@@ -870,7 +870,7 @@ const AIClassroom = () => {
             </div>
           </div>
         </div>
-      )}
+      )} 
     </div>
   );
 };
