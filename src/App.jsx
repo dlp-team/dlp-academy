@@ -1,17 +1,29 @@
-import React, { useState } from 'react';
-import { GraduationCap, Plus, FileText, Download, CheckCircle2, Clock, Upload, X, ChevronLeft, GripVertical, Play, BookOpen, Home } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { GraduationCap, Plus, FileText, Download, CheckCircle2, Clock, Upload, X, ChevronLeft, GripVertical, Play, BookOpen, Home, ArrowUpDown, AlertCircle, RotateCw } from 'lucide-react';
+
+// ⚠️ IMPORTANTE: CAMBIA ESTO POR TU URL DE N8N SI CAMBIA
+const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39';
 
 const AIClassroom = () => {
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [topics, setTopics] = useState([]);
+  
+  // Modales
   const [showSubjectModal, setShowSubjectModal] = useState(false);
   const [showTopicModal, setShowTopicModal] = useState(false);
   const [showPositionModal, setShowPositionModal] = useState(false);
+  const [showReorderModal, setShowReorderModal] = useState(false);
+  
   const [selectedTopic, setSelectedTopic] = useState(null);
+  
+  // Formularios y datos temporales
   const [subjectFormData, setSubjectFormData] = useState({ name: '', course: '', color: 'from-blue-400 to-blue-600' });
   const [topicFormData, setTopicFormData] = useState({ title: '', prompt: '' });
   const [pendingTopic, setPendingTopic] = useState(null);
+  const [reorderList, setReorderList] = useState([]); 
+  
+  // UI States
   const [dragActive, setDragActive] = useState(false);
   const [files, setFiles] = useState([]);
   const [activeTab, setActiveTab] = useState('materials');
@@ -29,6 +41,7 @@ const AIClassroom = () => {
     { name: 'Rosa Fucsia', value: 'from-pink-400 to-pink-600' }
   ];
 
+  // --- Lógica de Archivos ---
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -57,6 +70,7 @@ const AIClassroom = () => {
     setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
+  // --- Gestión de Asignaturas ---
   const handleCreateSubject = () => {
     if (!subjectFormData.name.trim() || !subjectFormData.course.trim()) return;
 
@@ -73,6 +87,65 @@ const AIClassroom = () => {
     setSubjectFormData({ name: '', course: '', color: 'from-blue-400 to-blue-600' });
   };
 
+  // --- 📡 LÓGICA DE CONEXIÓN CON N8N ---
+  const sendToN8N = async (topicId, topicsList, data, attachedFiles) => {
+    console.log("🚀 Enviando datos a n8n...");
+
+    const formData = new FormData();
+    // Datos del Tema
+    formData.append('topicId', topicId);
+    formData.append('title', data.title);
+    formData.append('prompt', data.prompt || '');
+    
+    // Datos de la Asignatura
+    formData.append('subject', selectedSubject.name);
+    formData.append('course', selectedSubject.course); 
+
+    // Lista completa de temas
+    formData.append('my_value', JSON.stringify(topicsList));
+
+    // Archivos PDF
+    attachedFiles.forEach((file) => {
+      formData.append('files', file); 
+    });
+
+    try {
+      const response = await fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        body: formData, 
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("✅ Respuesta de n8n:", result);
+
+      // Actualizamos el estado con la respuesta real de n8n
+      const updatedTopics = topicsList.map(t => 
+        t.id === topicId 
+          ? {
+              ...t,
+              status: 'completed',
+              pdfs: result.pdfs || [],      
+              quizzes: result.quizzes || [] 
+            }
+          : t
+      );
+      updateSubjectTopics(updatedTopics);
+
+    } catch (error) {
+      console.error("❌ Error en envío a n8n:", error);
+      // Estado de error visual
+      const updatedTopics = topicsList.map(t => 
+        t.id === topicId ? { ...t, status: 'error' } : t
+      );
+      updateSubjectTopics(updatedTopics);
+    }
+  };
+
+  // --- Gestión de Temas ---
   const handleCreateTopic = () => {
     if (!selectedSubject) return;
 
@@ -86,23 +159,48 @@ const AIClassroom = () => {
     };
 
     const currentTopics = selectedSubject.topics || [];
+    
+    // Guardamos copias locales antes de limpiar el estado
+    const currentFiles = [...files];
+    const currentPrompt = topicFormData.prompt;
+    const currentTitle = topicFormData.title;
 
     if (currentTopics.length === 0) {
+      // Primer tema (directo)
       const updatedTopic = { ...newTopic, number: '01' };
-      const newTopicsList = [updatedTopic]; // Lista explícita para evitar stale closure
+      const newTopicsList = [updatedTopic];
       
       updateSubjectTopics(newTopicsList);
       setShowTopicModal(false);
       setTopicFormData({ title: '', prompt: '' });
       setFiles([]);
       
-      // Pasamos la lista explícitamente
-      simulateGeneration(updatedTopic.id, newTopicsList);
+      // Llamada a n8n
+      sendToN8N(updatedTopic.id, newTopicsList, { title: currentTitle, prompt: currentPrompt }, currentFiles);
     } else {
-      setPendingTopic(newTopic);
+      // Tema adicional (requiere elegir posición)
+      setPendingTopic({ 
+        ...newTopic, 
+        tempFiles: currentFiles, 
+        tempPrompt: currentPrompt 
+      });
       setShowTopicModal(false);
       setShowPositionModal(true);
     }
+  };
+
+  // --- Reintentar Tema Fallido ---
+  const handleRetryTopic = (e, topic) => {
+    e.stopPropagation(); // Evita que se intente abrir el tema al hacer clic
+    
+    // 1. Ponemos el estado en 'generating' visualmente
+    const updatedTopics = topics.map(t => 
+      t.id === topic.id ? { ...t, status: 'generating' } : t
+    );
+    updateSubjectTopics(updatedTopics);
+
+    // 2. Reenviamos a n8n (usando el título del tema existente)
+    sendToN8N(topic.id, updatedTopics, { title: topic.title, prompt: '' }, []);
   };
 
   const updateSubjectTopics = (newTopics) => {
@@ -115,6 +213,7 @@ const AIClassroom = () => {
     setTopics(newTopics);
   };
 
+  // --- Lógica de Drag & Drop (Creación y Reordenamiento) ---
   const handleTopicDragStart = (e, index) => {
     setDraggedIndex(index);
     e.dataTransfer.effectAllowed = 'move';
@@ -133,12 +232,18 @@ const AIClassroom = () => {
     e.preventDefault();
     e.stopPropagation();
     
+    const targetIndex = index;
+
     if (draggedIndex !== null && pendingTopic) {
-      const currentTopics = selectedSubject.topics || [];
-      const newTopics = [...currentTopics];
-      newTopics.splice(index, 0, pendingTopic);
+      // Extraemos datos temporales
+      const filesToSend = pendingTopic.tempFiles || [];
+      const promptToSend = pendingTopic.tempPrompt || '';
+      const { tempFiles, tempPrompt, ...cleanTopic } = pendingTopic;
+
+      const currentTopics = [...topics];
+      currentTopics.splice(targetIndex, 0, cleanTopic);
       
-      const renumberedTopics = newTopics.map((topic, idx) => ({
+      const renumberedTopics = currentTopics.map((topic, idx) => ({
         ...topic,
         number: String(idx + 1).padStart(2, '0')
       }));
@@ -148,12 +253,11 @@ const AIClassroom = () => {
       setPendingTopic(null);
       setTopicFormData({ title: '', prompt: '' });
       setFiles([]);
-      
-      // Pasamos la lista explícitamente
-      simulateGeneration(pendingTopic.id, renumberedTopics);
-      
       setDraggedIndex(null);
       setDragOverIndex(null);
+
+      // Llamada a n8n
+      sendToN8N(cleanTopic.id, renumberedTopics, { title: cleanTopic.title, prompt: promptToSend }, filesToSend);
     }
   };
 
@@ -162,9 +266,49 @@ const AIClassroom = () => {
     setDragOverIndex(null);
   };
 
+  // Reordenar (Lista existente)
+  const openReorderModal = () => {
+    setReorderList([...topics]); 
+    setShowReorderModal(true);
+  };
+
+  const handleReorderDragStart = (e, index) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleReorderDragOver = (e, index) => {
+    e.preventDefault();
+  };
+
+  const handleReorderDrop = (e, targetIndex) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === targetIndex) return;
+    const newList = [...reorderList];
+    const [movedItem] = newList.splice(draggedIndex, 1);
+    newList.splice(targetIndex, 0, movedItem);
+    const renumberedList = newList.map((topic, idx) => ({
+      ...topic,
+      number: String(idx + 1).padStart(2, '0')
+    }));
+    setReorderList(renumberedList);
+    setDraggedIndex(null);
+  };
+
+  const saveReorder = () => {
+    updateSubjectTopics(reorderList);
+    setShowReorderModal(false);
+  };
+
   const confirmPosition = () => {
     const currentTopics = selectedSubject.topics || [];
-    const newTopics = [...currentTopics, pendingTopic];
+    
+    // Extraemos datos temporales
+    const filesToSend = pendingTopic.tempFiles || [];
+    const promptToSend = pendingTopic.tempPrompt || '';
+    const { tempFiles, tempPrompt, ...cleanTopic } = pendingTopic;
+
+    const newTopics = [...currentTopics, cleanTopic];
     const renumberedTopics = newTopics.map((topic, index) => ({
       ...topic,
       number: String(index + 1).padStart(2, '0')
@@ -176,8 +320,8 @@ const AIClassroom = () => {
     setTopicFormData({ title: '', prompt: '' });
     setFiles([]);
     
-    // Pasamos la lista explícitamente
-    simulateGeneration(pendingTopic.id, renumberedTopics);
+    // Llamada a n8n
+    sendToN8N(cleanTopic.id, renumberedTopics, { title: cleanTopic.title, prompt: promptToSend }, filesToSend);
   };
 
   const cancelPosition = () => {
@@ -185,50 +329,6 @@ const AIClassroom = () => {
     setPendingTopic(null);
     setTopicFormData({ title: '', prompt: '' });
     setFiles([]);
-  };
-
-  // CORRECCIÓN PRINCIPAL: Acepta topicsList como argumento
-  const simulateGeneration = (topicId, topicsList) => {
-    setTimeout(() => {
-      // Usamos topicsList en lugar de selectedSubject.topics para evitar closures obsoletos
-      const updatedTopics = topicsList.map(t => 
-        t.id === topicId 
-          ? {
-              ...t,
-              status: 'completed',
-              pdfs: [
-                { name: 'Formulario y Resumen.pdf', url: '#', type: 'summary' },
-                { name: 'Ejercicios Resueltos.pdf', url: '#', type: 'exercises' },
-                { name: 'Examen de Prueba.pdf', url: '#', type: 'exam' }
-              ],
-              quizzes: [
-                { 
-                  id: 1, 
-                  name: 'Test de Comprensión Básica',
-                  type: 'basic',
-                  questionCount: 15,
-                  duration: '20 min'
-                },
-                { 
-                  id: 2, 
-                  name: 'Test Avanzado de Aplicación',
-                  type: 'advanced',
-                  questionCount: 25,
-                  duration: '35 min'
-                },
-                { 
-                  id: 3, 
-                  name: 'Evaluación Final',
-                  type: 'final',
-                  questionCount: 40,
-                  duration: '60 min'
-                }
-              ]
-            }
-          : t
-      );
-      updateSubjectTopics(updatedTopics);
-    }, 3000);
   };
 
   const getQuizIcon = (type) => {
@@ -264,26 +364,27 @@ const AIClassroom = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 font-sans">
-      {/* Header */}
-      <header className="fixed top-0 w-full bg-white shadow-md z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
-              JD
-            </div>
-            <div>
-              <h2 className="font-semibold text-gray-900">Juan Docente</h2>
-              <p className="text-sm text-gray-500">Admin</p>
-            </div>
+      {/* Header Minimalista */}
+      <header className="fixed top-0 w-full bg-white shadow-sm border-b border-gray-200 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+          
+          {/* Logo Minimalista Izquierda */}
+          <div className="flex items-center gap-2">
+            <GraduationCap className="w-8 h-8 text-indigo-600" />
+            <h1 className="text-lg font-bold text-gray-900 tracking-tight">AI Classroom</h1>
           </div>
           
+          {/* Perfil Derecha */}
           <div className="flex items-center gap-3">
-            <GraduationCap className="w-10 h-10 text-indigo-600" />
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Colegio San José</h1>
-              <p className="text-xs text-gray-500">Excelencia Educativa</p>
+            <div className="text-right hidden sm:block">
+              <h2 className="font-semibold text-sm text-gray-900">Juan Docente</h2>
+              <p className="text-xs text-gray-500">Admin</p>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
+              JD
             </div>
           </div>
+
         </div>
       </header>
 
@@ -293,8 +394,8 @@ const AIClassroom = () => {
           /* Vista Principal - Asignaturas */
           <>
             <div className="mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">AI Classroom</h2>
-              <p className="text-gray-600">Gestiona tus asignaturas y contenido educativo</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Mis Asignaturas</h2>
+              <p className="text-gray-600">Gestiona tu contenido educativo</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -353,14 +454,28 @@ const AIClassroom = () => {
             </button>
 
             <div className="mb-8">
-              <div className="flex items-center gap-4 mb-4">
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${selectedSubject.color} flex items-center justify-center`}>
-                  <BookOpen className="w-8 h-8 text-white" />
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-4">
+                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${selectedSubject.color} flex items-center justify-center`}>
+                    <BookOpen className="w-8 h-8 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">{selectedSubject.course}</p>
+                    <h2 className="text-4xl font-bold text-gray-900">{selectedSubject.name}</h2>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">{selectedSubject.course}</p>
-                  <h2 className="text-4xl font-bold text-gray-900">{selectedSubject.name}</h2>
-                </div>
+
+                {/* BOTÓN DE REORDENAR TEMAS */}
+                {topics.length > 1 && (
+                  <button
+                    onClick={openReorderModal}
+                    className="p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center gap-2 text-gray-700 shadow-sm"
+                    title="Reordenar temas"
+                  >
+                    <ArrowUpDown className="w-5 h-5" />
+                    <span className="font-semibold hidden sm:inline">Reordenar</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -385,19 +500,38 @@ const AIClassroom = () => {
                   key={topic.id}
                   onClick={() => topic.status === 'completed' && setSelectedTopic(topic)}
                   className={`group relative h-64 rounded-2xl shadow-lg overflow-hidden transition-transform duration-300 ${
-                    topic.status === 'completed' ? 'hover:scale-105 cursor-pointer' : 'cursor-wait'
+                    topic.status === 'completed' ? 'hover:scale-105 cursor-pointer' : 
+                    topic.status === 'generating' ? 'cursor-wait' : 'cursor-default'
                   }`}
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${topic.color} opacity-90`}></div>
                   
+                  {/* Overlay Error - DISEÑO SUTIL (TRANSPARENTE 10%) */}
+                  {topic.status === 'error' && (
+                    <div className="absolute inset-0 bg-red-600/10 z-20 flex flex-col items-center justify-center transition-all duration-300">
+                        {/* Botón Reintentar */}
+                        <button 
+                          onClick={(e) => handleRetryTopic(e, topic)}
+                          className="flex flex-col items-center gap-2 group/btn"
+                        >
+                          <div className="bg-white text-red-600 p-3 rounded-full shadow-xl group-hover/btn:scale-110 transition-transform">
+                            <RotateCw className="w-6 h-6" />
+                          </div>
+                          <span className="text-white font-bold drop-shadow-md text-sm bg-red-600/80 px-3 py-1 rounded-full backdrop-blur-sm">
+                            Reintentar
+                          </span>
+                        </button>
+                    </div>
+                  )}
+
                   <div className="relative h-full p-6 flex flex-col justify-between text-white">
                     <div className="flex justify-between items-start">
                       <span className="text-8xl font-black opacity-30">{topic.number}</span>
                       {topic.status === 'generating' ? (
                         <Clock className="w-6 h-6 animate-spin" />
-                      ) : (
+                      ) : topic.status === 'completed' ? (
                         <CheckCircle2 className="w-6 h-6" />
-                      )}
+                      ) : null}
                     </div>
                     
                     <div>
@@ -405,12 +539,16 @@ const AIClassroom = () => {
                       <div className="w-full bg-white/30 rounded-full h-2">
                         <div 
                           className={`h-2 rounded-full bg-white transition-all duration-1000 ${
-                            topic.status === 'generating' ? 'w-1/3' : 'w-full'
+                            topic.status === 'generating' ? 'w-1/3 animate-pulse' : 
+                            topic.status === 'completed' ? 'w-full' : 'w-0'
                           }`}
                         ></div>
                       </div>
+                      
                       <p className="text-sm mt-2 opacity-90">
-                        {topic.status === 'generating' ? 'Generando contenido...' : 'Completado'}
+                        {topic.status === 'generating' ? 'Generando el temario...' : 
+                         topic.status === 'completed' ? 'Completado' : 
+                         topic.status === 'error' ? 'Falló la conexión' : ''}
                       </p>
                     </div>
                   </div>
@@ -468,7 +606,7 @@ const AIClassroom = () => {
             {/* Contenido según pestaña activa */}
             {activeTab === 'materials' ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {selectedTopic.pdfs.map((pdf, idx) => (
+                {selectedTopic.pdfs && selectedTopic.pdfs.length > 0 ? selectedTopic.pdfs.map((pdf, idx) => (
                   <div key={idx} className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-14 h-14 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
@@ -479,16 +617,26 @@ const AIClassroom = () => {
                         <p className="text-sm text-gray-500 capitalize">{pdf.type}</p>
                       </div>
                     </div>
-                    <button className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+                    {/* 👇 NOMBRE DE DESCARGA CONFIGURADO 👇 */}
+                    <a 
+                      href={pdf.url} 
+                      download={`ejerciciosTema${selectedTopic.number}(${selectedTopic.title})${selectedSubject.name}.pdf`}
+                      className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                    >
                       <Download className="w-5 h-5" />
                       Descargar
-                    </button>
+                    </a>
                   </div>
-                ))}
+                )) : (
+                  <div className="col-span-3 py-12 text-center text-gray-500 bg-white rounded-xl shadow-sm">
+                    <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300"/>
+                    <p>No se han generado materiales para este tema.</p>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {selectedTopic.quizzes.map((quiz) => {
+                {selectedTopic.quizzes && selectedTopic.quizzes.length > 0 ? selectedTopic.quizzes.map((quiz) => {
                   const quizStyle = getQuizIcon(quiz.type);
                   return (
                     <div key={quiz.id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
@@ -532,7 +680,12 @@ const AIClassroom = () => {
                       </div>
                     </div>
                   );
-                })}
+                }) : (
+                  <div className="col-span-3 py-12 text-center text-gray-500 bg-white rounded-xl shadow-sm">
+                      <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300"/>
+                      <p>No se han generado tests para este tema.</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -736,7 +889,7 @@ const AIClassroom = () => {
         </div>
       )}
 
-      {/* Modal de Selección de Posición con Drag & Drop */}
+      {/* Modal de Selección de Posición con Drag & Drop (NUEVO TEMA) */}
       {showPositionModal && pendingTopic && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto">
@@ -771,7 +924,7 @@ const AIClassroom = () => {
                       }`}
                     >
                       {dragOverIndex === index && (
-                        <div className="w-48 h-48 border-4 border-dashed border-indigo-500 bg-indigo-50 rounded-xl flex items-center justify-center">
+                        <div className="pointer-events-none w-48 h-48 border-4 border-dashed border-indigo-500 bg-indigo-50 rounded-xl flex items-center justify-center">
                           <div className="text-center">
                             <div className="text-4xl mb-2">📍</div>
                             <p className="text-sm font-bold text-indigo-600">Soltar aquí</p>
@@ -782,13 +935,17 @@ const AIClassroom = () => {
                     </div>
 
                     {/* Tema existente */}
-                    <div className="flex-shrink-0 w-40 h-48 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center shadow-md relative">
+                    <div 
+                      onDragOver={(e) => handleTopicDragOver(e, index)}
+                      onDrop={(e) => handleTopicDrop(e, index)}
+                      className="flex-shrink-0 w-40 h-48 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center shadow-md relative"
+                    >
                       <span className="text-5xl font-black text-gray-400">{topic.number}</span>
                       <span className="text-sm text-gray-600 text-center px-3 mt-2 font-semibold line-clamp-2">
                         {topic.title}
                       </span>
                       {dragOverIndex === index && draggedIndex !== null && (
-                        <div className="absolute -top-2 -left-2 bg-indigo-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        <div className="absolute -top-2 -left-2 bg-indigo-600 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
                           Insertando antes
                         </div>
                       )}
@@ -806,7 +963,7 @@ const AIClassroom = () => {
                   }`}
                 >
                   {dragOverIndex === topics.length && (
-                    <div className="w-48 h-48 border-4 border-dashed border-indigo-500 bg-indigo-50 rounded-xl flex items-center justify-center">
+                    <div className="pointer-events-none w-48 h-48 border-4 border-dashed border-indigo-500 bg-indigo-50 rounded-xl flex items-center justify-center">
                       <div className="text-center">
                         <div className="text-4xl mb-2">📍</div>
                         <p className="text-sm font-bold text-indigo-600">Soltar aquí</p>
@@ -870,7 +1027,69 @@ const AIClassroom = () => {
             </div>
           </div>
         </div>
-      )} 
+      )}
+
+      {/* Modal de Reordenar Temas (EXISTENTES) */}
+      {showReorderModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900">Reordenar Temas</h3>
+              <button
+                onClick={() => setShowReorderModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-600" />
+              </button>
+            </div>
+            
+            <div className="p-6">
+              <p className="text-sm text-gray-500 mb-4">
+                Arrastra los temas para cambiar su orden. La numeración se actualizará automáticamente al guardar.
+              </p>
+              
+              <div className="space-y-3">
+                {reorderList.map((topic, index) => (
+                  <div
+                    key={topic.id}
+                    draggable
+                    onDragStart={(e) => handleReorderDragStart(e, index)}
+                    onDragOver={(e) => handleReorderDragOver(e, index)}
+                    onDrop={(e) => handleReorderDrop(e, index)}
+                    className={`flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-white shadow-sm cursor-move transition-all ${
+                      draggedIndex === index ? 'opacity-50 bg-gray-50 border-dashed border-gray-400' : 'hover:border-indigo-300 hover:shadow-md'
+                    }`}
+                  >
+                    <GripVertical className="w-5 h-5 text-gray-400" />
+                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${topic.color} flex items-center justify-center text-white font-bold text-sm shrink-0`}>
+                      {topic.number}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-semibold text-gray-900">{topic.title}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={saveReorder}
+                  className="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-colors"
+                >
+                  Guardar Nuevo Orden
+                </button>
+                <button
+                  onClick={() => setShowReorderModal(false)}
+                  className="px-6 bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
