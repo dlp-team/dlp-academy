@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import styles from './Login.module.css'; // 👈 Importación como Módulo
-import { auth, provider } from './firebase'; 
+import styles from '../styles/Login.module.css';
+import { auth, provider } from '../firebase/config'; 
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 
 const Login = () => {
