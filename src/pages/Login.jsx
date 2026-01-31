@@ -1,15 +1,26 @@
 import React, { useState } from 'react';
 import styles from '../styles/Login.module.css';
 import { auth, provider } from '../firebase/config'; 
-import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore'; 
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; 
 import { db } from '../firebase/config';
+import { FcGoogle } from 'react-icons/fc';
+import { 
+    signInWithEmailAndPassword, 
+    signInWithPopup, 
+    setPersistence, 
+    browserLocalPersistence, 
+    browserSessionPersistence 
+} from 'firebase/auth';
+
+
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
+
 
     // Iniciar sesión con Email
     const handleLogin = async (e) => {
@@ -18,8 +29,12 @@ const Login = () => {
         setLoading(true);
 
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            await saveUserToFirestore(result.user);
+            const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+            
+            await setPersistence(auth, persistence);
+            const result = await signInWithEmailAndPassword(auth, email, password); // Capture 'result'
+        
+            await saveUserToFirestore(result.user); 
         } catch (err) {
             console.error(err);
             if(err.code === 'auth/invalid-credential') setError("Credenciales incorrectas.");
@@ -57,9 +72,18 @@ const Login = () => {
                 <div className={styles.loginLeft}>
                     <div className={styles.logoSection}>
                         <div className={styles.logo}>
-                            <div className={styles.logoIcon}>🎓</div>
+                            <div className={styles.logoIcon}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-graduation-cap w-8 h-8 text-indigo-600" aria-hidden="true">
+                                    <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z">
+                                    </path>
+                                    <path d="M22 10v6">
+                                    </path>
+                                    <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5">
+                                    </path>
+                                </svg>
+                            </div>
                             <div className={styles.logoText}>
-                                <h1>AI CLASSROOM</h1>
+                                <h1>DLP ACADEMY</h1>
                                 <p>Plataforma Inteligente</p>
                             </div>
                         </div>
@@ -128,7 +152,11 @@ const Login = () => {
 
                         <div className={styles.formOptions}>
                             <label className={styles.rememberMe}>
-                                <input type="checkbox" />
+                                <input 
+                                    type="checkbox" 
+                                    checked={rememberMe} 
+                                    onChange={(e) => setRememberMe(e.target.checked)} 
+                                />
                                 <span>Recordarme</span>
                             </label>
                             <a href="#" className={styles.forgotPassword}>¿Olvidaste tu contraseña?</a>
@@ -145,12 +173,8 @@ const Login = () => {
 
                     <div className={styles.socialLogin}>
                         <button type="button" className={styles.socialButton} onClick={handleGoogleLogin}>
-                            <span>📱</span>
+                            <FcGoogle size={32} style={{ width: '30px' }} />
                             <span>Google</span>
-                        </button>
-                        <button type="button" className={styles.socialButton} onClick={() => alert("Próximamente")}>
-                            <span>🔵</span>
-                            <span>Microsoft</span>
                         </button>
                     </div>
 

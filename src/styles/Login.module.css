@@ -85,7 +85,7 @@
 .rememberMe { display: flex; align-items: center; gap: 8px; color: #4a5568; }
 .rememberMe input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
 .forgotPassword { color: #667eea; text-decoration: none; font-weight: 600; transition: color 0.3s ease; }
-.forgotPassword:hover { color: #5568d3; }
+.forgotPassword:hover { color: #5568d3; text-decoration: underline; }
 
 .loginButton { width: 100%; padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
 .loginButton:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
@@ -95,10 +95,32 @@
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
 .divider span { padding: 0 15px; }
 
-.socialLogin { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-.socialButton { padding: 12px; border: 2px solid #e2e8f0; border-radius: 10px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px; font-weight: 600; color: #4a5568; transition: all 0.3s ease; }
-.socialButton:hover { border-color: #cbd5e0; background: #f7fafc; transform: translateY(-2px); }
+.socialLogin { display: grid; grid-template-columns: 1fr ; }
+.socialButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;            /* Espacio entre el icono y el texto */
+    
+    padding: 12px 24px;   /* Ajusta esto para que el botón sea más alto/ancho */
+    background-color: #ffffff;
+    border: 1px solid #dadce0;
+    border-radius: 8px;   /* Bordes un poco más redondeados se ven más modernos */
+    cursor: pointer;
 
+    /* LA FUENTE: */
+    font-size: 1.1rem;    /* Hace la letra más grande (aprox 18px) */
+    font-weight: 500;     /* Ni muy delgada ni muy gruesa, estilo "Medium" */
+    color: #3c4043;       /* El color gris oscuro oficial de Google */
+    font-family: 'Roboto', 'Segoe UI', Tahoma, sans-serif; /* Fuentes limpias */
+    
+    transition: background-color 0.3s ease;
+}
+
+.socialButton:hover {
+    background-color: #f8f9fa;
+    border-color: #d2e3fc;
+}
 .registerLink { text-align: center; margin-top: 30px; color: #718096; font-size: 14px; }
 .registerLink a { color: #667eea; text-decoration: none; font-weight: 600; }
 .registerLink a:hover { text-decoration: underline; }
