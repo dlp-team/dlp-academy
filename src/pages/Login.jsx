@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import styles from '../styles/Login.module.css';
 import { auth, provider } from '../firebase/config'; 
 import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp, collection, addDoc } from 'firebase/firestore'; 
+import { db } from '../firebase/config';
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -17,7 +19,7 @@ const Login = () => {
 
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            // El observador en AIClassroom detectará el cambio automáticamente
+            await saveUserToFirestore(result.user);
         } catch (err) {
             console.error(err);
             if(err.code === 'auth/invalid-credential') setError("Credenciales incorrectas.");
@@ -31,11 +33,20 @@ const Login = () => {
     const handleGoogleLogin = async () => {
         setError('');
         try {
-            await signInWithPopup(auth, provider);
+            const result = await signInWithPopup(auth, provider); 
+            await saveUserToFirestore(result.user);
         } catch (err) {
             console.error(err);
             setError("No se pudo iniciar sesión con Google.");
         }
+    };
+
+    const saveUserToFirestore = async (user) => {
+        const userRef = doc(db, "users", user.uid); // Use UID as the document ID
+        await setDoc(userRef, {
+            email: user.email,
+            lastLogin: serverTimestamp(),
+        }, { merge: true });
     };
 
     return (
