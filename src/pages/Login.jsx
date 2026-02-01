@@ -9,7 +9,8 @@ import {
     signInWithPopup, 
     setPersistence, 
     browserLocalPersistence, 
-    browserSessionPersistence 
+    browserSessionPersistence,
+    sendPasswordResetEmail
 } from 'firebase/auth';
 
 
@@ -32,9 +33,9 @@ const Login = () => {
             const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
             
             await setPersistence(auth, persistence);
-            const result = await signInWithEmailAndPassword(auth, email, password); // Capture 'result'
+            const result = await signInWithEmailAndPassword(auth, email, password);
         
-            await saveUserToFirestore(result.user); 
+            await saveUserToFirestore(result.user, rememberMe); 
         } catch (err) {
             console.error(err);
             if(err.code === 'auth/invalid-credential') setError("Credenciales incorrectas.");
@@ -49,19 +50,44 @@ const Login = () => {
         setError('');
         try {
             const result = await signInWithPopup(auth, provider); 
-            await saveUserToFirestore(result.user);
+            await saveUserToFirestore(result.user, rememberMe);
         } catch (err) {
             console.error(err);
             setError("No se pudo iniciar sesión con Google.");
         }
     };
 
-    const saveUserToFirestore = async (user) => {
+    const saveUserToFirestore = async (user, rememberMeValue) => {
         const userRef = doc(db, "users", user.uid);
         await setDoc(userRef, {
             email: user.email,
             lastLogin: serverTimestamp(),
+            rememberMe: rememberMeValue,
         }, { merge: true });
+    };
+
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+        if (!email) {
+            setError("Por favor, ingresa tu correo electrónico primero.");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await sendPasswordResetEmail(auth, email);
+            alert(`Se ha enviado un enlace de recuperación a: ${email}`);
+            setError(''); // Clear any previous errors
+        } catch (err) {
+            console.error(err);
+            if (err.code === 'auth/user-not-found') {
+                setError("No existe una cuenta con este correo.");
+            } else {
+                setError("Error al enviar el correo de recuperación.");
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -159,7 +185,9 @@ const Login = () => {
                                 />
                                 <span>Recordarme</span>
                             </label>
-                            <a href="#" className={styles.forgotPassword}>¿Olvidaste tu contraseña?</a>
+                            <a href="#" onClick={handleForgotPassword} className={styles.forgotPassword}>
+                                ¿Olvidaste tu contraseña?
+                            </a>
                         </div>
 
                         <button type="submit" className={styles.loginButton} disabled={loading}>
