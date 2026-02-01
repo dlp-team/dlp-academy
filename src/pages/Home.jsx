@@ -2,15 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Plus, BookOpen, Home, ArrowUpDown, CheckCircle2, 
-    Clock, RotateCw, ChevronLeft, FileText, Download, Play 
+    Clock, RotateCw, ChevronLeft, FileText, Download, Play , Trash2
 } from 'lucide-react';
+
+
 
 // 👇 1. IMPORTAMOS TUS NUEVOS COMPONENTES
 import Header from '../components/layout/Header';
 import SubjectModal from '../components/modals/SubjectModal';
 import TopicModal from '../components/modals/TopicModal';
-import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import DeleteModal from '../components/modals/DeleteModal';
+import { collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+
 // Si aún no has creado estos dos, coméntalos para que no falle:
 // import PositionModal from '../components/modals/PositionModal';
 // import ReorderModal from '../components/modals/ReorderModal';
@@ -25,6 +29,9 @@ const AIClassroom = ({ user }) => {
     const [selectedSubject, setSelectedSubject] = useState(null);
     const [topics, setTopics] = useState([]);
     const [selectedTopic, setSelectedTopic] = useState(null);
+    // Estado para controlar el modal de borrado
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [subjectToDelete, setSubjectToDelete] = useState(null); // Guardamos cuál vamos a borrar
 
     // Estados de Modales
     const [showSubjectModal, setShowSubjectModal] = useState(false);
@@ -55,6 +62,31 @@ const AIClassroom = ({ user }) => {
         { name: 'Índigo', value: 'from-indigo-400 to-indigo-600' },
         { name: 'Rosa Fucsia', value: 'from-pink-400 to-pink-600' }
     ];
+    const requestDelete = (e, subject) => {
+        e.stopPropagation(); // 🛑 ¡IMPORTANTE! Evita que se abra la asignatura al hacer clic en borrar
+        setSubjectToDelete(subject);
+        setShowDeleteModal(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!subjectToDelete) return;
+
+        try {
+            // 1. Borrar de Firebase
+            await deleteDoc(doc(db, "subjects", subjectToDelete.id));
+
+            // 2. Actualizar la pantalla (quitándolo de la lista local)
+            setSubjects(prev => prev.filter(s => s.id !== subjectToDelete.id));
+            
+            // 3. Cerrar modal
+            setShowDeleteModal(false);
+            setSubjectToDelete(null);
+        } catch (error) {
+            console.error("Error al eliminar:", error);
+            alert("No se pudo eliminar la asignatura.");
+        }
+    };
+    
     useEffect(() => {
         const fetchSubjects = async () => {
             if (!user) return; // Si no hay usuario, no hacemos nada
@@ -187,10 +219,31 @@ const AIClassroom = ({ user }) => {
         }
     };
 
-    const updateSubjectTopics = (newTopics) => {
-        setSubjects(prev => prev.map(s => s.id === selectedSubject.id ? { ...s, topics: newTopics } : s));
+    // 👇 SUSTITUYE TU FUNCIÓN ANTIGUA POR ESTA VERSIÓN CON PERSISTENCIA 👇
+    const updateSubjectTopics = async (newTopics) => {
+        // 1. Actualizamos la pantalla inmediatamente (Estado Local)
+        setSubjects(prev => prev.map(s => 
+            s.id === selectedSubject.id ? { ...s, topics: newTopics } : s
+        ));
         setSelectedSubject(prev => ({ ...prev, topics: newTopics }));
         setTopics(newTopics);
+
+        // 2. Guardamos en Firebase (Persistencia)
+        if (selectedSubject?.id) {
+            try {
+                // Referencia al documento específico de esta asignatura
+                const subjectRef = doc(db, "subjects", selectedSubject.id);
+                
+                // Actualizamos SOLO el campo 'topics' con la nueva lista
+                await updateDoc(subjectRef, { 
+                    topics: newTopics 
+                });
+                
+                console.log("✅ Temas guardados en Firebase correctamente");
+            } catch (error) {
+                console.error("❌ Error guardando temas en Firebase:", error);
+            }
+        }
     };
 
     const handleRetryTopic = (e, topic) => {
@@ -257,8 +310,15 @@ const AIClassroom = ({ user }) => {
                                 <button
                                     key={subject.id}
                                     onClick={() => handleSelectSubject(subject)}
-                                    className="group relative h-64 rounded-2xl shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105 cursor-pointer"
+                                    className="group relative h-64 rounded-2xl shadow-lg overflow-hidden transition-transform duration-300 hover:scale-105 cursor-pointer text-left"
                                 >
+                                    <div 
+                                        onClick={(e) => requestDelete(e, subject)}
+                                        className="absolute top-3 right-3 z-20 p-2 bg-white/20 backdrop-blur-md rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all duration-200 shadow-sm"
+                                        title="Eliminar asignatura"
+                                    >
+                                        <Trash2 className="w-5 h-5" />
+                                    </div>  
                                     <div className={`absolute inset-0 bg-gradient-to-br ${subject.color} opacity-90`}></div>
                                     <div className="relative h-full p-6 flex flex-col justify-between text-white">
                                         <div className="flex justify-between items-start">
@@ -429,6 +489,12 @@ const AIClassroom = ({ user }) => {
                 handleDrag={handleDrag}
                 handleDrop={handleDrop}
                 handleFileSelect={(e) => handleFiles(e.target.files)}
+            />
+            <DeleteModal 
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+                itemName={subjectToDelete?.name}
             />
 
             {/* Añade aquí PositionModal y ReorderModal cuando los crees */}
