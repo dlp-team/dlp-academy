@@ -1,24 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Plus, FileText, Download, CheckCircle2, Clock, Upload, X, ChevronLeft, GripVertical, Play, BookOpen, Home, ArrowUpDown, AlertCircle, RotateCw } from 'lucide-react';
 // 👇 AÑADIDO: Importamos onAuthStateChanged
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth, db, provider } from '../firebase/config'; 
+
 
 const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39';
 
-const AIClassroom = () => {
-  // --- 🔴 NUEVO: ESTADOS DE USUARIO ---
-  const [user, setUser] = useState(null);
-  const [loadingUser, setLoadingUser] = useState(true);
+const AIClassroom = ({ user }) => {
+
+  const navigate = useNavigate();
 
   // --- 🔴 NUEVO: EFECTO DE AUTENTICACIÓN ---
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoadingUser(false);
-    });
-    return () => unsubscribe();
-  }, []);
 
   const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState(null);
@@ -378,9 +370,7 @@ const AIClassroom = () => {
   };
 
   // Si está cargando el usuario, mostramos algo simple o nada
-  if (loadingUser) {
-    return <div className="min-h-screen flex items-center justify-center">Cargando...</div>;
-  }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 font-sans">
@@ -394,8 +384,11 @@ const AIClassroom = () => {
             <h1 className="text-lg font-bold text-gray-900 tracking-tight">AI Classroom</h1>
           </div>
           
-          {/* Perfil Derecha */}
-          <div className="flex items-center gap-4">
+          {/* Perfil Derecha - AHORA CON CLICK */}
+            <div 
+                className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => navigate('/profile')} 
+            >
               <div className="text-right hidden sm:block">
                   {/* NOMBRE: Si existe, lo muestra. Si no, pone 'Usuario' */}
                   <h2 className="font-semibold text-sm text-gray-900">
@@ -406,7 +399,7 @@ const AIClassroom = () => {
               </div>
 
               {/* AVATAR: Foto de Google o Inicial */}
-              <div className="relative group cursor-pointer">
+              <div className="relative group">
                   {user?.photoURL ? (
                       <img 
                           src={user.photoURL} 
@@ -420,7 +413,7 @@ const AIClassroom = () => {
                       </div>
                   )}
               </div>
-          </div>
+            </div>
 
         </div>
       </header>

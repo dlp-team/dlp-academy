@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   LogOut, User, BookOpen, Trophy, TrendingUp, 
   Star, ChevronLeft, LayoutDashboard, Award 
@@ -7,7 +8,8 @@ import { auth, db } from '../firebase/config';
 import { signOut } from 'firebase/auth';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
-const Profile = ({ user, onBack }) => {
+const Profile = ({ user }) => {
+  const navigate = useNavigate();
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +53,7 @@ const Profile = ({ user, onBack }) => {
       <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
           <button 
-            onClick={onBack}
+            onClick={() => navigate('/home')}
             className="flex items-center gap-2 text-gray-600 hover:text-indigo-600 transition-colors font-medium"
           >
             <ChevronLeft className="w-5 h-5" />
