@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Plus, BookOpen, Home, ArrowUpDown, CheckCircle2, 
@@ -9,6 +9,8 @@ import {
 import Header from '../components/layout/Header';
 import SubjectModal from '../components/modals/SubjectModal';
 import TopicModal from '../components/modals/TopicModal';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../firebase/config';
 // Si aún no has creado estos dos, coméntalos para que no falle:
 // import PositionModal from '../components/modals/PositionModal';
 // import ReorderModal from '../components/modals/ReorderModal';
@@ -53,6 +55,28 @@ const AIClassroom = ({ user }) => {
         { name: 'Índigo', value: 'from-indigo-400 to-indigo-600' },
         { name: 'Rosa Fucsia', value: 'from-pink-400 to-pink-600' }
     ];
+    useEffect(() => {
+        const fetchSubjects = async () => {
+            if (!user) return; // Si no hay usuario, no hacemos nada
+
+            try {
+                // Pedimos a Firebase las asignaturas de ESTE usuario (uid)
+                const q = query(collection(db, "subjects"), where("uid", "==", user.uid));
+                const querySnapshot = await getDocs(q);
+                
+                // Las guardamos en el estado local
+                const loadedSubjects = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                setSubjects(loadedSubjects);
+            } catch (error) {
+                console.error("Error cargando asignaturas:", error);
+            }
+        };
+
+        fetchSubjects();
+    }, [user]); // Se ejecuta cuando el usuario cambia o entra 
 
     // --- LÓGICA (FUNCIONES) ---
     // (Mantengo tu lógica intacta para que no se rompa nada)
@@ -76,20 +100,36 @@ const AIClassroom = ({ user }) => {
 
     const removeFile = (index) => setFiles(prev => prev.filter((_, i) => i !== index));
 
-    const handleCreateSubject = () => {
+   const handleCreateSubject = async () => {
+        // Validaciones
         if (!subjectFormData.name.trim() || !subjectFormData.course.trim()) return;
-        const newSubject = {
-            id: Date.now().toString(),
-            name: subjectFormData.name,
-            course: subjectFormData.course,
-            color: subjectFormData.color,
-            topics: []
-        };
-        setSubjects(prev => [...prev, newSubject]);
-        setShowSubjectModal(false);
-        setSubjectFormData({ name: '', course: '', color: 'from-blue-400 to-blue-600' });
-    };
+        
+        try {
+            // 1. Crear el objeto de la asignatura
+            const newSubject = {
+                name: subjectFormData.name,
+                course: subjectFormData.course,
+                color: subjectFormData.color,
+                topics: [],
+                uid: user.uid, // ⚠️ IMPORTANTE: La etiqueta de propiedad
+                createdAt: new Date() // Fecha de creación
+            };
 
+            // 2. Guardar en Firebase
+            const docRef = await addDoc(collection(db, "subjects"), newSubject);
+
+            // 3. Actualizar la pantalla (usando el ID real que nos dio Firebase)
+            setSubjects(prev => [...prev, { id: docRef.id, ...newSubject }]);
+
+            // 4. Cerrar y limpiar
+            setShowSubjectModal(false);
+            setSubjectFormData({ name: '', course: '', color: 'from-blue-400 to-blue-600' });
+
+        } catch (error) {
+            console.error("Error guardando asignatura:", error);
+            alert("Hubo un error al guardar.");
+        }
+    };
     const sendToN8N = async (topicId, topicsList, data, attachedFiles) => {
         console.log("🚀 Enviando datos a n8n...");
         const formData = new FormData();
