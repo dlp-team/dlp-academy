@@ -12,7 +12,7 @@ import {
     browserSessionPersistence,
     sendPasswordResetEmail
 } from 'firebase/auth';
-
+import { useNavigate } from 'react-router-dom';
 
 
 const Login = () => {
@@ -21,6 +21,7 @@ const Login = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [rememberMe, setRememberMe] = useState(false);
+    const navigate = useNavigate();
 
 
     // Iniciar sesión con Email
@@ -31,11 +32,12 @@ const Login = () => {
 
         try {
             const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
-            
             await setPersistence(auth, persistence);
             const result = await signInWithEmailAndPassword(auth, email, password);
         
             await saveUserToFirestore(result.user, rememberMe); 
+
+            navigate('/home')
         } catch (err) {
             console.error(err);
             if(err.code === 'auth/invalid-credential') setError("Credenciales incorrectas.");
@@ -51,6 +53,8 @@ const Login = () => {
         try {
             const result = await signInWithPopup(auth, provider); 
             await saveUserToFirestore(result.user, rememberMe);
+
+            navigate('/home')
         } catch (err) {
             console.error(err);
             setError("No se pudo iniciar sesión con Google.");
@@ -207,7 +211,14 @@ const Login = () => {
                     </div>
 
                     <div className={styles.registerLink}>
-                        ¿No tienes cuenta? <a href="#">Regístrate aquí</a>
+                        ¿No tienes cuenta?{' '}
+                        <span 
+                            className={styles.linkSpan} 
+                            onClick={() => navigate('/register')}
+                            style={{ cursor: 'pointer', color: '#4f46e5', fontWeight: '600' }}
+                        >
+                            Regístrate aquí
+                        </span>
                     </div>
                 </div>
             </div>
