@@ -1,0 +1,26 @@
+/* Boton.module.css */
+
+.contenedor {
+  display: flex;
+  justify_content: center;
+  padding: 20px;
+}
+
+.boton {
+  background-color: #0070f3;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.boton:hover {
+  background-color: #005bb5;
+}
+
+/* Las clases con guiones se pueden usar, pero requieren sintaxis de corchetes en JS */
+.boton-activo {
+  border: 2px solid yellow;
+}
