@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import styles from '../styles/Login.module.css';
-import { auth, provider } from '../firebase/config'; 
+import { auth, db, provider } from '../firebase/config'; 
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; 
-import { db } from '../firebase/config';
 import { FcGoogle } from 'react-icons/fc';
 import { 
     signInWithEmailAndPassword, 

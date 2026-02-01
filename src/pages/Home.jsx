@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GraduationCap, Plus, FileText, Download, CheckCircle2, Clock, Upload, X, ChevronLeft, GripVertical, Play, BookOpen, Home, ArrowUpDown, AlertCircle, RotateCw } from 'lucide-react';
+import { auth, db, provider } from '../firebase/config'; 
 
-// ⚠️ IMPORTANTE: CAMBIA ESTO POR TU URL DE N8N SI CAMBIA
 const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39';
 
 const AIClassroom = () => {
