@@ -57,7 +57,7 @@ const Login = () => {
     };
 
     const saveUserToFirestore = async (user) => {
-        const userRef = doc(db, "users", user.uid); // Use UID as the document ID
+        const userRef = doc(db, "users", user.uid);
         await setDoc(userRef, {
             email: user.email,
             lastLogin: serverTimestamp(),
