@@ -1,5 +1,5 @@
 // Boton.jsx
-import styles from './Boton.module.css'; // Importación clave
+import styles from '../styles/Register.module.css'; // Importación clave
 
 export const Boton = ({ texto, esActivo }) => {
   return (
