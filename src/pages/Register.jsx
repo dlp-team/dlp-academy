@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-// Asegúrate de que esta ruta sea correcta según dónde pusiste el archivo CSS
 import styles from '../styles/Register.module.css'; 
 import { GraduationCap, Mail, Lock, User, Check } from 'lucide-react';
 
