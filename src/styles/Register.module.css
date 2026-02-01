@@ -1,26 +1,190 @@
-/* Boton.module.css */
+/* src/styles/Register.module.css */
 
-.contenedor {
+/* Contenedor principal que cubre toda la pantalla */
+.registerPageWrapper {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  width: 100vw;
   display: flex;
-  justify_content: center;
+  align-items: center;
+  justify-content: center;
   padding: 20px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  overflow-y: auto; /* Permite scroll si la pantalla es pequeña */
 }
 
-.boton {
-  background-color: #0070f3;
+/* Tarjeta central dividida en 2 columnas */
+.registerContainer {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  max-width: 1000px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: auto;
+}
+
+/* --- LADO IZQUIERDO (BRANDING) --- */
+.registerLeft {
+  background: linear-gradient(135deg, #5b7cff 0%, #7c5cff 100%);
+  padding: 60px 50px;
   color: white;
-  padding: 10px 20px;
-  border-radius: 5px;
-  border: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animación de fondo */
+.registerLeft::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+  animation: pulse 8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.logoSection { position: relative; z-index: 1; }
+.logo { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; }
+.logoIcon { width: 60px; height: 60px; background: white; border-radius: 15px; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); }
+.logoText h1 { font-size: 32px; font-weight: 700; letter-spacing: 1px; margin: 0; }
+.logoText p { font-size: 14px; opacity: 0.9; margin-top: 5px; margin-bottom: 0; }
+
+.welcomeText { margin-top: 40px; position: relative; z-index: 1; }
+.welcomeText h2 { font-size: 28px; margin-bottom: 15px; line-height: 1.3; }
+.welcomeText p { font-size: 16px; opacity: 0.9; line-height: 1.6; }
+
+.benefits { margin-top: 40px; display: flex; flex-direction: column; gap: 15px; position: relative; z-index: 1; }
+.benefitItem { display: flex; align-items: center; gap: 12px; background: rgba(255, 255, 255, 0.1); padding: 12px 18px; border-radius: 10px; backdrop-filter: blur(10px); }
+.benefitIcon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+
+/* --- LADO DERECHO (FORMULARIO) --- */
+.registerRight { 
+  padding: 40px 50px; 
+  display: flex; 
+  flex-direction: column; 
+  justify-content: center;
+  background: white;
+}
+
+.registerHeader { margin-bottom: 25px; }
+.registerHeader h2 { font-size: 28px; color: #2d3748; margin-bottom: 10px; }
+.registerHeader p { color: #718096; font-size: 15px; }
+
+.formRow { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.formGroup { margin-bottom: 18px; }
+.formGroup label { display: block; color: #4a5568; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+
+.inputWrapper { position: relative; }
+.inputIcon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #a0aec0; display: flex; align-items: center; }
+
+.formGroup input, .formGroup select {
+  width: 100%;
+  padding: 13px 15px;
+  padding-left: 45px; /* Espacio para el icono */
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  background: #f7fafc;
+  color: #333;
+}
+
+/* Clase especial para inputs sin icono */
+.noIcon input, .noIcon select { padding-left: 15px; }
+
+.formGroup input:focus, .formGroup select:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Barra de fuerza de contraseña */
+.passwordStrength { margin-top: 8px; font-size: 12px; }
+.strengthBar { height: 4px; background: #e2e8f0; border-radius: 2px; margin-top: 5px; overflow: hidden; }
+.strengthFill { height: 100%; width: 0%; transition: all 0.3s ease; border-radius: 2px; }
+
+/* Colores para la fuerza */
+.strengthWeak { background-color: #fc8181; width: 33%; }
+.strengthMedium { background-color: #f6ad55; width: 66%; }
+.strengthStrong { background-color: #68d391; width: 100%; }
+
+/* Selección de Tipo de Usuario (Radio Buttons) */
+.userType { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 18px; }
+.userTypeOption { position: relative; }
+.userTypeOption input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+
+.userTypeLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  background: #f7fafc;
 }
 
-.boton:hover {
-  background-color: #005bb5;
+/* Estilo cuando el radio está seleccionado */
+.userTypeOption input[type="radio"]:checked + .userTypeLabel {
+  border-color: #667eea;
+  background: #eef2ff;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
-/* Las clases con guiones se pueden usar, pero requieren sintaxis de corchetes en JS */
-.boton-activo {
-  border: 2px solid yellow;
+.userTypeLabel .icon { font-size: 28px; margin-bottom: 8px; }
+.userTypeLabel .title { font-weight: 600; color: #2d3748; font-size: 14px; }
+
+/* Checkbox de términos */
+.termsCheckbox { display: flex; align-items: start; gap: 10px; margin-bottom: 20px; font-size: 14px; color: #4a5568; cursor: pointer; }
+.termsCheckbox input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; margin-top: 2px; flex-shrink: 0; }
+.termsCheckbox a { color: #667eea; text-decoration: none; font-weight: 600; }
+.termsCheckbox a:hover { text-decoration: underline; }
+
+/* Botón Principal */
+.registerButton {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+.registerButton:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
+.registerButton:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Enlaces y Textos extra */
+.loginLink { text-align: center; margin-top: 20px; color: #718096; font-size: 14px; }
+.loginLink a { color: #667eea; text-decoration: none; font-weight: 600; cursor: pointer; }
+.loginLink a:hover { text-decoration: underline; }
+
+/* RESPONSIVO (Móvil) */
+@media (max-width: 900px) {
+  .registerContainer { grid-template-columns: 1fr; max-width: 500px; }
+  .registerLeft { display: none; } /* Ocultar parte izquierda */
+  .registerRight { padding: 40px 30px; }
+  .formRow { grid-template-columns: 1fr; gap: 0; }
+  .registerPageWrapper { padding-top: 20px; align-items: flex-start; }
 }
