@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+<<<<<<< HEAD
 import { 
     Plus, BookOpen, Home, ArrowUpDown, CheckCircle2, 
     Clock, RotateCw, ChevronRight, FileText, Download, Play, Trash2, Loader2,
@@ -18,37 +19,38 @@ import { db } from '../firebase/config';
 
 // ⚠️ REVISA TU URL DE NGROK
 const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39';
+=======
+import { Plus, BookOpen, Trash2, Loader2 } from 'lucide-react';
+import { collection, addDoc, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 
-const AIClassroom = ({ user }) => {
+import Header from '../components/layout/Header';
+import SubjectModal from '../components/modals/SubjectModal';
+import DeleteModal from '../components/modals/DeleteModal';
+>>>>>>> 9ebab3d136cc4778feac0e7140664d385d3cb10f
+
+const Home = ({ user }) => {
     const navigate = useNavigate();
-
-    // --- ESTADOS ---
-    const [retryTopicId, setRetryTopicId] = useState(null);
-    const [fileCache, setFileCache] = useState({});
-    const [showPositionModal, setShowPositionModal] = useState(false);
-    const [pendingTopic, setPendingTopic] = useState(null);
     
     const [subjects, setSubjects] = useState([]);
+<<<<<<< HEAD
     const [selectedSubject, setSelectedSubject] = useState(null);
     const [topics, setTopics] = useState([]);
     const [selectedTopic, setSelectedTopic] = useState(null);
     const [loading, setLoading] = useState(true);
 
     // Modales
+=======
+    const [loading, setLoading] = useState(true);
+    const [showSubjectModal, setShowSubjectModal] = useState(false);
+>>>>>>> 9ebab3d136cc4778feac0e7140664d385d3cb10f
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [subjectToDelete, setSubjectToDelete] = useState(null);
-    const [showSubjectModal, setShowSubjectModal] = useState(false);
-    const [showTopicModal, setShowTopicModal] = useState(false);
-    const [showReorderModal, setShowReorderModal] = useState(false);
-
-    // Formularios
-    const [subjectFormData, setSubjectFormData] = useState({ name: '', course: '', color: 'from-blue-400 to-blue-600' });
-    const [topicFormData, setTopicFormData] = useState({ title: '', prompt: '' });
-
-    // UI
-    const [dragActive, setDragActive] = useState(false);
-    const [files, setFiles] = useState([]);
-    const [activeTab, setActiveTab] = useState('materials');
+    const [subjectFormData, setSubjectFormData] = useState({ 
+        name: '', 
+        course: '', 
+        color: 'from-blue-400 to-blue-600' 
+    });
 
     const colorOptions = [
         { name: 'Azul', value: 'from-blue-400 to-blue-600' },
@@ -61,10 +63,11 @@ const AIClassroom = ({ user }) => {
         { name: 'Rosa Fucsia', value: 'from-pink-400 to-pink-600' }
     ];
 
-    // --- CARGA INICIAL ---
+    // Load subjects on mount
     useEffect(() => {
         const fetchSubjects = async () => {
             if (!user) return; 
+
             try {
                 const q = query(collection(db, "subjects"), where("uid", "==", user.uid));
                 const querySnapshot = await getDocs(q);
@@ -74,7 +77,7 @@ const AIClassroom = ({ user }) => {
                 }));
                 setSubjects(loadedSubjects);
             } catch (error) {
-                console.error("Error cargando asignaturas:", error);
+                console.error("Error loading subjects:", error);
             } finally {
                 setLoading(false);
             }
@@ -82,7 +85,8 @@ const AIClassroom = ({ user }) => {
         fetchSubjects();
     }, [user]);
 
-    // --- LÓGICA ---
+    // --- LÓGICA DE GESTIÓN ---
+
     const requestDelete = (e, subject) => {
         e.stopPropagation();
         setSubjectToDelete(subject);
@@ -91,17 +95,19 @@ const AIClassroom = ({ user }) => {
 
     const confirmDelete = async () => {
         if (!subjectToDelete) return;
+        
         try {
             await deleteDoc(doc(db, "subjects", subjectToDelete.id));
             setSubjects(prev => prev.filter(s => s.id !== subjectToDelete.id));
             setShowDeleteModal(false);
             setSubjectToDelete(null);
         } catch (error) {
-            console.error("Error al eliminar:", error);
+            console.error("Error deleting:", error);
             alert("No se pudo eliminar la asignatura.");
         }
     };
 
+<<<<<<< HEAD
     const updateSubjectTopics = async (newTopics) => {
         setSubjects(prev => prev.map(s => 
             s.id === selectedSubject.id ? { ...s, topics: newTopics } : s
@@ -368,6 +374,8 @@ const AIClassroom = ({ user }) => {
         }
     };
 
+    // --- 🛡️ PROTECCIÓN CONTRA PANTALLA BLANCA 🛡️ ---
+    // Si el usuario aún no ha cargado, mostramos un loader en vez de intentar pintar la app.
     if (!user) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -381,6 +389,7 @@ const AIClassroom = ({ user }) => {
             <Header user={user} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+<<<<<<< HEAD
                 {!selectedSubject ? (
                     /* 1. VISTA ASIGNATURAS */
                     <>
@@ -623,15 +632,80 @@ const AIClassroom = ({ user }) => {
                         )}
                     </div>
                 )}
+=======
+                <div className="mb-8">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-2">Mis Asignaturas</h2>
+                    <p className="text-gray-600">Gestiona tu contenido educativo</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Create New Subject Card */}
+                    <button 
+                        onClick={() => setShowSubjectModal(true)} 
+                        className="group relative h-64 border-3 border-dashed border-gray-300 rounded-2xl bg-white hover:border-indigo-400 hover:bg-indigo-50 transition-all flex flex-col items-center justify-center gap-4"
+                    >
+                        <div className="w-20 h-20 rounded-full bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
+                            <Plus className="w-10 h-10 text-indigo-600" />
+                        </div>
+                        <span className="text-lg font-semibold text-gray-700 group-hover:text-indigo-600">
+                            Crear Nueva Asignatura
+                        </span>
+                    </button>
+
+                    {/* Subject Cards */}
+                    {subjects.map((subject) => (
+                        <button 
+                            key={subject.id} 
+                            onClick={() => handleSelectSubject(subject)} 
+                            className="group relative h-64 rounded-2xl shadow-lg overflow-hidden transition-transform hover:scale-105 cursor-pointer text-left"
+                        >
+                            <div 
+                                onClick={(e) => requestDelete(e, subject)} 
+                                className="absolute top-3 right-3 z-20 p-2 bg-white/20 backdrop-blur-md rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all"
+                            >
+                                <Trash2 className="w-5 h-5" />
+                            </div>
+                            
+                            <div className={`absolute inset-0 bg-gradient-to-br ${subject.color} opacity-90`}></div>
+                            
+                            <div className="relative h-full p-6 flex flex-col justify-between text-white">
+                                <div className="flex justify-between items-start">
+                                    <BookOpen className="w-12 h-12 opacity-80" />
+                                    <div className="bg-white/30 px-3 py-1 rounded-full">
+                                        <span className="text-sm font-bold">
+                                            {(subject.topics || []).length} temas
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <p className="text-sm opacity-90">{subject.course}</p>
+                                    <h3 className="text-2xl font-bold">{subject.name}</h3>
+                                </div>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+>>>>>>> 9ebab3d136cc4778feac0e7140664d385d3cb10f
             </main>
 
-            <SubjectModal isOpen={showSubjectModal} onClose={() => setShowSubjectModal(false)} formData={subjectFormData} setFormData={setSubjectFormData} onSubmit={handleCreateSubject} colorOptions={colorOptions} />
-            <TopicModal isOpen={showTopicModal} onClose={() => { setShowTopicModal(false); setTopicFormData({ title: '', prompt: '' }); setFiles([]); }} formData={topicFormData} setFormData={setTopicFormData} onSubmit={handleCreateTopic} isFirstTopic={topics.length === 0} files={files} onRemoveFile={removeFile} dragActive={dragActive} handleDrag={handleDrag} handleDrop={handleDrop} handleFileSelect={(e) => handleFiles(e.target.files)} />
-            <DeleteModal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} onConfirm={confirmDelete} itemName={subjectToDelete?.name} />
-            <PositionModal isOpen={showPositionModal} onClose={() => setShowPositionModal(false)} onConfirm={handlePositionConfirm} topics={selectedSubject?.topics || []} newTopicTitle={pendingTopic?.title} />
-            <ReorderModal isOpen={showReorderModal} onClose={() => setShowReorderModal(false)} onConfirm={handleReorderConfirm} topics={topics} />
+            <SubjectModal 
+                isOpen={showSubjectModal} 
+                onClose={() => setShowSubjectModal(false)} 
+                formData={subjectFormData} 
+                setFormData={setSubjectFormData} 
+                onSubmit={handleCreateSubject} 
+                colorOptions={colorOptions} 
+            />
+            
+            <DeleteModal 
+                isOpen={showDeleteModal} 
+                onClose={() => setShowDeleteModal(false)} 
+                onConfirm={confirmDelete} 
+                itemName={subjectToDelete?.name} 
+            />
         </div>
     );
 };
 
-export default AIClassroom;
+export default Home;
