@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { 
     collection, addDoc, query, getDocs, doc, 
-    updateDoc, serverTimestamp, getDoc 
+    updateDoc, serverTimestamp, getDoc, onSnapshot 
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -49,26 +49,36 @@ const Subject = ({ user }) => {
                     setSubject({ id: subjectDoc.id, ...subjectDoc.data() });
                 }
 
-                // Get topics
+                // Set up real-time listener for topics
                 const topicsRef = collection(db, "subjects", subjectId, "topics");
                 const q = query(topicsRef);
-                const querySnapshot = await getDocs(q);
                 
-                const loadedTopics = querySnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                const unsubscribe = onSnapshot(q, (querySnapshot) => {
+                    const loadedTopics = querySnapshot.docs.map(doc => ({
+                        id: doc.id,
+                        ...doc.data()
+                    }));
 
-                const sortedTopics = loadedTopics.sort((a, b) => (a.order || 0) - (b.order || 0));
-                setTopics(sortedTopics);
+                    const sortedTopics = loadedTopics.sort((a, b) => (a.order || 0) - (b.order || 0));
+                    setTopics(sortedTopics);
+                    setLoading(false);
+                });
+
+                return unsubscribe;
             } catch (error) {
                 console.error("Error loading subject/topics:", error);
-            } finally {
                 setLoading(false);
             }
         };
 
-        fetchSubjectAndTopics();
+        const unsubscribe = fetchSubjectAndTopics();
+        
+        // Cleanup on unmount
+        return () => {
+            if (unsubscribe && typeof unsubscribe.then === 'function') {
+                unsubscribe.then(unsub => unsub && unsub());
+            }
+        };
     }, [user, subjectId]);
 
     const updateSubjectTopics = async (newTopics) => {
@@ -353,10 +363,8 @@ const Subject = ({ user }) => {
                     {topics.map((topic) => (
                         <button 
                             key={topic.id} 
-                            onClick={() => topic.status === 'completed' && handleSelectTopic(topic)} 
-                            className={`group relative h-64 rounded-2xl shadow-lg overflow-hidden transition-transform ${
-                                topic.status === 'completed' ? 'hover:scale-105 cursor-pointer' : 'cursor-default'
-                            }`}
+                            onClick={() => handleSelectTopic(topic)} 
+                            className="group relative h-64 rounded-2xl shadow-lg overflow-hidden transition-transform hover:scale-105 cursor-pointer"
                         >
                             <div className={`absolute inset-0 bg-gradient-to-br ${topic.color} opacity-90`}></div>
                             
@@ -380,7 +388,10 @@ const Subject = ({ user }) => {
                                 <div className="flex justify-between items-start">
                                     <span className="text-8xl font-black opacity-30">{topic.number}</span>
                                     {topic.status === 'generating' ? (
-                                        <Clock className="w-6 h-6 animate-spin" />
+                                        <div className="flex flex-col items-center">
+                                            <Clock className="w-6 h-6 animate-spin" />
+                                            <span className="text-xs mt-1 opacity-75">Procesando</span>
+                                        </div>
                                     ) : topic.status === 'completed' ? (
                                         <CheckCircle2 className="w-6 h-6" />
                                     ) : null}
@@ -389,7 +400,7 @@ const Subject = ({ user }) => {
                                 <div>
                                     <h3 className="text-2xl font-bold mb-2">{topic.title}</h3>
                                     <p className="text-sm opacity-90">
-                                        {topic.status === 'generating' ? 'Generando...' : 
+                                        {topic.status === 'generating' ? 'Haz clic para ver el progreso' : 
                                          topic.status === 'completed' ? 'Completado' : 'Error'}
                                     </p>
                                 </div>
