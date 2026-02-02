@@ -6,7 +6,7 @@ import { db } from '../firebase/config';
 
 import Header from '../components/layout/Header';
 
-const TopicPage = ({ user }) => {
+const Topic = ({ user }) => {
     const navigate = useNavigate();
     const { subjectId, topicId } = useParams();
     
@@ -188,4 +188,4 @@ const TopicPage = ({ user }) => {
     );
 };
 
-export default TopicPage;
+export default Topic;

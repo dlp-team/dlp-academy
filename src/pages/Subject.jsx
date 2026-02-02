@@ -17,7 +17,7 @@ import PositionModal from '../components/modals/PositionModal';
 
 const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39';
 
-const SubjectPage = ({ user }) => {
+const Subject = ({ user }) => {
     const navigate = useNavigate();
     const { subjectId } = useParams();
     
@@ -436,4 +436,4 @@ const SubjectPage = ({ user }) => {
     );
 };
 
-export default SubjectPage;
+export default Subject;
