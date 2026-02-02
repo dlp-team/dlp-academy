@@ -372,7 +372,63 @@ const AIClassroom = ({ user }) => {
 
     const removeFile = (index) => setFiles(prev => prev.filter((_, i) => i !== index));
 
-    const handleSelectSubject = (subject) => { setSelectedSubject(subject); setTopics(subject.topics || []); };
+    const handleSelectSubject = async (subject) => {
+        setSelectedSubject(subject);
+        setLoading(true); // Optional: show a loader while fetching topics
+
+        try {
+            // Path: subjects/{subjectId}/topics
+            const topicsRef = collection(db, "subjects", subject.id, "topics");
+            
+            // We order them by the 'order' field we created earlier
+            const q = query(topicsRef); 
+            const querySnapshot = await getDocs(q);
+            
+            const loadedTopics = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            // Sort locally by order (or add orderBy to your query)
+            const sortedTopics = loadedTopics.sort((a, b) => (a.order || 0) - (b.order || 0));
+            
+            setTopics(sortedTopics);
+        } catch (error) {
+            console.error("Error fetching topics:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSelectTopic = async (topic) => {
+        setSelectedTopic(topic);
+        
+        try {
+            // Path: subjects/{sId}/topics/{tId}/documents
+            const docsRef = collection(db, "subjects", selectedSubject.id, "topics", topic.id, "documents");
+            const querySnapshot = await getDocs(docsRef);
+            
+            const allDocs = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+
+            // Separate them by type for your UI tabs
+            const pdfs = allDocs.filter(d => d.type === 'pdf' || d.type === 'summary');
+            const quizzes = allDocs.filter(d => d.type === 'quiz');
+
+            // Update the selectedTopic state with its nested documents
+            setSelectedTopic(prev => ({
+                ...prev,
+                pdfs,
+                quizzes
+            }));
+        } catch (error) {
+            console.error("Error fetching documents:", error);
+        }
+    };
+
+
     const handleBackToSubjects = () => { setSelectedSubject(null); setSelectedTopic(null); setTopics([]); };
     const handleBackToTopics = () => { setSelectedTopic(null); setActiveTab('materials'); };
     
