@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Plus, BookOpen, Home, ArrowUpDown, CheckCircle2, 
-    Clock, RotateCw, ChevronLeft, FileText, Download, Play, Trash2, Loader2
+    Clock, RotateCw, ChevronRight, FileText, Download, Play, Trash2, Loader2,
+    MoreVertical, Calendar, BarChart3, Timer, Sparkles
 } from 'lucide-react';
 
-// 👇 TUS COMPONENTES
 import Header from '../components/layout/Header';
 import SubjectModal from '../components/modals/SubjectModal';
 import TopicModal from '../components/modals/TopicModal';
@@ -16,7 +16,7 @@ import ReorderModal from '../components/modals/ReorderModal';
 import { collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
-// ⚠️ REVISA TU URL DE NGROK AQUÍ
+// ⚠️ REVISA TU URL DE NGROK
 const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39';
 
 const AIClassroom = ({ user }) => {
@@ -138,8 +138,7 @@ const AIClassroom = ({ user }) => {
         }
 
         const controller = new AbortController();
-        // ⏰ 10 MINUTOS DE ESPERA (600,000 ms)
-        const timeoutId = setTimeout(() => controller.abort(), 600000);
+        const timeoutId = setTimeout(() => controller.abort(), 600000); // 10 Minutos
 
         try {
             console.log("⏳ Conectando con IA...");
@@ -154,7 +153,6 @@ const AIClassroom = ({ user }) => {
             if (!response.ok) throw new Error(`Status: ${response.status}`);
 
             const result = await response.json();
-            console.log("✅ ÉXITO:", result);
             
             const completedList = topicsList.map(t => 
                 t.id === topicId 
@@ -164,8 +162,8 @@ const AIClassroom = ({ user }) => {
             updateSubjectTopics(completedList);
 
         } catch (error) {
-            console.error("❌ ERROR DE CONEXIÓN:", error);
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Pausa visual
+            console.error("❌ ERROR:", error);
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
             const errorList = topicsList.map(t => 
                 t.id === topicId ? { ...t, status: 'error' } : t
@@ -182,7 +180,6 @@ const AIClassroom = ({ user }) => {
     const handleCreateTopic = (e) => {
         if (e) e.preventDefault();
         
-        // REINTENTO
         if (retryTopicId) {
             const filesToSend = files.length > 0 ? files : (fileCache[retryTopicId] || []);
             if (filesToSend.length === 0) {
@@ -207,7 +204,6 @@ const AIClassroom = ({ user }) => {
             return;
         }
 
-        // NUEVO TEMA
         const newTopic = {
             id: Date.now().toString(),
             title: topicFormData.title,
@@ -281,7 +277,6 @@ const AIClassroom = ({ user }) => {
         setShowReorderModal(false);
     };
 
-    // --- ARCHIVOS Y UI ---
     const handleCreateSubject = async () => {
         if (!subjectFormData.name.trim() || !subjectFormData.course.trim()) return;
         try {
@@ -298,6 +293,7 @@ const AIClassroom = ({ user }) => {
         }
     };
 
+    // --- UI HELPERS ---
     const handleDrag = (e) => { e.preventDefault(); e.stopPropagation(); if (e.type === "dragenter" || e.type === "dragover") setDragActive(true); else if (e.type === "dragleave") setDragActive(false); };
     const handleDrop = (e) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFiles(e.dataTransfer.files); };
     const handleFiles = (fileList) => { const newFiles = Array.from(fileList).filter(f => f.type === 'application/pdf'); setFiles(prev => [...prev, ...newFiles]); };
@@ -308,49 +304,48 @@ const AIClassroom = ({ user }) => {
     
     const getQuizIcon = (type) => {
         switch(type) {
-            case 'basic': return { icon: '📖', color: 'from-blue-400 to-blue-600' };
-            case 'advanced': return { icon: '🧪', color: 'from-purple-400 to-purple-600' };
-            case 'final': return { icon: '🏆', color: 'from-amber-400 to-amber-600' };
-            default: return { icon: '📝', color: 'from-gray-400 to-gray-600' };
+            case 'basic': return { icon: '📖', color: 'from-blue-400 to-blue-600', level: 'Básico' };
+            case 'advanced': return { icon: '🧪', color: 'from-purple-400 to-purple-600', level: 'Avanzado' };
+            case 'final': return { icon: '🏆', color: 'from-amber-400 to-amber-600', level: 'Examen' };
+            default: return { icon: '📝', color: 'from-gray-400 to-gray-600', level: 'Test' };
         }
     };
 
-    // --- RENDER ---
     if (!user) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-                    <p className="text-gray-500 font-medium">Cargando tu aula...</p>
-                </div>
+                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 font-sans">
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
             <Header user={user} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
                 {!selectedSubject ? (
                     /* 1. VISTA ASIGNATURAS */
                     <>
-                        <div className="mb-8">
-                            <h2 className="text-3xl font-bold text-gray-900 mb-2">Mis Asignaturas</h2>
-                            <p className="text-gray-600">Gestiona tu contenido educativo</p>
+                        <div className="mb-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            <h2 className="text-3xl font-extrabold text-slate-900 mb-2 tracking-tight">Mis Asignaturas</h2>
+                            <p className="text-slate-500 text-lg">Gestiona tu contenido educativo de forma inteligente.</p>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <button onClick={() => setShowSubjectModal(true)} className="group relative h-64 border-3 border-dashed border-gray-300 rounded-2xl bg-white hover:border-indigo-400 hover:bg-indigo-50 transition-all flex flex-col items-center justify-center gap-4">
-                                <div className="w-20 h-20 rounded-full bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors"><Plus className="w-10 h-10 text-indigo-600" /></div>
-                                <span className="text-lg font-semibold text-gray-700 group-hover:text-indigo-600">Crear Nueva Asignatura</span>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <button onClick={() => setShowSubjectModal(true)} className="group relative h-64 border-2 border-dashed border-slate-300 rounded-3xl bg-white hover:border-indigo-500 hover:bg-indigo-50/50 transition-all duration-300 flex flex-col items-center justify-center gap-4">
+                                <div className="w-16 h-16 rounded-2xl bg-indigo-100 group-hover:bg-indigo-200 group-hover:scale-110 flex items-center justify-center transition-all duration-300 shadow-sm"><Plus className="w-8 h-8 text-indigo-600" /></div>
+                                <span className="text-lg font-bold text-slate-700 group-hover:text-indigo-700">Crear Asignatura</span>
                             </button>
                             {subjects.map((subject) => (
-                                <button key={subject.id} onClick={() => handleSelectSubject(subject)} className="group relative h-64 rounded-2xl shadow-lg overflow-hidden transition-transform hover:scale-105 cursor-pointer text-left">
-                                    <div onClick={(e) => requestDelete(e, subject)} className="absolute top-3 right-3 z-20 p-2 bg-white/20 backdrop-blur-md rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all"><Trash2 className="w-5 h-5" /></div>
-                                    <div className={`absolute inset-0 bg-gradient-to-br ${subject.color} opacity-90`}></div>
-                                    <div className="relative h-full p-6 flex flex-col justify-between text-white">
-                                        <div className="flex justify-between items-start"><BookOpen className="w-12 h-12 opacity-80" /><div className="bg-white/30 px-3 py-1 rounded-full"><span className="text-sm font-bold">{(subject.topics || []).length} temas</span></div></div>
-                                        <div><p className="text-sm opacity-90">{subject.course}</p><h3 className="text-2xl font-bold">{subject.name}</h3></div>
+                                <button key={subject.id} onClick={() => handleSelectSubject(subject)} className="group relative h-64 rounded-3xl shadow-lg shadow-slate-200/50 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl cursor-pointer text-left">
+                                    <div onClick={(e) => requestDelete(e, subject)} className="absolute top-4 right-4 z-20 p-2.5 bg-white/20 backdrop-blur-md rounded-xl opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-all duration-200 shadow-sm"><Trash2 className="w-4 h-4" /></div>
+                                    <div className={`absolute inset-0 bg-gradient-to-br ${subject.color} opacity-90 transition-opacity group-hover:opacity-100`}></div>
+                                    <div className="relative h-full p-8 flex flex-col justify-between text-white">
+                                        <div className="flex justify-between items-start">
+                                            <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl"><BookOpen className="w-8 h-8 text-white" /></div>
+                                            <div className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full"><span className="text-xs font-bold uppercase tracking-wider">{(subject.topics || []).length} Temas</span></div>
+                                        </div>
+                                        <div><p className="text-sm font-medium opacity-90 mb-1 uppercase tracking-wide">{subject.course}</p><h3 className="text-3xl font-extrabold tracking-tight">{subject.name}</h3></div>
                                     </div>
                                 </button>
                             ))}
@@ -358,90 +353,178 @@ const AIClassroom = ({ user }) => {
                     </>
                 ) : !selectedTopic ? (
                     /* 2. VISTA LISTA DE TEMAS */
-                    <>
-                        <button onClick={handleBackToSubjects} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"><Home className="w-5 h-5" /> Volver a Asignaturas</button>
-                        <div className="mb-8 flex justify-between items-center">
-                            <div className="flex items-center gap-4">
-                                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${selectedSubject.color} flex items-center justify-center`}><BookOpen className="w-8 h-8 text-white" /></div>
-                                <div><p className="text-sm text-gray-600">{selectedSubject.course}</p><h2 className="text-4xl font-bold text-gray-900">{selectedSubject.name}</h2></div>
-                            </div>
-                            {topics.length > 1 && <button onClick={() => setShowReorderModal(true)} className="p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 flex items-center gap-2 text-gray-700 shadow-sm"><ArrowUpDown className="w-5 h-5" /> Reordenar</button>}
+                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-500 mb-8">
+                            <button onClick={handleBackToSubjects} className="hover:text-indigo-600 transition-colors">Mis Asignaturas</button>
+                            <ChevronRight className="w-4 h-4" />
+                            <span className="text-slate-900 font-bold">{selectedSubject.name}</span>
                         </div>
+
+                        <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                            <div className="flex items-center gap-5">
+                                <div className={`w-20 h-20 rounded-3xl bg-gradient-to-br ${selectedSubject.color} flex items-center justify-center shadow-lg shadow-indigo-500/10`}><BookOpen className="w-10 h-10 text-white" /></div>
+                                <div><p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-1">{selectedSubject.course}</p><h2 className="text-5xl font-extrabold text-slate-900 tracking-tight">{selectedSubject.name}</h2></div>
+                            </div>
+                            {topics.length > 1 && <button onClick={() => setShowReorderModal(true)} className="px-5 py-2.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 flex items-center gap-2 text-slate-700 font-semibold shadow-sm transition-all"><ArrowUpDown className="w-4 h-4" /> Reordenar</button>}
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <button onClick={() => setShowTopicModal(true)} className="group relative h-64 border-3 border-dashed border-gray-300 rounded-2xl bg-white hover:border-indigo-400 hover:bg-indigo-50 transition-all flex flex-col items-center justify-center gap-4">
-                                <div className="w-20 h-20 rounded-full bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors"><Plus className="w-10 h-10 text-indigo-600" /></div>
-                                <span className="text-lg font-semibold text-gray-700 group-hover:text-indigo-600">Crear Nuevo Tema</span>
+                            <button onClick={() => setShowTopicModal(true)} className="group relative h-72 border-2 border-dashed border-slate-300 rounded-3xl bg-white hover:bg-white hover:border-indigo-400 transition-all duration-300 flex flex-col items-center justify-center gap-4">
+                                <div className="w-16 h-16 rounded-full bg-indigo-50 group-hover:bg-indigo-100 group-hover:scale-110 flex items-center justify-center transition-all duration-300"><Plus className="w-8 h-8 text-indigo-600" /></div>
+                                <span className="text-lg font-bold text-slate-600 group-hover:text-indigo-600">Nuevo Tema</span>
                             </button>
                             {topics.map((topic) => (
-                                <button key={topic.id} onClick={() => topic.status === 'completed' && setSelectedTopic(topic)} className={`group relative h-64 rounded-2xl shadow-lg overflow-hidden transition-transform ${topic.status === 'completed' ? 'hover:scale-105 cursor-pointer' : 'cursor-default'}`}>
-                                    <div className={`absolute inset-0 bg-gradient-to-br ${topic.color} opacity-90`}></div>
+                                <button key={topic.id} onClick={() => topic.status === 'completed' && setSelectedTopic(topic)} className={`group relative h-72 rounded-3xl shadow-md shadow-slate-200 overflow-hidden transition-all duration-300 ${topic.status === 'completed' ? 'hover:shadow-xl hover:-translate-y-1 cursor-pointer' : 'cursor-default'}`}>
+                                    <div className={`absolute inset-0 bg-gradient-to-br ${topic.color} opacity-90 transition-opacity group-hover:opacity-100`}></div>
+                                    
                                     {topic.status === 'error' && (
-                                        <div className="absolute inset-0 bg-red-600/10 z-20 flex flex-col items-center justify-center">
-                                            <div onClick={(e) => handleRetryTopic(e, topic)} className="flex flex-col items-center gap-2 group/btn cursor-pointer">
-                                                <div className="bg-white text-red-600 p-3 rounded-full shadow-xl group-hover/btn:scale-110 transition-transform"><RotateCw className="w-6 h-6" /></div>
-                                                <span className="text-white font-bold drop-shadow-md text-sm bg-red-600/80 px-3 py-1 rounded-full backdrop-blur-sm">Reintentar</span>
+                                        <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center animate-in fade-in">
+                                            <div onClick={(e) => handleRetryTopic(e, topic)} className="flex flex-col items-center gap-3 group/btn cursor-pointer">
+                                                <div className="bg-red-500 text-white p-4 rounded-full shadow-lg group-hover/btn:scale-110 transition-transform"><RotateCw className="w-8 h-8" /></div>
+                                                <span className="text-white font-bold text-lg">Reintentar Generación</span>
                                             </div>
                                         </div>
                                     )}
-                                    <div className="relative h-full p-6 flex flex-col justify-between text-white">
-                                        <div className="flex justify-between items-start"><span className="text-8xl font-black opacity-30">{topic.number}</span>{topic.status === 'generating' ? <Clock className="w-6 h-6 animate-spin" /> : topic.status === 'completed' ? <CheckCircle2 className="w-6 h-6" /> : null}</div>
-                                        <div><h3 className="text-2xl font-bold mb-2">{topic.title}</h3><p className="text-sm opacity-90">{topic.status === 'generating' ? 'Generando...' : topic.status === 'completed' ? 'Completado' : 'Error'}</p></div>
+
+                                    <div className="relative h-full p-8 flex flex-col justify-between text-white">
+                                        <div className="flex justify-between items-start">
+                                            <span className="text-7xl font-black opacity-20 -ml-2">{topic.number}</span>
+                                            {topic.status === 'generating' ? 
+                                                <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2"><Clock className="w-4 h-4 animate-spin" /><span className="text-xs font-bold">Procesando</span></div> 
+                                            : topic.status === 'completed' ? 
+                                                <div className="bg-emerald-500/20 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2 border border-emerald-400/30"><CheckCircle2 className="w-4 h-4" /><span className="text-xs font-bold">Completado</span></div> 
+                                            : null}
+                                        </div>
+                                        <div>
+                                            <h3 className="text-2xl font-bold mb-3 leading-tight">{topic.title}</h3>
+                                            <div className="w-full bg-black/20 rounded-full h-1.5 overflow-hidden">
+                                                <div className={`h-full bg-white transition-all duration-1000 ${topic.status === 'generating' ? 'w-1/3 animate-pulse' : topic.status === 'completed' ? 'w-full' : 'w-0'}`}></div>
+                                            </div>
+                                            <p className="text-xs mt-3 opacity-80 font-medium tracking-wide">
+                                                {topic.status === 'generating' ? 'La IA está trabajando...' : topic.status === 'completed' ? 'Click para ver contenidos' : 'Hubo un error'}
+                                            </p>
+                                        </div>
                                     </div>
                                 </button>
                             ))}
                         </div>
-                    </>
+                    </div>
                 ) : (
-                    /* 3. VISTA DETALLE TEMA (PROFESIONAL + NÚMERO GRANDE) */
+                    /* 3. VISTA DETALLE TEMA (PREMIUM SAAS) */
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="mb-8 border-b border-gray-200 pb-6">
-                            <button onClick={handleBackToTopics} className="group flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-indigo-600 mb-6 transition-colors">
-                                <div className="p-1 rounded-full group-hover:bg-indigo-50 transition-colors"><ChevronLeft className="w-5 h-5" /></div>
-                                Volver a la lista de temas
-                            </button>
-                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                                <div className={`w-24 h-24 rounded-2xl bg-gradient-to-br ${selectedTopic.color || 'from-blue-500 to-indigo-600'} flex items-center justify-center shadow-lg shadow-indigo-500/20 transform -rotate-3 transition-transform hover:rotate-0`}>
-                                    <span className="text-5xl font-black text-white tracking-tighter drop-shadow-sm">{selectedTopic.number}</span>
+                        
+                        {/* Breadcrumbs de Navegación */}
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-500 mb-8">
+                            <button onClick={handleBackToSubjects} className="hover:text-indigo-600 transition-colors">Mis Asignaturas</button>
+                            <ChevronRight className="w-4 h-4" />
+                            <button onClick={handleBackToTopics} className="hover:text-indigo-600 transition-colors">{selectedSubject.name}</button>
+                            <ChevronRight className="w-4 h-4" />
+                            <span className="text-slate-900 font-bold">Tema {selectedTopic.number}</span>
+                        </div>
+
+                        {/* Header del Tema */}
+                        <div className="mb-10 pb-8 border-b border-slate-200">
+                            <div className="flex flex-col md:flex-row items-start gap-8">
+                                {/* Número Grande con Gradiente */}
+                                <div className={`w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br ${selectedTopic.color || 'from-blue-500 to-indigo-600'} flex items-center justify-center shadow-2xl shadow-indigo-500/20 transform -rotate-2 transition-transform hover:rotate-0`}>
+                                    <span className="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-md">{selectedTopic.number}</span>
                                 </div>
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wider">{selectedSubject.course}</span>
-                                        <span className="text-sm text-gray-400 font-medium">{selectedSubject.name}</span>
+
+                                <div className="flex-1 space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wider border border-indigo-100">
+                                            {selectedSubject.course}
+                                        </span>
+                                        <div className="flex items-center gap-1 text-slate-400 text-sm font-medium">
+                                            <Calendar className="w-4 h-4" />
+                                            <span>Actualizado hoy</span>
+                                        </div>
                                     </div>
-                                    <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight capitalize">{selectedTopic.title}</h2>
-                                </div>
-                                <div className="hidden md:flex gap-6 text-sm text-gray-500 bg-gray-50 px-6 py-3 rounded-xl border border-gray-100">
-                                    <div className="flex flex-col items-center"><span className="font-bold text-gray-900 text-xl">{selectedTopic.pdfs?.length || 0}</span><span className="text-xs uppercase font-semibold text-gray-400">Archivos</span></div>
-                                    <div className="w-px bg-gray-200 h-10"></div>
-                                    <div className="flex flex-col items-center"><span className="font-bold text-gray-900 text-xl">{selectedTopic.quizzes?.length || 0}</span><span className="text-xs uppercase font-semibold text-gray-400">Tests</span></div>
+                                    
+                                    <h2 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight capitalize leading-tight">
+                                        {selectedTopic.title}
+                                    </h2>
+
+                                    {/* Barra de Progreso Simulada */}
+                                    <div className="flex items-center gap-4 max-w-md pt-2">
+                                        <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                            <div className="h-full bg-indigo-500 w-1/4 rounded-full"></div>
+                                        </div>
+                                        <span className="text-xs font-bold text-slate-500">25% Completado</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-1 bg-gray-100/80 p-1.5 rounded-xl w-fit mb-8 shadow-inner">
-                            <button onClick={() => setActiveTab('materials')} className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'materials' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}><FileText className="w-4 h-4" /> Materiales</button>
-                            <button onClick={() => setActiveTab('quizzes')} className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'quizzes' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}><CheckCircle2 className="w-4 h-4" /> Tests & Quizzes</button>
+                        {/* Tabs de Navegación Estilo Segmentado */}
+                        <div className="flex items-center gap-2 mb-8">
+                            <button 
+                                onClick={() => setActiveTab('materials')} 
+                                className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border ${
+                                    activeTab === 'materials' 
+                                    ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' 
+                                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                }`}
+                            >
+                                <FileText className="w-4 h-4" />
+                                Documentos
+                                <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'materials' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>
+                                    {selectedTopic.pdfs?.length || 0}
+                                </span>
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('quizzes')} 
+                                className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border ${
+                                    activeTab === 'quizzes' 
+                                    ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' 
+                                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                }`}
+                            >
+                                <CheckCircle2 className="w-4 h-4" />
+                                Tests Prácticos
+                                <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'quizzes' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>
+                                    {selectedTopic.quizzes?.length || 0}
+                                </span>
+                            </button>
                         </div>
 
+                        {/* Contenido */}
                         {activeTab === 'materials' ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                                 {selectedTopic.pdfs?.map((pdf, idx) => (
-                                    <div key={idx} className="group bg-white rounded-xl border border-gray-200 p-4 hover:shadow-lg hover:border-indigo-200 transition-all duration-300 flex flex-col justify-between h-48">
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex gap-3">
-                                                <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center border border-red-100 group-hover:scale-110 transition-transform"><FileText className="w-5 h-5 text-red-500" /></div>
-                                                <div className="flex flex-col"><h4 className="font-semibold text-gray-900 text-sm line-clamp-2 leading-snug" title={pdf.name}>{pdf.name}</h4><span className="text-xs text-gray-400 mt-1 capitalize">{pdf.type || 'Documento PDF'}</span></div>
+                                    <div key={idx} className="group bg-white rounded-2xl border border-slate-200 p-5 hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col justify-between h-52 relative overflow-hidden">
+                                        <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600">
+                                                <MoreVertical className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        
+                                        <div className="flex gap-4">
+                                            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center border border-red-100 group-hover:scale-110 transition-transform shadow-sm">
+                                                <FileText className="w-6 h-6 text-red-500" />
+                                            </div>
+                                            <div className="flex-1 pr-6">
+                                                <h4 className="font-bold text-slate-900 text-sm line-clamp-2 leading-snug mb-1" title={pdf.name}>
+                                                    {pdf.name}
+                                                </h4>
+                                                <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                                                    <span className="uppercase bg-slate-100 px-1.5 rounded text-[10px] tracking-wide text-slate-500">{pdf.type || 'PDF'}</span>
+                                                    <span>• 2.4 MB</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="mt-4 pt-4 border-t border-gray-50">
-                                            <a href={pdf.url} download className="flex items-center justify-center gap-2 w-full py-2 bg-slate-50 hover:bg-indigo-600 text-slate-600 hover:text-white rounded-lg text-sm font-medium transition-all group-hover:shadow-md"><Download className="w-4 h-4" /> Descargar</a>
+
+                                        <div className="mt-4 pt-4 border-t border-slate-50 flex items-center gap-3">
+                                            <a href={pdf.url} download className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 group-hover:bg-indigo-600 group-hover:text-white text-slate-600 rounded-xl text-xs font-bold uppercase tracking-wider transition-all">
+                                                <Download className="w-4 h-4" /> Descargar
+                                            </a>
                                         </div>
                                     </div>
                                 ))}
                                 {(!selectedTopic.pdfs || selectedTopic.pdfs.length === 0) && (
-                                    <div className="col-span-full py-12 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                                    <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
                                         <FileText className="w-12 h-12 mb-3 opacity-20" />
-                                        <p>No hay materiales disponibles todavía.</p>
+                                        <p className="font-medium">No hay materiales disponibles todavía.</p>
                                     </div>
                                 )}
                             </div>
@@ -450,23 +533,33 @@ const AIClassroom = ({ user }) => {
                                 {selectedTopic.quizzes?.map((quiz) => {
                                     const style = getQuizIcon(quiz.type);
                                     return (
-                                        <div key={quiz.id} className="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                                            <div className={`h-24 bg-gradient-to-r ${style.color} relative overflow-hidden`}>
-                                                <div className="absolute top-0 right-0 p-4 opacity-20 transform rotate-12 group-hover:rotate-0 group-hover:scale-110 transition-all duration-500"><span className="text-6xl">{style.icon}</span></div>
-                                                <div className="absolute bottom-3 left-4 text-white"><span className="text-xs font-bold uppercase tracking-wider opacity-80 bg-black/20 px-2 py-1 rounded">Test</span></div>
+                                        <div key={quiz.id} className="group bg-white rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/50 overflow-hidden hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300">
+                                            <div className={`h-28 bg-gradient-to-r ${style.color} relative overflow-hidden flex flex-col justify-between p-5`}>
+                                                <div className="absolute top-0 right-0 p-4 opacity-20 transform rotate-12 group-hover:rotate-0 group-hover:scale-110 transition-all duration-500"><span className="text-7xl">{style.icon}</span></div>
+                                                <div className="flex justify-between items-start relative z-10">
+                                                    <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border border-white/10">{style.level}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1 text-white/90 text-xs font-medium relative z-10">
+                                                    <Timer className="w-3 h-3" />
+                                                    <span>15 min aprox</span>
+                                                </div>
                                             </div>
-                                            <div className="p-5">
-                                                <h4 className="font-bold text-gray-900 text-lg mb-1">{quiz.name}</h4>
-                                                <p className="text-xs text-gray-500 mb-4 line-clamp-2">Pon a prueba tus conocimientos sobre {selectedTopic.title}.</p>
-                                                <button onClick={() => alert('Próximamente: Sistema de exámenes interactivos')} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-indigo-600 transition-colors shadow-lg shadow-gray-200 group-hover:shadow-indigo-200"><Play className="w-4 h-4 fill-current" /> Comenzar Test</button>
+                                            <div className="p-6">
+                                                <div className="mb-4">
+                                                    <h4 className="font-bold text-slate-900 text-lg mb-1">{quiz.name}</h4>
+                                                    <p className="text-xs text-slate-500 line-clamp-2">Pon a prueba tus conocimientos sobre {selectedTopic.title}.</p>
+                                                </div>
+                                                <button onClick={() => alert('Próximamente: Sistema de exámenes interactivos')} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-indigo-600 transition-all shadow-lg group-hover:shadow-indigo-200">
+                                                    <Play className="w-4 h-4 fill-current" /> Comenzar Test
+                                                </button>
                                             </div>
                                         </div>
                                     );
                                 })}
                                 {(!selectedTopic.quizzes || selectedTopic.quizzes.length === 0) && (
-                                    <div className="col-span-full py-12 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-                                        <CheckCircle2 className="w-12 h-12 mb-3 opacity-20" />
-                                        <p>No hay tests generados aún.</p>
+                                    <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+                                        <Sparkles className="w-12 h-12 mb-3 opacity-20" />
+                                        <p className="font-medium">No hay tests generados aún.</p>
                                     </div>
                                 )}
                             </div>
