@@ -190,7 +190,7 @@ const AIClassroom = ({ user }) => {
     };
 
     // --- MANEJO DE TEMAS ---
-    const handleCreateTopic = (e) => {
+    const handleCreateTopic = async (e) => {
         if (e) e.preventDefault();
         
         // 🅰️ REINTENTO
@@ -224,18 +224,24 @@ const AIClassroom = ({ user }) => {
             return;
         }
 
+        const topicsRef = collection(db, "subjects", selectedSubject.id, "topics");
+
         // 🅱️ NUEVO TEMA
         const newTopic = {
-            id: Date.now().toString(),
             title: topicFormData.title,
             prompt: topicFormData.prompt,
             status: 'generating',
             color: selectedSubject.color,
-            pdfs: [], quizzes: []
+            createdAt: serverTimestamp(),
+            order: currentTopics.length + 1
         };
+        
+
+        const docRef = await addDoc(topicsRef, newTopic);
+        const topicId = docRef.id;
 
         const currentFiles = [...files];
-        setFileCache(prev => ({...prev, [newTopic.id]: currentFiles}));
+        setFileCache(prev => ({...prev, [topicId]: currentFiles}));
 
         const currentTopics = selectedSubject.topics || [];
 
@@ -309,7 +315,6 @@ const AIClassroom = ({ user }) => {
                 name: subjectFormData.name,
                 course: subjectFormData.course,
                 color: subjectFormData.color,
-                topics: [],
                 uid: user.uid,
                 createdAt: new Date()
             };
@@ -338,6 +343,24 @@ const AIClassroom = ({ user }) => {
     const handleFiles = (fileList) => {
         const newFiles = Array.from(fileList).filter(f => f.type === 'application/pdf');
         setFiles(prev => [...prev, ...newFiles]);
+    };
+
+    const handleCreateDoc = async (subjectId, topicId, fileData) => {
+        try {
+            // Path: subjects/{sID}/topics/{tID}/documents
+            const docRef = await addDoc(
+                collection(db, "subjects", subjectId, "topics", topicId, "documents"), 
+                {
+                    name: fileData.name,
+                    url: fileData.url,
+                    type: fileData.type, // 'pdf', 'quiz', 'summary'
+                    createdAt: serverTimestamp()
+                }
+            );
+            console.log("Document saved with ID:", docRef.id);
+        } catch (error) {
+            console.error("Error saving document:", error);
+        }
     };
 
     const removeFile = (index) => setFiles(prev => prev.filter((_, i) => i !== index));
