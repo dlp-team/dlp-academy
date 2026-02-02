@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, FileText, Download, Play, Loader2 } from 'lucide-react';
-import { collection, getDocs, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { 
+    ChevronLeft, FileText, Download, Play, Loader2, 
+    ChevronRight, Calendar, MoreVertical, CheckCircle2, 
+    Timer, Sparkles, Home 
+} from 'lucide-react';
+import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 import Header from '../components/layout/Header';
@@ -20,21 +24,20 @@ const Topic = ({ user }) => {
             if (!user || !subjectId || !topicId) return;
 
             try {
-                // Get subject
+                // 1. Obtener datos de la asignatura (solo una vez)
                 const subjectDoc = await getDoc(doc(db, "subjects", subjectId));
                 if (subjectDoc.exists()) {
                     setSubject({ id: subjectDoc.id, ...subjectDoc.data() });
                 }
 
-                // Get topic with real-time listener
+                // 2. Escuchar cambios en el documento del Tema
                 const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
                 
-                // Set up real-time listener for topic
                 const unsubscribeTopic = onSnapshot(topicRef, (topicDoc) => {
                     if (topicDoc.exists()) {
                         const topicData = { id: topicDoc.id, ...topicDoc.data() };
 
-                        // Get documents for this topic with real-time listener
+                        // 3. Escuchar cambios en la subcolección de documentos
                         const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
                         
                         const unsubscribeDocs = onSnapshot(docsRef, (querySnapshot) => {
@@ -43,7 +46,7 @@ const Topic = ({ user }) => {
                                 ...doc.data()
                             }));
 
-                            // Separate by type
+                            // Separar por tipo
                             const pdfs = allDocs.filter(d => d.type === 'pdf' || d.type === 'summary');
                             const quizzes = allDocs.filter(d => d.type === 'quiz');
 
@@ -51,14 +54,13 @@ const Topic = ({ user }) => {
                             setLoading(false);
                         });
 
-                        // Store the documents unsubscribe function
                         return () => unsubscribeDocs();
                     } else {
                         setLoading(false);
+                        navigate('/home'); // Si el tema no existe, volver
                     }
                 });
 
-                // Cleanup function
                 return () => {
                     unsubscribeTopic();
                 };
@@ -70,177 +72,234 @@ const Topic = ({ user }) => {
 
         const unsubscribe = fetchTopicDetails();
         
-        // Cleanup on unmount
         return () => {
             if (unsubscribe && typeof unsubscribe.then === 'function') {
                 unsubscribe.then(unsub => unsub && unsub());
             }
         };
-    }, [user, subjectId, topicId]);
+    }, [user, subjectId, topicId, navigate]);
 
     const getQuizIcon = (type) => {
         switch(type) {
-            case 'basic': return { icon: '📖', color: 'from-blue-400 to-blue-600' };
-            case 'advanced': return { icon: '🧪', color: 'from-purple-400 to-purple-600' };
-            case 'final': return { icon: '🏆', color: 'from-amber-400 to-amber-600' };
-            default: return { icon: '📝', color: 'from-gray-400 to-gray-600' };
+            case 'basic': return { icon: '📖', color: 'from-blue-400 to-blue-600', level: 'Básico' };
+            case 'advanced': return { icon: '🧪', color: 'from-purple-400 to-purple-600', level: 'Avanzado' };
+            case 'final': return { icon: '🏆', color: 'from-amber-400 to-amber-600', level: 'Examen' };
+            default: return { icon: '📝', color: 'from-gray-400 to-gray-600', level: 'Test' };
         }
     };
 
     if (!user) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-                    <p className="text-gray-500 font-medium">Cargando...</p>
-                </div>
+                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
             </div>
         );
     }
 
-    if (loading || !topic) {
+    if (loading || !topic || !subject) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <div className="flex flex-col items-center gap-4">
                     <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-                    <p className="text-gray-500 font-medium">Cargando tema...</p>
+                    <p className="text-gray-500 font-medium">Cargando contenido...</p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 font-sans">
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
             <Header user={user} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
-                <button 
-                    onClick={() => navigate(`/home/subject/${subjectId}`)} 
-                    className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"
-                >
-                    <ChevronLeft className="w-5 h-5" /> Volver a Temas
-                </button>
-
-                <div className="mb-8">
-                    <h2 className="text-4xl font-bold text-gray-900 mb-2">{topic.title}</h2>
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     
-                    <div className="bg-white rounded-xl shadow-md p-2 flex gap-2 mb-6">
+                    {/* 1. BREADCRUMBS (Navegación Superior) */}
+                    <div className="flex items-center gap-2 text-sm font-medium text-slate-500 mb-8">
+                        <button onClick={() => navigate('/home')} className="hover:text-indigo-600 transition-colors flex items-center gap-1">
+                            <Home className="w-4 h-4" /> Inicio
+                        </button>
+                        <ChevronRight className="w-4 h-4 text-slate-300" />
+                        <span className="text-slate-500">{subject.name}</span>
+                        <ChevronRight className="w-4 h-4 text-slate-300" />
+                        <span className="text-slate-900 font-bold">Tema {topic.number}</span>
+                    </div>
+
+                    {/* 2. HERO HEADER (Título y Progreso) */}
+                    <div className="mb-10 pb-8 border-b border-slate-200">
+                        <div className="flex flex-col md:flex-row items-start gap-8">
+                            
+                            {/* Número Grande */}
+                            <div className={`w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br ${topic.color || 'from-blue-500 to-indigo-600'} flex items-center justify-center shadow-2xl shadow-indigo-500/20 transform -rotate-2 transition-transform hover:rotate-0`}>
+                                <span className="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-md">
+                                    {topic.number}
+                                </span>
+                            </div>
+
+                            <div className="flex-1 space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wider border border-indigo-100">
+                                        {subject.course}
+                                    </span>
+                                    <div className="flex items-center gap-1 text-slate-400 text-sm font-medium">
+                                        <Calendar className="w-4 h-4" />
+                                        <span>Última actualización hoy</span>
+                                    </div>
+                                </div>
+                                
+                                <h2 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight capitalize leading-tight">
+                                    {topic.title}
+                                </h2>
+
+                                {/* Barra de Progreso Visual */}
+                                <div className="flex items-center gap-4 max-w-md pt-2">
+                                    <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        {/* Calculamos progreso simulado: si hay quizzes, 50%, si no 10% */}
+                                        <div className={`h-full bg-indigo-500 rounded-full transition-all duration-1000 ${topic.quizzes?.length > 0 ? 'w-1/2' : 'w-1/12'}`}></div>
+                                    </div>
+                                    <span className="text-xs font-bold text-slate-500">
+                                        {topic.quizzes?.length > 0 ? '50%' : '10%'} Completado
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 3. TABS DE NAVEGACIÓN */}
+                    <div className="flex items-center gap-2 mb-8">
                         <button 
                             onClick={() => setActiveTab('materials')} 
-                            className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all ${
+                            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border ${
                                 activeTab === 'materials' 
-                                    ? 'bg-indigo-600 text-white shadow-md' 
-                                    : 'text-gray-600 hover:bg-gray-100'
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' 
+                                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                             }`}
                         >
-                            📚 Materiales
+                            <FileText className="w-4 h-4" />
+                            Documentos
+                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'materials' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>
+                                {topic.pdfs?.length || 0}
+                            </span>
                         </button>
                         <button 
                             onClick={() => setActiveTab('quizzes')} 
-                            className={`flex-1 py-3 px-6 rounded-lg font-semibold transition-all ${
+                            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border ${
                                 activeTab === 'quizzes' 
-                                    ? 'bg-indigo-600 text-white shadow-md' 
-                                    : 'text-gray-600 hover:bg-gray-100'
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' 
+                                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                             }`}
                         >
-                            ✍️ Tests
+                            <CheckCircle2 className="w-4 h-4" />
+                            Tests Prácticos
+                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'quizzes' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>
+                                {topic.quizzes?.length || 0}
+                            </span>
                         </button>
                     </div>
-                </div>
 
-                {activeTab === 'materials' ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* Show generating placeholder if topic is still generating */}
-                        {topic.status === 'generating' && (
-                            <div className="bg-white rounded-xl shadow-md p-6">
-                                <div className="flex items-center gap-4 mb-4">
-                                    <div className="w-14 h-14 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                        <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h4 className="font-semibold text-gray-700">Generando materiales...</h4>
-                                        <p className="text-sm text-gray-500">La IA está procesando tus documentos</p>
-                                    </div>
+                    {/* 4. CONTENIDO: MATERIALES */}
+                    {activeTab === 'materials' ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {topic.status === 'generating' && (
+                                <div className="bg-white rounded-2xl border border-blue-200 p-5 shadow-sm flex flex-col justify-center items-center text-center h-52">
+                                    <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-3" />
+                                    <h4 className="font-bold text-slate-800">Generando...</h4>
+                                    <p className="text-xs text-slate-500 mt-1">La IA está creando tus materiales.</p>
                                 </div>
-                                <div className="w-full bg-gray-200 text-gray-400 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 cursor-not-allowed">
-                                    <Loader2 className="w-5 h-5 animate-spin" /> Procesando...
-                                </div>
-                            </div>
-                        )}
-                        
-                        {/* Show actual PDFs */}
-                        {topic.pdfs && topic.pdfs.length > 0 ? (
-                            topic.pdfs.map((pdf, idx) => (
-                                <div key={idx} className="bg-white rounded-xl shadow-md p-6">
-                                    <div className="flex items-center gap-4 mb-4">
-                                        <div className="w-14 h-14 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-                                            <FileText className="w-7 h-7 text-red-600" />
+                            )}
+
+                            {topic.pdfs?.map((pdf, idx) => (
+                                <div key={idx} className="group bg-white rounded-2xl border border-slate-200 p-5 hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col justify-between h-52 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600">
+                                            <MoreVertical className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="flex gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center border border-red-100 group-hover:scale-110 transition-transform shadow-sm">
+                                            <FileText className="w-6 h-6 text-red-500" />
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="font-semibold truncate">{pdf.name}</h4>
+                                        <div className="flex-1 pr-6">
+                                            <h4 className="font-bold text-slate-900 text-sm line-clamp-2 leading-snug mb-1" title={pdf.name}>
+                                                {pdf.name}
+                                            </h4>
+                                            <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                                                <span className="uppercase bg-slate-100 px-1.5 rounded text-[10px] tracking-wide text-slate-500">{pdf.type || 'PDF'}</span>
+                                                <span>• 2.4 MB</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <a 
-                                        href={pdf.url} 
-                                        download 
-                                        className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"
-                                    >
-                                        <Download className="w-5 h-5" /> Descargar
-                                    </a>
-                                </div>
-                            ))
-                        ) : topic.status !== 'generating' ? (
-                            <div className="col-span-full text-center py-12 text-gray-500">
-                                No hay materiales disponibles todavía
-                            </div>
-                        ) : null}
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* Show generating placeholder if topic is still generating */}
-                        {topic.status === 'generating' && (
-                            <div className="bg-white rounded-xl shadow-md overflow-hidden">
-                                <div className="h-32 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
-                                    <Loader2 className="w-12 h-12 text-white animate-spin" />
-                                </div>
-                                <div className="p-6">
-                                    <h4 className="font-bold text-lg mb-2 text-gray-700">Generando tests...</h4>
-                                    <p className="text-sm text-gray-500 mb-4">La IA está creando evaluaciones personalizadas</p>
-                                    <div className="w-full bg-gray-200 text-gray-400 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 cursor-not-allowed">
-                                        <Loader2 className="w-5 h-5 animate-spin" /> Procesando...
+
+                                    <div className="mt-4 pt-4 border-t border-slate-50 flex items-center gap-3">
+                                        <a 
+                                            href={pdf.url} 
+                                            download 
+                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 group-hover:bg-indigo-600 group-hover:text-white text-slate-600 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                                        >
+                                            <Download className="w-4 h-4" /> 
+                                            Descargar
+                                        </a>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                        
-                        {/* Show actual quizzes */}
-                        {topic.quizzes && topic.quizzes.length > 0 ? (
-                            topic.quizzes.map((quiz) => {
+                            ))}
+
+                            {(!topic.pdfs || topic.pdfs.length === 0) && topic.status !== 'generating' && (
+                                <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+                                    <FileText className="w-12 h-12 mb-3 opacity-20" />
+                                    <p className="font-medium">No hay materiales disponibles todavía.</p>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        /* 5. CONTENIDO: QUIZZES */
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {topic.quizzes?.map((quiz) => {
                                 const style = getQuizIcon(quiz.type);
                                 return (
-                                    <div key={quiz.id} className="bg-white rounded-xl shadow-md overflow-hidden">
-                                        <div className={`h-32 bg-gradient-to-br ${style.color} flex items-center justify-center`}>
-                                            <span className="text-6xl">{style.icon}</span>
+                                    <div key={quiz.id} className="group bg-white rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/50 overflow-hidden hover:shadow-2xl hover:shadow-indigo-500/10 hover:-translate-y-1 transition-all duration-300">
+                                        <div className={`h-28 bg-gradient-to-r ${style.color} relative overflow-hidden flex flex-col justify-between p-5`}>
+                                            <div className="absolute top-0 right-0 p-4 opacity-20 transform rotate-12 group-hover:rotate-0 group-hover:scale-110 transition-all duration-500">
+                                                <span className="text-7xl">{style.icon}</span>
+                                            </div>
+                                            <div className="flex justify-between items-start relative z-10">
+                                                <span className="bg-white/20 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border border-white/10">
+                                                    {style.level}
+                                                </span>
+                                            </div>
+                                            <div className="flex items-center gap-1 text-white/90 text-xs font-medium relative z-10">
+                                                <Timer className="w-3 h-3" />
+                                                <span>15 min aprox</span>
+                                            </div>
                                         </div>
+                                        
                                         <div className="p-6">
-                                            <h4 className="font-bold text-lg mb-2">{quiz.name}</h4>
+                                            <div className="mb-4">
+                                                <h4 className="font-bold text-slate-900 text-lg mb-1">{quiz.name}</h4>
+                                                <p className="text-xs text-slate-500 line-clamp-2">Pon a prueba tus conocimientos sobre {topic.title}.</p>
+                                            </div>
+                                            
                                             <button 
-                                                onClick={() => alert('Próximamente')} 
-                                                className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"
+                                                onClick={() => alert('Próximamente: Sistema de exámenes interactivos')} 
+                                                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-indigo-600 transition-all shadow-lg group-hover:shadow-indigo-200"
                                             >
-                                                <Play className="w-5 h-5" /> Comenzar
+                                                <Play className="w-4 h-4 fill-current" /> 
+                                                Comenzar Test
                                             </button>
                                         </div>
                                     </div>
                                 );
-                            })
-                        ) : topic.status !== 'generating' ? (
-                            <div className="col-span-full text-center py-12 text-gray-500">
-                                No hay tests disponibles todavía
-                            </div>
-                        ) : null}
-                    </div>
-                )}
+                            })}
+                            
+                            {(!topic.quizzes || topic.quizzes.length === 0) && (
+                                <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+                                    <Sparkles className="w-12 h-12 mb-3 opacity-20" />
+                                    <p className="font-medium">No hay tests generados aún.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
             </main>
         </div>
     );
