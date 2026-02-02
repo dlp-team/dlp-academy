@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
     Plus, BookOpen, Home, ArrowUpDown, CheckCircle2, 
-    Clock, RotateCw, Loader2
+    Clock, RotateCw, Loader2, GripVertical, Save, X
 } from 'lucide-react';
 import { 
     collection, addDoc, query, getDocs, doc, 
@@ -36,6 +36,8 @@ const Subject = ({ user }) => {
     const [retryTopicId, setRetryTopicId] = useState(null);
     const [fileCache, setFileCache] = useState({});
     const [pendingTopic, setPendingTopic] = useState(null);
+    const [isReordering, setIsReordering] = useState(false);
+    const [reorderList, setReorderList] = useState([]);
 
     // Load subject and topics
     useEffect(() => {
@@ -265,6 +267,57 @@ const Subject = ({ user }) => {
         setShowReorderModal(false);
     };
 
+    const startReordering = () => {
+        setIsReordering(true);
+        setReorderList([...topics]);
+    };
+
+    const cancelReordering = () => {
+        setIsReordering(false);
+        setReorderList([]);
+    };
+
+    const saveReordering = async () => {
+        const updatedList = reorderList.map((topic, index) => ({
+            ...topic, 
+            number: (index + 1).toString().padStart(2, '0'),
+            order: index + 1
+        }));
+        
+        // Update each topic's order in Firebase
+        try {
+            const updatePromises = updatedList.map((topic) => {
+                const topicRef = doc(db, "subjects", subjectId, "topics", topic.id);
+                return updateDoc(topicRef, { 
+                    number: topic.number,
+                    order: topic.order 
+                });
+            });
+            
+            await Promise.all(updatePromises);
+            updateSubjectTopics(updatedList);
+            setIsReordering(false);
+            setReorderList([]);
+        } catch (error) {
+            console.error("Error saving order:", error);
+            alert("No se pudo guardar el orden");
+        }
+    };
+
+    const moveTopicUp = (index) => {
+        if (index === 0) return;
+        const newList = [...reorderList];
+        [newList[index - 1], newList[index]] = [newList[index], newList[index - 1]];
+        setReorderList(newList);
+    };
+
+    const moveTopicDown = (index) => {
+        if (index === reorderList.length - 1) return;
+        const newList = [...reorderList];
+        [newList[index], newList[index + 1]] = [newList[index + 1], newList[index]];
+        setReorderList(newList);
+    };
+
     const handleDrag = (e) => {
         e.preventDefault(); 
         e.stopPropagation();
@@ -335,77 +388,142 @@ const Subject = ({ user }) => {
                         </div>
                     </div>
                     
-                    {topics.length > 1 && (
+                    {topics.length > 1 && !isReordering && (
                         <button 
-                            onClick={() => setShowReorderModal(true)} 
+                            onClick={startReordering} 
                             className="p-3 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 flex items-center gap-2 text-gray-700 shadow-sm"
                         >
                             <ArrowUpDown className="w-5 h-5" /> Reordenar
                         </button>
                     )}
+                    
+                    {isReordering && (
+                        <div className="flex gap-2">
+                            <button 
+                                onClick={cancelReordering} 
+                                className="p-3 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 flex items-center gap-2 text-gray-700 shadow-sm"
+                            >
+                                <X className="w-5 h-5" /> Cancelar
+                            </button>
+                            <button 
+                                onClick={saveReordering} 
+                                className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 flex items-center gap-2 shadow-sm"
+                            >
+                                <Save className="w-5 h-5" /> Guardar Orden
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {/* Create New Topic Card */}
-                    <button 
-                        onClick={() => setShowTopicModal(true)} 
-                        className="group relative h-64 border-3 border-dashed border-gray-300 rounded-2xl bg-white hover:border-indigo-400 hover:bg-indigo-50 transition-all flex flex-col items-center justify-center gap-4"
-                    >
-                        <div className="w-20 h-20 rounded-full bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
-                            <Plus className="w-10 h-10 text-indigo-600" />
-                        </div>
-                        <span className="text-lg font-semibold text-gray-700 group-hover:text-indigo-600">
-                            Crear Nuevo Tema
-                        </span>
-                    </button>
+                    {!isReordering && (
+                        <button 
+                            onClick={() => setShowTopicModal(true)} 
+                            className="group relative h-64 border-3 border-dashed border-gray-300 rounded-2xl bg-white hover:border-indigo-400 hover:bg-indigo-50 transition-all flex flex-col items-center justify-center gap-4"
+                        >
+                            <div className="w-20 h-20 rounded-full bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
+                                <Plus className="w-10 h-10 text-indigo-600" />
+                            </div>
+                            <span className="text-lg font-semibold text-gray-700 group-hover:text-indigo-600">
+                                Crear Nuevo Tema
+                            </span>
+                        </button>
+                    )}
 
                     {/* Topic Cards */}
-                    {topics.map((topic) => (
-                        <button 
+                    {(isReordering ? reorderList : topics).map((topic, index) => (
+                        <div
                             key={topic.id} 
-                            onClick={() => handleSelectTopic(topic)} 
-                            className="group relative h-64 rounded-2xl shadow-lg overflow-hidden transition-transform hover:scale-105 cursor-pointer"
+                            className={`group relative h-64 rounded-2xl shadow-lg overflow-hidden transition-all ${
+                                isReordering ? 'cursor-move' : 'hover:scale-105 cursor-pointer'
+                            }`}
                         >
-                            <div className={`absolute inset-0 bg-gradient-to-br ${topic.color} opacity-90`}></div>
-                            
-                            {topic.status === 'error' && (
-                                <div className="absolute inset-0 bg-red-600/10 z-20 flex flex-col items-center justify-center">
-                                    <div 
-                                        onClick={(e) => handleRetryTopic(e, topic)} 
-                                        className="flex flex-col items-center gap-2 group/btn cursor-pointer"
-                                    >
-                                        <div className="bg-white text-red-600 p-3 rounded-full shadow-xl group-hover/btn:scale-110 transition-transform">
-                                            <RotateCw className="w-6 h-6" />
+                            <button 
+                                onClick={() => !isReordering && handleSelectTopic(topic)}
+                                disabled={isReordering}
+                                className="w-full h-full"
+                            >
+                                <div className={`absolute inset-0 bg-gradient-to-br ${topic.color} opacity-90`}></div>
+                                
+                                {topic.status === 'error' && !isReordering && (
+                                    <div className="absolute inset-0 bg-red-600/10 z-20 flex flex-col items-center justify-center">
+                                        <div 
+                                            onClick={(e) => handleRetryTopic(e, topic)} 
+                                            className="flex flex-col items-center gap-2 group/btn cursor-pointer"
+                                        >
+                                            <div className="bg-white text-red-600 p-3 rounded-full shadow-xl group-hover/btn:scale-110 transition-transform">
+                                                <RotateCw className="w-6 h-6" />
+                                            </div>
+                                            <span className="text-white font-bold drop-shadow-md text-sm bg-red-600/80 px-3 py-1 rounded-full backdrop-blur-sm">
+                                                Reintentar
+                                            </span>
                                         </div>
-                                        <span className="text-white font-bold drop-shadow-md text-sm bg-red-600/80 px-3 py-1 rounded-full backdrop-blur-sm">
-                                            Reintentar
+                                    </div>
+                                )}
+                                
+                                {/* Reorder Controls */}
+                                {isReordering && (
+                                    <div className="absolute inset-0 bg-black/30 z-20 flex items-center justify-center gap-2">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                moveTopicUp(index);
+                                            }}
+                                            disabled={index === 0}
+                                            className={`p-3 bg-white rounded-full shadow-lg ${
+                                                index === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-100'
+                                            }`}
+                                        >
+                                            <ArrowUpDown className="w-5 h-5 rotate-180" />
+                                        </button>
+                                        <div className="p-3 bg-white rounded-full shadow-lg cursor-move">
+                                            <GripVertical className="w-5 h-5 text-gray-600" />
+                                        </div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                moveTopicDown(index);
+                                            }}
+                                            disabled={index === reorderList.length - 1}
+                                            className={`p-3 bg-white rounded-full shadow-lg ${
+                                                index === reorderList.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-100'
+                                            }`}
+                                        >
+                                            <ArrowUpDown className="w-5 h-5" />
+                                        </button>
+                                    </div>
+                                )}
+                                
+                                <div className="relative h-full p-6 flex flex-col justify-between text-white">
+                                    <div className="flex justify-between items-start">
+                                        <span className="text-8xl font-black opacity-30">
+                                            {isReordering ? (index + 1).toString().padStart(2, '0') : topic.number}
                                         </span>
+                                        {!isReordering && (
+                                            topic.status === 'generating' ? (
+                                                <div className="flex flex-col items-center">
+                                                    <Clock className="w-6 h-6 animate-spin" />
+                                                    <span className="text-xs mt-1 opacity-75">Procesando</span>
+                                                </div>
+                                            ) : topic.status === 'completed' ? (
+                                                <CheckCircle2 className="w-6 h-6" />
+                                            ) : null
+                                        )}
+                                    </div>
+                                    
+                                    <div>
+                                        <h3 className="text-2xl font-bold mb-2">{topic.title}</h3>
+                                        {!isReordering && (
+                                            <p className="text-sm opacity-90">
+                                                {topic.status === 'generating' ? 'Haz clic para ver el progreso' : 
+                                                 topic.status === 'completed' ? 'Completado' : 'Error'}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
-                            )}
-                            
-                            <div className="relative h-full p-6 flex flex-col justify-between text-white">
-                                <div className="flex justify-between items-start">
-                                    <span className="text-8xl font-black opacity-30">{topic.number}</span>
-                                    {topic.status === 'generating' ? (
-                                        <div className="flex flex-col items-center">
-                                            <Clock className="w-6 h-6 animate-spin" />
-                                            <span className="text-xs mt-1 opacity-75">Procesando</span>
-                                        </div>
-                                    ) : topic.status === 'completed' ? (
-                                        <CheckCircle2 className="w-6 h-6" />
-                                    ) : null}
-                                </div>
-                                
-                                <div>
-                                    <h3 className="text-2xl font-bold mb-2">{topic.title}</h3>
-                                    <p className="text-sm opacity-90">
-                                        {topic.status === 'generating' ? 'Haz clic para ver el progreso' : 
-                                         topic.status === 'completed' ? 'Completado' : 'Error'}
-                                    </p>
-                                </div>
-                            </div>
-                        </button>
+                            </button>
+                        </div>
                     ))}
                 </div>
             </main>

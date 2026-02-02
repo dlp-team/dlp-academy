@@ -3,9 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { 
     ChevronLeft, FileText, Download, Play, Loader2, 
     ChevronRight, Calendar, MoreVertical, CheckCircle2, 
-    Timer, Sparkles, Home 
+    Timer, Sparkles, Home, Trash2, Edit2, Share2, Upload,
+    X, GripVertical
 } from 'lucide-react';
-import { collection, doc, getDoc, onSnapshot } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 import Header from '../components/layout/Header';
@@ -18,6 +19,10 @@ const Topic = ({ user }) => {
     const [topic, setTopic] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('materials');
+    const [showMenu, setShowMenu] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [editFormData, setEditFormData] = useState({ title: '', prompt: '' });
 
     useEffect(() => {
         const fetchTopicDetails = async () => {
@@ -49,15 +54,16 @@ const Topic = ({ user }) => {
                             // Separar por tipo
                             const pdfs = allDocs.filter(d => d.type === 'pdf' || d.type === 'summary');
                             const quizzes = allDocs.filter(d => d.type === 'quiz');
+                            const uploads = allDocs.filter(d => d.type === 'upload');
 
-                            setTopic({ ...topicData, pdfs, quizzes });
+                            setTopic({ ...topicData, pdfs, quizzes, uploads });
                             setLoading(false);
                         });
 
                         return () => unsubscribeDocs();
                     } else {
                         setLoading(false);
-                        navigate('/home'); // Si el tema no existe, volver
+                        navigate('/home');
                     }
                 });
 
@@ -78,6 +84,40 @@ const Topic = ({ user }) => {
             }
         };
     }, [user, subjectId, topicId, navigate]);
+
+    const handleEditTopic = async (e) => {
+        e.preventDefault();
+        
+        try {
+            const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
+            await updateDoc(topicRef, {
+                title: editFormData.title,
+                prompt: editFormData.prompt
+            });
+            
+            setShowEditModal(false);
+            setShowMenu(false);
+        } catch (error) {
+            console.error("Error updating topic:", error);
+            alert("No se pudo actualizar el tema.");
+        }
+    };
+
+    const handleDeleteTopic = async () => {
+        try {
+            await deleteDoc(doc(db, "subjects", subjectId, "topics", topicId));
+            navigate(`/home/subject/${subjectId}`);
+        } catch (error) {
+            console.error("Error deleting topic:", error);
+            alert("No se pudo eliminar el tema.");
+        }
+    };
+
+    const openEditModal = () => {
+        setEditFormData({ title: topic.title, prompt: topic.prompt || '' });
+        setShowEditModal(true);
+        setShowMenu(false);
+    };
 
     const getQuizIcon = (type) => {
         switch(type) {
@@ -115,14 +155,66 @@ const Topic = ({ user }) => {
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     
                     {/* 1. BREADCRUMBS (Navegación Superior) */}
-                    <div className="flex items-center gap-2 text-sm font-medium text-slate-500 mb-8">
-                        <button onClick={() => navigate('/home')} className="hover:text-indigo-600 transition-colors flex items-center gap-1">
-                            <Home className="w-4 h-4" /> Inicio
-                        </button>
-                        <ChevronRight className="w-4 h-4 text-slate-300" />
-                        <span className="text-slate-500">{subject.name}</span>
-                        <ChevronRight className="w-4 h-4 text-slate-300" />
-                        <span className="text-slate-900 font-bold">Tema {topic.number}</span>
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
+                            <button onClick={() => navigate('/home')} className="hover:text-indigo-600 transition-colors flex items-center gap-1">
+                                <Home className="w-4 h-4" /> Inicio
+                            </button>
+                            <ChevronRight className="w-4 h-4 text-slate-300" />
+                            <button onClick={() => navigate(`/home/subject/${subjectId}`)} className="hover:text-indigo-600 transition-colors">
+                                {subject.name}
+                            </button>
+                            <ChevronRight className="w-4 h-4 text-slate-300" />
+                            <span className="text-slate-900 font-bold">Tema {topic.number}</span>
+                        </div>
+
+                        {/* Three Dots Menu */}
+                        <div className="relative">
+                            <button 
+                                onClick={() => setShowMenu(!showMenu)}
+                                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                            >
+                                <MoreVertical className="w-5 h-5 text-slate-500" />
+                            </button>
+
+                            {showMenu && (
+                                <>
+                                    <div 
+                                        className="fixed inset-0 z-40" 
+                                        onClick={() => setShowMenu(false)}
+                                    />
+                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
+                                        <button
+                                            onClick={openEditModal}
+                                            className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-3 text-slate-700"
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                            Editar
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setShowDeleteModal(true);
+                                                setShowMenu(false);
+                                            }}
+                                            className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-3 text-red-600"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                            Eliminar
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                alert('Función de compartir próximamente');
+                                                setShowMenu(false);
+                                            }}
+                                            className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-3 text-slate-700"
+                                        >
+                                            <Share2 className="w-4 h-4" />
+                                            Compartir
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
 
                     {/* 2. HERO HEADER (Título y Progreso) */}
@@ -154,7 +246,6 @@ const Topic = ({ user }) => {
                                 {/* Barra de Progreso Visual */}
                                 <div className="flex items-center gap-4 max-w-md pt-2">
                                     <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                        {/* Calculamos progreso simulado: si hay quizzes, 50%, si no 10% */}
                                         <div className={`h-full bg-indigo-500 rounded-full transition-all duration-1000 ${topic.quizzes?.length > 0 ? 'w-1/2' : 'w-1/12'}`}></div>
                                     </div>
                                     <span className="text-xs font-bold text-slate-500">
@@ -166,24 +257,40 @@ const Topic = ({ user }) => {
                     </div>
 
                     {/* 3. TABS DE NAVEGACIÓN */}
-                    <div className="flex items-center gap-2 mb-8">
+                    <div className="flex items-center gap-2 mb-8 overflow-x-auto">
                         <button 
                             onClick={() => setActiveTab('materials')} 
-                            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border ${
+                            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border whitespace-nowrap ${
                                 activeTab === 'materials' 
                                 ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' 
                                 : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                             }`}
                         >
                             <FileText className="w-4 h-4" />
-                            Documentos
+                            Generados por IA
                             <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'materials' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>
                                 {topic.pdfs?.length || 0}
                             </span>
                         </button>
+                        
+                        <button 
+                            onClick={() => setActiveTab('uploads')} 
+                            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border whitespace-nowrap ${
+                                activeTab === 'uploads' 
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' 
+                                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                            }`}
+                        >
+                            <Upload className="w-4 h-4" />
+                            Mis Archivos
+                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'uploads' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>
+                                {topic.uploads?.length || 0}
+                            </span>
+                        </button>
+
                         <button 
                             onClick={() => setActiveTab('quizzes')} 
-                            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border ${
+                            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border whitespace-nowrap ${
                                 activeTab === 'quizzes' 
                                 ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' 
                                 : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
@@ -197,7 +304,7 @@ const Topic = ({ user }) => {
                         </button>
                     </div>
 
-                    {/* 4. CONTENIDO: MATERIALES */}
+                    {/* 4. CONTENIDO: MATERIALES GENERADOS */}
                     {activeTab === 'materials' ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                             {topic.status === 'generating' && (
@@ -247,7 +354,68 @@ const Topic = ({ user }) => {
                             {(!topic.pdfs || topic.pdfs.length === 0) && topic.status !== 'generating' && (
                                 <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
                                     <FileText className="w-12 h-12 mb-3 opacity-20" />
-                                    <p className="font-medium">No hay materiales disponibles todavía.</p>
+                                    <p className="font-medium">No hay materiales generados todavía.</p>
+                                </div>
+                            )}
+                        </div>
+                    ) : activeTab === 'uploads' ? (
+                        /* 4B. CONTENIDO: ARCHIVOS SUBIDOS MANUALMENTE */
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {/* Upload Area */}
+                            <button 
+                                onClick={() => alert('Función de subida de archivos próximamente')}
+                                className="group border-2 border-dashed border-slate-300 hover:border-indigo-400 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 h-52 bg-white hover:bg-indigo-50/50 transition-all"
+                            >
+                                <div className="w-16 h-16 rounded-full bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
+                                    <Upload className="w-8 h-8 text-indigo-600" />
+                                </div>
+                                <div className="text-center">
+                                    <p className="font-bold text-slate-700 group-hover:text-indigo-600 mb-1">Subir archivo</p>
+                                    <p className="text-xs text-slate-500">PDF, DOCX, hasta 10MB</p>
+                                </div>
+                            </button>
+
+                            {topic.uploads?.map((upload, idx) => (
+                                <div key={idx} className="group bg-white rounded-2xl border border-slate-200 p-5 hover:border-green-300 hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 flex flex-col justify-between h-52 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-red-600">
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    
+                                    <div className="flex gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center border border-green-100 group-hover:scale-110 transition-transform shadow-sm">
+                                            <FileText className="w-6 h-6 text-green-600" />
+                                        </div>
+                                        <div className="flex-1 pr-6">
+                                            <h4 className="font-bold text-slate-900 text-sm line-clamp-2 leading-snug mb-1" title={upload.name}>
+                                                {upload.name}
+                                            </h4>
+                                            <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                                                <span className="uppercase bg-green-100 text-green-700 px-1.5 rounded text-[10px] tracking-wide">MANUAL</span>
+                                                <span>• {upload.size || '2.4 MB'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 pt-4 border-t border-slate-50 flex items-center gap-3">
+                                        <a 
+                                            href={upload.url} 
+                                            download 
+                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 group-hover:bg-green-600 group-hover:text-white text-slate-600 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+                                        >
+                                            <Download className="w-4 h-4" /> 
+                                            Descargar
+                                        </a>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {(!topic.uploads || topic.uploads.length === 0) && (
+                                <div className="col-span-full py-12 flex flex-col items-center justify-center text-slate-400">
+                                    <Upload className="w-12 h-12 mb-3 opacity-20" />
+                                    <p className="font-medium">No has subido archivos manualmente.</p>
+                                    <p className="text-xs text-slate-400 mt-1">Haz clic en "Subir archivo" para añadir tus propios documentos</p>
                                 </div>
                             )}
                         </div>
@@ -301,6 +469,96 @@ const Topic = ({ user }) => {
                     )}
                 </div>
             </main>
+
+            {/* Edit Modal */}
+            {showEditModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-2xl font-bold text-slate-900">Editar Tema</h3>
+                            <button onClick={() => setShowEditModal(false)} className="p-2 hover:bg-slate-100 rounded-lg">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        
+                        <form onSubmit={handleEditTopic} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    Título del Tema
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editFormData.title}
+                                    onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    placeholder="Ej: Introducción a las derivadas"
+                                    required
+                                />
+                            </div>
+                            
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    Instrucciones para la IA (opcional)
+                                </label>
+                                <textarea
+                                    value={editFormData.prompt}
+                                    onChange={(e) => setEditFormData({ ...editFormData, prompt: e.target.value })}
+                                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent h-24 resize-none"
+                                    placeholder="Personaliza cómo quieres que la IA genere el contenido..."
+                                />
+                            </div>
+                            
+                            <div className="flex gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowEditModal(false)}
+                                    className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-semibold text-slate-700 hover:bg-slate-50"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700"
+                                >
+                                    Guardar Cambios
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            {showDeleteModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+                        <div className="text-center mb-6">
+                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Trash2 className="w-8 h-8 text-red-600" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-slate-900 mb-2">¿Eliminar tema?</h3>
+                            <p className="text-slate-600">
+                                Esta acción no se puede deshacer. Se eliminarán todos los materiales y tests asociados.
+                            </p>
+                        </div>
+                        
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowDeleteModal(false)}
+                                className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-semibold text-slate-700 hover:bg-slate-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleDeleteTopic}
+                                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700"
+                            >
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
