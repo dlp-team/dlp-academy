@@ -13,7 +13,7 @@ import DeleteModal from '../components/modals/DeleteModal';
 import PositionModal from '../components/modals/PositionModal';
 import ReorderModal from '../components/modals/ReorderModal';
 
-import { collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 // ⚠️ REVISA ESTA URL: Si ngrok se reinició, esta dirección ya no sirve. Pon la nueva.
@@ -233,35 +233,42 @@ const AIClassroom = ({ user }) => {
             status: 'generating',
             color: selectedSubject.color,
             createdAt: serverTimestamp(),
-            order: currentTopics.length + 1
+            order: topics.length + 1
         };
         
 
         const docRef = await addDoc(topicsRef, newTopic);
         const topicId = docRef.id;
-
-        const currentFiles = [...files];
-        setFileCache(prev => ({...prev, [topicId]: currentFiles}));
-
-        const currentTopics = selectedSubject.topics || [];
-
-        if (currentTopics.length === 0) {
-            // Primer tema (Directo)
-            const updatedTopic = { ...newTopic, number: '01' };
-            const newTopicsList = [updatedTopic];
+        
+        if (files.length > 0) {
+            const docsRef = collection(db, "subjects", selectedSubject.id, "topics", topicId, "documents");
             
-            updateSubjectTopics(newTopicsList);
-            setShowTopicModal(false);
-            setTopicFormData({ title: '', prompt: '' });
-            setFiles([]);
-            
-            sendToN8N(updatedTopic.id, newTopicsList, { title: topicFormData.title, prompt: topicFormData.prompt }, currentFiles);
-        } else {
-            // Siguientes temas (Preguntar Posición)
-            setPendingTopic({ ...newTopic, tempFiles: currentFiles, tempPrompt: topicFormData.prompt });
-            setShowTopicModal(false);
-            setShowPositionModal(true);
+            const uploadPromises = files.map(file => {
+                return addDoc(docsRef, {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    uploadedAt: serverTimestamp(),
+                    status: 'processing' 
+                });
+            });
+            await Promise.all(uploadPromises);
         }
+
+        // 4. Update local state and trigger n8n
+        // We include the ID so the UI knows which one it is
+        const finalTopic = { id: topicId, ...newTopic };
+        
+        // Update your UI state
+        setTopics(prev => [...prev, finalTopic]); 
+        
+        // Send IDs to n8n so it can "find" the path to save AI results later
+        sendToN8N(selectedSubject.id, topicId, topicFormData, files);
+
+        // Cleanup
+        setShowTopicModal(false);
+        setTopicFormData({ title: '', prompt: '' });
+        setFiles([]);
     };
 
     const handleRetryTopic = (e, topic) => {
