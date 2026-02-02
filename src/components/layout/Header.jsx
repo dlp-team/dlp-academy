@@ -6,8 +6,11 @@ const Header = ({ user }) => {
   const navigate = useNavigate();
 
   return (
-    <header className="fixed top-0 w-full bg-white shadow-sm border-b border-gray-200 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
+    // 👇 CAMBIO 1: Añadimos 'h-20' para forzar la altura a 80px (estándar)
+    <header className="fixed top-0 w-full h-20 bg-white shadow-sm border-b border-gray-200 z-50">
+      
+      {/* 👇 CAMBIO 2: Añadimos 'h-full' y quitamos 'py-3' para que el contenido se centre perfecto */}
+      <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
         
         {/* Logo Minimalista Izquierda */}
         <div 
@@ -24,11 +27,9 @@ const Header = ({ user }) => {
             onClick={() => navigate('/profile')} 
         >
             <div className="text-right hidden sm:block">
-                {/* NOMBRE */}
                 <h2 className="font-semibold text-sm text-gray-900">
                     {user?.displayName || "Usuario"}
                 </h2>
-                {/* EMAIL */}
                 <p className="text-xs text-gray-500">{user?.email}</p>
             </div>
 
@@ -38,7 +39,6 @@ const Header = ({ user }) => {
                     <img 
                         src={user.photoURL} 
                         alt="Perfil" 
-                        // 👇 ESTA ES LA LÍNEA MÁGICA QUE TE FALTA 👇
                         referrerPolicy="no-referrer"
                         className="w-10 h-10 rounded-full border-2 border-indigo-100 object-cover" 
                     />

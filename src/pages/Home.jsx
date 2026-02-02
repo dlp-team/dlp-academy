@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Plus, BookOpen, Home, ArrowUpDown, CheckCircle2, 
-    Clock, RotateCw, ChevronLeft, FileText, Download, Play , Trash2, Loader2
+    Clock, RotateCw, ChevronLeft, FileText, Download, Play, Trash2, Loader2
 } from 'lucide-react';
 
-// 👇 IMPORTAMOS TUS COMPONENTES
+// 👇 TUS COMPONENTES
 import Header from '../components/layout/Header';
 import SubjectModal from '../components/modals/SubjectModal';
 import TopicModal from '../components/modals/TopicModal';
@@ -16,7 +16,7 @@ import ReorderModal from '../components/modals/ReorderModal';
 import { collection, addDoc, query, where, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
-// ⚠️ REVISA ESTA URL: Si ngrok se reinició, esta dirección ya no sirve. Pon la nueva.
+// ⚠️ REVISA TU URL DE NGROK AQUÍ
 const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39';
 
 const AIClassroom = ({ user }) => {
@@ -32,7 +32,7 @@ const AIClassroom = ({ user }) => {
     const [selectedSubject, setSelectedSubject] = useState(null);
     const [topics, setTopics] = useState([]);
     const [selectedTopic, setSelectedTopic] = useState(null);
-    const [loading, setLoading] = useState(true); // Estado de carga inicial
+    const [loading, setLoading] = useState(true);
 
     // Modales
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -65,11 +65,9 @@ const AIClassroom = ({ user }) => {
     useEffect(() => {
         const fetchSubjects = async () => {
             if (!user) return; 
-
             try {
                 const q = query(collection(db, "subjects"), where("uid", "==", user.uid));
                 const querySnapshot = await getDocs(q);
-                
                 const loadedSubjects = querySnapshot.docs.map(doc => ({
                     id: doc.id,
                     ...doc.data()
@@ -78,15 +76,13 @@ const AIClassroom = ({ user }) => {
             } catch (error) {
                 console.error("Error cargando asignaturas:", error);
             } finally {
-                setLoading(false); // Terminó de cargar (bien o mal)
+                setLoading(false);
             }
         };
-
         fetchSubjects();
     }, [user]);
 
-    // --- LÓGICA DE GESTIÓN ---
-
+    // --- LÓGICA ---
     const requestDelete = (e, subject) => {
         e.stopPropagation();
         setSubjectToDelete(subject);
@@ -107,14 +103,12 @@ const AIClassroom = ({ user }) => {
     };
 
     const updateSubjectTopics = async (newTopics) => {
-        // 1. Actualización Visual Inmediata
         setSubjects(prev => prev.map(s => 
             s.id === selectedSubject.id ? { ...s, topics: newTopics } : s
         ));
         setSelectedSubject(prev => ({ ...prev, topics: newTopics }));
         setTopics(newTopics);
 
-        // 2. Persistencia en Firebase
         if (selectedSubject?.id) {
             try {
                 const subjectRef = doc(db, "subjects", selectedSubject.id);
@@ -125,14 +119,11 @@ const AIClassroom = ({ user }) => {
         }
     };
 
-    // --- CONEXIÓN CON N8N (BLINDADA) ---
+    // --- N8N (10 MINUTOS TIMEOUT) ---
     const sendToN8N = async (topicId, topicsList, data, attachedFiles) => {
         console.log("🚀 INICIANDO ENVÍO...", topicId);
 
-        if (!topicsList || topicsList.length === 0) {
-            console.error("⚠️ Error crítico: Lista vacía.");
-            return;
-        }
+        if (!topicsList || topicsList.length === 0) return;
 
         const formData = new FormData();
         formData.append('topicId', topicId);
@@ -147,7 +138,8 @@ const AIClassroom = ({ user }) => {
         }
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000); // 10s Timeout
+        // ⏰ 10 MINUTOS DE ESPERA (600,000 ms)
+        const timeoutId = setTimeout(() => controller.abort(), 600000);
 
         try {
             console.log("⏳ Conectando con IA...");
@@ -173,33 +165,28 @@ const AIClassroom = ({ user }) => {
 
         } catch (error) {
             console.error("❌ ERROR DE CONEXIÓN:", error);
-            
-            // 👇 PAUSA VISUAL LARGA (2 SEGUNDOS)
-            // Esto asegura que veas la tarjeta azul girando antes de que falle.
-            // Así sabrás que el botón "Reintentar" SÍ funcionó, pero el servidor falló.
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Pausa visual
 
             const errorList = topicsList.map(t => 
                 t.id === topicId ? { ...t, status: 'error' } : t
             );
-            
             updateSubjectTopics(errorList);
 
-        
+            if (error.name === 'AbortError') {
+                alert("⏳ Se ha superado el tiempo de espera (10 min).");
+            }
         }
     };
 
-    // --- MANEJO DE TEMAS ---
+    // --- GESTIÓN DE TEMAS ---
     const handleCreateTopic = (e) => {
         if (e) e.preventDefault();
         
-        // 🅰️ REINTENTO
+        // REINTENTO
         if (retryTopicId) {
-            // Usamos archivos nuevos O los de la memoria caché
             const filesToSend = files.length > 0 ? files : (fileCache[retryTopicId] || []);
-
             if (filesToSend.length === 0) {
-                alert("⚠️ Por favor, vuelve a arrastrar el PDF antes de continuar.");
+                alert("⚠️ Por favor, vuelve a arrastrar el PDF.");
                 return;
             }
 
@@ -211,20 +198,16 @@ const AIClassroom = ({ user }) => {
             
             updateSubjectTopics(updatedTopics);
             setShowTopicModal(false);
-            
-            // Actualizamos caché por si falla otra vez
             setFileCache(prev => ({...prev, [retryTopicId]: filesToSend}));
-
             sendToN8N(retryTopicId, updatedTopics, topicFormData, filesToSend);
             
-            // Limpieza
             setRetryTopicId(null);
             setTopicFormData({ title: '', prompt: '' });
             setFiles([]);
             return;
         }
 
-        // 🅱️ NUEVO TEMA
+        // NUEVO TEMA
         const newTopic = {
             id: Date.now().toString(),
             title: topicFormData.title,
@@ -240,7 +223,6 @@ const AIClassroom = ({ user }) => {
         const currentTopics = selectedSubject.topics || [];
 
         if (currentTopics.length === 0) {
-            // Primer tema (Directo)
             const updatedTopic = { ...newTopic, number: '01' };
             const newTopicsList = [updatedTopic];
             
@@ -251,7 +233,6 @@ const AIClassroom = ({ user }) => {
             
             sendToN8N(updatedTopic.id, newTopicsList, { title: topicFormData.title, prompt: topicFormData.prompt }, currentFiles);
         } else {
-            // Siguientes temas (Preguntar Posición)
             setPendingTopic({ ...newTopic, tempFiles: currentFiles, tempPrompt: topicFormData.prompt });
             setShowTopicModal(false);
             setShowPositionModal(true);
@@ -262,7 +243,7 @@ const AIClassroom = ({ user }) => {
         e.stopPropagation();
         setTopicFormData({ title: topic.title, prompt: topic.prompt || '' });
         setRetryTopicId(topic.id);
-        setFiles([]); // Forzamos limpieza visual para obligar a re-subir si quieren cambiarlo
+        setFiles([]); 
         setShowTopicModal(true);
     };
 
@@ -283,8 +264,7 @@ const AIClassroom = ({ user }) => {
         updateSubjectTopics(reorderedList);
         
         sendToN8N(
-            pendingTopic.id, 
-            reorderedList, 
+            pendingTopic.id, reorderedList, 
             { title: pendingTopic.title, prompt: pendingTopic.tempPrompt }, 
             pendingTopic.tempFiles
         );
@@ -301,17 +281,13 @@ const AIClassroom = ({ user }) => {
         setShowReorderModal(false);
     };
 
-    // --- MANEJO DE ARCHIVOS Y UI ---
+    // --- ARCHIVOS Y UI ---
     const handleCreateSubject = async () => {
         if (!subjectFormData.name.trim() || !subjectFormData.course.trim()) return;
         try {
             const newSubject = {
-                name: subjectFormData.name,
-                course: subjectFormData.course,
-                color: subjectFormData.color,
-                topics: [],
-                uid: user.uid,
-                createdAt: new Date()
+                name: subjectFormData.name, course: subjectFormData.course, color: subjectFormData.color,
+                topics: [], uid: user.uid, createdAt: new Date()
             };
             const docRef = await addDoc(collection(db, "subjects"), newSubject);
             setSubjects(prev => [...prev, { id: docRef.id, ...newSubject }]);
@@ -319,31 +295,15 @@ const AIClassroom = ({ user }) => {
             setSubjectFormData({ name: '', course: '', color: 'from-blue-400 to-blue-600' });
         } catch (error) {
             console.error("Error guardando asignatura:", error);
-            alert("Hubo un error al guardar.");
         }
     };
 
-    const handleDrag = (e) => {
-        e.preventDefault(); e.stopPropagation();
-        if (e.type === "dragenter" || e.type === "dragover") setDragActive(true);
-        else if (e.type === "dragleave") setDragActive(false);
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault(); e.stopPropagation();
-        setDragActive(false);
-        if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFiles(e.dataTransfer.files);
-    };
-
-    const handleFiles = (fileList) => {
-        const newFiles = Array.from(fileList).filter(f => f.type === 'application/pdf');
-        setFiles(prev => [...prev, ...newFiles]);
-    };
-
+    const handleDrag = (e) => { e.preventDefault(); e.stopPropagation(); if (e.type === "dragenter" || e.type === "dragover") setDragActive(true); else if (e.type === "dragleave") setDragActive(false); };
+    const handleDrop = (e) => { e.preventDefault(); e.stopPropagation(); setDragActive(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFiles(e.dataTransfer.files); };
+    const handleFiles = (fileList) => { const newFiles = Array.from(fileList).filter(f => f.type === 'application/pdf'); setFiles(prev => [...prev, ...newFiles]); };
     const removeFile = (index) => setFiles(prev => prev.filter((_, i) => i !== index));
-
     const handleSelectSubject = (subject) => { setSelectedSubject(subject); setTopics(subject.topics || []); };
-    const handleBackToSubjects = () => { setSelectedSubject(null); setSelectedTopic(null); setTopics([]); };
+    const handleBackToSubjects = () => { setSelectedSubject(null); setSelectedTopic(null); setTopics([]); setActiveTab('materials'); };
     const handleBackToTopics = () => { setSelectedTopic(null); setActiveTab('materials'); };
     
     const getQuizIcon = (type) => {
@@ -355,8 +315,7 @@ const AIClassroom = ({ user }) => {
         }
     };
 
-    // --- 🛡️ PROTECCIÓN CONTRA PANTALLA BLANCA 🛡️ ---
-    // Si el usuario aún no ha cargado, mostramos un loader en vez de intentar pintar la app.
+    // --- RENDER ---
     if (!user) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -368,14 +327,13 @@ const AIClassroom = ({ user }) => {
         );
     }
 
-    // --- VISTA PRINCIPAL ---
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 font-sans">
             <Header user={user} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
                 {!selectedSubject ? (
-                    /* Vista Principal - Asignaturas */
+                    /* 1. VISTA ASIGNATURAS */
                     <>
                         <div className="mb-8">
                             <h2 className="text-3xl font-bold text-gray-900 mb-2">Mis Asignaturas</h2>
@@ -399,7 +357,7 @@ const AIClassroom = ({ user }) => {
                         </div>
                     </>
                 ) : !selectedTopic ? (
-                    /* Vista de Temas */
+                    /* 2. VISTA LISTA DE TEMAS */
                     <>
                         <button onClick={handleBackToSubjects} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"><Home className="w-5 h-5" /> Volver a Asignaturas</button>
                         <div className="mb-8 flex justify-between items-center">
@@ -434,36 +392,83 @@ const AIClassroom = ({ user }) => {
                         </div>
                     </>
                 ) : (
-                    /* Vista Detalle Tema */
-                    <div>
-                        <button onClick={handleBackToTopics} className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-6"><ChevronLeft className="w-5 h-5" /> Volver a Temas</button>
-                        <div className="mb-8">
-                            <h2 className="text-4xl font-bold text-gray-900 mb-2">{selectedTopic.title}</h2>
-                            <div className="bg-white rounded-xl shadow-md p-2 flex gap-2 mb-6">
-                                <button onClick={() => setActiveTab('materials')} className={`flex-1 py-3 px-6 rounded-lg font-semibold ${activeTab === 'materials' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>📚 Materiales</button>
-                                <button onClick={() => setActiveTab('quizzes')} className={`flex-1 py-3 px-6 rounded-lg font-semibold ${activeTab === 'quizzes' ? 'bg-indigo-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'}`}>✍️ Tests</button>
+                    /* 3. VISTA DETALLE TEMA (PROFESIONAL + NÚMERO GRANDE) */
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="mb-8 border-b border-gray-200 pb-6">
+                            <button onClick={handleBackToTopics} className="group flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-indigo-600 mb-6 transition-colors">
+                                <div className="p-1 rounded-full group-hover:bg-indigo-50 transition-colors"><ChevronLeft className="w-5 h-5" /></div>
+                                Volver a la lista de temas
+                            </button>
+                            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+                                <div className={`w-24 h-24 rounded-2xl bg-gradient-to-br ${selectedTopic.color || 'from-blue-500 to-indigo-600'} flex items-center justify-center shadow-lg shadow-indigo-500/20 transform -rotate-3 transition-transform hover:rotate-0`}>
+                                    <span className="text-5xl font-black text-white tracking-tighter drop-shadow-sm">{selectedTopic.number}</span>
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wider">{selectedSubject.course}</span>
+                                        <span className="text-sm text-gray-400 font-medium">{selectedSubject.name}</span>
+                                    </div>
+                                    <h2 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight capitalize">{selectedTopic.title}</h2>
+                                </div>
+                                <div className="hidden md:flex gap-6 text-sm text-gray-500 bg-gray-50 px-6 py-3 rounded-xl border border-gray-100">
+                                    <div className="flex flex-col items-center"><span className="font-bold text-gray-900 text-xl">{selectedTopic.pdfs?.length || 0}</span><span className="text-xs uppercase font-semibold text-gray-400">Archivos</span></div>
+                                    <div className="w-px bg-gray-200 h-10"></div>
+                                    <div className="flex flex-col items-center"><span className="font-bold text-gray-900 text-xl">{selectedTopic.quizzes?.length || 0}</span><span className="text-xs uppercase font-semibold text-gray-400">Tests</span></div>
+                                </div>
                             </div>
                         </div>
+
+                        <div className="flex items-center gap-1 bg-gray-100/80 p-1.5 rounded-xl w-fit mb-8 shadow-inner">
+                            <button onClick={() => setActiveTab('materials')} className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'materials' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}><FileText className="w-4 h-4" /> Materiales</button>
+                            <button onClick={() => setActiveTab('quizzes')} className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ${activeTab === 'quizzes' ? 'bg-white text-indigo-600 shadow-sm ring-1 ring-gray-200' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'}`}><CheckCircle2 className="w-4 h-4" /> Tests & Quizzes</button>
+                        </div>
+
                         {activeTab === 'materials' ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                                 {selectedTopic.pdfs?.map((pdf, idx) => (
-                                    <div key={idx} className="bg-white rounded-xl shadow-md p-6">
-                                        <div className="flex items-center gap-4 mb-4"><div className="w-14 h-14 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0"><FileText className="w-7 h-7 text-red-600" /></div><div className="flex-1 min-w-0"><h4 className="font-semibold truncate">{pdf.name}</h4></div></div>
-                                        <a href={pdf.url} download className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2"><Download className="w-5 h-5" /> Descargar</a>
+                                    <div key={idx} className="group bg-white rounded-xl border border-gray-200 p-4 hover:shadow-lg hover:border-indigo-200 transition-all duration-300 flex flex-col justify-between h-48">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex gap-3">
+                                                <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center border border-red-100 group-hover:scale-110 transition-transform"><FileText className="w-5 h-5 text-red-500" /></div>
+                                                <div className="flex flex-col"><h4 className="font-semibold text-gray-900 text-sm line-clamp-2 leading-snug" title={pdf.name}>{pdf.name}</h4><span className="text-xs text-gray-400 mt-1 capitalize">{pdf.type || 'Documento PDF'}</span></div>
+                                            </div>
+                                        </div>
+                                        <div className="mt-4 pt-4 border-t border-gray-50">
+                                            <a href={pdf.url} download className="flex items-center justify-center gap-2 w-full py-2 bg-slate-50 hover:bg-indigo-600 text-slate-600 hover:text-white rounded-lg text-sm font-medium transition-all group-hover:shadow-md"><Download className="w-4 h-4" /> Descargar</a>
+                                        </div>
                                     </div>
                                 ))}
+                                {(!selectedTopic.pdfs || selectedTopic.pdfs.length === 0) && (
+                                    <div className="col-span-full py-12 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                                        <FileText className="w-12 h-12 mb-3 opacity-20" />
+                                        <p>No hay materiales disponibles todavía.</p>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {selectedTopic.quizzes?.map((quiz) => {
                                     const style = getQuizIcon(quiz.type);
                                     return (
-                                        <div key={quiz.id} className="bg-white rounded-xl shadow-md overflow-hidden">
-                                            <div className={`h-32 bg-gradient-to-br ${style.color} flex items-center justify-center`}><span className="text-6xl">{style.icon}</span></div>
-                                            <div className="p-6"><h4 className="font-bold text-lg mb-2">{quiz.name}</h4><button onClick={() => alert('Próximamente')} className="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2"><Play className="w-5 h-5" /> Comenzar</button></div>
+                                        <div key={quiz.id} className="group bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+                                            <div className={`h-24 bg-gradient-to-r ${style.color} relative overflow-hidden`}>
+                                                <div className="absolute top-0 right-0 p-4 opacity-20 transform rotate-12 group-hover:rotate-0 group-hover:scale-110 transition-all duration-500"><span className="text-6xl">{style.icon}</span></div>
+                                                <div className="absolute bottom-3 left-4 text-white"><span className="text-xs font-bold uppercase tracking-wider opacity-80 bg-black/20 px-2 py-1 rounded">Test</span></div>
+                                            </div>
+                                            <div className="p-5">
+                                                <h4 className="font-bold text-gray-900 text-lg mb-1">{quiz.name}</h4>
+                                                <p className="text-xs text-gray-500 mb-4 line-clamp-2">Pon a prueba tus conocimientos sobre {selectedTopic.title}.</p>
+                                                <button onClick={() => alert('Próximamente: Sistema de exámenes interactivos')} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-gray-900 text-white text-sm font-semibold hover:bg-indigo-600 transition-colors shadow-lg shadow-gray-200 group-hover:shadow-indigo-200"><Play className="w-4 h-4 fill-current" /> Comenzar Test</button>
+                                            </div>
                                         </div>
                                     );
                                 })}
+                                {(!selectedTopic.quizzes || selectedTopic.quizzes.length === 0) && (
+                                    <div className="col-span-full py-12 flex flex-col items-center justify-center text-gray-400 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                                        <CheckCircle2 className="w-12 h-12 mb-3 opacity-20" />
+                                        <p>No hay tests generados aún.</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
