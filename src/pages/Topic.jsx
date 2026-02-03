@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
-    ChevronLeft, FileText, Download, Play, Loader2, 
+    ChevronLeft, FileText, Download, Play, Loader2, ExternalLink,
     ChevronRight, Calendar, MoreVertical, CheckCircle2, 
     Timer, Sparkles, Home, Trash2, Edit2, Share2, Upload,
     X, GripVertical
 } from 'lucide-react';
 import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
-
 import Header from '../components/layout/Header';
+
+// IMPORT THE CSS MODULE
+import styles from '../styles/Topic.module.css';
 
 const Topic = ({ user }) => {
     const navigate = useNavigate();
@@ -19,11 +21,11 @@ const Topic = ({ user }) => {
     const [subject, setSubject] = useState(null);
     const [topic, setTopic] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [uploading, setUploading] = useState(false); // State for manual upload spinner
+    const [uploading, setUploading] = useState(false);
     const [activeTab, setActiveTab] = useState('materials');
     const [showMenu, setShowMenu] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false); // For Topic deletion
     const [editFormData, setEditFormData] = useState({ title: '', prompt: '' });
 
     useEffect(() => {
@@ -31,36 +33,29 @@ const Topic = ({ user }) => {
             if (!user || !subjectId || !topicId) return;
 
             try {
-                // 1. Obtener datos de la asignatura (solo una vez)
+                // 1. Get Subject Data
                 const subjectDoc = await getDoc(doc(db, "subjects", subjectId));
                 if (subjectDoc.exists()) {
                     setSubject({ id: subjectDoc.id, ...subjectDoc.data() });
                 }
 
-                // 2. Escuchar cambios en el documento del Tema
+                // 2. Listen to Topic changes
                 const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
-                
                 const unsubscribeTopic = onSnapshot(topicRef, (topicDoc) => {
                     if (topicDoc.exists()) {
                         const topicData = { id: topicDoc.id, ...topicDoc.data() };
 
-                        // 3. Escuchar cambios en la subcolección de documentos
+                        // 3. Listen to Sub-collection Documents
                         const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
-                        
                         const unsubscribeDocs = onSnapshot(docsRef, (querySnapshot) => {
                             const allDocs = querySnapshot.docs.map(doc => ({
                                 id: doc.id,
                                 ...doc.data()
                             }));
 
-                            // --- LOGIC CHANGE: Filter by 'source' field ---
-                            // AI Materials: PDFs/Summaries that are NOT manual
+                            // Filter Logic
                             const pdfs = allDocs.filter(d => (d.type === 'pdf' || d.type === 'summary') && d.source !== 'manual');
-                            
-                            // Quizzes: Always generated
                             const quizzes = allDocs.filter(d => d.type === 'quiz');
-                            
-                            // Manual Uploads: Explicitly marked as manual
                             const uploads = allDocs.filter(d => d.source === 'manual');
 
                             setTopic({ ...topicData, pdfs, quizzes, uploads });
@@ -74,9 +69,7 @@ const Topic = ({ user }) => {
                     }
                 });
 
-                return () => {
-                    unsubscribeTopic();
-                };
+                return () => unsubscribeTopic();
             } catch (error) {
                 console.error("Error loading topic:", error);
                 setLoading(false);
@@ -84,7 +77,6 @@ const Topic = ({ user }) => {
         };
 
         const unsubscribe = fetchTopicDetails();
-        
         return () => {
             if (unsubscribe && typeof unsubscribe.then === 'function') {
                 unsubscribe.then(unsub => unsub && unsub());
@@ -92,54 +84,82 @@ const Topic = ({ user }) => {
         };
     }, [user, subjectId, topicId, navigate]);
 
-    // --- NEW: Handle Manual File Upload ---
+    // --- Helper for Base64 ---
+    const convertFileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = (error) => reject(error);
+        });
+    };
+
+    // --- Upload Logic ---
     const handleManualUpload = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
+
+        // Size check (Firestore limit ~1MB)
+        const validFiles = files.filter(file => file.size < 1000000);
+        if (validFiles.length < files.length) {
+            alert("⚠️ Algunos archivos son mayores a 1MB y no se guardaron.");
+        }
+        if (validFiles.length === 0) return;
 
         setUploading(true);
         try {
             const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
             
-            const uploadPromises = files.map(file => {
+            const uploadPromises = validFiles.map(async (file) => {
+                const base64Url = await convertFileToBase64(file);
                 return addDoc(docsRef, {
                     name: file.name,
-                    type: file.type.includes('pdf') ? 'pdf' : 'doc', // Simple type check
+                    type: file.type.includes('pdf') ? 'pdf' : 'doc',
                     size: file.size,
-                    source: 'manual', // <--- THE KEY IDENTIFIER
+                    source: 'manual',
                     uploadedAt: serverTimestamp(),
-                    url: '#', // Placeholder: In real app, you'd upload to Storage first and get URL
+                    url: base64Url,
                     status: 'ready'
                 });
             });
 
             await Promise.all(uploadPromises);
-            
-            // Reset input
             if (fileInputRef.current) fileInputRef.current.value = '';
         } catch (error) {
             console.error("Error uploading file:", error);
-            alert("Error al subir el archivo.");
+            alert("Error al guardar archivo.");
         } finally {
             setUploading(false);
         }
     };
 
+    // --- NEW: Delete Document Logic ---
+    const handleDeleteDocument = async (docId, docName) => {
+        if (!window.confirm(`¿Estás seguro de que quieres eliminar "${docName}"?`)) return;
+
+        try {
+            const docRef = doc(db, "subjects", subjectId, "topics", topicId, "documents", docId);
+            await deleteDoc(docRef);
+            // No need to update state, onSnapshot will handle it automatically
+        } catch (error) {
+            console.error("Error deleting document:", error);
+            alert("No se pudo eliminar el archivo.");
+        }
+    };
+
+    // --- Topic Management ---
     const handleEditTopic = async (e) => {
         e.preventDefault();
-        
         try {
             const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
             await updateDoc(topicRef, {
                 title: editFormData.title,
                 prompt: editFormData.prompt
             });
-            
             setShowEditModal(false);
             setShowMenu(false);
         } catch (error) {
             console.error("Error updating topic:", error);
-            alert("No se pudo actualizar el tema.");
         }
     };
 
@@ -149,7 +169,6 @@ const Topic = ({ user }) => {
             navigate(`/home/subject/${subjectId}`);
         } catch (error) {
             console.error("Error deleting topic:", error);
-            alert("No se pudo eliminar el tema.");
         }
     };
 
@@ -168,14 +187,8 @@ const Topic = ({ user }) => {
         }
     };
 
-    if (!user) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-            </div>
-        );
-    }
-
+    if (!user) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="w-10 h-10 text-indigo-600 animate-spin" /></div>;
+    
     if (loading || !topic || !subject) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -188,10 +201,10 @@ const Topic = ({ user }) => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+        <div className={styles.pageContainer}>
             <Header user={user} />
 
-            <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+            <main className={styles.mainContent}>
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     
                     {/* 1. BREADCRUMBS */}
@@ -208,48 +221,23 @@ const Topic = ({ user }) => {
                             <span className="text-slate-900 font-bold">Tema {topic.number}</span>
                         </div>
 
-                        {/* Three Dots Menu */}
+                        {/* Three Dots Menu (Kept inline as it's small utility) */}
                         <div className="relative">
-                            <button 
-                                onClick={() => setShowMenu(!showMenu)}
-                                className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
-                            >
+                            <button onClick={() => setShowMenu(!showMenu)} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
                                 <MoreVertical className="w-5 h-5 text-slate-500" />
                             </button>
-
                             {showMenu && (
                                 <>
-                                    <div 
-                                        className="fixed inset-0 z-40" 
-                                        onClick={() => setShowMenu(false)}
-                                    />
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
                                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
-                                        <button
-                                            onClick={openEditModal}
-                                            className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-3 text-slate-700"
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                            Editar
+                                        <button onClick={openEditModal} className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-3 text-slate-700">
+                                            <Edit2 className="w-4 h-4" /> Editar
                                         </button>
-                                        <button
-                                            onClick={() => {
-                                                setShowDeleteModal(true);
-                                                setShowMenu(false);
-                                            }}
-                                            className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-3 text-red-600"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                            Eliminar
+                                        <button onClick={() => { setShowDeleteModal(true); setShowMenu(false); }} className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-3 text-red-600">
+                                            <Trash2 className="w-4 h-4" /> Eliminar
                                         </button>
-                                        <button
-                                            onClick={() => {
-                                                alert('Función de compartir próximamente');
-                                                setShowMenu(false);
-                                            }}
-                                            className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-3 text-slate-700"
-                                        >
-                                            <Share2 className="w-4 h-4" />
-                                            Compartir
+                                        <button onClick={() => { alert('Función de compartir próximamente'); setShowMenu(false); }} className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-3 text-slate-700">
+                                            <Share2 className="w-4 h-4" /> Compartir
                                         </button>
                                     </div>
                                 </>
@@ -257,13 +245,11 @@ const Topic = ({ user }) => {
                         </div>
                     </div>
 
-                    {/* 2. HERO HEADER */}
-                    <div className="mb-10 pb-8 border-b border-slate-200">
+                    {/* 2. HERO HEADER - USING MODULE CLASSES */}
+                    <div className={styles.heroContainer}>
                         <div className="flex flex-col md:flex-row items-start gap-8">
-                            
-                            {/* Icono Grande */}
-                            <div className={`w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br ${topic.color || 'from-blue-500 to-indigo-600'} flex items-center justify-center shadow-2xl shadow-indigo-500/20 transform -rotate-2 transition-transform hover:rotate-0`}>
-                                <span className="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-md">
+                            <div className={`${styles.heroIcon} bg-gradient-to-br ${topic.color || 'from-blue-500 to-indigo-600'}`}>
+                                <span className={styles.heroNumber}>
                                     {topic.number}
                                 </span>
                             </div>
@@ -278,12 +264,10 @@ const Topic = ({ user }) => {
                                         <span>Última actualización hoy</span>
                                     </div>
                                 </div>
-                                
                                 <h2 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight capitalize leading-tight">
                                     {topic.title}
                                 </h2>
-
-                                {/* Barra de Progreso */}
+                                {/* Progress Bar */}
                                 <div className="flex items-center gap-4 max-w-md pt-2">
                                     <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                                         <div className={`h-full bg-indigo-500 rounded-full transition-all duration-1000 ${topic.quizzes?.length > 0 ? 'w-1/2' : 'w-1/12'}`}></div>
@@ -296,15 +280,11 @@ const Topic = ({ user }) => {
                         </div>
                     </div>
 
-                    {/* 3. TABS DE NAVEGACIÓN */}
-                    <div className="flex items-center gap-2 mb-8 overflow-x-auto">
+                    {/* 3. TABS - USING MODULE CLASSES */}
+                    <div className={styles.tabsContainer}>
                         <button 
                             onClick={() => setActiveTab('materials')} 
-                            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border whitespace-nowrap ${
-                                activeTab === 'materials' 
-                                ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' 
-                                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                            }`}
+                            className={`${styles.tabBtn} ${activeTab === 'materials' ? styles.tabBtnActive : styles.tabBtnInactive}`}
                         >
                             <FileText className="w-4 h-4" />
                             Generados por IA
@@ -315,11 +295,7 @@ const Topic = ({ user }) => {
                         
                         <button 
                             onClick={() => setActiveTab('uploads')} 
-                            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border whitespace-nowrap ${
-                                activeTab === 'uploads' 
-                                ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' 
-                                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                            }`}
+                            className={`${styles.tabBtn} ${activeTab === 'uploads' ? styles.tabBtnActive : styles.tabBtnInactive}`}
                         >
                             <Upload className="w-4 h-4" />
                             Mis Archivos
@@ -330,11 +306,7 @@ const Topic = ({ user }) => {
 
                         <button 
                             onClick={() => setActiveTab('quizzes')} 
-                            className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border whitespace-nowrap ${
-                                activeTab === 'quizzes' 
-                                ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' 
-                                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                            }`}
+                            className={`${styles.tabBtn} ${activeTab === 'quizzes' ? styles.tabBtnActive : styles.tabBtnInactive}`}
                         >
                             <CheckCircle2 className="w-4 h-4" />
                             Tests Prácticos
@@ -344,9 +316,9 @@ const Topic = ({ user }) => {
                         </button>
                     </div>
 
-                    {/* 4. CONTENIDO: MATERIALES GENERADOS */}
+                    {/* 4. CONTENT AREA */}
                     {activeTab === 'materials' ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <div className={styles.gridContainer}>
                             {topic.status === 'generating' && (
                                 <div className="bg-white rounded-2xl border border-blue-200 p-5 shadow-sm flex flex-col justify-center items-center text-center h-52">
                                     <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-3" />
@@ -356,15 +328,9 @@ const Topic = ({ user }) => {
                             )}
 
                             {topic.pdfs?.map((pdf, idx) => (
-                                <div key={idx} className="group bg-white rounded-2xl border border-slate-200 p-5 hover:border-indigo-300 hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300 flex flex-col justify-between h-52 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600">
-                                            <MoreVertical className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                    
+                                <div key={idx} className={`${styles.card} ${styles.cardPdf} group`}>
                                     <div className="flex gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center border border-red-100 group-hover:scale-110 transition-transform shadow-sm">
+                                        <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center border border-red-100 group-hover:scale-110 transition-transform shadow-sm flex-shrink-0">
                                             <FileText className="w-6 h-6 text-red-500" />
                                         </div>
                                         <div className="flex-1 pr-6">
@@ -378,19 +344,13 @@ const Topic = ({ user }) => {
                                         </div>
                                     </div>
 
-                                    <div className="mt-4 pt-4 border-t border-slate-50 flex items-center gap-3">
-                                        <a 
-                                            href={pdf.url} 
-                                            download 
-                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 group-hover:bg-indigo-600 group-hover:text-white text-slate-600 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
-                                        >
-                                            <Download className="w-4 h-4" /> 
-                                            Descargar
+                                    <div className={styles.cardActions}>
+                                        <a href={pdf.url} download className={`${styles.actionBtn} ${styles.actionBtnPrimary} group-hover:bg-indigo-600 group-hover:text-white`}>
+                                            <Download className="w-4 h-4" /> Descargar
                                         </a>
                                     </div>
                                 </div>
                             ))}
-
                             {(!topic.pdfs || topic.pdfs.length === 0) && topic.status !== 'generating' && (
                                 <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
                                     <FileText className="w-12 h-12 mb-3 opacity-20" />
@@ -399,8 +359,7 @@ const Topic = ({ user }) => {
                             )}
                         </div>
                     ) : activeTab === 'uploads' ? (
-                        /* 4B. CONTENIDO: ARCHIVOS SUBIDOS MANUALMENTE */
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                        <div className={styles.gridContainer}>
                             {/* Hidden Input */}
                             <input 
                                 type="file" 
@@ -415,7 +374,7 @@ const Topic = ({ user }) => {
                             <button 
                                 onClick={() => fileInputRef.current.click()}
                                 disabled={uploading}
-                                className="group border-2 border-dashed border-slate-300 hover:border-indigo-400 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 h-52 bg-white hover:bg-indigo-50/50 transition-all"
+                                className={styles.uploadArea}
                             >
                                 {uploading ? (
                                     <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
@@ -425,23 +384,30 @@ const Topic = ({ user }) => {
                                     </div>
                                 )}
                                 <div className="text-center">
-                                    <p className="font-bold text-slate-700 group-hover:text-indigo-600 mb-1">
+                                    <p className="font-bold text-slate-700 hover:text-indigo-600 mb-1">
                                         {uploading ? 'Subiendo...' : 'Subir archivo'}
                                     </p>
-                                    <p className="text-xs text-slate-500">PDF, DOCX, hasta 10MB</p>
+                                    <p className="text-xs text-slate-500">PDF, DOCX, hasta 1MB</p>
                                 </div>
                             </button>
 
+                            {/* UPLOADED FILES */}
                             {topic.uploads?.map((upload, idx) => (
-                                <div key={idx} className="group bg-white rounded-2xl border border-slate-200 p-5 hover:border-green-300 hover:shadow-xl hover:shadow-green-500/10 transition-all duration-300 flex flex-col justify-between h-52 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-red-600">
+                                <div key={idx} className={`${styles.card} ${styles.cardUpload} group`}>
+                                    
+                                    {/* DELETE BUTTON - ADDED FUNCTIONALITY HERE */}
+                                    <div className={styles.deleteBtn}>
+                                        <button 
+                                            onClick={() => handleDeleteDocument(upload.id, upload.name)}
+                                            className={styles.deleteIconWrapper}
+                                            title="Eliminar archivo"
+                                        >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
                                     
                                     <div className="flex gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center border border-green-100 group-hover:scale-110 transition-transform shadow-sm">
+                                        <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center border border-green-100 group-hover:scale-110 transition-transform shadow-sm flex-shrink-0">
                                             <FileText className="w-6 h-6 text-green-600" />
                                         </div>
                                         <div className="flex-1 pr-6">
@@ -455,33 +421,28 @@ const Topic = ({ user }) => {
                                         </div>
                                     </div>
 
-                                    <div className="mt-4 pt-4 border-t border-slate-50 flex items-center gap-3">
-                                        <a 
-                                            href={upload.url} 
-                                            target="_blank"              // <--- CAMBIO 1: Abre en nueva pestaña
-                                            rel="noopener noreferrer"    // <--- CAMBIO 2: Seguridad recomendada
-                                            // download                  // <--- CAMBIO 3: ELIMINADO (para permitir visualización)
-                                            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 group-hover:bg-green-600 group-hover:text-white text-slate-600 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
-                                        >
-                                            {/* Opcional: Cambiar el icono a 'Eye' o 'ExternalLink' si prefieres "Ver" en vez de "Descargar" */}
-                                            <Download className="w-4 h-4" /> 
-                                            Abrir
+                                    <div className={styles.cardActions}>
+                                        {/* OPEN */}
+                                        <a href={upload.url} target="_blank" rel="noopener noreferrer" className={`${styles.actionBtn} ${styles.actionBtnPrimary} hover:bg-indigo-600 hover:text-white`}>
+                                            <ExternalLink className="w-4 h-4" /> Open
+                                        </a>
+
+                                        {/* DOWNLOAD */}
+                                        <a href={upload.url} download={upload.name} className={`${styles.actionBtn} ${styles.actionBtnSuccess} hover:bg-green-600 hover:text-white`}>
+                                            <Download className="w-4 h-4" /> Save
                                         </a>
                                     </div>
                                 </div>
                             ))}
-
                             {(!topic.uploads || topic.uploads.length === 0) && !uploading && (
                                 <div className="col-span-full py-12 flex flex-col items-center justify-center text-slate-400">
                                     <Upload className="w-12 h-12 mb-3 opacity-20" />
                                     <p className="font-medium">No has subido archivos manualmente.</p>
-                                    <p className="text-xs text-slate-400 mt-1">Haz clic en "Subir archivo" para añadir tus propios documentos</p>
                                 </div>
                             )}
                         </div>
                     ) : (
-                        /* 5. CONTENIDO: QUIZZES */
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className={styles.gridContainer}>
                             {topic.quizzes?.map((quiz) => {
                                 const style = getQuizIcon(quiz.type);
                                 return (
@@ -500,93 +461,22 @@ const Topic = ({ user }) => {
                                                 <span>15 min aprox</span>
                                             </div>
                                         </div>
-                                        
                                         <div className="p-6">
                                             <div className="mb-4">
                                                 <h4 className="font-bold text-slate-900 text-lg mb-1">{quiz.name}</h4>
                                                 <p className="text-xs text-slate-500 line-clamp-2">Pon a prueba tus conocimientos sobre {topic.title}.</p>
                                             </div>
-                                            
-                                            <button 
-                                                onClick={() => alert('Próximamente: Sistema de exámenes interactivos')} 
-                                                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-indigo-600 transition-all shadow-lg group-hover:shadow-indigo-200"
-                                            >
-                                                <Play className="w-4 h-4 fill-current" /> 
-                                                Comenzar Test
+                                            <button onClick={() => alert('Próximamente: Sistema de exámenes interactivos')} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-slate-900 text-white text-sm font-bold hover:bg-indigo-600 transition-all shadow-lg group-hover:shadow-indigo-200">
+                                                <Play className="w-4 h-4 fill-current" /> Comenzar Test
                                             </button>
                                         </div>
                                     </div>
                                 );
                             })}
-                            
-                            {(!topic.quizzes || topic.quizzes.length === 0) && (
-                                <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
-                                    <Sparkles className="w-12 h-12 mb-3 opacity-20" />
-                                    <p className="font-medium">No hay tests generados aún.</p>
-                                </div>
-                            )}
                         </div>
                     )}
                 </div>
             </main>
-
-            {/* Edit Modal */}
-            {showEditModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-2xl font-bold text-slate-900">Editar Tema</h3>
-                            <button onClick={() => setShowEditModal(false)} className="p-2 hover:bg-slate-100 rounded-lg">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        
-                        <form onSubmit={handleEditTopic} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                    Título del Tema
-                                </label>
-                                <input
-                                    type="text"
-                                    value={editFormData.title}
-                                    onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
-                                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                                    placeholder="Ej: Introducción a las derivadas"
-                                    required
-                                />
-                            </div>
-                            
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                    Instrucciones para la IA (opcional)
-                                </label>
-                                <textarea
-                                    value={editFormData.prompt}
-                                    onChange={(e) => setEditFormData({ ...editFormData, prompt: e.target.value })}
-                                    className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent h-24 resize-none"
-                                    placeholder="Personaliza cómo quieres que la IA genere el contenido..."
-                                />
-                            </div>
-                            
-                            <div className="flex gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowEditModal(false)}
-                                    className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 px-4 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
-                                >
-                                    Guardar Cambios
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
