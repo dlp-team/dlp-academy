@@ -458,11 +458,14 @@ const Topic = ({ user }) => {
                                     <div className="mt-4 pt-4 border-t border-slate-50 flex items-center gap-3">
                                         <a 
                                             href={upload.url} 
-                                            download 
+                                            target="_blank"              // <--- CAMBIO 1: Abre en nueva pestaña
+                                            rel="noopener noreferrer"    // <--- CAMBIO 2: Seguridad recomendada
+                                            // download                  // <--- CAMBIO 3: ELIMINADO (para permitir visualización)
                                             className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-slate-50 group-hover:bg-green-600 group-hover:text-white text-slate-600 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
                                         >
+                                            {/* Opcional: Cambiar el icono a 'Eye' o 'ExternalLink' si prefieres "Ver" en vez de "Descargar" */}
                                             <Download className="w-4 h-4" /> 
-                                            Descargar
+                                            Abrir
                                         </a>
                                     </div>
                                 </div>
