@@ -18,7 +18,7 @@ const Header = ({ user }) => {
             onClick={() => navigate('/home')}
         >
           <GraduationCap className="w-8 h-8 text-indigo-600" />
-          <h1 className="text-lg font-bold text-gray-900 tracking-tight">AI Classroom</h1>
+          <h1 className="text-lg font-bold text-gray-900 tracking-tight">DLP Academy</h1>
         </div>
         
         {/* Perfil Derecha */}
