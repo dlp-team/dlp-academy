@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, BookOpen, Trash2, Loader2 } from 'lucide-react';
-import { collection, addDoc, query, where, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { Plus, BookOpen, Trash2, Loader2, User, Globe, GraduationCap, Check } from 'lucide-react';
+// 1. Added updateDoc and getDoc to imports
+import { collection, addDoc, query, where, getDocs, deleteDoc, doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 import Header from '../components/layout/Header';
@@ -11,6 +12,7 @@ import DeleteModal from '../components/modals/DeleteModal';
 const Home = ({ user }) => {
     const navigate = useNavigate();
     
+    // --- EXISTING STATE ---
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showSubjectModal, setShowSubjectModal] = useState(false);
@@ -21,6 +23,13 @@ const Home = ({ user }) => {
         course: '', 
         color: 'from-blue-400 to-blue-600' 
     });
+
+    // --- 🟢 NEW: ONBOARDING STATE ---
+    const [showOnboarding, setShowOnboarding] = useState(false);
+    const [missingFields, setMissingFields] = useState([]); // Queue of fields to ask
+    const [currentStepIndex, setCurrentStepIndex] = useState(0);
+    const [onboardingData, setOnboardingData] = useState({});
+    const [isSavingProfile, setIsSavingProfile] = useState(false);
 
     const colorOptions = [
         { name: 'Azul', value: 'from-blue-400 to-blue-600' },
@@ -33,12 +42,35 @@ const Home = ({ user }) => {
         { name: 'Rosa Fucsia', value: 'from-pink-400 to-pink-600' }
     ];
 
-    // Load subjects on mount
+    // 1. CHECK USER PROFILE & LOAD SUBJECTS
     useEffect(() => {
-        const fetchSubjects = async () => {
+        const initData = async () => {
             if (!user) return;
 
             try {
+                // A. Check User Profile Integrity
+                const userDocRef = doc(db, "users", user.uid);
+                const userSnap = await getDoc(userDocRef);
+
+                if (userSnap.exists()) {
+                    const userData = userSnap.data();
+                    const requiredKeys = ['role', 'country', 'displayName']; // Fields we need to ask the user
+                    
+                    // Identify which fields are missing or empty
+                    const missing = requiredKeys.filter(key => !userData[key] || userData[key] === "");
+                    
+                    if (missing.length > 0) {
+                        setMissingFields(missing);
+                        setShowOnboarding(true);
+                        // We continue loading subjects in background, but user is blocked by overlay
+                    }
+                } else {
+                    // Critical: Doc doesn't exist at all (rare, but possible if manual delete)
+                    setMissingFields(['displayName', 'role', 'country']);
+                    setShowOnboarding(true);
+                }
+
+                // B. Load Subjects
                 const q = query(collection(db, "subjects"), where("uid", "==", user.uid));
                 const querySnapshot = await getDocs(q);
                 
@@ -47,16 +79,66 @@ const Home = ({ user }) => {
                     ...doc.data()
                 }));
                 setSubjects(loadedSubjects);
+
             } catch (error) {
-                console.error("Error loading subjects:", error);
+                console.error("Error initializing home:", error);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchSubjects();
+        initData();
     }, [user]);
 
+    // --- 🟢 ONBOARDING LOGIC ---
+
+    const handleOnboardingAnswer = async (key, value) => {
+        // 1. Update local buffer
+        const updatedData = { ...onboardingData, [key]: value };
+        setOnboardingData(updatedData);
+
+        // 2. Check if we have more steps
+        if (currentStepIndex < missingFields.length - 1) {
+            setCurrentStepIndex(prev => prev + 1);
+        } else {
+            // 3. Last step? Save everything to Firestore
+            await saveCompleteProfile(updatedData);
+        }
+    };
+
+    const saveCompleteProfile = async (finalData) => {
+        setIsSavingProfile(true);
+        try {
+            const userRef = doc(db, "users", user.uid);
+            
+            // Prepare the payload
+            const payload = {
+                ...finalData,
+                // Ensure technical fields are present if they were missing
+                uid: user.uid,
+                email: user.email, 
+                lastLogin: serverTimestamp(),
+                // Only add createdAt if it doesn't exist (using updateDoc usually merges, but safely handling here)
+            };
+
+            // Use setDoc with merge:true or updateDoc. 
+            // Since we know the doc exists (or we want to create it), updateDoc is safer if we checked existence,
+            // but setDoc with merge is robust.
+            await updateDoc(userRef, payload); // Using updateDoc assuming doc exists from check
+
+            setShowOnboarding(false);
+            // Optionally reload page or state to reflect changes
+            window.location.reload(); 
+
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            alert("Hubo un error guardando tu perfil.");
+        } finally {
+            setIsSavingProfile(false);
+        }
+    };
+
+    // --- EXISTING HANDLERS ---
     const handleCreateSubject = async () => {
         if (!subjectFormData.name.trim() || !subjectFormData.course.trim()) return;
         
@@ -103,7 +185,78 @@ const Home = ({ user }) => {
         navigate(`/home/subject/${subject.id}`);
     };
 
-    if (!user) {
+    // --- RENDER HELPERS ---
+    const renderOnboardingStep = () => {
+        const currentField = missingFields[currentStepIndex];
+
+        switch (currentField) {
+            case 'role':
+                return (
+                    <div className="animate-fadeIn">
+                        <div className="flex justify-center mb-4"><GraduationCap size={48} className="text-indigo-600"/></div>
+                        <h3 className="text-2xl font-bold text-center mb-2">¿Cuál es tu rol?</h3>
+                        <p className="text-gray-500 text-center mb-6">Para personalizar tu experiencia.</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            <button onClick={() => handleOnboardingAnswer('role', 'student')} className="p-4 border-2 rounded-xl hover:border-indigo-600 hover:bg-indigo-50 transition-all">
+                                <span className="text-3xl block mb-2">👨‍🎓</span>
+                                <span className="font-semibold">Estudiante</span>
+                            </button>
+                            <button onClick={() => handleOnboardingAnswer('role', 'teacher')} className="p-4 border-2 rounded-xl hover:border-indigo-600 hover:bg-indigo-50 transition-all">
+                                <span className="text-3xl block mb-2">👨‍🏫</span>
+                                <span className="font-semibold">Docente</span>
+                            </button>
+                        </div>
+                    </div>
+                );
+            case 'country':
+                return (
+                    <div className="animate-fadeIn">
+                        <div className="flex justify-center mb-4"><Globe size={48} className="text-emerald-600"/></div>
+                        <h3 className="text-2xl font-bold text-center mb-2">¿De dónde eres?</h3>
+                        <p className="text-gray-500 text-center mb-6">Te asignaremos contenido regional.</p>
+                        <select 
+                            className="w-full p-3 border rounded-lg text-lg bg-white"
+                            onChange={(e) => handleOnboardingAnswer('country', e.target.value)}
+                            value=""
+                        >
+                            <option value="" disabled>Selecciona tu país...</option>
+                            <option value="es">España 🇪🇸</option>
+                            <option value="mx">México 🇲🇽</option>
+                            <option value="ar">Argentina 🇦🇷</option>
+                            <option value="co">Colombia 🇨🇴</option>
+                            <option value="cl">Chile 🇨🇱</option>
+                            <option value="other">Otro 🌍</option>
+                        </select>
+                    </div>
+                );
+            case 'displayName':
+                return (
+                    <div className="animate-fadeIn">
+                        <div className="flex justify-center mb-4"><User size={48} className="text-blue-600"/></div>
+                        <h3 className="text-2xl font-bold text-center mb-2">¿Cómo te llamas?</h3>
+                        <p className="text-gray-500 text-center mb-6">Así te verán tus compañeros.</p>
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            const formData = new FormData(e.target);
+                            const fullName = `${formData.get('fname')} ${formData.get('lname')}`;
+                            if(fullName.trim().length > 2) handleOnboardingAnswer('displayName', fullName);
+                        }}>
+                            <div className="space-y-4">
+                                <input name="fname" placeholder="Nombre" className="w-full p-3 border rounded-lg" required />
+                                <input name="lname" placeholder="Apellidos" className="w-full p-3 border rounded-lg" required />
+                                <button type="submit" className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700">
+                                    Continuar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    if (!user || loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <div className="flex flex-col items-center gap-4">
@@ -174,6 +327,8 @@ const Home = ({ user }) => {
                 </div>
             </main>
 
+            {/* --- MODALS --- */}
+
             <SubjectModal 
                 isOpen={showSubjectModal} 
                 onClose={() => setShowSubjectModal(false)} 
@@ -189,6 +344,34 @@ const Home = ({ user }) => {
                 onConfirm={confirmDelete} 
                 itemName={subjectToDelete?.name} 
             />
+
+            {/* 🟢 ONBOARDING OVERLAY (Blocker) */}
+            {showOnboarding && (
+                <div className="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full relative overflow-hidden">
+                        {/* Progress Bar */}
+                        <div className="absolute top-0 left-0 h-2 bg-indigo-100 w-full">
+                            <div 
+                                className="h-full bg-indigo-600 transition-all duration-500"
+                                style={{ width: `${((currentStepIndex) / missingFields.length) * 100}%` }}
+                            />
+                        </div>
+
+                        {isSavingProfile ? (
+                            <div className="flex flex-col items-center py-8">
+                                <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
+                                <p className="text-lg font-medium text-gray-700">Guardando tu perfil...</p>
+                            </div>
+                        ) : (
+                            renderOnboardingStep()
+                        )}
+                        
+                        <div className="mt-6 text-center text-xs text-gray-400">
+                            Paso {currentStepIndex + 1} de {missingFields.length}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import styles from '../styles/Register.module.css';
 import { GraduationCap, Mail, Lock, Check } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'; // <--- IMPORT THIS
 
-// 👇 IMPORTACIONES IMPORTANTES DE FIREBASE
 import { auth, db } from "../firebase/config"; 
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore'; 
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; 
 
 const Register = () => {
-    // Estados para el formulario
+    const navigate = useNavigate(); // <--- INITIALIZE HOOK
+
+    // Form State
     const [formData, setFormData] = useState({
         userType: 'student',
         firstName: '',
@@ -16,14 +18,14 @@ const Register = () => {
         email: '',
         country: '',
         password: '',
-        confirmPassword: ''
+        confirmPassword: '',
+        rememberMe: false 
     });
 
     const [strength, setStrength] = useState(0);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(''); // Para mostrar errores reales
+    const [error, setError] = useState('');
 
-    // Calcular fuerza contraseña
     const checkStrength = (pass) => {
         let s = 0;
         if (pass.length >= 8) s++;
@@ -34,13 +36,15 @@ const Register = () => {
     };
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-        
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({ 
+            ...prev, 
+            [name]: type === 'checkbox' ? checked : value 
+        }));
         if (name === 'password') checkStrength(value);
     };
 
-    // --- 🟢 AQUÍ ESTÁ LA LÓGICA DE REGISTRO ---
+    // --- SUBMIT LOGIC ---
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
@@ -53,42 +57,49 @@ const Register = () => {
         setLoading(true);
 
         try {
-            // 1. CREAR EL USUARIO EN AUTH
+            // 1. Create User in Auth
             const userCredential = await createUserWithEmailAndPassword(
                 auth, 
                 formData.email, 
                 formData.password
             );
             const user = userCredential.user;
-
-            // 2. 📛 ACTUALIZAR EL NOMBRE VISIBLE (Esto es lo que pediste)
             const fullName = `${formData.firstName} ${formData.lastName}`;
+
+            // 2. Update Display Name in Auth
             await updateProfile(user, {
                 displayName: fullName
             });
 
-            // 3. GUARDAR DATOS EXTRA EN FIRESTORE (Como el rol de Estudiante/Profe)
+            // 3. Save User Data to Firestore
             await setDoc(doc(db, "users", user.uid), {
                 uid: user.uid,
                 displayName: fullName,
                 email: formData.email,
-                role: formData.userType, // Guardamos si es estudiante o profe
+                role: formData.userType,
                 country: formData.country,
-                createdAt: new Date()
+                rememberMe: formData.rememberMe,
+                lastLogin: serverTimestamp(),
+                createdAt: serverTimestamp()
             });
 
-            console.log("Usuario creado:", user.displayName);
-            alert("¡Cuenta creada! Ahora puedes iniciar sesión.");
-            
-            // Opcional: Redirigir o limpiar
-            // window.location.reload(); // Para forzar que la app detecte el login
+            // 4. SUCCESS: Redirect to Login
+            alert("¡Registro exitoso! Redirigiendo al inicio de sesión...");
+            navigate('/login'); 
 
         } catch (err) {
             console.error("Error al registrar:", err);
-            // Mensajes de error amigables
-            if (err.code === 'auth/email-already-in-use') setError("Este correo ya está registrado.");
-            else if (err.code === 'auth/weak-password') setError("La contraseña es muy débil.");
-            else setError("Error al crear la cuenta: " + err.message);
+            
+            // 5. ERROR HANDLING
+            if (err.code === 'auth/email-already-in-use') {
+                setError("Este correo ya está registrado.");
+            } else if (err.code === 'auth/weak-password') {
+                setError("La contraseña es muy débil.");
+            } else {
+                // Generic error for Firestore failures or other issues
+                setError("Ha ocurrido un error inesperado. Por favor, inténtalo más tarde.");
+                alert("Error al guardar los datos. Por favor, verifica tu conexión o inténtalo más tarde.");
+            }
         } finally {
             setLoading(false);
         }
@@ -98,12 +109,12 @@ const Register = () => {
         <div className={styles.registerPageWrapper}>
             <div className={styles.registerContainer}>
                 
-                {/* LADO IZQUIERDO */}
+                {/* LEFT SIDE */}
                 <div className={styles.registerLeft}>
                     <div className={styles.logoSection}>
                         <div className={styles.logo}>
                             <div className={styles.logoIcon}>
-                                <GraduationCap size={32} color="#333" />
+                                <GraduationCap size={32} color="#5539c6" />
                             </div>
                             <div className={styles.logoText}>
                                 <h1>DLP ACADEMY</h1>
@@ -129,18 +140,17 @@ const Register = () => {
                     </div>
                 </div>
 
-                {/* LADO DERECHO (Formulario) */}
+                {/* RIGHT SIDE (Form) */}
                 <div className={styles.registerRight}>
                     <div className={styles.registerHeader}>
                         <h2>Crear Cuenta</h2>
                         <p>Completa el formulario para registrarte</p>
                     </div>
 
-                    {/* MOSTRAR ERROR SI EXISTE */}
                     {error && <div className={styles.errorMessage}>{error}</div>}
 
                     <form onSubmit={handleSubmit}>
-                        {/* Tipo de Usuario */}
+                        {/* User Type */}
                         <div className={styles.formGroup}>
                             <label>Tipo de Usuario</label>
                             <div className={styles.userType}>
@@ -175,7 +185,7 @@ const Register = () => {
                             </div>
                         </div>
 
-                        {/* Nombre y Apellidos */}
+                        {/* Name Fields */}
                         <div className={styles.formRow}>
                             <div className={styles.formGroup}>
                                 <label>Nombre</label>
@@ -200,7 +210,7 @@ const Register = () => {
                             </div>
                         </div>
                         
-                        {/* Selección de País */}
+                        {/* Country */}
                          <div className={styles.formGroup}>
                             <label>País</label>
                             <div className={`${styles.inputWrapper} ${styles.noIcon}`}>
@@ -216,7 +226,7 @@ const Register = () => {
                             </div>
                         </div>
 
-                        {/* Contraseña */}
+                        {/* Password */}
                         <div className={styles.formGroup}>
                             <label>Contraseña</label>
                             <div className={styles.inputWrapper}>
@@ -241,13 +251,27 @@ const Register = () => {
                             )}
                         </div>
                         
-                        {/* Confirmar Contraseña */}
+                        {/* Confirm Password */}
                         <div className={styles.formGroup}>
                             <label>Confirmar Contraseña</label>
                             <div className={styles.inputWrapper}>
                                 <span className={styles.inputIcon}><Lock size={18}/></span>
                                 <input type="password" name="confirmPassword" placeholder="Repite la contraseña" onChange={handleChange} required />
                             </div>
+                        </div>
+
+                        {/* Remember Me */}
+                        <div className={styles.formOptions} style={{marginBottom: '15px', display:'flex', alignItems:'center', gap: '8px'}}>
+                            <input 
+                                type="checkbox" 
+                                name="rememberMe" 
+                                id="rememberMe"
+                                checked={formData.rememberMe}
+                                onChange={handleChange}
+                            />
+                            <label htmlFor="rememberMe" style={{margin:0, fontSize: '14px', color: '#4a5568'}}>
+                                Recordarme en este dispositivo
+                            </label>
                         </div>
 
                         <label className={styles.termsCheckbox}>
@@ -261,7 +285,7 @@ const Register = () => {
                     </form>
 
                     <div className={styles.loginLink}>
-                        ¿Ya tienes cuenta? <a href="#">Inicia sesión aquí</a>
+                        ¿Ya tienes cuenta? <a href="/login">Inicia sesión aquí</a>
                     </div>
                 </div>
             </div>
