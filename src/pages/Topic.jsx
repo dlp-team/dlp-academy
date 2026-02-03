@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
     ChevronLeft, FileText, Download, Play, Loader2, 
@@ -6,7 +6,7 @@ import {
     Timer, Sparkles, Home, Trash2, Edit2, Share2, Upload,
     X, GripVertical
 } from 'lucide-react';
-import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
 import Header from '../components/layout/Header';
@@ -14,10 +14,12 @@ import Header from '../components/layout/Header';
 const Topic = ({ user }) => {
     const navigate = useNavigate();
     const { subjectId, topicId } = useParams();
+    const fileInputRef = useRef(null);
     
     const [subject, setSubject] = useState(null);
     const [topic, setTopic] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [uploading, setUploading] = useState(false); // State for manual upload spinner
     const [activeTab, setActiveTab] = useState('materials');
     const [showMenu, setShowMenu] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -51,10 +53,15 @@ const Topic = ({ user }) => {
                                 ...doc.data()
                             }));
 
-                            // Separar por tipo
-                            const pdfs = allDocs.filter(d => d.type === 'pdf' || d.type === 'summary');
+                            // --- LOGIC CHANGE: Filter by 'source' field ---
+                            // AI Materials: PDFs/Summaries that are NOT manual
+                            const pdfs = allDocs.filter(d => (d.type === 'pdf' || d.type === 'summary') && d.source !== 'manual');
+                            
+                            // Quizzes: Always generated
                             const quizzes = allDocs.filter(d => d.type === 'quiz');
-                            const uploads = allDocs.filter(d => d.type === 'upload');
+                            
+                            // Manual Uploads: Explicitly marked as manual
+                            const uploads = allDocs.filter(d => d.source === 'manual');
 
                             setTopic({ ...topicData, pdfs, quizzes, uploads });
                             setLoading(false);
@@ -84,6 +91,39 @@ const Topic = ({ user }) => {
             }
         };
     }, [user, subjectId, topicId, navigate]);
+
+    // --- NEW: Handle Manual File Upload ---
+    const handleManualUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        setUploading(true);
+        try {
+            const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
+            
+            const uploadPromises = files.map(file => {
+                return addDoc(docsRef, {
+                    name: file.name,
+                    type: file.type.includes('pdf') ? 'pdf' : 'doc', // Simple type check
+                    size: file.size,
+                    source: 'manual', // <--- THE KEY IDENTIFIER
+                    uploadedAt: serverTimestamp(),
+                    url: '#', // Placeholder: In real app, you'd upload to Storage first and get URL
+                    status: 'ready'
+                });
+            });
+
+            await Promise.all(uploadPromises);
+            
+            // Reset input
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        } catch (error) {
+            console.error("Error uploading file:", error);
+            alert("Error al subir el archivo.");
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const handleEditTopic = async (e) => {
         e.preventDefault();
@@ -154,7 +194,7 @@ const Topic = ({ user }) => {
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     
-                    {/* 1. BREADCRUMBS (Navegación Superior) */}
+                    {/* 1. BREADCRUMBS */}
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
                             <button onClick={() => navigate('/home')} className="hover:text-indigo-600 transition-colors flex items-center gap-1">
@@ -217,11 +257,11 @@ const Topic = ({ user }) => {
                         </div>
                     </div>
 
-                    {/* 2. HERO HEADER (Título y Progreso) */}
+                    {/* 2. HERO HEADER */}
                     <div className="mb-10 pb-8 border-b border-slate-200">
                         <div className="flex flex-col md:flex-row items-start gap-8">
                             
-                            {/* Número Grande */}
+                            {/* Icono Grande */}
                             <div className={`w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br ${topic.color || 'from-blue-500 to-indigo-600'} flex items-center justify-center shadow-2xl shadow-indigo-500/20 transform -rotate-2 transition-transform hover:rotate-0`}>
                                 <span className="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-md">
                                     {topic.number}
@@ -243,7 +283,7 @@ const Topic = ({ user }) => {
                                     {topic.title}
                                 </h2>
 
-                                {/* Barra de Progreso Visual */}
+                                {/* Barra de Progreso */}
                                 <div className="flex items-center gap-4 max-w-md pt-2">
                                     <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
                                         <div className={`h-full bg-indigo-500 rounded-full transition-all duration-1000 ${topic.quizzes?.length > 0 ? 'w-1/2' : 'w-1/12'}`}></div>
@@ -361,16 +401,33 @@ const Topic = ({ user }) => {
                     ) : activeTab === 'uploads' ? (
                         /* 4B. CONTENIDO: ARCHIVOS SUBIDOS MANUALMENTE */
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {/* Hidden Input */}
+                            <input 
+                                type="file" 
+                                ref={fileInputRef} 
+                                onChange={handleManualUpload} 
+                                multiple 
+                                hidden 
+                                accept=".pdf,.doc,.docx" 
+                            />
+
                             {/* Upload Area */}
                             <button 
-                                onClick={() => alert('Función de subida de archivos próximamente')}
+                                onClick={() => fileInputRef.current.click()}
+                                disabled={uploading}
                                 className="group border-2 border-dashed border-slate-300 hover:border-indigo-400 rounded-2xl p-8 flex flex-col items-center justify-center gap-3 h-52 bg-white hover:bg-indigo-50/50 transition-all"
                             >
-                                <div className="w-16 h-16 rounded-full bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
-                                    <Upload className="w-8 h-8 text-indigo-600" />
-                                </div>
+                                {uploading ? (
+                                    <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                                ) : (
+                                    <div className="w-16 h-16 rounded-full bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
+                                        <Upload className="w-8 h-8 text-indigo-600" />
+                                    </div>
+                                )}
                                 <div className="text-center">
-                                    <p className="font-bold text-slate-700 group-hover:text-indigo-600 mb-1">Subir archivo</p>
+                                    <p className="font-bold text-slate-700 group-hover:text-indigo-600 mb-1">
+                                        {uploading ? 'Subiendo...' : 'Subir archivo'}
+                                    </p>
                                     <p className="text-xs text-slate-500">PDF, DOCX, hasta 10MB</p>
                                 </div>
                             </button>
@@ -393,7 +450,7 @@ const Topic = ({ user }) => {
                                             </h4>
                                             <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
                                                 <span className="uppercase bg-green-100 text-green-700 px-1.5 rounded text-[10px] tracking-wide">MANUAL</span>
-                                                <span>• {upload.size || '2.4 MB'}</span>
+                                                <span>• {upload.size ? (upload.size / 1024 / 1024).toFixed(2) + ' MB' : 'Archivo'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -411,7 +468,7 @@ const Topic = ({ user }) => {
                                 </div>
                             ))}
 
-                            {(!topic.uploads || topic.uploads.length === 0) && (
+                            {(!topic.uploads || topic.uploads.length === 0) && !uploading && (
                                 <div className="col-span-full py-12 flex flex-col items-center justify-center text-slate-400">
                                     <Upload className="w-12 h-12 mb-3 opacity-20" />
                                     <p className="font-medium">No has subido archivos manualmente.</p>
@@ -512,50 +569,18 @@ const Topic = ({ user }) => {
                                 <button
                                     type="button"
                                     onClick={() => setShowEditModal(false)}
-                                    className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-semibold text-slate-700 hover:bg-slate-50"
+                                    className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     type="submit"
-                                    className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700"
+                                    className="flex-1 px-4 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
                                 >
                                     Guardar Cambios
                                 </button>
                             </div>
                         </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Delete Confirmation Modal */}
-            {showDeleteModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-                        <div className="text-center mb-6">
-                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <Trash2 className="w-8 h-8 text-red-600" />
-                            </div>
-                            <h3 className="text-2xl font-bold text-slate-900 mb-2">¿Eliminar tema?</h3>
-                            <p className="text-slate-600">
-                                Esta acción no se puede deshacer. Se eliminarán todos los materiales y tests asociados.
-                            </p>
-                        </div>
-                        
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setShowDeleteModal(false)}
-                                className="flex-1 px-4 py-3 border border-slate-300 rounded-xl font-semibold text-slate-700 hover:bg-slate-50"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleDeleteTopic}
-                                className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700"
-                            >
-                                Eliminar
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}

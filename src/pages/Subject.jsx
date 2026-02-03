@@ -156,28 +156,29 @@ const Subject = ({ user }) => {
 
     const handleCreateTopic = async (e) => {
         if (e) e.preventDefault();
-        
-        // RETRY LOGIC
+        if (!selectedSubject?.id) return;
+
+        // --- 🅰️ RETRY LOGIC ---
         if (retryTopicId) {
             const filesToSend = files.length > 0 ? files : (fileCache[retryTopicId] || []);
 
             if (filesToSend.length === 0) {
-                alert("⚠️ Please drag the PDF again before continuing.");
+                alert("⚠️ Por favor, vuelve a arrastrar el PDF antes de continuar.");
                 return;
             }
 
             const updatedTopics = topics.map(t => 
                 t.id === retryTopicId 
-                    ? { ...t, title: topicFormData.title, prompt: topicFormData.prompt, status: 'generating', color: subject.color } 
+                    ? { ...t, status: 'generating' } 
                     : t
             );
             
-            updateSubjectTopics(updatedTopics);
+            setTopics(updatedTopics);
             setShowTopicModal(false);
-            
             setFileCache(prev => ({...prev, [retryTopicId]: filesToSend}));
 
-            sendToN8N(retryTopicId, updatedTopics, topicFormData, filesToSend);
+            // Trigger n8n with both IDs
+            sendToN8N(selectedSubject.id, retryTopicId, topicFormData, filesToSend);
             
             setRetryTopicId(null);
             setTopicFormData({ title: '', prompt: '' });
@@ -185,43 +186,51 @@ const Subject = ({ user }) => {
             return;
         }
 
-        // NEW TOPIC LOGIC
-        const newTopic = {
-            title: topicFormData.title,
-            prompt: topicFormData.prompt,
-            status: 'generating',
-            color: subject.color,
-            createdAt: serverTimestamp(),
-            order: topics.length + 1
-        };
+        // --- 🅱️ NEW TOPIC LOGIC ---
+        try {
+            const topicsRef = collection(db, "subjects", selectedSubject.id, "topics");
 
-        const topicsRef = collection(db, "subjects", subjectId, "topics");
-        const docRef = await addDoc(topicsRef, newTopic);
-        const topicId = docRef.id;
-        
-        if (files.length > 0) {
-            const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
+            const newTopic = {
+                title: topicFormData.title,
+                prompt: topicFormData.prompt,
+                status: 'generating',
+                color: selectedSubject.color,
+                createdAt: serverTimestamp(),
+                order: topics.length + 1
+            };
+
+            const docRef = await addDoc(topicsRef, newTopic);
+            const topicId = docRef.id;
             
-            const uploadPromises = files.map(file => {
-                return addDoc(docsRef, {
-                    name: file.name,
-                    type: file.type,
-                    size: file.size,
-                    uploadedAt: serverTimestamp(),
-                    status: 'processing' 
+            // Save manually uploaded files
+            if (files.length > 0) {
+                const docsRef = collection(db, "subjects", selectedSubject.id, "topics", topicId, "documents");
+                
+                const uploadPromises = files.map(file => {
+                    return addDoc(docsRef, {
+                        name: file.name,
+                        type: 'pdf',
+                        size: file.size,
+                        source: 'manual',
+                        uploadedAt: serverTimestamp(),
+                        status: 'ready' 
+                    });
                 });
-            });
-            await Promise.all(uploadPromises);
+                await Promise.all(uploadPromises);
+            }
+
+            const finalTopic = { id: topicId, ...newTopic };
+            setTopics(prev => [...prev, finalTopic]); 
+            
+            // Notify n8n
+            sendToN8N(selectedSubject.id, topicId, topicFormData, files);
+
+            setShowTopicModal(false);
+            setTopicFormData({ title: '', prompt: '' });
+            setFiles([]);
+        } catch (error) {
+            console.error("Error creating topic:", error);
         }
-
-        const finalTopic = { id: topicId, ...newTopic };
-        setTopics(prev => [...prev, finalTopic]); 
-        
-        sendToN8N(subjectId, topicId, topicFormData, files);
-
-        setShowTopicModal(false);
-        setTopicFormData({ title: '', prompt: '' });
-        setFiles([]);
     };
 
     const handleRetryTopic = (e, topic) => {
