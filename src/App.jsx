@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 
 // Main app pages
 import Home from './pages/Home';
@@ -111,6 +112,15 @@ function App() {
           element={
             <ProtectedRoute user={user} loading={loading}>
               <Profile user={user} />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/settings" 
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <Settings user={user} />
             </ProtectedRoute>
           } 
         />

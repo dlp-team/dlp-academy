@@ -1,20 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, LogOut, User as UserIcon } from 'lucide-react';
+// Added 'Settings' to imports
+import { GraduationCap, LogOut, User as UserIcon, Settings } from 'lucide-react';
 
 const Header = ({ user }) => {
   const navigate = useNavigate();
 
-  // 1. Logic to determine the Display Name
-  // With your data, this will return "Alex Maloliente" immediately.
   const getDisplayName = () => {
     if (user?.displayName) return user.displayName;
     if (user?.email) return user.email.split('@')[0];
     return 'Usuario';
   };
 
-  // 2. Logic to get initials (Fallback if image fails)
-  // "Alex Maloliente" -> "A"
   const getInitials = () => {
     const name = getDisplayName();
     return name && name.length > 0 ? name.charAt(0).toUpperCase() : 'U';
@@ -40,42 +37,51 @@ const Header = ({ user }) => {
           </h1>
         </div>
         
-        {/* --- RIGHT: USER PROFILE --- */}
-        <div 
-            className="flex items-center gap-4 pl-4 border-l border-gray-100 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => navigate('/profile')} 
-        >
-            {/* Text Info */}
-            <div className="text-right hidden sm:block">
-                <h2 className="font-bold text-sm text-gray-800 leading-tight">
-                    {displayName}
-                </h2>
-                <p className="text-xs text-gray-500 font-medium">
-                    {user?.email}
-                </p>
-            </div>
+        {/* --- RIGHT: ACTIONS & PROFILE --- */}
+        <div className="flex items-center gap-2">
 
-            {/* AVATAR */}
-            <div className="relative">
-                {user?.photoURL ? (
-                    <img 
-                        src={user.photoURL} 
-                        alt={displayName} 
-                        referrerPolicy="no-referrer"
-                        className="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover hover:scale-105 transition-transform"
-                        onError={(e) => {
-                            // If the Base64 string is corrupt or image fails, hide img and show fallback
-                            e.target.style.display = 'none';
-                            // Logic to show a fallback div could go here, 
-                            // but usually, we just let the React conditional below handle it if photoURL was null.
-                            // Since photoURL is NOT null here, the image tag renders. 
-                        }}
-                    />
-                ) : (
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md hover:scale-105 transition-transform">
-                        {initials}
-                    </div>
-                )}
+            {/* 1. SETTINGS BUTTON */}
+            <button 
+                onClick={() => navigate('/settings')}
+                className="p-2.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all duration-200"
+                title="Configuración"
+            >
+                <Settings size={20} />
+            </button>
+
+            {/* 2. USER PROFILE (Clickable Area) */}
+            <div 
+                className="flex items-center gap-4 pl-4 border-l border-gray-200 ml-2 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => navigate('/profile')} 
+            >
+                {/* Text Info */}
+                <div className="text-right hidden sm:block">
+                    <h2 className="font-bold text-sm text-gray-800 leading-tight">
+                        {displayName}
+                    </h2>
+                    <p className="text-xs text-gray-500 font-medium">
+                        {user?.email}
+                    </p>
+                </div>
+
+                {/* AVATAR */}
+                <div className="relative">
+                    {user?.photoURL ? (
+                        <img 
+                            src={user.photoURL} 
+                            alt={displayName} 
+                            referrerPolicy="no-referrer"
+                            className="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover hover:scale-105 transition-transform"
+                            onError={(e) => {
+                                e.target.style.display = 'none';
+                            }}
+                        />
+                    ) : (
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md hover:scale-105 transition-transform">
+                            {initials}
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
 
