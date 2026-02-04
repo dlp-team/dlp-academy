@@ -405,7 +405,11 @@ const Home = ({ user }) => {
                                                     The logic relies on the hover state of the parent .group container.
                                                     DO NOT CHANGE OR REMOVE THIS ANIMATION LOGIC.
                                                 */}
-                                                <div className="absolute top-6 right-6 z-20 transition-all duration-300 ease-out group-hover:-translate-x-12">
+                                                <div className={`absolute top-6 right-6 z-20 transition-all duration-300 ease-out group-hover:-translate-x-12 ${
+                                                    activeMenu === subject.id ? '-translate-x-12' : ''
+                                                }`}>
+
+                                                    {/* This inner div stays mostly the same, just keeping your styling */}
                                                     <div 
                                                         onClick={(e) => toggleFlip(e, subject.id)}
                                                         className="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-1.5 rounded-full text-white cursor-pointer hover:bg-white/40 hover:scale-105 flex items-center gap-2 shadow-sm"
