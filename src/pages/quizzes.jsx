@@ -1,15 +1,94 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
     ChevronLeft, Timer, CheckCircle2, XCircle, ArrowRight, 
-    RefreshCcw, Award, Sigma, X, Brain, HelpCircle, Volume2 
+    RefreshCcw, Award, Sigma, X, Brain, BookOpen, Sparkles,
+    TrendingUp, Target, Zap, Star, Trophy
 } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import confetti from 'canvas-confetti'; // npm install canvas-confetti
+
+// Importamos el Header Global
+import Header from '../components/layout/Header';
 
 import 'katex/dist/katex.min.css';
 import { BlockMath, InlineMath } from 'react-katex';
+
+// --- COMPONENTES UI REUTILIZABLES ---
+
+// 1. Confeti CSS
+const ConfettiEffect = ({ triggerKey, accentColor = '#4f46e5' }) => {
+    if (!triggerKey) return null;
+
+    const pieces = useMemo(() => {
+        return Array.from({ length: 30 }).map((_, i) => {
+            const angle = Math.random() * 360;
+            const velocity = 60 + Math.random() * 100; 
+            const tx = Math.cos(angle * Math.PI / 180) * velocity;
+            const ty = (Math.sin(angle * Math.PI / 180) * velocity) - 60; 
+
+            return {
+                id: i,
+                left: 50, 
+                top: 50,
+                color: Math.random() > 0.5 ? '#FBBF24' : accentColor, 
+                size: Math.random() * 6 + 4,
+                tx: `${tx}px`,
+                ty: `${ty}px`,
+                rot: `${Math.random() * 360}deg`,
+                delay: `${Math.random() * 0.2}s`,
+                duration: `${0.8 + Math.random() * 0.4}s`
+            };
+        });
+    }, [triggerKey, accentColor]);
+
+    return (
+        <div className="fixed inset-0 pointer-events-none z-[9999] flex items-center justify-center overflow-hidden">
+            {pieces.map((piece) => (
+                <div
+                    key={piece.id}
+                    className="absolute rounded-full animate-burst"
+                    style={{
+                        backgroundColor: piece.color,
+                        width: `${piece.size}px`,
+                        height: `${piece.size}px`,
+                        '--tx': piece.tx,
+                        '--ty': piece.ty,
+                        '--rot': piece.rot,
+                        animationDuration: piece.duration,
+                        animationDelay: piece.delay,
+                        left: '50%',
+                        top: '40%'
+                    }}
+                />
+            ))}
+            <style>{`
+                @keyframes burst {
+                    0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+                    20% { opacity: 1; }
+                    100% { 
+                        transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--rot)) scale(0); 
+                        opacity: 0; 
+                    }
+                }
+                .animate-burst {
+                    animation-name: burst;
+                    animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+                    animation-fill-mode: forwards;
+                }
+            `}</style>
+        </div>
+    );
+};
+
+// 2. Visualizador de Fórmulas
+const FormulaDisplay = ({ formula, size = 'text-2xl' }) => (
+    <div className={`${size} font-serif text-slate-800 select-text overflow-x-auto py-2`}>
+        <BlockMath math={formula} />
+    </div>
+);
+
+// --- COMPONENTE PRINCIPAL ---
 
 const Quizzes = ({ user }) => {
     const { subjectId, topicId, quizId } = useParams();
@@ -17,81 +96,98 @@ const Quizzes = ({ user }) => {
 
     // --- ESTADOS ---
     const [loading, setLoading] = useState(true);
-    const [viewState, setViewState] = useState('loading'); // loading, review, quiz, results
+    const [viewState, setViewState] = useState('loading'); 
     const [quizData, setQuizData] = useState(null);
     
     // Configuración Visual
-    const [accentColor, setAccentColor] = useState('indigo'); 
-    const [gradientClass, setGradientClass] = useState('from-indigo-500 to-purple-600');
+    const [accentColor, setAccentColor] = useState('#4f46e5');
+    const [accentLight, setAccentLight] = useState('#eef2ff'); 
 
-    // Estados del Juego
+    // Juego
     const [currentStep, setCurrentStep] = useState(0);
     const [selectedAnswer, setSelectedAnswer] = useState(null);
-    const [answerStatus, setAnswerStatus] = useState('idle'); // idle, correct, incorrect
+    const [answerStatus, setAnswerStatus] = useState('idle');
     const [correctCount, setCorrectCount] = useState(0);
     const [finalScore, setFinalScore] = useState(0);
-    const [streak, setStreak] = useState(0); // Racha de aciertos
+    
+    // Control de Confeti
+    const [confettiTrigger, setConfettiTrigger] = useState(0);
+    
+    const [isSaving, setIsSaving] = useState(false);
 
-    // --- EFECTOS DE SONIDO (Simulados - Implementar con useSound si deseas) ---
-    const playSound = (type) => {
-        // Aquí podrías integrar 'use-sound' para reproducir 'pop.mp3', 'success.mp3', etc.
-        // console.log(`Playing sound: ${type}`);
-    };
+    // --- NAVEGACIÓN ---
+    const handleGoBack = () => navigate(`/home/subject/${subjectId}`);
 
     // --- CARGA DE DATOS ---
     useEffect(() => {
         const loadData = async () => {
+            const MOCK_DATA = {
+                title: "Test de Prueba",
+                subtitle: "Matemáticas Básicas",
+                formulas: [
+                    { display: "E = mc^2", description: "Relatividad" },
+                    { display: "a^2 + b^2 = c^2", description: "Pitágoras" }
+                ],
+                questions: [
+                    {
+                        question: "Calcula la derivada de 3x^2:",
+                        formula: "f(x) = 3x^2",
+                        options: ["6x", "3x", "x^2", "6"],
+                        correctIndex: 0
+                    },
+                    {
+                        question: "¿Integral de x dx?",
+                        formula: "\\int x dx",
+                        options: ["1", "x^2/2", "x", "2x"],
+                        correctIndex: 1
+                    }
+                ]
+            };
+
             if (!user) return;
 
             try {
-                // 1. Cargar Tema para Estilos
+                // 1. Obtener Color
                 const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
                 const topicSnap = await getDoc(topicRef);
                 
                 if (topicSnap.exists()) {
                     const tData = topicSnap.data();
+                    const colorMap = {
+                        'blue': '#2563eb', 'indigo': '#4f46e5', 'purple': '#9333ea', 
+                        'green': '#16a34a', 'red': '#dc2626', 'orange': '#ea580c',
+                        'amber': '#d97706', 'teal': '#0d9488', 'cyan': '#0891b2'
+                    };
+                    
                     if (tData.color) {
-                        setGradientClass(tData.color);
-                        const firstPart = tData.color.split(' ')[0];
-                        const cleanColor = firstPart.replace('from-', '').split('-')[0];
-                        if (cleanColor) setAccentColor(cleanColor);
+                        const cleanColorName = tData.color.split(' ')[0].replace('from-', '').split('-')[0];
+                        if (colorMap[cleanColorName]) {
+                            setAccentColor(colorMap[cleanColorName]);
+                            setAccentLight(`${colorMap[cleanColorName]}15`);
+                        }
                     }
                 }
 
-                // 2. Cargar Quiz o Mock
-                const MOCK_DATA = {
-                    title: "Test de Prueba (Modo Demo)",
-                    formulas: [
-                        "\\frac{d}{dx}(x^n) = nx^{n-1}",
-                        "\\int x^n dx = \\frac{x^{n+1}}{n+1} + C",
-                        "E = mc^2"
-                    ],
-                    questions: [
-                        {
-                            question: "Calcula la derivada de la siguiente función:",
-                            formula: "f(x) = 3x^2 + 5x",
-                            options: ["6x + 5", "3x + 5", "6x", "x^2 + 5"],
-                            correctIndex: 0
-                        },
-                        {
-                            question: "¿Cuál es el resultado de esta integral definida?",
-                            formula: "\\int_{0}^{2} x dx",
-                            options: ["1", "2", "4", "0.5"],
-                            correctIndex: 1
-                        }
-                    ]
-                };
-            
-                const quizRef = doc(db, "subjects", subjectId, "topics", topicId, "quizzes_data", quizId);
-                const snap = await getDoc(quizRef);
-
-                if (snap.exists()) {
-                    setQuizData(snap.data());
+                // 2. Cargar Quiz
+                if(quizId && quizId !== 'undefined') {
+                    const quizRef = doc(db, "subjects", subjectId, "topics", topicId, "quizzes_data", quizId);
+                    const snap = await getDoc(quizRef);
+                    if (snap.exists()) {
+                        const data = snap.data();
+                        const normalizedFormulas = (data.formulas || []).map(f => 
+                            typeof f === 'string' ? { display: f, description: 'Fórmula' } : f
+                        );
+                        setQuizData({ ...data, formulas: normalizedFormulas });
+                    } else {
+                        setQuizData(MOCK_DATA);
+                    }
                 } else {
                     setQuizData(MOCK_DATA);
                 }
+
             } catch (error) {
-                console.error("Error cargando:", error);
+                console.error("Error cargando (Usando Fallback):", error);
+                setQuizData(MOCK_DATA);
             } finally {
                 setLoading(false);
                 setViewState('review');
@@ -101,374 +197,346 @@ const Quizzes = ({ user }) => {
         loadData();
     }, [user, subjectId, topicId, quizId]);
 
-    // --- LÓGICA DEL JUEGO "PRO" ---
-
-    // Manejo de teclado (Accesibilidad)
-    useEffect(() => {
-        if (viewState !== 'quiz' || answerStatus !== 'idle') return;
-
-        const handleKeyDown = (e) => {
-            const key = parseInt(e.key);
-            if (key >= 1 && key <= 4) {
-                const index = key - 1;
-                if (quizData.questions[currentStep].options[index]) {
-                    handleAnswerSelect(index);
-                }
-            }
-            if (e.key === 'Enter' && selectedAnswer !== null) {
-                handleCheckAnswer();
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [viewState, answerStatus, selectedAnswer, currentStep, quizData]);
+    // --- LÓGICA DEL JUEGO ---
+    
+    const triggerConfetti = () => {
+        setConfettiTrigger(prev => prev + 1);
+        setTimeout(() => setConfettiTrigger(0), 2000); 
+    };
 
     const handleAnswerSelect = (index) => {
-        if (answerStatus !== 'idle') return; // Bloquear cambios si ya se validó
+        if (answerStatus !== 'idle') return;
         setSelectedAnswer(index);
-        playSound('pop');
     };
 
     const handleCheckAnswer = () => {
+        if (answerStatus !== 'idle' || selectedAnswer === null) return;
         const isCorrect = selectedAnswer === quizData.questions[currentStep].correctIndex;
         
         if (isCorrect) {
             setAnswerStatus('correct');
             setCorrectCount(prev => prev + 1);
-            setStreak(prev => prev + 1);
-            playSound('success');
-            // Mini confeti al acertar
-            confetti({
-                particleCount: 50,
-                spread: 60,
-                origin: { y: 0.7 },
-                colors: ['#22c55e', '#4ade80'] // Verdes
-            });
+            triggerConfetti();
         } else {
             setAnswerStatus('incorrect');
-            setStreak(0);
-            playSound('error');
-            // Vibración en móviles (Haptic feedback)
             if (navigator.vibrate) navigator.vibrate(200);
         }
     };
 
-    const handleNextQuestion = () => {
-        if (currentStep < quizData.questions.length - 1) {
+    const handleNextQuestion = async () => {
+        const total = quizData.questions.length;
+        if (currentStep < total - 1) {
             setCurrentStep(prev => prev + 1);
             setSelectedAnswer(null);
             setAnswerStatus('idle');
         } else {
-            finishQuiz();
-        }
-    };
-
-    const finishQuiz = () => {
-        // Cálculo final asegurando que correctCount está actualizado
-        // Nota: En react el estado puede tardar un tick, pero aquí usamos lógica directa si es el último paso
-        const score = Math.round((correctCount / quizData.questions.length) * 100); 
-        // Si la última fue correcta, el estado correctCount ya se actualizó antes de llamar a handleNextQuestion
-        
-        // Recalcular por seguridad visual usando el estado actual
-        // (En producción usarías un ref o useEffect para garantizar sincronía total)
-        const finalCalc = Math.round(((answerStatus === 'correct' ? correctCount : correctCount) / quizData.questions.length) * 100);
-        
-        setFinalScore(finalCalc);
-        setViewState('results');
-        playSound('finish');
-        
-        if (finalCalc >= 50) {
-            triggerBigConfetti();
-        }
-    };
-
-    const triggerBigConfetti = () => {
-        const duration = 3000;
-        const animationEnd = Date.now() + duration;
-        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
-
-        const random = (min, max) => Math.random() * (max - min) + min;
-
-        const interval = setInterval(function() {
-            const timeLeft = animationEnd - Date.now();
-
-            if (timeLeft <= 0) {
-                return clearInterval(interval);
+            // FIN DEL TEST
+            const score = Math.round((correctCount / total) * 100);
+            setFinalScore(score);
+            setViewState('results');
+            
+            if (score >= 50) {
+                setTimeout(() => triggerConfetti(), 300);
             }
-
-            const particleCount = 50 * (timeLeft / duration);
-            confetti(Object.assign({}, defaults, { particleCount, origin: { x: random(0.1, 0.3), y: random(0.1, 0.3) } }));
-            confetti(Object.assign({}, defaults, { particleCount, origin: { x: random(0.7, 0.9), y: random(0.7, 0.9) } }));
-        }, 250);
+            
+            try {
+                const resultRef = doc(db, "subjects", subjectId, "topics", topicId, "quiz_results", `${quizId}_${user.uid}`);
+                await setDoc(resultRef, {
+                    userId: user.uid,
+                    score, correctAnswers: correctCount, totalQuestions: total,
+                    completedAt: serverTimestamp(),
+                    passed: score >= 50
+                }, { merge: true });
+            } catch (e) { console.error(e); }
+        }
     };
 
-    // --- RENDERIZADO ---
-
-    if (loading || viewState === 'loading') return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
-            <div className="relative">
-                <div className={`absolute inset-0 bg-${accentColor}-500 blur-xl opacity-20 rounded-full animate-pulse`}></div>
-                <RefreshCcw className={`w-16 h-16 text-${accentColor}-600 animate-spin relative z-10`} />
-            </div>
-            <p className="text-slate-500 font-bold mt-6 animate-pulse tracking-widest text-sm uppercase">Preparando Entorno...</p>
-        </div>
-    );
-
-    // VISTA REPASO (Intro)
-    if (viewState === 'review') return (
-        <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 font-sans relative overflow-hidden">
-            {/* Fondo decorativo */}
-            <div className={`absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-${accentColor}-600/30 rounded-full blur-3xl`}></div>
-            <div className={`absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-purple-600/20 rounded-full blur-3xl`}></div>
-
-            <div className="max-w-2xl w-full bg-white/10 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-8 md:p-12 shadow-2xl relative z-10 animate-in zoom-in-95 duration-500">
-                <div className="flex flex-col items-center text-center mb-10">
-                    <div className={`w-20 h-20 bg-gradient-to-br ${gradientClass} rounded-3xl flex items-center justify-center mb-6 shadow-lg shadow-${accentColor}-500/40 transform rotate-3 hover:rotate-0 transition-all duration-500`}>
-                        <Sigma className="w-10 h-10 text-white" />
-                    </div>
-                    <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight mb-4">
-                        Prepárate
-                    </h1>
-                    <p className="text-slate-300 text-lg leading-relaxed">
-                        Revisa estas fórmulas clave. <br/>
-                        Son tu herramienta para superar el desafío.
-                    </p>
-                </div>
-
-                <div className="space-y-4 mb-12">
-                    {quizData?.formulas?.map((f, i) => (
-                        <div key={i} className="bg-slate-800/60 border border-white/5 p-5 rounded-2xl flex items-center justify-center hover:bg-slate-800/80 transition-all duration-300 group relative overflow-hidden">
-                            <div className={`absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b ${gradientClass}`}></div>
-                            <span className="text-slate-500 text-xs font-bold absolute left-4 opacity-50">#{i+1}</span>
-                            <div className="text-white text-xl overflow-x-auto py-2 px-4">
-                                <BlockMath math={f} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <button 
-                    onClick={() => setViewState('quiz')}
-                    className={`w-full py-5 bg-gradient-to-r ${gradientClass} text-white rounded-2xl font-bold text-xl transition-all shadow-xl shadow-${accentColor}-600/30 hover:scale-[1.02] active:scale-[0.98] ring-4 ring-transparent hover:ring-${accentColor}-500/30`}
-                >
-                    ¡Empezar Desafío!
-                </button>
-            </div>
-        </div>
-    );
-
-    // VISTA RESULTADOS
-    if (viewState === 'results') return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 relative overflow-hidden">
-            {/* Fondo animado sutil */}
-            <div className={`absolute inset-0 bg-gradient-to-br from-${accentColor}-50/50 to-purple-50/50`}></div>
-
-            <div className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl p-10 text-center border border-white/50 relative z-10 animate-in slide-in-from-bottom-10 duration-700">
-                <div className={`w-32 h-32 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner ${finalScore >= 50 ? 'bg-green-50' : 'bg-red-50'}`}>
-                    <Award className={`w-16 h-16 ${finalScore >= 50 ? 'text-green-500 drop-shadow-lg' : 'text-red-500'}`} />
-                </div>
-                
-                <h2 className="text-5xl font-black text-slate-900 mb-3 tracking-tight">
-                    {finalScore >= 80 ? '¡Legendario!' : finalScore >= 50 ? '¡Bien hecho!' : '¡Sigue así!'}
-                </h2>
-                <p className="text-slate-500 mb-10 font-medium text-lg">
-                    Has dominado {correctCount} de {quizData.questions.length} conceptos.
-                </p>
-                
-                <div className="bg-slate-50 rounded-3xl p-8 mb-10 border border-slate-200 relative overflow-hidden group">
-                    <div className={`absolute top-0 left-0 h-2 w-full transition-all duration-1000 ${finalScore >= 50 ? 'bg-green-500' : 'bg-red-500'}`} style={{width: `${finalScore}%`}}></div>
-                    <div className="text-7xl font-black text-slate-800 mb-2 tracking-tighter group-hover:scale-110 transition-transform duration-500">
-                        {finalScore}<span className="text-4xl text-slate-400 align-top">%</span>
-                    </div>
-                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Puntuación Final</div>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                    <button 
-                        onClick={() => {
-                            setViewState('review');
-                            setCurrentStep(0);
-                            setCorrectCount(0);
-                            setFinalScore(0);
-                            setSelectedAnswer(null);
-                            setAnswerStatus('idle');
-                            setStreak(0);
-                        }}
-                        className="w-full py-4 bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-700 rounded-2xl font-bold transition-all hover:bg-slate-50"
-                    >
-                        Reintentar
-                    </button>
-                    <button 
-                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}`)}
-                        className={`w-full py-4 bg-slate-900 hover:bg-${accentColor}-600 text-white rounded-2xl font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-1`}
-                    >
-                        Continuar Aprendiendo
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-
-    // VISTA JUEGO (GAME LOOP)
-    const q = quizData.questions[currentStep];
-    const progress = ((currentStep) / quizData.questions.length) * 100;
-
-    // Colores dinámicos para los botones de estado
-    const getOptionStyles = (idx) => {
-        // 1. Si no hemos respondido aún
-        if (answerStatus === 'idle') {
-            return selectedAnswer === idx 
-                ? `border-${accentColor}-600 bg-${accentColor}-50 ring-2 ring-${accentColor}-200`
-                : `border-slate-200 bg-white hover:border-${accentColor}-300 hover:bg-slate-50`;
-        }
-
-        // 2. Si ya respondimos (Feedback)
-        if (idx === q.correctIndex) {
-            return "border-green-500 bg-green-50 ring-2 ring-green-200"; // Respuesta correcta (siempre verde)
-        }
-        if (selectedAnswer === idx && answerStatus === 'incorrect') {
-            return "border-red-500 bg-red-50 ring-2 ring-red-200 animate-shake"; // Tu error (rojo)
-        }
-        return "border-slate-100 bg-slate-50 opacity-50"; // Las demás apagadas
+    const handleRetry = () => {
+        setViewState('review');
+        setCurrentStep(0);
+        setCorrectCount(0);
+        setFinalScore(0);
+        setSelectedAnswer(null);
+        setAnswerStatus('idle');
+        setConfettiTrigger(0);
     };
 
+    // --- RENDERIZADO GLOBAL ---
+
+    if (loading) return (
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center pt-20">
+            <Header user={user} />
+            <RefreshCcw className="w-12 h-12 text-slate-300 animate-spin mb-4" />
+            <p className="text-slate-500 font-medium tracking-wide">Sincronizando...</p>
+        </div>
+    );
+
+    if (!quizData) return (
+        <div className="min-h-screen bg-slate-50 pt-20">
+            <Header user={user} />
+            <div className="flex flex-col items-center justify-center p-6 text-center h-[80vh]">
+                <XCircle className="w-12 h-12 text-red-400 mb-4" />
+                <h2 className="text-xl font-bold text-slate-800">Error cargando el test</h2>
+                <button onClick={handleGoBack} className="mt-4 text-indigo-600 underline">Volver</button>
+            </div>
+        </div>
+    );
+
+    // Contenedor principal con padding-top para el Header
     return (
-        <div className="min-h-screen bg-slate-50 pb-32 font-sans text-slate-900 selection:bg-indigo-100">
-            {/* HEADER PROGRESO */}
-            <div className="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 px-4 md:px-8 py-4 transition-all">
-                <div className="max-w-4xl mx-auto flex items-center justify-between gap-6">
-                    <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-700">
-                        <X className="w-6 h-6" />
-                    </button>
-                    
-                    <div className="flex-1 max-w-md relative">
-                        {/* Barra de Vida/Progreso tipo videojuego */}
-                        <div className="h-3 bg-slate-100 rounded-full overflow-hidden shadow-inner">
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pt-20">
+            {/* Header Global */}
+            <Header user={user} />
+
+            {/* 1. VISTA DE REPASO */}
+            {viewState === 'review' && (
+                <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 pb-20">
+                    {/* Header Sticky ajustado a top-20 */}
+                    <div className="bg-white/80 backdrop-blur-xl border-b border-slate-200 sticky top-20 z-40">
+                        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+                            <button onClick={handleGoBack} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
+                                <ChevronLeft className="w-6 h-6 text-slate-600" />
+                            </button>
+                            <div className="flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full border border-slate-200">
+                                <Sparkles className="w-4 h-4" style={{ color: accentColor }} />
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Modo Repaso</span>
+                            </div>
+                            <div className="w-10"></div>
+                        </div>
+                    </div>
+
+                    <div className="max-w-3xl mx-auto px-6 py-12">
+                        <div className="text-center mb-12">
                             <div 
-                                className={`h-full bg-gradient-to-r ${gradientClass} rounded-full transition-all duration-700 ease-out shadow-[0_0_10px_rgba(0,0,0,0.1)]`}
-                                style={{ width: `${progress}%` }}
-                            />
-                        </div>
-                        {streak > 1 && (
-                            <div className="absolute -top-6 right-0 text-xs font-black text-orange-500 animate-bounce">
-                                🔥 {streak} Racha!
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="hidden md:flex items-center gap-2 font-mono text-slate-400 bg-slate-100 px-3 py-1 rounded-lg border border-slate-200">
-                        <span className="text-xs font-bold">PREGUNTA</span>
-                        <span className="text-slate-900 font-black">{currentStep + 1}<span className="text-slate-400">/{quizData.questions.length}</span></span>
-                    </div>
-                </div>
-            </div>
-
-            {/* AREA DE JUEGO */}
-            <main className="pt-10 px-6 max-w-3xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
-                <div className="mb-8">
-                    <h2 className="text-2xl md:text-3xl font-bold text-slate-800 leading-snug mb-8">
-                        {q.question}
-                    </h2>
-
-                    {q.formula && (
-                        <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-10 text-center relative group hover:shadow-md transition-shadow">
-                            <div className="absolute top-4 left-4 text-slate-200 group-hover:text-indigo-200 transition-colors">
-                                <HelpCircle className="w-6 h-6" />
-                            </div>
-                            <div className="text-xl md:text-3xl text-slate-800 py-2 overflow-x-auto">
-                                <BlockMath math={q.formula} />
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="grid gap-4">
-                        {q.options.map((option, idx) => (
-                            <button
-                                key={idx}
-                                disabled={answerStatus !== 'idle'}
-                                onClick={() => handleAnswerSelect(idx)}
-                                className={`group relative p-6 rounded-2xl border-2 text-left transition-all duration-200 flex items-center gap-5 outline-none active:scale-[0.98] ${getOptionStyles(idx)}`}
+                                className="inline-flex items-center justify-center w-24 h-24 rounded-[2rem] mb-6 shadow-2xl shadow-slate-200 animate-float"
+                                style={{ backgroundColor: accentColor }}
                             >
-                                {/* Tecla de atajo (solo visible en desktop) */}
-                                <div className={`hidden md:flex w-8 h-8 rounded-lg border border-slate-200 items-center justify-center text-xs font-bold text-slate-400 absolute left-[-4rem] opacity-0 group-hover:opacity-100 transition-opacity`}>
-                                    {idx + 1}
+                                <Brain className="w-12 h-12 text-white" />
+                            </div>
+                            <h1 className="text-4xl md:text-6xl font-black text-slate-900 mb-4 tracking-tighter">
+                                {quizData.title}
+                            </h1>
+                            <p className="text-xl text-slate-500 font-medium">{quizData.subtitle}</p>
+                            
+                            <div className="flex items-center justify-center gap-6 mt-8 text-slate-500 text-sm font-semibold uppercase tracking-wider">
+                                <div className="flex items-center gap-2">
+                                    <Target className="w-4 h-4" style={{ color: accentColor }} />
+                                    {quizData.questions.length} Preguntas
                                 </div>
+                            </div>
+                        </div>
 
-                                <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-sm transition-colors border
-                                    ${answerStatus === 'idle' && selectedAnswer === idx 
-                                        ? `bg-${accentColor}-600 text-white border-${accentColor}-600` 
-                                        : answerStatus !== 'idle' && idx === q.correctIndex
-                                            ? 'bg-green-500 text-white border-green-500'
-                                            : answerStatus === 'incorrect' && selectedAnswer === idx
-                                                ? 'bg-red-500 text-white border-red-500'
-                                                : 'bg-white text-slate-400 border-slate-200'
-                                    }`}>
-                                    {String.fromCharCode(65 + idx)}
-                                </div>
-
-                                <div className="flex-1 text-lg font-medium text-slate-700">
-                                    <div className="katex-render-wrapper">
-                                        {option.includes('\\') || option.includes('^') ? <InlineMath math={option} /> : option}
+                        <div className="space-y-6 mb-12">
+                            {quizData.formulas?.map((formula, idx) => (
+                                <div key={idx} className="group relative bg-white rounded-3xl p-8 border-2 border-slate-100 hover:border-slate-200 hover:shadow-xl transition-all duration-300">
+                                    <div className="flex items-start gap-6">
+                                        <div 
+                                            className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold shadow-md shrink-0 mt-1"
+                                            style={{ backgroundColor: accentColor }}
+                                        >
+                                            {idx + 1}
+                                        </div>
+                                        <div className="flex-1 overflow-hidden">
+                                            <FormulaDisplay formula={formula.display} size="text-2xl md:text-3xl" />
+                                            {formula.description && (
+                                                <p className="text-sm text-slate-400 mt-2 font-bold uppercase tracking-wider">{formula.description}</p>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
+                            ))}
+                        </div>
 
-                                {/* Iconos de estado */}
-                                {answerStatus !== 'idle' && idx === q.correctIndex && (
-                                    <CheckCircle2 className="w-6 h-6 text-green-500 animate-in zoom-in spin-in-90 duration-300" />
-                                )}
-                                {answerStatus === 'incorrect' && selectedAnswer === idx && (
-                                    <XCircle className="w-6 h-6 text-red-500 animate-in zoom-in duration-300" />
-                                )}
-                            </button>
-                        ))}
+                        <button
+                            onClick={() => setViewState('quiz')}
+                            className="w-full text-white py-6 rounded-3xl font-black text-xl shadow-2xl hover:shadow-3xl hover:-translate-y-1 transition-all flex items-center justify-center gap-3 group"
+                            style={{ backgroundColor: accentColor, boxShadow: `0 20px 40px -10px ${accentColor}60` }}
+                        >
+                            <BookOpen className="w-6 h-6 group-hover:scale-110 transition-transform" />
+                            Comenzar Desafío
+                            <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                        </button>
                     </div>
+                    <style>{`
+                        @keyframes float { 0%, 100% { transform: translateY(0px) rotate(1deg); } 50% { transform: translateY(-10px) rotate(-1deg); } }
+                        .animate-float { animation: float 6s ease-in-out infinite; }
+                    `}</style>
                 </div>
-            </main>
+            )}
 
-            {/* BARRA INFERIOR DE ACCIÓN (ESTILO DUOLINGO) */}
-            <div className={`fixed bottom-0 left-0 right-0 p-6 border-t z-40 transition-colors duration-300
-                ${answerStatus === 'correct' ? 'bg-green-100 border-green-200' : 
-                  answerStatus === 'incorrect' ? 'bg-red-100 border-red-200' : 
-                  'bg-white border-slate-200'}`}>
-                
-                <div className="max-w-3xl mx-auto flex items-center justify-between">
+            {/* 2. VISTA TEST */}
+            {viewState === 'quiz' && (
+                <div className="min-h-screen bg-slate-50 pb-32">
+                    <ConfettiEffect triggerKey={confettiTrigger} accentColor={accentColor} />
                     
-                    {/* Mensaje de Feedback */}
-                    <div className="hidden md:block">
-                        {answerStatus === 'correct' && (
-                            <div className="flex items-center gap-3 text-green-700 font-bold text-xl animate-in slide-in-from-bottom-2">
-                                <div className="bg-white p-2 rounded-full"><CheckCircle2 className="w-6 h-6" /></div>
-                                ¡Correcto! ¡Sigue así!
+                    {/* Header Progreso Sticky top-20 */}
+                    <div className="bg-white/90 backdrop-blur-xl border-b border-slate-200 sticky top-20 z-40 px-6 py-4">
+                        <div className="max-w-4xl mx-auto flex items-center gap-6">
+                            <button onClick={() => setViewState('review')} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
+                                <X className="w-6 h-6" />
+                            </button>
+                            <div className="flex-1">
+                                <div className="flex justify-between text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                                    <span>Progreso</span>
+                                    <span>{currentStep + 1} / {quizData.questions.length}</span>
+                                </div>
+                                <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                    <div 
+                                        className="h-full rounded-full transition-all duration-700 ease-out"
+                                        style={{ width: `${((currentStep) / quizData.questions.length) * 100}%`, backgroundColor: accentColor }}
+                                    />
+                                </div>
                             </div>
-                        )}
-                        {answerStatus === 'incorrect' && (
-                            <div className="flex items-center gap-3 text-red-700 font-bold text-xl animate-in slide-in-from-bottom-2">
-                                <div className="bg-white p-2 rounded-full"><XCircle className="w-6 h-6" /></div>
-                                <span>La respuesta correcta era la <span className="underline decoration-2">opción {String.fromCharCode(65 + q.correctIndex)}</span></span>
-                            </div>
-                        )}
+                        </div>
                     </div>
 
-                    {/* Botón Principal Dinámico */}
-                    <button
-                        disabled={selectedAnswer === null && answerStatus === 'idle'}
-                        onClick={answerStatus === 'idle' ? handleCheckAnswer : handleNextQuestion}
-                        className={`w-full md:w-auto md:min-w-[200px] py-4 px-8 rounded-2xl font-black text-lg transition-all flex items-center justify-center gap-3 shadow-lg active:translate-y-1
-                            ${answerStatus === 'idle'
-                                ? selectedAnswer !== null
-                                    ? `bg-${accentColor}-600 hover:bg-${accentColor}-500 text-white shadow-${accentColor}-200`
-                                    : 'bg-slate-200 text-slate-400 cursor-not-allowed shadow-none'
-                                : answerStatus === 'correct'
-                                    ? 'bg-green-500 hover:bg-green-400 text-white shadow-green-200'
-                                    : 'bg-red-500 hover:bg-red-400 text-white shadow-red-200'
-                            }`}
-                    >
-                        {answerStatus === 'idle' ? 'Comprobar' : (currentStep === quizData.questions.length - 1 ? 'Ver Resultados' : 'Continuar')}
-                        <ArrowRight className="w-5 h-5" />
-                    </button>
+                    <main className="pt-12 px-6 max-w-3xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
+                        <div className="mb-10">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest bg-white border border-slate-200 text-slate-500 mb-8 shadow-sm">
+                                <TrendingUp className="w-3 h-3" style={{ color: accentColor }} />
+                                <span>Pregunta {currentStep + 1}</span>
+                            </div>
+
+                            <h2 className="text-3xl md:text-4xl font-black text-slate-900 leading-tight mb-8">
+                                {quizData.questions[currentStep].question}
+                            </h2>
+
+                            {quizData.questions[currentStep].formula && (
+                                <div className="bg-white rounded-[2rem] p-10 border-2 border-slate-100 shadow-xl shadow-slate-200/50 mb-10 text-center">
+                                    <BlockMath math={quizData.questions[currentStep].formula} />
+                                </div>
+                            )}
+
+                            <div className="space-y-4">
+                                {quizData.questions[currentStep].options.map((option, idx) => {
+                                    let style = { borderColor: '#e2e8f0', backgroundColor: 'white', color: '#334155', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)' };
+                                    
+                                    if (answerStatus === 'idle' && selectedAnswer === idx) {
+                                        style = { borderColor: accentColor, backgroundColor: accentLight, color: accentColor, boxShadow: `0 0 0 2px ${accentColor}20` };
+                                    } else if (answerStatus !== 'idle') {
+                                        if (idx === quizData.questions[currentStep].correctIndex) {
+                                            style = { borderColor: '#22c55e', backgroundColor: '#f0fdf4', color: '#15803d' };
+                                        } else if (selectedAnswer === idx && answerStatus === 'incorrect') {
+                                            style = { borderColor: '#ef4444', backgroundColor: '#fef2f2', color: '#b91c1c' };
+                                        }
+                                    }
+
+                                    return (
+                                        <button
+                                            key={idx}
+                                            disabled={answerStatus !== 'idle'}
+                                            onClick={() => handleAnswerSelect(idx)}
+                                            className="group w-full p-6 rounded-2xl border-2 text-left transition-all flex items-center gap-6 hover:scale-[1.01] active:scale-[0.99]"
+                                            style={style}
+                                        >
+                                            <div 
+                                                className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg border transition-colors shrink-0"
+                                                style={{ 
+                                                    borderColor: (answerStatus === 'idle' && selectedAnswer === idx) ? accentColor : 'transparent',
+                                                    backgroundColor: (answerStatus === 'idle' && selectedAnswer === idx) ? accentColor : '#f8fafc',
+                                                    color: (answerStatus === 'idle' && selectedAnswer === idx) ? 'white' : '#94a3b8'
+                                                }}
+                                            >
+                                                {String.fromCharCode(65 + idx)}
+                                            </div>
+                                            <div className="flex-1 text-lg font-bold">
+                                                <div className="katex-render-wrapper">
+                                                    {option.includes('\\') || option.includes('^') ? <InlineMath math={option} /> : option}
+                                                </div>
+                                            </div>
+                                            {answerStatus !== 'idle' && idx === quizData.questions[currentStep].correctIndex && <CheckCircle2 className="w-8 h-8 text-green-500 animate-bounce-in" />}
+                                            {answerStatus === 'incorrect' && selectedAnswer === idx && <XCircle className="w-8 h-8 text-red-500 animate-shake" />}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </main>
+
+                    <div className={`fixed bottom-0 left-0 right-0 p-6 border-t backdrop-blur-xl transition-colors duration-500 z-50 ${
+                        answerStatus === 'correct' ? 'bg-green-50/95 border-green-200' : 
+                        answerStatus === 'incorrect' ? 'bg-red-50/95 border-red-200' : 
+                        'bg-white/95 border-slate-200'
+                    }`}>
+                        <div className="max-w-4xl mx-auto flex items-center justify-between gap-6">
+                            <div className="hidden md:block">
+                                {answerStatus === 'correct' && <div className="flex items-center gap-3 text-green-700 font-bold text-xl"><CheckCircle2/> ¡Correcto!</div>}
+                                {answerStatus === 'incorrect' && <div className="flex items-center gap-3 text-red-700 font-bold text-xl"><XCircle/> Incorrecto</div>}
+                            </div>
+
+                            <button
+                                disabled={selectedAnswer === null && answerStatus === 'idle'}
+                                onClick={answerStatus === 'idle' ? handleCheckAnswer : handleNextQuestion}
+                                className="flex-1 md:flex-none md:min-w-[240px] h-16 rounded-2xl font-black text-xl text-white transition-all flex items-center justify-center gap-3 shadow-xl hover:shadow-2xl hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                                style={{ 
+                                    backgroundColor: answerStatus === 'idle' 
+                                        ? (selectedAnswer !== null ? accentColor : '#cbd5e1') 
+                                        : (answerStatus === 'correct' ? '#22c55e' : '#ef4444') 
+                                }}
+                            >
+                                {answerStatus === 'idle' ? 'Comprobar' : (currentStep === quizData.questions.length - 1 ? 'Ver Resultados' : 'Continuar')}
+                                <ArrowRight className="w-6 h-6" />
+                            </button>
+                        </div>
+                    </div>
+                    <style>{`
+                        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+                        .animate-shake { animation: shake 0.3s ease-out; }
+                        .animate-bounce-in { animation: bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+                        @keyframes bounce { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+                    `}</style>
                 </div>
-            </div>
+            )}
+
+            {/* 3. VISTA RESULTADOS */}
+            {viewState === 'results' && (
+                <div className="flex items-center justify-center p-6 h-[80vh]">
+                    <ConfettiEffect triggerKey={confettiTrigger} accentColor={accentColor} />
+                    <div className="max-w-lg w-full bg-white rounded-[3rem] shadow-2xl p-10 text-center border-2 border-slate-100 animate-scale-in relative overflow-hidden">
+                        <div className={`absolute top-0 left-0 w-full h-32 opacity-10 ${finalScore >= 50 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+
+                        <div className={`relative w-32 h-32 rounded-full mx-auto mb-8 flex items-center justify-center ${finalScore >= 50 ? 'bg-gradient-to-br from-green-400 to-emerald-600' : 'bg-gradient-to-br from-orange-400 to-red-500'} shadow-2xl shadow-slate-300`}>
+                            {finalScore >= 50 ? <Trophy className="w-16 h-16 text-white" /> : <Target className="w-16 h-16 text-white" />}
+                        </div>
+                        
+                        <h2 className="text-7xl font-black text-slate-900 mb-2 tracking-tighter">{finalScore}%</h2>
+                        <p className={`text-xl font-bold mb-10 ${finalScore >= 50 ? 'text-green-600' : 'text-red-600'}`}>
+                            {finalScore >= 50 ? '¡Desafío Completado!' : 'Sigue practicando'}
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-4 mb-10">
+                            <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                                <div className="text-3xl font-black text-slate-900">{correctCount}</div>
+                                <div className="text-xs text-slate-400 uppercase font-bold tracking-wider">Aciertos</div>
+                            </div>
+                            <div className="bg-slate-50 p-5 rounded-3xl border border-slate-100">
+                                <div className="text-3xl font-black text-slate-900">{quizData.questions.length}</div>
+                                <div className="text-xs text-slate-400 uppercase font-bold tracking-wider">Total</div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <button 
+                                onClick={handleRetry}
+                                className="w-full py-5 bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl font-bold text-lg transition-all"
+                            >
+                                Intentar de nuevo
+                            </button>
+                            <button 
+                                onClick={handleGoBack}
+                                className="w-full py-5 text-white rounded-2xl font-bold text-lg transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
+                                style={{ backgroundColor: accentColor }}
+                            >
+                                Volver al Tema
+                            </button>
+                        </div>
+                    </div>
+                    <style>{`
+                        @keyframes scale-in { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
+                        .animate-scale-in { animation: scale-in 0.4s ease-out; }
+                    `}</style>
+                </div>
+            )}
         </div>
     );
 };
