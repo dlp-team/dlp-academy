@@ -472,7 +472,7 @@ const Subject = ({ user }) => {
                                 onClick={() => !isReordering && handleSelectTopic(topic)}
                                 className="w-full h-full text-left"
                             >
-                                <div className={`absolute inset-0 bg-gradient-to-br ${topic.color} opacity-90`}></div>
+                                <div className={`absolute inset-0 bg-gradient-to-br ${subject.color} opacity-90`}></div>
                                 
                                 {/* New Delete Button for specific Topic */}
                                 {!isReordering && (
