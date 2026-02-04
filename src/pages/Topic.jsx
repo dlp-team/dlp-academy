@@ -4,7 +4,7 @@ import {
     ChevronLeft, FileText, Download, Play, Loader2, ExternalLink,
     ChevronRight, Calendar, MoreVertical, CheckCircle2, 
     Timer, Sparkles, Home, Trash2, Edit2, Share2, Upload,
-    X, BookOpen, Award, Maximize2, Wand2, FileEdit, Check, MoreHorizontal, Plus
+    X, BookOpen, Award, Maximize2, Wand2, FileEdit, Check, MoreHorizontal, Plus, Sigma
 } from 'lucide-react';
 import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
@@ -34,7 +34,7 @@ const Topic = ({ user }) => {
     const [renamingId, setRenamingId] = useState(null);
     const [tempName, setTempName] = useState("");
 
-    // Visor (Ahora guarda un objeto { url, name, type })
+    // Visor
     const [viewingFile, setViewingFile] = useState(null);
 
     // --- CARGA DE DATOS ---
@@ -60,7 +60,13 @@ const Topic = ({ user }) => {
                                 ...doc.data()
                             }));
 
-                            const aiPdfs = Array.isArray(topicData.pdfs) ? topicData.pdfs.map((p, i) => ({ ...p, id: `ai-${i}`, origin: 'AI' })) : [];
+                            // Asignamos IDs estables a los PDFs de IA si no tienen
+                            const aiPdfs = Array.isArray(topicData.pdfs) ? topicData.pdfs.map((p, i) => ({ 
+                                ...p, 
+                                id: p.id || `ai-${i}`, // Usar ID existente o generar uno
+                                origin: 'AI' 
+                            })) : [];
+                            
                             const aiQuizzes = Array.isArray(topicData.quizzes) ? topicData.quizzes : [];
                             const manualUploads = manualDocs.filter(d => d.source === 'manual').map(d => ({ ...d, origin: 'manual' }));
 
@@ -95,13 +101,16 @@ const Topic = ({ user }) => {
         };
     }, [user, subjectId, topicId, navigate]);
 
-    // --- HELPERS ---
+    // --- HELPERS VISUALES ---
     const getFileVisuals = (type) => {
         if (!type) return { icon: FileText, label: 'Documento' };
         const t = type.toLowerCase();
-        if (t.includes('exam') || t.includes('evaluación')) return { icon: Award, label: 'Examen' };
+        
+        if (t.includes('exam') || t.includes('evaluación')) return { icon: Award, label: 'Exámenes' };
         if (t.includes('exercise') || t.includes('ejercicio')) return { icon: FileText, label: 'Ejercicios' };
-        if (t.includes('summary') || t.includes('resumen') || t.includes('formulario')) return { icon: BookOpen, label: 'Formulario' };
+        if (t.includes('formula') || t.includes('fórmula')) return { icon: Sigma, label: 'Fórmulas' };
+        if (t.includes('summary') || t.includes('resumen') || t.includes('formulario')) return { icon: BookOpen, label: 'Resumen' };
+        
         return { icon: FileText, label: 'Documento' };
     };
 
@@ -130,16 +139,31 @@ const Topic = ({ user }) => {
                 const docRef = doc(db, "subjects", subjectId, "topics", topicId, "documents", file.id);
                 await updateDoc(docRef, { name: tempName });
             } else {
+                // Lógica para renombrar PDFs de IA dentro del array
                 const updatedPdfs = topic.pdfs.map(pdf => {
-                    const cleanPdf = { name: pdf.name, type: pdf.type, url: pdf.url }; 
-                    if (pdf.id === file.id) return { ...cleanPdf, name: tempName };
-                    return cleanPdf;
+                    // Mantener propiedades originales pero actualizar nombre
+                    if (pdf.id === file.id) {
+                        return { ...pdf, name: tempName }; 
+                    }
+                    return pdf;
                 });
+                
+                // Guardamos en Firestore eliminando campos UI temporales (como origin='AI')
+                const cleanPdfsForDb = updatedPdfs.map(p => ({
+                    name: p.name,
+                    type: p.type,
+                    url: p.url,
+                    id: p.id // Importante mantener el ID para futuras ediciones
+                }));
+
                 const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
-                await updateDoc(topicRef, { pdfs: updatedPdfs });
+                await updateDoc(topicRef, { pdfs: cleanPdfsForDb });
             }
             setRenamingId(null);
-        } catch (error) { console.error(error); alert("Error al renombrar."); }
+        } catch (error) { 
+            console.error(error); 
+            alert("Error al renombrar."); 
+        }
     };
 
     const deleteFile = async (file) => {
@@ -148,14 +172,15 @@ const Topic = ({ user }) => {
             if (file.origin === 'manual') {
                 await deleteDoc(doc(db, "subjects", subjectId, "topics", topicId, "documents", file.id));
             } else {
-                const updatedPdfs = topic.pdfs.filter(pdf => pdf.id !== file.id).map(pdf => ({ name: pdf.name, type: pdf.type, url: pdf.url }));
+                const updatedPdfs = topic.pdfs.filter(pdf => pdf.id !== file.id)
+                    .map(pdf => ({ name: pdf.name, type: pdf.type, url: pdf.url, id: pdf.id }));
                 await updateDoc(doc(db, "subjects", subjectId, "topics", topicId), { pdfs: updatedPdfs });
             }
             setActiveMenuId(null);
         } catch (error) { console.error(error); alert("Error al eliminar."); }
     };
 
-    // --- LÓGICA VISOR DE ARCHIVOS ---
+    // --- VISOR ---
     const handleViewFile = (file) => {
         const dataUrl = file.url;
         if (!dataUrl) { alert("Archivo vacío."); return; }
@@ -229,9 +254,9 @@ const Topic = ({ user }) => {
         await updateDoc(topicRef, {
             status: 'completed',
             pdfs: [
-                { name: 'Formulario', type: 'summary', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
-                { name: 'Ejercicios', type: 'exercises', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
-                { name: 'Examen', type: 'exam', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' }
+                { id: 'ai-1', name: 'Formulario', type: 'summary', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
+                { id: 'ai-2', name: 'Ejercicios', type: 'exercises', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
+                { id: 'ai-3', name: 'Examen', type: 'exam', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' }
             ],
             quizzes: [
                 { id: '1', name: 'Repaso Rápido', type: 'basic' },
@@ -271,19 +296,12 @@ const Topic = ({ user }) => {
                 </div>
                 
                 <div className="relative h-full p-8 flex flex-col justify-between text-white">
+                    {/* CABECERA: Icono de fondo */}
                     <div className="flex justify-between items-start">
                         {file.origin === 'AI' ? (
-                            <>
-                                <Icon className="w-24 h-24 text-white absolute -top-4 -left-4 opacity-20 rotate-12 group-hover:rotate-0 transition-transform duration-500" />
-                                <div className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20 z-10">
-                                    <span className="text-xs font-bold uppercase tracking-wider flex items-center gap-2"><Icon className="w-3 h-3" /> {label}</span>
-                                </div>
-                            </>
+                            <Icon className="w-24 h-24 text-white absolute -top-4 -left-4 opacity-20 rotate-12 group-hover:rotate-0 transition-transform duration-500" />
                         ) : (
-                            <>
-                                <FileText className="w-32 h-32 text-slate-100 absolute -bottom-4 -right-4 rotate-12" />
-                                <div className="z-10"><span className="inline-block px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wider mb-2">Manual</span></div>
-                            </>
+                            <FileText className="w-32 h-32 text-slate-100 absolute -bottom-4 -right-4 rotate-12" />
                         )}
                     </div>
 
@@ -297,7 +315,11 @@ const Topic = ({ user }) => {
                                 </div>
                             </div>
                         ) : (
-                            <h3 className={`text-3xl font-extrabold leading-tight line-clamp-2 mb-4 ${file.origin === 'AI' ? 'text-white' : 'text-slate-800'}`} title={file.name}>{file.name || label}</h3>
+                            // --- CAMBIO PRINCIPAL AQUÍ ---
+                            // Ahora mostramos file.name en lugar de label
+                            <h3 className={`text-4xl font-extrabold leading-tight mb-6 uppercase tracking-tight ${file.origin === 'AI' ? 'text-white' : 'text-slate-800'}`}>
+                                {file.name || label}
+                            </h3>
                         )}
                         <div className="flex gap-3">
                             <button onClick={() => handleViewFile(file)} className={`flex-1 flex items-center justify-center gap-2 py-3 backdrop-blur-sm rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${file.origin === 'AI' ? 'bg-white/20 hover:bg-white/30 text-white border border-white/10' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}><Maximize2 className="w-4 h-4" /> Ver</button>
@@ -348,7 +370,6 @@ const Topic = ({ user }) => {
                         <div className="flex flex-col md:flex-row items-start gap-8">
                             <div className={`w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br ${topic.color || 'from-blue-500 to-indigo-600'} flex items-center justify-center shadow-2xl shadow-indigo-500/20`}>
                                 <span className="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-md">
-                                    {/* ✅ CORRECCIÓN: Si no hay topic.number, usa el order como fallback */}
                                     {topic.number || (topic.order ? topic.order.toString().padStart(2, '0') : '#')}
                                 </span>
                             </div>
@@ -475,8 +496,8 @@ const Topic = ({ user }) => {
                             <div className={`flex justify-between items-center px-6 py-4 bg-gradient-to-r ${topic.color || 'from-indigo-500 to-purple-600'}`}>
                                 <span className="font-bold text-white flex items-center gap-2 text-lg tracking-tight">
                                     {(() => {
-                                        const { icon: HeaderIcon } = getFileVisuals(viewingFile.type);
-                                        return <><HeaderIcon className="w-5 h-5 text-white/90" /> {viewingFile.name}</>;
+                                        const { icon: HeaderIcon, label } = getFileVisuals(viewingFile.type);
+                                        return <><HeaderIcon className="w-5 h-5 text-white/90" /> {viewingFile.name || label}</>;
                                     })()}
                                 </span>
                                 <button onClick={() => setViewingFile(null)} className="p-2 bg-white/20 hover:bg-white/40 text-white rounded-full transition-all shadow-sm"><X className="w-5 h-5" /></button>
