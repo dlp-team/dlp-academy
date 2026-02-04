@@ -1,394 +1,514 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { 
-    ChevronLeft, Timer, CheckCircle2, ArrowRight, 
-    RefreshCcw, Award, Sigma, X, Brain, HelpCircle, BookOpen 
+    ChevronLeft, FileText, Download, Play, Loader2, ExternalLink,
+    ChevronRight, Calendar, MoreVertical, CheckCircle2, 
+    Timer, Sparkles, Home, Trash2, Edit2, Share2, Upload,
+    X, BookOpen, Award, Maximize2, Wand2, FileEdit, Check, MoreHorizontal, Plus, Sigma
 } from 'lucide-react';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'; // Añadido setDoc y serverTimestamp
+import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import Header from '../components/layout/Header';
 
-import 'katex/dist/katex.min.css';
-import { BlockMath, InlineMath } from 'react-katex';
-
-const Quizzes = ({ user }) => {
-    const { subjectId, topicId, quizId } = useParams();
+const Topic = ({ user }) => {
     const navigate = useNavigate();
-
-    // --- ESTADOS ---
-    const [loading, setLoading] = useState(true);
-    const [viewState, setViewState] = useState('loading'); 
-    const [quizData, setQuizData] = useState(null);
-    const [isSaving, setIsSaving] = useState(false); // Estado para mostrar que se está guardando
+    const { subjectId, topicId } = useParams();
+    const fileInputRef = useRef(null);
     
-    // Estado de Color (Por defecto indigo)
-    const [accentColor, setAccentColor] = useState('indigo'); 
+    // Estados de Datos
+    const [subject, setSubject] = useState(null);
+    const [topic, setTopic] = useState(null);
+    const [loading, setLoading] = useState(true);
+    
+    // Estados de UI
+    const [uploading, setUploading] = useState(false);
+    const [activeTab, setActiveTab] = useState('materials');
+    
+    // Menús y Edición
+    const [showMenu, setShowMenu] = useState(false);
+    const [isEditingTopic, setIsEditingTopic] = useState(false);
+    const [editTopicData, setEditTopicData] = useState({ title: '' });
 
-    // Estados del juego
-    const [currentStep, setCurrentStep] = useState(0);
-    const [selectedAnswer, setSelectedAnswer] = useState(null);
-    const [correctCount, setCorrectCount] = useState(0);
-    const [finalScore, setFinalScore] = useState(0);
+    // Gestión Archivos Individuales
+    const [activeMenuId, setActiveMenuId] = useState(null);
+    const [renamingId, setRenamingId] = useState(null);
+    const [tempName, setTempName] = useState("");
 
-    // --- FUNCIONES DE NAVEGACIÓN ---
-    const goToTopic = () => {
-        navigate(`/home/subject/${subjectId}/topic/${topicId}`);
-    };
+    // Visor
+    const [viewingFile, setViewingFile] = useState(null);
 
     // --- CARGA DE DATOS ---
     useEffect(() => {
-        const loadData = async () => {
-            if (!user) return;
+        const fetchTopicDetails = async () => {
+            if (!user || !subjectId || !topicId) return;
 
-            // 1. CARGAR TEMA (Para obtener el color)
             try {
+                const subjectDoc = await getDoc(doc(db, "subjects", subjectId));
+                if (subjectDoc.exists()) {
+                    setSubject({ id: subjectDoc.id, ...subjectDoc.data() });
+                }
+
                 const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
-                const topicSnap = await getDoc(topicRef);
-                
-                if (topicSnap.exists()) {
-                    const tData = topicSnap.data();
-                    if (tData.color) {
-                        const firstPart = tData.color.split(' ')[0]; 
-                        const cleanColor = firstPart.replace('from-', '').split('-')[0];
-                        if (cleanColor) setAccentColor(cleanColor);
-                    }
-                }
-            } catch (e) {
-                console.error("No se pudo cargar el color del tema", e);
-            }
+                const unsubscribeTopic = onSnapshot(topicRef, (topicDoc) => {
+                    if (topicDoc.exists()) {
+                        const topicData = { id: topicDoc.id, ...topicDoc.data() };
 
-            // 2. CARGAR QUIZ (Con Mock Fallback)
-            const MOCK_DATA = {
-                id: 'mock-1', // ID interno para el mock
-                title: "Test de Prueba (Modo Demo)",
-                formulas: [
-                    "\\frac{d}{dx}(x^n) = nx^{n-1}",
-                    "\\int x^n dx = \\frac{x^{n+1}}{n+1} + C",
-                    "E = mc^2"
-                ],
-                questions: [
-                    {
-                        question: "Calcula la derivada de la siguiente función:",
-                        formula: "f(x) = 3x^2 + 5x",
-                        options: ["6x + 5", "3x + 5", "6x", "x^2 + 5"],
-                        correctIndex: 0
-                    },
-                    {
-                        question: "¿Cuál es el resultado de esta integral definida?",
-                        formula: "\\int_{0}^{2} x dx",
-                        options: ["1", "2", "4", "0.5"],
-                        correctIndex: 1
-                    }
-                ]
-            };
-            
-            try {
-                const quizRef = doc(db, "subjects", subjectId, "topics", topicId, "quizzes_data", quizId);
-                const snap = await getDoc(quizRef);
+                        const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
+                        const unsubscribeDocs = onSnapshot(docsRef, (querySnapshot) => {
+                            const manualDocs = querySnapshot.docs.map(doc => ({
+                                id: doc.id,
+                                ...doc.data()
+                            }));
 
-                if (snap.exists()) {
-                    setQuizData({ ...snap.data(), id: snap.id });
-                } else {
-                    setQuizData(MOCK_DATA);
-                }
+                            // Asignamos IDs estables a los PDFs de IA si no tienen
+                            const aiPdfs = Array.isArray(topicData.pdfs) ? topicData.pdfs.map((p, i) => ({ 
+                                ...p, 
+                                id: p.id || `ai-${i}`, // Usar ID existente o generar uno
+                                origin: 'AI' 
+                            })) : [];
+                            
+                            const aiQuizzes = Array.isArray(topicData.quizzes) ? topicData.quizzes : [];
+                            const manualUploads = manualDocs.filter(d => d.source === 'manual').map(d => ({ ...d, origin: 'manual' }));
+
+                            setTopic({ 
+                                ...topicData, 
+                                pdfs: aiPdfs, 
+                                quizzes: aiQuizzes, 
+                                uploads: manualUploads 
+                            });
+                            setLoading(false);
+                        });
+
+                        return () => unsubscribeDocs();
+                    } else {
+                        setLoading(false);
+                        navigate('/home');
+                    }
+                });
+
+                return () => unsubscribeTopic();
             } catch (error) {
-                console.error("Error cargando Quiz (Usando Demo):", error);
-                setQuizData(MOCK_DATA);
-            } finally {
+                console.error("Error loading topic:", error);
                 setLoading(false);
-                setViewState('review');
             }
         };
 
-        loadData();
-    }, [user, subjectId, topicId, quizId, navigate]);
+        const unsubscribe = fetchTopicDetails();
+        return () => {
+            if (unsubscribe && typeof unsubscribe.then === 'function') {
+                unsubscribe.then(unsub => unsub && unsub());
+            }
+        };
+    }, [user, subjectId, topicId, navigate]);
 
-    // --- GUARDADO EN FIREBASE ---
-    const saveQuizResult = async (score, correct, total) => {
-        if (!user) return;
-        setIsSaving(true);
+    // --- HELPERS VISUALES ---
+    const getFileVisuals = (type) => {
+        if (!type) return { icon: FileText, label: 'Documento' };
+        const t = type.toLowerCase();
+        
+        if (t.includes('exam') || t.includes('evaluación')) return { icon: Award, label: 'Exámenes' };
+        if (t.includes('exercise') || t.includes('ejercicio')) return { icon: FileText, label: 'Ejercicios' };
+        if (t.includes('formula') || t.includes('fórmula')) return { icon: Sigma, label: 'Fórmulas' };
+        if (t.includes('summary') || t.includes('resumen') || t.includes('formulario')) return { icon: BookOpen, label: 'Resumen' };
+        
+        return { icon: FileText, label: 'Documento' };
+    };
+
+    const getQuizIcon = (type) => {
+        switch(type) {
+            case 'basic': return { icon: '📖', color: 'from-blue-400 to-blue-600', level: 'Repaso' };
+            case 'advanced': return { icon: '🧪', color: 'from-purple-400 to-purple-600', level: 'Avanzado' };
+            case 'final': return { icon: '🏆', color: 'from-amber-400 to-amber-600', level: 'Evaluación' };
+            default: return { icon: '📝', color: 'from-gray-400 to-gray-600', level: 'Test' };
+        }
+    };
+
+    // --- GESTIÓN ARCHIVOS ---
+    const handleMenuClick = (e, fileId) => { e.stopPropagation(); setActiveMenuId(activeMenuId === fileId ? null : fileId); };
+    
+    const startRenaming = (file) => {
+        setRenamingId(file.id);
+        setTempName(file.name);
+        setActiveMenuId(null);
+    };
+
+    const saveRename = async (file) => {
+        if (!tempName.trim()) return;
         try {
-            // Creamos un ID único para este intento: quizId_userId
-            // O usamos una colección 'attempts' si quieres guardar múltiples intentos.
-            // Aquí guardamos/sobreescribimos el mejor resultado o el último.
-            const resultRef = doc(db, "subjects", subjectId, "topics", topicId, "quiz_results", `${quizId}_${user.uid}`);
-            
-            await setDoc(resultRef, {
-                userId: user.uid,
-                quizId: quizId,
-                score: score,
-                correctAnswers: correct,
-                totalQuestions: total,
-                completedAt: serverTimestamp(),
-                passed: score >= 50
-            }, { merge: true }); // Merge para no borrar otros campos si los hubiera
+            if (file.origin === 'manual') {
+                const docRef = doc(db, "subjects", subjectId, "topics", topicId, "documents", file.id);
+                await updateDoc(docRef, { name: tempName });
+            } else {
+                // Lógica para renombrar PDFs de IA dentro del array
+                const updatedPdfs = topic.pdfs.map(pdf => {
+                    // Mantener propiedades originales pero actualizar nombre
+                    if (pdf.id === file.id) {
+                        return { ...pdf, name: tempName }; 
+                    }
+                    return pdf;
+                });
+                
+                // Guardamos en Firestore eliminando campos UI temporales (como origin='AI')
+                const cleanPdfsForDb = updatedPdfs.map(p => ({
+                    name: p.name,
+                    type: p.type,
+                    url: p.url,
+                    id: p.id // Importante mantener el ID para futuras ediciones
+                }));
 
-            console.log("✅ Puntuación guardada correctamente");
-        } catch (error) {
-            console.error("❌ Error guardando puntuación:", error);
-            // No bloqueamos la UI si falla el guardado, solo logueamos
-        } finally {
-            setIsSaving(false);
+                const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
+                await updateDoc(topicRef, { pdfs: cleanPdfsForDb });
+            }
+            setRenamingId(null);
+        } catch (error) { 
+            console.error(error); 
+            alert("Error al renombrar."); 
         }
     };
 
-    // --- LÓGICA DEL JUEGO ---
-    const handleAnswerSelect = (index) => setSelectedAnswer(index);
-
-    const handleNext = async () => {
-        // Calcular aciertos
-        const isCorrect = selectedAnswer === quizData.questions[currentStep].correctIndex;
-        const newCorrectCount = isCorrect ? correctCount + 1 : correctCount;
-        setCorrectCount(newCorrectCount);
-
-        // Si NO es la última pregunta, avanzamos
-        if (currentStep < quizData.questions.length - 1) {
-            setCurrentStep(currentStep + 1);
-            setSelectedAnswer(null);
-        } 
-        // Si ES la última pregunta, finalizamos
-        else {
-            const totalQuestions = quizData.questions.length;
-            const score = Math.round((newCorrectCount / totalQuestions) * 100);
-            
-            setFinalScore(score);
-            setViewState('results');
-            
-            // Guardamos en Firebase
-            await saveQuizResult(score, newCorrectCount, totalQuestions);
-        }
+    const deleteFile = async (file) => {
+        if (!window.confirm(`¿Eliminar "${file.name}"?`)) return;
+        try {
+            if (file.origin === 'manual') {
+                await deleteDoc(doc(db, "subjects", subjectId, "topics", topicId, "documents", file.id));
+            } else {
+                const updatedPdfs = topic.pdfs.filter(pdf => pdf.id !== file.id)
+                    .map(pdf => ({ name: pdf.name, type: pdf.type, url: pdf.url, id: pdf.id }));
+                await updateDoc(doc(db, "subjects", subjectId, "topics", topicId), { pdfs: updatedPdfs });
+            }
+            setActiveMenuId(null);
+        } catch (error) { console.error(error); alert("Error al eliminar."); }
     };
 
-    // --- RENDERIZADO ---
+    // --- VISOR ---
+    const handleViewFile = (file) => {
+        const dataUrl = file.url;
+        if (!dataUrl) { alert("Archivo vacío."); return; }
+        
+        try {
+            if (!dataUrl.startsWith('data:')) { 
+                setViewingFile({ url: dataUrl, name: file.name, type: file.type }); 
+                return; 
+            }
+            const arr = dataUrl.split(','); const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]); let n = bstr.length; const u8arr = new Uint8Array(n);
+            while (n--) u8arr[n] = bstr.charCodeAt(n);
+            const blob = new Blob([u8arr], { type: mime });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            setViewingFile({ url: blobUrl, name: file.name, type: file.type });
+        } catch (error) { alert("No se pudo previsualizar."); }
+    };
 
-    if (loading || viewState === 'loading') return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
-            <RefreshCcw className={`w-12 h-12 text-${accentColor}-600 animate-spin mb-4`} />
-            <p className="text-slate-500 font-medium animate-pulse">Sincronizando...</p>
-        </div>
-    );
+    // --- ACCIONES TEMA ---
+    const handleDeleteTopic = async () => {
+        if (!window.confirm("¿Eliminar tema completo?")) return;
+        try {
+            await deleteDoc(doc(db, "subjects", subjectId, "topics", topicId));
+            navigate(`/home/subject/${subjectId}`);
+        } catch (error) { console.error(error); }
+    };
 
-    // VISTA REPASO
-    if (viewState === 'review') return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-20">
-            {/* Header Simple */}
-            <div className="pt-8 px-6 mb-8 flex justify-between items-center max-w-3xl mx-auto">
-                {/* FLECHA ATRÁS CORREGIDA */}
-                <button onClick={goToTopic} className="p-2 hover:bg-white rounded-full transition-all text-slate-400 hover:text-slate-700 hover:shadow-sm cursor-pointer">
-                    <ChevronLeft className="w-6 h-6" />
-                </button>
-                <div className={`px-3 py-1 rounded-full bg-${accentColor}-50 text-${accentColor}-700 text-xs font-bold uppercase tracking-wider border border-${accentColor}-100`}>
-                    Modo Estudio
-                </div>
-            </div>
+    const handleSaveTopicTitle = async () => {
+        if (!editTopicData.title.trim()) return;
+        try {
+            await updateDoc(doc(db, "subjects", subjectId, "topics", topicId), { title: editTopicData.title });
+            setIsEditingTopic(false);
+        } catch (error) { console.error(error); }
+    };
 
-            <div className="max-w-2xl mx-auto px-6 animate-in slide-in-from-bottom-8 duration-500">
-                <div className="text-center mb-10">
-                    <div className={`w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-${accentColor}-100 border border-slate-100`}>
-                        <Sigma className={`w-8 h-8 text-${accentColor}-500`} />
-                    </div>
-                    <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight mb-3">
-                        Fórmulas Clave
-                    </h1>
-                    <p className="text-slate-500 text-lg max-w-md mx-auto leading-relaxed">
-                        Repasa estos conceptos antes de iniciar el test. <br/>
-                        <span className={`text-${accentColor}-600 font-bold`}>Son necesarios para resolver los ejercicios.</span>
-                    </p>
-                </div>
+    // --- UPLOAD ---
+    const convertFileToBase64 = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader(); reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result); reader.onerror = reject;
+    });
 
-                <div className="space-y-4 mb-12">
-                    {quizData?.formulas?.map((f, i) => (
-                        <div key={i} className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden group">
-                            <span className="absolute -right-2 -bottom-4 text-8xl font-black text-slate-50 opacity-50 select-none group-hover:text-slate-100 transition-colors">
-                                {i + 1}
-                            </span>
-                            
-                            <div className="flex items-center gap-4 relative z-10">
-                                <div className={`w-8 h-8 rounded-full bg-${accentColor}-50 flex items-center justify-center text-${accentColor}-600 font-bold text-sm shrink-0`}>
-                                    {i + 1}
-                                </div>
-                                <div className="text-xl text-slate-700 overflow-x-auto py-2 w-full">
-                                    <BlockMath math={f} />
-                                </div>
+    const handleManualUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+        const validFiles = files.filter(file => file.size < 1048576); 
+        if (validFiles.length < files.length) alert("⚠️ Archivos > 1MB omitidos.");
+        if (validFiles.length === 0) return;
+
+        setUploading(true);
+        try {
+            const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
+            await Promise.all(validFiles.map(async (file) => {
+                const base64Url = await convertFileToBase64(file);
+                return addDoc(docsRef, {
+                    name: file.name, type: file.type.includes('pdf') ? 'pdf' : 'doc',
+                    size: file.size, source: 'manual', uploadedAt: serverTimestamp(), url: base64Url, status: 'ready'
+                });
+            }));
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            setActiveTab('uploads'); 
+        } catch (error) { alert("Error al subir."); } finally { setUploading(false); }
+    };
+
+    const handleCreateCustomPDF = () => { alert("✨ Crear nuevo PDF personalizado"); };
+    const handleCreateCustomQuiz = () => { alert("✨ Crear nuevo Test personalizado"); };
+
+    // --- MOCK DATA ---
+    const handleSimulateAI = async () => {
+        const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
+        await updateDoc(topicRef, {
+            status: 'completed',
+            pdfs: [
+                { id: 'ai-1', name: 'Formulario', type: 'summary', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
+                { id: 'ai-2', name: 'Ejercicios', type: 'exercises', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' },
+                { id: 'ai-3', name: 'Examen', type: 'exam', url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf' }
+            ],
+            quizzes: [
+                { id: '1', name: 'Repaso Rápido', type: 'basic' },
+                { id: '2', name: 'Caso Práctico', type: 'advanced' },
+                { id: '3', name: 'Simulacro Examen', type: 'final' }
+            ]
+        });
+        alert("✅ Datos inyectados."); setShowMenu(false);
+    };
+
+    // --- RENDER CARD ---
+    const renderFileCard = (file, idx) => {
+        const { icon: Icon, label } = getFileVisuals(file.type);
+        const isRenaming = renamingId === file.id;
+        const isMenuOpen = activeMenuId === file.id;
+
+        return (
+            <div key={file.id || idx} className="group relative h-64 rounded-3xl shadow-lg shadow-slate-200/50 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl cursor-default bg-white border border-slate-100">
+                {file.origin === 'AI' && (
+                    <div className={`absolute inset-0 bg-gradient-to-br ${topic.color || 'from-blue-500 to-indigo-600'} opacity-90 transition-opacity group-hover:opacity-100`}></div>
+                )}
+
+                <div className="absolute top-4 right-4 z-30">
+                    <button onClick={(e) => handleMenuClick(e, file.id)} className={`p-1.5 rounded-full transition-colors ${file.origin === 'AI' ? 'text-white hover:bg-white/20' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
+                        <MoreHorizontal className="w-6 h-6" />
+                    </button>
+                    {isMenuOpen && (
+                        <>
+                            <div className="fixed inset-0 z-20" onClick={() => setActiveMenuId(null)} />
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-40 text-slate-700 animate-in fade-in zoom-in-95 duration-100">
+                                <button onClick={() => startRenaming(file)} className="w-full px-4 py-2.5 text-left text-sm hover:bg-indigo-50 flex items-center gap-2"><FileEdit className="w-4 h-4 text-indigo-600" /> Cambiar nombre</button>
+                                <div className="border-t border-slate-100 my-1"></div>
+                                <button onClick={() => deleteFile(file)} className="w-full px-4 py-2.5 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"><Trash2 className="w-4 h-4" /> Eliminar</button>
                             </div>
-                        </div>
-                    ))}
-                     {(!quizData?.formulas || quizData.formulas.length === 0) && (
-                        <div className="text-slate-400 text-center italic py-8 bg-white rounded-3xl border border-dashed border-slate-200">
-                            No se detectaron fórmulas para repasar.
-                        </div>
+                        </>
                     )}
                 </div>
-            </div>
-
-            <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent z-20">
-                <div className="max-w-2xl mx-auto">
-                    <button 
-                        onClick={() => setViewState('quiz')}
-                        className={`w-full py-5 bg-slate-900 hover:bg-${accentColor}-600 text-white rounded-[2rem] font-bold text-lg transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 flex items-center justify-center gap-3 cursor-pointer`}
-                    >
-                        <BookOpen className="w-5 h-5" />
-                        Comenzar Test Ahora
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-
-    // VISTA RESULTADOS
-    if (viewState === 'results') return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 font-sans">
-            <div className="max-w-md w-full bg-white rounded-[3rem] shadow-2xl shadow-slate-200/50 p-10 text-center border border-slate-100 animate-in zoom-in-95 duration-500">
-                <div className={`w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 ${finalScore >= 50 ? 'bg-green-50' : 'bg-red-50'}`}>
-                    <Award className={`w-12 h-12 ${finalScore >= 50 ? 'text-green-600' : 'text-red-500'}`} />
-                </div>
                 
-                <h2 className="text-4xl font-black text-slate-900 mb-2 tracking-tight">
-                    {finalScore >= 80 ? '¡Excelente!' : finalScore >= 50 ? '¡Bien hecho!' : 'A repasar...'}
-                </h2>
-                <p className="text-slate-500 mb-8 font-medium">
-                    Has acertado <span className="text-slate-900 font-bold">{correctCount}</span> de {quizData.questions.length} preguntas.
-                    {isSaving && <span className="block text-xs mt-2 text-slate-400 animate-pulse">Guardando progreso...</span>}
-                </p>
-                
-                <div className="bg-slate-50 rounded-3xl p-8 mb-8 border border-slate-100 relative overflow-hidden group">
-                    <div className={`absolute bottom-0 left-0 h-1.5 w-full ${finalScore >= 50 ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                    <div className="text-6xl font-black text-slate-800 mb-1 tracking-tighter">{finalScore}<span className="text-3xl text-slate-400 ml-1">%</span></div>
-                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Puntuación Final</div>
-                </div>
+                <div className="relative h-full p-8 flex flex-col justify-between text-white">
+                    {/* CABECERA: Icono de fondo */}
+                    <div className="flex justify-between items-start">
+                        {file.origin === 'AI' ? (
+                            <Icon className="w-24 h-24 text-white absolute -top-4 -left-4 opacity-20 rotate-12 group-hover:rotate-0 transition-transform duration-500" />
+                        ) : (
+                            <FileText className="w-32 h-32 text-slate-100 absolute -bottom-4 -right-4 rotate-12" />
+                        )}
+                    </div>
 
-                <div className="flex flex-col gap-3">
-                    <button 
-                        onClick={() => {
-                            setViewState('review');
-                            setCurrentStep(0);
-                            setCorrectCount(0);
-                            setFinalScore(0);
-                            setSelectedAnswer(null);
-                        }}
-                        className="w-full py-4 bg-white border-2 border-slate-100 hover:border-slate-300 text-slate-700 rounded-2xl font-bold transition-all cursor-pointer hover:bg-slate-50"
-                    >
-                        Intentar de nuevo
-                    </button>
-                    {/* BOTÓN VOLVER AL TEMA CORREGIDO */}
-                    <button 
-                        onClick={goToTopic}
-                        className={`w-full py-4 bg-slate-900 hover:bg-${accentColor}-600 text-white rounded-2xl font-bold transition-all shadow-lg cursor-pointer`}
-                    >
-                        Volver al Tema
-                    </button>
+                    <div className="z-10 mt-auto">
+                        {isRenaming ? (
+                            <div className="mb-4 bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/20 flex flex-col gap-2">
+                                <input type="text" value={tempName} onChange={(e) => setTempName(e.target.value)} className={`w-full bg-white/90 text-slate-900 rounded-lg px-3 py-2 text-sm font-bold focus:outline-none ${file.origin !== 'AI' && 'border border-slate-300'}`} autoFocus />
+                                <div className="flex gap-2">
+                                    <button onClick={() => saveRename(file)} className="flex-1 bg-green-500 hover:bg-green-600 text-white rounded-lg py-1.5 flex justify-center"><Check className="w-4 h-4" /></button>
+                                    <button onClick={() => setRenamingId(null)} className="flex-1 bg-red-500 hover:bg-red-600 text-white rounded-lg py-1.5 flex justify-center"><X className="w-4 h-4" /></button>
+                                </div>
+                            </div>
+                        ) : (
+                            // --- CAMBIO PRINCIPAL AQUÍ ---
+                            // Ahora mostramos file.name en lugar de label
+                            <h3 className={`text-4xl font-extrabold leading-tight mb-6 uppercase tracking-tight ${file.origin === 'AI' ? 'text-white' : 'text-slate-800'}`}>
+                                {file.name || label}
+                            </h3>
+                        )}
+                        <div className="flex gap-3">
+                            <button onClick={() => handleViewFile(file)} className={`flex-1 flex items-center justify-center gap-2 py-3 backdrop-blur-sm rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${file.origin === 'AI' ? 'bg-white/20 hover:bg-white/30 text-white border border-white/10' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}><Maximize2 className="w-4 h-4" /> Ver</button>
+                            <a href={file.url} download={file.name} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all shadow-lg ${file.origin === 'AI' ? 'bg-white text-indigo-900 hover:bg-indigo-50' : 'bg-slate-900 text-white hover:bg-indigo-600'}`}><Download className="w-4 h-4" /> Descargar</a>
+                        </div>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
-    // VISTA JUEGO
-    const q = quizData.questions[currentStep];
-    const progress = ((currentStep + 1) / quizData.questions.length) * 100;
+    if (!user || loading || !topic || !subject) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="w-10 h-10 text-indigo-600 animate-spin" /></div>;
 
     return (
-        <div className="min-h-screen bg-slate-50 pb-28 font-sans text-slate-900">
-            {/* HEADER FLOTANTE */}
-            <div className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur-xl border-b border-slate-200/60 px-4 md:px-8 py-4 transition-all supports-[backdrop-filter]:bg-slate-50/60">
-                <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-                    {/* BOTÓN CERRAR (X) CORREGIDO */}
-                    <button onClick={goToTopic} className="p-2 hover:bg-white rounded-full transition-colors text-slate-400 hover:text-slate-700 shadow-sm border border-transparent hover:border-slate-100 cursor-pointer">
-                        <X className="w-6 h-6" />
-                    </button>
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+            <Header user={user} />
+
+            <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                     
-                    <div className="flex-1 max-w-md">
-                        <div className="flex justify-between text-xs font-bold text-slate-400 mb-1.5 uppercase tracking-wider">
-                            <span>Progreso</span>
-                            <span>{currentStep + 1} / {quizData.questions.length}</span>
+                    {/* 1. BREADCRUMBS & MENU */}
+                    <div className="flex items-center justify-between mb-8">
+                        <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
+                            <button onClick={() => navigate('/home')} className="hover:text-indigo-600 transition-colors flex items-center gap-1 cursor-pointer"><Home className="w-4 h-4" /> Inicio</button>
+                            <ChevronRight className="w-4 h-4 text-slate-300" />
+                            <button onClick={() => navigate(`/home/subject/${subjectId}`)} className="hover:text-indigo-600 transition-colors cursor-pointer">{subject.name}</button>
+                            <ChevronRight className="w-4 h-4 text-slate-300" />
+                            <span className="text-slate-900 font-bold">Tema {topic.number}</span>
                         </div>
-                        <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden">
-                            <div 
-                                className={`h-full bg-${accentColor}-500 rounded-full transition-all duration-500 ease-out shadow-[0_0_10px_rgba(0,0,0,0.1)]`}
-                                style={{ width: `${progress}%` }}
-                            />
+                        <div className="relative">
+                            <button onClick={() => setShowMenu(!showMenu)} className="p-2 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"><MoreVertical className="w-5 h-5 text-slate-500" /></button>
+                            {showMenu && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setShowMenu(false)} />
+                                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
+                                        <button onClick={() => { setIsEditingTopic(true); setEditTopicData({ title: topic.title }); setShowMenu(false); }} className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 flex items-center gap-3 text-slate-700 cursor-pointer"><Edit2 className="w-4 h-4" /> Renombrar Tema</button>
+                                        <button onClick={handleSimulateAI} className="w-full px-4 py-2 text-left text-sm hover:bg-purple-50 flex items-center gap-3 text-purple-600 font-bold cursor-pointer"><Wand2 className="w-4 h-4" /> Simular IA</button>
+                                        <div className="border-t border-slate-100 my-1"></div>
+                                        <button onClick={() => { handleDeleteTopic(); setShowMenu(false); }} className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 flex items-center gap-3 text-red-600 cursor-pointer"><Trash2 className="w-4 h-4" /> Eliminar Tema</button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
-                    <div className={`hidden md:flex items-center gap-2 text-${accentColor}-700 font-bold bg-${accentColor}-50 px-4 py-2 rounded-xl border border-${accentColor}-100 shadow-sm`}>
-                        <Timer className="w-4 h-4" />
-                        <span className="text-sm">En curso</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* AREA PRINCIPAL */}
-            <main className="pt-8 px-6 max-w-3xl mx-auto animate-in slide-in-from-bottom-8 duration-500">
-                <div className="mb-8">
-                    <div className={`inline-flex items-center gap-2 text-${accentColor}-600 bg-${accentColor}-50 px-3 py-1 rounded-full border border-${accentColor}-100 font-bold text-xs uppercase tracking-widest mb-6`}>
-                        <Brain className="w-3.5 h-3.5" />
-                        <span>Pregunta {currentStep + 1}</span>
-                    </div>
-
-                    <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 leading-tight mb-8">
-                        {q.question}
-                    </h2>
-
-                    {q.formula && (
-                        <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm mb-10 text-center overflow-x-auto relative group hover:border-slate-300 transition-colors">
-                            <div className="absolute top-4 left-4 text-slate-300 group-hover:text-slate-400 transition-colors">
-                                <HelpCircle className="w-6 h-6" />
+                    {/* 2. HERO HEADER */}
+                    <div className="mb-10 pb-8 border-b border-slate-200">
+                        <div className="flex flex-col md:flex-row items-start gap-8">
+                            <div className={`w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br ${topic.color || 'from-blue-500 to-indigo-600'} flex items-center justify-center shadow-2xl shadow-indigo-500/20`}>
+                                <span className="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-md">
+                                    {topic.number || (topic.order ? topic.order.toString().padStart(2, '0') : '#')}
+                                </span>
                             </div>
-                            <div className="text-xl md:text-2xl text-slate-800 py-2">
-                                <BlockMath math={q.formula} />
+                            <div className="flex-1 space-y-4 w-full">
+                                <div className="flex items-center gap-3">
+                                    <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wider border border-indigo-100">{subject.course}</span>
+                                    <div className="flex items-center gap-1 text-slate-400 text-sm font-medium"><Calendar className="w-4 h-4" /><span>Actualizado hoy</span></div>
+                                </div>
+                                {isEditingTopic ? (
+                                    <div className="flex gap-2 max-w-lg">
+                                        <input type="text" value={editTopicData.title} onChange={(e) => setEditTopicData({ ...editTopicData, title: e.target.value })} className="flex-1 text-2xl font-bold border border-slate-300 rounded-lg px-3 py-2" autoFocus />
+                                        <button onClick={handleSaveTopicTitle} className="bg-indigo-600 text-white px-4 rounded-lg"><CheckCircle2 /></button>
+                                        <button onClick={() => setIsEditingTopic(false)} className="bg-slate-200 text-slate-600 px-4 rounded-lg"><X /></button>
+                                    </div>
+                                ) : (
+                                    <h2 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight capitalize leading-tight">{topic.title}</h2>
+                                )}
+                                <div className="flex items-center gap-4 max-w-md pt-2">
+                                    <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden"><div className={`h-full bg-indigo-500 rounded-full transition-all duration-1000 ${topic.quizzes?.length > 0 ? 'w-1/2' : 'w-1/12'}`}></div></div>
+                                    <span className="text-xs font-bold text-slate-500">{topic.quizzes?.length > 0 ? '50%' : '10%'} Completado</span>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* 3. TABS */}
+                    <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
+                        <button onClick={() => setActiveTab('materials')} className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border whitespace-nowrap ${activeTab === 'materials' ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50 cursor-pointer'}`}>
+                            <FileText className="w-4 h-4" /> 
+                            Generados por IA
+                            {activeTab === 'materials' && (
+                                <div role="button" onClick={(e) => { e.stopPropagation(); handleCreateCustomPDF(); }} className="ml-2 w-5 h-5 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 transition-all z-10 cursor-pointer" title="Crear Nuevo PDF"><Plus className="w-3 h-3" /></div>
+                            )}
+                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'materials' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>{topic.pdfs?.length || 0}</span>
+                        </button>
+                        
+                        <button onClick={() => setActiveTab('uploads')} className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border whitespace-nowrap ${activeTab === 'uploads' ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50 cursor-pointer'}`}>
+                            <Upload className="w-4 h-4" /> Mis Archivos
+                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'uploads' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>{topic.uploads?.length || 0}</span>
+                        </button>
+
+                        <button onClick={() => setActiveTab('quizzes')} className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border whitespace-nowrap ${activeTab === 'quizzes' ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50 cursor-pointer'}`}>
+                            <CheckCircle2 className="w-4 h-4" /> 
+                            Tests Prácticos
+                            {activeTab === 'quizzes' && (
+                                <div role="button" onClick={(e) => { e.stopPropagation(); handleCreateCustomQuiz(); }} className="ml-2 w-5 h-5 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 transition-all z-10 cursor-pointer" title="Crear Nuevo Test"><Plus className="w-3 h-3" /></div>
+                            )}
+                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'quizzes' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>{topic.quizzes?.length || 0}</span>
+                        </button>
+                    </div>
+
+                    {/* 4. CONTENIDO: MATERIALES IA */}
+                    {activeTab === 'materials' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {topic.status === 'generating' && (
+                                <div className="bg-white rounded-3xl border border-blue-200 p-8 shadow-sm flex flex-col justify-center items-center text-center h-64 animate-pulse">
+                                    <Loader2 className="w-12 h-12 text-blue-500 animate-spin mb-4" />
+                                    <h4 className="font-bold text-2xl text-slate-800">Generando...</h4>
+                                    <p className="text-slate-500 mt-2">La IA está creando tus materiales.</p>
+                                </div>
+                            )}
+                            {topic.pdfs?.map((pdf, idx) => renderFileCard(pdf, idx))}
+                            {(!topic.pdfs || topic.pdfs.length === 0) && topic.status !== 'generating' && (
+                                <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+                                    <FileText className="w-12 h-12 mb-3 opacity-20" />
+                                    <p className="font-medium">No hay materiales generados todavía.</p>
+                                </div>
+                            )}
                         </div>
                     )}
 
-                    <div className="grid gap-4">
-                        {q.options.map((option, idx) => {
-                            const isSelected = selectedAnswer === idx;
-                            return (
-                                <button
-                                    key={idx}
-                                    onClick={() => handleAnswerSelect(idx)}
-                                    className={`group relative p-6 rounded-2xl border-2 text-left transition-all duration-200 flex items-center gap-5 outline-none cursor-pointer
-                                        ${isSelected 
-                                            ? `border-${accentColor}-600 bg-${accentColor}-50/50 shadow-md scale-[1.01]` 
-                                            : 'border-white bg-white hover:border-slate-200 hover:bg-slate-50 shadow-sm hover:shadow-md'}`}
-                                >
-                                    <div className={`w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-sm transition-colors shadow-sm
-                                        ${isSelected ? `bg-${accentColor}-600 text-white` : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200'}`}>
-                                        {String.fromCharCode(65 + idx)}
-                                    </div>
+                    {/* 5. CONTENIDO: UPLOADS */}
+                    {activeTab === 'uploads' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <input type="file" ref={fileInputRef} onChange={handleManualUpload} multiple hidden accept=".pdf,.doc,.docx" />
+                            <button onClick={() => fileInputRef.current.click()} disabled={uploading} className="h-64 rounded-3xl border-3 border-dashed border-indigo-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all flex flex-col justify-center items-center text-center group bg-white cursor-pointer">
+                                {uploading ? <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" /> : <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"><Upload className="w-10 h-10 text-indigo-600" /></div>}
+                                <span className="font-bold text-xl text-slate-700">{uploading ? 'Subiendo...' : 'Subir Archivo'}</span>
+                                <span className="text-sm text-slate-400 mt-2">PDF, DOCX hasta 1MB</span>
+                            </button>
+                            {topic.uploads?.map((upload, idx) => renderFileCard(upload, idx))}
+                        </div>
+                    )}
 
-                                    <div className={`flex-1 text-lg font-medium ${isSelected ? `text-${accentColor}-900` : 'text-slate-700'}`}>
-                                        <div className="katex-render-wrapper">
-                                            {option.includes('\\') || option.includes('^') ? <InlineMath math={option} /> : option}
+                    {/* 6. CONTENIDO: QUIZZES */}
+                    {activeTab === 'quizzes' && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {topic.quizzes?.map((quiz, idx) => {
+                                const { icon: Icon, level, color } = getQuizIcon(quiz.type);
+                                return (
+                                    <div key={idx} className="group relative h-64 rounded-3xl shadow-lg shadow-slate-200/50 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl cursor-default">
+                                        <div className={`absolute inset-0 bg-gradient-to-r ${color} opacity-90 transition-opacity group-hover:opacity-100`}></div>
+                                        <div className="relative h-full p-8 flex flex-col justify-between text-white">
+                                            <div className="flex justify-between items-start">
+                                                <div className="text-6xl opacity-30 absolute -top-2 -left-2 rotate-12 group-hover:rotate-0 transition-transform duration-500">{level === 'Repaso' ? '📖' : level === 'Avanzado' ? '🧪' : '🏆'}</div>
+                                                <div className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full ml-auto border border-white/20 z-10"><span className="text-xs font-bold uppercase tracking-wider">{level}</span></div>
+                                            </div>
+                                            <div className="z-10 mt-auto">
+                                                <h3 className="text-3xl font-extrabold leading-tight mb-2">{quiz.name || "Test Práctico"}</h3>
+                                                <div className="flex items-center gap-2 text-white/80 text-sm mb-6 font-medium"><Timer className="w-4 h-4" /> 15 min aprox</div>
+                                                <button onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`)} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-indigo-900 text-sm font-bold uppercase tracking-wider hover:bg-indigo-50 transition-all shadow-lg cursor-pointer"><Play className="w-4 h-4 fill-current" /> Comenzar Test</button>
+                                            </div>
                                         </div>
                                     </div>
-
-                                    <div className={`transition-all duration-300 ${isSelected ? 'opacity-100 scale-100' : 'opacity-0 scale-50 w-0'}`}>
-                                        <CheckCircle2 className={`w-6 h-6 text-${accentColor}-600`} />
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
+                                );
+                            })}
+                            {(!topic.quizzes || topic.quizzes.length === 0) && (
+                                <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+                                    <Sparkles className="w-12 h-12 mb-3 opacity-20" />
+                                    <p className="font-medium">No hay tests generados aún.</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </main>
 
-            {/* BOTÓN NEXT FIJO */}
-            <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-50 via-slate-50/95 to-transparent z-20 backdrop-blur-[2px]">
-                <div className="max-w-3xl mx-auto">
-                    <button
-                        disabled={selectedAnswer === null}
-                        onClick={handleNext}
-                        className={`w-full py-4 md:py-5 rounded-[2rem] font-black text-lg transition-all flex items-center justify-center gap-3 shadow-xl cursor-pointer
-                            ${selectedAnswer !== null 
-                                ? `bg-slate-900 text-white hover:bg-${accentColor}-600 hover:-translate-y-1 hover:shadow-${accentColor}-500/30` 
-                                : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
-                    >
-                        {currentStep === quizData.questions.length - 1 ? 'Finalizar Test' : 'Siguiente Pregunta'}
-                        <ArrowRight className="w-5 h-5" />
-                    </button>
+            {/* --- VISUALIZADOR MODAL CON MARCO DE COLOR --- */}
+            {viewingFile && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200">
+                    <div className={`relative w-full max-w-6xl h-[90vh] rounded-3xl p-1 shadow-2xl flex flex-col bg-gradient-to-br ${topic.color || 'from-indigo-500 to-purple-600'}`}>
+                        <div className="flex-1 w-full h-full bg-slate-900 rounded-2xl overflow-hidden flex flex-col">
+                            {/* CABECERA CON COLOR Y TITULO CORRECTO */}
+                            <div className={`flex justify-between items-center px-6 py-4 bg-gradient-to-r ${topic.color || 'from-indigo-500 to-purple-600'}`}>
+                                <span className="font-bold text-white flex items-center gap-2 text-lg tracking-tight">
+                                    {(() => {
+                                        const { icon: HeaderIcon, label } = getFileVisuals(viewingFile.type);
+                                        return <><HeaderIcon className="w-5 h-5 text-white/90" /> {viewingFile.name || label}</>;
+                                    })()}
+                                </span>
+                                <button onClick={() => setViewingFile(null)} className="p-2 bg-white/20 hover:bg-white/40 text-white rounded-full transition-all shadow-sm"><X className="w-5 h-5" /></button>
+                            </div>
+                            <div className="flex-1 bg-white relative"><iframe src={viewingFile.url} className="w-full h-full" title="Visor" /></div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
         </div>
     );
 };
 
-export default Quizzes;
+export default Topic;
