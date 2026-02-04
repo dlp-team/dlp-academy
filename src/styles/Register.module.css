@@ -26,6 +26,11 @@
   margin: auto;
 }
 
+:global(.dark) .registerContainer {
+  background: #1e293b;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
 /* --- LADO IZQUIERDO (BRANDING) --- */
 .registerLeft {
   background: linear-gradient(135deg, #5b7cff 0%, #7c5cff 100%);
@@ -78,16 +83,36 @@
   background: white;
 }
 
+:global(.dark) .registerRight {
+  background: #1e293b;
+}
+
 .registerHeader { margin-bottom: 25px; }
 .registerHeader h2 { font-size: 28px; color: #2d3748; margin-bottom: 10px; }
 .registerHeader p { color: #718096; font-size: 15px; }
+
+:global(.dark) .registerHeader h2 {
+  color: #f1f5f9;
+}
+
+:global(.dark) .registerHeader p {
+  color: #94a3b8;
+}
 
 .formRow { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 .formGroup { margin-bottom: 18px; }
 .formGroup label { display: block; color: #4a5568; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
 
+:global(.dark) .formGroup label {
+  color: #cbd5e1;
+}
+
 .inputWrapper { position: relative; }
 .inputIcon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #a0aec0; display: flex; align-items: center; }
+
+:global(.dark) .inputIcon {
+  color: #64748b;
+}
 
 .formGroup input, .formGroup select {
   width: 100%;
@@ -111,10 +136,32 @@
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+:global(.dark) .formGroup input,
+:global(.dark) .formGroup select {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+:global(.dark) .formGroup input:focus,
+:global(.dark) .formGroup select:focus {
+  background: #1e293b;
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+}
+
 /* Barra de fuerza de contraseña */
 .passwordStrength { margin-top: 8px; font-size: 12px; }
 .strengthBar { height: 4px; background: #e2e8f0; border-radius: 2px; margin-top: 5px; overflow: hidden; }
 .strengthFill { height: 100%; width: 0%; transition: all 0.3s ease; border-radius: 2px; }
+
+:global(.dark) .strengthBar {
+  background: #334155;
+}
+
+:global(.dark) .passwordStrength {
+  color: #94a3b8;
+}
 
 /* Colores para la fuerza */
 .strengthWeak { background-color: #fc8181; width: 33%; }
@@ -145,20 +192,51 @@
   box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
 }
 
+:global(.dark) .userTypeLabel {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+:global(.dark) .userTypeOption input[type="radio"]:checked + .userTypeLabel {
+  border-color: #818cf8;
+  background: #312e81;
+  box-shadow: 0 0 0 2px rgba(129, 140, 248, 0.2);
+}
+
 .userTypeLabel .icon { font-size: 28px; margin-bottom: 8px; }
 .userTypeLabel .title { font-weight: 600; color: #2d3748; font-size: 14px; }
+
+:global(.dark) .userTypeLabel .title {
+  color: #f1f5f9;
+}
 
 /* Checkbox de rememberme */
 .formOptions { display: flex; align-items: start; gap: 10px; margin-bottom: 20px; font-size: 14px; color: #4a5568; cursor: pointer; }
 .formOptions input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; margin-top: 2px; flex-shrink: 0; }
-.formOptions a { color: #667eea; text-decoration: none; font-weight: 600; }
 .formOptions a:hover { text-decoration: underline; }
+.formOptions label { text-decoration: none;}
+
+:global(.dark) .formOptions {
+  color: #cbd5e1;
+}
+
+:global(.dark) .formOptions a {
+  color: #818cf8;
+}
 
 /* Checkbox de términos */
 .termsCheckbox { display: flex; align-items: start; gap: 10px; margin-bottom: 20px; font-size: 14px; color: #4a5568; cursor: pointer; }
 .termsCheckbox input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; margin-top: 2px; flex-shrink: 0; }
 .termsCheckbox a { color: #667eea; text-decoration: none; font-weight: 600; }
 .termsCheckbox a:hover { text-decoration: underline; }
+
+:global(.dark) .termsCheckbox {
+  color: #cbd5e1;
+}
+
+:global(.dark) .termsCheckbox a {
+  color: #818cf8;
+}
 
 /* Botón Principal */
 .registerButton {
@@ -181,6 +259,31 @@
 .loginLink { text-align: center; margin-top: 20px; color: #718096; font-size: 14px; }
 .loginLink a { color: #667eea; text-decoration: none; font-weight: 600; cursor: pointer; }
 .loginLink a:hover { text-decoration: underline; }
+
+:global(.dark) .loginLink {
+  color: #94a3b8;
+}
+
+:global(.dark) .loginLink a {
+  color: #818cf8;
+}
+
+.errorMessage {
+  color: #e53e3e;
+  background-color: #fff5f5;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  border: 1px solid #feb2b2;
+  text-align: center;
+}
+
+:global(.dark) .errorMessage {
+  color: #fca5a5;
+  background-color: #450a0a;
+  border-color: #991b1b;
+}
 
 /* RESPONSIVO (Móvil) */
 @media (max-width: 900px) {

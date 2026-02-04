@@ -56,15 +56,19 @@ const Settings = ({ user }) => {
   // 2. Helper to manually force the theme CHANGE (Visual Only)
   const applyThemeToDom = (theme) => {
     const root = window.document.documentElement;
+    
+    // 1. Remove both to start fresh
     root.classList.remove('light', 'dark');
 
+    // 2. Determine which one to add
     if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      root.classList.add(systemTheme);
+        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        root.classList.add(systemTheme);
     } else {
-      root.classList.add(theme);
+        // This is where he uses the manual logic
+        root.classList.add(theme);
     }
-  };
+    };
 
   // 3. Update Handler
   const updateSetting = async (path, value) => {

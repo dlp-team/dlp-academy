@@ -23,6 +23,11 @@
   grid-template-columns: 1fr 1fr;
 }
 
+:global(.dark) .loginContainer {
+  background: #1e293b;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
 .loginLeft {
   background: linear-gradient(135deg, #5b7cff 0%, #7c5cff 100%);
   padding: 60px 50px;
@@ -66,22 +71,69 @@
 .featureIcon { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
 
 .loginRight { padding: 60px 50px; display: flex; flex-direction: column; justify-content: center; }
+
+:global(.dark) .loginRight {
+  background: #1e293b;
+}
+
 .loginHeader { margin-bottom: 40px; }
 .loginHeader h2 { font-size: 28px; color: #2d3748; margin-bottom: 10px; }
 .loginHeader p { color: #718096; font-size: 15px; }
 
+:global(.dark) .loginHeader h2 {
+  color: #f1f5f9;
+}
+
+:global(.dark) .loginHeader p {
+  color: #94a3b8;
+}
+
 .formGroup { margin-bottom: 25px; }
 .formGroup label { display: block; color: #4a5568; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+
+:global(.dark) .formGroup label {
+  color: #cbd5e1;
+}
+
 .inputWrapper { position: relative; }
 .inputIcon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #a0aec0; }
+
+:global(.dark) .inputIcon {
+  color: #64748b;
+}
+
 .formGroup input { width: 100%; padding: 14px 15px 14px 45px; border: 2px solid #e2e8f0; border-radius: 10px; font-size: 15px; transition: all 0.3s ease; background: #f7fafc; }
 .formGroup input:focus { outline: none; border-color: #667eea; background: white; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+
+:global(.dark) .formGroup input {
+  background: #0f172a;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+:global(.dark) .formGroup input:focus {
+  background: #1e293b;
+  border-color: #818cf8;
+  box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.1);
+}
 
 .formOptions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 14px; }
 .rememberMe { display: flex; align-items: center; gap: 8px; color: #4a5568; }
 .rememberMe input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
 .forgotPassword { color: #667eea; text-decoration: none; font-weight: 600; transition: color 0.3s ease; }
 .forgotPassword:hover { color: #5568d3; text-decoration: underline; }
+
+:global(.dark) .rememberMe {
+  color: #cbd5e1;
+}
+
+:global(.dark) .forgotPassword {
+  color: #818cf8;
+}
+
+:global(.dark) .forgotPassword:hover {
+  color: #a5b4fc;
+}
 
 .loginButton { width: 100%; padding: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); }
 .loginButton:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6); }
@@ -90,6 +142,15 @@
 .divider { display: flex; align-items: center; margin: 30px 0; color: #a0aec0; font-size: 14px; }
 .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #e2e8f0; }
 .divider span { padding: 0 15px; }
+
+:global(.dark) .divider {
+  color: #64748b;
+}
+
+:global(.dark) .divider::before,
+:global(.dark) .divider::after {
+  background: #334155;
+}
 
 .socialLogin { display: grid; grid-template-columns: 1fr ; }
 .socialButton {
@@ -117,9 +178,29 @@
     background-color: #f8f9fa;
     border-color: #d2e3fc;
 }
+
+:global(.dark) .socialButton {
+  background-color: #1e293b;
+  border-color: #475569;
+  color: #f1f5f9;
+}
+
+:global(.dark) .socialButton:hover {
+  background-color: #334155;
+  border-color: #64748b;
+}
+
 .registerLink { text-align: center; margin-top: 30px; color: #718096; font-size: 14px; }
 .registerLink a { color: #667eea; text-decoration: none; font-weight: 600; }
 .registerLink a:hover { text-decoration: underline; }
+
+:global(.dark) .registerLink {
+  color: #94a3b8;
+}
+
+:global(.dark) .registerLink a {
+  color: #818cf8;
+}
 
 .linkSpan {
   text-decoration: none;
@@ -138,6 +219,12 @@
   font-size: 14px;
   border: 1px solid #feb2b2;
   text-align: center;
+}
+
+:global(.dark) .errorMsg {
+  color: #fca5a5;
+  background-color: #450a0a;
+  border-color: #991b1b;
 }
 
 /* Responsivo */

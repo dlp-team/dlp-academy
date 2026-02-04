@@ -269,7 +269,7 @@ const Register = () => {
                                 checked={formData.rememberMe}
                                 onChange={handleChange}
                             />
-                            <label htmlFor="rememberMe" style={{margin:0, fontSize: '14px', color: '#4a5568'}}>
+                            <label htmlFor="rememberMe">
                                 Recordarme en este dispositivo
                             </label>
                         </div>

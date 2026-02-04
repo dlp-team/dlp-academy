@@ -1,3 +1,12 @@
 @import "tailwindcss";
 
-@config "../tailwind.config.js";
+@theme {
+  /* This ensures the indigo and slate colors are available */
+  --color-indigo-600: #4f46e5;
+  --color-indigo-400: #818cf8;
+  --color-slate-950: #020617;
+  --color-slate-900: #0f172a;
+}
+
+/* THE FIX: Manual Dark Mode for v4 */
+@custom-variant dark (&:where(.dark, .dark *));
