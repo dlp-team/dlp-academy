@@ -102,7 +102,6 @@ const Subject = ({ user }) => {
         setTopics(newTopics);
         
         // Update each document's order in Firestore
-        // Note: For production, use writeBatch for atomicity
         newTopics.forEach(async (topic, index) => {
             try {
                 const topicRef = doc(db, "subjects", subjectId, "topics", topic.id);
@@ -122,8 +121,6 @@ const Subject = ({ user }) => {
         formData.append('prompt', data.prompt || '');
         formData.append('subject', subject.name);
         formData.append('course', subject.course);
-        // Note: Sending topicsList might be less useful with subcollections if n8n expects the full array structure
-        // But we keep it if your workflow uses it for context
         formData.append('my_value', JSON.stringify(topicsList));
         
         if (attachedFiles && attachedFiles.length > 0) {
@@ -148,8 +145,6 @@ const Subject = ({ user }) => {
             const result = await response.json();
             console.log("✅ SUCCESS:", result);
             
-            // ✅ CRITICAL FIX: Update the specific document in the subcollection
-            // This will trigger onSnapshot and update the UI automatically
             await updateTopicDocument(topicId, {
                 status: 'completed',
                 pdfs: result.pdfs || [],
@@ -161,7 +156,6 @@ const Subject = ({ user }) => {
             
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            // Update status to error on the specific document
             await updateTopicDocument(topicId, { status: 'error' });
 
             if (error.name === 'AbortError') {
@@ -182,7 +176,6 @@ const Subject = ({ user }) => {
                 return;
             }
 
-            // Update status to generating
             await updateTopicDocument(retryTopicId, {
                 title: topicFormData.title,
                 prompt: topicFormData.prompt,
@@ -202,13 +195,16 @@ const Subject = ({ user }) => {
 
         // NEW TOPIC LOGIC
         try {
+            const nextOrder = topics.length + 1;
             const newTopicData = {
                 title: topicFormData.title,
                 prompt: topicFormData.prompt,
                 status: 'generating',
                 color: subject.color,
                 createdAt: serverTimestamp(),
-                order: topics.length + 1,
+                order: nextOrder,
+                // ✅ CORRECCIÓN 1: Guardamos el número al crear
+                number: nextOrder.toString().padStart(2, '0'), 
                 pdfs: [],
                 quizzes: []
             };
@@ -217,7 +213,6 @@ const Subject = ({ user }) => {
             const docRef = await addDoc(topicsRef, newTopicData);
             const topicId = docRef.id;
             
-            // Save manually uploaded files if any (to documents subcollection)
             if (files.length > 0) {
                 const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
                 const uploadPromises = files.map(file => {
@@ -233,12 +228,9 @@ const Subject = ({ user }) => {
                 await Promise.all(uploadPromises);
             }
 
-            // Cache files for retry
             const currentFiles = [...files];
             setFileCache(prev => ({...prev, [topicId]: currentFiles}));
 
-            // Notify n8n
-            // Note: passing 'topics' might be stale, but keeping signature
             sendToN8N(topicId, topics, topicFormData, files);
 
             setShowTopicModal(false);
@@ -259,12 +251,7 @@ const Subject = ({ user }) => {
 
     const handlePositionConfirm = async (insertIndex) => {
         if (!pendingTopic || !subject) return;
-
-        // Simplified: Create at end for now to ensure stability
-        // To implement correctly with subcollections, you need to shift orders
-        // of all topics > insertIndex before creating the new one.
         await handleCreateTopic({ preventDefault: () => {} });
-
         setShowPositionModal(false);
         setPendingTopic(null);
     };
@@ -274,11 +261,8 @@ const Subject = ({ user }) => {
             ...topic, number: (index + 1).toString().padStart(2, '0')
         }));
         
-        // Update local state
         setTopics(updatedList);
-        // Update Firestore
         updateTopicsOrder(updatedList);
-        
         setShowReorderModal(false);
     };
 
@@ -501,7 +485,10 @@ const Subject = ({ user }) => {
                                 <div className="relative h-full p-6 flex flex-col justify-between text-white">
                                     <div className="flex justify-between items-start">
                                         <span className="text-8xl font-black opacity-30">
-                                            {isReordering ? (index + 1).toString().padStart(2, '0') : topic.number}
+                                            {/* ✅ CORRECCIÓN 2: Si no hay número guardado, calculamos uno basado en la posición */}
+                                            {isReordering 
+                                                ? (index + 1).toString().padStart(2, '0') 
+                                                : (topic.number || (index + 1).toString().padStart(2, '0'))}
                                         </span>
                                         {!isReordering && (
                                             topic.status === 'generating' ? (

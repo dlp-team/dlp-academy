@@ -161,12 +161,10 @@ const Topic = ({ user }) => {
         if (!dataUrl) { alert("Archivo vacío."); return; }
         
         try {
-            // Si es URL normal
             if (!dataUrl.startsWith('data:')) { 
                 setViewingFile({ url: dataUrl, name: file.name, type: file.type }); 
                 return; 
             }
-            // Si es Base64
             const arr = dataUrl.split(','); const mime = arr[0].match(/:(.*?);/)[1];
             const bstr = atob(arr[1]); let n = bstr.length; const u8arr = new Uint8Array(n);
             while (n--) u8arr[n] = bstr.charCodeAt(n);
@@ -302,7 +300,6 @@ const Topic = ({ user }) => {
                             <h3 className={`text-3xl font-extrabold leading-tight line-clamp-2 mb-4 ${file.origin === 'AI' ? 'text-white' : 'text-slate-800'}`} title={file.name}>{file.name || label}</h3>
                         )}
                         <div className="flex gap-3">
-                            {/* PASAMOS EL OBJETO FILE COMPLETO PARA QUE EL VISOR SEPA EL NOMBRE */}
                             <button onClick={() => handleViewFile(file)} className={`flex-1 flex items-center justify-center gap-2 py-3 backdrop-blur-sm rounded-xl text-sm font-bold uppercase tracking-wider transition-all ${file.origin === 'AI' ? 'bg-white/20 hover:bg-white/30 text-white border border-white/10' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}><Maximize2 className="w-4 h-4" /> Ver</button>
                             <a href={file.url} download={file.name} className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all shadow-lg ${file.origin === 'AI' ? 'bg-white text-indigo-900 hover:bg-indigo-50' : 'bg-slate-900 text-white hover:bg-indigo-600'}`}><Download className="w-4 h-4" /> Bajar</a>
                         </div>
@@ -349,7 +346,12 @@ const Topic = ({ user }) => {
                     {/* 2. HERO HEADER */}
                     <div className="mb-10 pb-8 border-b border-slate-200">
                         <div className="flex flex-col md:flex-row items-start gap-8">
-                            <div className={`w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br ${topic.color || 'from-blue-500 to-indigo-600'} flex items-center justify-center shadow-2xl shadow-indigo-500/20`}><span className="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-md">{topic.number}</span></div>
+                            <div className={`w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br ${topic.color || 'from-blue-500 to-indigo-600'} flex items-center justify-center shadow-2xl shadow-indigo-500/20`}>
+                                <span className="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-md">
+                                    {/* ✅ CORRECCIÓN: Si no hay topic.number, usa el order como fallback */}
+                                    {topic.number || (topic.order ? topic.order.toString().padStart(2, '0') : '#')}
+                                </span>
+                            </div>
                             <div className="flex-1 space-y-4 w-full">
                                 <div className="flex items-center gap-3">
                                     <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-bold uppercase tracking-wider border border-indigo-100">{subject.course}</span>
