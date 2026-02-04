@@ -180,7 +180,7 @@ const Home = ({ user }) => {
     };
 
     const handleSelectTopic = (subjectId, topicId) => {
-        navigate(`/home/subject/${subjectId}`);
+        navigate(`/home/subject/${subjectId}/topic/${topicId}`);
     };
 
     // Toggle the "Back" of the card
@@ -343,10 +343,10 @@ const Home = ({ user }) => {
                                                     <button
                                                         key={topic.id}
                                                         onClick={() => handleSelectTopic(subject.id, topic.id)}
-                                                        className="w-full text-left p-3 hover:bg-slate-50 rounded-lg group border border-transparent hover:border-slate-100 transition-all flex items-center justify-between"
+                                                        className="w-full text-left p-3 hover:bg-slate-50 rounded-lg group border border-transparent hover:border-slate-100 transition-all flex items-center justify-between cursor-pointer"
                                                     >
                                                         <span className="text-sm text-gray-700 font-medium truncate pr-2">
-                                                            {topic.name}
+                                                            {topic.title}
                                                         </span>
                                                         <ChevronRight size={14} className="text-gray-300 group-hover:text-indigo-500" />
                                                     </button>
