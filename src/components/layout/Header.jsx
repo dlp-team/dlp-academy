@@ -43,7 +43,7 @@ const Header = ({ user }) => {
             {/* 1. SETTINGS BUTTON */}
             <button 
                 onClick={() => navigate('/settings')}
-                className="p-2.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all duration-200"
+                className="p-2.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all duration-200 cursor-pointer"
                 title="Configuración"
             >
                 <Settings size={20} />
