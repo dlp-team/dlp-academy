@@ -2,16 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   LogOut, User, BookOpen, Trophy, TrendingUp, 
-  LayoutDashboard, Award, Edit2, MapPin, X, Save, Loader2, Camera 
+  LayoutDashboard, Award, Edit2, MapPin, X, Save, Loader2, Camera,
 } from 'lucide-react';
 
 // 1. Import storage functions
 import { auth, db } from '../firebase/config'; 
-import { signOut, updateProfile } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
 import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'firebase/firestore';
-// bimport { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 import Header from '../components/layout/Header';
+
+import { ICON_MAP, ICON_KEYS } from '../utils/subjectConstants';
+import SubjectIcon from '../components/modals/SubjectIcon';
+
 
 const Profile = ({ user }) => {
   const navigate = useNavigate();
@@ -44,7 +47,13 @@ const Profile = ({ user }) => {
     other: { name: "Otro", flag: "🌍" }
   };
 
-    /* Temporal for profile picture storage */
+  /* Helper to get the correct icon component */
+  const getSubjectIcon = (icon) => {
+      // ...but SubjectIcon expects the string key (e.g., "math"), not the component.
+      return <SubjectIcon iconName={icon} className="w-5 h-5" />;
+  };
+
+  /* Temporal for profile picture storage */
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const fileReader = new FileReader();
@@ -70,10 +79,17 @@ const Profile = ({ user }) => {
           const data = userSnap.data();
           setUserProfile(data);
           setFormData({
-            displayName: data.displayName || '',
+            displayName: data.displayName || user.displayName || '',
             role: data.role || 'student',
             country: data.country || ''
           });
+        } else {
+            // Fallback if no firestore doc exists yet
+            setFormData({
+                displayName: user.displayName || '',
+                role: 'student',
+                country: ''
+            });
         }
 
         const q = query(collection(db, "subjects"), where("uid", "==", user.uid));
@@ -99,11 +115,10 @@ const Profile = ({ user }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // 2. Handle Image Selection
+  // Handle Image Selection
   const handlePhotoChange = (e) => {
     if (e.target.files[0]) {
         setPhotoFile(e.target.files[0]);
-        // Create a fake local URL just for preview
         setPhotoPreview(URL.createObjectURL(e.target.files[0]));
     }
   };
@@ -113,14 +128,19 @@ const Profile = ({ user }) => {
     setIsSaving(true);
 
     try {
+      // 1. Logic for Photo:
+      // - If uploading new file: use Base64 of file
+      // - If existing userProfile has photo: keep it
+      // - If neither, we might want to save the Google photo URL to firestore, 
+      //   OR just leave it empty so it keeps falling back to auth object.
+      //   Here we default to existing Firestore URL or empty string.
       let finalPhotoData = userProfile?.photoURL || "";
 
-      // If a new file was selected, convert it to a Base64 string
       if (photoFile) {
         finalPhotoData = await convertToBase64(photoFile);
-      }
+      } 
 
-      // Update Firestore with the string (it will treat it like a long URL)
+      // Update Firestore
       const userRef = doc(db, "users", user.uid);
       await updateDoc(userRef, {
         displayName: formData.displayName,
@@ -158,11 +178,15 @@ const Profile = ({ user }) => {
   }
 
   // Helper to render Avatar
-  const renderAvatar = (url, name, size = "w-24 h-24", textSize = "text-3xl") => {
-    if (url) {
+  // UPDATED: Now accepts fallback logic inside
+  const renderAvatar = (firestoreUrl, name, size = "w-24 h-24", textSize = "text-3xl") => {
+    // Priority: 1. Firestore URL, 2. Google Auth URL, 3. Initials
+    const validUrl = firestoreUrl || user?.photoURL;
+
+    if (validUrl) {
         return (
             <img 
-                src={url} 
+                src={validUrl} 
                 alt="Profile" 
                 className={`${size} rounded-full object-cover border-4 border-indigo-50 shadow-inner`}
             />
@@ -188,7 +212,8 @@ const Profile = ({ user }) => {
                 {/* LEFT SIDE: Avatar + Info */}
                 <div className="flex flex-col md:flex-row items-center gap-6">
                     <div className="relative">
-                        {renderAvatar(userProfile?.photoURL, userProfile?.displayName)}
+                        {/* Pass Firestore URL first, fallback handled inside */}
+                        {renderAvatar(userProfile?.photoURL, userProfile?.displayName || user?.displayName)}
                         <div className="absolute bottom-1 right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-white"></div>
                     </div>
                     
@@ -197,7 +222,6 @@ const Profile = ({ user }) => {
                              <h1 className="text-3xl font-bold text-gray-900 mb-1">
                                 {userProfile?.displayName || user?.displayName || "Usuario"}
                             </h1>
-                            {/* Edit Button next to name (Subtle) */}
                             <button 
                                 onClick={() => setIsEditing(true)}
                                 className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
@@ -229,7 +253,7 @@ const Profile = ({ user }) => {
                     </div>
                 </div>
 
-                {/* RIGHT SIDE: Big Logout Button (Restored) */}
+                {/* RIGHT SIDE: Big Logout Button */}
                 <button 
                     onClick={handleLogout}
                     className="group flex items-center gap-2 px-6 py-3 bg-red-50 text-red-600 rounded-xl font-semibold hover:bg-red-600 hover:text-white transition-all duration-300"
@@ -260,7 +284,8 @@ const Profile = ({ user }) => {
                 {subjects.map((sub) => (
                   <div key={sub.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                     <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${sub.color || 'from-gray-400 to-gray-500'} mb-4 flex items-center justify-center text-white`}>
-                      <BookOpen className="w-5 h-5" />
+                      {/* UPDATED: Dynamic Icon based on subject.icon */}
+                      {getSubjectIcon(sub.icon)}
                     </div>
                     <h3 className="font-bold text-gray-900 truncate">{sub.name}</h3>
                     <p className="text-sm text-gray-500 mb-3">{sub.course}</p>
@@ -292,7 +317,7 @@ const Profile = ({ user }) => {
                 <div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-emerald-500 h-2 rounded-full w-2/3"></div></div>
               </div>
             </div>
-            {/* Global Ranking Card (Mockup) */}
+            
              <div className="bg-gradient-to-br from-indigo-900 to-purple-900 p-6 rounded-2xl shadow-lg text-white relative overflow-hidden">
                 <div className="flex items-center gap-2 mb-6 relative z-0">
                     <Trophy className="w-6 h-6 text-yellow-400" />
@@ -323,10 +348,10 @@ const Profile = ({ user }) => {
                     {/* 🟢 IMAGE UPLOAD SECTION */}
                     <div className="flex flex-col items-center mb-6">
                         <div className="relative group cursor-pointer">
-                            {/* Show Preview OR Current URL OR Initials */}
+                            {/* Show Preview OR Firestore URL OR Google URL */}
                             {renderAvatar(
                                 photoPreview || userProfile?.photoURL, 
-                                formData.displayName, 
+                                formData.displayName || user?.displayName, 
                                 "w-28 h-28", 
                                 "text-4xl"
                             )}
@@ -342,7 +367,6 @@ const Profile = ({ user }) => {
                                 />
                             </label>
                             
-                            {/* Small edit badge */}
                             <div className="absolute bottom-0 right-0 bg-indigo-600 p-2 rounded-full text-white border-4 border-white">
                                 <Edit2 size={14} />
                             </div>
