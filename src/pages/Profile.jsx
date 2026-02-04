@@ -12,7 +12,6 @@ import { collection, query, where, getDocs, doc, getDoc, updateDoc } from 'fireb
 
 import Header from '../components/layout/Header';
 
-import { ICON_MAP, ICON_KEYS } from '../utils/subjectConstants';
 import SubjectIcon from '../components/modals/SubjectIcon';
 
 
