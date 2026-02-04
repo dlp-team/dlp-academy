@@ -1,42 +1,115 @@
-// Archivo: src/components/modals/SubjectModal.jsx
 import React from 'react';
-import { X, CheckCircle2 } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 
-const SubjectModal = ({ isOpen, onClose, formData, setFormData, onSubmit, colorOptions }) => {
+const SubjectModal = ({ 
+    isOpen, 
+    onClose, 
+    formData, 
+    setFormData, 
+    onSubmit, 
+    colorOptions,
+    iconOptions, // Receive icon options
+    isEditing    // Receive edit state
+}) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-                    <h3 className="text-2xl font-bold text-gray-900">Crear Nueva Asignatura</h3>
-                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg">
-                        <X className="w-6 h-6 text-gray-600" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+                
+                {/* Header */}
+                <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                    <h3 className="text-xl font-bold text-gray-800">
+                        {isEditing ? 'Editar Asignatura' : 'Crear Nueva Asignatura'}
+                    </h3>
+                    <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                        <X size={20} className="text-gray-500" />
                     </button>
                 </div>
+
                 <div className="p-6 space-y-6">
+                    {/* Name Input */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Nombre</label>
-                        <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 outline-none" placeholder="Matemáticas" />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la Asignatura</label>
+                        <input 
+                            type="text" 
+                            value={formData.name}
+                            onChange={(e) => setFormData({...formData, name: e.target.value})}
+                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                            placeholder="Ej. Matemáticas"
+                        />
                     </div>
+
+                    {/* Course Input */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Curso</label>
-                        <input type="text" value={formData.course} onChange={(e) => setFormData({ ...formData, course: e.target.value })} className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 outline-none" placeholder="1º ESO" />
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Curso / Grupo</label>
+                        <input 
+                            type="text" 
+                            value={formData.course}
+                            onChange={(e) => setFormData({...formData, course: e.target.value})}
+                            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                            placeholder="Ej. 2º Bachillerato A"
+                        />
                     </div>
+
+                    {/* Icon Selector */}
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-3">Color</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Icono</label>
+                        <div className="grid grid-cols-4 gap-2">
+                            {iconOptions.map((opt) => {
+                                const Icon = opt.icon;
+                                const isSelected = (formData.icon || 'BookOpen') === opt.name;
+                                return (
+                                    <button
+                                        key={opt.name}
+                                        type="button"
+                                        onClick={() => setFormData({...formData, icon: opt.name})}
+                                        className={`p-3 rounded-xl flex items-center justify-center transition-all ${
+                                            isSelected 
+                                            ? 'bg-indigo-100 text-indigo-600 ring-2 ring-indigo-500' 
+                                            : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                                        }`}
+                                        title={opt.name}
+                                    >
+                                        <Icon size={24} />
+                                    </button>
+                                )
+                            })}
+                        </div>
+                    </div>
+
+                    {/* Color Selector */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Color de Fondo</label>
                         <div className="grid grid-cols-4 gap-3">
                             {colorOptions.map((color) => (
-                                <button key={color.value} onClick={() => setFormData({ ...formData, color: color.value })} className={`relative h-20 rounded-xl bg-gradient-to-br ${color.value} transition-all ${formData.color === color.value ? 'ring-4 ring-indigo-500 scale-105' : 'hover:scale-105'}`}>
-                                    {formData.color === color.value && <div className="absolute inset-0 flex items-center justify-center"><CheckCircle2 className="w-8 h-8 text-white drop-shadow-lg" /></div>}
+                                <button
+                                    key={color.name}
+                                    onClick={() => setFormData({...formData, color: color.value})}
+                                    className={`w-full h-10 rounded-lg bg-gradient-to-br ${color.value} relative shadow-sm hover:scale-105 transition-transform`}
+                                    title={color.name}
+                                >
+                                    {formData.color === color.value && (
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <Check className="text-white drop-shadow-md" size={18} />
+                                        </div>
+                                    )}
                                 </button>
                             ))}
                         </div>
                     </div>
-                    <button onClick={onSubmit} className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl font-bold">Crear Asignatura</button>
+
+                    {/* Submit Button */}
+                    <button 
+                        onClick={onSubmit}
+                        className="w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                    >
+                        {isEditing ? 'Guardar Cambios' : 'Crear Asignatura'}
+                    </button>
                 </div>
             </div>
         </div>
     );
 };
+
 export default SubjectModal;
