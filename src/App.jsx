@@ -10,7 +10,7 @@ import Profile from './pages/Profile';
 import Home from './pages/Home';
 import Subject from './pages/Subject';
 import Topic from './pages/Topic';
-
+import Quizzes from './pages/quizzes'
 // Firebase auth
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase/config';
@@ -101,6 +101,10 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        <Route 
+          path="/home/subject/:subjectId/topic/:topicId/quiz/:quizId" 
+          element={<Quizzes user={user} />} 
+        />
 
         <Route 
           path="/profile" 
@@ -110,6 +114,7 @@ function App() {
             </ProtectedRoute>
           } 
         />
+
 
         {/* Fallback - Redirect unknown routes to home */}
         <Route path="*" element={<Navigate to="/" />} />

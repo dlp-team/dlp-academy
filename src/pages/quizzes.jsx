@@ -26,59 +26,53 @@ const Quizzes = ({ user }) => {
     const [correctCount, setCorrectCount] = useState(0);
     const [finalScore, setFinalScore] = useState(0);
 
-    // --- CARGA DE DATOS (CON MODO DEMO) ---
+    // --- CARGA DE DATOS ---
     useEffect(() => {
         const fetchQuiz = async () => {
-            // DATOS DE PRUEBA (Para que funcione aunque falle Firebase)
-            const MOCK_DATA = {
-                title: "Test de Prueba (Modo Demo)",
-                formulas: [
-                    "\\frac{d}{dx}(x^n) = nx^{n-1}",
-                    "\\int x^n dx = \\frac{x^{n+1}}{n+1} + C",
-                    "E = mc^2"
-                ],
-                questions: [
-                    {
-                        question: "Calcula la derivada de la siguiente función:",
-                        formula: "f(x) = 3x^2 + 5x",
-                        options: ["6x + 5", "3x + 5", "6x", "x^2 + 5"],
-                        correctIndex: 0
-                    },
-                    {
-                        question: "¿Cuál es el resultado de esta integral definida?",
-                        formula: "\\int_{0}^{2} x dx",
-                        options: ["1", "2", "4", "0.5"],
-                        correctIndex: 1
-                    },
-                    {
-                        question: "Resuelve para x:",
-                        formula: "x^2 - 4 = 0",
-                        options: ["x = 2", "x = -2", "x = \\pm 2", "x = 4"],
-                        correctIndex: 2
-                    }
-                ]
-            };
-
             if (!user) return;
             
             try {
-                // Intentamos leer de Firebase
+                // Buscamos en la subcolección donde n8n escribe
                 const quizRef = doc(db, "subjects", subjectId, "topics", topicId, "quizzes_data", quizId);
                 const snap = await getDoc(quizRef);
 
                 if (snap.exists()) {
                     setQuizData(snap.data());
+                    setViewState('review'); // Empezamos con el repaso
                 } else {
-                    console.warn("Quiz no encontrado en BD, cargando Mock Data...");
-                    setQuizData(MOCK_DATA);
+                    console.warn("Quiz no encontrado, cargando Mock Data para demo...");
+                    // DATOS DE EJEMPLO (Por si n8n no ha llegado aún)
+                    setQuizData({
+                        title: "Test de Derivadas",
+                        // Estas son las fórmulas que el usuario pidió recordar antes del ejercicio
+                        formulas: [
+                            "\\frac{d}{dx}(x^n) = nx^{n-1}",
+                            "\\frac{d}{dx}(\\ln x) = \\frac{1}{x}",
+                            "\\int x^n dx = \\frac{x^{n+1}}{n+1} + C"
+                        ],
+                        questions: [
+                            {
+                                question: "Calcula la derivada de la siguiente función:",
+                                formula: "f(x) = 3x^2 + 5x",
+                                options: ["6x + 5", "3x + 5", "6x", "x^2 + 5"],
+                                correctIndex: 0 // Índice de la respuesta correcta en el array options
+                            },
+                            {
+                                question: "¿Cuál es el resultado de esta integral definida?",
+                                formula: "\\int_{0}^{2} x dx",
+                                options: ["1", "2", "4", "0.5"],
+                                correctIndex: 1
+                            }
+                        ]
+                    });
+                    setViewState('review');
                 }
             } catch (error) {
-                // AQUÍ CAPTURAMOS TU ERROR DE PERMISOS
-                console.error("Error de permisos (Cargando DEMO para probar UI):", error);
-                setQuizData(MOCK_DATA); // Forzamos la carga de datos de prueba
+                console.error("Error cargando el quiz:", error);
+                alert("Error al cargar el test. Intenta de nuevo.");
+                navigate(-1);
             } finally {
                 setLoading(false);
-                setViewState('review'); // Pasamos a la pantalla de repaso
             }
         };
 
@@ -95,7 +89,7 @@ const Quizzes = ({ user }) => {
         // 1. Verificar si la respuesta es correcta
         const isCorrect = selectedAnswer === quizData.questions[currentStep].correctIndex;
         
-        // 2. Actualizar contador (usamos variable temporal para el cálculo final)
+        // 2. Actualizar contador (usamos el valor previo para asegurar precisión)
         const newCorrectCount = isCorrect ? correctCount + 1 : correctCount;
         setCorrectCount(newCorrectCount);
 
@@ -133,16 +127,15 @@ const Quizzes = ({ user }) => {
                         Antes de empezar
                     </h1>
                     <p className="text-slate-400 text-lg">
-                        Repasa estas fórmulas clave extraídas del PDF. <br/>
-                        <span className="text-indigo-400 font-bold">Las necesitarás para el test.</span>
+                        La IA ha extraído estas fórmulas clave de tu PDF. <br/>
+                        <span className="text-indigo-400 font-bold">Úsalas para resolver los ejercicios.</span>
                     </p>
                 </div>
 
                 <div className="space-y-4 mb-12">
                     {quizData?.formulas?.map((f, i) => (
-                        <div key={i} className="bg-slate-800/50 border border-white/5 p-6 rounded-2xl flex items-center justify-center hover:bg-slate-800 transition-colors group relative overflow-hidden">
-                            <div className="absolute top-0 left-0 w-1 h-full bg-indigo-500/50"></div>
-                            <span className="text-slate-600 text-xs font-bold absolute left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">#{i+1}</span>
+                        <div key={i} className="bg-slate-800/50 border border-white/5 p-6 rounded-2xl flex items-center justify-center hover:bg-slate-800 transition-colors group">
+                            <span className="text-slate-600 text-xs font-bold absolute left-6 opacity-0 group-hover:opacity-100 transition-opacity">#{i+1}</span>
                             <div className="text-indigo-200 text-xl overflow-x-auto py-2">
                                 <BlockMath math={f} />
                             </div>
@@ -155,7 +148,7 @@ const Quizzes = ({ user }) => {
 
                 <button 
                     onClick={() => setViewState('quiz')}
-                    className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-lg transition-all shadow-xl shadow-indigo-600/20 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+                    className="w-full py-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl font-bold text-lg transition-all shadow-xl shadow-indigo-600/20 hover:scale-[1.02] active:scale-[0.98]"
                 >
                     ¡Entendido, vamos al Test!
                 </button>
@@ -192,15 +185,14 @@ const Quizzes = ({ user }) => {
                             setCurrentStep(0);
                             setCorrectCount(0);
                             setFinalScore(0);
-                            setSelectedAnswer(null);
                         }}
-                        className="w-full py-4 bg-white border-2 border-slate-100 hover:border-slate-300 text-slate-700 rounded-2xl font-bold transition-all cursor-pointer"
+                        className="w-full py-4 bg-white border-2 border-slate-100 hover:border-slate-300 text-slate-700 rounded-2xl font-bold transition-all"
                     >
                         Intentar de nuevo
                     </button>
                     <button 
                         onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}`)}
-                        className="w-full py-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-bold transition-all shadow-lg cursor-pointer"
+                        className="w-full py-4 bg-slate-900 hover:bg-indigo-600 text-white rounded-2xl font-bold transition-all shadow-lg"
                     >
                         Volver al Tema
                     </button>
@@ -218,7 +210,7 @@ const Quizzes = ({ user }) => {
             {/* --- HEADER FLOTANTE --- */}
             <div className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 md:px-8 py-4 transition-all">
                 <div className="max-w-4xl mx-auto flex items-center justify-between gap-4">
-                    <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-700 cursor-pointer">
+                    <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-700">
                         <X className="w-6 h-6" />
                     </button>
                     
@@ -277,7 +269,7 @@ const Quizzes = ({ user }) => {
                                 <button
                                     key={idx}
                                     onClick={() => handleAnswerSelect(idx)}
-                                    className={`group relative p-6 rounded-2xl border-2 text-left transition-all duration-200 flex items-center gap-5 outline-none cursor-pointer
+                                    className={`group relative p-6 rounded-2xl border-2 text-left transition-all duration-200 flex items-center gap-5 outline-none
                                         ${isSelected 
                                             ? 'border-indigo-600 bg-indigo-50/50 shadow-md scale-[1.01]' 
                                             : 'border-white bg-white hover:border-slate-200 hover:bg-slate-50 shadow-sm'}`}
@@ -290,8 +282,12 @@ const Quizzes = ({ user }) => {
 
                                     {/* Texto de la opción (Renderiza LaTeX si es necesario) */}
                                     <div className={`flex-1 text-lg font-medium ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>
-                                        {/* InlineMath renderizará LaTeX si detecta símbolos, sino mostrará texto */}
+                                        {/* InlineMath detecta si es texto o formula automaticamente en muchos casos, 
+                                            pero es mejor si la opción viene envuelta en $...$ si es pura fórmula */}
                                         <div className="katex-render-wrapper">
+                                           {/* Si tu string contiene LaTeX (ej: \frac{...}), InlineMath lo renderizará. 
+                                               Si es texto plano, se verá como texto plano a menos que falle el parser. 
+                                               Para seguridad: mostramos el texto tal cual si no parece LaTeX */}
                                             {option.includes('\\') || option.includes('^') ? <InlineMath math={option} /> : option}
                                         </div>
                                     </div>
@@ -313,7 +309,7 @@ const Quizzes = ({ user }) => {
                         <button
                             disabled={selectedAnswer === null}
                             onClick={handleNext}
-                            className={`w-full py-4 md:py-5 rounded-[2rem] font-black text-lg transition-all flex items-center justify-center gap-3 shadow-xl cursor-pointer
+                            className={`w-full py-4 md:py-5 rounded-[2rem] font-black text-lg transition-all flex items-center justify-center gap-3 shadow-xl
                                 ${selectedAnswer !== null 
                                     ? 'bg-slate-900 text-white hover:bg-indigo-600 hover:-translate-y-1 hover:shadow-indigo-500/30' 
                                     : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}
