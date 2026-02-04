@@ -40,3 +40,12 @@ export const COLORS = [
     'from-rose-400 to-rose-600',
     'from-amber-400 to-amber-600',
 ];
+
+// --- EDUCATION LEVELS CONSTANTS ---
+export const EDUCATION_LEVELS = {
+    'Primaria': ['1º', '2º', '3º', '4º', '5º', '6º'],
+    'ESO': ['1º', '2º', '3º', '4º'],
+    'Bachillerato': ['1º', '2º'],
+    'FP': ['Grado Medio 1', 'Grado Medio 2', 'Grado Superior 1', 'Grado Superior 2'],
+    'Universidad': ['1º', '2º', '3º', '4º', '5º', '6º', 'Máster', 'Doctorado']
+};
