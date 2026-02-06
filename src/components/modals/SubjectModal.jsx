@@ -1,3 +1,4 @@
+// src/components/modals/SubjectModal.jsx
 import React from 'react';
 import { X, Check } from 'lucide-react';
 

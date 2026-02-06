@@ -49,3 +49,23 @@ export const EDUCATION_LEVELS = {
     'FP': ['Grado Medio 1', 'Grado Medio 2', 'Grado Superior 1', 'Grado Superior 2'],
     'Universidad': ['1º', '2º', '3º', '4º', '5º', '6º', 'Máster', 'Doctorado']
 };
+
+ // Modern Fill Colors - More vibrant, visible gradients with proper CSS classes
+export const MODERN_FILL_COLORS = [
+    { name: 'Neutral', value: 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900' },
+    { name: 'Azul', value: 'bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/60 dark:to-blue-950/60' },
+    { name: 'Índigo', value: 'bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/60 dark:to-indigo-950/60' },
+    { name: 'Púrpura', value: 'bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900/60 dark:to-purple-950/60' },
+    { name: 'Rosa', value: 'bg-gradient-to-br from-pink-100 to-pink-200 dark:from-pink-900/60 dark:to-pink-950/60' },
+    { name: 'Rosa intenso', value: 'bg-gradient-to-br from-rose-100 to-rose-200 dark:from-rose-900/60 dark:to-rose-950/60' },
+    { name: 'Esmeralda', value: 'bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/60 dark:to-emerald-950/60' },
+    // { name: 'Mid-Neutro', value: 'bg-gradient-to-br from-slate-500 to-slate-600 dark:from-slate-300 dark:500' },
+    { name: 'Verde azulado', value: 'bg-gradient-to-br from-teal-100 to-teal-200 dark:from-teal-900/60 dark:to-teal-950/60' },
+    { name: 'Cian', value: 'bg-gradient-to-br from-cyan-100 to-cyan-200 dark:from-cyan-900/60 dark:to-cyan-950/60' },
+    { name: 'Cielo', value: 'bg-gradient-to-br from-sky-100 to-sky-200 dark:from-sky-900/60 dark:to-sky-950/60' },
+    { name: 'Ámbar', value: 'bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/60 dark:to-amber-950/60' },
+    { name: 'Naranja', value: 'bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/60 dark:to-orange-950/60' },
+    { name: 'Rojo', value: 'bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900/60 dark:to-red-950/60' },
+    { name: 'Lima', value: 'bg-gradient-to-br from-lime-100 to-lime-200 dark:from-lime-900/60 dark:to-lime-950/60' },
+    { name: 'Antineutral', value: 'bg-gradient-to-br from-slate-800 to-slate-950 dark:from-slate-100 dark:to-slate-300' },
+];

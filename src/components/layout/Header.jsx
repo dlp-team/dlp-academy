@@ -1,7 +1,7 @@
+// src/components/layout/Header.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-// Added 'Settings' to imports
-import { GraduationCap, LogOut, User as UserIcon, Settings } from 'lucide-react';
+import { GraduationCap, Settings } from 'lucide-react';
 
 const Header = ({ user }) => {
   const navigate = useNavigate();
@@ -21,7 +21,7 @@ const Header = ({ user }) => {
   const initials = getInitials();
 
   return (
-    <header className="fixed top-0 w-full h-20 bg-white/95 backdrop-blur-sm shadow-sm border-b border-gray-200 z-50 transition-all">
+    <header className="fixed top-0 w-full h-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-slate-800 z-50 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
         
         {/* --- LEFT: LOGO --- */}
@@ -29,10 +29,10 @@ const Header = ({ user }) => {
             className="flex items-center gap-3 cursor-pointer group" 
             onClick={() => navigate('/home')}
         >
-          <div className="bg-indigo-50 p-2 rounded-lg group-hover:bg-indigo-100 transition-colors">
-            <GraduationCap className="w-8 h-8 text-indigo-600" />
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 p-2 rounded-lg group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors">
+            <GraduationCap className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
           </div>
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight transition-colors">
             DLP Academy
           </h1>
         </div>
@@ -43,7 +43,7 @@ const Header = ({ user }) => {
             {/* 1. SETTINGS BUTTON */}
             <button 
                 onClick={() => navigate('/settings')}
-                className="p-2.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-all duration-200 cursor-pointer"
+                className="p-2.5 text-gray-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-full transition-all duration-200 cursor-pointer"
                 title="Configuración"
             >
                 <Settings size={20} />
@@ -51,15 +51,15 @@ const Header = ({ user }) => {
 
             {/* 2. USER PROFILE (Clickable Area) */}
             <div 
-                className="flex items-center gap-4 pl-4 border-l border-gray-200 ml-2 cursor-pointer hover:opacity-80 transition-opacity"
+                className="flex items-center gap-4 pl-4 border-l border-gray-200 dark:border-slate-700 ml-2 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => navigate('/profile')} 
             >
                 {/* Text Info */}
                 <div className="text-right hidden sm:block">
-                    <h2 className="font-bold text-sm text-gray-800 leading-tight">
+                    <h2 className="font-bold text-sm text-gray-800 dark:text-slate-200 leading-tight">
                         {displayName}
                     </h2>
-                    <p className="text-xs text-gray-500 font-medium">
+                    <p className="text-xs text-gray-500 dark:text-slate-500 font-medium">
                         {user?.email}
                     </p>
                 </div>
@@ -71,7 +71,7 @@ const Header = ({ user }) => {
                             src={user.photoURL} 
                             alt={displayName} 
                             referrerPolicy="no-referrer"
-                            className="w-10 h-10 rounded-full border-2 border-white shadow-md object-cover hover:scale-105 transition-transform"
+                            className="w-10 h-10 rounded-full border-2 border-white dark:border-slate-800 shadow-md object-cover hover:scale-105 transition-transform"
                             onError={(e) => {
                                 e.target.style.display = 'none';
                             }}

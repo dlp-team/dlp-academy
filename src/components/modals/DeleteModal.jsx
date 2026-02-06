@@ -1,3 +1,4 @@
+// src/components/modals/DeleteModal.jsx
 import React from 'react';
 import { AlertTriangle, X } from 'lucide-react';
 
