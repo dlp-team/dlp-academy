@@ -144,7 +144,7 @@ const Header = ({ user }) => {
                     name={displayName}
                     size="w-10 h-10"
                     textSize="text-sm"
-                    className="hover:scale-105 transition-transform"
+                    className="hover:scale-105 transition-transform border-none border-black-500 dark:border-white-400"
                 />
             </div>
         </div>

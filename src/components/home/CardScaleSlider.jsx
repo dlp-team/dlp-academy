@@ -5,11 +5,11 @@ import { Maximize2 } from 'lucide-react';
 const CardScaleSlider = ({ cardScale, setCardScale }) => {
     const [showSlider, setShowSlider] = useState(false);
     
+    // 3 scales: Small (75%), Medium (100%), Large (125%) - Large matches original
     const scales = [
-        { value: 75, label: 'S' },
-        { value: 100, label: 'M' },
-        { value: 125, label: 'L' },
-        { value: 150, label: 'XL' }
+        { value: 75, label: 'S', name: 'Pequeño' },
+        { value: 100, label: 'M', name: 'Mediano' },
+        { value: 125, label: 'L', name: 'Grande' }
     ];
 
     return (
@@ -30,7 +30,7 @@ const CardScaleSlider = ({ cardScale, setCardScale }) => {
                         onClick={() => setShowSlider(false)}
                     />
                     
-                    {/* Slider Panel - Positioned to appear over cards */}
+                    {/* Slider Panel */}
                     <div className="absolute top-full right-0 mt-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-50 w-64 animate-in fade-in slide-in-from-top-2 duration-200">
                         <div className="flex items-center justify-between mb-3">
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Tamaño de Tarjetas</span>
@@ -38,7 +38,7 @@ const CardScaleSlider = ({ cardScale, setCardScale }) => {
                         </div>
                         
                         {/* Quick Size Buttons */}
-                        <div className="grid grid-cols-4 gap-2 mb-4">
+                        <div className="grid grid-cols-3 gap-2 mb-4">
                             {scales.map(scale => (
                                 <button
                                     key={scale.value}
@@ -48,6 +48,7 @@ const CardScaleSlider = ({ cardScale, setCardScale }) => {
                                             ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 ring-2 ring-indigo-500 dark:ring-indigo-400'
                                             : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-slate-700 cursor-pointer'
                                     }`}
+                                    title={scale.name}
                                 >
                                     {scale.label}
                                 </button>
@@ -59,7 +60,7 @@ const CardScaleSlider = ({ cardScale, setCardScale }) => {
                             <input
                                 type="range"
                                 min="75"
-                                max="150"
+                                max="125"
                                 step="25"
                                 value={cardScale}
                                 onChange={(e) => setCardScale(parseInt(e.target.value))}
@@ -68,6 +69,20 @@ const CardScaleSlider = ({ cardScale, setCardScale }) => {
                             <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
                                 <span>Pequeño</span>
                                 <span>Grande</span>
+                            </div>
+                        </div>
+                        
+                        {/* Scale Preview - Rectangle shape */}
+                        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-slate-700">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Vista previa:</p>
+                            <div className="flex items-center justify-center">
+                                <div 
+                                    className="bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-lg transition-all"
+                                    style={{ 
+                                        width: `${60 * (cardScale / 100)}px`, 
+                                        height: `${32 * (cardScale / 100)}px` 
+                                    }}
+                                />
                             </div>
                         </div>
                     </div>

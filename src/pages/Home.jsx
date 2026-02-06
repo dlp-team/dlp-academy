@@ -45,12 +45,20 @@ const Home = ({ user }) => {
     // UI State
     const [viewMode, setViewMode] = useState('grid'); // grid, usage, courses, tags, shared
     const [layoutMode, setLayoutMode] = useState('grid'); // grid, list, folders
-    const [cardScale, setCardScale] = useState(100); // 75, 100, 125, 150
+    const [cardScale, setCardScale] = useState(125); // 75, 100, 125 (125 is default/original)
     const [flippedSubjectId, setFlippedSubjectId] = useState(null); 
     const [activeMenu, setActiveMenu] = useState(null);
     const [collapsedGroups, setCollapsedGroups] = useState({});
     const [selectedTags, setSelectedTags] = useState([]);
     const [currentFolder, setCurrentFolder] = useState(null); // For navigation
+    
+    // Drag and Drop State
+    const [draggedItem, setDraggedItem] = useState(null);
+    const [draggedItemType, setDraggedItemType] = useState(null); // 'subject' or 'folder'
+    const [dropPosition, setDropPosition] = useState(null);
+    
+    // Manual ordering state - store positions
+    const [manualOrder, setManualOrder] = useState({ subjects: [], folders: [] });
     
     // Modal State
     const [subjectModalConfig, setSubjectModalConfig] = useState({ isOpen: false, isEditing: false, data: null });
@@ -92,20 +100,43 @@ const Home = ({ user }) => {
         return subjects.filter(s => sharedFolderSubjectIds.has(s.id));
     }, [subjects, sharedFolders]);
 
+    // --- MANUAL ORDERING ---
+    // Apply manual order when in manual mode
+    const applyManualOrder = (items, type) => {
+        if (viewMode !== 'grid') return items;
+        
+        const orderArray = type === 'subject' ? manualOrder.subjects : manualOrder.folders;
+        if (orderArray.length === 0) return items;
+        
+        const ordered = [];
+        const unordered = [...items];
+        
+        orderArray.forEach(id => {
+            const index = unordered.findIndex(item => item.id === id);
+            if (index !== -1) {
+                ordered.push(unordered[index]);
+                unordered.splice(index, 1);
+            }
+        });
+        
+        return [...ordered, ...unordered];
+    };
 
     // --- VIEW GROUPING LOGIC ---
     const groupedContent = useMemo(() => {
         // In Manual mode with a folder open
         if (viewMode === 'grid' && currentFolder) {
+            const folderSubjects = getSubjectsInFolder(currentFolder.id);
             return { 
-                [currentFolder.name]: getSubjectsInFolder(currentFolder.id) 
+                [currentFolder.name]: applyManualOrder(folderSubjects, 'subject')
             };
         }
 
         // In Manual mode at root
         if (viewMode === 'grid' && !currentFolder) {
+            const unfolderedSubjects = getUnfolderedSubjects();
             return { 
-                'Todas': getUnfolderedSubjects() 
+                'Todas': applyManualOrder(unfolderedSubjects, 'subject')
             };
         }
 
@@ -150,8 +181,13 @@ const Home = ({ user }) => {
         }
         
         return { 'Todas': subjectsToGroup };
-    }, [subjects, filteredSubjectsByTags, viewMode, currentFolder, folders]);
+    }, [subjects, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder]);
 
+    // Get ordered folders for manual mode
+    const orderedFolders = useMemo(() => {
+        if (viewMode !== 'grid' || currentFolder) return [];
+        return applyManualOrder(folders.filter(f => f.isOwner), 'folder');
+    }, [folders, viewMode, currentFolder, manualOrder]);
 
 
     // --- HANDLERS ---
@@ -194,8 +230,18 @@ const Home = ({ user }) => {
     const handleDelete = async () => {
         if (deleteConfig.type === 'subject' && deleteConfig.item) {
             await deleteSubject(deleteConfig.item.id);
+            // Remove from manual order
+            setManualOrder(prev => ({
+                ...prev,
+                subjects: prev.subjects.filter(id => id !== deleteConfig.item.id)
+            }));
         } else if (deleteConfig.type === 'folder' && deleteConfig.item) {
             await deleteFolder(deleteConfig.item.id);
+            // Remove from manual order
+            setManualOrder(prev => ({
+                ...prev,
+                folders: prev.folders.filter(id => id !== deleteConfig.item.id)
+            }));
         }
         setDeleteConfig({ isOpen: false, type: null, item: null });
     };
@@ -217,6 +263,88 @@ const Home = ({ user }) => {
         setCollapsedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
     };
 
+    // --- DRAG AND DROP HANDLERS ---
+    const handleDragStartSubject = (subject, position) => {
+        setDraggedItem(subject);
+        setDraggedItemType('subject');
+    };
+
+    const handleDragStartFolder = (folder, position) => {
+        setDraggedItem(folder);
+        setDraggedItemType('folder');
+    };
+
+    const handleDragEnd = () => {
+        setDraggedItem(null);
+        setDraggedItemType(null);
+        setDropPosition(null);
+    };
+
+    const handleDragOverSubject = (e, position) => {
+        e.preventDefault();
+        setDropPosition(position);
+    };
+
+    const handleDragOverFolder = (e, position) => {
+        e.preventDefault();
+        setDropPosition(position);
+    };
+
+    const handleDropOnFolder = async (folderId, subjectId) => {
+        if (!subjectId || !folderId) return;
+        
+        // Add subject to folder
+        await addSubjectToFolder(folderId, subjectId);
+        
+        // Clear drag state
+        handleDragEnd();
+    };
+
+    const handleDropReorderSubject = (draggedId, fromPosition, toPosition) => {
+        if (draggedId === undefined || fromPosition === toPosition) return;
+        
+        const currentSubjects = groupedContent[Object.keys(groupedContent)[0]] || [];
+        const newOrder = currentSubjects.map(s => s.id);
+        
+        // Remove from old position
+        const draggedIndex = newOrder.indexOf(draggedId);
+        if (draggedIndex !== -1) {
+            newOrder.splice(draggedIndex, 1);
+        }
+        
+        // Insert at new position
+        newOrder.splice(toPosition, 0, draggedId);
+        
+        setManualOrder(prev => ({
+            ...prev,
+            subjects: newOrder
+        }));
+        
+        handleDragEnd();
+    };
+
+    const handleDropReorderFolder = (draggedId, fromPosition, toPosition) => {
+        if (draggedId === undefined || fromPosition === toPosition) return;
+        
+        const newOrder = orderedFolders.map(f => f.id);
+        
+        // Remove from old position
+        const draggedIndex = newOrder.indexOf(draggedId);
+        if (draggedIndex !== -1) {
+            newOrder.splice(draggedIndex, 1);
+        }
+        
+        // Insert at new position
+        newOrder.splice(toPosition, 0, draggedId);
+        
+        setManualOrder(prev => ({
+            ...prev,
+            folders: newOrder
+        }));
+        
+        handleDragEnd();
+    };
+
     // Close menus on outside click
     useEffect(() => {
         const closeMenu = () => setActiveMenu(null);
@@ -234,7 +362,8 @@ const Home = ({ user }) => {
     // Show collapsible groups only in certain modes
     const showCollapsibleGroups = ['courses', 'tags', 'shared'].includes(viewMode);
 
-
+    // Check if drag and drop is enabled (only in manual mode with grid layout)
+    const isDragAndDropEnabled = viewMode === 'grid' && layoutMode === 'grid';
 
     if (!user || loading || loadingFolders) {
         return (
@@ -324,6 +453,15 @@ const Home = ({ user }) => {
                                 <span>Nueva Carpeta</span>
                             </button>
                         )}
+                        
+                        {/* Drag and Drop Hint */}
+                        {isDragAndDropEnabled && draggedItem && (
+                            <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs text-indigo-700 dark:text-indigo-300">
+                                <span className="font-medium">
+                                    {draggedItemType === 'subject' && !currentFolder ? 'Arrastra sobre carpeta o reordena' : 'Arrastra para reordenar'}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -389,24 +527,32 @@ const Home = ({ user }) => {
                                     {/* GRID LAYOUT */}
                                     {layoutMode === 'grid' && (
                                         <div key={groupName} className="mb-10">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                {/* Create Button (Grid Mode only) */}
+                                            <div 
+                                                className="grid gap-6"
+                                                style={{ 
+                                                    gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` 
+                                                }}
+                                            >
+                                                {/* Create Button (Grid Mode only) - NOT DRAGGABLE */}
                                                 {viewMode === 'grid' && (
-                                                    <button 
-                                                        onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null })} 
-                                                        className="group relative h-64 border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center gap-4 cursor-pointer"
-                                                    >
-                                                        <div className="w-20 h-20 rounded-full bg-indigo-100 dark:bg-indigo-900/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/60 flex items-center justify-center transition-colors">
-                                                            <Plus className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
-                                                        </div>
-                                                        <span className="text-lg font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                                            Crear Nueva Asignatura
-                                                        </span>
-                                                    </button>
+                                                    <div>
+                                                        <button 
+                                                            onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null })} 
+                                                            className="group relative w-full border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center gap-4 cursor-pointer"
+                                                            style={{ aspectRatio: '16 / 10' }}
+                                                        >
+                                                            <div className="w-20 h-20 rounded-full bg-indigo-100 dark:bg-indigo-900/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/60 flex items-center justify-center transition-colors">
+                                                                <Plus className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
+                                                            </div>
+                                                            <span className="text-lg font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                                                Crear Nueva Asignatura
+                                                            </span>
+                                                        </button>
+                                                    </div>
                                                 )}
 
-                                                {/* Folders (Manual mode at root only) */}
-                                                {viewMode === 'grid' && !currentFolder && folders.filter(f => f.isOwner).map((folder) => (
+                                                {/* Folders (Manual mode at root only) - DRAGGABLE */}
+                                                {viewMode === 'grid' && !currentFolder && orderedFolders.map((folder, index) => (
                                                     <div key={`folder-${folder.id}`}>
                                                         <FolderCard
                                                             folder={folder}
@@ -417,32 +563,50 @@ const Home = ({ user }) => {
                                                             onDelete={(f) => setDeleteConfig({ isOpen: true, type: 'folder', item: f })}
                                                             onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                             cardScale={cardScale}
+                                                            onDrop={handleDropOnFolder}
+                                                            canDrop={isDragAndDropEnabled && draggedItemType === 'subject'}
+                                                            draggable={isDragAndDropEnabled}
+                                                            onDragStart={handleDragStartFolder}
+                                                            onDragEnd={handleDragEnd}
+                                                            onDragOver={handleDragOverFolder}
+                                                            onDropReorder={handleDropReorderFolder}
+                                                            position={index}
+                                                            isDragging={draggedItem?.id === folder.id}
                                                         />
                                                     </div>
                                                 ))}
 
-                                                {/* Cards */}
-                                                {groupSubjects.map((subject) => (
-                                                    <SubjectCard
-                                                        key={`${groupName}-${subject.id}`}
-                                                        subject={subject}
-                                                        isFlipped={flippedSubjectId === subject.id}
-                                                        onFlip={(id) => setFlippedSubjectId(flippedSubjectId === id ? null : id)}
-                                                        activeMenu={activeMenu}
-                                                        onToggleMenu={setActiveMenu}
-                                                        onSelect={handleSelectSubject}
-                                                        onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
-                                                        onEdit={(e, s) => { 
-                                                            e.stopPropagation(); 
-                                                            setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); 
-                                                            setActiveMenu(null); 
-                                                        }}
-                                                        onDelete={(e, s) => { 
-                                                            e.stopPropagation(); 
-                                                            setDeleteConfig({ isOpen: true, type: 'subject', item: s }); 
-                                                            setActiveMenu(null); 
-                                                        }}
-                                                    />
+                                                {/* Subject Cards - DRAGGABLE */}
+                                                {groupSubjects.map((subject, index) => (
+                                                    <div key={`${groupName}-${subject.id}`}>
+                                                        <SubjectCard
+                                                            subject={subject}
+                                                            isFlipped={flippedSubjectId === subject.id}
+                                                            onFlip={(id) => setFlippedSubjectId(flippedSubjectId === id ? null : id)}
+                                                            activeMenu={activeMenu}
+                                                            onToggleMenu={setActiveMenu}
+                                                            onSelect={handleSelectSubject}
+                                                            onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
+                                                            onEdit={(e, s) => { 
+                                                                e.stopPropagation(); 
+                                                                setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); 
+                                                                setActiveMenu(null); 
+                                                            }}
+                                                            onDelete={(e, s) => { 
+                                                                e.stopPropagation(); 
+                                                                setDeleteConfig({ isOpen: true, type: 'subject', item: s }); 
+                                                                setActiveMenu(null); 
+                                                            }}
+                                                            cardScale={cardScale}
+                                                            isDragging={draggedItem?.id === subject.id}
+                                                            onDragStart={handleDragStartSubject}
+                                                            onDragEnd={handleDragEnd}
+                                                            onDragOver={handleDragOverSubject}
+                                                            onDrop={handleDropReorderSubject}
+                                                            draggable={isDragAndDropEnabled}
+                                                            position={index}
+                                                        />
+                                                    </div>
                                                 ))}
                                             </div>
                                         </div>
@@ -490,8 +654,6 @@ const Home = ({ user }) => {
                         </div>
                     );
                 })}
-
-                
 
                 
                 {/* Empty State */}
