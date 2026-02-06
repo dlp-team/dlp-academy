@@ -10,7 +10,7 @@ import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serv
 import { db } from '../firebase/config';
 import Header from '../components/layout/Header';
 // 👇 IMPORTAMOS TU NUEVO MODAL PREMIUM
-import QuizModal from '../components/modals/QuizModal';
+import QuizModal from './QuizzModal'; // Con punto al inicio y doble 'z'
 
 const Topic = ({ user }) => {
     const navigate = useNavigate();
