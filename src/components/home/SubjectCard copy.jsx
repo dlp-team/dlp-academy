@@ -1,6 +1,7 @@
+// src/components/home/SubjectCard.jsx
 import React from 'react';
 import { ChevronRight, ArrowLeft, MoreVertical, Edit2, Trash2 } from 'lucide-react';
-import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
+import SubjectIcon from '../modals/SubjectIcon';
 
 const SubjectCard = ({ 
     subject, 
@@ -12,33 +13,25 @@ const SubjectCard = ({
     onToggleMenu, 
     onEdit, 
     onDelete,
-    cardScale = 100,
-    isDragging = false
+    cardScale = 100
 }) => {
     const topicCount = subject.topics ? subject.topics.length : 0;
     
     // Check if the Modern style is active
     const isModern = subject.cardStyle === 'modern';
     
-    // Use modernFillColor if available
-    const fillColor = subject.modernFillColor || subject.fillColor;
+    // Use fillColor if available, otherwise fallback to a subtle gradient
+    const fillColor = subject.fillColor || 'from-slate-50/50 to-slate-100/50 dark:from-slate-900/50 dark:to-slate-800/50';
 
-    // Calculate scaled sizes
-    const scaleMultiplier = cardScale / 100;
-    const iconSize = isModern ? 7 * scaleMultiplier : 12 * scaleMultiplier;
-    const titleSize = 24 * scaleMultiplier;
-    const courseSize = 14 * scaleMultiplier;
-    const tagSize = 10 * scaleMultiplier;
-    const moreIconSize = 15 * scaleMultiplier;
+    const getScaledSize = (base) => {
+        return `${(base * cardScale) / 100}px`;
+    };
+
 
     return (
-        /* FIX APPLIED: 
-           - Changed 'w-64' to 'w-full' so it fills the grid column.
-           - Changed 'h-full' to 'h-64' so it matches the standard card height.
-        */
-        <div className={`group relative w-full h-64 rounded-2xl shadow-lg dark:shadow-slate-900/50 transition-all ${
-            isDragging ? 'opacity-50 scale-95' : 'hover:scale-105'
-        } ${
+        // OUTER CONTAINER: 
+        // If Modern: we use the gradient as the background/border
+        <div className={`group relative h-64 rounded-2xl shadow-lg dark:shadow-slate-900/50 transition-all hover:scale-105 ${
             isModern 
                 ? `bg-gradient-to-br ${subject.color} p-[3px]` 
                 : ''
@@ -60,9 +53,9 @@ const SubjectCard = ({
                             <div className={`absolute inset-0 bg-gradient-to-br ${subject.color} opacity-90`}></div>
                         )}
 
-                        {/* Modern Background: Fill color */}
-                        {isModern && fillColor && (
-                            <div className={`absolute inset-0 ${fillColor}`}></div>
+                        {/* Modern Background: Subtle gradient fill */}
+                        {isModern && (
+                            <div className={`absolute inset-0 bg-gradient-to-br ${fillColor} transition-opacity`}></div>
                         )}
 
                         {/* Modern Hover Effect */}
@@ -81,12 +74,11 @@ const SubjectCard = ({
                                         ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50' 
                                         : 'bg-white/20 backdrop-blur-md border border-white/30 text-white'
                                 } px-3 py-1.5 rounded-full cursor-pointer hover:scale-105 flex items-center gap-2 shadow-sm transition-all`}
-                                style={{ fontSize: `${12 * scaleMultiplier}px` }}
                             >
-                                <span className="font-bold whitespace-nowrap">
+                                <span className="text-sm font-bold whitespace-nowrap">
                                     {topicCount} {topicCount === 1 ? 'tema' : 'temas'}
                                 </span>
-                                <ChevronRight size={14 * scaleMultiplier} className="opacity-70" />
+                                <ChevronRight size={14} className="opacity-70" />
                             </div>
                         </div>
 
@@ -96,13 +88,13 @@ const SubjectCard = ({
                                 onClick={(e) => { e.stopPropagation(); onToggleMenu(subject.id); }}
                                 className={`p-2 rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer ${
                                     isModern 
-                                        ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800' 
-                                        : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30'
+                                        ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800 hover:scale-120' 
+                                        : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30 hover:scale-110'
                                 } ${
                                     activeMenu === subject.id ? 'opacity-100 scale-110' : 'opacity-0 group-hover:opacity-100'
                                 }`}
                             >
-                                <MoreVertical size={moreIconSize} />
+                                <MoreVertical className="w-5 h-5" />
                             </button>
                             
                             {activeMenu === subject.id && (
@@ -122,97 +114,50 @@ const SubjectCard = ({
                             isModern ? '' : 'text-white'
                         }`}>
                             <div className="flex justify-between items-start">
-                                {/* Icon */}
+                                {/* Icon: Modern style applies the gradient color */}
                                 {isModern ? (
-                                    <div 
-                                        className={getIconColor(subject.color)}
-                                        style={{ 
-                                            width: `${iconSize * 4}px`, 
-                                            height: `${iconSize * 4}px` 
-                                        }}
-                                    >
-                                        {subject.icon ? (
-                                            <SubjectIcon 
-                                                iconName={subject.icon} 
-                                                style={{ 
-                                                    width: `${iconSize * 6}px`, 
-                                                    height: `${iconSize * 6}px` 
-                                                }}
-                                            />
-                                        ) : (
-                                            <SubjectIcon 
-                                                iconName={subject.icon} 
-                                                className="text-white opacity-80" 
-                                                style={{ 
-                                                    width: `${iconSize * 6}px`, 
-                                                    height: `${iconSize * 6}px` 
-                                                }}
-                                            />
-                                        )}
+                                    <div className={`bg-gradient-to-br ${subject.color} p-2.5 rounded-xl shadow-sm`}>
+                                        <SubjectIcon iconName={subject.icon} className="w-7 h-7 text-white" />
                                     </div>
                                 ) : (
-                                    <div style={{ width: `${iconSize * 4}px`, height: `${iconSize * 4}px` }}>
-                                        <SubjectIcon 
-                                            iconName={subject.icon} 
-                                            className="text-white opacity-80" 
-                                            style={{ 
-                                                width: `${iconSize * 4}px`, 
-                                                height: `${iconSize * 4}px` 
-                                            }}
-                                        />
-                                    </div>
+                                    <SubjectIcon iconName={subject.icon} className="w-12 h-12 text-white opacity-80" />
                                 )}
                             </div>
-                            
                             <div>
-                                {subject.course && (
-                                    <p 
-                                        className={`font-medium tracking-wide ${
-                                            isModern 
-                                                ? 'text-gray-500 dark:text-gray-400' 
-                                                : 'text-white opacity-90'
-                                        }`}
-                                        style={{ fontSize: `${courseSize}px` }}
-                                    >
-                                        {subject.course}
-                                    </p>
-                                )}
+                                <p className={`text-sm font-medium tracking-wide ${
+                                    isModern 
+                                        ? 'text-gray-500 dark:text-gray-400' 
+                                        : 'text-white opacity-90'
+                                }`}>
+                                    {subject.course}
+                                </p>
                                 
-                                <h3 
-                                    className={`font-bold tracking-tight mb-2 truncate ${
-                                        isModern 
-                                            ? `bg-gradient-to-br ${subject.color} bg-clip-text text-transparent` 
-                                            : 'text-white'
-                                    }`}
-                                    style={{ fontSize: `${titleSize}px` }}
-                                >
+                                {/* Title: Modern style applies gradient to text */}
+                                <h3 className={`text-2xl font-bold tracking-tight mb-2 ${
+                                    isModern 
+                                        ? `bg-gradient-to-br ${subject.color} bg-clip-text text-transparent` 
+                                        : 'text-white'
+                                }`}>
                                     {subject.name}
                                 </h3>
 
                                 {subject.tags && subject.tags.length > 0 && (
                                     <div className="flex flex-wrap gap-1 mt-1">
                                         {subject.tags.slice(0, 3).map(tag => (
-                                            <span 
-                                                key={tag} 
-                                                className={`px-1.5 py-0.5 rounded ${
-                                                    isModern 
-                                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' 
-                                                        : 'bg-white/20 text-white/90'
-                                                }`}
-                                                style={{ fontSize: `${tagSize}px` }}
-                                            >
+                                            <span key={tag} className={`text-[10px] px-1.5 py-0.5 rounded ${
+                                                isModern 
+                                                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' 
+                                                    : 'bg-white/20 text-white/90'
+                                            }`}>
                                                 #{tag}
                                             </span>
                                         ))}
                                         {subject.tags.length > 3 && (
-                                            <span 
-                                                className={`${
-                                                    isModern 
-                                                        ? 'text-gray-400 dark:text-gray-500' 
-                                                        : 'text-white/80'
-                                                }`}
-                                                style={{ fontSize: `${tagSize}px` }}
-                                            >
+                                            <span className={`text-[10px] ${
+                                                isModern 
+                                                    ? 'text-gray-400 dark:text-gray-500' 
+                                                    : 'text-white/80'
+                                            }`}>
                                                 +{subject.tags.length - 3}
                                             </span>
                                         )}
@@ -229,21 +174,11 @@ const SubjectCard = ({
                         <div className={`p-4 bg-gradient-to-r ${subject.color} flex items-center justify-between text-white shadow-sm`}>
                             <div className="flex items-center gap-2">
                                 <button onClick={(e) => { e.stopPropagation(); onFlip(subject.id); }} className="p-1 hover:bg-white/20 rounded-full transition-colors">
-                                    <ArrowLeft size={18 * scaleMultiplier} />
+                                    <ArrowLeft size={18} />
                                 </button>
-                                <span 
-                                    className="font-bold truncate max-w-[150px]"
-                                    style={{ fontSize: `${14 * scaleMultiplier}px` }}
-                                >
-                                    Temas de {subject.name}
-                                </span>
+                                <span className="font-bold text-sm truncate max-w-[150px]">Temas de {subject.name}</span>
                             </div>
-                            <span 
-                                className="font-medium bg-white/20 px-2 py-1 rounded-full"
-                                style={{ fontSize: `${12 * scaleMultiplier}px` }}
-                            >
-                                {topicCount}
-                            </span>
+                            <span className="text-xs font-medium bg-white/20 px-2 py-1 rounded-full">{topicCount}</span>
                         </div>
                         <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
                             {topicCount > 0 ? (
@@ -253,13 +188,8 @@ const SubjectCard = ({
                                         onClick={() => onSelectTopic(subject.id, topic.id)}
                                         className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg group border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all flex items-center justify-between cursor-pointer"
                                     >
-                                        <span 
-                                            className="font-medium truncate pr-2 text-gray-700 dark:text-gray-300"
-                                            style={{ fontSize: `${14 * scaleMultiplier}px` }}
-                                        >
-                                            {topic.title}
-                                        </span>
-                                        <ChevronRight size={14 * scaleMultiplier} className="text-gray-300 dark:text-gray-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors" />
+                                        <span className="text-sm text-gray-700 dark:text-gray-300 font-medium truncate pr-2">{topic.title}</span>
+                                        <ChevronRight size={14} className="text-gray-300 dark:text-gray-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors" />
                                     </button>
                                 ))
                             ) : (

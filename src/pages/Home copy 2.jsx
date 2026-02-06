@@ -7,7 +7,6 @@ import {
 } from 'lucide-react';
 import SubjectIcon from '../components/modals/SubjectIcon';
 
-
 // Layout & Logic
 import Header from '../components/layout/Header';
 import { useSubjects } from '../hooks/useSubjects';
@@ -57,6 +56,12 @@ const Home = ({ user }) => {
     const [folderModalConfig, setFolderModalConfig] = useState({ isOpen: false, isEditing: false, data: null });
     const [deleteConfig, setDeleteConfig] = useState({ isOpen: false, type: null, item: null });
 
+    // --- SCALE MAPPING ---
+    const getCardDimensions = () => {
+        const baseWidth = 256;
+        const scaledWidth = (baseWidth * cardScale) / 100;
+        return { width: `${scaledWidth}px` };
+    };
 
     // --- TAG FILTERING LOGIC ---
     const filteredSubjectsByTags = useMemo(() => {
@@ -66,7 +71,6 @@ const Home = ({ user }) => {
         );
     }, [subjects, selectedTags]);
 
-    
     // --- FOLDER HELPERS ---
     const getUnfolderedSubjects = () => {
         const allFolderSubjectIds = new Set(folders.flatMap(f => f.subjectIds || []));
@@ -91,7 +95,6 @@ const Home = ({ user }) => {
         );
         return subjects.filter(s => sharedFolderSubjectIds.has(s.id));
     }, [subjects, sharedFolders]);
-
 
     // --- VIEW GROUPING LOGIC ---
     const groupedContent = useMemo(() => {
@@ -151,8 +154,6 @@ const Home = ({ user }) => {
         
         return { 'Todas': subjectsToGroup };
     }, [subjects, filteredSubjectsByTags, viewMode, currentFolder, folders]);
-
-
 
     // --- HANDLERS ---
     const handleSaveSubject = async (formData) => {
@@ -233,8 +234,6 @@ const Home = ({ user }) => {
 
     // Show collapsible groups only in certain modes
     const showCollapsibleGroups = ['courses', 'tags', 'shared'].includes(viewMode);
-
-
 
     if (!user || loading || loadingFolders) {
         return (
@@ -388,43 +387,48 @@ const Home = ({ user }) => {
                                 <>
                                     {/* GRID LAYOUT */}
                                     {layoutMode === 'grid' && (
-                                        <div key={groupName} className="mb-10">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                                {/* Create Button (Grid Mode only) */}
-                                                {viewMode === 'grid' && (
-                                                    <button 
-                                                        onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null })} 
-                                                        className="group relative h-64 border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center gap-4 cursor-pointer"
-                                                    >
-                                                        <div className="w-20 h-20 rounded-full bg-indigo-100 dark:bg-indigo-900/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/60 flex items-center justify-center transition-colors">
-                                                            <Plus className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
-                                                        </div>
-                                                        <span className="text-lg font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                                            Crear Nueva Asignatura
-                                                        </span>
-                                                    </button>
-                                                )}
+                                        <div 
+                                            className="grid gap-6"
+                                            style={{
+                                                gridTemplateColumns: `repeat(auto-fill, minmax(${cardScale * 2.5}px, 1fr))`
+                                            }}
+                                        >
 
-                                                {/* Folders (Manual mode at root only) */}
-                                                {viewMode === 'grid' && !currentFolder && folders.filter(f => f.isOwner).map((folder) => (
-                                                    <div key={`folder-${folder.id}`}>
-                                                        <FolderCard
-                                                            folder={folder}
-                                                            onOpen={handleOpenFolder}
-                                                            activeMenu={activeMenu}
-                                                            onToggleMenu={setActiveMenu}
-                                                            onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
-                                                            onDelete={(f) => setDeleteConfig({ isOpen: true, type: 'folder', item: f })}
-                                                            onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
-                                                            cardScale={cardScale}
-                                                        />
+                                            {/* Create Button */}
+                                            {viewMode === 'grid' && (
+                                                <button 
+                                                    onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null })} 
+                                                    className="group w-64 h-full relative border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center gap-4 cursor-pointer"
+                                                    style={getCardDimensions()}
+                                                >
+                                                    <div className="w-20 h-20 rounded-full bg-indigo-100 dark:bg-indigo-900/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/60 flex items-center justify-center transition-colors">
+                                                        <Plus className="w-10 h-10 text-indigo-600 dark:text-indigo-400" />
                                                     </div>
-                                                ))}
+                                                    <span className="text-lg font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors px-4 text-center">
+                                                        Crear Nueva Asignatura
+                                                    </span>
+                                                </button>
+                                            )}
 
-                                                {/* Cards */}
-                                                {groupSubjects.map((subject) => (
+                                            {/* Folders (Manual mode at root only) */}
+                                            {viewMode === 'grid' && !currentFolder && folders.filter(f => f.isOwner).map((folder) => (
+                                                <div key={`folder-${folder.id}`} style={getCardDimensions()}>
+                                                    <FolderCard
+                                                        folder={folder}
+                                                        onOpen={handleOpenFolder}
+                                                        activeMenu={activeMenu}
+                                                        onToggleMenu={setActiveMenu}
+                                                        onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
+                                                        onDelete={(f) => setDeleteConfig({ isOpen: true, type: 'folder', item: f })}
+                                                        onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
+                                                        cardScale={cardScale}
+                                                    />
+                                                </div>
+                                            ))}
+                                            {/* Subject Cards */}
+                                            {groupSubjects.map((subject) => (
+                                                <div key={`subject-${subject.id}`} style={getCardDimensions()}>
                                                     <SubjectCard
-                                                        key={`${groupName}-${subject.id}`}
                                                         subject={subject}
                                                         isFlipped={flippedSubjectId === subject.id}
                                                         onFlip={(id) => setFlippedSubjectId(flippedSubjectId === id ? null : id)}
@@ -442,9 +446,10 @@ const Home = ({ user }) => {
                                                             setDeleteConfig({ isOpen: true, type: 'subject', item: s }); 
                                                             setActiveMenu(null); 
                                                         }}
+                                                        cardScale={cardScale}
                                                     />
-                                                ))}
-                                            </div>
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
 
@@ -491,9 +496,6 @@ const Home = ({ user }) => {
                     );
                 })}
 
-                
-
-                
                 {/* Empty State */}
                 {subjects.length === 0 && folders.length === 0 && viewMode !== 'shared' && (
                     <div className="text-center py-20">
@@ -521,7 +523,6 @@ const Home = ({ user }) => {
                     </div>
                 )}
             </main>
-
 
             {/* Modals */}
             <SubjectFormModal 
