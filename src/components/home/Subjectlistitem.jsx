@@ -15,7 +15,7 @@ const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false 
             className={`group relative rounded-xl transition-all hover:shadow-md cursor-pointer ${
                 compact ? 'p-3' : 'p-4'
             } ${
-                isModern ? `${getIconColor(subject.color)} border border-gradient-to-br ${subject.color} hover:border-gradient-to-br ${subject.color} ` : ` bg-gradient-to-br ${subject.color} border border-gray-200 hover:border-indigo-300 `
+                isModern ? `${getIconColor(subject.color)} border border-gradient-to-br ${subject.color} hover:border-gradient-to-br ${subject.color} ` : ` bg-gradient-to-br ${subject.color} hover:border-indigo-300 `
             }`}
             onClick={() => onSelect(subject.id)}
         >
