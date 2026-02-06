@@ -12,17 +12,15 @@ import Home from './pages/Home';
 import Subject from './pages/Subject';
 import Topic from './pages/Topic';
 import Quizzes from './pages/Quizzes'
-
-// Firebase imports
+// Firebase auth
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore'; // ✅ Added onSnapshot
-import { auth, db } from './firebase/config'; // ✅ Added db
+import { auth } from './firebase/config';
 
 // Protected Route wrapper component
 const ProtectedRoute = ({ children, user, loading }) => {
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
       </div>
     );
@@ -35,80 +33,24 @@ function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // 👂 1. Listen for Auth AND Firestore changes
+  // 👂 Listen for auth state changes
   useEffect(() => {
-    let unsubscribeFirestore = null;
-
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        // User is logged in. Now connect to the DATABASE to get settings.
-        const userRef = doc(db, "users", currentUser.uid);
-        
-        // onSnapshot listens for real-time updates from Firestore
-        unsubscribeFirestore = onSnapshot(userRef, (docSnap) => {
-          if (docSnap.exists()) {
-            const userData = docSnap.data();
-            // We combine Auth info (currentUser) with Database info (userData)
-            setUser({ ...currentUser, ...userData });
-          } else {
-            // Fallback if no document exists yet
-            setUser(currentUser);
-          }
-          setLoading(false);
-        });
-
-      } else {
-        // User is logged out
-        setUser(null);
-        setLoading(false);
-        if (unsubscribeFirestore) unsubscribeFirestore();
-      }
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      console.log("Usuario detectado en App:", currentUser?.email);
+      setUser(currentUser);
+      setLoading(false);
     });
     
-    // Cleanup listeners on unmount
-    return () => {
-      unsubscribeAuth();
-      if (unsubscribeFirestore) unsubscribeFirestore();
-    };
+    return () => unsubscribe();
   }, []);
 
-  // 🎨 2. Theme Logic (Now listens to the REAL user.settings)
-  useEffect(() => {
-    const applyTheme = () => {
-      // Now this works because we fetched the data from Firestore above!
-      const theme = user?.settings?.theme || 'system';
-      const root = window.document.documentElement;
-
-      root.classList.remove('light', 'dark');
-
-      if (theme === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        root.classList.add(systemTheme);
-      } else {
-        root.classList.add(theme);
-      }
-    };
-
-    applyTheme();
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemChange = () => {
-        if (user?.settings?.theme === 'system') applyTheme();
-    };
-    mediaQuery.addEventListener('change', handleSystemChange);
-    
-    return () => mediaQuery.removeEventListener('change', handleSystemChange);
-
-  }, [user]); // Re-runs whenever Firestore sends new settings
-
-  // Show loading screen
+  // Show loading screen while checking authentication
   if (loading) {
     return (
-      // Added dark mode support to loading screen
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-          <p className="text-gray-600 dark:text-gray-300 font-medium">Cargando aplicación...</p>
+          <p className="text-gray-600 font-medium">Cargando aplicación...</p>
         </div>
       </div>
     );
@@ -117,7 +59,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
+        {/* Public Routes - Redirect to home if already logged in */}
         <Route 
           path="/" 
           element={user ? <Navigate to="/home" /> : <Navigate to="/login" />} 
@@ -133,7 +75,7 @@ function App() {
           element={user ? <Navigate to="/home" /> : <Register />} 
         />
 
-        {/* Protected Routes */}
+        {/* Protected Routes - Main Application */}
         <Route 
           path="/home" 
           element={
@@ -160,14 +102,9 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        
         <Route 
           path="/home/subject/:subjectId/topic/:topicId/quiz/:quizId" 
-          element={
-             <ProtectedRoute user={user} loading={loading}>
-                <Quizzes user={user} />
-             </ProtectedRoute>
-          } 
+          element={<Quizzes user={user} />} 
         />
 
         <Route 
@@ -188,7 +125,8 @@ function App() {
           } 
         />
 
-        {/* Fallback */}
+
+        {/* Fallback - Redirect unknown routes to home */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
