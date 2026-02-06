@@ -1,17 +1,21 @@
 // src/components/home/SubjectListItem.jsx
 import React, { useState } from 'react';
 import { ChevronRight, Edit2, Trash2, MoreVertical } from 'lucide-react';
-import SubjectIcon from '../modals/SubjectIcon';
+import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
 
 const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false }) => {
     const [showMenu, setShowMenu] = useState(false);
     const topicCount = subject.topics ? subject.topics.length : 0;
     const isModern = subject.cardStyle === 'modern';
+    const scaleMultiplier = 256 / 150;
+    const iconSize = isModern ? 7 * scaleMultiplier : 12 * scaleMultiplier;
 
     return (
         <div 
-            className={`group relative bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl transition-all hover:border-indigo-300 dark:hover:border-indigo-600 hover:shadow-md cursor-pointer ${
+            className={`group relative rounded-xl transition-all hover:shadow-md cursor-pointer ${
                 compact ? 'p-3' : 'p-4'
+            } ${
+                isModern ? `${getIconColor(subject.color)} border border-gradient-to-br ${subject.color} hover:border-gradient-to-br ${subject.color} ` : ` bg-gradient-to-br ${subject.color} border border-gray-200 hover:border-indigo-300 `
             }`}
             onClick={() => onSelect(subject.id)}
         >
@@ -19,12 +23,43 @@ const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false 
                 {/* Icon */}
                 <div className={`flex-shrink-0 ${compact ? 'w-10 h-10' : 'w-12 h-12'}`}>
                     {isModern ? (
-                        <div className={`bg-gradient-to-br ${subject.color} p-2 rounded-lg shadow-sm h-full flex items-center justify-center`}>
-                            <SubjectIcon iconName={subject.icon} className={`${compact ? 'w-6 h-6' : 'w-7 h-7'} text-white`} />
+                        <div 
+                            className={`${getIconColor(subject.color)} rounded-lg h-full flex items-center justify-center`}
+                            style={{ 
+                                width: `${iconSize * 4}px`, 
+                                height: `${iconSize * 4}px` 
+                            }}
+                        >
+                            {subject.icon ? (
+                                <SubjectIcon 
+                                    iconName={subject.icon} 
+                                    style={{ 
+                                        width: `${iconSize * 6}px`, 
+                                        height: `${iconSize * 6}px` 
+                                    }}
+                                />
+                            ) : (
+                                <SubjectIcon 
+                                    iconName={subject.icon} 
+                                    className="text-white opacity-80" 
+                                    style={{ 
+                                        width: `${iconSize * 6}px`, 
+                                        height: `${iconSize * 6}px` 
+                                    }}
+                                />
+                            )}
                         </div>
                     ) : (
-                        <div className={`bg-gradient-to-br ${subject.color} rounded-lg h-full flex items-center justify-center`}>
-                            <SubjectIcon iconName={subject.icon} className={`${compact ? 'w-6 h-6' : 'w-7 h-7'} text-white opacity-90`} />
+                        // <div className={`bg-gradient-to-br ${subject.color} rounded-lg h-full flex items-center justify-center`}>
+                        <div className={`bg-transparent h-full flex items-center justify-center text-white opacity-90`}>
+                            <SubjectIcon 
+                                iconName={subject.icon} 
+                                //className={`${compact ? 'w-6 h-6' : 'w-7 h-7'} text-white opacity-90`}
+                                style={{ 
+                                        width: `${iconSize * 6}px`, 
+                                        height: `${iconSize * 6}px` 
+                                }} 
+                            />
                         </div>
                     )}
                 </div>
@@ -32,11 +67,16 @@ const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                        <h3 className={`font-bold text-gray-900 dark:text-white truncate ${compact ? 'text-base' : 'text-lg'}`}>
+                        <h3 
+                            //className={`font-bold text-gray-900 dark:text-white truncate ${compact ? 'text-base' : 'text-lg'}`}
+                            className={`${ isModern ? `font-bold text-gray-900 dark:text-white truncate ${compact ? 'text-base' : 'text-lg'}` : `font-bold text-white dark:text-white truncate ${compact ? 'text-base' : 'text-lg'}`}`}
+
+                        >
                             {subject.name}
                         </h3>
                         {!compact && subject.course && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400 px-2 py-0.5 bg-gray-100 dark:bg-slate-800 rounded-full whitespace-nowrap">
+                            <span 
+                                className="text-xs text-gray-500 dark:text-gray-400 px-2 py-0.5 bg-gray-100 dark:bg-slate-800 rounded-full whitespace-nowrap">
                                 {subject.course}
                             </span>
                         )}
@@ -47,7 +87,8 @@ const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false 
                             {subject.tags.slice(0, 3).map(tag => (
                                 <span 
                                     key={tag} 
-                                    className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50"
+                                    //className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50"
+                                    className={`${ isModern ? `text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50` : `text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50`}`}
                                 >
                                     #{tag}
                                 </span>
@@ -63,10 +104,10 @@ const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false 
 
                 {/* Topic Count Badge */}
                 <div className={`flex items-center gap-2 ${compact ? 'text-xs' : 'text-sm'}`}>
-                    <span className="text-gray-500 dark:text-gray-400 font-medium whitespace-nowrap">
+                    <span className={`${ isModern ? `text-gray-700 dark:text-gray-400 font-medium whitespace-nowrap` : `text-gray-100 dark:text-gray-900 font-medium whitespace-nowrap`}`}>
                         {topicCount} {topicCount === 1 ? 'tema' : 'temas'}
                     </span>
-                    <ChevronRight size={compact ? 16 : 18} className="text-gray-300 dark:text-gray-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors" />
+                    <ChevronRight size={compact ? 16 : 18} className={`${ isModern ? `text-gray-700 dark:text-gray-300 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors` : `text-gray-300 dark:text-gray-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors`}`} />
                 </div>
 
                 {/* Menu */}
