@@ -9,8 +9,9 @@ import {
 import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import Header from '../components/layout/Header';
-// 👇 IMPORTAMOS TU NUEVO MODAL PREMIUM
-import QuizModal from './QuizzModal'; // Con punto al inicio y doble 'z'
+
+// Asegúrate de que esta ruta sea correcta según donde guardaste el archivo
+import QuizModal from './QuizzModal';
 
 const Topic = ({ user }) => {
     const navigate = useNavigate();
@@ -31,15 +32,13 @@ const Topic = ({ user }) => {
     const [isEditingTopic, setIsEditingTopic] = useState(false);
     const [editTopicData, setEditTopicData] = useState({ title: '' });
 
-    // Gestión Archivos Individuales
+    // Gestión Archivos
     const [activeMenuId, setActiveMenuId] = useState(null);
     const [renamingId, setRenamingId] = useState(null);
     const [tempName, setTempName] = useState("");
-
-    // Visor
     const [viewingFile, setViewingFile] = useState(null);
 
-    // --- NUEVOS ESTADOS PARA EL QUIZ MODAL ---
+    // --- ESTADOS PARA EL MODAL DE TESTS ---
     const [showQuizModal, setShowQuizModal] = useState(false);
     const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
     const [quizFormData, setQuizFormData] = useState({ 
@@ -68,8 +67,7 @@ const Topic = ({ user }) => {
                         const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
                         const unsubscribeDocs = onSnapshot(docsRef, (querySnapshot) => {
                             const manualDocs = querySnapshot.docs.map(doc => ({
-                                id: doc.id,
-                                ...doc.data()
+                                id: doc.id, ...doc.data()
                             }));
 
                             const aiPdfs = Array.isArray(topicData.pdfs) ? topicData.pdfs.map((p, i) => ({ 
@@ -89,14 +87,12 @@ const Topic = ({ user }) => {
                             });
                             setLoading(false);
                         });
-
                         return () => unsubscribeDocs();
                     } else {
                         setLoading(false);
                         navigate('/home');
                     }
                 });
-
                 return () => unsubscribeTopic();
             } catch (error) {
                 console.error("Error loading topic:", error);
@@ -105,23 +101,17 @@ const Topic = ({ user }) => {
         };
 
         const unsubscribe = fetchTopicDetails();
-        return () => {
-            if (unsubscribe && typeof unsubscribe.then === 'function') {
-                unsubscribe.then(unsub => unsub && unsub());
-            }
-        };
+        return () => { if (unsubscribe && typeof unsubscribe.then === 'function') unsubscribe.then(u => u && u()); };
     }, [user, subjectId, topicId, navigate]);
 
     // --- HELPERS VISUALES ---
     const getFileVisuals = (type) => {
         if (!type) return { icon: FileText, label: 'Documento' };
         const t = type.toLowerCase();
-        
         if (t.includes('exam') || t.includes('evaluación')) return { icon: Award, label: 'Exámenes' };
         if (t.includes('exercise') || t.includes('ejercicio')) return { icon: FileText, label: 'Ejercicios' };
         if (t.includes('formula') || t.includes('fórmula')) return { icon: Sigma, label: 'Fórmulas' };
         if (t.includes('summary') || t.includes('resumen') || t.includes('formulario')) return { icon: BookOpen, label: 'Resumen' };
-        
         return { icon: FileText, label: 'Documento' };
     };
 
@@ -154,11 +144,9 @@ const Topic = ({ user }) => {
                     if (pdf.id === file.id) return { ...pdf, name: tempName };
                     return pdf;
                 });
-                
                 const cleanPdfsForDb = updatedPdfs.map(p => ({
                     name: p.name, type: p.type, url: p.url, id: p.id
                 }));
-
                 const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
                 await updateDoc(topicRef, { pdfs: cleanPdfsForDb });
             }
@@ -179,7 +167,6 @@ const Topic = ({ user }) => {
         } catch (error) { console.error(error); alert("Error al eliminar."); }
     };
 
-    // --- VISOR ---
     const handleViewFile = (file) => {
         const dataUrl = file.url;
         if (!dataUrl) { alert("Archivo vacío."); return; }
@@ -194,7 +181,6 @@ const Topic = ({ user }) => {
         } catch (error) { alert("No se pudo previsualizar."); }
     };
 
-    // --- ACCIONES TEMA ---
     const handleDeleteTopic = async () => {
         if (!window.confirm("¿Eliminar tema completo?")) return;
         try {
@@ -239,10 +225,9 @@ const Topic = ({ user }) => {
         } catch (error) { alert("Error al subir."); } finally { setUploading(false); }
     };
 
-    // --- HANDLERS PARA MODALES ---
     const handleCreateCustomPDF = () => { alert("✨ Crear nuevo PDF personalizado"); };
     
-    // 1. ABRIR EL MODAL DESDE EL BOTÓN '+'
+    // --- ACCIÓN: ABRIR MODAL ---
     const handleCreateCustomQuiz = () => {
         setQuizFormData({
             title: `Test de ${topic?.title || 'Repaso'}`,
@@ -253,20 +238,15 @@ const Topic = ({ user }) => {
         setShowQuizModal(true);
     };
 
-    // 2. LÓGICA DE GENERACIÓN (Submit del Modal)
+    // --- ACCIÓN: GENERAR (N8N) ---
     const handleGenerateQuizSubmit = async (e) => {
         e.preventDefault();
         setIsGeneratingQuiz(true);
-        
         try {
-            // AQUÍ IRÍA TU LLAMADA A N8N
             console.log("Enviando a n8n:", quizFormData);
-            
-            // Simulación de espera para ver la animación de carga
-            await new Promise(r => setTimeout(r, 2000));
-            
+            await new Promise(r => setTimeout(r, 2000)); // Simulación
             setShowQuizModal(false);
-            alert("✅ Solicitud enviada a la IA (Simulación)");
+            alert("✅ Test generado correctamente");
         } catch (error) {
             console.error(error);
             alert("Error al generar");
@@ -275,7 +255,6 @@ const Topic = ({ user }) => {
         }
     };
 
-    // --- MOCK DATA ---
     const handleSimulateAI = async () => {
         const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
         const genId = () => Math.random().toString(36).substr(2, 9);
@@ -295,7 +274,6 @@ const Topic = ({ user }) => {
         alert("✅ Datos inyectados."); setShowMenu(false);
     };
 
-    // --- RENDER CARD ---
     const renderFileCard = (file, idx) => {
         const { icon: Icon, label } = getFileVisuals(file.type);
         const isRenaming = renamingId === file.id;
@@ -491,7 +469,15 @@ const Topic = ({ user }) => {
                                             <div className="z-10 mt-auto">
                                                 <h3 className="text-3xl font-extrabold leading-tight mb-2">{quiz.name || "Test Práctico"}</h3>
                                                 <div className="flex items-center gap-2 text-white/80 text-sm mb-6 font-medium"><Timer className="w-4 h-4" /> 15 min aprox</div>
-                                                <button onClick={() => alert('Próximamente')} className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-indigo-900 text-sm font-bold uppercase tracking-wider hover:bg-indigo-50 transition-all shadow-lg"><Play className="w-4 h-4 fill-current" /> Comenzar Test</button>
+                                                
+                                                {/* --- BOTÓN ACTUALIZADO PARA NAVEGAR --- */}
+                                                <button 
+                                                    onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`)}
+                                                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-indigo-900 text-sm font-bold uppercase tracking-wider hover:bg-indigo-50 transition-all shadow-lg cursor-pointer"
+                                                >
+                                                    <Play className="w-4 h-4 fill-current" /> Comenzar Test
+                                                </button>
+
                                             </div>
                                         </div>
                                     </div>
@@ -508,7 +494,7 @@ const Topic = ({ user }) => {
                 </div>
             </main>
 
-            {/* --- MODAL QUIZ (NUEVO) --- */}
+            {/* --- VISUALIZADOR MODAL CON MARCO DE COLOR --- */}
             <QuizModal 
                 isOpen={showQuizModal}
                 onClose={() => setShowQuizModal(false)}
@@ -519,12 +505,10 @@ const Topic = ({ user }) => {
                 themeColor={topic?.color}
             />
 
-            {/* --- VISUALIZADOR MODAL --- */}
             {viewingFile && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200">
                     <div className={`relative w-full max-w-6xl h-[90vh] rounded-3xl p-1 shadow-2xl flex flex-col bg-gradient-to-br ${topic.color || 'from-indigo-500 to-purple-600'}`}>
                         <div className="flex-1 w-full h-full bg-slate-900 rounded-2xl overflow-hidden flex flex-col">
-                            {/* CABECERA CON COLOR Y TITULO CORRECTO */}
                             <div className={`flex justify-between items-center px-6 py-4 bg-gradient-to-r ${topic.color || 'from-indigo-500 to-purple-600'}`}>
                                 <span className="font-bold text-white flex items-center gap-2 text-lg tracking-tight">
                                     {(() => {
