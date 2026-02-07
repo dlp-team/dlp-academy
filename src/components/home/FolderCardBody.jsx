@@ -113,9 +113,6 @@ const FolderCardBody = ({
                                         <button onClick={(e) => { e.stopPropagation(); onShare(folder); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
                                             <Share2 size={14} /> Compartir
                                         </button>
-                                        <button onClick={(e) => { e.stopPropagation(); onEdit(folder); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
-                                            <Edit2 size={14} /> Editar
-                                        </button>
                                         <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
                                         <button onClick={(e) => { e.stopPropagation(); onDelete(folder); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors">
                                             <Trash2 size={14} /> Eliminar
