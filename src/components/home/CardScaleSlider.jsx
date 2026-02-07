@@ -73,19 +73,6 @@ const CardScaleSlider = ({ cardScale, setCardScale }) => {
                             </div>
                         </div>
                         
-                        {/* Scale Preview - Rectangle shape */}
-                        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-slate-700">
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Vista previa:</p>
-                            <div className="flex items-center justify-center">
-                                <div 
-                                    className="bg-gradient-to-br from-indigo-400 to-indigo-600 rounded-lg transition-all"
-                                    style={{ 
-                                        width: `${60 * (cardScale / 100)}px`, 
-                                        height: `${32 * (cardScale / 100)}px` 
-                                    }}
-                                />
-                            </div>
-                        </div>
                         
                         {/* Helper Text */}
                         <div className="mt-3 text-xs text-gray-500 dark:text-gray-400 text-center">

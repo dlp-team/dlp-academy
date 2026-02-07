@@ -106,10 +106,10 @@ const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false,
 
                 {/* Topic Count Badge */}
                         <div className={`flex items-center gap-2`}>
-                            <span className={`${ isModern ? `text-gray-700 dark:text-gray-400 font-medium whitespace-nowrap` : `text-gray-100 dark:text-gray-900 font-medium whitespace-nowrap`}`} style={{ fontSize: `${12 * scale}px` }}>
+                            <span className={`${ isModern ? `text-gray-700 dark:text-gray-400 font-medium whitespace-nowrap` : `text-gray-100 dark:text-gray-900 font-medium whitespace-nowrap`}`} style={{ fontSize: `${10 + 14* scale*0.3}px` }}>
                                 {topicCount} {topicCount === 1 ? 'tema' : 'temas'}
                             </span>
-                            <ChevronRight size={18 * scale} className={`${ isModern ? `text-gray-700 dark:text-gray-300 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors` : `text-gray-300 dark:text-gray-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors`}`} />
+                            <ChevronRight size={12 + 14* scale*0.3} className={`${ isModern ? `text-gray-700 dark:text-gray-300 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors` : `text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors`}`} />
                         </div>
 
                 {/* Menu */}
