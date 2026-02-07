@@ -13,16 +13,16 @@ const QuizHeader = ({
 }) => {
     return (
         <div className="flex items-center justify-between mb-8">
-            <button onClick={handleGoBack} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400 hover:text-slate-600">
+            <button onClick={handleGoBack} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300">
                 <X className="w-6 h-6" />
             </button>
             
             <div className="flex-1 mx-6">
-                <div className="flex justify-between text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">
+                <div className="flex justify-between text-xs font-bold text-slate-400 dark:text-slate-500 mb-2 uppercase tracking-wider">
                     <span>Progreso</span>
                     <span>{currentQuestionIndex + 1} / {quizData.questions.length}</span>
                 </div>
-                <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                     <div 
                         className={`h-full transition-all duration-500 ease-out rounded-full ${getProgressColor()}`} 
                         style={{ width: `${((currentQuestionIndex + 1) / quizData.questions.length) * 100}%` }}
@@ -35,7 +35,7 @@ const QuizHeader = ({
                     <Zap className={`w-5 h-5 ${streak > 0 ? 'fill-current' : ''}`} />
                     <span>{streak}</span>
                 </div>
-                <div className="bg-slate-900 text-white px-3 py-1 rounded-lg font-mono font-bold text-sm">
+                <div className="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-3 py-1 rounded-lg font-mono font-bold text-sm">
                     {score} pts
                 </div>
             </div>

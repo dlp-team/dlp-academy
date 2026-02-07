@@ -17,10 +17,10 @@ const Quizzes = ({ user }) => {
     // 2. Loading State
     if (logic.loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
-                    <p className="text-slate-500 font-bold animate-pulse">Cargando Quiz...</p>
+                    <Loader2 className="w-10 h-10 text-indigo-600 dark:text-indigo-400 animate-spin" />
+                    <p className="text-slate-500 dark:text-slate-400 font-bold animate-pulse">Cargando Quiz...</p>
                 </div>
             </div>
         );
@@ -29,10 +29,10 @@ const Quizzes = ({ user }) => {
     // 3. Error/Empty State
     if (!logic.quizData) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
                 <div className="text-center max-w-md p-8">
-                    <h2 className="text-2xl font-bold text-slate-800 mb-2">Quiz no encontrado</h2>
-                    <button onClick={logic.handleGoBack} className="text-indigo-600 font-bold hover:underline">Volver</button>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">Quiz no encontrado</h2>
+                    <button onClick={logic.handleGoBack} className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">Volver</button>
                 </div>
             </div>
         );
@@ -56,7 +56,7 @@ const Quizzes = ({ user }) => {
     const currentQuestion = logic.quizData.questions[logic.currentQuestionIndex];
     
     return (
-        <div className="min-h-screen bg-slate-50 font-sans">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans">
             <div className="max-w-3xl mx-auto px-4 py-6 md:py-10 pb-32">
                 
                 {/* Header */}

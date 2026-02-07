@@ -17,15 +17,15 @@ const Topic = ({ user }) => {
     // 2. Loading State
     if (!user || logic.loading || !logic.topic || !logic.subject) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+                <Loader2 className="w-10 h-10 text-indigo-600 dark:text-indigo-400 animate-spin" />
             </div>
         );
     }
 
     // 3. Render
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
             <Header user={user} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">

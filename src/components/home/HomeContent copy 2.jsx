@@ -49,13 +49,14 @@ const HomeContent = ({
     navigate
 }) => {
     const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
+    const [dropIndicator, setDropIndicator] = useState(null); // { type: 'subject'|'folder', position: number }
 
     // Show collapsible groups only in certain modes
     const showCollapsibleGroups = ['courses', 'tags', 'shared'].includes(viewMode);
 
     // Handle drag over promote zone
     const handlePromoteZoneDragOver = (e) => {
-        if (currentFolder && (draggedItemType === 'subject' || draggedItemType === 'folder')) {
+        if (currentFolder && draggedItem && (draggedItemType === 'subject' || draggedItemType === 'folder')) {
             e.preventDefault();
             e.stopPropagation();
             setIsPromoteZoneHovered(true);
@@ -78,6 +79,34 @@ const HomeContent = ({
             handlePromoteSubject(draggedItem.id);
         } else if (draggedItemType === 'folder') {
             handlePromoteFolder(draggedItem.id);
+        }
+    };
+
+    // Enhanced drag over handlers with drop indicator
+    const handleEnhancedDragOverSubject = (e, position) => {
+        handleDragOverSubject(e, position);
+        if (draggedItemType === 'subject') {
+            setDropIndicator({ type: 'subject', position });
+        }
+    };
+
+    const handleEnhancedDragOverFolder = (e, position) => {
+        handleDragOverFolder(e, position);
+        if (draggedItemType === 'folder') {
+            setDropIndicator({ type: 'folder', position });
+        }
+    };
+
+    const handleEnhancedDragLeave = () => {
+        setDropIndicator(null);
+    };
+
+    const handleEnhancedDrop = (e, position, isFolder = false) => {
+        setDropIndicator(null);
+        if (isFolder) {
+            handleDropReorderFolder(e, position);
+        } else {
+            handleDropReorderSubject(e, position);
         }
     };
 
@@ -124,19 +153,19 @@ const HomeContent = ({
                                                 gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` 
                                             }}
                                         >
-                                            {/* Create Button or Promote Zone */}
+                                            {/* Create Button OR Promote Zone */}
                                             {viewMode === 'grid' && (
                                                 <div>
                                                     {currentFolder && draggedItem && (draggedItemType === 'subject' || draggedItemType === 'folder') ? (
-                                                        /* Promote Zone when inside a folder */
+                                                        /* Promote Zone - only visible when dragging inside a folder */
                                                         <div
                                                             onDragOver={handlePromoteZoneDragOver}
                                                             onDragLeave={handlePromoteZoneDragLeave}
                                                             onDrop={handlePromoteZoneDrop}
                                                             className={`group relative w-full border-3 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center ${
-                                                                isPromoteZoneHovered && draggedItem
+                                                                isPromoteZoneHovered
                                                                     ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 scale-105'
-                                                                    : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                                                    : 'border-amber-300 dark:border-amber-600 bg-amber-50/50 dark:bg-amber-900/10'
                                                             }`}
                                                             style={{ 
                                                                 aspectRatio: '16 / 10',
@@ -145,9 +174,9 @@ const HomeContent = ({
                                                         >
                                                             <div 
                                                                 className={`rounded-full flex items-center justify-center transition-colors ${
-                                                                    isPromoteZoneHovered && draggedItem
+                                                                    isPromoteZoneHovered
                                                                         ? 'bg-amber-200 dark:bg-amber-800/60'
-                                                                        : 'bg-amber-100 dark:bg-amber-900/40 group-hover:bg-amber-200 dark:group-hover:bg-amber-800/60'
+                                                                        : 'bg-amber-100 dark:bg-amber-900/40'
                                                                 }`}
                                                                 style={{
                                                                     width: `${80 * (cardScale / 100)}px`,
@@ -156,7 +185,7 @@ const HomeContent = ({
                                                             >
                                                                 <ArrowUp 
                                                                     className={`transition-colors ${
-                                                                        isPromoteZoneHovered && draggedItem
+                                                                        isPromoteZoneHovered
                                                                             ? 'text-amber-700 dark:text-amber-300'
                                                                             : 'text-amber-600 dark:text-amber-400'
                                                                     }`}
@@ -165,20 +194,17 @@ const HomeContent = ({
                                                             </div>
                                                             <span 
                                                                 className={`font-semibold transition-colors px-4 text-center ${
-                                                                    isPromoteZoneHovered && draggedItem
+                                                                    isPromoteZoneHovered
                                                                         ? 'text-amber-700 dark:text-amber-300'
-                                                                        : 'text-gray-700 dark:text-gray-300 group-hover:text-amber-600 dark:group-hover:text-amber-400'
+                                                                        : 'text-amber-600 dark:text-amber-400'
                                                                 }`}
                                                                 style={{ fontSize: `${18 * (cardScale / 100)}px` }}
                                                             >
-                                                                {isPromoteZoneHovered && draggedItem
-                                                                    ? `Mover a nivel superior`
-                                                                    : 'Arrastra aquí para subir nivel'
-                                                                }
+                                                                Suelta para subir nivel
                                                             </span>
                                                         </div>
                                                     ) : (
-                                                        /* Create button when at root */
+                                                        /* Create Subject button - always visible when not dragging */
                                                         <button 
                                                             onClick={() => setSubjectModalConfig({ 
                                                                 isOpen: true, 
@@ -207,7 +233,7 @@ const HomeContent = ({
                                                                 className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors px-4 text-center"
                                                                 style={{ fontSize: `${18 * (cardScale / 100)}px` }}
                                                             >
-                                                                Crear Nueva Asignatura
+                                                                {currentFolder ? 'Crear Asignatura Aquí' : 'Crear Nueva Asignatura'}
                                                             </span>
                                                         </button>
                                                     )}
@@ -216,60 +242,105 @@ const HomeContent = ({
 
                                             {/* Folders (Manual mode) - DRAGGABLE */}
                                             {viewMode === 'grid' && orderedFolders.map((folder, index) => (
-                                                <div key={`folder-${folder.id}`}>
-                                                    <FolderCard
-                                                        folder={folder}
-                                                        onOpen={handleOpenFolder}
-                                                        activeMenu={activeMenu}
-                                                        onToggleMenu={setActiveMenu}
-                                                        onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
-                                                        onDelete={(f) => setDeleteConfig({ isOpen: true, type: 'folder', item: f })}
-                                                        onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
-                                                        cardScale={cardScale}
-                                                        onDrop={handleDropOnFolder}
-                                                        canDrop={isDragAndDropEnabled && (draggedItemType === 'subject' || draggedItemType === 'folder')}
-                                                        draggable={isDragAndDropEnabled}
-                                                        onDragStart={handleDragStartFolder}
-                                                        onDragEnd={handleDragEnd}
-                                                        onDragOver={handleDragOverFolder}
-                                                        onDropReorder={handleDropReorderFolder}
-                                                        position={index}
-                                                        isDragging={draggedItem?.id === folder.id}
-                                                    />
-                                                </div>
+                                                <React.Fragment key={`folder-${folder.id}`}>
+                                                    {/* Drop indicator before folder */}
+                                                    {dropIndicator?.type === 'folder' && dropIndicator.position === index && (
+                                                        <div 
+                                                            className="w-full border-4 border-dashed border-indigo-500 dark:border-indigo-400 rounded-2xl bg-indigo-50/50 dark:bg-indigo-900/20 animate-pulse"
+                                                            style={{ aspectRatio: '16 / 10' }}
+                                                        />
+                                                    )}
+                                                    
+                                                    <div
+                                                        onDragOver={(e) => handleEnhancedDragOverFolder(e, index)}
+                                                        onDragLeave={handleEnhancedDragLeave}
+                                                        onDrop={(e) => handleEnhancedDrop(e, index, true)}
+                                                    >
+                                                        <FolderCard
+                                                            folder={folder}
+                                                            onOpen={handleOpenFolder}
+                                                            activeMenu={activeMenu}
+                                                            onToggleMenu={setActiveMenu}
+                                                            onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
+                                                            onDelete={(f) => setDeleteConfig({ isOpen: true, type: 'folder', item: f })}
+                                                            onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
+                                                            cardScale={cardScale}
+                                                            onDrop={handleDropOnFolder}
+                                                            canDrop={isDragAndDropEnabled && (draggedItemType === 'subject' || draggedItemType === 'folder')}
+                                                            draggable={isDragAndDropEnabled}
+                                                            onDragStart={handleDragStartFolder}
+                                                            onDragEnd={handleDragEnd}
+                                                            position={index}
+                                                            isDragging={draggedItem?.id === folder.id}
+                                                        />
+                                                    </div>
+                                                    
+                                                    {/* Drop indicator after last folder */}
+                                                    {dropIndicator?.type === 'folder' && dropIndicator.position === orderedFolders.length && index === orderedFolders.length - 1 && (
+                                                        <div 
+                                                            className="w-full border-4 border-dashed border-indigo-500 dark:border-indigo-400 rounded-2xl bg-indigo-50/50 dark:bg-indigo-900/20 animate-pulse"
+                                                            style={{ aspectRatio: '16 / 10' }}
+                                                            onDragOver={(e) => handleEnhancedDragOverFolder(e, orderedFolders.length)}
+                                                            onDragLeave={handleEnhancedDragLeave}
+                                                            onDrop={(e) => handleEnhancedDrop(e, orderedFolders.length, true)}
+                                                        />
+                                                    )}
+                                                </React.Fragment>
                                             ))}
 
                                             {/* Subject Cards - DRAGGABLE */}
                                             {groupSubjects.map((subject, index) => (
-                                                <div key={`${groupName}-${subject.id}`}>
-                                                    <SubjectCard
-                                                        subject={subject}
-                                                        isFlipped={flippedSubjectId === subject.id}
-                                                        onFlip={(id) => setFlippedSubjectId(flippedSubjectId === id ? null : id)}
-                                                        activeMenu={activeMenu}
-                                                        onToggleMenu={setActiveMenu}
-                                                        onSelect={handleSelectSubject}
-                                                        onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
-                                                        onEdit={(e, s) => { 
-                                                            e.stopPropagation(); 
-                                                            setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); 
-                                                            setActiveMenu(null); 
-                                                        }}
-                                                        onDelete={(e, s) => { 
-                                                            e.stopPropagation(); 
-                                                            setDeleteConfig({ isOpen: true, type: 'subject', item: s }); 
-                                                            setActiveMenu(null); 
-                                                        }}
-                                                        cardScale={cardScale}
-                                                        isDragging={draggedItem?.id === subject.id}
-                                                        onDragStart={handleDragStartSubject}
-                                                        onDragEnd={handleDragEnd}
-                                                        onDragOver={handleDragOverSubject}
-                                                        onDrop={handleDropReorderSubject}
-                                                        draggable={isDragAndDropEnabled}
-                                                        position={index}
-                                                    />
-                                                </div>
+                                                <React.Fragment key={`${groupName}-${subject.id}`}>
+                                                    {/* Drop indicator before subject */}
+                                                    {dropIndicator?.type === 'subject' && dropIndicator.position === index && (
+                                                        <div 
+                                                            className="w-full border-4 border-dashed border-indigo-500 dark:border-indigo-400 rounded-2xl bg-indigo-50/50 dark:bg-indigo-900/20 animate-pulse"
+                                                            style={{ aspectRatio: '16 / 10' }}
+                                                        />
+                                                    )}
+                                                    
+                                                    <div
+                                                        onDragOver={(e) => handleEnhancedDragOverSubject(e, index)}
+                                                        onDragLeave={handleEnhancedDragLeave}
+                                                        onDrop={(e) => handleEnhancedDrop(e, index, false)}
+                                                    >
+                                                        <SubjectCard
+                                                            subject={subject}
+                                                            isFlipped={flippedSubjectId === subject.id}
+                                                            onFlip={(id) => setFlippedSubjectId(flippedSubjectId === id ? null : id)}
+                                                            activeMenu={activeMenu}
+                                                            onToggleMenu={setActiveMenu}
+                                                            onSelect={handleSelectSubject}
+                                                            onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
+                                                            onEdit={(e, s) => { 
+                                                                e.stopPropagation(); 
+                                                                setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); 
+                                                                setActiveMenu(null); 
+                                                            }}
+                                                            onDelete={(e, s) => { 
+                                                                e.stopPropagation(); 
+                                                                setDeleteConfig({ isOpen: true, type: 'subject', item: s }); 
+                                                                setActiveMenu(null); 
+                                                            }}
+                                                            cardScale={cardScale}
+                                                            isDragging={draggedItem?.id === subject.id}
+                                                            onDragStart={handleDragStartSubject}
+                                                            onDragEnd={handleDragEnd}
+                                                            position={index}
+                                                        />
+                                                    </div>
+                                                    
+                                                    {/* Drop indicator after last subject */}
+                                                    {dropIndicator?.type === 'subject' && dropIndicator.position === groupSubjects.length && index === groupSubjects.length - 1 && (
+                                                        <div 
+                                                            className="w-full border-4 border-dashed border-indigo-500 dark:border-indigo-400 rounded-2xl bg-indigo-50/50 dark:bg-indigo-900/20 animate-pulse"
+                                                            style={{ aspectRatio: '16 / 10' }}
+                                                            onDragOver={(e) => handleEnhancedDragOverSubject(e, groupSubjects.length)}
+                                                            onDragLeave={handleEnhancedDragLeave}
+                                                            onDrop={(e) => handleEnhancedDrop(e, groupSubjects.length, false)}
+                                                        />
+                                                    )}
+                                                </React.Fragment>
                                             ))}
                                         </div>
                                     </div>

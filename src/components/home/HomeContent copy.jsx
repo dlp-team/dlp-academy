@@ -127,7 +127,7 @@ const HomeContent = ({
                                             {/* Create Button or Promote Zone */}
                                             {viewMode === 'grid' && (
                                                 <div>
-                                                    {currentFolder && draggedItem && (draggedItemType === 'subject' || draggedItemType === 'folder') ? (
+                                                    {currentFolder ? (
                                                         /* Promote Zone when inside a folder */
                                                         <div
                                                             onDragOver={handlePromoteZoneDragOver}
@@ -180,11 +180,7 @@ const HomeContent = ({
                                                     ) : (
                                                         /* Create button when at root */
                                                         <button 
-                                                            onClick={() => setSubjectModalConfig({ 
-                                                                isOpen: true, 
-                                                                isEditing: false, 
-                                                                data: currentFolder ? { folderId: currentFolder.id } : null 
-                                                            })} 
+                                                            onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null })} 
                                                             className="group relative w-full border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center cursor-pointer"
                                                             style={{ 
                                                                 aspectRatio: '16 / 10',
