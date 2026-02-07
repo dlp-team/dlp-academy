@@ -11,8 +11,8 @@ const FolderCardTab = ({ isModern, gradientClass, scaleMultiplier }) => {
             }`}
             style={{ 
                 width: '40%',
-                height: `${12 * scaleMultiplier}px`,
-                clipPath: 'polygon(0 0, 100% 0, 100% 102%, 0% 120%)',
+                height: `${21 * scaleMultiplier}px`,
+                clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0% 100%)',
             }}
         >
             {/* Inner shadow for depth */}

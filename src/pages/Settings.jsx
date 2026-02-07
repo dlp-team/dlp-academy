@@ -3,10 +3,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 import { db } from '../firebase/config';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, onSnapshot } from 'firebase/firestore'; // <--- Import onSnapshot
 
-// --- IMPORTS FOR THE NEW SECTIONS ---
-// Make sure these paths match where you saved the files above!
+// --- IMPORTS FOR THE SECTIONS ---
 import AppearanceSection from '../components/settings/AppearanceSection';
 import OrganizationSection from '../components/settings/OrganizationSection';
 import NotificationSection from '../components/settings/NotificationSection';
@@ -29,82 +28,70 @@ const Settings = ({ user }) => {
     }
   });
 
-  // 1. Fetch current settings
+  // 1. LISTEN to Firestore in Real-Time (Replaces the old getDoc)
   useEffect(() => {
-    const fetchSettings = async () => {
-      if (!user) return;
-      try {
-        const userRef = doc(db, "users", user.uid);
-        const snapshot = await getDoc(userRef);
+    if (!user) return;
+
+    const userRef = doc(db, "users", user.uid);
+
+    // This listener triggers every time the document changes in the DB
+    const unsubscribe = onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
         
-        if (snapshot.exists()) {
-          const userData = snapshot.data();
-          if (userData.settings) {
-            setSettings(prev => ({
-              ...prev,
-              ...userData.settings,
-              notifications: { ...prev.notifications, ...userData.settings.notifications }
-            }));
+        // Update local state with DB data, keeping defaults if fields are missing
+        setSettings(prev => ({
+          ...prev,
+          theme: data.theme || 'system',
+          language: data.language || 'es',
+          viewMode: data.viewMode || 'grid',
+          rememberSort: data.rememberSort !== undefined ? data.rememberSort : true,
+          notifications: {
+            ...prev.notifications,
+            ...(data.notifications || {})
           }
-        }
-      } catch (error) {
-        console.error("Error fetching settings:", error);
-      } finally {
-        setLoading(false);
+        }));
       }
-    };
-
-    fetchSettings();
-  }, [user]);
-
-  // 2. Logic to change DOM classes
-  const applyThemeToDom = (theme) => {
-    const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-
-    if (theme === 'system') {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        root.classList.add(systemTheme);
-    } else {
-        root.classList.add(theme);
-    }
-  };
-
-  // 3. Central Update Handler
-  const updateSetting = async (path, value) => {
-    // A. Optimistic Update
-    setSettings(prev => {
-      const deepClone = JSON.parse(JSON.stringify(prev));
-      const keys = path.split('.');
-      let current = deepClone;
-      for (let i = 0; i < keys.length - 1; i++) {
-        current = current[keys[i]];
-      }
-      current[keys[keys.length - 1]] = value;
-      return deepClone;
+      setLoading(false);
+    }, (error) => {
+      console.error("Error listening to settings:", error);
+      setLoading(false);
     });
 
-    // B. Apply Theme immediately
-    if (path === 'theme') {
-        applyThemeToDom(value);
+    // Clean up the listener when the component unmounts
+    return () => unsubscribe();
+  }, [user]);
+
+  // 2. Update Function (Writes to Firestore)
+  const updateSetting = async (key, value) => {
+    // Optimistic UI update (feels instant)
+    if (key.includes('.')) {
+      const [parent, child] = key.split('.');
+      setSettings(prev => ({
+        ...prev,
+        [parent]: { ...prev[parent], [child]: value }
+      }));
+    } else {
+      setSettings(prev => ({ ...prev, [key]: value }));
     }
 
+    // Write to DB
     setSavingStatus('saving');
-
-    // C. Save to DB
     try {
       const userRef = doc(db, "users", user.uid);
-      const firestoreKey = `settings.${path}`;
-
-      await updateDoc(userRef, {
-        [firestoreKey]: value
-      });
-
+      
+      // Handle nested updates (like notifications.email)
+      const updateData = {};
+      updateData[key] = value;
+      
+      await updateDoc(userRef, updateData);
       setSavingStatus('success');
+      
+      // Reset success message after 2 seconds
       setTimeout(() => setSavingStatus('idle'), 2000);
-
+      
     } catch (error) {
-      console.error("Error saving setting:", error);
+      console.error("Error updating setting:", error);
       setSavingStatus('error');
     }
   };
@@ -112,20 +99,20 @@ const Settings = ({ user }) => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <Loader2 className="w-8 h-8 text-indigo-600 dark:text-indigo-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-12 transition-colors duration-300">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
       
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 border-b dark:border-slate-800 sticky top-0 z-30 px-6 py-4 flex items-center justify-between transition-colors duration-300">
+      <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between sticky top-0 z-10 transition-colors duration-300">
         <div className="flex items-center gap-4">
           <button 
             onClick={() => navigate(-1)}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400 transition-colors"
+            className="p-2 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-full text-slate-600 dark:text-slate-400 transition-colors"
           >
             <ArrowLeft size={20} />
           </button>
@@ -139,8 +126,10 @@ const Settings = ({ user }) => {
         </div>
       </div>
 
+      {/* Main Content */}
       <main className="max-w-2xl mx-auto px-6 py-8 space-y-8">
         
+        {/* Appearance Section now receives the LIVE theme from Firestore */}
         <AppearanceSection 
             theme={settings.theme} 
             onUpdate={updateSetting} 
@@ -161,7 +150,7 @@ const Settings = ({ user }) => {
             language={settings.language}
             onUpdate={updateSetting}
         />
-
+        
       </main>
     </div>
   );

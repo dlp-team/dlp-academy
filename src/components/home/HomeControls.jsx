@@ -1,7 +1,7 @@
 // src/components/home/HomeControls.jsx
 import React from 'react';
 import { 
-    LayoutGrid, Clock, Folder as FolderIcon, Tag, Users, FolderPlus 
+    LayoutGrid, Clock, Folder as FolderIcon, Users, FolderPlus 
 } from 'lucide-react';
 import ViewLayoutSelector from './ViewLayoutSelector';
 import CardScaleSlider from './CardScaleSlider';
@@ -19,8 +19,40 @@ const HomeControls = ({
     setCurrentFolder,
     isDragAndDropEnabled,
     draggedItem,
-    draggedItemType
+    draggedItemType,
+    onPreferenceChange
 }) => {
+    const handleViewModeChange = (mode) => {
+        setViewMode(mode);
+        setSelectedTags([]);
+        setCollapsedGroups({});
+        setCurrentFolder(null);
+        if (onPreferenceChange) {
+            onPreferenceChange('viewMode', mode);
+        }
+    };
+
+    const handleLayoutModeChange = (mode) => {
+        setLayoutMode(mode);
+        if (onPreferenceChange) {
+            onPreferenceChange('layoutMode', mode);
+        }
+    };
+
+    const handleCardScaleChange = (scale) => {
+        setCardScale(scale);
+        if (onPreferenceChange) {
+            onPreferenceChange('cardScale', scale);
+        }
+    };
+
+    const handleTagsChange = (tags) => {
+        setSelectedTags(tags);
+        if (onPreferenceChange) {
+            onPreferenceChange('selectedTags', tags);
+        }
+    };
+
     return (
         <div className="mb-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
@@ -29,23 +61,17 @@ const HomeControls = ({
                     <p className="text-gray-600 dark:text-gray-400">Gestiona tu contenido educativo</p>
                 </div>
                 
-                {/* View Mode Switcher */}
+                {/* View Mode Switcher - Removed "Etiquetas" tab */}
                 <div className="bg-white dark:bg-slate-900 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 inline-flex transition-colors">
                     {[
                         { id: 'grid', icon: LayoutGrid, label: 'Manual' },
                         { id: 'usage', icon: Clock, label: 'Uso' },
                         { id: 'courses', icon: FolderIcon, label: 'Cursos' },
-                        { id: 'tags', icon: Tag, label: 'Etiquetas' },
                         { id: 'shared', icon: Users, label: 'Compartido' }
                     ].map(mode => (
                         <button 
                             key={mode.id}
-                            onClick={() => {
-                                setViewMode(mode.id);
-                                setSelectedTags([]);
-                                setCollapsedGroups({});
-                                setCurrentFolder(null);
-                            }}
+                            onClick={() => handleViewModeChange(mode.id)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
                                 viewMode === mode.id 
                                     ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' 
@@ -65,7 +91,7 @@ const HomeControls = ({
                 {viewMode !== 'shared' && (
                     <ViewLayoutSelector 
                         layoutMode={layoutMode} 
-                        setLayoutMode={setLayoutMode}
+                        setLayoutMode={handleLayoutModeChange}
                         viewMode={viewMode}
                     />
                 )}
@@ -73,15 +99,15 @@ const HomeControls = ({
                 {/* Card Scale Slider */}
                 <CardScaleSlider 
                     cardScale={cardScale} 
-                    setCardScale={setCardScale}
+                    setCardScale={handleCardScaleChange}
                 />
 
-                {/* Tag Filter (only in tags mode) */}
-                {viewMode === 'tags' && allTags.length > 0 && (
+                {/* Tag Filter - Now available in Manual (grid) mode */}
+                {viewMode === 'grid' && allTags.length > 0 && (
                     <TagFilter 
                         allTags={allTags}
                         selectedTags={selectedTags}
-                        setSelectedTags={setSelectedTags}
+                        setSelectedTags={handleTagsChange}
                     />
                 )}
 

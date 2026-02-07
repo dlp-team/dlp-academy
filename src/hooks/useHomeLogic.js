@@ -1,8 +1,9 @@
 // src/hooks/useHomeLogic.js
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSubjects } from './useSubjects'; // Assumed path based on context
-import { useFolders } from './useFolders';   // Assumed path based on context
+import { useSubjects } from './useSubjects';
+import { useFolders } from './useFolders';
+import { useUserPreferences } from './useUserPreferences';
 
 export const useHomeLogic = (user) => {
     const navigate = useNavigate();
@@ -18,15 +19,20 @@ export const useHomeLogic = (user) => {
         shareFolder,
         addSubjectToFolder
     } = useFolders(user);
+    const { 
+        preferences, 
+        loading: loadingPreferences, 
+        updatePreference 
+    } = useUserPreferences(user, 'home');
 
     // UI State
-    const [viewMode, setViewMode] = useState('grid'); // grid, usage, courses, tags, shared
-    const [layoutMode, setLayoutMode] = useState('grid'); // grid, list, folders
-    const [cardScale, setCardScale] = useState(125); // 75, 100, 125 (125 is default/original)
+    const [viewMode, setViewMode] = useState(preferences?.viewMode || 'grid');
+    const [layoutMode, setLayoutMode] = useState(preferences?.layoutMode || 'grid');
+    const [cardScale, setCardScale] = useState(preferences?.cardScale || 100); // Default to M (100%)
+    const [selectedTags, setSelectedTags] = useState(preferences?.selectedTags || []);
     const [flippedSubjectId, setFlippedSubjectId] = useState(null); 
     const [activeMenu, setActiveMenu] = useState(null);
     const [collapsedGroups, setCollapsedGroups] = useState({});
-    const [selectedTags, setSelectedTags] = useState([]);
     const [currentFolder, setCurrentFolder] = useState(null); // For navigation
     
     // Drag and Drop State
@@ -52,15 +58,16 @@ export const useHomeLogic = (user) => {
 
     
     // --- FOLDER HELPERS ---
-    const getUnfolderedSubjects = () => {
+    // Allow optional subjectsList to enable applying tag filters when needed
+    const getUnfolderedSubjects = (subjectsList = subjects) => {
         const allFolderSubjectIds = new Set(folders.flatMap(f => f.subjectIds || []));
-        return subjects.filter(s => !allFolderSubjectIds.has(s.id));
+        return subjectsList.filter(s => !allFolderSubjectIds.has(s.id));
     };
 
-    const getSubjectsInFolder = (folderId) => {
+    const getSubjectsInFolder = (folderId, subjectsList = subjects) => {
         const folder = folders.find(f => f.id === folderId);
         if (!folder || !folder.subjectIds) return [];
-        return subjects.filter(s => folder.subjectIds.includes(s.id));
+        return subjectsList.filter(s => folder.subjectIds.includes(s.id));
     };
 
     // --- SHARED CONTENT ---
@@ -102,7 +109,7 @@ export const useHomeLogic = (user) => {
     const groupedContent = useMemo(() => {
         // In Manual mode with a folder open
         if (viewMode === 'grid' && currentFolder) {
-            const folderSubjects = getSubjectsInFolder(currentFolder.id);
+            const folderSubjects = getSubjectsInFolder(currentFolder.id, selectedTags.length > 0 ? filteredSubjectsByTags : subjects);
             return { 
                 [currentFolder.name]: applyManualOrder(folderSubjects, 'subject')
             };
@@ -110,7 +117,7 @@ export const useHomeLogic = (user) => {
 
         // In Manual mode at root
         if (viewMode === 'grid' && !currentFolder) {
-            const unfolderedSubjects = getUnfolderedSubjects();
+            const unfolderedSubjects = getUnfolderedSubjects(selectedTags.length > 0 ? filteredSubjectsByTags : subjects);
             return { 
                 'Todas': applyManualOrder(unfolderedSubjects, 'subject')
             };
@@ -121,7 +128,7 @@ export const useHomeLogic = (user) => {
             return {};
         }
 
-        const subjectsToGroup = viewMode === 'tags' ? filteredSubjectsByTags : subjects;
+        const subjectsToGroup = (selectedTags.length > 0 || viewMode === 'tags') ? filteredSubjectsByTags : subjects;
         
         if (viewMode === 'usage') {
             const sorted = [...subjectsToGroup].sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
@@ -162,8 +169,18 @@ export const useHomeLogic = (user) => {
     // Get ordered folders for manual mode
     const orderedFolders = useMemo(() => {
         if (viewMode !== 'grid' || currentFolder) return [];
-        return applyManualOrder(folders.filter(f => f.isOwner), 'folder');
-    }, [folders, viewMode, currentFolder, manualOrder]);
+
+        let ownerFolders = folders.filter(f => f.isOwner);
+
+        // If tags are selected, only include folders that contain at least
+        // one subject matching the selected tags
+        if (selectedTags.length > 0) {
+            const matchingIds = new Set(filteredSubjectsByTags.map(s => s.id));
+            ownerFolders = ownerFolders.filter(f => (f.subjectIds || []).some(id => matchingIds.has(id)));
+        }
+
+        return applyManualOrder(ownerFolders, 'folder');
+    }, [folders, viewMode, currentFolder, manualOrder, selectedTags, filteredSubjectsByTags]);
 
 
     // --- HANDLERS ---
@@ -321,6 +338,11 @@ export const useHomeLogic = (user) => {
         handleDragEnd();
     };
 
+    const handlePreferenceChange = (key, value) => {
+        // updatePreference is now synchronous with debounced Firestore save
+        updatePreference(key, value);
+    };
+
     // Close menus on outside click
     useEffect(() => {
         const closeMenu = () => setActiveMenu(null);
@@ -335,8 +357,19 @@ export const useHomeLogic = (user) => {
         return Array.from(tagSet).sort();
     }, [subjects]);
 
+    useEffect(() => {
+        if (preferences && !loadingPreferences) {
+            setViewMode(preferences.viewMode || 'grid');
+            setLayoutMode(preferences.layoutMode || 'grid');
+            setCardScale(preferences.cardScale || 100);
+            setSelectedTags(preferences.selectedTags || []);
+        }
+    }, [preferences, loadingPreferences]);
+
     // Check if drag and drop is enabled (only in manual mode with grid layout)
     const isDragAndDropEnabled = viewMode === 'grid' && layoutMode === 'grid';
+
+
 
     return {
         // Data
@@ -362,6 +395,7 @@ export const useHomeLogic = (user) => {
         draggedItem,
         draggedItemType,
         isDragAndDropEnabled,
+        loadingPreferences,
         
         // Modals State
         subjectModalConfig, setSubjectModalConfig,
@@ -386,6 +420,7 @@ export const useHomeLogic = (user) => {
         handleDropOnFolder,
         handleDropReorderSubject,
         handleDropReorderFolder,
+        handlePreferenceChange,
         
         navigate
     };

@@ -55,6 +55,7 @@ const Home = ({ user }) => {
                     isDragAndDropEnabled={logic.isDragAndDropEnabled}
                     draggedItem={logic.draggedItem}
                     draggedItemType={logic.draggedItemType}
+                    onPreferenceChange={logic.handlePreferenceChange}
                 />
 
                 {/* Breadcrumb Navigation */}
