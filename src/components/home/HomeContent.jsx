@@ -3,10 +3,10 @@ import React from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag
 } from 'lucide-react';
-import SubjectIcon from '../../components/modals/SubjectIcon'; // Adjust path
-import SubjectCard from '../../components/home/SubjectCard';   // Adjust path
-import FolderCard from '../../components/home/FolderCard';     // Adjust path
-import SubjectListItem from '../../components/home/SubjectListItem'; // Adjust path
+import SubjectIcon from '..//modals/SubjectIcon'; // Adjust path
+import SubjectCard from '..//home/SubjectCard';   // Adjust path
+import FolderCard from '..//home/FolderCard';     // Adjust path
+import SubjectListItem from '..//home/SubjectListItem'; // Adjust path
 
 const HomeContent = ({
     viewMode,
