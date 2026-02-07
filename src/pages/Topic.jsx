@@ -12,6 +12,28 @@ import { db } from '../firebase/config';
 import Header from '../components/layout/Header';
 import QuizModal from './QuizzModal';
 
+// --- COMPONENTE DE NOTIFICACIÓN (TOAST) ---
+const AppToast = ({ show, message, onClose }) => {
+    if (!show) return null;
+    return (
+        <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300 w-full max-w-sm px-4">
+            <div className="bg-slate-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10">
+                {/* Logo de la App Integrado */}
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/20 shrink-0">
+                    <Brain className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                    <h4 className="font-bold text-sm tracking-tight">IA Trabajando</h4>
+                    <p className="text-xs text-slate-300 font-medium mt-0.5">{message}</p>
+                </div>
+                <button onClick={onClose} className="p-1 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white">
+                    <X className="w-4 h-4" />
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const Topic = ({ user }) => {
     const navigate = useNavigate();
     const { subjectId, topicId } = useParams();
@@ -25,6 +47,9 @@ const Topic = ({ user }) => {
     // Estados de UI
     const [uploading, setUploading] = useState(false);
     const [activeTab, setActiveTab] = useState('materials');
+    
+    // Notificaciones
+    const [toast, setToast] = useState({ show: false, message: '' });
     
     // Menús y Edición
     const [showMenu, setShowMenu] = useState(false);
@@ -47,6 +72,12 @@ const Topic = ({ user }) => {
         prompt: '' 
     });
 
+    // Función auxiliar para mostrar notificaciones
+    const showNotification = (msg) => {
+        setToast({ show: true, message: msg });
+        setTimeout(() => setToast({ show: false, message: '' }), 4000); // Se oculta en 4s
+    };
+
     // --- CARGA DE DATOS ---
     useEffect(() => {
         let unsubscribeTopic = () => {};
@@ -66,8 +97,6 @@ const Topic = ({ user }) => {
                 unsubscribeTopic = onSnapshot(topicRef, (topicDoc) => {
                     if (topicDoc.exists()) {
                         const topicData = { id: topicDoc.id, ...topicDoc.data() };
-                        
-                        // Inicializamos con arrays vacíos para evitar errores si no existen campos
                         setTopic(prev => ({ 
                             ...prev, 
                             ...topicData,
@@ -181,7 +210,7 @@ const Topic = ({ user }) => {
         } catch (error) { console.error(error); alert("Error al eliminar."); }
     };
 
-    // --- NUEVO: ELIMINAR QUIZ ---
+    // --- ELIMINAR QUIZ ---
     const deleteQuiz = async (quizId) => {
         if (!window.confirm("¿Eliminar este test permanentemente?")) return;
         try {
@@ -234,7 +263,7 @@ const Topic = ({ user }) => {
         } catch (error) { alert("Error al subir."); } finally { setUploading(false); }
     };
 
-    // --- IA GENERATION ---
+    // --- IA GENERATION (MODIFICADO) ---
     const handleGenerateQuizSubmit = async (e) => {
         e.preventDefault();
         setIsGeneratingQuiz(true);
@@ -251,13 +280,25 @@ const Topic = ({ user }) => {
             formData.append('topicTitle', topic?.title);
             if (quizFormData.file) formData.append('files', quizFormData.file); 
 
+            // Enviamos petición (SIN esperar respuesta larga si es asíncrono, o esperando el OK de recepción)
             const res = await fetch('https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook/711e538b-9d63-42bb-8494-873301ffdf39', {
                 method: 'POST', body: formData 
             });
+            
             if (!res.ok) throw new Error("Error servidor");
+            
+            // 1. CERRAR MODAL INMEDIATAMENTE
             setShowQuizModal(false);
-            alert("✅ Solicitud enviada a la IA.");
-        } catch (error) { console.error(error); alert("Error de conexión"); } finally { setIsGeneratingQuiz(false); }
+            
+            // 2. MOSTRAR NOTIFICACIÓN TIPO APP (Toast)
+            showNotification("Generando test... te avisaremos cuando esté listo.");
+
+        } catch (error) { 
+            console.error(error); 
+            alert("Error de conexión con la IA"); 
+        } finally { 
+            setIsGeneratingQuiz(false); 
+        }
     };
 
     const handleCreateCustomPDF = () => { alert("✨ Crear nuevo PDF personalizado"); };
@@ -267,11 +308,10 @@ const Topic = ({ user }) => {
     };
 
     const handleSimulateAI = async () => {
-        // ... (Simulación existente)
         alert("Simulación desactivada para producción"); 
     };
 
-    // --- RENDER FILE CARD (MATERIALES) ---
+    // --- RENDER FILE CARD ---
     const renderFileCard = (file, idx) => {
         const { icon: Icon, label } = getFileVisuals(file.type);
         const isRenaming = renamingId === file.id;
@@ -283,8 +323,6 @@ const Topic = ({ user }) => {
                 {file.origin === 'AI' && (
                     <div className={`absolute inset-0 bg-gradient-to-br ${cardColor} opacity-90 transition-opacity group-hover:opacity-100`}></div>
                 )}
-                
-                {/* LOGO DE FONDO */}
                 <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
                     {file.origin === 'AI' ? (
                         <Icon className="w-32 h-32 text-white absolute -top-6 -left-6 opacity-20 rotate-12 group-hover:rotate-0 transition-transform duration-500" />
@@ -292,14 +330,11 @@ const Topic = ({ user }) => {
                         <FileText className="w-32 h-32 text-slate-100 absolute -bottom-4 -right-4 rotate-12" />
                     )}
                 </div>
-
-                {/* ICONO PEQUEÑO */}
                 <div className="absolute top-6 left-6 z-20">
                     <div className={`p-2.5 rounded-xl border shadow-sm backdrop-blur-md ${file.origin === 'AI' ? 'bg-white/20 border-white/20' : 'bg-indigo-50 border-indigo-100'}`}>
                         {file.origin === 'AI' ? <Icon className="w-6 h-6 text-white" /> : <FileText className="w-6 h-6 text-indigo-600" />}
                     </div>
                 </div>
-
                 <div className="absolute top-4 right-4 z-30">
                     <button onClick={(e) => handleMenuClick(e, file.id)} className={`p-1.5 rounded-full transition-colors ${file.origin === 'AI' ? 'text-white hover:bg-white/20' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'}`}>
                         <MoreHorizontal className="w-6 h-6" />
@@ -344,6 +379,9 @@ const Topic = ({ user }) => {
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
             <Header user={user} />
+
+            {/* NOTIFICACIÓN FLOTANTE */}
+            <AppToast show={toast.show} message={toast.message} onClose={() => setToast({ show: false, message: '' })} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -445,7 +483,7 @@ const Topic = ({ user }) => {
                         </div>
                     )}
 
-                    {/* CONTENIDO QUIZZES (CON MENÚ DE EDICIÓN AÑADIDO) */}
+                    {/* CONTENIDO QUIZZES (CON MENÚ) */}
                     {activeTab === 'quizzes' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {topic.quizzes?.map((quiz, idx) => {
@@ -456,24 +494,18 @@ const Topic = ({ user }) => {
                                     <div key={idx} className="group relative h-64 rounded-3xl shadow-lg shadow-slate-200/50 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl cursor-default bg-white border border-slate-100">
                                         <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-90 transition-opacity group-hover:opacity-100`}></div>
                                         
-                                        {/* LOGO GRANDE FONDO */}
                                         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
                                             <Icon className="w-48 h-48 text-white absolute -top-8 -left-8 opacity-20 rotate-12 group-hover:rotate-0 transition-transform duration-700" />
                                         </div>
 
-                                        {/* Icono pequeño */}
                                         <div className="absolute top-6 left-6 z-20">
                                             <div className="p-2.5 rounded-xl border shadow-sm backdrop-blur-md bg-white/20 border-white/20">
                                                 <Icon className="w-6 h-6 text-white" />
                                             </div>
                                         </div>
 
-                                        {/* --- BOTÓN DE MENÚ (3 PUNTITOS) --- */}
                                         <div className="absolute top-4 right-4 z-30">
-                                            <button 
-                                                onClick={(e) => handleMenuClick(e, quiz.id)} 
-                                                className="p-1.5 rounded-full transition-colors text-white hover:bg-white/20"
-                                            >
+                                            <button onClick={(e) => handleMenuClick(e, quiz.id)} className="p-1.5 rounded-full transition-colors text-white hover:bg-white/20">
                                                 <MoreHorizontal className="w-6 h-6" />
                                             </button>
                                             

@@ -7,7 +7,9 @@ import {
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
-// Se eliminó la importación del Header
+// 1. IMPORTAR TU MAPA DE ICONOS
+import { ICON_MAP } from '../utils/subjectConstants'; 
+
 import 'katex/dist/katex.min.css';
 import { BlockMath, InlineMath } from 'react-katex';
 
@@ -79,7 +81,7 @@ const Quizzes = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [viewState, setViewState] = useState('loading'); 
     const [quizData, setQuizData] = useState(null);
-    const [subjectIcon, setSubjectIcon] = useState(null); // Nuevo estado para el icono
+    const [subjectIconKey, setSubjectIconKey] = useState(null); // Guardamos la CLAVE del icono (ej: "calculator")
     
     // ESTADOS DE COLOR (HEX y GRADIENT)
     const [accentColor, setAccentColor] = useState('#4f46e5');
@@ -105,8 +107,8 @@ const Quizzes = ({ user }) => {
                 const subjectSnap = await getDoc(subjectRef);
                 if (subjectSnap.exists()) {
                     const sData = subjectSnap.data();
-                    // Guardamos el icono (emoji) o la primera letra del nombre
-                    setSubjectIcon(sData.icon || sData.name?.charAt(0) || "📚");
+                    // Guardamos la clave del icono o la primera letra
+                    setSubjectIconKey(sData.icon || sData.name?.charAt(0) || "📚");
                 }
 
                 // 2. Obtener Datos del TEMA para el COLOR
@@ -219,7 +221,6 @@ const Quizzes = ({ user }) => {
 
     if (loading) return (
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
-            {/* Header eliminado aquí también */}
             <RefreshCcw className="w-10 h-10 text-slate-300 animate-spin mb-4" />
             <p className="text-slate-500 text-sm font-medium">Cargando...</p>
         </div>
@@ -229,8 +230,7 @@ const Quizzes = ({ user }) => {
 
     return (
         <div className="min-h-screen bg-slate-100 font-sans text-slate-900">
-            {/* Header eliminado */}
-
+            
             {/* 1. VISTA DE REPASO */}
             {viewState === 'review' && (
                 <div className="min-h-screen bg-gradient-to-b from-slate-100 to-white pb-20">
@@ -247,9 +247,20 @@ const Quizzes = ({ user }) => {
                     <div className="max-w-2xl mx-auto px-4 py-8">
                         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 text-center mb-8">
                             
-                            {/* --- ICONO DE ASIGNATURA --- */}
-                            <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg shadow-slate-100 bg-gradient-to-br ${topicGradient} text-white font-bold text-3xl`}>
-                                {subjectIcon}
+                            {/* --- ICONO DE ASIGNATURA CORREGIDO --- */}
+                            <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg shadow-slate-100 bg-gradient-to-br ${topicGradient} text-white`}>
+                                {(() => {
+                                    // Buscamos el componente real en tu MAPA
+                                    const SubjectIconComponent = ICON_MAP[subjectIconKey];
+                                    
+                                    // Si existe, lo pintamos
+                                    if (SubjectIconComponent) {
+                                        return <SubjectIconComponent className="w-8 h-8" />;
+                                    }
+                                    
+                                    // Si no, mostramos texto (letra inicial o emoji)
+                                    return <span className="text-3xl font-bold">{subjectIconKey}</span>;
+                                })()}
                             </div>
 
                             <h1 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">
