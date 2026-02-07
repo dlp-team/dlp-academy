@@ -11,7 +11,9 @@ const HomeModals = ({
     handleSaveSubject,
     handleSaveFolder,
     handleShareFolder,
-    handleDelete
+    handleDelete,
+    currentFolder = null,
+    allFolders = []
 }) => {
     return (
         <>
@@ -30,6 +32,8 @@ const HomeModals = ({
                 initialData={folderModalConfig.data}
                 isEditing={folderModalConfig.isEditing}
                 onShare={handleShareFolder}
+                currentFolder={folderModalConfig.currentFolder || currentFolder}
+                allFolders={allFolders}
             />
 
             {/* Delete Confirmation */}
@@ -44,7 +48,7 @@ const HomeModals = ({
                         </h3>
                         <p className="text-gray-500 dark:text-gray-400 mb-6">
                             {deleteConfig.type === 'folder' 
-                                ? `Se eliminará la carpeta "${deleteConfig.item?.name}" pero las asignaturas se mantendrán.`
+                                ? `Se eliminará la carpeta "${deleteConfig.item?.name}" pero las asignaturas y subcarpetas se moverán al nivel superior.`
                                 : `Se eliminarán "${deleteConfig.item?.name}" y sus temas.`
                             }
                         </p>

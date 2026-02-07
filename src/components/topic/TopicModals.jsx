@@ -2,7 +2,7 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import AppToast from '../ui/AppToast';
-import QuizModal from '../../pages/QuizzModal';           // Check relative path
+import QuizModal from '../modals/QuizzModal';           // Check relative path
 import CreateContentModal from '../../pages/CreateContentModal'; // Check relative path
 
 const TopicModals = ({

@@ -81,7 +81,7 @@ const FolderCardBody = ({
                             }}
                         >
                             <span className="font-bold whitespace-nowrap">
-                                {subjectCount} {subjectCount === 1 ? 'asignatura' : 'asignaturas'}
+                                {subjectCount} {subjectCount === 1 ? 'elemento' : 'elementos'}
                             </span>
                         </div>
                     </div>
@@ -110,6 +110,9 @@ const FolderCardBody = ({
                             <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 z-50 animate-in fade-in zoom-in-95">
                                 {folder.isOwner ? (
                                     <>
+                                        <button onClick={(e) => { e.stopPropagation(); onEdit(folder); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
+                                            <Edit2 size={14} /> Editar
+                                        </button>
                                         <button onClick={(e) => { e.stopPropagation(); onShare(folder); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
                                             <Share2 size={14} /> Compartir
                                         </button>
@@ -173,21 +176,38 @@ const FolderCardBody = ({
 
                     {/* Bottom: Text Info */}
                     <div>
-                        {folder.isShared && (
-                            <div className={`inline-flex items-center gap-1 rounded-full ${
-                                isModern 
-                                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800' 
-                                    : 'bg-white/20 text-white border border-white/20'
-                            }`}
-                            style={{
-                                marginBottom: `${8 * scaleMultiplier}px`,
-                                padding: `${2 * scaleMultiplier}px ${8 * scaleMultiplier}px`,
-                                fontSize: `${10 * scaleMultiplier}px`
-                            }}>
-                                <Users size={10 * scaleMultiplier} />
-                                <span className="font-bold uppercase tracking-wider">Shared</span>
-                            </div>
-                        )}
+                        {/* Badges */}
+                        <div className="flex items-center gap-2 mb-2">
+                            {folder.isShared && (
+                                <div className={`inline-flex items-center gap-1 rounded-full ${
+                                    isModern 
+                                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800' 
+                                        : 'bg-white/20 text-white border border-white/20'
+                                }`}
+                                style={{
+                                    padding: `${2 * scaleMultiplier}px ${8 * scaleMultiplier}px`,
+                                    fontSize: `${10 * scaleMultiplier}px`
+                                }}>
+                                    <Users size={10 * scaleMultiplier} />
+                                    <span className="font-bold uppercase tracking-wider">Shared</span>
+                                </div>
+                            )}
+                            
+                            {folder.parentId && (
+                                <div className={`inline-flex items-center gap-1 rounded-full ${
+                                    isModern 
+                                        ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-800' 
+                                        : 'bg-white/20 text-white border border-white/20'
+                                }`}
+                                style={{
+                                    padding: `${2 * scaleMultiplier}px ${8 * scaleMultiplier}px`,
+                                    fontSize: `${10 * scaleMultiplier}px`
+                                }}>
+                                    <Folder size={10 * scaleMultiplier} />
+                                    <span className="font-bold uppercase tracking-wider">Subcarpeta</span>
+                                </div>
+                            )}
+                        </div>
                         
                         <h3 
                             className={`font-bold tracking-tight truncate ${
@@ -216,7 +236,7 @@ const FolderCardBody = ({
                             </p>
                         )}
 
-                        {/* NEW: Show folder tags */}
+                        {/* Folder tags */}
                         {folder.tags && folder.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                                 {folder.tags.slice(0, 3).map(tag => (

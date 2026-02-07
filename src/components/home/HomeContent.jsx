@@ -1,7 +1,7 @@
 // src/components/home/HomeContent.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { 
-    Plus, ChevronDown, Folder as FolderIcon, Tag
+    Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp
 } from 'lucide-react';
 import SubjectIcon from '..//modals/SubjectIcon'; // Adjust path
 import SubjectCard from '..//home/SubjectCard';   // Adjust path
@@ -31,6 +31,8 @@ const HomeContent = ({
     handleSelectSubject,
     handleOpenFolder,
     handleDropOnFolder,
+    handlePromoteSubject,
+    handlePromoteFolder,
     
     // Drag & Drop
     isDragAndDropEnabled,
@@ -46,8 +48,38 @@ const HomeContent = ({
     
     navigate
 }) => {
+    const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
+
     // Show collapsible groups only in certain modes
     const showCollapsibleGroups = ['courses', 'tags', 'shared'].includes(viewMode);
+
+    // Handle drag over promote zone
+    const handlePromoteZoneDragOver = (e) => {
+        if (currentFolder && (draggedItemType === 'subject' || draggedItemType === 'folder')) {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsPromoteZoneHovered(true);
+        }
+    };
+
+    const handlePromoteZoneDragLeave = (e) => {
+        e.preventDefault();
+        setIsPromoteZoneHovered(false);
+    };
+
+    const handlePromoteZoneDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsPromoteZoneHovered(false);
+
+        if (!currentFolder || !draggedItem) return;
+
+        if (draggedItemType === 'subject') {
+            handlePromoteSubject(draggedItem.id);
+        } else if (draggedItemType === 'folder') {
+            handlePromoteFolder(draggedItem.id);
+        }
+    };
 
     return (
         <>
@@ -92,41 +124,94 @@ const HomeContent = ({
                                                 gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` 
                                             }}
                                         >
-                                            {/* Create Button (Grid Mode only) - NOT DRAGGABLE */}
+                                            {/* Create Button or Promote Zone */}
                                             {viewMode === 'grid' && (
                                                 <div>
-                                                    <button 
-                                                        onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null })} 
-                                                        className="group relative w-full border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center cursor-pointer"
-                                                        style={{ 
-                                                            aspectRatio: '16 / 10',
-                                                            gap: `${16 * (cardScale / 100)}px`
-                                                        }}
-                                                    >
-                                                        <div 
-                                                            className="rounded-full bg-indigo-100 dark:bg-indigo-900/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/60 flex items-center justify-center transition-colors"
-                                                            style={{
-                                                                width: `${80 * (cardScale / 100)}px`,
-                                                                height: `${80 * (cardScale / 100)}px`
+                                                    {currentFolder ? (
+                                                        /* Promote Zone when inside a folder */
+                                                        <div
+                                                            onDragOver={handlePromoteZoneDragOver}
+                                                            onDragLeave={handlePromoteZoneDragLeave}
+                                                            onDrop={handlePromoteZoneDrop}
+                                                            className={`group relative w-full border-3 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center ${
+                                                                isPromoteZoneHovered && draggedItem
+                                                                    ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 scale-105'
+                                                                    : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                                            }`}
+                                                            style={{ 
+                                                                aspectRatio: '16 / 10',
+                                                                gap: `${16 * (cardScale / 100)}px`
                                                             }}
                                                         >
-                                                            <Plus 
-                                                                className="text-indigo-600 dark:text-indigo-400"
-                                                                size={40 * (cardScale / 100)}
-                                                            />
+                                                            <div 
+                                                                className={`rounded-full flex items-center justify-center transition-colors ${
+                                                                    isPromoteZoneHovered && draggedItem
+                                                                        ? 'bg-amber-200 dark:bg-amber-800/60'
+                                                                        : 'bg-amber-100 dark:bg-amber-900/40 group-hover:bg-amber-200 dark:group-hover:bg-amber-800/60'
+                                                                }`}
+                                                                style={{
+                                                                    width: `${80 * (cardScale / 100)}px`,
+                                                                    height: `${80 * (cardScale / 100)}px`
+                                                                }}
+                                                            >
+                                                                <ArrowUp 
+                                                                    className={`transition-colors ${
+                                                                        isPromoteZoneHovered && draggedItem
+                                                                            ? 'text-amber-700 dark:text-amber-300'
+                                                                            : 'text-amber-600 dark:text-amber-400'
+                                                                    }`}
+                                                                    size={40 * (cardScale / 100)}
+                                                                />
+                                                            </div>
+                                                            <span 
+                                                                className={`font-semibold transition-colors px-4 text-center ${
+                                                                    isPromoteZoneHovered && draggedItem
+                                                                        ? 'text-amber-700 dark:text-amber-300'
+                                                                        : 'text-gray-700 dark:text-gray-300 group-hover:text-amber-600 dark:group-hover:text-amber-400'
+                                                                }`}
+                                                                style={{ fontSize: `${18 * (cardScale / 100)}px` }}
+                                                            >
+                                                                {isPromoteZoneHovered && draggedItem
+                                                                    ? `Mover a nivel superior`
+                                                                    : 'Arrastra aquí para subir nivel'
+                                                                }
+                                                            </span>
                                                         </div>
-                                                        <span 
-                                                            className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors px-4 text-center"
-                                                            style={{ fontSize: `${18 * (cardScale / 100)}px` }}
+                                                    ) : (
+                                                        /* Create button when at root */
+                                                        <button 
+                                                            onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null })} 
+                                                            className="group relative w-full border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center cursor-pointer"
+                                                            style={{ 
+                                                                aspectRatio: '16 / 10',
+                                                                gap: `${16 * (cardScale / 100)}px`
+                                                            }}
                                                         >
-                                                            Crear Nueva Asignatura
-                                                        </span>
-                                                    </button>
+                                                            <div 
+                                                                className="rounded-full bg-indigo-100 dark:bg-indigo-900/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/60 flex items-center justify-center transition-colors"
+                                                                style={{
+                                                                    width: `${80 * (cardScale / 100)}px`,
+                                                                    height: `${80 * (cardScale / 100)}px`
+                                                                }}
+                                                            >
+                                                                <Plus 
+                                                                    className="text-indigo-600 dark:text-indigo-400"
+                                                                    size={40 * (cardScale / 100)}
+                                                                />
+                                                            </div>
+                                                            <span 
+                                                                className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors px-4 text-center"
+                                                                style={{ fontSize: `${18 * (cardScale / 100)}px` }}
+                                                            >
+                                                                Crear Nueva Asignatura
+                                                            </span>
+                                                        </button>
+                                                    )}
                                                 </div>
                                             )}
 
-                                            {/* Folders (Manual mode at root only) - DRAGGABLE */}
-                                            {viewMode === 'grid' && !currentFolder && orderedFolders.map((folder, index) => (
+                                            {/* Folders (Manual mode) - DRAGGABLE */}
+                                            {viewMode === 'grid' && orderedFolders.map((folder, index) => (
                                                 <div key={`folder-${folder.id}`}>
                                                     <FolderCard
                                                         folder={folder}
@@ -138,7 +223,7 @@ const HomeContent = ({
                                                         onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                         cardScale={cardScale}
                                                         onDrop={handleDropOnFolder}
-                                                        canDrop={isDragAndDropEnabled && draggedItemType === 'subject'}
+                                                        canDrop={isDragAndDropEnabled && (draggedItemType === 'subject' || draggedItemType === 'folder')}
                                                         draggable={isDragAndDropEnabled}
                                                         onDragStart={handleDragStartFolder}
                                                         onDragEnd={handleDragEnd}

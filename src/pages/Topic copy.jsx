@@ -10,7 +10,7 @@ import {
 import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import Header from '../components/layout/Header';
-import QuizModal from './QuizzModal';
+import QuizModal from '../components/modals/QuizzModal';
 import CreateContentModal from './CreateContentModal';
 
 // --- COMPONENTE DE NOTIFICACIÓN (TOAST) ---

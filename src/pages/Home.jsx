@@ -29,7 +29,7 @@ const Home = ({ user }) => {
             </div>
         );
     }
- 
+
     // 3. Render
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 font-sans transition-colors">
@@ -56,6 +56,7 @@ const Home = ({ user }) => {
                     draggedItem={logic.draggedItem}
                     draggedItemType={logic.draggedItemType}
                     onPreferenceChange={logic.handlePreferenceChange}
+                    allFolders={logic.folders}
                 />
 
                 {/* Breadcrumb Navigation */}
@@ -63,6 +64,7 @@ const Home = ({ user }) => {
                     <BreadcrumbNav 
                         currentFolder={logic.currentFolder}
                         onNavigate={logic.setCurrentFolder}
+                        allFolders={logic.folders}
                     />
                 )}
 
@@ -110,6 +112,8 @@ const Home = ({ user }) => {
                         handleSelectSubject={logic.handleSelectSubject}
                         handleOpenFolder={logic.handleOpenFolder}
                         handleDropOnFolder={logic.handleDropOnFolder}
+                        handlePromoteSubject={logic.handlePromoteSubject}
+                        handlePromoteFolder={logic.handlePromoteFolder}
                         
                         // Drag & Drop
                         isDragAndDropEnabled={logic.isDragAndDropEnabled}
@@ -148,6 +152,8 @@ const Home = ({ user }) => {
                 handleSaveFolder={logic.handleSaveFolder}
                 handleShareFolder={logic.handleShareFolder}
                 handleDelete={logic.handleDelete}
+                currentFolder={logic.currentFolder}
+                allFolders={logic.folders}
             />
         </div>
     );

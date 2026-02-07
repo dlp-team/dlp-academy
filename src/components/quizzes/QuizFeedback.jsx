@@ -1,0 +1,63 @@
+// src/components/quizzes/QuizFeedback.jsx
+import React from 'react';
+import { CheckCircle2, XCircle, ArrowRight, HelpCircle } from 'lucide-react';
+import { RenderLatex } from './QuizCommon';
+
+const QuizFeedback = ({ 
+    showResult, 
+    showExplanation, 
+    question, 
+    selectedOption, 
+    handleCheckAnswer, 
+    handleNextQuestion, 
+    isLastQuestion 
+}) => {
+    const isCorrect = selectedOption === question.correctAnswer;
+
+    return (
+        <div className="fixed bottom-0 left-0 w-full bg-white border-t border-slate-200 p-4 md:p-6 z-40">
+            <div className="max-w-3xl mx-auto flex flex-col gap-4">
+                
+                {/* Explanation Banner */}
+                {showExplanation && (
+                    <div className={`rounded-xl p-4 animate-in slide-in-from-bottom-5 fade-in duration-300 ${isCorrect ? 'bg-emerald-50 border border-emerald-100' : 'bg-red-50 border border-red-100'}`}>
+                        <div className="flex items-start gap-3">
+                            {isCorrect ? <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" /> : <XCircle className="w-6 h-6 text-red-500 shrink-0" />}
+                            <div>
+                                <h4 className={`font-bold mb-1 ${isCorrect ? 'text-emerald-800' : 'text-red-800'}`}>
+                                    {isCorrect ? '¡Correcto!' : 'Incorrecto'}
+                                </h4>
+                                <div className="text-slate-600 text-sm leading-relaxed">
+                                    <strong className="block text-slate-800 mb-1 flex items-center gap-1"><HelpCircle className="w-3 h-3" /> Explicación:</strong>
+                                    <RenderLatex text={question.explanation} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Action Button */}
+                <button
+                    onClick={showResult ? handleNextQuestion : handleCheckAnswer}
+                    disabled={selectedOption === null}
+                    className={`w-full py-4 rounded-xl font-black text-lg uppercase tracking-wider shadow-xl transition-all flex items-center justify-center gap-2
+                        ${selectedOption === null 
+                            ? 'bg-slate-100 text-slate-300 cursor-not-allowed' 
+                            : showResult 
+                                ? 'bg-slate-900 text-white hover:bg-slate-800 hover:-translate-y-1' 
+                                : 'bg-indigo-600 text-white hover:bg-indigo-500 hover:-translate-y-1'
+                        }
+                    `}
+                >
+                    {showResult ? (
+                        <>Siguiente <ArrowRight className="w-5 h-5" /></>
+                    ) : (
+                        'Comprobar'
+                    )}
+                </button>
+            </div>
+        </div>
+    );
+};
+
+export default QuizFeedback;

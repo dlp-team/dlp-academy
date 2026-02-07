@@ -20,7 +20,8 @@ const HomeControls = ({
     isDragAndDropEnabled,
     draggedItem,
     draggedItemType,
-    onPreferenceChange
+    onPreferenceChange,
+    allFolders = []
 }) => {
     const handleViewModeChange = (mode) => {
         setViewMode(mode);
@@ -61,7 +62,7 @@ const HomeControls = ({
                     <p className="text-gray-600 dark:text-gray-400">Gestiona tu contenido educativo</p>
                 </div>
                 
-                {/* View Mode Switcher - Removed "Etiquetas" tab */}
+                {/* View Mode Switcher */}
                 <div className="bg-white dark:bg-slate-900 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 inline-flex transition-colors">
                     {[
                         { id: 'grid', icon: LayoutGrid, label: 'Manual' },
@@ -112,13 +113,18 @@ const HomeControls = ({
                 )}
 
                 {/* Create Folder Button (Manual mode only) */}
-                {viewMode === 'grid' && !currentFolder && (
+                {viewMode === 'grid' && (
                     <button
-                        onClick={() => setFolderModalConfig({ isOpen: true, isEditing: false, data: null })}
+                        onClick={() => setFolderModalConfig({ 
+                            isOpen: true, 
+                            isEditing: false, 
+                            data: null,
+                            currentFolder: currentFolder 
+                        })}
                         className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-sm"
                     >
                         <FolderPlus size={16} />
-                        <span>Nueva Carpeta</span>
+                        <span>{currentFolder ? 'Nueva Subcarpeta' : 'Nueva Carpeta'}</span>
                     </button>
                 )}
                 
@@ -126,7 +132,14 @@ const HomeControls = ({
                 {isDragAndDropEnabled && draggedItem && (
                     <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs text-indigo-700 dark:text-indigo-300">
                         <span className="font-medium">
-                            {draggedItemType === 'subject' && !currentFolder ? 'Arrastra sobre carpeta o reordena' : 'Arrastra para reordenar'}
+                            {draggedItemType === 'subject' && currentFolder 
+                                ? 'Arrastra sobre carpeta, zona de promoción o reordena'
+                                : draggedItemType === 'subject' 
+                                    ? 'Arrastra sobre carpeta o reordena'
+                                    : draggedItemType === 'folder' && currentFolder
+                                        ? 'Arrastra sobre carpeta, zona de promoción o reordena'
+                                        : 'Arrastra para reordenar o sobre carpeta para anidar'
+                            }
                         </span>
                     </div>
                 )}
