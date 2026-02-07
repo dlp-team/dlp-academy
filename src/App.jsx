@@ -11,7 +11,8 @@ import Settings from './pages/Settings';
 import Home from './pages/Home';
 import Subject from './pages/Subject';
 import Topic from './pages/Topic';
-import Quizzes from './pages/Quizzes'
+import Quizzes from './pages/Quizzes';
+import EditQuiz from './pages/QuizzEdit';
 // Firebase auth
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase/config';
@@ -125,7 +126,10 @@ function App() {
           } 
         />
 
-
+        <Route 
+          path="/home/subject/:subjectId/topic/:topicId/quiz/:quizId/edit" 
+          element={<EditQuiz user={user} />} 
+        />
         {/* Fallback - Redirect unknown routes to home */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
