@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-    ChevronLeft, Timer, CheckCircle2, XCircle, ArrowRight, 
-    RefreshCcw, Award, Sigma, X, Brain, BookOpen, Sparkles,
-    TrendingUp, Target, Zap, Star, Trophy
+    ChevronLeft, CheckCircle2, XCircle, ArrowRight, 
+    RefreshCcw, Brain, BookOpen, Sparkles,
+    TrendingUp, Target, Trophy, X
 } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
@@ -113,41 +113,24 @@ const Quizzes = ({ user }) => {
     // Control de Confeti
     const [confettiTrigger, setConfettiTrigger] = useState(0);
     
-    const [isSaving, setIsSaving] = useState(false);
-
     // --- NAVEGACIÓN ---
-    const handleGoBack = () => navigate(`/home/subject/${subjectId}`);
+    const handleGoBack = () => navigate(`/home/subject/${subjectId}/topic/${topicId}`);
 
     // --- CARGA DE DATOS ---
+    // --- CARGA DE DATOS (ESPECÍFICO PARA QUIZZES) ---
     useEffect(() => {
         const loadData = async () => {
+            // Datos de prueba por si falla la carga
             const MOCK_DATA = {
                 title: "Test de Prueba",
-                subtitle: "Matemáticas Básicas",
-                formulas: [
-                    { display: "E = mc^2", description: "Relatividad" },
-                    { display: "a^2 + b^2 = c^2", description: "Pitágoras" }
-                ],
-                questions: [
-                    {
-                        question: "Calcula la derivada de 3x^2:",
-                        formula: "f(x) = 3x^2",
-                        options: ["6x", "3x", "x^2", "6"],
-                        correctIndex: 0
-                    },
-                    {
-                        question: "¿Integral de x dx?",
-                        formula: "\\int x dx",
-                        options: ["1", "x^2/2", "x", "2x"],
-                        correctIndex: 1
-                    }
-                ]
+                subtitle: "Matemáticas",
+                questions: [{ question: "Error cargando", options: ["A"], correctIndex: 0 }]
             };
 
-            if (!user) return;
+            if (!user || !subjectId || !topicId || !quizId) return;
 
             try {
-                // 1. Obtener Color
+                // 1. Obtener Color del Tema (Para que quede bonito)
                 const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
                 const topicSnap = await getDoc(topicRef);
                 
@@ -168,25 +151,28 @@ const Quizzes = ({ user }) => {
                     }
                 }
 
-                // 2. Cargar Quiz
-                if(quizId && quizId !== 'undefined') {
-                    const quizRef = doc(db, "subjects", subjectId, "topics", topicId, "quizzes_data", quizId);
-                    const snap = await getDoc(quizRef);
-                    if (snap.exists()) {
-                        const data = snap.data();
-                        const normalizedFormulas = (data.formulas || []).map(f => 
-                            typeof f === 'string' ? { display: f, description: 'Fórmula' } : f
-                        );
-                        setQuizData({ ...data, formulas: normalizedFormulas });
-                    } else {
-                        setQuizData(MOCK_DATA);
-                    }
+                // 2. Cargar el Quiz de la SUBCOLECCIÓN 'quizzes'
+                // (Aquí es donde estaba el fallo antes, ahora apunta bien)
+                const quizRef = doc(db, "subjects", subjectId, "topics", topicId, "quizzes", quizId);
+                const snap = await getDoc(quizRef);
+                
+                if (snap.exists()) {
+                    const data = snap.data();
+                    console.log("✅ Quiz cargado:", data);
+
+                    setQuizData({
+                        title: data.name || data.title || "Test Generado",
+                        subtitle: data.level || "Repaso",
+                        formulas: data.formulas || [],
+                        questions: data.questions || []
+                    });
                 } else {
+                    console.error("❌ El documento del quiz no existe en la base de datos");
                     setQuizData(MOCK_DATA);
                 }
 
             } catch (error) {
-                console.error("Error cargando (Usando Fallback):", error);
+                console.error("❌ Error cargando quiz:", error);
                 setQuizData(MOCK_DATA);
             } finally {
                 setLoading(false);
@@ -211,7 +197,10 @@ const Quizzes = ({ user }) => {
 
     const handleCheckAnswer = () => {
         if (answerStatus !== 'idle' || selectedAnswer === null) return;
-        const isCorrect = selectedAnswer === quizData.questions[currentStep].correctIndex;
+        
+        // Verificación segura
+        const currentQuestion = quizData.questions[currentStep];
+        const isCorrect = selectedAnswer === currentQuestion.correctIndex;
         
         if (isCorrect) {
             setAnswerStatus('correct');
@@ -240,14 +229,19 @@ const Quizzes = ({ user }) => {
             }
             
             try {
+                // Guardar resultado
                 const resultRef = doc(db, "subjects", subjectId, "topics", topicId, "quiz_results", `${quizId}_${user.uid}`);
                 await setDoc(resultRef, {
                     userId: user.uid,
-                    score, correctAnswers: correctCount, totalQuestions: total,
+                    quizId: quizId,
+                    quizTitle: quizData.title,
+                    score, 
+                    correctAnswers: correctCount, 
+                    totalQuestions: total,
                     completedAt: serverTimestamp(),
                     passed: score >= 50
                 }, { merge: true });
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Error guardando resultado:", e); }
         }
     };
 
@@ -267,7 +261,7 @@ const Quizzes = ({ user }) => {
         <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center pt-20">
             <Header user={user} />
             <RefreshCcw className="w-12 h-12 text-slate-300 animate-spin mb-4" />
-            <p className="text-slate-500 font-medium tracking-wide">Sincronizando...</p>
+            <p className="text-slate-500 font-medium tracking-wide">Cargando tu test...</p>
         </div>
     );
 
@@ -282,16 +276,14 @@ const Quizzes = ({ user }) => {
         </div>
     );
 
-    // Contenedor principal con padding-top para el Header
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pt-20">
-            {/* Header Global */}
             <Header user={user} />
 
-            {/* 1. VISTA DE REPASO */}
+            {/* 1. VISTA DE REPASO (PORTADA) */}
             {viewState === 'review' && (
                 <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 pb-20">
-                    {/* Header Sticky ajustado a top-20 */}
+                    {/* Header Sticky */}
                     <div className="bg-white/80 backdrop-blur-xl border-b border-slate-200 sticky top-20 z-40">
                         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
                             <button onClick={handleGoBack} className="p-2 hover:bg-slate-100 rounded-xl transition-colors">
@@ -326,26 +318,30 @@ const Quizzes = ({ user }) => {
                             </div>
                         </div>
 
-                        <div className="space-y-6 mb-12">
-                            {quizData.formulas?.map((formula, idx) => (
-                                <div key={idx} className="group relative bg-white rounded-3xl p-8 border-2 border-slate-100 hover:border-slate-200 hover:shadow-xl transition-all duration-300">
-                                    <div className="flex items-start gap-6">
-                                        <div 
-                                            className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold shadow-md shrink-0 mt-1"
-                                            style={{ backgroundColor: accentColor }}
-                                        >
-                                            {idx + 1}
-                                        </div>
-                                        <div className="flex-1 overflow-hidden">
-                                            <FormulaDisplay formula={formula.display} size="text-2xl md:text-3xl" />
-                                            {formula.description && (
-                                                <p className="text-sm text-slate-400 mt-2 font-bold uppercase tracking-wider">{formula.description}</p>
-                                            )}
+                        {/* Fórmulas (Si existen) */}
+                        {quizData.formulas && quizData.formulas.length > 0 && (
+                            <div className="space-y-6 mb-12">
+                                <h3 className="text-lg font-bold text-slate-700 ml-4">Fórmulas Clave</h3>
+                                {quizData.formulas.map((formula, idx) => (
+                                    <div key={idx} className="group relative bg-white rounded-3xl p-8 border-2 border-slate-100 hover:border-slate-200 hover:shadow-xl transition-all duration-300">
+                                        <div className="flex items-start gap-6">
+                                            <div 
+                                                className="w-10 h-10 rounded-2xl flex items-center justify-center text-white font-bold shadow-md shrink-0 mt-1"
+                                                style={{ backgroundColor: accentColor }}
+                                            >
+                                                {idx + 1}
+                                            </div>
+                                            <div className="flex-1 overflow-hidden">
+                                                <FormulaDisplay formula={formula.display || formula} size="text-2xl md:text-3xl" />
+                                                {formula.description && (
+                                                    <p className="text-sm text-slate-400 mt-2 font-bold uppercase tracking-wider">{formula.description}</p>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
 
                         <button
                             onClick={() => setViewState('quiz')}
@@ -357,10 +353,6 @@ const Quizzes = ({ user }) => {
                             <ArrowRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
                         </button>
                     </div>
-                    <style>{`
-                        @keyframes float { 0%, 100% { transform: translateY(0px) rotate(1deg); } 50% { transform: translateY(-10px) rotate(-1deg); } }
-                        .animate-float { animation: float 6s ease-in-out infinite; }
-                    `}</style>
                 </div>
             )}
 
@@ -369,7 +361,7 @@ const Quizzes = ({ user }) => {
                 <div className="min-h-screen bg-slate-50 pb-32">
                     <ConfettiEffect triggerKey={confettiTrigger} accentColor={accentColor} />
                     
-                    {/* Header Progreso Sticky top-20 */}
+                    {/* Header Progreso */}
                     <div className="bg-white/90 backdrop-blur-xl border-b border-slate-200 sticky top-20 z-40 px-6 py-4">
                         <div className="max-w-4xl mx-auto flex items-center gap-6">
                             <button onClick={() => setViewState('review')} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 transition-colors">
@@ -401,6 +393,7 @@ const Quizzes = ({ user }) => {
                                 {quizData.questions[currentStep].question}
                             </h2>
 
+                            {/* Mostrar fórmula si la pregunta la tiene */}
                             {quizData.questions[currentStep].formula && (
                                 <div className="bg-white rounded-[2rem] p-10 border-2 border-slate-100 shadow-xl shadow-slate-200/50 mb-10 text-center">
                                     <BlockMath math={quizData.questions[currentStep].formula} />
@@ -441,7 +434,7 @@ const Quizzes = ({ user }) => {
                                             </div>
                                             <div className="flex-1 text-lg font-bold">
                                                 <div className="katex-render-wrapper">
-                                                    {option.includes('\\') || option.includes('^') ? <InlineMath math={option} /> : option}
+                                                    {typeof option === 'string' && (option.includes('\\') || option.includes('^')) ? <InlineMath math={option} /> : option}
                                                 </div>
                                             </div>
                                             {answerStatus !== 'idle' && idx === quizData.questions[currentStep].correctIndex && <CheckCircle2 className="w-8 h-8 text-green-500 animate-bounce-in" />}
@@ -453,6 +446,7 @@ const Quizzes = ({ user }) => {
                         </div>
                     </main>
 
+                    {/* Barra inferior de acciones */}
                     <div className={`fixed bottom-0 left-0 right-0 p-6 border-t backdrop-blur-xl transition-colors duration-500 z-50 ${
                         answerStatus === 'correct' ? 'bg-green-50/95 border-green-200' : 
                         answerStatus === 'incorrect' ? 'bg-red-50/95 border-red-200' : 
@@ -479,12 +473,6 @@ const Quizzes = ({ user }) => {
                             </button>
                         </div>
                     </div>
-                    <style>{`
-                        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-                        .animate-shake { animation: shake 0.3s ease-out; }
-                        .animate-bounce-in { animation: bounce 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-                        @keyframes bounce { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-                    `}</style>
                 </div>
             )}
 
@@ -531,10 +519,6 @@ const Quizzes = ({ user }) => {
                             </button>
                         </div>
                     </div>
-                    <style>{`
-                        @keyframes scale-in { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
-                        .animate-scale-in { animation: scale-in 0.4s ease-out; }
-                    `}</style>
                 </div>
             )}
         </div>

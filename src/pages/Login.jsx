@@ -1,142 +1,186 @@
-// src/pages/Login.jsx
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Mail, Lock, GraduationCap, ArrowRight, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import styles from '../styles/Login.module.css';
+import { auth, provider } from '../firebase/config'; 
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; 
+import { db } from '../firebase/config';
+import { FcGoogle } from 'react-icons/fc';
+import { 
+    signInWithEmailAndPassword, 
+    signInWithPopup, 
+    setPersistence, 
+    browserLocalPersistence, 
+    browserSessionPersistence 
+} from 'firebase/auth';
 
-// Hook
-import { useLogin } from '../hooks/useLogin';
 
-// Components
-import SocialLogin from '../components/auth/SocialLogin';
 
 const Login = () => {
-    const { 
-        formData, loading, error, resetSent,
-        handleChange, handleLogin, handleGoogleLogin, handleForgotPassword 
-    } = useLogin();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [rememberMe, setRememberMe] = useState(false);
+
+
+    // Iniciar sesión con Email
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+
+        try {
+            const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
+            
+            await setPersistence(auth, persistence);
+            const result = await signInWithEmailAndPassword(auth, email, password); // Capture 'result'
+        
+            await saveUserToFirestore(result.user); 
+        } catch (err) {
+            console.error(err);
+            if(err.code === 'auth/invalid-credential') setError("Credenciales incorrectas.");
+            else setError("Error al iniciar sesión.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Iniciar sesión con Google
+    const handleGoogleLogin = async () => {
+        setError('');
+        try {
+            const result = await signInWithPopup(auth, provider); 
+            await saveUserToFirestore(result.user);
+        } catch (err) {
+            console.error(err);
+            setError("No se pudo iniciar sesión con Google.");
+        }
+    };
+
+    const saveUserToFirestore = async (user) => {
+        const userRef = doc(db, "users", user.uid);
+        await setDoc(userRef, {
+            email: user.email,
+            lastLogin: serverTimestamp(),
+        }, { merge: true });
+    };
 
     return (
-        <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
-            
-            {/* --- LEFT PANEL: Branding (Same as Register) --- */}
-            <div className="hidden lg:flex lg:w-1/2 bg-indigo-600 dark:bg-indigo-700 relative overflow-hidden flex-col justify-between p-12 text-white">
-                <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-indigo-900 to-indigo-900"></div>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl"></div>
+        <div className={styles.loginPageWrapper}>
+            <div className={styles.loginContainer}>
                 
-                <div className="relative z-10 flex items-center gap-3">
-                    <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                        <GraduationCap className="w-8 h-8 text-white" />
-                    </div>
-                    <span className="text-2xl font-bold tracking-tight">DLP Academy</span>
-                </div>
-
-                <div className="relative z-10 max-w-lg">
-                    <h1 className="text-5xl font-bold mb-6 leading-tight">Bienvenido de nuevo.</h1>
-                    <p className="text-indigo-100 dark:text-indigo-200 text-lg leading-relaxed">
-                        Tu espacio de aprendizaje inteligente te espera. Continúa donde lo dejaste.
-                    </p>
-                </div>
-
-                <div className="relative z-10 text-sm text-indigo-200 dark:text-indigo-300">
-                    © 2024 DLP Academy. Todos los derechos reservados.
-                </div>
-            </div>
-
-            {/* --- RIGHT PANEL: Form --- */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 bg-slate-50 dark:bg-slate-950 transition-colors">
-                <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    
-                    {/* Mobile Branding */}
-                    <div className="text-center mb-8 lg:hidden">
-                        <div className="inline-flex p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-full mb-4 transition-colors">
-                            <GraduationCap className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                {/* IZQUIERDA: Branding */}
+                <div className={styles.loginLeft}>
+                    <div className={styles.logoSection}>
+                        <div className={styles.logo}>
+                            <div className={styles.logoIcon}>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-graduation-cap w-8 h-8 text-indigo-600" aria-hidden="true">
+                                    <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z">
+                                    </path>
+                                    <path d="M22 10v6">
+                                    </path>
+                                    <path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div className={styles.logoText}>
+                                <h1>DLP ACADEMY</h1>
+                                <p>Plataforma Inteligente</p>
+                            </div>
                         </div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">DLP Academy</h1>
-                    </div>
-                    
-                    <h2 className="hidden lg:block text-3xl font-bold text-gray-900 dark:text-white mb-2">Iniciar Sesión</h2>
-                    <p className="text-gray-500 dark:text-gray-400 mb-8">Ingresa tus credenciales para acceder.</p>
-
-                    {/* Alerts */}
-                    {error && (
-                        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl flex items-center gap-3 text-red-600 dark:text-red-400 text-sm animate-in fade-in transition-colors">
-                            <AlertCircle size={20} className="shrink-0" />
-                            {error}
-                        </div>
-                    )}
-                    
-                    {resetSent && (
-                        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-100 dark:border-green-800 rounded-xl flex items-center gap-3 text-green-700 dark:text-green-400 text-sm animate-in fade-in transition-colors">
-                            <CheckCircle2 size={20} className="shrink-0" />
-                            Correo de recuperación enviado. Revisa tu bandeja.
-                        </div>
-                    )}
-
-                    <form onSubmit={handleLogin} className="space-y-5">
                         
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Correo Electrónico</label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
+                        <div className={styles.welcomeText}>
+                            <h2>Tu Aula Virtual con IA</h2>
+                            <p>Genera temarios, tests y material educativo en segundos usando inteligencia artificial.</p>
+                        </div>
+
+                        <div className={styles.features}>
+                            <div className={styles.featureItem}>
+                                <div className={styles.featureIcon}>🤖</div>
+                                <span>Contenido IA</span>
+                            </div>
+                            <div className={styles.featureItem}>
+                                <div className={styles.featureIcon}>☁️</div>
+                                <span>Guardado en la Nube</span>
+                            </div>
+                            <div className={styles.featureItem}>
+                                <div className={styles.featureIcon}>🔒</div>
+                                <span>Acceso Seguro</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* DERECHA: Formulario */}
+                <div className={styles.loginRight}>
+                    <div className={styles.loginHeader}>
+                        <h2>Iniciar Sesión</h2>
+                        <p>Ingresa para gestionar tus asignaturas</p>
+                    </div>
+
+                    {error && <div className={styles.errorMsg}>{error}</div>}
+
+                    <form onSubmit={handleLogin}>
+                        <div className={styles.formGroup}>
+                            <label htmlFor="email">Correo Electrónico</label>
+                            <div className={styles.inputWrapper}>
+                                <span className={styles.inputIcon}>📧</span>
                                 <input 
-                                    type="email" name="email" required
-                                    value={formData.email} onChange={handleChange}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-all text-gray-900 dark:text-white"
-                                    placeholder="tu@email.com"
+                                    type="email" 
+                                    id="email" 
+                                    placeholder="tu@email.com" 
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    required 
                                 />
                             </div>
                         </div>
 
-                        <div>
-                            <div className="flex items-center justify-between mb-1">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Contraseña</label>
-                                <button 
-                                    type="button"
-                                    onClick={handleForgotPassword}
-                                    className="text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline font-medium transition-colors cursor-pointer"
-                                >
-                                    ¿Olvidaste tu contraseña?
-                                </button>
-                            </div>
-                            <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
+                        <div className={styles.formGroup}>
+                            <label htmlFor="password">Contraseña</label>
+                            <div className={styles.inputWrapper}>
+                                <span className={styles.inputIcon}>🔒</span>
                                 <input 
-                                    type="password" name="password" required
-                                    value={formData.password} onChange={handleChange}
-                                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-all text-gray-900 dark:text-white"
-                                    placeholder="••••••••"
+                                    type="password" 
+                                    id="password" 
+                                    placeholder="••••••••" 
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required 
                                 />
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <input 
-                                type="checkbox" id="rememberMe" name="rememberMe"
-                                checked={formData.rememberMe} onChange={handleChange}
-                                className="w-4 h-4 text-indigo-600 dark:text-indigo-500 border-gray-300 dark:border-slate-600 rounded focus:ring-indigo-500 dark:focus:ring-indigo-400 bg-white dark:bg-slate-900"
-                            />
-                            <label htmlFor="rememberMe" className="text-sm text-gray-600 dark:text-gray-400 cursor-pointer select-none">
-                                Recordarme en este dispositivo
+                        <div className={styles.formOptions}>
+                            <label className={styles.rememberMe}>
+                                <input 
+                                    type="checkbox" 
+                                    checked={rememberMe} 
+                                    onChange={(e) => setRememberMe(e.target.checked)} 
+                                />
+                                <span>Recordarme</span>
                             </label>
+                            <a href="#" className={styles.forgotPassword}>¿Olvidaste tu contraseña?</a>
                         </div>
 
-                        <button 
-                            type="submit" 
-                            disabled={loading}
-                            className="w-full bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70  cursor-pointer "
-                        >
-                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Iniciar Sesión <ArrowRight className="w-5 h-5" /></>}
+                        <button type="submit" className={styles.loginButton} disabled={loading}>
+                            {loading ? 'Entrando...' : 'Iniciar Sesión'}
                         </button>
                     </form>
 
-                    <SocialLogin onClick={handleGoogleLogin} loading={loading} />
+                    <div className={styles.divider}>
+                        <span>O continúa con</span>
+                    </div>
 
-                    <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-                        ¿No tienes cuenta?{' '}
-                        <Link to="/register" className="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline transition-colors">
-                            Regístrate aquí
-                        </Link>
-                    </p>
+                    <div className={styles.socialLogin}>
+                        <button type="button" className={styles.socialButton} onClick={handleGoogleLogin}>
+                            <FcGoogle size={32} style={{ width: '30px' }} />
+                            <span>Google</span>
+                        </button>
+                    </div>
+
+                    <div className={styles.registerLink}>
+                        ¿No tienes cuenta? <a href="#">Regístrate aquí</a>
+                    </div>
                 </div>
             </div>
         </div>

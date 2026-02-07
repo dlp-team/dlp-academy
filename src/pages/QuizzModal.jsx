@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Loader2, Wand2 } from 'lucide-react';
+import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Loader2, Wand2, Upload, FileText, Trash2 } from 'lucide-react';
 
 const QuizModal = ({ 
     isOpen, 
@@ -39,6 +39,20 @@ const QuizModal = ({
         }
     };
 
+    // Helper para manejar la subida de archivo
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Guardamos el archivo en el formData
+            setFormData({ ...formData, file: file });
+        }
+    };
+
+    // Helper para eliminar el archivo seleccionado
+    const removeFile = () => {
+        setFormData({ ...formData, file: null });
+    };
+
     return (
         <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-500 ${isVisible ? 'visible' : 'invisible'}`}>
             
@@ -49,12 +63,7 @@ const QuizModal = ({
                 onClick={handleClose} 
             />
             
-            {/* MODAL 
-                CAMBIOS REALIZADOS:
-                1. Eliminado 'shadow-black/40': Quita la sombra negra fuerte.
-                2. Eliminado 'ring-2' y 'ring-${baseColorClass}-500/30': Quita el borde de color/negro alrededor.
-                3. Se mantiene 'shadow-2xl' para una elevación suave (por defecto grisácea), o cámbialo a 'shadow-none' para diseño plano.
-            */}
+            {/* MODAL */}
             <div className={`relative bg-white rounded-[2rem] w-full max-w-lg shadow-2xl overflow-hidden 
                 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] 
                 transform origin-bottom
@@ -73,7 +82,7 @@ const QuizModal = ({
                             <span className="text-[10px] font-bold text-white uppercase tracking-widest">AI Power</span>
                         </div>
                         <h3 className="text-3xl font-black text-white tracking-tight leading-none drop-shadow-sm">
-                            Nuevo Entrenamiento
+                            Crear test
                         </h3>
                         <p className="text-white/80 font-medium text-sm mt-1 max-w-xs leading-relaxed">
                             Diseña tu test a medida usando inteligencia artificial.
@@ -92,7 +101,7 @@ const QuizModal = ({
                 </div>
 
                 {/* --- FORMULARIO --- */}
-                <form onSubmit={onSubmit} className="p-8 space-y-6 bg-white">
+                <form onSubmit={onSubmit} className="p-8 space-y-5 bg-white">
                     
                     {/* Input: Título */}
                     <div className="space-y-2 group">
@@ -159,14 +168,66 @@ const QuizModal = ({
                         <textarea 
                             value={formData.prompt} 
                             onChange={e => setFormData({...formData, prompt: e.target.value})} 
-                            className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none h-24 resize-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-medium text-slate-600 placeholder:text-slate-300 disabled:opacity-50`} 
+                            className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none h-20 resize-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-medium text-slate-600 placeholder:text-slate-300 disabled:opacity-50`} 
                             placeholder="Ej: Enfócate en las excepciones y casos prácticos..."
                             disabled={isGenerating}
                         ></textarea>
                     </div>
 
+                    {/* --- NUEVA SECCIÓN: PDF UPLOAD --- */}
+                    <div className="space-y-2 group">
+                        <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1 transition-colors">
+                            <Upload className="w-3.5 h-3.5" /> Material de Apoyo (PDF)
+                        </label>
+                        
+                        <div className="relative">
+                            <input 
+                                type="file" 
+                                id="quiz-pdf-upload"
+                                accept=".pdf" 
+                                className="hidden" 
+                                onChange={handleFileChange}
+                                disabled={isGenerating}
+                            />
+                            
+                            {!formData.file ? (
+                                <label 
+                                    htmlFor="quiz-pdf-upload"
+                                    className={`flex items-center gap-4 w-full px-5 py-3.5 bg-slate-50 border border-slate-200 border-dashed rounded-2xl cursor-pointer hover:bg-slate-100 hover:border-${baseColorClass}-400 transition-all group`}
+                                >
+                                    <div className="p-2 bg-white rounded-xl border border-slate-200 shadow-sm group-hover:scale-110 transition-transform">
+                                        <Upload className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-slate-600 font-bold text-sm">Subir PDF de referencia</span>
+                                        <span className="text-slate-400 text-xs">Opcional - Máx 5MB</span>
+                                    </div>
+                                </label>
+                            ) : (
+                                <div className="flex items-center justify-between w-full px-5 py-3.5 bg-indigo-50/50 border border-indigo-100 rounded-2xl transition-all animate-in fade-in zoom-in-95">
+                                    <div className="flex items-center gap-3 overflow-hidden">
+                                        <div className="p-2 bg-white rounded-xl border border-indigo-100 shadow-sm shrink-0">
+                                            <FileText className="w-4 h-4 text-indigo-600" />
+                                        </div>
+                                        <span className="text-indigo-900 font-bold text-sm truncate max-w-[200px]" title={formData.file.name}>
+                                            {formData.file.name}
+                                        </span>
+                                    </div>
+                                    <button 
+                                        type="button"
+                                        onClick={removeFile}
+                                        disabled={isGenerating}
+                                        className="p-2 hover:bg-white rounded-full text-indigo-400 hover:text-red-500 transition-colors hover:shadow-sm"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
                     {/* --- FOOTER --- */}
-                    <div className="flex gap-3 pt-2">
+                    <div className="flex gap-3 pt-4">
                         <button 
                             type="button" 
                             onClick={handleClose} 

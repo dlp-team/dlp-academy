@@ -50,58 +50,79 @@ const Topic = ({ user }) => {
 
     // --- CARGA DE DATOS ---
     useEffect(() => {
+        let unsubscribeTopic = () => {};
+        let unsubscribeDocs = () => {};
+        let unsubscribeQuizzes = () => {};
+
         const fetchTopicDetails = async () => {
             if (!user || !subjectId || !topicId) return;
 
-            try {
-                const subjectDoc = await getDoc(doc(db, "subjects", subjectId));
-                if (subjectDoc.exists()) {
-                    setSubject({ id: subjectDoc.id, ...subjectDoc.data() });
-                }
+            console.log("🔍 Buscando datos para:", { subjectId, topicId });
 
+            try {
+                // 1. Asignatura
+                const subjectDoc = await getDoc(doc(db, "subjects", subjectId));
+                if (subjectDoc.exists()) setSubject({ id: subjectDoc.id, ...subjectDoc.data() });
+
+                // 2. Tema
                 const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
-                const unsubscribeTopic = onSnapshot(topicRef, (topicDoc) => {
+                unsubscribeTopic = onSnapshot(topicRef, (topicDoc) => {
                     if (topicDoc.exists()) {
                         const topicData = { id: topicDoc.id, ...topicDoc.data() };
+                        console.log("📂 Tema encontrado:", topicData.title);
 
+                        // 3. Documentos
                         const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
-                        const unsubscribeDocs = onSnapshot(docsRef, (querySnapshot) => {
-                            const manualDocs = querySnapshot.docs.map(doc => ({
-                                id: doc.id, ...doc.data()
-                            }));
-
-                            const aiPdfs = Array.isArray(topicData.pdfs) ? topicData.pdfs.map((p, i) => ({ 
-                                ...p, 
-                                id: p.id || `ai-${i}`, 
-                                origin: 'AI' 
-                            })) : [];
-                            
-                            const aiQuizzes = Array.isArray(topicData.quizzes) ? topicData.quizzes : [];
+                        unsubscribeDocs = onSnapshot(docsRef, (docsSnap) => {
+                            const manualDocs = docsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            const aiPdfs = Array.isArray(topicData.pdfs) ? topicData.pdfs.map((p, i) => ({ ...p, id: p.id || `ai-${i}`, origin: 'AI' })) : [];
                             const manualUploads = manualDocs.filter(d => d.source === 'manual').map(d => ({ ...d, origin: 'manual' }));
 
-                            setTopic({ 
-                                ...topicData, 
-                                pdfs: aiPdfs, 
-                                quizzes: aiQuizzes, 
-                                uploads: manualUploads 
+                            // 4. QUIZZES (Aquí está la clave)
+                            const quizzesPath = `subjects/${subjectId}/topics/${topicId}/quizzes`;
+                            console.log("📡 Escuchando quizzes en ruta:", quizzesPath);
+                            
+                            const quizzesRef = collection(db, "subjects", subjectId, "topics", topicId, "quizzes");
+                            
+                            unsubscribeQuizzes = onSnapshot(quizzesRef, (quizzesSnap) => {
+                                console.log(`📦 Se encontraron ${quizzesSnap.size} tests en la base de datos.`);
+                                
+                                const realQuizzes = quizzesSnap.docs.map(q => {
+                                    const data = q.data();
+                                    console.log("   - Test encontrado:", data.name || data.title);
+                                    return { id: q.id, ...data };
+                                });
+
+                                setTopic({ 
+                                    ...topicData, 
+                                    pdfs: aiPdfs, 
+                                    uploads: manualUploads,
+                                    quizzes: realQuizzes 
+                                });
+                                setLoading(false);
+                            }, (error) => {
+                                console.error("❌ Error leyendo quizzes (¿Permisos?):", error);
                             });
-                            setLoading(false);
                         });
-                        return () => unsubscribeDocs();
                     } else {
+                        console.log("❌ El tema no existe en la BD");
                         setLoading(false);
                         navigate('/home');
                     }
                 });
-                return () => unsubscribeTopic();
             } catch (error) {
-                console.error("Error loading topic:", error);
+                console.error("Error general:", error);
                 setLoading(false);
             }
         };
 
-        const unsubscribe = fetchTopicDetails();
-        return () => { if (unsubscribe && typeof unsubscribe.then === 'function') unsubscribe.then(u => u && u()); };
+        fetchTopicDetails();
+
+        return () => {
+            if (unsubscribeTopic) unsubscribeTopic();
+            if (unsubscribeDocs) unsubscribeDocs();
+            if (unsubscribeQuizzes) unsubscribeQuizzes();
+        };
     }, [user, subjectId, topicId, navigate]);
 
     // --- HELPERS VISUALES ---
@@ -239,17 +260,61 @@ const Topic = ({ user }) => {
     };
 
     // --- ACCIÓN: GENERAR (N8N) ---
+    // ✅ PEGA ESTO EN SU LUGAR
+    // --- ACCIÓN: GENERAR (N8N) ---
+    // --- ACCIÓN: GENERAR (N8N) CON ARCHIVO ---
     const handleGenerateQuizSubmit = async (e) => {
         e.preventDefault();
+        
+        // 👇 TU URL DE N8N
+        const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39'; 
+
         setIsGeneratingQuiz(true);
+
         try {
-            console.log("Enviando a n8n:", quizFormData);
-            await new Promise(r => setTimeout(r, 2000)); // Simulación
+            // 1. Crear un objeto FormData (necesario para enviar archivos)
+            const formData = new FormData();
+
+            // 2. Añadir los campos de texto
+            formData.append('title', quizFormData.title);
+            formData.append('level', quizFormData.level);
+            formData.append('numQuestions', quizFormData.numQuestions);
+            formData.append('prompt', quizFormData.prompt || '');
+            
+            // Contexto (Ids)
+            formData.append('userId', user?.uid || '');
+            formData.append('subjectId', subjectId || '');
+            formData.append('topicId', topicId || '');
+            formData.append('subjectName', subject?.name || '');
+            formData.append('topicTitle', topic?.title || '');
+            formData.append('requestDate', new Date().toISOString());
+
+            // 3. Añadir el archivo SI existe
+            // NOTA: Usamos la clave 'files' porque es lo que espera tu nodo de n8n según la foto
+            if (quizFormData.file) {
+                formData.append('files', quizFormData.file); 
+            }
+
+            console.log("🚀 Enviando FormData a n8n...");
+
+            // 4. Enviar petición POST
+            const response = await fetch(N8N_WEBHOOK_URL, {
+                method: 'POST',
+                // ❌ NO AÑADIR headers: { 'Content-Type': 'application/json' }
+                // El navegador detectará automáticamente que es FormData
+                body: formData 
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error del servidor: ${response.status}`);
+            }
+
             setShowQuizModal(false);
-            alert("✅ Test generado correctamente");
+            alert("✅ Solicitud enviada con el archivo. Procesando...");
+
         } catch (error) {
-            console.error(error);
-            alert("Error al generar");
+            console.error("❌ Error al conectar con n8n:", error);
+            alert("Hubo un error al enviar los datos.");
         } finally {
             setIsGeneratingQuiz(false);
         }
