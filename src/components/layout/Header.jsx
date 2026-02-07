@@ -1,8 +1,7 @@
-// src/components/layout/Header.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Settings, Moon, Sun } from 'lucide-react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore'; // <--- Added updateDoc
 import { db } from '../../firebase/config'; 
 
 // Import UI Helpers
@@ -21,6 +20,7 @@ const Header = ({ user }) => {
     return false;
   });
 
+  // Apply theme to DOM and LocalStorage whenever state changes
   useEffect(() => {
     const root = window.document.documentElement;
     if (darkMode) {
@@ -32,22 +32,42 @@ const Header = ({ user }) => {
     }
   }, [darkMode]);
 
+  // --- NEW: Handle Toggle Click (Updates State + Firestore) ---
+  const handleThemeToggle = async (isDark) => {
+    // 1. Update UI immediately
+    setDarkMode(isDark);
+
+    // 2. Update Firestore in background
+    if (user?.uid) {
+        try {
+            const userRef = doc(db, 'users', user.uid);
+            await updateDoc(userRef, {
+                theme: isDark ? 'dark' : 'light'
+            });
+        } catch (error) {
+            console.error("Error saving theme to Firestore:", error);
+        }
+    }
+  };
+
   // --- 2. USER DATA LOGIC (Cached + Live) ---
   useEffect(() => {
-    // If we don't have a user ID yet, do nothing
     if (!user?.uid) return;
 
     const cacheKey = `user_profile_${user.uid}`;
 
     const fetchUserData = async () => {
-      // A. INSTANT: Load from LocalStorage if available
-      // This prevents the "flash" by showing the last known state immediately
+      // A. INSTANT: Load from LocalStorage
       try {
         const cached = localStorage.getItem(cacheKey);
         if (cached) {
             const parsed = JSON.parse(cached);
-            // Only set if we haven't fetched fresh data yet
             setFirestoreUser((prev) => prev || parsed);
+            
+            // Sync theme from cache if available
+            if (parsed.theme) {
+                setDarkMode(parsed.theme === 'dark');
+            }
         }
       } catch (e) {
         console.error("Cache read error", e);
@@ -61,8 +81,12 @@ const Header = ({ user }) => {
         if (userDoc.exists()) {
           const freshData = userDoc.data();
           setFirestoreUser(freshData);
-          // Update the cache for next time
           localStorage.setItem(cacheKey, JSON.stringify(freshData));
+          
+          // Ensure header state matches database state
+          if (freshData.theme) {
+            setDarkMode(freshData.theme === 'dark');
+          }
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -84,8 +108,7 @@ const Header = ({ user }) => {
   const displayName = getDisplayName();
 
   return (
-    // Removed "transition-colors" to prevent background flash on load
-    <header className="fixed top-0 w-full h-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-slate-800 z-50">
+    <header className="fixed top-0 w-full h-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-slate-800 z-50 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
         
         {/* --- LEFT: LOGO --- */}
@@ -109,7 +132,7 @@ const Header = ({ user }) => {
                 <Sun size={16} className={`transition-colors ${!darkMode ? 'text-amber-500' : 'text-gray-400'}`} />
                 <Toggle 
                     enabled={darkMode} 
-                    onChange={setDarkMode} 
+                    onChange={handleThemeToggle} 
                 />
                 <Moon size={16} className={`transition-colors ${darkMode ? 'text-indigo-400' : 'text-gray-400'}`} />
             </div>

@@ -3,39 +3,42 @@ import React, { useState } from 'react';
 import { ChevronRight, Edit2, Trash2, MoreVertical } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
 
-const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false }) => {
+const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false, cardScale = 100 }) => {
     const [showMenu, setShowMenu] = useState(false);
     const topicCount = subject.topics ? subject.topics.length : 0;
     const isModern = subject.cardStyle === 'modern';
-    const scaleMultiplier = 256 / 150;
-    const iconSize = isModern ? 7 * scaleMultiplier : 12 * scaleMultiplier;
+    const scale = (cardScale || 100) / 100;
+
+    // Scaled sizes
+    const paddingPx = compact ? 12 * scale : 16 * scale;
+    const iconContainerSize = compact ? 40 * scale : 48 * scale;
+    const innerIconSize = 42 * scale;
 
     return (
         <div 
             className={`group relative rounded-xl transition-all hover:shadow-md cursor-pointer ${
-                compact ? 'p-3' : 'p-4'
-            } ${
                 isModern ? `${getIconColor(subject.color)} border border-gradient-to-br ${subject.color} hover:border-gradient-to-br ${subject.color} ` : ` bg-gradient-to-br ${subject.color} hover:border-indigo-300 `
             }`}
+            style={{ padding: `${paddingPx}px` }}
             onClick={() => onSelect(subject.id)}
         >
             <div className="flex items-center gap-4">
                 {/* Icon */}
-                <div className={`flex-shrink-0 ${compact ? 'w-10 h-10' : 'w-12 h-12'}`}>
+                <div className={`flex-shrink-0`} style={{ width: `${iconContainerSize}px`, height: `${iconContainerSize}px` }}>
                     {isModern ? (
                         <div 
                             className={`${getIconColor(subject.color)} rounded-lg h-full flex items-center justify-center`}
                             style={{ 
-                                width: `${iconSize * 4}px`, 
-                                height: `${iconSize * 4}px` 
+                                width: `${iconContainerSize}px`, 
+                                height: `${iconContainerSize}px` 
                             }}
                         >
                             {subject.icon ? (
                                 <SubjectIcon 
                                     iconName={subject.icon} 
                                     style={{ 
-                                        width: `${iconSize * 6}px`, 
-                                        height: `${iconSize * 6}px` 
+                                        width: `${innerIconSize}px`, 
+                                        height: `${innerIconSize}px` 
                                     }}
                                 />
                             ) : (
@@ -43,8 +46,8 @@ const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false 
                                     iconName={subject.icon} 
                                     className="text-white opacity-80" 
                                     style={{ 
-                                        width: `${iconSize * 6}px`, 
-                                        height: `${iconSize * 6}px` 
+                                        width: `${innerIconSize}px`, 
+                                        height: `${innerIconSize}px` 
                                     }}
                                 />
                             )}
@@ -54,10 +57,9 @@ const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false 
                         <div className={`bg-transparent h-full flex items-center justify-center text-white opacity-90`}>
                             <SubjectIcon 
                                 iconName={subject.icon} 
-                                //className={`${compact ? 'w-6 h-6' : 'w-7 h-7'} text-white opacity-90`}
                                 style={{ 
-                                        width: `${iconSize * 6}px`, 
-                                        height: `${iconSize * 6}px` 
+                                        width: `${innerIconSize}px`, 
+                                        height: `${innerIconSize}px` 
                                 }} 
                             />
                         </div>
@@ -103,12 +105,12 @@ const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false 
                 </div>
 
                 {/* Topic Count Badge */}
-                <div className={`flex items-center gap-2 ${compact ? 'text-xs' : 'text-sm'}`}>
-                    <span className={`${ isModern ? `text-gray-700 dark:text-gray-400 font-medium whitespace-nowrap` : `text-gray-100 dark:text-gray-900 font-medium whitespace-nowrap`}`}>
-                        {topicCount} {topicCount === 1 ? 'tema' : 'temas'}
-                    </span>
-                    <ChevronRight size={compact ? 16 : 18} className={`${ isModern ? `text-gray-700 dark:text-gray-300 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors` : `text-gray-300 dark:text-gray-600 group-hover:text-indigo-500 dark:group-hover:text-indigo-400 transition-colors`}`} />
-                </div>
+                        <div className={`flex items-center gap-2`}>
+                            <span className={`${ isModern ? `text-gray-700 dark:text-gray-400 font-medium whitespace-nowrap` : `text-gray-100 dark:text-gray-900 font-medium whitespace-nowrap`}`} style={{ fontSize: `${10 + 14* scale*0.3}px` }}>
+                                {topicCount} {topicCount === 1 ? 'tema' : 'temas'}
+                            </span>
+                            <ChevronRight size={12 + 14* scale*0.3} className={`${ isModern ? `text-gray-700 dark:text-gray-300 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors` : `text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors`}`} />
+                        </div>
 
                 {/* Menu */}
                 <div className="relative" onClick={(e) => e.stopPropagation()}>

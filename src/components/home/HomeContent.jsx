@@ -196,6 +196,7 @@ const HomeContent = ({
                                                 onSelect={handleSelectSubject}
                                                 onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                 onDelete={(s) => setDeleteConfig({ isOpen: true, type: 'subject', item: s })}
+                                                cardScale={cardScale}
                                             />
                                         ))}
                                     </div>

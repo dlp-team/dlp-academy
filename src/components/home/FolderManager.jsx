@@ -8,10 +8,12 @@ const FolderManager = ({ isOpen, onClose, onSave, initialData, isEditing, onShar
         name: '', 
         description: '', 
         color: 'from-amber-400 to-amber-600',
-        subjectIds: []
+        subjectIds: [],
+        tags: [] // NEW: Add tags support
     });
     const [shareEmail, setShareEmail] = useState('');
     const [shareRole, setShareRole] = useState('viewer');
+    const [tagInput, setTagInput] = useState(''); // NEW: For tag input
 
     useEffect(() => {
         if (isOpen) {
@@ -21,18 +23,21 @@ const FolderManager = ({ isOpen, onClose, onSave, initialData, isEditing, onShar
                     name: initialData.name || '',
                     description: initialData.description || '',
                     color: initialData.color || 'from-amber-400 to-amber-600',
-                    subjectIds: initialData.subjectIds || []
+                    subjectIds: initialData.subjectIds || [],
+                    tags: initialData.tags || [] // NEW: Load existing tags
                 });
             } else {
                 setFormData({ 
                     name: '', 
                     description: '', 
                     color: 'from-amber-400 to-amber-600',
-                    subjectIds: []
+                    subjectIds: [],
+                    tags: [] // NEW: Empty tags for new folder
                 });
             }
             setShareEmail('');
             setShareRole('viewer');
+            setTagInput(''); // NEW: Reset tag input
         }
     }, [isOpen, isEditing, initialData]);
 
@@ -46,6 +51,33 @@ const FolderManager = ({ isOpen, onClose, onSave, initialData, isEditing, onShar
         if (shareEmail.trim() && isEditing && initialData) {
             onShare(initialData.id, shareEmail.trim(), shareRole);
             setShareEmail('');
+        }
+    };
+
+    // NEW: Tag management functions
+    const handleAddTag = (e) => {
+        e.preventDefault();
+        const tag = tagInput.trim().toLowerCase();
+        if (tag && !formData.tags.includes(tag)) {
+            setFormData({
+                ...formData,
+                tags: [...formData.tags, tag]
+            });
+            setTagInput('');
+        }
+    };
+
+    const handleRemoveTag = (tagToRemove) => {
+        setFormData({
+            ...formData,
+            tags: formData.tags.filter(tag => tag !== tagToRemove)
+        });
+    };
+
+    const handleTagInputKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddTag(e);
         }
     };
 
@@ -116,6 +148,54 @@ const FolderManager = ({ isOpen, onClose, onSave, initialData, isEditing, onShar
                                     />
                                 ))}
                             </div>
+                        </div>
+
+                        {/* NEW: Tags Section */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Etiquetas (Opcional)
+                            </label>
+                            
+                            {/* Tag Input */}
+                            <div className="flex gap-2 mb-2">
+                                <input 
+                                    type="text" 
+                                    value={tagInput}
+                                    onChange={(e) => setTagInput(e.target.value)}
+                                    onKeyDown={handleTagInputKeyDown}
+                                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white transition-colors text-sm" 
+                                    placeholder="Añadir etiqueta..."
+                                />
+                                <button
+                                    type="button"
+                                    onClick={handleAddTag}
+                                    disabled={!tagInput.trim()}
+                                    className="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                >
+                                    <Plus size={16} />
+                                </button>
+                            </div>
+
+                            {/* Tag List */}
+                            {formData.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-2">
+                                    {formData.tags.map(tag => (
+                                        <div 
+                                            key={tag}
+                                            className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-sm"
+                                        >
+                                            <span>#{tag}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveTag(tag)}
+                                                className="hover:bg-indigo-200 dark:hover:bg-indigo-800 rounded-full p-0.5 transition-colors"
+                                            >
+                                                <X size={12} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* Share Section - Only for existing folders */}

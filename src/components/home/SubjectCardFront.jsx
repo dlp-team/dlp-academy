@@ -1,5 +1,5 @@
 // src/components/home/SubjectCardFront.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronRight, MoreVertical, Edit2, Trash2 } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../modals/SubjectIcon'; // Adjust path if necessary
 
@@ -16,6 +16,11 @@ const SubjectCardFront = ({
     scaleMultiplier,
     topicCount
 }) => {
+    const [isHovered, setIsHovered] = useState(false);
+
+    // Calculate shift factor based on scale - smaller cards have less shift
+    const shiftX = 48 * scaleMultiplier;
+
     return (
         <div className="absolute inset-0 cursor-pointer" onClick={() => onSelect(subject.id)}>
             
@@ -34,63 +39,77 @@ const SubjectCardFront = ({
                 <div className="absolute inset-0 bg-slate-100/30 dark:bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             )}
 
-            {/* Badge / Flipper */}
-            <div className={`absolute z-20 transition-all duration-300 ease-out group-hover:-translate-x-12 ${
-                activeMenu === subject.id ? '-translate-x-12' : ''
-            }`}
-            style={{
-                top: `${24 * scaleMultiplier}px`,
-                right: `${24 * scaleMultiplier}px`
-            }}>
+            
+
+           {/* --- ACTION GROUP WRAPPER --- */}
+            <div 
+                className="absolute z-30 flex items-center justify-end" 
+                style={{
+                    top: `${24 * scaleMultiplier}px`,
+                    right: `${24 * scaleMultiplier}px`,
+                    height: `${32 * scaleMultiplier}px` // Matches the dots button height for alignment
+                }}
+            >
+                {/* 1. Badge / Flipper (The one that shifts) */}
                 <div 
-                    onClick={(e) => { e.stopPropagation(); onFlip(subject.id); }}
-                    className={`${
-                        isModern 
-                            ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50' 
-                            : 'bg-white/20 backdrop-blur-md border border-white/30 text-white'
-                    } rounded-full cursor-pointer hover:scale-105 flex items-center gap-2 shadow-sm transition-all`}
-                    style={{ 
-                        fontSize: `${12 * scaleMultiplier}px`,
-                        padding: `${6 * scaleMultiplier}px ${12 * scaleMultiplier}px`
+                    className={`transition-all duration-300 ease-out 
+                        group-hover:-translate-x-[var(--shift-x)] 
+                        ${activeMenu === subject.id ? '-translate-x-[var(--shift-x)]' : ''}
+                    `}
+                    style={{
+                        '--shift-x': `${shiftX}px`,
                     }}
                 >
-                    <span className="font-bold whitespace-nowrap">
-                        {topicCount} {topicCount === 1 ? 'tema' : 'temas'}
-                    </span>
-                    <ChevronRight size={14 * scaleMultiplier} className="opacity-70" />
-                </div>
-            </div>
-
-            {/* Dots Menu */}
-            <div className="absolute z-30"
-            style={{
-                top: `${24 * scaleMultiplier}px`,
-                right: `${24 * scaleMultiplier}px`
-            }}>
-                <button 
-                    onClick={(e) => { e.stopPropagation(); onToggleMenu(subject.id); }}
-                    className={`rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer ${
-                        isModern 
-                            ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800' 
-                            : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30'
-                    } ${
-                        activeMenu === subject.id ? 'opacity-100 scale-110' : 'opacity-0 group-hover:opacity-100'
-                    }`}
-                    style={{ padding: `${8 * scaleMultiplier}px` }}
-                >
-                    <MoreVertical size={15 * scaleMultiplier} />
-                </button>
-                
-                {activeMenu === subject.id && (
-                    <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 z-50 animate-in fade-in zoom-in-95 duration-100 transition-colors">
-                        <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
-                            <Edit2 size={14} /> Editar
-                        </button>
-                        <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors">
-                            <Trash2 size={14} /> Eliminar
-                        </button>
+                    <div
+                        onClick={(e) => { e.stopPropagation(); onFlip(subject.id); }}
+                        className={`${
+                            isModern
+                                ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50'
+                                : 'bg-white/20 backdrop-blur-md border border-white/30 text-white'
+                        } rounded-full cursor-pointer hover:scale-105 flex items-center gap-2 shadow-sm transition-all`}
+                        style={{
+                            fontSize: `${12 * scaleMultiplier}px`,
+                            padding: `${6 * scaleMultiplier}px ${12 * scaleMultiplier}px`
+                        }}
+                    >
+                        <span className="font-bold whitespace-nowrap">
+                            {topicCount} {topicCount === 1 ? 'tema' : 'temas'}
+                        </span>
+                        <ChevronRight size={14 * scaleMultiplier} className="opacity-70" />
                     </div>
-                )}
+                </div>
+
+                {/* 2. Dots Menu (Fixed position on the right) */}
+                <div className="absolute right-0"> 
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onToggleMenu(subject.id); }}
+                        className={`rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer flex items-center justify-center ${
+                            isModern
+                                ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800'
+                                : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30'
+                        } ${
+                            activeMenu === subject.id ? 'opacity-100 scale-110' : 'opacity-0 group-hover:opacity-100'
+                        }`}
+                        style={{ 
+                            width: `${32 * scaleMultiplier}px`, 
+                            height: `${32 * scaleMultiplier}px` 
+                        }}
+                    >
+                        <MoreVertical size={15 * scaleMultiplier} />
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {activeMenu === subject.id && (
+                        <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 z-50 animate-in fade-in zoom-in-95 duration-100 transition-colors">
+                            <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
+                                <Edit2 size={14} /> Editar
+                            </button>
+                            <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors">
+                                <Trash2 size={14} /> Eliminar
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Content */}
