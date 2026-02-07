@@ -107,7 +107,7 @@ const SubjectCard = (props) => {
     return (
         <div 
             ref={cardRef}
-            className={`group relative w-full rounded-2xl shadow-lg dark:shadow-slate-900/50 transition-all ${
+            className={`group relative w-full rounded-2xl shadow-lg dark:shadow-slate-900/50 transition-transform ${
                 isDragging ? 'opacity-0 scale-95' : 'hover:scale-105'
             } ${
                 isModern 

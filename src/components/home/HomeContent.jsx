@@ -172,8 +172,8 @@ const HomeContent = ({
                                                                 style={{ fontSize: `${18 * (cardScale / 100)}px` }}
                                                             >
                                                                 {isPromoteZoneHovered && draggedItem
-                                                                    ? `Mover a nivel superior`
-                                                                    : 'Arrastra aquí para subir nivel'
+                                                                    ? `Mover a carpeta superior`
+                                                                    : 'Arrastra aquí para mover la asignatura a la anterior carpeta'
                                                                 }
                                                             </span>
                                                         </div>
