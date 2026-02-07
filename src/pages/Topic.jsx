@@ -5,12 +5,13 @@ import {
     ChevronRight, Calendar, MoreVertical, CheckCircle2, 
     Timer, Sparkles, Home, Trash2, Edit2, Share2, Upload,
     X, BookOpen, Award, Maximize2, Wand2, FileEdit, Check, MoreHorizontal, Plus, Sigma,
-    Zap, Brain, Trophy, Target
+    Zap, Brain, Trophy, Target, Pencil, NotebookPen
 } from 'lucide-react';
 import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import Header from '../components/layout/Header';
 import QuizModal from './QuizzModal';
+import CreateContentModal from './CreateContentModal'; // <--- IMPORTACIÓN NUEVA
 
 // --- COMPONENTE DE NOTIFICACIÓN (TOAST) ---
 const AppToast = ({ show, message, onClose }) => {
@@ -18,7 +19,6 @@ const AppToast = ({ show, message, onClose }) => {
     return (
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300 w-full max-w-sm px-4">
             <div className="bg-slate-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10">
-                {/* Logo de la App Integrado */}
                 <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/20 shrink-0">
                     <Brain className="w-6 h-6 text-white" />
                 </div>
@@ -38,6 +38,7 @@ const Topic = ({ user }) => {
     const navigate = useNavigate();
     const { subjectId, topicId } = useParams();
     const fileInputRef = useRef(null);
+    const toastTimerRef = useRef(null);
     
     // Estados de Datos
     const [subject, setSubject] = useState(null);
@@ -72,10 +73,22 @@ const Topic = ({ user }) => {
         prompt: '' 
     });
 
-    // Función auxiliar para mostrar notificaciones
-    const showNotification = (msg) => {
+    // --- NUEVO: ESTADOS PARA EL MODAL DE CONTENIDO ---
+    const [showContentModal, setShowContentModal] = useState(false);
+    const [isGeneratingContent, setIsGeneratingContent] = useState(false);
+    const [contentFormData, setContentFormData] = useState({ 
+        title: '', 
+        type: 'summary', 
+        prompt: '' 
+    });
+
+    // Función auxiliar para notificaciones
+    const showNotification = (msg, duration = 5000) => {
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         setToast({ show: true, message: msg });
-        setTimeout(() => setToast({ show: false, message: '' }), 4000); // Se oculta en 4s
+        toastTimerRef.current = setTimeout(() => {
+            setToast({ show: false, message: '' });
+        }, duration);
     };
 
     // --- CARGA DE DATOS ---
@@ -88,11 +101,9 @@ const Topic = ({ user }) => {
             if (!user || !subjectId || !topicId) return;
 
             try {
-                // 1. Asignatura
                 const subjectDoc = await getDoc(doc(db, "subjects", subjectId));
                 if (subjectDoc.exists()) setSubject({ id: subjectDoc.id, ...subjectDoc.data() });
 
-                // 2. Tema
                 const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
                 unsubscribeTopic = onSnapshot(topicRef, (topicDoc) => {
                     if (topicDoc.exists()) {
@@ -105,7 +116,6 @@ const Topic = ({ user }) => {
                             quizzes: prev?.quizzes || []
                         }));
 
-                        // 3. Documentos
                         const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
                         unsubscribeDocs = onSnapshot(docsRef, (docsSnap) => {
                             const manualDocs = docsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -119,7 +129,6 @@ const Topic = ({ user }) => {
                             }));
                         });
 
-                        // 4. QUIZZES
                         const quizzesRef = collection(db, "subjects", subjectId, "topics", topicId, "quizzes");
                         unsubscribeQuizzes = onSnapshot(quizzesRef, (quizzesSnap) => {
                             const realQuizzes = quizzesSnap.docs.map(q => ({ id: q.id, ...q.data() }));
@@ -146,6 +155,7 @@ const Topic = ({ user }) => {
             if (unsubscribeTopic) unsubscribeTopic();
             if (unsubscribeDocs) unsubscribeDocs();
             if (unsubscribeQuizzes) unsubscribeQuizzes();
+            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         };
     }, [user, subjectId, topicId, navigate]);
 
@@ -160,13 +170,13 @@ const Topic = ({ user }) => {
         return { icon: FileText, label: 'Documento' };
     };
 
-    const getQuizIcon = (type) => {
+    const getQuizVisuals = (type) => {
         const t = (type || 'basic').toLowerCase();
-        if (t.includes('basic') || t.includes('repaso')) return { icon: Zap, color: 'from-sky-400 to-blue-600', level: 'Repaso Rápido' };
-        if (t.includes('intermediate') || t.includes('práctica')) return { icon: Target, color: 'from-violet-400 to-purple-600', level: 'Práctica' };
-        if (t.includes('advanced') || t.includes('avanzado')) return { icon: Brain, color: 'from-fuchsia-500 to-pink-600', level: 'Avanzado' };
-        if (t.includes('final') || t.includes('simulacro')) return { icon: Trophy, color: 'from-amber-400 to-orange-600', level: 'Examen Final' };
-        return { icon: FileText, color: 'from-slate-400 to-slate-600', level: 'Test General' };
+        if (t.includes('basic') || t.includes('repaso')) return { icon: NotebookPen, bgFade: 'bg-sky-50', textAccent: 'text-sky-600', iconBg: 'bg-sky-100', border: 'border-sky-100', level: 'Repaso' };
+        if (t.includes('intermediate') || t.includes('práctica')) return { icon: Pencil, bgFade: 'bg-indigo-50', textAccent: 'text-indigo-600', iconBg: 'bg-indigo-100', border: 'border-indigo-100', level: 'Práctica' };
+        if (t.includes('advanced') || t.includes('avanzado')) return { icon: Target, bgFade: 'bg-emerald-50', textAccent: 'text-emerald-600', iconBg: 'bg-emerald-100', border: 'border-emerald-100', level: 'Avanzado' };
+        if (t.includes('final') || t.includes('simulacro') || t.includes('exam')) return { icon: Trophy, bgFade: 'bg-amber-50', textAccent: 'text-amber-600', iconBg: 'bg-amber-100', border: 'border-amber-100', level: 'Simulacro' };
+        return { icon: BookOpen, bgFade: 'bg-slate-50', textAccent: 'text-slate-600', iconBg: 'bg-slate-200', border: 'border-slate-100', level: 'Test' };
     };
 
     // --- GESTIÓN ARCHIVOS ---
@@ -210,7 +220,6 @@ const Topic = ({ user }) => {
         } catch (error) { console.error(error); alert("Error al eliminar."); }
     };
 
-    // --- ELIMINAR QUIZ ---
     const deleteQuiz = async (quizId) => {
         if (!window.confirm("¿Eliminar este test permanentemente?")) return;
         try {
@@ -224,7 +233,6 @@ const Topic = ({ user }) => {
         setViewingFile(file);
     };
 
-    // --- ACCIONES TEMA ---
     const handleDeleteTopic = async () => {
         if (!window.confirm("¿Eliminar tema completo?")) return;
         try {
@@ -241,7 +249,6 @@ const Topic = ({ user }) => {
         } catch (error) { console.error(error); }
     };
 
-    // --- UPLOAD ---
     const handleManualUpload = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
@@ -263,10 +270,13 @@ const Topic = ({ user }) => {
         } catch (error) { alert("Error al subir."); } finally { setUploading(false); }
     };
 
-    // --- IA GENERATION (MODIFICADO) ---
+    // --- IA GENERATION: QUIZZES ---
     const handleGenerateQuizSubmit = async (e) => {
         e.preventDefault();
-        setIsGeneratingQuiz(true);
+        setShowQuizModal(false);
+        setIsGeneratingQuiz(false); 
+        showNotification("⏳ La IA está diseñando tu test...", 6000);
+
         try {
             const formData = new FormData();
             formData.append('title', quizFormData.title);
@@ -280,30 +290,75 @@ const Topic = ({ user }) => {
             formData.append('topicTitle', topic?.title);
             if (quizFormData.file) formData.append('files', quizFormData.file); 
 
-            // Enviamos petición (SIN esperar respuesta larga si es asíncrono, o esperando el OK de recepción)
             const res = await fetch('https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook/711e538b-9d63-42bb-8494-873301ffdf39', {
                 method: 'POST', body: formData 
             });
             
             if (!res.ok) throw new Error("Error servidor");
-            
-            // 1. CERRAR MODAL INMEDIATAMENTE
-            setShowQuizModal(false);
-            
-            // 2. MOSTRAR NOTIFICACIÓN TIPO APP (Toast)
-            showNotification("Generando test... te avisaremos cuando esté listo.");
+            showNotification("✅ ¡Test generado con éxito!");
 
         } catch (error) { 
             console.error(error); 
-            alert("Error de conexión con la IA"); 
-        } finally { 
-            setIsGeneratingQuiz(false); 
+            showNotification("❌ Error de conexión con la IA"); 
         }
     };
 
-    const handleCreateCustomPDF = () => { alert("✨ Crear nuevo PDF personalizado"); };
+    // --- NUEVO: IA GENERATION: CONTENIDO (MATERIALS) ---
+    const handleGenerateContentSubmit = async (e) => {
+        e.preventDefault();
+        setShowContentModal(false);
+        setIsGeneratingContent(false);
+        showNotification("⏳ Redactando tu material de estudio...", 6000);
+
+        try {
+            const formData = new FormData();
+            formData.append('title', contentFormData.title);
+            formData.append('type', contentFormData.type); // 'summary', 'formulas', etc.
+            formData.append('prompt', contentFormData.prompt || '');
+            // NOTA: Ajusta esta acción si tu n8n lo requiere para diferenciar tests de materiales
+            formData.append('action', 'generate_study_material'); 
+            
+            formData.append('userId', user?.uid);
+            formData.append('subjectId', subjectId);
+            formData.append('topicId', topicId);
+            formData.append('subjectName', subject?.name);
+            formData.append('topicTitle', topic?.title);
+            
+            if (contentFormData.file) formData.append('files', contentFormData.file);
+
+            // Reutilizamos el mismo webhook (tu n8n debe saber diferenciar por 'action' o estructura)
+            const res = await fetch('https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook/711e538b-9d63-42bb-8494-873301ffdf39', {
+                method: 'POST', body: formData 
+            });
+
+            if (!res.ok) throw new Error("Error servidor");
+            showNotification("✅ ¡Material creado! Aparecerá en breve.");
+
+        } catch (error) {
+            console.error(error);
+            showNotification("❌ Error al generar el material.");
+        }
+    };
+
+    // --- HANDLERS PARA ABRIR MODALES ---
+    
+    // Antes esto era un alert, ahora abre el modal de contenido
+    const handleCreateCustomPDF = () => {
+        setContentFormData({ 
+            title: `Resumen: ${topic?.title}`, 
+            type: 'summary', 
+            prompt: '' 
+        });
+        setShowContentModal(true);
+    };
+
     const handleCreateCustomQuiz = () => {
-        setQuizFormData({ title: `Test: ${topic?.title}`, level: 'Intermedio', numQuestions: 5, prompt: '' });
+        setQuizFormData({ 
+            title: `Test: ${topic?.title}`, 
+            level: 'Intermedio', 
+            numQuestions: 5, 
+            prompt: '' 
+        });
         setShowQuizModal(true);
     };
 
@@ -483,29 +538,29 @@ const Topic = ({ user }) => {
                         </div>
                     )}
 
-                    {/* CONTENIDO QUIZZES (CON MENÚ) */}
+                    {/* CONTENIDO QUIZZES (REDISEÑADO) */}
                     {activeTab === 'quizzes' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {topic.quizzes?.map((quiz, idx) => {
-                                const { icon: Icon, level, color } = getQuizIcon(quiz.type);
+                                const { icon: Icon, bgFade, textAccent, iconBg, border, level } = getQuizVisuals(quiz.type);
                                 const isMenuOpen = activeMenuId === quiz.id;
 
                                 return (
-                                    <div key={idx} className="group relative h-64 rounded-3xl shadow-lg shadow-slate-200/50 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl cursor-default bg-white border border-slate-100">
-                                        <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-90 transition-opacity group-hover:opacity-100`}></div>
+                                    <div key={idx} className="group relative h-64 rounded-3xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl cursor-default bg-white border border-slate-100 shadow-sm">
                                         
-                                        <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
-                                            <Icon className="w-48 h-48 text-white absolute -top-8 -left-8 opacity-20 rotate-12 group-hover:rotate-0 transition-transform duration-700" />
-                                        </div>
+                                        {/* FADE BACKGROUND BEHIND ICON */}
+                                        <div className={`absolute -top-24 -left-24 w-64 h-64 rounded-full ${bgFade} opacity-70 blur-3xl group-hover:opacity-100 transition-opacity`}></div>
 
+                                        {/* ICONO GRANDE (FADE IN PAGE BLEND) */}
                                         <div className="absolute top-6 left-6 z-20">
-                                            <div className="p-2.5 rounded-xl border shadow-sm backdrop-blur-md bg-white/20 border-white/20">
-                                                <Icon className="w-6 h-6 text-white" />
+                                            <div className={`p-3.5 rounded-2xl ${iconBg} ${textAccent} shadow-sm`}>
+                                                <Icon className="w-8 h-8" />
                                             </div>
                                         </div>
 
+                                        {/* MENU */}
                                         <div className="absolute top-4 right-4 z-30">
-                                            <button onClick={(e) => handleMenuClick(e, quiz.id)} className="p-1.5 rounded-full transition-colors text-white hover:bg-white/20">
+                                            <button onClick={(e) => handleMenuClick(e, quiz.id)} className="p-2 rounded-full transition-colors text-slate-400 hover:bg-slate-50 hover:text-slate-600">
                                                 <MoreHorizontal className="w-6 h-6" />
                                             </button>
                                             
@@ -531,17 +586,17 @@ const Topic = ({ user }) => {
                                             )}
                                         </div>
 
-                                        <div className="relative h-full p-8 flex flex-col justify-end text-white z-10">
+                                        <div className="relative h-full p-8 flex flex-col justify-end z-10">
                                             <div className="mt-auto">
-                                                <span className="absolute top-6 right-16 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/10">
+                                                <span className={`absolute top-6 right-16 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${bgFade} ${border} ${textAccent}`}>
                                                     {level}
                                                 </span>
-                                                <h3 className="text-3xl font-extrabold leading-tight mb-2 text-white">{quiz.name || "Test Práctico"}</h3>
-                                                <div className="flex items-center gap-2 text-white/80 text-sm mb-6 font-medium"><Timer className="w-4 h-4" /> 15 min aprox</div>
+                                                <h3 className="text-3xl font-extrabold leading-tight mb-2 text-slate-800">{quiz.name || "Test Práctico"}</h3>
+                                                <div className="flex items-center gap-2 text-slate-400 text-sm mb-6 font-medium"><Timer className="w-4 h-4" /> 15 min aprox</div>
                                                 
                                                 <button 
                                                     onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`)} 
-                                                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-white text-indigo-900 text-sm font-bold uppercase tracking-wider hover:bg-indigo-50 transition-all shadow-lg cursor-pointer"
+                                                    className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all shadow-md hover:shadow-lg ${iconBg} ${textAccent} hover:brightness-95`}
                                                 >
                                                     <Play className="w-4 h-4 fill-current" /> Comenzar Test
                                                 </button>
@@ -559,6 +614,16 @@ const Topic = ({ user }) => {
             </main>
 
             <QuizModal isOpen={showQuizModal} onClose={() => setShowQuizModal(false)} onSubmit={handleGenerateQuizSubmit} formData={quizFormData} setFormData={setQuizFormData} isGenerating={isGeneratingQuiz} themeColor={topic?.color} />
+            
+            {/* RENDERIZADO DEL MODAL DE CONTENIDOS */}
+            <CreateContentModal 
+                isOpen={showContentModal}
+                onClose={() => setShowContentModal(false)}
+                onSubmit={handleGenerateContentSubmit}
+                formData={contentFormData}
+                setFormData={setContentFormData}
+                isGenerating={isGeneratingContent}
+            />
 
             {viewingFile && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-200">

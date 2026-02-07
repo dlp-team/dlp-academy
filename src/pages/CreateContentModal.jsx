@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Loader2, Wand2, Upload, FileText, Trash2 } from 'lucide-react';
+import { 
+    X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, 
+    Loader2, Wand2, Upload, FileText, Trash2 
+} from 'lucide-react';
 
 const QuizModal = ({ 
     isOpen, 
@@ -8,7 +11,7 @@ const QuizModal = ({
     formData, 
     setFormData, 
     isGenerating, 
-    themeColor 
+    themeColor // Recibimos el color del tema (ej: 'from-indigo-500 to-purple-600')
 }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [shouldRender, setShouldRender] = useState(false);
@@ -27,7 +30,13 @@ const QuizModal = ({
 
     if (!shouldRender) return null;
 
-    const baseColorClass = themeColor ? themeColor.split('-')[1] : 'indigo'; 
+    // --- LÓGICA DE COLOR DINÁMICO ---
+    // Extraemos el nombre del color base (ej: 'indigo' de 'from-indigo-500')
+    // Si no hay themeColor, usamos 'indigo' por defecto.
+    const baseColor = themeColor ? themeColor.split('-')[1] : 'indigo';
+    
+    // Usamos el degradado del tema o uno por defecto
+    const gradientClass = themeColor || 'from-indigo-600 to-violet-700';
 
     const handleClose = () => {
         if (!isGenerating) {
@@ -55,15 +64,15 @@ const QuizModal = ({
                 onClick={handleClose} 
             />
             
-            {/* MODAL */}
+            {/* MODAL CONTAINER */}
             <div className={`relative bg-white rounded-[2rem] w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] 
                 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] 
                 transform origin-bottom
                 ${isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8 pointer-events-none'}`}
             >
                 
-                {/* --- HEADER (Fijo) --- */}
-                <div className={`px-8 py-8 shrink-0 bg-gradient-to-br ${themeColor || 'from-indigo-600 to-violet-700'} relative overflow-hidden group rounded-t-[2rem]`}>
+                {/* --- HEADER (Usa gradientClass) --- */}
+                <div className={`px-8 py-8 shrink-0 bg-gradient-to-br ${gradientClass} relative overflow-hidden group rounded-t-[2rem]`}>
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none transition-transform duration-[2000ms] group-hover:scale-110"></div>
                     <div className="absolute bottom-0 left-0 w-40 h-40 bg-black/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/3 pointer-events-none"></div>
 
@@ -103,7 +112,7 @@ const QuizModal = ({
                                 type="text" 
                                 value={formData.title} 
                                 onChange={e => setFormData({...formData, title: e.target.value})} 
-                                className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-semibold text-slate-800 placeholder:text-slate-300`} 
+                                className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColor}-500/20 focus:border-${baseColor}-500 transition-all font-semibold text-slate-800 placeholder:text-slate-300`} 
                                 placeholder="Ej: Repaso Global - Tema 1" 
                                 required 
                                 disabled={isGenerating}
@@ -120,7 +129,7 @@ const QuizModal = ({
                                     <select 
                                         value={formData.level} 
                                         onChange={e => setFormData({...formData, level: e.target.value})} 
-                                        className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-bold text-slate-700 appearance-none cursor-pointer hover:bg-slate-100 disabled:opacity-50`}
+                                        className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColor}-500/20 focus:border-${baseColor}-500 transition-all font-bold text-slate-700 appearance-none cursor-pointer hover:bg-slate-100 disabled:opacity-50`}
                                         disabled={isGenerating}
                                     >
                                         <option value="Principiante">Básico</option>
@@ -144,7 +153,7 @@ const QuizModal = ({
                                     onChange={e => setFormData({...formData, numQuestions: e.target.value})} 
                                     min="1" 
                                     max="20" 
-                                    className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-bold text-slate-700 disabled:opacity-50`} 
+                                    className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColor}-500/20 focus:border-${baseColor}-500 transition-all font-bold text-slate-700 disabled:opacity-50`} 
                                     required
                                     disabled={isGenerating}
                                 />
@@ -159,7 +168,7 @@ const QuizModal = ({
                             <textarea 
                                 value={formData.prompt} 
                                 onChange={e => setFormData({...formData, prompt: e.target.value})} 
-                                className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none h-24 resize-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-medium text-slate-600 placeholder:text-slate-300 disabled:opacity-50`} 
+                                className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none h-24 resize-none focus:ring-2 focus:ring-${baseColor}-500/20 focus:border-${baseColor}-500 transition-all font-medium text-slate-600 placeholder:text-slate-300 disabled:opacity-50`} 
                                 placeholder="Ej: Enfócate en las excepciones y casos prácticos..."
                                 disabled={isGenerating}
                             ></textarea>
@@ -184,10 +193,10 @@ const QuizModal = ({
                                 {!formData.file ? (
                                     <label 
                                         htmlFor="quiz-pdf-upload"
-                                        className={`flex items-center gap-4 w-full px-5 py-3.5 bg-slate-50 border border-slate-200 border-dashed rounded-2xl cursor-pointer hover:bg-slate-100 hover:border-${baseColorClass}-400 transition-all group`}
+                                        className={`flex items-center gap-4 w-full px-5 py-3.5 bg-slate-50 border border-slate-200 border-dashed rounded-2xl cursor-pointer hover:bg-slate-100 hover:border-${baseColor}-400 transition-all group`}
                                     >
                                         <div className="p-2 bg-white rounded-xl border border-slate-200 shadow-sm group-hover:scale-110 transition-transform">
-                                            <Upload className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                            <Upload className={`w-4 h-4 text-slate-400 group-hover:text-${baseColor}-500 transition-colors`} />
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-slate-600 font-bold text-sm">Subir PDF de referencia</span>
@@ -195,12 +204,12 @@ const QuizModal = ({
                                         </div>
                                     </label>
                                 ) : (
-                                    <div className="flex items-center justify-between w-full px-5 py-3.5 bg-indigo-50/50 border border-indigo-100 rounded-2xl transition-all animate-in fade-in zoom-in-95">
+                                    <div className={`flex items-center justify-between w-full px-5 py-3.5 bg-${baseColor}-50/50 border border-${baseColor}-100 rounded-2xl transition-all animate-in fade-in zoom-in-95`}>
                                         <div className="flex items-center gap-3 overflow-hidden">
-                                            <div className="p-2 bg-white rounded-xl border border-indigo-100 shadow-sm shrink-0">
-                                                <FileText className="w-4 h-4 text-indigo-600" />
+                                            <div className={`p-2 bg-white rounded-xl border border-${baseColor}-100 shadow-sm shrink-0`}>
+                                                <FileText className={`w-4 h-4 text-${baseColor}-600`} />
                                             </div>
-                                            <span className="text-indigo-900 font-bold text-sm truncate max-w-[200px]" title={formData.file.name}>
+                                            <span className={`text-${baseColor}-900 font-bold text-sm truncate max-w-[200px]`} title={formData.file.name}>
                                                 {formData.file.name}
                                             </span>
                                         </div>
@@ -208,7 +217,7 @@ const QuizModal = ({
                                             type="button"
                                             onClick={removeFile}
                                             disabled={isGenerating}
-                                            className="p-2 hover:bg-white rounded-full text-indigo-400 hover:text-red-500 transition-colors hover:shadow-sm"
+                                            className={`p-2 hover:bg-white rounded-full text-${baseColor}-400 hover:text-red-500 transition-colors hover:shadow-sm`}
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
@@ -232,9 +241,9 @@ const QuizModal = ({
                         </button>
                         <button 
                             type="submit"
-                            form="quiz-form" // Vincula este botón al formulario de arriba
+                            form="quiz-form" 
                             disabled={isGenerating} 
-                            className={`flex-[2] px-6 py-4 bg-gradient-to-r ${themeColor || 'from-slate-800 to-slate-900'} text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-${baseColorClass}-500/30 transition-all flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed`}
+                            className={`flex-[2] px-6 py-4 bg-gradient-to-r ${gradientClass} text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-${baseColor}-500/30 transition-all flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed`}
                         >
                             {isGenerating ? (
                                 <>
