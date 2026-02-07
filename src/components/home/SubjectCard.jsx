@@ -33,10 +33,10 @@ const SubjectCard = (props) => {
            Changed to: w-full with aspect-[16/9] to make it RECTANGLE (wider than tall) */
         <div 
             className={`group relative w-full rounded-2xl shadow-lg dark:shadow-slate-900/50 transition-all ${
-                isDragging ? 'opacity-50 scale-95' : 'hover:scale-105'
+                isDragging ? 'opacity-0 scale-95' : 'hover:scale-105'
             } ${
                 isModern 
-                    ? `bg-gradient-to-br ${subject.color} p-[3px]` 
+                    ? `bg-gradient-to-br ${subject.color} p-[4px]` 
                     : ''
             }`}
             style={{ aspectRatio: '16 / 10' }}

@@ -25,9 +25,9 @@ const FolderCard = (props) => {
     return (
         <div 
             className={`group relative w-full pt-3 transition-all cursor-pointer ${
-                isDragging ? 'opacity-50 scale-95' : 'hover:scale-105'
+                isDragging ? 'opacity-0 scale-95' : 'hover:scale-105'
             } ${
-                state.isOver && canDrop ? 'ring-4 ring-indigo-400 dark:ring-indigo-500' : ''
+                state.isOver && canDrop ? 'ring-4 ring-indigo-400 rounded-2xl dark:ring-indigo-500' : ''
             }`}
             style={{ aspectRatio: '16 / 10' }}
             onClick={() => onOpen(folder)}
