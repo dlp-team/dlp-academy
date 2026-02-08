@@ -6,18 +6,83 @@ const BreadcrumbNav = ({
     currentFolder, 
     allFolders, 
     onNavigate,
-    // NEW PROPS for Drag & Drop
     onDropOnBreadcrumb, 
     draggedItem 
 }) => {
-    // State to track which breadcrumb segment is being hovered over
-    // Use 'root' string for Inicio, folder IDs for others, null for none.
     const [hoveredId, setHoveredId] = useState(null);
 
-    // 1. Build the breadcrumb path chain
+    // --- GHOST MANIPULATION HELPERS ---
+    
+    const shrinkGhost = () => {
+        const ghost = document.getElementById('active-drag-ghost');
+        if (ghost) {
+            // Scale down to 0.4 (40%) and fade slightly
+            ghost.style.transform = 'scale(0.4)';
+            ghost.style.opacity = '0.7'; 
+        }
+    };
+
+    const restoreGhost = () => {
+        const ghost = document.getElementById('active-drag-ghost');
+        if (ghost) {
+            // Restore to original scale (stored in dataset) or default 1
+            const originalScale = ghost.dataset.originalScale || 1;
+            ghost.style.transform = `scale(${originalScale})`;
+            ghost.style.opacity = '0.9';
+        }
+    };
+
+    // --- HANDLERS ---
+
+    const handleDragOver = (e, targetFolderId) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const currentId = currentFolder ? currentFolder.id : 'root';
+        if (targetFolderId === currentId) return;
+        if (draggedItem && draggedItem.id === targetFolderId) return;
+
+        setHoveredId(targetFolderId);
+
+        // TRIGGER THE GHOST SHRINK
+        if (draggingCanDropHere(targetFolderId)) {
+            shrinkGhost();
+        }
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        setHoveredId(null);
+        
+        // RESTORE THE GHOST SIZE
+        restoreGhost();
+    };
+
+    const handleDrop = (e, targetFolderId) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setHoveredId(null);
+        
+        // Restore ghost immediately (though it will likely be removed by dragEnd)
+        restoreGhost();
+
+        const currentId = currentFolder ? currentFolder.id : 'root';
+        if (targetFolderId === currentId) return;
+
+        const subjectId = e.dataTransfer.getData('subjectId');
+        const folderId = e.dataTransfer.getData('folderId');
+        const finalTargetId = targetFolderId === 'root' ? null : targetFolderId;
+
+        if (onDropOnBreadcrumb) {
+            onDropOnBreadcrumb(finalTargetId, subjectId, folderId);
+        }
+    };
+
+    // --- RENDER LOGIC ---
+
+    // 1. Build path
     const breadcrumbPath = [];
     let tempFolder = currentFolder;
-
     while (tempFolder) {
         breadcrumbPath.unshift(tempFolder);
         if (tempFolder.parentId) {
@@ -27,113 +92,68 @@ const BreadcrumbNav = ({
         }
     }
 
-    // --- DRAG & DROP HANDLERS ---
+    const getContainerClasses = (id) => {
+        const isHovered = hoveredId === id;
+        const canDrop = draggingCanDropHere(id);
+        
+        let classes = "relative inline-flex items-center px-3 py-1.5 rounded-lg transition-all duration-300 ease-out ";
 
-    const handleDragOver = (e, targetFolderId) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        // 1. Don't highlight if we are currently IN this folder
-        const currentId = currentFolder ? currentFolder.id : 'root';
-        if (targetFolderId === currentId) return;
-
-        // 2. Don't highlight if dragging a folder over itself in the breadcrumb
-        if (draggedItem && draggedItem.id === targetFolderId) return;
-
-        setHoveredId(targetFolderId);
-    };
-
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        setHoveredId(null);
-    };
-
-    const handleDrop = (e, targetFolderId) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setHoveredId(null);
-
-        // Don't drop onto the current folder
-        const currentId = currentFolder ? currentFolder.id : 'root';
-        if (targetFolderId === currentId) return;
-
-        const subjectId = e.dataTransfer.getData('subjectId');
-        const folderId = e.dataTransfer.getData('folderId');
-
-        // Convert 'root' back to null for the actual logic handler
-        const finalTargetId = targetFolderId === 'root' ? null : targetFolderId;
-
-        if (onDropOnBreadcrumb) {
-            onDropOnBreadcrumb(finalTargetId, subjectId, folderId);
+        if (canDrop) {
+            if (isHovered) {
+                // Docking visual: Scale Up Breadcrumb, Change Color
+                classes += "bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 scale-110 -translate-y-0.5 z-10 font-semibold ring-2 ring-indigo-300 dark:ring-indigo-500 cursor-copy";
+            } else {
+                classes += "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 border-dashed hover:scale-105";
+            }
+        } else {
+            classes += "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-900 dark:hover:text-gray-100";
         }
+        return classes;
     };
 
-    // Helper for highlight styles
-    const getDropZoneClasses = (id) => {
-        // Only show highlight if something is being dragged AND this element is hovered
-        if (draggedItem && hoveredId === id) {
-            return 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 scale-105 shadow-sm ring-2 ring-amber-300 dark:ring-amber-700 rounded-md';
-        }
-        return draggingCanDropHere(id) ? "hover:bg-gray-100 dark:hover:bg-slate-800 rounded-md" : "";
-    };
-
-    // Helper to see if the drag even *could* drop here (to show mild hover effect)
     const draggingCanDropHere = (id) => {
          const currentId = currentFolder ? currentFolder.id : 'root';
-         // Can't drop on current location, and can't drop folder on itself
          return draggedItem && id !== currentId && draggedItem.id !== id;
     }
-
 
     if (!currentFolder) return null;
 
     return (
         <nav className="flex mt-1 mb-8" aria-label="Breadcrumb">
-            <ol className="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse flex-wrap">
-                {/* 1. Root (Inicio) Link - NOW A DROP ZONE */}
-                <li 
-                    className={`inline-flex items-center transition-all duration-200 ${getDropZoneClasses('root')}`}
-                    onDragOver={(e) => handleDragOver(e, 'root')}
-                    onDragLeave={handleDragLeave}
-                    onDrop={(e) => handleDrop(e, 'root')}
-                >
+            <ol className="inline-flex items-center space-x-1 md:space-x-2 flex-wrap">
+                
+                {/* ROOT */}
+                <li>
                     <button 
                         onClick={() => onNavigate(null)}
-                        className={`inline-flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 px-2 py-1 transition-colors ${
-                            !draggedItem && "hover:text-indigo-600 dark:hover:text-indigo-400"
-                        }`}
+                        onDragOver={(e) => handleDragOver(e, 'root')}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, 'root')}
+                        className={getContainerClasses('root')}
                     >
                         <Home size={16} className="me-2" />
-                        Inicio
+                        <span className="text-sm font-medium">Inicio</span>
                     </button>
                 </li>
 
-                {/* 2. Dynamic Path Links - NOW DROP ZONES */}
+                {/* DYNAMIC PATH */}
                 {breadcrumbPath.map((folder, index) => {
                     const isLast = index === breadcrumbPath.length - 1;
                     
                     return (
-                        <li 
-                            key={folder.id} 
-                            className={`inline-flex items-center transition-all duration-200 ${!isLast ? getDropZoneClasses(folder.id) : ''}`}
-                             // Only enable handlers if it's NOT the last item (current folder)
-                            {...(!isLast ? {
-                                onDragOver: (e) => handleDragOver(e, folder.id),
-                                onDragLeave: handleDragLeave,
-                                onDrop: (e) => handleDrop(e, folder.id)
-                            } : {})}
-                        >
-                            <ChevronRight size={16} className="text-gray-400 mx-1" />
+                        <li key={folder.id} className="inline-flex items-center">
+                            <ChevronRight size={16} className="text-gray-300 dark:text-gray-600 mx-1" />
                             {isLast ? (
-                                <span className="ms-1 text-sm font-medium text-gray-500 dark:text-gray-400 md:ms-2 px-2 py-1">
+                                <span className="px-3 py-1.5 ms-1 text-sm font-bold text-gray-900 dark:text-white bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-gray-100 dark:border-slate-700">
                                     {folder.name}
                                 </span>
                             ) : (
                                 <button 
                                     onClick={() => onNavigate(folder)}
-                                    className={`ms-1 text-sm font-medium text-gray-700 dark:text-gray-300 md:ms-2 px-2 py-1 transition-colors ${
-                                         !draggedItem && "hover:text-indigo-600 dark:hover:text-indigo-400"
-                                    }`}
+                                    onDragOver={(e) => handleDragOver(e, folder.id)}
+                                    onDragLeave={handleDragLeave}
+                                    onDrop={(e) => handleDrop(e, folder.id)}
+                                    className={`ms-1 text-sm ${getContainerClasses(folder.id)}`}
                                 >
                                     {folder.name}
                                 </button>

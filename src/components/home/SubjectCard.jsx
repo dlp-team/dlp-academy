@@ -38,7 +38,7 @@ const SubjectCard = (props) => {
         const cardNode = cardRef.current;
 
         if (cardNode) {
-            // A. Calculate offset so the ghost stays under the mouse exactly where you grabbed it
+            // A. Calculate offset
             const rect = cardNode.getBoundingClientRect();
             dragOffsetRef.current = {
                 x: e.clientX - rect.left,
@@ -66,6 +66,22 @@ const SubjectCard = (props) => {
             // Remove any classes that might hide it or interfere
             ghost.classList.remove('opacity-0', 'transition-all', 'duration-300');
 
+            // --- NEW: Add ID and Transition for Breadcrumb interaction ---
+            ghost.id = 'active-drag-ghost';
+            ghost.style.transition = 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease'; // bouncy ease
+            ghost.dataset.originalScale = scaleMultiplier; // Store original scale
+            // -------------------------------------------------------------
+
+            ghost.style.position = 'fixed';
+            ghost.style.zIndex = '9999';
+            ghost.style.pointerEvents = 'none';
+            ghost.style.opacity = '1';
+            ghost.style.transform = `scale(0.9)`;
+            ghost.style.transformOrigin = 'center center';
+            ghost.style.left = `${rect.left}px`;
+            ghost.style.top = `${rect.top}px`;
+
+
             // D. Add to body
             document.body.appendChild(ghost);
             dragGhostRef.current = ghost;
@@ -74,29 +90,26 @@ const SubjectCard = (props) => {
             const emptyImg = new Image();
             emptyImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
             e.dataTransfer.setDragImage(emptyImg, 0, 0);
+            
+            
         }
 
-        // Call original handler logic
         handlers.handleDragStart(e);
     };
 
-    // 2. While Dragging: Move the Ghost
-    const handleDragMove = (e) => {
-        if (dragGhostRef.current) {
-            // Browsers sometimes fire a final (0,0) event at the end; ignore it.
-            if (e.clientX === 0 && e.clientY === 0) return;
-
+    // 2. Update Ghost Position
+    const handleDrag = (e) => {
+        if (dragGhostRef.current && e.clientX !== 0 && e.clientY !== 0) {
+            const ghost = dragGhostRef.current;
             const x = e.clientX - dragOffsetRef.current.x;
             const y = e.clientY - dragOffsetRef.current.y;
-
-            // Use direct DOM manipulation for performance (avoid React state here)
-            dragGhostRef.current.style.left = `${x}px`;
-            dragGhostRef.current.style.top = `${y}px`;
+            ghost.style.left = `${x}px`;
+            ghost.style.top = `${y}px`;
         }
     };
 
-    // 3. End Drag: Remove Ghost
-    const handleDragEndWithCleanup = (e) => {
+    // 3. End Drag: Cleanup
+    const handleDragEnd = (e) => {
         if (dragGhostRef.current) {
             dragGhostRef.current.remove();
             dragGhostRef.current = null;
@@ -115,12 +128,10 @@ const SubjectCard = (props) => {
                     : ''
             }`}
             style={{ aspectRatio: '16 / 10' }}
-            draggable={draggable && !isFlipped}
-            
-            // --- UPDATED HANDLERS ---
+            draggable={draggable}
             onDragStart={handleDragStartWithCustomImage}
-            onDrag={handleDragMove}         // Tracks mouse movement
-            onDragEnd={handleDragEndWithCleanup} // Cleans up the ghost
+            onDrag={handleDrag}
+            onDragEnd={handleDragEnd}
             onDragOver={handlers.handleDragOver}
             onDrop={handlers.handleDrop}
         >
@@ -132,7 +143,6 @@ const SubjectCard = (props) => {
                     : ''
             }`}>
                 
-                {/* --- FRONT --- */}
                 {!isFlipped && (
                     <SubjectCardFront 
                         subject={subject}
@@ -149,7 +159,6 @@ const SubjectCard = (props) => {
                     />
                 )}
 
-                {/* --- BACK --- */}
                 {isFlipped && (
                     <SubjectCardBack 
                         subject={subject}
