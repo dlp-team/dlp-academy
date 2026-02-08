@@ -81,8 +81,8 @@ const TopicCard = ({
             onDragStart={handleDragStartInternal}
             onDrag={handleDragMove}
             onDragEnd={handleDragEndInternal}
-            onDragOver={onDragOver} // Passed from Grid
-            onDrop={onDrop}         // Passed from Grid
+            onDragOver={onDragOver}
+            onDrop={onDrop}
             className="group relative h-64 rounded-2xl shadow-lg dark:shadow-slate-900/50 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl dark:hover:shadow-slate-900/70 cursor-pointer"
         >
             <div 

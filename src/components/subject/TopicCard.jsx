@@ -100,22 +100,32 @@ const TopicCard = ({
                 </button>
 
                 <div className="relative z-10 p-6 h-full flex flex-col justify-between text-white pointer-events-none">
+                    {/* pointer-events-none on inner content ensures the onDrop always fires on the parent div */}
+                    
                     <div className="flex justify-between items-start">
-                        <span className="text-6xl font-black text-white/20 select-none">
+                        <span className="text-7xl font-black text-white/30 select-none">
                             {topic.number}
                         </span>
+                        
                         {topic.status === 'generating' ? (
-                            <Clock className="w-6 h-6 animate-spin" />
+                            <div className="flex flex-col items-center animate-pulse">
+                                <Clock className="w-6 h-6 animate-spin" />
+                            </div>
                         ) : topic.status === 'completed' ? (
-                            <CheckCircle2 className="w-6 h-6 text-emerald-300" />
+                            <CheckCircle2 className="w-6 h-6 text-emerald-300 dark:text-emerald-400" />
                         ) : null}
                     </div>
+                    
                     <div>
                         <h3 className="text-2xl font-bold mb-2 leading-tight line-clamp-2 drop-shadow-md">
                             {topic.title}
                         </h3>
                         <p className="text-sm opacity-90 font-medium">
-                            {topic.status === 'generating' ? 'Generando...' : topic.status === 'completed' ? 'Completado' : 'Error'}
+                            {topic.status === 'generating' 
+                                ? 'Generando...' 
+                                : topic.status === 'completed' 
+                                    ? 'Completado' 
+                                    : 'Error'}
                         </p>
                     </div>
                 </div>

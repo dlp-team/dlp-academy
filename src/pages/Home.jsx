@@ -1,6 +1,6 @@
 // src/pages/Home.jsx
-import React from 'react';
-import { Loader2 } from 'lucide-react';
+import React, { useMemo } from 'react';
+import { Loader2, ArrowUpCircle } from 'lucide-react';
 
 // Logic Hook
 import { useHomeLogic } from '../hooks/useHomeLogic';
@@ -19,9 +19,25 @@ import HomeEmptyState from '../components/home/HomeEmptyState';
 import HomeModals from '../components/home/HomeModals';
 
 const Home = ({ user }) => {
+    // 1. Initialize Logic (Hooks always come first)
     const logic = useHomeLogic(user);
     const { moveSubjectToParent, moveFolderToParent } = useFolders(user);
 
+    // --- FILTERING LOGIC (MOVED UP) ---
+    // This hook must run on every render, BEFORE the loading check.
+    const displayedFolders = useMemo(() => {
+        // Defensive checks because logic.* might be undefined during loading
+        const allFolders = logic.folders || [];
+        const currentId = logic.currentFolder ? logic.currentFolder.id : null;
+        
+        return allFolders.filter(folder => {
+            // Treat undefined/null parentId as root (null)
+            const parentId = folder.parentId || null;
+            return parentId === currentId;
+        });
+    }, [logic.folders, logic.currentFolder]);
+
+    // 2. Loading State (Conditional Return)
     if (!user || logic.loading || logic.loadingFolders) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -32,7 +48,6 @@ const Home = ({ user }) => {
 
     // --- CUSTOM HANDLERS ---
 
-    // Ensure new folders get the correct parentId (or null for root)
     const handleSaveFolderWrapper = (folderData) => {
         const dataWithParent = {
             ...folderData,
@@ -41,7 +56,28 @@ const Home = ({ user }) => {
         logic.handleSaveFolder(dataWithParent);
     };
 
-    // Promote handlers
+    const handleUpwardDrop = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const subjectId = e.dataTransfer.getData('subjectId');
+        const folderId = e.dataTransfer.getData('folderId');
+        
+        if (logic.currentFolder) {
+            const currentId = logic.currentFolder.id;
+            const parentId = logic.currentFolder.parentId; 
+
+            if (subjectId) {
+                await moveSubjectToParent(subjectId, currentId, parentId);
+            } else if (folderId) {
+                if (folderId !== currentId) {
+                    await moveFolderToParent(folderId, currentId, parentId);
+                }
+            }
+        }
+    };
+
+    // Wrappers to handle promotion logic safely
     const handlePromoteSubjectWrapper = async (subjectId) => {
         if (logic.currentFolder) {
             await moveSubjectToParent(subjectId, logic.currentFolder.id, logic.currentFolder.parentId);
@@ -54,35 +90,62 @@ const Home = ({ user }) => {
         }
     };
 
-    const hasContent = (logic.subjects || []).length > 0 || (logic.folders || []).length > 0;
+    const hasSubjects = (logic.subjects || []).length > 0;
+    const hasFolders = displayedFolders.length > 0; 
+    const hasContent = hasSubjects || hasFolders;
 
+    // 3. Render
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 font-sans transition-colors">
             <Header user={user} />
             <OnboardingWizard user={user} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
-                <HomeControls 
-                    viewMode={logic.viewMode}
-                    setViewMode={logic.setViewMode}
-                    layoutMode={logic.layoutMode}
-                    setLayoutMode={logic.setLayoutMode}
-                    cardScale={logic.cardScale}
-                    setCardScale={logic.setCardScale}
-                    allTags={logic.allTags || []}
-                    selectedTags={logic.selectedTags || []}
-                    setSelectedTags={logic.setSelectedTags}
-                    currentFolder={logic.currentFolder}
-                    setFolderModalConfig={logic.setFolderModalConfig}
-                    setCollapsedGroups={logic.setCollapsedGroups}
-                    setCurrentFolder={logic.setCurrentFolder}
-                    isDragAndDropEnabled={logic.isDragAndDropEnabled}
-                    draggedItem={logic.draggedItem}
-                    draggedItemType={logic.draggedItemType}
-                    onPreferenceChange={logic.handlePreferenceChange}
-                    allFolders={logic.folders || []}
-                />
+                
+                {/* UPWARD DROP ZONE */}
+                <div 
+                    className="relative transition-all duration-300"
+                    onDragOver={(e) => {
+                        if (logic.currentFolder) {
+                            e.preventDefault(); 
+                        }
+                    }}
+                    onDrop={handleUpwardDrop}
+                >
+                    {logic.isDragAndDropEnabled && logic.draggedItem && logic.currentFolder ? (
+                        <div className="w-full h-34 mb-6 rounded-2xl border-2 border-dashed border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center gap-3 animate-pulse text-indigo-600 dark:text-indigo-300 z-10">
+                            <ArrowUpCircle className="w-8 h-8" />
+                            <span className="font-bold text-lg">
+                                {logic.currentFolder.parentId 
+                                    ? "Mover a la carpeta anterior" 
+                                    : "Mover al inicio"}
+                            </span>
+                        </div>
+                    ) : (
+                        <HomeControls 
+                            viewMode={logic.viewMode}
+                            setViewMode={logic.setViewMode}
+                            layoutMode={logic.layoutMode}
+                            setLayoutMode={logic.setLayoutMode}
+                            cardScale={logic.cardScale}
+                            setCardScale={logic.setCardScale}
+                            allTags={logic.allTags || []}
+                            selectedTags={logic.selectedTags || []}
+                            setSelectedTags={logic.setSelectedTags}
+                            currentFolder={logic.currentFolder}
+                            setFolderModalConfig={logic.setFolderModalConfig}
+                            setCollapsedGroups={logic.setCollapsedGroups}
+                            setCurrentFolder={logic.setCurrentFolder}
+                            isDragAndDropEnabled={logic.isDragAndDropEnabled}
+                            draggedItem={logic.draggedItem}
+                            draggedItemType={logic.draggedItemType}
+                            onPreferenceChange={logic.handlePreferenceChange}
+                            allFolders={logic.folders || []} 
+                        />
+                    )}
+                </div>
 
+                {/* Main Content */}
                 {logic.viewMode === 'shared' ? (
                     <SharedView user={user} />
                 ) : (
@@ -90,7 +153,7 @@ const Home = ({ user }) => {
                         <BreadcrumbNav 
                             currentFolder={logic.currentFolder} 
                             onNavigate={logic.setCurrentFolder}
-                            allFolders={logic.folders || []}
+                            allFolders={logic.folders || []} 
                         />
 
                         {logic.loading ? (
@@ -101,35 +164,33 @@ const Home = ({ user }) => {
                             <>
                                 {hasContent ? (
                                     <HomeContent 
-                                        // --- CRITICAL DEFENSIVE PROPS ---
                                         subjects={logic.subjects || []}
                                         folders={logic.folders || []}
-                                        groupedContent={logic.groupedContent || {}} // Prevents the crash
+                                        groupedContent={logic.groupedContent || {}} 
                                         collapsedGroups={logic.collapsedGroups || {}}
-                                        orderedFolders={logic.folders || []}
+                                        // Pass the filtered folders
+                                        orderedFolders={displayedFolders}
                                         
-                                        // UI State
-                                        layoutMode={logic.layoutMode}
-                                        cardScale={logic.cardScale}
+                                        layoutMode={logic.layoutMode || 'grid'}
+                                        cardScale={logic.cardScale || 100}
                                         viewMode={logic.viewMode}
                                         currentFolder={logic.currentFolder}
                                         
-                                        // Menu & Actions
-                                        toggleGroup={logic.toggleGroup}
                                         activeMenu={logic.activeMenu}
                                         setActiveMenu={logic.setActiveMenu}
+                                        toggleGroup={logic.toggleGroup}
+                                        
                                         setSubjectModalConfig={logic.setSubjectModalConfig}
                                         setFolderModalConfig={logic.setFolderModalConfig}
                                         setDeleteConfig={logic.setDeleteConfig}
                                         
-                                        // Handlers
                                         handleSelectSubject={(id) => logic.navigate(`/home/subject/${id}`)}
                                         handleOpenFolder={logic.setCurrentFolder}
+                                        handleShareFolder={logic.handleShareFolder}
+                                        handlePromoteSubject={handlePromoteSubjectWrapper}
+                                        handlePromoteFolder={handlePromoteFolderWrapper}
                                         handleDropOnFolder={logic.handleDropOnFolder}
-                                        handlePromoteSubject={handlePromoteSubjectWrapper} // Pass wrapper
-                                        handlePromoteFolder={handlePromoteFolderWrapper}   // Pass wrapper
                                         
-                                        // Drag & Drop
                                         isDragAndDropEnabled={logic.isDragAndDropEnabled}
                                         draggedItem={logic.draggedItem}
                                         draggedItemType={logic.draggedItemType}
