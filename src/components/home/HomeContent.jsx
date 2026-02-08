@@ -22,18 +22,17 @@ const HomeContent = ({
     activeMenu,
     setActiveMenu,
     
-    // Config Handlers
+    // Handlers
     setSubjectModalConfig,
     setFolderModalConfig,
     setDeleteConfig,
-    
-    // Action Handlers
     handleSelectSubject,
     handleOpenFolder,
-    handleDropOnFolder,   // Handles Subjects -> Folder
-    handleNestFolder,     // NEW: Handles Folder -> Folder
+    handleDropOnFolder,
+    handleNestFolder,
     handlePromoteSubject,
     handlePromoteFolder,
+    handleShowFolderContents, // NEW PROP
     
     // Drag & Drop
     isDragAndDropEnabled,
@@ -70,23 +69,18 @@ const HomeContent = ({
         e.stopPropagation();
         setIsPromoteZoneHovered(false);
         if (!currentFolder || !draggedItem) return;
-
-        if (draggedItemType === 'subject') {
-            handlePromoteSubject(draggedItem.id);
-        } else if (draggedItemType === 'folder') {
-            handlePromoteFolder(draggedItem.id);
-        }
+        if (draggedItemType === 'subject') handlePromoteSubject(draggedItem.id);
+        else if (draggedItemType === 'folder') handlePromoteFolder(draggedItem.id);
     };
 
     return (
         <>
             {groupedContent && Object.entries(groupedContent).map(([groupName, groupSubjects]) => {
                 const isCollapsed = collapsedGroups[groupName];
-                const showGroupHeader = showCollapsibleGroups;
 
                 return (
                     <div key={groupName} className="mb-10">
-                        {showGroupHeader && (
+                        {showCollapsibleGroups && (
                             <button
                                 onClick={() => toggleGroup(groupName)}
                                 className="flex items-center gap-2 mb-4 border-b border-gray-200 dark:border-slate-700 pb-2 transition-colors w-full text-left group hover:border-indigo-300 dark:hover:border-indigo-600 cursor-pointer"
@@ -111,7 +105,7 @@ const HomeContent = ({
                                             className="grid gap-6"
                                             style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` }}
                                         >
-                                            {/* Create/Promote Zone */}
+                                            {/* Promote Zone or Create Button */}
                                             {viewMode === 'grid' && (
                                                 <div>
                                                     {currentFolder && draggedItem && (draggedItemType === 'subject' || draggedItemType === 'folder') ? (
@@ -169,13 +163,15 @@ const HomeContent = ({
                                                         onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                         onDelete={(f) => setDeleteConfig({ isOpen: true, type: 'folder', item: f })}
                                                         onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
+                                                        onShowContents={handleShowFolderContents} // NEW
                                                         cardScale={cardScale}
                                                         
-                                                        // DROP HANDLERS
-                                                        onDrop={handleDropOnFolder}       // Subject -> Folder
-                                                        onDropFolder={handleNestFolder}   // Folder -> Folder (NEW)
+                                                        // Drop
+                                                        onDrop={handleDropOnFolder}
+                                                        onDropFolder={handleNestFolder}
                                                         canDrop={isDragAndDropEnabled && (draggedItemType === 'subject' || draggedItemType === 'folder')}
                                                         
+                                                        // Drag
                                                         draggable={isDragAndDropEnabled}
                                                         onDragStart={handleDragStartFolder}
                                                         onDragEnd={handleDragEnd}
@@ -215,7 +211,6 @@ const HomeContent = ({
                                     </div>
                                 )}
                                 
-                                {/* LIST and FOLDERS modes (omitted for brevity, they don't support this drop logic usually) */}
                                 {layoutMode === 'list' && (
                                      <div className="space-y-2">
                                         {groupSubjects.map((subject) => (

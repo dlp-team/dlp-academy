@@ -8,7 +8,7 @@ export const useFolderCardLogic = ({
     draggable,
     onDragOver,
     onDrop,          // Handles dropping a SUBJECT
-    onDropFolder,    // NEW: Handles dropping a FOLDER (nesting)
+    onDropFolder,    // Handles dropping a FOLDER (nesting)
     onDropReorder,
     onDragStart,
     onDragEnd,
@@ -17,7 +17,15 @@ export const useFolderCardLogic = ({
     const [isOver, setIsOver] = useState(false);
     
     // Derived Data
+    // 1. Calculate Subjects
     const subjectCount = folder.subjectIds ? folder.subjectIds.length : 0;
+    
+    // 2. Calculate Subfolders (Add this)
+    const folderCount = folder.folderIds ? folder.folderIds.length : 0;
+    
+    // 3. Calculate Total (Add this)
+    const totalCount = subjectCount + folderCount;
+
     const isModern = folder.cardStyle === 'modern';
     const fillColor = folder.modernFillColor || folder.fillColor;
     const scaleMultiplier = cardScale / 100;
@@ -60,8 +68,6 @@ export const useFolderCardLogic = ({
             onDropFolder(folder.id, droppedFolderId);
         }
         // Case 3: Reordering (Only if NOT nesting)
-        // We prioritize nesting if dropped ON the card. Reordering usually happens via dragOver on container, 
-        // but if your logic relies on drop, this 'else if' ensures we don't reorder when we meant to nest.
         else if (draggable && onDropReorder && droppedFolderId && draggedPosition !== undefined) {
             onDropReorder(droppedFolderId, parseInt(draggedPosition), position);
         }
@@ -86,6 +92,8 @@ export const useFolderCardLogic = ({
         state: { isOver },
         data: {
             subjectCount,
+            folderCount,
+            totalCount,
             isModern,
             fillColor,
             scaleMultiplier,

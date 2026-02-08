@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'; // Added useMemo
+import React, { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
@@ -12,34 +12,36 @@ import TopicGrid from '../components/subject/TopicGrid';
 // Modals
 import EditSubjectModal from '../components/modals/EditSubjectModal';
 import TopicFormModal from '../components/modals/TopicFormModal';
+import EditTopicModal from '../components/modals/EditTopicModal'; // NEW IMPORT
 
 const Subject = ({ user }) => {
-    // 1. Safe Params
     const params = useParams();
     const subjectId = params.subjectId || params.id; 
     const navigate = useNavigate();
     
-    // --- 1. DATA LOGIC ---
+    // Data Logic
     const { 
         subject, topics, loading, 
         updateSubject, deleteSubject, 
         createTopic, deleteTopic, 
-        handleReorderTopics 
+        handleReorderTopics,
+        updateTopic // NEW
     } = useSubjectManager(user, subjectId);
 
-    // --- 2. UI STATE ---
+    // UI State
     const [showEditModal, setShowEditModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showTopicModal, setShowTopicModal] = useState(false);
     
+    // NEW: Edit Topic Modal State
+    const [showEditTopicModal, setShowEditTopicModal] = useState(false);
+    const [editingTopic, setEditingTopic] = useState(null);
+
     const [retryTopicData, setRetryTopicData] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isReordering, setIsReordering] = useState(false);
-
-    // --- NEW: SEARCH STATE ---
     const [searchTerm, setSearchTerm] = useState('');
 
-    // --- NEW: FILTER LOGIC ---
     const filteredTopics = useMemo(() => {
         if (!searchTerm) return topics;
         const term = searchTerm.toLowerCase();
@@ -49,8 +51,7 @@ const Subject = ({ user }) => {
         );
     }, [topics, searchTerm]);
 
-
-    // --- 3. HANDLERS ---
+    // Handlers
     const handleCreateOrRetry = async (data, files) => {
         await createTopic(data, files); 
         setShowTopicModal(false);
@@ -68,22 +69,39 @@ const Subject = ({ user }) => {
         }
     };
 
+    // NEW: Handle opening edit modal
+    const handleEditTopicClick = (topic) => {
+        setEditingTopic(topic);
+        setShowEditTopicModal(true);
+    };
+
+    // NEW: Handle saving edited topic
+    const handleSaveEditedTopic = async (updatedData) => {
+        await updateTopic(updatedData.id, {
+            title: updatedData.title,
+            order: updatedData.order,
+            number: updatedData.number,
+            isVisible: updatedData.isVisible
+        });
+        setShowEditTopicModal(false);
+        setEditingTopic(null);
+    };
+
     const handleDeleteSubject = async () => {
         setIsDeleting(true);
         await deleteSubject(); 
     };
 
-    // Scroll Lock Effect
+    // Scroll Lock
     useEffect(() => {
-        document.body.style.overflow = (showEditModal || showDeleteModal || showTopicModal) ? 'hidden' : 'unset';
+        document.body.style.overflow = (showEditModal || showDeleteModal || showTopicModal || showEditTopicModal) ? 'hidden' : 'unset';
         return () => { document.body.style.overflow = 'unset'; };
-    }, [showEditModal, showDeleteModal, showTopicModal]);
-
+    }, [showEditModal, showDeleteModal, showTopicModal, showEditTopicModal]);
 
     if (!user || loading || !subject) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors">
-                <Loader2 className="w-10 h-10 text-indigo-600 dark:text-indigo-400 animate-spin" />
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin" />
             </div>
         );
     }
@@ -97,29 +115,26 @@ const Subject = ({ user }) => {
                     hasTopics={topics.length > 1}
                     onEdit={() => setShowEditModal(true)}
                     onDelete={() => setShowDeleteModal(true)}
-                    
-                    // Reorder Props
                     onReorder={() => setIsReordering(true)}
                     isReordering={isReordering}
                     onCancelReorder={() => setIsReordering(false)}
                     onSaveReorder={() => setIsReordering(false)}
-
-                    // --- NEW: PASS SEARCH PROPS ---
                     searchTerm={searchTerm}
                     onSearch={setSearchTerm}
                 />
 
                 <TopicGrid 
-                    // --- CHANGED: USE FILTERED TOPICS ---
                     topics={filteredTopics}
                     subjectColor={subject.color}
                     isReordering={isReordering} 
-                    
                     onOpenCreateModal={() => { setRetryTopicData(null); setShowTopicModal(true); }}
                     onSelectTopic={(t) => navigate(`/home/subject/${subjectId}/topic/${t.id}`)}
                     onDeleteTopic={onDeleteTopicConfirm}
                     onRetryTopic={onRetryTopic}
                     onReorderTopics={handleReorderTopics} 
+                    
+                    // NEW PROP passed down
+                    onEditTopic={handleEditTopicClick}
                 />
             </main>
 
@@ -139,31 +154,27 @@ const Subject = ({ user }) => {
                 initialData={retryTopicData}
             />
 
+            {/* NEW: Edit Topic Modal */}
+            <EditTopicModal
+                isOpen={showEditTopicModal}
+                onClose={() => setShowEditTopicModal(false)}
+                topic={editingTopic}
+                onSave={handleSaveEditedTopic}
+            />
+
             {showDeleteModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
-                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200">
+                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                             <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
                         </div>
                         <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">¿Eliminar Asignatura?</h3>
                         <p className="text-gray-500 dark:text-gray-400 mb-6">
-                            Se eliminarán <strong>{subject.name}</strong> y todos sus temas. Esta acción no se puede deshacer.
+                            Se eliminarán <strong>{subject.name}</strong> y todos sus temas.
                         </p>
                         <div className="flex gap-3 justify-center">
-                            <button 
-                                onClick={() => setShowDeleteModal(false)} 
-                                disabled={isDeleting} 
-                                className="px-6 py-2 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button 
-                                onClick={handleDeleteSubject} 
-                                disabled={isDeleting} 
-                                className="px-6 py-2 bg-red-600 dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600 text-white rounded-xl font-medium flex items-center gap-2 transition-colors"
-                            >
-                                {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />} Eliminar
-                            </button>
+                            <button onClick={() => setShowDeleteModal(false)} className="px-6 py-2 bg-gray-100 dark:bg-slate-800 rounded-xl font-medium">Cancelar</button>
+                            <button onClick={handleDeleteSubject} disabled={isDeleting} className="px-6 py-2 bg-red-600 text-white rounded-xl font-medium">Eliminar</button>
                         </div>
                     </div>
                 </div>

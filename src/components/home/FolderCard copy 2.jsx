@@ -22,7 +22,6 @@ const FolderCard = (props) => {
         onEdit, 
         onDelete,
         onShare,
-        onShowContents,
         isDragging,
         canDrop,
         draggable
@@ -111,10 +110,11 @@ const FolderCard = (props) => {
         handlers.handleDragEnd(e);
     };
 
+    // --- CUSTOM DRAG LOGIC END ---
 
     return (
         <div 
-            ref={cardRef}
+            ref={cardRef} // Attach Ref
             className={`group relative w-full pt-3 transition-transform cursor-pointer ${
                 isDragging ? 'opacity-0 scale-95' : 'hover:scale-105'
             } ${
@@ -165,7 +165,6 @@ const FolderCard = (props) => {
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onShare={onShare}
-                onShowContents={onShowContents}
             />
         </div>
     );

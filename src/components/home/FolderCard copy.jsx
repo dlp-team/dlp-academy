@@ -1,334 +1,140 @@
 // src/components/home/FolderCard.jsx
-import React, { useState } from 'react';
-import { Folder, MoreVertical, Edit2, Trash2, Share2, Users } from 'lucide-react';
-import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
+import React from 'react';
+import { useFolderCardLogic } from '../../hooks/useFolderCardLogic';
+import FolderCardTab from './FolderCardTab';
+import FolderCardBody from './FolderCardBody';
 
-const FolderCard = ({ 
-    folder, 
-    onOpen, 
-    activeMenu, 
-    onToggleMenu, 
-    onEdit, 
-    onDelete,
-    onShare,
-    cardScale = 100,
-    isDragging = false,
-    onDrop,
-    canDrop = false,
-    draggable = false,
-    onDragStart,
-    onDragEnd,
-    onDragOver,
-    onDropReorder,
-    position = 0
-}) => {
-    const [isOver, setIsOver] = useState(false);
-    const subjectCount = folder.subjectIds ? folder.subjectIds.length : 0;
+const FolderCard = (props) => {
+    // 0. Refs for the custom drag logic
+    const cardRef = React.useRef(null);
+    const dragGhostRef = React.useRef(null);
+    const dragOffsetRef = React.useRef({ x: 0, y: 0 });
+
+    // 1. Initialize Logic
+    const { state, data, handlers } = useFolderCardLogic(props);
     
-    // Check if the Modern style is active
-    const isModern = folder.cardStyle === 'modern';
-    
-    // Use modernFillColor if available
-    const fillColor = folder.modernFillColor || folder.fillColor;
+    // 2. Destructure Props for direct usage
+    const { 
+        folder, 
+        activeMenu, 
+        onToggleMenu, 
+        onEdit, 
+        onDelete,
+        onShare,
+        onShowContents, // NEW PROP
+        isDragging,
+        canDrop,
+        draggable
+    } = props;
 
-    // Calculate scaled sizes
-    const scaleMultiplier = cardScale / 100;
+    // ... (rest of the drag logic handleDragStartWithCustomImage, etc., stays exactly the same) ...
+    // NOTE: Copying the Drag Logic from previous response to ensure file completeness if copied directly
 
-    // Default gradient if none provided
-    const gradientClass = folder.color || 'from-amber-400 to-amber-600';
-
-    // Handle drag and drop for adding subjects to folder
-    const handleDragOver = (e) => {
-        if (canDrop) {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsOver(true);
-        } else if (draggable && onDragOver) {
-            e.preventDefault();
-            onDragOver(e, position);
+    const handleDragStartWithCustomImage = (e) => {
+        const cardNode = cardRef.current;
+        if (cardNode) {
+            const rect = cardNode.getBoundingClientRect();
+            dragOffsetRef.current = {
+                x: e.clientX - rect.left,
+                y: e.clientY - rect.top
+            };
+            const ghost = cardNode.cloneNode(true);
+            Object.assign(ghost.style, {
+                position: 'fixed',
+                top: `${rect.top}px`,
+                left: `${rect.left}px`,
+                width: `${rect.width}px`,
+                height: `${rect.height}px`,
+                opacity: '1',
+                zIndex: '10000',
+                pointerEvents: 'none',
+                transition: 'none',
+                transform: 'none',
+                boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
+            });
+            ghost.classList.remove('opacity-0', 'transition-all', 'duration-300');
+            ghost.id = 'active-drag-ghost';
+            ghost.style.transition = 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease';
+            ghost.dataset.originalScale = data.scaleMultiplier;
+            ghost.style.position = 'fixed';
+            ghost.style.zIndex = '9999';
+            ghost.style.pointerEvents = 'none';
+            ghost.style.opacity = '1';
+            ghost.style.transform = `scale(0.9)`;
+            ghost.style.transformOrigin = 'center center';
+            ghost.style.left = `${rect.left}px`;
+            ghost.style.top = `${rect.top}px`;
+            document.body.appendChild(ghost);
+            dragGhostRef.current = ghost;
+            const emptyImg = new Image();
+            emptyImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+            e.dataTransfer.setDragImage(emptyImg, 0, 0);
         }
+        handlers.handleDragStart(e);
     };
 
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsOver(false);
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsOver(false);
-        
-        const subjectId = e.dataTransfer.getData('subjectId');
-        const draggedPosition = e.dataTransfer.getData('position');
-        const folderId = e.dataTransfer.getData('folderId');
-        
-        // If dropping a subject into this folder
-        if (canDrop && onDrop && subjectId && !folderId) {
-            onDrop(folder.id, subjectId);
-        } 
-        // If reordering folders
-        else if (draggable && onDropReorder && folderId && draggedPosition !== undefined) {
-            onDropReorder(folderId, parseInt(draggedPosition), position);
-        }
-    };
-
-    // Handle drag events for reordering folders
-    const handleDragStart = (e) => {
-        if (draggable && onDragStart) {
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('folderId', folder.id);
-            e.dataTransfer.setData('position', position.toString());
-            onDragStart(folder, position);
+    const handleDrag = (e) => {
+        if (dragGhostRef.current && e.clientX !== 0) {
+            const ghost = dragGhostRef.current;
+            ghost.style.left = `${e.clientX - dragOffsetRef.current.x}px`;
+            ghost.style.top = `${e.clientY - dragOffsetRef.current.y}px`;
         }
     };
 
     const handleDragEnd = (e) => {
-        if (draggable && onDragEnd) {
-            onDragEnd();
+        if (dragGhostRef.current) {
+            document.body.removeChild(dragGhostRef.current);
+            dragGhostRef.current = null;
         }
+        handlers.handleDragEnd(e);
     };
 
     return (
         <div 
-            className={`group relative w-full pt-3 transition-all cursor-pointer ${
-                isDragging ? 'opacity-50 scale-95' : 'hover:scale-105'
-            } ${
-                isOver && canDrop ? 'ring-4 ring-indigo-400 dark:ring-indigo-500' : ''
+            ref={cardRef}
+            className={`relative w-full aspect-[1.3/1] transition-all duration-200 select-none group ${
+                isDragging ? 'opacity-40 scale-95' : 'hover:-translate-y-1 hover:shadow-xl'
             }`}
-            style={{ aspectRatio: '16 / 10' }}
-            onClick={() => onOpen(folder)}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
             draggable={draggable}
-            onDragStart={handleDragStart}
+            onDragStart={handleDragStartWithCustomImage}
+            onDrag={handleDrag}
             onDragEnd={handleDragEnd}
+            onDragOver={handlers.handleDragOver}
+            onDragLeave={handlers.handleDragLeave}
+            onDrop={handlers.handleDrop}
         >
-            {/* Drop Zone Indicator */}
-            {isOver && canDrop && (
+            {state.isOver && canDrop && (
                 <div className="absolute inset-0 bg-indigo-500/20 dark:bg-indigo-400/20 rounded-2xl z-50 flex items-center justify-center pointer-events-none">
                     <div className="bg-white dark:bg-slate-900 rounded-xl px-4 py-2 shadow-lg">
                         <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
-                            Soltar aquí
+                            Mover dentro
                         </p>
                     </div>
                 </div>
             )}
 
-            {/* --- 1. FOLDER TAB (Visual Indicator) --- */}
-            <div 
-                className={`absolute top-0 left-0 rounded-t-xl z-0 transition-all ${
-                    isModern 
-                        ? `bg-gradient-to-br ${gradientClass}` 
-                        : `bg-gradient-to-br ${gradientClass} opacity-90`
-                }`}
-                style={{ 
-                    width: '40%',
-                    height: `${12 * scaleMultiplier}px`,
-                    clipPath: 'polygon(0 0, 100% 0, 100% 102%, 0% 120%)',
-                }}
-            >
-                {/* Inner shadow for depth */}
-                <div className="absolute inset-0 bg-black/10 rounded-t-xl"></div>
-            </div>
+            <FolderCardTab 
+                isModern={data.isModern}
+                gradientClass={data.gradientClass}
+                scaleMultiplier={data.scaleMultiplier}
+            />
 
-            {/* --- 2. MAIN CARD BODY --- */}
-            <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${
-                isModern 
-                    ? `bg-gradient-to-br ${gradientClass} p-[3px]` 
-                    : ''
-            }`}>
-                 
-                {/* INNER CONTENT CONTAINER */}
-                <div className={`h-full w-full rounded-xl rounded-tl-none overflow-hidden relative flex flex-col justify-between ${
-                    isModern 
-                        ? 'bg-white dark:bg-slate-950' 
-                        : ''
-                }`}>
-                    
-                    {/* --- FRONT VISUALS --- */}
-                    
-                    {/* Classic Background: Full Gradient */}
-                    {!isModern && (
-                        <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-90`}></div>
-                    )}
-
-                    {/* Modern Background: Optional Fill */}
-                    {isModern && fillColor && (
-                        <div className={`absolute inset-0 ${fillColor}`}></div>
-                    )}
-
-                    {/* Modern Hover Effect */}
-                    {isModern && (
-                        <div className="absolute inset-0 bg-slate-100/30 dark:bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                    )}
-
-                    {/* --- INTERACTIVE ELEMENTS (Top Right) --- */}
-
-                    {/* Badge / Count (Slides on Hover) */}
-                    <div className={`absolute z-20 transition-all duration-300 ease-out group-hover:-translate-x-12 ${
-                        activeMenu === folder.id ? '-translate-x-12' : ''
-                    }`}
-                    style={{
-                        top: `${16 * scaleMultiplier}px`,
-                        right: `${16 * scaleMultiplier}px`
-                    }}>
-                        <div 
-                            className={`${
-                                isModern 
-                                    ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50' 
-                                    : 'bg-white/20 backdrop-blur-md border border-white/30 text-white'
-                            } rounded-full flex items-center gap-2 shadow-sm transition-all`}
-                            style={{ 
-                                fontSize: `${12 * scaleMultiplier}px`,
-                                padding: `${6 * scaleMultiplier}px ${12 * scaleMultiplier}px`
-                            }}
-                        >
-                            <span className="font-bold whitespace-nowrap">
-                                {subjectCount} {subjectCount === 1 ? 'asig.' : 'asigs.'}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Menu (Dots) */}
-                    <div className="absolute z-30"
-                    style={{
-                        top: `${16 * scaleMultiplier}px`,
-                        right: `${16 * scaleMultiplier}px`
-                    }}>
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); onToggleMenu(folder.id); }}
-                            className={`rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer ${
-                                isModern 
-                                    ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800' 
-                                    : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30'
-                            } ${
-                                activeMenu === folder.id ? 'opacity-100 scale-110' : 'opacity-0 group-hover:opacity-100'
-                            }`}
-                            style={{ padding: `${8 * scaleMultiplier}px` }}
-                        >
-                            <MoreVertical size={15 * scaleMultiplier} />
-                        </button>
-                        
-                        {/* Dropdown Menu */}
-                        {activeMenu === folder.id && (
-                            <div className="absolute right-0 top-full mt-2 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 z-50 animate-in fade-in zoom-in-95">
-                                {folder.isOwner ? (
-                                    <>
-                                        <button onClick={(e) => { e.stopPropagation(); onShare(folder); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
-                                            <Share2 size={14} /> Compartir
-                                        </button>
-                                        <button onClick={(e) => { e.stopPropagation(); onEdit(folder); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
-                                            <Edit2 size={14} /> Editar
-                                        </button>
-                                        <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
-                                        <button onClick={(e) => { e.stopPropagation(); onDelete(folder); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors">
-                                            <Trash2 size={14} /> Eliminar
-                                        </button>
-                                    </>
-                                ) : (
-                                    <div className="p-2 text-xs text-center text-gray-500">Solo lectura</div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-
-                    {/* --- CONTENT AREA (Aligned Bottom) --- */}
-                    <div className={`relative h-full flex flex-col justify-between pointer-events-none ${
-                        isModern ? '' : 'text-white'
-                    }`}
-                    style={{ padding: `${24 * scaleMultiplier}px` }}>
-                        
-                        {/* Top: Icon */}
-                        <div className="flex justify-between items-start"
-                        style={{ paddingTop: `${8 * scaleMultiplier}px` }}>
-                             {/* Icon Logic matching SubjectCard */}
-                             {isModern ? (
-                                <div 
-                                    className={getIconColor(folder.color)}
-                                    style={{ width: `${28 * scaleMultiplier}px`, height: `${28 * scaleMultiplier}px` }}
-                                >
-                                    {folder.icon ? (
-                                        <SubjectIcon 
-                                            iconName={folder.icon} 
-                                            style={{ width: `${42 * scaleMultiplier}px`, height: `${42 * scaleMultiplier}px` }}
-                                        />
-                                    ) : (
-                                        <Folder 
-                                            className="text-indigo-600 dark:text-indigo-400"
-                                            style={{ width: `${42 * scaleMultiplier}px`, height: `${42 * scaleMultiplier}px` }}
-                                        />
-                                    )}
-                                </div>
-                            ) : (
-                                <div style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}>
-                                    {folder.icon ? (
-                                        <SubjectIcon 
-                                            iconName={folder.icon} 
-                                            className="text-white opacity-80"
-                                            style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}
-                                        />
-                                    ) : (
-                                        <Folder 
-                                            className="text-white opacity-80"
-                                            style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}
-                                        />
-                                    )}
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Bottom: Text Info */}
-                        <div>
-                            {folder.isShared && (
-                                <div className={`inline-flex items-center gap-1 rounded-full ${
-                                    isModern 
-                                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800' 
-                                        : 'bg-white/20 text-white border border-white/20'
-                                }`}
-                                style={{
-                                    marginBottom: `${8 * scaleMultiplier}px`,
-                                    padding: `${2 * scaleMultiplier}px ${8 * scaleMultiplier}px`,
-                                    fontSize: `${10 * scaleMultiplier}px`
-                                }}>
-                                    <Users size={10 * scaleMultiplier} />
-                                    <span className="font-bold uppercase tracking-wider">Shared</span>
-                                </div>
-                            )}
-                            
-                            <h3 
-                                className={`font-bold tracking-tight truncate ${
-                                    isModern 
-                                        ? `bg-gradient-to-br ${gradientClass} bg-clip-text text-transparent` 
-                                        : 'text-white'
-                                }`}
-                                style={{ 
-                                    fontSize: `${24 * scaleMultiplier}px`,
-                                    marginBottom: `${4 * scaleMultiplier}px`
-                                }}
-                            >
-                                {folder.name}
-                            </h3>
-
-                            {folder.description && (
-                                <p 
-                                    className={`line-clamp-1 font-medium ${
-                                        isModern 
-                                            ? 'text-gray-400 dark:text-gray-500' 
-                                            : 'text-white/70'
-                                    }`}
-                                    style={{ fontSize: `${14 * scaleMultiplier}px` }}
-                                >
-                                    {folder.description}
-                                </p>
-                            )}
-                        </div>
-                    </div>
-
-                </div>
-            </div>
+            <FolderCardBody 
+                folder={folder}
+                isModern={data.isModern}
+                gradientClass={data.gradientClass}
+                fillColor={data.fillColor}
+                scaleMultiplier={data.scaleMultiplier}
+                subjectCount={data.subjectCount}
+                folderCount={data.folderCount}
+                totalCount={data.totalCount}
+                activeMenu={activeMenu}
+                onToggleMenu={onToggleMenu}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onShare={onShare}
+                onShowContents={onShowContents} // PASSED DOWN
+            />
         </div>
     );
 };

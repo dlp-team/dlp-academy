@@ -1,6 +1,6 @@
 // src/components/home/FolderCardBody.jsx
 import React from 'react';
-import { Folder, MoreVertical, Edit2, Trash2, Share2, Users } from 'lucide-react';
+import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
 
 const FolderCardBody = ({
@@ -16,7 +16,8 @@ const FolderCardBody = ({
     onToggleMenu,
     onEdit,
     onDelete,
-    onShare
+    onShare,
+    onShowContents // NEW PROP
 }) => {
     // Calculate dynamic slide distance based on scale
     const shiftX = 48 * scaleMultiplier;
@@ -36,18 +37,12 @@ const FolderCardBody = ({
             }`}>
                 
                 {/* --- FRONT VISUALS --- */}
-                
-                {/* Classic Background: Full Gradient */}
                 {!isModern && (
                     <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-100`}></div>
                 )}
-
-                {/* Modern Background: Optional Fill */}
                 {isModern && fillColor && (
                     <div className={`absolute inset-0 ${fillColor}`}></div>
                 )}
-
-                {/* Modern Hover Effect */}
                 {isModern && (
                     <div className="absolute inset-0 bg-slate-100/30 dark:bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                 )}
@@ -61,7 +56,7 @@ const FolderCardBody = ({
                         height: `${32 * scaleMultiplier}px`
                     }}
                 >
-                    {/* 1. Badge / Counter (shifts on hover) */}
+                    {/* 1. Badge / Counter (INTERACTIVE NOW) */}
                     <div 
                         className={`transition-all duration-300 ease-out 
                             group-hover:-translate-x-[var(--shift-x)] 
@@ -71,24 +66,30 @@ const FolderCardBody = ({
                             '--shift-x': `${shiftX}px`,
                         }}
                     >
-                        <div 
+                        <button 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (onShowContents) onShowContents(folder);
+                            }}
                             className={`${
                                 isModern 
-                                    ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50' 
-                                    : 'bg-white/20 backdrop-blur-md border border-white/30 text-white'
+                                    ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600' 
+                                    : 'bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30'
                             } rounded-full cursor-pointer hover:scale-105 flex items-center gap-2 shadow-sm transition-all`}
                             style={{
                                 fontSize: `${12 * scaleMultiplier}px`,
                                 padding: `${6 * scaleMultiplier}px ${12 * scaleMultiplier}px`
                             }}
+                            title="Ver estructura del contenido"
                         >
+                            <ListTree size={12 * scaleMultiplier} />
                             <span className="font-bold whitespace-nowrap">
-                                {totalCount} {totalCount === 1 ? `${totalCount} elemento` : `${totalCount} elementos`}
+                                {totalCount} {totalCount === 1 ? 'elemento' : 'elementos'}
                             </span>
-                        </div>
+                        </button>
                     </div>
 
-                    {/* 2. Dots Menu (Fixed position on the right) */}
+                    {/* 2. Dots Menu */}
                     <div className="absolute right-0"> 
                         <button
                             onClick={(e) => { e.stopPropagation(); onToggleMenu(folder.id); }}
@@ -131,7 +132,7 @@ const FolderCardBody = ({
                     </div>
                 </div>
 
-                {/* --- CONTENT AREA (Aligned Bottom) --- */}
+                {/* --- CONTENT AREA --- */}
                 <div className={`relative h-full flex flex-col justify-between pointer-events-none ${
                     isModern ? '' : 'text-white'
                 }`}
@@ -140,7 +141,6 @@ const FolderCardBody = ({
                     {/* Top: Icon */}
                     <div className="flex justify-between items-start"
                     style={{ paddingTop: `${8 * scaleMultiplier}px` }}>
-                            {/* Icon Logic matching SubjectCard */}
                             {isModern ? (
                             <div 
                                 className={getIconColor(folder.color)}

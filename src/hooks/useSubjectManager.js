@@ -1,5 +1,5 @@
 // src/hooks/useSubjectManager.js
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     collection, query, doc, getDoc, onSnapshot, 
@@ -15,7 +15,7 @@ export const useSubjectManager = (user, subjectId) => {
     const [subject, setSubject] = useState(null);
     const [topics, setTopics] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [fileCache, setFileCache] = useState({}); // Stores files for retrying
+    const [fileCache, setFileCache] = useState({});
 
     // 1. Fetch Data
     useEffect(() => {
@@ -55,7 +55,28 @@ export const useSubjectManager = (user, subjectId) => {
         return () => unsubscribe();
     }, [user, subjectId, navigate]);
 
-    // 2. Helper: Send to N8N
+    // 2. Actions for Subject
+    const updateSubject = async (data) => {
+        if (!subject) return;
+        try {
+            await updateDoc(doc(db, "subjects", subject.id), data);
+            setSubject(prev => ({ ...prev, ...data }));
+        } catch (error) {
+            console.error("Error updating subject:", error);
+        }
+    };
+
+    const deleteSubject = async () => {
+        if (!subject) return;
+        try {
+            await deleteDoc(doc(db, "subjects", subject.id));
+            navigate('/home');
+        } catch (error) {
+            console.error("Error deleting subject:", error);
+        }
+    };
+
+    // 3. Helper: Send to N8N
     const sendToN8N = async (topicId, data, files) => {
         try {
             const formData = new FormData();
@@ -69,7 +90,6 @@ export const useSubjectManager = (user, subjectId) => {
                 formData.append('files', file);
             });
 
-            // Fire and forget (don't await response to keep UI fast)
             fetch(N8N_WEBHOOK_URL, {
                 method: 'POST',
                 body: formData
@@ -80,18 +100,14 @@ export const useSubjectManager = (user, subjectId) => {
         }
     };
 
-    // 3. Create or Retry Topic
+    // 4. Create or Retry Topic
     const createTopic = async (data, files) => {
         const filesToSend = files.length > 0 ? files : (fileCache[data.retryId] || []);
         let topicId = data.retryId;
 
         if (data.isRetry && topicId) {
-            // Retry Logic
             const existingTopic = topics.find(t => t.id === topicId);
-            if (!existingTopic) {
-                console.error("Cannot retry: Topic not found");
-                return;
-            }
+            if (!existingTopic) return;
 
             await updateDoc(doc(db, "subjects", subjectId, "topics", topicId), {
                 title: data.title, 
@@ -99,9 +115,7 @@ export const useSubjectManager = (user, subjectId) => {
                 status: 'generating'
             });
         } else {
-            // Create Logic
             const nextOrder = topics.length + 1;
-            // Pad number with zero (e.g. 1 -> "01")
             const numberString = nextOrder.toString().padStart(2, '0');
 
             const newTopic = {
@@ -121,7 +135,6 @@ export const useSubjectManager = (user, subjectId) => {
             
             await updateDoc(doc(db, "subjects", subjectId), { topicCount: increment(1) });
             
-            // Upload Metadata
             if (files.length > 0) {
                 const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
                 files.forEach(f => addDoc(docsRef, { 
@@ -133,14 +146,23 @@ export const useSubjectManager = (user, subjectId) => {
             }
         }
 
-        // Update Cache and Send
         setFileCache(prev => ({ ...prev, [topicId]: filesToSend }));
         sendToN8N(topicId, data, filesToSend);
     };
 
-    // 4. Delete Topic
+    // 5. Update Topic (NEW)
+    const updateTopic = async (topicId, data) => {
+        try {
+            await updateDoc(doc(db, "subjects", subjectId, "topics", topicId), data);
+        } catch (error) {
+            console.error("Error updating topic:", error);
+            throw error;
+        }
+    };
+
+    // 6. Delete Topic
     const deleteTopic = async (topicId) => {
-        if (!window.confirm("¿Estás seguro de eliminar este tema?")) return;
+        // Confirmation is handled in UI now, but safety check remains
         try {
             await deleteDoc(doc(db, "subjects", subjectId, "topics", topicId));
             await updateDoc(doc(db, "subjects", subjectId), { topicCount: increment(-1) });
@@ -149,18 +171,17 @@ export const useSubjectManager = (user, subjectId) => {
         }
     };
 
-    // 5. Retry Helper (Prepares data for Modal)
+    // 7. Retry Helper
     const retryTopic = async (topicId) => {
         const topic = topics.find(t => t.id === topicId);
         if (!topic) return;
         return topic; 
     };
 
-    // 6. Handle Reorder Topics (Drag & Drop)
+    // 8. Handle Reorder Topics
     const handleReorderTopics = async (draggedId, targetId) => {
         if (draggedId === targetId) return;
 
-        // A. Local Reordering (Optimistic UI)
         const currentTopics = [...topics];
         const draggedIndex = currentTopics.findIndex(t => t.id === draggedId);
         const targetIndex = currentTopics.findIndex(t => t.id === targetId);
@@ -170,16 +191,13 @@ export const useSubjectManager = (user, subjectId) => {
         const [draggedItem] = currentTopics.splice(draggedIndex, 1);
         currentTopics.splice(targetIndex, 0, draggedItem);
 
-        // Update state immediately so UI doesn't lag
         setTopics(currentTopics);
 
-        // B. Batch Update Firestore
         try {
             const batch = writeBatch(db);
-            
             currentTopics.forEach((topic, index) => {
                 const newOrder = index + 1;
-                const newNumber = newOrder.toString().padStart(2, '0'); // "01", "02"...
+                const newNumber = newOrder.toString().padStart(2, '0');
                 
                 const topicRef = doc(db, "subjects", subjectId, "topics", topic.id);
                 batch.update(topicRef, {
@@ -187,9 +205,7 @@ export const useSubjectManager = (user, subjectId) => {
                     number: newNumber
                 });
             });
-
             await batch.commit();
-            console.log("Reorder saved successfully");
         } catch (error) {
             console.error("Error saving reorder:", error);
         }
@@ -199,7 +215,10 @@ export const useSubjectManager = (user, subjectId) => {
         subject,
         topics,
         loading,
+        updateSubject,      // Added
+        deleteSubject,      // Added
         createTopic,
+        updateTopic,        // Added
         deleteTopic,
         retryTopic,
         handleReorderTopics
