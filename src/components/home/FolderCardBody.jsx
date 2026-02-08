@@ -1,5 +1,5 @@
 // src/components/home/FolderCardBody.jsx
-import React from 'react';
+import React from 'react'; // Removed unused useState
 import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
 
@@ -17,11 +17,11 @@ const FolderCardBody = ({
     onEdit,
     onDelete,
     onShare,
-    onShowContents // NEW PROP
+    onShowContents
 }) => {
-    // Calculate dynamic slide distance based on scale
+    // 1. Logic: No useState needed here. We use CSS for hover states.
     const shiftX = 48 * scaleMultiplier;
-
+    
     return (
         <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${
             isModern 
@@ -43,6 +43,7 @@ const FolderCardBody = ({
                 {isModern && fillColor && (
                     <div className={`absolute inset-0 ${fillColor}`}></div>
                 )}
+                {/* Hover Overlay */}
                 {isModern && (
                     <div className="absolute inset-0 bg-slate-100/30 dark:bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                 )}
@@ -56,7 +57,7 @@ const FolderCardBody = ({
                         height: `${32 * scaleMultiplier}px`
                     }}
                 >
-                    {/* 1. Badge / Counter (INTERACTIVE NOW) */}
+                    {/* 1. Badge / Counter */}
                     <div 
                         className={`transition-all duration-300 ease-out 
                             group-hover:-translate-x-[var(--shift-x)] 
@@ -83,9 +84,23 @@ const FolderCardBody = ({
                             title="Ver estructura del contenido"
                         >
                             <ListTree size={12 * scaleMultiplier} />
+                            
+                            {/* --- FIXED TEXT LOGIC --- */}
                             <span className="font-bold whitespace-nowrap">
-                                {totalCount} {totalCount === 1 ? 'elemento' : 'elementos'}
+                                {/* Default View: Visible normally, Hidden on Card Hover */}
+                                <span className="block group-hover:hidden animate-in fade-in duration-200">
+                                    {totalCount} {totalCount === 1 ? 'elemento' : 'elementos'}
+                                </span>
+
+                                {/* Hover View: Hidden normally, Visible on Card Hover */}
+                                <span className="hidden group-hover:flex items-center gap-2 animate-in fade-in duration-200">
+                                    <span>{subjectCount} {subjectCount === 1 ? 'asig.' : 'asigs.'}</span>
+                                    <span className="opacity-40">|</span>
+                                    <span>{folderCount} {folderCount === 1 ? 'carp.' : 'carps.'}</span>
+                                </span>
                             </span>
+                            {/* ------------------------- */}
+
                         </button>
                     </div>
 
