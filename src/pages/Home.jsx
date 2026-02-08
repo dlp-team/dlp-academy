@@ -41,6 +41,20 @@ const Home = ({ user }) => {
         });
     }, [logic.folders, logic.currentFolder]);
 
+    // --- FIX: LIVE FOLDER RESOLUTION ---
+    // Instead of using the static folder object saved when we opened the modal (which becomes stale),
+    // we search for the latest version of that folder in the live 'logic.folders' list.
+    const activeModalFolder = useMemo(() => {
+        if (!folderContentsModalConfig.folder) return null;
+        
+        // Find the fresh version of the currently open folder
+        const liveFolder = (logic.folders || []).find(f => f.id === folderContentsModalConfig.folder.id);
+        
+        // Return live version, or fallback to the initial one (e.g. if loading)
+        return liveFolder || folderContentsModalConfig.folder;
+    }, [logic.folders, folderContentsModalConfig.folder]);
+
+
     // 2. Loading State
     if (!user || logic.loading || logic.loadingFolders) {
         return (
@@ -74,7 +88,7 @@ const Home = ({ user }) => {
 
     const handleBreadcrumbDrop = async (targetFolderId, subjectId, droppedFolderId) => {
         const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
-        if (subjectId) await moveSubjectToParent(subjectId, currentFolderId, targetFolderId);
+        if (subjectId) await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
         else if (droppedFolderId) {
             const droppedFolderObj = (logic.folders || []).find(f => f.id === droppedFolderId);
             if (!droppedFolderObj) return;
@@ -120,21 +134,17 @@ const Home = ({ user }) => {
         logic.navigate(`/home/subject/${subject.id}`);
     };
 
+    // Tree Move: If sourceFolderId is undefined, useFolders hook will now fetch it safely
     const handleTreeMoveSubject = async (subjectId, targetFolderId, sourceFolderId) => {
         await moveSubjectBetweenFolders(subjectId, sourceFolderId, targetFolderId);
     };
     
     const handleTreeReorderSubject = async (folderId, subjectId, newIndex) => {
-        // If the folder is the current view, we can use the main logic's reorder
         if (logic.currentFolder && folderId === logic.currentFolder.id) {
              if (logic.handleDropReorderSubject) {
-                 // The logic hook usually calculates the move based on current array state
-                 // passing the ID and new Index is usually sufficient
                  logic.handleDropReorderSubject(subjectId, newIndex); 
              }
         }
-        // Note: Reordering deep inside a non-viewed folder is complex and usually requires a dedicated backend/hook function. 
-        // For now this connects the UI action to the main view if applicable.
     };
 
     const hasContent = (logic.subjects || []).length > 0 || displayedFolders.length > 0;
@@ -150,26 +160,35 @@ const Home = ({ user }) => {
                     onDragOver={(e) => { if (logic.currentFolder) e.preventDefault(); }}
                     onDrop={handleUpwardDrop}
                 >
-                    <HomeControls 
-                        viewMode={logic.viewMode}
-                        setViewMode={logic.setViewMode}
-                        layoutMode={logic.layoutMode}
-                        setLayoutMode={logic.setLayoutMode}
-                        cardScale={logic.cardScale}
-                        setCardScale={logic.setCardScale}
-                        allTags={logic.allTags || []}
-                        selectedTags={logic.selectedTags || []}
-                        setSelectedTags={logic.setSelectedTags}
-                        currentFolder={logic.currentFolder}
-                        setFolderModalConfig={logic.setFolderModalConfig}
-                        setCollapsedGroups={logic.setCollapsedGroups}
-                        setCurrentFolder={logic.setCurrentFolder}
-                        isDragAndDropEnabled={logic.isDragAndDropEnabled}
-                        draggedItem={logic.draggedItem}
-                        draggedItemType={logic.draggedItemType}
-                        onPreferenceChange={logic.handlePreferenceChange}
-                        allFolders={logic.folders || []} 
+                    {logic.isDragAndDropEnabled && logic.draggedItem && logic.currentFolder ? (
+                        <div className="w-full h-20 mb-6 rounded-2xl border-2 border-dashed border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center gap-3 animate-pulse text-indigo-600 dark:text-indigo-300 z-10">
+                            <ArrowUpCircle className="w-8 h-8" />
+                            <span className="font-bold text-lg">
+                                {logic.currentFolder.parentId ? "Mover a la carpeta anterior" : "Mover al inicio (Root)"}
+                            </span>
+                        </div>
+                    ) : (
+                        <HomeControls 
+                            viewMode={logic.viewMode}
+                            setViewMode={logic.setViewMode}
+                            layoutMode={logic.layoutMode}
+                            setLayoutMode={logic.setLayoutMode}
+                            cardScale={logic.cardScale}
+                            setCardScale={logic.setCardScale}
+                            allTags={logic.allTags || []}
+                            selectedTags={logic.selectedTags || []}
+                            setSelectedTags={logic.setSelectedTags}
+                            currentFolder={logic.currentFolder}
+                            setFolderModalConfig={logic.setFolderModalConfig}
+                            setCollapsedGroups={logic.setCollapsedGroups}
+                            setCurrentFolder={logic.setCurrentFolder}
+                            isDragAndDropEnabled={logic.isDragAndDropEnabled}
+                            draggedItem={logic.draggedItem}
+                            draggedItemType={logic.draggedItemType}
+                            onPreferenceChange={logic.handlePreferenceChange}
+                            allFolders={logic.folders || []} 
                         />
+                    )}
                 </div>
 
                 {logic.viewMode === 'shared' ? (
@@ -261,10 +280,12 @@ const Home = ({ user }) => {
                 allFolders={logic.folders || []}
             />
             
+            {/* Folder Tree Modal */}
             <FolderTreeModal 
                 isOpen={folderContentsModalConfig.isOpen}
                 onClose={() => setFolderContentsModalConfig({ isOpen: false, folder: null })}
-                rootFolder={folderContentsModalConfig.folder}
+                // KEY CHANGE: Pass the live 'activeModalFolder' instead of the stale state
+                rootFolder={activeModalFolder}
                 allFolders={logic.folders || []}
                 allSubjects={logic.subjects || []}
                 onNavigateFolder={handleNavigateFromTree}
