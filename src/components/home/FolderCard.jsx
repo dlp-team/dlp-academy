@@ -149,6 +149,8 @@ const FolderCard = (props) => {
                 fillColor={data.fillColor}
                 scaleMultiplier={data.scaleMultiplier}
                 subjectCount={data.subjectCount}
+                folderCount={data.folderCount}
+                totalCount={data.totalCount}  // NEW: Pass total count
                 activeMenu={activeMenu}
                 onToggleMenu={onToggleMenu}
                 onEdit={onEdit}

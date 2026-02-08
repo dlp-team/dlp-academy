@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp
 } from 'lucide-react';
-import SubjectIcon from '..//modals/SubjectIcon'; // Adjust path
-import SubjectCard from '..//home/SubjectCard';   // Adjust path
-import FolderCard from '..//home/FolderCard';     // Adjust path
-import SubjectListItem from '..//home/SubjectListItem'; // Adjust path
+import SubjectIcon from '..//modals/SubjectIcon';
+import SubjectCard from '..//home/SubjectCard';
+import FolderCard from '..//home/FolderCard'; 
+import SubjectListItem from '..//home/SubjectListItem';
 
 const HomeContent = ({
     viewMode,
@@ -127,7 +127,7 @@ const HomeContent = ({
                                             {/* Create Button or Promote Zone */}
                                             {viewMode === 'grid' && (
                                                 <div>
-                                                    {currentFolder ? (
+                                                    {currentFolder && draggedItem && (draggedItemType === 'subject' || draggedItemType === 'folder') ? (
                                                         /* Promote Zone when inside a folder */
                                                         <div
                                                             onDragOver={handlePromoteZoneDragOver}
@@ -172,15 +172,19 @@ const HomeContent = ({
                                                                 style={{ fontSize: `${18 * (cardScale / 100)}px` }}
                                                             >
                                                                 {isPromoteZoneHovered && draggedItem
-                                                                    ? `Mover a nivel superior`
-                                                                    : 'Arrastra aquí para subir nivel'
+                                                                    ? `Mover a carpeta superior`
+                                                                    : 'Arrastra aquí para mover la asignatura a la anterior carpeta'
                                                                 }
                                                             </span>
                                                         </div>
                                                     ) : (
                                                         /* Create button when at root */
                                                         <button 
-                                                            onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null })} 
+                                                            onClick={() => setSubjectModalConfig({ 
+                                                                isOpen: true, 
+                                                                isEditing: false, 
+                                                                data: currentFolder ? { folderId: currentFolder.id } : null 
+                                                            })} 
                                                             className="group relative w-full border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center cursor-pointer"
                                                             style={{ 
                                                                 aspectRatio: '16 / 10',

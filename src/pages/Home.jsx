@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react';
 
 // Logic Hook
 import { useHomeLogic } from '../hooks/useHomeLogic';
+import { useFolders } from '../hooks/useFolders'; 
 
 // Layout & Global Components
 import Header from '../components/layout/Header';
@@ -18,10 +19,9 @@ import HomeEmptyState from '../components/home/HomeEmptyState';
 import HomeModals from '../components/home/HomeModals';
 
 const Home = ({ user }) => {
-    // 1. Initialize Logic
     const logic = useHomeLogic(user);
+    const { moveSubjectToParent, moveFolderToParent } = useFolders(user);
 
-    // 2. Loading State
     if (!user || logic.loading || logic.loadingFolders) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -30,14 +30,38 @@ const Home = ({ user }) => {
         );
     }
 
-    // 3. Render
+    // --- CUSTOM HANDLERS ---
+
+    // Ensure new folders get the correct parentId (or null for root)
+    const handleSaveFolderWrapper = (folderData) => {
+        const dataWithParent = {
+            ...folderData,
+            parentId: logic.currentFolder ? logic.currentFolder.id : null
+        };
+        logic.handleSaveFolder(dataWithParent);
+    };
+
+    // Promote handlers
+    const handlePromoteSubjectWrapper = async (subjectId) => {
+        if (logic.currentFolder) {
+            await moveSubjectToParent(subjectId, logic.currentFolder.id, logic.currentFolder.parentId);
+        }
+    };
+
+    const handlePromoteFolderWrapper = async (folderId) => {
+        if (logic.currentFolder && folderId !== logic.currentFolder.id) {
+            await moveFolderToParent(folderId, logic.currentFolder.id, logic.currentFolder.parentId);
+        }
+    };
+
+    const hasContent = (logic.subjects || []).length > 0 || (logic.folders || []).length > 0;
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 font-sans transition-colors">
             <Header user={user} />
             <OnboardingWizard user={user} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
-                {/* Header & Controls */}
                 <HomeControls 
                     viewMode={logic.viewMode}
                     setViewMode={logic.setViewMode}
@@ -45,8 +69,8 @@ const Home = ({ user }) => {
                     setLayoutMode={logic.setLayoutMode}
                     cardScale={logic.cardScale}
                     setCardScale={logic.setCardScale}
-                    allTags={logic.allTags}
-                    selectedTags={logic.selectedTags}
+                    allTags={logic.allTags || []}
+                    selectedTags={logic.selectedTags || []}
                     setSelectedTags={logic.setSelectedTags}
                     currentFolder={logic.currentFolder}
                     setFolderModalConfig={logic.setFolderModalConfig}
@@ -56,91 +80,81 @@ const Home = ({ user }) => {
                     draggedItem={logic.draggedItem}
                     draggedItemType={logic.draggedItemType}
                     onPreferenceChange={logic.handlePreferenceChange}
-                    allFolders={logic.folders}
+                    allFolders={logic.folders || []}
                 />
 
-                {/* Breadcrumb Navigation */}
-                {logic.currentFolder && (
-                    <BreadcrumbNav 
-                        currentFolder={logic.currentFolder}
-                        onNavigate={logic.setCurrentFolder}
-                        allFolders={logic.folders}
-                    />
-                )}
+                {logic.viewMode === 'shared' ? (
+                    <SharedView user={user} />
+                ) : (
+                    <>
+                        <BreadcrumbNav 
+                            currentFolder={logic.currentFolder} 
+                            onNavigate={logic.setCurrentFolder}
+                            allFolders={logic.folders || []}
+                        />
 
-                {/* Shared View */}
-                {logic.viewMode === 'shared' && (
-                    <SharedView
-                        sharedFolders={logic.sharedFolders}
-                        sharedSubjects={logic.sharedSubjects}
-                        layoutMode={logic.layoutMode}
-                        cardScale={logic.cardScale}
-                        onOpenFolder={logic.handleOpenFolder}
-                        onSelectSubject={logic.handleSelectSubject}
-                        activeMenu={logic.activeMenu}
-                        onToggleMenu={logic.setActiveMenu}
-                        flippedSubjectId={logic.flippedSubjectId}
-                        onFlipSubject={(id) => logic.setFlippedSubjectId(logic.flippedSubjectId === id ? null : id)}
-                        onSelectTopic={(sid, tid) => logic.navigate(`/home/subject/${sid}/topic/${tid}`)}
-                        navigate={logic.navigate}
-                    />
-                )}
-
-                {/* Content Rendering (Non-Shared Views) */}
-                {logic.viewMode !== 'shared' && (
-                    <HomeContent 
-                        // State
-                        viewMode={logic.viewMode}
-                        layoutMode={logic.layoutMode}
-                        cardScale={logic.cardScale}
-                        groupedContent={logic.groupedContent}
-                        collapsedGroups={logic.collapsedGroups}
-                        currentFolder={logic.currentFolder}
-                        orderedFolders={logic.orderedFolders}
-                        flippedSubjectId={logic.flippedSubjectId}
-                        activeMenu={logic.activeMenu}
-                        
-                        // Setters
-                        setFlippedSubjectId={logic.setFlippedSubjectId}
-                        setActiveMenu={logic.setActiveMenu}
-                        toggleGroup={logic.toggleGroup}
-                        setSubjectModalConfig={logic.setSubjectModalConfig}
-                        setFolderModalConfig={logic.setFolderModalConfig}
-                        setDeleteConfig={logic.setDeleteConfig}
-                        
-                        // Handlers
-                        handleSelectSubject={logic.handleSelectSubject}
-                        handleOpenFolder={logic.handleOpenFolder}
-                        handleDropOnFolder={logic.handleDropOnFolder}
-                        handlePromoteSubject={logic.handlePromoteSubject}
-                        handlePromoteFolder={logic.handlePromoteFolder}
-                        
-                        // Drag & Drop
-                        isDragAndDropEnabled={logic.isDragAndDropEnabled}
-                        draggedItem={logic.draggedItem}
-                        draggedItemType={logic.draggedItemType}
-                        handleDragStartSubject={logic.handleDragStartSubject}
-                        handleDragStartFolder={logic.handleDragStartFolder}
-                        handleDragEnd={logic.handleDragEnd}
-                        handleDragOverSubject={logic.handleDragOverSubject}
-                        handleDragOverFolder={logic.handleDragOverFolder}
-                        handleDropReorderSubject={logic.handleDropReorderSubject}
-                        handleDropReorderFolder={logic.handleDropReorderFolder}
-                        
-                        navigate={logic.navigate}
-                    />
-                )}
-
-                {/* Empty State */}
-                {logic.subjects.length === 0 && logic.folders.length === 0 && logic.viewMode !== 'shared' && (
-                    <HomeEmptyState 
-                        setSubjectModalConfig={logic.setSubjectModalConfig}
-                        setFolderModalConfig={logic.setFolderModalConfig}
-                    />
+                        {logic.loading ? (
+                             <div className="flex justify-center py-12">
+                                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+                            </div>
+                        ) : (
+                            <>
+                                {hasContent ? (
+                                    <HomeContent 
+                                        // --- CRITICAL DEFENSIVE PROPS ---
+                                        subjects={logic.subjects || []}
+                                        folders={logic.folders || []}
+                                        groupedContent={logic.groupedContent || {}} // Prevents the crash
+                                        collapsedGroups={logic.collapsedGroups || {}}
+                                        orderedFolders={logic.folders || []}
+                                        
+                                        // UI State
+                                        layoutMode={logic.layoutMode}
+                                        cardScale={logic.cardScale}
+                                        viewMode={logic.viewMode}
+                                        currentFolder={logic.currentFolder}
+                                        
+                                        // Menu & Actions
+                                        toggleGroup={logic.toggleGroup}
+                                        activeMenu={logic.activeMenu}
+                                        setActiveMenu={logic.setActiveMenu}
+                                        setSubjectModalConfig={logic.setSubjectModalConfig}
+                                        setFolderModalConfig={logic.setFolderModalConfig}
+                                        setDeleteConfig={logic.setDeleteConfig}
+                                        
+                                        // Handlers
+                                        handleSelectSubject={(id) => logic.navigate(`/home/subject/${id}`)}
+                                        handleOpenFolder={logic.setCurrentFolder}
+                                        handleDropOnFolder={logic.handleDropOnFolder}
+                                        handlePromoteSubject={handlePromoteSubjectWrapper} // Pass wrapper
+                                        handlePromoteFolder={handlePromoteFolderWrapper}   // Pass wrapper
+                                        
+                                        // Drag & Drop
+                                        isDragAndDropEnabled={logic.isDragAndDropEnabled}
+                                        draggedItem={logic.draggedItem}
+                                        draggedItemType={logic.draggedItemType}
+                                        handleDragStartSubject={logic.handleDragStartSubject}
+                                        handleDragStartFolder={logic.handleDragStartFolder}
+                                        handleDragEnd={logic.handleDragEnd}
+                                        handleDragOverSubject={logic.handleDragOverSubject}
+                                        handleDragOverFolder={logic.handleDragOverFolder}
+                                        handleDropReorderSubject={logic.handleDropReorderSubject}
+                                        handleDropReorderFolder={logic.handleDropReorderFolder}
+                                        
+                                        navigate={logic.navigate}
+                                    />
+                                ) : (
+                                    <HomeEmptyState 
+                                        setSubjectModalConfig={logic.setSubjectModalConfig}
+                                        setFolderModalConfig={logic.setFolderModalConfig}
+                                    />
+                                )}
+                            </>
+                        )}
+                    </>
                 )}
             </main>
 
-            {/* Modals */}
             <HomeModals 
                 subjectModalConfig={logic.subjectModalConfig}
                 setSubjectModalConfig={logic.setSubjectModalConfig}
@@ -149,11 +163,11 @@ const Home = ({ user }) => {
                 deleteConfig={logic.deleteConfig}
                 setDeleteConfig={logic.setDeleteConfig}
                 handleSaveSubject={logic.handleSaveSubject}
-                handleSaveFolder={logic.handleSaveFolder}
+                handleSaveFolder={handleSaveFolderWrapper}
                 handleShareFolder={logic.handleShareFolder}
                 handleDelete={logic.handleDelete}
                 currentFolder={logic.currentFolder}
-                allFolders={logic.folders}
+                allFolders={logic.folders || []}
             />
         </div>
     );

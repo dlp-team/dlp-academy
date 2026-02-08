@@ -3,20 +3,21 @@ import React, { useState } from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp
 } from 'lucide-react';
-import SubjectIcon from '..//modals/SubjectIcon';
-import SubjectCard from '..//home/SubjectCard';
-import FolderCard from '..//home/FolderCard'; 
-import SubjectListItem from '..//home/SubjectListItem';
+import SubjectIcon from '../modals/SubjectIcon';
+import SubjectCard from '../home/SubjectCard';
+import FolderCard from '../home/FolderCard'; 
+import SubjectListItem from '../home/SubjectListItem';
 
 const HomeContent = ({
-    viewMode,
-    layoutMode,
-    cardScale,
-    groupedContent,
-    collapsedGroups,
+    viewMode = 'grid',
+    layoutMode = 'grid',
+    cardScale = 100,
+    // FIX: Default to empty object to prevent Object.entries crash
+    groupedContent = {}, 
+    collapsedGroups = {},
     toggleGroup,
-    currentFolder,
-    orderedFolders,
+    currentFolder = null,
+    orderedFolders = [],
     flippedSubjectId,
     setFlippedSubjectId,
     activeMenu,
@@ -83,7 +84,8 @@ const HomeContent = ({
 
     return (
         <>
-            {Object.entries(groupedContent).map(([groupName, groupSubjects]) => {
+            {/* Defensive check: Ensure groupedContent is valid before mapping */}
+            {groupedContent && Object.entries(groupedContent).map(([groupName, groupSubjects]) => {
                 const isCollapsed = collapsedGroups[groupName];
                 const showGroupHeader = showCollapsibleGroups;
 
@@ -117,7 +119,7 @@ const HomeContent = ({
                             <>
                                 {/* GRID LAYOUT */}
                                 {layoutMode === 'grid' && (
-                                    <div key={groupName} className="mb-10">
+                                    <div className="mb-10">
                                         <div 
                                             className="grid gap-6"
                                             style={{ 
@@ -134,7 +136,7 @@ const HomeContent = ({
                                                             onDragLeave={handlePromoteZoneDragLeave}
                                                             onDrop={handlePromoteZoneDrop}
                                                             className={`group relative w-full border-3 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center ${
-                                                                isPromoteZoneHovered && draggedItem
+                                                                isPromoteZoneHovered
                                                                     ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 scale-105'
                                                                     : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
                                                             }`}
@@ -145,7 +147,7 @@ const HomeContent = ({
                                                         >
                                                             <div 
                                                                 className={`rounded-full flex items-center justify-center transition-colors ${
-                                                                    isPromoteZoneHovered && draggedItem
+                                                                    isPromoteZoneHovered
                                                                         ? 'bg-amber-200 dark:bg-amber-800/60'
                                                                         : 'bg-amber-100 dark:bg-amber-900/40 group-hover:bg-amber-200 dark:group-hover:bg-amber-800/60'
                                                                 }`}
@@ -156,7 +158,7 @@ const HomeContent = ({
                                                             >
                                                                 <ArrowUp 
                                                                     className={`transition-colors ${
-                                                                        isPromoteZoneHovered && draggedItem
+                                                                        isPromoteZoneHovered
                                                                             ? 'text-amber-700 dark:text-amber-300'
                                                                             : 'text-amber-600 dark:text-amber-400'
                                                                     }`}
@@ -165,26 +167,27 @@ const HomeContent = ({
                                                             </div>
                                                             <span 
                                                                 className={`font-semibold transition-colors px-4 text-center ${
-                                                                    isPromoteZoneHovered && draggedItem
+                                                                    isPromoteZoneHovered
                                                                         ? 'text-amber-700 dark:text-amber-300'
                                                                         : 'text-gray-700 dark:text-gray-300 group-hover:text-amber-600 dark:group-hover:text-amber-400'
                                                                 }`}
                                                                 style={{ fontSize: `${18 * (cardScale / 100)}px` }}
                                                             >
-                                                                {isPromoteZoneHovered && draggedItem
+                                                                {isPromoteZoneHovered
                                                                     ? `Mover a carpeta superior`
-                                                                    : 'Arrastra aquí para mover la asignatura a la anterior carpeta'
+                                                                    : 'Arrastra aquí para mover a la carpeta anterior'
                                                                 }
                                                             </span>
                                                         </div>
                                                     ) : (
-                                                        /* Create button when at root */
-                                                        <button 
+                                                        /* Create Subject Button */
+                                                        <button
                                                             onClick={() => setSubjectModalConfig({ 
                                                                 isOpen: true, 
                                                                 isEditing: false, 
-                                                                data: currentFolder ? { folderId: currentFolder.id } : null 
-                                                            })} 
+                                                                data: null,
+                                                                currentFolder: currentFolder 
+                                                            })}
                                                             className="group relative w-full border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center cursor-pointer"
                                                             style={{ 
                                                                 aspectRatio: '16 / 10',

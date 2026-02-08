@@ -10,6 +10,8 @@ const FolderCardBody = ({
     fillColor,
     scaleMultiplier,
     subjectCount,
+    folderCount,     // NEW: Receive folder count
+    totalCount,      // NEW: Receive total count
     activeMenu,
     onToggleMenu,
     onEdit,
@@ -81,7 +83,7 @@ const FolderCardBody = ({
                             }}
                         >
                             <span className="font-bold whitespace-nowrap">
-                                {subjectCount} {subjectCount === 1 ? 'elemento' : 'elementos'}
+                                {totalCount} {totalCount === 1 ? 'elemento' : 'elementos'}
                             </span>
                         </div>
                     </div>
