@@ -23,21 +23,18 @@ const Home = ({ user }) => {
     const logic = useHomeLogic(user);
     const { moveSubjectToParent, moveFolderToParent } = useFolders(user);
 
-    // --- FILTERING LOGIC (MOVED UP) ---
-    // This hook must run on every render, BEFORE the loading check.
+    // --- FILTERING LOGIC ---
     const displayedFolders = useMemo(() => {
-        // Defensive checks because logic.* might be undefined during loading
         const allFolders = logic.folders || [];
         const currentId = logic.currentFolder ? logic.currentFolder.id : null;
         
         return allFolders.filter(folder => {
-            // Treat undefined/null parentId as root (null)
             const parentId = folder.parentId || null;
             return parentId === currentId;
         });
     }, [logic.folders, logic.currentFolder]);
 
-    // 2. Loading State (Conditional Return)
+    // 2. Loading State
     if (!user || logic.loading || logic.loadingFolders) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -77,7 +74,20 @@ const Home = ({ user }) => {
         }
     };
 
-    // Wrappers to handle promotion logic safely
+    // Wrapper for nesting folders (Folder -> Folder)
+    const handleNestFolder = async (targetFolderId, droppedFolderId) => {
+        if (targetFolderId === droppedFolderId) return;
+
+        // Find the folder to see its current parent (so we can remove it from there)
+        const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
+        if (!droppedFolder) return;
+
+        const currentParentId = droppedFolder.parentId || null;
+        
+        // Move to the new target folder
+        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+    };
+
     const handlePromoteSubjectWrapper = async (subjectId) => {
         if (logic.currentFolder) {
             await moveSubjectToParent(subjectId, logic.currentFolder.id, logic.currentFolder.parentId);
@@ -101,7 +111,6 @@ const Home = ({ user }) => {
             <OnboardingWizard user={user} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
-                
                 {/* UPWARD DROP ZONE */}
                 <div 
                     className="relative transition-all duration-300"
@@ -118,7 +127,7 @@ const Home = ({ user }) => {
                             <span className="font-bold text-lg">
                                 {logic.currentFolder.parentId 
                                     ? "Mover a la carpeta anterior" 
-                                    : "Mover al inicio"}
+                                    : "Mover al inicio (Root)"}
                             </span>
                         </div>
                     ) : (
@@ -168,7 +177,6 @@ const Home = ({ user }) => {
                                         folders={logic.folders || []}
                                         groupedContent={logic.groupedContent || {}} 
                                         collapsedGroups={logic.collapsedGroups || {}}
-                                        // Pass the filtered folders
                                         orderedFolders={displayedFolders}
                                         
                                         layoutMode={logic.layoutMode || 'grid'}
@@ -190,6 +198,7 @@ const Home = ({ user }) => {
                                         handlePromoteSubject={handlePromoteSubjectWrapper}
                                         handlePromoteFolder={handlePromoteFolderWrapper}
                                         handleDropOnFolder={logic.handleDropOnFolder}
+                                        handleNestFolder={handleNestFolder} // PASS THE NEW HANDLER
                                         
                                         isDragAndDropEnabled={logic.isDragAndDropEnabled}
                                         draggedItem={logic.draggedItem}

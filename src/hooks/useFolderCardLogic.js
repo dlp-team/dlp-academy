@@ -7,7 +7,8 @@ export const useFolderCardLogic = ({
     canDrop,
     draggable,
     onDragOver,
-    onDrop,
+    onDrop,          // Handles dropping a SUBJECT
+    onDropFolder,    // NEW: Handles dropping a FOLDER (nesting)
     onDropReorder,
     onDragStart,
     onDragEnd,
@@ -48,15 +49,21 @@ export const useFolderCardLogic = ({
         
         const subjectId = e.dataTransfer.getData('subjectId');
         const draggedPosition = e.dataTransfer.getData('position');
-        const folderId = e.dataTransfer.getData('folderId');
+        const droppedFolderId = e.dataTransfer.getData('folderId');
         
-        // Case 1: Dropping a subject into this folder
-        if (canDrop && onDrop && subjectId && !folderId) {
+        // Case 1: Dropping a SUBJECT into this folder
+        if (canDrop && onDrop && subjectId && !droppedFolderId) {
             onDrop(folder.id, subjectId);
         } 
-        // Case 2: Reordering folders
-        else if (draggable && onDropReorder && folderId && draggedPosition !== undefined) {
-            onDropReorder(folderId, parseInt(draggedPosition), position);
+        // Case 2: Dropping a FOLDER into this folder (Nesting)
+        else if (canDrop && onDropFolder && droppedFolderId && droppedFolderId !== folder.id) {
+            onDropFolder(folder.id, droppedFolderId);
+        }
+        // Case 3: Reordering (Only if NOT nesting)
+        // We prioritize nesting if dropped ON the card. Reordering usually happens via dragOver on container, 
+        // but if your logic relies on drop, this 'else if' ensures we don't reorder when we meant to nest.
+        else if (draggable && onDropReorder && droppedFolderId && draggedPosition !== undefined) {
+            onDropReorder(droppedFolderId, parseInt(draggedPosition), position);
         }
     };
 
