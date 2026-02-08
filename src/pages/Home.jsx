@@ -19,9 +19,9 @@ import HomeEmptyState from '../components/home/HomeEmptyState';
 import HomeModals from '../components/home/HomeModals';
 
 const Home = ({ user }) => {
-    // 1. Initialize Logic (Hooks always come first)
+    // 1. Initialize Logic
     const logic = useHomeLogic(user);
-    const { moveSubjectToParent, moveFolderToParent } = useFolders(user);
+    const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders } = useFolders(user);
 
     // --- FILTERING LOGIC ---
     const displayedFolders = useMemo(() => {
@@ -74,17 +74,23 @@ const Home = ({ user }) => {
         }
     };
 
+    // Wrapper for dropping Subject -> Folder
+    const handleDropOnFolderWrapper = async (targetFolderId, subjectId) => {
+        const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
+        
+        // Prevent dropping into same folder
+        if (targetFolderId === currentFolderId) return;
+
+        // Perform the move (Remove from Source -> Add to Target)
+        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+    };
+
     // Wrapper for nesting folders (Folder -> Folder)
     const handleNestFolder = async (targetFolderId, droppedFolderId) => {
         if (targetFolderId === droppedFolderId) return;
-
-        // Find the folder to see its current parent (so we can remove it from there)
         const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
         if (!droppedFolder) return;
-
         const currentParentId = droppedFolder.parentId || null;
-        
-        // Move to the new target folder
         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
     };
 
@@ -122,7 +128,7 @@ const Home = ({ user }) => {
                     onDrop={handleUpwardDrop}
                 >
                     {logic.isDragAndDropEnabled && logic.draggedItem && logic.currentFolder ? (
-                        <div className="w-full h-34 mb-6 rounded-2xl border-2 border-dashed border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center gap-3 animate-pulse text-indigo-600 dark:text-indigo-300 z-10">
+                        <div className="w-full h-20 mb-6 rounded-2xl border-2 border-dashed border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center gap-3 animate-pulse text-indigo-600 dark:text-indigo-300 z-10">
                             <ArrowUpCircle className="w-8 h-8" />
                             <span className="font-bold text-lg">
                                 {logic.currentFolder.parentId 
@@ -197,8 +203,10 @@ const Home = ({ user }) => {
                                         handleShareFolder={logic.handleShareFolder}
                                         handlePromoteSubject={handlePromoteSubjectWrapper}
                                         handlePromoteFolder={handlePromoteFolderWrapper}
-                                        handleDropOnFolder={logic.handleDropOnFolder}
-                                        handleNestFolder={handleNestFolder} // PASS THE NEW HANDLER
+                                        
+                                        // CRITICAL: Use the new wrapper
+                                        handleDropOnFolder={handleDropOnFolderWrapper}
+                                        handleNestFolder={handleNestFolder}
                                         
                                         isDragAndDropEnabled={logic.isDragAndDropEnabled}
                                         draggedItem={logic.draggedItem}

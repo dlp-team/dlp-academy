@@ -36,7 +36,7 @@ export const useFolders = (user) => {
                 return { 
                     id: d.id, 
                     ...data,
-                    parentId: data.parentId || null, // Ensure parentId is null if undefined
+                    parentId: data.parentId || null,
                     isOwner: true 
                 };
             });
@@ -147,20 +147,51 @@ export const useFolders = (user) => {
         await updateDoc(doc(db, "folders", folderId), { sharedWith, isShared: sharedWith.length > 0, updatedAt: new Date() });
     };
 
-    // --- MOVE LOGIC ---
+    // --- MOVEMENT LOGIC ---
+    
+    // 1. Move Subject UP to parent
     const moveSubjectToParent = async (subjectId, currentFolderId, parentId) => {
         if (currentFolderId) await removeSubjectFromFolder(currentFolderId, subjectId);
         if (parentId) await addSubjectToFolder(parentId, subjectId);
+        
+        // Also update subject doc
+        try {
+            await updateDoc(doc(db, "subjects", subjectId), { folderId: parentId || null, updatedAt: new Date() });
+        } catch (e) { console.error("Error updating subject parent:", e); }
     };
 
+    // 2. Move Folder UP to parent
     const moveFolderToParent = async (folderId, currentParentId, newParentId) => {
         if (currentParentId) await removeFolderFromParent(currentParentId, folderId);
         await updateDoc(doc(db, "folders", folderId), { parentId: newParentId || null, updatedAt: new Date() });
         if (newParentId) await addFolderToParent(newParentId, folderId);
     };
 
+    // 3. Move Subject BETWEEN folders (Drag Subject -> Folder)
+    const moveSubjectBetweenFolders = async (subjectId, fromFolderId, toFolderId) => {
+        // Remove from Source
+        if (fromFolderId) {
+            await removeSubjectFromFolder(fromFolderId, subjectId);
+        }
+        // Add to Target
+        if (toFolderId) {
+            await addSubjectToFolder(toFolderId, subjectId);
+        }
+        // Update Subject Document
+        try {
+            await updateDoc(doc(db, "subjects", subjectId), { 
+                folderId: toFolderId, 
+                updatedAt: new Date() 
+            });
+        } catch (e) { 
+            console.error("Error updating subject location:", e); 
+        }
+    };
+
     return { 
         folders, loading, addFolder, updateFolder, deleteFolder, 
-        shareFolder, unshareFolder, moveSubjectToParent, moveFolderToParent, addSubjectToFolder 
+        shareFolder, unshareFolder, 
+        moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders,
+        addSubjectToFolder 
     };
 };
