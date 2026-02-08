@@ -43,57 +43,68 @@ const FolderCard = (props) => {
 
             // 2. Clone the card
             const ghost = cardNode.cloneNode(true);
-
-            // 3. Style the ghost (Force Opacity 1)
+            
+            // 3. Style the ghost (Fixed position, High Z-Index, NO Pointer Events)
             Object.assign(ghost.style, {
                 position: 'fixed',
                 top: `${rect.top}px`,
                 left: `${rect.left}px`,
                 width: `${rect.width}px`,
                 height: `${rect.height}px`,
-                opacity: '1',            // <--- CRITICAL
-                zIndex: '10000',         
-                pointerEvents: 'none',   
-                transition: 'none',      
-                transform: 'none',
-                boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)' // Nice shadow while dragging
+                opacity: '1',            // <--- FORCE 100% OPACITY
+                zIndex: '10000',         // On top of everything
+                pointerEvents: 'none',   // Let clicks pass through to drop zones
+                transition: 'none',      // No laggy animations
+                transform: 'none',       // Reset transforms
+                boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)' // Optional: add shadow for depth
             });
 
-            // 4. Remove conflicting classes
-            ghost.classList.remove('opacity-0', 'transition-all', 'hover:scale-105', 'cursor-pointer');
+            // Remove any classes that might hide it or interfere
+            ghost.classList.remove('opacity-0', 'transition-all', 'duration-300');
 
-            // 5. Mount to body
+            // --- NEW: Add ID and Transition for Breadcrumb interaction ---
+            ghost.id = 'active-drag-ghost';
+            ghost.style.transition = 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease'; // bouncy ease
+            ghost.dataset.originalScale = data.scaleMultiplier; // Store original scale
+            // -------------------------------------------------------------
+
+            ghost.style.position = 'fixed';
+            ghost.style.zIndex = '9999';
+            ghost.style.pointerEvents = 'none';
+            ghost.style.opacity = '1';
+            ghost.style.transform = `scale(0.9)`;
+            ghost.style.transformOrigin = 'center center';
+            ghost.style.left = `${rect.left}px`;
+            ghost.style.top = `${rect.top}px`;
+            
             document.body.appendChild(ghost);
             dragGhostRef.current = ghost;
 
-            // 6. Hide the native browser drag image
+            // 4. Set drag image to a transparent pixel (hide default)
             const emptyImg = new Image();
             emptyImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
             e.dataTransfer.setDragImage(emptyImg, 0, 0);
         }
 
-        // Call original logic
+        // 5. Call original handler
         handlers.handleDragStart(e);
     };
 
     // B. Move Ghost manually
-    const handleDragMove = (e) => {
-        if (dragGhostRef.current) {
-            // Ignore the (0,0) event that fires on drop
-            if (e.clientX === 0 && e.clientY === 0) return;
-
+    const handleDrag = (e) => {
+        if (dragGhostRef.current && e.clientX !== 0 && e.clientY !== 0) {
+            const ghost = dragGhostRef.current;
             const x = e.clientX - dragOffsetRef.current.x;
             const y = e.clientY - dragOffsetRef.current.y;
-
-            dragGhostRef.current.style.left = `${x}px`;
-            dragGhostRef.current.style.top = `${y}px`;
+            ghost.style.left = `${x}px`;
+            ghost.style.top = `${y}px`;
         }
     };
 
     // C. Cleanup on End
-    const handleDragEndWithCleanup = (e) => {
+    const handleDragEnd = (e) => {
         if (dragGhostRef.current) {
-            dragGhostRef.current.remove();
+            document.body.removeChild(dragGhostRef.current);
             dragGhostRef.current = null;
         }
         handlers.handleDragEnd(e);
@@ -114,11 +125,9 @@ const FolderCard = (props) => {
             
             // Drag Events
             draggable={draggable}
-            onDragStart={handleDragStartWithCustomImage} // Custom Handler
-            onDrag={handleDragMove}                      // Custom Handler
-            onDragEnd={handleDragEndWithCleanup}         // Custom Handler
-            
-            // Drop Events (Keep original)
+            onDragStart={handleDragStartWithCustomImage}
+            onDrag={handleDrag}
+            onDragEnd={handleDragEnd}
             onDragOver={handlers.handleDragOver}
             onDragLeave={handlers.handleDragLeave}
             onDrop={handlers.handleDrop}
@@ -150,7 +159,7 @@ const FolderCard = (props) => {
                 scaleMultiplier={data.scaleMultiplier}
                 subjectCount={data.subjectCount}
                 folderCount={data.folderCount}
-                totalCount={data.totalCount}  // NEW: Pass total count
+                totalCount={data.totalCount}
                 activeMenu={activeMenu}
                 onToggleMenu={onToggleMenu}
                 onEdit={onEdit}

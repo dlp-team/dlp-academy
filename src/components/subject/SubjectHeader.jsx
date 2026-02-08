@@ -1,13 +1,20 @@
-// src/components/subject/SubjectHeader.jsx
 import React from 'react';
-import { Home, Pencil, Trash2 } from 'lucide-react';
+import { Home, Pencil, Trash2, ArrowUpDown, X, Save, Search } from 'lucide-react'; // Added Search
 import { useNavigate } from 'react-router-dom';
 import SubjectIcon from '../modals/SubjectIcon';
 
 const SubjectHeader = ({ 
     subject, 
     onEdit, 
-    onDelete
+    onDelete, 
+    onReorder, 
+    isReordering, 
+    onCancelReorder, 
+    onSaveReorder,
+    hasTopics,
+    // --- New Props ---
+    searchTerm,
+    onSearch
 }) => {
     const navigate = useNavigate();
 
@@ -35,7 +42,40 @@ const SubjectHeader = ({
                     </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                    
+                    {/* --- EXPANDING SEARCH BAR --- */}
+                    <div className={`
+                        group flex items-center 
+                        bg-white dark:bg-slate-900 
+                        border border-gray-200 dark:border-slate-700 
+                        rounded-xl shadow-sm 
+                        transition-all duration-300 ease-in-out
+                        ${searchTerm ? 'w-64' : 'w-12 hover:w-64 focus-within:w-64'}
+                        overflow-hidden
+                        mr-1
+                    `}>
+                        <div className="flex-shrink-0 p-3 text-gray-500 dark:text-gray-400 cursor-pointer">
+                            <Search className="w-5 h-5" />
+                        </div>
+                        <input 
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => onSearch(e.target.value)}
+                            placeholder="Buscar tema o número..."
+                            className="w-full bg-transparent border-none outline-none text-gray-700 dark:text-gray-200 text-sm placeholder-gray-400 pr-3"
+                        />
+                        {searchTerm && (
+                            <button 
+                                onClick={() => onSearch('')}
+                                className="p-2 mr-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+
+                    {/* --- EDIT BUTTON --- */}
                     <button 
                         onClick={onEdit}
                         className="p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-300 shadow-sm transition-all hover:scale-105"
@@ -43,6 +83,8 @@ const SubjectHeader = ({
                     >
                         <Pencil className="w-5 h-5" />
                     </button>
+
+                    {/* --- DELETE BUTTON --- */}
                     <button 
                         onClick={onDelete}
                         className="p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 shadow-sm transition-all hover:scale-105"

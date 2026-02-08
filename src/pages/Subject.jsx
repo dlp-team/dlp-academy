@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react'; // Added useMemo
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
@@ -6,7 +6,6 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 import { useSubjectManager } from '../hooks/useSubjectManager';
 
 // Layout
-import Header from '../components/layout/Header';
 import SubjectHeader from '../components/subject/SubjectHeader';
 import TopicGrid from '../components/subject/TopicGrid';
 
@@ -21,12 +20,11 @@ const Subject = ({ user }) => {
     const navigate = useNavigate();
     
     // --- 1. DATA LOGIC ---
-    // Note: Ensure useSubjectManager exports 'handleReorderTopics'
     const { 
         subject, topics, loading, 
         updateSubject, deleteSubject, 
         createTopic, deleteTopic, 
-        handleReorderTopics // <--- NEW EXPORT FROM HOOK
+        handleReorderTopics 
     } = useSubjectManager(user, subjectId);
 
     // --- 2. UI STATE ---
@@ -34,18 +32,26 @@ const Subject = ({ user }) => {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showTopicModal, setShowTopicModal] = useState(false);
     
-    // Action Data State
     const [retryTopicData, setRetryTopicData] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
-    
-    // Reorder State (We keep this for visual toggling in Header, even if Drag is always on)
     const [isReordering, setIsReordering] = useState(false);
 
-    // --- 3. HANDLERS ---
+    // --- NEW: SEARCH STATE ---
+    const [searchTerm, setSearchTerm] = useState('');
 
-    // Topic Handlers
+    // --- NEW: FILTER LOGIC ---
+    const filteredTopics = useMemo(() => {
+        if (!searchTerm) return topics;
+        const term = searchTerm.toLowerCase();
+        return topics.filter(topic => 
+            topic.title?.toLowerCase().includes(term) || 
+            topic.number?.toString().toLowerCase().includes(term)
+        );
+    }, [topics, searchTerm]);
+
+
+    // --- 3. HANDLERS ---
     const handleCreateOrRetry = async (data, files) => {
-        // If retryTopicData exists, pass its ID to createTopic to handle the update
         await createTopic(data, files); 
         setShowTopicModal(false);
         setRetryTopicData(null);
@@ -64,7 +70,7 @@ const Subject = ({ user }) => {
 
     const handleDeleteSubject = async () => {
         setIsDeleting(true);
-        await deleteSubject(); // Hook handles navigation
+        await deleteSubject(); 
     };
 
     // Scroll Lock Effect
@@ -85,8 +91,6 @@ const Subject = ({ user }) => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 font-sans transition-colors">
             
-            <Header user={user} />
-
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
                 <SubjectHeader 
                     subject={subject}
@@ -94,28 +98,27 @@ const Subject = ({ user }) => {
                     onEdit={() => setShowEditModal(true)}
                     onDelete={() => setShowDeleteModal(true)}
                     
-                    // Reorder Toggles (Optional visual cues)
+                    // Reorder Props
                     onReorder={() => setIsReordering(true)}
                     isReordering={isReordering}
                     onCancelReorder={() => setIsReordering(false)}
                     onSaveReorder={() => setIsReordering(false)}
+
+                    // --- NEW: PASS SEARCH PROPS ---
+                    searchTerm={searchTerm}
+                    onSearch={setSearchTerm}
                 />
 
                 <TopicGrid 
-                    topics={topics}
+                    // --- CHANGED: USE FILTERED TOPICS ---
+                    topics={filteredTopics}
                     subjectColor={subject.color}
-                    isReordering={isReordering} // Pass down if you want visual changes (like dashed borders)
+                    isReordering={isReordering} 
                     
                     onOpenCreateModal={() => { setRetryTopicData(null); setShowTopicModal(true); }}
-                    
-                    // --- NAVIGATION FIX ---
-                    // Restored the /home/ prefix to match your routing
                     onSelectTopic={(t) => navigate(`/home/subject/${subjectId}/topic/${t.id}`)}
-                    
                     onDeleteTopic={onDeleteTopicConfirm}
                     onRetryTopic={onRetryTopic}
-                    
-                    // --- DRAG & DROP HANDLER ---
                     onReorderTopics={handleReorderTopics} 
                 />
             </main>
