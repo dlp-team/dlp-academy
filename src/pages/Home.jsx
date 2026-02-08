@@ -21,6 +21,8 @@ import HomeModals from '../components/home/HomeModals';
 const Home = ({ user }) => {
     // 1. Initialize Logic
     const logic = useHomeLogic(user);
+    // We use moveSubjectToParent and moveFolderToParent because moving to a breadcrumb 
+    // is essentially moving "up" or sideways to a specific parent ID (or null for root).
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders } = useFolders(user);
 
     // --- FILTERING LOGIC ---
@@ -53,6 +55,7 @@ const Home = ({ user }) => {
         logic.handleSaveFolder(dataWithParent);
     };
 
+    // Handler for the big "Move Up" zone (stays for convenience)
     const handleUpwardDrop = async (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -74,18 +77,35 @@ const Home = ({ user }) => {
         }
     };
 
-    // Wrapper for dropping Subject -> Folder
+    // NEW: Handler for dropping onto Breadcrumb segments
+    const handleBreadcrumbDrop = async (targetFolderId, subjectId, droppedFolderId) => {
+        const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
+
+        if (subjectId) {
+            // Move subject from current location to the breadcrumb target
+            // currentFolderId corresponds to the "from" folder, targetFolderId is the "to" folder (or null for root)
+            await moveSubjectToParent(subjectId, currentFolderId, targetFolderId);
+        } else if (droppedFolderId) {
+            // Find the dropped folder to know its old parent
+            const droppedFolderObj = (logic.folders || []).find(f => f.id === droppedFolderId);
+            if (!droppedFolderObj) return;
+            
+            const oldParentId = droppedFolderObj.parentId || null;
+            
+            // Move folder from old parent to new breadcrumb target
+            await moveFolderToParent(droppedFolderId, oldParentId, targetFolderId);
+        }
+    };
+
+
+    // Wrapper for dropping Subject -> Folder Card
     const handleDropOnFolderWrapper = async (targetFolderId, subjectId) => {
         const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
-        
-        // Prevent dropping into same folder
         if (targetFolderId === currentFolderId) return;
-
-        // Perform the move (Remove from Source -> Add to Target)
         await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
     };
 
-    // Wrapper for nesting folders (Folder -> Folder)
+    // Wrapper for nesting folders (Folder Card -> Folder Card)
     const handleNestFolder = async (targetFolderId, droppedFolderId) => {
         if (targetFolderId === droppedFolderId) return;
         const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
@@ -117,7 +137,7 @@ const Home = ({ user }) => {
             <OnboardingWizard user={user} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
-                {/* UPWARD DROP ZONE */}
+                {/* UPWARD DROP ZONE - Kept as an alternative big target */}
                 <div 
                     className="relative transition-all duration-300"
                     onDragOver={(e) => {
@@ -127,37 +147,26 @@ const Home = ({ user }) => {
                     }}
                     onDrop={handleUpwardDrop}
                 >
-                    {logic.isDragAndDropEnabled && logic.draggedItem && logic.currentFolder ? (
-                        <div className="w-full h-20 mb-6 rounded-2xl border-2 border-dashed border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center gap-3 animate-pulse text-indigo-600 dark:text-indigo-300 z-10">
-                            <ArrowUpCircle className="w-8 h-8" />
-                            <span className="font-bold text-lg">
-                                {logic.currentFolder.parentId 
-                                    ? "Mover a la carpeta anterior" 
-                                    : "Mover al inicio (Root)"}
-                            </span>
-                        </div>
-                    ) : (
-                        <HomeControls 
-                            viewMode={logic.viewMode}
-                            setViewMode={logic.setViewMode}
-                            layoutMode={logic.layoutMode}
-                            setLayoutMode={logic.setLayoutMode}
-                            cardScale={logic.cardScale}
-                            setCardScale={logic.setCardScale}
-                            allTags={logic.allTags || []}
-                            selectedTags={logic.selectedTags || []}
-                            setSelectedTags={logic.setSelectedTags}
-                            currentFolder={logic.currentFolder}
-                            setFolderModalConfig={logic.setFolderModalConfig}
-                            setCollapsedGroups={logic.setCollapsedGroups}
-                            setCurrentFolder={logic.setCurrentFolder}
-                            isDragAndDropEnabled={logic.isDragAndDropEnabled}
-                            draggedItem={logic.draggedItem}
-                            draggedItemType={logic.draggedItemType}
-                            onPreferenceChange={logic.handlePreferenceChange}
-                            allFolders={logic.folders || []} 
-                        />
-                    )}
+                    <HomeControls 
+                        viewMode={logic.viewMode}
+                        setViewMode={logic.setViewMode}
+                        layoutMode={logic.layoutMode}
+                        setLayoutMode={logic.setLayoutMode}
+                        cardScale={logic.cardScale}
+                        setCardScale={logic.setCardScale}
+                        allTags={logic.allTags || []}
+                        selectedTags={logic.selectedTags || []}
+                        setSelectedTags={logic.setSelectedTags}
+                        currentFolder={logic.currentFolder}
+                        setFolderModalConfig={logic.setFolderModalConfig}
+                        setCollapsedGroups={logic.setCollapsedGroups}
+                        setCurrentFolder={logic.setCurrentFolder}
+                        isDragAndDropEnabled={logic.isDragAndDropEnabled}
+                        draggedItem={logic.draggedItem}
+                        draggedItemType={logic.draggedItemType}
+                        onPreferenceChange={logic.handlePreferenceChange}
+                        allFolders={logic.folders || []} 
+                    />
                 </div>
 
                 {/* Main Content */}
@@ -165,10 +174,13 @@ const Home = ({ user }) => {
                     <SharedView user={user} />
                 ) : (
                     <>
+                        {/* NEW PROPS PASSED TO BREADCRUMBNAV */}
                         <BreadcrumbNav 
                             currentFolder={logic.currentFolder} 
                             onNavigate={logic.setCurrentFolder}
-                            allFolders={logic.folders || []} 
+                            allFolders={logic.folders || []}
+                            onDropOnBreadcrumb={handleBreadcrumbDrop}
+                            draggedItem={logic.draggedItem}
                         />
 
                         {logic.loading ? (
@@ -203,8 +215,6 @@ const Home = ({ user }) => {
                                         handleShareFolder={logic.handleShareFolder}
                                         handlePromoteSubject={handlePromoteSubjectWrapper}
                                         handlePromoteFolder={handlePromoteFolderWrapper}
-                                        
-                                        // CRITICAL: Use the new wrapper
                                         handleDropOnFolder={handleDropOnFolderWrapper}
                                         handleNestFolder={handleNestFolder}
                                         
