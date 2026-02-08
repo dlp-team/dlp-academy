@@ -1,7 +1,7 @@
 // src/hooks/useFolders.js
 import { useState, useEffect } from 'react';
 import { 
-    collection, query, where, addDoc, updateDoc, deleteDoc, doc, arrayUnion, arrayRemove, onSnapshot
+    collection, query, where, addDoc, updateDoc, deleteDoc, doc, getDoc, arrayUnion, arrayRemove, onSnapshot
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -70,29 +70,25 @@ export const useFolders = (user) => {
 
     }, [user]);
 
-    // --- HIERARCHY HELPERS ---
+    // --- HELPERS ---
     const addFolderToParent = async (parentId, childId) => {
         if (!parentId) return;
-        const parentRef = doc(db, "folders", parentId);
-        await updateDoc(parentRef, { folderIds: arrayUnion(childId), updatedAt: new Date() });
+        await updateDoc(doc(db, "folders", parentId), { folderIds: arrayUnion(childId), updatedAt: new Date() });
     };
 
     const removeFolderFromParent = async (parentId, childId) => {
         if (!parentId) return;
-        const parentRef = doc(db, "folders", parentId);
-        await updateDoc(parentRef, { folderIds: arrayRemove(childId), updatedAt: new Date() });
+        await updateDoc(doc(db, "folders", parentId), { folderIds: arrayRemove(childId), updatedAt: new Date() });
     };
 
     const removeSubjectFromFolder = async (folderId, subjectId) => {
         if (!folderId) return;
-        const folderRef = doc(db, "folders", folderId);
-        await updateDoc(folderRef, { subjectIds: arrayRemove(subjectId), updatedAt: new Date() });
+        await updateDoc(doc(db, "folders", folderId), { subjectIds: arrayRemove(subjectId), updatedAt: new Date() });
     };
 
     const addSubjectToFolder = async (folderId, subjectId) => {
         if (!folderId) return;
-        const folderRef = doc(db, "folders", folderId);
-        await updateDoc(folderRef, { subjectIds: arrayUnion(subjectId), updatedAt: new Date() });
+        await updateDoc(doc(db, "folders", folderId), { subjectIds: arrayUnion(subjectId), updatedAt: new Date() });
     };
 
     // --- ACTIONS ---
@@ -124,43 +120,36 @@ export const useFolders = (user) => {
     const deleteFolder = async (id) => {
         const folder = folders.find(f => f.id === id);
         if (!folder) return;
-        if (folder.parentId) {
-            await removeFolderFromParent(folder.parentId, id);
-        }
+        if (folder.parentId) await removeFolderFromParent(folder.parentId, id);
         await deleteDoc(doc(db, "folders", id));
     };
 
     const shareFolder = async (folderId, email, role = 'viewer') => {
-        const folder = folders.find(f => f.id === folderId);
-        if (!folder) return;
         const sharedWith = [
-            ...(folder.sharedWith || []).filter(s => s.email !== email),
+            ...(folders.find(f => f.id === folderId)?.sharedWith || []).filter(s => s.email !== email),
             { uid: null, email, role, sharedAt: new Date() }
         ];
         await updateDoc(doc(db, "folders", folderId), { sharedWith, isShared: true, updatedAt: new Date() });
     };
 
     const unshareFolder = async (folderId, email) => {
-        const folder = folders.find(f => f.id === folderId);
-        if (!folder) return;
-        const sharedWith = (folder.sharedWith || []).filter(s => s.email !== email);
+        const sharedWith = (folders.find(f => f.id === folderId)?.sharedWith || []).filter(s => s.email !== email);
         await updateDoc(doc(db, "folders", folderId), { sharedWith, isShared: sharedWith.length > 0, updatedAt: new Date() });
     };
 
     // --- MOVEMENT LOGIC ---
     
-    // 1. Move Subject UP to parent
+    // 1. Move Subject UP (Hierarchy)
     const moveSubjectToParent = async (subjectId, currentFolderId, parentId) => {
         if (currentFolderId) await removeSubjectFromFolder(currentFolderId, subjectId);
         if (parentId) await addSubjectToFolder(parentId, subjectId);
         
-        // Also update subject doc
         try {
             await updateDoc(doc(db, "subjects", subjectId), { folderId: parentId || null, updatedAt: new Date() });
         } catch (e) { console.error("Error updating subject parent:", e); }
     };
 
-    // 2. Move Folder UP to parent
+    // 2. Move Folder UP (Hierarchy)
     const moveFolderToParent = async (folderId, currentParentId, newParentId) => {
         if (currentParentId) await removeFolderFromParent(currentParentId, folderId);
         await updateDoc(doc(db, "folders", folderId), { parentId: newParentId || null, updatedAt: new Date() });
@@ -168,16 +157,36 @@ export const useFolders = (user) => {
     };
 
     // 3. Move Subject BETWEEN folders (Drag Subject -> Folder)
+    // ROBUST VERSION: Fetches subject to find source if not provided
     const moveSubjectBetweenFolders = async (subjectId, fromFolderId, toFolderId) => {
-        // Remove from Source
-        if (fromFolderId) {
-            await removeSubjectFromFolder(fromFolderId, subjectId);
+        let sourceId = fromFolderId;
+
+        // Failsafe: If source isn't known, fetch it from the subject doc
+        if (!sourceId) {
+            try {
+                const subSnap = await getDoc(doc(db, "subjects", subjectId));
+                if (subSnap.exists()) {
+                    sourceId = subSnap.data().folderId;
+                }
+            } catch (e) {
+                console.error("Error fetching subject source folder:", e);
+            }
         }
-        // Add to Target
+
+        // Prevent moving to same folder
+        if (sourceId === toFolderId) return;
+
+        // 1. Remove from Source
+        if (sourceId) {
+            await removeSubjectFromFolder(sourceId, subjectId);
+        }
+
+        // 2. Add to Target
         if (toFolderId) {
             await addSubjectToFolder(toFolderId, subjectId);
         }
-        // Update Subject Document
+
+        // 3. Update Subject Document
         try {
             await updateDoc(doc(db, "subjects", subjectId), { 
                 folderId: toFolderId, 

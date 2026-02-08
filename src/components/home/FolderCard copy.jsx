@@ -133,7 +133,7 @@ const FolderCard = (props) => {
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onShare={onShare}
-                onShowContents={onShowContents} // PASSED DOWN
+                onShowContents={onShowContents}
             />
         </div>
     );
