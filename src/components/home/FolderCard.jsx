@@ -1,6 +1,6 @@
 // src/components/home/FolderCard.jsx
 import React from 'react';
-import { useFolderCardLogic } from '../../hooks/useFolderCardLogic'; // Adjust path
+import { useFolderCardLogic } from '../../hooks/useFolderCardLogic';
 import FolderCardTab from './FolderCardTab';
 import FolderCardBody from './FolderCardBody';
 

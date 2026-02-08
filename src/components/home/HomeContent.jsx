@@ -3,10 +3,10 @@ import React, { useState } from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp
 } from 'lucide-react';
-import SubjectIcon from '..//modals/SubjectIcon'; // Adjust path
-import SubjectCard from '..//home/SubjectCard';   // Adjust path
-import FolderCard from '..//home/FolderCard';     // Adjust path
-import SubjectListItem from '..//home/SubjectListItem'; // Adjust path
+import SubjectIcon from '..//modals/SubjectIcon';
+import SubjectCard from '..//home/SubjectCard';
+import FolderCard from '..//home/FolderCard'; 
+import SubjectListItem from '..//home/SubjectListItem';
 
 const HomeContent = ({
     viewMode,
