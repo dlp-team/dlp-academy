@@ -106,20 +106,18 @@ export const useQuizzesLogic = (user) => {
         if (!user) return;
         
         try {
-            const resultRef = doc(db, 'users', user.uid, 'quiz_results', `${quizId}_${Date.now()}`);
+            // Guardar en la subcollection "quiz_results" dentro del tema
+            const resultRef = doc(db, 'subjects', subjectId, 'topics', topicId, 'quiz_results', `${quizId}_${user.uid}`);
             await setDoc(resultRef, {
-                subjectId,
-                topicId,
                 quizId,
+                userId: user.uid,
                 score,
                 correctCount,
                 wrongCount,
                 totalQuestions: quizData.questions.length,
                 completedAt: serverTimestamp(),
-                quizName: quizData.name || 'Quiz',
-                subjectName: subject?.name || 'Asignatura',
-                topicTitle: topic?.title || 'Tema'
-            });
+                quizName: quizData.name || 'Quiz'
+            }, { merge: true }); // merge: true sobrescribe si ya existe
         } catch (error) {
             console.error("Error saving result:", error);
         }

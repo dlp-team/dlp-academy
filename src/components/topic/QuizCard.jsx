@@ -1,75 +1,99 @@
-// src/components/topic/QuizCard.jsx
 import React from 'react';
-import { MoreHorizontal, Edit2, Trash2, Timer, Play } from 'lucide-react';
+import { Timer, Play, RotateCcw, Trophy } from 'lucide-react'; // Importamos iconos nuevos
 
 const QuizCard = ({ 
     quiz, 
-    activeMenuId, 
-    setActiveMenuId, 
-    handleMenuClick, 
-    deleteQuiz, 
-    getQuizVisuals, 
     navigate, 
     subjectId, 
     topicId 
 }) => {
-    const { icon: Icon, bgFade, textAccent, iconBg, border, level } = getQuizVisuals(quiz.type);
-    const isMenuOpen = activeMenuId === quiz.id;
+    // Determinamos si el test ya se ha realizado verificando si existe una puntuación
+    // (Asumiendo que quiz.score viene de tu base de datos)
+    const hasScore = quiz.score !== undefined && quiz.score !== null;
+
+    const getQuizIcon = (type, level) => {
+        if (level) {
+            const levelLower = level.toLowerCase();
+            if (levelLower.includes('básico') || levelLower.includes('basico') || levelLower.includes('principiante')) 
+                return { icon: '🧪', color: 'from-green-400 to-green-600', level: 'Básico' };
+            if (levelLower.includes('intermedio') || levelLower.includes('medio'))
+                return { icon: '📖', color: 'from-blue-400 to-blue-600', level: 'Intermedio' };
+            if (levelLower.includes('avanzado') || levelLower.includes('experto'))
+                return { icon: '🏆', color: 'from-purple-400 to-purple-600', level: 'Avanzado' };
+        }
+        
+        switch(type) {
+            case 'basic': return { icon: '🧪', color: 'from-green-400 to-green-600', level: 'Básico' };
+            case 'advanced': return { icon: '📖', color: 'from-blue-400 to-blue-600', level: 'Intermedio' };
+            case 'final': return { icon: '🏆', color: 'from-purple-400 to-purple-600', level: 'Avanzado' };
+            default: return { icon: '📝', color: 'from-gray-400 to-gray-600', level: 'Test' };
+        }
+    };
+
+    const { icon, level: displayLevel, color } = getQuizIcon(quiz.type, quiz.level);
 
     return (
-        <div className="group relative h-64 rounded-3xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl cursor-default bg-white border border-slate-100 shadow-sm">
+        <div className="group relative h-64 rounded-3xl shadow-lg shadow-slate-200/50 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl cursor-default">
+            {/* Fondo con degradado */}
+            <div className={`absolute inset-0 bg-gradient-to-r ${color} opacity-90 transition-opacity group-hover:opacity-100`}></div>
             
-            {/* FADE BACKGROUND BEHIND ICON */}
-            <div className={`absolute -top-24 -left-24 w-64 h-64 rounded-full ${bgFade} opacity-70 blur-3xl group-hover:opacity-100 transition-opacity`}></div>
-
-            {/* ICONO GRANDE (FADE IN PAGE BLEND) */}
-            <div className="absolute top-6 left-6 z-20">
-                <div className={`p-3.5 rounded-2xl ${iconBg} ${textAccent} shadow-sm`}>
-                    <Icon className="w-8 h-8" />
-                </div>
-            </div>
-
-            {/* MENU */}
-            <div className="absolute top-4 right-4 z-30">
-                <button onClick={(e) => handleMenuClick(e, quiz.id)} className="p-2 rounded-full transition-colors text-slate-400 hover:bg-slate-50 hover:text-slate-600">
-                    <MoreHorizontal className="w-6 h-6" />
-                </button>
+            <div className="relative h-full p-8 flex flex-col justify-between text-white">
                 
-                {isMenuOpen && (
-                    <>
-                        <div className="fixed inset-0 z-20" onClick={() => setActiveMenuId(null)} />
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-40 text-slate-700 animate-in fade-in zoom-in-95">
-                            <button 
-                                onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}/edit`)} 
-                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-indigo-50 flex items-center gap-2 font-medium"
-                            >
-                                <Edit2 className="w-4 h-4 text-indigo-600" /> Editar Test
-                            </button>
-                            <div className="border-t border-slate-100 my-1"></div>
-                            <button 
-                                onClick={() => deleteQuiz(quiz.id)} 
-                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2 font-medium"
-                            >
-                                <Trash2 className="w-4 h-4" /> Eliminar
-                            </button>
-                        </div>
-                    </>
-                )}
-            </div>
+                {/* --- HEADER DE LA TARJETA --- */}
+                <div className="flex justify-between items-start">
+                    {/* Icono Grande de Fondo */}
+                    <div className="text-6xl opacity-30 absolute -top-2 -left-2 rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                        {icon}
+                    </div>
 
-            <div className="relative h-full p-8 flex flex-col justify-end z-10">
-                <div className="mt-auto">
-                    <span className={`absolute top-6 right-16 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${bgFade} ${border} ${textAccent}`}>
-                        {level}
-                    </span>
-                    <h3 className="text-3xl font-extrabold leading-tight mb-2 text-slate-800">{quiz.name || "Test Práctico"}</h3>
-                    <div className="flex items-center gap-2 text-slate-400 text-sm mb-6 font-medium"><Timer className="w-4 h-4" /> 15 min aprox</div>
+                    {/* Zona Superior Derecha (Nivel y Puntuación) */}
+                    <div className="ml-auto flex flex-col items-end gap-2 z-10">
+                        {/* Badge de Nivel */}
+                        <div className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/20">
+                            <span className="text-xs font-bold uppercase tracking-wider">{displayLevel}</span>
+                        </div>
+
+                        {/* Badge de Puntuación (Solo si ya se hizo) */}
+                        {hasScore && (
+                            <div className="bg-white text-slate-800 px-3 py-1 rounded-full shadow-md flex items-center gap-1.5 animate-in fade-in slide-in-from-right-4 duration-500">
+                                <Trophy className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                <span className="text-xs font-black">{quiz.score}%</span>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* --- FOOTER DE LA TARJETA --- */}
+                <div className="z-10 mt-auto">
+                    <h3 className="text-3xl font-extrabold leading-tight mb-2 line-clamp-1" title={quiz.name}>
+                        {quiz.name || "Test Práctico"}
+                    </h3>
                     
+                    <div className="flex items-center gap-2 text-white/80 text-sm mb-6 font-medium">
+                        <Timer className="w-4 h-4" /> 
+                        <span>15 min aprox</span>
+                        {/* Opcional: Mostrar si está completado en texto */}
+                        {hasScore && <span className="text-white/60">• Completado</span>}
+                    </div>
+
+                    {/* BOTÓN DE ACCIÓN */}
                     <button 
-                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`)} 
-                        className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all shadow-md hover:shadow-lg ${iconBg} ${textAccent} hover:brightness-95`}
+                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`)}
+                        className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold uppercase tracking-wider transition-all shadow-lg
+                            ${hasScore 
+                                ? 'bg-white/90 text-slate-900 hover:bg-white' // Estilo Reintentar (más sutil o igual, a gusto)
+                                : 'bg-white text-indigo-900 hover:bg-indigo-50' // Estilo Nuevo
+                            }`}
                     >
-                        <Play className="w-4 h-4 fill-current" /> Comenzar Test
+                        {hasScore ? (
+                            <>
+                                <RotateCcw className="w-4 h-4" /> Reintentar Test
+                            </>
+                        ) : (
+                            <>
+                                <Play className="w-4 h-4 fill-current" /> Comenzar Test
+                            </>
+                        )}
                     </button>
                 </div>
             </div>
