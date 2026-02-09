@@ -10,6 +10,7 @@ import { useProfile } from '../hooks/useProfile';
 import UserCard from '../components/profile/UserCard';
 import ProfileSubjects from '../components/profile/ProfileSubjects';
 import StatsSidebar from '../components/profile/StatsSidebar';
+import UserStatistics from '../components/profile/UserStatistics'; // <--- IMPORT NEW COMPONENT
 import EditProfileModal from '../components/modals/EditProfileModal';
 
 const Profile = ({ user }) => {
@@ -41,6 +42,9 @@ const Profile = ({ user }) => {
           <ProfileSubjects subjects={subjects} />
           <StatsSidebar />
         </div>
+
+        {/* NEW STATISTICS SECTION */}
+        <UserStatistics subjects={subjects} userId={user.uid} />
 
       </main>
 

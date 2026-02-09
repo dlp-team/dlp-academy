@@ -7,6 +7,7 @@ import SubjectListItem from './SubjectListItem';
 const ListViewItem = ({ 
     item, 
     type, 
+    currentParentId, // <--- CRITICAL: The ID of the folder this item is currently inside
     depth = 0, 
     allFolders, 
     allSubjects, 
@@ -16,7 +17,7 @@ const ListViewItem = ({
     onDelete,
     cardScale = 100, 
     onDragStart,
-    onDragEnd, // NEW: Receive drag end handler
+    onDragEnd,
     onDropAction
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -25,12 +26,14 @@ const ListViewItem = ({
 
     const scale = cardScale / 100;
 
+    // --- PREPARE CHILDREN ---
     let childFolders = [];
     let childSubjects = [];
 
     if (type === 'folder') {
         if (item.folderIds && item.folderIds.length > 0) {
             childFolders = allFolders.filter(f => item.folderIds.includes(f.id));
+            // Maintain order
             childFolders.sort((a, b) => item.folderIds.indexOf(a.id) - item.folderIds.indexOf(b.id));
         }
         if (item.subjectIds && item.subjectIds.length > 0) {
@@ -42,50 +45,74 @@ const ListViewItem = ({
     const hasChildren = childFolders.length > 0 || childSubjects.length > 0;
     const totalChildren = childFolders.length + childSubjects.length;
 
+    // --- DRAG HANDLERS ---
     const handleDragStart = (e) => {
         e.stopPropagation();
-        const sourceParentId = item.parentId || item.folderId || null;
-        const dragData = { id: item.id, type: type, parentId: sourceParentId };
         
+        // We use the passed prop 'currentParentId' as the source. 
+        // This mirrors FolderTreeModal logic exactly.
+        const dragData = {
+            id: item.id,
+            type: type,
+            parentId: currentParentId // THIS IS THE SOURCE FOLDER ID
+        };
+        
+        // Set data for both internal app logic and generic drag
         if (type === 'subject') e.dataTransfer.setData('subjectId', item.id);
         else e.dataTransfer.setData('folderId', item.id);
+        
         e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
         
-        if (onDragStart) onDragStart(dragData);
+        // Trigger UI state
+        if (onDragStart) onDragStart(item); 
     };
 
     const handleDragOver = (e) => {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
         if (!isDragOver) setIsDragOver(true);
     };
 
     const handleDragLeave = (e) => {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault();
+        e.stopPropagation();
         setIsDragOver(false);
     };
 
     const handleDrop = (e) => {
-        e.preventDefault(); e.stopPropagation(); setIsDragOver(false);
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragOver(false);
+
         const treeDataString = e.dataTransfer.getData('treeItem');
         let draggedData;
-        if (treeDataString) draggedData = JSON.parse(treeDataString);
-        else {
+
+        if (treeDataString) {
+            draggedData = JSON.parse(treeDataString);
+        } else {
+            // Fallback for external drops (unlikely in this specific flow but good for safety)
             const sId = e.dataTransfer.getData('subjectId');
             const fId = e.dataTransfer.getData('folderId');
             if (sId) draggedData = { id: sId, type: 'subject' };
             else if (fId) draggedData = { id: fId, type: 'folder' };
         }
-        if (!draggedData || draggedData.id === item.id) return;
 
-        const myParentId = item.parentId || item.folderId || null;
-        onDropAction(draggedData, { id: item.id, type: type, parentId: myParentId });
+        if (!draggedData) return;
+        if (draggedData.id === item.id) return; // Dropped on self
+
+        // ACTION: Target is THIS item. Source comes from draggedData.
+        onDropAction(draggedData, { id: item.id, type: type, parentId: currentParentId });
+        
         if (type === 'folder' && !isExpanded) setIsExpanded(true);
     };
 
-    const handleClickFolder = (e) => { e.stopPropagation(); setIsExpanded(!isExpanded); };
+    const handleClickFolder = (e) => {
+        e.stopPropagation();
+        setIsExpanded(!isExpanded);
+    };
 
-    // Styles
-    const indent = depth * (64 * scale); // Clean indentation
+    // --- STYLES ---
+    const indent = depth * (48 * scale); // Adjusted indentation
     const iconBoxSize = 48 * scale;
     const iconSize = 28 * scale;
     const paddingY = 16 * scale;
@@ -97,7 +124,7 @@ const ListViewItem = ({
             <div 
                 draggable
                 onDragStart={handleDragStart}
-                onDragEnd={onDragEnd} // Pass drag end handler here
+                onDragEnd={onDragEnd}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -149,7 +176,7 @@ const ListViewItem = ({
                 )}
             </div>
 
-            {/* CHILDREN */}
+            {/* CHILDREN (RECURSION) */}
             {isExpanded && type === 'folder' && (
                 <div className="mt-3 flex flex-col gap-2">
                     {hasChildren ? (
@@ -159,6 +186,7 @@ const ListViewItem = ({
                                     key={folder.id}
                                     item={folder}
                                     type="folder"
+                                    currentParentId={item.id} // <--- PASS THIS FOLDER'S ID AS PARENT
                                     depth={depth + 1}
                                     allFolders={allFolders}
                                     allSubjects={allSubjects}
@@ -177,6 +205,7 @@ const ListViewItem = ({
                                     key={subject.id}
                                     item={subject}
                                     type="subject"
+                                    currentParentId={item.id} // <--- PASS THIS FOLDER'S ID AS PARENT
                                     depth={depth + 1}
                                     allFolders={allFolders}
                                     allSubjects={allSubjects}
