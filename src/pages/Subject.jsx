@@ -6,13 +6,14 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 import { useSubjectManager } from '../hooks/useSubjectManager';
 
 // Layout
+import Header from '../components/layout/Header';
 import SubjectHeader from '../components/subject/SubjectHeader';
 import TopicGrid from '../components/subject/TopicGrid';
 
 // Modals
 import EditSubjectModal from '../components/modals/EditSubjectModal';
 import TopicFormModal from '../components/modals/TopicFormModal';
-import EditTopicModal from '../components/modals/EditTopicModal'; // NEW IMPORT
+import EditTopicModal from '../components/modals/EditTopicModal';
 
 const Subject = ({ user }) => {
     const params = useParams();
@@ -108,7 +109,8 @@ const Subject = ({ user }) => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 font-sans transition-colors">
-            
+            <Header user={user} />
+
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
                 <SubjectHeader 
                     subject={subject}

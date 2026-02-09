@@ -66,7 +66,7 @@ const TopicCard = ({
                 position: 'fixed', top: `${rect.top}px`, left: `${rect.left}px`,
                 width: `${rect.width}px`, height: `${rect.height}px`,
                 opacity: '1', zIndex: '10000', pointerEvents: 'none',
-                transform: 'scale(1.05) rotate(3deg)', transition: 'none',
+                transform: 'scale(1.05) rotate(0deg)', transition: 'none',
                 boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.15)'
             });
             document.body.appendChild(ghost);
@@ -111,8 +111,8 @@ const TopicCard = ({
             onDragEnd={handleDragEndInternal}
             onDragOver={onDragOver}
             onDrop={onDrop}
-            className={`group relative h-64 rounded-2xl shadow-lg dark:shadow-slate-900/50 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl dark:hover:shadow-slate-900/70 cursor-pointer 
-            ${isDragging ? 'opacity-0' : 'opacity-100'} 
+            className={`group relative h-64 rounded-2xl shadow-lg dark:shadow-slate-900/50 overflow-hidden transition-transform duration-300 hover:scale-[1.02] hover:shadow-xl dark:hover:shadow-slate-900/70 cursor-pointer 
+            ${isDragging ? 'opacity-0 transition-none' : 'opacity-100'} 
             ${topic.isVisible === false ? 'grayscale-[0.5] opacity-80' : ''}`}
         >
             <div 
@@ -176,7 +176,7 @@ const TopicCard = ({
                     <div className="flex justify-between items-start">
                         
                         {/* Number */}
-                        <span className="text-6xl font-black text-white/20 select-none">
+                        <span className="text-8xl font-black text-white/40 select-none">
                             {topic.number}
                         </span>
                         
