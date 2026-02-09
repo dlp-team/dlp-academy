@@ -266,10 +266,44 @@ export const useFolders = (user) => {
         return false;
     };
 
+    // --- NEW: ROBUST MOVE FOLDER BETWEEN PARENTS (Added this) ---
+    // This is the clean function you need for the list view drag & drop
+    const moveFolderBetweenParents = async (folderId, fromParentId, toParentId) => {
+        if (folderId === toParentId) return; // Cannot move into self
+        if (fromParentId === toParentId) return; // No change
+
+        // Check for Circular Dependency
+        if (checkIsDescendant(folderId, toParentId)) {
+            alert("No puedes mover una carpeta dentro de sí misma.");
+            return;
+        }
+
+        const batch = writeBatch(db);
+
+        // 1. Remove from Old Parent
+        if (fromParentId) {
+            const oldParentRef = doc(db, "folders", fromParentId);
+            batch.update(oldParentRef, { folderIds: arrayRemove(folderId), updatedAt: new Date() });
+        }
+
+        // 2. Add to New Parent
+        if (toParentId) {
+            const newParentRef = doc(db, "folders", toParentId);
+            batch.update(newParentRef, { folderIds: arrayUnion(folderId), updatedAt: new Date() });
+        }
+
+        // 3. Update Folder Itself
+        const folderRef = doc(db, "folders", folderId);
+        batch.update(folderRef, { parentId: toParentId || null, updatedAt: new Date() });
+
+        await batch.commit();
+    };
+
     return { 
         folders, loading, addFolder, updateFolder, deleteFolder, 
         shareFolder, unshareFolder, 
         moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders,
-        addSubjectToFolder 
+        addSubjectToFolder,
+        moveFolderBetweenParents // Export the new function
     };
 };

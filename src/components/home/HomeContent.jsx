@@ -30,12 +30,11 @@ const HomeContent = ({
     handleSelectSubject,
     handleOpenFolder,
     handleDropOnFolder, 
-    handleNestFolder, 
+    handleNestFolder, // <--- Using this for Folder moves (Same as TreeModal)
     handlePromoteSubject,
     handlePromoteFolder,
     handleShowFolderContents,
-    handleMoveSubjectWithSource, 
-    handleMoveFolderWithSource, // This is moveFolderBetweenParents
+    handleMoveSubjectWithSource, // <--- Using this for Subject moves (Same as TreeModal)
     
     isDragAndDropEnabled,
     draggedItem,
@@ -73,77 +72,61 @@ const HomeContent = ({
     };
 
     // --- LIST VIEW: "MOVE TO CURRENT LAYER" ZONE ---
+    // Mirrors the "Root" behavior in TreeModal
     const handleRootZoneDrop = (e) => {
         e.preventDefault(); e.stopPropagation(); setIsRootZoneHovered(false);
 
         const treeDataString = e.dataTransfer.getData('treeItem');
-        let draggedData;
+        if (!treeDataString) return;
+        const draggedData = JSON.parse(treeDataString);
 
-        if (treeDataString) draggedData = JSON.parse(treeDataString);
-        else {
-            const sId = e.dataTransfer.getData('subjectId');
-            const fId = e.dataTransfer.getData('folderId');
-            if (sId) draggedData = { id: sId, type: 'subject' };
-            else if (fId) draggedData = { id: fId, type: 'folder' };
-        }
-
-        if (!draggedData) return;
-
-        // TARGET: The folder we are currently LOOKING AT (or null if root)
+        // TARGET: The folder currently being viewed (or null if root)
         const targetId = currentFolder ? currentFolder.id : null;
 
         // Prevent dropping if we are already in this folder
         if (draggedData.parentId === targetId) return;
 
         if (draggedData.type === 'subject') {
-            // Move subject to this layer
-            // Uses the robust method that cleans up the old parent
+            // Use existing handler passed from Home.jsx
             handleMoveSubjectWithSource(draggedData.id, targetId, draggedData.parentId);
         } else if (draggedData.type === 'folder') {
-            // Move folder to this layer
-            handleMoveFolderWithSource(draggedData.id, draggedData.parentId, targetId);
+            // Use existing handler passed from Home.jsx (mapped to moveFolderToParent)
+            handleNestFolder(targetId, draggedData.id); 
         }
         
         if (handleDragEnd) handleDragEnd();
     };
 
     // --- LIST VIEW: ITEM ON ITEM DROP ---
-    const handleListDrop = (dragged, target) => {
-        // dragged: {id, type, parentId}
-        // target: {id, type, parentId} -> We are dropping onto 'target' item
+    // Mirrors FolderTreeModal logic exactly
+    const handleListDropAction = (dragged, target) => {
+        // dragged: { id, type, parentId }
+        // target: { id, type, parentId }
 
-        // Case 1: Drop onto a FOLDER
+        // 1. Drop ON a Folder (Nest)
         if (target.type === 'folder') {
-            if (dragged.id === target.id) return; // Drop on self
-            
+            if (dragged.id === target.id) return;
+            if (dragged.parentId === target.id) return; // Already inside
+
             if (dragged.type === 'subject') {
                 // Move Subject INTO Target Folder
-                // Source is 'dragged.parentId', Target is 'target.id'
                 handleMoveSubjectWithSource(dragged.id, target.id, dragged.parentId);
             } else if (dragged.type === 'folder') {
                 // Move Folder INTO Target Folder
-                handleMoveFolderWithSource(dragged.id, dragged.parentId, target.id);
+                handleNestFolder(target.id, dragged.id);
             }
         }
-        // Case 2: Drop onto a SUBJECT (Sibling)
+        // 2. Drop ON a Subject (Sibling Move)
         else if (target.type === 'subject') {
-            // We want to move to the same folder as the target subject
-            // The target's parent is passed in 'target.parentId' (thanks to ListViewItem props)
             const targetParentId = target.parentId;
             
-            if (dragged.type === 'subject') {
-                if (dragged.parentId !== targetParentId) {
-                    // Different folders -> Move to target's folder
+            if (dragged.parentId !== targetParentId) {
+                // Moving from Folder A to Folder B (Target's Folder)
+                if (dragged.type === 'subject') {
                     handleMoveSubjectWithSource(dragged.id, targetParentId, dragged.parentId);
-                } else {
-                    // Same folder -> Reorder (If implemented)
-                    // handleDropReorderSubject(...)
+                } else if (dragged.type === 'folder') {
+                    handleNestFolder(targetParentId, dragged.id);
                 }
-            } else if (dragged.type === 'folder') {
-                 // Folders can also be moved to the sibling's level
-                 if (dragged.parentId !== targetParentId) {
-                     handleMoveFolderWithSource(dragged.id, dragged.parentId, targetParentId);
-                 }
             }
         }
         
@@ -169,11 +152,10 @@ const HomeContent = ({
 
                         {!isCollapsed && (
                             <>
-                                {/* GRID VIEW */}
                                 {layoutMode === 'grid' && (
                                     <div className="mb-10">
                                         <div className="grid gap-6" style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` }}>
-                                            {/* Promote Zone */}
+                                            {/* Promote Zone (Grid) */}
                                             {viewMode === 'grid' && (
                                                  <div>
                                                     {currentFolder && draggedItem && (draggedItemType === 'subject' || draggedItemType === 'folder') ? (
@@ -207,8 +189,7 @@ const HomeContent = ({
                                                     )}
                                                 </div>
                                             )}
-
-                                            {/* Items (Grid) */}
+                                            {/* (Existing Grid Logic...) */}
                                             {viewMode === 'grid' && orderedFolders.map((folder, index) => (
                                                 <div key={`folder-${folder.id}`}>
                                                     <FolderCard folder={folder} onOpen={handleOpenFolder} activeMenu={activeMenu} onToggleMenu={setActiveMenu} onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })} onDelete={(f) => setDeleteConfig({ isOpen: true, type: 'folder', item: f })} onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })} onShowContents={handleShowFolderContents} cardScale={cardScale} onDrop={handleDropOnFolder} onDropFolder={handleNestFolder} canDrop={isDragAndDropEnabled} draggable={isDragAndDropEnabled} onDragStart={handleDragStartFolder} onDragEnd={handleDragEnd} onDragOver={handleDragOverFolder} onDropReorder={handleDropReorderFolder} position={index} isDragging={draggedItem?.id === folder.id} />
@@ -223,12 +204,12 @@ const HomeContent = ({
                                     </div>
                                 )}
                                 
-                                {/* LIST VIEW */}
+                                {/* LIST VIEW (Corrected Logic) */}
                                 {layoutMode === 'list' && (
                                      <div className="space-y-2 relative">
                                         
-                                        {/* MOVE TO CURRENT LEVEL ZONE */}
-                                        {/* Only shows if dragging is enabled and an item is currently being dragged */}
+                                        {/* MOVE TO CURRENT LAYER ZONE */}
+                                        {/* Shows when dragging any item if D&D is enabled */}
                                         {isDragAndDropEnabled && draggedItem && (
                                             <div 
                                                 onDragOver={(e) => { e.preventDefault(); setIsRootZoneHovered(true); }}
@@ -251,7 +232,7 @@ const HomeContent = ({
                                                 key={folder.id}
                                                 item={folder}
                                                 type="folder"
-                                                currentParentId={currentFolder ? currentFolder.id : null} // ROOT LEVEL
+                                                parentId={currentFolder ? currentFolder.id : null} // Current View Root
                                                 allFolders={folders}
                                                 allSubjects={subjects}
                                                 onNavigate={handleOpenFolder}
@@ -261,7 +242,7 @@ const HomeContent = ({
                                                 cardScale={cardScale}
                                                 onDragStart={handleDragStartFolder} 
                                                 onDragEnd={handleDragEnd} 
-                                                onDropAction={handleListDrop}
+                                                onDropAction={handleListDropAction}
                                             />
                                         ))}
 
@@ -271,7 +252,7 @@ const HomeContent = ({
                                                 key={subject.id}
                                                 item={subject}
                                                 type="subject"
-                                                currentParentId={currentFolder ? currentFolder.id : null} // ROOT LEVEL
+                                                parentId={currentFolder ? currentFolder.id : null} // Current View Root
                                                 allFolders={folders}
                                                 allSubjects={subjects}
                                                 onNavigateSubject={handleSelectSubject}
@@ -280,7 +261,7 @@ const HomeContent = ({
                                                 cardScale={cardScale}
                                                 onDragStart={handleDragStartSubject}
                                                 onDragEnd={handleDragEnd}
-                                                onDropAction={handleListDrop}
+                                                onDropAction={handleListDropAction}
                                             />
                                         ))}
                                     </div>

@@ -26,6 +26,9 @@ const UserStatistics = ({ subjects, userId }) => {
     const [loading, setLoading] = useState(true);
     const [filterSubject, setFilterSubject] = useState('all');
 
+    // Tooltip State
+    const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, data: null });
+
     useEffect(() => {
         const fetchDeepStats = async () => {
             if (!subjects || subjects.length === 0 || !userId) {
@@ -120,23 +123,72 @@ const UserStatistics = ({ subjects, userId }) => {
         fetchDeepStats();
     }, [subjects, userId]);
 
-    // --- Chart Logic ---
+    // --- Chart Data Preparation ---
     const getChartData = () => {
         let data = rawResults;
         if (filterSubject !== 'all') {
             data = rawResults.filter(r => r.subjectId === filterSubject);
         }
+        // Sort by date ascending
         return data.sort((a, b) => a.date - b.date);
     };
 
     const chartData = getChartData();
 
-    // Enhanced Bar Styles: Gradient & Opacity
-    const getBarStyle = (score) => {
-        if (score === 100) return 'from-indigo-500/60 to-purple-600/60 hover:from-indigo-500 hover:to-purple-600 border-indigo-400/30'; 
-        if (score >= 70) return 'from-emerald-400/60 to-teal-500/60 hover:from-emerald-400 hover:to-teal-500 border-emerald-400/30';
-        if (score >= 50) return 'from-amber-300/60 to-orange-400/60 hover:from-amber-300 hover:to-orange-400 border-amber-400/30';
-        return 'from-rose-400/60 to-red-500/60 hover:from-rose-400 hover:to-red-500 border-rose-400/30';
+    // --- COLOR LOGIC (REFINED) ---
+    const getBarGradient = (score) => {
+        // 100% - Pure Strong Green + Gold Border
+        if (score === 100) {
+            return 'bg-gradient-to-t from-green-600 to-emerald-500 border-yellow-400 shadow-[0_0_15px_rgba(34,197,94,0.6)]';
+        }
+        
+        // 70% to <100% - Strong, Intense, Saturated Green
+        if (score >= 70) {
+            return 'bg-gradient-to-t from-emerald-500 to-green-500 border-green-400/50';
+        }
+
+        // 60% to <70% - Yellow/Orange -> Normal Green (Obscure)
+        if (score >= 60) {
+            // Transition from amber to a darker/standard green
+            return 'bg-gradient-to-t from-amber-500 to-emerald-700 border-emerald-600/30';
+        }
+
+        // 50% to <60% - Yellow/Orange
+        if (score >= 50) {
+            return 'bg-gradient-to-t from-orange-500 to-amber-500 border-amber-400/30';
+        }
+
+        // 45% to <50% - Red -> Orange
+        if (score >= 45) {
+            return 'bg-gradient-to-t from-red-600 to-orange-600 border-orange-500/30';
+        }
+
+        // 0% to <45% - Dark Red -> Red
+        return 'bg-gradient-to-t from-red-950 to-red-700 border-red-600/30';
+    };
+
+    // Tooltip Handlers
+    const handleMouseEnter = (e, data) => {
+        setTooltip({
+            visible: true,
+            x: e.clientX,
+            y: e.clientY,
+            data: data
+        });
+    };
+
+    const handleMouseMove = (e) => {
+        if (tooltip.visible) {
+            setTooltip(prev => ({
+                ...prev,
+                x: e.clientX,
+                y: e.clientY
+            }));
+        }
+    };
+
+    const handleMouseLeave = () => {
+        setTooltip(prev => ({ ...prev, visible: false }));
     };
 
     if (loading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>;
@@ -236,9 +288,34 @@ const UserStatistics = ({ subjects, userId }) => {
                     </div>
                 </div>
             </div>
+            
+            {/* CUSTOM CURSOR TOOLTIP */}
+            {tooltip.visible && tooltip.data && (
+                <div 
+                    className="fixed z-50 pointer-events-none transform -translate-y-1/2 ml-4 px-3 py-2 bg-slate-900/90 dark:bg-slate-100/90 backdrop-blur-md rounded-lg shadow-xl border border-slate-700 dark:border-slate-300"
+                    style={{ left: tooltip.x, top: tooltip.y }}
+                >
+                    <div className="flex items-center gap-3">
+                        <span className={`text-lg font-bold ${
+                             tooltip.data.score >= 70 ? 'text-emerald-400 dark:text-emerald-600' : 
+                             tooltip.data.score >= 50 ? 'text-amber-400 dark:text-amber-600' : 'text-red-400 dark:text-red-600'
+                        }`}>
+                            {tooltip.data.score}%
+                        </span>
+                        <div className="h-4 w-px bg-white/20 dark:bg-black/20"></div>
+                        <div className="flex flex-col">
+                            <span className="text-xs font-bold text-white dark:text-slate-900 max-w-[150px] truncate">
+                                {tooltip.data.quizTitle}
+                            </span>
+                            <span className="text-[10px] text-slate-300 dark:text-slate-500">
+                                {tooltip.data.date.toLocaleDateString()}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-            {/* --- MINIMALIST CHART SECTION --- */}
-            {/* Removed the background card container for a cleaner look */}
+            {/* --- CHART SECTION --- */}
             <div className="pt-8">
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 px-2">
                     <div>
@@ -275,82 +352,45 @@ const UserStatistics = ({ subjects, userId }) => {
                     </div>
                 </div>
 
-                {/* CHART CONTAINER */}
-                <div className="flex h-64 w-full">
+                {/* CHART CONTAINER - NO SCROLL */}
+                <div className="flex h-64 w-full pr-2">
                     {/* Y-AXIS (Fixed) */}
                     <div className="flex-shrink-0 w-12 flex flex-col justify-between items-end pr-3 pb-6 text-xs font-medium text-gray-400 dark:text-gray-500 border-r border-gray-300 dark:border-gray-700 relative">
-                        {/* Ticks */}
-                        <div className="relative w-full flex justify-end">
-                            <span className="relative top-[-6px]">100</span>
-                            <div className="absolute right-[-12px] top-0 w-3 h-px bg-gray-300 dark:bg-gray-700"></div>
-                        </div>
-                        <div className="relative w-full flex justify-end">
-                            <span className="relative top-[-6px]">75</span>
-                            <div className="absolute right-[-12px] top-0 w-2 h-px bg-gray-300 dark:bg-gray-700"></div>
-                        </div>
-                        <div className="relative w-full flex justify-end">
-                            <span className="relative top-[-6px]">50</span>
-                            <div className="absolute right-[-12px] top-0 w-2 h-px bg-gray-300 dark:bg-gray-700"></div>
-                        </div>
-                        <div className="relative w-full flex justify-end">
-                            <span className="relative top-[-6px]">25</span>
-                            <div className="absolute right-[-12px] top-0 w-2 h-px bg-gray-300 dark:bg-gray-700"></div>
-                        </div>
-                         <div className="relative w-full flex justify-end">
-                            <span className="relative top-[-6px]">0</span>
-                            {/* Base line connects here naturally */}
-                        </div>
+                        <div className="relative w-full flex justify-end"><span className="-translate-y-1/2">100</span><div className="absolute -right-3 top-0 w-2 h-px bg-gray-300 dark:bg-gray-700"></div></div>
+                        <div className="relative w-full flex justify-end"><span className="-translate-y-1/2">75</span><div className="absolute -right-3 top-0 w-2 h-px bg-gray-300 dark:bg-gray-700"></div></div>
+                        <div className="relative w-full flex justify-end"><span className="-translate-y-1/2">50</span><div className="absolute -right-3 top-0 w-2 h-px bg-gray-300 dark:bg-gray-700"></div></div>
+                        <div className="relative w-full flex justify-end"><span className="-translate-y-1/2">25</span><div className="absolute -right-3 top-0 w-2 h-px bg-gray-300 dark:bg-gray-700"></div></div>
+                        <div className="relative w-full flex justify-end"><span className="-translate-y-1/2">0</span></div>
                     </div>
 
-                    {/* SCROLLABLE PLOT AREA */}
-                    <div className="flex-grow overflow-x-auto pb-0 border-b border-gray-300 dark:border-gray-700 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
+                    {/* PLOT AREA - Flex container */}
+                    <div className="flex-grow flex items-end border-b border-gray-300 dark:border-gray-700 pb-[1px] relative">
                         {chartData.length > 0 ? (
-                            <div className="h-full flex items-end px-4 gap-6 min-w-max pb-[1px]">
+                            <div className="w-full h-full flex items-end justify-between gap-1">
                                 {chartData.map((data, index) => (
-                                    <div key={index} className="group relative h-full flex items-end flex-col justify-end">
+                                    <div 
+                                        key={index} 
+                                        className="group relative h-full flex items-end flex-col justify-end flex-1"
+                                        onMouseEnter={(e) => handleMouseEnter(e, data)}
+                                        onMouseMove={handleMouseMove}
+                                        onMouseLeave={handleMouseLeave}
+                                    >
                                         
-                                        {/* Floating Label on Hover (Punctuation) */}
-                                        <div 
-                                            className="opacity-0 group-hover:opacity-100 transition-all duration-300 absolute -top-8 left-1/2 -translate-x-1/2 font-bold text-sm z-20 pointer-events-none"
-                                            style={{ bottom: `${data.score + 5}%` }}
-                                        >
-                                            <span className={`px-2 py-1 rounded-md bg-white dark:bg-slate-800 shadow-sm border border-gray-100 dark:border-gray-700 ${
-                                                data.score >= 70 ? 'text-emerald-500' : 
-                                                data.score >= 50 ? 'text-amber-500' : 'text-rose-500'
-                                            }`}>
-                                                {data.score}
-                                            </span>
-                                        </div>
-
                                         {/* THE BAR */}
                                         <div 
-                                            className={`w-3 sm:w-4 rounded-t-md bg-gradient-to-t transition-all duration-500 border-t border-l border-r border-transparent ${getBarStyle(data.score)}`}
+                                            className={`w-full min-w-[2px] max-w-[20px] mx-auto rounded-t-sm transition-all duration-300 opacity-80 group-hover:opacity-100 border-t border-l border-r border-transparent ${getBarGradient(data.score)}`}
                                             style={{ 
                                                 height: `${data.score}%`,
-                                                boxShadow: data.score === 100 ? '0 0 15px rgba(99,102,241, 0.4)' : 'none'
+                                                // Enhance max score shadow
+                                                boxShadow: data.score === 100 ? '0 0 10px rgba(34,197,94, 0.4)' : 'none'
                                             }}
                                         ></div>
 
-                                        {/* Date Label (X-Axis Item) */}
-                                        <div className="mt-2 text-[10px] text-gray-400 dark:text-gray-500 font-medium rotate-0 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity absolute top-full left-1/2 -translate-x-1/2">
-                                            {data.date.getDate()}/{data.date.getMonth()+1}
-                                        </div>
-
-                                        {/* Tooltip for Details */}
-                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-40 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-30 invisible group-hover:visible">
-                                            <div className="bg-slate-900/90 dark:bg-white/90 backdrop-blur-sm text-white dark:text-slate-900 text-xs rounded-lg p-3 shadow-xl transform translate-y-1 group-hover:translate-y-0 transition-transform">
-                                                <div className="font-bold mb-1 line-clamp-2">{data.quizTitle}</div>
-                                                <div className="text-slate-300 dark:text-slate-500 mb-1">{data.subjectName}</div>
-                                                <div className="pt-1 border-t border-white/10 dark:border-black/10 flex justify-between">
-                                                    <span>{data.date.toLocaleDateString()}</span>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
                                 ))}
                             </div>
                         ) : (
-                            <div className="h-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 opacity-50">
+                            <div className="h-full w-full flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 opacity-50">
                                 <Filter className="w-8 h-8 mb-2" />
                                 <p className="text-sm">Sin datos</p>
                             </div>
@@ -358,6 +398,7 @@ const UserStatistics = ({ subjects, userId }) => {
                     </div>
                 </div>
             </div>
+
 
         </div>
     );

@@ -7,8 +7,8 @@ import SubjectListItem from './SubjectListItem';
 const ListViewItem = ({ 
     item, 
     type, 
-    currentParentId, // <--- CRITICAL: The ID of the folder this item is currently inside
-    depth = 0, 
+    parentId,
+    depth = 0, // Track depth for indentation
     allFolders, 
     allSubjects, 
     onNavigate, 
@@ -26,14 +26,13 @@ const ListViewItem = ({
 
     const scale = cardScale / 100;
 
-    // --- PREPARE CHILDREN ---
+    // --- CHILDREN CALCULATION ---
     let childFolders = [];
     let childSubjects = [];
 
     if (type === 'folder') {
         if (item.folderIds && item.folderIds.length > 0) {
             childFolders = allFolders.filter(f => item.folderIds.includes(f.id));
-            // Maintain order
             childFolders.sort((a, b) => item.folderIds.indexOf(a.id) - item.folderIds.indexOf(b.id));
         }
         if (item.subjectIds && item.subjectIds.length > 0) {
@@ -48,41 +47,31 @@ const ListViewItem = ({
     // --- DRAG HANDLERS ---
     const handleDragStart = (e) => {
         e.stopPropagation();
-        
-        // We use the passed prop 'currentParentId' as the source. 
-        // This mirrors FolderTreeModal logic exactly.
         const dragData = {
             id: item.id,
             type: type,
-            parentId: currentParentId // THIS IS THE SOURCE FOLDER ID
+            parentId: parentId 
         };
-        
-        // Set data for both internal app logic and generic drag
         if (type === 'subject') e.dataTransfer.setData('subjectId', item.id);
         else e.dataTransfer.setData('folderId', item.id);
         
         e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
         
-        // Trigger UI state
         if (onDragStart) onDragStart(item); 
     };
 
     const handleDragOver = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         if (!isDragOver) setIsDragOver(true);
     };
 
     const handleDragLeave = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+        e.preventDefault(); e.stopPropagation();
         setIsDragOver(false);
     };
 
     const handleDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragOver(false);
+        e.preventDefault(); e.stopPropagation(); setIsDragOver(false);
 
         const treeDataString = e.dataTransfer.getData('treeItem');
         let draggedData;
@@ -90,29 +79,25 @@ const ListViewItem = ({
         if (treeDataString) {
             draggedData = JSON.parse(treeDataString);
         } else {
-            // Fallback for external drops (unlikely in this specific flow but good for safety)
             const sId = e.dataTransfer.getData('subjectId');
             const fId = e.dataTransfer.getData('folderId');
             if (sId) draggedData = { id: sId, type: 'subject' };
             else if (fId) draggedData = { id: fId, type: 'folder' };
         }
 
-        if (!draggedData) return;
-        if (draggedData.id === item.id) return; // Dropped on self
+        if (!draggedData || draggedData.id === item.id) return;
 
-        // ACTION: Target is THIS item. Source comes from draggedData.
-        onDropAction(draggedData, { id: item.id, type: type, parentId: currentParentId });
+        onDropAction(draggedData, { id: item.id, type: type, parentId: parentId });
         
         if (type === 'folder' && !isExpanded) setIsExpanded(true);
     };
 
-    const handleClickFolder = (e) => {
-        e.stopPropagation();
-        setIsExpanded(!isExpanded);
-    };
+    const handleClickFolder = (e) => { e.stopPropagation(); setIsExpanded(!isExpanded); };
 
-    // --- STYLES ---
-    const indent = depth * (48 * scale); // Adjusted indentation
+    // --- STYLES & INDENTATION ---
+    // Calculate indentation based on depth
+    const indent = depth * (100 * scale); // 32px per level, scaled
+    
     const iconBoxSize = 48 * scale;
     const iconSize = 28 * scale;
     const paddingY = 16 * scale;
@@ -120,7 +105,7 @@ const ListViewItem = ({
 
     return (
         <div className="select-none animate-in fade-in duration-200">
-            {/* ITEM ROW */}
+            {/* ROW CONTAINER - Apply indentation here via margin */}
             <div 
                 draggable
                 onDragStart={handleDragStart}
@@ -135,7 +120,7 @@ const ListViewItem = ({
                         ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-500 scale-[1.01] shadow-md'
                         : ''
                 }`}
-                style={{ marginLeft: `${indent}px` }}
+                style={{ marginLeft: `${indent}px` }} // <--- EXPLICIT INDENTATION
             >
                 {type === 'folder' ? (
                     <div 
@@ -149,8 +134,8 @@ const ListViewItem = ({
                             <div className={`text-gray-300 cursor-grab active:cursor-grabbing ${isHovered ? 'opacity-100' : 'opacity-0'}`} style={{ transform: `scale(${scale})` }}>
                                 <GripVertical size={16} />
                             </div>
-                            <div className="text-gray-400 dark:text-gray-500 transition-transform duration-200" style={{ transform: `scale(${scale})` }}>
-                                {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                            <div className={`text-gray-400 dark:text-gray-500 transition-transform duration-300 ${isExpanded ? 'rotate-90' : 'rotate-0'}`} style={{ transformOrigin: 'center', transform: `scale(${scale}) ${isExpanded ? 'rotate(0deg)' : 'rotate(0deg)'}` }}>
+                                <ChevronRight size={20} />
                             </div>
                         </div>
                         <div className={`flex items-center justify-center rounded-lg bg-gradient-to-br ${item.color || 'from-indigo-500 to-purple-500'}`} style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px`, flexShrink: 0 }}>
@@ -176,55 +161,69 @@ const ListViewItem = ({
                 )}
             </div>
 
-            {/* CHILDREN (RECURSION) */}
-            {isExpanded && type === 'folder' && (
-                <div className="mt-3 flex flex-col gap-2">
-                    {hasChildren ? (
-                        <>
-                            {childFolders.map((folder) => (
-                                <ListViewItem
-                                    key={folder.id}
-                                    item={folder}
-                                    type="folder"
-                                    currentParentId={item.id} // <--- PASS THIS FOLDER'S ID AS PARENT
-                                    depth={depth + 1}
-                                    allFolders={allFolders}
-                                    allSubjects={allSubjects}
-                                    onNavigate={onNavigate}
-                                    onNavigateSubject={onNavigateSubject}
-                                    onEdit={onEdit}
-                                    onDelete={onDelete}
-                                    cardScale={cardScale}
-                                    onDragStart={onDragStart}
-                                    onDragEnd={onDragEnd}
-                                    onDropAction={onDropAction}
-                                />
-                            ))}
-                            {childSubjects.map((subject) => (
-                                <ListViewItem
-                                    key={subject.id}
-                                    item={subject}
-                                    type="subject"
-                                    currentParentId={item.id} // <--- PASS THIS FOLDER'S ID AS PARENT
-                                    depth={depth + 1}
-                                    allFolders={allFolders}
-                                    allSubjects={allSubjects}
-                                    onNavigate={onNavigate}
-                                    onNavigateSubject={onNavigateSubject}
-                                    onEdit={onEdit}
-                                    onDelete={onDelete}
-                                    cardScale={cardScale}
-                                    onDragStart={onDragStart}
-                                    onDragEnd={onDragEnd}
-                                    onDropAction={onDropAction}
-                                />
-                            ))}
-                        </>
-                    ) : (
-                        <div className="text-gray-400 italic py-3 pl-4 border-l-2 border-dashed border-gray-300 dark:border-slate-700" style={{ marginLeft: `${indent + (32 * scale)}px`, fontSize: `${12 * scale}px` }}>
-                            Carpeta vacía
+            {/* CHILDREN (Recursive) */}
+            {type === 'folder' && (
+                <div 
+                    className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
+                        isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                    }`}
+                >
+                    <div className="overflow-hidden">
+                        <div className="mt-2 flex flex-col gap-2">
+                            {hasChildren ? (
+                                <>
+                                    {childFolders.map((folder) => (
+                                        <ListViewItem
+                                            key={folder.id}
+                                            item={folder}
+                                            type="folder"
+                                            parentId={item.id} 
+                                            depth={depth + 1} // Increase depth
+                                            allFolders={allFolders}
+                                            allSubjects={allSubjects}
+                                            onNavigate={onNavigate}
+                                            onNavigateSubject={onNavigateSubject}
+                                            onEdit={onEdit}
+                                            onDelete={onDelete}
+                                            cardScale={cardScale}
+                                            onDragStart={onDragStart}
+                                            onDragEnd={onDragEnd}
+                                            onDropAction={onDropAction}
+                                        />
+                                    ))}
+                                    {childSubjects.map((subject) => (
+                                        <ListViewItem
+                                            key={subject.id}
+                                            item={subject}
+                                            type="subject"
+                                            parentId={item.id} 
+                                            depth={depth + 1} // Increase depth
+                                            allFolders={allFolders}
+                                            allSubjects={allSubjects}
+                                            onNavigate={onNavigate}
+                                            onNavigateSubject={onNavigateSubject}
+                                            onEdit={onEdit}
+                                            onDelete={onDelete}
+                                            cardScale={cardScale}
+                                            onDragStart={onDragStart}
+                                            onDragEnd={onDragEnd}
+                                            onDropAction={onDropAction}
+                                        />
+                                    ))}
+                                </>
+                            ) : (
+                                <div 
+                                    className="text-gray-400 italic py-3 pl-4 border-l-2 border-dashed border-gray-300 dark:border-slate-700" 
+                                    style={{ 
+                                        marginLeft: `${indent + (32 * scale)}px`, // Indent the empty message too
+                                        fontSize: `${12 * scale}px` 
+                                    }}
+                                >
+                                    Carpeta vacía
+                                </div>
+                            )}
                         </div>
-                    )}
+                    </div>
                 </div>
             )}
         </div>
