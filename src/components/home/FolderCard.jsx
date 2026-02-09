@@ -10,8 +10,12 @@ const FolderCard = (props) => {
     const dragGhostRef = React.useRef(null);
     const dragOffsetRef = React.useRef({ x: 0, y: 0 });
 
+
     // 1. Initialize Logic
-    const { state, data, handlers } = useFolderCardLogic(props);
+    const { state, data, handlers } = useFolderCardLogic({
+        ...props,
+        allFolders: props.allFolders
+    });
     
     // 2. Destructure Props for direct usage
     const { 

@@ -1,14 +1,15 @@
 // src/components/home/ListViewItem.jsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { ChevronRight, ChevronDown, Folder, GripVertical } from 'lucide-react';
 import SubjectIcon from '../modals/SubjectIcon';
 import SubjectListItem from './SubjectListItem';
+
 
 const ListViewItem = ({ 
     item, 
     type, 
     parentId,
-    depth = 0, // Track depth for indentation
+    depth = 0,
     allFolders, 
     allSubjects, 
     onNavigate, 
@@ -27,12 +28,62 @@ const ListViewItem = ({
     const scale = cardScale / 100;
 
     // --- CHILDREN CALCULATION ---
+    // --- 1. RECURSIVE COUNTING LOGIC (Same as FolderCard) ---
+    const { subjectCount, folderCount, totalCount } = useMemo(() => {
+        // If it's a subject, we don't count anything inside it
+        if (type !== 'folder') return { subjectCount: 0, folderCount: 0, totalCount: 0 };
+
+        // Fallback: If no folders list, use shallow count
+        if (!allFolders || allFolders.length === 0) {
+            const s = item.subjectIds?.length || 0;
+            const f = item.folderIds?.length || 0;
+            return { subjectCount: s, folderCount: f, totalCount: s + f };
+        }
+
+        const folderMap = new Map(allFolders.map(f => [f.id, f]));
+        const visited = new Set();
+
+        const traverse = (currentId) => {
+            if (visited.has(currentId)) return { s: 0, f: 0 };
+            visited.add(currentId);
+
+            const currentFolder = folderMap.get(currentId);
+            if (!currentFolder) return { s: 0, f: 0 };
+
+            let s = currentFolder.subjectIds?.length || 0;
+            const subFolderIds = currentFolder.folderIds || [];
+            let f = subFolderIds.length; 
+
+            subFolderIds.forEach(childId => {
+                const childStats = traverse(childId);
+                s += childStats.s;
+                f += childStats.f;
+            });
+
+            return { s, f };
+        };
+
+        const stats = traverse(item.id);
+        
+        // Subtract 1 from folders as requested (Math.max to avoid -1 on empty folders)
+        const adjustedFolderCount = Math.max(0, stats.f - 1);
+
+        return {
+            subjectCount: stats.s,
+            folderCount: stats.f,
+            totalCount: stats.s + stats.f
+        };
+    }, [item, allFolders, type]);
+
+    // --- 2. CHILDREN CALCULATION FOR RENDERING ---
+    // (This remains the same for displaying the immediate list below)
     let childFolders = [];
     let childSubjects = [];
 
     if (type === 'folder') {
         if (item.folderIds && item.folderIds.length > 0) {
             childFolders = allFolders.filter(f => item.folderIds.includes(f.id));
+            // Keep sort order
             childFolders.sort((a, b) => item.folderIds.indexOf(a.id) - item.folderIds.indexOf(b.id));
         }
         if (item.subjectIds && item.subjectIds.length > 0) {
@@ -106,6 +157,7 @@ const ListViewItem = ({
     return (
         <div className="select-none animate-in fade-in duration-200">
             {/* ROW CONTAINER - Apply indentation here via margin */}
+            
             <div 
                 draggable
                 onDragStart={handleDragStart}
@@ -120,7 +172,7 @@ const ListViewItem = ({
                         ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-500 scale-[1.01] shadow-md'
                         : ''
                 }`}
-                style={{ marginLeft: `${indent}px` }} // <--- EXPLICIT INDENTATION
+                style={{ marginLeft: `${indent}px` }}
             >
                 {type === 'folder' ? (
                     <div 
@@ -142,8 +194,25 @@ const ListViewItem = ({
                             {item.icon ? <SubjectIcon iconName={item.icon} className="text-white" style={{ width: `${iconSize}px`, height: `${iconSize}px` }} /> : <Folder className="text-white" style={{ width: `${iconSize}px`, height: `${iconSize}px` }} />}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-gray-800 dark:text-gray-200 truncate" style={{ fontSize: `${18 * scale}px` }}>{item.name}</h4>
-                            <div className="flex items-center gap-2 text-gray-500 mt-0.5" style={{ fontSize: `${12 * scale}px` }}><span>{totalChildren} elementos</span></div>
+                            <h4 className="font-bold text-gray-800 dark:text-gray-200 truncate" style={{ fontSize: `${18 * scale}px` }}>
+                                {item.name}
+                            </h4>
+                            <div className="flex items-center flex-wrap gap-x-2 text-gray-500 mt-0.5" style={{ fontSize: `${12 * scale}px` }}>
+                                {/* Total Count */}
+                                <span className="font-medium text-gray-600 dark:text-gray-400">
+                                    {totalCount} elementos
+                                </span>
+                                
+                                <span className="text-gray-300">•</span>
+                                
+                                {/* Detail Counts */}
+                                <span className="text-gray-400 dark:text-gray-500">
+                                    {subjectCount} asignaturas
+                                </span>
+                                <span className="text-gray-400 dark:text-gray-500">
+                                    {folderCount} carpetas
+                                </span>
+                            </div>
                         </div>
                         <button onClick={(e) => { e.stopPropagation(); onNavigate(item); }} className="text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors" style={{ padding: `${8 * scale}px` }}>
                             <Folder style={{ width: `${20 * scale}px`, height: `${20 * scale}px` }} />
