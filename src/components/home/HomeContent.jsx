@@ -41,7 +41,7 @@ const HomeContent = ({
     draggedItemType,
     handleDragStartSubject,
     handleDragStartFolder,
-    handleDragEnd,
+    handleDragEnd, // <--- This needs to be passed to list items
     handleDragOverSubject,
     handleDragOverFolder,
     handleDropReorderSubject,
@@ -53,32 +53,25 @@ const HomeContent = ({
     navigate
 }) => {
     const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
-    const [isRootZoneHovered, setIsRootZoneHovered] = useState(false); // NEW STATE
+    const [isRootZoneHovered, setIsRootZoneHovered] = useState(false);
 
     const showCollapsibleGroups = ['courses', 'tags', 'shared'].includes(viewMode);
 
     // --- GRID VIEW PROMOTE ZONE HANDLERS ---
     const handlePromoteZoneDragOver = (e) => {
         if (currentFolder && (draggedItemType === 'subject' || draggedItemType === 'folder')) {
-            e.preventDefault();
-            e.stopPropagation();
-            setIsPromoteZoneHovered(true);
+            e.preventDefault(); e.stopPropagation(); setIsPromoteZoneHovered(true);
         }
     };
-    const handlePromoteZoneDragLeave = (e) => {
-        e.preventDefault();
-        setIsPromoteZoneHovered(false);
-    };
+    const handlePromoteZoneDragLeave = (e) => { e.preventDefault(); setIsPromoteZoneHovered(false); };
     const handlePromoteZoneDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsPromoteZoneHovered(false);
+        e.preventDefault(); e.stopPropagation(); setIsPromoteZoneHovered(false);
         if (!currentFolder || !draggedItem) return;
         if (draggedItemType === 'subject') handlePromoteSubject(draggedItem.id);
         else if (draggedItemType === 'folder') handlePromoteFolder(draggedItem.id);
     };
 
-    // --- LIST VIEW ROOT ZONE HANDLERS ---
+    // --- LIST VIEW: MOVE TO CURRENT LEVEL ZONE ---
     const handleRootZoneDrop = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -87,9 +80,8 @@ const HomeContent = ({
         const treeDataString = e.dataTransfer.getData('treeItem');
         let draggedData;
 
-        if (treeDataString) {
-            draggedData = JSON.parse(treeDataString);
-        } else {
+        if (treeDataString) draggedData = JSON.parse(treeDataString);
+        else {
             const sId = e.dataTransfer.getData('subjectId');
             const fId = e.dataTransfer.getData('folderId');
             if (sId) draggedData = { id: sId, type: 'subject' };
@@ -98,50 +90,47 @@ const HomeContent = ({
 
         if (!draggedData) return;
 
-        // Move to Root (Target = null)
+        // Target is the folder currently being viewed (or null if at root)
+        const targetId = currentFolder ? currentFolder.id : null;
+
+        // Prevent moving if already there
+        if (draggedData.parentId === targetId) return;
+
         if (draggedData.type === 'subject') {
             if (handleMoveSubjectWithSource) {
-                // Pass null as targetId to indicate ROOT
-                handleMoveSubjectWithSource(draggedData.id, null, draggedData.parentId);
+                handleMoveSubjectWithSource(draggedData.id, targetId, draggedData.parentId);
             }
         } else if (draggedData.type === 'folder') {
-            // Reusing nest folder logic: Move dragged ID to null parent
-            // Note: handleNestFolder might expect a target ID.
-            // We should use handlePromoteFolder or moveFolderToParent directly if exposed.
-            // Assuming handleNestFolder checks if target is null -> root.
-            handleNestFolder(null, draggedData.id); 
+            handleNestFolder(targetId, draggedData.id); 
         }
+        
+        // Ensure drag ends
+        if (handleDragEnd) handleDragEnd();
     };
 
-    // --- HANDLER FOR LIST VIEW DROPS (Item on Item) ---
+    // --- LIST VIEW ITEM DROP ---
     const handleListDrop = (dragged, target) => {
         if (target.type === 'folder') {
             if (dragged.id === target.id) return;
-            
             if (dragged.type === 'subject') {
-                if (handleMoveSubjectWithSource) {
-                    handleMoveSubjectWithSource(dragged.id, target.id, dragged.parentId);
-                } else {
-                    handleDropOnFolder(target.id, dragged.id); 
-                }
+                if (handleMoveSubjectWithSource) handleMoveSubjectWithSource(dragged.id, target.id, dragged.parentId);
+                else handleDropOnFolder(target.id, dragged.id); 
             } else if (dragged.type === 'folder') {
                 handleNestFolder(target.id, dragged.id); 
             }
         }
         else if (target.type === 'subject') {
-            // Drop on subject -> move to that subject's parent
-            const targetParentId = target.parentId || null;
-            
+            const targetParentId = target.parentId || (currentFolder ? currentFolder.id : null);
             if (dragged.type === 'subject') {
                 if (dragged.parentId !== targetParentId) {
-                    if (handleMoveSubjectWithSource) {
-                        handleMoveSubjectWithSource(dragged.id, targetParentId, dragged.parentId);
-                    } else {
-                        handleDropOnFolder(targetParentId, dragged.id); 
-                    }
+                    if (handleMoveSubjectWithSource) handleMoveSubjectWithSource(dragged.id, targetParentId, dragged.parentId);
+                    else handleDropOnFolder(targetParentId, dragged.id); 
                 }
             }
         }
+        
+        // Ensure drag ends
+        if (handleDragEnd) handleDragEnd();
     };
 
     return (
@@ -170,14 +159,14 @@ const HomeContent = ({
 
                         {!isCollapsed && (
                             <>
-                                {/* GRID LAYOUT */}
+                                {/* GRID VIEW */}
                                 {layoutMode === 'grid' && (
                                     <div className="mb-10">
                                         <div 
                                             className="grid gap-6"
                                             style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` }}
                                         >
-                                            {/* Promote Zone */}
+                                            {/* Promote Zone (Grid) */}
                                             {viewMode === 'grid' && (
                                                  <div>
                                                     {currentFolder && draggedItem && (draggedItemType === 'subject' || draggedItemType === 'folder') ? (
@@ -224,7 +213,7 @@ const HomeContent = ({
                                                 </div>
                                             )}
 
-                                            {/* Folders in Grid */}
+                                            {/* Grid Items... (Same as before) */}
                                             {viewMode === 'grid' && orderedFolders.map((folder, index) => (
                                                 <div key={`folder-${folder.id}`}>
                                                     <FolderCard
@@ -250,8 +239,6 @@ const HomeContent = ({
                                                     />
                                                 </div>
                                             ))}
-
-                                            {/* Subjects in Grid */}
                                             {groupSubjects.map((subject, index) => (
                                                 <div key={`${groupName}-${subject.id}`}>
                                                     <SubjectCard
@@ -279,61 +266,63 @@ const HomeContent = ({
                                     </div>
                                 )}
                                 
-                                {/* LIST VIEW */}
+                                {/* LIST VIEW (UPDATED) */}
                                 {layoutMode === 'list' && (
-                                     <div className="space-y-2">
+                                     <div className="space-y-2 relative">
                                         
-                                        {/* NEW: MOVE TO HOME ZONE (Visible when dragging) */}
-                                        {isDragAndDropEnabled && (
+                                        {/* MOVE TO CURRENT LEVEL ZONE */}
+                                        {isDragAndDropEnabled && draggedItem && (
                                             <div 
                                                 onDragOver={(e) => { e.preventDefault(); setIsRootZoneHovered(true); }}
                                                 onDragLeave={() => setIsRootZoneHovered(false)}
                                                 onDrop={handleRootZoneDrop}
-                                                className={`mb-4 rounded-xl border-2 border-dashed transition-all duration-200 flex items-center justify-center gap-2 py-4 font-medium ${
+                                                className={`mb-4 rounded-xl border-2 border-dashed transition-all duration-200 flex items-center justify-center gap-2 py-5 font-bold animate-in fade-in slide-in-from-top-2 ${
                                                     isRootZoneHovered 
-                                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 scale-[1.01]' 
-                                                        : 'border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:border-indigo-300 hover:text-indigo-500'
+                                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 scale-[1.01] shadow-md' 
+                                                        : 'border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:border-indigo-400 hover:text-indigo-500'
                                                 }`}
                                             >
-                                                <ArrowUpCircle size={20} />
-                                                Mover al inicio (Home)
+                                                <ArrowUpCircle size={24} />
+                                                {currentFolder ? `Mover aquí (${currentFolder.name})` : "Mover al inicio (Root)"}
                                             </div>
                                         )}
 
-                                        {/* Folders */}
-                                        {orderedFolders.map((folder) => (
-                                            <ListViewItem 
-                                                key={folder.id}
-                                                item={folder}
-                                                type="folder"
-                                                allFolders={folders}
-                                                allSubjects={subjects}
-                                                onNavigate={handleOpenFolder}
-                                                onNavigateSubject={handleSelectSubject}
-                                                onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
-                                                onDelete={(f) => setDeleteConfig({ isOpen: true, type: 'folder', item: f })}
-                                                cardScale={cardScale}
-                                                onDragStart={handleDragStartFolder} 
-                                                onDropAction={handleListDrop}
-                                            />
-                                        ))}
-
-                                        {/* Subjects */}
-                                        {groupSubjects.map((subject) => (
-                                            <ListViewItem
-                                                key={subject.id}
-                                                item={subject}
-                                                type="subject"
-                                                allFolders={folders}
-                                                allSubjects={subjects}
-                                                onNavigateSubject={handleSelectSubject}
-                                                onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
-                                                onDelete={(s) => setDeleteConfig({ isOpen: true, type: 'subject', item: s })}
-                                                cardScale={cardScale}
-                                                onDragStart={handleDragStartSubject}
-                                                onDropAction={handleListDrop}
-                                            />
-                                        ))}
+                                        {/* List Items */}
+                                        <div className="space-y-2">
+                                            {orderedFolders.map((folder) => (
+                                                <ListViewItem 
+                                                    key={folder.id}
+                                                    item={folder}
+                                                    type="folder"
+                                                    allFolders={folders}
+                                                    allSubjects={subjects}
+                                                    onNavigate={handleOpenFolder}
+                                                    onNavigateSubject={handleSelectSubject}
+                                                    onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
+                                                    onDelete={(f) => setDeleteConfig({ isOpen: true, type: 'folder', item: f })}
+                                                    cardScale={cardScale}
+                                                    onDragStart={handleDragStartFolder} 
+                                                    onDragEnd={handleDragEnd} // Fix: Pass drag end
+                                                    onDropAction={handleListDrop}
+                                                />
+                                            ))}
+                                            {groupSubjects.map((subject) => (
+                                                <ListViewItem
+                                                    key={subject.id}
+                                                    item={subject}
+                                                    type="subject"
+                                                    allFolders={folders}
+                                                    allSubjects={subjects}
+                                                    onNavigateSubject={handleSelectSubject}
+                                                    onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
+                                                    onDelete={(s) => setDeleteConfig({ isOpen: true, type: 'subject', item: s })}
+                                                    cardScale={cardScale}
+                                                    onDragStart={handleDragStartSubject}
+                                                    onDragEnd={handleDragEnd} // Fix: Pass drag end
+                                                    onDropAction={handleListDrop}
+                                                />
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </>

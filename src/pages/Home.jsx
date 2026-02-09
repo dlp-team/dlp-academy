@@ -122,35 +122,27 @@ const Home = ({ user }) => {
                     onDragOver={(e) => { if (logic.currentFolder) e.preventDefault(); }}
                     onDrop={handleUpwardDrop}
                 >
-                     {logic.isDragAndDropEnabled && logic.draggedItem && logic.currentFolder ? (
-                        <div className="w-full h-20 mb-6 rounded-2xl border-2 border-dashed border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 flex items-center justify-center gap-3 animate-pulse text-indigo-600 dark:text-indigo-300 z-10">
-                            <ArrowUpCircle className="w-8 h-8" />
-                            <span className="font-bold text-lg">
-                                {logic.currentFolder.parentId ? "Mover a la carpeta anterior" : "Mover al inicio (Root)"}
-                            </span>
-                        </div>
-                    ) : (
-                        <HomeControls 
-                            viewMode={logic.viewMode}
-                            setViewMode={logic.setViewMode}
-                            layoutMode={logic.layoutMode}
-                            setLayoutMode={logic.setLayoutMode}
-                            cardScale={logic.cardScale}
-                            setCardScale={logic.setCardScale}
-                            allTags={logic.allTags || []}
-                            selectedTags={logic.selectedTags || []}
-                            setSelectedTags={logic.setSelectedTags}
-                            currentFolder={logic.currentFolder}
-                            setFolderModalConfig={logic.setFolderModalConfig}
-                            setCollapsedGroups={logic.setCollapsedGroups}
-                            setCurrentFolder={logic.setCurrentFolder}
-                            isDragAndDropEnabled={logic.isDragAndDropEnabled}
-                            draggedItem={logic.draggedItem}
-                            draggedItemType={logic.draggedItemType}
-                            onPreferenceChange={logic.handlePreferenceChange}
-                            allFolders={logic.folders || []} 
-                        />
-                    )}
+                    <HomeControls 
+                        viewMode={logic.viewMode}
+                        setViewMode={logic.setViewMode}
+                        layoutMode={logic.layoutMode}
+                        setLayoutMode={logic.setLayoutMode}
+                        cardScale={logic.cardScale}
+                        setCardScale={logic.setCardScale}
+                        allTags={logic.allTags || []}
+                        selectedTags={logic.selectedTags || []}
+                        setSelectedTags={logic.setSelectedTags}
+                        currentFolder={logic.currentFolder}
+                        setFolderModalConfig={logic.setFolderModalConfig}
+                        setCollapsedGroups={logic.setCollapsedGroups}
+                        setCurrentFolder={logic.setCurrentFolder}
+                        isDragAndDropEnabled={logic.isDragAndDropEnabled}
+                        draggedItem={logic.draggedItem}
+                        draggedItemType={logic.draggedItemType}
+                        onPreferenceChange={logic.handlePreferenceChange}
+                        allFolders={logic.folders || []} 
+                    />
+                    
                 </div>
 
                 {logic.viewMode === 'shared' ? (
