@@ -3,7 +3,15 @@ import React, { useState } from 'react';
 import { ChevronRight, Edit2, Trash2, MoreVertical } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
 
-const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false, cardScale = 100 }) => {
+const SubjectListItem = ({ 
+    subject, 
+    onSelect, 
+    onEdit, 
+    onDelete, 
+    compact = false, 
+    cardScale = 100,
+    className = ""
+}) => {
     const [showMenu, setShowMenu] = useState(false);
     const topicCount = subject.topics ? subject.topics.length : 0;
     const isModern = subject.cardStyle === 'modern';
@@ -18,109 +26,63 @@ const SubjectListItem = ({ subject, onSelect, onEdit, onDelete, compact = false,
         <div 
             className={`group relative rounded-xl transition-all hover:shadow-md cursor-pointer ${
                 isModern ? `${getIconColor(subject.color)} border border-gradient-to-br ${subject.color} hover:border-gradient-to-br ${subject.color} ` : ` bg-gradient-to-br ${subject.color} hover:border-indigo-300 `
-            }`}
+            } ${className}`} // Apply external className
             style={{ padding: `${paddingPx}px` }}
             onClick={() => onSelect(subject.id)}
         >
             <div className="flex items-center gap-4">
-                {/* Icon */}
-                <div className={`flex-shrink-0`} style={{ width: `${iconContainerSize}px`, height: `${iconContainerSize}px` }}>
-                    {isModern ? (
-                        <div 
-                            className={`${getIconColor(subject.color)} rounded-lg h-full flex items-center justify-center`}
-                            style={{ 
-                                width: `${iconContainerSize}px`, 
-                                height: `${iconContainerSize}px` 
-                            }}
-                        >
-                            {subject.icon ? (
-                                <SubjectIcon 
-                                    iconName={subject.icon} 
-                                    style={{ 
-                                        width: `${innerIconSize}px`, 
-                                        height: `${innerIconSize}px` 
-                                    }}
-                                />
-                            ) : (
-                                <SubjectIcon 
-                                    iconName={subject.icon} 
-                                    className="text-white opacity-80" 
-                                    style={{ 
-                                        width: `${innerIconSize}px`, 
-                                        height: `${innerIconSize}px` 
-                                    }}
-                                />
-                            )}
-                        </div>
+                {/* ICON */}
+                <div 
+                    className={`${
+                        isModern ? 'bg-white/90 dark:bg-slate-900/90' : 'bg-white/20'
+                    } rounded-lg flex items-center justify-center shadow-sm backdrop-blur-sm`}
+                    style={{ width: `${iconContainerSize}px`, height: `${iconContainerSize}px` }}
+                >
+                    {subject.icon ? (
+                         <SubjectIcon 
+                            iconName={subject.icon} 
+                            className={isModern ? '' : 'text-white'}
+                            style={{ width: `${32 * scale}px`, height: `${32 * scale}px` }} 
+                        />
                     ) : (
-                        // <div className={`bg-gradient-to-br ${subject.color} rounded-lg h-full flex items-center justify-center`}>
-                        <div className={`bg-transparent h-full flex items-center justify-center text-white opacity-90`}>
-                            <SubjectIcon 
-                                iconName={subject.icon} 
-                                style={{ 
-                                        width: `${innerIconSize}px`, 
-                                        height: `${innerIconSize}px` 
-                                }} 
-                            />
+                        <div className={`font-bold text-lg ${isModern ? 'text-gray-700 dark:text-gray-200' : 'text-white'}`}>
+                            {subject.name.substring(0, 2).toUpperCase()}
                         </div>
                     )}
                 </div>
 
-                {/* Content */}
+                {/* INFO */}
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                        <h3 
-                            //className={`font-bold text-gray-900 dark:text-white truncate ${compact ? 'text-base' : 'text-lg'}`}
-                            className={`${ isModern ? `font-bold text-gray-900 dark:text-white truncate ${compact ? 'text-base' : 'text-lg'}` : `font-bold text-white dark:text-white truncate ${compact ? 'text-base' : 'text-lg'}`}`}
-
+                    <h3 
+                        className={`font-bold truncate ${isModern ? 'text-gray-800 dark:text-gray-100' : 'text-white'}`}
+                        style={{ fontSize: `${18 * scale}px` }}
+                    >
+                        {subject.name}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                        <span 
+                            className={`text-xs px-2 py-0.5 rounded-full ${
+                                isModern 
+                                    ? 'bg-white/50 dark:bg-slate-800/50 text-gray-600 dark:text-gray-400' 
+                                    : 'bg-white/20 text-white/90'
+                            }`}
                         >
-                            {subject.name}
-                        </h3>
-                        {!compact && subject.course && (
-                            <span 
-                                className="text-xs text-gray-500 dark:text-gray-400 px-2 py-0.5 bg-gray-100 dark:bg-slate-800 rounded-full whitespace-nowrap">
-                                {subject.course}
-                            </span>
-                        )}
+                            {topicCount} temas
+                        </span>
                     </div>
-                    
-                    {!compact && subject.tags && subject.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                            {subject.tags.slice(0, 3).map(tag => (
-                                <span 
-                                    key={tag} 
-                                    //className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50"
-                                    className={`${ isModern ? `text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50` : `text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50`}`}
-                                >
-                                    #{tag}
-                                </span>
-                            ))}
-                            {subject.tags.length > 3 && (
-                                <span className="text-[10px] text-gray-400 dark:text-gray-500">
-                                    +{subject.tags.length - 3}
-                                </span>
-                            )}
-                        </div>
-                    )}
                 </div>
 
-                {/* Topic Count Badge */}
-                        <div className={`flex items-center gap-2`}>
-                            <span className={`${ isModern ? `text-gray-700 dark:text-gray-400 font-medium whitespace-nowrap` : `text-gray-100 dark:text-gray-900 font-medium whitespace-nowrap`}`} style={{ fontSize: `${10 + 14* scale*0.3}px` }}>
-                                {topicCount} {topicCount === 1 ? 'tema' : 'temas'}
-                            </span>
-                            <ChevronRight size={12 + 14* scale*0.3} className={`${ isModern ? `text-gray-700 dark:text-gray-300 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors` : `text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-colors`}`} />
-                        </div>
-
-                {/* Menu */}
-                <div className="relative" onClick={(e) => e.stopPropagation()}>
-                    <button
-                        onClick={() => setShowMenu(!showMenu)}
-                        className={`p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-800 hover:text-gray-700 dark:hover:text-gray-300 transition-colors ${
-                            showMenu ? 'bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-300' : 'opacity-0 group-hover:opacity-100'
+                {/* ACTIONS */}
+                <div className="flex items-center gap-2 relative">
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+                        className={`p-2 rounded-full transition-colors ${
+                            isModern 
+                                ? 'hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400' 
+                                : 'hover:bg-white/20 text-white'
                         }`}
                     >
-                        <MoreVertical size={16} />
+                        <MoreVertical size={20 * scale} />
                     </button>
 
                     {showMenu && (
