@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
 import Header from '../components/layout/Header';
 import { useTopicLogic } from '../hooks/useTopicLogic';
@@ -22,21 +22,35 @@ const Topic = ({ user }) => {
 
     // 2. ESTADO LOCAL: Puntuaciones del usuario
     const [userScores, setUserScores] = useState({});
+    const [scoresLoading, setScoresLoading] = useState(true);
 
     // 3. EFECTO: Escuchar puntuaciones en tiempo real
     useEffect(() => {
-        if (!user || !logic.subjectId || !logic.topicId) return;
+        if (!user || !logic.subjectId || !logic.topicId) {
+            setScoresLoading(false);
+            return;
+        }
+
+        setScoresLoading(true);
 
         const resultsRef = collection(db, "subjects", logic.subjectId, "topics", logic.topicId, "quiz_results");
         const q = query(resultsRef, where("userId", "==", user.uid));
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
             const scoresMap = {};
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                scoresMap[data.quizId] = data.score;
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                // Asegurarnos de que guardamos el score correctamente
+                if (data.quizId && data.score !== undefined) {
+                    scoresMap[data.quizId] = data.score;
+                }
             });
+            console.log('📊 Scores cargados:', scoresMap); // Debug
             setUserScores(scoresMap);
+            setScoresLoading(false);
+        }, (error) => {
+            console.error("Error cargando scores:", error);
+            setScoresLoading(false);
         });
 
         return () => unsubscribe();
@@ -112,16 +126,34 @@ const Topic = ({ user }) => {
         }
     };
 
-    // 5. MERGE DE DATOS IMPORTANTE
-    // Si enrichedTopic no está listo (porque logic.topic aún es null), usamos null
-    // Si está listo, le inyectamos las scores.
-    const enrichedTopic = logic.topic ? {
+    // 5. MERGE DE DATOS - ENRIQUECIMIENTO CON SCORES
+    const enrichedTopic = logic.topic && !scoresLoading ? {
         ...logic.topic,
-        quizzes: logic.topic.quizzes?.map(q => ({
-            ...q,
-            score: userScores[q.id] // Inyección de nota
-        }))
-    } : null;
+        quizzes: logic.topic.quizzes?.map(q => {
+            const quizWithScore = {
+                ...q,
+                score: userScores[q.id] ?? null // null si no existe
+            };
+            console.log(`🎯 Quiz ${q.id}:`, quizWithScore.score); // Debug
+            return quizWithScore;
+        }) || []
+    } : logic.topic;
+
+    // 6. CALCULAR PROGRESO GLOBAL
+    const globalProgress = useMemo(() => {
+        if (!enrichedTopic?.quizzes || enrichedTopic.quizzes.length === 0) {
+            return { completed: 0, total: 0, percentage: 0 };
+        }
+        
+        const total = enrichedTopic.quizzes.length;
+        const completed = enrichedTopic.quizzes.filter(q => q.score !== undefined && q.score !== null).length;
+        const percentage = (completed / total) * 100;
+        
+        return { completed, total, percentage };
+    }, [enrichedTopic]);
+
+    console.log('📈 Progreso global:', globalProgress);
+    console.log('🔍 Topic enriquecido:', enrichedTopic);
 
     // Loading State
     if (!user || logic.loading || !logic.topic || !logic.subject) {
@@ -139,26 +171,26 @@ const Topic = ({ user }) => {
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
                 <TopicHeader 
                     {...logic}
-                    // 👇 AQUÍ ESTABA EL FALLO: Usamos enrichedTopic en lugar de logic.topic
                     topic={enrichedTopic} 
+                    subject={logic.subject}
+                    globalProgress={globalProgress}
                     handleGenerateQuizSubmit={handleGenerateQuizSubmit}
                 />
 
                 <TopicTabs 
                     {...logic}
-                    // 👇 AQUÍ TAMBIÉN: Para que los contadores (badges) sean correctos si los hubiera
                     topic={enrichedTopic} 
                 />
 
                 <TopicContent 
                     {...logic}
-                    topic={enrichedTopic} 
+                    topic={enrichedTopic}
                 />
             </main>
 
             <TopicModals 
                 {...logic}
-                topic={enrichedTopic} // También aquí por si acaso
+                topic={enrichedTopic}
                 handleGenerateQuizSubmit={handleGenerateQuizSubmit}
             />
         </div>

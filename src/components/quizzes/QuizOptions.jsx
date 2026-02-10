@@ -1,98 +1,83 @@
-import React from 'react';
-import { CheckCircle2, XCircle, Circle } from 'lucide-react';
-import { RenderLatex } from './QuizCommon';
+import React, { useCallback } from 'react';
+import { CheckCircle2, XCircle } from 'lucide-react';
+import { RenderLatex, ANSWER_STATUS } from './QuizCommon';
 
-const QuizOptions = ({ 
-    options, 
-    selectedOption, 
-    handleOptionSelect, 
-    showResult, 
-    correctAnswer,
-    topicGradient // Recibimos ej: "from-purple-600 to-blue-500"
+const AnswerOption = React.memo(({ 
+    index, option, isCorrect, isSelected, answerStatus, topicGradient, onSelect 
 }) => {
+    const getOptionStyles = useCallback(() => {
+        let containerClass = "border-slate-200/50 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white hover:shadow-xl";
+        let circleClass = "bg-slate-100 text-slate-500";
+        let accentGradient = "";
 
-    // Valor por defecto por seguridad
-    const activeGradient = topicGradient || 'from-indigo-600 to-violet-600';
+        if (answerStatus === ANSWER_STATUS.IDLE && isSelected) {
+            containerClass = `border-transparent bg-gradient-to-r ${topicGradient} text-white ring-4 ring-offset-2 shadow-2xl scale-[1.02]`;
+            circleClass = "bg-white/20 text-white backdrop-blur-sm";
+            accentGradient = "before:absolute before:inset-0 before:bg-white/10 before:rounded-2xl";
+        } else if (answerStatus !== ANSWER_STATUS.IDLE) {
+            if (isCorrect) {
+                containerClass = "border-green-400 bg-gradient-to-r from-green-50 to-emerald-50 text-green-800 ring-2 ring-green-400 shadow-xl shadow-green-100";
+                circleClass = "bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-lg";
+            } else if (isSelected) {
+                containerClass = "border-red-300 bg-gradient-to-r from-red-50 to-pink-50 text-red-700 shadow-xl shadow-red-100";
+                circleClass = "bg-gradient-to-br from-red-500 to-pink-600 text-white shadow-lg";
+            } else {
+                containerClass = "border-slate-100/50 bg-slate-50/50 text-slate-400 opacity-40";
+            }
+        }
+
+        return { containerClass, circleClass, accentGradient };
+    }, [answerStatus, isSelected, isCorrect, topicGradient]);
+
+    const { containerClass, circleClass, accentGradient } = getOptionStyles();
+    const showCorrectIcon = answerStatus !== ANSWER_STATUS.IDLE && isCorrect;
+    const showIncorrectIcon = answerStatus === ANSWER_STATUS.INCORRECT && isSelected;
 
     return (
-        <div className="grid grid-cols-1 gap-4 mb-24">
-            {options.map((option, idx) => {
-                const isSelected = selectedOption === idx;
-                const isCorrect = idx === correctAnswer;
-                const isWrongSelection = isSelected && !isCorrect;
-
-                // --- ESTILOS BASE (Estado Normal) ---
-                // Usamos bordes y textos neutros para no complicar el hover dinámico
-                let containerClasses = "border-2 bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800/50";
-                
-                let circleClasses = "border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 bg-transparent";
-                
-                let icon = <Circle className="w-5 h-5 text-slate-300" />;
-
-                // --- LÓGICA DE ESTADOS ---
-
-                if (showResult) {
-                    // FASE 2: RESULTADOS (Prioridad absoluta a Verde/Rojo)
-                    if (isCorrect) {
-                        // Correcto: Verde Esmeralda
-                        containerClasses = "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-500 text-emerald-800 dark:text-emerald-400 shadow-md scale-[1.01]";
-                        circleClasses = "bg-emerald-600 border-emerald-600 text-white";
-                        icon = <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />;
-                    } else if (isWrongSelection) {
-                        // Error: Rojo
-                        containerClasses = "bg-red-50 dark:bg-red-900/20 border-red-500 text-red-800 dark:text-red-400 opacity-90";
-                        circleClasses = "bg-red-500 border-red-500 text-white";
-                        icon = <XCircle className="w-6 h-6 text-red-500 dark:text-red-400" />;
-                    } else {
-                        // Resto: Apagados
-                        containerClasses = "border-slate-100 dark:border-slate-800 opacity-40 grayscale";
-                    }
-                } else if (isSelected) {
-                    // FASE 1: SELECCIÓN ACTIVA (Usa el DEGRADADO del tema)
-                    // Aquí está la magia: inyectamos el gradiente directamente
-                    containerClasses = `bg-gradient-to-r ${activeGradient} border-transparent text-white shadow-xl scale-[1.02] ring-1 ring-white/20`;
-                    
-                    // El círculo de la letra se vuelve blanco semitransparente para que se vea el gradiente de fondo
-                    circleClasses = "bg-white/20 border-white/30 text-white font-bold backdrop-blur-sm";
-                    
-                    // Icono blanco
-                    icon = <CheckCircle2 className="w-6 h-6 text-white animate-in zoom-in duration-300" />;
-                }
-
-                return (
-                    <button
-                        key={idx}
-                        onClick={() => handleOptionSelect(idx)}
-                        disabled={showResult}
-                        className={`
-                            group relative w-full p-5 rounded-2xl text-left font-medium text-lg 
-                            transition-all duration-300 ease-out 
-                            flex items-center gap-5 outline-none
-                            ${containerClasses}
-                        `}
-                    >
-                        {/* Círculo con Letra (A, B, C...) */}
-                        <div className={`
-                            w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-sm font-bold border-2 transition-all duration-300
-                            ${circleClasses}
-                        `}>
-                            {String.fromCharCode(65 + idx)}
-                        </div>
-
-                        {/* Texto de la respuesta */}
-                        <div className="flex-1 leading-snug">
-                            <RenderLatex text={option} />
-                        </div>
-
-                        {/* Icono de estado (Check/X/Circle) */}
-                        <div className="flex-shrink-0">
-                            {icon}
-                        </div>
-                    </button>
-                );
-            })}
-        </div>
+        <button
+            disabled={answerStatus !== ANSWER_STATUS.IDLE}
+            onClick={onSelect}
+            className={`group relative w-full p-5 rounded-2xl border-2 text-left transition-all duration-300 flex items-center gap-4 overflow-hidden backdrop-blur-xl ${containerClass} ${accentGradient}`}
+        >
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-black text-base transition-all duration-300 shrink-0 ${circleClass}`}>
+                {String.fromCharCode(65 + index)}
+            </div>
+            <div className="flex-1 text-base font-bold leading-snug">
+                <RenderLatex text={option} />
+            </div>
+            {showCorrectIcon && (
+                <div className="flex items-center gap-2 animate-in slide-in-from-right">
+                    <CheckCircle2 className="w-6 h-6 text-green-600" />
+                </div>
+            )}
+            {showIncorrectIcon && (
+                <div className="flex items-center gap-2 animate-in slide-in-from-right">
+                    <XCircle className="w-6 h-6 text-red-600" />
+                </div>
+            )}
+        </button>
     );
-};
+});
+AnswerOption.displayName = 'AnswerOption';
 
+const QuizOptions = React.memo(({ 
+    options, correctIndex, selectedAnswer, answerStatus, shouldUseGrid, topicGradient, onSelect 
+}) => (
+    <div className={`grid gap-4 ${shouldUseGrid ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+        {options.map((option, idx) => (
+            <AnswerOption
+                key={idx}
+                index={idx}
+                option={option}
+                isCorrect={idx === correctIndex}
+                isSelected={selectedAnswer === idx}
+                answerStatus={answerStatus}
+                topicGradient={topicGradient}
+                onSelect={() => onSelect(idx)}
+            />
+        ))}
+    </div>
+));
+
+QuizOptions.displayName = 'QuizOptions';
 export default QuizOptions;
