@@ -1,27 +1,61 @@
 // src/utils/subjectConstants.js
 import { 
-    BookOpen, Calculator, FlaskConical, Globe, Music, 
-    Code, Dna, Palette, Trophy, Briefcase, GraduationCap,
-    Laptop, HeartPulse, Scale, Leaf, Atom
+  BookOpen, Calculator, FlaskConical, Globe, Music, Code, Dna, 
+  Palette, Trophy, Briefcase, GraduationCap, Laptop, HeartPulse, 
+  Scale, Leaf, Atom, Languages, Brain, Map, Microscope, 
+  Gamepad2, Camera, Rocket, Theater, Construction, Landmark, 
+  Clapperboard, Star, Stethoscope, Lightbulb, Pi, Sigma, Variable, Infinity,
+  Divide, SquareFunction
 } from 'lucide-react';
 
 export const ICON_MAP = {
-    book: BookOpen,
-    calculator: Calculator,
+    // STEM (Science, Tech, Engineering)
     science: FlaskConical,
-    globe: Globe,
-    music: Music,
-    code: Code,
-    dna: Dna,
-    art: Palette,
-    trophy: Trophy,
-    business: Briefcase,
-    school: GraduationCap,
-    tech: Laptop,
-    health: HeartPulse,
-    law: Scale,
+    physics: Atom,
     bio: Leaf,
-    physics: Atom
+    dna: Dna,
+    research: Microscope,
+    tech: Laptop,
+    code: Code,
+    engineering: Construction,
+    space: Rocket,
+
+    // Math
+    calculator: Calculator,
+    pi: Pi,
+    statistics: Sigma,
+    algebra: Variable,
+    calculus: Infinity,
+    functions: SquareFunction,
+    arithmetic: Divide,
+
+    // Humanities & Social Sciences
+    language: Languages,
+    psychology: Brain,
+    geography: Map,
+    history: Landmark,
+    globe: Globe,
+    law: Scale,
+
+    // Arts & Entertainment
+    art: Palette,
+    music: Music,
+    drama: Theater,
+    cinema: Clapperboard,
+    photography: Camera,
+    gaming: Gamepad2,
+
+    // Professional & Academic
+    school: GraduationCap,
+    book: BookOpen,
+    business: Briefcase,
+    medicine: Stethoscope,
+    health: HeartPulse,
+    innovation: Lightbulb,
+
+    // General & Achievements
+    trophy: Trophy,
+    start: Star
 };
 
 export const ICON_KEYS = Object.keys(ICON_MAP);

@@ -24,6 +24,7 @@ const Home = ({ user }) => {
     const logic = useHomeLogic(user);
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders } = useFolders(user);
 
+    // 2. Search State
     const [searchQuery, setSearchQuery] = useState('');
 
     // Helper function to normalize text for comparison
@@ -40,6 +41,7 @@ const Home = ({ user }) => {
         filteredSubjects, 
         sharedFolders, 
         sharedSubjects,
+        hasContent 
     } = useMemo(() => {
         const query = normalizeText(searchQuery);
         
@@ -63,21 +65,80 @@ const Home = ({ user }) => {
             filteredSubjects: filterList(subjects),
             sharedFolders: filterList(sFolders),
             sharedSubjects: filterList(sSubjects),
+            hasContent: (folders.length > 0 || subjects.length > 0 || sFolders.length > 0 || sSubjects.length > 0)
         };
     }, [searchQuery, logic.folders, logic.subjects, logic.currentFolderContents, logic.sharedFolders, logic.sharedSubjects]);
+
+    // Stricter matching function - checks word boundaries
+    const matchesSearch = (item, query) => {
+        if (!query) return true;
+        const normalizedQuery = normalizeText(query);
+        const itemName = normalizeText(item.name || item.title || '');
+        return itemName.includes(normalizedQuery);
+    };
+
+    const getSearchScopeIds = (folders, currentFolderId) => {
+        const scopeIds = new Set([currentFolderId]);
+        
+        // Iteratively add children until no new folders are found
+        let added = true;
+        while (added) {
+            added = false;
+            folders.forEach(f => {
+                // If a folder's parent is known to be in scope, the folder itself is in scope
+                if (f.parentId && scopeIds.has(f.parentId) && !scopeIds.has(f.id)) {
+                    scopeIds.add(f.id);
+                    added = true;
+                }
+            });
+        }
+        return scopeIds;
+    };
 
 
     // ... (State and Filtering Logic omitted for brevity, identical to previous) ...
     // NOTE: Keep all the logic.loading checks, displayedFolders memo, etc.
     const [folderContentsModalConfig, setFolderContentsModalConfig] = useState({ isOpen: false, folder: null });
+    
     const displayedFolders = useMemo(() => {
         const allFolders = logic.folders || [];
         const currentId = logic.currentFolder ? logic.currentFolder.id : null;
-        return allFolders.filter(folder => {
-            const parentId = folder.parentId || null;
-            return parentId === currentId;
+
+        if (!searchQuery) {
+            // Standard View: Direct children only
+            return allFolders.filter(f => (f.parentId || null) === currentId);
+        }
+
+        // Search View: Recursive Scope + Strict Match
+        const scopeIds = getSearchScopeIds(allFolders, currentId);
+        return allFolders.filter(f => {
+            const isInScope = (f.parentId || null) === currentId || (f.parentId && scopeIds.has(f.parentId));
+            return isInScope && matchesSearch(f, searchQuery);
         });
-    }, [logic.folders, logic.currentFolder]);
+    }, [logic.folders, logic.currentFolder, searchQuery]);
+
+    const displayedSubjects = useMemo(() => {
+        const allSubjects = logic.subjects || [];
+        const allFolders = logic.folders || [];
+        const currentId = logic.currentFolder ? logic.currentFolder.id : null;
+
+        if (!searchQuery) {
+            // Standard View: Direct children only
+            return allSubjects.filter(s => (s.parentFolderId || null) === currentId);
+        }
+
+        // Search View: Recursive Scope + Strict Match
+        const scopeIds = getSearchScopeIds(allFolders, currentId);
+        return allSubjects.filter(s => {
+            // Check if subject lives in any of the valid scope folders
+            const parentId = s.parentFolderId || null;
+            const isInScope = parentId === currentId || (parentId && scopeIds.has(parentId));
+            return isInScope && matchesSearch(s, searchQuery);
+        });
+    }, [logic.subjects, logic.folders, logic.currentFolder, searchQuery]);
+    
+    
+    
     const activeModalFolder = useMemo(() => {
         if (!folderContentsModalConfig.folder) return null;
         const liveFolder = (logic.folders || []).find(f => f.id === folderContentsModalConfig.folder.id);
@@ -105,56 +166,79 @@ const Home = ({ user }) => {
             const currentId = logic.currentFolder.id;
             const parentId = logic.currentFolder.parentId; 
             if (subjectId) await moveSubjectToParent(subjectId, currentId, parentId);
-            else if (folderId && folderId !== currentId) await moveFolderToParent(folderId, currentId, parentId);
+            if (folderId && folderId !== currentId) await moveFolderToParent(folderId, currentId, parentId);
         }
-    };
-    const handleBreadcrumbDrop = async (targetFolderId, subjectId, droppedFolderId) => {
-        const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
-        if (subjectId) await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-        else if (droppedFolderId) {
-            const droppedFolderObj = (logic.folders || []).find(f => f.id === droppedFolderId);
-            if (!droppedFolderObj) return;
-            const oldParentId = droppedFolderObj.parentId || null;
-            await moveFolderToParent(droppedFolderId, oldParentId, targetFolderId);
-        }
-    };
-    const handleDropOnFolderWrapper = async (targetFolderId, subjectId) => {
-        const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
-        if (targetFolderId === currentFolderId) return;
-        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-    };
-    const handleNestFolder = async (targetFolderId, droppedFolderId) => {
-        if (targetFolderId === droppedFolderId) return;
-        const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
-        if (!droppedFolder) return;
-        const currentParentId = droppedFolder.parentId || null;
-        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
     };
     const handlePromoteSubjectWrapper = async (subjectId) => {
-        if (logic.currentFolder) await moveSubjectToParent(subjectId, logic.currentFolder.id, logic.currentFolder.parentId);
+        const currentId = logic.currentFolder ? logic.currentFolder.id : null;
+        const parentId = logic.currentFolder ? logic.currentFolder.parentId : null;
+        if (currentId) await moveSubjectToParent(subjectId, currentId, parentId);
     };
     const handlePromoteFolderWrapper = async (folderId) => {
-        if (logic.currentFolder && folderId !== logic.currentFolder.id) await moveFolderToParent(folderId, logic.currentFolder.id, logic.currentFolder.parentId);
+        const currentId = logic.currentFolder ? logic.currentFolder.id : null;
+        const parentId = logic.currentFolder ? logic.currentFolder.parentId : null;
+        if (currentId && folderId !== currentId) await moveFolderToParent(folderId, currentId, parentId);
     };
-    const handleShowFolderContents = (folder) => { setFolderContentsModalConfig({ isOpen: true, folder }); };
-    const handleNavigateFromTree = (folder) => { setFolderContentsModalConfig({ isOpen: false, folder: null }); logic.setCurrentFolder(folder); };
-    const handleNavigateSubjectFromTree = (subject) => { setFolderContentsModalConfig({ isOpen: false, folder: null }); logic.navigate(`/home/subject/${subject.id}`); };
-    
-    // EXPOSE THIS
-    const handleTreeMoveSubject = async (subjectId, targetFolderId, sourceFolderId) => {
+    const handleDropOnFolderWrapper = async (targetFolderId, subjectId, sourceFolderId) => {
+        if (targetFolderId === sourceFolderId) return;
         await moveSubjectBetweenFolders(subjectId, sourceFolderId, targetFolderId);
     };
-    
-    const handleTreeReorderSubject = async (folderId, subjectId, newIndex) => {
-        if (logic.currentFolder && folderId === logic.currentFolder.id) {
-             if (logic.handleDropReorderSubject) logic.handleDropReorderSubject(subjectId, newIndex); 
+    const handleNestFolder = async (childId, newParentId) => {
+        if (childId === newParentId) return;
+        const { updateFolderParent } = useFolders(user);
+        await updateFolderParent(childId, newParentId);
+    };
+    const handleShowFolderContents = (folder) => {
+        setFolderContentsModalConfig({ isOpen: true, folder });
+    };
+    const handleNavigateFromTree = (folderId) => {
+        setFolderContentsModalConfig({ isOpen: false, folder: null });
+        if (folderId) {
+            const folder = logic.folders?.find(f => f.id === folderId);
+            logic.setCurrentFolder(folder || null);
+        } else {
+            logic.setCurrentFolder(null);
+        }
+    };
+    const handleNavigateSubjectFromTree = (subjectId) => {
+        setFolderContentsModalConfig({ isOpen: false, folder: null });
+        logic.navigate(`/home/subject/${subjectId}`);
+    };
+    const handleTreeMoveSubject = async (subjectId, targetFolderId) => {
+        const subject = logic.subjects?.find(s => s.id === subjectId);
+        if (!subject) return;
+        const sourceFolderId = subject.parentFolderId || null;
+        if (sourceFolderId === targetFolderId) return;
+        await moveSubjectBetweenFolders(subjectId, sourceFolderId, targetFolderId);
+    };
+    const handleTreeReorderSubject = async (subjectId, targetPosition, targetFolderId) => {
+        const subject = logic.subjects?.find(s => s.id === subjectId);
+        if (!subject) return;
+        const sourceFolderId = subject.parentFolderId || null;
+        if (sourceFolderId !== targetFolderId) return;
+    };
+    const handleBreadcrumbDrop = async (e, targetFolderId) => {
+        e.preventDefault(); e.stopPropagation();
+        const subjectId = e.dataTransfer.getData('subjectId');
+        const folderId = e.dataTransfer.getData('folderId');
+        if (subjectId) {
+            const subject = logic.subjects?.find(s => s.id === subjectId);
+            if (!subject) return;
+            const sourceFolderId = subject.parentFolderId || null;
+            if (sourceFolderId === targetFolderId) return;
+            await moveSubjectBetweenFolders(subjectId, sourceFolderId, targetFolderId);
+        }
+        if (folderId) {
+            const folder = logic.folders?.find(f => f.id === folderId);
+            if (!folder || folder.id === targetFolderId) return;
+            const { updateFolderParent } = useFolders(user);
+            await updateFolderParent(folderId, targetFolderId);
         }
     };
 
-    const hasContent = (logic.subjects || []).length > 0 || displayedFolders.length > 0;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 font-sans transition-colors">
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
             <Header user={user} />
             <OnboardingWizard user={user} />
 
@@ -183,7 +267,9 @@ const Home = ({ user }) => {
                         draggedItem={logic.draggedItem}
                         draggedItemType={logic.draggedItemType}
                         onPreferenceChange={logic.handlePreferenceChange}
-                        allFolders={logic.folders || []} 
+                        allFolders={logic.folders || []}
+                        searchTerm={searchQuery}
+                        onSearchChange={setSearchQuery}
                     />
                     
                 </div>
@@ -211,10 +297,6 @@ const Home = ({ user }) => {
                         // Navigation
                         onSelectTopic={(sid, tid) => logic.navigate(`/home/subject/${sid}/topic/${tid}`)}
                         navigate={logic.navigate}
-
-                        // Search
-                        searchTerm={searchQuery}
-                        onSearchChange={setSearchQuery}
                     />
                 ) : (
                     <>
@@ -234,7 +316,7 @@ const Home = ({ user }) => {
                             <>
                                 {hasContent ? (
                                     <HomeContent 
-                                        subjects={logic.subjects || []}
+                                        subjects={displayedSubjects}
                                         folders={logic.folders || []}
                                         groupedContent={logic.groupedContent || {}} 
                                         collapsedGroups={logic.collapsedGroups || {}}

@@ -206,7 +206,7 @@ const FolderCardBody = ({
                                     fontSize: `${10 * scaleMultiplier}px`
                                 }}>
                                     <Users size={10 * scaleMultiplier} />
-                                    <span className="font-bold uppercase tracking-wider">Shared</span>
+                                    <span className="font-bold uppercase tracking-wider">Compartida</span>
                                 </div>
                             )}
                             

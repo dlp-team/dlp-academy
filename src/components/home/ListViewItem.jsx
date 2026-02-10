@@ -65,9 +65,6 @@ const ListViewItem = ({
 
         const stats = traverse(item.id);
         
-        // Subtract 1 from folders as requested (Math.max to avoid -1 on empty folders)
-        const adjustedFolderCount = Math.max(0, stats.f - 1);
-
         return {
             subjectCount: stats.s,
             folderCount: stats.f,

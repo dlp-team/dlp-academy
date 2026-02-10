@@ -183,7 +183,6 @@ export const useFolders = (user) => {
         const isCircular = checkIsDescendant(folderId, newParentId);
 
         if (isCircular) {
-            console.log("Circular move detected. Swapping hierarchy.");
             // STRATEGY:
             // 1. Promote 'newParentId' (Child) to 'currentParentId' (Parent's level)
             // 2. Then move 'folderId' (Parent) into 'newParentId' (Child)

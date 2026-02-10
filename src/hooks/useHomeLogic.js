@@ -5,7 +5,8 @@ import { useSubjects } from './useSubjects';
 import { useFolders } from './useFolders';
 import { useUserPreferences } from './useUserPreferences';
 
-export const useHomeLogic = (user) => {
+export const useHomeLogic = (user, searchQuery = '') => {
+    console.log("DEBUG: useHomeLogic received searchQuery:", searchQuery);
     const navigate = useNavigate();
     
     // Data Logic
@@ -19,6 +20,18 @@ export const useHomeLogic = (user) => {
         shareFolder,
         addSubjectToFolder
     } = useFolders(user);
+
+    console.log('DEBUG: Raw Data from Hooks:', { 
+        subjectsCount: subjects?.length, 
+        foldersCount: folders?.length,
+        loading 
+    });
+
+
+
+
+
+    
     const { 
         preferences, 
         loading: loadingPreferences, 
@@ -105,8 +118,55 @@ export const useHomeLogic = (user) => {
         return [...ordered, ...unordered];
     };
 
+    // Get ordered folders for manual mode
+    const orderedFolders = useMemo(() => {
+        // 1. Normalize Search Query
+        console.log("DEBUG: orderedFolders re-calculating. Query:", searchQuery);
+        const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+        // 2. Original Guard: if not in grid or inside a folder, usually return empty 
+        // (Unless searching, where we want to see results regardless of currentFolder)
+        if (!query && (viewMode !== 'grid' || currentFolder)) return [];
+
+        let resultFolders = folders.filter(f => f.isOwner);
+
+        // 3. Apply Search Filter (Recursive/Global)
+        if (query) {
+            resultFolders = resultFolders.filter(f => {
+                const folderName = (f.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                return folderName.includes(query);
+            });
+            console.log("DEBUG: Folders found for query:", results.length);
+        }
+
+        // 4. Original Tag Filtering Logic
+        if (selectedTags.length > 0) {
+            const matchingIds = new Set(filteredSubjectsByTags.map(s => s.id));
+            resultFolders = resultFolders.filter(f => (f.subjectIds || []).some(id => matchingIds.has(id)));
+        }
+
+        // 5. Original Manual Order
+        return applyManualOrder(resultFolders, 'folder');
+
+    }, [folders, viewMode, currentFolder, manualOrder, selectedTags, filteredSubjectsByTags, searchQuery]);
+
+
+
     // --- VIEW GROUPING LOGIC ---
     const groupedContent = useMemo(() => {
+        console.log("DEBUG: groupedContent re-calculating. Query:", searchQuery);
+        const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        
+        // --- NEW: SEARCH LOGIC ---
+        if (query) {
+            const matchedSubjects = subjects.filter(s => {
+                const subjectName = (s.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                return subjectName.includes(query);
+            });
+            console.log("DEBUG: Subjects found for query:", matchedSubjects.length);
+            return { 'Resultados de búsqueda': matchedSubjects };
+        }
+
         // In Manual mode with a folder open
         if (viewMode === 'grid' && currentFolder) {
             const folderSubjects = getSubjectsInFolder(currentFolder.id, selectedTags.length > 0 ? filteredSubjectsByTags : subjects);
@@ -166,21 +226,13 @@ export const useHomeLogic = (user) => {
         return { 'Todas': subjectsToGroup };
     }, [subjects, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder]);
 
-    // Get ordered folders for manual mode
-    const orderedFolders = useMemo(() => {
-        if (viewMode !== 'grid' || currentFolder) return [];
 
-        let ownerFolders = folders.filter(f => f.isOwner);
 
-        // If tags are selected, only include folders that contain at least
-        // one subject matching the selected tags
-        if (selectedTags.length > 0) {
-            const matchingIds = new Set(filteredSubjectsByTags.map(s => s.id));
-            ownerFolders = ownerFolders.filter(f => (f.subjectIds || []).some(id => matchingIds.has(id)));
-        }
 
-        return applyManualOrder(ownerFolders, 'folder');
-    }, [folders, viewMode, currentFolder, manualOrder, selectedTags, filteredSubjectsByTags]);
+
+
+
+
 
 
     // --- HANDLERS ---

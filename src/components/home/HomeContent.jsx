@@ -53,7 +53,6 @@ const HomeContent = ({
     
     navigate
 }) => {
-    console.log(folders)
     const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
     const [isRootZoneHovered, setIsRootZoneHovered] = useState(false);
 
@@ -282,7 +281,7 @@ const HomeContent = ({
                                         
                                         
                                         {/* Render Folders */}
-                                        {orderedFolders.map((folder) => (
+                                        {viewMode === 'grid' && orderedFolders.map((folder) => (
                                             <ListViewItem 
                                                 key={folder.id}
                                                 item={folder}

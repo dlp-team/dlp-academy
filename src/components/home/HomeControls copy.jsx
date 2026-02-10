@@ -89,11 +89,13 @@ const HomeControls = ({
             {/* Secondary Controls Row */}
             <div className="flex flex-wrap items-center gap-3">
                 {/* Layout Mode Selector */}
-                <ViewLayoutSelector 
-                    layoutMode={layoutMode} 
-                    setLayoutMode={handleLayoutModeChange}
-                    viewMode={viewMode}
-                />
+                {viewMode !== 'shared' && (
+                    <ViewLayoutSelector 
+                        layoutMode={layoutMode} 
+                        setLayoutMode={handleLayoutModeChange}
+                        viewMode={viewMode}
+                    />
+                )}
 
                 {/* Card Scale Slider */}
                 <CardScaleSlider 
