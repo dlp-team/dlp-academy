@@ -345,6 +345,10 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
     const handleOpenFolder = (folder) => {
         setCurrentFolder(folder);
+        // If we're viewing shared content, switch back to grid view to show folder contents
+        if (viewMode === 'shared') {
+            setViewMode('grid');
+        }
     };
 
     const handleShareFolder = async (folderId, email, role) => {

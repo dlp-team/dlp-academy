@@ -25,7 +25,10 @@ const SharedView = ({
     onFlipSubject,
     
     // Navigation fallback
-    onSelectTopic
+    onSelectTopic,
+    
+    // All folders needed for drag/drop logic
+    allFolders = []
 }) => {
     const navigate = useNavigate();
 
@@ -72,7 +75,8 @@ const SharedView = ({
                                 <div key={folder.id}>
                                     <FolderCard
                                         folder={folder}
-                                        onClick={() => onOpenFolder(folder)}
+                                        allFolders={allFolders}
+                                        onOpen={onOpenFolder}
                                         activeMenu={activeMenu}
                                         onToggleMenu={onToggleMenu}
                                         onEdit={() => {}} // Disabled for shared
