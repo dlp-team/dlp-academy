@@ -1,7 +1,7 @@
 import React from 'react';
 import { Home, Pencil, Trash2, ArrowUpDown, X, Save, Search } from 'lucide-react'; // Added Search
 import { useNavigate } from 'react-router-dom';
-import SubjectIcon from '../modals/SubjectIcon';
+import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
 
 const SubjectHeader = ({ 
     subject, 
@@ -17,7 +17,9 @@ const SubjectHeader = ({
     onSearch
 }) => {
     const navigate = useNavigate();
+    const isModern = subject.cardStyle === 'modern';
 
+    
     return (
         <div className="animate-in fade-in slide-in-from-top-4 duration-500">
             <button 
@@ -29,9 +31,17 @@ const SubjectHeader = ({
 
             <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-center gap-4">
-                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${subject.color} flex items-center justify-center shadow-sm shadow-indigo-500/20`}>
-                        <SubjectIcon iconName={subject.icon} className="w-8 h-8 text-white" />
-                    </div>
+                    {subject.cardStyle === 'modern' ? (
+                        // MODERN STYLE:
+                        <div className={`w-16 h-16 flex items-center justify-center ${getIconColor(subject.color)}`}>
+                            <SubjectIcon iconName={subject.icon} className="w-14 h-14" /> 
+                        </div>
+                    ) : (
+                        // CLASSIC STYLE:
+                        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${subject.color} flex items-center justify-center shadow-sm shadow-indigo-500/20`}>
+                            <SubjectIcon iconName={subject.icon} className="w-8 h-8 text-white" />
+                        </div>
+                    )}
                     <div>
                         <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
                             {subject.name}
