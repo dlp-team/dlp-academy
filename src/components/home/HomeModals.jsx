@@ -13,6 +13,8 @@ const HomeModals = ({
     onShare,
     onUnshare,
     handleDelete,
+    onShareSubject,
+    onUnshareSubject,
     currentFolder = null,
     allFolders = []
 }) => {
@@ -24,6 +26,9 @@ const HomeModals = ({
                 initialData={subjectModalConfig.data}
                 onClose={() => setSubjectModalConfig({ ...subjectModalConfig, isOpen: false })}
                 onSave={handleSaveSubject}
+                onShare={onShareSubject}
+                onUnshare={onUnshareSubject}
+                initialTab={subjectModalConfig.initialTab || 'general'}
             />
 
             <FolderManager

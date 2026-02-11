@@ -152,6 +152,7 @@ const SubjectCard = (props) => {
                         onToggleMenu={onToggleMenu}
                         onEdit={onEdit}
                         onDelete={onDelete}
+                        onShare={props.onShare}
                         isModern={isModern}
                         fillColor={fillColor}
                         scaleMultiplier={scaleMultiplier}

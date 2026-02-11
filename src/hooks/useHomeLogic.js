@@ -18,7 +18,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
     const navigate = useNavigate();
     
     // Data Logic
-    const { subjects, loading, addSubject, updateSubject, deleteSubject, touchSubject } = useSubjects(user);
+    const { subjects, loading, addSubject, updateSubject, deleteSubject, touchSubject, shareSubject, unshareSubject } = useSubjects(user);
     const { 
         folders, 
         loading: loadingFolders, 
@@ -536,6 +536,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
         // Share Functions
         shareFolder,
         unshareFolder,
+        shareSubject,
+        unshareSubject,
 
         // Navigation
         

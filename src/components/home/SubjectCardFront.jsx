@@ -1,6 +1,6 @@
 // src/components/home/SubjectCardFront.jsx
 import React, { useState } from 'react';
-import { ChevronRight, MoreVertical, Edit2, Trash2 } from 'lucide-react';
+import { ChevronRight, MoreVertical, Edit2, Trash2, Share2 } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../modals/SubjectIcon'; // Adjust path if necessary
 
 const SubjectCardFront = ({
@@ -11,6 +11,7 @@ const SubjectCardFront = ({
     onToggleMenu,
     onEdit,
     onDelete,
+    onShare,
     isModern,
     fillColor,
     scaleMultiplier,
@@ -103,6 +104,9 @@ const SubjectCardFront = ({
                         <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 z-50 animate-in fade-in zoom-in-95 duration-100 transition-colors">
                             <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
                                 <Edit2 size={14} /> Editar
+                            </button>
+                            <button onClick={(e) => { e.stopPropagation(); onShare(subject); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
+                                <Share2 size={14} /> Compartir
                             </button>
                             <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors">
                                 <Trash2 size={14} /> Eliminar

@@ -263,6 +263,7 @@ const Home = ({ user }) => {
                                         handleDropOnFolder={handleDropOnFolderWrapper}
                                         handleNestFolder={handleNestFolder}
                                         handleShowFolderContents={handleShowFolderContents}
+                                        onShareSubject={(subject) => logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: subject, initialTab: 'sharing' })}
                                         
                                         // NEW: Pass the robust move handler
                                         handleMoveSubjectWithSource={handleTreeMoveSubject}
@@ -321,6 +322,8 @@ const Home = ({ user }) => {
                 handleDelete={logic.handleDelete}
                 onShare={logic.shareFolder}
                 onUnshare={logic.unshareFolder}
+                onShareSubject={logic.shareSubject}
+                onUnshareSubject={logic.unshareSubject}
                 currentFolder={logic.currentFolder}
                 allFolders={logic.folders || []}
             />

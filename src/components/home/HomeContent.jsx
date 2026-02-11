@@ -35,7 +35,8 @@ const HomeContent = ({
     handlePromoteFolder,
     handleShowFolderContents,
     handleMoveSubjectWithSource, 
-    handleMoveFolderWithSource, 
+    handleMoveFolderWithSource,
+    onShareSubject,
     
     isDragAndDropEnabled,
     draggedItem,
@@ -260,6 +261,7 @@ const HomeContent = ({
                                                         onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
                                                         onEdit={(e, s) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
                                                         onDelete={(e, s) => { e.stopPropagation(); setDeleteConfig({ isOpen: true, type: 'subject', item: s }); setActiveMenu(null); }}
+                                                        onShare={(s) => { setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' }); setActiveMenu(null); }}
                                                         cardScale={cardScale}
                                                         isDragging={draggedItem?.id === subject.id}
                                                         onDragStart={handleDragStartSubject}
