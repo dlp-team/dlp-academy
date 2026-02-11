@@ -102,8 +102,16 @@ export const useHomeLogic = (user, searchQuery = '') => {
         const sharedFolderSubjectIds = new Set(
             sharedFolders.flatMap(f => f.subjectIds || [])
         );
-        return subjects.filter(s => sharedFolderSubjectIds.has(s.id));
-    }, [subjects, sharedFolders]);
+        
+        // Also include directly shared subjects (where uid !== current user's uid)
+        // This handles both:
+        // 1. Subjects inside shared folders
+        // 2. Subjects directly shared with the user
+        return subjects.filter(s => 
+            sharedFolderSubjectIds.has(s.id) || // In a shared folder
+            (s.uid !== user.uid && s.sharedWith?.includes(user.uid)) // Directly shared
+        );
+    }, [subjects, sharedFolders, user]);
 
     // --- MANUAL ORDERING ---
     // Apply manual order when in manual mode

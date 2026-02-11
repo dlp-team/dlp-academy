@@ -72,7 +72,47 @@ export const useFolders = (user) => {
 
     const addSubjectToFolder = async (folderId, subjectId) => {
         if (!folderId) return;
-        await updateDoc(doc(db, "folders", folderId), { subjectIds: arrayUnion(subjectId), updatedAt: new Date() });
+        
+        const batch = writeBatch(db);
+        
+        // 1. Add subject to folder
+        const folderRef = doc(db, "folders", folderId);
+        batch.update(folderRef, { 
+            subjectIds: arrayUnion(subjectId), 
+            updatedAt: new Date() 
+        });
+        
+        // 2. Get folder's shared users and propagate to subject
+        try {
+            const folderSnap = await getDoc(folderRef);
+            if (folderSnap.exists()) {
+                const sharedWithUids = folderSnap.data().sharedWithUids || [];
+                
+                // Get current subject's shared users and add folder's users
+                const subjectRef = doc(db, "subjects", subjectId);
+                const subjectSnap = await getDoc(subjectRef);
+                
+                let newSharedWith = subjectSnap.exists() ? (subjectSnap.data().sharedWith || []) : [];
+                
+                // Add all folder's shared users
+                sharedWithUids.forEach(uid => {
+                    if (!newSharedWith.includes(uid)) {
+                        newSharedWith.push(uid);
+                    }
+                });
+                
+                // Update subject with propagated sharing
+                batch.update(subjectRef, {
+                    sharedWith: newSharedWith,
+                    isShared: newSharedWith.length > 0,
+                    updatedAt: new Date()
+                });
+            }
+        } catch (e) {
+            console.error("Error propagating folder sharing to subject:", e);
+        }
+        
+        await batch.commit();
     };
 
     // --- CORE ACTIONS ---
@@ -251,6 +291,7 @@ export const useFolders = (user) => {
     /**
      * Standard Move Subject (Up/Down/Sideways)
      * Includes "Doubling" fix: checks DB for true parent if unsure.
+     * Handles sharing propagation when moving between folders
      */
     const moveSubjectBetweenFolders = async (subjectId, fromFolderId, toFolderId) => {
         // 1. Identify Source
@@ -272,7 +313,29 @@ export const useFolders = (user) => {
         // Prevent useless move
         if (sourceId === toFolderId) return;
 
-        // 2. Perform Move
+        // 2. Get folder sharing info before moving
+        let newFolderSharedUids = [];
+        let oldFolderSharedUids = [];
+        
+        try {
+            if (toFolderId) {
+                const targetFolderSnap = await getDoc(doc(db, "folders", toFolderId));
+                if (targetFolderSnap.exists()) {
+                    newFolderSharedUids = targetFolderSnap.data().sharedWithUids || [];
+                }
+            }
+            
+            if (sourceId) {
+                const sourceFolderSnap = await getDoc(doc(db, "folders", sourceId));
+                if (sourceFolderSnap.exists()) {
+                    oldFolderSharedUids = sourceFolderSnap.data().sharedWithUids || [];
+                }
+            }
+        } catch (e) {
+            console.error("Error fetching folder sharing info:", e);
+        }
+
+        // 3. Perform Move
         const batch = writeBatch(db);
 
         // Remove from old
@@ -287,9 +350,40 @@ export const useFolders = (user) => {
             batch.update(targetRef, { subjectIds: arrayUnion(subjectId), updatedAt: new Date() });
         }
 
-        // Update Subject Self
+        // Update Subject Self with new folder reference and sharing
         const subRef = doc(db, "subjects", subjectId);
-        batch.update(subRef, { folderId: toFolderId || null, updatedAt: new Date() });
+        
+        // Build the subject update payload
+        const subjectUpdate = {
+            folderId: toFolderId || null,
+            updatedAt: new Date(),
+            isShared: newFolderSharedUids.length > 0
+        };
+        
+        // Start with current sharedWith array, remove old folder users, add new folder users
+        try {
+            const currentSubSnap = await getDoc(subRef);
+            if (currentSubSnap.exists()) {
+                const currentSharedWith = currentSubSnap.data().sharedWith || [];
+                let newSharedWith = [...currentSharedWith];
+                
+                // Remove old folder's shared users
+                newSharedWith = newSharedWith.filter(uid => !oldFolderSharedUids.includes(uid));
+                
+                // Add new folder's shared users
+                newFolderSharedUids.forEach(uid => {
+                    if (!newSharedWith.includes(uid)) {
+                        newSharedWith.push(uid);
+                    }
+                });
+                
+                subjectUpdate.sharedWith = newSharedWith;
+            }
+        } catch (e) {
+            console.error("Error computing subject sharing:", e);
+        }
+        
+        batch.update(subRef, subjectUpdate);
 
         await batch.commit();
     };
