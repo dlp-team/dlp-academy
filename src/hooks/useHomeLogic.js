@@ -520,6 +520,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         handleOpenFolder,
         handleShareFolder,
         toggleGroup,
+        touchSubject,
         
         // Drag & Drop Handlers
         handleDragStartSubject,

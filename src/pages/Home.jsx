@@ -195,13 +195,14 @@ const Home = ({ user }) => {
                         cardScale={logic.cardScale}
                         allFolders={logic.folders || []}
                         
-                        // --- ADD THIS LINE ---
                         layoutMode={logic.layoutMode} 
-                        // --------------------
 
                         // Handlers
                         onOpenFolder={logic.handleOpenFolder}
-                        onSelectSubject={logic.handleSubjectClick} // Or specific handler
+                        onSelectSubject={(subject) => {
+                            logic.touchSubject(subject.id);
+                            logic.navigate(`/home/subject/${subject.id}`);
+                        }}
                         
                         // UI State
                         activeMenu={logic.activeMenu}
