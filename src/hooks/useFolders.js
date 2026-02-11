@@ -1,7 +1,8 @@
 // src/hooks/useFolders.js
 import { useState, useEffect } from 'react';
 import { 
-    collection, query, where, addDoc, updateDoc, deleteDoc, doc, getDoc, arrayUnion, arrayRemove, onSnapshot, writeBatch
+    collection, query, where, addDoc, updateDoc, deleteDoc, doc, 
+    getDoc, arrayUnion, arrayRemove, onSnapshot, writeBatch, getDocs
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -79,6 +80,7 @@ export const useFolders = (user) => {
             ownerId: user.uid,
             ownerEmail: user.email,
             sharedWith: [],
+            sharedWithUids: [],
             isShared: false,
             parentId: parentId,
             folderIds: [],
@@ -102,20 +104,132 @@ export const useFolders = (user) => {
     };
 
     const shareFolder = async (folderId, email, role = 'viewer') => {
-        const folder = folders.find(f => f.id === folderId);
-        if (!folder) return;
-        const sharedWith = [
-            ...(folder.sharedWith || []).filter(s => s.email !== email),
-            { uid: null, email, role, sharedAt: new Date() }
-        ];
-        await updateDoc(doc(db, "folders", folderId), { sharedWith, isShared: true, updatedAt: new Date() });
+
+        if (user && user.email && user.email.toLowerCase() === email.toLowerCase()) {
+            alert("No puedes compartir una carpeta contigo mismo.");
+            return;
+        }
+
+        try {
+            // 1. Find the user UID by email from your 'users' collection
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('email', '==', email));
+            const querySnapshot = await getDocs(q);
+
+            let targetUid = null;
+
+            if (!querySnapshot.empty) {
+                targetUid = querySnapshot.docs[0].id; 
+            } else {
+                console.warn(`User with email ${email} not found.`);
+                return;
+            }
+
+            // 2. Now you have the verified UID securely
+            const shareData = {
+                email: email.toLowerCase(),
+                uid: targetUid,
+                role,
+                sharedAt: new Date()
+            };
+
+            // 3. Update the folder document
+            const folderRef = doc(db, 'folders', folderId);
+            const folderSnap = await getDoc(folderRef);
+
+            if (!folderSnap.exists()) {
+                console.error("Folder not found");
+                return;
+            }
+
+            const folderData = folderSnap.data();
+            
+            const subjectsInFolder = folderData.subjectIds || [];
+            
+           const batch = writeBatch(db);
+
+            // A) Update the Folder
+            batch.update(folderRef, {
+                sharedWith: arrayUnion(shareData),      // For UI display
+                sharedWithUids: arrayUnion(targetUid),  // For Security Rules & Perms
+                isShared: true,
+                updatedAt: new Date()
+            });
+
+            // B) Retroactively update ALL Subjects inside this folder
+            subjectsInFolder.forEach(subjectId => {
+                if (typeof subjectId === 'string') { // Ensure it's a valid ID
+                    const subjectRef = doc(db, 'subjects', subjectId);
+                    batch.update(subjectRef, {
+                        isShared: true,
+                        // Subjects use a simple array of UIDs for sharing
+                        sharedWith: arrayUnion(targetUid) 
+                    });
+                }
+            });
+
+            // 6. COMMIT CHANGES
+            await batch.commit();
+            console.log(`Folder and ${subjectsInFolder.length} subjects shared with ${email}`);
+
+            return shareData;
+
+        } catch (error) {
+            console.error("Error sharing folder:", error);
+            throw error; // Re-throw so UI can handle it
+        }
     };
 
     const unshareFolder = async (folderId, email) => {
-        const folder = folders.find(f => f.id === folderId);
-        if (!folder) return;
-        const sharedWith = (folder.sharedWith || []).filter(s => s.email !== email);
-        await updateDoc(doc(db, "folders", folderId), { sharedWith, isShared: sharedWith.length > 0, updatedAt: new Date() });
+        try {
+            // A. Find the user UID for this email (to remove from arrays)
+            const usersRef = collection(db, 'users');
+            const q = query(usersRef, where('email', '==', email));
+            const querySnapshot = await getDocs(q);
+            
+            if (querySnapshot.empty) {
+                console.error("User not found to unshare");
+                return;
+            }
+            const targetUid = querySnapshot.docs[0].id;
+
+            // B. Get Folder to find subjects
+            const folderRef = doc(db, 'folders', folderId);
+            const folderSnap = await getDoc(folderRef);
+            const folderData = folderSnap.data();
+            
+            // Filter out the user from the sharedWith array object
+            const currentSharedWith = folderData.sharedWith || [];
+            const newSharedWith = currentSharedWith.filter(u => u.email !== email);
+
+            const batch = writeBatch(db);
+
+            // C. Update Folder
+            batch.update(folderRef, {
+                sharedWith: newSharedWith,        // Update the visual list
+                sharedWithUids: arrayRemove(targetUid), // Remove permissions
+                updatedAt: new Date()
+            });
+
+            // D. Remove from Subjects (Retroactive Unshare)
+            const subjectIds = folderData.subjectIds || [];
+            subjectIds.forEach(subjectId => {
+                if (typeof subjectId === 'string') {
+                    const subjectRef = doc(db, 'subjects', subjectId);
+                    batch.update(subjectRef, {
+                        sharedWith: arrayRemove(targetUid)
+                    });
+                }
+            });
+
+            await batch.commit();
+            console.log(`Unshared with ${email}`);
+            return true;
+
+        } catch (error) {
+            console.error("Error unsharing folder:", error);
+            throw error;
+        }
     };
 
     // --- MOVEMENT & HIERARCHY LOGIC ---

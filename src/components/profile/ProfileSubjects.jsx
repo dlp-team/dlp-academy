@@ -1,7 +1,7 @@
 // src/components/profile/ProfileSubjects.jsx
 import React from 'react';
 import { BookOpen } from 'lucide-react';
-import SubjectIcon, { getIconColor } from '../modals/SubjectIcon'; // Added getIconColor import
+import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
 
 const ProfileSubjects = ({ subjects }) => {
     return (

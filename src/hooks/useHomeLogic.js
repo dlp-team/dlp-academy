@@ -5,6 +5,14 @@ import { useSubjects } from './useSubjects';
 import { useFolders } from './useFolders';
 import { useUserPreferences } from './useUserPreferences';
 
+const normalizeText = (text) => {
+    return (text || '')
+        .toLowerCase()
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+};
+
 export const useHomeLogic = (user, searchQuery = '') => {
     console.log("DEBUG: useHomeLogic received searchQuery:", searchQuery);
     const navigate = useNavigate();
@@ -18,6 +26,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         updateFolder, 
         deleteFolder, 
         shareFolder,
+        unshareFolder,
         addSubjectToFolder
     } = useFolders(user);
 
@@ -247,20 +256,58 @@ export const useHomeLogic = (user, searchQuery = '') => {
             modernFillColor: formData.modernFillColor || null,
             updatedAt: new Date(),
             uid: user.uid,
+            isShared: false,
+            sharedWith: []
         };
 
-        if (subjectModalConfig.isEditing) {
-            await updateSubject(formData.id, payload);
-        } else {
-            payload.createdAt = new Date();
-            const newSubject = await addSubject(payload);
-            
-            // If in a folder, add to that folder
-            if (currentFolder) {
-                await addSubjectToFolder(currentFolder.id, newSubject.id);
+        try {
+            if (subjectModalConfig.isEditing) {
+                // Update existing subject
+                await updateSubject(formData.id, payload);
+            } else {
+                // 1. Prepare new subject data
+
+                // 2. If we are inside a folder, inherit sharing settings
+                if (currentFolder) {
+                    // Check if the parent folder is shared
+                    if (currentFolder.isShared || (currentFolder.sharedWith && currentFolder.sharedWith.length > 0)) {
+                        payload.isShared = true;
+
+                        // 1. Start with the users the folder is shared with
+                        const parentShares = currentFolder.sharedWith || [];
+                        const usersToShareWith = new Set(parentShares);
+
+                        // 2. CRITICAL: Add the Folder Owner
+                        // If I am creating this inside someone else's folder, 
+                        // I must share it with the owner, otherwise they won't see it.
+                        if (currentFolder.ownerId && currentFolder.ownerId !== user.uid) {
+                            usersToShareWith.add(currentFolder.ownerId);
+                        }
+
+                        // 3. Assign unique list back to payload
+                        payload.sharedWith = Array.from(usersToShareWith);
+                    }
+                }
+
+                // 3. Create the subject
+                const newSubject = await addSubject(payload); 
+                
+                // SAFETY CHECK: Handle if addSubject returns object or string
+                const newId = typeof newSubject === 'object' ? newSubject.id : newSubject;
+                
+                // 4. Link to folder
+                if (currentFolder) {
+                    await addSubjectToFolder(currentFolder.id, newId);
+                }
+                
             }
+
+            // Close modal
+            setSubjectModalConfig({ isOpen: false, isEditing: false, data: null });
+        } catch (error) {
+            console.error("Error saving subject:", error);
+            // Handle error (maybe show a toast)
         }
-        setSubjectModalConfig({ isOpen: false, isEditing: false, data: null });
     };
 
     const handleSaveFolder = async (formData) => {
@@ -301,7 +348,13 @@ export const useHomeLogic = (user, searchQuery = '') => {
     };
 
     const handleShareFolder = async (folderId, email, role) => {
-        await shareFolder(folderId, email, role);
+        // await shareFolder(folderId, email, role);
+        setFolderModalConfig({
+            isOpen: true,
+            mode: 'edit',
+            initialTab: 'sharing',
+            folder: folder
+        });
     };
 
     const toggleGroup = (groupName) => {
@@ -473,6 +526,12 @@ export const useHomeLogic = (user, searchQuery = '') => {
         handleDropReorderSubject,
         handleDropReorderFolder,
         handlePreferenceChange,
+
+        // Share Functions
+        shareFolder,
+        unshareFolder,
+
+        // Navigation
         
         navigate
     };

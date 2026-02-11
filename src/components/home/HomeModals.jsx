@@ -10,7 +10,8 @@ const HomeModals = ({
     deleteConfig, setDeleteConfig,
     handleSaveSubject,
     handleSaveFolder,
-    handleShareFolder,
+    onShare,
+    onUnshare,
     handleDelete,
     currentFolder = null,
     allFolders = []
@@ -31,7 +32,8 @@ const HomeModals = ({
                 onSave={handleSaveFolder}
                 initialData={folderModalConfig.data}
                 isEditing={folderModalConfig.isEditing}
-                onShare={handleShareFolder}
+                onShare={onShare}
+                onUnshare={onUnshare}
                 currentFolder={folderModalConfig.currentFolder || currentFolder}
                 allFolders={allFolders}
             />

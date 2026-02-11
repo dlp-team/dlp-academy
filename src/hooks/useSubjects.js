@@ -1,4 +1,3 @@
-// src/hooks/useSubjects.js
 import { useState, useEffect, useCallback } from 'react';
 import { 
     collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc 
@@ -11,23 +10,67 @@ export const useSubjects = (user) => {
 
     const fetchSubjects = useCallback(async () => {
         if (!user) return;
+        
         try {
-            const q = query(collection(db, "subjects"), where("uid", "==", user.uid));
-            const querySnapshot = await getDocs(q);
-            
-            const tempSubjects = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            // 1. Query subjects created by the user (Owned)
+            const ownedQuery = query(
+                collection(db, "subjects"), 
+                where("uid", "==", user.uid)
+            );
 
-            // Load Topics
+            // 2. Query subjects shared with the user (Shared)
+            const sharedQuery = query(
+                collection(db, "subjects"), 
+                where("sharedWith", "array-contains", user.uid)
+            );
+
+            // 3. Execute both queries in parallel
+            const [ownedSnap, sharedSnap] = await Promise.allSettled([
+                getDocs(ownedQuery),
+                getDocs(sharedQuery)
+            ]);
+
+            const allDocsMap = new Map();
+
+            // Process Owned
+            if (ownedSnap.status === 'fulfilled') {
+                ownedSnap.value.docs.forEach(d => {
+                    allDocsMap.set(d.id, { id: d.id, ...d.data() });
+                });
+            } else {
+                console.error("Error fetching owned subjects:", ownedSnap.reason);
+            }
+
+            // Process Shared
+            if (sharedSnap.status === 'fulfilled') {
+                sharedSnap.value.docs.forEach(d => {
+                    allDocsMap.set(d.id, { id: d.id, ...d.data() });
+                });
+            } else {
+                console.error("Error fetching shared subjects (check console for index link?):", sharedSnap.reason);
+            }
+
+            const tempSubjects = Array.from(allDocsMap.values());
+
+            // 3. LOAD TOPICS (Only for the subjects we found)
             const subjectsWithTopics = await Promise.all(tempSubjects.map(async (subject) => {
-                const topicsRef = collection(db, "subjects", subject.id, "topics");
-                const topicsSnap = await getDocs(topicsRef);
-                const topicsList = topicsSnap.docs.map(t => ({ id: t.id, ...t.data() }));
-                return { ...subject, topics: topicsList };
+                try {
+                    const topicsRef = collection(db, "subjects", subject.id, "topics");
+                    const topicsSnap = await getDocs(topicsRef);
+                    const topicsList = topicsSnap.docs.map(t => ({ id: t.id, ...t.data() }));
+                    // Simple sort
+                    topicsList.sort((a, b) => (a.order || 0) - (b.order || 0));
+                    return { ...subject, topics: topicsList };
+                } catch (e) {
+                    console.warn(`Failed to load topics for subject ${subject.id}`, e);
+                    return { ...subject, topics: [] };
+                }
             }));
 
             setSubjects(subjectsWithTopics);
+
         } catch (error) {
-            console.error("Error fetching subjects:", error);
+            console.error("Critical Error in useSubjects:", error);
         } finally {
             setLoading(false);
         }
@@ -39,9 +82,8 @@ export const useSubjects = (user) => {
 
     const addSubject = async (payload) => {
         const docRef = await addDoc(collection(db, "subjects"), payload);
-        const newSubject = { id: docRef.id, ...payload, topics: [] };
-        setSubjects(prev => [...prev, newSubject]);
-        return newSubject;
+        // Return the ID explicitly to handle the folder link correctly
+        return docRef.id; 
     };
 
     const updateSubject = async (id, payload) => {
@@ -55,9 +97,23 @@ export const useSubjects = (user) => {
     };
 
     const touchSubject = async (id) => {
-        // Fire and forget update for "Usage" sorting
-        try { updateDoc(doc(db, "subjects", id), { updatedAt: new Date() }); } catch(e){}
+        // Fire and forget update for "Usage" view sorting
+        try {
+            const subjectRef = doc(db, "subjects", id);
+            await updateDoc(subjectRef, { 
+                lastAccessed: new Date() 
+            });
+        } catch (e) {
+            console.error("Error updating lastAccessed", e);
+        }
     };
 
-    return { subjects, loading, addSubject, updateSubject, deleteSubject, touchSubject };
+    return { 
+        subjects, 
+        loading, 
+        addSubject, 
+        updateSubject, 
+        deleteSubject,
+        touchSubject
+    };
 };

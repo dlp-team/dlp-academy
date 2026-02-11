@@ -21,10 +21,10 @@ import FolderTreeModal from '../components/modals/FolderTreeModal';
 
 const Home = ({ user }) => {
     // 1. Initialize Logic
-    const logic = useHomeLogic(user);
+    const [searchQuery, setSearchQuery] = useState('');
+    const logic = useHomeLogic(user, searchQuery);
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders } = useFolders(user);
 
-    const [searchQuery, setSearchQuery] = useState('');
 
     // Helper function to normalize text for comparison
     const normalizeText = (text) => {
@@ -317,6 +317,8 @@ const Home = ({ user }) => {
                 handleSaveFolder={handleSaveFolderWrapper}
                 handleShareFolder={logic.handleShareFolder}
                 handleDelete={logic.handleDelete}
+                onShare={logic.shareFolder}
+                onUnshare={logic.unshareFolder}
                 currentFolder={logic.currentFolder}
                 allFolders={logic.folders || []}
             />
