@@ -230,7 +230,7 @@ const HomeContent = ({
                                                         onToggleMenu={setActiveMenu}
                                                         onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                         onDelete={(f) => setDeleteConfig({ isOpen: true, type: 'folder', item: f })}
-                                                        onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
+                                                        onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
                                                         onShowContents={handleShowFolderContents}
                                                         cardScale={cardScale}
                                                         onDrop={handleDropOnFolder}

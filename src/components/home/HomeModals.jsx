@@ -36,6 +36,7 @@ const HomeModals = ({
                 onUnshare={onUnshare}
                 currentFolder={folderModalConfig.currentFolder || currentFolder}
                 allFolders={allFolders}
+                initialTab={folderModalConfig.initialTab || 'general'}
             />
 
             {/* Delete Confirmation */}

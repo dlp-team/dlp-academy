@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-    collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc 
+    collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -8,57 +8,45 @@ export const useSubjects = (user) => {
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchSubjects = useCallback(async () => {
-        if (!user) return;
-        
-        try {
-            // 1. Query subjects created by the user (Owned)
-            const ownedQuery = query(
-                collection(db, "subjects"), 
-                where("uid", "==", user.uid)
-            );
+    useEffect(() => {
+        if (!user) {
+            setSubjects([]);
+            setLoading(false);
+            return;
+        }
 
-            // 2. Query subjects shared with the user (Shared)
-            const sharedQuery = query(
-                collection(db, "subjects"), 
-                where("sharedWith", "array-contains", user.uid)
-            );
+        setLoading(true);
 
-            // 3. Execute both queries in parallel
-            const [ownedSnap, sharedSnap] = await Promise.allSettled([
-                getDocs(ownedQuery),
-                getDocs(sharedQuery)
-            ]);
+        // 1. Query subjects created by the user (Owned)
+        const ownedQuery = query(
+            collection(db, "subjects"), 
+            where("uid", "==", user.uid)
+        );
 
-            const allDocsMap = new Map();
+        // 2. Query subjects shared with the user (Shared)
+        const sharedQuery = query(
+            collection(db, "subjects"), 
+            where("sharedWith", "array-contains", user.uid)
+        );
 
-            // Process Owned
-            if (ownedSnap.status === 'fulfilled') {
-                ownedSnap.value.docs.forEach(d => {
-                    allDocsMap.set(d.id, { id: d.id, ...d.data() });
-                });
-            } else {
-                console.error("Error fetching owned subjects:", ownedSnap.reason);
-            }
+        let ownedSubjects = [];
+        let sharedSubjects = [];
 
-            // Process Shared
-            if (sharedSnap.status === 'fulfilled') {
-                sharedSnap.value.docs.forEach(d => {
-                    allDocsMap.set(d.id, { id: d.id, ...d.data() });
-                });
-            } else {
-                console.error("Error fetching shared subjects (check console for index link?):", sharedSnap.reason);
-            }
+        const updateSubjectsState = async () => {
+            // Merge owned and shared subjects, avoiding duplicates
+            const allSubjectsMap = new Map();
 
-            const tempSubjects = Array.from(allDocsMap.values());
+            ownedSubjects.forEach(s => allSubjectsMap.set(s.id, s));
+            sharedSubjects.forEach(s => allSubjectsMap.set(s.id, s));
 
-            // 3. LOAD TOPICS (Only for the subjects we found)
+            const tempSubjects = Array.from(allSubjectsMap.values());
+
+            // Load topics for all subjects
             const subjectsWithTopics = await Promise.all(tempSubjects.map(async (subject) => {
                 try {
                     const topicsRef = collection(db, "subjects", subject.id, "topics");
                     const topicsSnap = await getDocs(topicsRef);
                     const topicsList = topicsSnap.docs.map(t => ({ id: t.id, ...t.data() }));
-                    // Simple sort
                     topicsList.sort((a, b) => (a.order || 0) - (b.order || 0));
                     return { ...subject, topics: topicsList };
                 } catch (e) {
@@ -68,17 +56,34 @@ export const useSubjects = (user) => {
             }));
 
             setSubjects(subjectsWithTopics);
-
-        } catch (error) {
-            console.error("Critical Error in useSubjects:", error);
-        } finally {
             setLoading(false);
-        }
-    }, [user]);
+        };
 
-    useEffect(() => {
-        fetchSubjects();
-    }, [fetchSubjects]);
+        // Real-time listener for owned subjects
+        const unsubscribeOwned = onSnapshot(ownedQuery, (snapshot) => {
+            ownedSubjects = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            updateSubjectsState();
+        }, (error) => {
+            console.error("Error listening to owned subjects:", error);
+            ownedSubjects = [];
+            updateSubjectsState();
+        });
+
+        // Real-time listener for shared subjects
+        const unsubscribeShared = onSnapshot(sharedQuery, (snapshot) => {
+            sharedSubjects = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            updateSubjectsState();
+        }, (error) => {
+            console.error("Error listening to shared subjects:", error);
+            sharedSubjects = [];
+            updateSubjectsState();
+        });
+
+        return () => {
+            unsubscribeOwned();
+            unsubscribeShared();
+        };
+    }, [user]);
 
     const addSubject = async (payload) => {
         const docRef = await addDoc(collection(db, "subjects"), payload);

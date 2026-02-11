@@ -41,7 +41,10 @@ export const useFolders = (user) => {
         const unsubscribeShared = onSnapshot(sharedQuery, (snapshot) => {
             sharedFolders = snapshot.docs.filter(d => {
                 const data = d.data();
-                return data.sharedWith?.some(share => share.email === user.email || share.uid === user.uid);
+                const userEmail = user.email?.toLowerCase() || '';
+                return data.sharedWith?.some(share => 
+                    share.email?.toLowerCase() === userEmail || share.uid === user.uid
+                );
             }).map(d => ({ 
                 id: d.id, ...d.data(), parentId: d.data().parentId || null, isOwner: false 
             }));
@@ -111,9 +114,11 @@ export const useFolders = (user) => {
         }
 
         try {
+            const emailLower = email.toLowerCase();
+            
             // 1. Find the user UID by email from your 'users' collection
             const usersRef = collection(db, 'users');
-            const q = query(usersRef, where('email', '==', email));
+            const q = query(usersRef, where('email', '==', emailLower));
             const querySnapshot = await getDocs(q);
 
             let targetUid = null;
@@ -121,13 +126,14 @@ export const useFolders = (user) => {
             if (!querySnapshot.empty) {
                 targetUid = querySnapshot.docs[0].id; 
             } else {
-                console.warn(`User with email ${email} not found.`);
+                console.warn(`User with email ${emailLower} not found.`);
+                alert(`No se encontró usuario con el correo ${email}. El usuario debe crear una cuenta primero.`);
                 return;
             }
 
             // 2. Now you have the verified UID securely
             const shareData = {
-                email: email.toLowerCase(),
+                email: emailLower,
                 uid: targetUid,
                 role,
                 sharedAt: new Date()
@@ -145,6 +151,13 @@ export const useFolders = (user) => {
             const folderData = folderSnap.data();
             
             const subjectsInFolder = folderData.subjectIds || [];
+            
+            // Check if already shared with this user
+            const alreadyShared = folderData.sharedWith?.some(s => s.uid === targetUid);
+            if (alreadyShared) {
+                alert("Esta carpeta ya está compartida con este usuario.");
+                return;
+            }
             
            const batch = writeBatch(db);
 
@@ -170,7 +183,7 @@ export const useFolders = (user) => {
 
             // 6. COMMIT CHANGES
             await batch.commit();
-            console.log(`Folder and ${subjectsInFolder.length} subjects shared with ${email}`);
+            console.log(`Folder and ${subjectsInFolder.length} subjects shared with ${emailLower}`);
 
             return shareData;
 
@@ -184,7 +197,7 @@ export const useFolders = (user) => {
         try {
             // A. Find the user UID for this email (to remove from arrays)
             const usersRef = collection(db, 'users');
-            const q = query(usersRef, where('email', '==', email));
+            const q = query(usersRef, where('email', '==', email.toLowerCase()));
             const querySnapshot = await getDocs(q);
             
             if (querySnapshot.empty) {
@@ -200,7 +213,7 @@ export const useFolders = (user) => {
             
             // Filter out the user from the sharedWith array object
             const currentSharedWith = folderData.sharedWith || [];
-            const newSharedWith = currentSharedWith.filter(u => u.email !== email);
+            const newSharedWith = currentSharedWith.filter(u => u.email?.toLowerCase() !== email.toLowerCase());
 
             const batch = writeBatch(db);
 
@@ -208,6 +221,7 @@ export const useFolders = (user) => {
             batch.update(folderRef, {
                 sharedWith: newSharedWith,        // Update the visual list
                 sharedWithUids: arrayRemove(targetUid), // Remove permissions
+                isShared: newSharedWith.length > 0, // Update isShared flag
                 updatedAt: new Date()
             });
 

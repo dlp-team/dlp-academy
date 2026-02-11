@@ -99,7 +99,6 @@ const FolderCardBody = ({
                                     <span>{folderCount} {folderCount === 1 ? 'carp.' : 'carps.'}</span>
                                 </span>
                             </span>
-                            {/* ------------------------- */}
 
                         </button>
                     </div>
@@ -128,14 +127,14 @@ const FolderCardBody = ({
                             <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 z-50 animate-in fade-in zoom-in-95">
                                 {folder.isOwner ? (
                                     <>
-                                        <button onClick={(e) => { e.stopPropagation(); onEdit(folder); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
+                                        <button onClick={(e) => { e.stopPropagation(); onEdit(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
                                             <Edit2 size={14} /> Editar
                                         </button>
-                                        <button onClick={(e) => { e.stopPropagation(); onShare(folder); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
+                                        <button onClick={(e) => { e.stopPropagation(); onShare(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
                                             <Share2 size={14} /> Compartir
                                         </button>
                                         <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
-                                        <button onClick={(e) => { e.stopPropagation(); onDelete(folder); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors">
+                                        <button onClick={(e) => { e.stopPropagation(); onDelete(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors">
                                             <Trash2 size={14} /> Eliminar
                                         </button>
                                     </>
@@ -196,7 +195,13 @@ const FolderCardBody = ({
                         {/* Badges */}
                         <div className="flex items-center gap-2 mb-2">
                             {folder.isShared && (
-                                <div className={`inline-flex items-center gap-1 rounded-full ${
+                                <div 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onShare(folder);
+                                }}
+                                className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium 
+                                    cursor-pointer transition-all duration-200 hover:scale-125 hover:shadow-md active:scale-95 ${
                                     isModern 
                                         ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800' 
                                         : 'bg-white/20 text-white border border-white/20'
@@ -208,7 +213,8 @@ const FolderCardBody = ({
                                     <Users size={10 * scaleMultiplier} />
                                     <span className="font-bold uppercase tracking-wider">Compartida</span>
                                 </div>
-                            )}
+                            )} 
+
                             
                             {folder.parentId && (
                                 <div className={`inline-flex items-center gap-1 rounded-full ${

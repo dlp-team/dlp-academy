@@ -350,11 +350,12 @@ export const useHomeLogic = (user, searchQuery = '') => {
     const handleShareFolder = async (folderId, email, role) => {
         // await shareFolder(folderId, email, role);
         setFolderModalConfig({
-            isOpen: true,
-            mode: 'edit',
-            initialTab: 'sharing',
-            folder: folder
-        });
+        isOpen: true,
+        isEditing: true,
+        data: folder,
+        currentFolder: null,
+        initialTab: 'sharing'
+    });
     };
 
     const toggleGroup = (groupName) => {
