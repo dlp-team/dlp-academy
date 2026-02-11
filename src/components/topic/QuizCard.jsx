@@ -49,16 +49,22 @@ const QuizCard = ({
                     {/* 1. BADGE DE PUNTUACIÓN (ARRIBA IZQUIERDA) */}
                     <div>
                         {hasScore && (
-                            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-lg border border-white/20 backdrop-blur-md bg-white animate-in zoom-in duration-300">
-                                {/* ICONOS CON COLOR FIJO */}
+                            <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full shadow-lg border backdrop-blur-md animate-in zoom-in duration-300 ${
+                                isPassed 
+                                    ? 'bg-white border-white/20' 
+                                    : 'bg-red-500 border-red-400/30'
+                            }`}>
+                                {/* ICONO */}
                                 {isPassed ? (
                                     <Trophy className="w-4 h-4 text-yellow-500 fill-yellow-500" />
                                 ) : (
-                                    <XCircle className="w-4 h-4 text-red-500 fill-red-50" />
+                                    <XCircle className="w-4 h-4 text-white fill-white/20" />
                                 )}
                                 
-                                {/* TEXTO CON COLOR CONDICIONAL */}
-                                <span className={`text-xs font-black ${isPassed ? 'text-green-600' : 'text-red-600'}`}>
+                                {/* TEXTO */}
+                                <span className={`text-xs font-black ${
+                                    isPassed ? 'text-green-600' : 'text-white'
+                                }`}>
                                     {quiz.score}%
                                 </span>
                             </div>

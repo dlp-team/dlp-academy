@@ -1,116 +1,51 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-    ChevronLeft, CheckCircle2, XCircle, ArrowRight, 
-    RefreshCcw, Target, Trophy, X, HelpCircle
+    ChevronLeft, Target, Clock, Sparkles, ArrowRight 
 } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db } from '../firebase/config'; 
 
-// 1. IMPORTAR TU MAPA DE ICONOS
-import { ICON_MAP } from '../utils/subjectConstants'; 
+// ==================== IMPORTACIONES DE COMPONENTES ====================
+// Apuntan a la carpeta components/quizzes
 
-import 'katex/dist/katex.min.css';
-import { BlockMath, InlineMath } from 'react-katex';
+import { 
+    ANSWER_STATUS, VIEW_STATES, DEFAULT_QUIZ, VIBRATION_DURATION, MAX_OPTION_LENGTH_FOR_GRID,
+    extractColorFromGradient, calculateScore, isPassed,
+    LoadingSpinner, SubjectIcon, FormulaDisplay, ProgressBar, QuizFooter
+} from '../components/quizzes/QuizCommon';
 
-// --- COMPONENTES UI REUTILIZABLES ---
+import ConfettiEffect, { useConfetti } from '../components/quizzes/QuizFeedback';
+import QuizHeader from '../components/quizzes/QuizHeader';
+import QuestionCard from '../components/quizzes/QuizQuestion';
+import QuizOptions from '../components/quizzes/QuizOptions';
+import ResultsView from '../components/quizzes/QuizResults';
 
-const RenderLatex = ({ text }) => {
-    if (!text) return null;
-    if (typeof text !== 'string') return text;
-    const parts = text.split('$');
-    return (
-        <span>
-            {parts.map((part, index) => (
-                index % 2 === 0 ? <span key={index}>{part}</span> : <InlineMath key={index} math={part} />
-            ))}
-        </span>
-    );
-};
+// ==================== CUSTOM HOOKS ====================
 
-const ConfettiEffect = ({ triggerKey, accentColor = '#4f46e5' }) => {
-    if (!triggerKey) return null;
-    const pieces = useMemo(() => Array.from({ length: 40 }).map((_, i) => {
-        const angle = Math.random() * 360;
-        const velocity = 80 + Math.random() * 120;
-        const tx = Math.cos(angle * Math.PI / 180) * velocity;
-        const ty = (Math.sin(angle * Math.PI / 180) * velocity) - 80;
-        return {
-            id: i, color: Math.random() > 0.5 ? '#FBBF24' : accentColor,
-            size: Math.random() * 8 + 6, tx: `${tx}px`, ty: `${ty}px`,
-            rot: `${Math.random() * 360}deg`, delay: `${Math.random() * 0.15}s`,
-            duration: `${0.9 + Math.random() * 0.5}s`
-        };
-    }), [triggerKey, accentColor]);
-
-    return (
-        <div className="fixed inset-0 pointer-events-none z-[9999] flex items-center justify-center">
-            {pieces.map(piece => (
-                <div key={piece.id} className="absolute rounded-full animate-burst"
-                    style={{
-                        backgroundColor: piece.color, width: piece.size, height: piece.size,
-                        '--tx': piece.tx, '--ty': piece.ty, '--rot': piece.rot,
-                        animationDuration: piece.duration, animationDelay: piece.delay,
-                        left: '50%', top: '40%'
-                    }}
-                />
-            ))}
-            <style>{`
-                @keyframes burst {
-                    0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
-                    100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) rotate(var(--rot)) scale(0); opacity: 0; }
-                }
-                .animate-burst { animation: burst cubic-bezier(0.25, 1, 0.5, 1) forwards; }
-            `}</style>
-        </div>
-    );
-};
-
-const FormulaDisplay = ({ formula, size = 'text-lg' }) => (
-    <div className={`${size} font-serif text-slate-800 select-text overflow-x-auto py-1`}>
-        <BlockMath math={formula} />
-    </div>
-);
-
-// --- COMPONENTE PRINCIPAL ---
-
-const Quizzes = ({ user }) => {
-    const { subjectId, topicId, quizId } = useParams();
-    const navigate = useNavigate();
-
+const useQuizData = (user, subjectId, topicId, quizId) => {
     const [loading, setLoading] = useState(true);
-    const [viewState, setViewState] = useState('loading'); 
     const [quizData, setQuizData] = useState(null);
     const [subjectIconKey, setSubjectIconKey] = useState(null);
-    
-    // ESTADOS DE COLOR (HEX y GRADIENT)
     const [accentColor, setAccentColor] = useState('#4f46e5');
     const [topicGradient, setTopicGradient] = useState('from-indigo-500 to-purple-600');
 
-    const [currentStep, setCurrentStep] = useState(0);
-    const [selectedAnswer, setSelectedAnswer] = useState(null);
-    const [answerStatus, setAnswerStatus] = useState('idle');
-    const [correctCount, setCorrectCount] = useState(0);
-    const [finalScore, setFinalScore] = useState(0);
-    const [confettiTrigger, setConfettiTrigger] = useState(0);
-    
-    const handleGoBack = () => navigate(`/home/subject/${subjectId}/topic/${topicId}`);
-
     useEffect(() => {
         const loadData = async () => {
-            const MOCK_DATA = { title: "Test de Prueba", subtitle: "Matemáticas", questions: [{ question: "Error", options: ["A"], correctIndex: 0 }] };
-            if (!user || !subjectId || !topicId || !quizId) return;
+            if (!user || !subjectId || !topicId || !quizId) {
+                setLoading(false);
+                return;
+            }
 
             try {
-                // 1. OBTENER ASIGNATURA (Para el icono)
                 const subjectRef = doc(db, "subjects", subjectId);
                 const subjectSnap = await getDoc(subjectRef);
+                
                 if (subjectSnap.exists()) {
                     const sData = subjectSnap.data();
                     setSubjectIconKey(sData.icon || sData.name?.charAt(0) || "📚");
                 }
 
-                // 2. Obtener Datos del TEMA para el COLOR
                 const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
                 const topicSnap = await getDoc(topicRef);
                 
@@ -119,26 +54,18 @@ const Quizzes = ({ user }) => {
                     
                     if (tData.color) {
                         setTopicGradient(tData.color);
-                    }
-
-                    const colorMap = {
-                        'blue': '#2563eb', 'indigo': '#4f46e5', 'purple': '#9333ea', 
-                        'green': '#16a34a', 'red': '#dc2626', 'orange': '#ea580c',
-                        'amber': '#d97706', 'teal': '#0d9488', 'cyan': '#0891b2',
-                        'pink': '#db2777', 'rose': '#e11d48'
-                    };
-                    if (tData.color) {
-                        const mainColorName = tData.color.split(' ')[0].replace('from-', '').split('-')[0];
-                        if (colorMap[mainColorName]) setAccentColor(colorMap[mainColorName]);
+                        const extractedColor = extractColorFromGradient(tData.color);
+                        if (extractedColor) {
+                            setAccentColor(extractedColor);
+                        }
                     }
                 }
 
-                // 3. Cargar el Quiz
                 const quizRef = doc(db, "subjects", subjectId, "topics", topicId, "quizzes", quizId);
-                const snap = await getDoc(quizRef);
+                const quizSnap = await getDoc(quizRef);
                 
-                if (snap.exists()) {
-                    const data = snap.data();
+                if (quizSnap.exists()) {
+                    const data = quizSnap.data();
                     setQuizData({
                         title: data.name || data.title || "Test Generado",
                         subtitle: data.level || "Repaso",
@@ -146,312 +73,347 @@ const Quizzes = ({ user }) => {
                         questions: data.questions || []
                     });
                 } else {
-                    setQuizData(MOCK_DATA);
+                    setQuizData(DEFAULT_QUIZ);
                 }
-
             } catch (error) {
-                console.error("Error:", error);
-                setQuizData(MOCK_DATA);
+                console.error("Error al cargar datos:", error);
+                setQuizData(DEFAULT_QUIZ);
             } finally {
                 setLoading(false);
-                setViewState('review');
             }
         };
+
         loadData();
     }, [user, subjectId, topicId, quizId]);
 
-    const triggerConfetti = () => {
-        setConfettiTrigger(prev => prev + 1);
-        setTimeout(() => setConfettiTrigger(0), 2000); 
-    };
+    return { loading, quizData, subjectIconKey, accentColor, topicGradient };
+};
 
-    const handleAnswerSelect = (index) => {
-        if (answerStatus !== 'idle') return;
+// ==================== COMPONENTES DE VISTA INTERNOS ====================
+// Estos organizan los subcomponentes importados
+
+const ReviewView = React.memo(({ 
+    quizData, subjectIconKey, topicGradient, accentColor, onStart, onGoBack 
+}) => (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 pb-20">
+        {/* Header */}
+        <div className="bg-white/70 backdrop-blur-2xl border-b border-white/50 sticky top-0 z-40 shadow-sm">
+            <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+                <button 
+                    onClick={onGoBack} 
+                    className="p-2.5 hover:bg-white/80 rounded-2xl transition-all duration-300 text-slate-600 hover:text-slate-900 hover:shadow-lg group"
+                >
+                    <ChevronLeft className="w-5 h-5 transform group-hover:-translate-x-0.5 transition-transform" />
+                </button>
+                <span className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] px-4 py-1.5 rounded-full bg-slate-100/50">
+                    Resumen
+                </span>
+                <div className="w-11" />
+            </div>
+        </div>
+
+        <div className="max-w-2xl mx-auto px-4 py-10">
+            {/* Hero Card */}
+            <div className="relative mb-10">
+                <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-[2rem] blur-3xl opacity-20`} />
+                <div className="relative bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/50 p-10 text-center overflow-hidden">
+                    <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${topicGradient} rounded-full blur-3xl opacity-10 -translate-y-1/2 translate-x-1/2`} />
+                    <div className={`absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr ${topicGradient} rounded-full blur-3xl opacity-10 translate-y-1/2 -translate-x-1/2`} />
+                    
+                    <div className="relative z-10">
+                        <div className="mb-6 flex justify-center">
+                            <SubjectIcon iconKey={subjectIconKey} topicGradient={topicGradient} />
+                        </div>
+                        
+                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-3 tracking-tight leading-tight">
+                            {quizData.title}
+                        </h1>
+                        <p className={`text-lg font-bold bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent`}>
+                            {quizData.subtitle}
+                        </p>
+                        
+                        <div className="flex items-center justify-center gap-6 mt-8">
+                            <div className="flex items-center gap-2.5 px-5 py-3 bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-sm rounded-2xl border border-white/50 shadow-lg">
+                                <div className={`p-2 rounded-xl bg-gradient-to-br ${topicGradient}`}>
+                                    <Target className="w-4 h-4 text-white" />
+                                </div>
+                                <div className="text-left">
+                                    <div className="text-2xl font-black text-slate-900">{quizData.questions.length}</div>
+                                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Preguntas</div>
+                                </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-2.5 px-5 py-3 bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-sm rounded-2xl border border-white/50 shadow-lg">
+                                <div className={`p-2 rounded-xl bg-gradient-to-br ${topicGradient}`}>
+                                    <Clock className="w-4 h-4 text-white" />
+                                </div>
+                                <div className="text-left">
+                                    <div className="text-2xl font-black text-slate-900">~{Math.ceil(quizData.questions.length * 1.5)}</div>
+                                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Minutos</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Formulas Section */}
+            {quizData.formulas?.length > 0 && (
+                <div className="mb-10 space-y-4">
+                    <div className="flex items-center gap-3 ml-2">
+                        <Sparkles className={`w-5 h-5 bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent`} style={{ color: accentColor }} />
+                        <h3 className="text-sm font-black text-slate-700 uppercase tracking-[0.15em]">
+                            Fórmulas de referencia
+                        </h3>
+                    </div>
+                    <div className="space-y-3">
+                        {quizData.formulas.map((formula, idx) => (
+                            <div key={idx} className="group relative">
+                                <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-2xl blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300`} />
+                                <div className="relative flex items-center gap-4 bg-white/80 backdrop-blur-xl rounded-2xl p-5 border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-black shrink-0 bg-gradient-to-br ${topicGradient} shadow-lg`}>
+                                        {idx + 1}
+                                    </div>
+                                    <div className="overflow-hidden flex-1">
+                                        <FormulaDisplay formula={formula.display || formula} size="text-base" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Start Button */}
+            <button
+                onClick={onStart}
+                className={`group relative w-full text-white py-5 rounded-2xl font-black text-xl shadow-2xl hover:shadow-3xl transition-all duration-300 flex items-center justify-center gap-3 bg-gradient-to-r ${topicGradient} overflow-hidden hover:-translate-y-1`}
+            >
+                <div className="absolute inset-0 bg-white/20 transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-700" />
+                <span className="relative z-10 flex items-center gap-3">
+                    Comenzar Test
+                    <ArrowRight className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" />
+                </span>
+            </button>
+        </div>
+    </div>
+));
+ReviewView.displayName = 'ReviewView';
+
+const QuizView = React.memo(({ 
+    currentStep, totalQuestions, currentQuestion, selectedAnswer, answerStatus, 
+    shouldUseGrid, topicGradient, confettiTrigger, accentColor, 
+    onAnswerSelect, onCheckAnswer, onNextQuestion, onGoBack
+}) => (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 pb-40">
+        <ConfettiEffect triggerKey={confettiTrigger} accentColor={accentColor} />
+        
+        <ProgressBar 
+            current={currentStep + 1} 
+            total={totalQuestions} 
+            gradient={topicGradient} 
+        />
+
+        <QuizHeader 
+            current={currentStep + 1} 
+            total={totalQuestions} 
+            onClose={onGoBack} 
+        />
+
+        <main className="px-4 max-w-3xl mx-auto">
+            <QuestionCard 
+                questionNumber={currentStep + 1}
+                question={currentQuestion.question}
+                formula={currentQuestion.formula}
+                topicGradient={topicGradient}
+            />
+
+            <QuizOptions
+                options={currentQuestion.options}
+                correctIndex={currentQuestion.correctIndex}
+                selectedAnswer={selectedAnswer}
+                answerStatus={answerStatus}
+                shouldUseGrid={shouldUseGrid}
+                topicGradient={topicGradient}
+                onSelect={onAnswerSelect}
+            />
+        </main>
+
+        <QuizFooter
+            answerStatus={answerStatus}
+            selectedAnswer={selectedAnswer}
+            isLastQuestion={currentStep === totalQuestions - 1}
+            topicGradient={topicGradient}
+            onCheck={onCheckAnswer}
+            onNext={onNextQuestion}
+        />
+    </div>
+));
+QuizView.displayName = 'QuizView';
+
+// ==================== MAIN COMPONENT ====================
+
+const Quizzes = ({ user }) => {
+    const { subjectId, topicId, quizId } = useParams();
+    const navigate = useNavigate();
+
+    const { loading, quizData, subjectIconKey, accentColor, topicGradient } = 
+        useQuizData(user, subjectId, topicId, quizId);
+
+    const [viewState, setViewState] = useState(VIEW_STATES.REVIEW);
+    const [currentStep, setCurrentStep] = useState(0);
+    const [selectedAnswer, setSelectedAnswer] = useState(null);
+    const [answerStatus, setAnswerStatus] = useState(ANSWER_STATUS.IDLE);
+    const [correctCount, setCorrectCount] = useState(0);
+    const [finalScore, setFinalScore] = useState(0);
+    const { confettiTrigger, triggerConfetti } = useConfetti();
+
+    const handleGoBack = useCallback(() => {
+        navigate(`/home/subject/${subjectId}/topic/${topicId}`);
+    }, [navigate, subjectId, topicId]);
+
+    const handleAnswerSelect = useCallback((index) => {
+        if (answerStatus !== ANSWER_STATUS.IDLE) return;
         setSelectedAnswer(index);
-    };
+    }, [answerStatus]);
 
-    const handleCheckAnswer = () => {
-        if (answerStatus !== 'idle' || selectedAnswer === null) return;
+    const handleCheckAnswer = useCallback(() => {
+        if (answerStatus !== ANSWER_STATUS.IDLE || selectedAnswer === null || !quizData) return;
+        
         const isCorrect = selectedAnswer === quizData.questions[currentStep].correctIndex;
+        
         if (isCorrect) {
-            setAnswerStatus('correct');
+            setAnswerStatus(ANSWER_STATUS.CORRECT);
             setCorrectCount(prev => prev + 1);
             triggerConfetti();
         } else {
-            setAnswerStatus('incorrect');
-            if (navigator.vibrate) navigator.vibrate(200);
+            setAnswerStatus(ANSWER_STATUS.INCORRECT);
+            if (navigator.vibrate) {
+                navigator.vibrate(VIBRATION_DURATION);
+            }
         }
-    };
+    }, [answerStatus, selectedAnswer, quizData, currentStep, triggerConfetti]);
 
-    // --- FUNCIÓN CLAVE PARA GUARDAR LA PUNTUACIÓN ---
-    const handleNextQuestion = async () => {
+    const saveQuizResult = useCallback(async (score, correct, total) => {
+        if (!user?.uid) return;
+
+        try {
+            const resultRef = doc(
+                db, 
+                "subjects", subjectId, 
+                "topics", topicId, 
+                "quiz_results", 
+                `${quizId}_${user.uid}`
+            );
+            
+            await setDoc(resultRef, {
+                userId: user.uid,
+                userEmail: user.email || 'anon',
+                quizId,
+                subjectId,
+                topicId,
+                quizTitle: quizData?.title || 'Quiz',
+                score,
+                correctAnswers: correct,
+                totalQuestions: total,
+                completedAt: serverTimestamp(),
+                passed: isPassed(score)
+            }, { merge: true });
+
+            console.log("✅ Puntuación guardada con éxito");
+        } catch (error) {
+            console.error("❌ Error al guardar puntuación:", error);
+        }
+    }, [user, subjectId, topicId, quizId, quizData]);
+
+    const handleNextQuestion = useCallback(async () => {
+        if (!quizData) return;
+        
         const total = quizData.questions.length;
         
-        // Si hay más preguntas, avanzamos
         if (currentStep < total - 1) {
             setCurrentStep(prev => prev + 1);
             setSelectedAnswer(null);
-            setAnswerStatus('idle');
+            setAnswerStatus(ANSWER_STATUS.IDLE);
         } else {
-            // El test ha terminado
-            const score = Math.round((correctCount / total) * 100);
+            const score = calculateScore(correctCount, total);
             setFinalScore(score);
-            setViewState('results');
+            setViewState(VIEW_STATES.RESULTS);
             
-            if (score >= 50) setTimeout(() => triggerConfetti(), 300);
-            
-            // Lógica de guardado en Firebase
-            if (user && user.uid) {
-                try {
-                    // Creamos una referencia única: quizId_userId para evitar duplicados
-                    const resultRef = doc(db, "subjects", subjectId, "topics", topicId, "quiz_results", `${quizId}_${user.uid}`);
-                    
-                    await setDoc(resultRef, {
-                        userId: user.uid,
-                        userEmail: user.email || 'anon', // Opcional, útil para depurar
-                        quizId: quizId,
-                        subjectId: subjectId, // Guardamos IDs padre para facilitar consultas
-                        topicId: topicId,
-                        quizTitle: quizData.title,
-                        score: score,
-                        correctAnswers: correctCount,
-                        totalQuestions: total,
-                        completedAt: serverTimestamp(), // Marca de tiempo del servidor
-                        passed: score >= 50
-                    }, { merge: true }); // Merge: true actualiza el campo si ya existe sin borrar lo demás
-
-                    console.log("Puntuación guardada con éxito");
-                } catch (e) { 
-                    console.error("Error al guardar puntuación:", e); 
-                }
+            if (isPassed(score)) {
+                setTimeout(() => triggerConfetti(), 300);
             }
+            
+            await saveQuizResult(score, correctCount, total);
         }
-    };
+    }, [quizData, currentStep, correctCount, triggerConfetti, saveQuizResult]);
 
-    const handleRetry = () => {
-        setViewState('review'); setCurrentStep(0); setCorrectCount(0);
-        setFinalScore(0); setSelectedAnswer(null); setAnswerStatus('idle');
-    };
+    const handleRetry = useCallback(() => {
+        setViewState(VIEW_STATES.REVIEW);
+        setCurrentStep(0);
+        setCorrectCount(0);
+        setFinalScore(0);
+        setSelectedAnswer(null);
+        setAnswerStatus(ANSWER_STATUS.IDLE);
+    }, []);
 
     const shouldUseGrid = useMemo(() => {
         if (!quizData?.questions?.length) return false;
-        const options = quizData.questions[currentStep].options || [];
-        const maxLen = Math.max(...options.map(o => (typeof o === 'string' ? o.length : 0)));
-        return maxLen < 50; 
+        const options = quizData.questions[currentStep]?.options || [];
+        const maxLen = Math.max(...options.map(o => 
+            typeof o === 'string' ? o.length : 0
+        ));
+        return maxLen < MAX_OPTION_LENGTH_FOR_GRID;
     }, [quizData, currentStep]);
 
-    if (loading) return (
-        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
-            <RefreshCcw className="w-10 h-10 text-slate-300 animate-spin mb-4" />
-            <p className="text-slate-500 text-sm font-medium">Cargando...</p>
-        </div>
-    );
-
+    if (loading) return <LoadingSpinner />;
     if (!quizData) return null;
+
+    const currentQuestion = quizData.questions[currentStep];
+    const totalQuestions = quizData.questions.length;
 
     return (
         <div className="min-h-screen bg-slate-100 font-sans text-slate-900">
-            
-            {/* 1. VISTA DE REPASO */}
-            {viewState === 'review' && (
-                <div className="min-h-screen bg-gradient-to-b from-slate-100 to-white pb-20">
-                    <div className="bg-white/80 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-40">
-                        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
-                            <button onClick={handleGoBack} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
-                                <ChevronLeft className="w-5 h-5" />
-                            </button>
-                            <span className="text-sm font-bold text-slate-600 uppercase tracking-wider">Resumen</span>
-                            <div className="w-9"></div>
-                        </div>
-                    </div>
-
-                    <div className="max-w-2xl mx-auto px-4 py-8">
-                        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-8 text-center mb-8">
-                            
-                            <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 shadow-lg shadow-slate-100 bg-gradient-to-br ${topicGradient} text-white`}>
-                                {(() => {
-                                    const SubjectIconComponent = ICON_MAP[subjectIconKey];
-                                    if (SubjectIconComponent) {
-                                        return <SubjectIconComponent className="w-8 h-8" />;
-                                    }
-                                    return <span className="text-3xl font-bold">{subjectIconKey}</span>;
-                                })()}
-                            </div>
-
-                            <h1 className="text-3xl font-bold text-slate-900 mb-2 tracking-tight">
-                                {quizData.title}
-                            </h1>
-                            <p className="text-slate-500 font-medium">{quizData.subtitle}</p>
-                            
-                            <div className="flex items-center justify-center gap-4 mt-6 text-slate-400 text-xs font-bold uppercase tracking-wider">
-                                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 rounded-full border border-slate-100">
-                                    <Target className="w-3.5 h-3.5" style={{ color: accentColor }} />
-                                    {quizData.questions.length} Preguntas
-                                </div>
-                            </div>
-                        </div>
-
-                        {quizData.formulas && quizData.formulas.length > 0 && (
-                            <div className="space-y-4 mb-8">
-                                <h3 className="text-sm font-bold text-slate-400 ml-2 uppercase tracking-wider">Fórmulas</h3>
-                                {quizData.formulas.map((formula, idx) => (
-                                    <div key={idx} className="flex items-center gap-4 bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
-                                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0 bg-gradient-to-br ${topicGradient}`}>
-                                            {idx + 1}
-                                        </div>
-                                        <div className="overflow-hidden">
-                                            <FormulaDisplay formula={formula.display || formula} size="text-base" />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        <button
-                            onClick={() => setViewState('quiz')}
-                            className={`w-full text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 bg-gradient-to-r ${topicGradient}`}
-                        >
-                            Comenzar
-                            <ArrowRight className="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
+            {viewState === VIEW_STATES.REVIEW && (
+                <ReviewView
+                    quizData={quizData}
+                    subjectIconKey={subjectIconKey}
+                    topicGradient={topicGradient}
+                    accentColor={accentColor}
+                    onStart={() => setViewState(VIEW_STATES.QUIZ)}
+                    onGoBack={handleGoBack}
+                />
             )}
 
-            {/* 2. VISTA TEST */}
-            {viewState === 'quiz' && (
-                <div className="min-h-screen bg-slate-50 pb-32">
-                    <ConfettiEffect triggerKey={confettiTrigger} accentColor={accentColor} />
-                    
-                    <div className="fixed top-0 left-0 right-0 z-30 h-1.5 bg-slate-200">
-                        <div 
-                            className={`h-full transition-all duration-500 ease-out bg-gradient-to-r ${topicGradient}`}
-                            style={{ width: `${((currentStep + 1) / quizData.questions.length) * 100}%` }}
-                        />
-                    </div>
-
-                    <div className="max-w-3xl mx-auto px-4 pt-10 pb-6 flex justify-between items-center text-xs font-bold text-slate-400 uppercase tracking-widest">
-                        <span>Pregunta {currentStep + 1} de {quizData.questions.length}</span>
-                        <button onClick={() => setViewState('review')} className="hover:text-slate-600 transition-colors"><X className="w-5 h-5" /></button>
-                    </div>
-
-                    <main className="px-4 max-w-3xl mx-auto animate-in slide-in-from-bottom-4 duration-500">
-                        <div className="bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-slate-200 mb-6 relative overflow-hidden">
-                            <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${topicGradient}`}></div>
-                            
-                            <h2 className="text-xl md:text-2xl font-bold text-slate-800 leading-relaxed text-center">
-                                <span className="mr-2 opacity-60">{currentStep + 1}.</span>
-                                <RenderLatex text={quizData.questions[currentStep].question} />
-                            </h2>
-
-                            {quizData.questions[currentStep].formula && (
-                                <div className="mt-6 bg-slate-50 rounded-xl p-4 border border-slate-100 flex justify-center">
-                                    <BlockMath math={quizData.questions[currentStep].formula} />
-                                </div>
-                            )}
-                        </div>
-
-                        <div className={`grid gap-3 ${shouldUseGrid ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-                            {quizData.questions[currentStep].options.map((option, idx) => {
-                                let containerClass = "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50";
-                                let circleClass = "bg-slate-100 text-slate-400";
-
-                                if (answerStatus === 'idle' && selectedAnswer === idx) {
-                                    containerClass = `border-transparent bg-gradient-to-r ${topicGradient} text-white ring-2 ring-offset-2 ring-indigo-200`;
-                                    circleClass = "bg-white/20 text-white";
-                                } else if (answerStatus !== 'idle') {
-                                    if (idx === quizData.questions[currentStep].correctIndex) {
-                                        containerClass = "border-green-500 bg-green-50 text-green-700 ring-1 ring-green-500";
-                                        circleClass = "bg-green-500 text-white";
-                                    } else if (selectedAnswer === idx) {
-                                        containerClass = "border-red-300 bg-red-50 text-red-700";
-                                        circleClass = "bg-red-500 text-white";
-                                    } else {
-                                        containerClass = "border-slate-100 bg-slate-50 text-slate-300 opacity-50";
-                                    }
-                                }
-
-                                return (
-                                    <button
-                                        key={idx}
-                                        disabled={answerStatus !== 'idle'}
-                                        onClick={() => handleAnswerSelect(idx)}
-                                        className={`group w-full p-4 rounded-2xl border-2 text-left transition-all duration-200 flex items-center gap-4 relative overflow-hidden ${containerClass}`}
-                                    >
-                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm transition-colors shrink-0 ${circleClass}`}>
-                                            {String.fromCharCode(65 + idx)}
-                                        </div>
-                                        <div className="flex-1 text-base font-semibold leading-snug">
-                                            <div className="katex-render-wrapper">
-                                                <RenderLatex text={option} />
-                                            </div>
-                                        </div>
-                                        {answerStatus !== 'idle' && idx === quizData.questions[currentStep].correctIndex && <CheckCircle2 className="w-5 h-5 animate-bounce-in shrink-0" />}
-                                        {answerStatus === 'incorrect' && selectedAnswer === idx && <XCircle className="w-5 h-5 animate-shake shrink-0" />}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </main>
-
-                    <div className="fixed bottom-6 left-4 right-4 z-40">
-                        <div className="max-w-3xl mx-auto bg-white/90 backdrop-blur-md p-2 rounded-2xl shadow-xl border border-white/20 flex items-center justify-between gap-4 pl-6">
-                            <div className="hidden md:flex items-center gap-2">
-                                {answerStatus === 'correct' && <span className="text-green-600 font-bold flex items-center gap-2 text-sm"><CheckCircle2 className="w-4 h-4"/> Correcto</span>}
-                                {answerStatus === 'incorrect' && <span className="text-red-500 font-bold flex items-center gap-2 text-sm"><XCircle className="w-4 h-4"/> Incorrecto</span>}
-                                {answerStatus === 'idle' && <span className="text-slate-400 font-medium text-sm flex items-center gap-2"><HelpCircle className="w-4 h-4"/> Selecciona una opción</span>}
-                            </div>
-
-                            <button
-                                disabled={selectedAnswer === null && answerStatus === 'idle'}
-                                onClick={answerStatus === 'idle' ? handleCheckAnswer : handleNextQuestion}
-                                className={`flex-1 md:flex-none md:w-48 h-12 rounded-xl font-bold text-sm text-white transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
-                                    answerStatus === 'idle' ? `bg-gradient-to-r ${topicGradient}` : 
-                                    answerStatus === 'correct' ? 'bg-green-600' : 'bg-slate-800'
-                                }`}
-                            >
-                                {answerStatus === 'idle' ? 'Comprobar' : (currentStep === quizData.questions.length - 1 ? 'Finalizar' : 'Siguiente')}
-                                <ArrowRight className="w-4 h-4" />
-                            </button>
-                        </div>
-                    </div>
-                </div>
+            {viewState === VIEW_STATES.QUIZ && (
+                <QuizView
+                    currentStep={currentStep}
+                    totalQuestions={totalQuestions}
+                    currentQuestion={currentQuestion}
+                    selectedAnswer={selectedAnswer}
+                    answerStatus={answerStatus}
+                    shouldUseGrid={shouldUseGrid}
+                    topicGradient={topicGradient}
+                    confettiTrigger={confettiTrigger}
+                    accentColor={accentColor}
+                    onAnswerSelect={handleAnswerSelect}
+                    onCheckAnswer={handleCheckAnswer}
+                    onNextQuestion={handleNextQuestion}
+                    onGoBack={() => setViewState(VIEW_STATES.REVIEW)}
+                />
             )}
 
-            {/* 3. VISTA RESULTADOS */}
-            {viewState === 'results' && (
-                <div className="flex items-center justify-center p-6 min-h-screen">
-                    <ConfettiEffect triggerKey={confettiTrigger} accentColor={accentColor} />
-                    <div className="max-w-md w-full bg-white rounded-3xl shadow-xl p-8 text-center border border-slate-100 animate-scale-in">
-                        
-                        <div className={`w-24 h-24 rounded-full mx-auto mb-6 flex items-center justify-center ${finalScore >= 50 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                            {finalScore >= 50 ? <Trophy className="w-12 h-12" /> : <Target className="w-12 h-12" />}
-                        </div>
-                        
-                        <h2 className={`text-6xl font-black mb-2 tracking-tighter ${finalScore >= 50 ? 'text-green-600' : 'text-red-600'}`}>
-                            {finalScore}%
-                        </h2>
-                        <p className="text-slate-500 font-medium mb-8">
-                            {finalScore >= 50 ? '¡Excelente trabajo!' : 'Sigue practicando'}
-                        </p>
-
-                        <div className="grid grid-cols-2 gap-3 mb-8">
-                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                <div className="text-2xl font-black text-slate-900">{correctCount}</div>
-                                <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Aciertos</div>
-                            </div>
-                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                <div className="text-2xl font-black text-slate-900">{quizData.questions.length}</div>
-                                <div className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Total</div>
-                            </div>
-                        </div>
-
-                        <div className="space-y-3">
-                            <button onClick={handleRetry} className="w-full py-3.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold text-sm transition-all">Intentar de nuevo</button>
-                            <button onClick={handleGoBack} className={`w-full py-3.5 text-white rounded-xl font-bold text-sm transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 bg-gradient-to-r ${topicGradient}`}>Volver al Tema</button>
-                        </div>
-                    </div>
-                </div>
+            {viewState === VIEW_STATES.RESULTS && (
+                <ResultsView
+                    finalScore={finalScore}
+                    correctCount={correctCount}
+                    totalQuestions={totalQuestions}
+                    topicGradient={topicGradient}
+                    confettiTrigger={confettiTrigger}
+                    accentColor={accentColor}
+                    onRetry={handleRetry}
+                    onGoBack={handleGoBack}
+                />
             )}
         </div>
     );

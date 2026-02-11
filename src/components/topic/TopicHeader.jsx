@@ -15,7 +15,8 @@ const TopicHeader = ({
     setEditTopicData, 
     handleSaveTopicTitle, 
     handleGenerateQuizSubmit, 
-    handleDeleteTopic 
+    handleDeleteTopic,
+    globalProgress // 👈 NUEVO PROP
 }) => {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -64,9 +65,21 @@ const TopicHeader = ({
                         ) : (
                             <h2 className="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight capitalize leading-tight">{topic.title}</h2>
                         )}
+                        
+                        {/* 👇 BARRA DE PROGRESO CORREGIDA */}
                         <div className="flex items-center gap-4 max-w-md pt-2">
-                            <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden"><div className={`h-full bg-indigo-500 dark:bg-indigo-400 rounded-full transition-all duration-1000 ${topic.quizzes?.length > 0 ? 'w-1/2' : 'w-1/12'}`}></div></div>
-                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">{topic.quizzes?.length > 0 ? '50%' : '10%'} Completado</span>
+                            <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-400 dark:to-purple-400 rounded-full transition-all duration-1000 ease-out"
+                                    style={{ width: `${globalProgress?.percentage || 0}%` }}
+                                />
+                            </div>
+                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                                {globalProgress?.total > 0 
+                                    ? `${globalProgress.completed}/${globalProgress.total} (${Math.round(globalProgress.percentage)}%)`
+                                    : '0/0 (0%)'
+                                }
+                            </span>
                         </div>
                     </div>
                 </div>

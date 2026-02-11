@@ -4,14 +4,20 @@ import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Loader2,
 const QuizModal = ({ 
     isOpen, 
     onClose, 
-    onSubmit, 
     formData, 
     setFormData, 
-    isGenerating, 
-    themeColor 
+    themeColor,
+    // RECIBIMOS LOS IDS NECESARIOS PARA N8N/FIREBASE
+    subjectId,
+    topicId
 }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [shouldRender, setShouldRender] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    // TU WEBHOOK DE N8N
+    // NOTA: Si tienes error de CORS, cambia esto por '/api-n8n/webhook/...' y configura el proxy en vite.config.js
+    const WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook/711e538b-9d63-42bb-8494-873301ffdf39';
 
     useEffect(() => {
         let timeoutId;
@@ -25,12 +31,67 @@ const QuizModal = ({
         return () => clearTimeout(timeoutId);
     }, [isOpen]);
 
+    // LÓGICA DE ENVÍO
+    const handleInternalSubmit = async (e) => {
+        e.preventDefault();
+        
+        // Validación de seguridad
+        if (!subjectId || !topicId) {
+            alert("Error crítico: No se identificó la Asignatura o el Tema. Recarga la página.");
+            return;
+        }
+
+        setLoading(true);
+
+        try {
+            const dataToSend = new FormData();
+            
+            // Datos del formulario
+            dataToSend.append('title', formData.title);
+            dataToSend.append('level', formData.level);
+            dataToSend.append('numQuestions', formData.numQuestions);
+            dataToSend.append('prompt', formData.prompt);
+            
+            // DATOS CRÍTICOS PARA ARREGLAR EL ERROR DE FIREBASE
+            dataToSend.append('subjectId', subjectId);
+            dataToSend.append('topicId', topicId);
+            
+            // Archivo (si existe)
+            if (formData.file) {
+                dataToSend.append('file', formData.file);
+            }
+
+            console.log(`📤 Enviando test a ${subjectId}/${topicId}...`);
+
+            const response = await fetch(WEBHOOK_URL, {
+                method: 'POST',
+                body: dataToSend,
+            });
+
+            if (!response.ok) {
+                throw new Error(`Error del servidor: ${response.status}`);
+            }
+
+            const result = await response.json();
+            console.log("✅ Respuesta de n8n:", result);
+
+            handleClose();
+            alert("¡Solicitud enviada! Tu test aparecerá en unos momentos.");
+
+        } catch (error) {
+            console.error("❌ Error enviando al webhook:", error);
+            alert("Error al conectar con el generador de tests. Revisa la consola.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (!shouldRender) return null;
 
     const baseColorClass = themeColor ? themeColor.split('-')[1] : 'indigo'; 
 
     const handleClose = () => {
-        if (!isGenerating) {
+        if (!loading) {
             setIsVisible(false);
             onClose(); 
         }
@@ -48,21 +109,18 @@ const QuizModal = ({
     return (
         <div className={`fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-500 ${isVisible ? 'visible' : 'invisible'}`}>
             
-            {/* BACKDROP */}
             <div 
                 className={`fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity duration-500 ease-out 
                 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
                 onClick={handleClose} 
             />
             
-            {/* MODAL */}
             <div className={`relative bg-white rounded-[2rem] w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] 
                 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] 
                 transform origin-bottom
                 ${isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8 pointer-events-none'}`}
             >
-                
-                {/* --- HEADER (Fijo) --- */}
+                {/* HEADER */}
                 <div className={`px-8 py-8 shrink-0 bg-gradient-to-br ${themeColor || 'from-indigo-600 to-violet-700'} relative overflow-hidden group rounded-t-[2rem]`}>
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none transition-transform duration-[2000ms] group-hover:scale-110"></div>
                     <div className="absolute bottom-0 left-0 w-40 h-40 bg-black/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/3 pointer-events-none"></div>
@@ -82,19 +140,17 @@ const QuizModal = ({
                     
                     <button 
                         onClick={(e) => { e.preventDefault(); handleClose(); }} 
-                        disabled={isGenerating}
+                        disabled={loading}
                         className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/25 text-white rounded-full transition-all duration-300 backdrop-blur-sm shadow-inner hover:rotate-90 hover:scale-110 active:scale-95 z-50 cursor-pointer disabled:opacity-0"
-                        type="button"
                     >
                         <X className="w-5 h-5" />
                     </button>
                 </div>
 
-                {/* --- CONTENIDO CON SCROLL --- */}
+                {/* FORM CONTENT */}
                 <div className="overflow-y-auto p-8 space-y-5 bg-white custom-scrollbar">
-                    <form id="quiz-form" onSubmit={onSubmit} className="space-y-5">
+                    <form id="quiz-form" onSubmit={handleInternalSubmit} className="space-y-5">
                         
-                        {/* Título */}
                         <div className="space-y-2 group">
                             <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1 group-focus-within:text-slate-800 transition-colors">
                                 <BarChart3 className="w-3.5 h-3.5" /> Nombre del Test
@@ -106,12 +162,11 @@ const QuizModal = ({
                                 className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-semibold text-slate-800 placeholder:text-slate-300`} 
                                 placeholder="Ej: Repaso Global - Tema 1" 
                                 required 
-                                disabled={isGenerating}
+                                disabled={loading}
                             />
                         </div>
 
                         <div className="grid grid-cols-2 gap-5">
-                            {/* Nivel */}
                             <div className="space-y-2 group">
                                 <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1 group-focus-within:text-slate-800 transition-colors">
                                     <Award className="w-3.5 h-3.5" /> Nivel
@@ -121,7 +176,7 @@ const QuizModal = ({
                                         value={formData.level} 
                                         onChange={e => setFormData({...formData, level: e.target.value})} 
                                         className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-bold text-slate-700 appearance-none cursor-pointer hover:bg-slate-100 disabled:opacity-50`}
-                                        disabled={isGenerating}
+                                        disabled={loading}
                                     >
                                         <option value="Principiante">Básico</option>
                                         <option value="Intermedio">Medio</option>
@@ -133,7 +188,6 @@ const QuizModal = ({
                                 </div>
                             </div>
 
-                            {/* Cantidad */}
                             <div className="space-y-2 group">
                                 <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1 group-focus-within:text-slate-800 transition-colors">
                                     <ListOrdered className="w-3.5 h-3.5" /> Preguntas
@@ -146,12 +200,11 @@ const QuizModal = ({
                                     max="20" 
                                     className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-bold text-slate-700 disabled:opacity-50`} 
                                     required
-                                    disabled={isGenerating}
+                                    disabled={loading}
                                 />
                             </div>
                         </div>
 
-                        {/* Prompt */}
                         <div className="space-y-2 group">
                             <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1 group-focus-within:text-slate-800 transition-colors">
                                 <MessageSquarePlus className="w-3.5 h-3.5" /> Instrucciones Adicionales
@@ -161,11 +214,10 @@ const QuizModal = ({
                                 onChange={e => setFormData({...formData, prompt: e.target.value})} 
                                 className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none h-24 resize-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-medium text-slate-600 placeholder:text-slate-300 disabled:opacity-50`} 
                                 placeholder="Ej: Enfócate en las excepciones y casos prácticos..."
-                                disabled={isGenerating}
+                                disabled={loading}
                             ></textarea>
                         </div>
 
-                        {/* PDF Upload */}
                         <div className="space-y-2 group">
                             <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1 transition-colors">
                                 <Upload className="w-3.5 h-3.5" /> Material de Apoyo (PDF)
@@ -178,7 +230,7 @@ const QuizModal = ({
                                     accept=".pdf" 
                                     className="hidden" 
                                     onChange={handleFileChange}
-                                    disabled={isGenerating}
+                                    disabled={loading}
                                 />
                                 
                                 {!formData.file ? (
@@ -207,7 +259,7 @@ const QuizModal = ({
                                         <button 
                                             type="button"
                                             onClick={removeFile}
-                                            disabled={isGenerating}
+                                            disabled={loading}
                                             className="p-2 hover:bg-white rounded-full text-indigo-400 hover:text-red-500 transition-colors hover:shadow-sm"
                                         >
                                             <Trash2 className="w-4 h-4" />
@@ -219,27 +271,27 @@ const QuizModal = ({
                     </form>
                 </div>
 
-                {/* --- FOOTER (Fijo) --- */}
+                {/* FOOTER */}
                 <div className="p-6 pt-2 bg-white border-t border-slate-50 rounded-b-[2rem]">
                     <div className="flex gap-3">
                         <button 
                             type="button" 
                             onClick={handleClose} 
-                            disabled={isGenerating}
+                            disabled={loading}
                             className="flex-1 px-6 py-4 text-slate-500 font-bold hover:bg-slate-100 rounded-2xl transition-all disabled:opacity-50 text-sm tracking-wide"
                         >
                             Cancelar
                         </button>
                         <button 
                             type="submit"
-                            form="quiz-form" // Vincula este botón al formulario de arriba
-                            disabled={isGenerating} 
+                            form="quiz-form"
+                            disabled={loading} 
                             className={`flex-[2] px-6 py-4 bg-gradient-to-r ${themeColor || 'from-slate-800 to-slate-900'} text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-${baseColorClass}-500/30 transition-all flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed`}
                         >
-                            {isGenerating ? (
+                            {loading ? (
                                 <>
                                     <Loader2 className="w-5 h-5 animate-spin text-white/80" />
-                                    <span className="animate-pulse">Creando...</span>
+                                    <span className="animate-pulse">Enviando...</span>
                                 </>
                             ) : (
                                 <>
