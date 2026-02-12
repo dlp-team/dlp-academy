@@ -202,13 +202,78 @@ export const useHomeLogic = (user, searchQuery = '') => {
         }
         
         if (viewMode === 'courses') {
-            const groups = {};
+            // Use EDUCATION_LEVELS for group and year order
+            let EDUCATION_LEVELS = {
+                'Primaria': ['1º', '2º', '3º', '4º', '5º', '6º'],
+                'ESO': ['1º', '2º', '3º', '4º'],
+                'Bachillerato': ['1º', '2º'],
+                'FP': ['Grado Medio 1', 'Grado Medio 2', 'Grado Superior 1', 'Grado Superior 2'],
+                'Universidad': ['1º', '2º', '3º', '4º', '5º', '6º', 'Máster', 'Doctorado']
+            };
+            try {
+                EDUCATION_LEVELS = require('../utils/subjectConstants').EDUCATION_LEVELS || EDUCATION_LEVELS;
+            } catch (e) {}
+
+            // Helper to parse course string into group and year
+            function parseCourse(course) {
+                if (!course || course === null || course === undefined || course === '') return { group: null, year: null };
+                for (const group of Object.keys(EDUCATION_LEVELS)) {
+                    for (const year of EDUCATION_LEVELS[group]) {
+                        // Accept both 'ESO 1º' and 'ESO 1' and similar
+                        if (
+                            course === `${group} ${year}` ||
+                            course === `${group} ${year.replace('º','')}` ||
+                            course === `${group} ${year.replace('º','º')}`
+                        ) {
+                            return { group, year };
+                        }
+                    }
+                }
+                // FP special case: allow just 'FP'
+                if (course === 'FP') return { group: 'FP', year: '' };
+                // Universidad special case: allow just 'Universidad'
+                if (course === 'Universidad') return { group: 'Universidad', year: '' };
+                return { group: course, year: '' };
+            }
+
+            // Group subjects by group and year, and collect those with no course
+            const groupMap = {};
+            const noCourse = [];
             subjectsToGroup.forEach(sub => {
-                const key = sub.course || 'Sin Curso';
-                if (!groups[key]) groups[key] = [];
-                groups[key].push(sub);
+                const { group, year } = parseCourse(sub.course);
+                if (!group && !year) {
+                    noCourse.push(sub);
+                } else {
+                    if (!groupMap[group]) groupMap[group] = {};
+                    if (!groupMap[group][year]) groupMap[group][year] = [];
+                    groupMap[group][year].push(sub);
+                }
             });
-            return groups;
+
+            // Build sortedGroups in the desired order
+            const sortedGroups = {};
+            Object.keys(EDUCATION_LEVELS).forEach(group => {
+                EDUCATION_LEVELS[group].forEach(year => {
+                    const key = `${group} ${year}`;
+                    if (groupMap[group] && groupMap[group][year]) {
+                        sortedGroups[key] = groupMap[group][year].slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                    }
+                });
+            });
+            // Add any remaining groups/years not in EDUCATION_LEVELS
+            Object.keys(groupMap).forEach(group => {
+                Object.keys(groupMap[group]).forEach(year => {
+                    const key = year ? `${group} ${year}` : group;
+                    if (!sortedGroups[key]) {
+                        sortedGroups[key] = groupMap[group][year].slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                    }
+                });
+            });
+            // Add 'Sin Curso' at the end if there are subjects with no course
+            if (noCourse.length > 0) {
+                sortedGroups['Sin Curso'] = noCourse.slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            }
+            return sortedGroups;
         }
         
         if (viewMode === 'tags') {
