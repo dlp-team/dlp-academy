@@ -135,6 +135,12 @@ const Home = ({ user }) => {
         if (targetFolderId === currentFolderId) return;
         const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
         const sourceFolder = (logic.folders || []).find(f => f.id === currentFolderId);
+        const subject = (logic.subjects || []).find(s => s.id === subjectId);
+
+        // Helper: get shared user IDs from subject.shareWithUids (array of strings) and folder.sharedWith (array of objects with uid)
+        const getSubjectSharedUids = (subject) => (subject && Array.isArray(subject.sharedWithUids)) ? subject.sharedWithUids : [];
+        const getFolderSharedUids = (folder) => (folder && Array.isArray(folder.sharedWithUids)) ? folder.sharedWithUids : [];
+
         // Moving OUT of a shared folder
         if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
             setUnshareConfirm({
@@ -147,15 +153,23 @@ const Home = ({ user }) => {
                 }
             });
         } else if (targetFolder && targetFolder.isShared) {
-            setShareConfirm({
-                open: true,
-                subjectId,
-                folder: targetFolder,
-                onConfirm: async () => {
-                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-                    setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
-                }
-            });
+            // Only show confirmation if there is a new user who will gain access
+            const subjectShared = new Set(getSubjectSharedUids(subject));
+            const folderShared = getFolderSharedUids(targetFolder);
+            const newUsers = folderShared.filter(uid => !subjectShared.has(uid));
+            if (newUsers.length > 0) {
+                setShareConfirm({
+                    open: true,
+                    subjectId,
+                    folder: targetFolder,
+                    onConfirm: async () => {
+                        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+                        setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                    }
+                });
+            } else {
+                await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+            }
         } else {
             await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
         }
@@ -195,6 +209,30 @@ const Home = ({ user }) => {
         const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
         if (!droppedFolder) return;
         const currentParentId = droppedFolder.parentId || null;
+        const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
+
+        // Helper: get shared user IDs from folder.sharedWithUids (array of strings) and folder.sharedWith (array of objects with uid)
+        const getFolderSharedUids = (folder) => (folder && Array.isArray(folder.sharedWithUids)) ? folder.sharedWithUids : [];
+        const getTargetFolderSharedUids = (folder) => (folder && Array.isArray(folder.sharedWith)) ? folder.sharedWith.map(u => u.uid) : [];
+
+        // Only show confirmation if there is a new user who will gain access
+        if (targetFolder && targetFolder.isShared) {
+            const droppedShared = new Set(getFolderSharedUids(droppedFolder));
+            const targetShared = getTargetFolderSharedUids(targetFolder);
+            const newUsers = targetShared.filter(uid => !droppedShared.has(uid));
+            if (newUsers.length > 0) {
+                setShareConfirm({
+                    open: true,
+                    folder: targetFolder,
+                    subjectId: null,
+                    onConfirm: async () => {
+                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                        setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                    }
+                });
+                return;
+            }
+        }
         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
     };
     const handlePromoteSubjectWrapper = async (subjectId) => {
