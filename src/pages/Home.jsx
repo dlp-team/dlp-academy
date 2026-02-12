@@ -322,7 +322,29 @@ const Home = ({ user }) => {
         if (currentFolder) await moveSubjectToParent(subjectId, currentFolder.id, parentId);
     };
     const handlePromoteFolderWrapper = async (folderId) => {
-        if (logic.currentFolder && folderId !== logic.currentFolder.id) await moveFolderToParent(folderId, logic.currentFolder.id, logic.currentFolder.parentId);
+        if (logic.currentFolder && folderId !== logic.currentFolder.id) {
+            const currentFolder = logic.currentFolder;
+            const parentId = currentFolder.parentId;
+            const sourceFolder = currentFolder;
+            let targetFolder = null;
+            if (parentId) {
+                targetFolder = (logic.folders || []).find(f => f.id === parentId);
+            }
+            // If moving out of a shared folder to a non-shared folder or to root (parentId null), show confirmation
+            if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
+                setUnshareConfirm({
+                    open: true,
+                    subjectId: null,
+                    folder: sourceFolder,
+                    onConfirm: async () => {
+                        await moveFolderToParent(folderId, currentFolder.id, parentId);
+                        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                    }
+                });
+                return;
+            }
+            await moveFolderToParent(folderId, currentFolder.id, parentId);
+        }
     };
     const handleShowFolderContents = (folder) => { setFolderContentsModalConfig({ isOpen: true, folder }); };
     const handleNavigateFromTree = (folder) => { setFolderContentsModalConfig({ isOpen: false, folder: null }); logic.setCurrentFolder(folder); };
@@ -479,12 +501,29 @@ const Home = ({ user }) => {
                             <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
                                 <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C7.305 20.5 3.5 16.695 3.5 12S7.305 3.5 12 3.5 20.5 7.305 20.5 12 16.695 20.5 12 20.5z" /></svg>
                             </div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                                Vas a mover una asignatura fuera de una carpeta compartida
-                            </h3>
-                            <p className="text-gray-500 dark:text-gray-400 mb-6">
-                                Esto hará que la asignatura deje de estar compartida automáticamente con las personas que tenían acceso a la carpeta <span className="font-semibold">"{unshareConfirm.folder?.name}"</span>.<br />¿Deseas continuar?
-                            </p>
+                            {(() => {
+                                const isFolder = !unshareConfirm.subjectId;
+                                const itemType = isFolder ? 'carpeta' : 'asignatura';
+                                const itemName = isFolder ? (unshareConfirm.folder?.name || '') : (() => {
+                                    // Find subject name if possible
+                                    if (unshareConfirm.subjectId && logic.subjects) {
+                                        const subj = logic.subjects.find(s => s.id === unshareConfirm.subjectId);
+                                        return subj ? subj.name : '';
+                                    }
+                                    return '';
+                                })();
+                                const folderName = unshareConfirm.folder?.name || '';
+                                return (
+                                    <>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                            Vas a mover la {itemType} <span className="font-semibold">"{itemName}"</span> fuera de una carpeta compartida
+                                        </h3>
+                                        <p className="text-gray-500 dark:text-gray-400 mb-6">
+                                            Esto hará que la {itemType} deje de estar compartida automáticamente con las personas que tenían acceso a la carpeta <span className="font-semibold">"{folderName}"</span>.<br />¿Deseas continuar?
+                                        </p>
+                                    </>
+                                );
+                            })()}
                             <div className="flex justify-center gap-4">
                                 <button
                                 className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
