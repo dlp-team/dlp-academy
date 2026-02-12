@@ -1,6 +1,9 @@
 // src/pages/Home.jsx
 import React, { useMemo, useState } from 'react';
 import { Loader2, ArrowUpCircle } from 'lucide-react';
+// Firebase
+import { updateDoc, doc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 // Logic Hook
 import { useHomeLogic } from '../hooks/useHomeLogic';
 import { useFolders } from '../hooks/useFolders'; 
@@ -29,7 +32,7 @@ const Home = ({ user }) => {
     // 1. Initialize Logic
     const [searchQuery, setSearchQuery] = useState('');
     const logic = useHomeLogic(user, searchQuery);
-    const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders } = useFolders(user);
+    const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
 
 
     // Helper function to normalize text for comparison
@@ -337,6 +340,32 @@ const Home = ({ user }) => {
                     subjectId: null,
                     folder: sourceFolder,
                     onConfirm: async () => {
+                        // --- UNSHARE LOGIC FOR FOLDER ---
+                        // Remove all users from sharedWith/sharedWithUids that were only present due to the previous parent
+                        const oldSharedWithUids = Array.isArray(sourceFolder.sharedWithUids) ? sourceFolder.sharedWithUids : [];
+                        const oldSharedWith = Array.isArray(sourceFolder.sharedWith) ? sourceFolder.sharedWith : [];
+                        // Remove sharing from the folder itself
+                        await updateFolder(folderId, {
+                            sharedWith: [],
+                            sharedWithUids: [],
+                            isShared: false
+                        });
+                        // Remove sharing from all child subjects
+                        const folder = (logic.folders || []).find(f => f.id === folderId);
+                        if (folder && Array.isArray(folder.subjectIds)) {
+                            for (const subjectId of folder.subjectIds) {
+                                const subject = (logic.subjects || []).find(s => s.id === subjectId);
+                                if (subject) {
+                                    const newSharedWith = (subject.sharedWith || []).filter(u => !oldSharedWithUids.includes(u.uid));
+                                    const newSharedWithUids = (subject.sharedWithUids || []).filter(uid => !oldSharedWithUids.includes(uid));
+                                    await updateDoc(doc(db, 'subjects', subjectId), {
+                                        sharedWith: newSharedWith,
+                                        sharedWithUids: newSharedWithUids,
+                                        isShared: newSharedWithUids.length > 0
+                                    });
+                                }
+                            }
+                        }
                         await moveFolderToParent(folderId, currentFolder.id, parentId);
                         setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
                     }
