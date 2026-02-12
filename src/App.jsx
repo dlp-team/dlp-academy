@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -17,6 +16,7 @@ import Subject from './pages/Subject';
 import Topic from './pages/Topic';
 import Quizzes from './pages/Quizzes';
 import EditQuiz from './pages/QuizzEdit';
+import StudyGuide from './pages/StudyGuide';
 
 // Dashboard pages
 import SchoolAdminDashboard from './pages/SchoolAdminDashboard';
@@ -120,16 +120,27 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        
+        {/* Quiz Routes */}
         <Route 
           path="/home/subject/:subjectId/topic/:topicId/quiz/:quizId" 
-          element={<Quizzes user={user} />} 
+          element={
+             <ProtectedRoute user={user} loading={loading}>
+                <Quizzes user={user} />
+             </ProtectedRoute>
+          } 
         />
 
         <Route 
           path="/home/subject/:subjectId/topic/:topicId/quiz/:quizId/edit" 
-          element={<EditQuiz user={user} />} 
+          element={
+             <ProtectedRoute user={user} loading={loading}>
+                <EditQuiz user={user} />
+             </ProtectedRoute>
+          } 
         />
 
+        {/* User Profile & Settings */}
         <Route 
           path="/profile" 
           element={
@@ -157,7 +168,40 @@ function App() {
             </ProtectedRoute>
           } 
         />
+
+        {/* --- RUTAS DE VISUALIZACIÓN DE CONTENIDO (NUEVAS) --- */}
         
+        {/* 1. Ruta para Resúmenes/Guías generadas (Coincide con FileCard) */}
+        <Route 
+          path="/home/subject/:subjectId/topic/:topicId/resumen/:fileId" 
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <StudyGuide user={user} />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* 2. Ruta para Recursos/Archivos subidos (Coincide con FileCard) */}
+        <Route 
+          path="/home/subject/:subjectId/topic/:topicId/resource/:fileId" 
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <StudyGuide user={user} />
+            </ProtectedRoute>
+          } 
+        />
+
+        {/* Ruta legacy (por compatibilidad) */}
+        <Route 
+          path="/home/subject/:subjectId/topic/:topicId/guide/:guideId" 
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <StudyGuide user={user} />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Catch-all: Si no coincide ninguna, vuelve a Home */}
         <Route path="*" element={<Navigate to="/home" />} />
       </Routes>
     </BrowserRouter>
