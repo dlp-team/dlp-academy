@@ -109,55 +109,111 @@ const Home = ({ user }) => {
         const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
         if (targetFolderId === currentFolderId) return;
         const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
-        const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
-        const currentParentId = droppedFolder ? droppedFolder.parentId || null : null;
-
-        // Always check Firestore for the parent folder's sharing status
-        let sourceFolder = null;
-        if (currentParentId) {
-            try {
-                const parentSnap = await window.firebase.firestore().collection('folders').doc(currentParentId).get();
-                if (parentSnap.exists) {
-                    sourceFolder = { id: currentParentId, ...parentSnap.data() };
+        // Check if dropped item is a subject or folder
+        const droppedSubject = (logic.subjects || []).find(s => s.id === droppedFolderId);
+        if (droppedSubject) {
+            // Subject drag-and-drop
+            const currentParentId = droppedSubject.parentId || null;
+            let sourceFolder = null;
+            if (currentParentId) {
+                try {
+                    const parentSnap = await window.firebase.firestore().collection('folders').doc(currentParentId).get();
+                    if (parentSnap.exists) {
+                        sourceFolder = { id: currentParentId, ...parentSnap.data() };
+                    }
+                } catch (e) {
+                    console.error('Error fetching parent folder from Firestore:', e);
                 }
-            } catch (e) {
-                console.error('Error fetching parent folder from Firestore:', e);
             }
-        }
-
-        // Moving OUT of a shared folder
-        if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
-            setUnshareFolderConfirm({
-                open: true,
-                folderId: droppedFolderId,
-                sourceFolder,
-                onUnshare: async () => {
-                    await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-                    await window.firebase.firestore().collection('folders').doc(droppedFolderId).update({
-                        sharedWith: [],
-                        sharedWithUids: [],
-                        isShared: false,
-                        updatedAt: new Date()
-                    });
-                    setUnshareFolderConfirm({ open: false, folderId: null, sourceFolder: null, onUnshare: null, onKeepShared: null });
-                },
-                onKeepShared: async () => {
-                    await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-                    setUnshareFolderConfirm({ open: false, folderId: null, sourceFolder: null, onUnshare: null, onKeepShared: null });
-                }
-            });
-        } else if (targetFolder && targetFolder.isShared) {
-            setShareFolderConfirm({
-                open: true,
-                folderId: droppedFolderId,
-                targetFolder,
-                onConfirm: async () => {
-                    await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-                    setShareFolderConfirm({ open: false, folderId: null, targetFolder: null, onConfirm: null });
-                }
-            });
+            // Moving OUT of a shared folder
+            if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
+                setUnshareConfirm({
+                    open: true,
+                    subjectId: droppedSubject.id,
+                    folder: sourceFolder,
+                    onConfirm: async () => {
+                        await moveSubjectToParent(droppedSubject.id, currentParentId, targetFolderId);
+                        await window.firebase.firestore().collection('subjects').doc(droppedSubject.id).update({
+                            sharedWith: [],
+                            sharedWithUids: [],
+                            isShared: false,
+                            updatedAt: new Date()
+                        });
+                        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                    }
+                });
+            } else if (targetFolder && targetFolder.isShared) {
+                // Use Firestore SDK
+                const { doc, updateDoc } = await import('firebase/firestore');
+                const { db } = await import('../firebase/config');
+                setShareConfirm({
+                    open: true,
+                    subjectId: droppedSubject.id,
+                    folder: targetFolder,
+                    onConfirm: async () => {
+                        await moveSubjectToParent(droppedSubject.id, currentParentId, targetFolderId);
+                        const subjectRef = doc(db, 'subjects', droppedSubject.id);
+                        await updateDoc(subjectRef, {
+                            sharedWith: targetFolder.sharedWith || [],
+                            sharedWithUids: targetFolder.sharedWithUids || [],
+                            isShared: true,
+                            updatedAt: new Date()
+                        });
+                        setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                    }
+                });
+            } else {
+                await moveSubjectToParent(droppedSubject.id, currentParentId, targetFolderId);
+            }
         } else {
-            await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+            // Folder drag-and-drop (original logic)
+            const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
+            const currentParentId = droppedFolder ? droppedFolder.parentId || null : null;
+            let sourceFolder = null;
+            if (currentParentId) {
+                try {
+                    const parentSnap = await window.firebase.firestore().collection('folders').doc(currentParentId).get();
+                    if (parentSnap.exists) {
+                        sourceFolder = { id: currentParentId, ...parentSnap.data() };
+                    }
+                } catch (e) {
+                    console.error('Error fetching parent folder from Firestore:', e);
+                }
+            }
+            // Moving OUT of a shared folder
+            if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
+                setUnshareFolderConfirm({
+                    open: true,
+                    folderId: droppedFolderId,
+                    sourceFolder,
+                    onUnshare: async () => {
+                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                        await window.firebase.firestore().collection('folders').doc(droppedFolderId).update({
+                            sharedWith: [],
+                            sharedWithUids: [],
+                            isShared: false,
+                            updatedAt: new Date()
+                        });
+                        setUnshareFolderConfirm({ open: false, folderId: null, sourceFolder: null, onUnshare: null, onKeepShared: null });
+                    },
+                    onKeepShared: async () => {
+                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                        setUnshareFolderConfirm({ open: false, folderId: null, sourceFolder: null, onUnshare: null, onKeepShared: null });
+                    }
+                });
+            } else if (targetFolder && targetFolder.isShared) {
+                setShareFolderConfirm({
+                    open: true,
+                    folderId: droppedFolderId,
+                    targetFolder,
+                    onConfirm: async () => {
+                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                        setShareFolderConfirm({ open: false, folderId: null, targetFolder: null, onConfirm: null });
+                    }
+                });
+            } else {
+                await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+            }
         }
     };
 
