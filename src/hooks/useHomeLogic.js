@@ -466,7 +466,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
     useEffect(() => {
         if (preferences && !loadingPreferences) {
-            setViewMode(preferences.viewMode || 'grid');
+            // Only set viewMode if it is not already set (prevents resetting to 'grid' on layout change)
+            setViewMode(prev => prev || preferences.viewMode || 'grid');
             setLayoutMode(preferences.layoutMode || 'grid');
             setCardScale(preferences.cardScale || 100);
             setSelectedTags(preferences.selectedTags || []);
