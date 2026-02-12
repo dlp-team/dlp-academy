@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ChevronRight, MoreVertical, Edit2, Trash2, Share2 } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../modals/SubjectIcon'; // Adjust path if necessary
+import { Users } from 'lucide-react';
 
 const SubjectCardFront = ({
     subject,
@@ -219,6 +220,20 @@ const SubjectCardFront = ({
                                     +{subject.tags.length - 3}
                                 </span>
                             )}
+                        </div>
+                    )}
+                    {/* Compartida Badge at Bottom Left */}
+                    {subject.isShared && (
+                        <div 
+                            onClick={e => { e.stopPropagation(); onShare(subject); }}
+                            className="absolute right-4 bottom-0 mb-3 ml-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-transparent text-white-600 border border-white shadow cursor-pointer opacity-30 transition-all duration-200 hover:scale-110 hover:shadow-md active:scale-95 z-20"
+                            style={{
+                                padding: `${2 * scaleMultiplier}px ${8 * scaleMultiplier}px`,
+                                fontSize: `${10 * scaleMultiplier}px`
+                            }}
+                        >
+                            <Users size={10 * scaleMultiplier} className="text-white-600" />
+                            <span className="font-bold uppercase tracking-wider">Compartida</span>
                         </div>
                     )}
                 </div>
