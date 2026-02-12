@@ -1,6 +1,6 @@
 // src/components/home/SubjectCardBack.jsx
 import React from 'react';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronRight, List } from 'lucide-react';
 import SubjectIcon from '../modals/SubjectIcon'; // Adjust path if necessary
 
 const SubjectCardBack = ({
@@ -9,7 +9,8 @@ const SubjectCardBack = ({
     onSelectTopic,
     onSelect,
     scaleMultiplier,
-    topicCount
+    topicCount,
+    onOpenTopics
 }) => {
     return (
         <div className="absolute inset-0 bg-white dark:bg-slate-900 flex flex-col z-40 animate-in fade-in duration-200 transition-colors">

@@ -103,18 +103,31 @@ export const useFolderCardLogic = ({
         e.preventDefault();
         e.stopPropagation();
         setIsOver(false);
-        
+
+        // Debug: Log all drop data
+        console.log('[DEBUG][FolderCardLogic] handleDrop', {
+            folderId: folder.id,
+            canDrop,
+            subjectId: e.dataTransfer.getData('subjectId'),
+            draggedPosition: e.dataTransfer.getData('position'),
+            droppedFolderId: e.dataTransfer.getData('folderId'),
+            event: e
+        });
+
         const subjectId = e.dataTransfer.getData('subjectId');
         const draggedPosition = e.dataTransfer.getData('position');
         const droppedFolderId = e.dataTransfer.getData('folderId');
-        
+
         if (canDrop && onDrop && subjectId && !droppedFolderId) {
+            console.log('[DEBUG][FolderCardLogic] Calling onDrop', { targetFolderId: folder.id, subjectId });
             onDrop(folder.id, subjectId);
-        } 
+        }
         else if (canDrop && onDropFolder && droppedFolderId && droppedFolderId !== folder.id) {
+            console.log('[DEBUG][FolderCardLogic] Calling onDropFolder', { targetFolderId: folder.id, droppedFolderId });
             onDropFolder(folder.id, droppedFolderId);
         }
         else if (draggable && onDropReorder && droppedFolderId && draggedPosition !== undefined) {
+            console.log('[DEBUG][FolderCardLogic] Calling onDropReorder', { droppedFolderId, draggedPosition, position });
             onDropReorder(droppedFolderId, parseInt(draggedPosition), position);
         }
     };

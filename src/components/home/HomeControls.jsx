@@ -33,7 +33,9 @@ const HomeControls = ({
         }
     };
 
+    // Only change layoutMode, do not force viewMode to 'grid' (manual)
     const handleLayoutModeChange = (mode) => {
+        // Do not change viewMode here! Only update layoutMode
         setLayoutMode(mode);
         if (onPreferenceChange) {
             onPreferenceChange('layoutMode', mode);

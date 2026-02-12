@@ -26,7 +26,7 @@ export const useSubjects = (user) => {
         // 2. Query subjects shared with the user (Shared)
         const sharedQuery = query(
             collection(db, "subjects"), 
-            where("sharedWith", "array-contains", user.uid)
+            where("sharedWithUids", "array-contains", user.uid)
         );
 
         let ownedSubjects = [];
@@ -151,14 +151,19 @@ export const useSubjects = (user) => {
             }
 
             // 3. Update the subject with the new shared user
+            const shareData = {
+                email: emailLower,
+                uid: targetUid,
+                role: 'viewer',
+                sharedAt: new Date()
+            };
             await updateDoc(subjectRef, {
-                sharedWith: arrayUnion(targetUid),
+                sharedWith: arrayUnion(shareData),
+                sharedWithUids: arrayUnion(targetUid),
                 isShared: true,
                 updatedAt: new Date()
             });
-
-            console.log(`Subject ${subjectId} shared with ${emailLower}`);
-            return { email: emailLower, uid: targetUid };
+            return shareData;
 
         } catch (error) {
             console.error("Error sharing subject:", error);
@@ -184,12 +189,18 @@ export const useSubjects = (user) => {
 
             // 2. Update the subject
             const subjectRef = doc(db, 'subjects', subjectId);
+            // Get current sharedWith array to find the user object
+            const subjectSnap = await getDocs(query(collection(db, 'subjects'), where('__name__', '==', subjectId)));
+            let userObj = null;
+            if (!subjectSnap.empty) {
+                const subjectData = subjectSnap.docs[0].data();
+                userObj = (subjectData.sharedWith || []).find(u => u.uid === targetUid) || null;
+            }
             await updateDoc(subjectRef, {
-                sharedWith: arrayRemove(targetUid),
+                sharedWith: userObj ? arrayRemove(userObj) : [],
+                sharedWithUids: arrayRemove(targetUid),
                 updatedAt: new Date()
             });
-
-            console.log(`Subject ${subjectId} unshared with ${emailLower}`);
             return true;
 
         } catch (error) {

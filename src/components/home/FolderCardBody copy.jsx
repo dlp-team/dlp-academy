@@ -1,6 +1,5 @@
 // src/components/home/FolderCardBody.jsx
-import React, { useRef, useLayoutEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import React from 'react'; // Removed unused useState
 import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
 
@@ -22,18 +21,6 @@ const FolderCardBody = ({
 }) => {
     // 1. Logic: No useState needed here. We use CSS for hover states.
     const shiftX = 48 * scaleMultiplier;
-    const menuBtnRef = useRef(null);
-    const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
-
-    useLayoutEffect(() => {
-        if (activeMenu === folder.id && menuBtnRef.current) {
-            const rect = menuBtnRef.current.getBoundingClientRect();
-            setMenuPos({
-                top: rect.bottom + 4,
-                left: rect.left,
-            });
-        }
-    }, [activeMenu, folder.id]);
     
     return (
         <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${
@@ -119,7 +106,6 @@ const FolderCardBody = ({
                     {/* 2. Dots Menu */}
                     <div className="absolute right-0"> 
                         <button
-                            ref={menuBtnRef}
                             onClick={(e) => { e.stopPropagation(); onToggleMenu(folder.id); }}
                             className={`rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer flex items-center justify-center ${
                                 isModern
@@ -136,17 +122,9 @@ const FolderCardBody = ({
                             <MoreVertical size={15 * scaleMultiplier} />
                         </button>
 
-                        {/* Dropdown Menu rendered in a portal */}
-                        {activeMenu === folder.id && typeof window !== 'undefined' && createPortal(
-                            <div
-                                className="w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 animate-in fade-in zoom-in-95 duration-100 transition-colors"
-                                style={{
-                                    position: 'fixed',
-                                    top: menuPos.top,
-                                    left: menuPos.left,
-                                    zIndex: 9999
-                                }}
-                            >
+                        {/* Dropdown Menu */}
+                        {activeMenu === folder.id && (
+                            <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 z-50 animate-in fade-in zoom-in-95">
                                 {folder.isOwner ? (
                                     <>
                                         <button onClick={(e) => { e.stopPropagation(); onEdit(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
@@ -163,8 +141,7 @@ const FolderCardBody = ({
                                 ) : (
                                     <div className="p-2 text-xs text-center text-gray-500">Solo lectura</div>
                                 )}
-                            </div>,
-                            document.body
+                            </div>
                         )}
                     </div>
                 </div>
@@ -224,12 +201,12 @@ const FolderCardBody = ({
                             {folder.isShared && (
                                 <div 
                                     className="absolute inset-0 flex items-center justify-center z-10"
-                                    style={{
+                                    style={{ 
                                         // Optional: slight offset if you want it to look like it's peeking out
-                                        bottom: isModern ? 0 : '-6px', 
+                                        bottom: isModern ? 0 : '-4px', 
                                     }} 
                                 >
-                                    <div className={`flex items-center justify-center rounded-full opacity-70 ${isModern ? 'bg-black/10' : ''}`}>
+                                    <div className={`flex items-center justify-center rounded-full ${isModern ? 'bg-black/10' : ''}`}>
                                         <Users 
                                             className={isModern ? "text-indigo-900" : "text-white"}
                                             style={{ 
@@ -326,6 +303,39 @@ const FolderCardBody = ({
                             </div>
                         )}
 
+                        
+                        {folder.isShared && (
+                            <div 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onShare(folder);
+                            }}
+                            className="absolute right-4 bottom-0 mb-3 ml-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-transparent text-white-600 border border-white shadow cursor-pointer opacity-50 transition-all duration-200 hover:scale-110 hover:shadow-md active:scale-95 z-20"
+                            style={{
+                                padding: `${2 * scaleMultiplier}px ${8 * scaleMultiplier}px`,
+                                fontSize: `${10 * scaleMultiplier}px`
+                            }}>
+                                <Users size={10 * scaleMultiplier} />
+                                <span className="font-bold uppercase tracking-wider">Compartida</span>
+                            </div>
+                        )} 
+
+                        {folder.isShared && (
+                            <div 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onShare(folder);
+                            }}
+                            className="absolute mb-3 ml-3 inline-flex items-center gap-1 px-2 py-0.5  text-[10px] font-medium bg-transparent text-white-600 border border-none shadow cursor-pointer opacity-0 transition-all duration-200 hover:scale-110 hover:shadow-md active:scale-95 z-20"
+                            style={{
+                                left: `${14 * scaleMultiplier}px`,
+                                top: `${46 * scaleMultiplier}px`,
+                                padding: `${2 * scaleMultiplier}px ${8 * scaleMultiplier}px`,
+                                fontSize: `${10 * scaleMultiplier}px`
+                            }}>
+                                <Users size={20 * scaleMultiplier} />
+                            </div>
+                        )} 
 
                     </div>
                 </div>

@@ -14,7 +14,6 @@ const normalizeText = (text) => {
 };
 
 export const useHomeLogic = (user, searchQuery = '') => {
-    console.log("DEBUG: useHomeLogic received searchQuery:", searchQuery);
     const navigate = useNavigate();
     
     // Data Logic
@@ -29,12 +28,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
         unshareFolder,
         addSubjectToFolder
     } = useFolders(user);
-
-    console.log('DEBUG: Raw Data from Hooks:', { 
-        subjectsCount: subjects?.length, 
-        foldersCount: folders?.length,
-        loading 
-    });
 
 
 
@@ -56,6 +49,30 @@ export const useHomeLogic = (user, searchQuery = '') => {
     const [activeMenu, setActiveMenu] = useState(null);
     const [collapsedGroups, setCollapsedGroups] = useState({});
     const [currentFolder, setCurrentFolder] = useState(null); // For navigation
+
+    // Restore last visited folder from localStorage on mount (if folders are loaded)
+    // Guarantee folder persistence and sync with folders array
+    useEffect(() => {
+        if (!folders || folders.length === 0) {
+            return;
+        }
+        const lastFolderId = localStorage.getItem('dlp_last_folderId');
+        //
+        // If currentFolder is not set or not found in folders, restore or reset
+        if (lastFolderId) {
+            const folder = folders.find(f => f.id === lastFolderId);
+            if (folder && (!currentFolder || currentFolder.id !== folder.id)) {
+                //
+                setCurrentFolder(folder);
+            } else if (!folder && currentFolder) {
+                //
+                setCurrentFolder(null);
+            }
+        } else if (currentFolder) {
+            //
+            setCurrentFolder(null);
+        }
+    }, [folders]);
     
     // Drag and Drop State
     const [draggedItem, setDraggedItem] = useState(null);
@@ -109,7 +126,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         // 2. Subjects directly shared with the user
         return subjects.filter(s => 
             sharedFolderSubjectIds.has(s.id) || // In a shared folder
-            (s.uid !== user.uid && s.sharedWith?.includes(user.uid)) // Directly shared
+            (s.uid !== user.uid && s.sharedWithUids?.includes(user.uid)) // Directly shared
         );
     }, [subjects, sharedFolders, user]);
 
@@ -138,7 +155,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
     // Get ordered folders for manual mode
     const orderedFolders = useMemo(() => {
         // 1. Normalize Search Query
-        console.log("DEBUG: orderedFolders re-calculating. Query:", searchQuery);
         const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
         // 2. Original Guard: if not in grid or inside a folder, usually return empty 
@@ -153,7 +169,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
                 const folderName = (f.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 return folderName.includes(query);
             });
-            console.log("DEBUG: Folders found for query:", results.length);
         }
 
         // 4. Original Tag Filtering Logic
@@ -171,7 +186,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
     // --- VIEW GROUPING LOGIC ---
     const groupedContent = useMemo(() => {
-        console.log("DEBUG: groupedContent re-calculating. Query:", searchQuery);
         const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         
         // --- NEW: SEARCH LOGIC ---
@@ -180,7 +194,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
                 const subjectName = (s.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 return subjectName.includes(query);
             });
-            console.log("DEBUG: Subjects found for query:", matchedSubjects.length);
             return { 'Resultados de búsqueda': matchedSubjects };
         }
 
@@ -213,13 +226,78 @@ export const useHomeLogic = (user, searchQuery = '') => {
         }
         
         if (viewMode === 'courses') {
-            const groups = {};
+            // Use EDUCATION_LEVELS for group and year order
+            let EDUCATION_LEVELS = {
+                'Primaria': ['1º', '2º', '3º', '4º', '5º', '6º'],
+                'ESO': ['1º', '2º', '3º', '4º'],
+                'Bachillerato': ['1º', '2º'],
+                'FP': ['Grado Medio 1', 'Grado Medio 2', 'Grado Superior 1', 'Grado Superior 2'],
+                'Universidad': ['1º', '2º', '3º', '4º', '5º', '6º', 'Máster', 'Doctorado']
+            };
+            try {
+                EDUCATION_LEVELS = require('../utils/subjectConstants').EDUCATION_LEVELS || EDUCATION_LEVELS;
+            } catch (e) {}
+
+            // Helper to parse course string into group and year
+            function parseCourse(course) {
+                if (!course || course === null || course === undefined || course === '') return { group: null, year: null };
+                for (const group of Object.keys(EDUCATION_LEVELS)) {
+                    for (const year of EDUCATION_LEVELS[group]) {
+                        // Accept both 'ESO 1º' and 'ESO 1' and similar
+                        if (
+                            course === `${group} ${year}` ||
+                            course === `${group} ${year.replace('º','')}` ||
+                            course === `${group} ${year.replace('º','º')}`
+                        ) {
+                            return { group, year };
+                        }
+                    }
+                }
+                // FP special case: allow just 'FP'
+                if (course === 'FP') return { group: 'FP', year: '' };
+                // Universidad special case: allow just 'Universidad'
+                if (course === 'Universidad') return { group: 'Universidad', year: '' };
+                return { group: course, year: '' };
+            }
+
+            // Group subjects by group and year, and collect those with no course
+            const groupMap = {};
+            const noCourse = [];
             subjectsToGroup.forEach(sub => {
-                const key = sub.course || 'Sin Curso';
-                if (!groups[key]) groups[key] = [];
-                groups[key].push(sub);
+                const { group, year } = parseCourse(sub.course);
+                if (!group && !year) {
+                    noCourse.push(sub);
+                } else {
+                    if (!groupMap[group]) groupMap[group] = {};
+                    if (!groupMap[group][year]) groupMap[group][year] = [];
+                    groupMap[group][year].push(sub);
+                }
             });
-            return groups;
+
+            // Build sortedGroups in the desired order
+            const sortedGroups = {};
+            Object.keys(EDUCATION_LEVELS).forEach(group => {
+                EDUCATION_LEVELS[group].forEach(year => {
+                    const key = `${group} ${year}`;
+                    if (groupMap[group] && groupMap[group][year]) {
+                        sortedGroups[key] = groupMap[group][year].slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                    }
+                });
+            });
+            // Add any remaining groups/years not in EDUCATION_LEVELS
+            Object.keys(groupMap).forEach(group => {
+                Object.keys(groupMap[group]).forEach(year => {
+                    const key = year ? `${group} ${year}` : group;
+                    if (!sortedGroups[key]) {
+                        sortedGroups[key] = groupMap[group][year].slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                    }
+                });
+            });
+            // Add 'Sin Curso' at the end if there are subjects with no course
+            if (noCourse.length > 0) {
+                sortedGroups['Sin Curso'] = noCourse.slice().sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+            }
+            return sortedGroups;
         }
         
         if (viewMode === 'tags') {
@@ -352,7 +430,22 @@ export const useHomeLogic = (user, searchQuery = '') => {
     };
 
     const handleOpenFolder = (folder) => {
-        setCurrentFolder(folder);
+        //
+        if (folder && folder.id) {
+            const found = folders.find(f => f.id === folder.id);
+            setCurrentFolder(found || null);
+            if (found) {
+                localStorage.setItem('dlp_last_folderId', found.id);
+                //
+            } else {
+                localStorage.removeItem('dlp_last_folderId');
+                //
+            }
+        } else {
+            setCurrentFolder(null);
+            localStorage.removeItem('dlp_last_folderId');
+            //
+        }
         // If we're viewing shared content, switch back to grid view to show folder contents
         if (viewMode === 'shared') {
             setViewMode('grid');
@@ -477,7 +570,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
     useEffect(() => {
         if (preferences && !loadingPreferences) {
-            setViewMode(preferences.viewMode || 'grid');
+            // Only set viewMode if it is not already set (prevents resetting to 'grid' on layout change)
+            setViewMode(prev => prev || preferences.viewMode || 'grid');
             setLayoutMode(preferences.layoutMode || 'grid');
             setCardScale(preferences.cardScale || 100);
             setSelectedTags(preferences.selectedTags || []);

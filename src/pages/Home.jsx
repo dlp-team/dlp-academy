@@ -1,10 +1,14 @@
 // src/pages/Home.jsx
 import React, { useMemo, useState } from 'react';
 import { Loader2, ArrowUpCircle } from 'lucide-react';
-
+// Firebase
+import { updateDoc, doc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 // Logic Hook
 import { useHomeLogic } from '../hooks/useHomeLogic';
 import { useFolders } from '../hooks/useFolders'; 
+
+    
 
 // Layout & Global Components
 import Header from '../components/layout/Header';
@@ -18,12 +22,32 @@ import HomeContent from '../components/home/HomeContent';
 import HomeEmptyState from '../components/home/HomeEmptyState';
 import HomeModals from '../components/home/HomeModals';
 import FolderTreeModal from '../components/modals/FolderTreeModal'; 
+import SubjectTopicsModal from '../components/modals/SubjectTopicModal';
 
 const Home = ({ user }) => {
+    // Top-level debug: confirm Home is mounted
+    React.useEffect(() => {
+        console.log('[DEBUG] Home component mounted');
+    }, []);
     // 1. Initialize Logic
     const [searchQuery, setSearchQuery] = useState('');
     const logic = useHomeLogic(user, searchQuery);
-    const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders } = useFolders(user);
+    const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
+
+    // Persist last visited tab and folder
+    const didRestoreRef = React.useRef(false);
+    React.useEffect(() => {
+        if (didRestoreRef.current) return;
+        if (!logic || !logic.folders) return;
+        const lastTab = localStorage.getItem('dlp_last_viewMode');
+        const lastFolderId = localStorage.getItem('dlp_last_folderId');
+        if (lastTab && logic.setViewMode) logic.setViewMode(lastTab);
+        if (lastFolderId && logic.setCurrentFolder) {
+            const folder = logic.folders.find(f => f.id === lastFolderId);
+            if (folder) logic.setCurrentFolder(folder);
+        }
+        didRestoreRef.current = true;
+    }, [logic.folders]);
 
 
     // Helper function to normalize text for comparison
@@ -70,6 +94,14 @@ const Home = ({ user }) => {
     // ... (State and Filtering Logic omitted for brevity, identical to previous) ...
     // NOTE: Keep all the logic.loading checks, displayedFolders memo, etc.
     const [folderContentsModalConfig, setFolderContentsModalConfig] = useState({ isOpen: false, folder: null });
+    // Confirmation overlay state for sharing
+    const [shareConfirm, setShareConfirm] = useState({ open: false, subjectId: null, folder: null, onConfirm: null });
+    const [unshareConfirm, setUnshareConfirm] = useState({ open: false, subjectId: null, folder: null, onConfirm: null });
+    const [topicsModalConfig, setTopicsModalConfig] = useState({ 
+        isOpen: false, 
+        subject: null 
+    });
+
     const displayedFolders = useMemo(() => {
         const allFolders = logic.folders || [];
         const currentId = logic.currentFolder ? logic.currentFolder.id : null;
@@ -83,6 +115,12 @@ const Home = ({ user }) => {
         const liveFolder = (logic.folders || []).find(f => f.id === folderContentsModalConfig.folder.id);
         return liveFolder || folderContentsModalConfig.folder;
     }, [logic.folders, folderContentsModalConfig.folder]);
+
+    // Persist viewMode and currentFolder changes
+    React.useEffect(() => {
+        if (logic.viewMode) localStorage.setItem('dlp_last_viewMode', logic.viewMode);
+    }, [logic.viewMode]);
+    // Removed effect that clears dlp_last_folderId when logic.currentFolder is null
 
     if (!user || logic.loading || logic.loadingFolders) {
         return (
@@ -98,14 +136,20 @@ const Home = ({ user }) => {
         logic.handleSaveFolder(dataWithParent);
     };
     const handleUpwardDrop = async (e) => {
+        console.log('[DEBUG] handleUpwardDrop called');
         e.preventDefault(); e.stopPropagation();
         const subjectId = e.dataTransfer.getData('subjectId');
         const folderId = e.dataTransfer.getData('folderId');
         if (logic.currentFolder) {
             const currentId = logic.currentFolder.id;
             const parentId = logic.currentFolder.parentId; 
-            if (subjectId) await moveSubjectToParent(subjectId, currentId, parentId);
-            else if (folderId && folderId !== currentId) await moveFolderToParent(folderId, currentId, parentId);
+            if (subjectId) {
+                console.log('[DEBUG] handleUpwardDrop: moving subject', { subjectId, currentId, parentId });
+                await moveSubjectToParent(subjectId, currentId, parentId);
+            } else if (folderId && folderId !== currentId) {
+                console.log('[DEBUG] handleUpwardDrop: moving folder', { folderId, currentId, parentId });
+                await moveFolderToParent(folderId, currentId, parentId);
+            }
         }
     };
     const handleBreadcrumbDrop = async (targetFolderId, subjectId, droppedFolderId) => {
@@ -118,26 +162,251 @@ const Home = ({ user }) => {
             await moveFolderToParent(droppedFolderId, oldParentId, targetFolderId);
         }
     };
-    const handleDropOnFolderWrapper = async (targetFolderId, subjectId) => {
-        const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
-        if (targetFolderId === currentFolderId) return;
-        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+    const handleOpenTopics = (subject) => {
+        setTopicsModalConfig({ isOpen: true, subject });
     };
+    const handleDropOnFolderWrapper = async (targetFolderId, subjectId) => {
+        console.log('[DEBUG] handleDropOnFolderWrapper ENTRY', { targetFolderId, subjectId });
+        const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
+        console.log('[DEBUG] currentFolderId:', currentFolderId);
+        if (targetFolderId === currentFolderId) {
+            console.log('[DEBUG] targetFolderId === currentFolderId, returning');
+            return;
+        }
+        const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
+        const sourceFolder = (logic.folders || []).find(f => f.id === currentFolderId);
+        const subject = (logic.subjects || []).find(s => s.id === subjectId);
+        console.log('[DEBUG] Folders and subject:', { targetFolder, sourceFolder, subject });
+
+        // Helper: get shared user IDs from sharedWithUids (array of strings)
+        const getSharedUids = (item) => (item && Array.isArray(item.sharedWithUids)) ? item.sharedWithUids : [];
+
+        const sourceIsShared = sourceFolder ? sourceFolder.isShared : undefined;
+        const targetIsShared = targetFolder ? targetFolder.isShared : undefined;
+        const subjectSharedWithUids = getSharedUids(subject);
+        const targetFolderSharedWithUids = getSharedUids(targetFolder);
+        console.log('[DEBUG] Sharing info:', { sourceIsShared, targetIsShared, subjectSharedWithUids, targetFolderSharedWithUids });
+
+        // Moving OUT of a shared folder (confirmation required if source is shared and target is not)
+        console.log('[DEBUG] handleDropOnFolderWrapper: Checking exit (out of shared folder) case', {
+            sourceFolder,
+            sourceIsShared,
+            targetFolder,
+            targetIsShared,
+            currentFolderId,
+            targetFolderId
+        });
+        if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
+            console.log('[DEBUG] handleDropOnFolderWrapper: Condition met: EXIT branch (sourceFolder is shared and targetFolder is not). Triggering unshareConfirm overlay.', {
+                sourceFolder,
+                targetFolder
+            });
+            setUnshareConfirm({
+                open: true,
+                subjectId,
+                folder: sourceFolder,
+                onConfirm: async () => {
+                    console.log('[DEBUG] handleDropOnFolderWrapper: unshareConfirm onConfirm triggered (EXIT branch)');
+                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+                    setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                }
+            });
+            return;
+        }
+
+        // Only show confirmation if there is a new user who will gain access
+        if (targetFolder && targetFolder.isShared) {
+            const subjectShared = new Set(subjectSharedWithUids);
+            const folderShared = targetFolderSharedWithUids;
+            const newUsers = folderShared.filter(uid => !subjectShared.has(uid));
+            console.log('[DEBUG] Checking for new users to share:', { subjectShared: Array.from(subjectShared), folderShared, newUsers });
+            if (newUsers.length > 0) {
+                console.log('[DEBUG] Condition met: new users found. Triggering shareConfirm overlay.');
+                setShareConfirm({
+                    open: true,
+                    subjectId,
+                    folder: targetFolder,
+                    onConfirm: async () => {
+                        console.log('[DEBUG] shareConfirm onConfirm triggered');
+                        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+                        setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                    }
+                });
+                return;
+            }
+        }
+        console.log('[DEBUG] No confirmation needed, moving subject');
+            const handleDragStart = (e) => {
+                console.log('[DEBUG] Drag started', { event: e });
+            };
+        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+            const handleDragEnd = (e) => {
+                console.log('[DEBUG] Drag ended', { event: e });
+            };
+    };
+
     const handleNestFolder = async (targetFolderId, droppedFolderId) => {
         if (targetFolderId === droppedFolderId) return;
         const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
         if (!droppedFolder) return;
         const currentParentId = droppedFolder.parentId || null;
+        const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
+
+        // Helper: get shared user IDs from sharedWithUids (array of strings)
+        const getSharedUids = (item) => (item && Array.isArray(item.sharedWithUids)) ? item.sharedWithUids : [];
+
+        // Debugging output
+        console.log('[DEBUG] handleNestFolder:', {
+            targetFolderId,
+            droppedFolderId,
+            droppedFolder,
+            targetFolder,
+            droppedIsShared: droppedFolder ? droppedFolder.isShared : undefined,
+            targetIsShared: targetFolder ? targetFolder.isShared : undefined,
+            droppedSharedWithUids: getSharedUids(droppedFolder),
+            targetFolderSharedWithUids: getSharedUids(targetFolder),
+        });
+
+        // Moving OUT of a shared folder (confirmation required if droppedFolder is shared and target is not)
+        if (droppedFolder && droppedFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
+            console.log('[DEBUG] Triggering unshareConfirm overlay (folder)');
+            setUnshareConfirm({
+                open: true,
+                subjectId: null,
+                folder: droppedFolder,
+                onConfirm: async () => {
+                    await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                    setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                }
+            });
+            return;
+        }
+
+        // Only show confirmation if there is a new user who will gain access (moving INTO a shared folder)
+        if (targetFolder && targetFolder.isShared) {
+            const droppedShared = new Set(getSharedUids(droppedFolder));
+            const targetShared = getSharedUids(targetFolder);
+            const newUsers = targetShared.filter(uid => !droppedShared.has(uid));
+            console.log('[DEBUG] Checking for new users to share (folder):', { droppedShared: Array.from(droppedShared), targetShared, newUsers });
+            if (newUsers.length > 0) {
+                // Show confirmation overlay for folder sharing
+                setShareConfirm({
+                    open: true,
+                    folder: targetFolder,
+                    subjectId: null,
+                    onConfirm: async () => {
+                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                        setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                    }
+                });
+                return;
+            }
+        }
+        console.log('[DEBUG] No confirmation needed, moving folder');
         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
     };
     const handlePromoteSubjectWrapper = async (subjectId) => {
-        if (logic.currentFolder) await moveSubjectToParent(subjectId, logic.currentFolder.id, logic.currentFolder.parentId);
+        // Find current folder and subject
+        const currentFolder = logic.currentFolder;
+        const parentId = currentFolder ? currentFolder.parentId : null;
+        const sourceFolder = currentFolder;
+        const subject = (logic.subjects || []).find(s => s.id === subjectId);
+        // Helper: get shared user IDs from sharedWithUids (array of strings)
+        const getSharedUids = (item) => (item && Array.isArray(item.sharedWithUids)) ? item.sharedWithUids : [];
+        const sourceIsShared = sourceFolder ? sourceFolder.isShared : undefined;
+        let targetFolder = null;
+        if (parentId) {
+            targetFolder = (logic.folders || []).find(f => f.id === parentId);
+        }
+        const targetIsShared = targetFolder ? targetFolder.isShared : undefined;
+        // Debug: Log promote subject context
+        console.log('[DEBUG][handlePromoteSubjectWrapper]', {
+            currentFolder,
+            parentId,
+            sourceFolder,
+            targetFolder,
+            sourceIsShared,
+            targetIsShared
+        });
+        // If moving out of a shared folder to a non-shared folder or to root (parentId null), show confirmation
+        if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
+            console.log('[DEBUG][handlePromoteSubjectWrapper] Triggering unshareConfirm overlay');
+            setUnshareConfirm({
+                open: true,
+                subjectId,
+                folder: sourceFolder,
+                onConfirm: async () => {
+                    await moveSubjectToParent(subjectId, currentFolder.id, parentId);
+                    setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                }
+            });
+            return;
+        }
+        // Otherwise, move immediately
+        if (currentFolder) await moveSubjectToParent(subjectId, currentFolder.id, parentId);
     };
     const handlePromoteFolderWrapper = async (folderId) => {
-        if (logic.currentFolder && folderId !== logic.currentFolder.id) await moveFolderToParent(folderId, logic.currentFolder.id, logic.currentFolder.parentId);
+        if (logic.currentFolder && folderId !== logic.currentFolder.id) {
+            const currentFolder = logic.currentFolder;
+            const parentId = currentFolder.parentId;
+            const sourceFolder = currentFolder;
+            let targetFolder = null;
+            if (parentId) {
+                targetFolder = (logic.folders || []).find(f => f.id === parentId);
+            }
+            // If moving out of a shared folder to a non-shared folder or to root (parentId null), show confirmation
+            if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
+                setUnshareConfirm({
+                    open: true,
+                    subjectId: null,
+                    folder: sourceFolder,
+                    onConfirm: async () => {
+                        // --- UNSHARE LOGIC FOR FOLDER ---
+                        // Remove all users from sharedWith/sharedWithUids that were only present due to the previous parent
+                        const oldSharedWithUids = Array.isArray(sourceFolder.sharedWithUids) ? sourceFolder.sharedWithUids : [];
+                        const oldSharedWith = Array.isArray(sourceFolder.sharedWith) ? sourceFolder.sharedWith : [];
+                        // Remove sharing from the folder itself
+                        await updateFolder(folderId, {
+                            sharedWith: [],
+                            sharedWithUids: [],
+                            isShared: false
+                        });
+                        // Remove sharing from all child subjects
+                        const folder = (logic.folders || []).find(f => f.id === folderId);
+                        if (folder && Array.isArray(folder.subjectIds)) {
+                            for (const subjectId of folder.subjectIds) {
+                                const subject = (logic.subjects || []).find(s => s.id === subjectId);
+                                if (subject) {
+                                    const newSharedWith = (subject.sharedWith || []).filter(u => !oldSharedWithUids.includes(u.uid));
+                                    const newSharedWithUids = (subject.sharedWithUids || []).filter(uid => !oldSharedWithUids.includes(uid));
+                                    await updateDoc(doc(db, 'subjects', subjectId), {
+                                        sharedWith: newSharedWith,
+                                        sharedWithUids: newSharedWithUids,
+                                        isShared: newSharedWithUids.length > 0
+                                    });
+                                }
+                            }
+                        }
+                        await moveFolderToParent(folderId, currentFolder.id, parentId);
+                        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                    }
+                });
+                return;
+            }
+            await moveFolderToParent(folderId, currentFolder.id, parentId);
+        }
     };
     const handleShowFolderContents = (folder) => { setFolderContentsModalConfig({ isOpen: true, folder }); };
-    const handleNavigateFromTree = (folder) => { setFolderContentsModalConfig({ isOpen: false, folder: null }); logic.setCurrentFolder(folder); };
+    const handleNavigateFromTree = (folder) => {
+        setFolderContentsModalConfig({ isOpen: false, folder: null });
+        logic.setCurrentFolder(folder);
+        if (folder && folder.id) {
+            localStorage.setItem('dlp_last_folderId', folder.id);
+        }
+        if (!folder) {
+            localStorage.removeItem('dlp_last_folderId');
+        }
+    };
     const handleNavigateSubjectFromTree = (subject) => { setFolderContentsModalConfig({ isOpen: false, folder: null }); logic.navigate(`/home/subject/${subject.id}`); };
     
     // EXPOSE THIS
@@ -162,12 +431,32 @@ const Home = ({ user }) => {
                 {/* Drag Up Zone (Omitted for brevity, logic same) */}
                 <div 
                     className="relative transition-all duration-300"
-                    onDragOver={(e) => { if (logic.currentFolder) e.preventDefault(); }}
-                    onDrop={handleUpwardDrop}
+                    onDragOver={(e) => {
+                        console.log('[DEBUG] Main drop zone onDragOver', {
+                            event: e,
+                            currentFolder: logic.currentFolder
+                        });
+                        if (logic.currentFolder) e.preventDefault();
+                    }}
+                    onDrop={(e) => {
+                        console.log('[DEBUG] Main drop zone onDrop', {
+                            event: e,
+                            currentFolder: logic.currentFolder,
+                            dataTransfer: e.dataTransfer ? {
+                                types: e.dataTransfer.types,
+                                subjectId: e.dataTransfer.getData('subjectId'),
+                                folderId: e.dataTransfer.getData('folderId')
+                            } : null
+                        });
+                        handleUpwardDrop(e);
+                    }}
                 >
                     <HomeControls 
                         viewMode={logic.viewMode}
-                        setViewMode={logic.setViewMode}
+                        setViewMode={(mode) => {
+                            logic.setViewMode(mode);
+                            if (mode) localStorage.setItem('dlp_last_viewMode', mode);
+                        }}
                         layoutMode={logic.layoutMode}
                         setLayoutMode={logic.setLayoutMode}
                         cardScale={logic.cardScale}
@@ -178,7 +467,15 @@ const Home = ({ user }) => {
                         currentFolder={logic.currentFolder}
                         setFolderModalConfig={logic.setFolderModalConfig}
                         setCollapsedGroups={logic.setCollapsedGroups}
-                        setCurrentFolder={logic.setCurrentFolder}
+                        setCurrentFolder={(folder) => {
+                            logic.setCurrentFolder(folder);
+                            if (folder && folder.id) {
+                                localStorage.setItem('dlp_last_folderId', folder.id);
+                            }
+                            if (!folder) {
+                                localStorage.removeItem('dlp_last_folderId');
+                            }
+                        }}
                         isDragAndDropEnabled={logic.isDragAndDropEnabled}
                         draggedItem={logic.draggedItem}
                         draggedItemType={logic.draggedItemType}
@@ -220,9 +517,107 @@ const Home = ({ user }) => {
                     />
                 ) : (
                     <>
+                        {/* Overlay for sharing confirmation when moving subject into shared folder */}
+                        {shareConfirm.open && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
+                                <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
+                                    <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
+                                        <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C7.305 20.5 3.5 16.695 3.5 12S7.305 3.5 12 3.5 20.5 7.305 20.5 12 16.695 20.5 12 20.5z" /></svg>
+                                    </div>
+                                    {(() => {
+                                        const isFolder = !shareConfirm.subjectId;
+                                        const itemType = isFolder ? 'carpeta' : 'asignatura';
+                                        const itemName = isFolder ? (shareConfirm.folder?.name || '') : (() => {
+                                            // Find subject name if possible
+                                            // Try to get from logic.subjects
+                                            if (shareConfirm.subjectId && logic.subjects) {
+                                                const subj = logic.subjects.find(s => s.id === shareConfirm.subjectId);
+                                                return subj ? subj.name : '';
+                                            }
+                                            return '';
+                                        })();
+                                        const folderName = shareConfirm.folder?.name || '';
+                                        return (
+                                            <>
+                                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                                    Vas a mover la {itemType} <span className="font-semibold">"{itemName}"</span> a una carpeta compartida
+                                                </h3>
+                                                <p className="text-gray-500 dark:text-gray-400 mb-6">
+                                                    Esto hará que la {itemType} también sea compartida automáticamente con las mismas personas que tienen acceso a la carpeta <span className="font-semibold">"{folderName}"</span>.<br />¿Deseas continuar?
+                                                </p>
+                                            </>
+                                        );
+                                    })()}
+                                    <div className="flex justify-center gap-4">
+                                        <button
+                                            className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                                            onClick={() => setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null })}
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            className="px-6 py-2 rounded-xl bg-indigo-600 text-white font-bold shadow-lg hover:bg-indigo-700 transition-colors"
+                                            onClick={shareConfirm.onConfirm}
+                                        >
+                                            Sí, compartir
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {unshareConfirm.open && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
+                            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
+                            <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
+                                <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C7.305 20.5 3.5 16.695 3.5 12S7.305 3.5 12 3.5 20.5 7.305 20.5 12 16.695 20.5 12 20.5z" /></svg>
+                            </div>
+                            {(() => {
+                                const isFolder = !unshareConfirm.subjectId;
+                                const itemType = isFolder ? 'carpeta' : 'asignatura';
+                                const itemName = isFolder ? (unshareConfirm.folder?.name || '') : (() => {
+                                    // Find subject name if possible
+                                    if (unshareConfirm.subjectId && logic.subjects) {
+                                        const subj = logic.subjects.find(s => s.id === unshareConfirm.subjectId);
+                                        return subj ? subj.name : '';
+                                    }
+                                    return '';
+                                })();
+                                const folderName = unshareConfirm.folder?.name || '';
+                                return (
+                                    <>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                            Vas a mover la {itemType} <span className="font-semibold">"{itemName}"</span> fuera de una carpeta compartida
+                                        </h3>
+                                        <p className="text-gray-500 dark:text-gray-400 mb-6">
+                                            Esto hará que la {itemType} deje de estar compartida automáticamente con las personas que tenían acceso a la carpeta <span className="font-semibold">"{folderName}"</span>.<br />¿Deseas continuar?
+                                        </p>
+                                    </>
+                                );
+                            })()}
+                            <div className="flex justify-center gap-4">
+                                <button
+                                className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                                onClick={() => setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null })}
+                                >
+                                Cancelar
+                                </button>
+                                <button
+                                className="px-6 py-2 rounded-xl bg-yellow-600 text-white font-bold shadow-lg hover:bg-yellow-700 transition-colors"
+                                onClick={unshareConfirm.onConfirm}
+                                >
+                                Sí, dejar de compartir
+                                </button>
+                            </div>
+                            </div>
+                        </div>
+                        )}
                         <BreadcrumbNav 
                             currentFolder={logic.currentFolder} 
-                            onNavigate={logic.setCurrentFolder}
+                            onNavigate={(folder) => {
+                                logic.setCurrentFolder(folder);
+                                if (folder && folder.id) localStorage.setItem('dlp_last_folderId', folder.id);
+                                if (!folder) localStorage.removeItem('dlp_last_folderId');
+                            }}
                             allFolders={logic.folders || []}
                             onDropOnBreadcrumb={handleBreadcrumbDrop}
                             draggedItem={logic.draggedItem}
@@ -256,7 +651,15 @@ const Home = ({ user }) => {
                                         setDeleteConfig={logic.setDeleteConfig}
                                         
                                         handleSelectSubject={(id) => logic.navigate(`/home/subject/${id}`)}
-                                        handleOpenFolder={logic.setCurrentFolder}
+                                        handleOpenFolder={(folder) => {
+                                            logic.setCurrentFolder(folder);
+                                            if (folder && folder.id) {
+                                                localStorage.setItem('dlp_last_folderId', folder.id);
+                                            }
+                                            if (!folder) {
+                                                localStorage.removeItem('dlp_last_folderId');
+                                            }
+                                        }}
                                         handleShareFolder={logic.handleShareFolder}
                                         handlePromoteSubject={handlePromoteSubjectWrapper}
                                         handlePromoteFolder={handlePromoteFolderWrapper}
@@ -267,6 +670,7 @@ const Home = ({ user }) => {
                                         
                                         // NEW: Pass the robust move handler
                                         handleMoveSubjectWithSource={handleTreeMoveSubject}
+                                        onOpenTopics={handleOpenTopics}
                                         
                                         isDragAndDropEnabled={logic.isDragAndDropEnabled}
                                         draggedItem={logic.draggedItem}
@@ -334,12 +738,27 @@ const Home = ({ user }) => {
                 rootFolder={activeModalFolder}
                 allFolders={logic.folders || []}
                 allSubjects={logic.subjects || []}
-                onNavigateFolder={handleNavigateFromTree}
+                onNavigateFolder={(folder) => {
+                    handleNavigateFromTree(folder);
+                    if (folder && folder.id) {
+                        localStorage.setItem('dlp_last_folderId', folder.id);
+                    }
+                    if (!folder) {
+                        localStorage.removeItem('dlp_last_folderId');
+                    }
+                }}
                 onNavigateSubject={handleNavigateSubjectFromTree}
                 onMoveSubjectToFolder={handleTreeMoveSubject}
                 onNestFolder={handleNestFolder}
                 onReorderSubject={handleTreeReorderSubject}
             />
+
+            <SubjectTopicsModal 
+                isOpen={topicsModalConfig.isOpen}
+                onClose={() => setTopicsModalConfig({ ...topicsModalConfig, isOpen: false })}
+                subject={topicsModalConfig.subject}
+            />
+            
         </div>
     );
 };
