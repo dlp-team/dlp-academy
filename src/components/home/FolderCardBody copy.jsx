@@ -206,7 +206,7 @@ const FolderCardBody = ({
                                         bottom: isModern ? 0 : '-4px', 
                                     }} 
                                 >
-                                    <div className={`flex items-center justify-center rounded-full opacity-70 ${isModern ? 'bg-black/10' : ''}`}>
+                                    <div className={`flex items-center justify-center rounded-full ${isModern ? 'bg-black/10' : ''}`}>
                                         <Users 
                                             className={isModern ? "text-indigo-900" : "text-white"}
                                             style={{ 
@@ -303,6 +303,39 @@ const FolderCardBody = ({
                             </div>
                         )}
 
+                        
+                        {folder.isShared && (
+                            <div 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onShare(folder);
+                            }}
+                            className="absolute right-4 bottom-0 mb-3 ml-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-transparent text-white-600 border border-white shadow cursor-pointer opacity-50 transition-all duration-200 hover:scale-110 hover:shadow-md active:scale-95 z-20"
+                            style={{
+                                padding: `${2 * scaleMultiplier}px ${8 * scaleMultiplier}px`,
+                                fontSize: `${10 * scaleMultiplier}px`
+                            }}>
+                                <Users size={10 * scaleMultiplier} />
+                                <span className="font-bold uppercase tracking-wider">Compartida</span>
+                            </div>
+                        )} 
+
+                        {folder.isShared && (
+                            <div 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onShare(folder);
+                            }}
+                            className="absolute mb-3 ml-3 inline-flex items-center gap-1 px-2 py-0.5  text-[10px] font-medium bg-transparent text-white-600 border border-none shadow cursor-pointer opacity-0 transition-all duration-200 hover:scale-110 hover:shadow-md active:scale-95 z-20"
+                            style={{
+                                left: `${14 * scaleMultiplier}px`,
+                                top: `${46 * scaleMultiplier}px`,
+                                padding: `${2 * scaleMultiplier}px ${8 * scaleMultiplier}px`,
+                                fontSize: `${10 * scaleMultiplier}px`
+                            }}>
+                                <Users size={20 * scaleMultiplier} />
+                            </div>
+                        )} 
 
                     </div>
                 </div>

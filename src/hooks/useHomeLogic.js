@@ -109,7 +109,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         // 2. Subjects directly shared with the user
         return subjects.filter(s => 
             sharedFolderSubjectIds.has(s.id) || // In a shared folder
-            (s.uid !== user.uid && s.sharedWith?.includes(user.uid)) // Directly shared
+            (s.uid !== user.uid && s.sharedWithUids?.includes(user.uid)) // Directly shared
         );
     }, [subjects, sharedFolders, user]);
 

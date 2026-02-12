@@ -150,6 +150,7 @@ const SubjectCardFront = ({
                                     }}
                                 />
                             )}
+                            
                         </div>
                     ) : (
                         <div style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}>
@@ -179,16 +180,39 @@ const SubjectCardFront = ({
                         </p>
                     )}
                     
-                    <h3 
-                        className={`font-bold tracking-tight mb-2 truncate ${
-                            isModern 
-                                ? `bg-gradient-to-br ${subject.color} bg-clip-text text-transparent` 
-                                : 'text-white'
-                        }`}
-                        style={{ fontSize: `${24 * scaleMultiplier}px` }}
-                    >
-                        {subject.name}
-                    </h3>
+                    <div className="flex items-center gap-2 mb-2">
+                        {/* 1. Subject Name */}
+                        <h3 
+                            className={`font-bold tracking-tight truncate ${
+                                isModern 
+                                    ? `bg-gradient-to-br ${subject.color} bg-clip-text text-transparent` 
+                                    : 'text-white'
+                            }`}
+                            style={{ fontSize: `${24 * scaleMultiplier}px` }}
+                        >
+                            {subject.name}
+                        </h3>
+
+                        {/* 2. Shared Icon (at the right) */}
+                        {subject.isShared && (
+                            <div 
+                                className={`flex items-center justify-center rounded-full ${
+                                    isModern ? 'bg-indigo-50 dark:bg-indigo-900/30' : 'bg-white/20'
+                                }`}
+                                style={{ 
+                                    width: `${24 * scaleMultiplier}px`, 
+                                    height: `${24 * scaleMultiplier}px`,
+                                    minWidth: `${24 * scaleMultiplier}px` // Prevents shrinking if name is long
+                                }}
+                                title="Asignatura compartida"
+                            >
+                                <Users 
+                                    className={isModern ? "text-indigo-600 dark:text-indigo-400" : "text-white"}
+                                    style={{ width: `${14 * scaleMultiplier}px`, height: `${14 * scaleMultiplier}px` }}
+                                />
+                            </div>
+                        )}
+                    </div>
 
                     {subject.tags && subject.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">
@@ -222,20 +246,7 @@ const SubjectCardFront = ({
                             )}
                         </div>
                     )}
-                    {/* Compartida Badge at Bottom Left */}
-                    {subject.isShared && (
-                        <div 
-                            onClick={e => { e.stopPropagation(); onShare(subject); }}
-                            className="absolute right-4 bottom-0 mb-3 ml-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-transparent text-white-600 border border-white shadow cursor-pointer opacity-30 transition-all duration-200 hover:scale-110 hover:shadow-md active:scale-95 z-20"
-                            style={{
-                                padding: `${2 * scaleMultiplier}px ${8 * scaleMultiplier}px`,
-                                fontSize: `${10 * scaleMultiplier}px`
-                            }}
-                        >
-                            <Users size={10 * scaleMultiplier} className="text-white-600" />
-                            <span className="font-bold uppercase tracking-wider">Compartida</span>
-                        </div>
-                    )}
+                    
                 </div>
             </div>
         </div>
