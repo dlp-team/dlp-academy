@@ -201,9 +201,9 @@ const FolderCardBody = ({
                             {folder.isShared && (
                                 <div 
                                     className="absolute inset-0 flex items-center justify-center z-10"
-                                    style={{ 
+                                    style={{
                                         // Optional: slight offset if you want it to look like it's peeking out
-                                        bottom: isModern ? 0 : '-4px', 
+                                        bottom: isModern ? 0 : '-6px', 
                                     }} 
                                 >
                                     <div className={`flex items-center justify-center rounded-full opacity-70 ${isModern ? 'bg-black/10' : ''}`}>
