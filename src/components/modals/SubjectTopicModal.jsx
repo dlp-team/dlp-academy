@@ -90,9 +90,16 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transition-all">
-                
+        <div 
+            // 1. Add onClick to close when clicking the backdrop
+            onClick={onClose}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+        >
+            <div 
+                // 2. Add stopPropagation so clicking INSIDE the modal doesn't close it
+                onClick={(e) => e.stopPropagation()}
+                className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[80vh] overflow-hidden transition-all"
+            >
                 {/* Header */}
                 <div className="p-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50/50 dark:bg-slate-900/50">
                     <div className="flex items-center gap-3">
