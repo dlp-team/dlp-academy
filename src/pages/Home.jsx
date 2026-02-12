@@ -258,14 +258,14 @@ const Home = ({ user }) => {
             return;
         }
 
-        // Only show confirmation if there is a new user who will gain access
+        // Only show confirmation if there is a new user who will gain access (moving INTO a shared folder)
         if (targetFolder && targetFolder.isShared) {
             const droppedShared = new Set(getSharedUids(droppedFolder));
             const targetShared = getSharedUids(targetFolder);
             const newUsers = targetShared.filter(uid => !droppedShared.has(uid));
             console.log('[DEBUG] Checking for new users to share (folder):', { droppedShared: Array.from(droppedShared), targetShared, newUsers });
             if (newUsers.length > 0) {
-                console.log('[DEBUG] Triggering shareConfirm overlay (folder)');
+                // Show confirmation overlay for folder sharing
                 setShareConfirm({
                     open: true,
                     folder: targetFolder,
