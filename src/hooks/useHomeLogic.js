@@ -14,7 +14,6 @@ const normalizeText = (text) => {
 };
 
 export const useHomeLogic = (user, searchQuery = '') => {
-    console.log("DEBUG: useHomeLogic received searchQuery:", searchQuery);
     const navigate = useNavigate();
     
     // Data Logic
@@ -29,12 +28,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
         unshareFolder,
         addSubjectToFolder
     } = useFolders(user);
-
-    console.log('DEBUG: Raw Data from Hooks:', { 
-        subjectsCount: subjects?.length, 
-        foldersCount: folders?.length,
-        loading 
-    });
 
 
 
@@ -138,7 +131,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
     // Get ordered folders for manual mode
     const orderedFolders = useMemo(() => {
         // 1. Normalize Search Query
-        console.log("DEBUG: orderedFolders re-calculating. Query:", searchQuery);
         const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
         // 2. Original Guard: if not in grid or inside a folder, usually return empty 
@@ -153,7 +145,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
                 const folderName = (f.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 return folderName.includes(query);
             });
-            console.log("DEBUG: Folders found for query:", results.length);
         }
 
         // 4. Original Tag Filtering Logic
@@ -171,7 +162,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
     // --- VIEW GROUPING LOGIC ---
     const groupedContent = useMemo(() => {
-        console.log("DEBUG: groupedContent re-calculating. Query:", searchQuery);
         const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         
         // --- NEW: SEARCH LOGIC ---
@@ -180,7 +170,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
                 const subjectName = (s.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 return subjectName.includes(query);
             });
-            console.log("DEBUG: Subjects found for query:", matchedSubjects.length);
             return { 'Resultados de búsqueda': matchedSubjects };
         }
 

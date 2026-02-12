@@ -245,7 +245,6 @@ export const useFolders = (user) => {
 
             // 6. COMMIT CHANGES
             await batch.commit();
-            console.log(`Folder and ${subjectsInFolder.length} subjects shared with ${emailLower}`);
 
             return shareData;
 
@@ -300,7 +299,6 @@ export const useFolders = (user) => {
             });
 
             await batch.commit();
-            console.log(`Unshared with ${email}`);
             return true;
 
         } catch (error) {
@@ -493,12 +491,26 @@ export const useFolders = (user) => {
             }
 
             const folderRef = doc(db, "folders", folderId);
-            batch.update(folderRef, { parentId: newParentId || null, updatedAt: new Date() });
+            let updatePayload = { parentId: newParentId || null, updatedAt: new Date() };
 
+            // If moving into a shared folder, propagate sharing
             if (newParentId) {
                 const newParentRef = doc(db, "folders", newParentId);
                 batch.update(newParentRef, { folderIds: arrayUnion(folderId) });
+                // Fetch new parent folder's sharing info
+                try {
+                    const parentSnap = await getDoc(newParentRef);
+                    if (parentSnap.exists()) {
+                        const parentData = parentSnap.data();
+                        updatePayload.sharedWith = parentData.sharedWith || [];
+                        updatePayload.sharedWithUids = parentData.sharedWithUids || [];
+                        updatePayload.isShared = (parentData.sharedWithUids || []).length > 0;
+                    }
+                } catch (e) {
+                    console.error("Error propagating sharing when moving folder:", e);
+                }
             }
+            batch.update(folderRef, updatePayload);
 
             await batch.commit();
         }

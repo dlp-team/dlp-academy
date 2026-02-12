@@ -2,7 +2,6 @@
 import React from 'react';
 import { useSubjectCardLogic } from '../../hooks/useSubjectCardLogic';
 import SubjectCardFront from './SubjectCardFront';
-import SubjectCardBack from './SubjectCardBack';
 
 const SubjectCard = (props) => {
     const cardRef = React.useRef(null);
@@ -21,8 +20,6 @@ const SubjectCard = (props) => {
 
     const { 
         subject, 
-        isFlipped, 
-        onFlip, 
         onSelect, 
         onSelectTopic, 
         activeMenu, 
@@ -30,7 +27,8 @@ const SubjectCard = (props) => {
         onEdit, 
         onDelete,
         draggable = false,
-        isDragging = false
+        isDragging = false,
+        onOpenTopics
     } = props;
 
     // 1. Start Drag: Create Ghost & Hide Native Image
@@ -143,33 +141,21 @@ const SubjectCard = (props) => {
                     : ''
             }`}>
                 
-                {!isFlipped && (
-                    <SubjectCardFront 
-                        subject={subject}
-                        onSelect={onSelect}
-                        onFlip={onFlip}
-                        activeMenu={activeMenu}
-                        onToggleMenu={onToggleMenu}
-                        onEdit={onEdit}
-                        onDelete={onDelete}
-                        onShare={props.onShare}
-                        isModern={isModern}
-                        fillColor={fillColor}
-                        scaleMultiplier={scaleMultiplier}
-                        topicCount={topicCount}
-                    />
-                )}
-
-                {isFlipped && (
-                    <SubjectCardBack 
-                        subject={subject}
-                        onFlip={onFlip}
-                        onSelectTopic={onSelectTopic}
-                        onSelect={onSelect}
-                        scaleMultiplier={scaleMultiplier}
-                        topicCount={topicCount}
-                    />
-                )}
+                <SubjectCardFront 
+                    subject={subject}
+                    onSelect={onSelect}
+                    // REMOVE: onFlip={onFlip}
+                    activeMenu={activeMenu}
+                    onToggleMenu={onToggleMenu}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onShare={props.onShare}
+                    isModern={isModern}
+                    fillColor={fillColor}
+                    scaleMultiplier={scaleMultiplier}
+                    topicCount={topicCount}
+                    onOpenTopics={onOpenTopics}
+                />
             </div>
         </div>
     );

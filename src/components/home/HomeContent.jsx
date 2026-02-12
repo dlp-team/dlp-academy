@@ -18,8 +18,6 @@ const HomeContent = ({
     toggleGroup,
     currentFolder = null,
     orderedFolders = [],
-    flippedSubjectId,
-    setFlippedSubjectId,
     activeMenu,
     setActiveMenu,
     
@@ -37,6 +35,8 @@ const HomeContent = ({
     handleMoveSubjectWithSource, 
     handleMoveFolderWithSource,
     onShareSubject,
+
+    onOpenTopics,
     
     isDragAndDropEnabled,
     draggedItem,
@@ -253,8 +253,6 @@ const HomeContent = ({
                                                 <div key={`${groupName}-${subject.id}`}>
                                                     <SubjectCard
                                                         subject={subject}
-                                                        isFlipped={flippedSubjectId === subject.id}
-                                                        onFlip={(id) => setFlippedSubjectId(flippedSubjectId === id ? null : id)}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
                                                         onSelect={handleSelectSubject}
@@ -270,6 +268,7 @@ const HomeContent = ({
                                                         onDrop={handleDropReorderSubject}
                                                         draggable={isDragAndDropEnabled}
                                                         position={index}
+                                                        onOpenTopics={onOpenTopics}
                                                     />
                                                 </div>
                                             ))}

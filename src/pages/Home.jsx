@@ -18,6 +18,7 @@ import HomeContent from '../components/home/HomeContent';
 import HomeEmptyState from '../components/home/HomeEmptyState';
 import HomeModals from '../components/home/HomeModals';
 import FolderTreeModal from '../components/modals/FolderTreeModal'; 
+import SubjectTopicsModal from '../components/modals/SubjectTopicModal';
 
 const Home = ({ user }) => {
     // 1. Initialize Logic
@@ -69,7 +70,13 @@ const Home = ({ user }) => {
 
     // ... (State and Filtering Logic omitted for brevity, identical to previous) ...
     // NOTE: Keep all the logic.loading checks, displayedFolders memo, etc.
+            // NEW: Confirmation overlay state for moving folder out of shared folder
+    const [unshareFolderConfirm, setUnshareFolderConfirm] = useState({ open: false, folderId: null, sourceFolder: null, onUnshare: null, onKeepShared: null });
     const [folderContentsModalConfig, setFolderContentsModalConfig] = useState({ isOpen: false, folder: null });
+    const [topicsModalConfig, setTopicsModalConfig] = useState({ 
+        isOpen: false, 
+        subject: null 
+    });
     // Confirmation overlay state for sharing
     const [shareConfirm, setShareConfirm] = useState({ open: false, subjectId: null, folder: null, onConfirm: null });
     const [unshareConfirm, setUnshareConfirm] = useState({ open: false, subjectId: null, folder: null, onConfirm: null });
@@ -97,6 +104,63 @@ const Home = ({ user }) => {
         );
     }
 
+    // Handler for moving folder with confirmation overlays
+    const handleDropOnFolderWrapper = async (targetFolderId, droppedFolderId) => {
+        const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
+        if (targetFolderId === currentFolderId) return;
+        const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
+        const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
+        const currentParentId = droppedFolder ? droppedFolder.parentId || null : null;
+
+        // Always check Firestore for the parent folder's sharing status
+        let sourceFolder = null;
+        if (currentParentId) {
+            try {
+                const parentSnap = await window.firebase.firestore().collection('folders').doc(currentParentId).get();
+                if (parentSnap.exists) {
+                    sourceFolder = { id: currentParentId, ...parentSnap.data() };
+                }
+            } catch (e) {
+                console.error('Error fetching parent folder from Firestore:', e);
+            }
+        }
+
+        // Moving OUT of a shared folder
+        if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
+            setUnshareFolderConfirm({
+                open: true,
+                folderId: droppedFolderId,
+                sourceFolder,
+                onUnshare: async () => {
+                    await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                    await window.firebase.firestore().collection('folders').doc(droppedFolderId).update({
+                        sharedWith: [],
+                        sharedWithUids: [],
+                        isShared: false,
+                        updatedAt: new Date()
+                    });
+                    setUnshareFolderConfirm({ open: false, folderId: null, sourceFolder: null, onUnshare: null, onKeepShared: null });
+                },
+                onKeepShared: async () => {
+                    await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                    setUnshareFolderConfirm({ open: false, folderId: null, sourceFolder: null, onUnshare: null, onKeepShared: null });
+                }
+            });
+        } else if (targetFolder && targetFolder.isShared) {
+            setShareFolderConfirm({
+                open: true,
+                folderId: droppedFolderId,
+                targetFolder,
+                onConfirm: async () => {
+                    await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                    setShareFolderConfirm({ open: false, folderId: null, targetFolder: null, onConfirm: null });
+                }
+            });
+        } else {
+            await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+        }
+    };
+
     // --- HANDLERS (Same as before) ---
     const handleSaveFolderWrapper = (folderData) => {
         const dataWithParent = { ...folderData, parentId: logic.currentFolder ? logic.currentFolder.id : null };
@@ -115,83 +179,90 @@ const Home = ({ user }) => {
     };
     const handleBreadcrumbDrop = async (targetFolderId, subjectId, droppedFolderId) => {
         const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
-        if (subjectId) await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-        else if (droppedFolderId) {
+        if (subjectId) {
+            await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+        } else if (droppedFolderId) {
             const droppedFolderObj = (logic.folders || []).find(f => f.id === droppedFolderId);
             if (!droppedFolderObj) return;
             const oldParentId = droppedFolderObj.parentId || null;
-            await moveFolderToParent(droppedFolderId, oldParentId, targetFolderId);
-        }
-    };
-    const handleDropOnFolderWrapper = async (targetFolderId, subjectId) => {
-        const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
-        if (targetFolderId === currentFolderId) return;
-        const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
-        const sourceFolder = (logic.folders || []).find(f => f.id === currentFolderId);
-        // Moving OUT of a shared folder
-        if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
-            setUnshareConfirm({
-                open: true,
-                subjectId,
-                folder: sourceFolder,
-                onConfirm: async () => {
-                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-                    setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+            let sourceFolder = null;
+            if (oldParentId) {
+                try {
+                    const parentSnap = await window.firebase.firestore().collection('folders').doc(oldParentId).get();
+                    if (parentSnap.exists) {
+                        sourceFolder = { id: oldParentId, ...parentSnap.data() };
+                    }
+                } catch (e) {
+                    // ...existing code...
                 }
-            });
-        } else if (targetFolder && targetFolder.isShared) {
-            // Only show confirmation if target is shared with more people than the source (parent) folder
-            const targetUids = Array.isArray(targetFolder.sharedWithUids) ? targetFolder.sharedWithUids : [];
-            const sourceUids = sourceFolder && Array.isArray(sourceFolder.sharedWithUids) ? sourceFolder.sharedWithUids : [];
-            // Check if target has more UIDs than source, or any extra UIDs
-            const extraUids = targetUids.filter(uid => !sourceUids.includes(uid));
-            if (!sourceFolder || extraUids.length > 0) {
-                setShareConfirm({
+            }
+            if (sourceFolder && sourceFolder.isShared) {
+                console.log('[DEBUG] Overlay should appear: handleBreadcrumbDrop', {
+                    droppedFolderId,
+                    oldParentId,
+                    sourceFolder
+                });
+                setUnshareFolderConfirm({
                     open: true,
-                    subjectId,
-                    folder: targetFolder,
-                    onConfirm: async () => {
-                        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-                        setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                    folderId: droppedFolderId,
+                    sourceFolder,
+                    onUnshare: async () => {
+                        console.log('[DEBUG] onUnshare triggered: handleBreadcrumbDrop', { droppedFolderId });
+                        await moveFolderToParent(droppedFolderId, oldParentId, targetFolderId);
+                        await window.firebase.firestore().collection('folders').doc(droppedFolderId).update({
+                            sharedWith: [],
+                            sharedWithUids: [],
+                            isShared: false,
+                            updatedAt: new Date()
+                        });
+                        setUnshareFolderConfirm({ open: false, folderId: null, sourceFolder: null, onUnshare: null, onKeepShared: null });
+                    },
+                    onKeepShared: async () => {
+                        console.log('[DEBUG] onKeepShared triggered: handleBreadcrumbDrop', { droppedFolderId });
+                        await moveFolderToParent(droppedFolderId, oldParentId, targetFolderId);
+                        setUnshareFolderConfirm({ open: false, folderId: null, sourceFolder: null, onUnshare: null, onKeepShared: null });
                     }
                 });
             } else {
-                await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+                await moveFolderToParent(droppedFolderId, oldParentId, targetFolderId);
             }
-        } else {
-            await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
         }
     };
-                {/* Overlay for unsharing confirmation when moving subject out of shared folder */}
-                {unshareConfirm.open && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
-                        <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
-                            <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
-                                <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C7.305 20.5 3.5 16.695 3.5 12S7.305 3.5 12 3.5 20.5 7.305 20.5 12 16.695 20.5 12 20.5z" /></svg>
-                            </div>
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                                Vas a mover una asignatura fuera de una carpeta compartida
-                            </h3>
-                            <p className="text-gray-500 dark:text-gray-400 mb-6">
-                                Esto hará que la asignatura deje de estar compartida automáticamente con las personas que tenían acceso a la carpeta <span className="font-semibold">"{unshareConfirm.folder?.name}"</span>.<br />¿Deseas continuar?
-                            </p>
-                            <div className="flex justify-center gap-4">
-                                <button
-                                    className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
-                                    onClick={() => setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null })}
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    className="px-6 py-2 rounded-xl bg-yellow-600 text-white font-bold shadow-lg hover:bg-yellow-700 transition-colors"
-                                    onClick={unshareConfirm.onConfirm}
-                                >
-                                    Sí, dejar de compartir
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+    {/* Overlay for unsharing confirmation when moving subject out of shared folder */}
+    {unshareConfirm.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
+                <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
+                    <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C7.305 20.5 3.5 16.695 3.5 12S7.305 3.5 12 3.5 20.5 7.305 20.5 12 16.695 20.5 12 20.5z" /></svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                    Vas a mover una asignatura fuera de una carpeta compartida
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">
+                    Esto hará que la asignatura deje de estar compartida automáticamente con las personas que tenían acceso a la carpeta <span className="font-semibold">"{unshareConfirm.folder?.name}"</span>.<br />¿Deseas continuar?
+                </p>
+                <div className="flex justify-center gap-4">
+                    <button
+                        className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                        onClick={() => setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null })}
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        className="px-6 py-2 rounded-xl bg-yellow-600 text-white font-bold shadow-lg hover:bg-yellow-700 transition-colors"
+                        onClick={unshareConfirm.onConfirm}
+                    >
+                        Sí, dejar de compartir
+                    </button>
+                </div>
+            </div>
+        </div>
+    )}
+            
+    
+    const handleOpenTopics = (subject) => {
+        setTopicsModalConfig({ isOpen: true, subject });
+    };
     const handleNestFolder = async (targetFolderId, droppedFolderId) => {
         if (targetFolderId === droppedFolderId) return;
         const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
@@ -217,7 +288,48 @@ const Home = ({ user }) => {
         if (logic.currentFolder) await moveSubjectToParent(subjectId, logic.currentFolder.id, logic.currentFolder.parentId);
     };
     const handlePromoteFolderWrapper = async (folderId) => {
-        if (logic.currentFolder && folderId !== logic.currentFolder.id) await moveFolderToParent(folderId, logic.currentFolder.id, logic.currentFolder.parentId);
+        if (logic.currentFolder && folderId !== logic.currentFolder.id) {
+            const currentParentId = logic.currentFolder.id;
+            let sourceFolder = null;
+            try {
+                const parentSnap = await window.firebase.firestore().collection('folders').doc(currentParentId).get();
+                if (parentSnap.exists) {
+                    sourceFolder = { id: currentParentId, ...parentSnap.data() };
+                }
+            } catch (e) {
+                // ...existing code...
+            }
+            if (sourceFolder && sourceFolder.isShared) {
+                console.log('[DEBUG] Overlay should appear: handlePromoteFolderWrapper', {
+                    folderId,
+                    currentParentId,
+                    sourceFolder
+                });
+                setUnshareFolderConfirm({
+                    open: true,
+                    folderId,
+                    sourceFolder,
+                    onUnshare: async () => {
+                        console.log('[DEBUG] onUnshare triggered: handlePromoteFolderWrapper', { folderId });
+                        await moveFolderToParent(folderId, currentParentId, logic.currentFolder.parentId);
+                        await window.firebase.firestore().collection('folders').doc(folderId).update({
+                            sharedWith: [],
+                            sharedWithUids: [],
+                            isShared: false,
+                            updatedAt: new Date()
+                        });
+                        setUnshareFolderConfirm({ open: false, folderId: null, sourceFolder: null, onUnshare: null, onKeepShared: null });
+                    },
+                    onKeepShared: async () => {
+                        console.log('[DEBUG] onKeepShared triggered: handlePromoteFolderWrapper', { folderId });
+                        await moveFolderToParent(folderId, currentParentId, logic.currentFolder.parentId);
+                        setUnshareFolderConfirm({ open: false, folderId: null, sourceFolder: null, onUnshare: null, onKeepShared: null });
+                    }
+                });
+            } else {
+                await moveFolderToParent(folderId, currentParentId, logic.currentFolder.parentId);
+            }
+        }
     };
     const handleShowFolderContents = (folder) => { setFolderContentsModalConfig({ isOpen: true, folder }); };
     const handleNavigateFromTree = (folder) => { setFolderContentsModalConfig({ isOpen: false, folder: null }); logic.setCurrentFolder(folder); };
@@ -367,6 +479,44 @@ const Home = ({ user }) => {
                                 </div>
                             </div>
                         )}
+                        {/* Overlay for unsharing confirmation when moving folder out of shared folder */}
+                        {unshareFolderConfirm.open && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
+                                <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
+                                    <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
+                                        <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C7.305 20.5 3.5 16.695 3.5 12S7.305 3.5 12 3.5 20.5 7.305 20.5 12 16.695 20.5 12 20.5z" /></svg>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                        Vas a mover la carpeta <span className="text-indigo-600 dark:text-indigo-400">
+                                            "{logic.folders?.find(f => f.id === unshareFolderConfirm.folderId)?.name}"
+                                        </span> fuera de una carpeta compartida
+                                    </h3>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-6">
+                                        Esto hará que la carpeta deje de estar compartida automáticamente con las personas que tenían acceso a la carpeta <span className="font-semibold">"{unshareFolderConfirm.sourceFolder?.name}"</span>.<br />¿Deseas continuar?
+                                    </p>
+                                    <div className="flex justify-center gap-4">
+                                        <button
+                                            className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
+                                            onClick={() => setUnshareFolderConfirm({ open: false, folderId: null, sourceFolder: null, onUnshare: null, onKeepShared: null })}
+                                        >
+                                            Cancelar
+                                        </button>
+                                        <button
+                                            className="px-6 py-2 rounded-xl bg-yellow-600 text-white font-bold shadow-lg hover:bg-yellow-700 transition-colors"
+                                            onClick={unshareFolderConfirm.onUnshare}
+                                        >
+                                            Sí, dejar de compartir
+                                        </button>
+                                        <button
+                                            className="px-6 py-2 rounded-xl bg-indigo-600 text-white font-bold shadow-lg hover:bg-indigo-700 transition-colors"
+                                            onClick={unshareFolderConfirm.onKeepShared}
+                                        >
+                                            Sí, mantener compartido
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         <BreadcrumbNav 
                             currentFolder={logic.currentFolder} 
                             onNavigate={logic.setCurrentFolder}
@@ -414,6 +564,7 @@ const Home = ({ user }) => {
                                         
                                         // NEW: Pass the robust move handler
                                         handleMoveSubjectWithSource={handleTreeMoveSubject}
+                                        onOpenTopics={handleOpenTopics}
                                         
                                         isDragAndDropEnabled={logic.isDragAndDropEnabled}
                                         draggedItem={logic.draggedItem}
@@ -486,6 +637,12 @@ const Home = ({ user }) => {
                 onMoveSubjectToFolder={handleTreeMoveSubject}
                 onNestFolder={handleNestFolder}
                 onReorderSubject={handleTreeReorderSubject}
+            />
+
+            <SubjectTopicsModal 
+                isOpen={topicsModalConfig.isOpen}
+                onClose={() => setTopicsModalConfig({ ...topicsModalConfig, isOpen: false })}
+                subject={topicsModalConfig.subject}
             />
         </div>
     );

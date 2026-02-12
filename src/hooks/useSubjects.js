@@ -163,7 +163,6 @@ export const useSubjects = (user) => {
                 isShared: true,
                 updatedAt: new Date()
             });
-            console.log(`Subject ${subjectId} shared with ${emailLower}`);
             return shareData;
 
         } catch (error) {
@@ -202,7 +201,6 @@ export const useSubjects = (user) => {
                 sharedWithUids: arrayRemove(targetUid),
                 updatedAt: new Date()
             });
-            console.log(`Subject ${subjectId} unshared with ${emailLower}`);
             return true;
 
         } catch (error) {

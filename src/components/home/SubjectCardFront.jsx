@@ -16,7 +16,8 @@ const SubjectCardFront = ({
     isModern,
     fillColor,
     scaleMultiplier,
-    topicCount
+    topicCount,
+    onOpenTopics
 }) => {
     const [isHovered, setIsHovered] = useState(false);
 
@@ -24,7 +25,12 @@ const SubjectCardFront = ({
     const shiftX = 48 * scaleMultiplier;
 
     return (
-        <div className="absolute inset-0 cursor-pointer" onClick={() => onSelect(subject.id)}>
+        <div 
+            className="absolute inset-0 cursor-pointer" 
+            onClick={() => onSelect(subject.id)}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+        >
             
             {/* Classic Background: Full Gradient */}
             {!isModern && (
@@ -53,7 +59,11 @@ const SubjectCardFront = ({
                 }}
             >
                 {/* 1. Badge / Flipper (The one that shifts) */}
-                <div 
+                <div
+                    onClick={(e) => { 
+                        e.stopPropagation(); 
+                        onOpenTopics && onOpenTopics(subject); // UPDATED: Direct call to modal
+                    }} 
                     className={`transition-all duration-300 ease-out 
                         group-hover:-translate-x-[var(--shift-x)] 
                         ${activeMenu === subject.id ? '-translate-x-[var(--shift-x)]' : ''}
@@ -62,14 +72,17 @@ const SubjectCardFront = ({
                         '--shift-x': `${shiftX}px`,
                     }}
                 >
-                    <div
-                        onClick={(e) => { e.stopPropagation(); onFlip(subject.id); }}
+                    <div 
+                        onClick={(e) => { 
+                            e.stopPropagation(); 
+                            onOpenTopics && onOpenTopics(subject); // UPDATED: Fixes the crash
+                        }} 
                         className={`${
-                            isModern
-                                ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50'
+                            isModern 
+                                ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50' 
                                 : 'bg-white/20 backdrop-blur-md border border-white/30 text-white'
                         } rounded-full cursor-pointer hover:scale-105 flex items-center gap-2 shadow-sm transition-all`}
-                        style={{
+                        style={{ 
                             fontSize: `${12 * scaleMultiplier}px`,
                             padding: `${6 * scaleMultiplier}px ${12 * scaleMultiplier}px`
                         }}
@@ -77,6 +90,7 @@ const SubjectCardFront = ({
                         <span className="font-bold whitespace-nowrap">
                             {topicCount} {topicCount === 1 ? 'tema' : 'temas'}
                         </span>
+                        {/* You might want to change this icon to List or Eye instead of ChevronRight if it opens a modal */}
                         <ChevronRight size={14 * scaleMultiplier} className="opacity-70" />
                     </div>
                 </div>
