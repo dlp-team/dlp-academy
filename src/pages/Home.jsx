@@ -34,6 +34,21 @@ const Home = ({ user }) => {
     const logic = useHomeLogic(user, searchQuery);
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
 
+    // Persist last visited tab and folder
+    const didRestoreRef = React.useRef(false);
+    React.useEffect(() => {
+        if (didRestoreRef.current) return;
+        if (!logic || !logic.folders) return;
+        const lastTab = localStorage.getItem('dlp_last_viewMode');
+        const lastFolderId = localStorage.getItem('dlp_last_folderId');
+        if (lastTab && logic.setViewMode) logic.setViewMode(lastTab);
+        if (lastFolderId && logic.setCurrentFolder) {
+            const folder = logic.folders.find(f => f.id === lastFolderId);
+            if (folder) logic.setCurrentFolder(folder);
+        }
+        didRestoreRef.current = true;
+    }, [logic.folders]);
+
 
     // Helper function to normalize text for comparison
     const normalizeText = (text) => {
@@ -100,6 +115,15 @@ const Home = ({ user }) => {
         const liveFolder = (logic.folders || []).find(f => f.id === folderContentsModalConfig.folder.id);
         return liveFolder || folderContentsModalConfig.folder;
     }, [logic.folders, folderContentsModalConfig.folder]);
+
+    // Persist viewMode and currentFolder changes
+    React.useEffect(() => {
+        if (logic.viewMode) localStorage.setItem('dlp_last_viewMode', logic.viewMode);
+    }, [logic.viewMode]);
+    React.useEffect(() => {
+        if (logic.currentFolder && logic.currentFolder.id) localStorage.setItem('dlp_last_folderId', logic.currentFolder.id);
+        if (!logic.currentFolder) localStorage.removeItem('dlp_last_folderId');
+    }, [logic.currentFolder]);
 
     if (!user || logic.loading || logic.loadingFolders) {
         return (
@@ -423,7 +447,10 @@ const Home = ({ user }) => {
                 >
                     <HomeControls 
                         viewMode={logic.viewMode}
-                        setViewMode={logic.setViewMode}
+                        setViewMode={(mode) => {
+                            logic.setViewMode(mode);
+                            if (mode) localStorage.setItem('dlp_last_viewMode', mode);
+                        }}
                         layoutMode={logic.layoutMode}
                         setLayoutMode={logic.setLayoutMode}
                         cardScale={logic.cardScale}
@@ -434,7 +461,11 @@ const Home = ({ user }) => {
                         currentFolder={logic.currentFolder}
                         setFolderModalConfig={logic.setFolderModalConfig}
                         setCollapsedGroups={logic.setCollapsedGroups}
-                        setCurrentFolder={logic.setCurrentFolder}
+                        setCurrentFolder={(folder) => {
+                            logic.setCurrentFolder(folder);
+                            if (folder && folder.id) localStorage.setItem('dlp_last_folderId', folder.id);
+                            if (!folder) localStorage.removeItem('dlp_last_folderId');
+                        }}
                         isDragAndDropEnabled={logic.isDragAndDropEnabled}
                         draggedItem={logic.draggedItem}
                         draggedItemType={logic.draggedItemType}
