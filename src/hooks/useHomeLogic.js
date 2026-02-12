@@ -54,23 +54,22 @@ export const useHomeLogic = (user, searchQuery = '') => {
     // Guarantee folder persistence and sync with folders array
     useEffect(() => {
         if (!folders || folders.length === 0) {
-            console.log('[FOLDER PERSIST] Folders not loaded yet.');
             return;
         }
         const lastFolderId = localStorage.getItem('dlp_last_folderId');
-        console.log('[FOLDER PERSIST] useEffect triggered. lastFolderId:', lastFolderId, 'currentFolder:', currentFolder ? currentFolder.id : null, 'folders:', folders.map(f => f.id));
+        //
         // If currentFolder is not set or not found in folders, restore or reset
         if (lastFolderId) {
             const folder = folders.find(f => f.id === lastFolderId);
             if (folder && (!currentFolder || currentFolder.id !== folder.id)) {
-                console.log('[FOLDER PERSIST] Restoring folder from localStorage:', folder);
+                //
                 setCurrentFolder(folder);
             } else if (!folder && currentFolder) {
-                console.log('[FOLDER PERSIST] Folder id in localStorage not found, resetting currentFolder.');
+                //
                 setCurrentFolder(null);
             }
         } else if (currentFolder) {
-            console.log('[FOLDER PERSIST] No lastFolderId in localStorage, resetting currentFolder.');
+            //
             setCurrentFolder(null);
         }
     }, [folders]);
@@ -431,21 +430,21 @@ export const useHomeLogic = (user, searchQuery = '') => {
     };
 
     const handleOpenFolder = (folder) => {
-        console.log('[FOLDER PERSIST] handleOpenFolder called with:', folder);
+        //
         if (folder && folder.id) {
             const found = folders.find(f => f.id === folder.id);
             setCurrentFolder(found || null);
             if (found) {
                 localStorage.setItem('dlp_last_folderId', found.id);
-                console.log('[FOLDER PERSIST] Saved folder id to localStorage:', found.id);
+                //
             } else {
                 localStorage.removeItem('dlp_last_folderId');
-                console.log('[FOLDER PERSIST] Folder not found, removed from localStorage');
+                //
             }
         } else {
             setCurrentFolder(null);
             localStorage.removeItem('dlp_last_folderId');
-            console.log('[FOLDER PERSIST] Cleared currentFolder and removed from localStorage');
+            //
         }
         // If we're viewing shared content, switch back to grid view to show folder contents
         if (viewMode === 'shared') {
