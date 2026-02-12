@@ -25,6 +25,8 @@ import FolderTreeModal from '../components/modals/FolderTreeModal';
 import SubjectTopicsModal from '../components/modals/SubjectTopicModal';
 
 const Home = ({ user }) => {
+    // Debug: print folderId from localStorage on every mount
+    console.log('[FOLDER PERSIST] On mount, localStorage.dlp_last_folderId =', localStorage.getItem('dlp_last_folderId'));
     // Top-level debug: confirm Home is mounted
     React.useEffect(() => {
         console.log('[DEBUG] Home component mounted');
@@ -120,10 +122,7 @@ const Home = ({ user }) => {
     React.useEffect(() => {
         if (logic.viewMode) localStorage.setItem('dlp_last_viewMode', logic.viewMode);
     }, [logic.viewMode]);
-    React.useEffect(() => {
-        if (logic.currentFolder && logic.currentFolder.id) localStorage.setItem('dlp_last_folderId', logic.currentFolder.id);
-        if (!logic.currentFolder) localStorage.removeItem('dlp_last_folderId');
-    }, [logic.currentFolder]);
+    // Removed effect that clears dlp_last_folderId when logic.currentFolder is null
 
     if (!user || logic.loading || logic.loadingFolders) {
         return (
@@ -400,7 +399,18 @@ const Home = ({ user }) => {
         }
     };
     const handleShowFolderContents = (folder) => { setFolderContentsModalConfig({ isOpen: true, folder }); };
-    const handleNavigateFromTree = (folder) => { setFolderContentsModalConfig({ isOpen: false, folder: null }); logic.setCurrentFolder(folder); };
+    const handleNavigateFromTree = (folder) => {
+        setFolderContentsModalConfig({ isOpen: false, folder: null });
+        logic.setCurrentFolder(folder);
+        if (folder && folder.id) {
+            localStorage.setItem('dlp_last_folderId', folder.id);
+            console.log('[FOLDER PERSIST] Saved folder id to localStorage (handleNavigateFromTree):', folder.id);
+        }
+        if (!folder) {
+            localStorage.removeItem('dlp_last_folderId');
+            console.log('[FOLDER PERSIST] Removed folder id from localStorage (handleNavigateFromTree)');
+        }
+    };
     const handleNavigateSubjectFromTree = (subject) => { setFolderContentsModalConfig({ isOpen: false, folder: null }); logic.navigate(`/home/subject/${subject.id}`); };
     
     // EXPOSE THIS
@@ -463,8 +473,14 @@ const Home = ({ user }) => {
                         setCollapsedGroups={logic.setCollapsedGroups}
                         setCurrentFolder={(folder) => {
                             logic.setCurrentFolder(folder);
-                            if (folder && folder.id) localStorage.setItem('dlp_last_folderId', folder.id);
-                            if (!folder) localStorage.removeItem('dlp_last_folderId');
+                            if (folder && folder.id) {
+                                localStorage.setItem('dlp_last_folderId', folder.id);
+                                console.log('[FOLDER PERSIST] Saved folder id to localStorage (setCurrentFolder):', folder.id);
+                            }
+                            if (!folder) {
+                                localStorage.removeItem('dlp_last_folderId');
+                                console.log('[FOLDER PERSIST] Removed folder id from localStorage (setCurrentFolder)');
+                            }
                         }}
                         isDragAndDropEnabled={logic.isDragAndDropEnabled}
                         draggedItem={logic.draggedItem}
@@ -603,7 +619,11 @@ const Home = ({ user }) => {
                         )}
                         <BreadcrumbNav 
                             currentFolder={logic.currentFolder} 
-                            onNavigate={logic.setCurrentFolder}
+                            onNavigate={(folder) => {
+                                logic.setCurrentFolder(folder);
+                                if (folder && folder.id) localStorage.setItem('dlp_last_folderId', folder.id);
+                                if (!folder) localStorage.removeItem('dlp_last_folderId');
+                            }}
                             allFolders={logic.folders || []}
                             onDropOnBreadcrumb={handleBreadcrumbDrop}
                             draggedItem={logic.draggedItem}
@@ -637,7 +657,17 @@ const Home = ({ user }) => {
                                         setDeleteConfig={logic.setDeleteConfig}
                                         
                                         handleSelectSubject={(id) => logic.navigate(`/home/subject/${id}`)}
-                                        handleOpenFolder={logic.setCurrentFolder}
+                                        handleOpenFolder={(folder) => {
+                                            logic.setCurrentFolder(folder);
+                                            if (folder && folder.id) {
+                                                localStorage.setItem('dlp_last_folderId', folder.id);
+                                                console.log('[FOLDER PERSIST] Saved folder id to localStorage (handleOpenFolder):', folder.id);
+                                            }
+                                            if (!folder) {
+                                                localStorage.removeItem('dlp_last_folderId');
+                                                console.log('[FOLDER PERSIST] Removed folder id from localStorage (handleOpenFolder)');
+                                            }
+                                        }}
                                         handleShareFolder={logic.handleShareFolder}
                                         handlePromoteSubject={handlePromoteSubjectWrapper}
                                         handlePromoteFolder={handlePromoteFolderWrapper}
@@ -716,7 +746,17 @@ const Home = ({ user }) => {
                 rootFolder={activeModalFolder}
                 allFolders={logic.folders || []}
                 allSubjects={logic.subjects || []}
-                onNavigateFolder={handleNavigateFromTree}
+                onNavigateFolder={(folder) => {
+                    handleNavigateFromTree(folder);
+                    if (folder && folder.id) {
+                        localStorage.setItem('dlp_last_folderId', folder.id);
+                        console.log('[FOLDER PERSIST] Saved folder id to localStorage (onNavigateFolder):', folder.id);
+                    }
+                    if (!folder) {
+                        localStorage.removeItem('dlp_last_folderId');
+                        console.log('[FOLDER PERSIST] Removed folder id from localStorage (onNavigateFolder)');
+                    }
+                }}
                 onNavigateSubject={handleNavigateSubjectFromTree}
                 onMoveSubjectToFolder={handleTreeMoveSubject}
                 onNestFolder={handleNestFolder}
