@@ -1,5 +1,6 @@
 // src/components/home/SubjectCardFront.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronRight, MoreVertical, Edit2, Trash2, Share2 } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../modals/SubjectIcon'; // Adjust path if necessary
 import { Users } from 'lucide-react';
@@ -20,6 +21,18 @@ const SubjectCardFront = ({
     onOpenTopics
 }) => {
     const [isHovered, setIsHovered] = useState(false);
+    const menuBtnRef = useRef(null);
+    const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+
+    useLayoutEffect(() => {
+        if (activeMenu === subject.id && menuBtnRef.current) {
+            const rect = menuBtnRef.current.getBoundingClientRect();
+            setMenuPos({
+                top: rect.bottom + 4,
+                left: rect.left,
+            });
+        }
+    }, [activeMenu, subject.id]);
 
     // Calculate shift factor based on scale - smaller cards have less shift
     const shiftX = 48 * scaleMultiplier;
@@ -98,6 +111,7 @@ const SubjectCardFront = ({
                 {/* 2. Dots Menu (Fixed position on the right) */}
                 <div className="absolute right-0"> 
                     <button
+                        ref={menuBtnRef}
                         onClick={(e) => { e.stopPropagation(); onToggleMenu(subject.id); }}
                         className={`rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer flex items-center justify-center ${
                             isModern
@@ -114,9 +128,17 @@ const SubjectCardFront = ({
                         <MoreVertical size={15 * scaleMultiplier} />
                     </button>
 
-                    {/* Dropdown Menu */}
-                    {activeMenu === subject.id && (
-                        <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 z-50 animate-in fade-in zoom-in-95 duration-100 transition-colors">
+                    {/* Dropdown Menu rendered in a portal to avoid clipping */}
+                    {activeMenu === subject.id && typeof window !== 'undefined' && createPortal(
+                        <div
+                            className="w-32 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-colors"
+                            style={{
+                                position: 'fixed',
+                                top: menuPos.top,
+                                left: menuPos.left,
+                                zIndex: 9999
+                            }}
+                        >
                             <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
                                 <Edit2 size={14} /> Editar
                             </button>
@@ -126,7 +148,8 @@ const SubjectCardFront = ({
                             <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors">
                                 <Trash2 size={14} /> Eliminar
                             </button>
-                        </div>
+                        </div>,
+                        document.body
                     )}
                 </div>
             </div>
@@ -232,7 +255,7 @@ const SubjectCardFront = ({
                         <div className="flex flex-wrap gap-1 mt-1">
                             {subject.tags.slice(0, 3).map(tag => (
                                 <span 
-                                    key={tag} 
+                                    key={tag}
                                     className={`rounded ${
                                         isModern 
                                             ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400' 
@@ -248,11 +271,11 @@ const SubjectCardFront = ({
                             ))}
                             {subject.tags.length > 3 && (
                                 <span 
-                                    className={`${
+                                    className={
                                         isModern 
                                             ? 'text-gray-400 dark:text-gray-500' 
                                             : 'text-white/80'
-                                    }`}
+                                    }
                                     style={{ fontSize: `${10 * scaleMultiplier}px` }}
                                 >
                                     +{subject.tags.length - 3}
