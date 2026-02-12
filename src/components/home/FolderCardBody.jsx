@@ -1,5 +1,6 @@
 // src/components/home/FolderCardBody.jsx
-import React from 'react'; // Removed unused useState
+import React, { useRef, useLayoutEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
 
@@ -21,6 +22,18 @@ const FolderCardBody = ({
 }) => {
     // 1. Logic: No useState needed here. We use CSS for hover states.
     const shiftX = 48 * scaleMultiplier;
+    const menuBtnRef = useRef(null);
+    const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+
+    useLayoutEffect(() => {
+        if (activeMenu === folder.id && menuBtnRef.current) {
+            const rect = menuBtnRef.current.getBoundingClientRect();
+            setMenuPos({
+                top: rect.bottom + 4,
+                left: rect.left,
+            });
+        }
+    }, [activeMenu, folder.id]);
     
     return (
         <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${
@@ -106,6 +119,7 @@ const FolderCardBody = ({
                     {/* 2. Dots Menu */}
                     <div className="absolute right-0"> 
                         <button
+                            ref={menuBtnRef}
                             onClick={(e) => { e.stopPropagation(); onToggleMenu(folder.id); }}
                             className={`rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer flex items-center justify-center ${
                                 isModern
@@ -122,9 +136,17 @@ const FolderCardBody = ({
                             <MoreVertical size={15 * scaleMultiplier} />
                         </button>
 
-                        {/* Dropdown Menu */}
-                        {activeMenu === folder.id && (
-                            <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 z-50 animate-in fade-in zoom-in-95">
+                        {/* Dropdown Menu rendered in a portal */}
+                        {activeMenu === folder.id && typeof window !== 'undefined' && createPortal(
+                            <div
+                                className="w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 animate-in fade-in zoom-in-95 duration-100 transition-colors"
+                                style={{
+                                    position: 'fixed',
+                                    top: menuPos.top,
+                                    left: menuPos.left,
+                                    zIndex: 9999
+                                }}
+                            >
                                 {folder.isOwner ? (
                                     <>
                                         <button onClick={(e) => { e.stopPropagation(); onEdit(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
@@ -141,7 +163,8 @@ const FolderCardBody = ({
                                 ) : (
                                     <div className="p-2 text-xs text-center text-gray-500">Solo lectura</div>
                                 )}
-                            </div>
+                            </div>,
+                            document.body
                         )}
                     </div>
                 </div>
