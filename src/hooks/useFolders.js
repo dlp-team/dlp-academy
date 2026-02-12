@@ -291,10 +291,12 @@ export const useFolders = (user) => {
             subjectIds.forEach(subjectId => {
                 if (typeof subjectId === 'string') {
                     const subjectRef = doc(db, 'subjects', subjectId);
-                    batch.update(subjectRef, {
-                        sharedWith: arrayRemove(newSharedWith.find(u => u.uid === targetUid)),
-                        sharedWithUids: arrayRemove(targetUid)
-                    });
+                    const userObjToRemove = (folderData.sharedWith || []).find(u => u.uid === targetUid);
+                    const updateData = { sharedWithUids: arrayRemove(targetUid) };
+                    if (userObjToRemove !== undefined) {
+                        updateData.sharedWith = arrayRemove(userObjToRemove);
+                    }
+                    batch.update(subjectRef, updateData);
                 }
             });
 
