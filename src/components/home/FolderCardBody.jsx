@@ -194,27 +194,6 @@ const FolderCardBody = ({
                     <div>
                         {/* Badges */}
                         <div className="flex items-center gap-2 mb-2">
-                            {folder.isShared && (
-                                <div 
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    onShare(folder);
-                                }}
-                                className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-medium 
-                                    cursor-pointer transition-all duration-200 hover:scale-125 hover:shadow-md active:scale-95 ${
-                                    isModern 
-                                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800' 
-                                        : 'bg-white/20 text-white border border-white/20'
-                                }`}
-                                style={{
-                                    padding: `${2 * scaleMultiplier}px ${8 * scaleMultiplier}px`,
-                                    fontSize: `${10 * scaleMultiplier}px`
-                                }}>
-                                    <Users size={10 * scaleMultiplier} />
-                                    <span className="font-bold uppercase tracking-wider">Compartida</span>
-                                </div>
-                            )} 
-
                             
                             {folder.parentId && (
                                 <div className={`inline-flex items-center gap-1 rounded-full ${
@@ -292,6 +271,24 @@ const FolderCardBody = ({
                                 )}
                             </div>
                         )}
+
+                        
+                        {folder.isShared && (
+                            <div 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onShare(folder);
+                            }}
+                            className="absolute right-4 bottom-0 mb-3 ml-3 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-transparent text-white-600 border border-white shadow cursor-pointer opacity-50 transition-all duration-200 hover:scale-110 hover:shadow-md active:scale-95 z-20"
+                            style={{
+                                padding: `${2 * scaleMultiplier}px ${8 * scaleMultiplier}px`,
+                                fontSize: `${10 * scaleMultiplier}px`
+                            }}>
+                                <Users size={10 * scaleMultiplier} />
+                                <span className="font-bold uppercase tracking-wider">Compartida</span>
+                            </div>
+                        )} 
+
                     </div>
                 </div>
 

@@ -118,13 +118,30 @@ export const useFolders = (user) => {
     // --- CORE ACTIONS ---
     const addFolder = async (payload) => {
         const parentId = payload.parentId || null;
+        let sharedWith = [];
+        let sharedWithUids = [];
+        let isShared = false;
+        // If parentId exists, inherit sharing from parent
+        if (parentId) {
+            try {
+                const parentSnap = await getDoc(doc(db, "folders", parentId));
+                if (parentSnap.exists()) {
+                    const parentData = parentSnap.data();
+                    sharedWith = parentData.sharedWith || [];
+                    sharedWithUids = parentData.sharedWithUids || [];
+                    isShared = parentData.isShared || false;
+                }
+            } catch (e) {
+                console.error("Error inheriting sharing from parent folder:", e);
+            }
+        }
         const docRef = await addDoc(collection(db, "folders"), {
             ...payload,
             ownerId: user.uid,
             ownerEmail: user.email,
-            sharedWith: [],
-            sharedWithUids: [],
-            isShared: false,
+            sharedWith,
+            sharedWithUids,
+            isShared,
             parentId: parentId,
             folderIds: [],
             subjectIds: [],
