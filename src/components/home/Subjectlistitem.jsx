@@ -33,9 +33,9 @@ const SubjectListItem = ({
             <div className="flex items-center gap-4">
                 {/* ICON */}
                 <div 
-                    className={`${
+                    className={`$${
                         isModern ? 'bg-white/90 dark:bg-slate-900/90' : 'bg-white/20'
-                    } rounded-lg flex items-center justify-center shadow-sm backdrop-blur-sm`}
+                    } rounded-lg flex items-center justify-center shadow-sm backdrop-blur-sm ml-3`}
                     style={{ width: `${iconContainerSize}px`, height: `${iconContainerSize}px` }}
                 >
                     {subject.icon ? (
