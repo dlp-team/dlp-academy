@@ -47,24 +47,6 @@ const ListViewItem = ({
     const [isHovered, setIsHovered] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
     
-    // Ensure dataTransfer payload is correctly set before delegating to the ghost hook
-    const handleLocalDragStart = (e) => {
-        e.stopPropagation();
-        
-        const dragData = {
-            id: item.id,
-            type: 'subject',
-            parentId: parentId 
-        };
-        
-        // Set dataTransfer payloads for drop zones to read!
-        e.dataTransfer.setData('subjectId', item.id);
-        e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
-        
-        // Trigger the external prop if provided
-        if (onDragStart) onDragStart(item); 
-    };
-
     // Initialize custom ghost drag hook
     const { 
         isDragging, 
@@ -74,7 +56,7 @@ const ListViewItem = ({
         item, 
         type: 'subject', 
         cardScale, 
-        onDragStart: handleLocalDragStart, // Pass the local interceptor here
+        onDragStart, 
         onDragEnd 
     });
 
