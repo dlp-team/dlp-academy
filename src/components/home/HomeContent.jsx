@@ -292,26 +292,49 @@ const HomeContent = ({
                                 {layoutMode === 'list' && (
                                      <div className="space-y-2 relative">
                                         
-                                        {/* Crear Nueva Asignatura card for list view */}
-                                        <button
-                                            onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder: currentFolder })}
-                                            className="group flex items-center w-full border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all cursor-pointer mb-2"
+                                        {/* Crear Nueva Asignatura / Drop Zone for list view */}
+                                        <div
+                                            onDragOver={(e) => { e.preventDefault(); setIsRootZoneHovered(true); }}
+                                            onDragLeave={() => setIsRootZoneHovered(false)}
+                                            onDrop={handleRootZoneDrop}
+                                            onClick={() => { if (!draggedItem) setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder: currentFolder }); }}
+                                            className={`group relative w-full border-3 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer mb-2
+                                                ${draggedItem
+                                                    ? isRootZoneHovered
+                                                        ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 scale-105'
+                                                        : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                                    : isRootZoneHovered
+                                                        ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 scale-105'
+                                                        : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                                                }
+                                            `}
                                             style={{
-                                                minHeight: `${64 * (cardScale / 100)}px`,
-                                                paddingLeft: `${32 * (cardScale / 100)}px`,
-                                                paddingRight: `${32 * (cardScale / 100)}px`,
-                                                paddingTop: `${16 * (cardScale / 100)}px`,
-                                                paddingBottom: `${16 * (cardScale / 100)}px`,
+                                                // Match SubjectListItem card height: padding (top+bottom) + icon size
+                                                // padding: 16 * scale (top) + 16 * scale (bottom) = 32 * scale
+                                                // iconContainerSize: 48 * scale
+                                                // total: 80 * scale
+                                                minHeight: `${(48 + 32) * (cardScale / 100)}px`,
                                                 gap: `${16 * (cardScale / 100)}px`
                                             }}
                                         >
-                                            <span className="rounded-full bg-indigo-100 dark:bg-indigo-900/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/60 flex items-center justify-center transition-colors" style={{ width: `${48 * (cardScale / 100)}px`, height: `${48 * (cardScale / 100)}px` }}>
-                                                <Plus className="text-indigo-600 dark:text-indigo-400" size={24 * (cardScale / 100)} />
-                                            </span>
-                                            <span className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors text-lg" style={{ fontSize: `${18 * (cardScale / 100)}px` }}>
-                                                Crear Nueva Asignatura
-                                            </span>
-                                        </button>
+                                            {draggedItem ? (
+                                                <div className="flex flex-row items-center justify-center w-full h-full gap-3">
+                                                    <ArrowUp className={`transition-colors ${isRootZoneHovered ? 'text-amber-700 dark:text-amber-300' : 'text-amber-600 dark:text-amber-400'}`} style={{ width: `${18 * (cardScale / 100)}px`, height: `${18 * (cardScale / 100)}px` }} />
+                                                    <span className={`font-semibold transition-colors text-center ${isRootZoneHovered ? 'text-amber-700 dark:text-amber-300' : 'text-gray-700 dark:text-gray-300 group-hover:text-amber-600 dark:group-hover:text-amber-400'}`}
+                                                        style={{ fontSize: `${18 * (cardScale / 100)}px` }}
+                                                    >
+                                                        {isRootZoneHovered ? (currentFolder ? `Mover al inicio de ${currentFolder.name}` : "Mover al inicio") : 'Arrastra aquí para mover al inicio'}
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-row items-center justify-center w-full h-full gap-3">
+                                                    <Plus className="text-indigo-600 dark:text-indigo-400" style={{ width: `${18 * (cardScale / 100)}px`, height: `${18 * (cardScale / 100)}px` }} />
+                                                    <span className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors text-center" style={{ fontSize: `${18 * (cardScale / 100)}px` }}>
+                                                        Crear Nueva Asignatura
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
                                         
                                         {/* Render Folders */}
                                         {viewMode === 'grid' && orderedFolders.map((folder) => (
