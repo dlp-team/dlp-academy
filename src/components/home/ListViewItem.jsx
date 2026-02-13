@@ -191,8 +191,36 @@ const ListViewItem = ({
                                 <ChevronRight size={20} />
                             </div>
                         </div>
-                        <div className={`flex items-center justify-center rounded-lg bg-gradient-to-br ${item.color || 'from-indigo-500 to-purple-500'}`} style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px`, flexShrink: 0 }}>
-                            {item.icon ? <SubjectIcon iconName={item.icon} className="text-white" style={{ width: `${iconSize}px`, height: `${iconSize}px` }} /> : <Folder className="text-white" style={{ width: `${iconSize}px`, height: `${iconSize}px` }} />}
+                        <div className={`relative flex items-center justify-center rounded-lg bg-gradient-to-br ${item.color || 'from-indigo-500 to-purple-500'}`} style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px`, flexShrink: 0 }}>
+                            {/* Main folder or subject icon */}
+                            {item.icon ? (
+                                <SubjectIcon iconName={item.icon} className="text-white" style={{ width: `${iconSize}px`, height: `${iconSize}px` }} />
+                            ) : (
+                                <Folder className="text-white" style={{ width: `${iconSize}px`, height: `${iconSize}px` }} />
+                            )}
+                            {/* Shared icon inside folder icon, like FolderCardBody, but smaller */}
+                            {type === 'folder' && (
+                                item.isShared === true || (Array.isArray(item.sharedWith) && item.sharedWith.length > 0) || (Array.isArray(item.sharedWithUids) && item.sharedWithUids.length > 0)
+                            ) && (
+                                <div
+                                    className="absolute inset-0 flex items-center justify-center z-10 bottom--"
+                                    style={{ pointerEvents: 'none' }}
+                                >
+                                    <div className="flex items-center justify-center rounded-full opacity-80 bg-none"
+                                        style={{
+                                            width: `${iconSize * 0.45}px`,
+                                            height: `${iconSize * 0.45}px`,
+                                            transform: 'translateY(2px)'
+                                        }}
+                                    >
+                                        <Users
+                                            className="text-white"
+                                            style={{ width: `${iconSize * 0.4}px`, height: `${iconSize * 0.4}px` }}
+                                            strokeWidth={2.5}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex-1 min-w-0 flex items-center gap-2">
