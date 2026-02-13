@@ -89,6 +89,7 @@ const SubjectListItem = ({
                                     ? 'bg-white/50 dark:bg-slate-800/50 text-gray-600 dark:text-gray-400' 
                                     : 'bg-white/20 text-white/90'
                             }`}
+                            style={{ fontSize: `${16 * scale}px` }}
                         >
                             {topicCount} temas
                         </span>

@@ -228,7 +228,7 @@ const FolderListItem = ({
                             )}
                             
                         </div>
-                        <div className="flex items-center flex-wrap gap-x-2 text-gray-500 mt-0.5" style={{ fontSize: `${12 * scale}px` }}>
+                        <div className="flex items-center flex-wrap gap-x-2 text-gray-500 mt-0.5" style={{ fontSize: `${16 * scale}px` }}>
                             {/* Total Count */}
                             <span className="font-medium text-gray-600 dark:text-gray-400">
                                 {totalCount} elementos
