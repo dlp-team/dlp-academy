@@ -292,6 +292,26 @@ const HomeContent = ({
                                 {layoutMode === 'list' && (
                                      <div className="space-y-2 relative">
                                         
+                                        {/* Crear Nueva Asignatura card for list view */}
+                                        <button
+                                            onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder: currentFolder })}
+                                            className="group flex items-center w-full border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all cursor-pointer mb-2"
+                                            style={{
+                                                minHeight: `${64 * (cardScale / 100)}px`,
+                                                paddingLeft: `${32 * (cardScale / 100)}px`,
+                                                paddingRight: `${32 * (cardScale / 100)}px`,
+                                                paddingTop: `${16 * (cardScale / 100)}px`,
+                                                paddingBottom: `${16 * (cardScale / 100)}px`,
+                                                gap: `${16 * (cardScale / 100)}px`
+                                            }}
+                                        >
+                                            <span className="rounded-full bg-indigo-100 dark:bg-indigo-900/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/60 flex items-center justify-center transition-colors" style={{ width: `${48 * (cardScale / 100)}px`, height: `${48 * (cardScale / 100)}px` }}>
+                                                <Plus className="text-indigo-600 dark:text-indigo-400" size={24 * (cardScale / 100)} />
+                                            </span>
+                                            <span className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors text-lg" style={{ fontSize: `${18 * (cardScale / 100)}px` }}>
+                                                Crear Nueva Asignatura
+                                            </span>
+                                        </button>
                                         
                                         {/* Render Folders */}
                                         {viewMode === 'grid' && orderedFolders.map((folder) => (
