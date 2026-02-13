@@ -1,6 +1,6 @@
 // src/components/home/ListViewItem.jsx
 import React, { useState, useMemo } from 'react';
-import { ChevronRight, ChevronDown, Folder, GripVertical } from 'lucide-react';
+import { ChevronRight, ChevronDown, Folder, GripVertical, Users } from 'lucide-react';
 import SubjectIcon from '../modals/SubjectIcon';
 import SubjectListItem from './SubjectListItem';
 
@@ -151,6 +151,10 @@ const ListViewItem = ({
     const paddingY = 16 * scale;
     const paddingX = 16 * scale;
 
+    // Debug: log subject item and isShared property
+    if (type === 'subject') {
+        console.log('ListViewItem subject:', item);
+    }
     return (
         <div className="select-none animate-in fade-in duration-200">
             {/* ROW CONTAINER - Apply indentation here via margin */}
@@ -191,9 +195,31 @@ const ListViewItem = ({
                             {item.icon ? <SubjectIcon iconName={item.icon} className="text-white" style={{ width: `${iconSize}px`, height: `${iconSize}px` }} /> : <Folder className="text-white" style={{ width: `${iconSize}px`, height: `${iconSize}px` }} />}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-gray-800 dark:text-gray-200 truncate" style={{ fontSize: `${18 * scale}px` }}>
-                                {item.name}
-                            </h4>
+                            <div className="flex-1 min-w-0 flex items-center gap-2">
+                                <h4 className="font-bold text-gray-800 dark:text-gray-200 truncate" style={{ fontSize: `${18 * scale}px` }}>
+                                    {item.name}
+                                </h4>
+                                {/* Shared icon for subjects, right of title */}
+                                {type === 'subject' && (
+                                    (item.isShared === true || (Array.isArray(item.sharedWith) && item.sharedWith.length > 0) || (Array.isArray(item.sharedWithUids) && item.sharedWithUids.length > 0)) && (
+                                        <div 
+                                            className={`flex items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/30 ml-2`}
+                                            style={{ 
+                                                width: `${24 * scale}px`, 
+                                                height: `${24 * scale}px`,
+                                                minWidth: `${24 * scale}px` 
+                                            }}
+                                            title="Asignatura compartida"
+                                        >
+                                            <Users 
+                                                className="text-indigo-600 dark:text-indigo-400"
+                                                style={{ width: `${14 * scale}px`, height: `${14 * scale}px` }}
+                                            />
+                                        </div>
+                                    )
+                                )}
+                                
+                            </div>
                             <div className="flex items-center flex-wrap gap-x-2 text-gray-500 mt-0.5" style={{ fontSize: `${12 * scale}px` }}>
                                 {/* Total Count */}
                                 <span className="font-medium text-gray-600 dark:text-gray-400">
@@ -210,6 +236,7 @@ const ListViewItem = ({
                                     {folderCount} carpetas
                                 </span>
                             </div>
+                            
                         </div>
                         <button onClick={(e) => { e.stopPropagation(); onNavigate(item); }} className="text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors" style={{ padding: `${8 * scale}px` }}>
                             <Folder style={{ width: `${20 * scale}px`, height: `${20 * scale}px` }} />

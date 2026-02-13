@@ -1,6 +1,6 @@
 // src/components/home/SubjectListItem.jsx
 import React, { useState } from 'react';
-import { ChevronRight, Edit2, Trash2, MoreVertical } from 'lucide-react';
+import { ChevronRight, Edit2, Trash2, MoreVertical, Users } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
 
 const SubjectListItem = ({ 
@@ -53,12 +53,35 @@ const SubjectListItem = ({
 
                 {/* INFO */}
                 <div className="flex-1 min-w-0">
-                    <h3 
-                        className={`font-bold truncate ${isModern ? 'text-gray-800 dark:text-gray-100' : 'text-white'}`}
-                        style={{ fontSize: `${18 * scale}px` }}
-                    >
-                        {subject.name}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                        <h3 
+                            className={`font-bold truncate ${isModern ? 'text-gray-800 dark:text-gray-100' : 'text-white'}`}
+                            style={{ fontSize: `${18 * scale}px` }}
+                        >
+                            {subject.name}
+                        </h3>
+                        {/* Shared icon for subjects, right of title */}
+                        {(
+                            subject.isShared === true ||
+                            (Array.isArray(subject.sharedWith) && subject.sharedWith.length > 0) ||
+                            (Array.isArray(subject.sharedWithUids) && subject.sharedWithUids.length > 0)
+                        ) && (
+                            <div
+                                className={`flex items-center justify-center rounded-full ml-1 ${isModern ? 'bg-none-50 dark:bg-none-900/30' : 'bg-white'}`}
+                                style={{
+                                    width: `${20 * scale}px`,
+                                    height: `${20 * scale}px`,
+                                    minWidth: `${20 * scale}px`
+                                }}
+                                title="Asignatura compartida"
+                            >
+                                <Users
+                                    className="text-indigo-600 dark:text-indigo-400"
+                                    style={{ width: `${12 * scale}px`, height: `${12 * scale}px` }}
+                                />
+                            </div>
+                        )}
+                    </div>
                     <div className="flex items-center gap-2 mt-1">
                         <span 
                             className={`text-xs px-2 py-0.5 rounded-full ${
