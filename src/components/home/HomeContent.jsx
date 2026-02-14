@@ -162,17 +162,23 @@ const HomeContent = ({
                         {showCollapsibleGroups && (
                             <button
                                 onClick={() => toggleGroup(groupName)}
-                                className="flex items-center gap-2 mb-4 border-b border-gray-200 dark:border-slate-700 pb-2 transition-colors w-full text-left group hover:border-indigo-300 dark:hover:border-indigo-600 cursor-pointer"
+                                className={`flex items-center gap-2 w-full text-left group rounded-lg py-2 px-1 mb-4 transition-colors
+                                    ${viewMode === 'courses' ? 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20' : 'hover:bg-pink-50 dark:hover:bg-pink-900/20'}
+                                `}
                             >
-                                <ChevronDown size={20} className={`text-gray-400 dark:text-gray-500 transition-transform ${isCollapsed ? '-rotate-90' : ''}`} />
                                 {viewMode === 'courses' && <FolderIcon className="text-indigo-500 dark:text-indigo-400" size={20} />}
                                 {viewMode === 'tags' && <Tag className="text-pink-500 dark:text-pink-400" size={20} />}
-                                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                <h3 className="text-xl font-bold text-gray-800 dark:text-gray-100 flex-1 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                     {groupName}
                                 </h3>
-                                <span className="bg-gray-100 dark:bg-slate-800 text-gray-500 dark:text-gray-400 text-xs px-2 py-1 rounded-full transition-colors">
+                                <span className={
+                                    viewMode === 'courses'
+                                        ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2 py-1 rounded-full'
+                                        : 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 text-xs font-bold px-2 py-1 rounded-full'
+                                }>
                                     {groupSubjects.length}
                                 </span>
+                                <span className={`transition-transform ${isCollapsed ? '-rotate-90' : ''}`}>▼</span>
                             </button>
                         )}
 
