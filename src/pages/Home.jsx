@@ -1,6 +1,6 @@
 // src/pages/Home.jsx
 import React, { useMemo, useState } from 'react';
-import { Loader2, ArrowUpCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 // Firebase
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
@@ -34,6 +34,7 @@ const Home = ({ user }) => {
     const logic = useHomeLogic(user, searchQuery);
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
+    
 
     // Persist last visited tab and folder
     const didRestoreRef = React.useRef(false);

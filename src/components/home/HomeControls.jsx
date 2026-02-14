@@ -117,6 +117,7 @@ const HomeControls = ({
                         selectedTags={selectedTags}
                         setSelectedTags={handleTagsChange}
                         onOverlayToggle={onFilterOverlayChange}
+                        activeFilter={activeFilter} 
                     />
                 )}
 

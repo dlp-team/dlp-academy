@@ -635,7 +635,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         handleShareFolder,
         toggleGroup,
         touchSubject,
-        handleFilterChange, // New Handler exposed
+        handleFilterChange,
         
         // Drag & Drop Handlers
         handleDragStartSubject,

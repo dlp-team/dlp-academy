@@ -55,7 +55,7 @@ const HomeContent = ({
     navigate,
     activeFilter,
     filterOverlayOpen = false,
-    onCloseFilterOverlay = () => {}
+    onCloseFilterOverlay = () => {},
 }) => {
     console.log('[HomeContent] render', { activeFilter, groupedContent, orderedFolders });
     const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
@@ -162,7 +162,9 @@ const HomeContent = ({
 
     
     return (
-        <>
+        <div className={`transition-opacity duration-200 ${
+        filterOverlayOpen ? 'pointer-events-none opacity-100' : ''
+        }`}>
             {groupedContent && Object.entries(groupedContent).map(([groupName, groupSubjects]) => {
                 const isCollapsed = collapsedGroups[groupName];
 
@@ -425,7 +427,7 @@ const HomeContent = ({
                     </div>
                 );
             })}
-        </>
+        </div>
     );
 };
 
