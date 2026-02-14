@@ -93,6 +93,44 @@ export const useHomeLogic = (user, searchQuery = '') => {
         );
     }, [subjects, selectedTags]);
 
+
+    // --- 1. FILTER FOLDERS (Fixing the Search Logic here too) ---
+    const filteredFolders = useMemo(() => {
+        if (!folders) return [];
+        
+        // A. Search Mode: Search ALL folders, ignore hierarchy
+        if (searchQuery) {
+            const query = normalizeText(searchQuery);
+            return folders.filter(f => normalizeText(f.name).includes(query));
+        }
+
+        // B. Navigation Mode: Only show folders in current layer
+        return folders.filter(f => {
+            if (currentFolder) {
+                return f.parentId === currentFolder.id;
+            }
+            return !f.parentId; // Root folders
+        });
+    }, [folders, currentFolder, searchQuery]);
+
+    // --- 2. FILTER SUBJECTS ---
+    const filteredSubjects = useMemo(() => {
+        if (!subjects) return [];
+
+        if (searchQuery) {
+            const query = normalizeText(searchQuery);
+            return subjects.filter(s => normalizeText(s.name).includes(query));
+        }
+
+        return subjects.filter(s => {
+            if (currentFolder) {
+                return s.folderId === currentFolder.id;
+            }
+            return !s.folderId;
+        });
+    }, [subjects, currentFolder, searchQuery]);
+
+
     
     // --- FOLDER HELPERS ---
     // Allow optional subjectsList to enable applying tag filters when needed
@@ -594,8 +632,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
     return {
         // Data
-        subjects,
-        folders,
+        subjects: filteredSubjects, 
+        folders: filteredFolders,
         loading,
         loadingFolders,
         sharedFolders,
