@@ -1,9 +1,17 @@
 // src/components/home/TagFilter.jsx
 import React, { useState } from 'react';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, Folder, BookOpen } from 'lucide-react';
 
-const TagFilter = ({ allTags, selectedTags, setSelectedTags }) => {
+const TagFilter = ({ allTags, selectedTags, setSelectedTags, filterTypes = { folder: true, subject: true }, setFilterTypes = () => {} }) => {
     const [showFilter, setShowFilter] = useState(false);
+    // Local state for type filter if not provided
+    const [localTypes, setLocalTypes] = useState({ folder: true, subject: true });
+    const types = filterTypes || localTypes;
+    const handleTypeToggle = (type) => {
+        const updated = { ...types, [type]: !types[type] };
+        if (setFilterTypes && setFilterTypes !== (() => {})) setFilterTypes(updated);
+        else setLocalTypes(updated);
+    };
 
     const toggleTag = (tag) => {
         if (selectedTags.includes(tag)) {
@@ -45,8 +53,8 @@ const TagFilter = ({ allTags, selectedTags, setSelectedTags }) => {
                     />
                     
                     {/* Filter Panel */}
-                    <div className="absolute top-full mt-2 left-0 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-20 w-80 max-h-96 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
-                        <div className="flex items-center justify-between mb-3">
+                    <div className="absolute top-full mt-2 left-0 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-[60] w-80 max-h-96 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
+                        <div className="flex items-center justify-between mb-3 relative">
                             <span className="text-sm font-bold text-gray-900 dark:text-white">Filtrar por Etiquetas</span>
                             {selectedTags.length > 0 && (
                                 <button
@@ -56,6 +64,25 @@ const TagFilter = ({ allTags, selectedTags, setSelectedTags }) => {
                                     Limpiar
                                 </button>
                             )}
+                            {/* Type filter icons */}
+                            <div className="absolute top-0 right-0 flex gap-2">
+                                <button
+                                    onClick={() => handleTypeToggle('folder')}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${types.folder ? 'bg-indigo-100 border-indigo-400 text-indigo-700' : 'bg-gray-100 border-gray-300 text-gray-400'}`}
+                                    style={{ zIndex: 30 }}
+                                    title="Mostrar carpetas"
+                                >
+                                    <Folder size={18} />
+                                </button>
+                                <button
+                                    onClick={() => handleTypeToggle('subject')}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${types.subject ? 'bg-pink-100 border-pink-400 text-pink-700' : 'bg-gray-100 border-gray-300 text-gray-400'}`}
+                                    style={{ zIndex: 30 }}
+                                    title="Mostrar asignaturas"
+                                >
+                                    <BookOpen size={18} />
+                                </button>
+                            </div>
                         </div>
 
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
