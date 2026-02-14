@@ -2,6 +2,7 @@
 import React from 'react';
 import { useSubjectCardLogic } from '../../hooks/useSubjectCardLogic';
 import SubjectCardFront from './SubjectCardFront';
+import { useGhostDrag } from '../../hooks/useGhostDrag';
 
 const SubjectCard = (props) => {
     const cardRef = React.useRef(null);

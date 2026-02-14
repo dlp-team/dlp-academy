@@ -108,7 +108,7 @@ const FolderListItem = ({
         item, 
         type: 'folder', 
         cardScale, 
-        onDragStart: handleLocalDragStart, // Use local interceptor
+        onDragStart: handleLocalDragStart,
         onDragEnd 
     });
 

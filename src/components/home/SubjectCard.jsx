@@ -28,12 +28,25 @@ const SubjectCard = (props) => {
         onOpenTopics
     } = props;
 
+    const handleLocalDragStart = (e) => {
+        if (draggable) {
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('subjectId', subject.id); // Essential for the drop logic
+            e.dataTransfer.setData('type', 'subject');
+            
+            // Trigger the parent's event (for UI state)
+            if (props.onDragStart) {
+                props.onDragStart(e, subject);
+            }
+        }
+    };
+
 
     const { isDragging: isGhostDragging, itemRef, dragHandlers } = useGhostDrag({
         item: subject,
         type: 'subject',
         cardScale: cardScale,
-        onDragStart: props.onDragStart,
+        onDragStart: handleLocalDragStart,
         onDragEnd: props.onDragEnd
     });
 
