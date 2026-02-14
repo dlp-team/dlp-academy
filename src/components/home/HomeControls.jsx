@@ -26,7 +26,8 @@ const HomeControls = ({
     searchQuery = '',
     setSearchQuery = () => {},
     activeFilter,
-    onFilterOverlayChange
+    onFilterOverlayChange,
+    onScaleOverlayChange
 }) => {
     console.log('[HomeControls] render', { activeFilter, viewMode, layoutMode, selectedTags });
 
@@ -108,6 +109,7 @@ const HomeControls = ({
                 <CardScaleSlider 
                     cardScale={cardScale} 
                     setCardScale={handleCardScaleChange}
+                    onOverlayToggle={onScaleOverlayChange}
                 />
 
                 {/* Tag Filter - Now available in Manual (grid) mode */}
