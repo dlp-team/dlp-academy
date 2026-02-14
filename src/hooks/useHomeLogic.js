@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSubjects } from './useSubjects';
 import { useFolders } from './useFolders';
 import { useUserPreferences } from './useUserPreferences';
+import { EDUCATION_LEVELS } from '../utils/subjectConstants';
 
 const normalizeText = (text) => {
     return (text || '')
@@ -96,20 +97,26 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
     // --- 1. FILTER FOLDERS (Fixing the Search Logic here too) ---
     const filteredFolders = useMemo(() => {
+        // Safety check
         if (!folders) return [];
         
-        // A. Search Mode: Search ALL folders, ignore hierarchy
-        if (searchQuery) {
+        // A. SEARCH MODE: Priority #1
+        // If there is a query, we search the ENTIRE list and return immediately.
+        if (searchQuery && searchQuery.trim().length > 0) {
             const query = normalizeText(searchQuery);
+            // Note: We deliberately do NOT check f.parentId here.
             return folders.filter(f => normalizeText(f.name).includes(query));
         }
 
-        // B. Navigation Mode: Only show folders in current layer
+        // B. NAVIGATION MODE: Priority #2 (Only runs if Search is empty)
+        // This is where we respect the hierarchy/current layer.
         return folders.filter(f => {
             if (currentFolder) {
+                // If we are inside a folder, only show its children
                 return f.parentId === currentFolder.id;
             }
-            return !f.parentId; // Root folders
+            // If we are at root, only show root folders
+            return !f.parentId; 
         });
     }, [folders, currentFolder, searchQuery]);
 
@@ -634,6 +641,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         // Data
         subjects: filteredSubjects, 
         folders: filteredFolders,
+        allRawFolders: folders,
         loading,
         loadingFolders,
         sharedFolders,
