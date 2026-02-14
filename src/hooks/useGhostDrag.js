@@ -38,6 +38,7 @@ export const useGhostDrag = ({ item, type, cardScale = 100, onDragStart, onDragE
                 opacity: '1',
                 zIndex: '10000',
                 pointerEvents: 'none',
+                margin: '0',
                 transition: 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)', // Smoother ease-out
                 transform: `scale(${DRAG_SCALE})`, // Set initial scale
                 transformOrigin: `${offsetX}px ${offsetY}px`,
