@@ -15,7 +15,7 @@ const HomeControls = ({
     selectedTags, setSelectedTags,
     currentFolder,
     setFolderModalConfig,
-    setCollapsedGroups,
+    setCollapsedGroups = () => {},
     setCurrentFolder,
     isDragAndDropEnabled,
     draggedItem,

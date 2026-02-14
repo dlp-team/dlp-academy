@@ -15,7 +15,7 @@ const HomeContent = ({
     cardScale = 100,
     groupedContent = {}, 
     collapsedGroups = {},
-    toggleGroup,
+    toggleGroup = () => {},
     currentFolder = null,
     orderedFolders = [],
     activeMenu,
