@@ -54,7 +54,8 @@ const HomeContent = ({
     
     navigate,
     activeFilter,
-    filterOverlayOpen = false
+    filterOverlayOpen = false,
+    onCloseFilterOverlay = () => {}
 }) => {
     console.log('[HomeContent] render', { activeFilter, groupedContent, orderedFolders });
     const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
@@ -271,6 +272,7 @@ const HomeContent = ({
                                                         position={index}
                                                         isDragging={draggedItem?.id === folder.id}
                                                         filterOverlayOpen={filterOverlayOpen}
+                                                        onCloseFilterOverlay={onCloseFilterOverlay}
                                                     />
                                                 </div>
                                             ))}

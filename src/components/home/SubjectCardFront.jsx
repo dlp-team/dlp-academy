@@ -19,7 +19,8 @@ const SubjectCardFront = ({
     scaleMultiplier,
     topicCount,
     onOpenTopics,
-    filterOverlayOpen = false
+        filterOverlayOpen = false,
+        onCloseFilterOverlay
 }) => {
     const [isHovered, setIsHovered] = useState(false);
     const menuBtnRef = useRef(null);
@@ -76,6 +77,7 @@ const SubjectCardFront = ({
                 <div
                     onClick={(e) => { 
                         e.stopPropagation(); 
+                        if (onCloseFilterOverlay) onCloseFilterOverlay();
                         onOpenTopics && onOpenTopics(subject); // UPDATED: Direct call to modal
                     }} 
                     className={`transition-all duration-300 ease-out 

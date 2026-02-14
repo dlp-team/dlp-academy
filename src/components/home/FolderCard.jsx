@@ -27,7 +27,8 @@ const FolderCard = (props) => {
         canDrop,
         draggable,
         cardScale = 100,
-        filterOverlayOpen = false
+        filterOverlayOpen = false,
+        onCloseFilterOverlay
     } = props;
 
     // --- CUSTOM DRAG LOGIC START ---
@@ -94,6 +95,7 @@ const FolderCard = (props) => {
                 onShare={onShare}
                 onShowContents={onShowContents}
                 filterOverlayOpen={filterOverlayOpen}
+                onCloseFilterOverlay={onCloseFilterOverlay}
             />
         </div>
     );

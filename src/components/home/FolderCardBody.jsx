@@ -84,6 +84,7 @@ const FolderCardBody = ({
                         <button 
                             onClick={(e) => {
                                 e.stopPropagation();
+                                if (typeof onCloseFilterOverlay === 'function') onCloseFilterOverlay();
                                 if (onShowContents) onShowContents(folder);
                             }}
                             className={`${

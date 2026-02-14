@@ -160,8 +160,8 @@ const HomeControls = ({
                 {/* 3. Search Bar */}
                 {viewMode === 'grid' && (
                     <div 
-                        className="relative flex justify-end"
-                        style={{ minWidth: 220 }}
+                        className="relative flex justify-end flex-1 min-w-0 margin-0 padding"
+                        style={{ maxWidth: 400 }}
                     >
                         <SearchBar 
                             value={searchQuery}
