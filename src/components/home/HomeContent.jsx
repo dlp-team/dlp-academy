@@ -296,6 +296,7 @@ const HomeContent = ({
                                                         draggable={isDragAndDropEnabled}
                                                         position={index}
                                                         onOpenTopics={onOpenTopics}
+                                                        filterOverlayOpen={filterOverlayOpen}
                                                     />
                                                 </div>
                                             ))}

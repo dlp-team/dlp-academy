@@ -18,7 +18,8 @@ const SubjectCardFront = ({
     fillColor,
     scaleMultiplier,
     topicCount,
-    onOpenTopics
+    onOpenTopics,
+    filterOverlayOpen = false
 }) => {
     const [isHovered, setIsHovered] = useState(false);
     const menuBtnRef = useRef(null);
@@ -78,7 +79,7 @@ const SubjectCardFront = ({
                         onOpenTopics && onOpenTopics(subject); // UPDATED: Direct call to modal
                     }} 
                     className={`transition-all duration-300 ease-out 
-                        group-hover:-translate-x-[var(--shift-x)] 
+                        ${!filterOverlayOpen ? 'group-hover:-translate-x-[var(--shift-x)]' : ''}
                         ${activeMenu === subject.id ? '-translate-x-[var(--shift-x)]' : ''}
                     `}
                     style={{
@@ -113,12 +114,12 @@ const SubjectCardFront = ({
                     <button
                         ref={menuBtnRef}
                         onClick={(e) => { e.stopPropagation(); onToggleMenu(subject.id); }}
-                        className={`rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer flex items-center justify-center ${
+                        className={`rounded-lg transition-all duration-200 cursor-pointer flex items-center justify-center ${
                             isModern
                                 ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800'
                                 : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30'
                         } ${
-                            activeMenu === subject.id ? 'opacity-100 scale-110' : 'opacity-0 group-hover:opacity-100'
+                            activeMenu === subject.id ? 'opacity-100 scale-110' : (!filterOverlayOpen ? 'opacity-0 group-hover:opacity-100 hover:scale-110' : 'opacity-0')
                         }`}
                         style={{ 
                             width: `${32 * scaleMultiplier}px`, 

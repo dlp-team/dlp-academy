@@ -25,7 +25,8 @@ const SubjectCard = (props) => {
         draggable = false,
         isDragging = false,
         cardScale = 100,
-        onOpenTopics
+        onOpenTopics,
+        filterOverlayOpen = false
     } = props;
 
     const handleLocalDragStart = (e) => {
@@ -55,7 +56,7 @@ const SubjectCard = (props) => {
         <div 
             ref={itemRef}
             className={`group relative w-full rounded-2xl shadow-lg dark:shadow-slate-900/50 transition-transform ${
-                (isDragging || isGhostDragging) ? 'opacity-0 scale-95' : 'hover:scale-105'
+                (isDragging || isGhostDragging) ? 'opacity-0 scale-95' : (!filterOverlayOpen ? 'hover:scale-105' : '')
             } ${
                 isModern 
                     ? `bg-gradient-to-br ${subject.color} p-[4px]` 
@@ -67,14 +68,12 @@ const SubjectCard = (props) => {
             onDragOver={handlers.handleDragOver}
             onDrop={handlers.handleDrop}
         >
-            
             {/* INNER CONTENT */}
             <div className={`h-full w-full rounded-xl overflow-hidden relative ${
                 isModern 
                     ? 'bg-white dark:bg-slate-950' 
                     : ''
             }`}>
-                
                 <SubjectCardFront 
                     subject={subject}
                     onSelect={onSelect}
@@ -88,6 +87,7 @@ const SubjectCard = (props) => {
                     scaleMultiplier={scaleMultiplier}
                     topicCount={topicCount}
                     onOpenTopics={onOpenTopics}
+                    filterOverlayOpen={filterOverlayOpen}
                 />
             </div>
         </div>

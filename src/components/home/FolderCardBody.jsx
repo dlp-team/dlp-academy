@@ -22,12 +22,6 @@ const FolderCardBody = ({
     filterOverlayOpen
 }) => {
     // 1. Logic: No useState needed here. We use CSS for hover states.
-    if (!window.debugTimers) window.debugTimers = {};
-    if (!window.debugTimers[folder.id]) {
-        window.debugTimers[folder.id] = setInterval(() => {
-            console.log(`Folder [${folder.name}] - filterOverlayOpen:`, filterOverlayOpen);
-        }, 1000);
-    }
     const shiftX = 48 * scaleMultiplier;
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
