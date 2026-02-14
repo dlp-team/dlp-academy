@@ -481,6 +481,8 @@ const Home = ({ user }) => {
                         draggedItemType={logic.draggedItemType}
                         onPreferenceChange={logic.handlePreferenceChange}
                         allFolders={logic.folders || []} 
+                        activeFilter={logic.activeFilter}
+                        handleFilterChange={logic.handleFilterChange}
                     />
                     
                 </div>

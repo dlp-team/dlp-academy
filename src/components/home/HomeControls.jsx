@@ -24,8 +24,11 @@ const HomeControls = ({
     onPreferenceChange,
     allFolders = [],
     searchQuery = '',
-    setSearchQuery = () => {}
+    setSearchQuery = () => {},
+    activeFilter,
+    handleFilterChange
 }) => {
+
     const handleViewModeChange = (mode) => {
         setViewMode(mode);
         setSelectedTags([]);
@@ -112,6 +115,8 @@ const HomeControls = ({
                         allTags={allTags}
                         selectedTags={selectedTags}
                         setSelectedTags={handleTagsChange}
+                        activeFilter={activeFilter} 
+                        onFilterChange={handleFilterChange}
                     />
                 )}
 

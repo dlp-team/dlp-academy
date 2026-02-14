@@ -29,6 +29,11 @@ export const useHomeLogic = (user, searchQuery = '') => {
         addSubjectToFolder
     } = useFolders(user);
 
+
+
+
+
+    
     const { 
         preferences, 
         loading: loadingPreferences, 
@@ -44,9 +49,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
     const [activeMenu, setActiveMenu] = useState(null);
     const [collapsedGroups, setCollapsedGroups] = useState({});
     const [currentFolder, setCurrentFolder] = useState(null); // For navigation
-
-    // --- NEW: FILTER STATE (Folders/Subjects/All) ---
-    const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'folders', 'subjects'
 
     // Restore last visited folder from localStorage on mount (if folders are loaded)
     // Guarantee folder persistence and sync with folders array
@@ -152,9 +154,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
     // Get ordered folders for manual mode
     const orderedFolders = useMemo(() => {
-        // --- NEW: FILTER LOGIC (Hide folders if filter is 'subjects') ---
-        if (activeFilter === 'subjects') return [];
-
         // 1. Normalize Search Query
         const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
@@ -181,15 +180,12 @@ export const useHomeLogic = (user, searchQuery = '') => {
         // 5. Original Manual Order
         return applyManualOrder(resultFolders, 'folder');
 
-    }, [folders, viewMode, currentFolder, manualOrder, selectedTags, filteredSubjectsByTags, searchQuery, activeFilter]);
+    }, [folders, viewMode, currentFolder, manualOrder, selectedTags, filteredSubjectsByTags, searchQuery]);
 
 
 
     // --- VIEW GROUPING LOGIC ---
     const groupedContent = useMemo(() => {
-        // --- NEW: FILTER LOGIC (Hide subjects if filter is 'folders') ---
-        if (activeFilter === 'folders') return {};
-
         const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         
         // --- NEW: SEARCH LOGIC ---
@@ -323,7 +319,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         }
         
         return { 'Todas': subjectsToGroup };
-    }, [subjects, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery]);
+    }, [subjects, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder]);
 
 
 
@@ -470,11 +466,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
     const toggleGroup = (groupName) => {
         setCollapsedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
     };
-    
-    // --- NEW: FILTER HANDLER ---
-    const handleFilterChange = (filterType) => {
-        setActiveFilter(prev => prev === filterType ? 'all' : filterType);
-    };
 
     // --- DRAG AND DROP HANDLERS ---
     const handleDragStartSubject = (subject, position) => {
@@ -618,9 +609,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
         isDragAndDropEnabled,
         loadingPreferences,
         
-        // New State
-        activeFilter,
-        
         // Modals State
         subjectModalConfig, setSubjectModalConfig,
         folderModalConfig, setFolderModalConfig,
@@ -635,7 +623,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
         handleShareFolder,
         toggleGroup,
         touchSubject,
-        handleFilterChange, // New Handler exposed
         
         // Drag & Drop Handlers
         handleDragStartSubject,
@@ -655,6 +642,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         unshareSubject,
 
         // Navigation
+        
         navigate
     };
 };
