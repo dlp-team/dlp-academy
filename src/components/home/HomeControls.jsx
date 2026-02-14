@@ -26,7 +26,7 @@ const HomeControls = ({
     searchQuery = '',
     setSearchQuery = () => {},
     activeFilter,
-    handleFilterChange
+    onFilterOverlayChange
 }) => {
     console.log('[HomeControls] render', { activeFilter, viewMode, layoutMode, selectedTags });
 
@@ -116,6 +116,7 @@ const HomeControls = ({
                         allTags={allTags}
                         selectedTags={selectedTags}
                         setSelectedTags={handleTagsChange}
+                        onOverlayToggle={onFilterOverlayChange}
                     />
                 )}
 

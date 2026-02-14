@@ -52,13 +52,14 @@ const HomeContent = ({
     subjects = [], 
     folders = [],  
     
-    navigate
-    ,
-    activeFilter // <-- Add this prop
+    navigate,
+    activeFilter,
+    filterOverlayOpen = false
 }) => {
     console.log('[HomeContent] render', { activeFilter, groupedContent, orderedFolders });
     const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
     const [isRootZoneHovered, setIsRootZoneHovered] = useState(false);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     const showCollapsibleGroups = ['courses', 'tags', 'shared'].includes(viewMode);
 
@@ -269,6 +270,7 @@ const HomeContent = ({
                                                         onDropReorder={handleDropReorderFolder}
                                                         position={index}
                                                         isDragging={draggedItem?.id === folder.id}
+                                                        filterOverlayOpen={filterOverlayOpen}
                                                     />
                                                 </div>
                                             ))}

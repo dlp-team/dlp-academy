@@ -7,11 +7,16 @@ const TagFilter = ({
     selectedTags, 
     setSelectedTags, 
     activeFilter = 'all', 
-    onFilterChange = () => {} 
+    onFilterChange = () => {} ,
+    onOverlayToggle
 }) => {
     const [showFilter, setShowFilter] = useState(false);
 
-    // Folder icon and logic removed
+
+    const handleSetShowFilter = (newState) => {
+        setShowFilter(newState);
+        if (onOverlayToggle) onOverlayToggle(newState);
+    };
 
     const toggleTag = (tag) => {
         if (selectedTags.includes(tag)) {
@@ -29,7 +34,7 @@ const TagFilter = ({
     return (
         <div className="relative">
             <button
-                onClick={() => setShowFilter(!showFilter)}
+                onClick={() => handleSetShowFilter(!showFilter)}
                 className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium transition-colors shadow-sm cursor-pointer ${
                     selectedTags.length > 0 || activeFilter !== 'all'
                         ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-300 dark:border-pink-700 text-pink-700 dark:text-pink-300'
@@ -45,12 +50,13 @@ const TagFilter = ({
                 )}
             </button>
 
+            {/* Pass showFilter as a prop to parent (HomeControls) if needed */}
             {showFilter && (
                 <>
                     {/* Backdrop */}
                     <div 
                         className="fixed inset-0 z-10"
-                        onClick={() => setShowFilter(false)}
+                        onClick={() => handleSetShowFilter(false)}
                     />
                     
                     {/* Filter Panel */}

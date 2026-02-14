@@ -33,6 +33,7 @@ const Home = ({ user }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const logic = useHomeLogic(user, searchQuery);
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     // Persist last visited tab and folder
     const didRestoreRef = React.useRef(false);
@@ -483,6 +484,7 @@ const Home = ({ user }) => {
                         allFolders={logic.folders || []} 
                         activeFilter={logic.activeFilter}
                         handleFilterChange={logic.handleFilterChange}
+                        onFilterOverlayChange={setIsFilterOpen}
                     />
                     
                 </div>
@@ -683,6 +685,7 @@ const Home = ({ user }) => {
                                         handleDragOverFolder={logic.handleDragOverFolder}
                                         handleDropReorderSubject={logic.handleDropReorderSubject}
                                         handleDropReorderFolder={logic.handleDropReorderFolder}
+                                        filterOverlayOpen={isFilterOpen}
 
                                         
                                         activeFilter={logic.activeFilter}

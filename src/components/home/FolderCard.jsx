@@ -26,7 +26,8 @@ const FolderCard = (props) => {
         isDragging,
         canDrop,
         draggable,
-        cardScale = 100
+        cardScale = 100,
+        filterOverlayOpen = false
     } = props;
 
     // --- CUSTOM DRAG LOGIC START ---
@@ -45,13 +46,12 @@ const FolderCard = (props) => {
         <div 
             ref={itemRef}
             className={`group relative w-full pt-3 transition-transform cursor-pointer ${
-                (isDragging || isGhostDragging) ? 'opacity-0 scale-95' : 'hover:scale-105'
+                (isDragging || isGhostDragging) ? 'opacity-0 scale-95' : (!filterOverlayOpen ? 'hover:scale-105' : '')
             } ${
                 state.isOver && canDrop ? 'ring-4 ring-indigo-400 rounded-2xl dark:ring-indigo-500' : ''
             }`}
             style={{ aspectRatio: '16 / 10' }}
             onClick={() => onOpen(folder)}
-            
             // Drag Events
             draggable={draggable}
             {...dragHandlers}
@@ -93,6 +93,7 @@ const FolderCard = (props) => {
                 onDelete={onDelete}
                 onShare={onShare}
                 onShowContents={onShowContents}
+                filterOverlayOpen={filterOverlayOpen}
             />
         </div>
     );
