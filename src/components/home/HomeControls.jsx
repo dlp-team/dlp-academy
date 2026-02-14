@@ -116,8 +116,6 @@ const HomeControls = ({
                         allTags={allTags}
                         selectedTags={selectedTags}
                         setSelectedTags={handleTagsChange}
-                        activeFilter={activeFilter} 
-                        onFilterChange={handleFilterChange}
                     />
                 )}
 

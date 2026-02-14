@@ -1,6 +1,6 @@
 // src/components/home/TagFilter.jsx
 import React, { useState } from 'react';
-import { Filter, X, Folder, BookOpen } from 'lucide-react';
+import { Filter, X } from 'lucide-react';
 
 const TagFilter = ({ 
     allTags, 
@@ -11,44 +11,7 @@ const TagFilter = ({
 }) => {
     const [showFilter, setShowFilter] = useState(false);
 
-    // Helper: Determine if buttons should look "active" based on the single activeFilter string
-    const isFolderOn = activeFilter === 'all' || activeFilter === 'folders';
-    const isSubjectOn = activeFilter === 'all' || activeFilter === 'subjects';
-
-    // Logic: Simulate toggles using the 3 states ('all', 'folders', 'subjects')
-    const handleFolderClick = () => {
-        console.log('[TagFilter] handleFolderClick', { activeFilter });
-        if (activeFilter === 'all') {
-            // Both are on, turning Folder OFF -> Show only Subjects
-            console.log('[TagFilter] Folder OFF, show only subjects');
-            onFilterChange('subjects');
-        } else if (activeFilter === 'folders') {
-            // Only Folder is on, clicking it again -> Reset to All
-            console.log('[TagFilter] Folder ON, reset to all');
-            onFilterChange('all');
-        } else {
-            // Only Subject is on, clicking Folder -> Turn Folder ON -> Show All
-            console.log('[TagFilter] Only subject on, turn folder on (show all)');
-            onFilterChange('all');
-        }
-    };
-
-    const handleSubjectClick = () => {
-        console.log('[TagFilter] handleSubjectClick', { activeFilter });
-        if (activeFilter === 'all') {
-            // Both are on, turning Subject OFF -> Show only Folders
-            console.log('[TagFilter] Subject OFF, show only folders');
-            onFilterChange('folders');
-        } else if (activeFilter === 'subjects') {
-            // Only Subject is on, clicking it again -> Reset to All
-            console.log('[TagFilter] Subject ON, reset to all');
-            onFilterChange('all');
-        } else {
-            // Only Folder is on, clicking Subject -> Turn Subject ON -> Show All
-            console.log('[TagFilter] Only folder on, turn subject on (show all)');
-            onFilterChange('all');
-        }
-    };
+    // Folder icon and logic removed
 
     const toggleTag = (tag) => {
         if (selectedTags.includes(tag)) {
@@ -75,9 +38,9 @@ const TagFilter = ({
             >
                 <Filter size={16} />
                 <span className="hidden sm:inline">Filtrar</span>
-                {(selectedTags.length > 0 || activeFilter !== 'all') && (
+                {selectedTags.length > 0 && (
                     <span className="bg-pink-500 dark:bg-pink-600 text-white text-xs px-1.5 py-0.5 rounded-full">
-                        {selectedTags.length + (activeFilter !== 'all' ? 1 : 0)}
+                        {selectedTags.length}
                     </span>
                 )}
             </button>
@@ -94,33 +57,7 @@ const TagFilter = ({
                     <div className="absolute top-full mt-2 left-0 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-[60] w-80 max-h-96 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
                         <div className="flex items-center justify-between mb-3 relative">
                             <span className="text-sm font-bold text-gray-900 dark:text-white">Filtrar por Etiquetas</span>
-                            {/* Type filter icons */}
-                            <div className="absolute top-0 right-0 flex gap-2">
-                                <button
-                                    onClick={handleFolderClick}
-                                    className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${
-                                        isFolderOn 
-                                            ? 'bg-indigo-100 border-indigo-400 text-indigo-700 dark:bg-indigo-900/40 dark:border-indigo-500 dark:text-indigo-300' 
-                                            : 'bg-gray-100 border-gray-300 text-gray-400 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-500'
-                                    }`}
-                                    style={{ zIndex: 30 }}
-                                    title={isFolderOn ? "Ocultar carpetas" : "Mostrar carpetas"}
-                                >
-                                    <Folder size={18} />
-                                </button>
-                                <button
-                                    onClick={handleSubjectClick}
-                                    className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${
-                                        isSubjectOn 
-                                            ? 'bg-indigo-100 border-indigo-400 text-indigo-700 dark:bg-indigo-900/40 dark:border-indigo-500 dark:text-indigo-300' 
-                                            : 'bg-gray-100 border-gray-300 text-gray-400 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-500'
-                                    }`}
-                                    style={{ zIndex: 30 }}
-                                    title={isSubjectOn ? "Ocultar asignaturas" : "Mostrar asignaturas"}
-                                >
-                                    <BookOpen size={18} />
-                                </button>
-                            </div>
+                            {/* Folder filter icon removed */}
                         </div>
 
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">

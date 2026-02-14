@@ -156,9 +156,7 @@ const HomeContent = ({
     };
 
     // --- FILTERING LOGIC ---
-    // Expecting activeFilter prop: 'all', 'folders', 'subjects'
-    // Only show folders if 'folders', only subjects if 'subjects', both if 'all'
-    // Folders are rendered using orderedFolders, subjects using groupSubjects
+    // No folder filter logic anymore
 
     
     return (
