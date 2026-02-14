@@ -485,6 +485,10 @@ const Home = ({ user }) => {
                         activeFilter={logic.activeFilter}
                         handleFilterChange={logic.handleFilterChange}
                         onFilterOverlayChange={setIsFilterOpen}
+
+                        // SEARCH
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
                     />
                     
                 </div>
