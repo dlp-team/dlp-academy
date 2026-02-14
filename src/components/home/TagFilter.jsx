@@ -6,7 +6,6 @@ const TagFilter = ({
     allTags, 
     selectedTags, 
     setSelectedTags, 
-    // New props from HomeControls
     activeFilter = 'all', 
     onFilterChange = () => {} 
 }) => {
@@ -18,27 +17,35 @@ const TagFilter = ({
 
     // Logic: Simulate toggles using the 3 states ('all', 'folders', 'subjects')
     const handleFolderClick = () => {
+        console.log('[TagFilter] handleFolderClick', { activeFilter });
         if (activeFilter === 'all') {
             // Both are on, turning Folder OFF -> Show only Subjects
+            console.log('[TagFilter] Folder OFF, show only subjects');
             onFilterChange('subjects');
         } else if (activeFilter === 'folders') {
             // Only Folder is on, clicking it again -> Reset to All
+            console.log('[TagFilter] Folder ON, reset to all');
             onFilterChange('all');
         } else {
             // Only Subject is on, clicking Folder -> Turn Folder ON -> Show All
+            console.log('[TagFilter] Only subject on, turn folder on (show all)');
             onFilterChange('all');
         }
     };
 
     const handleSubjectClick = () => {
+        console.log('[TagFilter] handleSubjectClick', { activeFilter });
         if (activeFilter === 'all') {
             // Both are on, turning Subject OFF -> Show only Folders
+            console.log('[TagFilter] Subject OFF, show only folders');
             onFilterChange('folders');
         } else if (activeFilter === 'subjects') {
             // Only Subject is on, clicking it again -> Reset to All
+            console.log('[TagFilter] Subject ON, reset to all');
             onFilterChange('all');
         } else {
             // Only Folder is on, clicking Subject -> Turn Subject ON -> Show All
+            console.log('[TagFilter] Only folder on, turn subject on (show all)');
             onFilterChange('all');
         }
     };

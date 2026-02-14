@@ -28,6 +28,7 @@ const HomeControls = ({
     activeFilter,
     handleFilterChange
 }) => {
+    console.log('[HomeControls] render', { activeFilter, viewMode, layoutMode, selectedTags });
 
     const handleViewModeChange = (mode) => {
         setViewMode(mode);

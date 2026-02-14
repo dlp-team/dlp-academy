@@ -670,7 +670,6 @@ const Home = ({ user }) => {
                                         handleShowFolderContents={handleShowFolderContents}
                                         onShareSubject={(subject) => logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: subject, initialTab: 'sharing' })}
                                         
-                                        // NEW: Pass the robust move handler
                                         handleMoveSubjectWithSource={handleTreeMoveSubject}
                                         onOpenTopics={handleOpenTopics}
                                         
@@ -684,6 +683,9 @@ const Home = ({ user }) => {
                                         handleDragOverFolder={logic.handleDragOverFolder}
                                         handleDropReorderSubject={logic.handleDropReorderSubject}
                                         handleDropReorderFolder={logic.handleDropReorderFolder}
+
+                                        
+                                        activeFilter={logic.activeFilter}
                                         
                                         navigate={logic.navigate}
                                     />

@@ -53,7 +53,10 @@ const HomeContent = ({
     folders = [],  
     
     navigate
+    ,
+    activeFilter // <-- Add this prop
 }) => {
+    console.log('[HomeContent] render', { activeFilter, groupedContent, orderedFolders });
     const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
     const [isRootZoneHovered, setIsRootZoneHovered] = useState(false);
 
@@ -152,6 +155,12 @@ const HomeContent = ({
         if (handleDragEnd) handleDragEnd();
     };
 
+    // --- FILTERING LOGIC ---
+    // Expecting activeFilter prop: 'all', 'folders', 'subjects'
+    // Only show folders if 'folders', only subjects if 'subjects', both if 'all'
+    // Folders are rendered using orderedFolders, subjects using groupSubjects
+
+    
     return (
         <>
             {groupedContent && Object.entries(groupedContent).map(([groupName, groupSubjects]) => {
@@ -239,7 +248,7 @@ const HomeContent = ({
                                             )}
 
                                             {/* Folders in Grid */}
-                                            {viewMode === 'grid' && orderedFolders.map((folder, index) => (
+                                            {viewMode === 'grid' && activeFilter !== 'subjects' && orderedFolders.map((folder, index) => (
                                                 <div key={`folder-${folder.id}`}>
                                                     <FolderCard
                                                         folder={folder}
@@ -267,7 +276,7 @@ const HomeContent = ({
                                             ))}
 
                                             {/* Subjects in Grid */}
-                                            {groupSubjects.map((subject, index) => (
+                                            {activeFilter !== 'folders' && groupSubjects.map((subject, index) => (
                                                 <div key={`${groupName}-${subject.id}`}>
                                                     <SubjectCard
                                                         subject={subject}
