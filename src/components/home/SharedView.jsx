@@ -98,20 +98,27 @@ const SharedView = ({
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                {sharedFolders.map((folder) => (
-                                    <ListViewItem 
-                                        key={folder.id}
-                                        item={folder}
-                                        type="folder"
-                                        onNavigate={() => onOpenFolder(folder)}
-                                        cardScale={cardScale}
-                                        onEdit={() => {}}
-                                        onDelete={() => {}}
-                                        draggable={false}
-                                        allFolders={sharedFolders}
-                                        allSubjects={sharedSubjects}
-                                    />
-                                ))}
+                                {sharedFolders
+                                    .filter(folder => {
+                                        // Only show folders that are not inside another shared folder
+                                        // i.e., parentId is null or parent is not a shared folder
+                                        if (!folder.parentId) return true;
+                                        return !sharedFolders.some(f => f.id === folder.parentId);
+                                    })
+                                    .map((folder) => (
+                                        <ListViewItem 
+                                            key={folder.id}
+                                            item={folder}
+                                            type="folder"
+                                            onNavigate={() => onOpenFolder(folder)}
+                                            cardScale={cardScale}
+                                            onEdit={() => {}}
+                                            onDelete={() => {}}
+                                            draggable={false}
+                                            allFolders={sharedFolders}
+                                            allSubjects={sharedSubjects}
+                                        />
+                                    ))}
                             </div>
                         )}
                         </>
