@@ -73,14 +73,20 @@ const FolderListItem = ({
     let childFolders = [];
     let childSubjects = [];
 
-    if (item.folderIds && item.folderIds.length > 0) {
-        childFolders = allFolders.filter(f => item.folderIds.includes(f.id));
+    const folderIds = Array.isArray(item.folderIds) ? item.folderIds : [];
+    const subjectIds = Array.isArray(item.subjectIds) ? item.subjectIds : [];
+
+    const safeAllFolders = Array.isArray(allFolders) ? allFolders : [];
+    const safeAllSubjects = Array.isArray(allSubjects) ? allSubjects : [];
+
+    if (folderIds.length > 0) {
+        childFolders = safeAllFolders.filter(f => folderIds.includes(f.id));
         // Keep sort order
-        childFolders.sort((a, b) => item.folderIds.indexOf(a.id) - item.folderIds.indexOf(b.id));
+        childFolders.sort((a, b) => folderIds.indexOf(a.id) - folderIds.indexOf(b.id));
     }
-    if (item.subjectIds && item.subjectIds.length > 0) {
-        childSubjects = allSubjects.filter(s => item.subjectIds.includes(s.id));
-        childSubjects.sort((a, b) => item.subjectIds.indexOf(a.id) - item.subjectIds.indexOf(b.id));
+    if (subjectIds.length > 0) {
+        childSubjects = safeAllSubjects.filter(s => subjectIds.includes(s.id));
+        childSubjects.sort((a, b) => subjectIds.indexOf(a.id) - subjectIds.indexOf(b.id));
     }
     
     const hasChildren = childFolders.length > 0 || childSubjects.length > 0;
