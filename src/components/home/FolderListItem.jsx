@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { ChevronRight, Folder, GripVertical, Users } from 'lucide-react';
 import SubjectIcon from '../modals/SubjectIcon';
 import ListViewItem from './ListViewItem';
+import { useGhostDrag } from '../../hooks/useGhostDrag';
 
 const FolderListItem = ({ 
     item, 
@@ -85,7 +86,7 @@ const FolderListItem = ({
     const hasChildren = childFolders.length > 0 || childSubjects.length > 0;
 
     // --- DRAG HANDLERS ---
-    const handleDragStart = (e) => {
+    const handleLocalDragStart = (e) => {
         e.stopPropagation();
         const dragData = {
             id: item.id,
@@ -97,6 +98,19 @@ const FolderListItem = ({
         
         if (onDragStart) onDragStart(item); 
     };
+
+    // Initialize custom ghost drag hook
+    const { 
+        isDragging, 
+        itemRef, 
+        dragHandlers 
+    } = useGhostDrag({ 
+        item, 
+        type: 'folder', 
+        cardScale, 
+        onDragStart: handleLocalDragStart, // Use local interceptor
+        onDragEnd 
+    });
 
     const handleDragOver = (e) => {
         e.preventDefault(); e.stopPropagation();
@@ -143,9 +157,11 @@ const FolderListItem = ({
         <div className="select-none animate-in fade-in duration-200">
             {/* ROW CONTAINER */}
             <div 
+                ref={itemRef}
                 draggable
-                onDragStart={handleDragStart}
-                onDragEnd={onDragEnd}
+                onDragStart={dragHandlers.onDragStart}
+                onDrag={dragHandlers.onDrag}
+                onDragEnd={dragHandlers.onDragEnd}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -155,7 +171,7 @@ const FolderListItem = ({
                     isDragOver 
                         ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-500 scale-[1.01] shadow-md'
                         : ''
-                }`}
+                } ${isDragging ? 'opacity-0 scale-95 transition-none' : ''}`}
                 style={{ marginLeft: `${indent}px` }}
             >
                 <div 
