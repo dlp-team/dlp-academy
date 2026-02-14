@@ -100,8 +100,9 @@ const SharedView = ({
                                     cardScale={cardScale}
                                     onEdit={() => {}}
                                     onDelete={() => {}}
-                                    // Shared items usually don't support drag/drop reordering
                                     draggable={false}
+                                    allFolders={sharedFolders}
+                                    allSubjects={sharedSubjects}
                                 />
                             ))}
                         </div>
