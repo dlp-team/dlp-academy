@@ -7,9 +7,12 @@ export const useGhostDrag = ({ item, type, cardScale = 100, onDragStart, onDragE
     const dragGhostRef = useRef(null);
     const dragOffsetRef = useRef({ x: 0, y: 0 });
 
+    // CONSTANTS
+    const DRAG_SCALE = 0.95; // The fixed scale for the ghost while dragging (slightly smaller than original)
+
     const handleDragStartWithCustomImage = (e) => {
         setIsDragging(true);
-        const cardNode = itemRef.current; // The DOM element of the list item
+        const cardNode = itemRef.current; 
 
         if (cardNode) {
             // A. Calculate offset
@@ -22,37 +25,37 @@ export const useGhostDrag = ({ item, type, cardScale = 100, onDragStart, onDragE
             // B. Clone the card
             const ghost = cardNode.cloneNode(true);
 
-            // C. Style the ghost (Fixed position, High Z-Index, NO Pointer Events)
+            // C. Style the ghost
             Object.assign(ghost.style, {
                 position: 'fixed',
                 top: `${rect.top}px`,
                 left: `${rect.left}px`,
                 width: `${rect.width}px`,
                 height: `${rect.height}px`,
-                opacity: '1',            // FORCE 100% OPACITY
-                zIndex: '10000',         // On top of everything
-                pointerEvents: 'none',   // Let clicks pass through to drop zones
-                transition: 'transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s ease', // bouncy ease
-                transform: 'scale(0.9)',
+                opacity: '1',
+                zIndex: '10000',
+                pointerEvents: 'none',
+                transition: 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)', // Smoother ease-out
+                transform: `scale(${DRAG_SCALE})`, // Set initial scale
                 transformOrigin: 'center center',
-                boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)' // optional depth
+                boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
             });
 
-            // Remove any classes that might hide it or interfere
-            ghost.classList.remove('opacity-0', 'transition-all', 'duration-300', 'scale-95');
-
-            // Add ID for Breadcrumb interaction
+            // Remove interference classes
+            ghost.classList.remove('opacity-0', 'transition-all', 'duration-300', 'scale-95', 'hover:scale-105');
             ghost.id = 'active-drag-ghost';
             
-            // Calculate scale multiplier
-            const scaleMultiplier = cardScale ? cardScale / 100 : 1; 
-            ghost.dataset.originalScale = scaleMultiplier; // Store original scale
+            // --- THE FIX ---
+            // Store the EXACT scale we are using for the drag state. 
+            // When BreadcrumbNav reads this on dragLeave, it will restore to 0.95, not the card's internal scale.
+            ghost.dataset.originalScale = DRAG_SCALE; 
+            ghost.dataset.scale = DRAG_SCALE; // Backup data attribute
 
             // D. Add to body
             document.body.appendChild(ghost);
             dragGhostRef.current = ghost;
 
-            // E. HIDE the native browser drag image (The semi-transparent one)
+            // E. Hide native drag image
             const emptyImg = new Image();
             emptyImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
             e.dataTransfer.setDragImage(emptyImg, 0, 0);
@@ -62,12 +65,10 @@ export const useGhostDrag = ({ item, type, cardScale = 100, onDragStart, onDragE
     };
 
     const handleDrag = (e) => {
-        // e.clientX/Y drop to 0 at the very end of the drag cycle, ignore those frames
         if (dragGhostRef.current && e.clientX !== 0 && e.clientY !== 0) {
             const x = e.clientX - dragOffsetRef.current.x;
             const y = e.clientY - dragOffsetRef.current.y;
             
-            // Use fixed coordinates to follow the cursor exactly
             dragGhostRef.current.style.left = `${x}px`;
             dragGhostRef.current.style.top = `${y}px`;
         }
@@ -75,7 +76,6 @@ export const useGhostDrag = ({ item, type, cardScale = 100, onDragStart, onDragE
 
     const handleDragEndCustom = (e) => {
         setIsDragging(false);
-        // Remove ghost from DOM
         if (dragGhostRef.current && dragGhostRef.current.parentNode) {
             dragGhostRef.current.parentNode.removeChild(dragGhostRef.current);
             dragGhostRef.current = null;
