@@ -107,7 +107,7 @@ const HomeControls = ({
                 />
 
                 {/* Tag Filter - Now available in Manual (grid) mode */}
-                {viewMode === 'grid' && allTags.length > 0 && (
+                {allTags.length > 0 && (
                     <TagFilter 
                         allTags={allTags}
                         selectedTags={selectedTags}
