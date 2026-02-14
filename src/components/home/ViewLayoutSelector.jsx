@@ -6,8 +6,7 @@ const ViewLayoutSelector = ({ layoutMode, setLayoutMode, viewMode }) => {
     // All modes can use folders layout
     const layouts = [
         { id: 'grid', icon: LayoutGrid, label: 'Cuadrícula' },
-        { id: 'list', icon: List, label: 'Lista' },
-        { id: 'folders', icon: Folder, label: 'Carpetas' }
+        { id: 'list', icon: List, label: 'Lista' }
     ];
 
     return (
