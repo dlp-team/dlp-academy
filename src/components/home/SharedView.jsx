@@ -37,7 +37,12 @@ const SharedView = ({
         gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` 
     };
 
-    // --- EMPTY STATE ---
+    // --- COLLAPSE STATE ---
+    const [collapsed, setCollapsed] = React.useState({
+        folders: false,
+        subjects: false
+    });
+
     if (sharedFolders.length === 0 && sharedSubjects.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 animate-in fade-in zoom-in duration-300">
@@ -56,56 +61,60 @@ const SharedView = ({
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            
             {/* --- SHARED FOLDERS SECTION --- */}
             {sharedFolders.length > 0 && (
                 <div className="space-y-4">
-                    <div className="flex items-center gap-2 px-1">
+                    <button
+                        className="flex items-center gap-2 px-1 w-full text-left group hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg py-2 transition-colors"
+                        onClick={() => setCollapsed(c => ({ ...c, folders: !c.folders }))}
+                    >
                         <FolderIcon className="w-5 h-5 text-indigo-500" />
-                        <h2 className="text-lg font-bold text-gray-800 dark:text-white">Carpetas Compartidas</h2>
+                        <h2 className="text-lg font-bold text-gray-800 dark:text-white flex-1">Carpetas Compartidas</h2>
                         <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2 py-1 rounded-full">
                             {sharedFolders.length}
                         </span>
-                    </div>
-
-                    {layoutMode === 'grid' ? (
-                        /* GRID LAYOUT */
-                        <div className="grid gap-6" style={gridStyle}>
-                            {sharedFolders.map((folder) => (
-                                <div key={folder.id}>
-                                    <FolderCard
-                                        folder={folder}
-                                        allFolders={allFolders}
-                                        onOpen={onOpenFolder}
-                                        activeMenu={activeMenu}
-                                        onToggleMenu={onToggleMenu}
-                                        onEdit={() => {}} // Disabled for shared
-                                        onDelete={() => {}} // Disabled for shared
-                                        onShare={() => {}}
-                                        isShared={true}
+                        <span className={`transition-transform ${collapsed.folders ? '-rotate-90' : ''}`}>▼</span>
+                    </button>
+                    {!collapsed.folders && (
+                        <>
+                        {layoutMode === 'grid' ? (
+                            <div className="grid gap-6" style={gridStyle}>
+                                {sharedFolders.map((folder) => (
+                                    <div key={folder.id}>
+                                        <FolderCard
+                                            folder={folder}
+                                            allFolders={allFolders}
+                                            onOpen={onOpenFolder}
+                                            activeMenu={activeMenu}
+                                            onToggleMenu={onToggleMenu}
+                                            onEdit={() => {}} // Disabled for shared
+                                            onDelete={() => {}} // Disabled for shared
+                                            onShare={() => {}}
+                                            isShared={true}
+                                            cardScale={cardScale}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {sharedFolders.map((folder) => (
+                                    <ListViewItem 
+                                        key={folder.id}
+                                        item={folder}
+                                        type="folder"
+                                        onNavigate={() => onOpenFolder(folder)}
                                         cardScale={cardScale}
+                                        onEdit={() => {}}
+                                        onDelete={() => {}}
+                                        draggable={false}
+                                        allFolders={sharedFolders}
+                                        allSubjects={sharedSubjects}
                                     />
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        /* LIST LAYOUT */
-                        <div className="space-y-2">
-                            {sharedFolders.map((folder) => (
-                                <ListViewItem 
-                                    key={folder.id}
-                                    item={folder}
-                                    type="folder"
-                                    onNavigate={() => onOpenFolder(folder)}
-                                    cardScale={cardScale}
-                                    onEdit={() => {}}
-                                    onDelete={() => {}}
-                                    draggable={false}
-                                    allFolders={sharedFolders}
-                                    allSubjects={sharedSubjects}
-                                />
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
+                        </>
                     )}
                 </div>
             )}
@@ -113,54 +122,56 @@ const SharedView = ({
             {/* --- SHARED SUBJECTS SECTION --- */}
             {sharedSubjects.length > 0 && (
                 <div className="space-y-4">
-                    <div className="flex items-center gap-2 px-1">
+                    <button
+                        className="flex items-center gap-2 px-1 w-full text-left group hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg py-2 transition-colors"
+                        onClick={() => setCollapsed(c => ({ ...c, subjects: !c.subjects }))}
+                    >
                         <BookOpen className="w-5 h-5 text-emerald-500" />
-                        <h2 className="text-lg font-bold text-gray-800 dark:text-white">Asignaturas Compartidas</h2>
+                        <h2 className="text-lg font-bold text-gray-800 dark:text-white flex-1">Asignaturas Compartidas</h2>
                         <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold px-2 py-1 rounded-full">
                             {sharedSubjects.length}
                         </span>
-                    </div>
-
-                    {layoutMode === 'grid' ? (
-                        /* GRID LAYOUT */
-                        <div className="grid gap-6" style={gridStyle}>
-                            {sharedSubjects.map((subject) => (
-                                <div key={subject.id}>
-                                    <SubjectCard
-                                        subject={subject}
-                                        isFlipped={flippedSubjectId === subject.id}
-                                        onFlip={(id) => onFlipSubject(flippedSubjectId === id ? null : id)}
-                                        activeMenu={activeMenu}
-                                        onToggleMenu={onToggleMenu}
-                                        onSelect={() => onSelectSubject(subject)}
-                                        onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
-                                        
-                                        // Read-only actions for shared items
-                                        onEdit={() => {}} 
-                                        onDelete={() => {}}
-                                        
+                        <span className={`transition-transform ${collapsed.subjects ? '-rotate-90' : ''}`}>▼</span>
+                    </button>
+                    {!collapsed.subjects && (
+                        <>
+                        {layoutMode === 'grid' ? (
+                            <div className="grid gap-6" style={gridStyle}>
+                                {sharedSubjects.map((subject) => (
+                                    <div key={subject.id}>
+                                        <SubjectCard
+                                            subject={subject}
+                                            isFlipped={flippedSubjectId === subject.id}
+                                            onFlip={(id) => onFlipSubject(flippedSubjectId === id ? null : id)}
+                                            activeMenu={activeMenu}
+                                            onToggleMenu={onToggleMenu}
+                                            onSelect={() => onSelectSubject(subject)}
+                                            onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
+                                            onEdit={() => {}} 
+                                            onDelete={() => {}}
+                                            cardScale={cardScale}
+                                            isShared={true}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {sharedSubjects.map((subject) => (
+                                    <ListViewItem
+                                        key={subject.id}
+                                        item={subject}
+                                        type="subject"
+                                        onNavigateSubject={() => onSelectSubject(subject)}
                                         cardScale={cardScale}
-                                        isShared={true}
+                                        onEdit={() => {}}
+                                        onDelete={() => {}}
+                                        draggable={false}
                                     />
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        /* LIST LAYOUT */
-                        <div className="space-y-2">
-                            {sharedSubjects.map((subject) => (
-                                <ListViewItem
-                                    key={subject.id}
-                                    item={subject}
-                                    type="subject"
-                                    onNavigateSubject={() => onSelectSubject(subject)}
-                                    cardScale={cardScale}
-                                    onEdit={() => {}}
-                                    onDelete={() => {}}
-                                    draggable={false}
-                                />
-                            ))}
-                        </div>
+                                ))}
+                            </div>
+                        )}
+                        </>
                     )}
                 </div>
             )}

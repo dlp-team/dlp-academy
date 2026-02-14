@@ -466,7 +466,7 @@ const Home = ({ user }) => {
                         setSelectedTags={logic.setSelectedTags}
                         currentFolder={logic.currentFolder}
                         setFolderModalConfig={logic.setFolderModalConfig}
-                        setCollapsedGroups={logic.setCollapsedGroups}
+                        { ...(logic.setCollapsedGroups ? { setCollapsedGroups: logic.setCollapsedGroups } : {}) }
                         setCurrentFolder={(folder) => {
                             logic.setCurrentFolder(folder);
                             if (folder && folder.id) {
