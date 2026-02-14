@@ -10,7 +10,7 @@ const SearchBar = ({ searchTerm, onSearch, placeholder = "Buscar en todas las ca
             border border-gray-200 dark:border-slate-700 
             rounded-xl shadow-sm 
             transition-all duration-300 ease-in-out
-            ${searchTerm ? 'w-64' : 'w-12 hover:w-64 focus-within:w-64'}
+            ${searchTerm ? 'w-98' : 'w-12 hover:w-98 focus-within:w-98'}
             overflow-hidden
         `}>
             <div className="flex-shrink-0 p-3 text-gray-500 dark:text-gray-400 cursor-pointer">
