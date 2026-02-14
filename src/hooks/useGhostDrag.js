@@ -17,9 +17,12 @@ export const useGhostDrag = ({ item, type, cardScale = 100, onDragStart, onDragE
         if (cardNode) {
             // A. Calculate offset
             const rect = cardNode.getBoundingClientRect();
+            const offsetX = e.clientX - rect.left;
+            const offsetY = e.clientY - rect.top;
+
             dragOffsetRef.current = {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
+                x: offsetX,
+                y: offsetY
             };
 
             // B. Clone the card
@@ -37,7 +40,7 @@ export const useGhostDrag = ({ item, type, cardScale = 100, onDragStart, onDragE
                 pointerEvents: 'none',
                 transition: 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)', // Smoother ease-out
                 transform: `scale(${DRAG_SCALE})`, // Set initial scale
-                transformOrigin: 'center center',
+                transformOrigin: `${offsetX}px ${offsetY}px`,
                 boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
             });
 
