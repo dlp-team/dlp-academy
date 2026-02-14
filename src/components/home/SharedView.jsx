@@ -79,22 +79,28 @@ const SharedView = ({
                         <>
                         {layoutMode === 'grid' ? (
                             <div className="grid gap-6" style={gridStyle}>
-                                {sharedFolders.map((folder) => (
-                                    <div key={folder.id}>
-                                        <FolderCard
-                                            folder={folder}
-                                            allFolders={allFolders}
-                                            onOpen={onOpenFolder}
-                                            activeMenu={activeMenu}
-                                            onToggleMenu={onToggleMenu}
-                                            onEdit={() => {}} // Disabled for shared
-                                            onDelete={() => {}} // Disabled for shared
-                                            onShare={() => {}}
-                                            isShared={true}
-                                            cardScale={cardScale}
-                                        />
-                                    </div>
-                                ))}
+                                {sharedFolders
+                                    .filter(folder => {
+                                        // Only show folders that are not inside another shared folder
+                                        if (!folder.parentId) return true;
+                                        return !sharedFolders.some(f => f.id === folder.parentId);
+                                    })
+                                    .map((folder) => (
+                                        <div key={folder.id}>
+                                            <FolderCard
+                                                folder={folder}
+                                                allFolders={allFolders}
+                                                onOpen={onOpenFolder}
+                                                activeMenu={activeMenu}
+                                                onToggleMenu={onToggleMenu}
+                                                onEdit={() => {}} // Disabled for shared
+                                                onDelete={() => {}} // Disabled for shared
+                                                onShare={() => {}}
+                                                isShared={true}
+                                                cardScale={cardScale}
+                                            />
+                                        </div>
+                                    ))}
                             </div>
                         ) : (
                             <div className="space-y-2">
