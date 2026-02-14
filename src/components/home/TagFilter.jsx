@@ -76,7 +76,7 @@ const TagFilter = ({ allTags, selectedTags, setSelectedTags, filterTypes = { fol
                                 </button>
                                 <button
                                     onClick={() => handleTypeToggle('subject')}
-                                    className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${types.subject ? 'bg-pink-100 border-pink-400 text-pink-700' : 'bg-gray-100 border-gray-300 text-gray-400'}`}
+                                    className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-colors ${types.subject ? 'bg-indigo-100 border-indigo-400 text-indigo-700' : 'bg-gray-100 border-gray-300 text-gray-400'}`}
                                     style={{ zIndex: 30 }}
                                     title="Mostrar asignaturas"
                                 >
