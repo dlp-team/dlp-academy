@@ -137,6 +137,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
         });
     }, [subjects, currentFolder, searchQuery]);
 
+    
+
 
     
     // --- FOLDER HELPERS ---
@@ -207,7 +209,9 @@ export const useHomeLogic = (user, searchQuery = '') => {
         // (Unless searching, where we want to see results regardless of currentFolder)
         if (!query && (viewMode !== 'grid' || currentFolder)) return [];
 
-        let resultFolders = folders.filter(f => f.isOwner);
+        let resultFolders = folders.filter(f => 
+            f.uid === user?.uid || (f.sharedWithUids && f.sharedWithUids.includes(user?.uid))
+        );
 
         // 3. Apply Search Filter (Recursive/Global)
         if (query) {
@@ -235,13 +239,15 @@ export const useHomeLogic = (user, searchQuery = '') => {
         // --- NEW: FILTER LOGIC (Hide subjects if filter is 'folders') ---
         if (activeFilter === 'folders') return {};
 
+        const isRelated = (item) => item.uid === user?.uid || (item.sharedWithUids && item.sharedWithUids.includes(user?.uid));
+
         const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         
-        // --- NEW: SEARCH LOGIC ---
         if (query) {
+            // Apply isRelated filter to search results
             const matchedSubjects = subjects.filter(s => {
                 const subjectName = (s.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                return subjectName.includes(query);
+                return subjectName.includes(query) && isRelated(s); // Add isRelated check
             });
             return { 'Resultados de búsqueda': matchedSubjects };
         }
@@ -267,7 +273,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
             return {};
         }
 
-        const subjectsToGroup = (selectedTags.length > 0 || viewMode === 'tags') ? filteredSubjectsByTags : subjects;
+        const sourceSubjects = (selectedTags.length > 0 || viewMode === 'tags') ? filteredSubjectsByTags : subjects;
+        const subjectsToGroup = sourceSubjects.filter(isRelated);
         
         if (viewMode === 'usage') {
             const sorted = [...subjectsToGroup].sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
@@ -639,9 +646,10 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
     return {
         // Data
-        subjects: filteredSubjects, 
-        folders: filteredFolders,
-        allRawFolders: folders,
+        subjects, 
+        folders,
+        filteredFolders:filteredFolders,
+        filteredSubjects:filteredSubjects,
         loading,
         loadingFolders,
         sharedFolders,
