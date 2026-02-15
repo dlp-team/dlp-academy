@@ -242,10 +242,17 @@ const FolderTreeModal = ({
         if (draggedData.parentId === rootFolder.id) return; // Already at root
 
         if (draggedData.type === 'subject') {
-            onMoveSubjectToFolder(draggedData.id, rootFolder.id, draggedData.parentId);
+            let overlayShown = false;
+            if (onDropWithOverlay) {
+                const result = onDropWithOverlay(rootFolder.id, draggedData.id, draggedData.parentId);
+                if (result === true) overlayShown = true;
+            }
+            if (!overlayShown && onMoveSubjectToFolder) {
+                onMoveSubjectToFolder(draggedData.id, rootFolder.id, draggedData.parentId);
+            }
         } else if (draggedData.type === 'folder') {
             if (draggedData.id === rootFolder.id) return;
-            onNestFolder(rootFolder.id, draggedData.id);
+            if (onNestFolder) onNestFolder(rootFolder.id, draggedData.id);
         }
     };
 
