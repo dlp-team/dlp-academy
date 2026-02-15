@@ -192,40 +192,46 @@ const Home = ({ user }) => {
             const getSharedUids = (item) => (item && Array.isArray(item.sharedWithUids)) ? item.sharedWithUids : [];
             // Moving OUT of a shared folder (confirmation required if droppedFolder is shared and target is not)
             if (droppedFolder && droppedFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
-                setUnshareConfirm({
-                    open: true,
-                    subjectId: null,
-                    folder: droppedFolder,
-                    onConfirm: async () => {
-                        // --- UNSHARE LOGIC FOR FOLDER (breadcrumb) ---
-                        const oldSharedWithUids = Array.isArray(droppedFolder.sharedWithUids) ? droppedFolder.sharedWithUids : [];
-                        const oldSharedWith = Array.isArray(droppedFolder.sharedWith) ? droppedFolder.sharedWith : [];
-                        // Remove sharing from the folder itself
-                        await updateFolder(droppedFolderId, {
-                            sharedWith: [],
-                            sharedWithUids: [],
-                            isShared: false
-                        });
-                        // Remove sharing from all child subjects
-                        if (Array.isArray(droppedFolder.subjectIds)) {
-                            for (const subjectId of droppedFolder.subjectIds) {
-                                const subject = (logic.subjects || []).find(s => s.id === subjectId);
-                                if (subject) {
-                                    const newSharedWith = (subject.sharedWith || []).filter(u => !oldSharedWithUids.includes(u.uid));
-                                    const newSharedWithUids = (subject.sharedWithUids || []).filter(uid => !oldSharedWithUids.includes(uid));
-                                    await updateDoc(doc(db, 'subjects', subjectId), {
-                                        sharedWith: newSharedWith,
-                                        sharedWithUids: newSharedWithUids,
-                                        isShared: newSharedWithUids.length > 0
-                                    });
+                // Only show unshare confirmation if droppedFolder.parentId is not null and parent is shared
+                if (droppedFolder.parentId) {
+                    const parentFolder = (logic.folders || []).find(f => f.id === droppedFolder.parentId);
+                    if (parentFolder && parentFolder.isShared) {
+                        setUnshareConfirm({
+                            open: true,
+                            subjectId: null,
+                            folder: droppedFolder,
+                            onConfirm: async () => {
+                                // --- UNSHARE LOGIC FOR FOLDER (breadcrumb) ---
+                                const oldSharedWithUids = Array.isArray(droppedFolder.sharedWithUids) ? droppedFolder.sharedWithUids : [];
+                                const oldSharedWith = Array.isArray(droppedFolder.sharedWith) ? droppedFolder.sharedWith : [];
+                                // Remove sharing from the folder itself
+                                await updateFolder(droppedFolderId, {
+                                    sharedWith: [],
+                                    sharedWithUids: [],
+                                    isShared: false
+                                });
+                                // Remove sharing from all child subjects
+                                if (Array.isArray(droppedFolder.subjectIds)) {
+                                    for (const subjectId of droppedFolder.subjectIds) {
+                                        const subject = (logic.subjects || []).find(s => s.id === subjectId);
+                                        if (subject) {
+                                            const newSharedWith = (subject.sharedWith || []).filter(u => !oldSharedWithUids.includes(u.uid));
+                                            const newSharedWithUids = (subject.sharedWithUids || []).filter(uid => !oldSharedWithUids.includes(uid));
+                                            await updateDoc(doc(db, 'subjects', subjectId), {
+                                                sharedWith: newSharedWith,
+                                                sharedWithUids: newSharedWithUids,
+                                                isShared: newSharedWithUids.length > 0
+                                            });
+                                        }
+                                    }
                                 }
+                                await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                                setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
                             }
-                        }
-                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-                        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                        });
+                        return true;
                     }
-                });
-                return true;
+                }
             }
             // Only show confirmation if there is a new user who will gain access (moving INTO a shared folder)
             if (targetFolder && targetFolder.isShared) {
@@ -285,22 +291,33 @@ const Home = ({ user }) => {
             currentFolderId,
             targetFolderId
         });
-        if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
-            console.log('[DEBUG] handleDropOnFolderWrapper: Condition met: EXIT branch (sourceFolder is shared and targetFolder is not). Triggering unshareConfirm overlay.', {
-                sourceFolder,
-                targetFolder
-            });
-            setUnshareConfirm({
-                open: true,
-                subjectId,
-                folder: sourceFolder,
-                onConfirm: async () => {
-                    console.log('[DEBUG] handleDropOnFolderWrapper: unshareConfirm onConfirm triggered (EXIT branch)');
-                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-                    setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
-                }
-            });
-            return true;
+        if (
+            sourceFolder &&
+            sourceFolder.isShared &&
+            (!targetFolder || !targetFolder.isShared) &&
+            Array.isArray(sourceFolder.subjectIds) &&
+            sourceFolder.subjectIds.includes(subjectId)
+        ) {
+            // Check if sourceFolder has a parentId and if that parent is shared
+            const parentFolder = sourceFolder.parentId ? (logic.folders || []).find(f => f.id === sourceFolder.parentId) : null;
+            if (parentFolder && parentFolder.isShared) {
+                console.log('[DEBUG] handleDropOnFolderWrapper: Condition met: EXIT branch (parent is shared). Triggering unshareConfirm overlay.', {
+                    sourceFolder,
+                    targetFolder,
+                    parentFolder
+                });
+                setUnshareConfirm({
+                    open: true,
+                    subjectId,
+                    folder: sourceFolder,
+                    onConfirm: async () => {
+                        console.log('[DEBUG] handleDropOnFolderWrapper: unshareConfirm onConfirm triggered (EXIT branch)');
+                        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+                        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                    }
+                });
+                return true;
+            }
         }
 
         // Only show confirmation if there is a new user who will gain access
@@ -330,6 +347,7 @@ const Home = ({ user }) => {
     };
 
     const handleNestFolder = async (targetFolderId, droppedFolderId) => {
+
         if (targetFolderId === droppedFolderId) return;
         const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
         if (!droppedFolder) return;
@@ -351,19 +369,50 @@ const Home = ({ user }) => {
             targetFolderSharedWithUids: getSharedUids(targetFolder),
         });
 
-        // Moving OUT of a shared folder (confirmation required if droppedFolder is shared and target is not)
-        if (droppedFolder && droppedFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
-            console.log('[DEBUG] Triggering unshareConfirm overlay (folder)');
-            setUnshareConfirm({
-                open: true,
-                subjectId: null,
-                folder: droppedFolder,
-                onConfirm: async () => {
-                    await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-                    setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
-                }
-            });
-            return;
+        // Only show unshare confirmation if droppedFolder has a parentId and that parent is shared
+        if (
+            droppedFolder &&
+            droppedFolder.isShared &&
+            (!targetFolder || !targetFolder.isShared) &&
+            droppedFolder.parentId
+        ) {
+            const parentFolder = (logic.folders || []).find(f => f.id === droppedFolder.parentId);
+            if (parentFolder && parentFolder.isShared) {
+                console.log('[DEBUG] Triggering unshareConfirm overlay (folder, parent is shared)');
+                setUnshareConfirm({
+                    open: true,
+                    subjectId: null,
+                    folder: droppedFolder,
+                    onConfirm: async () => {
+                        // --- UNSHARE LOGIC FOR FOLDER (move out of shared parent) ---
+                        const oldSharedWithUids = Array.isArray(droppedFolder.sharedWithUids) ? droppedFolder.sharedWithUids : [];
+                        const oldSharedWith = Array.isArray(droppedFolder.sharedWith) ? droppedFolder.sharedWith : [];
+                        await updateFolder(droppedFolderId, {
+                            sharedWith: [],
+                            sharedWithUids: [],
+                            isShared: false
+                        });
+                        // Remove sharing from all child subjects
+                        if (Array.isArray(droppedFolder.subjectIds)) {
+                            for (const subjectId of droppedFolder.subjectIds) {
+                                const subject = (logic.subjects || []).find(s => s.id === subjectId);
+                                if (subject) {
+                                    const newSharedWith = (subject.sharedWith || []).filter(u => !oldSharedWithUids.includes(u.uid));
+                                    const newSharedWithUids = (subject.sharedWithUids || []).filter(uid => !oldSharedWithUids.includes(uid));
+                                    await updateDoc(doc(db, 'subjects', subjectId), {
+                                        sharedWith: newSharedWith,
+                                        sharedWithUids: newSharedWithUids,
+                                        isShared: newSharedWithUids.length > 0
+                                    });
+                                }
+                            }
+                        }
+                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                    }
+                });
+                return;
+            }
         }
 
         // Only show confirmation if there is a new user who will gain access (moving INTO a shared folder)
@@ -386,8 +435,9 @@ const Home = ({ user }) => {
                 return;
             }
         }
-        console.log('[DEBUG] No confirmation needed, moving folder');
-        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+        // If no overlay, just move the folder and DO NOT change its shared state
+        console.log('[DEBUG] No confirmation needed, moving folder (shared state preserved)');
+        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId, { preserveSharing: true });
     };
     const handlePromoteSubjectWrapper = async (subjectId) => {
         // Find current folder and subject
