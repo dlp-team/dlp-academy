@@ -80,18 +80,6 @@ const SharedView = ({
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* --- TAG FILTER --- */}
-            {allTags.length > 0 && (
-                <div className="mb-2">
-                    <TagFilter
-                        allTags={allTags}
-                        selectedTags={selectedTags}
-                        setSelectedTags={setSelectedTags}
-                        activeFilter={activeFilter}
-                        onFilterChange={setActiveFilter}
-                    />
-                </div>
-            )}
 
             {/* --- SHARED FOLDERS SECTION --- */}
             {filteredFolders.length > 0 && (

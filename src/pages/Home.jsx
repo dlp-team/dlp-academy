@@ -62,36 +62,51 @@ const Home = ({ user }) => {
             .replace(/[\u0300-\u036f]/g, '');
     };
 
-    const { 
-        filteredFolders, 
-        filteredSubjects, 
-        sharedFolders, 
+    // --- SHARED TAG FILTER STATE ---
+    const [sharedSelectedTags, setSharedSelectedTags] = useState([]);
+    const [sharedActiveFilter, setSharedActiveFilter] = useState('all');
+    const sharedAllTags = useMemo(() => {
+        const folderTags = (logic.sharedFolders || []).flatMap(f => Array.isArray(f.tags) ? f.tags : []);
+        const subjectTags = (logic.sharedSubjects || []).flatMap(s => Array.isArray(s.tags) ? s.tags : []);
+        return Array.from(new Set([...folderTags, ...subjectTags])).filter(Boolean);
+    }, [logic.sharedFolders, logic.sharedSubjects]);
+
+    const {
+        filteredFolders,
+        filteredSubjects,
+        sharedFolders,
         sharedSubjects,
     } = useMemo(() => {
         const query = normalizeText(searchQuery);
-        
+
         // Helper to filter by query
-        const filterList = (list) => list.filter(item => 
+        const filterList = (list) => list.filter(item =>
             normalizeText(item.name).includes(query)
         );
 
         // Filter Main Content
-        // We look at the current folder contents OR the root lists
         const folders = logic.currentFolderContents?.folders || logic.folders || [];
         const subjects = logic.currentFolderContents?.subjects || logic.subjects || [];
-        
-        // Filter Shared Content
-        // If logic.sharedFolders is undefined, we default to [] to prevent crashes
-        const sFolders = logic.sharedFolders || [];
-        const sSubjects = logic.sharedSubjects || [];
+
+        // Filter Shared Content (by search)
+        let sFolders = logic.sharedFolders || [];
+        let sSubjects = logic.sharedSubjects || [];
+        sFolders = filterList(sFolders);
+        sSubjects = filterList(sSubjects);
+
+        // Further filter shared by selected tags if in shared mode
+        if (logic.viewMode === 'shared' && sharedSelectedTags.length > 0) {
+            sFolders = sFolders.filter(f => Array.isArray(f.tags) && sharedSelectedTags.every(tag => f.tags.includes(tag)));
+            sSubjects = sSubjects.filter(s => Array.isArray(s.tags) && sharedSelectedTags.every(tag => s.tags.includes(tag)));
+        }
 
         return {
             filteredFolders: filterList(folders),
             filteredSubjects: filterList(subjects),
-            sharedFolders: filterList(sFolders),
-            sharedSubjects: filterList(sSubjects),
+            sharedFolders: sFolders,
+            sharedSubjects: sSubjects,
         };
-    }, [searchQuery, logic.folders, logic.subjects, logic.currentFolderContents, logic.sharedFolders, logic.sharedSubjects]);
+    }, [searchQuery, logic.folders, logic.subjects, logic.currentFolderContents, logic.sharedFolders, logic.sharedSubjects, logic.viewMode, sharedSelectedTags]);
 
 
     // ... (State and Filtering Logic omitted for brevity, identical to previous) ...
@@ -471,9 +486,9 @@ const Home = ({ user }) => {
                         setLayoutMode={logic.setLayoutMode}
                         cardScale={logic.cardScale}
                         setCardScale={logic.setCardScale}
-                        allTags={logic.allTags || []}
-                        selectedTags={logic.selectedTags || []}
-                        setSelectedTags={logic.setSelectedTags}
+                        allTags={logic.viewMode === 'shared' ? sharedAllTags : (logic.allTags || [])}
+                        selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
+                        setSelectedTags={logic.viewMode === 'shared' ? setSharedSelectedTags : logic.setSelectedTags}
                         currentFolder={logic.currentFolder}
                         setFolderModalConfig={logic.setFolderModalConfig}
                         { ...(logic.setCollapsedGroups ? { setCollapsedGroups: logic.setCollapsedGroups } : {}) }
@@ -491,7 +506,7 @@ const Home = ({ user }) => {
                         draggedItemType={logic.draggedItemType}
                         onPreferenceChange={logic.handlePreferenceChange}
                         allFolders={logic.folders || []} 
-                        activeFilter={logic.activeFilter}
+                        activeFilter={logic.viewMode === 'shared' ? sharedActiveFilter : logic.activeFilter}
                         handleFilterChange={logic.handleFilterChange}
                         onFilterOverlayChange={setIsFilterOpen}
                         onScaleOverlayChange={setIsScaleOverlayOpen}
