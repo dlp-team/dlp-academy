@@ -136,8 +136,16 @@ const HomeContent = ({
         if (target.type === 'folder') {
             if (dragged.id === target.id) return;
             if (dragged.type === 'subject') {
-                if (handleMoveSubjectWithSource) handleMoveSubjectWithSource(dragged.id, target.id, dragged.parentId);
-                else handleDropOnFolder(target.id, dragged.id); 
+                // Call handleDropOnFolder. If it returns true (overlay shown), do NOT move yet. Only move if it returns false/undefined.
+                let overlayShown = false;
+                if (handleDropOnFolder) {
+                    // handleDropOnFolder should return true if overlay is shown and move should be blocked
+                    const result = handleDropOnFolder(target.id, dragged.id, dragged.parentId);
+                    if (result === true) overlayShown = true;
+                }
+                if (!overlayShown && handleMoveSubjectWithSource) {
+                    handleMoveSubjectWithSource(dragged.id, target.id, dragged.parentId);
+                }
             } else if (dragged.type === 'folder') {
                 if (handleMoveFolderWithSource) handleMoveFolderWithSource(dragged.id, dragged.parentId, target.id);
                 else handleNestFolder(target.id, dragged.id); 
@@ -148,7 +156,7 @@ const HomeContent = ({
             if (dragged.type === 'subject') {
                 if (dragged.parentId !== targetParentId) {
                     if (handleMoveSubjectWithSource) handleMoveSubjectWithSource(dragged.id, targetParentId, dragged.parentId);
-                    else handleDropOnFolder(targetParentId, dragged.id); 
+                    else handleDropOnFolder(targetParentId, dragged.id, dragged.parentId); 
                 }
             }
         }

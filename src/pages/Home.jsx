@@ -190,9 +190,10 @@ const Home = ({ user }) => {
     const handleOpenTopics = (subject) => {
         setTopicsModalConfig({ isOpen: true, subject });
     };
-    const handleDropOnFolderWrapper = async (targetFolderId, subjectId) => {
+    const handleDropOnFolderWrapper = (targetFolderId, subjectId, sourceFolderId) => {
         console.log('[DEBUG] handleDropOnFolderWrapper ENTRY', { targetFolderId, subjectId });
-        const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
+        // Use passed sourceFolderId if provided, otherwise fallback to currentFolder
+        const currentFolderId = sourceFolderId !== undefined ? sourceFolderId : (logic.currentFolder ? logic.currentFolder.id : null);
         console.log('[DEBUG] currentFolderId:', currentFolderId);
         if (targetFolderId === currentFolderId) {
             console.log('[DEBUG] targetFolderId === currentFolderId, returning');
@@ -236,7 +237,7 @@ const Home = ({ user }) => {
                     setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
                 }
             });
-            return;
+            return true;
         }
 
         // Only show confirmation if there is a new user who will gain access
@@ -257,17 +258,12 @@ const Home = ({ user }) => {
                         setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
                     }
                 });
-                return;
+                return true;
             }
         }
         console.log('[DEBUG] No confirmation needed, moving subject');
-            const handleDragStart = (e) => {
-                console.log('[DEBUG] Drag started', { event: e });
-            };
-        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-            const handleDragEnd = (e) => {
-                console.log('[DEBUG] Drag ended', { event: e });
-            };
+        moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+        return false;
     };
 
     const handleNestFolder = async (targetFolderId, droppedFolderId) => {
