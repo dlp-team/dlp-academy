@@ -306,8 +306,29 @@ const FolderTreeModal = ({
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-800">
                     <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg bg-gradient-to-br ${getGradient(rootFolder.color)} shadow-sm`}>
+                        <div className={`relative p-2 rounded-lg bg-gradient-to-br ${getGradient(rootFolder.color)} shadow-sm`}>
                             {rootFolder.icon ? <SubjectIcon iconName={rootFolder.icon} className="w-5 h-5 text-white" /> : <Folder className="text-white w-5 h-5" />}
+                            {/* Shared icon inside folder icon, like in tree, only for folders */}
+                            {(rootFolder.isShared === true || (Array.isArray(rootFolder.sharedWith) && rootFolder.sharedWith.length > 0) || (Array.isArray(rootFolder.sharedWithUids) && rootFolder.sharedWithUids.length > 0)) && (
+                                <div
+                                    className="absolute inset-0 flex items-center justify-center z-10"
+                                    style={{ pointerEvents: 'none' }}
+                                >
+                                    <div className="flex items-center justify-center rounded-full opacity-80 bg-none"
+                                        style={{
+                                            width: '18px',
+                                            height: '18px',
+                                            transform: 'translateY(2px)'
+                                        }}
+                                    >
+                                        <Users
+                                            className="text-white"
+                                            style={{ width: '9px', height: '9px' }}
+                                            strokeWidth={2.5}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div>
                             <h2 className="font-bold text-gray-900 dark:text-white text-lg">{rootFolder.name}</h2>
