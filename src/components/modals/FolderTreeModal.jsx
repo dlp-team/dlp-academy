@@ -168,7 +168,8 @@ const FolderTreeModal = ({
     onNavigateSubject,
     onMoveSubjectToFolder,
     onNestFolder,
-    onReorderSubject
+    onReorderSubject,
+    onDropWithOverlay // <-- Add this prop for overlay logic
 }) => {
     
     if (!isOpen || !rootFolder) return null;
@@ -182,9 +183,16 @@ const FolderTreeModal = ({
             if (dragged.parentId === target.id) return; // Already inside
 
             if (dragged.type === 'subject') {
-                onMoveSubjectToFolder(dragged.id, target.id, dragged.parentId);
+                let overlayShown = false;
+                if (onDropWithOverlay) {
+                    const result = onDropWithOverlay(target.id, dragged.id, dragged.parentId);
+                    if (result === true) overlayShown = true;
+                }
+                if (!overlayShown && onMoveSubjectToFolder) {
+                    onMoveSubjectToFolder(dragged.id, target.id, dragged.parentId);
+                }
             } else if (dragged.type === 'folder') {
-                onNestFolder(target.id, dragged.id); 
+                if (onNestFolder) onNestFolder(target.id, dragged.id); 
             }
         }
         
@@ -192,13 +200,17 @@ const FolderTreeModal = ({
         else if (target.type === 'subject' && dragged.type === 'subject') {
             // Determine the folder that contains the target subject
             const targetParentId = target.parentId || rootFolder.id; 
-            
             if (dragged.parentId !== targetParentId) {
-                // Moving from Folder A to Folder B (where target resides)
-                onMoveSubjectToFolder(dragged.id, targetParentId, dragged.parentId);
+                let overlayShown = false;
+                if (onDropWithOverlay) {
+                    const result = onDropWithOverlay(targetParentId, dragged.id, dragged.parentId);
+                    if (result === true) overlayShown = true;
+                }
+                if (!overlayShown && onMoveSubjectToFolder) {
+                    onMoveSubjectToFolder(dragged.id, targetParentId, dragged.parentId);
+                }
             } else {
                 // Same folder: Reorder
-                // Logic: Move 'dragged.id' to the position of 'target.index'
                 if (onReorderSubject) {
                     onReorderSubject(targetParentId, dragged.id, target.index);
                 }
