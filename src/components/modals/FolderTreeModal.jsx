@@ -1,7 +1,7 @@
 // src/components/modals/FolderTreeModal.jsx
 import React, { useState } from 'react';
 import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, ArrowUpCircle, Users } from 'lucide-react';
-import SubjectIcon from './SubjectIcon';
+import SubjectIcon, { getIconColor } from './SubjectIcon';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
 
@@ -118,37 +118,44 @@ const TreeItem = ({
 
                 {depth > 0 && <CornerDownRight size={14} className="text-gray-300 dark:text-gray-600 shrink-0 -ml-1" />}
 
-                <div className={`relative shrink-0 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br ${getGradient(item.color)}`}>
-                    {/* Main folder or subject icon */}
-                    {type === 'folder' ? (
-                        <>
-                            {item.icon ? <SubjectIcon iconName={item.icon} className="w-5 h-5 text-white" /> : <Folder size={20} className="text-white" />}
-                            {/* Shared icon inside folder icon, like FolderListItem, only for folders */}
-                            {(item.isShared === true || (Array.isArray(item.sharedWith) && item.sharedWith.length > 0) || (Array.isArray(item.sharedWithUids) && item.sharedWithUids.length > 0)) && (
-                                <div
-                                    className="absolute inset-0 flex items-center justify-center z-10"
-                                    style={{ pointerEvents: 'none' }}
+                {/* Icon logic for subject/folder: match ProfileSubjects */}
+                {type === 'folder' ? (
+                    <div className={`relative shrink-0 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br ${getGradient(item.color)}`}>
+                        {item.icon ? <SubjectIcon iconName={item.icon} className="w-5 h-5 text-white" /> : <Folder size={20} className="text-white" />}
+                        {/* Shared icon inside folder icon, like FolderListItem, only for folders */}
+                        {(item.isShared === true || (Array.isArray(item.sharedWith) && item.sharedWith.length > 0) || (Array.isArray(item.sharedWithUids) && item.sharedWithUids.length > 0)) && (
+                            <div
+                                className="absolute inset-0 flex items-center justify-center z-10"
+                                style={{ pointerEvents: 'none' }}
+                            >
+                                <div className="flex items-center justify-center rounded-full opacity-80 bg-none"
+                                    style={{
+                                        width: '14px',
+                                        height: '14px',
+                                        transform: 'translateY(2px)'
+                                    }}
                                 >
-                                    <div className="flex items-center justify-center rounded-full opacity-80 bg-none"
-                                        style={{
-                                            width: '14px',
-                                            height: '14px',
-                                            transform: 'translateY(2px)'
-                                        }}
-                                    >
-                                        <Users
-                                            className="text-white"
-                                            style={{ width: '9px', height: '9px' }}
-                                            strokeWidth={2.5}
-                                        />
-                                    </div>
+                                    <Users
+                                        className="text-white"
+                                        style={{ width: '9px', height: '9px' }}
+                                        strokeWidth={2.5}
+                                    />
                                 </div>
-                            )}
-                        </>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    // Subject: modern or classic style
+                    item.cardStyle === 'modern' ? (
+                        <div className={`shrink-0 w-8 h-8 flex items-center justify-center ${getIconColor(item.color)}`}>
+                            <SubjectIcon iconName={item.icon} className="w-7 h-7" />
+                        </div>
                     ) : (
-                        item.icon ? <SubjectIcon iconName={item.icon} className="w-5 h-5 text-white" /> : <FileText size={20} className="text-white" />
-                    )}
-                </div>
+                        <div className={`relative shrink-0 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br ${item.color || 'from-gray-400 to-gray-500'}`}>
+                            <SubjectIcon iconName={item.icon} className="w-5 h-5 text-white" />
+                        </div>
+                    )
+                )}
 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-center min-w-0 gap-1">
