@@ -159,8 +159,27 @@ const HomeContent = ({
             const targetParentId = target.parentId || (currentFolder ? currentFolder.id : null);
             if (dragged.type === 'subject') {
                 if (dragged.parentId !== targetParentId) {
-                    if (handleMoveSubjectWithSource) handleMoveSubjectWithSource(dragged.id, targetParentId, dragged.parentId);
-                    else handleDropOnFolder(targetParentId, dragged.id, dragged.parentId); 
+                    // Overlay logic for subject-to-subject drop
+                    let overlayShown = false;
+                    if (handleDropOnFolder) {
+                        const result = handleDropOnFolder(targetParentId, dragged.id, dragged.parentId);
+                        if (result === true) overlayShown = true;
+                    }
+                    if (!overlayShown && handleMoveSubjectWithSource) {
+                        handleMoveSubjectWithSource(dragged.id, targetParentId, dragged.parentId);
+                    }
+                }
+            } else if (dragged.type === 'folder') {
+                // Overlay logic for folder-to-subject drop
+                let overlayShown = false;
+                if (handleDropOnFolder) {
+                    const result = handleDropOnFolder(targetParentId, dragged.id, dragged.parentId);
+                    if (result === true) overlayShown = true;
+                }
+                if (!overlayShown && handleMoveFolderWithSource) {
+                    handleMoveFolderWithSource(dragged.id, dragged.parentId, targetParentId);
+                } else if (!overlayShown && handleNestFolder) {
+                    handleNestFolder(targetParentId, dragged.id);
                 }
             }
         }
