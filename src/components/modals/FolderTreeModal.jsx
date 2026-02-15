@@ -1,6 +1,6 @@
 // src/components/modals/FolderTreeModal.jsx
 import React, { useState } from 'react';
-import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, ArrowUpCircle } from 'lucide-react';
+import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, ArrowUpCircle, Users } from 'lucide-react';
 import SubjectIcon from './SubjectIcon';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
@@ -118,18 +118,55 @@ const TreeItem = ({
 
                 {depth > 0 && <CornerDownRight size={14} className="text-gray-300 dark:text-gray-600 shrink-0 -ml-1" />}
 
-                <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br ${getGradient(item.color)}`}>
+                <div className={`relative shrink-0 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br ${getGradient(item.color)}`}>
+                    {/* Main folder or subject icon */}
                     {type === 'folder' ? (
-                        item.icon ? <SubjectIcon iconName={item.icon} className="w-5 h-5 text-white" /> : <Folder size={16} className="text-white" />
+                        <>
+                            {item.icon ? <SubjectIcon iconName={item.icon} className="w-5 h-5 text-white" /> : <Folder size={20} className="text-white" />}
+                            {/* Shared icon inside folder icon, like FolderListItem, only for folders */}
+                            {(item.isShared === true || (Array.isArray(item.sharedWith) && item.sharedWith.length > 0) || (Array.isArray(item.sharedWithUids) && item.sharedWithUids.length > 0)) && (
+                                <div
+                                    className="absolute inset-0 flex items-center justify-center z-10"
+                                    style={{ pointerEvents: 'none' }}
+                                >
+                                    <div className="flex items-center justify-center rounded-full opacity-80 bg-none"
+                                        style={{
+                                            width: '14px',
+                                            height: '14px',
+                                            transform: 'translateY(2px)'
+                                        }}
+                                    >
+                                        <Users
+                                            className="text-white"
+                                            style={{ width: '9px', height: '9px' }}
+                                            strokeWidth={2.5}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     ) : (
-                        item.icon ? <SubjectIcon iconName={item.icon} className="w-5 h-5 text-white" /> : <FileText size={16} className="text-white" />
+                        item.icon ? <SubjectIcon iconName={item.icon} className="w-5 h-5 text-white" /> : <FileText size={20} className="text-white" />
                     )}
                 </div>
 
                 <div className="flex-1 min-w-0">
-                    <p className={`text-sm truncate ${type === 'folder' ? 'font-semibold' : 'font-medium'}`}>
-                        {item.name}
-                    </p>
+                    <div className="flex items-center min-w-0 gap-1">
+                        <p className={`text-sm truncate ${type === 'folder' ? 'font-semibold' : 'font-medium'}`}>{item.name}</p>
+                        {/* Shared icon for subjects, right of title */}
+                        {type === 'subject' && (item.isShared === true || (Array.isArray(item.sharedWith) && item.sharedWith.length > 0) || (Array.isArray(item.sharedWithUids) && item.sharedWithUids.length > 0)) && (
+                            <div 
+                                className="flex items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/30 ml-1"
+                                style={{ width: '18px', height: '18px', minWidth: '18px' }}
+                                title="Asignatura compartida"
+                            >
+                                <Users 
+                                    className="text-indigo-600 dark:text-indigo-400"
+                                    style={{ width: '11px', height: '11px' }}
+                                />
+                            </div>
+                        )}
+                    </div>
                     {type === 'subject' && <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{item.topics?.length || 0} temas</p>}
                 </div>
 
