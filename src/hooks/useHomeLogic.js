@@ -386,12 +386,26 @@ export const useHomeLogic = (user, searchQuery = '') => {
         }
 
         const query = normalizeText(searchQuery);
-        const isRelated = (item) => item.uid === user?.uid || (item.sharedWithUids && item.sharedWithUids.includes(user?.uid));
+        
+        // Helper to check access rights (Owner OR Shared)
+        const isRelated = (item) => {
+            // 1. Explicit Ownership (if property exists)
+            if (item.isOwner === true) return true;
+            // 2. UID Match (Fallback if isOwner is missing)
+            if (user?.uid && item.uid === user.uid) return true;
+            // 3. Shared Access
+            if (item.sharedWithUids && Array.isArray(item.sharedWithUids) && user?.uid) {
+                return item.sharedWithUids.includes(user.uid);
+            }
+            return false;
+        };
 
+        // Filter Folders
         const sFolders = folders.filter(f => 
             isRelated(f) && normalizeText(f.name).includes(query)
         );
 
+        // Filter Subjects
         const sSubjects = subjects.filter(s => 
             isRelated(s) && normalizeText(s.name).includes(query)
         );

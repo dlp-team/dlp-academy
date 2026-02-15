@@ -1,5 +1,5 @@
 // src/components/home/SharedView.jsx
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { Users, Folder as FolderIcon, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,30 +7,49 @@ import { useNavigate } from 'react-router-dom';
 import FolderCard from './FolderCard';
 import SubjectCard from './SubjectCard';
 import ListViewItem from './ListViewItem';
+import TagFilter from './TagFilter';
 
 const SharedView = ({ 
     sharedFolders = [],   
     sharedSubjects = [],  
     layoutMode = 'grid',  
     cardScale = 100,      
-    
     // Actions
     onOpenFolder,
     onSelectSubject,
-    
     // UI State for cards
     activeMenu,
     onToggleMenu,
     flippedSubjectId,
     onFlipSubject,
-    
     // Navigation fallback
     onSelectTopic,
-    
     // All folders needed for drag/drop logic
     allFolders = []
 }) => {
     const navigate = useNavigate();
+
+    // --- TAG FILTER STATE ---
+    // Collect all tags from shared folders and subjects
+    const allTags = useMemo(() => {
+        const folderTags = sharedFolders.flatMap(f => Array.isArray(f.tags) ? f.tags : []);
+        const subjectTags = sharedSubjects.flatMap(s => Array.isArray(s.tags) ? s.tags : []);
+        return Array.from(new Set([...folderTags, ...subjectTags])).filter(Boolean);
+    }, [sharedFolders, sharedSubjects]);
+
+    const [selectedTags, setSelectedTags] = useState([]);
+    const [activeFilter, setActiveFilter] = useState('all');
+
+    // Filtered shared folders/subjects by selected tags
+    const filteredFolders = useMemo(() => {
+        if (selectedTags.length === 0) return sharedFolders;
+        return sharedFolders.filter(f => Array.isArray(f.tags) && selectedTags.every(tag => f.tags.includes(tag)));
+    }, [sharedFolders, selectedTags]);
+
+    const filteredSubjects = useMemo(() => {
+        if (selectedTags.length === 0) return sharedSubjects;
+        return sharedSubjects.filter(s => Array.isArray(s.tags) && selectedTags.every(tag => s.tags.includes(tag)));
+    }, [sharedSubjects, selectedTags]);
 
     // Calculate grid column width based on scale (matches HomeContent logic)
     const gridStyle = { 
@@ -61,8 +80,21 @@ const SharedView = ({
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* --- TAG FILTER --- */}
+            {allTags.length > 0 && (
+                <div className="mb-2">
+                    <TagFilter
+                        allTags={allTags}
+                        selectedTags={selectedTags}
+                        setSelectedTags={setSelectedTags}
+                        activeFilter={activeFilter}
+                        onFilterChange={setActiveFilter}
+                    />
+                </div>
+            )}
+
             {/* --- SHARED FOLDERS SECTION --- */}
-            {sharedFolders.length > 0 && (
+            {filteredFolders.length > 0 && (
                 <div className="space-y-4">
                     <button
                         className="flex items-center gap-2 px-1 w-full text-left group hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg py-2 transition-colors"
@@ -71,7 +103,7 @@ const SharedView = ({
                         <FolderIcon className="w-5 h-5 text-indigo-500" />
                         <h2 className="text-lg font-bold text-gray-800 dark:text-white flex-1">Carpetas Compartidas</h2>
                         <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2 py-1 rounded-full">
-                            {sharedFolders.length}
+                            {filteredFolders.length}
                         </span>
                         <span className={`transition-transform ${collapsed.folders ? '-rotate-90' : ''}`}>▼</span>
                     </button>
@@ -79,11 +111,11 @@ const SharedView = ({
                         <>
                         {layoutMode === 'grid' ? (
                             <div className="grid gap-6" style={gridStyle}>
-                                {sharedFolders
+                                {filteredFolders
                                     .filter(folder => {
                                         // Only show folders that are not inside another shared folder
                                         if (!folder.parentId) return true;
-                                        return !sharedFolders.some(f => f.id === folder.parentId);
+                                        return !filteredFolders.some(f => f.id === folder.parentId);
                                     })
                                     .map((folder) => (
                                         <div key={folder.id}>
@@ -104,12 +136,11 @@ const SharedView = ({
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                {sharedFolders
+                                {filteredFolders
                                     .filter(folder => {
                                         // Only show folders that are not inside another shared folder
-                                        // i.e., parentId is null or parent is not a shared folder
                                         if (!folder.parentId) return true;
-                                        return !sharedFolders.some(f => f.id === folder.parentId);
+                                        return !filteredFolders.some(f => f.id === folder.parentId);
                                     })
                                     .map((folder) => (
                                         <ListViewItem 
@@ -121,8 +152,8 @@ const SharedView = ({
                                             onEdit={() => {}}
                                             onDelete={() => {}}
                                             draggable={false}
-                                            allFolders={sharedFolders}
-                                            allSubjects={sharedSubjects}
+                                            allFolders={filteredFolders}
+                                            allSubjects={filteredSubjects}
                                         />
                                     ))}
                             </div>
@@ -133,7 +164,7 @@ const SharedView = ({
             )}
 
             {/* --- SHARED SUBJECTS SECTION --- */}
-            {sharedSubjects.length > 0 && (
+            {filteredSubjects.length > 0 && (
                 <div className="space-y-4">
                     <button
                         className="flex items-center gap-2 px-1 w-full text-left group hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg py-2 transition-colors"
@@ -142,7 +173,7 @@ const SharedView = ({
                         <BookOpen className="w-5 h-5 text-emerald-500" />
                         <h2 className="text-lg font-bold text-gray-800 dark:text-white flex-1">Asignaturas Compartidas</h2>
                         <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold px-2 py-1 rounded-full">
-                            {sharedSubjects.length}
+                            {filteredSubjects.length}
                         </span>
                         <span className={`transition-transform ${collapsed.subjects ? '-rotate-90' : ''}`}>▼</span>
                     </button>
@@ -150,7 +181,7 @@ const SharedView = ({
                         <>
                         {layoutMode === 'grid' ? (
                             <div className="grid gap-6" style={gridStyle}>
-                                {sharedSubjects.map((subject) => (
+                                {filteredSubjects.map((subject) => (
                                     <div key={subject.id}>
                                         <SubjectCard
                                             subject={subject}
@@ -170,7 +201,7 @@ const SharedView = ({
                             </div>
                         ) : (
                             <div className="space-y-2">
-                                {sharedSubjects.map((subject) => (
+                                {filteredSubjects.map((subject) => (
                                     <ListViewItem
                                         key={subject.id}
                                         item={subject}
