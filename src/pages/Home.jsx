@@ -183,7 +183,7 @@ const Home = ({ user }) => {
         if (subjectId) {
             return handleDropOnFolderWrapper(targetFolderId, subjectId, currentFolderId);
         } else if (droppedFolderId) {
-            // For folders, use similar overlay logic as in handleNestFolder
+            // For folders, use similar overlay logic as in handleNestFolder, but also handle unsharing logic
             const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
             if (!droppedFolder) return;
             const currentParentId = droppedFolder.parentId || null;
@@ -197,6 +197,30 @@ const Home = ({ user }) => {
                     subjectId: null,
                     folder: droppedFolder,
                     onConfirm: async () => {
+                        // --- UNSHARE LOGIC FOR FOLDER (breadcrumb) ---
+                        const oldSharedWithUids = Array.isArray(droppedFolder.sharedWithUids) ? droppedFolder.sharedWithUids : [];
+                        const oldSharedWith = Array.isArray(droppedFolder.sharedWith) ? droppedFolder.sharedWith : [];
+                        // Remove sharing from the folder itself
+                        await updateFolder(droppedFolderId, {
+                            sharedWith: [],
+                            sharedWithUids: [],
+                            isShared: false
+                        });
+                        // Remove sharing from all child subjects
+                        if (Array.isArray(droppedFolder.subjectIds)) {
+                            for (const subjectId of droppedFolder.subjectIds) {
+                                const subject = (logic.subjects || []).find(s => s.id === subjectId);
+                                if (subject) {
+                                    const newSharedWith = (subject.sharedWith || []).filter(u => !oldSharedWithUids.includes(u.uid));
+                                    const newSharedWithUids = (subject.sharedWithUids || []).filter(uid => !oldSharedWithUids.includes(uid));
+                                    await updateDoc(doc(db, 'subjects', subjectId), {
+                                        sharedWith: newSharedWith,
+                                        sharedWithUids: newSharedWithUids,
+                                        isShared: newSharedWithUids.length > 0
+                                    });
+                                }
+                            }
+                        }
                         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
                         setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
                     }
