@@ -103,8 +103,8 @@ const HomeContent = ({
         else {
             const sId = e.dataTransfer.getData('subjectId');
             const fId = e.dataTransfer.getData('folderId');
-            if (sId) draggedData = { id: sId, type: 'subject' };
-            else if (fId) draggedData = { id: fId, type: 'folder' };
+            if (sId) draggedData = { id: sId, type: 'subject', parentId: undefined };
+            else if (fId) draggedData = { id: fId, type: 'folder', parentId: undefined };
         }
 
         if (!draggedData) return;
@@ -116,17 +116,21 @@ const HomeContent = ({
         if (draggedData.parentId === targetId) return;
 
         if (draggedData.type === 'subject') {
-            if (handleMoveSubjectWithSource) {
+            let overlayShown = false;
+            if (handleDropOnFolder) {
+                // Use the same overlay logic as folder drop: pass targetId, subjectId, sourceFolderId
+                const result = handleDropOnFolder(targetId, draggedData.id, draggedData.parentId);
+                if (result === true) overlayShown = true;
+            }
+            if (!overlayShown && handleMoveSubjectWithSource) {
                 handleMoveSubjectWithSource(draggedData.id, targetId, draggedData.parentId);
             }
         } else if (draggedData.type === 'folder') {
-            if (handleMoveFolderWithSource) {
-                handleMoveFolderWithSource(draggedData.id, draggedData.parentId, targetId);
-            } else {
-                handleNestFolder(targetId, draggedData.id); 
+            // Use the same overlay logic as handleNestFolder
+            if (handleNestFolder) {
+                handleNestFolder(targetId, draggedData.id);
             }
         }
-        
         // Ensure drag ends
         if (handleDragEnd) handleDragEnd();
     };
