@@ -380,7 +380,24 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
 
 
+    const { searchFolders, searchSubjects } = useMemo(() => {
+        if (!searchQuery || searchQuery.trim() === '') {
+            return { searchFolders: [], searchSubjects: [] };
+        }
 
+        const query = normalizeText(searchQuery);
+        const isRelated = (item) => item.uid === user?.uid || (item.sharedWithUids && item.sharedWithUids.includes(user?.uid));
+
+        const sFolders = folders.filter(f => 
+            isRelated(f) && normalizeText(f.name).includes(query)
+        );
+
+        const sSubjects = subjects.filter(s => 
+            isRelated(s) && normalizeText(s.name).includes(query)
+        );
+
+        return { searchFolders: sFolders, searchSubjects: sSubjects };
+    }, [folders, subjects, searchQuery, user]);
 
 
 
@@ -648,8 +665,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
         // Data
         subjects, 
         folders,
-        filteredFolders:filteredFolders,
-        filteredSubjects:filteredSubjects,
+        searchFolders,
+        searchSubjects,
         loading,
         loadingFolders,
         sharedFolders,

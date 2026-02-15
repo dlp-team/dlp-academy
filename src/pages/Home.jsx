@@ -106,13 +106,20 @@ const Home = ({ user }) => {
     });
 
     const displayedFolders = useMemo(() => {
+        // If searching, return the flat list of search results
+        if (searchQuery && logic.searchFolders) {
+            return logic.searchFolders;
+        }
+
+        // Standard Hierarchy Logic (Original)
         const allFolders = logic.folders || [];
         const currentId = logic.currentFolder ? logic.currentFolder.id : null;
         return allFolders.filter(folder => {
             const parentId = folder.parentId || null;
             return parentId === currentId;
         });
-    }, [logic.folders, logic.currentFolder]);
+    }, [logic.folders, logic.currentFolder, logic.searchFolders, searchQuery]);
+
     const activeModalFolder = useMemo(() => {
         if (!folderContentsModalConfig.folder) return null;
         const liveFolder = (logic.folders || []).find(f => f.id === folderContentsModalConfig.folder.id);
