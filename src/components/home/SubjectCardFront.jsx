@@ -234,7 +234,11 @@ const SubjectCardFront = ({
                         </h3>
 
                         {/* 2. Shared Icon (at the right) */}
-                        {subject.isShared && (
+                        {(
+                            subject.isShared === true ||
+                            (Array.isArray(subject.sharedWith) && subject.sharedWith.length > 0) ||
+                            (Array.isArray(subject.sharedWithUids) && subject.sharedWithUids.length > 0)
+                        ) && (
                             <div 
                                 className={`flex items-center justify-center rounded-full ${
                                     isModern ? 'bg-indigo-50 dark:bg-indigo-900/30' : 'bg-white/20'
