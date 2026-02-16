@@ -1,6 +1,6 @@
 // src/components/home/SubjectListItem.jsx
 import React, { useState } from 'react';
-import { ChevronRight, Edit2, Trash2, MoreVertical, Users } from 'lucide-react';
+import { ChevronRight, Edit2, Trash2, MoreVertical, Users ,Share2 } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
 
 const SubjectListItem = ({ 
@@ -8,6 +8,7 @@ const SubjectListItem = ({
     onSelect, 
     onEdit, 
     onDelete, 
+    onShare, 
     compact = false, 
     cardScale = 100,
     className = ""
@@ -117,13 +118,19 @@ const SubjectListItem = ({
                             />
                             <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 z-20 animate-in fade-in zoom-in-95 duration-100">
                                 <button 
-                                    onClick={() => { onEdit(subject); setShowMenu(false); }}
+                                    onClick={(e) => { e.stopPropagation(); onEdit(subject); setShowMenu(false); }}
                                     className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
                                 >
                                     <Edit2 size={14} /> Editar
                                 </button>
                                 <button 
-                                    onClick={() => { onDelete(subject); setShowMenu(false); }}
+                                    onClick={(e) => { e.stopPropagation(); onShare && onShare(subject); setShowMenu(false); }}
+                                    className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                                >
+                                    <Share2 size={14} /> Compartir
+                                </button>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); onDelete(subject); setShowMenu(false); }}
                                     className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
                                 >
                                     <Trash2 size={14} /> Eliminar
