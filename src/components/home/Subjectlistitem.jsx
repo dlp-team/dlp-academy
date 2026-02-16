@@ -1,7 +1,7 @@
 // src/components/home/SubjectListItem.jsx
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight, Edit2, Trash2, MoreVertical, Users ,Share2 } from 'lucide-react';
+import { ChevronRight, Edit2, Trash2, MoreVertical, Users , Share2 } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../modals/SubjectIcon';
 
 const SubjectListItem = ({ 
@@ -21,9 +21,10 @@ const SubjectListItem = ({
     React.useEffect(() => {
         if (showMenu && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
+            const menu = { width: 128, height: 48 * 3 }; // 128px width, 3 items 48px each
             setMenuPos({
-                top: rect.bottom,
-                left: rect.left
+                top: rect.bottom - menu.height,
+                left: rect.right - menu.width
             });
         }
     }, [showMenu]);
@@ -136,7 +137,8 @@ const SubjectListItem = ({
                                     className="fixed z-[101] w-32 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-none"
                                     style={{
                                         top: menuPos.top + 'px',
-                                        left: menuPos.left - 100 + 'px',
+                                        left: menuPos.left + 'px',
+                                        width: '128px',
                                         pointerEvents: 'auto'
                                     }}
                                 >
