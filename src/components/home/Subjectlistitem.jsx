@@ -101,7 +101,7 @@ const SubjectListItem = ({
                 <div className="flex items-center gap-2 relative">
                     <button 
                         onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                        className={`p-2 rounded-full transition-colors ${
+                        className={`p-2 rounded-full transition-colors opacity-100 ${
                             isModern 
                                 ? 'hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400' 
                                 : 'hover:bg-white/20 text-white'
@@ -112,31 +112,39 @@ const SubjectListItem = ({
 
                     {showMenu && (
                         <>
-                            <div 
-                                className="fixed inset-0 z-10" 
-                                onClick={() => setShowMenu(false)}
-                            />
-                            <div className="absolute right-0 mt-1 w-32 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 z-20 animate-in fade-in zoom-in-95 duration-100">
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); onEdit(subject); setShowMenu(false); }}
-                                    className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
-                                >
-                                    <Edit2 size={14} /> Editar
-                                </button>
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); onShare && onShare(subject); setShowMenu(false); }}
-                                    className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
-                                >
-                                    <Share2 size={14} /> Compartir
-                                </button>
-                                <button 
-                                    onClick={(e) => { e.stopPropagation(); onDelete(subject); setShowMenu(false); }}
-                                    className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
-                                >
-                                    <Trash2 size={14} /> Eliminar
-                                </button>
-                            </div>
-                        </>
+                        <div 
+                            className="fixed inset-0 z-[100]" 
+                            onClick={() => setShowMenu(false)}
+                        />
+                        <div
+                            className="absolute z-[101] w-32 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100"
+                            style={{
+                                right: '100%', // Position to the left of the button
+                                bottom: 0, // Align to the bottom of the button
+                                marginRight: '8px', // Small gap
+                                pointerEvents: 'auto'
+                            }}
+                        >
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); onEdit(subject); setShowMenu(false); }}
+                                className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                            >
+                                <Edit2 size={14} /> Editar
+                            </button>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); onShare && onShare(subject); setShowMenu(false); }}
+                                className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                            >
+                                <Share2 size={14} /> Compartir
+                            </button>
+                            <button 
+                                onClick={(e) => { e.stopPropagation(); onDelete(subject); setShowMenu(false); }}
+                                className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                            >
+                                <Trash2 size={14} /> Eliminar
+                            </button>
+                        </div>
+                    </>
                     )}
                 </div>
             </div>

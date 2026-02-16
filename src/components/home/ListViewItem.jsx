@@ -16,7 +16,6 @@ const ListViewItem = ({
     onNavigateSubject,
     onEdit,
     onDelete,
-    onShare,
     cardScale = 100, 
     onDragStart,
     onDragEnd,
@@ -144,7 +143,6 @@ const ListViewItem = ({
                             onSelect={() => onNavigateSubject(item.id)} 
                             onEdit={onEdit} 
                             onDelete={onDelete} 
-                            onShare={onShare} 
                             cardScale={cardScale} 
                             className="pl-8" 
                         />

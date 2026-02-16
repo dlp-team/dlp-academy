@@ -419,7 +419,6 @@ const HomeContent = ({
                                                 onNavigateSubject={handleSelectSubject}
                                                 onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                 onDelete={(s) => setDeleteConfig({ isOpen: true, type: 'subject', item: s })}
-                                                onShare={(s) => { setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' }); setActiveMenu(null); }}
                                                 cardScale={cardScale}
                                                 onDragStart={handleDragStartSubject}
                                                 onDragEnd={handleDragEnd}
