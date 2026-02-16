@@ -560,9 +560,19 @@ export const useHomeLogic = (user, searchQuery = '') => {
     };
 
     // --- DRAG AND DROP HANDLERS ---
-    const handleDragStartSubject = (subject, position) => {
-        setDraggedItem(subject);
-        setDraggedItemType('subject');
+    // Accept both (subject, position) and (e, subject)
+    const handleDragStartSubject = (a, b) => {
+        // If first arg is an event, second is subject
+        if (a && typeof a.preventDefault === 'function' && b && typeof b === 'object' && b.id) {
+            setDraggedItem(b);
+            setDraggedItemType('subject');
+        } else if (a && typeof a === 'object' && a.id) {
+            setDraggedItem(a);
+            setDraggedItemType('subject');
+        } else {
+            setDraggedItem(null);
+            setDraggedItemType(null);
+        }
     };
 
     const handleDragStartFolder = (folder, position) => {
