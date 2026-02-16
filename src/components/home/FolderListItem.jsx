@@ -173,7 +173,7 @@ const FolderListItem = ({
                 onDrop={handleDrop}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className={`relative group rounded-xl transition-all duration-200 border border-transparent z-10 ${
+                className={`relative group rounded-xl transition-all duration-200 border border-transparent z-40 ${
                     isDragOver 
                         ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-500 scale-[1.01] shadow-md'
                         : ''
