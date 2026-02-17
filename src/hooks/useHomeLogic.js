@@ -274,17 +274,20 @@ export const useHomeLogic = (user, searchQuery = '') => {
             return { 'Resultados de búsqueda': matchedSubjects };
         }
 
-        // In Manual mode with a folder open
+        // In Manual mode: if tag filter is active, show all filtered subjects as one group regardless of folder
+        if (viewMode === 'grid' && selectedTags.length > 0) {
+            return { 'Filtradas': applyManualOrder(filteredSubjectsByTags, 'subject') };
+        }
+        // In Manual mode with a folder open (no tag filter)
         if (viewMode === 'grid' && currentFolder) {
-            const folderSubjects = getSubjectsInFolder(currentFolder.id, selectedTags.length > 0 ? filteredSubjectsByTags : subjects);
+            const folderSubjects = getSubjectsInFolder(currentFolder.id, subjects);
             return { 
                 [currentFolder.name]: applyManualOrder(folderSubjects, 'subject')
             };
         }
-
-        // In Manual mode at root
+        // In Manual mode at root (no tag filter)
         if (viewMode === 'grid' && !currentFolder) {
-            const unfolderedSubjects = getUnfolderedSubjects(selectedTags.length > 0 ? filteredSubjectsByTags : subjects);
+            const unfolderedSubjects = getUnfolderedSubjects(subjects);
             return { 
                 'Todas': applyManualOrder(unfolderedSubjects, 'subject')
             };
