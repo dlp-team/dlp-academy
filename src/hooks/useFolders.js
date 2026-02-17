@@ -431,7 +431,7 @@ export const useFolders = (user) => {
      * Advanced Folder Move Logic
      * Handles normal moves AND "Swap/Extract" if moving Parent -> Child
      */
-    const moveFolderToParent = async (folderId, currentParentId, newParentId) => {
+    const moveFolderToParent = async (folderId, currentParentId, newParentId, options = {}) => {
         // Prevent move to self
         if (folderId === newParentId) return;
 
@@ -495,21 +495,23 @@ export const useFolders = (user) => {
             const folderRef = doc(db, "folders", folderId);
             let updatePayload = { parentId: newParentId || null, updatedAt: new Date() };
 
-            // If moving into a shared folder, propagate sharing
+            // If moving into a shared folder, propagate sharing unless options.preserveSharing is true
             if (newParentId) {
                 const newParentRef = doc(db, "folders", newParentId);
                 batch.update(newParentRef, { folderIds: arrayUnion(folderId) });
-                // Fetch new parent folder's sharing info
-                try {
-                    const parentSnap = await getDoc(newParentRef);
-                    if (parentSnap.exists()) {
-                        const parentData = parentSnap.data();
-                        updatePayload.sharedWith = parentData.sharedWith || [];
-                        updatePayload.sharedWithUids = parentData.sharedWithUids || [];
-                        updatePayload.isShared = (parentData.sharedWithUids || []).length > 0;
+                if (!options.preserveSharing) {
+                    // Fetch new parent folder's sharing info
+                    try {
+                        const parentSnap = await getDoc(newParentRef);
+                        if (parentSnap.exists()) {
+                            const parentData = parentSnap.data();
+                            updatePayload.sharedWith = parentData.sharedWith || [];
+                            updatePayload.sharedWithUids = parentData.sharedWithUids || [];
+                            updatePayload.isShared = (parentData.sharedWithUids || []).length > 0;
+                        }
+                    } catch (e) {
+                        console.error("Error propagating sharing when moving folder:", e);
                     }
-                } catch (e) {
-                    console.error("Error propagating sharing when moving folder:", e);
                 }
             }
             batch.update(folderRef, updatePayload);

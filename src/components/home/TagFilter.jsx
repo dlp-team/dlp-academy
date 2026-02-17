@@ -2,8 +2,21 @@
 import React, { useState } from 'react';
 import { Filter, X } from 'lucide-react';
 
-const TagFilter = ({ allTags, selectedTags, setSelectedTags }) => {
+const TagFilter = ({ 
+    allTags, 
+    selectedTags, 
+    setSelectedTags, 
+    activeFilter = 'all', 
+    onFilterChange = () => {} ,
+    onOverlayToggle
+}) => {
     const [showFilter, setShowFilter] = useState(false);
+
+
+    const handleSetShowFilter = (newState) => {
+        setShowFilter(newState);
+        if (onOverlayToggle) onOverlayToggle(newState);
+    };
 
     const toggleTag = (tag) => {
         if (selectedTags.includes(tag)) {
@@ -15,14 +28,15 @@ const TagFilter = ({ allTags, selectedTags, setSelectedTags }) => {
 
     const clearFilters = () => {
         setSelectedTags([]);
+        onFilterChange('all'); // Also reset view to all
     };
 
     return (
         <div className="relative">
             <button
-                onClick={() => setShowFilter(!showFilter)}
+                onClick={() => handleSetShowFilter(!showFilter)}
                 className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium transition-colors shadow-sm cursor-pointer ${
-                    selectedTags.length > 0
+                    selectedTags.length > 0 || activeFilter !== 'all'
                         ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-300 dark:border-pink-700 text-pink-700 dark:text-pink-300'
                         : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
                 }`}
@@ -36,26 +50,20 @@ const TagFilter = ({ allTags, selectedTags, setSelectedTags }) => {
                 )}
             </button>
 
+            {/* Pass showFilter as a prop to parent (HomeControls) if needed */}
             {showFilter && (
                 <>
                     {/* Backdrop */}
                     <div 
                         className="fixed inset-0 z-10"
-                        onClick={() => setShowFilter(false)}
+                        onClick={() => handleSetShowFilter(false)}
                     />
                     
                     {/* Filter Panel */}
-                    <div className="absolute top-full mt-2 left-0 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-20 w-80 max-h-96 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
-                        <div className="flex items-center justify-between mb-3">
+                    <div className="absolute top-full mt-2 left-0 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-[60] w-80 max-h-96 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
+                        <div className="flex items-center justify-between mb-3 relative">
                             <span className="text-sm font-bold text-gray-900 dark:text-white">Filtrar por Etiquetas</span>
-                            {selectedTags.length > 0 && (
-                                <button
-                                    onClick={clearFilters}
-                                    className="text-xs text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-300 font-medium cursor-pointer"
-                                >
-                                    Limpiar
-                                </button>
-                            )}
+                            {/* Folder filter icon removed */}
                         </div>
 
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
@@ -63,18 +71,23 @@ const TagFilter = ({ allTags, selectedTags, setSelectedTags }) => {
                         </p>
 
                         {/* Tag List */}
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5" style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            maxHeight: 'calc(2.5rem * 4 + 0.375rem * 3)', // 4 rows of 2.5rem height + 3 gaps (0.375rem = 6px)
+                            overflowY: allTags.length > 0 ? 'auto' : 'unset',
+                        }}>
                             {allTags.map(tag => {
                                 const isSelected = selectedTags.includes(tag);
                                 return (
                                     <button
                                         key={tag}
                                         onClick={() => toggleTag(tag)}
-                                        className={`w-full flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer ${
-                                            isSelected
+                                        className={`flex-1 min-w-[45%] max-w-[48%] flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer m-0.5
+                                            ${isSelected
                                                 ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 ring-2 ring-pink-500 dark:ring-pink-400'
-                                                : 'bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'
-                                        }`}
+                                                : 'bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'}
+                                        `}
                                     >
                                         <span className="font-medium">#{tag}</span>
                                         {isSelected && (
@@ -86,6 +99,18 @@ const TagFilter = ({ allTags, selectedTags, setSelectedTags }) => {
                                 );
                             })}
                         </div>
+
+                        {/* Limpiar button moved below tag list */}
+                        {(selectedTags.length > 0 || activeFilter !== 'all') && (
+                            <div className="flex justify-end mt-3">
+                                <button
+                                    onClick={clearFilters}
+                                    className="text-xs text-pink-600 dark:text-pink-400 hover:text-pink-700 dark:hover:text-pink-300 font-medium cursor-pointer"
+                                >
+                                    Borrar filtros
+                                </button>
+                            </div>
+                        )}
 
                         {allTags.length === 0 && (
                             <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">

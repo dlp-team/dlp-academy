@@ -18,9 +18,12 @@ const FolderCardBody = ({
     onEdit,
     onDelete,
     onShare,
-    onShowContents
+    onShowContents,
+    filterOverlayOpen
 }) => {
     // 1. Logic: No useState needed here. We use CSS for hover states.
+    // Enforce a minimum scale of 1 for the menu
+    const menuScale = Math.max(scaleMultiplier, 1);
     const shiftX = 48 * scaleMultiplier;
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
@@ -73,7 +76,7 @@ const FolderCardBody = ({
                     {/* 1. Badge / Counter */}
                     <div 
                         className={`transition-all duration-300 ease-out 
-                            group-hover:-translate-x-[var(--shift-x)] 
+                            ${(!filterOverlayOpen ? 'group-hover:-translate-x-[var(--shift-x)]' : '')}
                             ${activeMenu === folder.id ? '-translate-x-[var(--shift-x)]' : ''}
                         `}
                         style={{
@@ -83,6 +86,7 @@ const FolderCardBody = ({
                         <button 
                             onClick={(e) => {
                                 e.stopPropagation();
+                                if (typeof onCloseFilterOverlay === 'function') onCloseFilterOverlay();
                                 if (onShowContents) onShowContents(folder);
                             }}
                             className={`${
@@ -100,73 +104,84 @@ const FolderCardBody = ({
                             
                             {/* --- FIXED TEXT LOGIC --- */}
                             <span className="font-bold whitespace-nowrap">
-                                {/* Default View: Visible normally, Hidden on Card Hover */}
-                                <span className="block group-hover:hidden animate-in fade-in duration-200">
+                                {/* Default View: Visible normally, Hidden on Card Hover (unless filterOverlayOpen) */}
+                                <span
+                                    className={`block ${!filterOverlayOpen ? 'animate-in fade-in duration-200 group-hover:hidden' : ''}`}
+                                >
                                     {totalCount} {totalCount === 1 ? 'elemento' : 'elementos'}
                                 </span>
 
-                                {/* Hover View: Hidden normally, Visible on Card Hover */}
-                                <span className="hidden group-hover:flex items-center gap-2 animate-in fade-in duration-200">
-                                    <span>{subjectCount} {subjectCount === 1 ? 'asig.' : 'asigs.'}</span>
-                                    <span className="opacity-40">|</span>
-                                    <span>{folderCount} {folderCount === 1 ? 'carp.' : 'carps.'}</span>
-                                </span>
+                                {/* Hover View: Hidden normally, Visible on Card Hover (unless filterOverlayOpen) */}
+                                {!filterOverlayOpen && (
+                                    <span
+                                        className="hidden group-hover:flex items-center gap-2 animate-in fade-in duration-200"
+                                    >
+                                        <span>{subjectCount} {subjectCount === 1 ? 'asig.' : 'asigs.'}</span>
+                                        <span className="opacity-40">|</span>
+                                        <span>{folderCount} {folderCount === 1 ? 'carp.' : 'carps.'}</span>
+                                    </span>
+                                )}
                             </span>
 
                         </button>
                     </div>
 
                     {/* 2. Dots Menu */}
-                    <div className="absolute right-0"> 
-                        <button
-                            ref={menuBtnRef}
-                            onClick={(e) => { e.stopPropagation(); onToggleMenu(folder.id); }}
-                            className={`rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer flex items-center justify-center ${
-                                isModern
-                                    ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800'
-                                    : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30'
-                            } ${
-                                activeMenu === folder.id ? 'opacity-100 scale-110' : 'opacity-0 group-hover:opacity-100'
-                            }`}
-                            style={{ 
-                                width: `${32 * scaleMultiplier}px`, 
-                                height: `${32 * scaleMultiplier}px` 
-                            }}
-                        >
-                            <MoreVertical size={15 * scaleMultiplier} />
-                        </button>
-
-                        {/* Dropdown Menu rendered in a portal */}
-                        {activeMenu === folder.id && typeof window !== 'undefined' && createPortal(
-                            <div
-                                className="w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 animate-in fade-in zoom-in-95 duration-100 transition-colors"
-                                style={{
-                                    position: 'fixed',
-                                    top: menuPos.top,
-                                    left: menuPos.left,
-                                    zIndex: 9999
+                    {!filterOverlayOpen && (
+                        <div className="absolute right-0"> 
+                            <button
+                                ref={menuBtnRef}
+                                onClick={(e) => { e.stopPropagation(); onToggleMenu(folder.id); }}
+                                className={`rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer flex items-center justify-center ${
+                                    isModern
+                                        ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800'
+                                        : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30'
+                                } ${
+                                    activeMenu === folder.id ? 'opacity-100 scale-110' : 'opacity-0 group-hover:opacity-100'
+                                }`}
+                                style={{ 
+                                    width: `${32 * scaleMultiplier}px`, 
+                                    height: `${32 * scaleMultiplier}px` 
                                 }}
                             >
-                                {folder.isOwner ? (
-                                    <>
-                                        <button onClick={(e) => { e.stopPropagation(); onEdit(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
-                                            <Edit2 size={14} /> Editar
-                                        </button>
-                                        <button onClick={(e) => { e.stopPropagation(); onShare(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
-                                            <Share2 size={14} /> Compartir
-                                        </button>
-                                        <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
-                                        <button onClick={(e) => { e.stopPropagation(); onDelete(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors">
-                                            <Trash2 size={14} /> Eliminar
-                                        </button>
-                                    </>
-                                ) : (
-                                    <div className="p-2 text-xs text-center text-gray-500">Solo lectura</div>
-                                )}
-                            </div>,
-                            document.body
-                        )}
-                    </div>
+                                <MoreVertical size={15 * scaleMultiplier} />
+                            </button>
+
+                            {/* Dropdown Menu rendered in a portal */}
+                            {activeMenu === folder.id && typeof window !== 'undefined' && createPortal(
+                                <div
+                                    className="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-colors"
+                                    style={{
+                                        position: 'fixed',
+                                        top: menuPos.top,
+                                        left: menuPos.left,
+                                        zIndex: 9999,
+                                        width: `${120 * menuScale}px`,
+                                        transform: `scale(${menuScale})`,
+                                        transformOrigin: 'top left'
+                                    }}
+                                >
+                                    {folder.isOwner ? (
+                                        <>
+                                            <button onClick={(e) => { e.stopPropagation(); onEdit(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                <Edit2 size={14 * menuScale} /> Editar
+                                            </button>
+                                            <button onClick={(e) => { e.stopPropagation(); onShare(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                <Share2 size={14 * menuScale} /> Compartir
+                                            </button>
+                                            <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
+                                            <button onClick={(e) => { e.stopPropagation(); onDelete(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                <Trash2 size={14 * menuScale} /> Eliminar
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <div className="p-2 text-xs text-center text-gray-500">Solo lectura</div>
+                                    )}
+                                </div>,
+                                document.body
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {/* --- CONTENT AREA --- */}
@@ -335,4 +350,4 @@ const FolderCardBody = ({
     );
 };
 
-export default FolderCardBody;
+export default FolderCardBody;;

@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { useSubjects } from './useSubjects';
 import { useFolders } from './useFolders';
 import { useUserPreferences } from './useUserPreferences';
-import { EDUCATION_LEVELS } from '../utils/subjectConstants';
 
 const normalizeText = (text) => {
     return (text || '')
@@ -12,28 +11,6 @@ const normalizeText = (text) => {
         .trim()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '');
-};
-
-// Helper: Returns TRUE if 'targetId' is inside 'possibleParentId'
-// (e.g. Is the Destination inside the Dragged Folder?)
-const isDescendant = (possibleParentId, targetId, allFolders) => {
-    if (!possibleParentId || !targetId) return false;
-    if (possibleParentId === targetId) return true; 
-    
-    let current = allFolders.find(f => f.id === targetId);
-    const visited = new Set(); // Safety: Prevents browser freeze if DB is already corrupt
-
-    while (current && current.folderId) {
-        // If we found the dragged folder in the ancestry of the target -> BLOCK IT
-        if (current.folderId === possibleParentId) return true;
-        
-        // Safety Break: If we see the same folder twice, stop checking (Assume safe to avoid crash)
-        if (visited.has(current.id)) return false; 
-        visited.add(current.id);
-
-        current = allFolders.find(f => f.id === current.folderId);
-    }
-    return false;
 };
 
 export const useHomeLogic = (user, searchQuery = '') => {
@@ -52,6 +29,11 @@ export const useHomeLogic = (user, searchQuery = '') => {
         addSubjectToFolder
     } = useFolders(user);
 
+
+
+
+
+    
     const { 
         preferences, 
         loading: loadingPreferences, 
@@ -67,9 +49,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
     const [activeMenu, setActiveMenu] = useState(null);
     const [collapsedGroups, setCollapsedGroups] = useState({});
     const [currentFolder, setCurrentFolder] = useState(null); // For navigation
-
-    // --- NEW: FILTER STATE (Folders/Subjects/All) ---
-    const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'folders', 'subjects'
 
     // Restore last visited folder from localStorage on mount (if folders are loaded)
     // Guarantee folder persistence and sync with folders array
@@ -115,59 +94,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
             selectedTags.every(tag => subject.tags?.includes(tag))
         );
     }, [subjects, selectedTags]);
-
-
-    // --- 1. FILTER FOLDERS (Fixing the Search Logic here too) ---
-    const filteredFolders = useMemo(() => {
-        // Safety check
-        if (!folders) return [];
-        
-        // A. SEARCH MODE: Priority #1
-        // If there is a query, we search the ENTIRE list and return immediately.
-        if (searchQuery && searchQuery.trim().length > 0) {
-            const query = normalizeText(searchQuery);
-            // Note: We deliberately do NOT check f.parentId here.
-            return folders.filter(f => normalizeText(f.name).includes(query));
-        }
-
-        // B. NAVIGATION MODE: Priority #2 (Only runs if Search is empty)
-        // This is where we respect the hierarchy/current layer.
-        return folders.filter(f => {
-            if (currentFolder) {
-                // If we are inside a folder, only show its children
-                return f.parentId === currentFolder.id;
-            }
-            // If we are at root, only show root folders
-            return !f.parentId; 
-        });
-    }, [folders, currentFolder, searchQuery]);
-
-    // --- 2. FILTER SUBJECTS ---
-    const filteredSubjects = useMemo(() => {
-        if (!subjects) return [];
-
-        if (searchQuery) {
-            const query = normalizeText(searchQuery);
-            return subjects.filter(s => normalizeText(s.name).includes(query));
-        }
-
-        return subjects.filter(s => {
-            if (currentFolder) {
-                return s.folderId === currentFolder.id;
-            }
-            return !s.folderId;
-        });
-    }, [subjects, currentFolder, searchQuery]);
-
-    
-    // --- FILTER FOLDERS BY TAGS ---
-    const filteredFoldersByTags = useMemo(() => {
-        if (selectedTags.length === 0) return folders;
-        return folders.filter(folder =>
-            selectedTags.every(tag => folder.tags?.includes(tag))
-        );
-    }, [folders, selectedTags]);
-
 
     
     // --- FOLDER HELPERS ---
@@ -228,9 +154,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
     // Get ordered folders for manual mode
     const orderedFolders = useMemo(() => {
-        // --- NEW: FILTER LOGIC (Hide folders if filter is 'subjects') ---
-        if (activeFilter === 'subjects') return [];
-
         // 1. Normalize Search Query
         const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
@@ -238,9 +161,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         // (Unless searching, where we want to see results regardless of currentFolder)
         if (!query && (viewMode !== 'grid' || currentFolder)) return [];
 
-        let resultFolders = folders.filter(f => 
-            f.uid === user?.uid || (f.sharedWithUids && f.sharedWithUids.includes(user?.uid))
-        );
+        let resultFolders = folders.filter(f => f.isOwner);
 
         // 3. Apply Search Filter (Recursive/Global)
         if (query) {
@@ -259,42 +180,34 @@ export const useHomeLogic = (user, searchQuery = '') => {
         // 5. Original Manual Order
         return applyManualOrder(resultFolders, 'folder');
 
-    }, [folders, viewMode, currentFolder, manualOrder, selectedTags, filteredSubjectsByTags, searchQuery, activeFilter]);
+    }, [folders, viewMode, currentFolder, manualOrder, selectedTags, filteredSubjectsByTags, searchQuery]);
 
 
 
     // --- VIEW GROUPING LOGIC ---
     const groupedContent = useMemo(() => {
-        // --- NEW: FILTER LOGIC (Hide subjects if filter is 'folders') ---
-        if (activeFilter === 'folders') return {};
-
-        const isRelated = (item) => item.uid === user?.uid || (item.sharedWithUids && item.sharedWithUids.includes(user?.uid));
-
         const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
         
+        // --- NEW: SEARCH LOGIC ---
         if (query) {
-            // Apply isRelated filter to search results
             const matchedSubjects = subjects.filter(s => {
                 const subjectName = (s.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                return subjectName.includes(query) && isRelated(s); // Add isRelated check
+                return subjectName.includes(query);
             });
             return { 'Resultados de búsqueda': matchedSubjects };
         }
 
-        // In Manual mode: if tag filter is active, show all filtered subjects as one group regardless of folder
-        if (viewMode === 'grid' && selectedTags.length > 0) {
-            return { 'Filtradas': applyManualOrder(filteredSubjectsByTags, 'subject') };
-        }
-        // In Manual mode with a folder open (no tag filter)
+        // In Manual mode with a folder open
         if (viewMode === 'grid' && currentFolder) {
-            const folderSubjects = getSubjectsInFolder(currentFolder.id, subjects);
+            const folderSubjects = getSubjectsInFolder(currentFolder.id, selectedTags.length > 0 ? filteredSubjectsByTags : subjects);
             return { 
                 [currentFolder.name]: applyManualOrder(folderSubjects, 'subject')
             };
         }
-        // In Manual mode at root (no tag filter)
+
+        // In Manual mode at root
         if (viewMode === 'grid' && !currentFolder) {
-            const unfolderedSubjects = getUnfolderedSubjects(subjects);
+            const unfolderedSubjects = getUnfolderedSubjects(selectedTags.length > 0 ? filteredSubjectsByTags : subjects);
             return { 
                 'Todas': applyManualOrder(unfolderedSubjects, 'subject')
             };
@@ -305,8 +218,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
             return {};
         }
 
-        const sourceSubjects = (selectedTags.length > 0 || viewMode === 'tags') ? filteredSubjectsByTags : subjects;
-        const subjectsToGroup = sourceSubjects.filter(isRelated);
+        const subjectsToGroup = (selectedTags.length > 0 || viewMode === 'tags') ? filteredSubjectsByTags : subjects;
         
         if (viewMode === 'usage') {
             const sorted = [...subjectsToGroup].sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
@@ -407,43 +319,12 @@ export const useHomeLogic = (user, searchQuery = '') => {
         }
         
         return { 'Todas': subjectsToGroup };
-    }, [subjects, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery]);
+    }, [subjects, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder]);
 
 
 
 
-    const { searchFolders, searchSubjects } = useMemo(() => {
-        if (!searchQuery || searchQuery.trim() === '') {
-            return { searchFolders: [], searchSubjects: [] };
-        }
 
-        const query = normalizeText(searchQuery);
-        
-        // Helper to check access rights (Owner OR Shared)
-        const isRelated = (item) => {
-            // 1. Explicit Ownership (if property exists)
-            if (item.isOwner === true) return true;
-            // 2. UID Match (Fallback if isOwner is missing)
-            if (user?.uid && item.uid === user.uid) return true;
-            // 3. Shared Access
-            if (item.sharedWithUids && Array.isArray(item.sharedWithUids) && user?.uid) {
-                return item.sharedWithUids.includes(user.uid);
-            }
-            return false;
-        };
-
-        // Filter Folders
-        const sFolders = folders.filter(f => 
-            isRelated(f) && normalizeText(f.name).includes(query)
-        );
-
-        // Filter Subjects
-        const sSubjects = subjects.filter(s => 
-            isRelated(s) && normalizeText(s.name).includes(query)
-        );
-
-        return { searchFolders: sFolders, searchSubjects: sSubjects };
-    }, [folders, subjects, searchQuery, user]);
 
 
 
@@ -585,26 +466,11 @@ export const useHomeLogic = (user, searchQuery = '') => {
     const toggleGroup = (groupName) => {
         setCollapsedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
     };
-    
-    // --- NEW: FILTER HANDLER ---
-    const handleFilterChange = (filterType) => {
-        setActiveFilter(prev => prev === filterType ? 'all' : filterType);
-    };
 
     // --- DRAG AND DROP HANDLERS ---
-    // Accept both (subject, position) and (e, subject)
-    const handleDragStartSubject = (a, b) => {
-        // If first arg is an event, second is subject
-        if (a && typeof a.preventDefault === 'function' && b && typeof b === 'object' && b.id) {
-            setDraggedItem(b);
-            setDraggedItemType('subject');
-        } else if (a && typeof a === 'object' && a.id) {
-            setDraggedItem(a);
-            setDraggedItemType('subject');
-        } else {
-            setDraggedItem(null);
-            setDraggedItemType(null);
-        }
+    const handleDragStartSubject = (subject, position) => {
+        setDraggedItem(subject);
+        setDraggedItemType('subject');
     };
 
     const handleDragStartFolder = (folder, position) => {
@@ -628,7 +494,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         setDropPosition(position);
     };
 
-    /*const handleDropOnFolder = async (folderId, subjectId) => {
+    const handleDropOnFolder = async (folderId, subjectId) => {
         if (!subjectId || !folderId) return;
         
         // Add subject to folder
@@ -636,57 +502,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         
         // Clear drag state
         handleDragEnd();
-    };*/
-
-    const handleDropOnFolder = async (draggedId, targetFolderId, type) => {
-        if (!draggedId || !targetFolderId) return;
-
-        try {
-            if (type === 'subject') {
-                const subject = subjects.find(s => s.id === draggedId);
-                if (subject && subject.folderId !== targetFolderId) {
-                    await updateSubject(draggedId, { folderId: targetFolderId });
-                    touchSubject(draggedId);
-                }
-            } else if (type === 'folder') {
-                if (draggedId === targetFolderId) return;
-
-                // STRICT BAN: Prevent Circular Moves
-                if (isDescendant(draggedId, targetFolderId, folders)) {
-                    console.warn("🚫 BLOCKED: Circular dependency detected.");
-                    return; 
-                }
-
-                // Execute Move
-                await updateFolder(draggedId, { folderId: targetFolderId });
-            }
-        } catch (error) {
-            console.error("❌ Error moving item:", error);
-            alert("Error moving item. Check console for details.");
-        }
     };
-
-    // --- 3. FIXED: handleNestFolder ---
-    const handleNestFolder = async (targetFolderId, folderToNestId) => {
-        if (!targetFolderId || !folderToNestId) return;
-        if (targetFolderId === folderToNestId) return;
-
-        try {
-            // STRICT BAN: Prevent Circular Moves
-            if (isDescendant(folderToNestId, targetFolderId, folders)) {
-                console.warn("🚫 BLOCKED: Circular dependency detected.");
-                return;
-            }
-
-            // Execute Move
-            await updateFolder(folderToNestId, { folderId: targetFolderId });
-            
-        } catch (error) {
-            console.error("❌ Error nesting folder:", error);
-            alert("Error nesting folder. Check console for details.");
-        }
-    };
-
 
     const handleDropReorderSubject = (draggedId, fromPosition, toPosition) => {
         if (draggedId === undefined || fromPosition === toPosition) return;
@@ -749,9 +565,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
     const allTags = useMemo(() => {
         const tagSet = new Set();
         subjects.forEach(s => s.tags?.forEach(t => tagSet.add(t)));
-        folders.forEach(f => f.tags?.forEach(t => tagSet.add(t)));
         return Array.from(tagSet).sort();
-    }, [subjects, folders]);
+    }, [subjects]);
 
     useEffect(() => {
         if (preferences && !loadingPreferences) {
@@ -770,10 +585,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
     return {
         // Data
-        subjects, 
+        subjects,
         folders,
-        searchFolders,
-        searchSubjects,
         loading,
         loadingFolders,
         sharedFolders,
@@ -781,7 +594,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
         groupedContent,
         orderedFolders,
         allTags,
-        filteredFoldersByTags, 
         
         // State
         viewMode, setViewMode,
@@ -797,9 +609,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
         isDragAndDropEnabled,
         loadingPreferences,
         
-        // New State
-        activeFilter,
-        
         // Modals State
         subjectModalConfig, setSubjectModalConfig,
         folderModalConfig, setFolderModalConfig,
@@ -814,7 +623,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
         handleShareFolder,
         toggleGroup,
         touchSubject,
-        handleFilterChange,
         
         // Drag & Drop Handlers
         handleDragStartSubject,
@@ -823,7 +631,6 @@ export const useHomeLogic = (user, searchQuery = '') => {
         handleDragOverSubject,
         handleDragOverFolder,
         handleDropOnFolder,
-        handleNestFolder,
         handleDropReorderSubject,
         handleDropReorderFolder,
         handlePreferenceChange,
@@ -835,6 +642,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         unshareSubject,
 
         // Navigation
+        
         navigate
     };
 };

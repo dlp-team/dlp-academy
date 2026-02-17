@@ -1,6 +1,6 @@
 // src/pages/Home.jsx
 import React, { useMemo, useState } from 'react';
-import { Loader2, ArrowUpCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 // Firebase
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
@@ -24,15 +24,65 @@ import HomeModals from '../components/home/HomeModals';
 import FolderTreeModal from '../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../components/modals/SubjectTopicModal';
 
+
+const isDescendant = (possibleParentId, targetId, allFolders) => {
+    if (!possibleParentId || !targetId) return false;
+    if (possibleParentId === targetId) return true; 
+    let current = allFolders.find(f => f.id === targetId);
+    const visited = new Set();
+    while (current && current.folderId) {
+        if (current.folderId === possibleParentId) return true;
+        if (visited.has(current.id)) return false; 
+        visited.add(current.id);
+        current = allFolders.find(f => f.id === current.folderId);
+    }
+    return false;
+};
+
+
 const Home = ({ user }) => {
     // Top-level debug: confirm Home is mounted
     React.useEffect(() => {
-        console.log('[DEBUG] Home component mounted');
     }, []);
     // 1. Initialize Logic
     const [searchQuery, setSearchQuery] = useState('');
     const logic = useHomeLogic(user, searchQuery);
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isScaleOverlayOpen, setIsScaleOverlayOpen] = useState(false);
+
+
+    // --- 🤖 AUTO-CLEANER: DETECT & FIX LOOPS AUTOMATICALLY ---
+    React.useEffect(() => {
+        if (!logic.folders || logic.folders.length === 0) return;
+
+        const allFolders = logic.folders;
+        let fixedCount = 0;
+
+        allFolders.forEach(folder => {
+            // Trace the path of this folder upwards
+            let current = folder;
+            const path = new Set();
+            
+            while (current && current.folderId) {
+                // If we see the same ID twice, we found a loop!
+                if (path.has(current.id)) {
+                    // FORCE MOVE TO ROOT
+                    updateDoc(doc(db, 'folders', folder.id), { folderId: null });
+                    fixedCount++;
+                    break;
+                }
+                path.add(current.id);
+                // Move up to parent
+                current = allFolders.find(f => f.id === current.folderId);
+            }
+        });
+
+        if (fixedCount > 0) {
+            alert(`✅ Auto-Cleaner Fixed ${fixedCount} corrupted folders! You can now remove the cleaner code.`);
+        }
+    }, [logic.folders]);
+    // -----------------------------------------------------------
 
     // Persist last visited tab and folder
     const didRestoreRef = React.useRef(false);
@@ -59,36 +109,51 @@ const Home = ({ user }) => {
             .replace(/[\u0300-\u036f]/g, '');
     };
 
-    const { 
-        filteredFolders, 
-        filteredSubjects, 
-        sharedFolders, 
+    // --- SHARED TAG FILTER STATE ---
+    const [sharedSelectedTags, setSharedSelectedTags] = useState([]);
+    const [sharedActiveFilter, setSharedActiveFilter] = useState('all');
+    const sharedAllTags = useMemo(() => {
+        const folderTags = (logic.sharedFolders || []).flatMap(f => Array.isArray(f.tags) ? f.tags : []);
+        const subjectTags = (logic.sharedSubjects || []).flatMap(s => Array.isArray(s.tags) ? s.tags : []);
+        return Array.from(new Set([...folderTags, ...subjectTags])).filter(Boolean);
+    }, [logic.sharedFolders, logic.sharedSubjects]);
+
+    const {
+        filteredFolders,
+        filteredSubjects,
+        sharedFolders,
         sharedSubjects,
     } = useMemo(() => {
         const query = normalizeText(searchQuery);
-        
+
         // Helper to filter by query
-        const filterList = (list) => list.filter(item => 
+        const filterList = (list) => list.filter(item =>
             normalizeText(item.name).includes(query)
         );
 
         // Filter Main Content
-        // We look at the current folder contents OR the root lists
         const folders = logic.currentFolderContents?.folders || logic.folders || [];
         const subjects = logic.currentFolderContents?.subjects || logic.subjects || [];
-        
-        // Filter Shared Content
-        // If logic.sharedFolders is undefined, we default to [] to prevent crashes
-        const sFolders = logic.sharedFolders || [];
-        const sSubjects = logic.sharedSubjects || [];
+
+        // Filter Shared Content (by search)
+        let sFolders = logic.sharedFolders || [];
+        let sSubjects = logic.sharedSubjects || [];
+        sFolders = filterList(sFolders);
+        sSubjects = filterList(sSubjects);
+
+        // Further filter shared by selected tags if in shared mode
+        if (logic.viewMode === 'shared' && sharedSelectedTags.length > 0) {
+            sFolders = sFolders.filter(f => Array.isArray(f.tags) && sharedSelectedTags.every(tag => f.tags.includes(tag)));
+            sSubjects = sSubjects.filter(s => Array.isArray(s.tags) && sharedSelectedTags.every(tag => s.tags.includes(tag)));
+        }
 
         return {
             filteredFolders: filterList(folders),
             filteredSubjects: filterList(subjects),
-            sharedFolders: filterList(sFolders),
-            sharedSubjects: filterList(sSubjects),
+            sharedFolders: sFolders,
+            sharedSubjects: sSubjects,
         };
-    }, [searchQuery, logic.folders, logic.subjects, logic.currentFolderContents, logic.sharedFolders, logic.sharedSubjects]);
+    }, [searchQuery, logic.folders, logic.subjects, logic.currentFolderContents, logic.sharedFolders, logic.sharedSubjects, logic.viewMode, sharedSelectedTags]);
 
 
     // ... (State and Filtering Logic omitted for brevity, identical to previous) ...
@@ -103,13 +168,23 @@ const Home = ({ user }) => {
     });
 
     const displayedFolders = useMemo(() => {
+        // If tag filter is active, use filteredFoldersByTags from logic
+        if ((logic.selectedTags && logic.selectedTags.length > 0) && logic.filteredFoldersByTags) {
+            return logic.filteredFoldersByTags;
+        }
+        // If searching, return the flat list of search results
+        if (searchQuery && logic.searchFolders) {
+            return logic.searchFolders;
+        }
+        // Standard Hierarchy Logic (Original)
         const allFolders = logic.folders || [];
         const currentId = logic.currentFolder ? logic.currentFolder.id : null;
         return allFolders.filter(folder => {
-            const parentId = folder.parentId || null;
-            return parentId === currentId;
+            if (currentId) return folder.parentId === currentId;
+            return !folder.parentId;
         });
-    }, [logic.folders, logic.currentFolder]);
+    }, [logic.folders, logic.currentFolder, logic.searchFolders, searchQuery, logic.selectedTags, logic.filteredFoldersByTags]);
+
     const activeModalFolder = useMemo(() => {
         if (!folderContentsModalConfig.folder) return null;
         const liveFolder = (logic.folders || []).find(f => f.id === folderContentsModalConfig.folder.id);
@@ -136,7 +211,6 @@ const Home = ({ user }) => {
         logic.handleSaveFolder(dataWithParent);
     };
     const handleUpwardDrop = async (e) => {
-        console.log('[DEBUG] handleUpwardDrop called');
         e.preventDefault(); e.stopPropagation();
         const subjectId = e.dataTransfer.getData('subjectId');
         const folderId = e.dataTransfer.getData('folderId');
@@ -144,39 +218,103 @@ const Home = ({ user }) => {
             const currentId = logic.currentFolder.id;
             const parentId = logic.currentFolder.parentId; 
             if (subjectId) {
-                console.log('[DEBUG] handleUpwardDrop: moving subject', { subjectId, currentId, parentId });
                 await moveSubjectToParent(subjectId, currentId, parentId);
             } else if (folderId && folderId !== currentId) {
-                console.log('[DEBUG] handleUpwardDrop: moving folder', { folderId, currentId, parentId });
                 await moveFolderToParent(folderId, currentId, parentId);
             }
         }
     };
-    const handleBreadcrumbDrop = async (targetFolderId, subjectId, droppedFolderId) => {
+    const handleBreadcrumbDrop = (targetFolderId, subjectId, droppedFolderId) => {
         const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
-        if (subjectId) await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-        else if (droppedFolderId) {
-            const droppedFolderObj = (logic.folders || []).find(f => f.id === droppedFolderId);
-            if (!droppedFolderObj) return;
-            const oldParentId = droppedFolderObj.parentId || null;
-            await moveFolderToParent(droppedFolderId, oldParentId, targetFolderId);
+        // If subject is being dropped, use the same overlay logic as handleDropOnFolderWrapper
+        if (subjectId) {
+            return handleDropOnFolderWrapper(targetFolderId, subjectId, currentFolderId);
+        } else if (droppedFolderId) {
+            // For folders, use similar overlay logic as in handleNestFolder, but also handle unsharing logic
+            const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
+            if (!droppedFolder) return;
+            const currentParentId = droppedFolder.parentId || null;
+            const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
+            // Helper: get shared user IDs from sharedWithUids (array of strings)
+            const getSharedUids = (item) => (item && Array.isArray(item.sharedWithUids)) ? item.sharedWithUids : [];
+            // Moving OUT of a shared folder (confirmation required if droppedFolder is shared and target is not)
+            if (droppedFolder && droppedFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
+                // Only show unshare confirmation if droppedFolder.parentId is not null and parent is shared
+                if (droppedFolder.parentId) {
+                    const parentFolder = (logic.folders || []).find(f => f.id === droppedFolder.parentId);
+                    if (parentFolder && parentFolder.isShared) {
+                        setUnshareConfirm({
+                            open: true,
+                            subjectId: null,
+                            folder: droppedFolder,
+                            onConfirm: async () => {
+                                // --- UNSHARE LOGIC FOR FOLDER (breadcrumb) ---
+                                const oldSharedWithUids = Array.isArray(droppedFolder.sharedWithUids) ? droppedFolder.sharedWithUids : [];
+                                const oldSharedWith = Array.isArray(droppedFolder.sharedWith) ? droppedFolder.sharedWith : [];
+                                // Remove sharing from the folder itself
+                                await updateFolder(droppedFolderId, {
+                                    sharedWith: [],
+                                    sharedWithUids: [],
+                                    isShared: false
+                                });
+                                // Remove sharing from all child subjects
+                                if (Array.isArray(droppedFolder.subjectIds)) {
+                                    for (const subjectId of droppedFolder.subjectIds) {
+                                        const subject = (logic.subjects || []).find(s => s.id === subjectId);
+                                        if (subject) {
+                                            const newSharedWith = (subject.sharedWith || []).filter(u => !oldSharedWithUids.includes(u.uid));
+                                            const newSharedWithUids = (subject.sharedWithUids || []).filter(uid => !oldSharedWithUids.includes(uid));
+                                            await updateDoc(doc(db, 'subjects', subjectId), {
+                                                sharedWith: newSharedWith,
+                                                sharedWithUids: newSharedWithUids,
+                                                isShared: newSharedWithUids.length > 0
+                                            });
+                                        }
+                                    }
+                                }
+                                await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                                setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                            }
+                        });
+                        return true;
+                    }
+                }
+            }
+            // Only show confirmation if there is a new user who will gain access (moving INTO a shared folder)
+            if (targetFolder && targetFolder.isShared) {
+                const droppedShared = new Set(getSharedUids(droppedFolder));
+                const targetShared = getSharedUids(targetFolder);
+                const newUsers = targetShared.filter(uid => !droppedShared.has(uid));
+                if (newUsers.length > 0) {
+                    setShareConfirm({
+                        open: true,
+                        folder: targetFolder,
+                        subjectId: null,
+                        onConfirm: async () => {
+                            await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                            setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                        }
+                    });
+                    return true;
+                }
+            }
+            // Otherwise, move immediately
+            moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+            return false;
         }
     };
     const handleOpenTopics = (subject) => {
         setTopicsModalConfig({ isOpen: true, subject });
     };
-    const handleDropOnFolderWrapper = async (targetFolderId, subjectId) => {
-        console.log('[DEBUG] handleDropOnFolderWrapper ENTRY', { targetFolderId, subjectId });
-        const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
-        console.log('[DEBUG] currentFolderId:', currentFolderId);
+    const handleDropOnFolderWrapper = (targetFolderId, subjectId, sourceFolderId) => {
+        // Use passed sourceFolderId if provided, otherwise fallback to currentFolder
+        const currentFolderId = sourceFolderId !== undefined ? sourceFolderId : (logic.currentFolder ? logic.currentFolder.id : null);
         if (targetFolderId === currentFolderId) {
-            console.log('[DEBUG] targetFolderId === currentFolderId, returning');
             return;
         }
         const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
         const sourceFolder = (logic.folders || []).find(f => f.id === currentFolderId);
         const subject = (logic.subjects || []).find(s => s.id === subjectId);
-        console.log('[DEBUG] Folders and subject:', { targetFolder, sourceFolder, subject });
 
         // Helper: get shared user IDs from sharedWithUids (array of strings)
         const getSharedUids = (item) => (item && Array.isArray(item.sharedWithUids)) ? item.sharedWithUids : [];
@@ -185,33 +323,29 @@ const Home = ({ user }) => {
         const targetIsShared = targetFolder ? targetFolder.isShared : undefined;
         const subjectSharedWithUids = getSharedUids(subject);
         const targetFolderSharedWithUids = getSharedUids(targetFolder);
-        console.log('[DEBUG] Sharing info:', { sourceIsShared, targetIsShared, subjectSharedWithUids, targetFolderSharedWithUids });
 
-        // Moving OUT of a shared folder (confirmation required if source is shared and target is not)
-        console.log('[DEBUG] handleDropOnFolderWrapper: Checking exit (out of shared folder) case', {
-            sourceFolder,
-            sourceIsShared,
-            targetFolder,
-            targetIsShared,
-            currentFolderId,
-            targetFolderId
-        });
-        if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
-            console.log('[DEBUG] handleDropOnFolderWrapper: Condition met: EXIT branch (sourceFolder is shared and targetFolder is not). Triggering unshareConfirm overlay.', {
-                sourceFolder,
-                targetFolder
-            });
-            setUnshareConfirm({
-                open: true,
-                subjectId,
-                folder: sourceFolder,
-                onConfirm: async () => {
-                    console.log('[DEBUG] handleDropOnFolderWrapper: unshareConfirm onConfirm triggered (EXIT branch)');
-                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-                    setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
-                }
-            });
-            return;
+        if (
+            sourceFolder &&
+            sourceFolder.isShared &&
+            (!targetFolder || !targetFolder.isShared) &&
+            Array.isArray(sourceFolder.subjectIds) &&
+            sourceFolder.subjectIds.includes(subjectId)
+        ) {
+            // Check if sourceFolder has a parentId and if that parent is shared
+            const parentFolder = sourceFolder.parentId ? (logic.folders || []).find(f => f.id === sourceFolder.parentId) : null;
+            if (parentFolder && parentFolder.isShared) {
+                
+                setUnshareConfirm({
+                    open: true,
+                    subjectId,
+                    folder: sourceFolder,
+                    onConfirm: async () => {
+                        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+                        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                    }
+                });
+                return true;
+            }
         }
 
         // Only show confirmation if there is a new user who will gain access
@@ -219,34 +353,33 @@ const Home = ({ user }) => {
             const subjectShared = new Set(subjectSharedWithUids);
             const folderShared = targetFolderSharedWithUids;
             const newUsers = folderShared.filter(uid => !subjectShared.has(uid));
-            console.log('[DEBUG] Checking for new users to share:', { subjectShared: Array.from(subjectShared), folderShared, newUsers });
             if (newUsers.length > 0) {
-                console.log('[DEBUG] Condition met: new users found. Triggering shareConfirm overlay.');
                 setShareConfirm({
                     open: true,
                     subjectId,
                     folder: targetFolder,
                     onConfirm: async () => {
-                        console.log('[DEBUG] shareConfirm onConfirm triggered');
                         await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
                         setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
                     }
                 });
-                return;
+                return true;
             }
         }
-        console.log('[DEBUG] No confirmation needed, moving subject');
-            const handleDragStart = (e) => {
-                console.log('[DEBUG] Drag started', { event: e });
-            };
-        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-            const handleDragEnd = (e) => {
-                console.log('[DEBUG] Drag ended', { event: e });
-            };
+        moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+        return false;
     };
 
     const handleNestFolder = async (targetFolderId, droppedFolderId) => {
         if (targetFolderId === droppedFolderId) return;
+
+
+        if (isDescendant(droppedFolderId, targetFolderId, logic.folders || [])) {
+            console.warn("🚫 BLOCKED: Circular dependency detected.");
+            return;
+        }
+
+
         const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
         if (!droppedFolder) return;
         const currentParentId = droppedFolder.parentId || null;
@@ -255,31 +388,50 @@ const Home = ({ user }) => {
         // Helper: get shared user IDs from sharedWithUids (array of strings)
         const getSharedUids = (item) => (item && Array.isArray(item.sharedWithUids)) ? item.sharedWithUids : [];
 
-        // Debugging output
-        console.log('[DEBUG] handleNestFolder:', {
-            targetFolderId,
-            droppedFolderId,
-            droppedFolder,
-            targetFolder,
-            droppedIsShared: droppedFolder ? droppedFolder.isShared : undefined,
-            targetIsShared: targetFolder ? targetFolder.isShared : undefined,
-            droppedSharedWithUids: getSharedUids(droppedFolder),
-            targetFolderSharedWithUids: getSharedUids(targetFolder),
-        });
 
-        // Moving OUT of a shared folder (confirmation required if droppedFolder is shared and target is not)
-        if (droppedFolder && droppedFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
-            console.log('[DEBUG] Triggering unshareConfirm overlay (folder)');
-            setUnshareConfirm({
-                open: true,
-                subjectId: null,
-                folder: droppedFolder,
-                onConfirm: async () => {
-                    await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-                    setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
-                }
-            });
-            return;
+        // Only show unshare confirmation if droppedFolder has a parentId and that parent is shared
+        if (
+            droppedFolder &&
+            droppedFolder.isShared &&
+            (!targetFolder || !targetFolder.isShared) &&
+            droppedFolder.parentId
+        ) {
+            const parentFolder = (logic.folders || []).find(f => f.id === droppedFolder.parentId);
+            if (parentFolder && parentFolder.isShared) {
+                setUnshareConfirm({
+                    open: true,
+                    subjectId: null,
+                    folder: droppedFolder,
+                    onConfirm: async () => {
+                        // --- UNSHARE LOGIC FOR FOLDER (move out of shared parent) ---
+                        const oldSharedWithUids = Array.isArray(droppedFolder.sharedWithUids) ? droppedFolder.sharedWithUids : [];
+                        const oldSharedWith = Array.isArray(droppedFolder.sharedWith) ? droppedFolder.sharedWith : [];
+                        await updateFolder(droppedFolderId, {
+                            sharedWith: [],
+                            sharedWithUids: [],
+                            isShared: false
+                        });
+                        // Remove sharing from all child subjects
+                        if (Array.isArray(droppedFolder.subjectIds)) {
+                            for (const subjectId of droppedFolder.subjectIds) {
+                                const subject = (logic.subjects || []).find(s => s.id === subjectId);
+                                if (subject) {
+                                    const newSharedWith = (subject.sharedWith || []).filter(u => !oldSharedWithUids.includes(u.uid));
+                                    const newSharedWithUids = (subject.sharedWithUids || []).filter(uid => !oldSharedWithUids.includes(uid));
+                                    await updateDoc(doc(db, 'subjects', subjectId), {
+                                        sharedWith: newSharedWith,
+                                        sharedWithUids: newSharedWithUids,
+                                        isShared: newSharedWithUids.length > 0
+                                    });
+                                }
+                            }
+                        }
+                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                    }
+                });
+                return;
+            }
         }
 
         // Only show confirmation if there is a new user who will gain access (moving INTO a shared folder)
@@ -287,7 +439,6 @@ const Home = ({ user }) => {
             const droppedShared = new Set(getSharedUids(droppedFolder));
             const targetShared = getSharedUids(targetFolder);
             const newUsers = targetShared.filter(uid => !droppedShared.has(uid));
-            console.log('[DEBUG] Checking for new users to share (folder):', { droppedShared: Array.from(droppedShared), targetShared, newUsers });
             if (newUsers.length > 0) {
                 // Show confirmation overlay for folder sharing
                 setShareConfirm({
@@ -302,8 +453,8 @@ const Home = ({ user }) => {
                 return;
             }
         }
-        console.log('[DEBUG] No confirmation needed, moving folder');
-        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+        // If no overlay, just move the folder and DO NOT change its shared state
+        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId, { preserveSharing: true });
     };
     const handlePromoteSubjectWrapper = async (subjectId) => {
         // Find current folder and subject
@@ -319,18 +470,9 @@ const Home = ({ user }) => {
             targetFolder = (logic.folders || []).find(f => f.id === parentId);
         }
         const targetIsShared = targetFolder ? targetFolder.isShared : undefined;
-        // Debug: Log promote subject context
-        console.log('[DEBUG][handlePromoteSubjectWrapper]', {
-            currentFolder,
-            parentId,
-            sourceFolder,
-            targetFolder,
-            sourceIsShared,
-            targetIsShared
-        });
+
         // If moving out of a shared folder to a non-shared folder or to root (parentId null), show confirmation
         if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
-            console.log('[DEBUG][handlePromoteSubjectWrapper] Triggering unshareConfirm overlay');
             setUnshareConfirm({
                 open: true,
                 subjectId,
@@ -432,22 +574,10 @@ const Home = ({ user }) => {
                 <div 
                     className="relative transition-all duration-300"
                     onDragOver={(e) => {
-                        console.log('[DEBUG] Main drop zone onDragOver', {
-                            event: e,
-                            currentFolder: logic.currentFolder
-                        });
                         if (logic.currentFolder) e.preventDefault();
                     }}
                     onDrop={(e) => {
-                        console.log('[DEBUG] Main drop zone onDrop', {
-                            event: e,
-                            currentFolder: logic.currentFolder,
-                            dataTransfer: e.dataTransfer ? {
-                                types: e.dataTransfer.types,
-                                subjectId: e.dataTransfer.getData('subjectId'),
-                                folderId: e.dataTransfer.getData('folderId')
-                            } : null
-                        });
+
                         handleUpwardDrop(e);
                     }}
                 >
@@ -461,12 +591,12 @@ const Home = ({ user }) => {
                         setLayoutMode={logic.setLayoutMode}
                         cardScale={logic.cardScale}
                         setCardScale={logic.setCardScale}
-                        allTags={logic.allTags || []}
-                        selectedTags={logic.selectedTags || []}
-                        setSelectedTags={logic.setSelectedTags}
+                        allTags={logic.viewMode === 'shared' ? sharedAllTags : (logic.allTags || [])}
+                        selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
+                        setSelectedTags={logic.viewMode === 'shared' ? setSharedSelectedTags : logic.setSelectedTags}
                         currentFolder={logic.currentFolder}
                         setFolderModalConfig={logic.setFolderModalConfig}
-                        setCollapsedGroups={logic.setCollapsedGroups}
+                        { ...(logic.setCollapsedGroups ? { setCollapsedGroups: logic.setCollapsedGroups } : {}) }
                         setCurrentFolder={(folder) => {
                             logic.setCurrentFolder(folder);
                             if (folder && folder.id) {
@@ -481,6 +611,14 @@ const Home = ({ user }) => {
                         draggedItemType={logic.draggedItemType}
                         onPreferenceChange={logic.handlePreferenceChange}
                         allFolders={logic.folders || []} 
+                        activeFilter={logic.viewMode === 'shared' ? sharedActiveFilter : logic.activeFilter}
+                        handleFilterChange={logic.handleFilterChange}
+                        onFilterOverlayChange={setIsFilterOpen}
+                        onScaleOverlayChange={setIsScaleOverlayOpen}
+
+                        // SEARCH
+                        searchQuery={searchQuery}
+                        setSearchQuery={setSearchQuery}
                     />
                     
                 </div>
@@ -519,7 +657,7 @@ const Home = ({ user }) => {
                     <>
                         {/* Overlay for sharing confirmation when moving subject into shared folder */}
                         {shareConfirm.open && (
-                            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
+                            <div className="fixed inset-0 z-51 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
                                 <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
                                     <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
                                         <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C7.305 20.5 3.5 16.695 3.5 12S7.305 3.5 12 3.5 20.5 7.305 20.5 12 16.695 20.5 12 20.5z" /></svg>
@@ -566,7 +704,7 @@ const Home = ({ user }) => {
                             </div>
                         )}
                         {unshareConfirm.open && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
+                        <div className="fixed inset-0 z-51 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
                             <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
                             <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
                                 <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C7.305 20.5 3.5 16.695 3.5 12S7.305 3.5 12 3.5 20.5 7.305 20.5 12 16.695 20.5 12 20.5z" /></svg>
@@ -668,7 +806,6 @@ const Home = ({ user }) => {
                                         handleShowFolderContents={handleShowFolderContents}
                                         onShareSubject={(subject) => logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: subject, initialTab: 'sharing' })}
                                         
-                                        // NEW: Pass the robust move handler
                                         handleMoveSubjectWithSource={handleTreeMoveSubject}
                                         onOpenTopics={handleOpenTopics}
                                         
@@ -682,6 +819,11 @@ const Home = ({ user }) => {
                                         handleDragOverFolder={logic.handleDragOverFolder}
                                         handleDropReorderSubject={logic.handleDropReorderSubject}
                                         handleDropReorderFolder={logic.handleDropReorderFolder}
+                                        filterOverlayOpen={isFilterOpen || isScaleOverlayOpen}
+
+                                        
+                                        activeFilter={logic.activeFilter}
+                                        selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
                                         
                                         navigate={logic.navigate}
                                     />
@@ -749,8 +891,9 @@ const Home = ({ user }) => {
                 }}
                 onNavigateSubject={handleNavigateSubjectFromTree}
                 onMoveSubjectToFolder={handleTreeMoveSubject}
-                onNestFolder={handleNestFolder}
+                onNestFolder={logic.handleNestFolder}
                 onReorderSubject={handleTreeReorderSubject}
+                onDropWithOverlay={handleDropOnFolderWrapper}
             />
 
             <SubjectTopicsModal 

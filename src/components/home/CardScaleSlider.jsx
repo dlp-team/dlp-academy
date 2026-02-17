@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { Maximize2 } from 'lucide-react';
 
-const CardScaleSlider = ({ cardScale, setCardScale }) => {
-    const [showSlider, setShowSlider] = useState(false);
+const CardScaleSlider = ({ cardScale, setCardScale, onOverlayToggle }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
     
     // 4 scales: XS (60% - 5 cards), S (75% - 4 cards), M (100% - 3 cards), L (125% - 2 cards)
     const scales = [
@@ -13,22 +14,28 @@ const CardScaleSlider = ({ cardScale, setCardScale }) => {
         { value: 125, label: 'L', name: 'Grande (2 tarjetas)' }
     ];
 
+    // 2. CREATE HELPER
+    const handleSetIsOpen = (newState) => {
+        setIsOpen(newState);
+        if (onOverlayToggle) onOverlayToggle(newState);
+    };
+
     return (
         <div className="relative">
             <button
-                onClick={() => setShowSlider(!showSlider)}
+                onClick={() => handleSetIsOpen(!isOpen)}
                 className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-sm"
             >
                 <Maximize2 size={16} />
                 <span className="hidden sm:inline">Escala</span>
             </button>
 
-            {showSlider && (
+            {isOpen && (
                 <>
                     {/* Backdrop to close */}
                     <div 
                         className="fixed inset-0 z-10"
-                        onClick={() => setShowSlider(false)}
+                        onClick={() => handleSetIsOpen(false)}
                     />
                     
                     {/* Slider Panel */}

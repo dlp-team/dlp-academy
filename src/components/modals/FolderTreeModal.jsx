@@ -1,9 +1,28 @@
 // src/components/modals/FolderTreeModal.jsx
 import React, { useState } from 'react';
-import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, ArrowUpCircle } from 'lucide-react';
-import SubjectIcon from './SubjectIcon';
+import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, ArrowUpCircle, Users } from 'lucide-react';
+import SubjectIcon, { getIconColor } from './SubjectIcon';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
+
+const isDescendant = (possibleParentId, targetId, allFolders) => {
+    if (!possibleParentId || !targetId) return false;
+    if (possibleParentId === targetId) return true; 
+    
+    let current = allFolders.find(f => f.id === targetId);
+    const visited = new Set(); // Safety for existing corruption
+
+    while (current && current.folderId) {
+        if (current.folderId === possibleParentId) return true;
+        
+        // STOP if we hit an existing infinite loop in the database
+        if (visited.has(current.id)) return false; 
+        visited.add(current.id);
+
+        current = allFolders.find(f => f.id === current.folderId);
+    }
+    return false;
+};
 
 const TreeItem = ({ 
     item, 
@@ -16,10 +35,17 @@ const TreeItem = ({
     onNavigateSubject, 
     depth = 0,
     onDragStart,
-    onDropItem
+    onDropItem,
+    path = []
 }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
+
+    if (path.includes(item.id)) {
+        console.error("Cycle detected in folder structure! Stopping render for:", item.name);
+        return null; // Stop rendering this branch immediately
+    }
+    const currentPath = [...path, item.id];
 
     let childFolders = [];
     let childSubjects = [];
@@ -118,18 +144,62 @@ const TreeItem = ({
 
                 {depth > 0 && <CornerDownRight size={14} className="text-gray-300 dark:text-gray-600 shrink-0 -ml-1" />}
 
-                <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br ${getGradient(item.color)}`}>
-                    {type === 'folder' ? (
-                        item.icon ? <SubjectIcon iconName={item.icon} className="w-5 h-5 text-white" /> : <Folder size={16} className="text-white" />
+                {/* Icon logic for subject/folder: match ProfileSubjects */}
+                {type === 'folder' ? (
+                    <div className={`relative shrink-0 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br ${getGradient(item.color)}`}>
+                        {item.icon ? <SubjectIcon iconName={item.icon} className="w-5 h-5 text-white" /> : <Folder size={20} className="text-white" />}
+                        {/* Shared icon inside folder icon, like FolderListItem, only for folders */}
+                        {(item.isShared === true || (Array.isArray(item.sharedWith) && item.sharedWith.length > 0) || (Array.isArray(item.sharedWithUids) && item.sharedWithUids.length > 0)) && (
+                            <div
+                                className="absolute inset-0 flex items-center justify-center z-10"
+                                style={{ pointerEvents: 'none' }}
+                            >
+                                <div className="flex items-center justify-center rounded-full opacity-80 bg-none"
+                                    style={{
+                                        width: '14px',
+                                        height: '14px',
+                                        transform: 'translateY(2px)'
+                                    }}
+                                >
+                                    <Users
+                                        className="text-white"
+                                        style={{ width: '9px', height: '9px' }}
+                                        strokeWidth={2.5}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    // Subject: modern or classic style
+                    item.cardStyle === 'modern' ? (
+                        <div className={`shrink-0 w-8 h-8 flex items-center justify-center ${getIconColor(item.color)}`}>
+                            <SubjectIcon iconName={item.icon} className="w-7 h-7" />
+                        </div>
                     ) : (
-                        item.icon ? <SubjectIcon iconName={item.icon} className="w-5 h-5 text-white" /> : <FileText size={16} className="text-white" />
-                    )}
-                </div>
+                        <div className={`relative shrink-0 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm bg-gradient-to-br ${item.color || 'from-gray-400 to-gray-500'}`}>
+                            <SubjectIcon iconName={item.icon} className="w-5 h-5 text-white" />
+                        </div>
+                    )
+                )}
 
                 <div className="flex-1 min-w-0">
-                    <p className={`text-sm truncate ${type === 'folder' ? 'font-semibold' : 'font-medium'}`}>
-                        {item.name}
-                    </p>
+                    <div className="flex items-center min-w-0 gap-1">
+                        <p className={`text-sm truncate ${type === 'folder' ? 'font-semibold' : 'font-medium'}`}>{item.name}</p>
+                        {/* Shared icon for subjects, right of title */}
+                        {type === 'subject' && (item.isShared === true || (Array.isArray(item.sharedWith) && item.sharedWith.length > 0) || (Array.isArray(item.sharedWithUids) && item.sharedWithUids.length > 0)) && (
+                            <div 
+                                className="flex items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/30 ml-1"
+                                style={{ width: '18px', height: '18px', minWidth: '18px' }}
+                                title="Asignatura compartida"
+                            >
+                                <Users 
+                                    className="text-indigo-600 dark:text-indigo-400"
+                                    style={{ width: '11px', height: '11px' }}
+                                />
+                            </div>
+                        )}
+                    </div>
                     {type === 'subject' && <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate">{item.topics?.length || 0} temas</p>}
                 </div>
 
@@ -142,11 +212,40 @@ const TreeItem = ({
 
             {hasChildren && (
                 <div className="border-l-2 border-gray-100 dark:border-slate-800 ml-[2.25rem] my-1 pl-1">
+                    {/* CRASH FIX: PASS THE PATH PROP DOWN */}
                     {childFolders.map((folder, idx) => (
-                        <TreeItem key={folder.id} item={folder} type="folder" index={idx} parentId={item.id} allFolders={allFolders} allSubjects={allSubjects} onNavigateFolder={onNavigateFolder} onNavigateSubject={onNavigateSubject} depth={depth + 1} onDragStart={onDragStart} onDropItem={onDropItem} />
+                        <TreeItem 
+                            key={folder.id} 
+                            item={folder} 
+                            type="folder" 
+                            index={idx} 
+                            parentId={item.id} 
+                            allFolders={allFolders} 
+                            allSubjects={allSubjects} 
+                            onNavigateFolder={onNavigateFolder} 
+                            onNavigateSubject={onNavigateSubject} 
+                            depth={depth + 1} 
+                            onDragStart={onDragStart} 
+                            onDropItem={onDropItem}
+                            path={currentPath} 
+                        />
                     ))}
                     {childSubjects.map((subject, idx) => (
-                        <TreeItem key={subject.id} item={subject} type="subject" index={idx} parentId={item.id} allFolders={allFolders} allSubjects={allSubjects} onNavigateFolder={onNavigateFolder} onNavigateSubject={onNavigateSubject} depth={depth + 1} onDragStart={onDragStart} onDropItem={onDropItem} />
+                        <TreeItem 
+                            key={subject.id} 
+                            item={subject} 
+                            type="subject" 
+                            index={idx} 
+                            parentId={item.id} 
+                            allFolders={allFolders} 
+                            allSubjects={allSubjects} 
+                            onNavigateFolder={onNavigateFolder} 
+                            onNavigateSubject={onNavigateSubject} 
+                            depth={depth + 1} 
+                            onDragStart={onDragStart} 
+                            onDropItem={onDropItem}
+                            path={currentPath}
+                        />
                     ))}
                 </div>
             )}
@@ -168,7 +267,8 @@ const FolderTreeModal = ({
     onNavigateSubject,
     onMoveSubjectToFolder,
     onNestFolder,
-    onReorderSubject
+    onReorderSubject,
+    onDropWithOverlay // <-- Add this prop for overlay logic
 }) => {
     
     if (!isOpen || !rootFolder) return null;
@@ -176,33 +276,28 @@ const FolderTreeModal = ({
     const [isRootDropZoneActive, setIsRootDropZoneActive] = useState(false);
 
     const handleDropAction = (dragged, target) => {
-        // 1. Drop on Folder -> Nesting
-        if (target.type === 'folder') {
-            if (dragged.id === target.id) return;
-            if (dragged.parentId === target.id) return; // Already inside
+        if (!dragged || !target) return;
 
-            if (dragged.type === 'subject') {
-                onMoveSubjectToFolder(dragged.id, target.id, dragged.parentId);
-            } else if (dragged.type === 'folder') {
-                onNestFolder(target.id, dragged.id); 
-            }
-        }
-        
-        // 2. Drop on Subject -> Reorder or Move to Sibling
-        else if (target.type === 'subject' && dragged.type === 'subject') {
-            // Determine the folder that contains the target subject
-            const targetParentId = target.parentId || rootFolder.id; 
+        // 1. Logic for moving SUBJECTS (No changes needed here)
+        if (dragged.type === 'subject') {
+             // ... existing subject logic ...
+             if (target.type === 'folder') {
+                 if (onMoveSubjectToFolder) onMoveSubjectToFolder(dragged.id, target.id);
+             } else if (target.type === 'subject') {
+                 if (onReorderSubject) onReorderSubject(dragged.id, target.id);
+             }
+        } 
+        // 2. Logic for moving FOLDERS
+        else if (dragged.type === 'folder' && target.type === 'folder') {
             
-            if (dragged.parentId !== targetParentId) {
-                // Moving from Folder A to Folder B (where target resides)
-                onMoveSubjectToFolder(dragged.id, targetParentId, dragged.parentId);
-            } else {
-                // Same folder: Reorder
-                // Logic: Move 'dragged.id' to the position of 'target.index'
-                if (onReorderSubject) {
-                    onReorderSubject(targetParentId, dragged.id, target.index);
-                }
+            // --- 🛡️ ADD THIS PROTECTION BLOCK ---
+            if (isDescendant(dragged.id, target.id, allFolders)) {
+                console.warn("🚫 BLOCKED: Cannot move a folder into its own subfolder.");
+                return; // STOP HERE
             }
+            // ------------------------------------
+
+            if (onNestFolder) onNestFolder(target.id, dragged.id);
         }
     };
 
@@ -212,6 +307,7 @@ const FolderTreeModal = ({
         e.stopPropagation();
         setIsRootDropZoneActive(false);
 
+        // ... (Keep data parsing logic) ...
         let draggedData;
         const treeDataString = e.dataTransfer.getData('treeItem');
         
@@ -226,14 +322,28 @@ const FolderTreeModal = ({
 
         if (!draggedData) return;
 
-        // Move to rootFolder.id (The folder currently open in the modal)
-        if (draggedData.parentId === rootFolder.id) return; // Already at root
+        if (draggedData.parentId === rootFolder.id) return; 
 
         if (draggedData.type === 'subject') {
-            onMoveSubjectToFolder(draggedData.id, rootFolder.id, draggedData.parentId);
+             // ... (Keep existing subject logic) ...
+            let overlayShown = false;
+            if (onDropWithOverlay) {
+                const result = onDropWithOverlay(rootFolder.id, draggedData.id, draggedData.parentId);
+                if (result === true) overlayShown = true;
+            }
+            if (!overlayShown && onMoveSubjectToFolder) {
+                onMoveSubjectToFolder(draggedData.id, rootFolder.id, draggedData.parentId);
+            }
         } else if (draggedData.type === 'folder') {
             if (draggedData.id === rootFolder.id) return;
-            onNestFolder(rootFolder.id, draggedData.id);
+
+            // --- FIX STARTS HERE ---
+            if (isDescendant(draggedData.id, rootFolder.id, allFolders)) {
+                return; // Block cycle
+            }
+            // --- FIX ENDS HERE ---
+
+            if (onNestFolder) onNestFolder(rootFolder.id, draggedData.id);
         }
     };
 
@@ -250,8 +360,29 @@ const FolderTreeModal = ({
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-800">
                     <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg bg-gradient-to-br ${getGradient(rootFolder.color)} shadow-sm`}>
+                        <div className={`relative p-2 rounded-lg bg-gradient-to-br ${getGradient(rootFolder.color)} shadow-sm`}>
                             {rootFolder.icon ? <SubjectIcon iconName={rootFolder.icon} className="w-5 h-5 text-white" /> : <Folder className="text-white w-5 h-5" />}
+                            {/* Shared icon inside folder icon, like in tree, only for folders */}
+                            {(rootFolder.isShared === true || (Array.isArray(rootFolder.sharedWith) && rootFolder.sharedWith.length > 0) || (Array.isArray(rootFolder.sharedWithUids) && rootFolder.sharedWithUids.length > 0)) && (
+                                <div
+                                    className="absolute inset-0 flex items-center justify-center z-10"
+                                    style={{ pointerEvents: 'none' }}
+                                >
+                                    <div className="flex items-center justify-center rounded-full opacity-80 bg-none"
+                                        style={{
+                                            width: '18px',
+                                            height: '18px',
+                                            transform: 'translateY(2px)'
+                                        }}
+                                    >
+                                        <Users
+                                            className="text-white"
+                                            style={{ width: '9px', height: '9px' }}
+                                            strokeWidth={2.5}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div>
                             <h2 className="font-bold text-gray-900 dark:text-white text-lg">{rootFolder.name}</h2>
@@ -298,10 +429,33 @@ const FolderTreeModal = ({
                         return (
                             <div className="space-y-1">
                                 {childFolders.map((folder, idx) => (
-                                    <TreeItem key={folder.id} item={folder} type="folder" index={idx} parentId={rootFolder.id} allFolders={allFolders} allSubjects={allSubjects} onNavigateFolder={onNavigateFolder} onNavigateSubject={onNavigateSubject} onDropItem={handleDropAction} />
+                                    <TreeItem
+                                        key={folder.id}
+                                        item={folder}
+                                        type="folder"
+                                        index={idx}
+                                        parentId={rootFolder.id}
+                                        allFolders={allFolders}
+                                        allSubjects={allSubjects}
+                                        onNavigateFolder={onNavigateFolder}
+                                        onNavigateSubject={onNavigateSubject}
+                                        onDropItem={handleDropAction}
+                                        path={[rootFolder.id]}
+                                    />
                                 ))}
                                 {childSubjects.map((subject, idx) => (
-                                    <TreeItem key={subject.id} item={subject} type="subject" index={idx} parentId={rootFolder.id} allFolders={allFolders} allSubjects={allSubjects} onNavigateFolder={onNavigateFolder} onNavigateSubject={onNavigateSubject} onDropItem={handleDropAction} />
+                                    <TreeItem
+                                        key={subject.id}
+                                        item={subject}
+                                        type="subject"
+                                        index={idx}
+                                        parentId={rootFolder.id}
+                                        allFolders={allFolders}
+                                        allSubjects={allSubjects}
+                                        onNavigateFolder={onNavigateFolder}
+                                        onNavigateSubject={onNavigateSubject}
+                                        onDropItem={handleDropAction}
+                                    />  
                                 ))}
                             </div>
                         );

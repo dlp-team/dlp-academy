@@ -16,20 +16,11 @@ const ListViewItem = ({
     onNavigateSubject,
     onEdit,
     onDelete,
-    onShare,
     cardScale = 100, 
     onDragStart,
     onDragEnd,
-    onDropAction,
-    path = []
+    onDropAction
 }) => {
-
-    if (path.includes(item.id)) {
-        console.warn(`Cycle detected in List View for item: ${item.name}`);
-        return null;
-    }
-    // Create the new path for children: [grandparent, parent, me]
-    const currentPath = [...path, item.id];
     
     // Delegate to FolderListItem component if the item is a folder
     if (type === 'folder') {
@@ -48,7 +39,6 @@ const ListViewItem = ({
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
                 onDropAction={onDropAction}
-                path={currentPath}
             />
         );
     }
@@ -56,27 +46,7 @@ const ListViewItem = ({
     // Otherwise, treat the item as a Subject
     const [isHovered, setIsHovered] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
-
     
-    
-    // Ensure dataTransfer payload is correctly set before delegating to the ghost hook
-    const handleLocalDragStart = (e) => {
-        e.stopPropagation();
-        
-        const dragData = {
-            id: item.id,
-            type: 'subject',
-            parentId: parentId 
-        };
-        
-        // Set dataTransfer payloads for drop zones to read!
-        e.dataTransfer.setData('subjectId', item.id);
-        e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
-        
-        // Trigger the external prop if provided
-        if (onDragStart) onDragStart(item); 
-    };
-
     // Initialize custom ghost drag hook
     const { 
         isDragging, 
@@ -86,7 +56,7 @@ const ListViewItem = ({
         item, 
         type: 'subject', 
         cardScale, 
-        onDragStart: handleLocalDragStart, // Pass the local interceptor here
+        onDragStart, 
         onDragEnd 
     });
 
@@ -155,7 +125,6 @@ const ListViewItem = ({
                             onSelect={() => onNavigateSubject(item.id)} 
                             onEdit={onEdit} 
                             onDelete={onDelete} 
-                            onShare={onShare}
                             cardScale={cardScale} 
                             className="pl-8" 
                         />

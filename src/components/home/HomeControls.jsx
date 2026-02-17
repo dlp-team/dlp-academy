@@ -1,11 +1,12 @@
 // src/components/home/HomeControls.jsx
 import React from 'react';
 import { 
-    LayoutGrid, Clock, Folder as FolderIcon, Users, FolderPlus 
+    LayoutGrid, Clock, Folder as FolderIcon, Users, FolderPlus, Move 
 } from 'lucide-react';
 import ViewLayoutSelector from './ViewLayoutSelector';
 import CardScaleSlider from './CardScaleSlider';
 import TagFilter from './TagFilter';
+import SearchBar from './SearchBar';
 
 const HomeControls = ({
     viewMode, setViewMode,
@@ -15,14 +16,20 @@ const HomeControls = ({
     selectedTags, setSelectedTags,
     currentFolder,
     setFolderModalConfig,
-    setCollapsedGroups,
+    setCollapsedGroups = () => {},
     setCurrentFolder,
     isDragAndDropEnabled,
     draggedItem,
     draggedItemType,
     onPreferenceChange,
-    allFolders = []
+    allFolders = [],
+    searchQuery = '',
+    setSearchQuery = () => {},
+    activeFilter,
+    onFilterOverlayChange,
+    onScaleOverlayChange
 }) => {
+
     const handleViewModeChange = (mode) => {
         setViewMode(mode);
         setSelectedTags([]);
@@ -67,7 +74,7 @@ const HomeControls = ({
                 {/* View Mode Switcher */}
                 <div className="bg-white dark:bg-slate-900 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 inline-flex transition-colors">
                     {[
-                        { id: 'grid', icon: LayoutGrid, label: 'Manual' },
+                        { id: 'grid', icon: Move, label: 'Manual' },
                         { id: 'usage', icon: Clock, label: 'Uso' },
                         { id: 'courses', icon: FolderIcon, label: 'Cursos' },
                         { id: 'shared', icon: Users, label: 'Compartido' }
@@ -89,7 +96,7 @@ const HomeControls = ({
             </div>
 
             {/* Secondary Controls Row */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 w-full">
                 {/* Layout Mode Selector */}
                 <ViewLayoutSelector 
                     layoutMode={layoutMode} 
@@ -101,31 +108,38 @@ const HomeControls = ({
                 <CardScaleSlider 
                     cardScale={cardScale} 
                     setCardScale={handleCardScaleChange}
+                    onOverlayToggle={onScaleOverlayChange}
                 />
 
                 {/* Tag Filter - Now available in Manual (grid) mode */}
-                {viewMode === 'grid' && allTags.length > 0 && (
+                {allTags.length > 0 && (
                     <TagFilter 
                         allTags={allTags}
                         selectedTags={selectedTags}
                         setSelectedTags={handleTagsChange}
+                        onOverlayToggle={onFilterOverlayChange}
+                        activeFilter={activeFilter} 
                     />
                 )}
 
-                {/* Create Folder Button (Manual mode only) */}
+                {/* Create Folder Button and Search Bar (Manual mode only) */}
                 {viewMode === 'grid' && (
-                    <button
-                        onClick={() => setFolderModalConfig({ 
-                            isOpen: true, 
-                            isEditing: false, 
-                            data: null,
-                            currentFolder: currentFolder 
-                        })}
-                        className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-sm"
-                    >
-                        <FolderPlus size={16} />
-                        <span>{currentFolder ? 'Nueva Subcarpeta' : 'Nueva Carpeta'}</span>
-                    </button>
+                    <>
+                        <div className="flex items-center gap-2 flex-grow">
+                            <button
+                                onClick={() => setFolderModalConfig({ 
+                                    isOpen: true, 
+                                    isEditing: false, 
+                                    data: null,
+                                    currentFolder: currentFolder 
+                                })}
+                                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-sm"
+                            >
+                                <FolderPlus size={16} />
+                                <span>{currentFolder ? 'Nueva Subcarpeta' : 'Nueva Carpeta'}</span>
+                            </button>
+                        </div>
+                    </>
                 )}
                 
                 {/* Drag and Drop Hint */}
@@ -143,6 +157,19 @@ const HomeControls = ({
                         </span>
                     </div>
                 )}
+
+                
+                {/* 3. Search Bar */}
+                <div 
+                    className="relative flex justify-end flex-1 min-w-0 margin-0 padding ml-auto"
+                    style={{ maxWidth: 380 }}
+                >
+                    <SearchBar 
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder="Buscar..."
+                    />
+                </div>
             </div>
         </div>
     );

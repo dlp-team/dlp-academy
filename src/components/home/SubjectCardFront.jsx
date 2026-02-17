@@ -18,12 +18,16 @@ const SubjectCardFront = ({
     fillColor,
     scaleMultiplier,
     topicCount,
-    onOpenTopics
+    onOpenTopics,
+        filterOverlayOpen = false,
+        onCloseFilterOverlay
 }) => {
     const [isHovered, setIsHovered] = useState(false);
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
 
+    // Enforce a minimum scale of 1 for the menu
+    const menuScale = Math.max(scaleMultiplier, 1);
     useLayoutEffect(() => {
         if (activeMenu === subject.id && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
@@ -75,10 +79,11 @@ const SubjectCardFront = ({
                 <div
                     onClick={(e) => { 
                         e.stopPropagation(); 
+                        if (onCloseFilterOverlay) onCloseFilterOverlay();
                         onOpenTopics && onOpenTopics(subject); // UPDATED: Direct call to modal
                     }} 
                     className={`transition-all duration-300 ease-out 
-                        group-hover:-translate-x-[var(--shift-x)] 
+                        ${!filterOverlayOpen ? 'group-hover:-translate-x-[var(--shift-x)]' : ''}
                         ${activeMenu === subject.id ? '-translate-x-[var(--shift-x)]' : ''}
                     `}
                     style={{
@@ -113,12 +118,12 @@ const SubjectCardFront = ({
                     <button
                         ref={menuBtnRef}
                         onClick={(e) => { e.stopPropagation(); onToggleMenu(subject.id); }}
-                        className={`rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer flex items-center justify-center ${
+                        className={`rounded-lg transition-all duration-200 cursor-pointer flex items-center justify-center ${
                             isModern
                                 ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800'
                                 : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30'
                         } ${
-                            activeMenu === subject.id ? 'opacity-100 scale-110' : 'opacity-0 group-hover:opacity-100'
+                            activeMenu === subject.id ? 'opacity-100 scale-110' : (!filterOverlayOpen ? 'opacity-0 group-hover:opacity-100 hover:scale-110' : 'opacity-0')
                         }`}
                         style={{ 
                             width: `${32 * scaleMultiplier}px`, 
@@ -131,22 +136,25 @@ const SubjectCardFront = ({
                     {/* Dropdown Menu rendered in a portal to avoid clipping */}
                     {activeMenu === subject.id && typeof window !== 'undefined' && createPortal(
                         <div
-                            className="w-32 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-colors"
+                            className="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-colors"
                             style={{
                                 position: 'fixed',
                                 top: menuPos.top,
                                 left: menuPos.left,
-                                zIndex: 9999
+                                zIndex: 9999,
+                                width: `${128 * menuScale}px`,
+                                transform: `scale(${menuScale})`,
+                                transformOrigin: 'top left'
                             }}
                         >
-                            <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
-                                <Edit2 size={14} /> Editar
+                            <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                <Edit2 size={14 * menuScale} /> Editar
                             </button>
-                            <button onClick={(e) => { e.stopPropagation(); onShare(subject); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
-                                <Share2 size={14} /> Compartir
+                            <button onClick={(e) => { e.stopPropagation(); onShare(subject); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                <Share2 size={14 * menuScale} /> Compartir
                             </button>
-                            <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors">
-                                <Trash2 size={14} /> Eliminar
+                            <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                <Trash2 size={14 * menuScale} /> Eliminar
                             </button>
                         </div>,
                         document.body
@@ -231,7 +239,11 @@ const SubjectCardFront = ({
                         </h3>
 
                         {/* 2. Shared Icon (at the right) */}
-                        {subject.isShared && (
+                        {(
+                            subject.isShared === true ||
+                            (Array.isArray(subject.sharedWith) && subject.sharedWith.length > 0) ||
+                            (Array.isArray(subject.sharedWithUids) && subject.sharedWithUids.length > 0)
+                        ) && (
                             <div 
                                 className={`flex items-center justify-center rounded-full ${
                                     isModern ? 'bg-indigo-50 dark:bg-indigo-900/30' : 'bg-white/20'
