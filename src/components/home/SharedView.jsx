@@ -142,6 +142,7 @@ const SharedView = ({
                                             draggable={false}
                                             allFolders={filteredFolders}
                                             allSubjects={filteredSubjects}
+                                            onDropAction={() => {}}
                                         />
                                     ))}
                             </div>
@@ -199,6 +200,7 @@ const SharedView = ({
                                         onEdit={() => {}}
                                         onDelete={() => {}}
                                         draggable={false}
+                                        onDropAction={() => {}}
                                     />
                                 ))}
                             </div>

@@ -23,21 +23,8 @@ import HomeEmptyState from '../components/home/HomeEmptyState';
 import HomeModals from '../components/home/HomeModals';
 import FolderTreeModal from '../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../components/modals/SubjectTopicModal';
-
-
-const isDescendant = (possibleParentId, targetId, allFolders) => {
-    if (!possibleParentId || !targetId) return false;
-    if (possibleParentId === targetId) return true; 
-    let current = allFolders.find(f => f.id === targetId);
-    const visited = new Set();
-    while (current && current.folderId) {
-        if (current.folderId === possibleParentId) return true;
-        if (visited.has(current.id)) return false; 
-        visited.add(current.id);
-        current = allFolders.find(f => f.id === current.folderId);
-    }
-    return false;
-};
+import { isDescendant } from '../utils/folderUtils';
+import { normalizeText } from '../utils/stringUtils';
 
 
 const Home = ({ user }) => {
@@ -99,15 +86,6 @@ const Home = ({ user }) => {
         didRestoreRef.current = true;
     }, [logic.folders]);
 
-
-    // Helper function to normalize text for comparison
-    const normalizeText = (text) => {
-        return (text || '')
-            .toLowerCase()
-            .trim()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '');
-    };
 
     // --- SHARED TAG FILTER STATE ---
     const [sharedSelectedTags, setSharedSelectedTags] = useState([]);

@@ -5,6 +5,7 @@ import {
     getDoc, arrayUnion, arrayRemove, onSnapshot, writeBatch, getDocs
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { isDescendant } from '../utils/folderUtils';
 
 export const useFolders = (user) => {
     const [folders, setFolders] = useState([]);
@@ -436,7 +437,7 @@ export const useFolders = (user) => {
         if (folderId === newParentId) return;
 
         // Check for Circular Dependency (Is newParentId currently a child of folderId?)
-        const isCircular = checkIsDescendant(folderId, newParentId);
+        const isCircular = isDescendant(folderId, newParentId);
 
         if (isCircular) {
             // STRATEGY:
@@ -521,21 +522,6 @@ export const useFolders = (user) => {
     };
 
     // Helper: DFS to check if 'targetId' is inside 'sourceId'
-    const checkIsDescendant = (sourceId, targetId) => {
-        if (!targetId) return false; // Moving to root is never circular
-        
-        // Find the target folder object
-        const targetFolder = folders.find(f => f.id === targetId);
-        if (!targetFolder) return false;
-
-        // Walk up the parents of the target
-        let pointer = targetFolder;
-        while (pointer && pointer.parentId) {
-            if (pointer.parentId === sourceId) return true;
-            pointer = folders.find(f => f.id === pointer.parentId);
-        }
-        return false;
-    };
 
     // --- NEW: ROBUST MOVE FOLDER BETWEEN PARENTS (Added this) ---
     // This is the clean function you need for the list view drag & drop
@@ -544,7 +530,7 @@ export const useFolders = (user) => {
         if (fromParentId === toParentId) return; // No change
 
         // Check for Circular Dependency
-        if (checkIsDescendant(folderId, toParentId)) {
+        if (isDescendant(folderId, toParentId)) {
             alert("No puedes mover una carpeta dentro de sí misma.");
             return;
         }

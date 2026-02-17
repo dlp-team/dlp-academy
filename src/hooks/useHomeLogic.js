@@ -5,36 +5,9 @@ import { useSubjects } from './useSubjects';
 import { useFolders } from './useFolders';
 import { useUserPreferences } from './useUserPreferences';
 import { EDUCATION_LEVELS } from '../utils/subjectConstants';
+import { normalizeText } from '../utils/stringUtils';
+import { isDescendant } from '../utils/folderUtils';
 
-const normalizeText = (text) => {
-    return (text || '')
-        .toLowerCase()
-        .trim()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
-};
-
-// Helper: Returns TRUE if 'targetId' is inside 'possibleParentId'
-// (e.g. Is the Destination inside the Dragged Folder?)
-const isDescendant = (possibleParentId, targetId, allFolders) => {
-    if (!possibleParentId || !targetId) return false;
-    if (possibleParentId === targetId) return true; 
-    
-    let current = allFolders.find(f => f.id === targetId);
-    const visited = new Set(); // Safety: Prevents browser freeze if DB is already corrupt
-
-    while (current && current.folderId) {
-        // If we found the dragged folder in the ancestry of the target -> BLOCK IT
-        if (current.folderId === possibleParentId) return true;
-        
-        // Safety Break: If we see the same folder twice, stop checking (Assume safe to avoid crash)
-        if (visited.has(current.id)) return false; 
-        visited.add(current.id);
-
-        current = allFolders.find(f => f.id === current.folderId);
-    }
-    return false;
-};
 
 export const useHomeLogic = (user, searchQuery = '') => {
     const navigate = useNavigate();

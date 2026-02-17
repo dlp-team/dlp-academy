@@ -2,27 +2,10 @@
 import React, { useState } from 'react';
 import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, ArrowUpCircle, Users } from 'lucide-react';
 import SubjectIcon, { getIconColor } from './SubjectIcon';
+import { isDescendant } from '../../utils/folderUtils';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
 
-const isDescendant = (possibleParentId, targetId, allFolders) => {
-    if (!possibleParentId || !targetId) return false;
-    if (possibleParentId === targetId) return true; 
-    
-    let current = allFolders.find(f => f.id === targetId);
-    const visited = new Set(); // Safety for existing corruption
-
-    while (current && current.folderId) {
-        if (current.folderId === possibleParentId) return true;
-        
-        // STOP if we hit an existing infinite loop in the database
-        if (visited.has(current.id)) return false; 
-        visited.add(current.id);
-
-        current = allFolders.find(f => f.id === current.folderId);
-    }
-    return false;
-};
 
 const TreeItem = ({ 
     item, 
