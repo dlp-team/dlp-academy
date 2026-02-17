@@ -54,6 +54,7 @@ const HomeContent = ({
     
     navigate,
     activeFilter,
+    selectedTags = [],
     filterOverlayOpen = false,
     onCloseFilterOverlay = () => {},
 }) => {
@@ -62,6 +63,15 @@ const HomeContent = ({
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     const showCollapsibleGroups = ['courses', 'tags', 'shared'].includes(viewMode);
+
+    // --- FILTER FOLDERS IF TAG FILTER IS ACTIVE ---
+    let filteredFolders = orderedFolders;
+    if (selectedTags && selectedTags.length > 0) {
+        // Only show folders that have at least one of the selected tags
+        filteredFolders = orderedFolders.filter(folder =>
+            Array.isArray(folder.tags) && folder.tags.some(tag => selectedTags.includes(tag))
+        );
+    }
 
     // --- GRID VIEW PROMOTE ZONE HANDLERS ---
     const handlePromoteZoneDragOver = (e) => {
@@ -273,7 +283,7 @@ const HomeContent = ({
                                             )}
 
                                             {/* Folders in Grid */}
-                                            {viewMode === 'grid' && activeFilter !== 'subjects' && orderedFolders.map((folder, index) => (
+                                            {viewMode === 'grid' && activeFilter !== 'subjects' && filteredFolders.map((folder, index) => (
                                                 <div key={`folder-${folder.id}`}>
                                                     <FolderCard
                                                         folder={folder}
@@ -380,7 +390,7 @@ const HomeContent = ({
                                         </div>
                                         
                                         {/* Render Folders */}
-                                        {viewMode === 'grid' && orderedFolders.map((folder) => (
+                                        {viewMode === 'grid' && filteredFolders.map((folder) => (
                                             <ListViewItem 
                                                 key={folder.id}
                                                 item={folder}

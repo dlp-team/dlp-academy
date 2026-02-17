@@ -797,6 +797,7 @@ const Home = ({ user }) => {
 
                                         
                                         activeFilter={logic.activeFilter}
+                                        selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
                                         
                                         navigate={logic.navigate}
                                     />
