@@ -25,9 +25,8 @@ const FileCard = ({
 }) => {
     const navigate = useNavigate();
     const { subjectId, topicId } = useParams();
-
-    // 1. IDENTIDAD VISUAL: Prioridad total a SUBJECT
-    const cardColor = subject?.color || 'from-indigo-500 to-purple-600';
+    // Prefer subject color, then topic color, then default
+    const cardColor = subject?.color || topic?.color || 'from-blue-500 to-indigo-600';
     
     // Extraemos el color base (ej: de "from-blue-500" sacamos "blue")
     const colorName = useMemo(() => {
@@ -53,8 +52,6 @@ const FileCard = ({
 
     const isRenaming = renamingId === file.id;
     const isMenuOpen = activeMenuId === file.id;
-    // Prefer subject color, then topic color, then default
-    const cardColor = subject?.color || topic?.color || 'from-blue-500 to-indigo-600';
 
     console.log(cardColor)
     // DETERMINAR SI ES CONTENIDO GENERADO (Resumen/Fórmula/Examen)

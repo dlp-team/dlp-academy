@@ -1,7 +1,7 @@
 // src/components/topic/TopicContent.jsx
 import React, { useMemo } from 'react';
 import { Loader2, FileText, Upload } from 'lucide-react';
-import FileCard from '../../../components/modules/FileCard/FileCard';
+import FileCard from '../FileCard/FileCard';
 import QuizCard from '../../../components/modules/QuizCard/QuizCard';
 
 const TopicContent = ({ 
