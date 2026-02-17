@@ -559,19 +559,26 @@ const StudyGuide = () => {
             if (!activeDocId) return;
 
             try {
+                setLoading(true);
+
+                // 1. OBTENER EL COLOR DE LA ASIGNATURA (SUBJECT)
                 try {
-                    const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
-                    const topicSnap = await getDoc(topicRef);
-                    if (topicSnap.exists()) {
-                        const tData = topicSnap.data();
-                        if (tData.color) {
-                            setTopicGradient(tData.color);
+                    const subjectRef = doc(db, "subjects", subjectId);
+                    const subjectSnap = await getDoc(subjectRef);
+                    
+                    if (subjectSnap.exists()) {
+                        const sData = subjectSnap.data();
+                        // Priorizamos el color de la asignatura
+                        if (sData.color) {
+                            setTopicGradient(sData.color);
                         }
                     }
                 } catch (err) {
-                    console.log("Tema no encontrado, usando colores por defecto");
+                    console.warn("No se pudo obtener el color de la asignatura:", err);
+                    // El estado topicGradient mantendrá su valor inicial si esto falla
                 }
 
+                // 2. OBTENER LOS DATOS DE LA GUÍA (RESUMEN)
                 const guideRef = doc(db, "subjects", subjectId, "topics", topicId, "resumen", activeDocId);
                 const guideSnap = await getDoc(guideRef);
 
@@ -580,13 +587,14 @@ const StudyGuide = () => {
                     let parsedStudyGuide = [];
                     
                     try {
+                        // Manejo de datos si vienen como String (JSON) o como Array directamente
                         if (typeof rawData.studyGuide === 'string') {
                             parsedStudyGuide = JSON.parse(rawData.studyGuide);
                         } else if (Array.isArray(rawData.studyGuide)) {
                             parsedStudyGuide = rawData.studyGuide;
                         }
                     } catch (e) {
-                        console.error("Error al parsear la guía:", e);
+                        console.error("Error al parsear el contenido de la guía:", e);
                     }
 
                     setGuideData({
@@ -594,11 +602,14 @@ const StudyGuide = () => {
                         studyGuide: parsedStudyGuide
                     });
 
-                    const initialExpanded = { 0: true };
-                    setExpandedSections(initialExpanded);
+                    // Abrir la primera sección por defecto
+                    setExpandedSections({ 0: true });
+                } else {
+                    console.error("El documento de la guía no existe en la ruta especificada.");
                 }
+
             } catch (error) {
-                console.error("Error cargando datos:", error);
+                console.error("Error crítico cargando datos:", error);
             } finally {
                 setLoading(false);
             }
