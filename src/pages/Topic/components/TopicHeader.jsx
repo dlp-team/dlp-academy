@@ -16,8 +16,11 @@ const TopicHeader = ({
     handleSaveTopicTitle, 
     handleGenerateQuizSubmit, 
     handleDeleteTopic,
-    globalProgress // 👈 NUEVO PROP
+    globalProgress 
 }) => {
+    // Definimos un color de respaldo por si la asignatura no tiene uno
+    const subjectGradient = subject.color || 'from-indigo-500 to-purple-600';
+
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* BREADCRUMBS */}
@@ -48,7 +51,8 @@ const TopicHeader = ({
             {/* HERO HEADER */}
             <div className="mb-10 pb-8 border-b border-slate-200 dark:border-slate-800">
                 <div className="flex flex-col md:flex-row items-start gap-8">
-                    <div className={`w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br ${topic.color || 'from-blue-500 to-indigo-600'} flex items-center justify-center shadow-2xl shadow-indigo-500/20`}>
+                    {/* CAMBIO 1: El color del cuadro del número ahora viene de subject.color */}
+                    <div className={`w-24 h-24 md:w-32 md:h-32 rounded-3xl bg-gradient-to-br ${subjectGradient} flex items-center justify-center shadow-2xl shadow-indigo-500/20`}>
                         <span className="text-5xl md:text-7xl font-black text-white tracking-tighter drop-shadow-md">{topic.number || '#'}</span>
                     </div>
                     <div className="flex-1 space-y-4 w-full">
@@ -66,11 +70,12 @@ const TopicHeader = ({
                             <h2 className="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight capitalize leading-tight">{topic.title}</h2>
                         )}
                         
-                        {/* 👇 BARRA DE PROGRESO CORREGIDA */}
+                        {/* BARRA DE PROGRESO */}
                         <div className="flex items-center gap-4 max-w-md pt-2">
                             <div className="flex-1 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                                 <div 
-                                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 dark:from-indigo-400 dark:to-purple-400 rounded-full transition-all duration-1000 ease-out"
+                                    /* CAMBIO 2: El color de la barra de progreso ahora viene de subject.color */
+                                    className={`h-full bg-gradient-to-r ${subjectGradient} rounded-full transition-all duration-1000 ease-out`}
                                     style={{ width: `${globalProgress?.percentage || 0}%` }}
                                 />
                             </div>
