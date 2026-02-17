@@ -17,14 +17,38 @@ const normalizeText = (text) => {
 // Helper: Returns TRUE if 'targetId' is inside 'possibleParentId'
 // (e.g. Is the Destination inside the Dragged Folder?)
 const isDescendant = (possibleParentId, targetId, allFolders) => {
+    console.log(`🔍 [Check] Is ${possibleParentId} an ancestor of ${targetId}?`);
+    
     if (!possibleParentId || !targetId) return false;
-    if (possibleParentId === targetId) return true; 
+    if (possibleParentId === targetId) {
+        console.log("🚫 [Block] Source and Target are the same folder.");
+        return true; 
+    }
     
     let current = allFolders.find(f => f.id === targetId);
+    const visited = new Set(); // Safety list to prevent freezing
+
     while (current && current.folderId) {
-        if (current.folderId === possibleParentId) return true;
+        console.log(`   ⬆ Walking up tree: Current=${current.name || current.id} -> Parent=${current.folderId}`);
+
+        // FOUND IT: The folder we are moving is an ancestor of the target
+        if (current.folderId === possibleParentId) {
+            console.log("🚫 [Block] CIRCULAR DETECTED! You cannot move a parent inside its child.");
+            return true;
+        }
+
+        // SAFETY: If we see a folder we already visited, the DB has a loop!
+        if (visited.has(current.id)) {
+            console.warn(`⚠ [Warning] Existing Infinite Loop detected at folder: ${current.name}. Breaking check to prevent crash.`);
+            return false; // Stop checking, assume safe to prevent freeze
+        }
+        visited.add(current.id);
+
+        // Move up
         current = allFolders.find(f => f.id === current.folderId);
     }
+    
+    console.log("✅ [Safe] No circular dependency found.");
     return false;
 };
 
@@ -621,41 +645,54 @@ export const useHomeLogic = (user, searchQuery = '') => {
     };*/
 
     const handleDropOnFolder = async (draggedId, targetFolderId, type) => {
+        console.log(`📂 [Drop] Dragged=${draggedId} -> Target=${targetFolderId} (Type: ${type})`);
+
         if (!draggedId || !targetFolderId) return;
 
         if (type === 'subject') {
             const subject = subjects.find(s => s.id === draggedId);
             if (subject && subject.folderId !== targetFolderId) {
+                console.log("   ➡ Moving Subject...");
                 await updateSubject(draggedId, { folderId: targetFolderId });
                 touchSubject(draggedId);
             }
         } else if (type === 'folder') {
             if (draggedId === targetFolderId) return;
 
-            // --- 🛡️ ADD THIS PROTECTION ---
-            if (isDescendant(draggedId, targetFolderId, folders)) {
-                console.warn("BLOCKED: Cannot move a folder into its own subfolder.");
-                return; 
+            // --- STRICT CHECK WITH LOGS ---
+            const isUnsafe = isDescendant(draggedId, targetFolderId, folders);
+            
+            if (isUnsafe) {
+                console.warn("🛑 ACTION BLOCKED: Logic prevented circular loop.");
+                return; // STOP
             }
             // ------------------------------
 
+            console.log("   ➡ Moving Folder (Safe)...");
             await updateFolder(draggedId, { folderId: targetFolderId });
         }
     };
 
+    // 3. DEBUGGED handleNestFolder
     const handleNestFolder = async (targetFolderId, folderToNestId) => {
+        console.log(`🌳 [Tree Nest] Nesting ${folderToNestId} INTO ${targetFolderId}`);
+
         if (!targetFolderId || !folderToNestId) return;
         if (targetFolderId === folderToNestId) return;
 
-        // --- 🛡️ GUARD: PREVENT LOOPS ---
-        if (isDescendant(folderToNestId, targetFolderId, folders)) {
-            console.warn("BLOCKED: Cannot nest a folder into its own descendant.");
-            return;
+        // --- STRICT CHECK WITH LOGS ---
+        const isUnsafe = isDescendant(folderToNestId, targetFolderId, folders);
+
+        if (isUnsafe) {
+            console.warn("🛑 ACTION BLOCKED: Logic prevented circular loop.");
+            return; // STOP
         }
         // ------------------------------
 
+        console.log("   ➡ Nesting Folder (Safe)...");
         await updateFolder(folderToNestId, { folderId: targetFolderId });
     };
+
 
     const handleDropReorderSubject = (draggedId, fromPosition, toPosition) => {
         if (draggedId === undefined || fromPosition === toPosition) return;

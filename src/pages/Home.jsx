@@ -27,7 +27,6 @@ import SubjectTopicsModal from '../components/modals/SubjectTopicModal';
 const Home = ({ user }) => {
     // Top-level debug: confirm Home is mounted
     React.useEffect(() => {
-        console.log('[DEBUG] Home component mounted');
     }, []);
     // 1. Initialize Logic
     const [searchQuery, setSearchQuery] = useState('');
@@ -52,7 +51,6 @@ const Home = ({ user }) => {
             while (current && current.folderId) {
                 // If we see the same ID twice, we found a loop!
                 if (path.has(current.id)) {
-                    console.log(`🔥 LOOP DETECTED on folder: ${folder.name}. Moving to Root to fix.`);
                     // FORCE MOVE TO ROOT
                     updateDoc(doc(db, 'folders', folder.id), { folderId: null });
                     fixedCount++;
@@ -194,7 +192,6 @@ const Home = ({ user }) => {
         logic.handleSaveFolder(dataWithParent);
     };
     const handleUpwardDrop = async (e) => {
-        console.log('[DEBUG] handleUpwardDrop called');
         e.preventDefault(); e.stopPropagation();
         const subjectId = e.dataTransfer.getData('subjectId');
         const folderId = e.dataTransfer.getData('folderId');
@@ -202,10 +199,8 @@ const Home = ({ user }) => {
             const currentId = logic.currentFolder.id;
             const parentId = logic.currentFolder.parentId; 
             if (subjectId) {
-                console.log('[DEBUG] handleUpwardDrop: moving subject', { subjectId, currentId, parentId });
                 await moveSubjectToParent(subjectId, currentId, parentId);
             } else if (folderId && folderId !== currentId) {
-                console.log('[DEBUG] handleUpwardDrop: moving folder', { folderId, currentId, parentId });
                 await moveFolderToParent(folderId, currentId, parentId);
             }
         }
@@ -293,18 +288,14 @@ const Home = ({ user }) => {
         setTopicsModalConfig({ isOpen: true, subject });
     };
     const handleDropOnFolderWrapper = (targetFolderId, subjectId, sourceFolderId) => {
-        console.log('[DEBUG] handleDropOnFolderWrapper ENTRY', { targetFolderId, subjectId });
         // Use passed sourceFolderId if provided, otherwise fallback to currentFolder
         const currentFolderId = sourceFolderId !== undefined ? sourceFolderId : (logic.currentFolder ? logic.currentFolder.id : null);
-        console.log('[DEBUG] currentFolderId:', currentFolderId);
         if (targetFolderId === currentFolderId) {
-            console.log('[DEBUG] targetFolderId === currentFolderId, returning');
             return;
         }
         const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
         const sourceFolder = (logic.folders || []).find(f => f.id === currentFolderId);
         const subject = (logic.subjects || []).find(s => s.id === subjectId);
-        console.log('[DEBUG] Folders and subject:', { targetFolder, sourceFolder, subject });
 
         // Helper: get shared user IDs from sharedWithUids (array of strings)
         const getSharedUids = (item) => (item && Array.isArray(item.sharedWithUids)) ? item.sharedWithUids : [];
@@ -313,17 +304,7 @@ const Home = ({ user }) => {
         const targetIsShared = targetFolder ? targetFolder.isShared : undefined;
         const subjectSharedWithUids = getSharedUids(subject);
         const targetFolderSharedWithUids = getSharedUids(targetFolder);
-        console.log('[DEBUG] Sharing info:', { sourceIsShared, targetIsShared, subjectSharedWithUids, targetFolderSharedWithUids });
 
-        // Moving OUT of a shared folder (confirmation required if source is shared and target is not)
-        console.log('[DEBUG] handleDropOnFolderWrapper: Checking exit (out of shared folder) case', {
-            sourceFolder,
-            sourceIsShared,
-            targetFolder,
-            targetIsShared,
-            currentFolderId,
-            targetFolderId
-        });
         if (
             sourceFolder &&
             sourceFolder.isShared &&
@@ -334,17 +315,12 @@ const Home = ({ user }) => {
             // Check if sourceFolder has a parentId and if that parent is shared
             const parentFolder = sourceFolder.parentId ? (logic.folders || []).find(f => f.id === sourceFolder.parentId) : null;
             if (parentFolder && parentFolder.isShared) {
-                console.log('[DEBUG] handleDropOnFolderWrapper: Condition met: EXIT branch (parent is shared). Triggering unshareConfirm overlay.', {
-                    sourceFolder,
-                    targetFolder,
-                    parentFolder
-                });
+                
                 setUnshareConfirm({
                     open: true,
                     subjectId,
                     folder: sourceFolder,
                     onConfirm: async () => {
-                        console.log('[DEBUG] handleDropOnFolderWrapper: unshareConfirm onConfirm triggered (EXIT branch)');
                         await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
                         setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
                     }
@@ -358,15 +334,12 @@ const Home = ({ user }) => {
             const subjectShared = new Set(subjectSharedWithUids);
             const folderShared = targetFolderSharedWithUids;
             const newUsers = folderShared.filter(uid => !subjectShared.has(uid));
-            console.log('[DEBUG] Checking for new users to share:', { subjectShared: Array.from(subjectShared), folderShared, newUsers });
             if (newUsers.length > 0) {
-                console.log('[DEBUG] Condition met: new users found. Triggering shareConfirm overlay.');
                 setShareConfirm({
                     open: true,
                     subjectId,
                     folder: targetFolder,
                     onConfirm: async () => {
-                        console.log('[DEBUG] shareConfirm onConfirm triggered');
                         await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
                         setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
                     }
@@ -374,7 +347,6 @@ const Home = ({ user }) => {
                 return true;
             }
         }
-        console.log('[DEBUG] No confirmation needed, moving subject');
         moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
         return false;
     };
@@ -390,17 +362,6 @@ const Home = ({ user }) => {
         // Helper: get shared user IDs from sharedWithUids (array of strings)
         const getSharedUids = (item) => (item && Array.isArray(item.sharedWithUids)) ? item.sharedWithUids : [];
 
-        // Debugging output
-        console.log('[DEBUG] handleNestFolder:', {
-            targetFolderId,
-            droppedFolderId,
-            droppedFolder,
-            targetFolder,
-            droppedIsShared: droppedFolder ? droppedFolder.isShared : undefined,
-            targetIsShared: targetFolder ? targetFolder.isShared : undefined,
-            droppedSharedWithUids: getSharedUids(droppedFolder),
-            targetFolderSharedWithUids: getSharedUids(targetFolder),
-        });
 
         // Only show unshare confirmation if droppedFolder has a parentId and that parent is shared
         if (
@@ -411,7 +372,6 @@ const Home = ({ user }) => {
         ) {
             const parentFolder = (logic.folders || []).find(f => f.id === droppedFolder.parentId);
             if (parentFolder && parentFolder.isShared) {
-                console.log('[DEBUG] Triggering unshareConfirm overlay (folder, parent is shared)');
                 setUnshareConfirm({
                     open: true,
                     subjectId: null,
@@ -453,7 +413,6 @@ const Home = ({ user }) => {
             const droppedShared = new Set(getSharedUids(droppedFolder));
             const targetShared = getSharedUids(targetFolder);
             const newUsers = targetShared.filter(uid => !droppedShared.has(uid));
-            console.log('[DEBUG] Checking for new users to share (folder):', { droppedShared: Array.from(droppedShared), targetShared, newUsers });
             if (newUsers.length > 0) {
                 // Show confirmation overlay for folder sharing
                 setShareConfirm({
@@ -469,7 +428,6 @@ const Home = ({ user }) => {
             }
         }
         // If no overlay, just move the folder and DO NOT change its shared state
-        console.log('[DEBUG] No confirmation needed, moving folder (shared state preserved)');
         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId, { preserveSharing: true });
     };
     const handlePromoteSubjectWrapper = async (subjectId) => {
@@ -486,18 +444,9 @@ const Home = ({ user }) => {
             targetFolder = (logic.folders || []).find(f => f.id === parentId);
         }
         const targetIsShared = targetFolder ? targetFolder.isShared : undefined;
-        // Debug: Log promote subject context
-        console.log('[DEBUG][handlePromoteSubjectWrapper]', {
-            currentFolder,
-            parentId,
-            sourceFolder,
-            targetFolder,
-            sourceIsShared,
-            targetIsShared
-        });
+
         // If moving out of a shared folder to a non-shared folder or to root (parentId null), show confirmation
         if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
-            console.log('[DEBUG][handlePromoteSubjectWrapper] Triggering unshareConfirm overlay');
             setUnshareConfirm({
                 open: true,
                 subjectId,
@@ -599,22 +548,10 @@ const Home = ({ user }) => {
                 <div 
                     className="relative transition-all duration-300"
                     onDragOver={(e) => {
-                        console.log('[DEBUG] Main drop zone onDragOver', {
-                            event: e,
-                            currentFolder: logic.currentFolder
-                        });
                         if (logic.currentFolder) e.preventDefault();
                     }}
                     onDrop={(e) => {
-                        console.log('[DEBUG] Main drop zone onDrop', {
-                            event: e,
-                            currentFolder: logic.currentFolder,
-                            dataTransfer: e.dataTransfer ? {
-                                types: e.dataTransfer.types,
-                                subjectId: e.dataTransfer.getData('subjectId'),
-                                folderId: e.dataTransfer.getData('folderId')
-                            } : null
-                        });
+
                         handleUpwardDrop(e);
                     }}
                 >

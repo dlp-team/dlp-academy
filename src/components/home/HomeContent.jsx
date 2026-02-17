@@ -57,7 +57,6 @@ const HomeContent = ({
     filterOverlayOpen = false,
     onCloseFilterOverlay = () => {},
 }) => {
-    console.log('[HomeContent] render', { activeFilter, groupedContent, orderedFolders });
     const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
     const [isRootZoneHovered, setIsRootZoneHovered] = useState(false);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -73,19 +72,12 @@ const HomeContent = ({
     const handlePromoteZoneDragLeave = (e) => { e.preventDefault(); setIsPromoteZoneHovered(false); };
     const handlePromoteZoneDrop = (e) => {
         e.preventDefault(); e.stopPropagation(); setIsPromoteZoneHovered(false);
-        // Debug: Log promote zone drop
-        console.log('[DEBUG][HomeContent] handlePromoteZoneDrop', {
-            currentFolder,
-            draggedItem,
-            draggedItemType
-        });
+
         if (!currentFolder || !draggedItem) return;
         if (draggedItemType === 'subject') {
-            console.log('[DEBUG][HomeContent] Calling handlePromoteSubject', { subjectId: draggedItem.id });
             handlePromoteSubject(draggedItem.id);
         }
         else if (draggedItemType === 'folder') {
-            console.log('[DEBUG][HomeContent] Calling handlePromoteFolder', { folderId: draggedItem.id });
             handlePromoteFolder(draggedItem.id);
         }
     };
