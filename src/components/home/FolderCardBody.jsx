@@ -350,4 +350,4 @@ const FolderCardBody = ({
     );
 };
 
-export default FolderCardBody;
+export default FolderCardBody;;

@@ -14,6 +14,20 @@ const normalizeText = (text) => {
         .replace(/[\u0300-\u036f]/g, '');
 };
 
+// Helper: Returns TRUE if 'targetId' is inside 'possibleParentId'
+// (e.g. Is the Destination inside the Dragged Folder?)
+const isDescendant = (possibleParentId, targetId, allFolders) => {
+    if (!possibleParentId || !targetId) return false;
+    if (possibleParentId === targetId) return true; 
+    
+    let current = allFolders.find(f => f.id === targetId);
+    while (current && current.folderId) {
+        if (current.folderId === possibleParentId) return true;
+        current = allFolders.find(f => f.id === current.folderId);
+    }
+    return false;
+};
+
 export const useHomeLogic = (user, searchQuery = '') => {
     const navigate = useNavigate();
     
@@ -596,7 +610,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         setDropPosition(position);
     };
 
-    const handleDropOnFolder = async (folderId, subjectId) => {
+    /*const handleDropOnFolder = async (folderId, subjectId) => {
         if (!subjectId || !folderId) return;
         
         // Add subject to folder
@@ -604,6 +618,43 @@ export const useHomeLogic = (user, searchQuery = '') => {
         
         // Clear drag state
         handleDragEnd();
+    };*/
+
+    const handleDropOnFolder = async (draggedId, targetFolderId, type) => {
+        if (!draggedId || !targetFolderId) return;
+
+        if (type === 'subject') {
+            const subject = subjects.find(s => s.id === draggedId);
+            if (subject && subject.folderId !== targetFolderId) {
+                await updateSubject(draggedId, { folderId: targetFolderId });
+                touchSubject(draggedId);
+            }
+        } else if (type === 'folder') {
+            if (draggedId === targetFolderId) return;
+
+            // --- 🛡️ ADD THIS PROTECTION ---
+            if (isDescendant(draggedId, targetFolderId, folders)) {
+                console.warn("BLOCKED: Cannot move a folder into its own subfolder.");
+                return; 
+            }
+            // ------------------------------
+
+            await updateFolder(draggedId, { folderId: targetFolderId });
+        }
+    };
+
+    const handleNestFolder = async (targetFolderId, folderToNestId) => {
+        if (!targetFolderId || !folderToNestId) return;
+        if (targetFolderId === folderToNestId) return;
+
+        // --- 🛡️ GUARD: PREVENT LOOPS ---
+        if (isDescendant(folderToNestId, targetFolderId, folders)) {
+            console.warn("BLOCKED: Cannot nest a folder into its own descendant.");
+            return;
+        }
+        // ------------------------------
+
+        await updateFolder(folderToNestId, { folderId: targetFolderId });
     };
 
     const handleDropReorderSubject = (draggedId, fromPosition, toPosition) => {
@@ -739,6 +790,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         handleDragOverSubject,
         handleDragOverFolder,
         handleDropOnFolder,
+        handleNestFolder,
         handleDropReorderSubject,
         handleDropReorderFolder,
         handlePreferenceChange,

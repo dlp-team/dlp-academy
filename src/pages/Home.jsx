@@ -35,7 +35,40 @@ const Home = ({ user }) => {
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isScaleOverlayOpen, setIsScaleOverlayOpen] = useState(false);
-    
+
+
+    // --- 🤖 AUTO-CLEANER: DETECT & FIX LOOPS AUTOMATICALLY ---
+    React.useEffect(() => {
+        if (!logic.folders || logic.folders.length === 0) return;
+
+        const allFolders = logic.folders;
+        let fixedCount = 0;
+
+        allFolders.forEach(folder => {
+            // Trace the path of this folder upwards
+            let current = folder;
+            const path = new Set();
+            
+            while (current && current.folderId) {
+                // If we see the same ID twice, we found a loop!
+                if (path.has(current.id)) {
+                    console.log(`🔥 LOOP DETECTED on folder: ${folder.name}. Moving to Root to fix.`);
+                    // FORCE MOVE TO ROOT
+                    updateDoc(doc(db, 'folders', folder.id), { folderId: null });
+                    fixedCount++;
+                    break;
+                }
+                path.add(current.id);
+                // Move up to parent
+                current = allFolders.find(f => f.id === current.folderId);
+            }
+        });
+
+        if (fixedCount > 0) {
+            alert(`✅ Auto-Cleaner Fixed ${fixedCount} corrupted folders! You can now remove the cleaner code.`);
+        }
+    }, [logic.folders]);
+    // -----------------------------------------------------------
 
     // Persist last visited tab and folder
     const didRestoreRef = React.useRef(false);
@@ -894,7 +927,7 @@ const Home = ({ user }) => {
                 }}
                 onNavigateSubject={handleNavigateSubjectFromTree}
                 onMoveSubjectToFolder={handleTreeMoveSubject}
-                onNestFolder={handleNestFolder}
+                onNestFolder={logic.handleNestFolder}
                 onReorderSubject={handleTreeReorderSubject}
                 onDropWithOverlay={handleDropOnFolderWrapper}
             />
