@@ -9,6 +9,7 @@ import {
 const FileCard = ({ 
     file, 
     topic,
+    subject,
     activeMenuId, 
     setActiveMenuId, 
     renamingId, 
@@ -54,8 +55,10 @@ const FileCard = ({
 
     const isRenaming = renamingId === file.id;
     const isMenuOpen = activeMenuId === file.id;
-    const cardColor = topic?.color || 'from-blue-500 to-indigo-600';
+    // Prefer subject color, then topic color, then default
+    const cardColor = subject?.color || topic?.color || 'from-blue-500 to-indigo-600';
 
+    console.log(cardColor)
     // DETERMINAR SI ES CONTENIDO GENERADO (Resumen/Fórmula/Examen)
     // Esto controla tanto el ESTILO como la NAVEGACIÓN
     const isGenerated = file.origin === 'AI' || ['summary', 'resumen', 'formulas', 'formulario', 'exam', 'quiz', 'examen'].includes(type);

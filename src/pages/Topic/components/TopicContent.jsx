@@ -7,6 +7,7 @@ import QuizCard from '../../../components/modules/QuizCard/QuizCard';
 const TopicContent = ({ 
     activeTab, 
     topic, 
+    subject,
     uploading, 
     fileInputRef, 
     handleManualUpload,
@@ -92,6 +93,7 @@ const TopicContent = ({
                         key={pdf.id || idx}
                         file={pdf}
                         topic={topic}
+                        subject={subject}
                         activeMenuId={activeMenuId}
                         setActiveMenuId={setActiveMenuId}
                         renamingId={renamingId}
@@ -142,6 +144,7 @@ const TopicContent = ({
                         key={upload.id || idx}
                         file={upload}
                         topic={topic}
+                        subject={subject}
                         activeMenuId={activeMenuId}
                         setActiveMenuId={setActiveMenuId}
                         renamingId={renamingId}

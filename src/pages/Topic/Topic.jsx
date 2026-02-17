@@ -231,6 +231,7 @@ const Topic = ({ user }) => {
                 <TopicContent 
                     {...logic}
                     topic={enrichedTopic}
+                    subject={logic.subject}
                     handleManualUpload={handleLocalUpload}
                     uploading={isUploadingLocal}
                 />
