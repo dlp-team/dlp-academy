@@ -17,20 +17,23 @@ const SubjectListItem = ({
     const [showMenu, setShowMenu] = useState(false);
     const menuBtnRef = React.useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+    
+    const topicCount = subject.topics ? subject.topics.length : 0;
+    const isModern = subject.cardStyle === 'modern';
+    const scale = (cardScale || 100) / 100;
 
+    // Minimum scale for the menu is 1 (100%)
+    const menuScale = Math.max(scale, 1);
     React.useEffect(() => {
         if (showMenu && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
-            const menu = { width: 128, height: 48 * 3 }; // 128px width, 3 items 48px each
+            const menu = { width: 128 * menuScale, height: 48 * 3 * menuScale };
             setMenuPos({
                 top: rect.bottom - menu.height,
                 left: rect.right - menu.width
             });
         }
-    }, [showMenu]);
-    const topicCount = subject.topics ? subject.topics.length : 0;
-    const isModern = subject.cardStyle === 'modern';
-    const scale = (cardScale || 100) / 100;
+    }, [showMenu, menuScale]);
 
     // Scaled sizes
     const paddingPx = compact ? 12 * scale : 16 * scale;
@@ -134,11 +137,13 @@ const SubjectListItem = ({
                                     onClick={(e) => { e.stopPropagation(); setShowMenu(false); }}
                                 />
                                 <div
-                                    className="fixed z-[101] w-32 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-none"
+                                    className="fixed z-[101] bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-none"
                                     style={{
                                         top: menuPos.top + 'px',
                                         left: menuPos.left + 'px',
-                                        width: '128px',
+                                        width: `${128 * menuScale}px`,
+                                        transform: `scale(${menuScale})`,
+                                        transformOrigin: 'bottom right',
                                         pointerEvents: 'auto'
                                     }}
                                 >

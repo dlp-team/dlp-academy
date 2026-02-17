@@ -18,7 +18,8 @@ const FolderListItem = ({
     cardScale = 100, 
     onDragStart,
     onDragEnd,
-    onDropAction
+    onDropAction,
+    path
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
@@ -173,7 +174,7 @@ const FolderListItem = ({
                 onDrop={handleDrop}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className={`relative group rounded-xl transition-all duration-200 border border-transparent z-40 ${
+                className={`relative group rounded-xl transition-all duration-200 border border-transparent z-10 ${
                     isDragOver 
                         ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-500 scale-[1.01] shadow-md'
                         : ''
@@ -301,6 +302,7 @@ const FolderListItem = ({
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}
                                         onDropAction={onDropAction}
+                                        path={path}
                                     />
                                 ))}
                                 {childSubjects.map((subject) => (
@@ -320,6 +322,7 @@ const FolderListItem = ({
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}
                                         onDropAction={onDropAction}
+                                        path={path}
                                     />
                                 ))}
                             </>

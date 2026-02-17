@@ -20,8 +20,16 @@ const ListViewItem = ({
     cardScale = 100, 
     onDragStart,
     onDragEnd,
-    onDropAction
+    onDropAction,
+    path = []
 }) => {
+
+    if (path.includes(item.id)) {
+        console.warn(`Cycle detected in List View for item: ${item.name}`);
+        return null;
+    }
+    // Create the new path for children: [grandparent, parent, me]
+    const currentPath = [...path, item.id];
     
     // Delegate to FolderListItem component if the item is a folder
     if (type === 'folder') {
@@ -40,6 +48,7 @@ const ListViewItem = ({
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
                 onDropAction={onDropAction}
+                path={currentPath}
             />
         );
     }
@@ -47,6 +56,8 @@ const ListViewItem = ({
     // Otherwise, treat the item as a Subject
     const [isHovered, setIsHovered] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
+
+    
     
     // Ensure dataTransfer payload is correctly set before delegating to the ghost hook
     const handleLocalDragStart = (e) => {
