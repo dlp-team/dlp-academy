@@ -5,21 +5,21 @@ import { doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
 import { auth, db } from './firebase/config'; // Import db
 
 // Authentication pages
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Profile from './pages/Profile';
-import Settings from './pages/Settings';
+import Login from './pages/Auth/Login';
+import Register from './pages/Auth/Register';
+import Profile from './pages/Profile/Profile';
+import Settings from './pages/Settings/Settings';
 
 // Main app pages
 import Home from './pages/Home';
-import Subject from './pages/Subject';
-import Topic from './pages/Topic';
-import Quizzes from './pages/Quizzes';
-import EditQuiz from './pages/QuizzEdit';
-import StudyGuide from './pages/StudyGuide';
+import Subject from './pages/Subject/Subject';
+import Topic from './pages/Topic/Topic';
+import Quizzes from './pages/Quizzes/Quizzes';
+import EditQuiz from './pages/Quizzes/QuizzEdit';
+import StudyGuide from './pages/Content/StudyGuide';
 
 // Dashboard pages
-import SchoolAdminDashboard from './pages/SchoolAdminDashboard';
+import SchoolAdminDashboard from './pages/SchoolAdminDashboard/SchoolAdminDashboard';
 
 // Updated ProtectedRoute to handle Role Checks
 const ProtectedRoute = ({ children, user, loading, requiredRole }) => {

@@ -1,7 +1,7 @@
 // src/components/modals/FolderTreeModal.jsx
 import React, { useState } from 'react';
 import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, ArrowUpCircle, Users } from 'lucide-react';
-import SubjectIcon, { getIconColor } from './SubjectIcon';
+import SubjectIcon, { getIconColor } from '../ui/SubjectIcon';
 import { isDescendant } from '../../utils/folderUtils';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
