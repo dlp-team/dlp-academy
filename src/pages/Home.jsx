@@ -24,6 +24,22 @@ import HomeModals from '../components/home/HomeModals';
 import FolderTreeModal from '../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../components/modals/SubjectTopicModal';
 
+
+const isDescendant = (possibleParentId, targetId, allFolders) => {
+    if (!possibleParentId || !targetId) return false;
+    if (possibleParentId === targetId) return true; 
+    let current = allFolders.find(f => f.id === targetId);
+    const visited = new Set();
+    while (current && current.folderId) {
+        if (current.folderId === possibleParentId) return true;
+        if (visited.has(current.id)) return false; 
+        visited.add(current.id);
+        current = allFolders.find(f => f.id === current.folderId);
+    }
+    return false;
+};
+
+
 const Home = ({ user }) => {
     // Top-level debug: confirm Home is mounted
     React.useEffect(() => {
@@ -352,8 +368,15 @@ const Home = ({ user }) => {
     };
 
     const handleNestFolder = async (targetFolderId, droppedFolderId) => {
-
         if (targetFolderId === droppedFolderId) return;
+
+
+        if (isDescendant(droppedFolderId, targetFolderId, logic.folders || [])) {
+            console.warn("🚫 BLOCKED: Circular dependency detected.");
+            return;
+        }
+
+
         const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
         if (!droppedFolder) return;
         const currentParentId = droppedFolder.parentId || null;

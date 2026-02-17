@@ -742,8 +742,9 @@ export const useHomeLogic = (user, searchQuery = '') => {
     const allTags = useMemo(() => {
         const tagSet = new Set();
         subjects.forEach(s => s.tags?.forEach(t => tagSet.add(t)));
+        folders.forEach(f => f.tags?.forEach(t => tagSet.add(t)));
         return Array.from(tagSet).sort();
-    }, [subjects]);
+    }, [subjects, folders]);
 
     useEffect(() => {
         if (preferences && !loadingPreferences) {
