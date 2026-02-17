@@ -12,6 +12,7 @@ import { db } from '../../firebase/config';
 import 'katex/dist/katex.min.css';
 import { BlockMath, InlineMath } from 'react-katex';
 
+
 // ==================== CONSTANTS ====================
 
 const COLOR_MAP = {
@@ -41,14 +42,7 @@ const extractColorFromGradient = (gradient) => {
 const SmartTextRenderer = ({ text }) => {
     if (!text) return null;
 
-    // EXPLICACIÓN: Esta expresión regular busca patrones matemáticos comunes en tus imágenes:
-    // 1. Notación científica (ej: 3,24 \times 10^9)
-    // 2. Unidades con exponentes (ej: Nm^2C^-2)
-    // 3. Comandos LaTeX sueltos (ej: \alpha, \times)
-    // 4. Texto en negrita (**texto**)
-    // 5. Fórmulas que SÍ tengan $ (por si acaso)
-    
-    const regex = /((?:\d+(?:[.,]\d+)?\s*\\times\s*10\^\{?-?\d+\}?)|(?:\b[a-zA-Z]+\^\{?-?\d+\}?(?:[a-zA-Z]+\^\{?-?\d+\}?)*)|(?:\\[a-zA-Z]+)|(?:\$[^\$]+\$)|(?:\*\*.*?\*\*))/g;
+    const regex = /((?:\$[^\$]+\$)|(?:\\\[[^\]]+\\\])|(?:\d+(?:[.,]\d+)?\s*\\times\s*10\^\{?-?\d+\}?)|(?:\b[a-zA-Z]+\^\{?-?\d+\}?(?:[a-zA-Z]+\^\{?-?\d+\}?)*)|(?:\\[a-zA-Z]+)|(?:\*\*.*?\*\*))/g;
 
     const parts = text.split(regex);
 
@@ -57,29 +51,43 @@ const SmartTextRenderer = ({ text }) => {
             {parts.map((part, index) => {
                 if (!part) return null;
 
-                // Detectar si es Matemáticas (contiene \times, ^, \, o está entre $)
+                if ((part.startsWith('$') && part.endsWith('$')) || 
+                    (part.startsWith('\\[') && part.endsWith('\\]'))) {
+                    let mathContent = part;
+                    if (part.startsWith('$')) {
+                        mathContent = part.slice(1, -1);
+                    } else if (part.startsWith('\\[')) {
+                        mathContent = part.slice(2, -2);
+                    }
+                    
+                    const isBlockFormula = mathContent.length > 30 || mathContent.includes('\\frac') || mathContent.includes('\\sum');
+                    
+                    return isBlockFormula ? (
+                        <div key={index} className="my-4">
+                            <BlockMath math={mathContent} />
+                        </div>
+                    ) : (
+                        <InlineMath key={index} math={mathContent} />
+                    );
+                }
+
                 const isMath = 
                     part.includes('\\times') || 
                     part.includes('^') || 
-                    (part.startsWith('\\') && !part.includes(' ')) ||
-                    (part.startsWith('$') && part.endsWith('$'));
+                    (part.startsWith('\\') && !part.includes(' '));
 
                 if (isMath) {
-                    // Limpiamos los signos $ si existen para que la librería no se confunda
-                    const mathContent = part.startsWith('$') ? part.slice(1, -1) : part;
-                    return <InlineMath key={index} math={mathContent} />;
+                    return <InlineMath key={index} math={part} />;
                 }
 
-                // Detectar Negritas
                 if (part.startsWith('**') && part.endsWith('**')) {
                     return (
-                        <strong key={index} className="text-slate-900 font-extrabold bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 bg-clip-text">
+                        <strong key={index} className="text-slate-900 font-extrabold">
                             {part.slice(2, -2)}
                         </strong>
                     );
                 }
 
-                // Texto Normal
                 return <span key={index}>{part}</span>;
             })}
         </>
@@ -96,7 +104,38 @@ const RichTextRenderer = ({ text, topicGradient }) => {
                 const cleanLine = line.trim();
                 if (!cleanLine) return null;
 
-                // Renderizar viñetas (bullets)
+                if (cleanLine.match(/^[a-zA-Zα-ωΑ-Ω_{}\\]+(\d+)?:\s/)) {
+                    const colonIndex = cleanLine.indexOf(':');
+                    const symbol = cleanLine.substring(0, colonIndex);
+                    const definition = cleanLine.substring(colonIndex + 1).trim();
+                    
+                    return (
+                        <div key={i} className="group/def relative">
+                            <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-2xl blur-xl opacity-0 group-hover/def:opacity-20 transition-opacity duration-500`} />
+                            
+                            <div className="relative flex items-start gap-4 py-4 px-5 bg-gradient-to-br from-white via-slate-50/50 to-white backdrop-blur-xl rounded-2xl border-2 border-white/80 shadow-lg hover:shadow-xl transition-all duration-500 group-hover/def:scale-[1.02]">
+                                <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${topicGradient} opacity-5 rounded-bl-3xl`} />
+                                <div className={`absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr ${topicGradient} opacity-5 rounded-tr-3xl`} />
+                                
+                                <div className="relative shrink-0">
+                                    <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-xl blur-md opacity-60 group-hover/def:opacity-80 transition-opacity duration-500`} />
+                                    <div className={`relative px-4 py-2.5 bg-gradient-to-br ${topicGradient} text-white rounded-xl font-mono text-base font-black shadow-xl ring-2 ring-white transform group-hover/def:scale-110 group-hover/def:rotate-3 transition-all duration-500`}>
+                                        <SmartTextRenderer text={symbol} />
+                                    </div>
+                                </div>
+                                
+                                <div className="flex-1 pt-1 relative z-10">
+                                    <p className="text-slate-700 font-medium leading-relaxed group-hover/def:text-slate-900 transition-colors duration-300">
+                                        <SmartTextRenderer text={definition} />
+                                    </p>
+                                </div>
+                                
+                                <div className={`absolute -right-1 top-1/2 -translate-y-1/2 w-1.5 h-12 bg-gradient-to-b ${topicGradient} rounded-full opacity-0 group-hover/def:opacity-100 transition-opacity duration-500 shadow-lg`} />
+                            </div>
+                        </div>
+                    );
+                }
+
                 if (cleanLine.startsWith('•') || cleanLine.startsWith('-')) {
                     return (
                         <div key={i} className="flex items-start gap-4 pl-2 group/bullet">
@@ -111,27 +150,25 @@ const RichTextRenderer = ({ text, topicGradient }) => {
                     );
                 }
 
-                // Renderizar subtítulos
-                if (cleanLine.endsWith(':') && cleanLine.length < 80) {
+                if (cleanLine.endsWith(':') && cleanLine.length < 80 && !cleanLine.match(/^[a-zA-Zα-ωΑ-Ω_{}\\]+(\d+)?:\s/)) {
                     return (
-                        <div key={i} className="mt-10 mb-6 group/subtitle">
+                        <div key={i} className="mt-10 mb-6">
                             <div className="flex items-center gap-4">
                                 <div className="relative">
-                                    <div className={`absolute inset-0 bg-gradient-to-b ${topicGradient} rounded-full blur-xl opacity-50 group-hover/subtitle:opacity-70 transition-opacity duration-500`} />
-                                    <div className={`relative w-1.5 h-10 rounded-full bg-gradient-to-b ${topicGradient} shadow-xl group-hover/subtitle:h-14 group-hover/subtitle:scale-110 transition-all duration-500`} />
+                                    <div className={`absolute inset-0 bg-gradient-to-b ${topicGradient} rounded-full blur-xl opacity-50 transition-opacity duration-500`} />
+                                    <div className={`relative w-1.5 h-10 rounded-full bg-gradient-to-b ${topicGradient} shadow-xl transition-all duration-500`} />
                                 </div>
                                 <div className="flex-1">
-                                    <h4 className={`text-2xl md:text-3xl lg:text-4xl font-black bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent group-hover/subtitle:scale-[1.02] transition-transform duration-500 origin-left inline-block`}>
+                                    <h4 className={`text-2xl md:text-3xl lg:text-4xl font-black bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent transition-transform duration-500 origin-left inline-block`}>
                                         <SmartTextRenderer text={cleanLine} />
                                     </h4>
-                                    <div className={`mt-3 h-1 w-28 bg-gradient-to-r ${topicGradient} opacity-50 rounded-full shadow-lg group-hover/subtitle:w-40 transition-all duration-500`} />
+                                    <div className={`mt-3 h-1 w-28 bg-gradient-to-r ${topicGradient} opacity-50 rounded-full shadow-lg transition-all duration-500`} />
                                 </div>
                             </div>
                         </div>
                     );
                 }
 
-                // Párrafos normales
                 return (
                     <p key={i} className="leading-[1.8] text-slate-700">
                         <SmartTextRenderer text={cleanLine} />
@@ -190,14 +227,32 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
                 <div className="relative p-8 md:p-10 lg:p-12">
                     <button
                         onClick={onToggle}
-                        className="w-full flex items-start gap-5 lg:gap-6 mb-8 group/header"
+                        className="w-full flex items-center gap-4 mb-6 group/header"
                     >
                         <div className="relative shrink-0">
-                            <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-3xl blur-xl opacity-50 group-hover/header:opacity-70 transition-opacity duration-500`} />
-                            <div className={`relative w-16 h-16 lg:w-20 lg:h-20 rounded-3xl flex items-center justify-center text-white font-black text-2xl lg:text-3xl shadow-2xl bg-gradient-to-br ${topicGradient} ring-4 ring-white transform group-hover/header:scale-110 group-hover/header:rotate-3 transition-all duration-500`}>
+                            <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-2xl blur-lg opacity-50 group-hover/header:opacity-70 transition-opacity duration-500`} />
+                            <div className={`relative w-12 h-12 lg:w-14 lg:h-14 rounded-2xl flex items-center justify-center text-white font-black text-lg lg:text-xl shadow-xl bg-gradient-to-br ${topicGradient} ring-4 ring-white transform group-hover/header:scale-110 transition-all duration-500`}>
                                 {index + 1}
                             </div>
-                            <div className="absolute -bottom-2 -right-2 w-8 h-8 lg:w-9 lg:h-9 bg-white rounded-xl shadow-xl flex items-center justify-center border-2 border-slate-100 transform group-hover/header:scale-110 transition-transform duration-300">
+                        </div>
+                        
+                        <div className="flex-1 text-left">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                    Capítulo {index + 1} de {totalSections}
+                                </span>
+                            </div>
+                            <h3 className={`text-xl md:text-2xl lg:text-3xl font-black leading-tight transition-all duration-500 ${
+                                isActive 
+                                    ? `bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent` 
+                                    : 'text-slate-900'
+                            }`}>
+                                {section.title}
+                            </h3>
+                        </div>
+
+                        <div className="shrink-0">
+                            <div className="w-8 h-8 rounded-xl bg-slate-100 group-hover/header:bg-slate-200 flex items-center justify-center transition-all duration-300">
                                 {isExpanded ? (
                                     <ChevronUp className="w-4 h-4 text-slate-700" />
                                 ) : (
@@ -205,37 +260,16 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
                                 )}
                             </div>
                         </div>
-                        
-                        <div className="flex-1 text-left">
-                            <div className="flex items-center gap-3 mb-3">
-                                <span className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] px-4 py-2 rounded-full bg-gradient-to-r from-slate-100 to-slate-50 border border-slate-200 shadow-sm">
-                                    Capítulo {index + 1} de {totalSections}
-                                </span>
-                            </div>
-                            <h3 className={`text-2xl md:text-3xl lg:text-4xl font-black leading-tight transition-all duration-500 ${
-                                isActive 
-                                    ? `bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent` 
-                                    : 'text-slate-900 group-hover/header:bg-gradient-to-r group-hover/header:' + topicGradient + ' group-hover/header:bg-clip-text group-hover/header:text-transparent'
-                            }`}>
-                                {section.title}
-                            </h3>
-                            <div className={`mt-3 h-1.5 w-20 bg-gradient-to-r ${topicGradient} rounded-full shadow-lg group-hover/header:w-32 transition-all duration-500`} />
-                        </div>
                     </button>
 
                     {isExpanded && (
                         <div className="animate-in slide-in-from-top-6 duration-700 fade-in">
-                            <div className="relative pl-8 md:pl-10 lg:pl-12">
-                                <div className="absolute left-0 top-0 bottom-0 w-2 rounded-full overflow-hidden">
-                                    <div className={`absolute inset-0 bg-gradient-to-b ${topicGradient} opacity-30`} />
-                                    <div className={`absolute inset-0 bg-gradient-to-b ${topicGradient} opacity-50 animate-pulse`} />
-                                </div>
+                            <div className="relative">
                                 <RichTextRenderer text={section.content} topicGradient={topicGradient} />
                             </div>
 
-                            {/* Fórmulas integradas directamente en la sección */}
                             {section.formulas && section.formulas.length > 0 && (
-                                <div className="mt-10 space-y-4 pl-8 md:pl-10 lg:pl-12">
+                                <div className="mt-10 space-y-4">
                                     <div className="flex items-center gap-4 mb-6">
                                         <div className="relative">
                                             <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-2xl blur-lg opacity-50`} />
@@ -257,7 +291,11 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
                                     </div>
                                     
                                     {section.formulas.map((formula, fIdx) => (
-                                        <div key={fIdx} className="group/item relative overflow-visible">
+                                        <button
+                                            key={fIdx}
+                                            onClick={scrollToFormulas}
+                                            className="w-full group/item relative overflow-visible cursor-pointer"
+                                        >
                                             <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-3xl blur-2xl opacity-0 group-hover/item:opacity-15 transition-opacity duration-700`} />
                                             
                                             <div className="relative bg-gradient-to-br from-white via-slate-50/80 to-white backdrop-blur-2xl rounded-3xl p-8 border-2 border-white shadow-xl group-hover/item:shadow-2xl transition-all duration-500 overflow-visible">
@@ -267,8 +305,12 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
                                                 <div className="overflow-x-auto py-4 relative z-10">
                                                     <BlockMath math={typeof formula === 'string' ? formula : ""} />
                                                 </div>
+                                                
+                                                <div className="absolute bottom-4 right-4 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
+                                                    <span className="text-xs font-bold text-slate-400">Ver formulario completo →</span>
+                                                </div>
                                             </div>
-                                        </div>
+                                        </button>
                                     ))}
                                 </div>
                             )}
@@ -280,7 +322,7 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
     );
 };
 
-const TableOfContents = ({ sections, topicGradient, onNavigate, activeSection, isScrolled, isMouseAtTop, setKeepHeaderVisible }) => {
+const TableOfContents = ({ sections, topicGradient, onNavigate, activeSection, isScrolled, isMouseAtTop, setKeepHeaderVisible, onExpandSection }) => {
     const [isOpen, setIsOpen] = useState(false);
 
     useEffect(() => {
@@ -328,13 +370,13 @@ const TableOfContents = ({ sections, topicGradient, onNavigate, activeSection, i
                             isScrolled ? 'p-2' : 'p-2.5'
                         }`}>
                             {isOpen ? (
-                                <ChevronUp className={`text-slate-700 transition-all duration-300 ${
-                                    isScrolled ? 'w-4 h-4' : 'w-5 h-5'
-                                }`} />
+                                <svg className={`text-slate-700 transition-all duration-300 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                </svg>
                             ) : (
-                                <ChevronDown className={`text-slate-700 transition-all duration-300 ${
-                                    isScrolled ? 'w-4 h-4' : 'w-5 h-5'
-                                }`} />
+                                <svg className={`text-slate-700 transition-all duration-300 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
                             )}
                         </div>
                     </div>
@@ -349,7 +391,8 @@ const TableOfContents = ({ sections, topicGradient, onNavigate, activeSection, i
                                     <button
                                         key={idx}
                                         onClick={() => {
-                                            onNavigate(`section-${idx}`);
+                                            onExpandSection(idx);
+                                            onNavigate(idx);
                                             setIsOpen(false);
                                         }}
                                         className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-500 text-left group/item relative overflow-hidden ${
@@ -436,6 +479,7 @@ const StudyGuide = () => {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMouseAtTop, setIsMouseAtTop] = useState(true);
     const [keepHeaderVisible, setKeepHeaderVisible] = useState(false);
+    const [isGridMode, setIsGridMode] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -456,6 +500,28 @@ const StudyGuide = () => {
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (!guideData?.studyGuide) return;
+            
+            if (document.activeElement.tagName === 'INPUT' || 
+                document.activeElement.tagName === 'TEXTAREA') {
+                return;
+            }
+            
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                navigateToNextSection();
+            } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                navigateToPreviousSection();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [guideData, activeSection, expandedSections]);
 
     useEffect(() => {
         if (!guideData?.studyGuide) return;
@@ -528,10 +594,7 @@ const StudyGuide = () => {
                         studyGuide: parsedStudyGuide
                     });
 
-                    const initialExpanded = {};
-                    parsedStudyGuide.forEach((_, idx) => {
-                        initialExpanded[idx] = true;
-                    });
+                    const initialExpanded = { 0: true };
                     setExpandedSections(initialExpanded);
                 }
             } catch (error) {
@@ -548,20 +611,38 @@ const StudyGuide = () => {
 
     const handleGoBack = () => navigate(-1);
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-    const scrollToSection = (sectionId) => {
-        const element = document.getElementById(sectionId);
-        if (element) {
-            const headerHeight = 80;
-            const tocHeight = isScrolled ? 80 : 120;
-            const offset = headerHeight + tocHeight + 20;
-            
-            const elementPosition = element.getBoundingClientRect().top;
-            const offsetPosition = elementPosition + window.pageYOffset - offset;
+    
+    const scrollToSection = (sectionIndex) => {
+        if (typeof sectionIndex === 'string') {
+            const element = document.getElementById(sectionIndex);
+            if (element) {
+                const headerHeight = 80;
+                const tocHeight = 80;
+                const offset = headerHeight + tocHeight;
+                
+                const elementPosition = element.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - offset;
 
-            window.scrollTo({
-                top: offsetPosition,
-                behavior: 'smooth'
-            });
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
+        } else {
+            const element = document.getElementById(`section-${sectionIndex}`);
+            if (element) {
+                const headerHeight = isScrolled ? 60 : 80;
+                const tocHeight = isScrolled ? 70 : 100;
+                const offset = headerHeight + tocHeight + 10;
+                
+                const elementPosition = element.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+            }
         }
     };
     
@@ -581,6 +662,53 @@ const StudyGuide = () => {
             ...prev,
             [index]: !prev[index]
         }));
+    };
+
+    const navigateToNextSection = () => {
+        if (!guideData?.studyGuide) return;
+        
+        const totalSections = guideData.studyGuide.length;
+        const nextSection = activeSection + 1;
+        
+        if (nextSection < totalSections) {
+            setExpandedSections(prev => {
+                const newState = {};
+                Object.keys(prev).forEach(key => {
+                    newState[key] = false;
+                });
+                newState[nextSection] = true;
+                return newState;
+            });
+            
+            setActiveSection(nextSection);
+            
+            setTimeout(() => {
+                scrollToSection(nextSection);
+            }, 100);
+        }
+    };
+
+    const navigateToPreviousSection = () => {
+        if (!guideData?.studyGuide) return;
+        
+        const prevSection = activeSection - 1;
+        
+        if (prevSection >= 0) {
+            setExpandedSections(prev => {
+                const newState = {};
+                Object.keys(prev).forEach(key => {
+                    newState[key] = false;
+                });
+                newState[prevSection] = true;
+                return newState;
+            });
+            
+            setActiveSection(prevSection);
+            
+            setTimeout(() => {
+                scrollToSection(prevSection);
+            }, 100);
+        }
     };
 
     const totalFormulas = useMemo(() => {
@@ -693,17 +821,20 @@ const StudyGuide = () => {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={toggleAllSections}
-                            className={`group p-2 hover:bg-white/80 rounded-2xl text-slate-500 hover:text-slate-900 transition-all duration-300 shadow-md hover:shadow-lg flex items-center gap-2 ${
+                            className={`group p-2 hover:bg-white/80 rounded-2xl text-slate-500 hover:text-slate-900 transition-all duration-300 shadow-md hover:shadow-lg ${
                                 isScrolled ? 'scale-90' : 'scale-100'
                             }`}
-                            title={allExpanded ? 'Recoger todo' : 'Desplegar todo'}
+                            title={allExpanded ? 'Recoger todas las secciones' : 'Desplegar todas las secciones'}
                         >
-                            <List className={`transition-all duration-300 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} />
-                            {!isScrolled && (allExpanded ? (
-                                <ChevronUp className="w-4 h-4 hidden sm:block" />
+                            {allExpanded ? (
+                                <svg className={`transition-all duration-300 ${isScrolled ? 'w-5 h-5' : 'w-6 h-6'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                                </svg>
                             ) : (
-                                <ChevronDown className="w-4 h-4 hidden sm:block" />
-                            ))}
+                                <svg className={`transition-all duration-300 ${isScrolled ? 'w-5 h-5' : 'w-6 h-6'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            )}
                         </button>
                         {guideData.url && (
                             <a
@@ -737,6 +868,9 @@ const StudyGuide = () => {
                 isScrolled={isScrolled}
                 isMouseAtTop={isMouseAtTop}
                 setKeepHeaderVisible={setKeepHeaderVisible}
+                onExpandSection={(idx) => {
+                    setExpandedSections(prev => ({ ...prev, [idx]: true }));
+                }}
             />
 
             <main className={`relative z-10 max-w-7xl mx-auto px-6 lg:px-8 space-y-12 transition-all duration-500 ${
@@ -755,78 +889,77 @@ const StudyGuide = () => {
                         <div className={`absolute top-0 right-0 w-[40rem] h-[40rem] bg-gradient-to-br ${topicGradient} rounded-full blur-3xl opacity-10 -translate-y-1/2 translate-x-1/2`} />
                         <div className={`absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr ${topicGradient} rounded-full blur-3xl opacity-10 translate-y-1/2 -translate-x-1/2`} />
                         
-                        <div className="relative p-12 md:p-16 lg:p-20 text-center">
-                            <div className="mb-10 flex justify-center">
-                                <div className="relative group/icon">
-                                    <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-[2rem] blur-2xl opacity-50 group-hover/icon:opacity-70 transition-opacity duration-500`} />
-                                    <div className={`relative w-28 h-28 lg:w-32 lg:h-32 rounded-[2rem] bg-gradient-to-br ${topicGradient} flex items-center justify-center text-white shadow-2xl ring-8 ring-white transform group-hover/icon:scale-110 group-hover/icon:rotate-6 transition-all duration-500`}>
-                                        <BookOpen className="w-14 h-14 lg:w-16 lg:h-16" />
+                        <div className="relative p-8 md:p-12 lg:p-16">
+                            <div className="flex items-start gap-6 mb-8">
+                                <div className="relative group/icon shrink-0">
+                                    <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-2xl blur-xl opacity-50 group-hover/icon:opacity-70 transition-opacity duration-500`} />
+                                    <div className={`relative w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-br ${topicGradient} flex items-center justify-center text-white shadow-2xl ring-4 ring-white transform group-hover/icon:scale-110 group-hover/icon:rotate-6 transition-all duration-500`}>
+                                        <BookOpen className="w-8 h-8 lg:w-10 lg:h-10" />
                                     </div>
                                 </div>
+                                
+                                <div className="flex-1">
+                                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 mb-3 tracking-tight leading-tight">
+                                        {guideData.title}
+                                    </h2>
+                                    <p className={`text-base lg:text-lg font-bold bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent`}>
+                                        {guideData.subtitle}
+                                    </p>
+                                </div>
                             </div>
-
-                            <h2 className="text-4xl md:text-5xl lg:text-7xl font-black text-slate-900 mb-6 tracking-tight leading-[1.1] max-w-5xl mx-auto">
-                                {guideData.title}
-                            </h2>
-                            <p className={`text-xl lg:text-3xl font-bold mb-12 bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent`}>
-                                {guideData.subtitle}
-                            </p>
                             
-                            <div className="flex flex-wrap justify-center gap-5 lg:gap-6">
-                                <div className="group px-8 py-6 lg:px-10 lg:py-7 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl border-2 border-white/80 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-2xl bg-gradient-to-br ${topicGradient} shadow-lg`}>
-                                            <FileText className="w-6 h-6 lg:w-7 lg:h-7 text-white" />
+                            <div className="flex flex-wrap justify-center gap-4 mt-8">
+                                <div className="group px-6 py-4 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl border-2 border-white/80 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-xl bg-gradient-to-br ${topicGradient} shadow-lg`}>
+                                            <FileText className="w-5 h-5 text-white" />
                                         </div>
                                         <div className="text-left">
-                                            <div className="text-3xl lg:text-4xl font-black text-slate-900">{guideData.studyGuide.length}</div>
-                                            <div className="text-xs lg:text-sm text-slate-600 uppercase font-bold tracking-wider">Capítulos</div>
+                                            <div className="text-2xl font-black text-slate-900">{guideData.studyGuide.length}</div>
+                                            <div className="text-xs text-slate-600 uppercase font-bold tracking-wider">Capítulos</div>
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <button
                                     onClick={() => scrollToSection('formulas-section')}
-                                    className="group px-8 py-6 lg:px-10 lg:py-7 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl border-2 border-white/80 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer relative overflow-hidden"
+                                    className="group px-6 py-4 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl border-2 border-white/80 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 cursor-pointer relative overflow-hidden"
                                 >
                                     <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
-                                    <div className="flex items-center gap-4 relative z-10">
-                                        <div className={`p-3 rounded-2xl bg-gradient-to-br ${topicGradient} shadow-lg group-hover:scale-110 transition-transform duration-500`}>
-                                            <Calculator className="w-6 h-6 lg:w-7 lg:h-7 text-white" />
+                                    <div className="flex items-center gap-3 relative z-10">
+                                        <div className={`p-2 rounded-xl bg-gradient-to-br ${topicGradient} shadow-lg group-hover:scale-110 transition-transform duration-500`}>
+                                            <Calculator className="w-5 h-5 text-white" />
                                         </div>
                                         <div className="text-left">
-                                            <div className="text-3xl lg:text-4xl font-black text-slate-900">{totalFormulas}</div>
-                                            <div className="text-xs lg:text-sm text-slate-600 uppercase font-bold tracking-wider">Fórmulas</div>
+                                            <div className="text-2xl font-black text-slate-900">{totalFormulas}</div>
+                                            <div className="text-xs text-slate-600 uppercase font-bold tracking-wider">Fórmulas</div>
                                         </div>
-                                    </div>
-                                    <div className="absolute bottom-2 right-2 text-xs font-bold text-slate-400 group-hover:text-slate-600 transition-colors">
-                                        Ver todo →
                                     </div>
                                 </button>
 
-                                <div className="group px-8 py-6 lg:px-10 lg:py-7 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl border-2 border-white/80 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-1">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`p-3 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg`}>
-                                            <TrendingUp className="w-6 h-6 lg:w-7 lg:h-7 text-white" />
+                                <div className="group px-6 py-4 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl border-2 border-white/80 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg`}>
+                                            <TrendingUp className="w-5 h-5 text-white" />
                                         </div>
                                         <div className="text-left">
-                                            <div className="text-3xl lg:text-4xl font-black text-slate-900">A+</div>
-                                            <div className="text-xs lg:text-sm text-slate-600 uppercase font-bold tracking-wider">Calidad</div>
+                                            <div className="text-2xl font-black text-slate-900">A+</div>
+                                            <div className="text-xs text-slate-600 uppercase font-bold tracking-wider">Calidad</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
                             {guideData.url && (
-                                <div className="mt-10">
+                                <div className="mt-6">
                                     <a 
                                         href={guideData.url} 
                                         target="_blank" 
                                         rel="noreferrer"
-                                        className={`group inline-flex items-center gap-3 lg:gap-4 px-10 py-5 lg:px-12 lg:py-6 bg-gradient-to-r ${topicGradient} text-white rounded-3xl shadow-2xl hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] transition-all duration-500 hover:-translate-y-2 font-bold text-base lg:text-lg relative overflow-hidden`}
+                                        className={`group inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r ${topicGradient} text-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 font-bold text-sm relative overflow-hidden`}
                                     >
                                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-700" />
-                                        <Share2 className="w-5 h-5 lg:w-6 lg:h-6 relative z-10 transform group-hover:rotate-12 transition-transform duration-500" />
+                                        <Share2 className="w-4 h-4 relative z-10 transform group-hover:rotate-12 transition-transform duration-500" />
                                         <span className="relative z-10">Ver Documento Original</span>
                                     </a>
                                 </div>
@@ -880,61 +1013,158 @@ const StudyGuide = () => {
                                     <p className={`text-xl lg:text-2xl font-bold bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent mb-8`}>
                                         Todas las fórmulas en un solo lugar
                                     </p>
-                                    <div className="flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-slate-50 to-white rounded-full border-2 border-slate-200 shadow-lg inline-flex">
-                                        <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${topicGradient} animate-pulse`} />
-                                        <span className="text-sm font-bold text-slate-700">{totalFormulas} fórmulas totales</span>
+                                    
+                                    <div className="flex items-center justify-center gap-4 flex-wrap">
+                                        <div className="flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-slate-50 to-white rounded-full border-2 border-slate-200 shadow-lg">
+                                            <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${topicGradient} animate-pulse`} />
+                                            <span className="text-sm font-bold text-slate-700">{totalFormulas} fórmulas totales</span>
+                                        </div>
+                                        
+                                        <button
+                                            onClick={() => setIsGridMode(!isGridMode)}
+                                            className={`group/toggle relative px-6 py-3 rounded-full border-2 shadow-lg font-bold text-sm transition-all duration-500 hover:scale-105 ${
+                                                isGridMode 
+                                                    ? `bg-gradient-to-r ${topicGradient} text-white border-transparent` 
+                                                    : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                {isGridMode ? (
+                                                    <>
+                                                        <div className="w-4 h-4 grid grid-cols-2 gap-0.5">
+                                                            <div className="bg-white rounded-sm"></div>
+                                                            <div className="bg-white rounded-sm"></div>
+                                                            <div className="bg-white rounded-sm"></div>
+                                                            <div className="bg-white rounded-sm"></div>
+                                                        </div>
+                                                        <span>Vista Grid</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <List className="w-4 h-4" />
+                                                        <span>Vista Lista</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                            {!isGridMode && (
+                                                <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-full opacity-0 group-hover/toggle:opacity-10 transition-opacity duration-300`} />
+                                            )}
+                                        </button>
                                     </div>
                                 </div>
 
-                                <div className="space-y-6 max-w-5xl mx-auto">
-                                    {guideData.studyGuide.map((section, sectionIdx) => {
-                                        if (!section.formulas || section.formulas.length === 0) return null;
-                                        
-                                        return (
-                                            <div key={sectionIdx} className="space-y-4">
-                                                <div className="flex items-center gap-4 mb-6">
-                                                    <div className="relative">
-                                                        <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-xl blur-md opacity-50`} />
-                                                        <div className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${topicGradient} flex items-center justify-center text-white font-black text-lg shadow-xl ring-4 ring-white`}>
-                                                            {sectionIdx + 1}
+                                {isGridMode ? (
+                                    // =============================================
+                                    // MODO GRID - REDISEÑADO: Agrupado por tema,
+                                    // sin scale hack, cards con altura natural
+                                    // =============================================
+                                    <div className="max-w-[1400px] mx-auto space-y-10">
+                                        {guideData.studyGuide.map((section, sectionIdx) => {
+                                            if (!section.formulas || section.formulas.length === 0) return null;
+
+                                            return (
+                                                <div key={sectionIdx}>
+                                                    {/* Encabezado de sección */}
+                                                    <div className="flex items-center gap-3 mb-4">
+                                                        <div className="relative shrink-0">
+                                                            <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-xl blur-md opacity-50`} />
+                                                            <div className={`relative w-9 h-9 rounded-xl bg-gradient-to-br ${topicGradient} flex items-center justify-center text-white font-black text-sm shadow-lg ring-2 ring-white`}>
+                                                                {sectionIdx + 1}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-1">
+                                                        <h3 className="text-sm font-black text-slate-600 uppercase tracking-widest">
                                                             {section.title}
                                                         </h3>
-                                                        <div className={`h-1 w-16 bg-gradient-to-r ${topicGradient} rounded-full shadow-md`} />
+                                                        <div className={`flex-1 h-px bg-gradient-to-r ${topicGradient} opacity-20 rounded-full`} />
+                                                        <span className="text-xs font-bold text-slate-400 shrink-0">
+                                                            {section.formulas.length} {section.formulas.length === 1 ? 'fórmula' : 'fórmulas'}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Grid de fórmulas */}
+                                                    <div className="flex flex-wrap gap-3">
+                                                        {section.formulas.map((formula, formulaIdx) => (
+                                                            <button
+                                                                key={formulaIdx}
+                                                                onClick={() => scrollToSection(sectionIdx)}
+                                                                className="group/formula relative cursor-pointer text-left w-fit"
+                                                            >
+                                                                {/* Glow on hover */}
+                                                                <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-2xl blur-xl opacity-0 group-hover/formula:opacity-25 transition-opacity duration-500`} />
+
+                                                                <div className="relative bg-white rounded-2xl border-2 border-slate-100 group-hover/formula:border-slate-200 shadow-sm group-hover/formula:shadow-xl transition-all duration-300 group-hover/formula:-translate-y-1">
+
+                                                                    {/* Barra de color superior */}
+                                                                    <div className={`h-1.5 w-full bg-gradient-to-r ${topicGradient} shrink-0`} />
+
+                                                                    {/* Área de fórmula — el cuadro crece al ancho de la fórmula */}
+                                                                    <div className="flex items-center justify-center px-5 py-7">
+                                                                        <div className="[&_.katex-display]:my-0">
+                                                                            <BlockMath math={typeof formula === 'string' ? formula : ""} />
+                                                                        </div>
+                                                                    </div>
+
+
+                                                                </div>
+                                                            </button>
+                                                        ))}
                                                     </div>
                                                 </div>
-                                                
-                                                <div className="space-y-4 pt-2">
-                                                    {section.formulas.map((formula, formulaIdx) => (
-                                                        <button
-                                                            key={formulaIdx}
-                                                            onClick={() => scrollToSection(`section-${sectionIdx}`)}
-                                                            className="w-full group/item relative overflow-visible cursor-pointer"
-                                                        >
-                                                            <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-3xl blur-2xl opacity-0 group-hover/item:opacity-15 transition-opacity duration-700`} />
-                                                            
-                                                            <div className="relative bg-gradient-to-br from-white via-slate-50/80 to-white backdrop-blur-2xl rounded-3xl p-8 border-2 border-white shadow-xl group-hover/item:shadow-2xl transition-all duration-500 overflow-visible">
-                                                                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${topicGradient} opacity-5 rounded-bl-[4rem]`} />
-                                                                <div className={`absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr ${topicGradient} opacity-5 rounded-tr-[3rem]`} />
-                                                                
-                                                                <div className="overflow-x-auto py-4 relative z-10">
-                                                                    <BlockMath math={typeof formula === 'string' ? formula : ""} />
-                                                                </div>
-                                                                
-                                                                <div className="absolute bottom-4 right-4 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
-                                                                    <span className="text-xs font-bold text-slate-400">Ir a: {section.title} →</span>
-                                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    // MODO LISTA - Original con agrupación por tema
+                                    <div className="space-y-6 max-w-5xl mx-auto">
+                                        {guideData.studyGuide.map((section, sectionIdx) => {
+                                            if (!section.formulas || section.formulas.length === 0) return null;
+                                            
+                                            return (
+                                                <div key={sectionIdx} className="space-y-4">
+                                                    <div className="flex items-center gap-4 mb-6">
+                                                        <div className="relative">
+                                                            <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-xl blur-md opacity-50`} />
+                                                            <div className={`relative w-12 h-12 rounded-xl bg-gradient-to-br ${topicGradient} flex items-center justify-center text-white font-black text-lg shadow-xl ring-4 ring-white`}>
+                                                                {sectionIdx + 1}
                                                             </div>
-                                                        </button>
-                                                    ))}
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-1">
+                                                                {section.title}
+                                                            </h3>
+                                                            <div className={`h-1 w-16 bg-gradient-to-r ${topicGradient} rounded-full shadow-md`} />
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div className="space-y-4 pt-2">
+                                                        {section.formulas.map((formula, formulaIdx) => (
+                                                            <button
+                                                                key={formulaIdx}
+                                                                onClick={() => scrollToSection(sectionIdx)}
+                                                                className="w-full group/item relative overflow-visible cursor-pointer"
+                                                            >
+                                                                <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-3xl blur-2xl opacity-0 group-hover/item:opacity-15 transition-opacity duration-700`} />
+                                                                
+                                                                <div className="relative bg-gradient-to-br from-white via-slate-50/80 to-white backdrop-blur-2xl rounded-3xl p-8 border-2 border-white shadow-xl group-hover/item:shadow-2xl transition-all duration-500 overflow-visible">
+                                                                    <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${topicGradient} opacity-5 rounded-bl-[4rem]`} />
+                                                                    <div className={`absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr ${topicGradient} opacity-5 rounded-tr-[3rem]`} />
+                                                                    
+                                                                    <div className="overflow-x-auto py-4 relative z-10">
+                                                                        <BlockMath math={typeof formula === 'string' ? formula : ""} />
+                                                                    </div>
+                                                                    
+                                                                    <div className="absolute bottom-4 right-4 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
+                                                                        <span className="text-xs font-bold text-slate-400">Ir a: {section.title} →</span>
+                                                                    </div>
+                                                                </div>
+                                                            </button>
+                                                        ))}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -973,6 +1203,14 @@ const StudyGuide = () => {
             </main>
 
             <style jsx>{`
+                .no-scrollbar {
+                    -ms-overflow-style: none;
+                    scrollbar-width: none;
+                }
+                .no-scrollbar::-webkit-scrollbar {
+                    display: none;
+                }
+                
                 @keyframes shimmer {
                     0% { transform: translateX(-100%); }
                     100% { transform: translateX(100%); }
