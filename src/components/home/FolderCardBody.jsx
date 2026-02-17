@@ -22,6 +22,8 @@ const FolderCardBody = ({
     filterOverlayOpen
 }) => {
     // 1. Logic: No useState needed here. We use CSS for hover states.
+    // Enforce a minimum scale of 1 for the menu
+    const menuScale = Math.max(scaleMultiplier, 1);
     const shiftX = 48 * scaleMultiplier;
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
@@ -148,25 +150,28 @@ const FolderCardBody = ({
                             {/* Dropdown Menu rendered in a portal */}
                             {activeMenu === folder.id && typeof window !== 'undefined' && createPortal(
                                 <div
-                                    className="w-44 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1.5 animate-in fade-in zoom-in-95 duration-100 transition-colors"
+                                    className="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-colors"
                                     style={{
                                         position: 'fixed',
                                         top: menuPos.top,
                                         left: menuPos.left,
-                                        zIndex: 9999
+                                        zIndex: 9999,
+                                        width: `${120 * menuScale}px`,
+                                        transform: `scale(${menuScale})`,
+                                        transformOrigin: 'top left'
                                     }}
                                 >
                                     {folder.isOwner ? (
                                         <>
-                                            <button onClick={(e) => { e.stopPropagation(); onEdit(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
-                                                <Edit2 size={14} /> Editar
+                                            <button onClick={(e) => { e.stopPropagation(); onEdit(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                <Edit2 size={14 * menuScale} /> Editar
                                             </button>
-                                            <button onClick={(e) => { e.stopPropagation(); onShare(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors">
-                                                <Share2 size={14} /> Compartir
+                                            <button onClick={(e) => { e.stopPropagation(); onShare(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                <Share2 size={14 * menuScale} /> Compartir
                                             </button>
                                             <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
-                                            <button onClick={(e) => { e.stopPropagation(); onDelete(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors">
-                                                <Trash2 size={14} /> Eliminar
+                                            <button onClick={(e) => { e.stopPropagation(); onDelete(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                <Trash2 size={14 * menuScale} /> Eliminar
                                             </button>
                                         </>
                                     ) : (
