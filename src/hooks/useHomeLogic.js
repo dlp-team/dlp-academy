@@ -160,6 +160,13 @@ export const useHomeLogic = (user, searchQuery = '') => {
     }, [subjects, currentFolder, searchQuery]);
 
     
+    // --- FILTER FOLDERS BY TAGS ---
+    const filteredFoldersByTags = useMemo(() => {
+        if (selectedTags.length === 0) return folders;
+        return folders.filter(folder =>
+            selectedTags.every(tag => folder.tags?.includes(tag))
+        );
+    }, [folders, selectedTags]);
 
 
     
@@ -774,6 +781,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         groupedContent,
         orderedFolders,
         allTags,
+        filteredFoldersByTags, 
         
         // State
         viewMode, setViewMode,

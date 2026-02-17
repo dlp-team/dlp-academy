@@ -168,19 +168,22 @@ const Home = ({ user }) => {
     });
 
     const displayedFolders = useMemo(() => {
+        // If tag filter is active, use filteredFoldersByTags from logic
+        if ((logic.selectedTags && logic.selectedTags.length > 0) && logic.filteredFoldersByTags) {
+            return logic.filteredFoldersByTags;
+        }
         // If searching, return the flat list of search results
         if (searchQuery && logic.searchFolders) {
             return logic.searchFolders;
         }
-
         // Standard Hierarchy Logic (Original)
         const allFolders = logic.folders || [];
         const currentId = logic.currentFolder ? logic.currentFolder.id : null;
         return allFolders.filter(folder => {
-            const parentId = folder.parentId || null;
-            return parentId === currentId;
+            if (currentId) return folder.parentId === currentId;
+            return !folder.parentId;
         });
-    }, [logic.folders, logic.currentFolder, logic.searchFolders, searchQuery]);
+    }, [logic.folders, logic.currentFolder, logic.searchFolders, searchQuery, logic.selectedTags, logic.filteredFoldersByTags]);
 
     const activeModalFolder = useMemo(() => {
         if (!folderContentsModalConfig.folder) return null;
