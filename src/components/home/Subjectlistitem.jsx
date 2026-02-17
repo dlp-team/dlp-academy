@@ -149,21 +149,24 @@ const SubjectListItem = ({
                                 >
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onEdit(subject); setShowMenu(false); }}
-                                        className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                                        className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                                        style={{ fontSize: `${14 * menuScale}px` }}
                                     >
-                                        <Edit2 size={14} /> Editar
+                                        <Edit2 size={14 * menuScale} /> Editar
                                     </button>
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onShare && onShare(subject); setShowMenu(false); }}
-                                        className="w-full flex items-center gap-2 p-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                                        className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                                        style={{ fontSize: `${14 * menuScale}px` }}
                                     >
-                                        <Share2 size={14} /> Compartir
+                                        <Share2 size={14 * menuScale} /> Compartir
                                     </button>
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onDelete(subject); setShowMenu(false); }}
-                                        className="w-full flex items-center gap-2 p-2 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                                        className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                                        style={{ fontSize: `${14 * menuScale}px` }}
                                     >
-                                        <Trash2 size={14} /> Eliminar
+                                        <Trash2 size={14 * menuScale} /> Eliminar
                                     </button>
                                 </div>
                             </>,
