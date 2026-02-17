@@ -37,12 +37,30 @@ const extractColorFromGradient = (gradient) => {
     return COLOR_MAP[mainColorName] || null;
 };
 
+const cleanMath = (math) => {
+    if (typeof math !== 'string') return '';
+    let cleaned = math.trim();
+    
+    // Si empieza y termina con los delimitadores, los quita con slice
+    if (cleaned.startsWith('\\(') && cleaned.endsWith('\\)')) {
+        return cleaned.slice(2, -2).trim();
+    }
+    if (cleaned.startsWith('\\[') && cleaned.endsWith('\\]')) {
+        return cleaned.slice(2, -2).trim();
+    }
+    if (cleaned.startsWith('$') && cleaned.endsWith('$')) {
+        return cleaned.slice(1, -1).trim();
+    }
+    
+    return cleaned;
+};
 // ==================== UI COMPONENTS ====================
 
 const SmartTextRenderer = ({ text }) => {
     if (!text) return null;
 
-    const regex = /((?:\$[^\$]+\$)|(?:\\\[[^\]]+\\\])|(?:\d+(?:[.,]\d+)?\s*\\times\s*10\^\{?-?\d+\}?)|(?:\b[a-zA-Z]+\^\{?-?\d+\}?(?:[a-zA-Z]+\^\{?-?\d+\}?)*)|(?:\\[a-zA-Z]+)|(?:\*\*.*?\*\*))/g;
+    // 1. Regex actualizado para incluir \( ... \) y mejorar la captura de bloques
+    const regex = /((?:\$[^\$]+\$)|(?:\\\[[\s\S]*?\\\])|(?:\\\([\s\S]*?\\\))|(?:\d+(?:[.,]\d+)?\s*\\times\s*10\^\{?-?\d+\}?)|(?:\b[a-zA-Z]+\^\{?-?\d+\}?(?:[a-zA-Z]+\^\{?-?\d+\}?)*)|(?:\\[a-zA-Z]+)|(?:\*\*.*?\*\*))/g;
 
     const parts = text.split(regex);
 
@@ -51,32 +69,42 @@ const SmartTextRenderer = ({ text }) => {
             {parts.map((part, index) => {
                 if (!part) return null;
 
-                if ((part.startsWith('$') && part.endsWith('$')) || 
-                    (part.startsWith('\\[') && part.endsWith('\\]'))) {
+                // 2. Comprobamos si es un bloque delimitado estándar
+                const isDelimitedMath = 
+                    (part.startsWith('$') && part.endsWith('$')) || 
+                    (part.startsWith('\\[') && part.endsWith('\\]')) ||
+                    (part.startsWith('\\(') && part.endsWith('\\)'));
+
+                if (isDelimitedMath) {
                     let mathContent = part;
+                    // Limpiamos los delimitadores para pasar solo el contenido a KaTeX
                     if (part.startsWith('$')) {
                         mathContent = part.slice(1, -1);
                     } else if (part.startsWith('\\[')) {
                         mathContent = part.slice(2, -2);
+                    } else if (part.startsWith('\\(')) {
+                        mathContent = part.slice(2, -2);
                     }
                     
-                    const isBlockFormula = mathContent.length > 30 || mathContent.includes('\\frac') || mathContent.includes('\\sum');
+                    // Decidimos si es bloque o línea (los de \[ \] suelen ser bloque)
+                    const isBlockFormula = part.startsWith('\\[') || mathContent.length > 50 || mathContent.includes('\\frac');
                     
                     return isBlockFormula ? (
-                        <div key={index} className="my-4">
-                            <BlockMath math={mathContent} />
+                        <div key={index} className="my-4 overflow-x-auto">
+                            <BlockMath math={cleanMath(mathContent)} />
                         </div>
                     ) : (
                         <InlineMath key={index} math={mathContent} />
                     );
                 }
 
-                const isMath = 
+                // Lógica existente para otros patrones (científicos, negritas, etc.)
+                const isShortMath = 
                     part.includes('\\times') || 
                     part.includes('^') || 
                     (part.startsWith('\\') && !part.includes(' '));
 
-                if (isMath) {
+                if (isShortMath) {
                     return <InlineMath key={index} math={part} />;
                 }
 
@@ -302,8 +330,8 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
                                                 <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${topicGradient} opacity-5 rounded-bl-[4rem]`} />
                                                 <div className={`absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr ${topicGradient} opacity-5 rounded-tr-[3rem]`} />
                                                 
-                                                <div className="overflow-x-auto py-4 relative z-10">
-                                                    <BlockMath math={typeof formula === 'string' ? formula : ""} />
+                                                <div className="[&_.katex-display]:my-0">
+                                                    <BlockMath math={cleanMath(formula)} />
                                                 </div>
                                                 
                                                 <div className="absolute bottom-4 right-4 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
@@ -1110,8 +1138,8 @@ const StudyGuide = () => {
 
                                                                     {/* Área de fórmula — el cuadro crece al ancho de la fórmula */}
                                                                     <div className="flex items-center justify-center px-5 py-7">
-                                                                        <div className="[&_.katex-display]:my-0">
-                                                                            <BlockMath math={typeof formula === 'string' ? formula : ""} />
+                                                                        <div className="overflow-x-auto py-4 relative z-10">
+                                                                            <SmartTextRenderer text={formula} />
                                                                         </div>
                                                                     </div>
 
@@ -1160,8 +1188,8 @@ const StudyGuide = () => {
                                                                     <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${topicGradient} opacity-5 rounded-bl-[4rem]`} />
                                                                     <div className={`absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr ${topicGradient} opacity-5 rounded-tr-[3rem]`} />
                                                                     
-                                                                    <div className="overflow-x-auto py-4 relative z-10">
-                                                                        <BlockMath math={typeof formula === 'string' ? formula : ""} />
+                                                                    <div className="overflow-x-auto py-4 relative z-10 text-center">
+                                                                        <SmartTextRenderer text={formula} />
                                                                     </div>
                                                                     
                                                                     <div className="absolute bottom-4 right-4 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
