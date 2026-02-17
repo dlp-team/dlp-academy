@@ -70,20 +70,24 @@ const TagFilter = ({
                             Selecciona múltiples etiquetas para filtrar
                         </p>
 
-
                         {/* Tag List */}
-                        <div className="space-y-1.5">
+                        <div className="space-y-1.5" style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            maxHeight: 'calc(2.5rem * 4 + 0.375rem * 3)', // 4 rows of 2.5rem height + 3 gaps (0.375rem = 6px)
+                            overflowY: allTags.length > 0 ? 'auto' : 'unset',
+                        }}>
                             {allTags.map(tag => {
                                 const isSelected = selectedTags.includes(tag);
                                 return (
                                     <button
                                         key={tag}
                                         onClick={() => toggleTag(tag)}
-                                        className={`w-full flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer ${
-                                            isSelected
+                                        className={`flex-1 min-w-[45%] max-w-[48%] flex items-center justify-between p-2.5 rounded-lg text-sm transition-all cursor-pointer m-0.5
+                                            ${isSelected
                                                 ? 'bg-pink-100 dark:bg-pink-900/30 text-pink-700 dark:text-pink-300 ring-2 ring-pink-500 dark:ring-pink-400'
-                                                : 'bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'
-                                        }`}
+                                                : 'bg-gray-50 dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-700'}
+                                        `}
                                     >
                                         <span className="font-medium">#{tag}</span>
                                         {isSelected && (
