@@ -2,7 +2,7 @@
 import React from 'react';
 import { useFolderCardLogic } from './useFolderCardLogic';
 import FolderCardTab from './FolderCardTab';
-import FolderCardBody from '../../home/FolderCardBody';
+import FolderCardBody from './FolderCardBody';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
 
 const FolderCard = (props) => {

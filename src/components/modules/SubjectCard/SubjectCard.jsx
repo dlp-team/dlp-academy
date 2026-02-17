@@ -1,6 +1,6 @@
 // src/components/home/SubjectCard.jsx
 import React from 'react';
-import { useSubjectCardLogic } from '../../../hooks/useSubjectCardLogic';
+import { useSubjectCardLogic } from './useSubjectCardLogic';
 import SubjectCardFront from './SubjectCardFront';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
 

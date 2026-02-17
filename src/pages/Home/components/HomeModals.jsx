@@ -1,8 +1,8 @@
 // src/components/home/HomeModals.jsx
 import React from 'react';
 import { Trash2 } from 'lucide-react';
-import SubjectFormModal from '../../Subject/modals/SubjectFormModal'; // Adjust path
-import FolderManager from '../home/FolderManager';         // Adjust path
+import SubjectFormModal from '../../Subject/modals/SubjectFormModal'; // Check path
+import FolderManager from './FolderManager';
 
 const HomeModals = ({
     subjectModalConfig, setSubjectModalConfig,

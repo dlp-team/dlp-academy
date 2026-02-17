@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styles from '../styles/Login.module.css';
+import styles from './styles/Login.module.css';
 import { auth, provider } from '../../firebase/config'; 
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; 
 import { db } from '../../firebase/config';

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { db } from '../../../firebase/config';
 
 export const useQuizzesLogic = (user) => {
     const { subjectId, topicId, quizId } = useParams();

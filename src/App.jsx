@@ -11,11 +11,11 @@ import Profile from './pages/Profile/Profile';
 import Settings from './pages/Settings/Settings';
 
 // Main app pages
-import Home from './pages/Home';
+import Home from './pages/Home/Home';
 import Subject from './pages/Subject/Subject';
 import Topic from './pages/Topic/Topic';
 import Quizzes from './pages/Quizzes/Quizzes';
-import EditQuiz from './pages/Quizzes/QuizzEdit';
+import EditQuiz from './pages/Quizzes/QuizEdit';
 import StudyGuide from './pages/Content/StudyGuide';
 
 // Dashboard pages

@@ -13,7 +13,7 @@ import TopicGrid from './components/TopicGrid';
 // Modals
 import EditSubjectModal from '../Home/modals/EditSubjectModal';
 import TopicFormModal from './modals/TopicFormModal';
-import EditTopicModal from '../../components/modals/EditTopicModal';
+import EditTopicModal from './modals/EditTopicModal';
 
 const Subject = ({ user }) => {
     const params = useParams();
