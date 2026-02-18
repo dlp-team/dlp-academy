@@ -66,10 +66,6 @@ export const useFolders = (user) => {
         await updateDoc(doc(db, "folders", parentId), { folderIds: arrayRemove(childId), updatedAt: new Date() });
     };
 
-    const removeSubjectFromFolder = async (folderId, subjectId) => {
-        if (!folderId) return;
-        await updateDoc(doc(db, "folders", folderId), { subjectIds: arrayRemove(subjectId), updatedAt: new Date() });
-    };
 
     const addSubjectToFolder = async (folderId, subjectId) => {
         if (!folderId) return;

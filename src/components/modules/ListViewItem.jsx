@@ -24,13 +24,36 @@ const ListViewItem = ({
     path = []
 }) => {
 
+    // Always call hooks at the top level
+    const [isHovered, setIsHovered] = useState(false);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const currentPath = [...path, item.id];
+    const {
+        isDragging,
+        itemRef,
+        dragHandlers
+    } = useGhostDrag({
+        item,
+        type: 'subject',
+        cardScale,
+        onDragStart: (e) => {
+            e.stopPropagation();
+            const dragData = {
+                id: item.id,
+                type: 'subject',
+                parentId: parentId
+            };
+            e.dataTransfer.setData('subjectId', item.id);
+            e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
+            if (onDragStart) onDragStart(item);
+        },
+        onDragEnd
+    });
+
     if (path.includes(item.id)) {
         console.warn(`Cycle detected in List View for item: ${item.name}`);
         return null;
     }
-    // Create the new path for children: [grandparent, parent, me]
-    const currentPath = [...path, item.id];
-    
     // Delegate to FolderListItem component if the item is a folder
     if (type === 'folder') {
         return (
@@ -53,42 +76,9 @@ const ListViewItem = ({
         );
     }
 
-    // Otherwise, treat the item as a Subject
-    const [isHovered, setIsHovered] = useState(false);
-    const [isDragOver, setIsDragOver] = useState(false);
-
     
     
-    // Ensure dataTransfer payload is correctly set before delegating to the ghost hook
-    const handleLocalDragStart = (e) => {
-        e.stopPropagation();
-        
-        const dragData = {
-            id: item.id,
-            type: 'subject',
-            parentId: parentId 
-        };
-        
-        // Set dataTransfer payloads for drop zones to read!
-        e.dataTransfer.setData('subjectId', item.id);
-        e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
-        
-        // Trigger the external prop if provided
-        if (onDragStart) onDragStart(item); 
-    };
-
-    // Initialize custom ghost drag hook
-    const { 
-        isDragging, 
-        itemRef, 
-        dragHandlers 
-    } = useGhostDrag({ 
-        item, 
-        type: 'subject', 
-        cardScale, 
-        onDragStart: handleLocalDragStart, // Pass the local interceptor here
-        onDragEnd 
-    });
+    // (Removed duplicate useGhostDrag and handleLocalDragStart, now handled at top level)
 
     const scale = cardScale / 100;
     const indent = depth * (100 * scale);
