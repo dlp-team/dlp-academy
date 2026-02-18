@@ -1,9 +1,10 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
 // Hooks
 import { useSubjectManager } from './hooks/useSubjectManager';
+import useSubjectPageState from './hooks/useSubjectPageState';
 
 // Layout
 import Header from '../../components/layout/Header';
@@ -26,31 +27,31 @@ const Subject = ({ user }) => {
         updateSubject, deleteSubject, 
         createTopic, deleteTopic, 
         handleReorderTopics,
-        updateTopic // NEW
+        updateTopic
     } = useSubjectManager(user, subjectId);
 
-    // UI State
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [showTopicModal, setShowTopicModal] = useState(false);
-    
-    // NEW: Edit Topic Modal State
-    const [showEditTopicModal, setShowEditTopicModal] = useState(false);
-    const [editingTopic, setEditingTopic] = useState(null);
-
-    const [retryTopicData, setRetryTopicData] = useState(null);
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [isReordering, setIsReordering] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
-
-    const filteredTopics = useMemo(() => {
-        if (!searchTerm) return topics;
-        const term = searchTerm.toLowerCase();
-        return topics.filter(topic => 
-            topic.title?.toLowerCase().includes(term) || 
-            topic.number?.toString().toLowerCase().includes(term)
-        );
-    }, [topics, searchTerm]);
+    // UI State from custom hook
+    const {
+        showEditModal,
+        setShowEditModal,
+        showDeleteModal,
+        setShowDeleteModal,
+        showTopicModal,
+        setShowTopicModal,
+        showEditTopicModal,
+        setShowEditTopicModal,
+        editingTopic,
+        setEditingTopic,
+        retryTopicData,
+        setRetryTopicData,
+        isDeleting,
+        setIsDeleting,
+        isReordering,
+        setIsReordering,
+        searchTerm,
+        setSearchTerm,
+        filteredTopics
+    } = useSubjectPageState(topics);
 
     // Handlers
     const handleCreateOrRetry = async (data, files) => {
@@ -92,12 +93,6 @@ const Subject = ({ user }) => {
         setIsDeleting(true);
         await deleteSubject(); 
     };
-
-    // Scroll Lock
-    useEffect(() => {
-        document.body.style.overflow = (showEditModal || showDeleteModal || showTopicModal || showEditTopicModal) ? 'hidden' : 'unset';
-        return () => { document.body.style.overflow = 'unset'; };
-    }, [showEditModal, showDeleteModal, showTopicModal, showEditTopicModal]);
 
     if (!user || loading || !subject) {
         return (
