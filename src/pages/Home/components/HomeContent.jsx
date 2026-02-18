@@ -1,5 +1,5 @@
 // src/components/home/HomeContent.jsx
-import React, { useState } from 'react';
+import React from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp, ArrowUpCircle
 } from 'lucide-react';
@@ -8,6 +8,7 @@ import SubjectCard from '../../../components/modules/SubjectCard/SubjectCard';
 import FolderCard from '../../../components/modules/FolderCard/FolderCard'; 
 import SubjectListItem from '../../../components/modules/ListItems/SubjectListItem';
 import ListViewItem from '../../../components/modules/ListViewItem'; 
+import useHomeContentDnd from '../hooks/useHomeContentDnd';
 
 const HomeContent = ({
     viewMode = 'grid',
@@ -57,8 +58,27 @@ const HomeContent = ({
     filterOverlayOpen = false,
     onCloseFilterOverlay = () => {},
 }) => {
-    const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
-    const [isRootZoneHovered, setIsRootZoneHovered] = useState(false);
+    const {
+        isPromoteZoneHovered,
+        isRootZoneHovered,
+        setIsRootZoneHovered,
+        handlePromoteZoneDragOver,
+        handlePromoteZoneDragLeave,
+        handlePromoteZoneDrop,
+        handleRootZoneDrop,
+        handleListDrop
+    } = useHomeContentDnd({
+        currentFolder,
+        draggedItem,
+        draggedItemType,
+        handlePromoteSubject,
+        handlePromoteFolder,
+        handleDropOnFolder,
+        handleMoveSubjectWithSource,
+        handleNestFolder,
+        handleMoveFolderWithSource,
+        handleDragEnd
+    });
 
     const showCollapsibleGroups = ['courses', 'tags', 'shared'].includes(viewMode);
 
@@ -70,123 +90,6 @@ const HomeContent = ({
             Array.isArray(folder.tags) && folder.tags.some(tag => selectedTags.includes(tag))
         );
     }
-
-    // --- GRID VIEW PROMOTE ZONE HANDLERS ---
-    const handlePromoteZoneDragOver = (e) => {
-        if (currentFolder && (draggedItemType === 'subject' || draggedItemType === 'folder')) {
-            e.preventDefault(); e.stopPropagation(); setIsPromoteZoneHovered(true);
-        }
-    };
-    const handlePromoteZoneDragLeave = (e) => { e.preventDefault(); setIsPromoteZoneHovered(false); };
-    const handlePromoteZoneDrop = (e) => {
-        e.preventDefault(); e.stopPropagation(); setIsPromoteZoneHovered(false);
-
-        if (!currentFolder || !draggedItem) return;
-        if (draggedItemType === 'subject') {
-            handlePromoteSubject(draggedItem.id);
-        }
-        else if (draggedItemType === 'folder') {
-            handlePromoteFolder(draggedItem.id);
-        }
-    };
-
-    // --- LIST VIEW: MOVE TO CURRENT LEVEL ZONE ---
-    const handleRootZoneDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsRootZoneHovered(false);
-
-        const treeDataString = e.dataTransfer.getData('treeItem');
-        let draggedData;
-
-        if (treeDataString) draggedData = JSON.parse(treeDataString);
-        else {
-            const sId = e.dataTransfer.getData('subjectId');
-            const fId = e.dataTransfer.getData('folderId');
-            if (sId) draggedData = { id: sId, type: 'subject', parentId: undefined };
-            else if (fId) draggedData = { id: fId, type: 'folder', parentId: undefined };
-        }
-
-        if (!draggedData) return;
-
-        // Target is the folder currently being viewed (or null if at root)
-        const targetId = currentFolder ? currentFolder.id : null;
-
-        // Prevent moving if already there
-        if (draggedData.parentId === targetId) return;
-
-        if (draggedData.type === 'subject') {
-            let overlayShown = false;
-            if (handleDropOnFolder) {
-                // Use the same overlay logic as folder drop: pass targetId, subjectId, sourceFolderId
-                const result = handleDropOnFolder(targetId, draggedData.id, draggedData.parentId);
-                if (result === true) overlayShown = true;
-            }
-            if (!overlayShown && handleMoveSubjectWithSource) {
-                handleMoveSubjectWithSource(draggedData.id, targetId, draggedData.parentId);
-            }
-        } else if (draggedData.type === 'folder') {
-            // Use the same overlay logic as handleNestFolder
-            if (handleNestFolder) {
-                handleNestFolder(targetId, draggedData.id);
-            }
-        }
-        // Ensure drag ends
-        if (handleDragEnd) handleDragEnd();
-    };
-
-    // --- LIST VIEW ITEM DROP ---
-    const handleListDrop = (dragged, target) => {
-        if (target.type === 'folder') {
-            if (dragged.id === target.id) return;
-            if (dragged.type === 'subject') {
-                // Call handleDropOnFolder. If it returns true (overlay shown), do NOT move yet. Only move if it returns false/undefined.
-                let overlayShown = false;
-                if (handleDropOnFolder) {
-                    // handleDropOnFolder should return true if overlay is shown and move should be blocked
-                    const result = handleDropOnFolder(target.id, dragged.id, dragged.parentId);
-                    if (result === true) overlayShown = true;
-                }
-                if (!overlayShown && handleMoveSubjectWithSource) {
-                    handleMoveSubjectWithSource(dragged.id, target.id, dragged.parentId);
-                }
-            } else if (dragged.type === 'folder') {
-                if (handleMoveFolderWithSource) handleMoveFolderWithSource(dragged.id, dragged.parentId, target.id);
-                else handleNestFolder(target.id, dragged.id); 
-            }
-        }
-        else if (target.type === 'subject') {
-            const targetParentId = target.parentId || (currentFolder ? currentFolder.id : null);
-            if (dragged.type === 'subject') {
-                if (dragged.parentId !== targetParentId) {
-                    // Overlay logic for subject-to-subject drop
-                    let overlayShown = false;
-                    if (handleDropOnFolder) {
-                        const result = handleDropOnFolder(targetParentId, dragged.id, dragged.parentId);
-                        if (result === true) overlayShown = true;
-                    }
-                    if (!overlayShown && handleMoveSubjectWithSource) {
-                        handleMoveSubjectWithSource(dragged.id, targetParentId, dragged.parentId);
-                    }
-                }
-            } else if (dragged.type === 'folder') {
-                // Overlay logic for folder-to-subject drop
-                let overlayShown = false;
-                if (handleDropOnFolder) {
-                    const result = handleDropOnFolder(targetParentId, dragged.id, dragged.parentId);
-                    if (result === true) overlayShown = true;
-                }
-                if (!overlayShown && handleMoveFolderWithSource) {
-                    handleMoveFolderWithSource(dragged.id, dragged.parentId, targetParentId);
-                } else if (!overlayShown && handleNestFolder) {
-                    handleNestFolder(targetParentId, dragged.id);
-                }
-            }
-        }
-        
-        // Ensure drag ends
-        if (handleDragEnd) handleDragEnd();
-    };
 
     // --- FILTERING LOGIC ---
     // No folder filter logic anymore

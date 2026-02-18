@@ -9,5 +9,5 @@ This folder contains all components, hooks, and logic specific to the Subject pa
 - `modals/`: Subject-specific modals (if any)
 
 ## Notes
-- Use only for Subject-specific logic. Reusable UI should go in `src/components/ui/` or `src/components/shared/`.
+- Use only for Subject-specific logic. Reusable UI should go in `src/components/ui/` or `src/components/modules/`.
 - Update this README if you add new major features or refactor the Subject module.
