@@ -239,6 +239,7 @@ const Topic = ({ user }) => {
             <TopicModals 
                 {...logic}
                 topic={enrichedTopic}
+                subject={logic.subject}
                 handleGenerateQuizSubmit={handleGenerateQuizSubmit}
                 viewingFile={null} 
             />

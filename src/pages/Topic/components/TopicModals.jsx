@@ -15,6 +15,7 @@ const TopicModals = ({
     setQuizFormData,
     isGeneratingQuiz,
     topic,
+    subject,
     showContentModal,
     setShowContentModal,
     handleGenerateContentSubmit,
@@ -23,7 +24,9 @@ const TopicModals = ({
     isGeneratingContent,
     viewingFile,
     setViewingFile,
-    getFileVisuals
+    getFileVisuals,
+    subjectId,
+    topicId
 }) => {
     return (
         <>
@@ -36,7 +39,9 @@ const TopicModals = ({
                 formData={quizFormData} 
                 setFormData={setQuizFormData} 
                 isGenerating={isGeneratingQuiz} 
-                themeColor={topic?.color} 
+                themeColor={subject?.color} 
+                subjectId={subjectId}
+                topicId={topicId}
             />
             
             <CreateContentModal 
