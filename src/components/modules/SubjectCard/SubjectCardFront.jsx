@@ -8,7 +8,6 @@ import { Users } from 'lucide-react';
 const SubjectCardFront = ({
     subject,
     onSelect,
-    onFlip,
     activeMenu,
     onToggleMenu,
     onEdit,
@@ -22,7 +21,6 @@ const SubjectCardFront = ({
         filterOverlayOpen = false,
         onCloseFilterOverlay
 }) => {
-    const [isHovered, setIsHovered] = useState(false);
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
 
@@ -45,8 +43,6 @@ const SubjectCardFront = ({
         <div 
             className="absolute inset-0 cursor-pointer" 
             onClick={() => onSelect(subject.id)}
-            onMouseEnter={() => setIsHovered(true)}
-            onMouseLeave={() => setIsHovered(false)}
         >
             
             {/* Classic Background: Full Gradient */}

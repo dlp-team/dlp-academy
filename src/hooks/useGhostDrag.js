@@ -1,7 +1,7 @@
 // src/hooks/useGhostDrag.js
 import { useState, useRef } from 'react';
 
-export const useGhostDrag = ({ item, type, cardScale = 100, onDragStart, onDragEnd }) => {
+export const useGhostDrag = ({ item, type, onDragStart, onDragEnd }) => {
     const [isDragging, setIsDragging] = useState(false);
     const itemRef = useRef(null);
     const dragGhostRef = useRef(null);

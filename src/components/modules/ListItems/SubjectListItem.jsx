@@ -38,7 +38,6 @@ const SubjectListItem = ({
     // Scaled sizes
     const paddingPx = compact ? 12 * scale : 16 * scale;
     const iconContainerSize = compact ? 40 * scale : 48 * scale;
-    const innerIconSize = 42 * scale;
 
     return (
         <div 

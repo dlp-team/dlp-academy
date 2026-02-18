@@ -17,7 +17,6 @@ const SubjectCard = (props) => {
     const { 
         subject, 
         onSelect, 
-        onSelectTopic, 
         activeMenu, 
         onToggleMenu, 
         onEdit, 

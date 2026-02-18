@@ -34,7 +34,6 @@ const HomeContent = ({
     handleShowFolderContents,
     handleMoveSubjectWithSource, 
     handleMoveFolderWithSource,
-    onShareSubject,
 
     onOpenTopics,
     
@@ -60,7 +59,6 @@ const HomeContent = ({
 }) => {
     const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
     const [isRootZoneHovered, setIsRootZoneHovered] = useState(false);
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     const showCollapsibleGroups = ['courses', 'tags', 'shared'].includes(viewMode);
 

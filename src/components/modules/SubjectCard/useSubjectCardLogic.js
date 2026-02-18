@@ -1,5 +1,4 @@
 // src/hooks/useSubjectCardLogic.js
-import { useMemo } from 'react';
 
 export const useSubjectCardLogic = ({ 
     subject, 
