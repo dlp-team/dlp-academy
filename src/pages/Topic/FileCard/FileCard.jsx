@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { 
     FileText, MoreHorizontal, FileEdit, Trash2, 
     Check, X, Maximize2, Download, 
-    BookOpen, Calculator, FileQuestion 
+    BookOpen, Calculator, FileQuestion, Pencil // Añadido Pencil para el icono de editar
 } from 'lucide-react';
 
 const FileCard = ({ 
@@ -25,16 +25,14 @@ const FileCard = ({
 }) => {
     const navigate = useNavigate();
     const { subjectId, topicId } = useParams();
-    // Prefer subject color, then topic color, then default
+    
     const cardColor = subject?.color || topic?.color || 'from-blue-500 to-indigo-600';
     
-    // Extraemos el color base (ej: de "from-blue-500" sacamos "blue")
     const colorName = useMemo(() => {
         const firstPart = cardColor.split(' ')[0] || '';
         return firstPart.replace('from-', '').split('-')[0] || 'indigo';
     }, [cardColor]);
 
-    // 2. DETECCIÓN DEL TIPO
     let Icon = FileText;
     let label = 'Documento';
     const type = (file.type || '').toLowerCase();
@@ -52,10 +50,6 @@ const FileCard = ({
 
     const isRenaming = renamingId === file.id;
     const isMenuOpen = activeMenuId === file.id;
-
-    console.log(cardColor)
-    // DETERMINAR SI ES CONTENIDO GENERADO (Resumen/Fórmula/Examen)
-    // Esto controla tanto el ESTILO como la NAVEGACIÓN
     const isGenerated = file.origin === 'AI' || ['summary', 'resumen', 'formulas', 'formulario', 'exam', 'quiz', 'examen'].includes(type);
 
     const handleViewClick = () => {
@@ -65,25 +59,28 @@ const FileCard = ({
         });
     };
 
+    // --- NUEVA FUNCIÓN PARA IR AL EDITOR ---
+    const handleEditClick = (e) => {
+        e.stopPropagation();
+        setActiveMenuId(null); // Cerrar el menú
+        navigate(`/home/subject/${subjectId}/topic/${topicId}/resumen/${file.id}/edit`);
+    };
+
     return (
         <div className="group relative h-64 rounded-3xl shadow-lg shadow-slate-200/50 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl cursor-default bg-white border border-slate-100">
             
-            {/* FONDO: Gradiente de la asignatura si es IA */}
             {isGenerated && (
                 <div className={`absolute inset-0 bg-gradient-to-br ${cardColor} opacity-90 transition-opacity group-hover:opacity-100`}></div>
             )}
             
-            {/* ICONO GIGANTE DE FONDO */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
                 {isGenerated ? (
                     <Icon className="w-32 h-32 text-white absolute -top-6 -left-6 opacity-20 rotate-12 group-hover:rotate-0 transition-transform duration-500" />
                 ) : (
-                    // Si no es generado, el icono de fondo usa el color de la asignatura muy suave
                     <FileText style={{ color: `var(--tw-color-${colorName}-500)` }} className="w-32 h-32 absolute -bottom-4 -right-4 rotate-12 opacity-[0.05]" />
                 )}
             </div>
             
-            {/* ICONO PEQUEÑO */}
             <div className="absolute top-6 left-6 z-20">
                 <div className={`p-2.5 rounded-xl border shadow-sm backdrop-blur-md ${
                     isGenerated 
@@ -97,7 +94,7 @@ const FileCard = ({
                 </div>
             </div>
 
-            {/* MENÚ */}
+            {/* MENÚ ACTUALIZADO */}
             <div className="absolute top-4 right-4 z-30">
                 <button onClick={(e) => handleMenuClick(e, file.id)} className={`p-1.5 rounded-full transition-colors ${isGenerated ? 'text-white hover:bg-white/20' : 'text-slate-400 hover:bg-slate-100'}`}>
                     <MoreHorizontal className="w-6 h-6" />
@@ -106,10 +103,26 @@ const FileCard = ({
                     <>
                         <div className="fixed inset-0 z-20" onClick={() => setActiveMenuId(null)} />
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-40 text-slate-700 animate-in fade-in zoom-in-95">
+                            
+                            {/* OPCIÓN: EDITAR CONTENIDO (Solo si es generado por IA) */}
+                            {isGenerated && (
+                                <>
+                                    <button 
+                                        onClick={handleEditClick}
+                                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 font-bold text-indigo-600"
+                                    >
+                                        <Pencil className="w-4 h-4" /> Editar Contenido
+                                    </button>
+                                    <div className="border-t border-slate-100 my-1"></div>
+                                </>
+                            )}
+
                             <button onClick={() => startRenaming(file)} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2">
                                 <FileEdit className={`w-4 h-4 text-${colorName}-600`} /> Renombrar
                             </button>
+                            
                             <div className="border-t border-slate-100 my-1"></div>
+                            
                             <button onClick={() => deleteFile(file)} className="w-full px-4 py-2.5 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2">
                                 <Trash2 className="w-4 h-4" /> Eliminar
                             </button>
@@ -118,7 +131,6 @@ const FileCard = ({
                 )}
             </div>
 
-            {/* TEXTO Y BOTONES */}
             <div className="relative h-full p-8 flex flex-col justify-end z-10">
                 <div className="mt-auto">
                     {isRenaming ? (

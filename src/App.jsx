@@ -4,6 +4,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
 import { auth, db } from './firebase/config'; // Import db
 
+
 // Authentication pages
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
@@ -17,6 +18,7 @@ import Topic from './pages/Topic/Topic';
 import Quizzes from './pages/Quizzes/Quizzes';
 import EditQuiz from './pages/Quizzes/QuizEdit';
 import StudyGuide from './pages/Content/StudyGuide';
+import StudyGuideEditor from './pages/Content/StudyGuideEditor';
 
 // Dashboard pages
 import SchoolAdminDashboard from './pages/SchoolAdminDashboard/SchoolAdminDashboard';
@@ -129,6 +131,10 @@ function App() {
                 <Quizzes user={user} />
              </ProtectedRoute>
           } 
+        />
+        <Route 
+          path="/home/subject/:subjectId/topic/:topicId/resumen/:guideId/edit" 
+          element={<StudyGuideEditor />} 
         />
 
         <Route 
