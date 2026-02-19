@@ -1,4 +1,4 @@
-// src/hooks/useTopicLogic.js
+// src/pages/Topic/hooks/useTopicLogic.js
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 

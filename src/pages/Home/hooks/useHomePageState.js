@@ -1,3 +1,4 @@
+// src/pages/Home/hooks/useHomePageState.js
 import React, { useMemo, useRef, useState } from 'react';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';

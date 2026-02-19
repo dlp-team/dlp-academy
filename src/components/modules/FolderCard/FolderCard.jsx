@@ -1,4 +1,4 @@
-// src/components/home/FolderCard.jsx
+// src/components/modules/FolderCard/FolderCard.jsx
 import React from 'react';
 import { useFolderCardLogic } from './useFolderCardLogic';
 import FolderCardTab from './FolderCardTab';

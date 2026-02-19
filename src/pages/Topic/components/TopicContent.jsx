@@ -1,4 +1,4 @@
-// src/components/topic/TopicContent.jsx
+// src/pages/Topic/components/TopicContent.jsx
 import React, { useMemo } from 'react';
 import { Loader2, FileText, Upload } from 'lucide-react';
 import FileCard from '../FileCard/FileCard';

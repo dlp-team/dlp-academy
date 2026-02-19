@@ -1,4 +1,4 @@
-// src/pages/UserDetailView.jsx
+// src/pages/SchoolAdminDashboard/components/UserDetailView.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Calendar, CheckCircle2, XCircle, BookOpen, Users, TrendingUp } from 'lucide-react';

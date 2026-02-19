@@ -1,4 +1,4 @@
-// src/components/topic/TopicModals.jsx
+// src/pages/Topic/components/TopicModals.jsx
 import React from 'react';
 import { X } from 'lucide-react';
 import AppToast from '../../../components/ui/AppToast';

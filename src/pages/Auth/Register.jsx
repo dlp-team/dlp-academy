@@ -1,4 +1,4 @@
-// src/pages/Register.jsx
+// src/pages/Auth/Register.jsx
 import React from 'react';
 import { Mail, Lock, GraduationCap, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';

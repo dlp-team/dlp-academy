@@ -1,4 +1,4 @@
-// src/components/home/SubjectCard.jsx
+// src/components/modules/SubjectCard/SubjectCard.jsx
 import React from 'react';
 import { useSubjectCardLogic } from './useSubjectCardLogic';
 import SubjectCardFront from './SubjectCardFront';

@@ -1,3 +1,4 @@
+// src/pages/Auth/Login.jsx
 import React, { useState } from 'react';
 import styles from './styles/Login.module.css';
 import { auth, provider } from '../../firebase/config'; 

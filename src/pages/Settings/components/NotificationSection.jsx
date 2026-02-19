@@ -1,4 +1,4 @@
-// src/components/settings/NotificationSection.jsx
+// src/pages/Settings/components/NotificationSection.jsx
 import React from 'react';
 import { Bell } from 'lucide-react';
 import Toggle from '../../../components/ui/Toggle';

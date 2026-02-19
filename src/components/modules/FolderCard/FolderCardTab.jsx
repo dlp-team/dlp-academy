@@ -1,4 +1,4 @@
-// src/components/home/FolderCardTab.jsx
+// src/components/modules/FolderCard/FolderCardTab.jsx
 import React from 'react';
 
 const FolderCardTab = ({ isModern, gradientClass, scaleMultiplier }) => {

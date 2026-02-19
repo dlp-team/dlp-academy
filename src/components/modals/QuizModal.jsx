@@ -1,3 +1,4 @@
+// src/components/modals/QuizModal.jsx
 import React, { useEffect, useState } from 'react';
 import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Loader2, Wand2, Upload, FileText, Trash2 } from 'lucide-react';
 

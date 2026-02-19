@@ -1,3 +1,4 @@
+// src/components/modules/QuizEngine/QuizResults.jsx
 import React from 'react';
 import { Trophy, Target, Award } from 'lucide-react';
 import ConfettiEffect from './QuizFeedback';

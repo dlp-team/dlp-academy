@@ -1,4 +1,4 @@
-// src/components/home/SubjectCardFront.jsx
+// src/components/modules/SubjectCard/SubjectCardFront.jsx
 import React, { useState, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, MoreVertical, Edit2, Trash2, Share2 } from 'lucide-react';

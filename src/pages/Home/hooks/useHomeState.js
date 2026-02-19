@@ -1,3 +1,4 @@
+// src/pages/Home/hooks/useHomeState.js
 import { useEffect, useMemo, useState } from 'react';
 import { normalizeText } from '../../../utils/stringUtils';
 

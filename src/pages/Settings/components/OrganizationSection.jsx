@@ -1,4 +1,4 @@
-// src/components/settings/OrganizationSection.jsx
+// src/pages/Settings/components/OrganizationSection.jsx
 import React from 'react';
 import { LayoutGrid, List, Save } from 'lucide-react';
 import Toggle from '../../../components/ui/Toggle'; // Import the toggle we just made

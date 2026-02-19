@@ -1,4 +1,4 @@
-// src/hooks/useSubjectCardLogic.js
+// src/components/modules/SubjectCard/useSubjectCardLogic.js
 
 export const useSubjectCardLogic = ({ 
     subject, 

@@ -1,4 +1,4 @@
-// src/hooks/useRegister.js
+// src/pages/Auth/hooks/useRegister.js
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';

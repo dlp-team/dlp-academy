@@ -1,3 +1,4 @@
+// src/pages/ViewResource/ViewResource.jsx
 import React, { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, FileText, Download, AlertTriangle } from 'lucide-react';

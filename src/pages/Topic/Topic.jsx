@@ -1,3 +1,4 @@
+// src/pages/Topic/Topic.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { Loader2 } from 'lucide-react';
 import Header from '../../components/layout/Header';

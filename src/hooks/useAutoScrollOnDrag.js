@@ -1,3 +1,4 @@
+// src/hooks/useAutoScrollOnDrag.js
 import { useEffect, useRef } from 'react';
 
 const getWindowScrollMax = () => {
@@ -50,6 +51,14 @@ const useAutoScrollOnDrag = ({
             }
         };
 
+        const onUpdateCoordinates = (event) => {
+            if (!isDragActiveRef.current) return;
+            // Use clientY from any valid drag-related event
+            if (typeof event.clientY === 'number' && event.clientY !== 0) {
+                lastYRef.current = event.clientY;
+            }
+        };
+
         const tick = () => {
             if (isDragActiveRef.current && lastYRef.current !== null) {
                 const boundsTarget = containerRef?.current || null;
@@ -93,6 +102,7 @@ const useAutoScrollOnDrag = ({
         window.addEventListener('dragend', onDragEnd);
         window.addEventListener('drop', onDragEnd);
         window.addEventListener('dragover', onDragOver);
+        window.addEventListener('drag', onUpdateCoordinates);
 
         return () => {
             if (rafRef.current) {
@@ -102,6 +112,7 @@ const useAutoScrollOnDrag = ({
             window.removeEventListener('dragend', onDragEnd);
             window.removeEventListener('drop', onDragEnd);
             window.removeEventListener('dragover', onDragOver);
+            window.removeEventListener('drag', onUpdateCoordinates);
         };
     }, [containerRef, edgeThreshold, enabled, maxSpeed, scrollContainer]);
 };

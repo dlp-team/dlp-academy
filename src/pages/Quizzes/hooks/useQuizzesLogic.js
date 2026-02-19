@@ -1,4 +1,4 @@
-// src/hooks/useQuizzesLogic.js
+// src/pages/Quizzes/hooks/useQuizzesLogic.js
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';

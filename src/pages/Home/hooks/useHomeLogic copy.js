@@ -1,4 +1,4 @@
-// src/hooks/useHomeLogic.js
+// src/pages/Home/hooks/useHomeLogic copy.js
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSubjects } from '../../../hooks/useSubjects';

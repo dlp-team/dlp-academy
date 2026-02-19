@@ -1,4 +1,4 @@
-// src/components/modules/FileCard/FileCard.jsx
+// src/pages/Topic/FileCard/FileCard.jsx
 import React, { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 

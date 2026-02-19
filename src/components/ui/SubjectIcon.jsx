@@ -1,4 +1,4 @@
-// src/components/SubjectIcon.jsx
+// src/components/ui/SubjectIcon.jsx
 import React from 'react';
 import { ICON_MAP } from '../../utils/subjectConstants';
 import { BookOpen } from 'lucide-react';

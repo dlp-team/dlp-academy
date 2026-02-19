@@ -1,4 +1,4 @@
-// src/components/home/FolderCardBody.jsx
+// src/components/modules/FolderCard/FolderCardBody.jsx
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree } from 'lucide-react';

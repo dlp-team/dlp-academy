@@ -1,3 +1,4 @@
+// src/hooks/useSubjects.js
 import { useState, useEffect } from 'react';
 import { 
     collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove

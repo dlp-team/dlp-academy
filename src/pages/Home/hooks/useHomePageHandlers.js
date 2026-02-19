@@ -1,3 +1,4 @@
+// src/pages/Home/hooks/useHomePageHandlers.js
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { isInvalidFolderMove } from '../../../utils/folderUtils';

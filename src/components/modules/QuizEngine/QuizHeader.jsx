@@ -1,3 +1,4 @@
+// src/components/modules/QuizEngine/QuizHeader.jsx
 import React from 'react';
 import { X } from 'lucide-react';
 

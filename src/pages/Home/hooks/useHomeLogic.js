@@ -1,4 +1,4 @@
-// src/hooks/useHomeLogic.js
+// src/pages/Home/hooks/useHomeLogic.js
 import { useNavigate } from 'react-router-dom';
 import { useSubjects } from '../../../hooks/useSubjects';
 import { useFolders } from '../../../hooks/useFolders';

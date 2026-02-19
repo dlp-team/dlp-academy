@@ -1,3 +1,4 @@
+// src/pages/Home/hooks/useHomeControlsHandlers.js
 import { useCallback } from 'react';
 
 export const HOME_VIEW_MODES = [

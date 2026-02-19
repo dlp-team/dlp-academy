@@ -1,3 +1,4 @@
+// src/components/modules/QuizEngine/QuizQuestion.jsx
 import React from 'react';
 import { BlockMath } from 'react-katex';
 import { RenderLatex } from './QuizCommon';

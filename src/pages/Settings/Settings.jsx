@@ -1,4 +1,4 @@
-// src/pages/Settings.jsx
+// src/pages/Settings/Settings.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Loader2 } from 'lucide-react';

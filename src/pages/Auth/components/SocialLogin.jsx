@@ -1,4 +1,4 @@
-// src/components/auth/SocialLogin.jsx
+// src/pages/Auth/components/SocialLogin.jsx
 import React from 'react';
 import { FcGoogle } from 'react-icons/fc'; // Assuming you have react-icons installed
 

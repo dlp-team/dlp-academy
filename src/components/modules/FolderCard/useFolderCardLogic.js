@@ -1,4 +1,4 @@
-// src/hooks/useFolderCardLogic.js
+// src/components/modules/FolderCard/useFolderCardLogic.js
 import { useState, useMemo } from 'react';
 
 export const useFolderCardLogic = ({

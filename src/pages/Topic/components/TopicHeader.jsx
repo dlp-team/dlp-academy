@@ -1,4 +1,4 @@
-// src/components/topic/TopicHeader.jsx
+// src/pages/Topic/components/TopicHeader.jsx
 import React from 'react';
 import { Home, ChevronRight, MoreVertical, Edit2, Wand2, Trash2, Calendar, CheckCircle2, X } from 'lucide-react';
 
