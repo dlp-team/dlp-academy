@@ -144,7 +144,7 @@ const Header = ({ user }) => {
   const unreadMailCount = 6;
 
   return (
-    <header className="fixed top-0 w-full h-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-slate-800 z-50 transition-colors duration-300">
+    <header className="fixed top-0 w-full h-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-slate-800 z-[9999] transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
         
         {/* --- LEFT: LOGO --- */}

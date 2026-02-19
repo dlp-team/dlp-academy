@@ -84,7 +84,7 @@ const SubjectListItem = ({
                             (Array.isArray(subject.sharedWithUids) && subject.sharedWithUids.length > 0)
                         ) && (
                             <div
-                                className={`flex items-center justify-center rounded-full ml-1 ${isModern ? 'bg-none-50 dark:bg-none-900/30' : 'bg-white'}`}
+                                className={`flex items-center justify-center rounded-full ml-1`}
                                 style={{
                                     width: `${20 * scale}px`,
                                     height: `${20 * scale}px`,
@@ -93,7 +93,7 @@ const SubjectListItem = ({
                                 title="Asignatura compartida"
                             >
                                 <Users
-                                    className="text-indigo-600 dark:text-indigo-400"
+                                    className={isModern ? 'text-gray-900 dark:text-white' : 'text-white'}
                                     style={{ width: `${12 * scale}px`, height: `${12 * scale}px` }}
                                 />
                             </div>

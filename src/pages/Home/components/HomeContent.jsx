@@ -66,7 +66,7 @@ const HomeContent = ({
         containerRef: contentRef,
         enabled: isDragAndDropEnabled,
         scrollContainer: 'window',
-        edgeThreshold: 160 // Large margin for top/bottom edge
+        edgeThreshold: 160
     });
 
     const {

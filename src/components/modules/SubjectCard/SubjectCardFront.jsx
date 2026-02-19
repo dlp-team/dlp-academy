@@ -242,17 +242,17 @@ const SubjectCardFront = ({
                         ) && (
                             <div 
                                 className={`flex items-center justify-center rounded-full ${
-                                    isModern ? 'bg-indigo-50 dark:bg-indigo-900/30' : 'bg-white/20'
+                                    isModern ? '' : 'bg-white/20'
                                 }`}
                                 style={{ 
                                     width: `${24 * scaleMultiplier}px`, 
                                     height: `${24 * scaleMultiplier}px`,
-                                    minWidth: `${24 * scaleMultiplier}px` // Prevents shrinking if name is long
+                                    minWidth: `${24 * scaleMultiplier}px`
                                 }}
                                 title="Asignatura compartida"
                             >
                                 <Users 
-                                    className={isModern ? "text-indigo-600 dark:text-indigo-400" : "text-white"}
+                                    className={isModern ? `${getIconColor(subject.color)} drop-shadow` : "text-white"}
                                     style={{ width: `${14 * scaleMultiplier}px`, height: `${14 * scaleMultiplier}px` }}
                                 />
                             </div>
