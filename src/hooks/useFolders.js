@@ -61,12 +61,6 @@ export const useFolders = (user) => {
         await updateDoc(doc(db, "folders", parentId), { folderIds: arrayUnion(childId), updatedAt: new Date() });
     };
 
-    const removeFolderFromParent = async (parentId, childId) => {
-        if (!parentId) return;
-        await updateDoc(doc(db, "folders", parentId), { folderIds: arrayRemove(childId), updatedAt: new Date() });
-    };
-
-
     const addSubjectToFolder = async (folderId, subjectId) => {
         if (!folderId) return;
         
@@ -161,8 +155,48 @@ export const useFolders = (user) => {
     const deleteFolder = async (id) => {
         const folder = folders.find(f => f.id === id);
         if (!folder) return;
-        if (folder.parentId) await removeFolderFromParent(folder.parentId, id);
-        await deleteDoc(doc(db, "folders", id));
+
+        const batch = writeBatch(db);
+
+        // Helper to recursively delete folders and their contents
+        const deleteFolderRecursive = async (folderId) => {
+            const folderToDelete = folders.find(f => f.id === folderId);
+            if (!folderToDelete) return;
+
+            // 1. Delete all child subjects
+            if (folderToDelete.subjectIds && folderToDelete.subjectIds.length > 0) {
+                for (const subjectId of folderToDelete.subjectIds) {
+                    const subjectRef = doc(db, "subjects", subjectId);
+                    batch.delete(subjectRef);
+                }
+            }
+
+            // 2. Recursively delete all child folders
+            if (folderToDelete.folderIds && folderToDelete.folderIds.length > 0) {
+                for (const childFolderId of folderToDelete.folderIds) {
+                    await deleteFolderRecursive(childFolderId);
+                }
+            }
+
+            // 3. Delete the folder itself
+            const folderRef = doc(db, "folders", folderId);
+            batch.delete(folderRef);
+        };
+
+        // Start recursive deletion
+        await deleteFolderRecursive(id);
+
+        // Remove from parent's folderIds if it has a parent
+        if (folder.parentId) {
+            const parentRef = doc(db, "folders", folder.parentId);
+            batch.update(parentRef, {
+                folderIds: arrayRemove(id),
+                updatedAt: new Date()
+            });
+        }
+
+        // Commit all deletions in one batch
+        await batch.commit();
     };
 
     const deleteFolderOnly = async (id) => {

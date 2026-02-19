@@ -22,6 +22,8 @@ import StudyGuideEditor from './pages/Content/StudyGuideEditor';
 
 // Dashboard pages
 import SchoolAdminDashboard from './pages/SchoolAdminDashboard/SchoolAdminDashboard';
+import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
+import TeacherDashboard from './pages/TeacherDashboard/TeacherDashboard';
 
 // Updated ProtectedRoute to handle Role Checks
 const ProtectedRoute = ({ children, user, loading, requiredRole }) => {
@@ -165,12 +167,32 @@ function App() {
           } 
         />
         
+        {/* --- ADMIN DASHBOARD --- */}
+        <Route 
+          path="/admin-dashboard" 
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="admin">
+              <AdminDashboard user={user} />
+            </ProtectedRoute>
+          } 
+        />
+        
         {/* --- SCHOOL ADMIN DASHBOARD --- */}
         <Route 
           path="/school-admin-dashboard" 
           element={
             <ProtectedRoute user={user} loading={loading} requiredRole="schooladmin">
               <SchoolAdminDashboard user={user} />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* --- TEACHER DASHBOARD --- */}
+        <Route 
+          path="/teacher-dashboard" 
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="teacher">
+              <TeacherDashboard user={user} />
             </ProtectedRoute>
           } 
         />
