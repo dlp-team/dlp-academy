@@ -1,4 +1,4 @@
-// src/components/home/HomeEmptyState.jsx
+// src/pages/Home/components/HomeEmptyState.jsx
 import React from 'react';
 import { LayoutGrid, Plus, FolderPlus } from 'lucide-react';
 

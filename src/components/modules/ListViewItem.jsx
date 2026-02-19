@@ -1,4 +1,4 @@
-// src/components/home/ListViewItem.jsx
+// src/components/modules/ListViewItem.jsx
 import React, { useState } from 'react';
 import { GripVertical } from 'lucide-react';
 import SubjectListItem from './ListItems/SubjectListItem';
@@ -37,7 +37,7 @@ const ListViewItem = ({
         type: 'subject',
         cardScale,
         onDragStart: (e) => {
-            e.stopPropagation();
+            //e.stopPropagation();
             const dragData = {
                 id: item.id,
                 type: 'subject',
@@ -86,17 +86,18 @@ const ListViewItem = ({
 
     // Drop Zone Handlers
     const handleDragOver = (e) => {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault(); //e.stopPropagation();
         if (!isDragOver) setIsDragOver(true);
     };
 
     const handleDragLeave = (e) => {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault(); //e.stopPropagation();
         setIsDragOver(false);
     };
 
     const handleDrop = (e) => {
-        e.preventDefault(); e.stopPropagation(); setIsDragOver(false);
+        e.preventDefault(); e.stopPropagation(); 
+        setIsDragOver(false);
 
         const treeDataString = e.dataTransfer.getData('treeItem');
         let draggedData;

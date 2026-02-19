@@ -1,4 +1,4 @@
-// src/components/home/BreadcrumbNav.jsx
+// src/pages/Home/components/BreadcrumbNav.jsx
 import React, { useState } from 'react';
 import { ChevronRight, Home } from 'lucide-react';
 

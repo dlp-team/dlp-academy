@@ -1,4 +1,4 @@
-// src/hooks/useProfile.js
+// src/pages/Profile/hooks/useProfile.js
 import { useState, useEffect } from 'react';
 import { auth, db } from '../../../firebase/config'; 
 import { signOut } from 'firebase/auth';

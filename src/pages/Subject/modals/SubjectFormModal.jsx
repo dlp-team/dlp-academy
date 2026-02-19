@@ -1,4 +1,4 @@
-// src/components/modals/SubjectFormModal.jsx
+// src/pages/Subject/modals/SubjectFormModal.jsx
 import React, { useState, useEffect } from 'react';
 import { X, Save, Users, Trash2, Share2 } from 'lucide-react';
 import { MODERN_FILL_COLORS } from '../../../utils/subjectConstants';

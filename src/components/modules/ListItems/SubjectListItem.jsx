@@ -1,4 +1,4 @@
-// src/components/home/SubjectListItem.jsx
+// src/components/modules/ListItems/SubjectListItem.jsx
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, Edit2, Trash2, MoreVertical, Users , Share2 } from 'lucide-react';

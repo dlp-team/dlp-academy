@@ -1,4 +1,4 @@
-// src/components/home/FolderManager.jsx
+// src/pages/Home/components/FolderManager.jsx
 import React, { useState, useEffect } from 'react';
 import { X, Save, Plus, Trash2, Share2, Users } from 'lucide-react';
 import { COLORS } from '../../../utils/subjectConstants';

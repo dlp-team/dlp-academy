@@ -1,4 +1,4 @@
-// src/components/modals/SubjectTopicsModal.jsx
+// src/pages/Subject/modals/SubjectTopicModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { X, FileText, GripVertical, Loader2 } from 'lucide-react';
 import { collection, query, where, orderBy, onSnapshot, writeBatch, doc } from 'firebase/firestore';

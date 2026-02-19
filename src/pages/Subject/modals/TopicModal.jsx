@@ -1,4 +1,4 @@
-// src/components/modals/TopicModal.jsx
+// src/pages/Subject/modals/TopicModal.jsx
 import React from 'react';
 import { X, Upload } from 'lucide-react';
 

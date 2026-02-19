@@ -1,4 +1,4 @@
-// src/components/home/HomeContent.jsx
+// src/pages/Home/components/HomeContent.jsx
 import React, { useRef } from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp, ArrowUpCircle

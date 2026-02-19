@@ -1,4 +1,4 @@
-// src/components/home/HomeModals.jsx
+// src/pages/Home/components/HomeModals.jsx
 import React from 'react';
 import SubjectFormModal from '../../Subject/modals/SubjectFormModal'; // Check path
 import FolderManager from './FolderManager';

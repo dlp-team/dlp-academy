@@ -1,4 +1,4 @@
-// src/components/modals/subject-form/StyleSelector.jsx
+// src/pages/Subject/modals/subject-form/StyleSelector.jsx
 import React from 'react';
 import { MODERN_FILL_COLORS } from '../../../../utils/subjectConstants';
 

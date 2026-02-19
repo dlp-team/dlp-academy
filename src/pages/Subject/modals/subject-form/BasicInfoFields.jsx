@@ -1,4 +1,4 @@
-// src/components/modals/subject-form/BasicInfoFields.jsx
+// src/pages/Subject/modals/subject-form/BasicInfoFields.jsx
 import React from 'react';
 import { EDUCATION_LEVELS } from '../../../../utils/subjectConstants';
 

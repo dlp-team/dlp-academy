@@ -1,3 +1,4 @@
+// src/pages/Home/components/HomeDeleteConfirmModal.jsx
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 

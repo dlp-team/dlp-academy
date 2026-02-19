@@ -1,4 +1,4 @@
-// src/pages/Home.jsx
+// src/pages/Home/Home.jsx
 import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 // Logic Hook

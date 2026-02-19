@@ -1,4 +1,4 @@
-// src/components/home/SharedView.jsx
+// src/pages/Home/components/SharedView.jsx
 import React, { useMemo, useState } from 'react';
 import { Users, Folder as FolderIcon, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';

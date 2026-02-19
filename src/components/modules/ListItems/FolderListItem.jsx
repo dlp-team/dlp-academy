@@ -1,4 +1,4 @@
-// src/components/home/FolderListItem.jsx
+// src/components/modules/ListItems/FolderListItem.jsx
 import React, { useState, useMemo, useRef, useLayoutEffect } from 'react';
 import { ChevronRight, Folder, GripVertical, Users, MoreVertical, Edit2, Trash2, Share2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -114,7 +114,7 @@ const FolderListItem = ({
 
     // --- DRAG HANDLERS ---
     const handleLocalDragStart = (e) => {
-        e.stopPropagation();
+        //e.stopPropagation();
         const dragData = {
             id: item.id,
             type: type,
@@ -140,17 +140,18 @@ const FolderListItem = ({
     });
 
     const handleDragOver = (e) => {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault(); //e.stopPropagation();
         if (!isDragOver) setIsDragOver(true);
     };
 
     const handleDragLeave = (e) => {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault(); //e.stopPropagation();
         setIsDragOver(false);
     };
 
     const handleDrop = (e) => {
-        e.preventDefault(); e.stopPropagation(); setIsDragOver(false);
+        e.preventDefault(); e.stopPropagation(); 
+        setIsDragOver(false);
 
         const treeDataString = e.dataTransfer.getData('treeItem');
         let draggedData;

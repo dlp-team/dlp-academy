@@ -1,4 +1,4 @@
-// src/components/profile/UserStatistics.jsx
+// src/pages/Profile/components/UserStatistics.jsx
 import React, { useState } from 'react';
 import useUserStatistics from '../hooks/useUserStatistics';
 import { 

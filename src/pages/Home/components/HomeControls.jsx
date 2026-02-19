@@ -1,4 +1,4 @@
-// src/components/home/HomeControls.jsx
+// src/pages/Home/components/HomeControls.jsx
 import React from 'react';
 import { 
     LayoutGrid, Clock, Folder as FolderIcon, Users, FolderPlus, Move 
