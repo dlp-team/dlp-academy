@@ -29,6 +29,7 @@ export const useHomeHandlers = ({
     addFolder,
     deleteSubject,
     deleteFolder,
+    deleteFolderOnly,
     updatePreference,
     navigate,
     isDescendant
@@ -99,6 +100,28 @@ export const useHomeHandlers = ({
             }));
         } else if (deleteConfig.type === 'folder' && deleteConfig.item) {
             await deleteFolder(deleteConfig.item.id);
+            setManualOrder(prev => ({
+                ...prev,
+                folders: prev.folders.filter(id => id !== deleteConfig.item.id)
+            }));
+        }
+        setDeleteConfig({ isOpen: false, type: null, item: null });
+    };
+
+    const handleDeleteFolderAll = async () => {
+        if (deleteConfig.item) {
+            await deleteFolder(deleteConfig.item.id);
+            setManualOrder(prev => ({
+                ...prev,
+                folders: prev.folders.filter(id => id !== deleteConfig.item.id)
+            }));
+        }
+        setDeleteConfig({ isOpen: false, type: null, item: null });
+    };
+
+    const handleDeleteFolderOnly = async () => {
+        if (deleteConfig.item) {
+            await deleteFolderOnly(deleteConfig.item.id);
             setManualOrder(prev => ({
                 ...prev,
                 folders: prev.folders.filter(id => id !== deleteConfig.item.id)
@@ -274,6 +297,8 @@ export const useHomeHandlers = ({
         handleSaveSubject,
         handleSaveFolder,
         handleDelete,
+        handleDeleteFolderAll,
+        handleDeleteFolderOnly,
         handleSelectSubject,
         handleOpenFolder,
         handleShareFolder,

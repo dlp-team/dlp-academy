@@ -304,6 +304,8 @@ const Home = ({ user }) => {
                 handleSaveFolder={handleSaveFolderWrapper}
                 handleShareFolder={logic.handleShareFolder}
                 handleDelete={logic.handleDelete}
+                handleDeleteFolderAll={logic.handleDeleteFolderAll}
+                handleDeleteFolderOnly={logic.handleDeleteFolderOnly}
                 onShare={logic.shareFolder}
                 onUnshare={logic.unshareFolder}
                 onShareSubject={logic.shareSubject}

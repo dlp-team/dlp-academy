@@ -165,6 +165,69 @@ export const useFolders = (user) => {
         await deleteDoc(doc(db, "folders", id));
     };
 
+    const deleteFolderOnly = async (id) => {
+        const folder = folders.find(f => f.id === id);
+        if (!folder) return;
+
+        const batch = writeBatch(db);
+        const parentId = folder.parentId || null;
+
+        // 1. Move all child subjects to parent
+        if (folder.subjectIds && folder.subjectIds.length > 0) {
+            for (const subjectId of folder.subjectIds) {
+                const subjectRef = doc(db, "subjects", subjectId);
+                batch.update(subjectRef, { 
+                    folderId: parentId,
+                    updatedAt: new Date()
+                });
+
+                // If moving to a parent folder, add to its subjectIds
+                if (parentId) {
+                    const parentRef = doc(db, "folders", parentId);
+                    batch.update(parentRef, {
+                        subjectIds: arrayUnion(subjectId),
+                        updatedAt: new Date()
+                    });
+                }
+            }
+        }
+
+        // 2. Move all child folders to parent
+        if (folder.folderIds && folder.folderIds.length > 0) {
+            for (const childFolderId of folder.folderIds) {
+                const childRef = doc(db, "folders", childFolderId);
+                batch.update(childRef, {
+                    parentId: parentId,
+                    updatedAt: new Date()
+                });
+
+                // If moving to a parent folder, add to its folderIds
+                if (parentId) {
+                    const parentRef = doc(db, "folders", parentId);
+                    batch.update(parentRef, {
+                        folderIds: arrayUnion(childFolderId),
+                        updatedAt: new Date()
+                    });
+                }
+            }
+        }
+
+        // 3. Remove this folder from parent's folderIds
+        if (parentId) {
+            const parentRef = doc(db, "folders", parentId);
+            batch.update(parentRef, {
+                folderIds: arrayRemove(id),
+                updatedAt: new Date()
+            });
+        }
+
+        // 4. Commit all changes
+        await batch.commit();
+
+        // 5. Delete the folder itself
+        await deleteDoc(doc(db, "folders", id));
+    };
+
     const shareFolder = async (folderId, email, role = 'viewer') => {
 
         if (user && user.email && user.email.toLowerCase() === email.toLowerCase()) {
@@ -499,7 +562,7 @@ export const useFolders = (user) => {
     };
 
     return { 
-        folders, loading, addFolder, updateFolder, deleteFolder, 
+        folders, loading, addFolder, updateFolder, deleteFolder, deleteFolderOnly,
         shareFolder, unshareFolder, 
         moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders,
         addSubjectToFolder,

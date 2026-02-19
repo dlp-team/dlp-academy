@@ -3,6 +3,7 @@ import React from 'react';
 import SubjectFormModal from '../../Subject/modals/SubjectFormModal'; // Check path
 import FolderManager from './FolderManager';
 import HomeDeleteConfirmModal from './HomeDeleteConfirmModal';
+import FolderDeleteModal from '../../../components/modals/FolderDeleteModal';
 
 const HomeModals = ({
     subjectModalConfig, setSubjectModalConfig,
@@ -13,6 +14,8 @@ const HomeModals = ({
     onShare,
     onUnshare,
     handleDelete,
+    handleDeleteFolderAll,
+    handleDeleteFolderOnly,
     onShareSubject,
     onUnshareSubject,
     currentFolder = null,
@@ -43,11 +46,23 @@ const HomeModals = ({
                 allFolders={allFolders}
                 initialTab={folderModalConfig.initialTab || 'general'}
             />
-            <HomeDeleteConfirmModal
-                deleteConfig={deleteConfig}
-                setDeleteConfig={setDeleteConfig}
-                handleDelete={handleDelete}
-            />
+            
+            {deleteConfig.type === 'folder' ? (
+                <FolderDeleteModal
+                    isOpen={deleteConfig.isOpen}
+                    folderName={deleteConfig.item?.name || ''}
+                    itemCount={(deleteConfig.item?.subjectIds?.length || 0) + (deleteConfig.item?.folderIds?.length || 0)}
+                    onClose={() => setDeleteConfig({ isOpen: false, type: null, item: null })}
+                    onDeleteAll={handleDeleteFolderAll}
+                    onDeleteFolderOnly={handleDeleteFolderOnly}
+                />
+            ) : (
+                <HomeDeleteConfirmModal
+                    deleteConfig={deleteConfig}
+                    setDeleteConfig={setDeleteConfig}
+                    handleDelete={handleDelete}
+                />
+            )}
         </>
     );
 };

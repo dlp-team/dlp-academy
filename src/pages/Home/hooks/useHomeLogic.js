@@ -19,6 +19,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         addFolder, 
         updateFolder, 
         deleteFolder, 
+        deleteFolderOnly,
         shareFolder,
         unshareFolder,
         addSubjectToFolder
@@ -85,6 +86,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
         handleSaveSubject,
         handleSaveFolder,
         handleDelete,
+        handleDeleteFolderAll,
+        handleDeleteFolderOnly,
         handleSelectSubject,
         handleOpenFolder,
         handleShareFolder,
@@ -130,6 +133,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         addFolder,
         deleteSubject,
         deleteFolder,
+        deleteFolderOnly,
         updatePreference,
         navigate,
         isDescendant
@@ -178,6 +182,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
         handleSaveSubject,
         handleSaveFolder,
         handleDelete,
+        handleDeleteFolderAll,
+        handleDeleteFolderOnly,
         handleSelectSubject,
         handleOpenFolder,
         handleShareFolder,
