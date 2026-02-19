@@ -1,6 +1,6 @@
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { isDescendant } from '../../../utils/folderUtils';
+import { isInvalidFolderMove } from '../../../utils/folderUtils';
 
 export const useHomePageHandlers = ({
     logic,
@@ -97,6 +97,11 @@ export const useHomePageHandlers = ({
             return handleDropOnFolderWrapper(targetFolderId, subjectId, currentFolderId);
         }
         if (droppedFolderId) {
+            if (isInvalidFolderMove(droppedFolderId, targetFolderId, logic.folders || [])) {
+                console.warn('🚫 BLOCKED: Circular dependency detected.');
+                return true;
+            }
+
             const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
             if (!droppedFolder) return;
             const currentParentId = droppedFolder.parentId || null;
@@ -170,7 +175,7 @@ export const useHomePageHandlers = ({
     const handleNestFolder = async (targetFolderId, droppedFolderId) => {
         if (targetFolderId === droppedFolderId) return;
 
-        if (isDescendant(droppedFolderId, targetFolderId, logic.folders || [])) {
+        if (isInvalidFolderMove(droppedFolderId, targetFolderId, logic.folders || [])) {
             console.warn('🚫 BLOCKED: Circular dependency detected.');
             return;
         }

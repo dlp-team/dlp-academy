@@ -2,61 +2,9 @@
 import React, { useState } from 'react';
 import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, ArrowUpCircle, Users } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../ui/SubjectIcon';
-import { isDescendant } from '../../utils/folderUtils';
+import { isInvalidFolderMove } from '../../utils/folderUtils';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
-
-const isTargetInsideDraggedTree = (draggedFolderId, targetFolderId, allFolders) => {
-    console.log('[isTargetInsideDraggedTree] draggedFolderId:', draggedFolderId, 'targetFolderId:', targetFolderId, 'allFolders:', allFolders);
-    if (!draggedFolderId || !targetFolderId) {
-        console.log('[isTargetInsideDraggedTree] missing ids, returning false');
-        return false;
-    }
-    if (draggedFolderId === targetFolderId) {
-        console.log('[isTargetInsideDraggedTree] draggedFolderId === targetFolderId, returning true');
-        return true;
-    }
-
-    const byId = new Map((allFolders || []).map(folder => [folder.id, folder]));
-    const visited = new Set();
-    const stack = [draggedFolderId];
-
-    while (stack.length > 0) {
-        const currentId = stack.pop();
-        if (visited.has(currentId)) continue;
-        visited.add(currentId);
-
-        const currentFolder = byId.get(currentId);
-        if (!currentFolder) continue;
-
-        const children = Array.isArray(currentFolder.folderIds) ? currentFolder.folderIds : [];
-        for (const childId of children) {
-            if (childId === targetFolderId) {
-                console.log('[isTargetInsideDraggedTree] Found targetFolderId in children, returning true');
-                return true;
-            }
-            if (!visited.has(childId)) stack.push(childId);
-        }
-    }
-    console.log('[isTargetInsideDraggedTree] Not found, returning false');
-    return false;
-};
-
-const isInvalidFolderMove = (draggedFolderId, targetFolderId, allFolders) => {
-    console.log('[isInvalidFolderMove] draggedFolderId:', draggedFolderId, 'targetFolderId:', targetFolderId);
-    if (!draggedFolderId || !targetFolderId) {
-        console.log('[isInvalidFolderMove] missing ids, returning false');
-        return false;
-    }
-    if (draggedFolderId === targetFolderId) {
-        console.log('[isInvalidFolderMove] draggedFolderId === targetFolderId, returning true');
-        return true;
-    }
-    const insideTree = isTargetInsideDraggedTree(draggedFolderId, targetFolderId, allFolders);
-    const descendant = isDescendant(draggedFolderId, targetFolderId, allFolders);
-    console.log('[isInvalidFolderMove] insideTree:', insideTree, 'descendant:', descendant);
-    return insideTree || descendant;
-};
 
 
 const TreeItem = ({ 
@@ -312,19 +260,13 @@ const FolderTreeModal = ({
     const [isRootDropZoneActive, setIsRootDropZoneActive] = useState(false);
 
     const handleDropAction = (dragged, target) => {
-        console.log('[handleDropAction] dragged:', dragged, 'target:', target);
-        if (!dragged || !target) {
-            console.log('[handleDropAction] missing dragged or target, returning');
-            return;
-        }
+        if (!dragged || !target) return;
 
         // 1. Logic for moving SUBJECTS (No changes needed here)
         if (dragged.type === 'subject') {
             if (target.type === 'folder') {
-                console.log('[handleDropAction] Moving subject', dragged.id, 'to folder', target.id);
                 if (onMoveSubjectToFolder) onMoveSubjectToFolder(dragged.id, target.id);
             } else if (target.type === 'subject') {
-                console.log('[handleDropAction] Reordering subject', dragged.id, 'with', target.id);
                 if (onReorderSubject) onReorderSubject(dragged.id, target.id);
             }
         } 
@@ -334,7 +276,6 @@ const FolderTreeModal = ({
                 console.warn("🚫 BLOCKED: Cannot move a folder into its own subfolder.");
                 return;
             }
-            console.log('[handleDropAction] Calling onNestFolder with targetId:', target.id, 'draggedId:', dragged.id);
             if (onNestFolder) onNestFolder(target.id, dragged.id);
         }
     };
