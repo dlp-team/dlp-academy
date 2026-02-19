@@ -9,7 +9,7 @@ import FolderCard from '../../../components/modules/FolderCard/FolderCard';
 import SubjectListItem from '../../../components/modules/ListItems/SubjectListItem';
 import ListViewItem from '../../../components/modules/ListViewItem'; 
 import useHomeContentDnd from '../hooks/useHomeContentDnd';
-import { useAutoScrollOnDrag } from '../../../hooks/useAutoScrollOnDrag';
+import useAutoScrollOnDrag from '../../../hooks/useAutoScrollOnDrag';
 
 const HomeContent = ({
     viewMode = 'grid',
@@ -59,6 +59,14 @@ const HomeContent = ({
     filterOverlayOpen = false,
     onCloseFilterOverlay = () => {},
 }) => {
+    const contentRef = useRef(null);
+
+    useAutoScrollOnDrag({
+        containerRef: contentRef,
+        enabled: isDragAndDropEnabled,
+        scrollContainer: 'window'
+    });
+
     const {
         isPromoteZoneHovered,
         isRootZoneHovered,
@@ -96,21 +104,12 @@ const HomeContent = ({
     // No folder filter logic anymore
 
     
-    // Ref for scrollable content section
-    const contentRef = useRef(null);
-    // Enable auto-scroll on drag
-    useAutoScrollOnDrag({
-        isDragging: !!draggedItem,
-        containerRef: contentRef
-    });
-
     return (
         <div
-            ref={contentRef}
-            className={`transition-opacity duration-200 ${
-                filterOverlayOpen ? 'pointer-events-none opacity-100' : ''
-            }`}
-        >
+        ref={contentRef}
+        className={`transition-opacity duration-200 ${
+        filterOverlayOpen ? 'pointer-events-none opacity-100' : ''
+        }`}>
             {groupedContent && Object.entries(groupedContent).map(([groupName, groupSubjects]) => {
                 const isCollapsed = collapsedGroups[groupName];
 

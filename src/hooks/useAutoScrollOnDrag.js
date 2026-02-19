@@ -1,62 +1,99 @@
-// useAutoScrollOnDrag.js
 import { useEffect, useRef } from 'react';
 
-/**
- * useAutoScrollOnDrag
- * Adds auto-scroll behavior to a scrollable container when dragging near top/bottom.
- * @param {Object} options
- * @param {boolean} options.isDragging - Whether a drag is in progress
- * @param {React.RefObject} options.containerRef - Ref to the scrollable container
- * @param {number} [options.edgeThreshold=60] - px from edge to trigger scroll
- * @param {number} [options.scrollSpeed=24] - px per interval
- */
-export function useAutoScrollOnDrag({ isDragging, containerRef, edgeThreshold = 60, scrollSpeed = 24 }) {
-  const intervalRef = useRef(null);
+const getWindowScrollMax = () => {
+    const doc = document.documentElement;
+    return Math.max(0, doc.scrollHeight - window.innerHeight);
+};
 
-  useEffect(() => {
-    if (!isDragging || !containerRef.current) {
-      clearInterval(intervalRef.current);
-      return;
+const getBounds = (boundsTarget) => {
+    if (boundsTarget) {
+        return boundsTarget.getBoundingClientRect();
     }
+    return { top: 0, bottom: window.innerHeight };
+};
 
-    function onDragOver(e) {
-      if (!containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const y = e.clientY;
-      let scrollDelta = 0;
-      if (y - rect.top < edgeThreshold) {
-        scrollDelta = -scrollSpeed;
-      } else if (rect.bottom - y < edgeThreshold) {
-        scrollDelta = scrollSpeed;
-      }
-      if (scrollDelta !== 0) {
-        if (!intervalRef.current) {
-          intervalRef.current = setInterval(() => {
-            containerRef.current.scrollBy({ top: scrollDelta, behavior: 'auto' });
-          }, 30);
-        }
-      } else {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    }
+const useAutoScrollOnDrag = ({
+    containerRef,
+    enabled = true,
+    edgeThreshold = 80,
+    maxSpeed = 18,
+    scrollContainer = 'element'
+} = {}) => {
+    const rafRef = useRef(null);
+    const lastYRef = useRef(null);
+    const isDragActiveRef = useRef(false);
 
-    function onDragLeaveOrEnd() {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+    useEffect(() => {
+        if (!enabled) return;
 
-    const node = containerRef.current;
-    node.addEventListener('dragover', onDragOver);
-    node.addEventListener('dragleave', onDragLeaveOrEnd);
-    node.addEventListener('drop', onDragLeaveOrEnd);
-    node.addEventListener('dragend', onDragLeaveOrEnd);
-    return () => {
-      node.removeEventListener('dragover', onDragOver);
-      node.removeEventListener('dragleave', onDragLeaveOrEnd);
-      node.removeEventListener('drop', onDragLeaveOrEnd);
-      node.removeEventListener('dragend', onDragLeaveOrEnd);
-      clearInterval(intervalRef.current);
-    };
-  }, [isDragging, containerRef, edgeThreshold, scrollSpeed]);
-}
+        const onDragStart = () => {
+            isDragActiveRef.current = true;
+        };
+
+        const onDragEnd = () => {
+            isDragActiveRef.current = false;
+            lastYRef.current = null;
+        };
+
+        const onDragOver = (event) => {
+            if (!isDragActiveRef.current) return;
+            lastYRef.current = event.clientY;
+        };
+
+        const tick = () => {
+            if (isDragActiveRef.current && lastYRef.current !== null) {
+                const boundsTarget = containerRef?.current || null;
+                const { top, bottom } = getBounds(boundsTarget);
+                const topEdge = top + edgeThreshold;
+                const bottomEdge = bottom - edgeThreshold;
+
+                let speed = 0;
+                if (lastYRef.current < topEdge) {
+                    const intensity = (topEdge - lastYRef.current) / edgeThreshold;
+                    speed = -maxSpeed * Math.min(1, intensity);
+                } else if (lastYRef.current > bottomEdge) {
+                    const intensity = (lastYRef.current - bottomEdge) / edgeThreshold;
+                    speed = maxSpeed * Math.min(1, intensity);
+                }
+
+                if (speed !== 0) {
+                    if (scrollContainer === 'window') {
+                        const maxScrollTop = getWindowScrollMax();
+                        const nextTop = window.scrollY + speed;
+                        if (nextTop >= 0 && nextTop <= maxScrollTop) {
+                            window.scrollBy({ top: speed, left: 0 });
+                        }
+                    } else if (containerRef?.current) {
+                        const el = containerRef.current;
+                        const maxScrollTop = Math.max(0, el.scrollHeight - el.clientHeight);
+                        const nextTop = el.scrollTop + speed;
+                        if (nextTop >= 0 && nextTop <= maxScrollTop) {
+                            el.scrollTop = nextTop;
+                        }
+                    }
+                }
+            }
+
+            rafRef.current = requestAnimationFrame(tick);
+        };
+
+        rafRef.current = requestAnimationFrame(tick);
+
+        window.addEventListener('dragstart', onDragStart);
+        window.addEventListener('dragend', onDragEnd);
+        window.addEventListener('drop', onDragEnd);
+        window.addEventListener('dragover', onDragOver);
+
+        return () => {
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current);
+            }
+            window.removeEventListener('dragstart', onDragStart);
+            window.removeEventListener('dragend', onDragEnd);
+            window.removeEventListener('drop', onDragEnd);
+            window.removeEventListener('dragover', onDragOver);
+        };
+    }, [containerRef, edgeThreshold, enabled, maxSpeed, scrollContainer]);
+};
+
+export default useAutoScrollOnDrag;

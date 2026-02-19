@@ -1,9 +1,9 @@
 // src/components/modals/FolderTreeModal.jsx
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, ArrowUpCircle, Users } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../ui/SubjectIcon';
 import { isInvalidFolderMove } from '../../utils/folderUtils';
-import { useAutoScrollOnDrag } from '../../hooks/useAutoScrollOnDrag';
+import useAutoScrollOnDrag from '../../hooks/useAutoScrollOnDrag';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
 
@@ -242,6 +242,7 @@ const TreeItem = ({
     );
 };
 
+
 const FolderTreeModal = ({ 
     isOpen, 
     onClose, 
@@ -255,12 +256,15 @@ const FolderTreeModal = ({
     onReorderSubject,
     onDropWithOverlay // <-- Add this prop for overlay logic
 }) => {
-    // Ref for scrollable tree area
-    const treeRef = useRef(null);
-    // Place ALL hooks before any return
-    const [isDragging, setIsDragging] = useState(false);
+    // All hooks must be called unconditionally and in the same order
+    const contentRef = useRef(null);
     const [isRootDropZoneActive, setIsRootDropZoneActive] = useState(false);
-    useAutoScrollOnDrag({ isDragging, containerRef: treeRef });
+    useAutoScrollOnDrag({
+        containerRef: contentRef,
+        enabled: isOpen,
+        scrollContainer: 'element'
+    });
+
     if (!isOpen || !rootFolder) return null;
 
     const handleDropAction = (dragged, target) => {
@@ -377,7 +381,7 @@ const FolderTreeModal = ({
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto min-h-[300px] custom-scrollbar bg-slate-50/50 dark:bg-slate-950/30 p-4 flex flex-col">
+                <div ref={contentRef} className="flex-1 overflow-y-auto min-h-[300px] custom-scrollbar bg-slate-50/50 dark:bg-slate-950/30 p-4 flex flex-col">
                     
                     {/* MOVE TO ROOT ZONE */}
                     <div 
