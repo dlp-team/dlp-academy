@@ -42,10 +42,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 // Validate that level exists in EDUCATION_LEVELS
                 const prefilledLevel = initialData?.level || '';
                 const prefilledGrade = initialData?.grade || '';
-                console.log('📝 SubjectFormModal - Initializing with:', { initialData, prefilledLevel, prefilledGrade, educationLevels: EDUCATION_LEVELS });
                 const validLevel = prefilledLevel && EDUCATION_LEVELS[prefilledLevel] ? prefilledLevel : '';
                 const validGrade = validLevel && prefilledGrade && EDUCATION_LEVELS[validLevel].includes(prefilledGrade) ? prefilledGrade : '';
-                console.log('✅ SubjectFormModal - Validated:', { validLevel, validGrade });
                 
                 setFormData({ 
                     name: '',

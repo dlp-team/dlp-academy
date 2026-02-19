@@ -160,7 +160,6 @@ const HomeContent = ({
                                                             const grade = parts[0]; // e.g., "6º"
                                                             const level = parts.slice(1).join(' '); // e.g., "Universidad"
                                                             data = { course: groupName, level, grade };
-                                                            console.log('🎯 Creating subject - groupName:', groupName, 'parsed:', { level, grade, course: groupName });
                                                         }
                                                         setSubjectModalConfig({ 
                                                             isOpen: true, 
@@ -308,7 +307,6 @@ const HomeContent = ({
                                                             const grade = parts[0]; // e.g., "6º"
                                                             const level = parts.slice(1).join(' '); // e.g., "Universidad"
                                                             data = { course: groupName, level, grade };
-                                                            console.log('🎯 Creating subject (list) - groupName:', groupName, 'parsed:', { level, grade, course: groupName });
                                                         }
                                                         setSubjectModalConfig({ 
                                                             isOpen: true, 
