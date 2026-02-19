@@ -149,6 +149,40 @@ const HomeContent = ({
                                             className="grid gap-6"
                                             style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` }}
                                         >
+                                            {/* Create Subject Button for courses/tags view */}
+                                            {(viewMode === 'courses' || viewMode === 'tags') && (
+                                                <button
+                                                    onClick={() => {
+                                                        let data = null;
+                                                        if (viewMode === 'courses') {
+                                                            // groupName comes as "6º Universidad" so swap for correct format
+                                                            const parts = groupName.split(' ');
+                                                            const grade = parts[0]; // e.g., "6º"
+                                                            const level = parts.slice(1).join(' '); // e.g., "Universidad"
+                                                            data = { course: groupName, level, grade };
+                                                            console.log('🎯 Creating subject - groupName:', groupName, 'parsed:', { level, grade, course: groupName });
+                                                        }
+                                                        setSubjectModalConfig({ 
+                                                            isOpen: true, 
+                                                            isEditing: false, 
+                                                            data, 
+                                                            currentFolder: null 
+                                                        });
+                                                    }}
+                                                    className="group relative w-full border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center cursor-pointer"
+                                                    style={{ aspectRatio: '16 / 10', gap: `${16 * (cardScale / 100)}px` }}
+                                                >
+                                                    <div className="rounded-full bg-indigo-100 dark:bg-indigo-900/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/60 flex items-center justify-center transition-colors"
+                                                        style={{ width: `${80 * (cardScale / 100)}px`, height: `${80 * (cardScale / 100)}px` }}
+                                                    >
+                                                        <Plus className="text-indigo-600 dark:text-indigo-400" size={40 * (cardScale / 100)} />
+                                                    </div>
+                                                    <span className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors px-4 text-center" style={{ fontSize: `${18 * (cardScale / 100)}px` }}>
+                                                        Crear Nueva Asignatura
+                                                    </span>
+                                                </button>
+                                            )}
+
                                             {/* Promote Zone (Grid) */}
                                             {viewMode === 'grid' && (
                                                  <div>
@@ -259,32 +293,51 @@ const HomeContent = ({
                                 {layoutMode === 'list' && (
                                      <div className="space-y-2 relative">
                                         
-                                        {/* Crear Nueva Asignatura / Drop Zone for list view */}
-                                        <div
-                                            onDragOver={(e) => { e.preventDefault(); setIsRootZoneHovered(true); }}
-                                            onDragLeave={() => setIsRootZoneHovered(false)}
-                                            onDrop={handleRootZoneDrop}
-                                            onClick={() => { if (!draggedItem) setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder: currentFolder }); }}
-                                            className={`group relative w-full border-3 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer mb-2
-                                                ${draggedItem
-                                                    ? isRootZoneHovered
-                                                        ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 scale-105'
-                                                        : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                                                    : isRootZoneHovered
-                                                        ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 scale-105'
-                                                        : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
-                                                }
-                                            `}
-                                            style={{
-                                                // Match SubjectListItem card height: padding (top+bottom) + icon size
-                                                // padding: 16 * scale (top) + 16 * scale (bottom) = 32 * scale
-                                                // iconContainerSize: 48 * scale
-                                                // total: 80 * scale
-                                                minHeight: `${(48 + 32) * (cardScale / 100)}px`,
-                                                gap: `${16 * (cardScale / 100)}px`
-                                            }}
-                                        >
-                                            {draggedItem ? (
+                                        {/* Crear Nueva Asignatura / Drop Zone for list view - only in grid/manual modes */}
+                                        {(viewMode === 'grid' || viewMode === 'courses' || viewMode === 'tags') && (
+                                            <div
+                                                onDragOver={(e) => { e.preventDefault(); setIsRootZoneHovered(true); }}
+                                                onDragLeave={() => setIsRootZoneHovered(false)}
+                                                onDrop={handleRootZoneDrop}
+                                                onClick={() => { 
+                                                    if (!draggedItem) {
+                                                        let data = null;
+                                                        if (viewMode === 'courses') {
+                                                            // groupName comes as "6º Universidad" so swap for correct format
+                                                            const parts = groupName.split(' ');
+                                                            const grade = parts[0]; // e.g., "6º"
+                                                            const level = parts.slice(1).join(' '); // e.g., "Universidad"
+                                                            data = { course: groupName, level, grade };
+                                                            console.log('🎯 Creating subject (list) - groupName:', groupName, 'parsed:', { level, grade, course: groupName });
+                                                        }
+                                                        setSubjectModalConfig({ 
+                                                            isOpen: true, 
+                                                            isEditing: false, 
+                                                            data, 
+                                                            currentFolder: currentFolder 
+                                                        }); 
+                                                    }
+                                                }}
+                                                className={`group relative w-full border-3 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer mb-2
+                                                    ${draggedItem
+                                                        ? isRootZoneHovered
+                                                            ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 scale-105'
+                                                            : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                                        : isRootZoneHovered
+                                                            ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 scale-105'
+                                                            : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                                                    }
+                                                `}
+                                                style={{
+                                                    // Match SubjectListItem card height: padding (top+bottom) + icon size
+                                                    // padding: 16 * scale (top) + 16 * scale (bottom) = 32 * scale
+                                                    // iconContainerSize: 48 * scale
+                                                    // total: 80 * scale
+                                                    minHeight: `${(48 + 32) * (cardScale / 100)}px`,
+                                                    gap: `${16 * (cardScale / 100)}px`
+                                                }}
+                                            >
+                                                {draggedItem ? (
                                                 <div className="flex flex-row items-center justify-center w-full h-full gap-3">
                                                     <ArrowUp className={`transition-colors ${isRootZoneHovered ? 'text-amber-700 dark:text-amber-300' : 'text-amber-600 dark:text-amber-400'}`} style={{ width: `${18 * (cardScale / 100)}px`, height: `${18 * (cardScale / 100)}px` }} />
                                                     <span className={`font-semibold transition-colors text-center ${isRootZoneHovered ? 'text-amber-700 dark:text-amber-300' : 'text-gray-700 dark:text-gray-300 group-hover:text-amber-600 dark:group-hover:text-amber-400'}`}
@@ -301,7 +354,8 @@ const HomeContent = ({
                                                     </span>
                                                 </div>
                                             )}
-                                        </div>
+                                            </div>
+                                        )}
                                         
                                         {/* Render Folders */}
                                         {viewMode === 'grid' && filteredFolders.map((folder) => (

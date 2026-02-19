@@ -1,7 +1,7 @@
 // src/pages/Subject/modals/SubjectFormModal.jsx
 import React, { useState, useEffect } from 'react';
 import { X, Save, Users, Trash2, Share2 } from 'lucide-react';
-import { MODERN_FILL_COLORS } from '../../../utils/subjectConstants';
+import { MODERN_FILL_COLORS, EDUCATION_LEVELS } from '../../../utils/subjectConstants';
 
 // Sub-components
 import BasicInfoFields from './subject-form/BasicInfoFields';
@@ -38,22 +38,43 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 // Load shared list
                 setSharedList(initialData.sharedWith || []);
             } else {
+                // When creating new subject, pre-fill course, level, and grade if provided
+                // Validate that level exists in EDUCATION_LEVELS
+                const prefilledLevel = initialData?.level || '';
+                const prefilledGrade = initialData?.grade || '';
+                console.log('📝 SubjectFormModal - Initializing with:', { initialData, prefilledLevel, prefilledGrade, educationLevels: EDUCATION_LEVELS });
+                const validLevel = prefilledLevel && EDUCATION_LEVELS[prefilledLevel] ? prefilledLevel : '';
+                const validGrade = validLevel && prefilledGrade && EDUCATION_LEVELS[validLevel].includes(prefilledGrade) ? prefilledGrade : '';
+                console.log('✅ SubjectFormModal - Validated:', { validLevel, validGrade });
+                
                 setFormData({ 
-                    name: '', level: '', grade: '', course: '', 
-                    color: 'from-blue-400 to-blue-600', icon: 'book', tags: [],
-                    cardStyle: 'default', modernFillColor: MODERN_FILL_COLORS[0].value
+                    name: '',
+                    level: validLevel,
+                    grade: validGrade,
+                    course: initialData?.course || '',
+                    color: 'from-blue-400 to-blue-600',
+                    icon: 'book',
+                    tags: [],
+                    cardStyle: 'default',
+                    modernFillColor: MODERN_FILL_COLORS[0].value
                 });
                 setSharedList([]);
             }
         }
     }, [isOpen, isEditing, initialData, initialTab]);
 
-    // 2. Auto-generate Course Name
+    // 2. Auto-generate Course Name (only if course is not pre-filled from outside)
     useEffect(() => {
-        if (formData.level && formData.grade) {
-            setFormData(prev => ({ ...prev, course: `${prev.grade} ${prev.level}` }));
+        if (formData.level && formData.grade && !isEditing) {
+            // Only auto-generate if we don't already have a manually set course
+            // or if the course doesn't match the expected format
+            const expectedCourse = `${formData.grade} ${formData.level}`;
+            const reversedCourse = `${formData.level} ${formData.grade}`;
+            if (formData.course !== expectedCourse && formData.course !== reversedCourse) {
+                setFormData(prev => ({ ...prev, course: expectedCourse }));
+            }
         }
-    }, [formData.level, formData.grade]);
+    }, [formData.level, formData.grade, isEditing]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
