@@ -1,5 +1,5 @@
 // src/components/home/HomeContent.jsx
-import React from 'react';
+import React, { useRef } from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp, ArrowUpCircle
 } from 'lucide-react';
@@ -9,6 +9,7 @@ import FolderCard from '../../../components/modules/FolderCard/FolderCard';
 import SubjectListItem from '../../../components/modules/ListItems/SubjectListItem';
 import ListViewItem from '../../../components/modules/ListViewItem'; 
 import useHomeContentDnd from '../hooks/useHomeContentDnd';
+import { useAutoScrollOnDrag } from '../../../hooks/useAutoScrollOnDrag';
 
 const HomeContent = ({
     viewMode = 'grid',
@@ -95,10 +96,21 @@ const HomeContent = ({
     // No folder filter logic anymore
 
     
+    // Ref for scrollable content section
+    const contentRef = useRef(null);
+    // Enable auto-scroll on drag
+    useAutoScrollOnDrag({
+        isDragging: !!draggedItem,
+        containerRef: contentRef
+    });
+
     return (
-        <div className={`transition-opacity duration-200 ${
-        filterOverlayOpen ? 'pointer-events-none opacity-100' : ''
-        }`}>
+        <div
+            ref={contentRef}
+            className={`transition-opacity duration-200 ${
+                filterOverlayOpen ? 'pointer-events-none opacity-100' : ''
+            }`}
+        >
             {groupedContent && Object.entries(groupedContent).map(([groupName, groupSubjects]) => {
                 const isCollapsed = collapsedGroups[groupName];
 

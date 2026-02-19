@@ -1,8 +1,9 @@
 // src/components/modals/FolderTreeModal.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, ArrowUpCircle, Users } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../ui/SubjectIcon';
 import { isInvalidFolderMove } from '../../utils/folderUtils';
+import { useAutoScrollOnDrag } from '../../hooks/useAutoScrollOnDrag';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
 
@@ -254,10 +255,13 @@ const FolderTreeModal = ({
     onReorderSubject,
     onDropWithOverlay // <-- Add this prop for overlay logic
 }) => {
-    
-    if (!isOpen || !rootFolder) return null;
-
+    // Ref for scrollable tree area
+    const treeRef = useRef(null);
+    // Place ALL hooks before any return
+    const [isDragging, setIsDragging] = useState(false);
     const [isRootDropZoneActive, setIsRootDropZoneActive] = useState(false);
+    useAutoScrollOnDrag({ isDragging, containerRef: treeRef });
+    if (!isOpen || !rootFolder) return null;
 
     const handleDropAction = (dragged, target) => {
         if (!dragged || !target) return;

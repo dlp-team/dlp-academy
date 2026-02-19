@@ -19,37 +19,74 @@ const MailboxIcon = ({ mailCount = 0, onClick }) => {
         strokeWidth="2" 
         strokeLinecap="round" 
         strokeLinejoin="round" 
-        className="w-6 h-6"
+        className="w-7 h-7"
       >
-        {/* Base Mailbox Body */}
-        <path d="M4 8.5C4 6.01472 6.01472 4 8.5 4H17C18.6569 4 20 5.34315 20 7V13C20 14.6569 18.6569 16 17 16H8.5C6.01472 16 4 13.9853 4 11.5V8.5Z" />
-        <path d="M4 11.5V16" />
-        <path d="M4 11.5C4 13.9853 6.01472 16 8.5 16" />
-        
-        {/* Support Pole */}
-        <path d="M12 16V22" />
-        <path d="M9 22H15" />
+        {/* Base Wooden Post (Always visible) */}
+        <path d="M 8 16 V 22 M 5 22 H 11" strokeWidth="2" />
 
-        {/* State 1: Nothing New (Flag Down) */}
-        {isEmpty && (
-          <path d="M15 10 L19 10 L19 12 L15 12 Z" fill="currentColor" stroke="none" />
+        {/* --- STATE 1 & 2: Door Closed --- */}
+        {(isEmpty || isFew) && (
+          <>
+            {/* Mailbox Body (Rounded Front) */}
+            <path d="M 4 16 V 6 H 14 C 17.5 6 20 8 20 11.5 V 16 Z" />
+            {/* Door Seam */}
+            <path d="M 14 6 V 16" />
+            {/* Door Handle */}
+            <path d="M 20 10.5 V 12.5" strokeWidth="2" />
+          </>
         )}
 
-        {/* State 2 & 3: New Mail (Flag Up) */}
-        {(isFew || isMany) && (
-          <path d="M15 10 L15 5 L17 5 L17 10 Z" fill="#ef4444" stroke="none" />
-        )}
-
-        {/* State 3: Overflowing Mail (Cards sticking out of the door) */}
+        {/* --- STATE 3: Door Open (Overflowing) --- */}
         {isMany && (
           <>
-            <path d="M3 8 L6 3 L9 5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M4 11 L8 6 L10 8" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            {/* Mailbox Body (Cut straight where door opens) */}
+            <path d="M 4 16 V 6 H 14 V 16 Z" />
+            {/* Door Dropped Open (Acting as a ramp) */}
+            <path d="M 14 16 L 20 17.5" />
+            {/* Door Handle on dropped door */}
+            <path d="M 19 17 L 19.5 19" />
+
+            {/* Background Letter */}
+            <path 
+                d="M 10 16 V 8 L 15 9.5 V 13 Z" 
+                className="fill-white dark:fill-slate-900" 
+                stroke="currentColor" 
+                strokeWidth="1.5" 
+            />
+            {/* Foreground Letter (Sticking out onto the door) */}
+            <path 
+                d="M 13 16 V 11 L 18 13 V 16.5 Z" 
+                className="fill-white dark:fill-slate-900" 
+                stroke="currentColor" 
+                strokeWidth="1.5" 
+            />
+            {/* Envelope Flap Detail */}
+            <path d="M 13 11 L 15.5 13 L 18 13" strokeWidth="1.5" />
+          </>
+        )}
+
+        {/* --- FLAG: STATE 1 (Down/Empty) --- */}
+        {isEmpty && (
+          <>
+            {/* Arm laying flat */}
+            <path d="M 10 11 H 13" strokeWidth="1.5" />
+            {/* Red Flag */}
+            <path d="M 13 9 H 16 V 13 H 13 Z" fill="#ef4444" stroke="none" />
+          </>
+        )}
+
+        {/* --- FLAG: STATE 2 & 3 (Up/New Mail) --- */}
+        {(isFew || isMany) && (
+          <>
+            {/* Arm sticking up */}
+            <path d="M 11 11 V 8" strokeWidth="1.5" />
+            {/* Red Flag above the box */}
+            <path d="M 11 4 H 15 V 8 H 11 Z" fill="#ef4444" stroke="none" />
           </>
         )}
       </svg>
 
-      {/* Optional: Visual badge for exact numbers */}
+      {/* Red notification dot/number */}
       {mailCount > 0 && (
         <span className="absolute top-1 right-1 flex items-center justify-center w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full border border-white dark:border-slate-900">
           {mailCount > 99 ? '99+' : mailCount}
