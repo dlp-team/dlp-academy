@@ -66,6 +66,7 @@ const ListViewItem = ({
                 onNavigate={onNavigate}
                 onNavigateSubject={onNavigateSubject}
                 onEdit={onEdit}
+                onShare={onShare}
                 onDelete={onDelete}
                 cardScale={cardScale}
                 onDragStart={onDragStart}

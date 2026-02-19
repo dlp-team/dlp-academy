@@ -16,6 +16,7 @@ const FolderListItem = ({
     onNavigateSubject,
     onEdit,
     onDelete,
+    onShare = () => {},
     cardScale = 100, 
     onDragStart,
     onDragEnd,
@@ -330,7 +331,7 @@ const FolderListItem = ({
                                                 <Edit2 size={14 * menuScale} /> Editar
                                             </button>
                                             <button 
-                                                onClick={e => { e.stopPropagation(); if (onEdit) onEdit(item, 'share'); setShowMenu(false); }}
+                                                onClick={e => { e.stopPropagation(); onShare(item); setShowMenu(false); }}
                                                 className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
                                                 style={{ fontSize: `${14 * menuScale}px` }}
                                             >
@@ -377,6 +378,7 @@ const FolderListItem = ({
                                         onNavigateSubject={onNavigateSubject}
                                         onEdit={onEdit}
                                         onDelete={onDelete}
+                                        onShare={onShare}
                                         cardScale={cardScale}
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}
@@ -397,6 +399,7 @@ const FolderListItem = ({
                                         onNavigateSubject={onNavigateSubject}
                                         onEdit={onEdit}
                                         onDelete={onDelete}
+                                        onShare={onShare}
                                         cardScale={cardScale}
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}
