@@ -52,7 +52,9 @@ const Home = ({ user }) => {
         setTopicsModalConfig,
         displayedFolders,
         activeModalFolder,
-        hasContent
+        hasContent,
+        sharedActiveFilter,
+        setSharedActiveFilter
     } = useHomePageState({ logic, searchQuery });
 
     const {
