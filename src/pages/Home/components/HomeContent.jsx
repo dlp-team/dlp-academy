@@ -61,10 +61,12 @@ const HomeContent = ({
 }) => {
     const contentRef = useRef(null);
 
+    // Auto-scroll is always enabled for both grid and list modes
     useAutoScrollOnDrag({
         containerRef: contentRef,
         enabled: isDragAndDropEnabled,
-        scrollContainer: 'window'
+        scrollContainer: 'window',
+        edgeThreshold: 160 // Large margin for top/bottom edge
     });
 
     const {

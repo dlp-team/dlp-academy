@@ -5,7 +5,11 @@ const getWindowScrollMax = () => {
     return Math.max(0, doc.scrollHeight - window.innerHeight);
 };
 
-const getBounds = (boundsTarget) => {
+const getBounds = (boundsTarget, scrollContainer) => {
+    if (scrollContainer === 'window') {
+        // Always use the visible viewport for window scrolling
+        return { top: 0, bottom: window.innerHeight };
+    }
     if (boundsTarget) {
         return boundsTarget.getBoundingClientRect();
     }
@@ -35,15 +39,21 @@ const useAutoScrollOnDrag = ({
             lastYRef.current = null;
         };
 
+        // Always use the global mouse position for dragover
         const onDragOver = (event) => {
             if (!isDragActiveRef.current) return;
-            lastYRef.current = event.clientY;
+            // Use event.clientY if available, else fallback to last known
+            if (typeof event.clientY === 'number') {
+                lastYRef.current = event.clientY;
+            } else if (event.touches && event.touches.length > 0) {
+                lastYRef.current = event.touches[0].clientY;
+            }
         };
 
         const tick = () => {
             if (isDragActiveRef.current && lastYRef.current !== null) {
                 const boundsTarget = containerRef?.current || null;
-                const { top, bottom } = getBounds(boundsTarget);
+                const { top, bottom } = getBounds(boundsTarget, scrollContainer);
                 const topEdge = top + edgeThreshold;
                 const bottomEdge = bottom - edgeThreshold;
 
