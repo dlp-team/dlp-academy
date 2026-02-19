@@ -4,13 +4,14 @@ const MailboxIcon = ({ mailCount = 0, onClick, dark = false }) => {
   const isEmpty = mailCount === 0;
   const isMany  = mailCount >= 5;
 
-  const s  = dark ? "rgba(255,255,255,0.88)"  : "rgba(0,0,0,0.82)";
-  const m  = dark ? "rgba(255,255,255,0.42)"  : "rgba(0,0,0,0.26)";
-  const w  = dark ? "rgba(255,255,255,0.08)"  : "rgba(0,0,0,0.04)";
-  const d  = dark ? "rgba(255,255,255,0.04)"  : "rgba(0,0,0,0.09)";
-  const hi = dark ? "rgba(255,255,255,0.14)"  : "rgba(255,255,255,0.72)";
-  const ef = dark ? "#3A3A3C"                 : "#FFFFFF";
-  const br = dark ? "#1C1C1E"                 : "#FFFFFF";
+  // Icon colors: strong contrast for minimalist look
+  const s  = dark ? "#f5f5f5" : "#23232a"; // stroke
+  const m  = dark ? "#bdbdbd" : "#757575"; // mid-tone
+  const w  = dark ? "#23232a" : "#f5f5f5"; // box fill
+  const d  = dark ? "#18181b" : "#e0e0e0"; // depth
+  const hi = dark ? "#fff" : "#23232a";    // highlight
+  const ef = "#fff"; // envelope always white
+  const br = dark ? "#18181b" : "#fff";    // badge border
 
   // Slot line y position — envelope straddles this
   const slotY = 25;
@@ -38,10 +39,13 @@ const MailboxIcon = ({ mailCount = 0, onClick, dark = false }) => {
         WebkitTapHighlightColor: "transparent",
         ...(dark
           ? {
-              backgroundColor: "#18181b",
-              border: "1.5px solid #23232a",
+              backgroundColor: "#23232a",
+              color: "#f5f5f5",
             }
-          : {})
+          : {
+              backgroundColor: "#f5f5f5",
+              color: "#23232a",
+            })
       }}
       onMouseEnter={e => e.currentTarget.style.background = dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.05)"}
       onMouseLeave={e => e.currentTarget.style.background = dark ? "#18181b" : "none"}
@@ -66,19 +70,19 @@ const MailboxIcon = ({ mailCount = 0, onClick, dark = false }) => {
         {/* ── FRONT FACE ── */}
         <path
           d="M8 17 L38 17 L38 32 L8 32 Z"
-          fill={w} stroke={s} strokeWidth="1.1" strokeLinejoin="round"
+          fill={w}
         />
 
         {/* ── ARCH — front (half-ellipse) ── */}
         <path
           d="M8 17 A15 11.5 0 0 1 38 17"
-          fill={w} stroke={s} strokeWidth="1.1"
+          fill={w}
         />
 
         {/* ── ARCH GLINT ── */}
         <path
           d="M11 15 A13.5 10 0 0 1 35 15"
-          stroke={hi} strokeWidth="1" strokeLinecap="round" fill="none"
+          fill="none"
         />
 
         {/* ── MAIL SLOT ── */}
@@ -108,7 +112,7 @@ const MailboxIcon = ({ mailCount = 0, onClick, dark = false }) => {
               <rect
                 x={envX1} y={envTop}
                 width={envX2 - envX1} height={envBottom - envTop}
-                rx="1" fill={ef} stroke={s} strokeWidth="0.9"
+                rx="1" fill={ef}
               />
             </g>
 
@@ -128,7 +132,7 @@ const MailboxIcon = ({ mailCount = 0, onClick, dark = false }) => {
             <g clipPath="url(#envBottom)">
               <path
                 d={`M${envX1} ${slotY} L${(envX1 + envX2) / 2} ${slotY + 3} L${envX2} ${slotY}`}
-                stroke={m} strokeWidth="0.8" fill="none" strokeLinejoin="round"
+                fill="none"
               />
             </g>
           </g>
@@ -137,15 +141,13 @@ const MailboxIcon = ({ mailCount = 0, onClick, dark = false }) => {
         {/* ── FLAG POLE ── */}
         {isEmpty ? (
           <>
-            <line x1="34" y1="17" x2="34" y2="20"
-              stroke={m} strokeWidth="1.2" strokeLinecap="round" />
+            <line x1="34" y1="17" x2="34" y2="20" />
             {/* Flag resting flat on top */}
             <rect x="34" y="13" width="5" height="4" rx="0.6" fill="#FF3B30" />
           </>
         ) : (
           <>
-            <line x1="34" y1="4" x2="34" y2="20"
-              stroke={m} strokeWidth="1.2" strokeLinecap="round" />
+            <line x1="34" y1="4" x2="34" y2="20" />
             {/* Flag raised, pointing left */}
             <path d="M34 4 L34 11 L27 11 L27 4 Z" fill="#FF3B30" />
           </>
