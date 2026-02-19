@@ -329,7 +329,7 @@ const Home = ({ user }) => {
                 }}
                 onNavigateSubject={handleNavigateSubjectFromTree}
                 onMoveSubjectToFolder={handleTreeMoveSubject}
-                onNestFolder={logic.handleNestFolder}
+                onNestFolder={handleNestFolder}
                 onReorderSubject={handleTreeReorderSubject}
                 onDropWithOverlay={handleDropOnFolderWrapper}
             />
