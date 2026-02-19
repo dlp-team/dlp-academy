@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from "react";
 
 const MailboxIcon = ({ mailCount = 0, onClick, dark = false }) => {
   const isEmpty = mailCount === 0;
@@ -24,27 +24,15 @@ const MailboxIcon = ({ mailCount = 0, onClick, dark = false }) => {
     <button
       onClick={onClick}
       style={{
-        background: "none",
-        border: "none",
-        padding: "10px",
-        cursor: "pointer",
+        background: "none", border: "none",
+        padding: "10px", cursor: "pointer",
         position: "relative",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: "16px",
-        transition: "background 0.18s",
-        outline: "none",
-        WebkitTapHighlightColor: "transparent",
-        ...(dark
-          ? {
-              backgroundColor: "#18181b",
-              border: "1.5px solid #23232a",
-            }
-          : {})
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        borderRadius: "16px", transition: "background 0.18s",
+        outline: "none", WebkitTapHighlightColor: "transparent",
       }}
       onMouseEnter={e => e.currentTarget.style.background = dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.05)"}
-      onMouseLeave={e => e.currentTarget.style.background = dark ? "#18181b" : "none"}
+      onMouseLeave={e => e.currentTarget.style.background = "none"}
       title="Mailbox"
     >
       {/*
@@ -179,4 +167,97 @@ const MailboxIcon = ({ mailCount = 0, onClick, dark = false }) => {
   );
 };
 
-export default MailboxIcon;
+/* ─── Demo ─── */
+export default function App() {
+  const [dark,  setDark]  = useState(false);
+  const [count, setCount] = useState(0);
+
+  const bg   = dark ? "#1C1C1E" : "#F2F2F7";
+  const card = dark ? "#2C2C2E" : "#FFFFFF";
+  const text = dark ? "#FFFFFF" : "#1C1C1E";
+  const sub  = dark ? "rgba(255,255,255,0.4)" : "#8E8E93";
+  const sep  = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)";
+  const cOn  = "#007AFF";
+  const cOff = dark ? "#3A3A3C" : "#E5E5EA";
+  const ctOn = "#fff";
+  const ctOff= dark ? "rgba(255,255,255,0.65)" : "#3C3C43";
+
+  const states = [
+    { n: 0, label: "Empty", desc: "Flag down"        },
+    { n: 3, label: "Few",   desc: "Flag up"           },
+    { n: 8, label: "Many",  desc: "Envelope in slot"  },
+  ];
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: bg,
+      display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      gap: 52, transition: "background 0.3s",
+      fontFamily: '-apple-system, "SF Pro Display", Helvetica, Arial, sans-serif',
+    }}>
+
+      <button onClick={() => setDark(d => !d)} style={{
+        position: "fixed", top: 20, right: 20,
+        background: card, border: "none", borderRadius: 22,
+        padding: "9px 18px", cursor: "pointer",
+        color: text, fontSize: 13, fontWeight: 600, fontFamily: "inherit",
+        boxShadow: dark ? "0 2px 16px rgba(0,0,0,0.6)" : "0 2px 12px rgba(0,0,0,0.1)",
+        transition: "all 0.25s",
+        display: "flex", alignItems: "center", gap: 7,
+      }}>
+        <span>{dark ? "☀️" : "🌙"}</span>
+        {dark ? "Light" : "Dark"}
+      </button>
+
+      <div style={{ textAlign: "center", userSelect: "none" }}>
+        <p style={{ color: sub, fontSize: 11, fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase", margin: "0 0 6px" }}>
+          Icon
+        </p>
+        <h1 style={{ color: text, fontSize: 30, fontWeight: 700, margin: 0, letterSpacing: "-0.6px" }}>
+          Mailbox
+        </h1>
+      </div>
+
+      <div style={{ display: "flex", gap: 52, alignItems: "flex-end" }}>
+        {states.map(s => (
+          <div key={s.label} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+            <MailboxIcon mailCount={s.n} dark={dark} onClick={() => {}} />
+            <div style={{ textAlign: "center" }}>
+              <p style={{ color: text, fontSize: 13, fontWeight: 600, margin: "0 0 2px" }}>{s.label}</p>
+              <p style={{ color: sub, fontSize: 11, margin: 0 }}>{s.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{
+        background: card, borderRadius: 22,
+        padding: "28px 32px",
+        boxShadow: dark ? "0 4px 40px rgba(0,0,0,0.55)" : "0 1px 0 rgba(0,0,0,0.04), 0 4px 28px rgba(0,0,0,0.08)",
+        display: "flex", flexDirection: "column",
+        alignItems: "center", gap: 20, minWidth: 280,
+        transition: "background 0.3s",
+      }}>
+        <MailboxIcon mailCount={count} onClick={() => setCount(0)} dark={dark} />
+        <p style={{ color: sub, fontSize: 14, fontWeight: 500, margin: 0, textAlign: "center" }}>
+          {count === 0 ? "Inbox empty" : `${count} message${count !== 1 ? "s" : ""} · tap to clear`}
+        </p>
+        <div style={{ width: "100%", height: 1, background: sep }} />
+        <div style={{ display: "flex", gap: 8 }}>
+          {[0, 1, 3, 8, 25].map(n => (
+            <button key={n} onClick={() => setCount(n)} style={{
+              padding: "7px 15px", borderRadius: 20, border: "none",
+              background: count === n ? cOn : cOff,
+              color: count === n ? ctOn : ctOff,
+              fontSize: 13, fontWeight: 600, cursor: "pointer",
+              transition: "all 0.15s", fontFamily: "inherit",
+            }}>
+              {n}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
