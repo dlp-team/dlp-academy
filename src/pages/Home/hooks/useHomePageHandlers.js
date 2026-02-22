@@ -89,7 +89,7 @@ export const useHomePageHandlers = ({
             }
         }
         moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-        return false;
+        return true;
     };
 
     const handleBreadcrumbDrop = (targetFolderId, subjectId, droppedFolderId) => {
@@ -169,7 +169,7 @@ export const useHomePageHandlers = ({
                 }
             }
             moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-            return false;
+            return true;
         }
     };
 

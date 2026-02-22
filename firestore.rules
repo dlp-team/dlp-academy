@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isSignedIn() {
+        return request.auth != null;
+    }
+    
+    function isOwner() {
+        return resource.data.ownerId == request.auth.uid || resource.data.userId == request.auth.uid;
+    }
+    
+    function isShared() {
+      // verify the field exists and the user's UID is inside it
+      return request.auth.uid in resource.data.sharedWithUids;
+    }
+    
+    // Reglas para usuarios
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Reglas principales de Asignaturas
+    match /subjects/{subjectId} {
+      // Permite leer/escribir si estás autenticado (puedes hacerlo más estricto si quieres)
+      allow read, write: if isSignedIn();
+
+      // Reglas para la subcolección "topics"
+      match /topics/{topicId} {
+        allow read, write: if isSignedIn();
+
+        // 1. Pestaña "Generados por IA" (FALTABA ESTO)
+        match /resumen/{docId} {
+          allow read, write: if isSignedIn();
+        }
+
+        // 2. Pestaña "Mis Archivos" (FALTABA ESTO)
+        match /materials/{docId} {
+          allow read, write: if isSignedIn();
+        }
+
+        // 3. Tests y Resultados (Ya los tenías)
+        match /quizzes/{quizId} {
+          allow read, write: if isSignedIn();
+        }
+        match /quiz_results/{resultId} {
+          allow read, write: if isSignedIn();
+        }
+        match /documents/{docId} {
+          allow read, write: if isSignedIn();
+        }
+      }
+    }
+    
+    // Reglas para Carpetas (Folders)
+    match /folders/{folderId} {
+      allow create: if isSignedIn();
+      allow read, write: if isSignedIn();
+    }
+  }
+}

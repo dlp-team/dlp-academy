@@ -31,14 +31,14 @@ export const useHomePageState = ({ logic, searchQuery }) => {
             let current = folder;
             const path = new Set();
 
-            while (current && current.folderId) {
+            while (current && current.parentId) {
                 if (path.has(current.id)) {
-                    updateDoc(doc(db, 'folders', folder.id), { folderId: null });
+                    updateDoc(doc(db, 'folders', folder.id), { parentId: null });
                     fixedCount++;
                     break;
                 }
                 path.add(current.id);
-                current = allFolders.find(f => f.id === current.folderId);
+                current = allFolders.find(f => f.id === current.parentId);
             }
         });
 
@@ -106,18 +106,42 @@ export const useHomePageState = ({ logic, searchQuery }) => {
     ]);
 
     const displayedFolders = useMemo(() => {
-        if (logic.selectedTags && logic.selectedTags.length > 0 && logic.filteredFoldersByTags) {
-            return logic.filteredFoldersByTags;
-        }
-        if (searchQuery && logic.searchFolders) {
-            return logic.searchFolders;
-        }
         const allFolders = logic.folders || [];
         const currentId = logic.currentFolder ? logic.currentFolder.id : null;
-        return allFolders.filter(folder => {
-            if (currentId) return folder.parentId === currentId;
-            return !folder.parentId;
-        });
+
+        const descendantIds = new Set();
+        if (currentId) {
+            const queue = [currentId];
+            while (queue.length > 0) {
+                const parent = queue.shift();
+                const children = allFolders.filter(f => f.parentId === parent);
+                children.forEach(child => {
+                    if (!descendantIds.has(child.id)) {
+                        descendantIds.add(child.id);
+                        queue.push(child.id);
+                    }
+                });
+            }
+        }
+
+        const inCurrentScope = folder => {
+            if (!currentId) return !folder.parentId;
+            return folder.parentId === currentId || descendantIds.has(folder.id);
+        };
+
+        let scopedFolders = allFolders.filter(inCurrentScope);
+
+        if (logic.selectedTags && logic.selectedTags.length > 0 && logic.filteredFoldersByTags) {
+            const tagAllowed = new Set(logic.filteredFoldersByTags.map(f => f.id));
+            scopedFolders = scopedFolders.filter(f => tagAllowed.has(f.id));
+        }
+
+        if (searchQuery && logic.searchFolders) {
+            const searchAllowed = new Set(logic.searchFolders.map(f => f.id));
+            scopedFolders = scopedFolders.filter(f => searchAllowed.has(f.id));
+        }
+
+        return scopedFolders;
     }, [logic.folders, logic.currentFolder, logic.searchFolders, searchQuery, logic.selectedTags, logic.filteredFoldersByTags]);
 
     const activeModalFolder = useMemo(() => {

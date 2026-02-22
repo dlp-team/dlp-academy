@@ -69,7 +69,7 @@ const useHomeContentDnd = ({
                 const result = handleDropOnFolder(targetId, draggedData.id, draggedData.parentId);
                 if (result === true) overlayShown = true;
             }
-            if (!overlayShown && handleMoveSubjectWithSource) {
+            if (!overlayShown && !handleDropOnFolder && handleMoveSubjectWithSource) {
                 handleMoveSubjectWithSource(draggedData.id, targetId, draggedData.parentId);
             }
         } else if (draggedData.type === 'folder' && handleNestFolder) {
@@ -88,7 +88,7 @@ const useHomeContentDnd = ({
                     const result = handleDropOnFolder(target.id, dragged.id, dragged.parentId);
                     if (result === true) overlayShown = true;
                 }
-                if (!overlayShown && handleMoveSubjectWithSource) {
+                if (!overlayShown && !handleDropOnFolder && handleMoveSubjectWithSource) {
                     handleMoveSubjectWithSource(dragged.id, target.id, dragged.parentId);
                 }
             } else if (dragged.type === 'folder') {
@@ -104,19 +104,14 @@ const useHomeContentDnd = ({
                         const result = handleDropOnFolder(targetParentId, dragged.id, dragged.parentId);
                         if (result === true) overlayShown = true;
                     }
-                    if (!overlayShown && handleMoveSubjectWithSource) {
+                    if (!overlayShown && !handleDropOnFolder && handleMoveSubjectWithSource) {
                         handleMoveSubjectWithSource(dragged.id, targetParentId, dragged.parentId);
                     }
                 }
             } else if (dragged.type === 'folder') {
-                let overlayShown = false;
-                if (handleDropOnFolder) {
-                    const result = handleDropOnFolder(targetParentId, dragged.id, dragged.parentId);
-                    if (result === true) overlayShown = true;
-                }
-                if (!overlayShown && handleMoveFolderWithSource) {
+                if (handleMoveFolderWithSource) {
                     handleMoveFolderWithSource(dragged.id, dragged.parentId, targetParentId);
-                } else if (!overlayShown && handleNestFolder) {
+                } else if (handleNestFolder) {
                     handleNestFolder(targetParentId, dragged.id);
                 }
             }

@@ -22,3 +22,29 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Private local planning workspace
+.copilot-plans/
+
+
+# Firebase logs
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# Firebase Emulators
+.firebase/
+**/emulator-data/
+
+# Local configuration files
+# These often contain project-specific paths or local settings
+.firebaserc
+*-local.json
+
+# If you use functions, ignore the node_modules
+functions/node_modules/
+functions/lib/
+
+# OS generated files
+.DS_Store
+Thumbs.db

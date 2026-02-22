@@ -12,15 +12,15 @@ export const isDescendant = (possibleParentId, targetId, allFolders) => {
     let current = allFolders.find(f => f.id === targetId);
     const visited = new Set(); // Safety: Prevents browser freeze if DB is already corrupt
 
-    while (current && current.folderId) {
+    while (current && current.parentId) {
         // If we found the dragged folder in the ancestry of the target -> BLOCK IT
-        if (current.folderId === possibleParentId) return true;
+        if (current.parentId === possibleParentId) return true;
 
         // Safety Break: If we see the same folder twice, stop checking (Assume safe to avoid crash)
         if (visited.has(current.id)) return false;
         visited.add(current.id);
 
-        current = allFolders.find(f => f.id === current.folderId);
+        current = allFolders.find(f => f.id === current.parentId);
     }
     return false;
 };

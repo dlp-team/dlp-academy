@@ -45,35 +45,63 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         return subjects.filter(subject => selectedTags.every(tag => subject.tags?.includes(tag)));
     }, [subjects, selectedTags]);
 
+    const descendantFolderIds = useMemo(() => {
+        if (!currentFolder || !Array.isArray(folders) || folders.length === 0) return new Set();
+
+        const descendants = new Set();
+        const queue = [currentFolder.id];
+
+        while (queue.length > 0) {
+            const parentId = queue.shift();
+            const children = folders.filter(folder => folder.parentId === parentId);
+            children.forEach(child => {
+                if (!descendants.has(child.id)) {
+                    descendants.add(child.id);
+                    queue.push(child.id);
+                }
+            });
+        }
+
+        return descendants;
+    }, [folders, currentFolder]);
+
     const filteredFolders = useMemo(() => {
         if (!folders) return [];
-        if (searchQuery && searchQuery.trim().length > 0) {
-            const query = normalizeText(searchQuery);
-            return folders.filter(f => normalizeText(f.name).includes(query));
-        }
-        return folders.filter(f => {
-            if (currentFolder) {
-                return f.parentId === currentFolder.id;
-            }
-            return !f.parentId;
+
+        const query = searchQuery?.trim();
+        const hasQuery = Boolean(query && query.length > 0);
+        const normalizedQuery = hasQuery ? normalizeText(query) : '';
+
+        return folders.filter(folder => {
+            const inScope = currentFolder
+                ? folder.parentId === currentFolder.id || descendantFolderIds.has(folder.id)
+                : !folder.parentId;
+
+            if (!inScope) return false;
+            if (!hasQuery) return true;
+
+            return normalizeText(folder.name).includes(normalizedQuery);
         });
-    }, [folders, currentFolder, searchQuery]);
+    }, [folders, currentFolder, searchQuery, descendantFolderIds]);
 
     const filteredSubjects = useMemo(() => {
         if (!subjects) return [];
 
-        if (searchQuery) {
-            const query = normalizeText(searchQuery);
-            return subjects.filter(s => normalizeText(s.name).includes(query));
-        }
+        const query = searchQuery?.trim();
+        const hasQuery = Boolean(query && query.length > 0);
+        const normalizedQuery = hasQuery ? normalizeText(query) : '';
 
-        return subjects.filter(s => {
-            if (currentFolder) {
-                return s.folderId === currentFolder.id;
-            }
-            return !s.folderId;
+        return subjects.filter(subject => {
+            const inScope = currentFolder
+                ? subject.folderId === currentFolder.id || descendantFolderIds.has(subject.folderId)
+                : !subject.folderId;
+
+            if (!inScope) return false;
+            if (!hasQuery) return true;
+
+            return normalizeText(subject.name).includes(normalizedQuery);
         });
-    }, [subjects, currentFolder, searchQuery]);
+    }, [subjects, currentFolder, searchQuery, descendantFolderIds]);
 
     const filteredFoldersByTags = useMemo(() => {
         if (selectedTags.length === 0) return folders;
@@ -303,11 +331,24 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
             return false;
         };
 
-        const sFolders = folders.filter(f => isRelated(f) && normalizeText(f.name).includes(query));
-        const sSubjects = subjects.filter(s => isRelated(s) && normalizeText(s.name).includes(query));
+        const sFolders = folders.filter(f => {
+            if (!isRelated(f)) return false;
+            if (!normalizeText(f.name).includes(query)) return false;
+
+            if (!currentFolder) return true;
+            return f.parentId === currentFolder.id || descendantFolderIds.has(f.id);
+        });
+
+        const sSubjects = subjects.filter(s => {
+            if (!isRelated(s)) return false;
+            if (!normalizeText(s.name).includes(query)) return false;
+
+            if (!currentFolder) return true;
+            return s.folderId === currentFolder.id || descendantFolderIds.has(s.folderId);
+        });
 
         return { searchFolders: sFolders, searchSubjects: sSubjects };
-    }, [folders, subjects, searchQuery, user]);
+    }, [folders, subjects, searchQuery, user, currentFolder, descendantFolderIds]);
 
     useEffect(() => {
         const closeMenu = () => setActiveMenu(null);

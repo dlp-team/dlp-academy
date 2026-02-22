@@ -223,7 +223,7 @@ export const useHomeHandlers = ({
                     return;
                 }
 
-                await updateFolder(draggedId, { folderId: targetFolderId });
+                await updateFolder(draggedId, { parentId: targetFolderId });
             }
         } catch (error) {
             console.error('❌ Error moving item:', error);
@@ -241,7 +241,7 @@ export const useHomeHandlers = ({
                 return;
             }
 
-            await updateFolder(folderToNestId, { folderId: targetFolderId });
+            await updateFolder(folderToNestId, { parentId: targetFolderId });
         } catch (error) {
             console.error('❌ Error nesting folder:', error);
             alert('Error nesting folder. Check console for details.');

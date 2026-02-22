@@ -1,6 +1,7 @@
 // src/pages/Home/Home.jsx
 import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 // Logic Hook
 import { useHomeLogic } from './hooks/useHomeLogic';
 import { useFolders } from '../../hooks/useFolders'; 
@@ -30,6 +31,7 @@ const Home = ({ user }) => {
     }, []);
 
     const [searchQuery, setSearchQuery] = useState('');
+    const [searchParams, setSearchParams] = useSearchParams();
     const logic = useHomeLogic(user, searchQuery);
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
     const {
@@ -56,6 +58,43 @@ const Home = ({ user }) => {
         sharedActiveFilter,
         setSharedActiveFilter
     } = useHomePageState({ logic, searchQuery });
+
+    const folderIdFromUrl = searchParams.get('folderId');
+
+    React.useEffect(() => {
+        if (!folderIdFromUrl || !Array.isArray(logic.folders) || logic.folders.length === 0) return;
+
+        const targetFolder = logic.folders.find(folder => folder.id === folderIdFromUrl);
+
+        if (targetFolder && (!logic.currentFolder || logic.currentFolder.id !== targetFolder.id)) {
+            logic.setCurrentFolder(targetFolder);
+            localStorage.setItem('dlp_last_folderId', targetFolder.id);
+        }
+
+        if (!targetFolder) {
+            const next = new URLSearchParams(searchParams);
+            next.delete('folderId');
+            setSearchParams(next, { replace: true });
+        }
+    }, [folderIdFromUrl, logic.folders]);
+
+    React.useEffect(() => {
+        const next = new URLSearchParams(searchParams);
+        const currentId = logic.currentFolder ? logic.currentFolder.id : null;
+
+        if (currentId) {
+            if (next.get('folderId') !== currentId) {
+                next.set('folderId', currentId);
+                setSearchParams(next, { replace: true });
+            }
+            return;
+        }
+
+        if (next.has('folderId')) {
+            next.delete('folderId');
+            setSearchParams(next, { replace: true });
+        }
+    }, [logic.currentFolder?.id]);
 
     const {
         handleSaveFolderWrapper,
@@ -199,6 +238,7 @@ const Home = ({ user }) => {
                             allFolders={logic.folders || []}
                             onDropOnBreadcrumb={handleBreadcrumbDrop}
                             draggedItem={logic.draggedItem}
+                            draggedItemType={logic.draggedItemType}
                         />
 
                         {logic.loading ? (
