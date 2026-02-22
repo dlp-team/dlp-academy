@@ -1,4 +1,6 @@
 // src/pages/Home/hooks/useHomeHandlers.js
+import { canEdit } from '../../../utils/permissionUtils';
+
 export const useHomeHandlers = ({
     user,
     subjects,
@@ -32,7 +34,8 @@ export const useHomeHandlers = ({
     deleteFolderOnly,
     updatePreference,
     navigate,
-    isDescendant
+    isDescendant,
+    createShortcut
 }) => {
     const handleSaveSubject = async formData => {
         const payload = {
@@ -211,23 +214,59 @@ export const useHomeHandlers = ({
         try {
             if (type === 'subject') {
                 const subject = subjects.find(s => s.id === draggedId);
-                if (subject && subject.folderId !== targetFolderId) {
+                if (!subject) return;
+                
+                // Check if user can edit this subject (i.e., owns it or is an editor)
+                const userCanEdit = canEdit(subject, user.uid);
+                
+                if (!userCanEdit) {
+                    // User is just a viewer - create a shortcut instead of moving
+                    console.log('📌 Creating shortcut for shared subject:', subject.name);
+                    if (createShortcut) {
+                        await createShortcut(
+                            draggedId,
+                            'subject',
+                            targetFolderId,
+                            user.institutionId || 'default'
+                        );
+                    }
+                } else if (subject.folderId !== targetFolderId) {
+                    // User owns or can edit - perform normal move
                     await updateSubject(draggedId, { folderId: targetFolderId });
                     touchSubject(draggedId);
                 }
             } else if (type === 'folder') {
                 if (draggedId === targetFolderId) return;
 
-                if (isDescendant(draggedId, targetFolderId, folders)) {
-                    console.warn('🚫 BLOCKED: Circular dependency detected.');
-                    return;
+                const folder = folders.find(f => f.id === draggedId);
+                if (!folder) return;
+                
+                // Check if user can edit this folder
+                const userCanEdit = canEdit(folder, user.uid);
+                
+                if (!userCanEdit) {
+                    // User is just a viewer - create a shortcut instead of moving
+                    console.log('📌 Creating shortcut for shared folder:', folder.name);
+                    if (createShortcut) {
+                        await createShortcut(
+                            draggedId,
+                            'folder',
+                            targetFolderId,
+                            user.institutionId || 'default'
+                        );
+                    }
+                } else {
+                    // User owns or can edit - check for circular dependency and move
+                    if (isDescendant(draggedId, targetFolderId, folders)) {
+                        console.warn('🚫 BLOCKED: Circular dependency detected.');
+                        return;
+                    }
+                    await updateFolder(draggedId, { parentId: targetFolderId });
                 }
-
-                await updateFolder(draggedId, { parentId: targetFolderId });
             }
         } catch (error) {
-            console.error('❌ Error moving item:', error);
-            alert('Error moving item. Check console for details.');
+            console.error('❌ Error handling drop:', error);
+            alert('Error processing action. Check console for details.');
         }
     };
 

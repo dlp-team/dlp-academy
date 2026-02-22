@@ -268,6 +268,7 @@ const Home = ({ user }) => {
                                         setSubjectModalConfig={logic.setSubjectModalConfig}
                                         setFolderModalConfig={logic.setFolderModalConfig}
                                         setDeleteConfig={logic.setDeleteConfig}
+                                        onDeleteShortcut={logic.deleteShortcut}
                                         
                                         handleSelectSubject={(id) => logic.navigate(`/home/subject/${id}`)}
                                         handleOpenFolder={(folder) => {

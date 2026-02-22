@@ -1,8 +1,11 @@
 // src/pages/Home/hooks/useHomeState.js
 import { useEffect, useMemo, useState } from 'react';
 import { normalizeText } from '../../../utils/stringUtils';
+import { useShortcuts } from '../../../hooks/useShortcuts';
 
 export const useHomeState = ({ user, searchQuery = '', subjects, folders, preferences, loadingPreferences }) => {
+    // Fetch user's shortcuts
+    const { resolvedShortcuts, loading: loadingShortcuts } = useShortcuts(user);
     const [viewMode, setViewMode] = useState(preferences?.viewMode || 'grid');
     const [layoutMode, setLayoutMode] = useState(preferences?.layoutMode || 'grid');
     const [cardScale, setCardScale] = useState(preferences?.cardScale || 100);
@@ -84,6 +87,47 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         });
     }, [folders, currentFolder, searchQuery, descendantFolderIds]);
 
+    // Merge shortcuts with folders (deduplication by targetId)
+    const foldersWithShortcuts = useMemo(() => {
+        if (!resolvedShortcuts || resolvedShortcuts.length === 0) return filteredFolders;
+
+        // Get folder shortcuts that match current scope
+        const folderShortcuts = resolvedShortcuts.filter(s => {
+            if (s.targetType !== 'folder') return false;
+            
+            // Check if shortcut belongs in current scope
+            const inScope = currentFolder
+                ? s.parentId === currentFolder.id || descendantFolderIds.has(s.parentId)
+                : !s.parentId;
+            
+            return inScope;
+        });
+
+        // Deduplicate: if direct folder exists, don't add shortcut
+        const seen = new Set();
+        const merged = [];
+
+        // Add direct folders first
+        filteredFolders.forEach(folder => {
+            const key = `folder:${folder.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(folder);
+            }
+        });
+
+        // Add shortcuts only if target not already present
+        folderShortcuts.forEach(shortcut => {
+            const key = `folder:${shortcut.targetId}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(shortcut);
+            }
+        });
+
+        return merged;
+    }, [filteredFolders, resolvedShortcuts, currentFolder, descendantFolderIds]);
+
     const filteredSubjects = useMemo(() => {
         if (!subjects) return [];
 
@@ -102,6 +146,47 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
             return normalizeText(subject.name).includes(normalizedQuery);
         });
     }, [subjects, currentFolder, searchQuery, descendantFolderIds]);
+
+    // Merge shortcuts with subjects (deduplication by targetId)
+    const subjectsWithShortcuts = useMemo(() => {
+        if (!resolvedShortcuts || resolvedShortcuts.length === 0) return filteredSubjects;
+
+        // Get subject shortcuts that match current scope
+        const subjectShortcuts = resolvedShortcuts.filter(s => {
+            if (s.targetType !== 'subject') return false;
+            
+            // For subjects, use shortcutParentId (where the shortcut lives)
+            const inScope = currentFolder
+                ? s.shortcutParentId === currentFolder.id || (s.shortcutParentId && descendantFolderIds.has(s.shortcutParentId))
+                : !s.shortcutParentId;
+            
+            return inScope;
+        });
+
+        // Deduplicate: if direct subject exists in current scope, don't add shortcut
+        const seen = new Set();
+        const merged = [];
+
+        // Add direct subjects first
+        filteredSubjects.forEach(subject => {
+            const key = `subject:${subject.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(subject);
+            }
+        });
+
+        // Add shortcuts only if target not already present
+        subjectShortcuts.forEach(shortcut => {
+            const key = `subject:${shortcut.targetId}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(shortcut);
+            }
+        });
+
+        return merged;
+    }, [filteredSubjects, resolvedShortcuts, currentFolder, descendantFolderIds]);
 
     const filteredFoldersByTags = useMemo(() => {
         if (selectedTags.length === 0) return folders;
@@ -411,13 +496,15 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         orderedFolders,
         allTags,
         filteredFoldersByTags,
-        filteredFolders,
-        filteredSubjects,
+        filteredFolders: foldersWithShortcuts,
+        filteredSubjects: subjectsWithShortcuts,
         searchFolders,
         searchSubjects,
         sharedFolders,
         sharedSubjects,
         filteredSubjectsByTags,
-        isDragAndDropEnabled
+        isDragAndDropEnabled,
+        shortcuts: resolvedShortcuts || [],
+        loadingShortcuts
     };
 };

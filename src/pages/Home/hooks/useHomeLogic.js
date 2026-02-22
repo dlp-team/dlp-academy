@@ -2,6 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useSubjects } from '../../../hooks/useSubjects';
 import { useFolders } from '../../../hooks/useFolders';
+import { useShortcuts } from '../../../hooks/useShortcuts';
 import { useUserPreferences } from '../../../hooks/useUserPreferences';
 import { isDescendant } from '../../../utils/folderUtils';
 import { useHomeState } from './useHomeState';
@@ -24,6 +25,17 @@ export const useHomeLogic = (user, searchQuery = '') => {
         unshareFolder,
         addSubjectToFolder
     } = useFolders(user);
+    
+    // Shortcuts Logic
+    const { 
+        shortcuts,
+        resolvedShortcuts,
+        loading: loadingShortcuts,
+        createShortcut,
+        deleteShortcut,
+        moveShortcut,
+        deleteOrphanedShortcuts
+    } = useShortcuts(user);
 
     const { 
         preferences, 
@@ -136,7 +148,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
         deleteFolderOnly,
         updatePreference,
         navigate,
-        isDescendant
+        isDescendant,
+        createShortcut
     });
 
 
@@ -145,10 +158,12 @@ export const useHomeLogic = (user, searchQuery = '') => {
         // Data
         subjects, 
         folders,
+        shortcuts,
         searchFolders,
         searchSubjects,
         loading,
         loadingFolders,
+        loadingShortcuts,
         sharedFolders,
         sharedSubjects,
         groupedContent,
@@ -208,6 +223,12 @@ export const useHomeLogic = (user, searchQuery = '') => {
         unshareFolder,
         shareSubject,
         unshareSubject,
+        
+        // Shortcut Functions
+        createShortcut,
+        deleteShortcut,
+        moveShortcut,
+        deleteOrphanedShortcuts,
 
         // Navigation
         navigate
