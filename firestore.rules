@@ -58,5 +58,13 @@ service cloud.firestore {
       allow create: if isSignedIn();
       allow read, write: if isSignedIn();
     }
+
+    // Reglas para Shortcuts (en la raíz)
+    match /shortcuts/{shortcutId} {
+      // Solo el dueño del shortcut puede leer, crear o borrar su propio shortcut
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow read, delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      // (Opcional) Para multi-tenant: && resource.data.institutionId == request.auth.token.institutionId
+    }
   }
 }
