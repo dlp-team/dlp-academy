@@ -6,56 +6,46 @@ param(
     [string]$branch = $(git branch --show-current)
 )
 
-# 1. Local Validation
-Write-Host "--- Validating Firestore rules ---" -ForegroundColor Cyan
-firebase firestore:rules:check 2>$null 
-
-$testRules = Get-Content ./firestore.rules
-if ($testRules -match "service cloud.firestore") {
-    Write-Host "Basic syntax looks okay." -ForegroundColor Green
-} else {
-    Write-Host "!!! Critical Error: firestore.rules seems corrupted!" -ForegroundColor Red
-    return
+# 1. Quick Syntax Check (Optional but recommended)
+# This ensures you aren't pushing a file with a glaring error
+if (Test-Path ./firestore.rules) {
+    $testRules = Get-Content ./firestore.rules
+    if ($testRules -match "service cloud.firestore") {
+        Write-Host "--- Firestore rules file looks healthy ---" -ForegroundColor Green
+    } else {
+        Write-Host "!!! Warning: firestore.rules looks corrupted or empty!" -ForegroundColor Red
+        $continue = Read-Host "Push anyway? (y/n)"
+        if ($continue -ne "y") { return }
+    }
 }
 
-
-# 2. Preparation Summary
-Write-Host "`n--- DEPLOYMENT SUMMARY ---" -ForegroundColor Gray
+# 2. Summary
+Write-Host "`n--- GIT PUSH SUMMARY ---" -ForegroundColor Gray
 Write-Host "Message: $msg"
 Write-Host "Branch:  $branch"
-Write-Host "--------------------------"
+Write-Host "------------------------"
 
-# 3. Double Confirmation for Main Branch
+# 3. Double Confirmation for Main
 if ($branch -eq "main") {
-    Write-Host "!!! WARNING: You are deploying to the     MAIN     branch !!!" -ForegroundColor Magentat
-    $confirm = Read-Host "Type   'YES'   to confirm production deployment"
+    Write-Host "!!! WARNING: You are pushing to the MAIN branch !!!" -ForegroundColor Magenta
+    $confirm = Read-Host "Type 'YES' to confirm"
     if ($confirm -ne "YES") {
-        Write-Host "Deployment cancelled by user." -ForegroundColor Yellow
+        Write-Host "Push cancelled." -ForegroundColor Yellow
         return
     }
 } else {
-    # Single confirmation for other branches
-    Write-Host "Press [ENTER] to confirm, or [CTRL+C] to cancel..." -ForegroundColor Yellow
+    Write-Host "Press [ENTER] to push, or [CTRL+C] to cancel..." -ForegroundColor Yellow
     $null = Read-Host
 }
 
 # 4. Git Commands
-Write-Host ">>> Pushing to Git..." -ForegroundColor Gray
+Write-Host ">>> Executing Git commands..." -ForegroundColor Gray
 git add .
 git commit -m "$msg"
 git push origin $branch
 
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "!!! Git push failed. Deployment aborted." -ForegroundColor Red
-    return
-}
-
-# 5. Firebase Deployment
-Write-Host ">>> Deploying to Firestore..." -ForegroundColor Cyan
-firebase deploy --only firestore:rules
-
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "`n*** SUCCESS: Rules are live on $branch! ***" -ForegroundColor Green
+    Write-Host "`n*** SUCCESS: Pushed to $branch ***" -ForegroundColor Green
 } else {
-    Write-Host "`n!!! Deployment failed. Check the logs above." -ForegroundColor Red
+    Write-Host "`n!!! Git push failed." -ForegroundColor Red
 }
