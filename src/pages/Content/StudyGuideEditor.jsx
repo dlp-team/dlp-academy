@@ -5,10 +5,11 @@ import {
     ChevronLeft, Plus, Trash2, Save, Eye,
     ChevronDown, ChevronUp, BookOpen, Calculator, AlertCircle,
     CheckCircle2, Loader2, PenLine, X, Copy, MoveUp, MoveDown,
-    LayoutList, Sparkles
+    LayoutList, Sparkles, ShieldAlert
 } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from "../../firebase/config";
+import { db } from '../../firebase/config';
+import { canEdit } from '../../utils/permissionUtils';
 
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
@@ -147,13 +148,14 @@ const SectionEditor = ({ section, index, total, topicGradient, baseColor, onUpda
 
 // ==================== MAIN COMPONENT ====================
 
-const StudyGuideEditor = () => {
+const StudyGuideEditor = ({ user }) => {
     const { subjectId, topicId, guideId, fileId } = useParams();
     const activeDocId = fileId || guideId;
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [hasEditPermission, setHasEditPermission] = useState(false);
     const [topicGradient, setTopicGradient] = useState('from-indigo-500 to-purple-600');
     const [toast, setToast] = useState(null);
 
@@ -181,13 +183,30 @@ const StudyGuideEditor = () => {
         const load = async () => {
             if (!activeDocId) return;
             try {
-                // 1. Cargar color de la SUBJECT (Prioridad absoluta)
+                // 1. Check permissions first
+                const topicSnap = await getDoc(doc(db, 'subjects', subjectId, 'topics', topicId));
+                if (!topicSnap.exists()) {
+                    showToast('Tema no encontrado', 'error');
+                    navigate(-1);
+                    return;
+                }
+                
+                const topicData = { id: topicSnap.id, ...topicSnap.data() };
+                const hasPermission = canEdit(topicData, user);
+                setHasEditPermission(hasPermission);
+                
+                if (!hasPermission) {
+                    setLoading(false);
+                    return;
+                }
+                
+                // 2. Load subject color (Priority)
                 const subjectSnap = await getDoc(doc(db, 'subjects', subjectId));
                 if (subjectSnap.exists() && subjectSnap.data().color) {
                     setTopicGradient(subjectSnap.data().color);
                 }
 
-                // 2. Cargar guía
+                // 3. Load study guide
                 const guideSnap = await getDoc(doc(db, 'subjects', subjectId, 'topics', topicId, 'resumen', activeDocId));
                 if (guideSnap.exists()) {
                     const raw = guideSnap.data();
@@ -203,7 +222,7 @@ const StudyGuideEditor = () => {
             }
         };
         load();
-    }, [subjectId, topicId, activeDocId, showToast]);
+    }, [subjectId, topicId, activeDocId, showToast, navigate, user]);
 
     const handleSave = async () => {
         setSaving(true);
@@ -224,6 +243,37 @@ const StudyGuideEditor = () => {
     };
 
     if (loading) return <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50 font-bold text-slate-400"><Loader2 className="w-10 h-10 animate-spin" /> Cargando editor...</div>;
+
+    // *** PERMISSION DENIED UI ***
+    if (!hasEditPermission) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-6">
+                <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200 p-12 text-center">
+                    <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <ShieldAlert className="w-10 h-10 text-amber-600" />
+                    </div>
+                    <h1 className="text-3xl font-black text-slate-800 mb-3">Sin permisos de edición</h1>
+                    <p className="text-slate-500 mb-8 leading-relaxed">
+                        No tienes permisos para editar esta guía de estudio. Solo el creador o colaboradores con acceso de edición pueden modificar el contenido.
+                    </p>
+                    <div className="flex flex-col gap-3">
+                        <button 
+                            onClick={() => navigate(-1)}
+                            className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all"
+                        >
+                            <ChevronLeft className="w-5 h-5" /> Volver
+                        </button>
+                        <button 
+                            onClick={goToView}
+                            className="w-full flex items-center justify-center gap-2 bg-slate-100 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-200 transition-all"
+                        >
+                            <Eye className="w-5 h-5" /> Ver en modo lectura
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={`min-h-screen bg-slate-50 pb-32`}>

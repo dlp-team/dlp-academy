@@ -3,10 +3,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
     ChevronLeft, Save, Plus, Trash2, CheckCircle2, 
-    Circle, Loader2, GripVertical, X, Pencil, Eye
+    Circle, Loader2, GripVertical, X, Pencil, Eye, ShieldAlert
 } from 'lucide-react';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { canEdit } from '../../utils/permissionUtils';
 
 // Importaciones para matemáticas
 import 'katex/dist/katex.min.css';
@@ -92,12 +93,13 @@ const EditableMathText = ({ value, onChange, placeholder, isTextArea = false, cl
 };
 
 // --- COMPONENTE PRINCIPAL ---
-const QuizEdit = () => {
+const QuizEdit = ({ user }) => {
     const { subjectId, topicId, quizId } = useParams();
     const navigate = useNavigate();
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [hasEditPermission, setHasEditPermission] = useState(false);
     const [quizData, setQuizData] = useState({
         title: '',
         questions: []
@@ -106,6 +108,27 @@ const QuizEdit = () => {
     useEffect(() => {
         const fetchQuiz = async () => {
             try {
+                // Fetch topic to check permissions
+                const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
+                const topicSnap = await getDoc(topicRef);
+                
+                if (!topicSnap.exists()) {
+                    alert("Tema no encontrado");
+                    navigate(-1);
+                    return;
+                }
+                
+                const topicData = { id: topicSnap.id, ...topicSnap.data() };
+                const hasPermission = canEdit(topicData, user);
+                setHasEditPermission(hasPermission);
+                
+                if (!hasPermission) {
+                    // Redirect viewers to read-only quiz view
+                    setLoading(false);
+                    return;
+                }
+                
+                // Fetch quiz data if user has permission
                 const quizRef = doc(db, "subjects", subjectId, "topics", topicId, "quizzes", quizId);
                 const snap = await getDoc(quizRef);
                 if (snap.exists()) setQuizData(snap.data());
@@ -114,7 +137,7 @@ const QuizEdit = () => {
             finally { setLoading(false); }
         };
         fetchQuiz();
-    }, [subjectId, topicId, quizId, navigate]);
+    }, [subjectId, topicId, quizId, navigate, user]);
 
     // --- HANDLERS ---
     const updateField = (field, value) => setQuizData({ ...quizData, [field]: value });
@@ -169,6 +192,37 @@ const QuizEdit = () => {
     };
 
     if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin w-8 h-8 text-indigo-600"/></div>;
+
+    // *** PERMISSION DENIED UI ***
+    if (!hasEditPermission) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-6">
+                <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200 p-12 text-center">
+                    <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <ShieldAlert className="w-10 h-10 text-amber-600" />
+                    </div>
+                    <h1 className="text-3xl font-black text-slate-800 mb-3">Sin permisos de edición</h1>
+                    <p className="text-slate-500 mb-8 leading-relaxed">
+                        No tienes permisos para editar este test. Solo el creador o colaboradores con acceso de edición pueden modificar el contenido.
+                    </p>
+                    <div className="flex flex-col gap-3">
+                        <button 
+                            onClick={() => navigate(-1)}
+                            className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all"
+                        >
+                            <ChevronLeft className="w-5 h-5" /> Volver
+                        </button>
+                        <button 
+                            onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quizId}`)}
+                            className="w-full flex items-center justify-center gap-2 bg-slate-100 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-200 transition-all"
+                        >
+                            <Eye className="w-5 h-5" /> Ver en modo lectura
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-32">

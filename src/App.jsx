@@ -136,7 +136,11 @@ function App() {
         />
         <Route 
           path="/home/subject/:subjectId/topic/:topicId/resumen/:guideId/edit" 
-          element={<StudyGuideEditor />} 
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <StudyGuideEditor user={user} />
+            </ProtectedRoute>
+          } 
         />
 
         <Route 

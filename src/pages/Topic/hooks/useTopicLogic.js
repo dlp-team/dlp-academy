@@ -1,11 +1,12 @@
 // src/pages/Topic/hooks/useTopicLogic.js
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
     FileText, Award, Sigma, BookOpen, NotebookPen, Pencil, Target, Trophy 
 } from 'lucide-react';
 import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { canEdit, canView, canDelete, shouldShowEditUI, shouldShowDeleteUI } from '../../../utils/permissionUtils';
 
 export const useTopicLogic = (user) => {
     const navigate = useNavigate();
@@ -333,6 +334,32 @@ export const useTopicLogic = (user) => {
         setShowQuizModal(true);
     };
 
+    // --- PERMISSION CHECKS ---
+    const topicPermissions = useMemo(() => {
+        if (!topic || !user) return {
+            canEdit: false,
+            canView: false,
+            canDelete: false,
+            showEditUI: false,
+            showDeleteUI: false,
+            isViewer: false
+        };
+
+        const hasEditPermission = canEdit(topic, user);
+        const hasViewPermission = canView(topic, user);
+        const hasDeletePermission = canDelete(topic, user);
+        const isViewerOnly = hasViewPermission && !hasEditPermission;
+
+        return {
+            canEdit: hasEditPermission,
+            canView: hasViewPermission,
+            canDelete: hasDeletePermission,
+            showEditUI: shouldShowEditUI(topic, user),
+            showDeleteUI: shouldShowDeleteUI(topic, user),
+            isViewer: isViewerOnly
+        };
+    }, [topic, user]);
+
     return {
         // Data
         subject,
@@ -340,6 +367,9 @@ export const useTopicLogic = (user) => {
         loading,
         uploading,
         activeTab, setActiveTab,
+        
+        // Permissions
+        permissions: topicPermissions,
         
         // UI State
         toast, setToast,

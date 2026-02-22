@@ -224,6 +224,7 @@ const Topic = ({ user }) => {
                     subject={logic.subject}
                     globalProgress={globalProgress}
                     handleGenerateQuizSubmit={handleGenerateQuizSubmit}
+                    permissions={logic.permissions}
                 />
                 <TopicTabs 
                     {...logic}
@@ -235,6 +236,7 @@ const Topic = ({ user }) => {
                     subject={logic.subject}
                     handleManualUpload={handleLocalUpload}
                     uploading={isUploadingLocal}
+                    permissions={logic.permissions}
                 />
             </main>
             <TopicModals 
