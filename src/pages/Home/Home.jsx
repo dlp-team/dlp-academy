@@ -249,6 +249,7 @@ const Home = ({ user }) => {
                             <>
                                 {hasContent ? (
                                     <HomeContent 
+                                        user={user}
                                         subjects={logic.subjects || []}
                                         folders={logic.folders || []}
                                         groupedContent={logic.groupedContent || {}} 

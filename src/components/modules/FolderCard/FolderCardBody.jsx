@@ -3,9 +3,11 @@ import React, { useRef, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem } from '../../../utils/permissionUtils';
 
 const FolderCardBody = ({
     folder,
+    user,
     isModern,
     gradientClass,
     fillColor,
@@ -21,6 +23,10 @@ const FolderCardBody = ({
     onShowContents,
     filterOverlayOpen
 }) => {
+    // Permission checks
+    const showEditUI = user && shouldShowEditUI(folder, user.uid);
+    const showDeleteUI = user && shouldShowDeleteUI(folder, user.uid);
+    const canShare = user && canEditItem(folder, user.uid); // Only editors can share
     // 1. Logic: No useState needed here. We use CSS for hover states.
     // Enforce a minimum scale of 1 for the menu
     const menuScale = Math.max(scaleMultiplier, 1);
@@ -161,21 +167,29 @@ const FolderCardBody = ({
                                         transformOrigin: 'top left'
                                     }}
                                 >
-                                    {folder.isOwner ? (
+                                    {(showEditUI || showDeleteUI) ? (
                                         <>
-                                            <button onClick={(e) => { e.stopPropagation(); onEdit(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
-                                                <Edit2 size={14 * menuScale} /> Editar
-                                            </button>
-                                            <button onClick={(e) => { e.stopPropagation(); onShare(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
-                                                <Share2 size={14 * menuScale} /> Compartir
-                                            </button>
-                                            <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
-                                            <button onClick={(e) => { e.stopPropagation(); onDelete(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
-                                                <Trash2 size={14 * menuScale} /> Eliminar
-                                            </button>
+                                            {showEditUI && (
+                                                <button onClick={(e) => { e.stopPropagation(); onEdit(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                    <Edit2 size={14 * menuScale} /> Editar
+                                                </button>
+                                            )}
+                                            {canShare && (
+                                                <button onClick={(e) => { e.stopPropagation(); onShare(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                    <Share2 size={14 * menuScale} /> Compartir
+                                                </button>
+                                            )}
+                                            {(showEditUI || showDeleteUI) && canShare && (
+                                                <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
+                                            )}
+                                            {showDeleteUI && (
+                                                <button onClick={(e) => { e.stopPropagation(); onDelete(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                    <Trash2 size={14 * menuScale} /> Eliminar
+                                                </button>
+                                            )}
                                         </>
                                     ) : (
-                                        <div className="p-2 text-xs text-center text-gray-500">Solo lectura</div>
+                                        <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
                                     )}
                                 </div>,
                                 document.body

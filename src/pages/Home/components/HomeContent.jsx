@@ -12,6 +12,7 @@ import useHomeContentDnd from '../hooks/useHomeContentDnd';
 import useAutoScrollOnDrag from '../../../hooks/useAutoScrollOnDrag';
 
 const HomeContent = ({
+    user,
     viewMode = 'grid',
     layoutMode = 'grid',
     cardScale = 100,
@@ -234,6 +235,7 @@ const HomeContent = ({
                                                 <div key={`folder-${folder.id}`}>
                                                     <FolderCard
                                                         folder={folder}
+                                                        user={user}
                                                         allFolders={folders}
                                                         onOpen={handleOpenFolder}
                                                         activeMenu={activeMenu}
@@ -264,6 +266,7 @@ const HomeContent = ({
                                                 <div key={`${groupName}-${subject.id}`}>
                                                     <SubjectCard
                                                         subject={subject}
+                                                        user={user}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
                                                         onSelect={handleSelectSubject}

@@ -4,9 +4,11 @@ import { createPortal } from 'react-dom';
 import { ChevronRight, MoreVertical, Edit2, Trash2, Share2 } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon'; // Adjust path if necessary
 import { Users } from 'lucide-react';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem } from '../../../utils/permissionUtils';
 
 const SubjectCardFront = ({
     subject,
+    user,
     onSelect,
     activeMenu,
     onToggleMenu,
@@ -21,6 +23,10 @@ const SubjectCardFront = ({
         filterOverlayOpen = false,
         onCloseFilterOverlay
 }) => {
+    // Permission checks
+    const showEditUI = user && shouldShowEditUI(subject, user.uid);
+    const showDeleteUI = user && shouldShowDeleteUI(subject, user.uid);
+    const canShare = user && canEditItem(subject, user.uid);
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
 
@@ -143,15 +149,30 @@ const SubjectCardFront = ({
                                 transformOrigin: 'top left'
                             }}
                         >
-                            <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
-                                <Edit2 size={14 * menuScale} /> Editar
-                            </button>
-                            <button onClick={(e) => { e.stopPropagation(); onShare(subject); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
-                                <Share2 size={14 * menuScale} /> Compartir
-                            </button>
-                            <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
-                                <Trash2 size={14 * menuScale} /> Eliminar
-                            </button>
+                            {(showEditUI || showDeleteUI) ? (
+                                <>
+                                    {showEditUI && (
+                                        <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                            <Edit2 size={14 * menuScale} /> Editar
+                                        </button>
+                                    )}
+                                    {canShare && (
+                                        <button onClick={(e) => { e.stopPropagation(); onShare(subject); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                            <Share2 size={14 * menuScale} /> Compartir
+                                        </button>
+                                    )}
+                                    {(showEditUI || canShare) && showDeleteUI && (
+                                        <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
+                                    )}
+                                    {showDeleteUI && (
+                                        <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                            <Trash2 size={14 * menuScale} /> Eliminar
+                                        </button>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
+                            )}
                         </div>,
                         document.body
                     )}

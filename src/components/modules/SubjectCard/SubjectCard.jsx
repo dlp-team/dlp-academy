@@ -15,7 +15,8 @@ const SubjectCard = (props) => {
     } = useSubjectCardLogic(props);
 
     const { 
-        subject, 
+        subject,
+        user, 
         onSelect, 
         activeMenu, 
         onToggleMenu, 
@@ -75,6 +76,7 @@ const SubjectCard = (props) => {
             }`}>
                 <SubjectCardFront 
                     subject={subject}
+                    user={user}
                     onSelect={onSelect}
                     activeMenu={activeMenu}
                     onToggleMenu={onToggleMenu}
