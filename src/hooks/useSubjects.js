@@ -71,10 +71,11 @@ export const useSubjects = (user) => {
     const addSubject = async (payload) => {
         const docRef = await addDoc(collection(db, "subjects"), {
             ...payload,
+            ownerId: payload?.ownerId || user.uid,
             institutionId: payload?.institutionId || currentInstitutionId
         });
         // Return the ID explicitly to handle the folder link correctly
-        return docRef.id; 
+        return docRef.id;
     };
 
     const updateSubject = async (id, payload) => {

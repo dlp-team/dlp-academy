@@ -12,7 +12,7 @@ const admin = require('firebase-admin');
 
 const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
-const dryRun = String(process.env.DRY_RUN || 'true').toLowerCase() === 'true';
+const dryRun = false; //String(process.env.DRY_RUN || 'true').toLowerCase() === 'true';
 
 function loadServiceAccount() {
   if (serviceAccountJson) {
