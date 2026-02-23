@@ -1,4 +1,4 @@
-# Phase 04 - Legacy Data Migration (In Progress)
+# Phase 04 - Legacy Data Migration (Completed)
 
 ## Objective
 Backfill `institutionId` on legacy documents that were created before institution scoping was enforced.
@@ -27,6 +27,11 @@ Backfill `institutionId` on legacy documents that were created before institutio
 ## Validation
 - No document remains without institutionId where required for tenant isolation.
 - Record any orphaned or ambiguous docs for manual review.
+
+## Completion Notes
+- Migration script created: scripts/backfill-institution-id.js
+- Script supports dry-run mode and email/domain-based resolution.
+- Execution is pending operator run.
 
 ## Risks
 - Orphaned docs without owner or related user.

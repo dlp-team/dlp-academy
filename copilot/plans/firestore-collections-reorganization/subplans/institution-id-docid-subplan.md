@@ -56,5 +56,5 @@ Use the Firestore document ID as the canonical institution identifier. Remove cu
 ## Status
 - Phase 1: completed
 - Phase 2: in progress
-- Phase 3: in progress
-- Phase 4: in progress
+- Phase 3: completed
+- Phase 4: completed

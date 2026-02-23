@@ -1,4 +1,4 @@
-# Phase 03 - Reads, Filters, and Security (In Progress)
+# Phase 03 - Reads, Filters, and Security (Completed)
 
 ## Objective
 Enforce tenant isolation in reads and security rules using `institutionId` (institution doc ID).
@@ -11,11 +11,10 @@ Enforce tenant isolation in reads and security rules using `institutionId` (inst
 ## Actions Completed
 - Teacher dashboard reads updated to use `institutionId`.
 - Institutions rules use document path id for update authorization.
+- Enforced institution scoping in rules for users, subjects, folders, shortcuts, classes, courses, and allowed_teachers.
 
 ## Remaining Work
-- Audit remaining reads for legacy `schoolId` usage.
-- Align security rules for subjects, folders, shortcuts, classes, courses, and users to enforce tenant boundaries.
-- Ensure share flows and shortcuts validate institution boundaries.
+- None for Phase 03. Validate in staging after backfill.
 
 ## Notes
 - Current rules are permissive for most collections; tightening will require coordinated testing.

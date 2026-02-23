@@ -30,6 +30,41 @@ service cloud.firestore {
       return currentUserRole() == 'institutionadmin';
     }
 
+    function hasInstitutionField(data) {
+      return data.keys().hasAny(['institutionId']);
+    }
+
+    function isOwnerData(data) {
+      return data.ownerId == request.auth.uid || data.userId == request.auth.uid;
+    }
+
+    function sameInstitution(data) {
+      return currentUserInstitutionId() != null && data.institutionId == currentUserInstitutionId();
+    }
+
+    function canReadResource(data) {
+      return isGlobalAdmin()
+        || sameInstitution(data)
+        || (!hasInstitutionField(data) && isOwnerData(data));
+    }
+
+    function canWriteResource(data) {
+      return isGlobalAdmin()
+        || sameInstitution(data)
+        || (!hasInstitutionField(data) && isOwnerData(data));
+    }
+
+    function subjectInstitutionMatches(subjectId) {
+      return exists(/databases/$(database)/documents/subjects/$(subjectId))
+        && (
+          sameInstitution(get(/databases/$(database)/documents/subjects/$(subjectId)).data)
+          || (
+            !hasInstitutionField(get(/databases/$(database)/documents/subjects/$(subjectId)).data)
+            && isOwnerData(get(/databases/$(database)/documents/subjects/$(subjectId)).data)
+          )
+        );
+    }
+
     function canManageInstitution(institutionId) {
       return isGlobalAdmin()
         || (
@@ -98,46 +133,97 @@ service cloud.firestore {
     
     // Reglas para usuarios
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn() && request.auth.uid == userId;
+      allow read: if isSignedIn()
+        && (
+          request.auth.uid == userId
+          || isGlobalAdmin()
+          || (hasInstitutionField(resource.data) && sameInstitution(resource.data))
+        );
+      allow write: if isSignedIn()
+        && (
+          request.auth.uid == userId
+          || isGlobalAdmin()
+          || (
+            isInstitutionAdmin()
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
     }
 
     // Reglas principales de Asignaturas
     match /subjects/{subjectId} {
-      // Permite leer/escribir si estás autenticado (puedes hacerlo más estricto si quieres)
-      allow read, write: if isSignedIn();
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            currentUserInstitutionId() != null
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+      allow read: if isSignedIn() && canReadResource(resource.data);
+      allow update, delete: if isSignedIn()
+        && canWriteResource(resource.data)
+        && (
+          request.resource.data.institutionId == resource.data.institutionId
+          || (
+            !hasInstitutionField(resource.data)
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
 
       // Reglas para la subcolección "topics"
       match /topics/{topicId} {
-        allow read, write: if isSignedIn();
+        allow read, write: if isSignedIn()
+          && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
 
         // 1. Pestaña "Generados por IA" (FALTABA ESTO)
         match /resumen/{docId} {
-          allow read, write: if isSignedIn();
+          allow read, write: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
 
         // 2. Pestaña "Mis Archivos" (FALTABA ESTO)
         match /materials/{docId} {
-          allow read, write: if isSignedIn();
+          allow read, write: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
 
         // 3. Tests y Resultados (Ya los tenías)
         match /quizzes/{quizId} {
-          allow read, write: if isSignedIn();
+          allow read, write: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
         match /quiz_results/{resultId} {
-          allow read, write: if isSignedIn();
+          allow read, write: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
         match /documents/{docId} {
-          allow read, write: if isSignedIn();
+          allow read, write: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
       }
     }
     
     // Reglas para Carpetas (Folders)
     match /folders/{folderId} {
-      allow create: if isSignedIn();
-      allow read, write: if isSignedIn();
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            currentUserInstitutionId() != null
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+      allow read: if isSignedIn() && canReadResource(resource.data);
+      allow update, delete: if isSignedIn()
+        && canWriteResource(resource.data)
+        && (
+          request.resource.data.institutionId == resource.data.institutionId
+          || (
+            !hasInstitutionField(resource.data)
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
     }
 
     match /institutions/{institutionId} {
@@ -151,7 +237,8 @@ service cloud.firestore {
     match /shortcuts/{shortcutId} {
       // Owner can create own shortcut OR target owner can create shortcut for a shared recipient (share flow)
       allow create: if isSignedIn()
-        || validShortcutCreatePayload()
+        && request.resource.data.institutionId == currentUserInstitutionId()
+        && validShortcutCreatePayload()
         && (
           request.resource.data.ownerId == request.auth.uid
           || (
@@ -161,7 +248,7 @@ service cloud.firestore {
           )
         );
       // Allow read if the user is the shortcut owner OR the owner of the subject referenced by the shortcut
-      allow read: if isSignedIn() && (
+      allow read: if isSignedIn() && sameInstitution(resource.data) && (
         resource.data.ownerId == request.auth.uid
         || (
           resource.data.targetType == 'subject'
@@ -180,8 +267,66 @@ service cloud.firestore {
           )
         )
       );
-      allow delete, update: if isSignedIn() && resource.data.ownerId == request.auth.uid;
-      // (Opcional) Para multi-tenant: && resource.data.institutionId == request.auth.token.institutionId
+      allow delete, update: if isSignedIn()
+        && sameInstitution(resource.data)
+        && resource.data.ownerId == request.auth.uid;
+    }
+
+    match /classes/{classId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || request.resource.data.institutionId == currentUserInstitutionId()
+        );
+      allow read: if isSignedIn() && (
+        isGlobalAdmin() || sameInstitution(resource.data)
+      );
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            sameInstitution(resource.data)
+            && request.resource.data.institutionId == resource.data.institutionId
+          )
+        );
+    }
+
+    match /courses/{courseId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || request.resource.data.institutionId == currentUserInstitutionId()
+        );
+      allow read: if isSignedIn() && (
+        isGlobalAdmin() || sameInstitution(resource.data)
+      );
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            sameInstitution(resource.data)
+            && request.resource.data.institutionId == resource.data.institutionId
+          )
+        );
+    }
+
+    match /allowed_teachers/{allowedTeacherId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || request.resource.data.institutionId == currentUserInstitutionId()
+        );
+      allow read: if isSignedIn() && (
+        isGlobalAdmin() || sameInstitution(resource.data)
+      );
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            sameInstitution(resource.data)
+            && request.resource.data.institutionId == resource.data.institutionId
+          )
+        );
     }
   }
 }
