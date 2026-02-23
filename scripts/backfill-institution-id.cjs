@@ -6,7 +6,7 @@
     - Optional: DRY_RUN=true (default)
     - Run: node scripts/backfill-institution-id.js
 */
-
+require('dotenv').config();
 const fs = require('fs');
 const admin = require('firebase-admin');
 

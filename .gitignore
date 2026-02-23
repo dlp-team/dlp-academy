@@ -38,6 +38,13 @@ ui-debug.log*
 
 # Local configuration files
 # These often contain project-specific paths or local settings
+
+# Local environment variables for scripts and development
+.env
+.env.local
+.env.development
+.env.production
+.env.*
 .firebaserc
 *-local.json
 
