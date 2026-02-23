@@ -1,5 +1,5 @@
 // src/hooks/useSubjectManager.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     collection, query, doc, getDoc, onSnapshot, 
@@ -44,16 +44,50 @@ export const useSubjectManager = (user, subjectId) => {
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
-            const topicsData = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
+            const topicsData = snapshot.docs.map(docSnap => ({
+                id: docSnap.id,
+                ...docSnap.data()
             }));
             setTopics(topicsData);
             setLoading(false);
+
+            // Auto-detect: si n8n ya escribió quizzes/pdfs en el documento, marcar como completed
+            topicsData.forEach(topic => {
+                if (topic.status === 'generating' && (topic.quizzes?.length > 0 || topic.pdfs?.length > 0)) {
+                    updateDoc(doc(db, "subjects", subjectId, "topics", topic.id), {
+                        status: 'completed'
+                    }).catch(err => console.error("Error auto-updating status:", err));
+                }
+            });
         });
 
         return () => unsubscribe();
     }, [user, subjectId, navigate]);
+
+    // Auto-detect: escuchar subcolección "resumen" de topics en estado 'generating'
+    const generatingIds = useMemo(() =>
+        topics.filter(t => t.status === 'generating').map(t => t.id).join(','),
+        [topics]
+    );
+
+    useEffect(() => {
+        if (!subjectId || !generatingIds) return;
+
+        const ids = generatingIds.split(',');
+
+        const unsubscribes = ids.map(topicId => {
+            const resumenRef = collection(db, "subjects", subjectId, "topics", topicId, "resumen");
+            return onSnapshot(resumenRef, (snapshot) => {
+                if (!snapshot.empty) {
+                    updateDoc(doc(db, "subjects", subjectId, "topics", topicId), {
+                        status: 'completed'
+                    }).catch(err => console.error("Auto-update resumen error:", err));
+                }
+            });
+        });
+
+        return () => unsubscribes.forEach(unsub => unsub());
+    }, [generatingIds, subjectId]);
 
     // 2. Actions for Subject
     const updateSubject = async (data) => {

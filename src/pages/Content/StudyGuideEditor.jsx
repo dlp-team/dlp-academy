@@ -1,14 +1,14 @@
-// src/pages/Content/StudyGuideEditor.jsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     ChevronLeft, Plus, Trash2, Save, Eye,
-    ChevronDown, ChevronUp, BookOpen, Calculator, AlertCircle,
+    ChevronDown, BookOpen, Calculator, AlertCircle,
     CheckCircle2, Loader2, PenLine, X, Copy, MoveUp, MoveDown,
-    LayoutList, Sparkles
+    LayoutList
 } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from "../../firebase/config";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
@@ -166,7 +166,6 @@ const StudyGuideEditor = () => {
         return firstPart.replace('from-', '').split('-')[0] || 'indigo';
     }, [topicGradient]);
 
-    // ✅ NAVEGACIÓN DIRECTA CORREGIDA: Te lleva a la StudyGuide
     const goToView = () => {
         if (subjectId && topicId && activeDocId) {
             navigate(`/home/subject/${subjectId}/topic/${topicId}/resumen/${activeDocId}`);
@@ -177,11 +176,51 @@ const StudyGuideEditor = () => {
 
     const showToast = useCallback((message, type = 'success') => setToast({ message, type }), []);
 
+    // ---------------------------------------------------------
+    // ✅ SEGURIDAD: VERIFICACIÓN DE ROL DE PROFESOR
+    // ---------------------------------------------------------
+    useEffect(() => {
+        const auth = getAuth();
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                // Si no hay usuario, redirigir al login
+                navigate('/');
+                return;
+            }
+
+            try {
+                // Verificar rol en Firestore
+                const userRef = doc(db, 'users', user.uid);
+                const userSnap = await getDoc(userRef);
+
+                if (userSnap.exists()) {
+                    const userData = userSnap.data();
+                    
+                    // Si el rol NO es 'teacher', redirigir fuera
+                    if (userData.role !== 'teacher') {
+                        navigate('/home'); 
+                    }
+                } else {
+                    // Si no existe el documento del usuario, por seguridad fuera
+                    navigate('/');
+                }
+            } catch (error) {
+                console.error("Error verificando permisos:", error);
+                navigate('/');
+            }
+        });
+
+        return () => unsubscribe();
+    }, [navigate]);
+
+    // ---------------------------------------------------------
+    // CARGA DE DATOS DE LA GUÍA
+    // ---------------------------------------------------------
     useEffect(() => {
         const load = async () => {
             if (!activeDocId) return;
             try {
-                // 1. Cargar color de la SUBJECT (Prioridad absoluta)
+                // 1. Cargar color de la SUBJECT
                 const subjectSnap = await getDoc(doc(db, 'subjects', subjectId));
                 if (subjectSnap.exists() && subjectSnap.data().color) {
                     setTopicGradient(subjectSnap.data().color);
@@ -241,7 +280,6 @@ const StudyGuideEditor = () => {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        {/* ✅ BOTÓN VER GUÍA CORREGIDO */}
                         <button onClick={goToView} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-sm">
                             <Eye className="w-4 h-4" /> <span>Ver guía</span>
                         </button>
@@ -291,7 +329,6 @@ const StudyGuideEditor = () => {
                     <button onClick={handleSave} disabled={saving} className={`px-10 py-4 bg-gradient-to-r ${topicGradient} text-white rounded-[2rem] font-black text-lg shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50`}>
                         {saving ? <Loader2 className="animate-spin" /> : <Save />} Guardar Cambios Finales
                     </button>
-                    {/* ✅ ENLACE SECUNDARIO VER GUÍA */}
                     <button onClick={goToView} className="text-slate-400 hover:text-slate-600 font-bold text-sm transition-colors flex items-center gap-2">
                         <Eye className="w-4 h-4" /> Ver cómo está quedando
                     </button>

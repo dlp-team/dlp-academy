@@ -134,14 +134,50 @@ const FileCard = ({
             <div className="relative h-full p-8 flex flex-col justify-end z-10">
                 <div className="mt-auto">
                     {isRenaming ? (
-                        <div className="mb-4 bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/20 flex flex-col gap-2">
-                            <input type="text" value={tempName} onChange={(e) => setTempName(e.target.value)} className="w-full bg-white/90 text-slate-900 rounded-lg px-3 py-2 text-sm font-bold outline-none" autoFocus />
+                        <div 
+                            className="mb-4 bg-white/10 backdrop-blur-md p-2 rounded-xl border border-white/20 flex flex-col gap-2"
+                            onClick={(e) => e.stopPropagation()} // Evita clicks accidentales en la tarjeta
+                        >
+                            <input 
+                                type="text" 
+                                value={tempName} 
+                                onChange={(e) => setTempName(e.target.value)} 
+                                // --- INICIO CAMBIOS ---
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                        e.preventDefault(); // Evita recargas si está dentro de un form
+                                        saveRename(file.id);
+                                    }
+                                    if (e.key === 'Escape') {
+                                        setRenamingId(null);
+                                    }
+                                }}
+                                // --- FIN CAMBIOS ---
+                                className="w-full bg-white/90 text-slate-900 rounded-lg px-3 py-2 text-sm font-bold outline-none border border-transparent focus:border-indigo-500 transition-all" 
+                                autoFocus 
+                                placeholder="Escribe un nombre..."
+                            />
                             <div className="flex gap-2">
-                                <button onClick={() => saveRename(file.id)} className="flex-1 bg-green-500 rounded-lg py-1 flex justify-center text-white"><Check className="w-4 h-4" /></button>
-                                <button onClick={() => setRenamingId(null)} className="flex-1 bg-red-500 rounded-lg py-1 flex justify-center text-white"><X className="w-4 h-4" /></button>
+                                <button 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        saveRename(file.id);
+                                    }} 
+                                    className="flex-1 bg-green-500 hover:bg-green-600 rounded-lg py-1 flex justify-center text-white transition-colors"
+                                >
+                                    <Check className="w-4 h-4" />
+                                </button>
+                                <button 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setRenamingId(null);
+                                    }} 
+                                    className="flex-1 bg-red-500 hover:bg-red-600 rounded-lg py-1 flex justify-center text-white transition-colors"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
                             </div>
-                        </div>
-                    ) : (
+                        </div>) : (
                         <h3 className={`text-2xl font-black leading-tight mb-6 uppercase tracking-tight line-clamp-2 ${isGenerated ? 'text-white' : 'text-slate-800'}`}>
                             {file.name || label}
                         </h3>

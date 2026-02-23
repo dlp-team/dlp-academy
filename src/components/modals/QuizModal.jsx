@@ -1,13 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Loader2, Wand2, Upload, FileText, Trash2 } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Loader2, Wand2, Upload, FileText, Trash2, ChevronDown } from 'lucide-react';
 
 const QuizModal = ({ 
     isOpen, 
     onClose, 
     formData, 
     setFormData, 
-    themeColor,
-    // RECIBIMOS LOS IDS NECESARIOS PARA N8N/FIREBASE
+    themeColor, // Expected format: "from-blue-500 to-indigo-600"
     subjectId,
     topicId
 }) => {
@@ -15,9 +14,36 @@ const QuizModal = ({
     const [shouldRender, setShouldRender] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // TU WEBHOOK DE N8N
-    // NOTA: Si tienes error de CORS, cambia esto por '/api-n8n/webhook/...' y configura el proxy en vite.config.js
     const WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook/711e538b-9d63-42bb-8494-873301ffdf39';
+
+    // --- 1. EXTRACT COLOR NAME ---
+    const colorName = useMemo(() => {
+        const firstPart = themeColor?.split(' ')[0] || '';
+        return firstPart.replace('from-', '').split('-')[0] || 'indigo';
+    }, [themeColor]);
+
+    // --- 2. MAP TO EXPLICIT TAILWIND CLASSES ---
+    // This is crucial. Tailwind purges unused classes. We must list them explicitly.
+    const themeStyles = useMemo(() => {
+        const colors = {
+            blue: { ring: 'focus:ring-blue-500/20', border: 'focus:border-blue-500', shadow: 'shadow-blue-500/30', hoverBorder: 'hover:border-blue-400', bg: 'bg-blue-50', text: 'text-blue-600' },
+            indigo: { ring: 'focus:ring-indigo-500/20', border: 'focus:border-indigo-500', shadow: 'shadow-indigo-500/30', hoverBorder: 'hover:border-indigo-400', bg: 'bg-indigo-50', text: 'text-indigo-600' },
+            emerald: { ring: 'focus:ring-emerald-500/20', border: 'focus:border-emerald-500', shadow: 'shadow-emerald-500/30', hoverBorder: 'hover:border-emerald-400', bg: 'bg-emerald-50', text: 'text-emerald-600' },
+            purple: { ring: 'focus:ring-purple-500/20', border: 'focus:border-purple-500', shadow: 'shadow-purple-500/30', hoverBorder: 'hover:border-purple-400', bg: 'bg-purple-50', text: 'text-purple-600' },
+            red: { ring: 'focus:ring-red-500/20', border: 'focus:border-red-500', shadow: 'shadow-red-500/30', hoverBorder: 'hover:border-red-400', bg: 'bg-red-50', text: 'text-red-600' },
+            amber: { ring: 'focus:ring-amber-500/20', border: 'focus:border-amber-500', shadow: 'shadow-amber-500/30', hoverBorder: 'hover:border-amber-400', bg: 'bg-amber-50', text: 'text-amber-600' },
+            violet: { ring: 'focus:ring-violet-500/20', border: 'focus:border-violet-500', shadow: 'shadow-violet-500/30', hoverBorder: 'hover:border-violet-400', bg: 'bg-violet-50', text: 'text-violet-600' },
+            pink: { ring: 'focus:ring-pink-500/20', border: 'focus:border-pink-500', shadow: 'shadow-pink-500/30', hoverBorder: 'hover:border-pink-400', bg: 'bg-pink-50', text: 'text-pink-600' },
+            cyan: { ring: 'focus:ring-cyan-500/20', border: 'focus:border-cyan-500', shadow: 'shadow-cyan-500/30', hoverBorder: 'hover:border-cyan-400', bg: 'bg-cyan-50', text: 'text-cyan-600' },
+            teal: { ring: 'focus:ring-teal-500/20', border: 'focus:border-teal-500', shadow: 'shadow-teal-500/30', hoverBorder: 'hover:border-teal-400', bg: 'bg-teal-50', text: 'text-teal-600' },
+            orange: { ring: 'focus:ring-orange-500/20', border: 'focus:border-orange-500', shadow: 'shadow-orange-500/30', hoverBorder: 'hover:border-orange-400', bg: 'bg-orange-50', text: 'text-orange-600' },
+            sky: { ring: 'focus:ring-sky-500/20', border: 'focus:border-sky-500', shadow: 'shadow-sky-500/30', hoverBorder: 'hover:border-sky-400', bg: 'bg-sky-50', text: 'text-sky-600' },
+            lime: { ring: 'focus:ring-lime-500/20', border: 'focus:border-lime-500', shadow: 'shadow-lime-500/30', hoverBorder: 'hover:border-lime-400', bg: 'bg-lime-50', text: 'text-lime-600' },
+            fuchsia: { ring: 'focus:ring-fuchsia-500/20', border: 'focus:border-fuchsia-500', shadow: 'shadow-fuchsia-500/30', hoverBorder: 'hover:border-fuchsia-400', bg: 'bg-fuchsia-50', text: 'text-fuchsia-600' },
+            rose: { ring: 'focus:ring-rose-500/20', border: 'focus:border-rose-500', shadow: 'shadow-rose-500/30', hoverBorder: 'hover:border-rose-400', bg: 'bg-rose-50', text: 'text-rose-600' }
+        };
+        return colors[colorName] || colors.indigo;
+    }, [colorName]);
 
     useEffect(() => {
         let timeoutId;
@@ -31,11 +57,9 @@ const QuizModal = ({
         return () => clearTimeout(timeoutId);
     }, [isOpen]);
 
-    // LÓGICA DE ENVÍO
     const handleInternalSubmit = async (e) => {
         e.preventDefault();
         
-        // Validación de seguridad
         if (!subjectId || !topicId) {
             alert("Error crítico: No se identificó la Asignatura o el Tema. Recarga la página.");
             return;
@@ -46,17 +70,13 @@ const QuizModal = ({
         try {
             const dataToSend = new FormData();
             
-            // Datos del formulario
             dataToSend.append('title', formData.title);
             dataToSend.append('level', formData.level);
             dataToSend.append('numQuestions', formData.numQuestions);
             dataToSend.append('prompt', formData.prompt);
-            
-            // DATOS CRÍTICOS PARA ARREGLAR EL ERROR DE FIREBASE
             dataToSend.append('subjectId', subjectId);
             dataToSend.append('topicId', topicId);
             
-            // Archivo (si existe)
             if (formData.file) {
                 dataToSend.append('file', formData.file);
             }
@@ -87,8 +107,6 @@ const QuizModal = ({
     };
 
     if (!shouldRender) return null;
-
-    const baseColorClass = themeColor ? themeColor.split('-')[1] : 'indigo'; 
 
     const handleClose = () => {
         if (!loading) {
@@ -159,7 +177,7 @@ const QuizModal = ({
                                 type="text" 
                                 value={formData.title} 
                                 onChange={e => setFormData({...formData, title: e.target.value})} 
-                                className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-semibold text-slate-800 placeholder:text-slate-300`} 
+                                className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none transition-all font-semibold text-slate-800 placeholder:text-slate-300 focus:ring-2 ${themeStyles.ring} ${themeStyles.border}`} 
                                 placeholder="Ej: Repaso Global - Tema 1" 
                                 required 
                                 disabled={loading}
@@ -175,7 +193,7 @@ const QuizModal = ({
                                     <select 
                                         value={formData.level} 
                                         onChange={e => setFormData({...formData, level: e.target.value})} 
-                                        className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-bold text-slate-700 appearance-none cursor-pointer hover:bg-slate-100 disabled:opacity-50`}
+                                        className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none transition-all font-bold text-slate-700 appearance-none cursor-pointer hover:bg-slate-100 disabled:opacity-50 focus:ring-2 ${themeStyles.ring} ${themeStyles.border}`}
                                         disabled={loading}
                                     >
                                         <option value="Principiante">Básico</option>
@@ -183,7 +201,7 @@ const QuizModal = ({
                                         <option value="Avanzado">Experto</option>
                                     </select>
                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                        <ChevronDownIcon />
                                     </div>
                                 </div>
                             </div>
@@ -196,9 +214,8 @@ const QuizModal = ({
                                     type="number" 
                                     value={formData.numQuestions} 
                                     onChange={e => setFormData({...formData, numQuestions: e.target.value})} 
-                                    min="1" 
-                                    max="20" 
-                                    className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-bold text-slate-700 disabled:opacity-50`} 
+                                    min="1" max="20" 
+                                    className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none transition-all font-bold text-slate-700 disabled:opacity-50 focus:ring-2 ${themeStyles.ring} ${themeStyles.border}`} 
                                     required
                                     disabled={loading}
                                 />
@@ -212,7 +229,7 @@ const QuizModal = ({
                             <textarea 
                                 value={formData.prompt} 
                                 onChange={e => setFormData({...formData, prompt: e.target.value})} 
-                                className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none h-24 resize-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-medium text-slate-600 placeholder:text-slate-300 disabled:opacity-50`} 
+                                className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none h-24 resize-none transition-all font-medium text-slate-600 placeholder:text-slate-300 disabled:opacity-50 focus:ring-2 ${themeStyles.ring} ${themeStyles.border}`} 
                                 placeholder="Ej: Enfócate en las excepciones y casos prácticos..."
                                 disabled={loading}
                             ></textarea>
@@ -235,11 +252,11 @@ const QuizModal = ({
                                 
                                 {!formData.file ? (
                                     <label 
-                                        htmlFor="quiz-pdf-upload"
-                                        className={`flex items-center gap-4 w-full px-5 py-3.5 bg-slate-50 border border-slate-200 border-dashed rounded-2xl cursor-pointer hover:bg-slate-100 hover:border-${baseColorClass}-400 transition-all group`}
+                                        htmlFor="quiz-pdf-upload" 
+                                        className={`flex items-center gap-4 w-full px-5 py-3.5 bg-slate-50 border border-slate-200 border-dashed rounded-2xl cursor-pointer hover:bg-slate-100 transition-all group ${themeStyles.hoverBorder}`}
                                     >
                                         <div className="p-2 bg-white rounded-xl border border-slate-200 shadow-sm group-hover:scale-110 transition-transform">
-                                            <Upload className="w-4 h-4 text-slate-400 group-hover:text-indigo-500 transition-colors" />
+                                            <Upload className="w-4 h-4 text-slate-400 group-hover:text-slate-600 transition-colors" />
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-slate-600 font-bold text-sm">Subir PDF de referencia</span>
@@ -247,20 +264,18 @@ const QuizModal = ({
                                         </div>
                                     </label>
                                 ) : (
-                                    <div className="flex items-center justify-between w-full px-5 py-3.5 bg-indigo-50/50 border border-indigo-100 rounded-2xl transition-all animate-in fade-in zoom-in-95">
+                                    <div className={`flex items-center justify-between w-full px-5 py-3.5 ${themeStyles.bg} border ${themeStyles.border.replace('focus:', '')} rounded-2xl transition-all animate-in fade-in zoom-in-95`}>
                                         <div className="flex items-center gap-3 overflow-hidden">
-                                            <div className="p-2 bg-white rounded-xl border border-indigo-100 shadow-sm shrink-0">
-                                                <FileText className="w-4 h-4 text-indigo-600" />
+                                            <div className="p-2 bg-white rounded-xl border border-slate-200 shadow-sm shrink-0">
+                                                <FileText className={`w-4 h-4 ${themeStyles.text}`} />
                                             </div>
-                                            <span className="text-indigo-900 font-bold text-sm truncate max-w-[200px]" title={formData.file.name}>
-                                                {formData.file.name}
-                                            </span>
+                                            <span className={`font-bold text-sm truncate max-w-[200px] ${themeStyles.text}`}>{formData.file.name}</span>
                                         </div>
                                         <button 
-                                            type="button"
-                                            onClick={removeFile}
-                                            disabled={loading}
-                                            className="p-2 hover:bg-white rounded-full text-indigo-400 hover:text-red-500 transition-colors hover:shadow-sm"
+                                            type="button" 
+                                            onClick={removeFile} 
+                                            disabled={loading} 
+                                            className="p-2 hover:bg-white rounded-full text-slate-400 hover:text-red-500 transition-colors hover:shadow-sm"
                                         >
                                             <Trash2 className="w-4 h-4" />
                                         </button>
@@ -286,7 +301,7 @@ const QuizModal = ({
                             type="submit"
                             form="quiz-form"
                             disabled={loading} 
-                            className={`flex-[2] px-6 py-4 bg-gradient-to-r ${themeColor || 'from-slate-800 to-slate-900'} text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-${baseColorClass}-500/30 transition-all flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed`}
+                            className={`flex-[2] px-6 py-4 bg-gradient-to-r ${themeColor || 'from-slate-800 to-slate-900'} text-white rounded-2xl font-black uppercase tracking-widest shadow-lg ${themeStyles.shadow} transition-all flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed`}
                         >
                             {loading ? (
                                 <>
@@ -307,5 +322,10 @@ const QuizModal = ({
         </div>
     );
 };
+
+// Auxiliary icon for select
+const ChevronDownIcon = () => (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+);
 
 export default QuizModal;

@@ -59,8 +59,9 @@ const cleanMath = (math) => {
 const SmartTextRenderer = ({ text }) => {
     if (!text) return null;
 
-    // 1. Regex actualizado para incluir \( ... \) y mejorar la captura de bloques
-    const regex = /((?:\$[^\$]+\$)|(?:\\\[[\s\S]*?\\\])|(?:\\\([\s\S]*?\\\))|(?:\d+(?:[.,]\d+)?\s*\\times\s*10\^\{?-?\d+\}?)|(?:\b[a-zA-Z]+\^\{?-?\d+\}?(?:[a-zA-Z]+\^\{?-?\d+\}?)*)|(?:\\[a-zA-Z]+)|(?:\*\*.*?\*\*))/g;
+    // CORRECCIÓN AQUÍ: He añadido "|(?:\`.*?\`)" al final del regex.
+    // Esto le enseña al código a reconocer textos como `SUMA` o `PRODUCTO`.
+    const regex = /((?:\$[^\$]+\$)|(?:\\\[[\s\S]*?\\\])|(?:\\\([\s\S]*?\\\))|(?:\d+(?:[.,]\d+)?\s*\\times\s*10\^\{?-?\d+\}?)|(?:\b[a-zA-Z]+\^\{?-?\d+\}?(?:[a-zA-Z]+\^\{?-?\d+\}?)*)|(?:\\[a-zA-Z]+)|(?:\*\*.*?\*\*)|(?:\`.*?\`))/g;
 
     const parts = text.split(regex);
 
@@ -69,60 +70,47 @@ const SmartTextRenderer = ({ text }) => {
             {parts.map((part, index) => {
                 if (!part) return null;
 
-                // 2. Comprobamos si es un bloque delimitado estándar
-                const isDelimitedMath = 
-                    (part.startsWith('$') && part.endsWith('$')) || 
-                    (part.startsWith('\\[') && part.endsWith('\\]')) ||
-                    (part.startsWith('\\(') && part.endsWith('\\)'));
+                // 1. Manejo de Matemáticas
+                const isMath = (part.startsWith('$') && part.endsWith('$')) || 
+                               (part.startsWith('\\(') && part.endsWith('\\)')) ||
+                               (part.startsWith('\\[') && part.endsWith('\\]'));
 
-                if (isDelimitedMath) {
-                    let mathContent = part;
-                    // Limpiamos los delimitadores para pasar solo el contenido a KaTeX
-                    if (part.startsWith('$')) {
-                        mathContent = part.slice(1, -1);
-                    } else if (part.startsWith('\\[')) {
-                        mathContent = part.slice(2, -2);
-                    } else if (part.startsWith('\\(')) {
-                        mathContent = part.slice(2, -2);
-                    }
-                    
-                    // Decidimos si es bloque o línea (los de \[ \] suelen ser bloque)
-                    const isBlockFormula = part.startsWith('\\[') || mathContent.length > 50 || mathContent.includes('\\frac');
-                    
-                    return isBlockFormula ? (
-                        <div key={index} className="my-4 overflow-x-auto">
-                            <BlockMath math={cleanMath(mathContent)} />
+                if (isMath) {
+                    const content = cleanMath(part);
+                    // Si es una fórmula larga o tiene fracción, la ponemos en bloque con scroll
+                    const isLong = content.length > 40 || content.includes('\\frac') || content.includes('\\sum') || content.includes('\\lim');
+
+                    return isLong ? (
+                        <div key={index} className="my-3 overflow-x-auto custom-scrollbar pb-2 text-center">
+                            <BlockMath math={content} />
                         </div>
                     ) : (
-                        <InlineMath key={index} math={mathContent} />
+                        <InlineMath key={index} math={content} />
                     );
                 }
 
-                // Lógica existente para otros patrones (científicos, negritas, etc.)
-                const isShortMath = 
-                    part.includes('\\times') || 
-                    part.includes('^') || 
-                    (part.startsWith('\\') && !part.includes(' '));
-
-                if (isShortMath) {
-                    return <InlineMath key={index} math={part} />;
-                }
-
-                if (part.startsWith('**') && part.endsWith('**')) {
+                // 2. Manejo de Etiquetas `TEXTO`: (Esto arregla lo rojo en "Operaciones con Infinito")
+                if (part.startsWith('`') && part.endsWith('`')) {
                     return (
-                        <strong key={index} className="text-slate-900 font-extrabold">
-                            {part.slice(2, -2)}
-                        </strong>
+                        <span key={index} className="inline-block mx-1 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-xs font-bold text-slate-600 tracking-wider font-mono align-middle shadow-sm">
+                            {part.slice(1, -1)}
+                        </span>
                     );
                 }
 
+                // 3. Negritas
+                if (part.startsWith('**') && part.endsWith('**')) {
+                    return <strong key={index} className="text-slate-900 font-extrabold">{part.slice(2, -2)}</strong>;
+                }
+
+                // 4. Texto normal
                 return <span key={index}>{part}</span>;
             })}
         </>
     );
 };
 
-const RichTextRenderer = ({ text, topicGradient }) => {
+const RichTextRenderer = ({ text, topicGradient, formulas = [] }) => {
     if (!text) return null;
     const lines = text.split('\n');
 
@@ -132,73 +120,54 @@ const RichTextRenderer = ({ text, topicGradient }) => {
                 const cleanLine = line.trim();
                 if (!cleanLine) return null;
 
-                if (cleanLine.match(/^[a-zA-Zα-ωΑ-Ω_{}\\]+(\d+)?:\s/)) {
-                    const colonIndex = cleanLine.indexOf(':');
-                    const symbol = cleanLine.substring(0, colonIndex);
-                    const definition = cleanLine.substring(colonIndex + 1).trim();
+                // Detectamos "| Ejemplo X:" o simplemente "| Ejemplo:"
+                const exampleMatch = cleanLine.match(/^\|\s*Ejemplo\s*(\d+)?\s*:/i);
+                
+                if (exampleMatch) {
+                    // Intentamos obtener el número del ejemplo. Si no hay, asumimos 1 o lógica custom.
+                    // OJO: Si Gemini pone el texto de la fórmula en 'content' en vez de 'formulas', 
+                    // aquí deberíamos renderizar el resto de la línea.
                     
-                    return (
-                        <div key={i} className="group/def relative">
-                            <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-2xl blur-xl opacity-0 group-hover/def:opacity-20 transition-opacity duration-500`} />
-                            
-                            <div className="relative flex items-start gap-4 py-4 px-5 bg-gradient-to-br from-white via-slate-50/50 to-white backdrop-blur-xl rounded-2xl border-2 border-white/80 shadow-lg hover:shadow-xl transition-all duration-500 group-hover/def:scale-[1.02]">
-                                <div className={`absolute top-0 right-0 w-20 h-20 bg-gradient-to-br ${topicGradient} opacity-5 rounded-bl-3xl`} />
-                                <div className={`absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr ${topicGradient} opacity-5 rounded-tr-3xl`} />
-                                
-                                <div className="relative shrink-0">
-                                    <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-xl blur-md opacity-60 group-hover/def:opacity-80 transition-opacity duration-500`} />
-                                    <div className={`relative px-4 py-2.5 bg-gradient-to-br ${topicGradient} text-white rounded-xl font-mono text-base font-black shadow-xl ring-2 ring-white transform group-hover/def:scale-110 group-hover/def:rotate-3 transition-all duration-500`}>
-                                        <SmartTextRenderer text={symbol} />
-                                    </div>
-                                </div>
-                                
-                                <div className="flex-1 pt-1 relative z-10">
-                                    <p className="text-slate-700 font-medium leading-relaxed group-hover/def:text-slate-900 transition-colors duration-300">
-                                        <SmartTextRenderer text={definition} />
-                                    </p>
-                                </div>
-                                
-                                <div className={`absolute -right-1 top-1/2 -translate-y-1/2 w-1.5 h-12 bg-gradient-to-b ${topicGradient} rounded-full opacity-0 group-hover/def:opacity-100 transition-opacity duration-500 shadow-lg`} />
-                            </div>
-                        </div>
-                    );
-                }
+                    const exampleNumber = exampleMatch[1] ? parseInt(exampleMatch[1]) : null;
+                    const formulaText = exampleNumber && formulas[exampleNumber - 1] 
+                        ? formulas[exampleNumber - 1] 
+                        : null;
 
-                if (cleanLine.startsWith('•') || cleanLine.startsWith('-')) {
-                    return (
-                        <div key={i} className="flex items-start gap-4 pl-2 group/bullet">
-                            <div className="relative mt-2.5">
-                                <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-full blur-md opacity-60 group-hover/bullet:opacity-100 transition-opacity duration-500`} />
-                                <div className={`relative w-2 h-2 rounded-full bg-gradient-to-br ${topicGradient} ring-4 ring-white shadow-lg group-hover/bullet:scale-150 transition-all duration-500`} />
-                            </div>
-                            <p className="flex-1 text-slate-700 group-hover/bullet:text-slate-900 transition-colors duration-300">
-                                <SmartTextRenderer text={cleanLine.substring(1).trim()} />
-                            </p>
-                        </div>
-                    );
-                }
+                    // Título del ejemplo (lo que va después de los dos puntos)
+                    const titleText = cleanLine.split(':')[1]?.trim() || "";
 
-                if (cleanLine.endsWith(':') && cleanLine.length < 80 && !cleanLine.match(/^[a-zA-Zα-ωΑ-Ω_{}\\]+(\d+)?:\s/)) {
                     return (
-                        <div key={i} className="mt-10 mb-6">
-                            <div className="flex items-center gap-4">
-                                <div className="relative">
-                                    <div className={`absolute inset-0 bg-gradient-to-b ${topicGradient} rounded-full blur-xl opacity-50 transition-opacity duration-500`} />
-                                    <div className={`relative w-1.5 h-10 rounded-full bg-gradient-to-b ${topicGradient} shadow-xl transition-all duration-500`} />
-                                </div>
-                                <div className="flex-1">
-                                    <h4 className={`text-2xl md:text-3xl lg:text-4xl font-black bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent transition-transform duration-500 origin-left inline-block`}>
-                                        <SmartTextRenderer text={cleanLine} />
+                        <div key={i} className="my-8 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                            {/* Header del Ejemplo */}
+                            <div className="flex items-center gap-3 mb-4">
+                                <span className={`px-3 py-1 rounded-lg bg-gradient-to-r ${topicGradient} text-white text-xs font-bold uppercase tracking-wider shadow-md`}>
+                                    Ejemplo {exampleNumber || ''}
+                                </span>
+                                {titleText && (
+                                    <h4 className="text-xl font-black text-slate-800">
+                                        <SmartTextRenderer text={titleText} />
                                     </h4>
-                                    <div className={`mt-3 h-1 w-28 bg-gradient-to-r ${topicGradient} opacity-50 rounded-full shadow-lg transition-all duration-500`} />
-                                </div>
+                                )}
                             </div>
+
+                            {/* Fórmula asociada (Si existe en el array) */}
+                            {formulaText ? (
+                                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 overflow-x-auto custom-scrollbar">
+                                    <SmartTextRenderer text={formulaText} />
+                                </div>
+                            ) : (
+                                /* Si no hay fórmula en el array, quizás Gemini la puso en la siguiente línea del texto */
+                                <div className="text-slate-500 italic text-sm">
+                                    (Ver explicación a continuación)
+                                </div>
+                            )}
                         </div>
                     );
                 }
 
+                // Renderizado normal
                 return (
-                    <p key={i} className="leading-[1.8] text-slate-700">
+                    <p key={i} className="text-slate-700">
                         <SmartTextRenderer text={cleanLine} />
                     </p>
                 );
@@ -293,10 +262,16 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
                     {isExpanded && (
                         <div className="animate-in slide-in-from-top-6 duration-700 fade-in">
                             <div className="relative">
-                                <RichTextRenderer text={section.content} topicGradient={topicGradient} />
+                                {/* MODIFICACIÓN 1: Pasamos las fórmulas al RichTextRenderer para los ejemplos dinámicos */}
+                                <RichTextRenderer 
+                                    text={section.content} 
+                                    topicGradient={topicGradient} 
+                                    formulas={section.formulas} // <--- ESTO ES LO QUE FALTA
+                                />
                             </div>
 
-                            {section.formulas && section.formulas.length > 0 && (
+                            {/* MODIFICACIÓN 2: Solo mostramos este bloque si NO hay ejemplos "| Ejemplo" en el texto */}
+                            {section.formulas && section.formulas.length > 0 && !section.content.includes('| Ejemplo') && (
                                 <div className="mt-10 space-y-4">
                                     <div className="flex items-center gap-4 mb-6">
                                         <div className="relative">
@@ -330,8 +305,9 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
                                                 <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${topicGradient} opacity-5 rounded-bl-[4rem]`} />
                                                 <div className={`absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr ${topicGradient} opacity-5 rounded-tr-[3rem]`} />
                                                 
-                                                <div className="[&_.katex-display]:my-0">
-                                                    <BlockMath math={cleanMath(formula)} />
+                                                <div className="overflow-x-auto custom-scrollbar py-4 relative z-10">
+                                                    {/* Usamos SmartTextRenderer para asegurar limpieza de backticks y delimitadores */}
+                                                    <SmartTextRenderer text={formula} />
                                                 </div>
                                                 
                                                 <div className="absolute bottom-4 right-4 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
@@ -1138,7 +1114,7 @@ const StudyGuide = () => {
 
                                                                     {/* Área de fórmula — el cuadro crece al ancho de la fórmula */}
                                                                     <div className="flex items-center justify-center px-5 py-7">
-                                                                        <div className="overflow-x-auto py-4 relative z-10">
+                                                                        <div className="overflow-x-auto custom-scrollbar py-4 relative z-10 px-4">
                                                                             <SmartTextRenderer text={formula} />
                                                                         </div>
                                                                     </div>
@@ -1188,7 +1164,7 @@ const StudyGuide = () => {
                                                                     <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${topicGradient} opacity-5 rounded-bl-[4rem]`} />
                                                                     <div className={`absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr ${topicGradient} opacity-5 rounded-tr-[3rem]`} />
                                                                     
-                                                                    <div className="overflow-x-auto py-4 relative z-10 text-center">
+                                                                    <div className="overflow-x-auto custom-scrollbar py-4 relative z-10 text-center px-2">
                                                                         <SmartTextRenderer text={formula} />
                                                                     </div>
                                                                     
