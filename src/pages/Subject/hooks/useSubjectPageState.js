@@ -18,7 +18,7 @@ const useSubjectPageState = (topics) => {
         if (!searchTerm) return topics;
         const term = searchTerm.toLowerCase();
         return topics.filter(topic =>
-            topic.title?.toLowerCase().includes(term) ||
+            topic.name?.toLowerCase().includes(term) ||
             topic.number?.toString().toLowerCase().includes(term)
         );
     }, [topics, searchTerm]);

@@ -92,7 +92,7 @@ export const useSubjectManager = (user, subjectId) => {
         try {
             const formData = new FormData();
             formData.append('topicId', topicId);
-            formData.append('title', data.title);
+            formData.append('name', data.name);
             formData.append('prompt', data.prompt);
             formData.append('subjectId', subjectId);
             formData.append('userId', user.uid);
@@ -121,7 +121,7 @@ export const useSubjectManager = (user, subjectId) => {
             if (!existingTopic) return;
 
             await updateDoc(doc(db, "topics", topicId), {
-                title: data.title, 
+                name: data.name,
                 prompt: data.prompt, 
                 status: 'generating'
             });
@@ -130,7 +130,7 @@ export const useSubjectManager = (user, subjectId) => {
             const numberString = nextOrder.toString().padStart(2, '0');
 
             const newTopic = {
-                title: data.title, 
+                name: data.name,
                 prompt: data.prompt, 
                 status: 'generating',
                 color: subject.color, 

@@ -4,7 +4,7 @@ import { X, Save, Eye, EyeOff, ListOrdered, Type } from 'lucide-react';
 
 const EditTopicModal = ({ isOpen, onClose, topic, onSave }) => {
     const [formData, setFormData] = useState({
-        title: '',
+        name: '',
         order: '',
         isVisible: true
     });
@@ -12,7 +12,7 @@ const EditTopicModal = ({ isOpen, onClose, topic, onSave }) => {
     useEffect(() => {
         if (topic) {
             setFormData({
-                title: topic.title || '',
+                name: topic.name || topic.title || '',
                 order: topic.order || 0,
                 // Default to true if undefined
                 isVisible: topic.isVisible !== undefined ? topic.isVisible : true
@@ -62,8 +62,8 @@ const EditTopicModal = ({ isOpen, onClose, topic, onSave }) => {
                             </label>
                             <input
                                 type="text"
-                                value={formData.title}
-                                onChange={(e) => setFormData({...formData, title: e.target.value})}
+                                value={formData.name}
+                                onChange={(e) => setFormData({...formData, name: e.target.value})}
                                 className="w-full px-4 py-2 bg-white dark:bg-slate-950 border border-gray-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all dark:text-white"
                                 required
                             />

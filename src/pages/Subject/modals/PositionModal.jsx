@@ -107,7 +107,7 @@ const PositionModal = ({ isOpen, onClose, onConfirm, topics = [], newTopicTitle 
                             >
                                 {topics.map((topic, index) => (
                                     <option key={topic.id} value={topic.id}>
-                                        {index + 1}. {topic.title}
+                                        {index + 1}. {topic.name || topic.title}
                                     </option>
                                 ))}
                             </select>

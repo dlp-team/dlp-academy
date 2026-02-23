@@ -3,13 +3,16 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 
 const TopicFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
-    const [formData, setFormData] = useState({ title: '', prompt: '' });
+    const [formData, setFormData] = useState({ name: '', prompt: '' });
     const [files, setFiles] = useState([]);
     const [dragActive, setDragActive] = useState(false);
 
     useEffect(() => {
         if (isOpen) {
-            setFormData(initialData || { title: '', prompt: '' });
+            setFormData({
+                name: initialData?.name || initialData?.title || '',
+                prompt: initialData?.prompt || ''
+            });
             setFiles([]); // Reset files on open unless we pass cached ones (optional)
         }
     }, [isOpen, initialData]);
@@ -56,8 +59,8 @@ const TopicFormModal = ({ isOpen, onClose, onSubmit, initialData }) => {
                             <label className="block text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Título</label>
                             <input 
                                 type="text" 
-                                value={formData.title} 
-                                onChange={e => setFormData({...formData, title: e.target.value})} 
+                                value={formData.name}
+                                onChange={e => setFormData({...formData, name: e.target.value})}
                                 className="w-full px-5 py-3 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white text-lg font-medium focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all mb-2" 
                                 placeholder="Ej: La Segunda Guerra Mundial" 
                                 required 

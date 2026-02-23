@@ -54,7 +54,7 @@ const TopicHeader = ({
                                 <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-2 z-50">
                                     {/* *** CONDITIONAL: Show rename only if canEdit *** */}
                                     {permissions?.showEditUI && (
-                                        <button onClick={() => { setIsEditingTopic(true); setEditTopicData({ title: topic.title }); setShowMenu(false); }} className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 text-slate-700 dark:text-slate-300">
+                                        <button onClick={() => { setIsEditingTopic(true); setEditTopicData({ name: topic.name || topic.title || '' }); setShowMenu(false); }} className="w-full px-4 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-3 text-slate-700 dark:text-slate-300">
                                             <Edit2 className="w-4 h-4" /> Renombrar Tema
                                         </button>
                                     )}
@@ -98,12 +98,12 @@ const TopicHeader = ({
                         </div>
                         {isEditingTopic ? (
                             <div className="flex gap-2 max-w-lg">
-                                <input type="text" value={editTopicData.title} onChange={(e) => setEditTopicData({ ...editTopicData, title: e.target.value })} className="flex-1 text-2xl font-bold border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" autoFocus />
+                                <input type="text" value={editTopicData.name} onChange={(e) => setEditTopicData({ ...editTopicData, name: e.target.value })} className="flex-1 text-2xl font-bold border border-slate-300 dark:border-slate-600 rounded-lg px-3 py-2 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100" autoFocus />
                                 <button onClick={handleSaveTopicTitle} className="bg-indigo-600 dark:bg-indigo-500 text-white px-4 rounded-lg"><CheckCircle2 /></button>
                                 <button onClick={() => setIsEditingTopic(false)} className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-4 rounded-lg"><X /></button>
                             </div>
                         ) : (
-                            <h2 className="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight capitalize leading-tight">{topic.title}</h2>
+                            <h2 className="text-4xl md:text-6xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight capitalize leading-tight">{topic.name || topic.title}</h2>
                         )}
                         
                         {/* BARRA DE PROGRESO */}

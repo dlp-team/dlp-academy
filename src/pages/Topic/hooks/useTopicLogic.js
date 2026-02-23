@@ -29,7 +29,7 @@ export const useTopicLogic = (user) => {
     // Menús y Edición
     const [showMenu, setShowMenu] = useState(false);
     const [isEditingTopic, setIsEditingTopic] = useState(false);
-    const [editTopicData, setEditTopicData] = useState({ title: '' });
+    const [editTopicData, setEditTopicData] = useState({ name: '' });
 
     // Gestión Archivos y Menús
     const [activeMenuId, setActiveMenuId] = useState(null);
@@ -212,9 +212,9 @@ export const useTopicLogic = (user) => {
     };
 
     const handleSaveTopicTitle = async () => {
-        if (!editTopicData.title.trim()) return;
+        if (!editTopicData.name.trim()) return;
         try {
-            await updateDoc(doc(db, "topics", topicId), { title: editTopicData.title });
+            await updateDoc(doc(db, "topics", topicId), { name: editTopicData.name });
             setIsEditingTopic(false);
         } catch (error) { console.error(error); }
     };
@@ -261,7 +261,7 @@ export const useTopicLogic = (user) => {
             formData.append('subjectId', subjectId);
             formData.append('topicId', topicId);
             formData.append('subjectName', subject?.name);
-            formData.append('topicTitle', topic?.title);
+            formData.append('topicName', topic?.name || topic?.title);
             if (quizFormData.file) formData.append('files', quizFormData.file); 
 
             const res = await fetch('https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook/711e538b-9d63-42bb-8494-873301ffdf39', {
@@ -296,7 +296,7 @@ export const useTopicLogic = (user) => {
             formData.append('subjectId', subjectId);
             formData.append('topicId', topicId);
             formData.append('subjectName', subject?.name);
-            formData.append('topicTitle', topic?.title);
+            formData.append('topicName', topic?.name || topic?.title);
             
             if (contentFormData.file) formData.append('files', contentFormData.file);
 
@@ -317,7 +317,7 @@ export const useTopicLogic = (user) => {
     // --- HANDLERS PARA ABRIR MODALES ---
     const handleCreateCustomPDF = () => {
         setContentFormData({ 
-            title: `Resumen: ${topic?.title}`, 
+            title: `Resumen: ${topic?.name || topic?.title}`,
             type: 'summary', 
             prompt: '' 
         });
@@ -326,7 +326,7 @@ export const useTopicLogic = (user) => {
 
     const handleCreateCustomQuiz = () => {
         setQuizFormData({ 
-            title: `Test: ${topic?.title}`, 
+            title: `Test: ${topic?.name || topic?.title}`,
             level: 'Intermedio', 
             numQuestions: 5, 
             prompt: '' 

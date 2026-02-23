@@ -80,7 +80,7 @@ const Subject = ({ user }) => {
     // NEW: Handle saving edited topic
     const handleSaveEditedTopic = async (updatedData) => {
         await updateTopic(updatedData.id, {
-            title: updatedData.title,
+            name: updatedData.name,
             order: updatedData.order,
             number: updatedData.number,
             isVisible: updatedData.isVisible

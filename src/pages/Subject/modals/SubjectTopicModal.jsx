@@ -190,7 +190,7 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
                                             {/* Content */}
                                             <div className="flex-1 min-w-0 z-10">
                                                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
-                                                    {topic.title}
+                                                    {topic.name || topic.title}
                                                 </h4>
                                                 <div className="flex items-center gap-2 mt-0.5">
                                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium

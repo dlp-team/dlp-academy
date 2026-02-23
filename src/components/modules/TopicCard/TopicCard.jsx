@@ -211,7 +211,7 @@ const TopicCard = ({
                     {/* Footer Row */}
                     <div>
                         <h3 className="text-2xl font-bold mb-2 leading-tight line-clamp-2 drop-shadow-md">
-                            {topic.title}
+                            {topic.name || topic.title}
                         </h3>
                         
                         {/* Status Text */}
