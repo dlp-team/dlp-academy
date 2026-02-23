@@ -21,7 +21,7 @@ Evolve Home/Folder/Subject architecture into a robust hierarchical model, then e
 - `parentId: string | null`
 - `editorUids: string[]`
 - `viewerUids: string[]`
-- `institutionId: string`
+- `institutionId: string` (institutions/{id} doc ID)
 
 ### shortcuts collection
 
@@ -30,7 +30,7 @@ Evolve Home/Folder/Subject architecture into a robust hierarchical model, then e
 - `parentId: string | null`
 - `targetId: string`
 - `targetType: 'subject' | 'folder'`
-- `institutionId: string`
+- `institutionId: string` (institutions/{id} doc ID)
 - `createdAt: timestamp`
 
 ## Current Phase Status

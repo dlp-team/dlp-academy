@@ -143,8 +143,7 @@ service cloud.firestore {
     match /institutions/{institutionId} {
       allow read: if isSignedIn();
       allow create: if isGlobalAdmin();
-      allow update: if canManageInstitution(resource.data.institutionId)
-        && request.resource.data.institutionId == resource.data.institutionId;
+      allow update: if canManageInstitution(institutionId);
       allow delete: if isGlobalAdmin();
     }
 

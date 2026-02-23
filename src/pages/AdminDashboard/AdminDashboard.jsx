@@ -27,16 +27,6 @@ const RoleBadge = ({ role }) => {
     return <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${cfg.cls}`}>{cfg.label}</span>;
 };
 
-const slugifyInstitutionId = (value = '') => {
-    return value
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-+|-+$/g, '')
-        .slice(0, 48);
-};
-
 const parseCsvEmails = (value = '') => {
     return value
         .split(',')
@@ -111,10 +101,6 @@ const SchoolsTab = () => {
     };
 
     useEffect(() => { fetchSchools(); }, []);
-
-    useEffect(() => {
-        // No institutionId field needed, Firestore will generate it
-    }, [form.name]);
 
     const handleCreate = async (e) => {
         e.preventDefault();
@@ -318,7 +304,7 @@ const SchoolsTab = () => {
                             <thead className="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase font-semibold text-slate-500">
                                 <tr>
                                     <th className="px-6 py-4">Institución</th>
-                                    <th className="px-6 py-4">ID</th>
+                                    <th className="px-6 py-4">ID (Firestore)</th>
                                     <th className="px-6 py-4">Dominio</th>
                                     <th className="px-6 py-4">Tipo</th>
                                     <th className="px-6 py-4">Ciudad</th>
@@ -333,7 +319,7 @@ const SchoolsTab = () => {
                                 ) : filtered.map(school => (
                                     <tr key={school.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 ${school.enabled === false ? 'opacity-60' : ''}`}>
                                         <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{school.name}</td>
-                                        <td className="px-6 py-4 font-mono text-xs">{school.institutionId || '—'}</td>
+                                        <td className="px-6 py-4 font-mono text-xs" title={school.id}>{school.id}</td>
                                         <td className="px-6 py-4">{school.domain || school.domains?.[0] || '—'}</td>
                                         <td className="px-6 py-4 capitalize">{school.type || 'school'}</td>
                                         <td className="px-6 py-4">{school.city || '—'}</td>
