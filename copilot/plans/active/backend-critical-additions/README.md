@@ -16,8 +16,8 @@ This plan tracks backend-critical additions for the DLP Academy workspace, with 
 ## Current Status
 
 - Plan state: **ACTIVE**
-- Current phase: **Phase 00 — Backend baseline and gap inventory (IN_PROGRESS)**
-- Next milestone: Produce a prioritized implementation backlog and lock Phase 01 scope.
+- Current phase: **Phase 02 — Security/rules hardening checkpoints (IN_PROGRESS)**
+- Next milestone: Define and execute a rules validation matrix for migration-adjacent flows.
 
 ## Plan Artifacts
 

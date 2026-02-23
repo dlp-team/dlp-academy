@@ -115,6 +115,14 @@ module.exports = {
 
 ---
 
+## Operational Safeguards
+
+- Rollback procedures: see `scripts/migration-rollback-playbook.md`
+- Release verification gate: see `scripts/migration-release-gate-checklist.md`
+- Plan review templates (checklist/log): see `copilot/plans/active/backend-critical-additions/reviewing/`
+
+---
+
 ## Environment requirements
 
 - `FIREBASE_SERVICE_ACCOUNT_JSON` or `FIREBASE_SERVICE_ACCOUNT_PATH` (required)

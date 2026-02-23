@@ -1,4 +1,4 @@
-# Phase 00 — Backend Baseline and Gap Inventory (IN_PROGRESS)
+# Phase 00 — Backend Baseline and Gap Inventory (COMPLETED)
 
 ## Objective
 
@@ -14,8 +14,8 @@ Create a concrete inventory of backend-critical gaps and produce a prioritized e
 
 - [x] Enumerate backend-critical systems currently in use.
 - [x] Capture missing safeguards per system.
-- [ ] Assign severity and implementation priority.
-- [ ] Propose Phase 01 scope from top-priority items.
+- [x] Assign severity and implementation priority.
+- [x] Propose Phase 01 scope from top-priority items.
 
 ## Progress Notes
 
@@ -28,3 +28,8 @@ Create a concrete inventory of backend-critical gaps and produce a prioritized e
 
 - A prioritized backlog exists in `working/phase-00-gap-inventory.md`.
 - At least one implementation-ready item is selected for Phase 01.
+
+## Completion Summary
+
+- Priority ranking completed in `working/phase-00-gap-inventory.md`.
+- Phase 01 scope was defined around rollback and release-gate safeguards.
