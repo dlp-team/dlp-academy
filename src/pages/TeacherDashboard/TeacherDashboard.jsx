@@ -261,13 +261,13 @@ const TeacherDashboard = ({ user }) => {
 
     useEffect(() => {
         const fetchData = async () => {
-            if (!user?.uid || !user?.schoolId) return;
+            if (!user?.uid || !user?.institutionId) return;
             setLoading(true);
             try {
                 // 1. Fetch classes where this teacher is assigned
                 const classesSnap = await getDocs(
                     query(collection(db, 'classes'),
-                        where('schoolId', '==', user.schoolId),
+                        where('institutionId', '==', user.institutionId),
                         where('teacherId', '==', user.uid)
                     )
                 );
@@ -291,7 +291,7 @@ const TeacherDashboard = ({ user }) => {
                 if (studentIdSet.size > 0) {
                     const studentsSnap = await getDocs(
                         query(collection(db, 'users'),
-                            where('schoolId', '==', user.schoolId),
+                            where('institutionId', '==', user.institutionId),
                             where('role', '==', 'student')
                         )
                     );

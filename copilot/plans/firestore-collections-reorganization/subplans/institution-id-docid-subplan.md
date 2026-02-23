@@ -46,8 +46,15 @@ Use the Firestore document ID as the canonical institution identifier. Remove cu
 - If any legacy institutionId fields exist in institutions, they can remain but should be ignored and eventually removed.
 - Avoid hard deletes of user institutionId until all flows are verified.
 
+## Phase 1 findings (inventory snapshot)
+- Core hooks already use institutionId filters and stamping: useSubjects, useFolders, useShortcuts.
+- Institution admin flows use institutionId for classes, courses, allowed_teachers, and users.
+- Legacy usage still present in teacher dashboard (schoolId) and in docs (ReadmePannels).
+- User registration/login paths need verification to ensure institutionId is always set.
+- Topic/material/quiz subcollections do not carry institutionId; rely on parent subject's institutionId.
+
 ## Status
-- Phase 1: not started
-- Phase 2: not started
+- Phase 1: completed
+- Phase 2: in progress
 - Phase 3: not started
 - Phase 4: not started
