@@ -5,6 +5,7 @@ import {
     getDoc, onSnapshot, updateDoc
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { canView } from '../utils/permissionUtils';
 
 /**
  * Custom hook to manage user's shortcuts collection
@@ -105,11 +106,26 @@ export const useShortcuts = (user) => {
 
                     // Target exists - return normalized object with metadata
                     const targetData = { id: targetSnap.id, ...targetSnap.data() };
+
+                    if (!canView(targetData, user.uid)) {
+                        return {
+                            ...shortcut,
+                            isShortcut: true,
+                            isOrphan: true,
+                            shortcutId: shortcut.id,
+                            targetData: null,
+                            name: '(No access)',
+                            _originalTargetId: targetId,
+                            _originalTargetType: targetType,
+                            _reason: 'access-revoked'
+                        };
+                    }
                     
                     return {
                         ...targetData, // Spread target data first
                         // Override with shortcut-specific properties
                         shortcutId: shortcut.id,
+                        shortcutOwnerId: shortcut.ownerId,
                         shortcutParentId: shortcut.parentId, // Where shortcut lives
                         isShortcut: true,
                         isOrphan: false,
@@ -152,6 +168,41 @@ export const useShortcuts = (user) => {
         if (!user) {
             console.log('[SHORTCUT] createShortcut: user missing');
             throw new Error("User must be authenticated to create shortcuts");
+        }
+
+        const existingShortcuts = shortcuts.filter(
+            shortcut =>
+                shortcut.ownerId === user.uid &&
+                shortcut.targetId === targetId &&
+                shortcut.targetType === targetType
+        );
+
+        if (existingShortcuts.length > 0) {
+            const primaryShortcut = existingShortcuts[0];
+            const duplicates = existingShortcuts.slice(1);
+
+            const primaryRef = doc(db, "shortcuts", primaryShortcut.id);
+            await updateDoc(primaryRef, {
+                parentId,
+                institutionId,
+                updatedAt: new Date()
+            });
+
+            if (duplicates.length > 0) {
+                await Promise.all(
+                    duplicates.map(duplicate => deleteDoc(doc(db, "shortcuts", duplicate.id)))
+                );
+            }
+
+            console.log('[SHORTCUT] Existing shortcut updated:', {
+                shortcutId: primaryShortcut.id,
+                targetId,
+                targetType,
+                parentId,
+                duplicatesRemoved: duplicates.length
+            });
+
+            return primaryShortcut.id;
         }
 
         const shortcutData = {

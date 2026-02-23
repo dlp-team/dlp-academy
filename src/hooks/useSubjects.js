@@ -164,6 +164,31 @@ export const useSubjects = (user) => {
                 isShared: true,
                 updatedAt: new Date()
             });
+
+            // Ensure exactly one shortcut exists for the newly shared user
+            const existingShortcutQuery = query(
+                collection(db, 'shortcuts'),
+                where('ownerId', '==', targetUid),
+                where('targetId', '==', subjectId),
+                where('targetType', '==', 'subject')
+            );
+            const existingShortcutSnap = await getDocs(existingShortcutQuery);
+
+            if (existingShortcutSnap.empty) {
+                await addDoc(collection(db, 'shortcuts'), {
+                    ownerId: targetUid,
+                    parentId: null,
+                    targetId: subjectId,
+                    targetType: 'subject',
+                    institutionId: user?.institutionId || 'default',
+                    createdAt: new Date()
+                });
+            } else if (existingShortcutSnap.docs.length > 1) {
+                // Keep one, remove accidental duplicates
+                const duplicateDocs = existingShortcutSnap.docs.slice(1);
+                await Promise.all(duplicateDocs.map(d => deleteDoc(doc(db, 'shortcuts', d.id))));
+            }
+
             return shareData;
 
         } catch (error) {
@@ -202,6 +227,7 @@ export const useSubjects = (user) => {
                 sharedWithUids: arrayRemove(targetUid),
                 updatedAt: new Date()
             });
+
             return true;
 
         } catch (error) {

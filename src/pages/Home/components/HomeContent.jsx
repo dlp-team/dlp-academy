@@ -306,7 +306,15 @@ const HomeContent = ({
                                                         onSelect={handleSelectSubject}
                                                         onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
                                                         onEdit={(e, s) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
-                                                        onDelete={(e, s) => { e.stopPropagation(); setDeleteConfig({ isOpen: true, type: 'subject', item: s }); setActiveMenu(null); }}
+                                                        onDelete={(e, s) => {
+                                                            e.stopPropagation();
+                                                            if (s?.isShortcut && s?.shortcutId) {
+                                                                onDeleteShortcut && onDeleteShortcut(s.shortcutId);
+                                                            } else {
+                                                                setDeleteConfig({ isOpen: true, type: 'subject', item: s });
+                                                            }
+                                                            setActiveMenu(null);
+                                                        }}
                                                         onShare={(s) => { setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' }); setActiveMenu(null); }}
                                                         cardScale={cardScale}
                                                         isDragging={draggedItem?.id === subject.id}
@@ -397,6 +405,7 @@ const HomeContent = ({
                                         {viewMode === 'grid' && filteredFolders.map((folder) => (
                                             <ListViewItem 
                                                 key={folder.id}
+                                                user={user}
                                                 item={folder}
                                                 type="folder"
                                                 parentId={currentFolder ? currentFolder.id : null}
@@ -418,6 +427,7 @@ const HomeContent = ({
                                         {groupSubjects.map((subject) => (
                                             <ListViewItem
                                                 key={subject.id}
+                                                user={user}
                                                 item={subject}
                                                 type="subject"
                                                 parentId={currentFolder ? currentFolder.id : null}
@@ -425,7 +435,13 @@ const HomeContent = ({
                                                 allSubjects={subjects}
                                                 onNavigateSubject={handleSelectSubject}
                                                 onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
-                                                onDelete={(s) => setDeleteConfig({ isOpen: true, type: 'subject', item: s })}
+                                                onDelete={(s) => {
+                                                    if (s?.isShortcut && s?.shortcutId) {
+                                                        onDeleteShortcut && onDeleteShortcut(s.shortcutId);
+                                                        return;
+                                                    }
+                                                    setDeleteConfig({ isOpen: true, type: 'subject', item: s });
+                                                }}
                                                 onShare={(s) => { setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' }); setActiveMenu(null); }}
                                                 cardScale={cardScale}
                                                 onDragStart={handleDragStartSubject}

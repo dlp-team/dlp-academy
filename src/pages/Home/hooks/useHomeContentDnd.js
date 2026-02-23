@@ -53,8 +53,17 @@ const useHomeContentDnd = ({
         if (treeDataString) draggedData = JSON.parse(treeDataString);
         else {
             const subjectId = e.dataTransfer.getData('subjectId');
+            const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
+            const subjectParentId = e.dataTransfer.getData('subjectParentId');
             const folderId = e.dataTransfer.getData('folderId');
-            if (subjectId) draggedData = { id: subjectId, type: 'subject', parentId: undefined };
+            if (subjectId) {
+                draggedData = {
+                    id: subjectId,
+                    type: 'subject',
+                    parentId: subjectParentId || undefined,
+                    shortcutId: subjectShortcutId || undefined
+                };
+            }
             else if (folderId) draggedData = { id: folderId, type: 'folder', parentId: undefined };
         }
         console.log('[DND] handleRootZoneDrop:', { draggedData, currentFolder });
@@ -73,7 +82,7 @@ const useHomeContentDnd = ({
                     draggedParentId: draggedData.parentId,
                     draggedType: draggedData.type
                 });
-                const result = handleDropOnFolder(targetId, draggedData.id, draggedData.parentId);
+                const result = handleDropOnFolder(targetId, draggedData.id, draggedData.parentId, draggedData.shortcutId);
                 if (result === true) overlayShown = true;
             }
             if (!overlayShown && !handleDropOnFolder && handleMoveSubjectWithSource) {
@@ -100,7 +109,7 @@ const useHomeContentDnd = ({
                         draggedType: dragged.type,
                         targetType: target.type
                     });
-                    const result = handleDropOnFolder(target.id, dragged.id, dragged.parentId);
+                    const result = handleDropOnFolder(target.id, dragged.id, dragged.parentId, dragged.shortcutId);
                     if (result === true) overlayShown = true;
                 }
                 if (!overlayShown && !handleDropOnFolder && handleMoveSubjectWithSource) {
@@ -123,7 +132,7 @@ const useHomeContentDnd = ({
                             draggedType: dragged.type,
                             targetType: target.type
                         });
-                        const result = handleDropOnFolder(targetParentId, dragged.id, dragged.parentId);
+                        const result = handleDropOnFolder(targetParentId, dragged.id, dragged.parentId, dragged.shortcutId);
                         if (result === true) overlayShown = true;
                     }
                     if (!overlayShown && !handleDropOnFolder && handleMoveSubjectWithSource) {

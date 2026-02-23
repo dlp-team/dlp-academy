@@ -7,6 +7,7 @@ import {
     writeBatch, increment, orderBy 
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { canView } from '../../../utils/permissionUtils';
 
 const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39';
 
@@ -25,13 +26,22 @@ export const useSubjectManager = (user, subjectId) => {
             try {
                 const docSnap = await getDoc(doc(db, "subjects", subjectId));
                 if (docSnap.exists()) {
-                    setSubject({ id: docSnap.id, ...docSnap.data() });
+                    const subjectData = { id: docSnap.id, ...docSnap.data() };
+                    if (!canView(subjectData, user.uid)) {
+                        navigate('/home');
+                        setLoading(false);
+                        return;
+                    }
+                    setSubject(subjectData);
                 } else {
                     console.error("Subject not found");
                     navigate('/home');
+                    setLoading(false);
                 }
             } catch (error) {
                 console.error("Error fetching subject:", error);
+                navigate('/home');
+                setLoading(false);
             }
         };
 

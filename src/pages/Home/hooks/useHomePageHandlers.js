@@ -24,22 +24,28 @@ export const useHomePageHandlers = ({
         e.preventDefault();
         e.stopPropagation();
         const subjectId = e.dataTransfer.getData('subjectId');
+        const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
         const folderId = e.dataTransfer.getData('folderId');
         if (logic.currentFolder) {
             const currentId = logic.currentFolder.id;
             const parentId = logic.currentFolder.parentId;
             if (subjectId) {
-                await moveSubjectToParent(subjectId, currentId, parentId);
+                if (subjectShortcutId && logic?.moveShortcut) {
+                    await logic.moveShortcut(subjectShortcutId, parentId || null);
+                } else {
+                    await moveSubjectToParent(subjectId, currentId, parentId);
+                }
             } else if (folderId && folderId !== currentId) {
                 await moveFolderToParent(folderId, currentId, parentId);
             }
         }
     };
 
-    const handleDropOnFolderWrapper = (targetFolderId, subjectId, typeOrSourceFolderId, sourceFolderIdMaybe) => {
+    const handleDropOnFolderWrapper = (targetFolderId, subjectId, typeOrSourceFolderId, sourceFolderIdMaybe, shortcutIdMaybe) => {
         const isKnownType = typeOrSourceFolderId === 'subject' || typeOrSourceFolderId === 'folder';
         const type = isKnownType ? typeOrSourceFolderId : 'subject';
         const explicitSourceFolderId = isKnownType ? sourceFolderIdMaybe : typeOrSourceFolderId;
+        const draggedShortcutId = isKnownType ? shortcutIdMaybe : sourceFolderIdMaybe;
 
         if (type === 'folder') {
             handleNestFolder(targetFolderId, subjectId);
@@ -58,7 +64,8 @@ export const useHomePageHandlers = ({
             type,
             typeOrSourceFolderId,
             sourceFolderIdMaybe,
-            currentFolderId
+            currentFolderId,
+            draggedShortcutId
         });
 
         if (targetFolderId === currentFolderId) {
@@ -68,32 +75,20 @@ export const useHomePageHandlers = ({
         const sourceFolder = (logic.folders || []).find(f => f.id === currentFolderId);
         const userId = logic?.user?.uid || logic?.uid;
 
+        if (draggedShortcutId && logic?.moveShortcut) {
+            logic.moveShortcut(draggedShortcutId, targetFolderId || null);
+            return true;
+        }
+
         if (subject) {
             const userCanEdit = userId ? canEdit(subject, userId) : false;
             if (!userCanEdit) {
-                console.log('[handleDropOnFolderWrapper] viewer detected, creating shortcut:', {
+                console.log('[handleDropOnFolderWrapper] viewer/editor without shortcut cannot move source subject directly:', {
                     subjectId,
                     targetFolderId,
                     currentFolderId,
                     userId
                 });
-                if (logic?.createShortcut) {
-                    logic
-                        .createShortcut(
-                            subjectId,
-                            'subject',
-                            targetFolderId,
-                            logic?.user?.institutionId || 'default'
-                        )
-                        .then(shortcutId => {
-                            console.log('[handleDropOnFolderWrapper] shortcut created:', shortcutId);
-                        })
-                        .catch(error => {
-                            console.error('[handleDropOnFolderWrapper] shortcut creation failed:', error);
-                        });
-                } else {
-                    console.warn('[handleDropOnFolderWrapper] createShortcut is not available on logic');
-                }
                 return true;
             }
         }
@@ -403,6 +398,24 @@ export const useHomePageHandlers = ({
     };
 
     const handleTreeMoveSubject = async (subjectId, targetFolderId, sourceFolderId) => {
+        const subject = (logic.subjects || []).find(s => s.id === subjectId);
+        const userId = logic?.user?.uid || logic?.uid;
+        const userCanEdit = subject && userId ? canEdit(subject, userId) : false;
+
+        if (!userCanEdit && logic?.moveShortcut) {
+            const shortcut = (logic.shortcuts || []).find(
+                s =>
+                    s.targetId === subjectId &&
+                    s.targetType === 'subject' &&
+                    (s.parentId || null) === (sourceFolderId || null)
+            );
+
+            if (shortcut?.id) {
+                await logic.moveShortcut(shortcut.id, targetFolderId || null);
+                return;
+            }
+        }
+
         await moveSubjectBetweenFolders(subjectId, sourceFolderId, targetFolderId);
     };
 

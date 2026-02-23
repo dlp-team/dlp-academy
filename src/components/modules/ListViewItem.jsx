@@ -6,6 +6,7 @@ import FolderListItem from './ListItems/FolderListItem';
 import { useGhostDrag } from '../../hooks/useGhostDrag'; // Adjust path if needed
 
 const ListViewItem = ({ 
+    user,
     item, 
     type, 
     parentId,
@@ -38,12 +39,16 @@ const ListViewItem = ({
         cardScale,
         onDragStart: (e) => {
             //e.stopPropagation();
+            const itemParentId = item.shortcutParentId ?? parentId;
             const dragData = {
                 id: item.id,
                 type: 'subject',
-                parentId: parentId
+                parentId: itemParentId,
+                shortcutId: item.shortcutId || null
             };
             e.dataTransfer.setData('subjectId', item.id);
+            e.dataTransfer.setData('subjectParentId', itemParentId || '');
+            e.dataTransfer.setData('subjectShortcutId', item.shortcutId || '');
             e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
             if (onDragStart) onDragStart(item);
         },
@@ -143,6 +148,7 @@ const ListViewItem = ({
                     </div>
                     <div className="flex-1">
                         <SubjectListItem 
+                            user={user}
                             subject={item} 
                             onSelect={() => onNavigateSubject(item.id)} 
                             onEdit={onEdit} 

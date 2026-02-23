@@ -27,6 +27,7 @@ const SubjectCardFront = ({
     const showEditUI = user && shouldShowEditUI(subject, user.uid);
     const showDeleteUI = user && shouldShowDeleteUI(subject, user.uid);
     const canShare = user && canEditItem(subject, user.uid);
+    const isShortcut = subject?.isShortcut === true;
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
 
@@ -149,7 +150,7 @@ const SubjectCardFront = ({
                                 transformOrigin: 'top left'
                             }}
                         >
-                            {(showEditUI || showDeleteUI) ? (
+                            {(showEditUI || showDeleteUI || isShortcut) ? (
                                 <>
                                     {showEditUI && (
                                         <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
@@ -161,8 +162,13 @@ const SubjectCardFront = ({
                                             <Share2 size={14 * menuScale} /> Compartir
                                         </button>
                                     )}
-                                    {(showEditUI || canShare) && showDeleteUI && (
+                                    {(showEditUI || canShare) && (showDeleteUI || isShortcut) && (
                                         <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
+                                    )}
+                                    {isShortcut && (
+                                        <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                            <Trash2 size={14 * menuScale} /> Quitar de mi vista
+                                        </button>
                                     )}
                                     {showDeleteUI && (
                                         <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>

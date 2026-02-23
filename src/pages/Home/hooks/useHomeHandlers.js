@@ -246,29 +246,8 @@ export const useHomeHandlers = ({
                 const userCanEdit = canEdit(subject, user.uid);
                 console.log('[DND] userCanEdit:', userCanEdit, 'subject:', subject);
                 if (!userCanEdit) {
-                    // User is just a viewer - create a shortcut instead of moving
-                    console.log('[DND] handleDropOnFolder: About to call createShortcut', {
-                        draggedId,
-                        targetFolderId,
-                        institutionId: user.institutionId || 'default',
-                        user,
-                        subject
-                    });
-                    if (createShortcut) {
-                        try {
-                            const shortcutId = await createShortcut(
-                                draggedId,
-                                'subject',
-                                targetFolderId,
-                                user.institutionId || 'default'
-                            );
-                            console.log('[DND] Shortcut created with ID:', shortcutId);
-                        } catch (error) {
-                            console.error('[DND] Error creating shortcut:', error);
-                        }
-                    } else {
-                        console.log('[DND] createShortcut function missing');
-                    }
+                    // Shortcuts are created only during sharing, never by drag-and-drop.
+                    console.log('[DND] Non-owner cannot move source subject directly without existing shortcut context.');
                 } else if (subject.folderId !== targetFolderId) {
                     // User owns or can edit - perform normal move
                     await updateSubject(draggedId, { folderId: targetFolderId });
@@ -290,16 +269,8 @@ export const useHomeHandlers = ({
                 const userCanEdit = canEdit(folder, user.uid);
 
                 if (!userCanEdit) {
-                    // User is just a viewer - create a shortcut instead of moving
-                    console.log('📌 Creating shortcut for shared folder:', folder.name);
-                    if (createShortcut) {
-                        await createShortcut(
-                            draggedId,
-                            'folder',
-                            targetFolderId,
-                            user.institutionId || 'default'
-                        );
-                    }
+                    // Shortcuts are created only during sharing, never by drag-and-drop.
+                    console.log('[DND] Non-owner cannot move source folder directly without existing shortcut context.');
                 } else {
                     // User owns or can edit - check for circular dependency and move
                     if (isDescendant(draggedId, targetFolderId, folders)) {

@@ -31,15 +31,18 @@ const SubjectCard = (props) => {
 
     const handleLocalDragStart = (e) => {
         if (draggable) {
+            const subjectParentId = subject.shortcutParentId ?? subject.folderId ?? null;
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('subjectId', subject.id); // Essential for the drop logic
             e.dataTransfer.setData('type', 'subject');
             e.dataTransfer.setData('subjectType', 'subject');
-            e.dataTransfer.setData('subjectParentId', subject.folderId || '');
+            e.dataTransfer.setData('subjectParentId', subjectParentId || '');
+            e.dataTransfer.setData('subjectShortcutId', subject.shortcutId || '');
             e.dataTransfer.setData('treeItem', JSON.stringify({
                 id: subject.id,
                 type: 'subject',
-                parentId: subject.folderId || null
+                parentId: subjectParentId,
+                shortcutId: subject.shortcutId || null
             }));
             
             // Trigger the parent's event (for UI state)

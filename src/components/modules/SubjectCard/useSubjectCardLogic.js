@@ -26,14 +26,17 @@ export const useSubjectCardLogic = ({
     // Handle drag events
     const handleDragStart = (e) => {
         if (draggable && onDragStart) {
+            const subjectParentId = subject.shortcutParentId ?? subject.folderId ?? null;
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('subjectId', subject.id);
             e.dataTransfer.setData('subjectType', 'subject');
-            e.dataTransfer.setData('subjectParentId', subject.folderId || '');
+            e.dataTransfer.setData('subjectParentId', subjectParentId || '');
+            e.dataTransfer.setData('subjectShortcutId', subject.shortcutId || '');
             e.dataTransfer.setData('treeItem', JSON.stringify({
                 id: subject.id,
                 type: 'subject',
-                parentId: subject.folderId || null
+                parentId: subjectParentId,
+                shortcutId: subject.shortcutId || null
             }));
             e.dataTransfer.setData('position', position.toString());
             onDragStart(subject, position);
