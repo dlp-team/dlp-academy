@@ -116,7 +116,7 @@ The Teacher Dashboard is designed for teachers to manage their students and moni
   email: string,
   displayName: string,
   role: 'teacher',
-  schoolId: string,
+  institutionId: string,
   subjects: string[], // Array of subject IDs the teacher teaches
   classes: string[], // Array of class/group IDs
 }
@@ -127,7 +127,7 @@ The Teacher Dashboard is designed for teachers to manage their students and moni
   email: string,
   displayName: string,
   role: 'student',
-  schoolId: string,
+  institutionId: string,
   teacherId: string, // Reference to assigned teacher
   enrolledSubjects: string[], // Array of subject IDs
   classId: string, // Reference to class/group
@@ -173,7 +173,7 @@ Admin Dashboard
 # Admin Dashboard (Panel de Administrador)
 
 ## Overview
-The Admin Dashboard is the highest-level control panel for platform administrators to manage all schools/universities, users, and system-wide settings across the entire DLP Academy platform.
+The Admin Dashboard is the highest-level control panel for platform administrators to manage all institutions, users, and system-wide settings across the entire DLP Academy platform.
 
 ## Access Requirements
 - **User Role**: `admin`
@@ -182,14 +182,14 @@ The Admin Dashboard is the highest-level control panel for platform administrato
 
 ## Main Features
 
-### 1. Schools/Universities Management Tab
+### 1. Institutions Management Tab
 **Purpose**: Manage all educational institutions using the platform
 
 **Features**:
-- **Schools Table**: Display all registered schools/universities
-  - School Name
-  - School ID
-  - School Admin Email
+- **Institutions Table**: Display all registered institutions
+  - Institution Name
+  - Institution ID
+  - Institution Admin Email
   - Total Teachers Count
   - Total Students Count
   - Subscription Status (Active, Trial, Expired)
@@ -198,32 +198,32 @@ The Admin Dashboard is the highest-level control panel for platform administrato
   - Status (Active/Suspended)
 
 - **Search & Filters**:
-  - Search by school name or admin email
+  - Search by institution name or admin email
   - Filter by subscription status
   - Filter by subscription tier
   - Filter by activity status
   - Sort by student count, teacher count, or registration date
 
 - **Quick Actions**:
-  - Click on school to view detailed analytics (navigate to `/admin/school/:schoolId`)
-  - Add new school
-  - Suspend/activate school
+  - Click on institution to view detailed analytics (navigate to `/admin/institution/:institutionId`)
+  - Add new institution
+  - Suspend/activate institution
   - Manage subscription
-  - Contact school admin
+  - Contact institution admin
 
-- **Add New School**:
-  - School name
-  - School admin email (will receive setup instructions)
+- **Add New Institution**:
+  - Institution name
+  - Institution admin email (will receive setup instructions)
   - Subscription tier selection
   - Initial configuration (logo, colors, etc.)
 
 ### 2. Global User Management Tab
-**Purpose**: View and manage all users across all schools
+**Purpose**: View and manage all users across all institutions
 
 **Features**:
 - **User Filters**:
-  - Filter by role (Admin, School Admin, Teacher, Student)
-  - Filter by school
+  - Filter by role (Admin, Institution Admin, Teacher, Student)
+  - Filter by institution
   - Filter by status (Active, Suspended, Pending Verification)
   - Search by email or name
 
@@ -231,7 +231,7 @@ The Admin Dashboard is the highest-level control panel for platform administrato
   - Email
   - Name
   - Role
-  - School Name
+  - Institution Name
   - Status
   - Last Login
   - Registration Date
@@ -247,7 +247,7 @@ The Admin Dashboard is the highest-level control panel for platform administrato
 
 **Features**:
 - **Key Metrics Dashboard**:
-  - Total Schools
+  - Total Institutions
   - Total Users (breakdown by role)
   - Total Active Users (last 30 days)
   - Total Subjects Created
@@ -257,13 +257,13 @@ The Admin Dashboard is the highest-level control panel for platform administrato
 
 - **Charts & Visualizations**:
   - User growth over time (line chart)
-  - Schools by subscription tier (pie chart)
-  - Active users by school (bar chart)
+  - Institutions by subscription tier (pie chart)
+  - Active users by institution (bar chart)
   - Content creation trends (area chart)
-  - Geographic distribution of schools (map - if applicable)
+  - Geographic distribution of institutions (map - if applicable)
 
 - **Usage Statistics**:
-  - Most active schools (by user engagement)
+  - Most active institutions (by user engagement)
   - Most used features
   - Peak usage times
   - Average session duration
@@ -278,8 +278,8 @@ The Admin Dashboard is the highest-level control panel for platform administrato
   - Set pricing
   - Manage feature flags per tier
 
-- **Schools by Subscription**:
-  - List schools per tier
+- **Institutions by Subscription**:
+  - List institutions per tier
   - Upcoming renewals
   - Expired subscriptions
   - Trial accounts expiring soon
@@ -325,29 +325,29 @@ The Admin Dashboard is the highest-level control panel for platform administrato
 - **Content Statistics**:
   - Total public subjects/content
   - Most shared subjects
-  - Content creation by school
+  - Content creation by institution
 
-## School Detail Page
-**Route**: `/admin/school/:schoolId`
+## Institution Detail Page
+**Route**: `/admin/institution/:institutionId`
 
 **Features**:
-- **School Profile**:
-  - School name, logo, contact info
-  - School admin details
+- **Institution Profile**:
+  - Institution name, logo, contact info
+  - Institution admin details
   - Subscription information
   - Registration and activity dates
 
-- **School Analytics**:
+- **Institution Analytics**:
   - User count breakdown (teachers/students)
   - Active users (last 7/30 days)
   - Content created (subjects, topics)
   - Average engagement metrics
   - Growth trends
 
-- **User Management** (for this school):
+- **User Management** (for this institution):
   - List all teachers
   - List all students
-  - Promote users to school admin
+  - Promote users to institution admin
   - Suspend/activate users
 
 - **Subscription Management**:
@@ -357,20 +357,20 @@ The Admin Dashboard is the highest-level control panel for platform administrato
   - View billing history
 
 - **Customization Preview**:
-  - View school's custom branding
+  - View institution's custom branding
   - Preview their customized interface
 
 - **Actions**:
-  - Contact school admin
-  - Suspend/activate school
-  - Export school data
-  - Delete school (with confirmation)
+  - Contact institution admin
+  - Suspend/activate institution
+  - Export institution data
+  - Delete institution (with confirmation)
 
 ## Technical Implementation Notes
 
 ### Data Structure Required
 ```javascript
-// School/University document in Firestore
+// Institution document in Firestore
 {
   id: string,
   name: string,
@@ -378,7 +378,7 @@ The Admin Dashboard is the highest-level control panel for platform administrato
   primaryColor: string,
   secondaryColor: string,
   adminEmail: string,
-  adminId: string, // Reference to school admin user
+  adminId: string, // Reference to institution admin user
   subscriptionTier: 'free' | 'pro' | 'enterprise',
   subscriptionStatus: 'active' | 'trial' | 'expired' | 'suspended',
   subscriptionStartDate: timestamp,
@@ -390,7 +390,7 @@ The Admin Dashboard is the highest-level control panel for platform administrato
   createdAt: timestamp,
   lastActivity: timestamp,
   settings: {
-    // Custom settings per school
+    // Custom settings per institution
   }
 }
 
@@ -407,7 +407,7 @@ The Admin Dashboard is the highest-level control panel for platform administrato
 // Platform Analytics Collection (aggregated data)
 {
   date: timestamp,
-  totalSchools: number,
+  totalInstitutions: number,
   totalUsers: number,
   activeUsers: number,
   totalSubjects: number,
@@ -418,17 +418,17 @@ The Admin Dashboard is the highest-level control panel for platform administrato
 
 ### Components to Create
 1. `AdminDashboard.jsx` - Main container
-2. `SchoolsTable.jsx` - Schools management table
+2. `InstitutionsTable.jsx` - Institutions management table
 3. `GlobalUsersTable.jsx` - All users table
 4. `PlatformAnalytics.jsx` - Platform-wide analytics
-5. `SchoolDetailView.jsx` - Detailed school page
+5. `InstitutionDetailView.jsx` - Detailed institution page
 6. `SubscriptionManager.jsx` - Subscription management
 7. `SystemSettings.jsx` - Platform settings
 8. `AnalyticsDashboard.jsx` - Charts and metrics
 
 ### Firebase Queries Needed
-- Get all schools with pagination
-- Get aggregated user counts per school
+- Get all institutions with pagination
+- Get aggregated user counts per institution
 - Get platform-wide statistics
 - Get subscription data
 - Get activity logs and analytics
@@ -439,7 +439,7 @@ The Admin Dashboard is the highest-level control panel for platform administrato
 - Audit log for all admin actions
 - Two-factor authentication required for admin accounts
 - Rate limiting on sensitive operations
-- Encrypt sensitive school data
+- Encrypt sensitive institution data
 - Implement data retention policies
 - GDPR compliance for data export/deletion
 
@@ -474,7 +474,7 @@ Add the following routes to your main routing configuration (usually in `App.jsx
 
 ```javascript
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import SchoolAdminDashboard from './pages/SchoolAdminDashboard';
+import InstitutionAdminDashboard from './pages/InstitutionAdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard'; // TODO: Create this component
 import AdminDashboard from './pages/AdminDashboard'; // TODO: Create this component
 
@@ -499,31 +499,31 @@ function App() {
       <Routes>
         {/* ... existing routes ... */}
         
-        {/* School Admin Dashboard */}
+        {/* Institution Admin Dashboard */}
         <Route 
-          path="/school-admin-dashboard" 
+          path="/institution-admin-dashboard" 
           element={
-            <ProtectedRoute user={user} requiredRole="schooladmin">
-              <SchoolAdminDashboard user={user} />
+            <ProtectedRoute user={user} requiredRole="institutionadmin">
+              <InstitutionAdminDashboard user={user} />
             </ProtectedRoute>
           } 
         />
         
-        {/* School Admin - Teacher Detail */}
+        {/* Institution Admin - Teacher Detail */}
         <Route 
           path="/teacher/:teacherId" 
           element={
-            <ProtectedRoute user={user} requiredRole="schooladmin">
+            <ProtectedRoute user={user} requiredRole="institutionadmin">
               <TeacherDetailView user={user} />
             </ProtectedRoute>
           } 
         />
         
-        {/* School Admin - Student Detail */}
+        {/* Institution Admin - Student Detail */}
         <Route 
           path="/student/:studentId" 
           element={
-            <ProtectedRoute user={user} requiredRole="schooladmin">
+            <ProtectedRoute user={user} requiredRole="institutionadmin">
               <StudentDetailView user={user} />
             </ProtectedRoute>
           } 
@@ -559,12 +559,12 @@ function App() {
           } 
         />
         
-        {/* Admin - School Detail */}
+        {/* Admin - Institution Detail */}
         <Route 
-          path="/admin/school/:schoolId" 
+          path="/admin/institution/:institutionId" 
           element={
             <ProtectedRoute user={user} requiredRole="admin">
-              <SchoolDetailView user={user} />
+              <InstitutionDetailView user={user} />
             </ProtectedRoute>
           } 
         />
@@ -580,10 +580,10 @@ function App() {
 ### User Roles Hierarchy
 ```
 admin (highest privilege)
-  └── Can access: Admin Dashboard, all schools, all users
+  └── Can access: Admin Dashboard, all institutions, all users
   
-schooladmin
-  └── Can access: School Admin Dashboard, teachers/students in their school
+institutionadmin
+  └── Can access: Institution Admin Dashboard, teachers/students in their institution
   
 teacher
   └── Can access: Teacher Dashboard, their assigned students
@@ -601,9 +601,9 @@ student (lowest privilege)
   email: string,
   displayName: string,
   photoURL: string,
-  role: 'admin' | 'schooladmin' | 'teacher' | 'student',
-  schoolId: string, // Reference to school (null for admin)
-  enabled: boolean, // Can be disabled by school admin
+  role: 'admin' | 'institutionadmin' | 'teacher' | 'student',
+  institutionId: string, // Reference to institution (null for admin)
+  enabled: boolean, // Can be disabled by institution admin
   createdAt: timestamp,
   lastLogin: timestamp,
   theme: 'light' | 'dark',
@@ -617,7 +617,7 @@ student (lowest privilege)
 }
 ```
 
-#### schools Collection
+#### institutions Collection
 ```javascript
 {
   id: string,
@@ -625,13 +625,13 @@ student (lowest privilege)
   logo: string,
   primaryColor: string,
   secondaryColor: string,
-  adminId: string, // Reference to school admin user
+  adminId: string, // Reference to institution admin user
   adminEmail: string,
   subscriptionTier: 'free' | 'pro' | 'enterprise',
   subscriptionStatus: 'active' | 'trial' | 'expired' | 'suspended',
   createdAt: timestamp,
   settings: {
-    schoolName: string,
+    institutionName: string,
     allowStudentRegistration: boolean,
     requireEmailVerification: boolean,
     // ... other customization settings
@@ -676,16 +676,16 @@ service cloud.firestore {
       return isAuthenticated() && getUserRole() == 'admin';
     }
     
-    function isSchoolAdmin() {
-      return isAuthenticated() && getUserRole() == 'schooladmin';
+    function isInstitutionAdmin() {
+      return isAuthenticated() && getUserRole() == 'institutionadmin';
     }
     
     function isTeacher() {
       return isAuthenticated() && getUserRole() == 'teacher';
     }
     
-    function isSameSchool(schoolId) {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.schoolId == schoolId;
+    function isSameInstitution(institutionId) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.institutionId == institutionId;
     }
     
     // Users collection
@@ -693,22 +693,22 @@ service cloud.firestore {
       // Anyone can read their own user document
       allow read: if isAuthenticated() && request.auth.uid == userId;
       
-      // School admin can read/write users in their school
-      allow read, write: if isSchoolAdmin() && isSameSchool(resource.data.schoolId);
+      // Institution admin can read/write users in their institution
+      allow read, write: if isInstitutionAdmin() && isSameInstitution(resource.data.institutionId);
       
-      // Teachers can read students in their school
-      allow read: if isTeacher() && isSameSchool(resource.data.schoolId) && resource.data.role == 'student';
+      // Teachers can read students in their institution
+      allow read: if isTeacher() && isSameInstitution(resource.data.institutionId) && resource.data.role == 'student';
       
       // Admins can read/write all users
       allow read, write: if isAdmin();
     }
     
-    // Schools collection
-    match /schools/{schoolId} {
-      // School admins can read their school
-      allow read: if isSchoolAdmin() && isSameSchool(schoolId);
+    // Institutions collection
+    match /institutions/{institutionId} {
+      // Institution admins can read their institution
+      allow read: if isInstitutionAdmin() && isSameInstitution(institutionId);
       
-      // Admins can read/write all schools
+      // Admins can read/write all institutions
       allow read, write: if isAdmin();
     }
     
@@ -717,11 +717,11 @@ service cloud.firestore {
       // Students can read/write their own progress
       allow read, write: if isAuthenticated() && resource.data.studentId == request.auth.uid;
       
-      // Teachers can read progress of students in their school
-      allow read: if isTeacher() && isSameSchool(get(/databases/$(database)/documents/users/$(resource.data.studentId)).data.schoolId);
+      // Teachers can read progress of students in their institution
+      allow read: if isTeacher() && isSameInstitution(get(/databases/$(database)/documents/users/$(resource.data.studentId)).data.institutionId);
       
-      // School admins can read all progress in their school
-      allow read: if isSchoolAdmin() && isSameSchool(get(/databases/$(database)/documents/users/$(resource.data.studentId)).data.schoolId);
+      // Institution admins can read all progress in their institution
+      allow read: if isInstitutionAdmin() && isSameInstitution(get(/databases/$(database)/documents/users/$(resource.data.studentId)).data.institutionId);
       
       // Admins can read all progress
       allow read: if isAdmin();
@@ -759,10 +759,10 @@ export const db = getFirestore(app);
 
 ## Testing Checklist
 
-### School Admin Dashboard
-- [ ] Only accessible to users with role 'schooladmin'
-- [ ] Displays teachers from the same school only
-- [ ] Displays students from the same school only
+### Institution Admin Dashboard
+- [ ] Only accessible to users with role 'institutionadmin'
+- [ ] Displays teachers from the same institution only
+- [ ] Displays students from the same institution only
 - [ ] Can toggle teacher/student status (enabled/disabled)
 - [ ] Search functionality works correctly
 - [ ] Filter by status works correctly
@@ -777,23 +777,23 @@ export const db = getFirestore(app);
 
 ### Admin Dashboard (When implemented)
 - [ ] Only accessible to users with role 'admin'
-- [ ] Displays all schools
+- [ ] Displays all institutions
 - [ ] Shows platform-wide analytics
 - [ ] Can manage subscriptions
-- [ ] Navigation to school detail page works
+- [ ] Navigation to institution detail page works
 
 ### Header Navigation
 - [ ] Admin sees "Panel Admin" button
-- [ ] School Admin sees "Panel Escuela" button
+- [ ] Institution Admin sees "Panel Institucion" button
 - [ ] Teacher sees "Panel Profesor" button
 - [ ] Student sees NO panel button
 - [ ] Clicking panel button navigates to correct dashboard
 
 ## Next Steps
 
-1. **Test School Admin Dashboard**:
-   - Create a test user with role 'schooladmin'
-   - Add test teachers and students to the same school
+1. **Test Institution Admin Dashboard**:
+  - Create a test user with role 'institutionadmin'
+  - Add test teachers and students to the same institution
    - Test all functionality
 
 2. **Implement Teacher Dashboard**:
@@ -804,10 +804,10 @@ export const db = getFirestore(app);
 3. **Implement Admin Dashboard**:
    - Follow the structure in ADMIN_DASHBOARD_README.md
    - Create AdminDashboard.jsx component
-   - Implement schools table and analytics
+  - Implement institutions table and analytics
 
 4. **Create Detail Views**:
-   - TeacherDetailView.jsx (for school admin)
-   - StudentDetailView.jsx (for school admin)
-   - TeacherStudentDetailView.jsx (for teachers)
-   - SchoolDetailView.jsx (for admin)
+  - TeacherDetailView.jsx (for institution admin)
+  - StudentDetailView.jsx (for institution admin)
+  - TeacherStudentDetailView.jsx (for teachers)
+  - InstitutionDetailView.jsx (for admin)
