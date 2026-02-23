@@ -90,7 +90,6 @@ const SchoolsTab = () => {
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [form, setForm] = useState({
         name: '',
-        institutionId: '',
         domain: '',
         institutionAdministrators: '',
         type: 'school',
@@ -114,14 +113,7 @@ const SchoolsTab = () => {
     useEffect(() => { fetchSchools(); }, []);
 
     useEffect(() => {
-        setForm(prev => {
-            if (!prev.name) return prev;
-            if (prev.institutionId && prev.institutionId.length > 0) return prev;
-            return {
-                ...prev,
-                institutionId: slugifyInstitutionId(prev.name)
-            };
-        });
+        // No institutionId field needed, Firestore will generate it
     }, [form.name]);
 
     const handleCreate = async (e) => {
@@ -129,7 +121,6 @@ const SchoolsTab = () => {
         setError(''); setSuccess(''); setSubmitting(true);
 
         const name = form.name.trim();
-        const institutionId = slugifyInstitutionId(form.institutionId || form.name);
         const domain = form.domain.toLowerCase().trim();
         const admins = parseCsvEmails(form.institutionAdministrators);
         const institutionType = (form.type || 'school').trim();
@@ -139,12 +130,6 @@ const SchoolsTab = () => {
 
         if (!name) {
             setError('El nombre es obligatorio.');
-            setSubmitting(false);
-            return;
-        }
-
-        if (!institutionId) {
-            setError('El ID de la institución es obligatorio.');
             setSubmitting(false);
             return;
         }
@@ -175,17 +160,8 @@ const SchoolsTab = () => {
         }
 
         try {
-            const existingIdQuery = query(collection(db, 'institutions'), where('institutionId', '==', institutionId));
-            const existingIdSnap = await getDocs(existingIdQuery);
-            if (!existingIdSnap.empty) {
-                setError(`El ID institucional "${institutionId}" ya existe. Elige otro.`);
-                setSubmitting(false);
-                return;
-            }
-
             await addDoc(collection(db, 'institutions'), {
                 name,
-                institutionId,
                 domain,
                 domains: [domain],
                 institutionAdministrators: admins,
@@ -201,7 +177,6 @@ const SchoolsTab = () => {
             setSuccess(`Institución "${name}" creada correctamente.`);
             setForm({
                 name: '',
-                institutionId: '',
                 domain: '',
                 institutionAdministrators: '',
                 type: 'school',
@@ -272,13 +247,7 @@ const SchoolsTab = () => {
                                 onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
                                 className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" required />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ID Institucional *</label>
-                            <input type="text" placeholder="ej: ies-ramon-y-cajal" value={form.institutionId}
-                                onChange={e => setForm(p => ({ ...p, institutionId: slugifyInstitutionId(e.target.value) }))}
-                                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all font-mono" required />
-                            <p className="text-xs text-gray-500 mt-2">Identificador único para reglas, consultas y segmentación multi-tenant.</p>
-                        </div>
+                        {/* ID Institucional field removed, Firestore document ID will be used */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dominio de la institución *</label>
                             <input type="text" placeholder="ej: universidad.edu" value={form.domain}
@@ -298,11 +267,11 @@ const SchoolsTab = () => {
                             <select value={form.type}
                                 onChange={e => setForm(p => ({ ...p, type: e.target.value }))}
                                 className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" required>
-                                <option value="school">School</option>
-                                <option value="academy">Academy</option>
-                                <option value="university">University</option>
-                                <option value="training-center">Training Center</option>
-                                <option value="other">Other</option>
+                                <option value="school">Escuela</option>
+                                <option value="academy">Academia</option>
+                                <option value="university">Universidad</option>
+                                <option value="training-center">Centro de Estudios</option>
+                                <option value="other">Otro</option>
                             </select>
                         </div>
                         <div>
