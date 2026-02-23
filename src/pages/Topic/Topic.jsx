@@ -6,8 +6,7 @@ import { useTopicLogic } from './hooks/useTopicLogic';
 
 // Firebase imports
 import { 
-    collection, query, where, onSnapshot, doc, getDoc, 
-    updateDoc, orderBy, addDoc, serverTimestamp 
+    collection, query, where, onSnapshot
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
@@ -28,12 +27,6 @@ const Topic = ({ user }) => {
     const [userScores, setUserScores] = useState({});
     const [scoresLoading, setScoresLoading] = useState(true);
     
-    // ✅ SEPARAMOS LOS ESTADOS
-    const [manualMaterials, setManualMaterials] = useState([]); // Para "Mis Archivos"
-    const [aiMaterials, setAiMaterials] = useState([]);         // Para "Generados por IA"
-    const [materialsLoading, setMaterialsLoading] = useState(true);
-    const [isUploadingLocal, setIsUploadingLocal] = useState(false);
-
     // 3. EFECTO: Escuchar puntuaciones (Quizzes)
     useEffect(() => {
         if (!user || !logic.subjectId || !logic.topicId) {
@@ -60,149 +53,22 @@ const Topic = ({ user }) => {
         return () => unsubscribe();
     }, [user, logic.subjectId, logic.topicId]);
 
-    // 4. EFECTO PRINCIPAL: Cargar LISTAS DE ARCHIVOS
-    useEffect(() => {
-        if (!logic.subjectId || !logic.topicId) return;
-
-        setMaterialsLoading(true);
-
-        // A) Escuchar carpeta 'materials' (Tus PDFs subidos) -> Va a manualMaterials
-        const manualRef = collection(db, "subjects", logic.subjectId, "topics", logic.topicId, "materials");
-        const qManual = query(manualRef, orderBy("createdAt", "desc")); 
-
-        const unsubManual = onSnapshot(qManual, (snapshot) => {
-            const docs = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                origin: 'upload', // Etiqueta
-                type: 'pdf'
-            }));
-            setManualMaterials(docs);
-        }, (err) => console.log("Error loading uploads:", err));
-
-        // B) Escuchar carpeta 'resumen' (Generados por IA) -> Va a aiMaterials
-        const aiRef = collection(db, "subjects", logic.subjectId, "topics", logic.topicId, "resumen");
-        
-        const unsubAi = onSnapshot(aiRef, (snapshot) => {
-            const docs = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data(),
-                origin: 'AI',        // Etiqueta clave
-                type: 'summary',     // Icono
-                // Aseguramos que tenga un nombre visible
-                name: doc.data().title || doc.data().name || doc.data().topic || 'Resumen Generado',
-                date: doc.data().createdAt?.toDate() || new Date()
-            }));
-            console.log("Resúmenes IA encontrados:", docs); 
-            setAiMaterials(docs);
-            setMaterialsLoading(false);
-        }, (error) => {
-            console.error("Error cargando resumenes:", error);
-            setMaterialsLoading(false);
-        });
-
-        // Limpieza
-        return () => {
-            unsubManual();
-            unsubAi();
-        };
-    }, [logic.subjectId, logic.topicId]);
-
-    // 5. FUNCIÓN DE SUBIDA MANUAL
-    const handleLocalUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        if (file.size > 1048576) { 
-            logic.setToast({ show: true, message: "Archivo muy grande (>1MB).", type: "error" });
-            return;
-        }
-
-        setIsUploadingLocal(true);
-
-        try {
-            const toBase64 = file => new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
-            });
-
-            const base64String = await toBase64(file);
-            const materialsRef = collection(db, "subjects", logic.subjectId, "topics", logic.topicId, "materials");
-            
-            await addDoc(materialsRef, {
-                name: file.name,
-                url: base64String,
-                type: 'pdf',
-                origin: 'upload',
-                createdAt: serverTimestamp()
-            });
-
-            logic.setToast({ show: true, message: "Archivo subido", type: "success" });
-        } catch (error) {
-            console.error("Error subiendo:", error);
-            logic.setToast({ show: true, message: "Error al subir", type: "error" });
-        } finally {
-            setIsUploadingLocal(false);
-            e.target.value = null; 
-        }
-    };
-
-    // 6. GENERAR QUIZ (Lógica N8N)
-    const handleGenerateQuizSubmit = async (e) => {
-        e.preventDefault();
-        logic.setShowQuizModal(false);
-
-        const tempId = `gen-${Date.now()}`;
-        const tempQuiz = { id: tempId, name: logic.quizFormData.title, type: 'generating', createdAt: new Date().toISOString() };
-
-        const topicRef = doc(db, "topics", logic.topicId);
-        
-        try {
-            const docSnap = await getDoc(topicRef);
-            if (docSnap.exists()) {
-                const currentQuizzes = docSnap.data().quizzes || [];
-                await updateDoc(topicRef, { quizzes: [...currentQuizzes, tempQuiz] });
-            }
-        } catch (error) { console.error("Error UI:", error); return; }
-
-        try {
-            logic.setIsGeneratingQuiz(true);
-            const response = await fetch(N8N_WEBHOOK_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ...logic.quizFormData, subjectId: logic.subjectId, topicId: logic.topicId, tempId: tempId })
-            });
-
-            if (!response.ok) throw new Error('Error en N8N');
-            // La actualización real del quiz se espera por parte de N8N o recarga manual
-        } catch (error) {
-            console.error("Fallo N8N:", error);
-            logic.setToast({ show: true, message: "Error al generar", type: "error" });
-        } finally {
-            logic.setIsGeneratingQuiz(false);
-        }
-    };
-
-    // 7. MERGE DE DATOS (AQUÍ ESTÁ LA CLAVE DEL ARREGLO)
+    // 4. MERGE DE DATOS
     const enrichedTopic = useMemo(() => {
         if (!logic.topic) return null;
 
         return {
             ...logic.topic,
-            // 🔹 ASIGNAMOS CADA LISTA A SU CAMPO CORRECTO
-            pdfs: aiMaterials,       // "Generados por IA" lee topic.pdfs
-            uploads: manualMaterials, // "Mis Archivos" lee topic.uploads
-            
+            pdfs: logic.topic.pdfs || [],
+            uploads: logic.topic.uploads || [],
             quizzes: logic.topic.quizzes?.map(q => ({
                 ...q,
                 score: userScores[q.id] ?? null
             })) || []
         };
-    }, [logic.topic, aiMaterials, manualMaterials, userScores]);
+    }, [logic.topic, userScores]);
 
-    // 8. PROGRESO
+    // 5. PROGRESO
     const globalProgress = useMemo(() => {
         if (!enrichedTopic?.quizzes?.length) return { completed: 0, total: 0, percentage: 0 };
         const total = enrichedTopic.quizzes.length;
@@ -223,7 +89,7 @@ const Topic = ({ user }) => {
                     topic={enrichedTopic} 
                     subject={logic.subject}
                     globalProgress={globalProgress}
-                    handleGenerateQuizSubmit={handleGenerateQuizSubmit}
+                    handleGenerateQuizSubmit={logic.handleGenerateQuizSubmit}
                     permissions={logic.permissions}
                 />
                 <TopicTabs 
@@ -234,8 +100,8 @@ const Topic = ({ user }) => {
                     {...logic}
                     topic={enrichedTopic}
                     subject={logic.subject}
-                    handleManualUpload={handleLocalUpload}
-                    uploading={isUploadingLocal}
+                    handleManualUpload={logic.handleManualUpload}
+                    uploading={logic.uploading}
                     permissions={logic.permissions}
                 />
             </main>
@@ -243,7 +109,7 @@ const Topic = ({ user }) => {
                 {...logic}
                 topic={enrichedTopic}
                 subject={logic.subject}
-                handleGenerateQuizSubmit={handleGenerateQuizSubmit}
+                handleGenerateQuizSubmit={logic.handleGenerateQuizSubmit}
                 viewingFile={null} 
             />
         </div>

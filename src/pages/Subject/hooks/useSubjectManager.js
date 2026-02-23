@@ -50,7 +50,7 @@ export const useSubjectManager = (user, subjectId) => {
         // Real-time listener for Topics (Ordered by 'order')
         const q = query(
             collection(db, "topics"),
-            where("subject_id", "==", subjectId),
+            where("subjectId", "==", subjectId),
             orderBy("order", "asc")
         );
 
@@ -137,9 +137,7 @@ export const useSubjectManager = (user, subjectId) => {
                 createdAt: serverTimestamp(),
                 order: nextOrder, 
                 number: numberString,
-                pdfs: [], 
-                quizzes: [],
-                subject_id: subjectId,
+                subjectId: subjectId,
                 ownerId: subject?.ownerId || user?.uid,
                 institutionId: subject?.institutionId || user?.institutionId || 'default'
             };
@@ -156,8 +154,9 @@ export const useSubjectManager = (user, subjectId) => {
                     type: 'pdf', 
                     size: f.size, 
                     uploadedAt: serverTimestamp(),
-                    topic_id: topicId,
-                    subject_id: subjectId,
+                    source: 'manual',
+                    topicId: topicId,
+                    subjectId: subjectId,
                     ownerId: subject?.ownerId || user?.uid,
                     institutionId: subject?.institutionId || user?.institutionId || 'default'
                 }));

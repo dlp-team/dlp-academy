@@ -65,6 +65,39 @@ service cloud.firestore {
         );
     }
 
+    function hasSubjectRef(data) {
+      return data.keys().hasAny(['subjectId', 'subject_id']);
+    }
+
+    function subjectRef(data) {
+      return data.keys().hasAny(['subjectId']) ? data.subjectId : data.subject_id;
+    }
+
+    function hasTopicRef(data) {
+      return data.keys().hasAny(['topicId', 'topic_id']);
+    }
+
+    function topicRef(data) {
+      return data.keys().hasAny(['topicId']) ? data.topicId : data.topic_id;
+    }
+
+    function topicInstitutionMatches(topicId) {
+      return exists(/databases/$(database)/documents/topics/$(topicId))
+        && (
+          sameInstitution(get(/databases/$(database)/documents/topics/$(topicId)).data)
+          || (
+            !hasInstitutionField(get(/databases/$(database)/documents/topics/$(topicId)).data)
+            && (
+              (
+                hasSubjectRef(get(/databases/$(database)/documents/topics/$(topicId)).data)
+                && subjectInstitutionMatches(subjectRef(get(/databases/$(database)/documents/topics/$(topicId)).data))
+              )
+              || isOwnerData(get(/databases/$(database)/documents/topics/$(topicId)).data)
+            )
+          )
+        );
+    }
+
     function canManageInstitution(institutionId) {
       return isGlobalAdmin()
         || (
@@ -217,6 +250,120 @@ service cloud.firestore {
       allow read: if isSignedIn() && canReadResource(resource.data);
       allow update, delete: if isSignedIn()
         && canWriteResource(resource.data)
+        && (
+          request.resource.data.institutionId == resource.data.institutionId
+          || (
+            !hasInstitutionField(resource.data)
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+    }
+
+    // Reglas para Temas (Topics) en colección raíz
+    match /topics/{topicId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasSubjectRef(request.resource.data)
+            && subjectInstitutionMatches(subjectRef(request.resource.data))
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+
+      allow read: if isSignedIn()
+        && (
+          canReadResource(resource.data)
+          || (
+            hasSubjectRef(resource.data)
+            && subjectInstitutionMatches(subjectRef(resource.data))
+          )
+        );
+
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasSubjectRef(resource.data)
+            && subjectInstitutionMatches(subjectRef(resource.data))
+          )
+        )
+        && (
+          request.resource.data.institutionId == resource.data.institutionId
+          || (
+            !hasInstitutionField(resource.data)
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+    }
+
+    // Reglas para Documentos (Documents) en colección raíz
+    match /documents/{documentId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasTopicRef(request.resource.data)
+            && topicInstitutionMatches(topicRef(request.resource.data))
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+
+      allow read: if isSignedIn()
+        && (
+          canReadResource(resource.data)
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+        );
+
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+        )
+        && (
+          request.resource.data.institutionId == resource.data.institutionId
+          || (
+            !hasInstitutionField(resource.data)
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+    }
+
+    // Reglas para Quizzes en colección raíz
+    match /quizzes/{quizId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasTopicRef(request.resource.data)
+            && topicInstitutionMatches(topicRef(request.resource.data))
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+
+      allow read: if isSignedIn()
+        && (
+          canReadResource(resource.data)
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+        );
+
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+        )
         && (
           request.resource.data.institutionId == resource.data.institutionId
           || (

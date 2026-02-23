@@ -20,7 +20,7 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
         setLoading(true);
         const q = query(
             collection(db, "topics"),
-            where("subject_id", "==", subject.id),
+            where("subjectId", "==", subject.id),
             orderBy("order", "asc")
         );
 

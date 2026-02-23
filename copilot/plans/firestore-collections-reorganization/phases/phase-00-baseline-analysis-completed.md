@@ -1,22 +1,27 @@
-# Phase 00: Baseline Analysis (Completed)
+# Phase 00 — Baseline & Dependency Audit
+Status: COMPLETED
 
-## Goal
+## Why this phase existed
+Before changing core hierarchy behavior, we needed a complete map of data fetch/write paths and DnD entry points to avoid breaking existing features.
 
-Map the original subject/folder/share model and identify blockers for shortcut-first sharing.
-
-## Baseline Findings (Recovered)
-
-- Shared content behavior mixed direct shared-subject visibility with shortcut behavior, creating inconsistencies.
-- Recipient experience was not strictly shortcut-based.
-- Duplicate creation paths existed (share flow + drag/drop side effects).
-- Permission model for shortcuts did not fully align with share flow operations.
-
-## Key Risks Identified
-
-- Duplicated shortcuts per user/target.
-- Non-owner seeing original shared cards instead of recipient-local shortcut cards.
-- Permission denials in chained operations (update subject then create/query shortcut).
+## What was done
+- Inspected Home page composition, state hooks, and handler wrappers.
+- Mapped folder/subject write paths in:
+  - `useFolders`
+  - `useSubjects`
+  - `useHomeState`
+  - `useHomePageHandlers`
+  - `useHomeContentDnd`
+  - `BreadcrumbNav`
+- Identified root architectural mismatches:
+  - mixed use of `folderId` vs `parentId` for folder ancestry
+  - duplicate move execution under some DnD flows
+  - insufficient breadcrumb drop validation for cyclic moves
 
 ## Outcome
+- Established safe refactor sequence and boundaries.
+- Enabled Phase 01 to implement targeted fixes without broad rewrites.
 
-Baseline constraints and failure points were identified and used as the foundation for Phases 01–03.
+## Risks observed
+- Legacy handlers still coexist with newer wrappers.
+- Some old component paths may still contain casing and import inconsistencies unrelated to architecture work.

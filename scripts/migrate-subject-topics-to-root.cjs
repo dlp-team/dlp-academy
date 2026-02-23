@@ -83,10 +83,11 @@ async function migrateSubjectTopicsToRoot() {
     for (const topicDoc of topicsSnap.docs) {
       const topicData = topicDoc.data();
       const topicRootId = `${subjectDoc.id}__${topicDoc.id}`;
+      const { pdfs, quizzes, ...topicDataWithoutEmbeddedLists } = topicData;
 
       await queueSet(db.collection('topics').doc(topicRootId), {
-        ...topicData,
-        subject_id: subjectDoc.id,
+        ...topicDataWithoutEmbeddedLists,
+        subjectId: subjectDoc.id,
         ownerId: topicData.ownerId || ownerId,
         institutionId: targetInstitutionId,
       });
@@ -99,8 +100,8 @@ async function migrateSubjectTopicsToRoot() {
 
         await queueSet(db.collection('documents').doc(documentRootId), {
           ...documentData,
-          topic_id: topicRootId,
-          subject_id: subjectDoc.id,
+          topicId: topicRootId,
+          subjectId: subjectDoc.id,
           ownerId: documentData.ownerId || topicData.ownerId || ownerId,
           institutionId: targetInstitutionId,
         });
@@ -114,8 +115,8 @@ async function migrateSubjectTopicsToRoot() {
 
         await queueSet(db.collection('quizzes').doc(quizRootId), {
           ...quizData,
-          topic_id: topicRootId,
-          subject_id: subjectDoc.id,
+          topicId: topicRootId,
+          subjectId: subjectDoc.id,
           ownerId: quizData.ownerId || topicData.ownerId || ownerId,
           institutionId: targetInstitutionId,
         });

@@ -90,11 +90,15 @@ export const useTopicLogic = (user) => {
                             quizzes: prev?.quizzes || []
                         }));
 
-                        const docsRef = query(collection(db, "documents"), where("topic_id", "==", topicId));
+                        const docsRef = query(collection(db, "documents"), where("topicId", "==", topicId));
                         unsubscribeDocs = onSnapshot(docsRef, (docsSnap) => {
-                            const manualDocs = docsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                            const aiPdfs = Array.isArray(topicData.pdfs) ? topicData.pdfs.map((p, i) => ({ ...p, id: p.id || `ai-${i}`, origin: 'AI' })) : [];
-                            const manualUploads = manualDocs.filter(d => d.source === 'manual').map(d => ({ ...d, origin: 'manual' }));
+                            const allDocs = docsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            const manualUploads = allDocs
+                                .filter(d => d.source === 'manual')
+                                .map(d => ({ ...d, origin: 'manual' }));
+                            const aiPdfs = allDocs
+                                .filter(d => d.source !== 'manual')
+                                .map(d => ({ ...d, origin: 'AI' }));
 
                             setTopic(prev => ({ 
                                 ...prev, 
@@ -103,7 +107,7 @@ export const useTopicLogic = (user) => {
                             }));
                         });
 
-                        const quizzesRef = query(collection(db, "quizzes"), where("topic_id", "==", topicId));
+                        const quizzesRef = query(collection(db, "quizzes"), where("topicId", "==", topicId));
                         unsubscribeQuizzes = onSnapshot(quizzesRef, (quizzesSnap) => {
                             const realQuizzes = quizzesSnap.docs.map(q => ({ id: q.id, ...q.data() }));
                             setTopic(prev => ({ 
@@ -162,21 +166,18 @@ export const useTopicLogic = (user) => {
         setActiveMenuId(null);
     };
 
-    const saveRename = async (file) => {
+    const saveRename = async (fileOrId) => {
         if (!tempName.trim()) return;
+
+        const file = typeof fileOrId === 'string'
+            ? [...(topic?.pdfs || []), ...(topic?.uploads || [])].find((entry) => entry.id === fileOrId)
+            : fileOrId;
+
+        if (!file?.id) return;
+
         try {
-            if (file.origin === 'manual') {
-                const docRef = doc(db, "documents", file.id);
-                await updateDoc(docRef, { name: tempName });
-            } else {
-                const updatedPdfs = topic.pdfs.map(pdf => {
-                    if (pdf.id === file.id) return { ...pdf, name: tempName };
-                    return pdf;
-                });
-                const cleanPdfsForDb = updatedPdfs.map(p => ({ name: p.name, type: p.type, url: p.url, id: p.id }));
-                const topicRef = doc(db, "topics", topicId);
-                await updateDoc(topicRef, { pdfs: cleanPdfsForDb });
-            }
+            const docRef = doc(db, "documents", file.id);
+            await updateDoc(docRef, { name: tempName });
             setRenamingId(null);
         } catch (error) { console.error(error); alert("Error al renombrar."); }
     };
@@ -184,12 +185,7 @@ export const useTopicLogic = (user) => {
     const deleteFile = async (file) => {
         if (!window.confirm(`¿Eliminar "${file.name}"?`)) return;
         try {
-            if (file.origin === 'manual') {
-                await deleteDoc(doc(db, "documents", file.id));
-            } else {
-                const updatedPdfs = topic.pdfs.filter(pdf => pdf.id !== file.id).map(pdf => ({ name: pdf.name, type: pdf.type, url: pdf.url, id: pdf.id }));
-                await updateDoc(doc(db, "topics", topicId), { pdfs: updatedPdfs });
-            }
+            await deleteDoc(doc(db, "documents", file.id));
             setActiveMenuId(null);
         } catch (error) { console.error(error); alert("Error al eliminar."); }
     };
@@ -237,8 +233,8 @@ export const useTopicLogic = (user) => {
                 return addDoc(collection(db, "documents"), {
                     name: file.name, type: file.type.includes('pdf') ? 'pdf' : 'doc', size: file.size, 
                     source: 'manual', uploadedAt: serverTimestamp(), url: base64Url, status: 'ready',
-                    topic_id: topicId,
-                    subject_id: subjectId,
+                    topicId: topicId,
+                    subjectId: subjectId,
                     ownerId: topic?.ownerId || subject?.ownerId || user?.uid,
                     institutionId: topic?.institutionId || subject?.institutionId || user?.institutionId || 'default'
                 });

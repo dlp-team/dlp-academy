@@ -38,7 +38,7 @@ const useUserStatistics = (subjects, userId) => {
                 });
 
                 for (const subject of subjects) {
-                    const topicsRef = query(collection(db, 'topics'), where('subject_id', '==', subject.id));
+                    const topicsRef = query(collection(db, 'topics'), where('subjectId', '==', subject.id));
                     const topicsSnapshot = await getDocs(topicsRef);
 
                     for (const topicDoc of topicsSnapshot.docs) {
