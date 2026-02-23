@@ -1,3 +1,4 @@
+// src/components/modules/QuizEngine/QuizFeedback.jsx
 import React, { useMemo, useState, useCallback } from 'react';
 import { CONFETTI_COUNT, CONFETTI_DURATION } from './QuizCommon';
 

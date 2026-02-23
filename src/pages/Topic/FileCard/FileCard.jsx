@@ -1,4 +1,4 @@
-// src/components/modules/FileCard/FileCard.jsx
+// src/pages/Topic/FileCard/FileCard.jsx
 import React, { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
@@ -21,7 +21,8 @@ const FileCard = ({
     startRenaming, 
     saveRename, 
     deleteFile, 
-    getFileVisuals 
+    getFileVisuals,
+    permissions // *** NEW: Permission flags ***
 }) => {
     const navigate = useNavigate();
     const { subjectId, topicId } = useParams();
@@ -95,41 +96,44 @@ const FileCard = ({
             </div>
 
             {/* MENÚ ACTUALIZADO */}
-            <div className="absolute top-4 right-4 z-30">
-                <button onClick={(e) => handleMenuClick(e, file.id)} className={`p-1.5 rounded-full transition-colors ${isGenerated ? 'text-white hover:bg-white/20' : 'text-slate-400 hover:bg-slate-100'}`}>
-                    <MoreHorizontal className="w-6 h-6" />
-                </button>
-                {isMenuOpen && (
-                    <>
-                        <div className="fixed inset-0 z-20" onClick={() => setActiveMenuId(null)} />
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-40 text-slate-700 animate-in fade-in zoom-in-95">
-                            
-                            {/* OPCIÓN: EDITAR CONTENIDO (Solo si es generado por IA) */}
-                            {isGenerated && (
-                                <>
-                                    <button 
-                                        onClick={handleEditClick}
-                                        className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 font-bold text-indigo-600"
-                                    >
-                                        <Pencil className="w-4 h-4" /> Editar Contenido
-                                    </button>
-                                    <div className="border-t border-slate-100 my-1"></div>
-                                </>
-                            )}
+            {/* *** CONDITIONAL: Only show menu if user can edit *** */}
+            {permissions?.canEdit && (
+                <div className="absolute top-4 right-4 z-30">
+                    <button onClick={(e) => handleMenuClick(e, file.id)} className={`p-1.5 rounded-full transition-colors ${isGenerated ? 'text-white hover:bg-white/20' : 'text-slate-400 hover:bg-slate-100'}`}>
+                        <MoreHorizontal className="w-6 h-6" />
+                    </button>
+                    {isMenuOpen && (
+                        <>
+                            <div className="fixed inset-0 z-20" onClick={() => setActiveMenuId(null)} />
+                            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 z-40 text-slate-700 animate-in fade-in zoom-in-95">
+                                
+                                {/* OPCIÓN: EDITAR CONTENIDO (Solo si es generado por IA) */}
+                                {isGenerated && (
+                                    <>
+                                        <button 
+                                            onClick={handleEditClick}
+                                            className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2 font-bold text-indigo-600"
+                                        >
+                                            <Pencil className="w-4 h-4" /> Editar Contenido
+                                        </button>
+                                        <div className="border-t border-slate-100 my-1"></div>
+                                    </>
+                                )}
 
-                            <button onClick={() => startRenaming(file)} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2">
-                                <FileEdit className={`w-4 h-4 text-${colorName}-600`} /> Renombrar
-                            </button>
-                            
-                            <div className="border-t border-slate-100 my-1"></div>
-                            
-                            <button onClick={() => deleteFile(file)} className="w-full px-4 py-2.5 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2">
-                                <Trash2 className="w-4 h-4" /> Eliminar
-                            </button>
-                        </div>
-                    </>
-                )}
-            </div>
+                                <button onClick={() => startRenaming(file)} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-2">
+                                    <FileEdit className={`w-4 h-4 text-${colorName}-600`} /> Renombrar
+                                </button>
+                                
+                                <div className="border-t border-slate-100 my-1"></div>
+                                
+                                <button onClick={() => deleteFile(file)} className="w-full px-4 py-2.5 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2">
+                                    <Trash2 className="w-4 h-4" /> Eliminar
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            )}
 
             <div className="relative h-full p-8 flex flex-col justify-end z-10">
                 <div className="mt-auto">

@@ -1,3 +1,4 @@
+// src/components/modules/QuizEngine/QuizCommon.jsx
 import React, { useMemo } from 'react';
 import { 
     RefreshCcw, Zap, Trophy, ArrowRight, HelpCircle, CheckCircle2, XCircle 

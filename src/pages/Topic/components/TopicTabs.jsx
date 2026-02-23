@@ -1,4 +1,4 @@
-// src/components/topic/TopicTabs.jsx
+// src/pages/Topic/components/TopicTabs.jsx
 import React from 'react';
 import { FileText, Upload, CheckCircle2, Plus } from 'lucide-react';
 

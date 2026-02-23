@@ -1,4 +1,4 @@
-// src/hooks/useLogin.js
+// src/pages/Auth/hooks/useLogin.js
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -9,7 +9,7 @@ import {
     browserSessionPersistence,
     sendPasswordResetEmail 
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore'; 
+import { collection, doc, getDoc, getDocs, query, setDoc, serverTimestamp, where } from 'firebase/firestore'; 
 import { auth, db, provider } from '../../../firebase/config';
 
 export const useLogin = () => {
@@ -25,9 +25,35 @@ export const useLogin = () => {
     });
 
     // Helper to ensure user exists in Firestore (especially for Google Login)
+    const resolveInstitutionId = async (email) => {
+        const normalizedEmail = (email || '').toLowerCase();
+        const domain = normalizedEmail.split('@')[1];
+        if (!domain) return null;
+
+        const allowedSnap = await getDocs(
+            query(collection(db, 'allowed_teachers'), where('email', '==', normalizedEmail))
+        );
+        if (!allowedSnap.empty) {
+            return allowedSnap.docs[0].data()?.institutionId || null;
+        }
+
+        const domainSnap = await getDocs(
+            query(collection(db, 'institutions'), where('domains', 'array-contains', domain))
+        );
+        if (!domainSnap.empty) return domainSnap.docs[0].id;
+
+        const singleSnap = await getDocs(
+            query(collection(db, 'institutions'), where('domain', '==', domain))
+        );
+        if (!singleSnap.empty) return singleSnap.docs[0].id;
+
+        return null;
+    };
+
     const saveUserToFirestore = async (user) => {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
+        const resolvedInstitutionId = await resolveInstitutionId(user.email);
 
         if (!userSnap.exists()) {
             // New Google User
@@ -37,13 +63,18 @@ export const useLogin = () => {
                 email: user.email,
                 photoURL: user.photoURL,
                 role: 'student',
+                institutionId: resolvedInstitutionId,
                 createdAt: serverTimestamp(),
                 lastLogin: serverTimestamp(),
                 settings: { theme: 'system', language: 'es', viewMode: 'grid' }
             });
         } else {
             // Existing User - Update login time
-            await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
+            const updates = { lastLogin: serverTimestamp() };
+            if (!userSnap.data()?.institutionId && resolvedInstitutionId) {
+                updates.institutionId = resolvedInstitutionId;
+            }
+            await setDoc(userRef, updates, { merge: true });
         }
     };
 

@@ -1,4 +1,4 @@
-// src/components/home/SubjectCard.jsx
+// src/components/modules/SubjectCard/SubjectCard.jsx
 import React from 'react';
 import { useSubjectCardLogic } from './useSubjectCardLogic';
 import SubjectCardFront from './SubjectCardFront';
@@ -15,9 +15,9 @@ const SubjectCard = (props) => {
     } = useSubjectCardLogic(props);
 
     const { 
-        subject, 
+        subject,
+        user, 
         onSelect, 
-        onSelectTopic, 
         activeMenu, 
         onToggleMenu, 
         onEdit, 
@@ -31,9 +31,19 @@ const SubjectCard = (props) => {
 
     const handleLocalDragStart = (e) => {
         if (draggable) {
+            const subjectParentId = subject.shortcutParentId ?? subject.folderId ?? null;
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('subjectId', subject.id); // Essential for the drop logic
             e.dataTransfer.setData('type', 'subject');
+            e.dataTransfer.setData('subjectType', 'subject');
+            e.dataTransfer.setData('subjectParentId', subjectParentId || '');
+            e.dataTransfer.setData('subjectShortcutId', subject.shortcutId || '');
+            e.dataTransfer.setData('treeItem', JSON.stringify({
+                id: subject.id,
+                type: 'subject',
+                parentId: subjectParentId,
+                shortcutId: subject.shortcutId || null
+            }));
             
             // Trigger the parent's event (for UI state)
             if (props.onDragStart) {
@@ -76,6 +86,7 @@ const SubjectCard = (props) => {
             }`}>
                 <SubjectCardFront 
                     subject={subject}
+                    user={user}
                     onSelect={onSelect}
                     activeMenu={activeMenu}
                     onToggleMenu={onToggleMenu}

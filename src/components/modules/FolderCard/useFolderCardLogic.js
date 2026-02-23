@@ -1,4 +1,4 @@
-// src/hooks/useFolderCardLogic.js
+// src/components/modules/FolderCard/useFolderCardLogic.js
 import { useState, useMemo } from 'react';
 
 export const useFolderCardLogic = ({
@@ -83,6 +83,7 @@ export const useFolderCardLogic = ({
 
     // --- DRAG AND DROP HANDLERS ---
     const handleDragOver = (e) => {
+        console.log('[DND] FolderCard handleDragOver:', { canDrop, draggable, position });
         if (canDrop) {
             e.preventDefault();
             e.stopPropagation();
@@ -94,40 +95,48 @@ export const useFolderCardLogic = ({
     };
 
     const handleDragLeave = (e) => {
+        console.log('[DND] FolderCard handleDragLeave:', { position });
         e.preventDefault();
         e.stopPropagation();
         setIsOver(false);
     };
 
     const handleDrop = (e) => {
+        console.log('[DND] FolderCard handleDrop:', {
+            folderId: folder.id,
+            canDrop,
+            draggable,
+            position,
+            subjectId: e.dataTransfer.getData('subjectId'),
+            draggedPosition: e.dataTransfer.getData('position'),
+            droppedFolderId: e.dataTransfer.getData('folderId')
+        });
         e.preventDefault();
         e.stopPropagation();
         setIsOver(false);
-
-        // Debug: Log all drop data
-        console.log('[DEBUG][FolderCardLogic] handleDrop', {
-            folderId: folder.id,
-            canDrop,
-            subjectId: e.dataTransfer.getData('subjectId'),
-            draggedPosition: e.dataTransfer.getData('position'),
-            droppedFolderId: e.dataTransfer.getData('folderId'),
-            event: e
-        });
 
         const subjectId = e.dataTransfer.getData('subjectId');
         const draggedPosition = e.dataTransfer.getData('position');
         const droppedFolderId = e.dataTransfer.getData('folderId');
 
         if (canDrop && onDrop && subjectId && !droppedFolderId) {
-            console.log('[DEBUG][FolderCardLogic] Calling onDrop', { targetFolderId: folder.id, subjectId });
-            onDrop(folder.id, subjectId);
+            // Try to get subject type and parentId from dataTransfer or context
+            const subjectType = e.dataTransfer.getData('subjectType') || 'subject';
+            const subjectParentId = e.dataTransfer.getData('subjectParentId') || null;
+            console.log('[DND] FolderCard handleDrop → onDrop:', {
+                folderId: folder.id,
+                subjectId,
+                subjectType,
+                subjectParentId
+            });
+            onDrop(folder.id, subjectId, subjectType, subjectParentId);
         }
         else if (canDrop && onDropFolder && droppedFolderId && droppedFolderId !== folder.id) {
-            console.log('[DEBUG][FolderCardLogic] Calling onDropFolder', { targetFolderId: folder.id, droppedFolderId });
+            console.log('[DND] FolderCard handleDrop → onDropFolder:', { folderId: folder.id, droppedFolderId });
             onDropFolder(folder.id, droppedFolderId);
         }
         else if (draggable && onDropReorder && droppedFolderId && draggedPosition !== undefined) {
-            console.log('[DEBUG][FolderCardLogic] Calling onDropReorder', { droppedFolderId, draggedPosition, position });
+            console.log('[DND] FolderCard handleDrop → onDropReorder:', { droppedFolderId, draggedPosition, position });
             onDropReorder(droppedFolderId, parseInt(draggedPosition), position);
         }
     };

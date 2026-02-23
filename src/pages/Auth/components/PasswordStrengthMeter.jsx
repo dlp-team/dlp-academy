@@ -1,4 +1,4 @@
-// src/components/auth/PasswordStrengthMeter.jsx
+// src/pages/Auth/components/PasswordStrengthMeter.jsx
 import React from 'react';
 
 const PasswordStrengthMeter = ({ strength }) => {

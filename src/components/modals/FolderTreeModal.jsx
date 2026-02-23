@@ -1,8 +1,9 @@
 // src/components/modals/FolderTreeModal.jsx
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, ArrowUpCircle, Users } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../ui/SubjectIcon';
-import { isDescendant } from '../../utils/folderUtils';
+import { isInvalidFolderMove } from '../../utils/folderUtils';
+import useAutoScrollOnDrag from '../../hooks/useAutoScrollOnDrag';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
 
@@ -79,6 +80,7 @@ const TreeItem = ({
         if (treeDataString) {
             const draggedData = JSON.parse(treeDataString);
             if (draggedData.id === item.id) return;
+            if (draggedData.type === 'folder' && type === 'folder' && currentPath.includes(draggedData.id)) return;
             onDropItem(draggedData, { id: item.id, type: type, parentId: parentId, index: index });
             return;
         }
@@ -240,6 +242,7 @@ const TreeItem = ({
     );
 };
 
+
 const FolderTreeModal = ({ 
     isOpen, 
     onClose, 
@@ -253,33 +256,34 @@ const FolderTreeModal = ({
     onReorderSubject,
     onDropWithOverlay // <-- Add this prop for overlay logic
 }) => {
-    
-    if (!isOpen || !rootFolder) return null;
-
+    // All hooks must be called unconditionally and in the same order
+    const contentRef = useRef(null);
     const [isRootDropZoneActive, setIsRootDropZoneActive] = useState(false);
+    useAutoScrollOnDrag({
+        containerRef: contentRef,
+        enabled: isOpen,
+        scrollContainer: 'element'
+    });
+
+    if (!isOpen || !rootFolder) return null;
 
     const handleDropAction = (dragged, target) => {
         if (!dragged || !target) return;
 
         // 1. Logic for moving SUBJECTS (No changes needed here)
         if (dragged.type === 'subject') {
-             // ... existing subject logic ...
-             if (target.type === 'folder') {
-                 if (onMoveSubjectToFolder) onMoveSubjectToFolder(dragged.id, target.id);
-             } else if (target.type === 'subject') {
-                 if (onReorderSubject) onReorderSubject(dragged.id, target.id);
-             }
+            if (target.type === 'folder') {
+                if (onMoveSubjectToFolder) onMoveSubjectToFolder(dragged.id, target.id);
+            } else if (target.type === 'subject') {
+                if (onReorderSubject) onReorderSubject(dragged.id, target.id);
+            }
         } 
         // 2. Logic for moving FOLDERS
         else if (dragged.type === 'folder' && target.type === 'folder') {
-            
-            // --- 🛡️ ADD THIS PROTECTION BLOCK ---
-            if (isDescendant(dragged.id, target.id, allFolders)) {
+            if (isInvalidFolderMove(dragged.id, target.id, allFolders)) {
                 console.warn("🚫 BLOCKED: Cannot move a folder into its own subfolder.");
-                return; // STOP HERE
+                return;
             }
-            // ------------------------------------
-
             if (onNestFolder) onNestFolder(target.id, dragged.id);
         }
     };
@@ -320,11 +324,10 @@ const FolderTreeModal = ({
         } else if (draggedData.type === 'folder') {
             if (draggedData.id === rootFolder.id) return;
 
-            // --- FIX STARTS HERE ---
-            if (isDescendant(draggedData.id, rootFolder.id, allFolders)) {
-                return; // Block cycle
+            if (isInvalidFolderMove(draggedData.id, rootFolder.id, allFolders)) {
+                console.warn("🚫 BLOCKED: Cannot move a folder into its own subfolder.");
+                return;
             }
-            // --- FIX ENDS HERE ---
 
             if (onNestFolder) onNestFolder(rootFolder.id, draggedData.id);
         }
@@ -378,7 +381,7 @@ const FolderTreeModal = ({
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto min-h-[300px] custom-scrollbar bg-slate-50/50 dark:bg-slate-950/30 p-4 flex flex-col">
+                <div ref={contentRef} className="flex-1 overflow-y-auto min-h-[300px] custom-scrollbar bg-slate-50/50 dark:bg-slate-950/30 p-4 flex flex-col">
                     
                     {/* MOVE TO ROOT ZONE */}
                     <div 

@@ -1,6 +1,7 @@
-// src/components/home/FolderListItem.jsx
-import React, { useState, useMemo } from 'react';
-import { ChevronRight, Folder, GripVertical, Users } from 'lucide-react';
+// src/components/modules/ListItems/FolderListItem.jsx
+import React, { useState, useMemo, useRef, useLayoutEffect } from 'react';
+import { ChevronRight, Folder, GripVertical, Users, MoreVertical, Edit2, Trash2, Share2 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import SubjectIcon from '../../ui/SubjectIcon';
 import ListViewItem from '../ListViewItem';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
@@ -15,6 +16,7 @@ const FolderListItem = ({
     onNavigateSubject,
     onEdit,
     onDelete,
+    onShare = () => {},
     cardScale = 100, 
     onDragStart,
     onDragEnd,
@@ -24,9 +26,27 @@ const FolderListItem = ({
     const [isExpanded, setIsExpanded] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
+    const [showMenu, setShowMenu] = useState(false);
+    const menuBtnRef = useRef(null);
+    const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
 
+    
     const scale = cardScale / 100;
     const type = 'folder';
+    // Minimum scale for the menu is 1 (100%)
+    const menuScale = Math.max(scale, 1);
+
+    React.useEffect(() => {
+        if (showMenu && menuBtnRef.current) {
+            const rect = menuBtnRef.current.getBoundingClientRect();
+            const menu = { width: 128 * menuScale, height: 48 * 3 * menuScale };
+            setMenuPos({
+                top: rect.bottom - menu.height,
+                left: rect.right - menu.width
+            });
+        }
+    }, [showMenu, menuScale]);
+
 
     // --- CHILDREN CALCULATION ---
     // --- 1. RECURSIVE COUNTING LOGIC (Same as FolderCard) ---
@@ -94,7 +114,7 @@ const FolderListItem = ({
 
     // --- DRAG HANDLERS ---
     const handleLocalDragStart = (e) => {
-        e.stopPropagation();
+        //e.stopPropagation();
         const dragData = {
             id: item.id,
             type: type,
@@ -120,17 +140,18 @@ const FolderListItem = ({
     });
 
     const handleDragOver = (e) => {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault(); //e.stopPropagation();
         if (!isDragOver) setIsDragOver(true);
     };
 
     const handleDragLeave = (e) => {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault(); //e.stopPropagation();
         setIsDragOver(false);
     };
 
     const handleDrop = (e) => {
-        e.preventDefault(); e.stopPropagation(); setIsDragOver(false);
+        e.preventDefault(); e.stopPropagation(); 
+        setIsDragOver(false);
 
         const treeDataString = e.dataTransfer.getData('treeItem');
         let draggedData;
@@ -272,6 +293,66 @@ const FolderListItem = ({
                     <button onClick={(e) => { e.stopPropagation(); onNavigate(item); }} className="text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors" style={{ padding: `${8 * scale}px` }}>
                         <Folder style={{ width: `${20 * scale}px`, height: `${20 * scale}px` }} />
                     </button>
+                    {/* Three Dots Menu Button */}
+                    <div className="relative ml-2 flex items-center">
+                        <button
+                            ref={menuBtnRef}
+                            onClick={e => {
+                                e.stopPropagation();
+                                setShowMenu(!showMenu);
+                            }}
+                            className={`p-2 rounded-full transition-colors opacity-100 hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400`}
+                        >
+                            <MoreVertical size={20 * scale} />
+                        </button>
+                        {showMenu && (
+                            <>
+                                {typeof window !== 'undefined' && window.document && createPortal(
+                                    <>
+                                        <div 
+                                            className="fixed inset-0 z-[100]" 
+                                            onClick={e => { e.stopPropagation(); setShowMenu(false); }}
+                                        />
+                                        <div
+                                            className="fixed z-[101] bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-none"
+                                            style={{
+                                                top: menuPos.top + 'px',
+                                                left: menuPos.left + 'px',
+                                                width: `${128 * menuScale}px`,
+                                                transform: `scale(${menuScale})`,
+                                                transformOrigin: 'bottom right',
+                                                pointerEvents: 'auto'
+                                            }}
+                                        >
+                                            <button 
+                                                onClick={e => { e.stopPropagation(); onEdit(item); setShowMenu(false); }}
+                                                className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                                                style={{ fontSize: `${14 * menuScale}px` }}
+                                            >
+                                                <Edit2 size={14 * menuScale} /> Editar
+                                            </button>
+                                            <button 
+                                                onClick={e => { e.stopPropagation(); onShare(item); setShowMenu(false); }}
+                                                className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                                                style={{ fontSize: `${14 * menuScale}px` }}
+                                            >
+                                                <Share2 size={14 * menuScale} /> Compartir
+                                            </button>
+                                            <button 
+                                                onClick={e => { e.stopPropagation(); onDelete(item); setShowMenu(false); }}
+                                                className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                                                style={{ fontSize: `${14 * menuScale}px` }}
+                                            >
+                                                <Trash2 size={14 * menuScale} /> Eliminar
+                                            </button>
+                                        </div>
+                                    </>,
+                                    window.document.body
+                                )}
+                            </>
+                        )}
+                    </div>
+                    
                 </div>
             </div>
 
@@ -298,6 +379,7 @@ const FolderListItem = ({
                                         onNavigateSubject={onNavigateSubject}
                                         onEdit={onEdit}
                                         onDelete={onDelete}
+                                        onShare={onShare}
                                         cardScale={cardScale}
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}
@@ -318,6 +400,7 @@ const FolderListItem = ({
                                         onNavigateSubject={onNavigateSubject}
                                         onEdit={onEdit}
                                         onDelete={onDelete}
+                                        onShare={onShare}
                                         cardScale={cardScale}
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}

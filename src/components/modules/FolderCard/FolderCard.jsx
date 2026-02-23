@@ -1,4 +1,4 @@
-// src/components/home/FolderCard.jsx
+// src/components/modules/FolderCard/FolderCard.jsx
 import React from 'react';
 import { useFolderCardLogic } from './useFolderCardLogic';
 import FolderCardTab from './FolderCardTab';
@@ -15,7 +15,8 @@ const FolderCard = (props) => {
     
     // 2. Destructure Props for direct usage
     const { 
-        folder, 
+        folder,
+        user, 
         onOpen, 
         activeMenu, 
         onToggleMenu, 
@@ -81,6 +82,7 @@ const FolderCard = (props) => {
             {/* --- 2. MAIN CARD BODY --- */}
             <FolderCardBody 
                 folder={folder}
+                user={user}
                 isModern={data.isModern}
                 gradientClass={data.gradientClass}
                 fillColor={data.fillColor}

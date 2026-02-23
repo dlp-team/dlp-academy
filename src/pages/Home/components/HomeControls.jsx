@@ -1,4 +1,4 @@
-// src/components/home/HomeControls.jsx
+// src/pages/Home/components/HomeControls.jsx
 import React from 'react';
 import { 
     LayoutGrid, Clock, Folder as FolderIcon, Users, FolderPlus, Move 
@@ -7,6 +7,14 @@ import ViewLayoutSelector from '../../../components/ui/ViewLayoutSelector';
 import CardScaleSlider from '../../../components/ui/CardScaleSlider';
 import TagFilter from '../../../components/ui/TagFilter';
 import SearchBar from '../../../components/ui/SearchBar';
+import useHomeControlsHandlers, { HOME_VIEW_MODES } from '../hooks/useHomeControlsHandlers';
+
+const VIEW_MODE_ICONS = {
+    grid: Move,
+    usage: Clock,
+    courses: FolderIcon,
+    shared: Users
+};
 
 const HomeControls = ({
     viewMode, setViewMode,
@@ -22,46 +30,26 @@ const HomeControls = ({
     draggedItem,
     draggedItemType,
     onPreferenceChange,
-    allFolders = [],
     searchQuery = '',
     setSearchQuery = () => {},
     activeFilter,
     onFilterOverlayChange,
     onScaleOverlayChange
 }) => {
-
-    const handleViewModeChange = (mode) => {
-        setViewMode(mode);
-        setSelectedTags([]);
-        setCollapsedGroups({});
-        setCurrentFolder(null);
-        if (onPreferenceChange) {
-            onPreferenceChange('viewMode', mode);
-        }
-    };
-
-    // Only change layoutMode, do not force viewMode to 'grid' (manual)
-    const handleLayoutModeChange = (mode) => {
-        // Do not change viewMode here! Only update layoutMode
-        setLayoutMode(mode);
-        if (onPreferenceChange) {
-            onPreferenceChange('layoutMode', mode);
-        }
-    };
-
-    const handleCardScaleChange = (scale) => {
-        setCardScale(scale);
-        if (onPreferenceChange) {
-            onPreferenceChange('cardScale', scale);
-        }
-    };
-
-    const handleTagsChange = (tags) => {
-        setSelectedTags(tags);
-        if (onPreferenceChange) {
-            onPreferenceChange('selectedTags', tags);
-        }
-    };
+    const {
+        handleViewModeChange,
+        handleLayoutModeChange,
+        handleCardScaleChange,
+        handleTagsChange
+    } = useHomeControlsHandlers({
+        setViewMode,
+        setSelectedTags,
+        setCollapsedGroups,
+        setCurrentFolder,
+        setLayoutMode,
+        setCardScale,
+        onPreferenceChange
+    });
 
     return (
         <div className="mb-8">
@@ -73,12 +61,9 @@ const HomeControls = ({
                 
                 {/* View Mode Switcher */}
                 <div className="bg-white dark:bg-slate-900 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 inline-flex transition-colors">
-                    {[
-                        { id: 'grid', icon: Move, label: 'Manual' },
-                        { id: 'usage', icon: Clock, label: 'Uso' },
-                        { id: 'courses', icon: FolderIcon, label: 'Cursos' },
-                        { id: 'shared', icon: Users, label: 'Compartido' }
-                    ].map(mode => (
+                    {HOME_VIEW_MODES.map(mode => {
+                        const Icon = VIEW_MODE_ICONS[mode.id];
+                        return (
                         <button 
                             key={mode.id}
                             onClick={() => handleViewModeChange(mode.id)}
@@ -88,10 +73,11 @@ const HomeControls = ({
                                     : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer'
                             }`}
                         >
-                            <mode.icon size={16} /> 
+                            <Icon size={16} /> 
                             <span className="hidden sm:inline">{mode.label}</span>
                         </button>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 

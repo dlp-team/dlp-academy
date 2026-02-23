@@ -1,11 +1,11 @@
-// src/components/home/FolderManager.jsx
+// src/pages/Home/components/FolderManager.jsx
 import React, { useState, useEffect } from 'react';
 import { X, Save, Plus, Trash2, Share2, Users } from 'lucide-react';
 import { COLORS } from '../../../utils/subjectConstants';
 
 const FolderManager = ({ 
     isOpen, onClose, onSave, initialData, isEditing, 
-    onShare, onUnshare, onUpdateRole, initialTab = 'general'
+    onShare, onUnshare, initialTab = 'general'
 }) => {
     const [formData, setFormData] = useState({ 
         name: '', 

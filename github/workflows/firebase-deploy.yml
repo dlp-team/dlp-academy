@@ -1,0 +1,23 @@
+name: Deploy Firestore Rules
+on:
+  push:
+    branches:
+      - main  # Trigger only when pushing to the main branch
+    paths:
+      - 'firestore.rules' # Trigger only if rules changed
+      - 'firestore.indexes.json'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Deploy to Firebase
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: '${{ secrets.GITHUB_TOKEN }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+          projectId: YOUR_PROJECT_ID_HERE
+          channelId: live

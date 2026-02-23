@@ -1,6 +1,8 @@
+// src/pages/Subject/components/TopicGrid.jsx
 import React from 'react';
 import { Plus } from 'lucide-react';
 import TopicCard from '../../../components/modules/TopicCard/TopicCard';
+import useTopicGridDnD from '../hooks/useTopicGridDnD';
 
 const TopicGrid = ({ 
     topics, 
@@ -13,32 +15,7 @@ const TopicGrid = ({
     onReorderTopics, // Critical for dragging
     onEditTopic      // Critical for the menu
 }) => {
-
-    // --- DRAG HANDLERS DEFINED HERE ---
-
-    // 1. Prepare data when dragging starts
-    const handleDragStart = (e, topicId) => {
-        e.dataTransfer.setData("text/plain", topicId);
-        e.dataTransfer.effectAllowed = "move";
-    };
-
-    // 2. Allow dropping
-    const handleDragOver = (e) => {
-        e.preventDefault(); 
-        e.dataTransfer.dropEffect = "move";
-    };
-
-    // 3. Handle the drop (Swap logic)
-    const handleDrop = (e, targetTopicId) => {
-        e.preventDefault();
-        const sourceTopicId = e.dataTransfer.getData("text/plain");
-
-        if (sourceTopicId && sourceTopicId !== targetTopicId) {
-            if (onReorderTopics) {
-                onReorderTopics(sourceTopicId, targetTopicId);
-            }
-        }
-    };
+    const { handleDragStart, handleDragOver, handleDrop } = useTopicGridDnD(onReorderTopics);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-24">

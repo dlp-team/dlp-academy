@@ -1,9 +1,13 @@
 # Custom Hooks (The Logic Layer)
 
-This directory contains the **business logic** and **data fetching** for the application. 
+This directory contains hooks that are used across multiple features or pages.
 
 ## 🧠 Philosophy
 We separate logic from UI to keep components clean. A `.jsx` file should worry about *how it looks*, while a hook worries about *how it works*.
+
+## Guidelines
+- Only keep hooks here if they are truly global and reusable (e.g., useFolders, useSubjects, useUserPreferences).
+- Feature-specific hooks should live in their respective feature folders (e.g., src/pages/Home/hooks/).
 
 ## Rules for Hooks
 1. **Firebase Isolation:** All direct Firebase calls (`getDoc`, `updateDoc`, `signIn`) should live here, not in the components.
@@ -13,8 +17,9 @@ We separate logic from UI to keep components clean. A `.jsx` file should worry a
    - Loading states (`loading`, `error`)
    - Action functions (`updateSubject`, `login`, `logout`)
 
-## Existing Hooks
-- `useLogin.js` / `useRegister.js`: Auth flows.
-- `useProfile.js`: User data and stats fetching.
-- `useSubjectManager.js`: Complex logic for drag-and-drop, N8N generation, and topic CRUD.
-- `useSubjects.js`: General list fetching for the Home page.
+## Structure
+- `useFolders.js`: Fetches and manages folder data.
+- `useSubjects.js`: Fetches and manages subject data.
+- `useUserPreferences.js`: Manages user preferences.
+
+Update this README if you add or move hooks.

@@ -1,4 +1,4 @@
-// src/components/settings/AppearanceSection.jsx
+// src/pages/Settings/components/AppearanceSection.jsx
 import React from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
 

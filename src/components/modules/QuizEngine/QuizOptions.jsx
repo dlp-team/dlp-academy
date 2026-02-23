@@ -1,3 +1,4 @@
+// src/components/modules/QuizEngine/QuizOptions.jsx
 import React, { useCallback } from 'react';
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { RenderLatex, ANSWER_STATUS } from './QuizCommon';

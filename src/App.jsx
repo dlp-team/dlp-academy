@@ -21,7 +21,9 @@ import StudyGuide from './pages/Content/StudyGuide';
 import StudyGuideEditor from './pages/Content/StudyGuideEditor';
 
 // Dashboard pages
-import SchoolAdminDashboard from './pages/SchoolAdminDashboard/SchoolAdminDashboard';
+import InstitutionAdminDashboard from './pages/InstitutionAdminDashboard/InstitutionAdminDashboard';
+import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
+import TeacherDashboard from './pages/TeacherDashboard/TeacherDashboard';
 
 // Updated ProtectedRoute to handle Role Checks
 const ProtectedRoute = ({ children, user, loading, requiredRole }) => {
@@ -66,7 +68,7 @@ function App() {
               uid: firebaseUser.uid,
               email: firebaseUser.email,
               photoURL: firebaseUser.photoURL,
-              ...userData // This spreads 'role', 'schoolId', etc. into the user object
+              ...userData // This spreads 'role', 'institutionId', etc. into the user object
             });
           } else {
             // Fallback if no database record exists
@@ -134,7 +136,11 @@ function App() {
         />
         <Route 
           path="/home/subject/:subjectId/topic/:topicId/resumen/:guideId/edit" 
-          element={<StudyGuideEditor />} 
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <StudyGuideEditor user={user} />
+            </ProtectedRoute>
+          } 
         />
 
         <Route 
@@ -165,12 +171,32 @@ function App() {
           } 
         />
         
-        {/* --- SCHOOL ADMIN DASHBOARD --- */}
+        {/* --- ADMIN DASHBOARD --- */}
         <Route 
-          path="/school-admin-dashboard" 
+          path="/admin-dashboard" 
           element={
-            <ProtectedRoute user={user} loading={loading} requiredRole="schooladmin">
-              <SchoolAdminDashboard user={user} />
+            <ProtectedRoute user={user} loading={loading} requiredRole="admin">
+              <AdminDashboard user={user} />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* --- INSTITUTION ADMIN DASHBOARD --- */}
+        <Route 
+          path="/institution-admin-dashboard" 
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="institutionadmin">
+              <InstitutionAdminDashboard user={user} />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* --- TEACHER DASHBOARD --- */}
+        <Route 
+          path="/teacher-dashboard" 
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="teacher">
+              <TeacherDashboard user={user} />
             </ProtectedRoute>
           } 
         />

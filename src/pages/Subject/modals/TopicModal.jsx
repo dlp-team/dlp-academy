@@ -1,4 +1,4 @@
-// src/components/modals/TopicModal.jsx
+// src/pages/Subject/modals/TopicModal.jsx
 import React from 'react';
 import { X, Upload } from 'lucide-react';
 
@@ -37,8 +37,8 @@ const TopicModal = ({
                         <label className="block text-sm font-semibold text-gray-700 mb-2">Título del Tema</label>
                         <input
                             type="text"
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 outline-none"
                             placeholder="Física Cuántica"
                         />
@@ -95,7 +95,7 @@ const TopicModal = ({
 
                     <button
                         onClick={onSubmit}
-                        disabled={!formData.title.trim()}
+                        disabled={!formData.name.trim()}
                         className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-4 rounded-xl font-bold hover:shadow-xl disabled:opacity-50"
                     >
                         {isFirstTopic ? 'Crear Tema 01' : 'Continuar'}

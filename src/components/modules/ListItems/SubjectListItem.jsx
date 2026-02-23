@@ -1,10 +1,12 @@
-// src/components/home/SubjectListItem.jsx
+// src/components/modules/ListItems/SubjectListItem.jsx
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, Edit2, Trash2, MoreVertical, Users , Share2 } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem } from '../../../utils/permissionUtils';
 
 const SubjectListItem = ({ 
+    user,
     subject, 
     onSelect, 
     onEdit, 
@@ -21,6 +23,10 @@ const SubjectListItem = ({
     const topicCount = subject.topics ? subject.topics.length : 0;
     const isModern = subject.cardStyle === 'modern';
     const scale = (cardScale || 100) / 100;
+    const showEditUI = user && shouldShowEditUI(subject, user.uid);
+    const showDeleteUI = user && shouldShowDeleteUI(subject, user.uid);
+    const canShare = user && canEditItem(subject, user.uid);
+    const isShortcut = subject?.isShortcut === true;
 
     // Minimum scale for the menu is 1 (100%)
     const menuScale = Math.max(scale, 1);
@@ -38,7 +44,6 @@ const SubjectListItem = ({
     // Scaled sizes
     const paddingPx = compact ? 12 * scale : 16 * scale;
     const iconContainerSize = compact ? 40 * scale : 48 * scale;
-    const innerIconSize = 42 * scale;
 
     return (
         <div 
@@ -85,7 +90,7 @@ const SubjectListItem = ({
                             (Array.isArray(subject.sharedWithUids) && subject.sharedWithUids.length > 0)
                         ) && (
                             <div
-                                className={`flex items-center justify-center rounded-full ml-1 ${isModern ? 'bg-none-50 dark:bg-none-900/30' : 'bg-white'}`}
+                                className={`flex items-center justify-center rounded-full ml-1`}
                                 style={{
                                     width: `${20 * scale}px`,
                                     height: `${20 * scale}px`,
@@ -94,7 +99,7 @@ const SubjectListItem = ({
                                 title="Asignatura compartida"
                             >
                                 <Users
-                                    className="text-indigo-600 dark:text-indigo-400"
+                                    className={isModern ? 'text-gray-900 dark:text-white' : 'text-white'}
                                     style={{ width: `${12 * scale}px`, height: `${12 * scale}px` }}
                                 />
                             </div>
@@ -149,25 +154,40 @@ const SubjectListItem = ({
                                 >
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onEdit(subject); setShowMenu(false); }}
+                                        disabled={!showEditUI}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: showEditUI ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
-                                        style={{ fontSize: `${14 * menuScale}px` }}
                                     >
                                         <Edit2 size={14 * menuScale} /> Editar
                                     </button>
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onShare && onShare(subject); setShowMenu(false); }}
+                                        disabled={!canShare}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: canShare ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
-                                        style={{ fontSize: `${14 * menuScale}px` }}
                                     >
                                         <Share2 size={14 * menuScale} /> Compartir
                                     </button>
+                                    {isShortcut && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); onDelete(subject); setShowMenu(false); }}
+                                            className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors cursor-pointer"
+                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                        >
+                                            <Trash2 size={14 * menuScale} /> Quitar de mi vista
+                                        </button>
+                                    )}
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onDelete(subject); setShowMenu(false); }}
+                                        disabled={!showDeleteUI || isShortcut}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: !isShortcut && showDeleteUI ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
-                                        style={{ fontSize: `${14 * menuScale}px` }}
                                     >
                                         <Trash2 size={14 * menuScale} /> Eliminar
                                     </button>
+                                    {!showEditUI && !canShare && !showDeleteUI && !isShortcut && (
+                                        <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
+                                    )}
                                 </div>
                             </>,
                             window.document.body

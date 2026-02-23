@@ -1,4 +1,4 @@
-// src/components/modals/subject-form/AppearanceSection.jsx
+// src/pages/Subject/modals/subject-form/AppearanceSection.jsx
 import React from 'react';
 import { ICON_MAP, ICON_KEYS, COLORS } from '../../../../utils/subjectConstants';
 

@@ -1,4 +1,4 @@
-// src/components/auth/UserTypeSelector.jsx
+// src/pages/Auth/components/UserTypeSelector.jsx
 import React from 'react';
 import { GraduationCap, Briefcase } from 'lucide-react';
 

@@ -1,3 +1,4 @@
+// src/components/modules/QuizCard/QuizCard.jsx
 import React from 'react';
 import { Timer, Play, RotateCcw, Trophy, XCircle } from 'lucide-react';
 

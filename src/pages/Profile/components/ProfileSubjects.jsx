@@ -1,4 +1,4 @@
-// src/components/profile/ProfileSubjects.jsx
+// src/pages/Profile/components/ProfileSubjects.jsx
 import React from 'react';
 import { BookOpen } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../../components/ui/SubjectIcon';
@@ -17,35 +17,39 @@ const ProfileSubjects = ({ subjects }) => {
             </div>
 
             {subjects.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {subjects.map((sub) => {
-                        // Check if the subject is modern style
-                        const isModern = sub.cardStyle === 'modern';
+                /* Scroll container: max height for 2 rows of cards (~2 × ~130px + gap), scrollable */
+                <div
+                    className="overflow-y-auto pr-1"
+                    style={{ maxHeight: '390px' }}
+                >
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {subjects.map((sub) => {
+                            const isModern = sub.cardStyle === 'modern';
 
-                        return (
-                            <div key={sub.id} className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all">
-                                
-                                {/* Icon Logic: Modern vs Classic */}
-                                {isModern ? (
-                                    // MODERN: No background, just the colored icon (larger)
-                                    <div className={`w-10 h-10 mb-4 flex items-center justify-start ${getIconColor(sub.color)}`}>
-                                        <SubjectIcon iconName={sub.icon} className="w-9 h-9" />
-                                    </div>
-                                ) : (
-                                    // CLASSIC: Gradient Box, white icon (smaller)
-                                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${sub.color || 'from-gray-400 to-gray-500'} mb-4 flex items-center justify-center text-white shadow-sm`}>
-                                        <SubjectIcon iconName={sub.icon} className="w-5 h-5" />
-                                    </div>
-                                )}
+                            return (
+                                <div
+                                    key={sub.id}
+                                    className="bg-white dark:bg-gray-800 p-5 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-all"
+                                >
+                                    {isModern ? (
+                                        <div className={`w-10 h-10 mb-4 flex items-center justify-start ${getIconColor(sub.color)}`}>
+                                            <SubjectIcon iconName={sub.icon} className="w-9 h-9" />
+                                        </div>
+                                    ) : (
+                                        <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${sub.color || 'from-gray-400 to-gray-500'} mb-4 flex items-center justify-center text-white shadow-sm`}>
+                                            <SubjectIcon iconName={sub.icon} className="w-5 h-5" />
+                                        </div>
+                                    )}
 
-                                <h3 className="font-bold text-gray-900 dark:text-gray-100 truncate">{sub.name}</h3>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{sub.course}</p>
-                                <div className="flex justify-between items-center text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-700 pt-3 transition-colors">
-                                    <span>{(sub.topics || []).length} Temas generados</span>
+                                    <h3 className="font-bold text-gray-900 dark:text-gray-100 truncate">{sub.name}</h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">{sub.course}</p>
+                                    <div className="flex justify-between items-center text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-700 pt-3 transition-colors">
+                                        <span>{(sub.topics || []).length} Temas generados</span>
+                                    </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
                 </div>
             ) : (
                 <div className="bg-white dark:bg-gray-800 p-8 rounded-xl border border-dashed border-gray-300 dark:border-gray-700 text-center transition-colors">

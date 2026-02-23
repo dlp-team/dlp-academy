@@ -1,4 +1,5 @@
 // src/utils/profileConstants.js
+// src/utils/profileConstants.js
 export const COUNTRIES = {
     es: { name: "España", flag: "🇪🇸" },
     mx: { name: "México", flag: "🇲🇽" },

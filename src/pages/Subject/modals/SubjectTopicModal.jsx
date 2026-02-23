@@ -1,4 +1,4 @@
-// src/components/modals/SubjectTopicsModal.jsx
+// src/pages/Subject/modals/SubjectTopicModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { X, FileText, GripVertical, Loader2 } from 'lucide-react';
 import { collection, query, where, orderBy, onSnapshot, writeBatch, doc } from 'firebase/firestore';
@@ -19,7 +19,8 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
 
         setLoading(true);
         const q = query(
-            collection(db, "subjects", subject.id, "topics"),
+            collection(db, "topics"),
+            where("subjectId", "==", subject.id),
             orderBy("order", "asc")
         );
 
@@ -77,7 +78,7 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
             
             // FIX: Change 'newOrder' to 'newTopics'
             newTopics.forEach((item, index) => { 
-                const ref = doc(db, "subjects", subject.id, "topics", item.id); 
+                const ref = doc(db, "topics", item.id); 
                 batch.update(ref, { order: index });
             });
             
@@ -189,7 +190,7 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
                                             {/* Content */}
                                             <div className="flex-1 min-w-0 z-10">
                                                 <h4 className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
-                                                    {topic.title}
+                                                    {topic.name || topic.title}
                                                 </h4>
                                                 <div className="flex items-center gap-2 mt-0.5">
                                                     <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium

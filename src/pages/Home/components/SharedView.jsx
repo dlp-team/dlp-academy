@@ -1,4 +1,4 @@
-// src/components/home/SharedView.jsx
+// src/pages/Home/components/SharedView.jsx
 import React, { useMemo, useState } from 'react';
 import { Users, Folder as FolderIcon, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -50,7 +50,6 @@ const SharedView = ({
         if (selectedTags.length === 0) return sharedSubjects;
         return sharedSubjects.filter(s => Array.isArray(s.tags) && selectedTags.every(tag => s.tags.includes(tag)));
     }, [sharedSubjects, selectedTags]);
-
     // Calculate grid column width based on scale (matches HomeContent logic)
     const gridStyle = { 
         gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` 
@@ -211,6 +210,6 @@ const SharedView = ({
             )}
         </div>
     );
-};
+}
 
 export default SharedView;

@@ -1,13 +1,15 @@
-// src/components/home/BreadcrumbNav.jsx
+// src/pages/Home/components/BreadcrumbNav.jsx
 import React, { useState } from 'react';
 import { ChevronRight, Home } from 'lucide-react';
+import { isInvalidFolderMove } from '../../../utils/folderUtils';
 
 const BreadcrumbNav = ({ 
     currentFolder, 
     allFolders, 
     onNavigate,
     onDropOnBreadcrumb, 
-    draggedItem 
+    draggedItem,
+    draggedItemType
 }) => {
     const [hoveredId, setHoveredId] = useState(null);
 
@@ -41,6 +43,7 @@ const BreadcrumbNav = ({
         const currentId = currentFolder ? currentFolder.id : 'root';
         if (targetFolderId === currentId) return;
         if (draggedItem && draggedItem.id === targetFolderId) return;
+        if (!draggingCanDropHere(targetFolderId)) return;
 
         setHoveredId(targetFolderId);
 
@@ -73,6 +76,10 @@ const BreadcrumbNav = ({
         const folderId = e.dataTransfer.getData('folderId');
         const finalTargetId = targetFolderId === 'root' ? null : targetFolderId;
 
+        if (folderId && finalTargetId && isInvalidFolderMove(folderId, finalTargetId, allFolders || [])) {
+            return;
+        }
+
         if (onDropOnBreadcrumb) {
             onDropOnBreadcrumb(finalTargetId, subjectId, folderId);
         }
@@ -83,7 +90,10 @@ const BreadcrumbNav = ({
     // 1. Build path
     const breadcrumbPath = [];
     let tempFolder = currentFolder;
+    const visited = new Set();
     while (tempFolder) {
+        if (visited.has(tempFolder.id)) break;
+        visited.add(tempFolder.id);
         breadcrumbPath.unshift(tempFolder);
         if (tempFolder.parentId) {
             tempFolder = allFolders.find(f => f.id === tempFolder.parentId);
@@ -113,7 +123,14 @@ const BreadcrumbNav = ({
 
     const draggingCanDropHere = (id) => {
          const currentId = currentFolder ? currentFolder.id : 'root';
-         return draggedItem && id !== currentId && draggedItem.id !== id;
+            if (!draggedItem || id === currentId || draggedItem.id === id) return false;
+
+            if (draggedItemType === 'folder') {
+              if (id === 'root') return true;
+              return !isInvalidFolderMove(draggedItem.id, id, allFolders || []);
+            }
+
+            return true;
     }
 
     if (!currentFolder) return null;

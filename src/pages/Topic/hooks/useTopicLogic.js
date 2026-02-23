@@ -1,11 +1,12 @@
-// src/hooks/useTopicLogic.js
-import { useState, useEffect, useRef } from 'react';
+// src/pages/Topic/hooks/useTopicLogic.js
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
     FileText, Award, Sigma, BookOpen, NotebookPen, Pencil, Target, Trophy 
 } from 'lucide-react';
-import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { canEdit, canView, canDelete, shouldShowEditUI, shouldShowDeleteUI } from '../../../utils/permissionUtils';
 
 export const useTopicLogic = (user) => {
     const navigate = useNavigate();
@@ -28,7 +29,7 @@ export const useTopicLogic = (user) => {
     // Menús y Edición
     const [showMenu, setShowMenu] = useState(false);
     const [isEditingTopic, setIsEditingTopic] = useState(false);
-    const [editTopicData, setEditTopicData] = useState({ title: '' });
+    const [editTopicData, setEditTopicData] = useState({ name: '' });
 
     // Gestión Archivos y Menús
     const [activeMenuId, setActiveMenuId] = useState(null);
@@ -77,7 +78,7 @@ export const useTopicLogic = (user) => {
                 const subjectDoc = await getDoc(doc(db, "subjects", subjectId));
                 if (subjectDoc.exists()) setSubject({ id: subjectDoc.id, ...subjectDoc.data() });
 
-                const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
+                const topicRef = doc(db, "topics", topicId);
                 unsubscribeTopic = onSnapshot(topicRef, (topicDoc) => {
                     if (topicDoc.exists()) {
                         const topicData = { id: topicDoc.id, ...topicDoc.data() };
@@ -89,11 +90,15 @@ export const useTopicLogic = (user) => {
                             quizzes: prev?.quizzes || []
                         }));
 
-                        const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
+                        const docsRef = query(collection(db, "documents"), where("topicId", "==", topicId));
                         unsubscribeDocs = onSnapshot(docsRef, (docsSnap) => {
-                            const manualDocs = docsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                            const aiPdfs = Array.isArray(topicData.pdfs) ? topicData.pdfs.map((p, i) => ({ ...p, id: p.id || `ai-${i}`, origin: 'AI' })) : [];
-                            const manualUploads = manualDocs.filter(d => d.source === 'manual').map(d => ({ ...d, origin: 'manual' }));
+                            const allDocs = docsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                            const manualUploads = allDocs
+                                .filter(d => d.source === 'manual')
+                                .map(d => ({ ...d, origin: 'manual' }));
+                            const aiPdfs = allDocs
+                                .filter(d => d.source !== 'manual')
+                                .map(d => ({ ...d, origin: 'AI' }));
 
                             setTopic(prev => ({ 
                                 ...prev, 
@@ -102,7 +107,7 @@ export const useTopicLogic = (user) => {
                             }));
                         });
 
-                        const quizzesRef = collection(db, "subjects", subjectId, "topics", topicId, "quizzes");
+                        const quizzesRef = query(collection(db, "quizzes"), where("topicId", "==", topicId));
                         unsubscribeQuizzes = onSnapshot(quizzesRef, (quizzesSnap) => {
                             const realQuizzes = quizzesSnap.docs.map(q => ({ id: q.id, ...q.data() }));
                             setTopic(prev => ({ 
@@ -161,21 +166,18 @@ export const useTopicLogic = (user) => {
         setActiveMenuId(null);
     };
 
-    const saveRename = async (file) => {
+    const saveRename = async (fileOrId) => {
         if (!tempName.trim()) return;
+
+        const file = typeof fileOrId === 'string'
+            ? [...(topic?.pdfs || []), ...(topic?.uploads || [])].find((entry) => entry.id === fileOrId)
+            : fileOrId;
+
+        if (!file?.id) return;
+
         try {
-            if (file.origin === 'manual') {
-                const docRef = doc(db, "subjects", subjectId, "topics", topicId, "documents", file.id);
-                await updateDoc(docRef, { name: tempName });
-            } else {
-                const updatedPdfs = topic.pdfs.map(pdf => {
-                    if (pdf.id === file.id) return { ...pdf, name: tempName };
-                    return pdf;
-                });
-                const cleanPdfsForDb = updatedPdfs.map(p => ({ name: p.name, type: p.type, url: p.url, id: p.id }));
-                const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
-                await updateDoc(topicRef, { pdfs: cleanPdfsForDb });
-            }
+            const docRef = doc(db, "documents", file.id);
+            await updateDoc(docRef, { name: tempName });
             setRenamingId(null);
         } catch (error) { console.error(error); alert("Error al renombrar."); }
     };
@@ -183,12 +185,7 @@ export const useTopicLogic = (user) => {
     const deleteFile = async (file) => {
         if (!window.confirm(`¿Eliminar "${file.name}"?`)) return;
         try {
-            if (file.origin === 'manual') {
-                await deleteDoc(doc(db, "subjects", subjectId, "topics", topicId, "documents", file.id));
-            } else {
-                const updatedPdfs = topic.pdfs.filter(pdf => pdf.id !== file.id).map(pdf => ({ name: pdf.name, type: pdf.type, url: pdf.url, id: pdf.id }));
-                await updateDoc(doc(db, "subjects", subjectId, "topics", topicId), { pdfs: updatedPdfs });
-            }
+            await deleteDoc(doc(db, "documents", file.id));
             setActiveMenuId(null);
         } catch (error) { console.error(error); alert("Error al eliminar."); }
     };
@@ -196,7 +193,7 @@ export const useTopicLogic = (user) => {
     const deleteQuiz = async (quizId) => {
         if (!window.confirm("¿Eliminar este test permanentemente?")) return;
         try {
-            await deleteDoc(doc(db, "subjects", subjectId, "topics", topicId, "quizzes", quizId));
+            await deleteDoc(doc(db, "quizzes", quizId));
             setActiveMenuId(null);
         } catch (error) { console.error(error); alert("Error al eliminar test"); }
     };
@@ -209,15 +206,15 @@ export const useTopicLogic = (user) => {
     const handleDeleteTopic = async () => {
         if (!window.confirm("¿Eliminar tema completo?")) return;
         try {
-            await deleteDoc(doc(db, "subjects", subjectId, "topics", topicId));
+            await deleteDoc(doc(db, "topics", topicId));
             navigate(`/home/subject/${subjectId}`);
         } catch (error) { console.error(error); }
     };
 
     const handleSaveTopicTitle = async () => {
-        if (!editTopicData.title.trim()) return;
+        if (!editTopicData.name.trim()) return;
         try {
-            await updateDoc(doc(db, "subjects", subjectId, "topics", topicId), { title: editTopicData.title });
+            await updateDoc(doc(db, "topics", topicId), { name: editTopicData.name });
             setIsEditingTopic(false);
         } catch (error) { console.error(error); }
     };
@@ -233,9 +230,13 @@ export const useTopicLogic = (user) => {
             const convert = (f) => new Promise((r) => { const fr = new FileReader(); fr.readAsDataURL(f); fr.onload = () => r(fr.result); });
             await Promise.all(validFiles.map(async (file) => {
                 const base64Url = await convert(file);
-                return addDoc(collection(db, "subjects", subjectId, "topics", topicId, "documents"), {
+                return addDoc(collection(db, "documents"), {
                     name: file.name, type: file.type.includes('pdf') ? 'pdf' : 'doc', size: file.size, 
-                    source: 'manual', uploadedAt: serverTimestamp(), url: base64Url, status: 'ready'
+                    source: 'manual', uploadedAt: serverTimestamp(), url: base64Url, status: 'ready',
+                    topicId: topicId,
+                    subjectId: subjectId,
+                    ownerId: topic?.ownerId || subject?.ownerId || user?.uid,
+                    institutionId: topic?.institutionId || subject?.institutionId || user?.institutionId || 'default'
                 });
             }));
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -260,7 +261,7 @@ export const useTopicLogic = (user) => {
             formData.append('subjectId', subjectId);
             formData.append('topicId', topicId);
             formData.append('subjectName', subject?.name);
-            formData.append('topicTitle', topic?.title);
+            formData.append('topicName', topic?.name || topic?.title);
             if (quizFormData.file) formData.append('files', quizFormData.file); 
 
             const res = await fetch('https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook/711e538b-9d63-42bb-8494-873301ffdf39', {
@@ -295,7 +296,7 @@ export const useTopicLogic = (user) => {
             formData.append('subjectId', subjectId);
             formData.append('topicId', topicId);
             formData.append('subjectName', subject?.name);
-            formData.append('topicTitle', topic?.title);
+            formData.append('topicName', topic?.name || topic?.title);
             
             if (contentFormData.file) formData.append('files', contentFormData.file);
 
@@ -316,7 +317,7 @@ export const useTopicLogic = (user) => {
     // --- HANDLERS PARA ABRIR MODALES ---
     const handleCreateCustomPDF = () => {
         setContentFormData({ 
-            title: `Resumen: ${topic?.title}`, 
+            title: `Resumen: ${topic?.name || topic?.title}`,
             type: 'summary', 
             prompt: '' 
         });
@@ -325,13 +326,39 @@ export const useTopicLogic = (user) => {
 
     const handleCreateCustomQuiz = () => {
         setQuizFormData({ 
-            title: `Test: ${topic?.title}`, 
+            title: `Test: ${topic?.name || topic?.title}`,
             level: 'Intermedio', 
             numQuestions: 5, 
             prompt: '' 
         });
         setShowQuizModal(true);
     };
+
+    // --- PERMISSION CHECKS ---
+    const topicPermissions = useMemo(() => {
+        if (!topic || !user) return {
+            canEdit: false,
+            canView: false,
+            canDelete: false,
+            showEditUI: false,
+            showDeleteUI: false,
+            isViewer: false
+        };
+
+        const hasEditPermission = canEdit(topic, user);
+        const hasViewPermission = canView(topic, user);
+        const hasDeletePermission = canDelete(topic, user);
+        const isViewerOnly = hasViewPermission && !hasEditPermission;
+
+        return {
+            canEdit: hasEditPermission,
+            canView: hasViewPermission,
+            canDelete: hasDeletePermission,
+            showEditUI: shouldShowEditUI(topic, user),
+            showDeleteUI: shouldShowDeleteUI(topic, user),
+            isViewer: isViewerOnly
+        };
+    }, [topic, user]);
 
     return {
         // Data
@@ -340,6 +367,9 @@ export const useTopicLogic = (user) => {
         loading,
         uploading,
         activeTab, setActiveTab,
+        
+        // Permissions
+        permissions: topicPermissions,
         
         // UI State
         toast, setToast,

@@ -5,11 +5,12 @@ import {
     getDoc, arrayUnion, arrayRemove, onSnapshot, writeBatch, getDocs
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { isDescendant } from '../utils/folderUtils';
+import { isInvalidFolderMove } from '../utils/folderUtils';
 
 export const useFolders = (user) => {
     const [folders, setFolders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const currentInstitutionId = user?.institutionId || 'default';
 
     useEffect(() => {
         if (!user) {
@@ -33,9 +34,14 @@ export const useFolders = (user) => {
         };
 
         const unsubscribeOwned = onSnapshot(ownedQuery, (snapshot) => {
-            ownedFolders = snapshot.docs.map(d => ({ 
-                id: d.id, ...d.data(), parentId: d.data().parentId || null, isOwner: true 
-            }));
+            ownedFolders = snapshot.docs
+                .map(d => ({ id: d.id, ...d.data(), parentId: d.data().parentId || null, isOwner: true }))
+                .filter(folder => {
+                    if (!folder?.institutionId) {
+                        return folder?.ownerId === user?.uid;
+                    }
+                    return folder.institutionId === currentInstitutionId;
+                });
             updateState();
         });
 
@@ -43,6 +49,9 @@ export const useFolders = (user) => {
             sharedFolders = snapshot.docs.filter(d => {
                 const data = d.data();
                 const userEmail = user.email?.toLowerCase() || '';
+                if (!data?.institutionId || data.institutionId !== currentInstitutionId) {
+                    return false;
+                }
                 return data.sharedWith?.some(share => 
                     share.email?.toLowerCase() === userEmail || share.uid === user.uid
                 );
@@ -53,22 +62,12 @@ export const useFolders = (user) => {
         });
 
         return () => { unsubscribeOwned(); unsubscribeShared(); };
-    }, [user]);
+    }, [user, currentInstitutionId]);
 
     // --- ATOMIC HELPERS ---
     const addFolderToParent = async (parentId, childId) => {
         if (!parentId) return;
         await updateDoc(doc(db, "folders", parentId), { folderIds: arrayUnion(childId), updatedAt: new Date() });
-    };
-
-    const removeFolderFromParent = async (parentId, childId) => {
-        if (!parentId) return;
-        await updateDoc(doc(db, "folders", parentId), { folderIds: arrayRemove(childId), updatedAt: new Date() });
-    };
-
-    const removeSubjectFromFolder = async (folderId, subjectId) => {
-        if (!folderId) return;
-        await updateDoc(doc(db, "folders", folderId), { subjectIds: arrayRemove(subjectId), updatedAt: new Date() });
     };
 
     const addSubjectToFolder = async (folderId, subjectId) => {
@@ -145,6 +144,7 @@ export const useFolders = (user) => {
             ...payload,
             ownerId: user.uid,
             ownerEmail: user.email,
+            institutionId: payload?.institutionId || currentInstitutionId,
             sharedWith,
             sharedWithUids,
             isShared,
@@ -165,7 +165,110 @@ export const useFolders = (user) => {
     const deleteFolder = async (id) => {
         const folder = folders.find(f => f.id === id);
         if (!folder) return;
-        if (folder.parentId) await removeFolderFromParent(folder.parentId, id);
+
+        const batch = writeBatch(db);
+
+        // Helper to recursively delete folders and their contents
+        const deleteFolderRecursive = async (folderId) => {
+            const folderToDelete = folders.find(f => f.id === folderId);
+            if (!folderToDelete) return;
+
+            // 1. Delete all child subjects
+            if (folderToDelete.subjectIds && folderToDelete.subjectIds.length > 0) {
+                for (const subjectId of folderToDelete.subjectIds) {
+                    const subjectRef = doc(db, "subjects", subjectId);
+                    batch.delete(subjectRef);
+                }
+            }
+
+            // 2. Recursively delete all child folders
+            if (folderToDelete.folderIds && folderToDelete.folderIds.length > 0) {
+                for (const childFolderId of folderToDelete.folderIds) {
+                    await deleteFolderRecursive(childFolderId);
+                }
+            }
+
+            // 3. Delete the folder itself
+            const folderRef = doc(db, "folders", folderId);
+            batch.delete(folderRef);
+        };
+
+        // Start recursive deletion
+        await deleteFolderRecursive(id);
+
+        // Remove from parent's folderIds if it has a parent
+        if (folder.parentId) {
+            const parentRef = doc(db, "folders", folder.parentId);
+            batch.update(parentRef, {
+                folderIds: arrayRemove(id),
+                updatedAt: new Date()
+            });
+        }
+
+        // Commit all deletions in one batch
+        await batch.commit();
+    };
+
+    const deleteFolderOnly = async (id) => {
+        const folder = folders.find(f => f.id === id);
+        if (!folder) return;
+
+        const batch = writeBatch(db);
+        const parentId = folder.parentId || null;
+
+        // 1. Move all child subjects to parent
+        if (folder.subjectIds && folder.subjectIds.length > 0) {
+            for (const subjectId of folder.subjectIds) {
+                const subjectRef = doc(db, "subjects", subjectId);
+                batch.update(subjectRef, { 
+                    folderId: parentId,
+                    updatedAt: new Date()
+                });
+
+                // If moving to a parent folder, add to its subjectIds
+                if (parentId) {
+                    const parentRef = doc(db, "folders", parentId);
+                    batch.update(parentRef, {
+                        subjectIds: arrayUnion(subjectId),
+                        updatedAt: new Date()
+                    });
+                }
+            }
+        }
+
+        // 2. Move all child folders to parent
+        if (folder.folderIds && folder.folderIds.length > 0) {
+            for (const childFolderId of folder.folderIds) {
+                const childRef = doc(db, "folders", childFolderId);
+                batch.update(childRef, {
+                    parentId: parentId,
+                    updatedAt: new Date()
+                });
+
+                // If moving to a parent folder, add to its folderIds
+                if (parentId) {
+                    const parentRef = doc(db, "folders", parentId);
+                    batch.update(parentRef, {
+                        folderIds: arrayUnion(childFolderId),
+                        updatedAt: new Date()
+                    });
+                }
+            }
+        }
+
+        // 3. Remove this folder from parent's folderIds
+        if (parentId) {
+            const parentRef = doc(db, "folders", parentId);
+            batch.update(parentRef, {
+                folderIds: arrayRemove(id),
+                updatedAt: new Date()
+            });
+        }
+
+        // 4. Commit all changes
+        await batch.commit();
+
+        // 5. Delete the folder itself
         await deleteDoc(doc(db, "folders", id));
     };
 
@@ -187,7 +290,13 @@ export const useFolders = (user) => {
             let targetUid = null;
 
             if (!querySnapshot.empty) {
-                targetUid = querySnapshot.docs[0].id; 
+                targetUid = querySnapshot.docs[0].id;
+                const targetUserData = querySnapshot.docs[0].data() || {};
+                const targetInstitutionId = targetUserData.institutionId || null;
+                if (targetInstitutionId && targetInstitutionId !== currentInstitutionId) {
+                    alert("No puedes compartir entre instituciones diferentes.");
+                    return;
+                }
             } else {
                 console.warn(`User with email ${emailLower} not found.`);
                 alert(`No se encontró usuario con el correo ${email}. El usuario debe crear una cuenta primero.`);
@@ -362,6 +471,16 @@ export const useFolders = (user) => {
         // 3. Perform Move
         const batch = writeBatch(db);
 
+        // Validate folder IDs (null is allowed for root-level moves)
+        if (sourceId !== null && sourceId !== undefined && (typeof sourceId !== 'string' || sourceId === 'subject')) {
+            console.warn('[moveSubjectBetweenFolders] Invalid sourceId:', sourceId);
+            return;
+        }
+        if (toFolderId !== null && toFolderId !== undefined && (typeof toFolderId !== 'string' || toFolderId === 'subject')) {
+            console.warn('[moveSubjectBetweenFolders] Invalid toFolderId:', toFolderId);
+            return;
+        }
+
         // Remove from old
         if (sourceId) {
             const sourceRef = doc(db, "folders", sourceId);
@@ -428,97 +547,43 @@ export const useFolders = (user) => {
         moveSubjectBetweenFolders(subjectId, currentFolderId, parentId);
 
 
-    /**
-     * Advanced Folder Move Logic
-     * Handles normal moves AND "Swap/Extract" if moving Parent -> Child
-     */
     const moveFolderToParent = async (folderId, currentParentId, newParentId, options = {}) => {
-        // Prevent move to self
         if (folderId === newParentId) return;
+        if (isInvalidFolderMove(folderId, newParentId, folders)) {
+            console.warn('🚫 BLOCKED: Cannot move a folder into its own subfolder.');
+            return;
+        }
 
-        // Check for Circular Dependency (Is newParentId currently a child of folderId?)
-        const isCircular = isDescendant(folderId, newParentId);
+        const batch = writeBatch(db);
 
-        if (isCircular) {
-            // STRATEGY:
-            // 1. Promote 'newParentId' (Child) to 'currentParentId' (Parent's level)
-            // 2. Then move 'folderId' (Parent) into 'newParentId' (Child)
-            
-            const childFolderId = newParentId;
-            const parentFolderId = folderId;
-            const grandParentId = currentParentId; // Where the parent currently lives
+        if (currentParentId) {
+            const oldParentRef = doc(db, "folders", currentParentId);
+            batch.update(oldParentRef, { folderIds: arrayRemove(folderId) });
+        }
 
-            const batch = writeBatch(db);
+        const folderRef = doc(db, "folders", folderId);
+        let updatePayload = { parentId: newParentId || null, updatedAt: new Date() };
 
-            // Step 1: Move Child OUT of Parent, UP to Grandparent
-            // Remove Child from Parent's folderIds
-            const parentRef = doc(db, "folders", parentFolderId);
-            batch.update(parentRef, { 
-                folderIds: arrayRemove(childFolderId),
-                updatedAt: new Date() 
-            });
-
-            // Add Child to Grandparent (if exists)
-            if (grandParentId) {
-                const grandParentRef = doc(db, "folders", grandParentId);
-                batch.update(grandParentRef, { folderIds: arrayUnion(childFolderId) });
-            }
-            // Update Child's parent pointer
-            const childRef = doc(db, "folders", childFolderId);
-            batch.update(childRef, { 
-                parentId: grandParentId || null,
-                folderIds: arrayUnion(parentFolderId) // PREPARE Step 2: Add Parent to Child's list
-            });
-
-            // Step 2: Move Parent INTO Child
-            // Remove Parent from Grandparent
-            if (grandParentId) {
-                const grandParentRef = doc(db, "folders", grandParentId);
-                batch.update(grandParentRef, { folderIds: arrayRemove(parentFolderId) });
-            }
-            
-            // Update Parent's pointer to Child
-            batch.update(parentRef, { 
-                parentId: childFolderId 
-            });
-
-            await batch.commit();
-
-        } else {
-            // Standard Move
-            const batch = writeBatch(db);
-
-            if (currentParentId) {
-                const oldParentRef = doc(db, "folders", currentParentId);
-                batch.update(oldParentRef, { folderIds: arrayRemove(folderId) });
-            }
-
-            const folderRef = doc(db, "folders", folderId);
-            let updatePayload = { parentId: newParentId || null, updatedAt: new Date() };
-
-            // If moving into a shared folder, propagate sharing unless options.preserveSharing is true
-            if (newParentId) {
-                const newParentRef = doc(db, "folders", newParentId);
-                batch.update(newParentRef, { folderIds: arrayUnion(folderId) });
-                if (!options.preserveSharing) {
-                    // Fetch new parent folder's sharing info
-                    try {
-                        const parentSnap = await getDoc(newParentRef);
-                        if (parentSnap.exists()) {
-                            const parentData = parentSnap.data();
-                            updatePayload.sharedWith = parentData.sharedWith || [];
-                            updatePayload.sharedWithUids = parentData.sharedWithUids || [];
-                            updatePayload.isShared = (parentData.sharedWithUids || []).length > 0;
-                        }
-                    } catch (e) {
-                        console.error("Error propagating sharing when moving folder:", e);
+        if (newParentId) {
+            const newParentRef = doc(db, "folders", newParentId);
+            batch.update(newParentRef, { folderIds: arrayUnion(folderId) });
+            if (!options.preserveSharing) {
+                try {
+                    const parentSnap = await getDoc(newParentRef);
+                    if (parentSnap.exists()) {
+                        const parentData = parentSnap.data();
+                        updatePayload.sharedWith = parentData.sharedWith || [];
+                        updatePayload.sharedWithUids = parentData.sharedWithUids || [];
+                        updatePayload.isShared = (parentData.sharedWithUids || []).length > 0;
                     }
+                } catch (e) {
+                    console.error("Error propagating sharing when moving folder:", e);
                 }
             }
-            batch.update(folderRef, updatePayload);
-
-            await batch.commit();
         }
+        batch.update(folderRef, updatePayload);
+
+        await batch.commit();
     };
 
     // Helper: DFS to check if 'targetId' is inside 'sourceId'
@@ -530,7 +595,7 @@ export const useFolders = (user) => {
         if (fromParentId === toParentId) return; // No change
 
         // Check for Circular Dependency
-        if (isDescendant(folderId, toParentId)) {
+        if (isInvalidFolderMove(folderId, toParentId, folders)) {
             alert("No puedes mover una carpeta dentro de sí misma.");
             return;
         }
@@ -557,7 +622,7 @@ export const useFolders = (user) => {
     };
 
     return { 
-        folders, loading, addFolder, updateFolder, deleteFolder, 
+        folders, loading, addFolder, updateFolder, deleteFolder, deleteFolderOnly,
         shareFolder, unshareFolder, 
         moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders,
         addSubjectToFolder,

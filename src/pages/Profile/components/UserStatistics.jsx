@@ -1,7 +1,6 @@
-// src/components/profile/UserStatistics.jsx
-import React, { useState, useEffect } from 'react';
-import { db } from '../../../firebase/config'; 
-import { collection, getDocs } from 'firebase/firestore';
+// src/pages/Profile/components/UserStatistics.jsx
+import React, { useState } from 'react';
+import useUserStatistics from '../hooks/useUserStatistics';
 import { 
     BarChart3, 
     CheckCircle2, 
@@ -14,158 +13,11 @@ import {
 } from 'lucide-react';
 
 const UserStatistics = ({ subjects, userId }) => {
-    const [stats, setStats] = useState({
-        totalQuizzes: 0,
-        averageScore: 0,
-        passRate: 0,
-        totalQuestions: 0,
-        recentActivity: [],
-        subjectPerformance: []
-    });
-    const [rawResults, setRawResults] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { stats, loading, getChartData, getBarGradient } = useUserStatistics(subjects, userId);
     const [filterSubject, setFilterSubject] = useState('all');
 
     // Tooltip State
     const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, data: null });
-
-    useEffect(() => {
-        const fetchDeepStats = async () => {
-            if (!subjects || subjects.length === 0 || !userId) {
-                setLoading(false);
-                return;
-            }
-
-            try {
-                let allResults = [];
-                let subjectStatsMap = {};
-
-                subjects.forEach(sub => {
-                    subjectStatsMap[sub.id] = {
-                        id: sub.id,
-                        name: sub.name,
-                        color: sub.color,
-                        totalScore: 0,
-                        quizCount: 0,
-                        passedCount: 0
-                    };
-                });
-
-                for (const subject of subjects) {
-                    const topicsRef = collection(db, 'subjects', subject.id, 'topics');
-                    const topicsSnapshot = await getDocs(topicsRef);
-
-                    for (const topicDoc of topicsSnapshot.docs) {
-                        const resultsRef = collection(db, 'subjects', subject.id, 'topics', topicDoc.id, 'quiz_results');
-                        const resultsSnapshot = await getDocs(resultsRef);
-
-                        resultsSnapshot.forEach(doc => {
-                            const data = doc.data();
-                            if (data.userId === userId) {
-                                const resultEntry = {
-                                    id: doc.id,
-                                    ...data,
-                                    subjectId: subject.id,
-                                    subjectName: subject.name,
-                                    subjectColor: subject.color,
-                                    date: data.completedAt?.toDate ? data.completedAt.toDate() : new Date(data.completedAt)
-                                };
-
-                                allResults.push(resultEntry);
-
-                                if (subjectStatsMap[subject.id]) {
-                                    subjectStatsMap[subject.id].totalScore += (data.score || 0);
-                                    subjectStatsMap[subject.id].quizCount += 1;
-                                    if (data.passed) subjectStatsMap[subject.id].passedCount += 1;
-                                }
-                            }
-                        });
-                    }
-                }
-
-                const totalQuizzes = allResults.length;
-                const totalScore = allResults.reduce((acc, curr) => acc + (curr.score || 0), 0);
-                const averageScore = totalQuizzes > 0 ? Math.round(totalScore / totalQuizzes) : 0;
-                const passedCount = allResults.filter(r => r.passed).length;
-                const passRate = totalQuizzes > 0 ? Math.round((passedCount / totalQuizzes) * 100) : 0;
-                const totalQuestions = allResults.reduce((acc, curr) => acc + (curr.totalQuestions || 0), 0);
-
-                const subjectPerformance = Object.values(subjectStatsMap)
-                    .filter(s => s.quizCount > 0)
-                    .map(s => ({
-                        ...s,
-                        average: Math.round(s.totalScore / s.quizCount),
-                        passRate: Math.round((s.passedCount / s.quizCount) * 100)
-                    }))
-                    .sort((a, b) => b.average - a.average);
-
-                const recentActivity = [...allResults]
-                    .sort((a, b) => b.date - a.date)
-                    .slice(0, 5);
-
-                setRawResults(allResults);
-                setStats({
-                    totalQuizzes,
-                    averageScore,
-                    passRate,
-                    totalQuestions,
-                    recentActivity,
-                    subjectPerformance
-                });
-
-            } catch (error) {
-                console.error("Error fetching detailed stats:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchDeepStats();
-    }, [subjects, userId]);
-
-    // --- Chart Data Preparation ---
-    const getChartData = () => {
-        let data = rawResults;
-        if (filterSubject !== 'all') {
-            data = rawResults.filter(r => r.subjectId === filterSubject);
-        }
-        // Sort by date ascending
-        return data.sort((a, b) => a.date - b.date);
-    };
-
-    const chartData = getChartData();
-
-    // --- COLOR LOGIC (REFINED) ---
-    const getBarGradient = (score) => {
-        // 100% - Pure Strong Green + Gold Border
-        if (score === 100) {
-            return 'bg-gradient-to-t from-green-600 to-emerald-500 border-yellow-400 shadow-[0_0_15px_rgba(34,197,94,0.6)]';
-        }
-        
-        // 70% to <100% - Strong, Intense, Saturated Green
-        if (score >= 70) {
-            return 'bg-gradient-to-t from-emerald-500 to-green-500 border-green-400/50';
-        }
-
-        // 60% to <70% - Yellow/Orange -> Normal Green (Obscure)
-        if (score >= 60) {
-            // Transition from amber to a darker/standard green
-            return 'bg-gradient-to-t from-amber-500 to-emerald-700 border-emerald-600/30';
-        }
-
-        // 50% to <60% - Yellow/Orange
-        if (score >= 50) {
-            return 'bg-gradient-to-t from-orange-500 to-amber-500 border-amber-400/30';
-        }
-
-        // 45% to <50% - Red -> Orange
-        if (score >= 45) {
-            return 'bg-gradient-to-t from-red-600 to-orange-600 border-orange-500/30';
-        }
-
-        // 0% to <45% - Dark Red -> Red
-        return 'bg-gradient-to-t from-red-950 to-red-700 border-red-600/30';
-    };
 
     // Tooltip Handlers
     const handleMouseEnter = (e, data) => {
@@ -193,6 +45,8 @@ const UserStatistics = ({ subjects, userId }) => {
 
     if (loading) return <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-indigo-500" /></div>;
     if (stats.totalQuizzes === 0) return null;
+
+    const chartData = getChartData(filterSubject);
 
     return (
         <div className="mt-8 space-y-8 animate-fade-in pb-12">

@@ -1,4 +1,4 @@
-// src/components/modals/PositionModal.jsx
+// src/pages/Subject/modals/PositionModal.jsx
 import React, { useState, useEffect } from 'react';
 import { X, ArrowUpCircle, ArrowDownCircle, List } from 'lucide-react';
 
@@ -107,7 +107,7 @@ const PositionModal = ({ isOpen, onClose, onConfirm, topics = [], newTopicTitle 
                             >
                                 {topics.map((topic, index) => (
                                     <option key={topic.id} value={topic.id}>
-                                        {index + 1}. {topic.title}
+                                        {index + 1}. {topic.name || topic.title}
                                     </option>
                                 ))}
                             </select>

@@ -1,0 +1,479 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isSignedIn() {
+        return request.auth != null;
+    }
+
+    function currentUserPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    function hasCurrentUserDoc() {
+      return isSignedIn() && exists(currentUserPath());
+    }
+
+    function currentUserRole() {
+      return hasCurrentUserDoc() ? get(currentUserPath()).data.role : null;
+    }
+
+    function currentUserInstitutionId() {
+      return hasCurrentUserDoc() ? get(currentUserPath()).data.institutionId : null;
+    }
+
+    function isGlobalAdmin() {
+      return currentUserRole() == 'admin';
+    }
+
+    function isInstitutionAdmin() {
+      return currentUserRole() == 'institutionadmin';
+    }
+
+    function hasInstitutionField(data) {
+      return data.keys().hasAny(['institutionId']);
+    }
+
+    function isOwnerData(data) {
+      return data.ownerId == request.auth.uid || data.userId == request.auth.uid;
+    }
+
+    function sameInstitution(data) {
+      return currentUserInstitutionId() != null && data.institutionId == currentUserInstitutionId();
+    }
+
+    function canReadResource(data) {
+      return isGlobalAdmin()
+        || sameInstitution(data)
+        || (!hasInstitutionField(data) && isOwnerData(data));
+    }
+
+    function canWriteResource(data) {
+      return isGlobalAdmin()
+        || sameInstitution(data)
+        || (!hasInstitutionField(data) && isOwnerData(data));
+    }
+
+    function subjectInstitutionMatches(subjectId) {
+      return exists(/databases/$(database)/documents/subjects/$(subjectId))
+        && (
+          sameInstitution(get(/databases/$(database)/documents/subjects/$(subjectId)).data)
+          || (
+            !hasInstitutionField(get(/databases/$(database)/documents/subjects/$(subjectId)).data)
+            && isOwnerData(get(/databases/$(database)/documents/subjects/$(subjectId)).data)
+          )
+        );
+    }
+
+    function hasSubjectRef(data) {
+      return data.keys().hasAny(['subjectId', 'subject_id']);
+    }
+
+    function subjectRef(data) {
+      return data.keys().hasAny(['subjectId']) ? data.subjectId : data.subject_id;
+    }
+
+    function hasTopicRef(data) {
+      return data.keys().hasAny(['topicId', 'topic_id']);
+    }
+
+    function topicRef(data) {
+      return data.keys().hasAny(['topicId']) ? data.topicId : data.topic_id;
+    }
+
+    function topicInstitutionMatches(topicId) {
+      return exists(/databases/$(database)/documents/topics/$(topicId))
+        && (
+          sameInstitution(get(/databases/$(database)/documents/topics/$(topicId)).data)
+          || (
+            !hasInstitutionField(get(/databases/$(database)/documents/topics/$(topicId)).data)
+            && (
+              (
+                hasSubjectRef(get(/databases/$(database)/documents/topics/$(topicId)).data)
+                && subjectInstitutionMatches(subjectRef(get(/databases/$(database)/documents/topics/$(topicId)).data))
+              )
+              || isOwnerData(get(/databases/$(database)/documents/topics/$(topicId)).data)
+            )
+          )
+        );
+    }
+
+    function canManageInstitution(institutionId) {
+      return isGlobalAdmin()
+        || (
+          isInstitutionAdmin()
+          && currentUserInstitutionId() != null
+          && institutionId == currentUserInstitutionId()
+        );
+    }
+    
+    function isOwner() {
+        return resource.data.ownerId == request.auth.uid || resource.data.userId == request.auth.uid;
+    }
+    
+    function isShared() {
+      // verify the field exists and the user's UID is inside it
+      return request.auth.uid in resource.data.sharedWithUids;
+    }
+
+    function validShortcutCreatePayload() {
+      return request.resource.data.keys().hasAll([
+        'ownerId',
+        'parentId',
+        'targetId',
+        'targetType',
+        'institutionId',
+        'createdAt'
+      ])
+      && (request.resource.data.targetType == 'subject' || request.resource.data.targetType == 'folder');
+    }
+
+    function isTargetOwnerForCreate() {
+      return (
+        request.resource.data.targetType == 'subject'
+        && exists(/databases/$(database)/documents/subjects/$(request.resource.data.targetId))
+        && (
+          get(/databases/$(database)/documents/subjects/$(request.resource.data.targetId)).data.ownerId == request.auth.uid
+          || get(/databases/$(database)/documents/subjects/$(request.resource.data.targetId)).data.uid == request.auth.uid
+        )
+      )
+      || (
+        request.resource.data.targetType == 'folder'
+        && exists(/databases/$(database)/documents/folders/$(request.resource.data.targetId))
+        && (
+          get(/databases/$(database)/documents/folders/$(request.resource.data.targetId)).data.ownerId == request.auth.uid
+          || get(/databases/$(database)/documents/folders/$(request.resource.data.targetId)).data.uid == request.auth.uid
+        )
+      );
+    }
+
+    function targetSharedWithShortcutOwner() {
+      return (
+        request.resource.data.targetType == 'subject'
+        && exists(/databases/$(database)/documents/subjects/$(request.resource.data.targetId))
+        && (
+          request.resource.data.ownerId in get(/databases/$(database)/documents/subjects/$(request.resource.data.targetId)).data.sharedWithUids
+        )
+      )
+      || (
+        request.resource.data.targetType == 'folder'
+        && exists(/databases/$(database)/documents/folders/$(request.resource.data.targetId))
+        && (
+          request.resource.data.ownerId in get(/databases/$(database)/documents/folders/$(request.resource.data.targetId)).data.sharedWithUids
+        )
+      );
+    }
+    
+    // Reglas para usuarios
+    match /users/{userId} {
+      allow read: if isSignedIn()
+        && (
+          request.auth.uid == userId
+          || isGlobalAdmin()
+          || (hasInstitutionField(resource.data) && sameInstitution(resource.data))
+        );
+      allow write: if isSignedIn()
+        && (
+          request.auth.uid == userId
+          || isGlobalAdmin()
+          || (
+            isInstitutionAdmin()
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+    }
+
+    // Reglas principales de Asignaturas
+    match /subjects/{subjectId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            currentUserInstitutionId() != null
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+      allow read: if isSignedIn() && canReadResource(resource.data);
+      allow update, delete: if isSignedIn()
+        && canWriteResource(resource.data)
+        && (
+          request.resource.data.institutionId == resource.data.institutionId
+          || (
+            !hasInstitutionField(resource.data)
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+
+      // Reglas para la subcolección "topics"
+      match /topics/{topicId} {
+        allow read, write: if isSignedIn()
+          && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+
+        // 1. Pestaña "Generados por IA" (FALTABA ESTO)
+        match /resumen/{docId} {
+          allow read, write: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+        }
+
+        // 2. Pestaña "Mis Archivos" (FALTABA ESTO)
+        match /materials/{docId} {
+          allow read, write: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+        }
+
+        // 3. Tests y Resultados (Ya los tenías)
+        match /quizzes/{quizId} {
+          allow read, write: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+        }
+        match /quiz_results/{resultId} {
+          allow read, write: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+        }
+        match /documents/{docId} {
+          allow read, write: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+        }
+      }
+    }
+    
+    // Reglas para Carpetas (Folders)
+    match /folders/{folderId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            currentUserInstitutionId() != null
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+      allow read: if isSignedIn() && canReadResource(resource.data);
+      allow update, delete: if isSignedIn()
+        && canWriteResource(resource.data)
+        && (
+          request.resource.data.institutionId == resource.data.institutionId
+          || (
+            !hasInstitutionField(resource.data)
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+    }
+
+    // Reglas para Temas (Topics) en colección raíz
+    match /topics/{topicId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasSubjectRef(request.resource.data)
+            && subjectInstitutionMatches(subjectRef(request.resource.data))
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+
+      allow read: if isSignedIn()
+        && (
+          canReadResource(resource.data)
+          || (
+            hasSubjectRef(resource.data)
+            && subjectInstitutionMatches(subjectRef(resource.data))
+          )
+        );
+
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasSubjectRef(resource.data)
+            && subjectInstitutionMatches(subjectRef(resource.data))
+          )
+        )
+        && (
+          request.resource.data.institutionId == resource.data.institutionId
+          || (
+            !hasInstitutionField(resource.data)
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+    }
+
+    // Reglas para Documentos (Documents) en colección raíz
+    match /documents/{documentId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasTopicRef(request.resource.data)
+            && topicInstitutionMatches(topicRef(request.resource.data))
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+
+      allow read: if isSignedIn()
+        && (
+          canReadResource(resource.data)
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+        );
+
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+        )
+        && (
+          request.resource.data.institutionId == resource.data.institutionId
+          || (
+            !hasInstitutionField(resource.data)
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+    }
+
+    // Reglas para Quizzes en colección raíz
+    match /quizzes/{quizId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasTopicRef(request.resource.data)
+            && topicInstitutionMatches(topicRef(request.resource.data))
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+
+      allow read: if isSignedIn()
+        && (
+          canReadResource(resource.data)
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+        );
+
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+        )
+        && (
+          request.resource.data.institutionId == resource.data.institutionId
+          || (
+            !hasInstitutionField(resource.data)
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+    }
+
+    match /institutions/{institutionId} {
+      allow read: if isSignedIn();
+      allow create: if isGlobalAdmin();
+      allow update: if canManageInstitution(institutionId);
+      allow delete: if isGlobalAdmin();
+    }
+
+    // Reglas para Shortcuts (en la raíz)
+    match /shortcuts/{shortcutId} {
+      // Owner can create own shortcut OR target owner can create shortcut for a shared recipient (share flow)
+      allow create: if isSignedIn()
+        && request.resource.data.institutionId == currentUserInstitutionId()
+        && validShortcutCreatePayload()
+        && (
+          request.resource.data.ownerId == request.auth.uid
+          || (
+            request.resource.data.ownerId != request.auth.uid
+            && isTargetOwnerForCreate()
+            && targetSharedWithShortcutOwner()
+          )
+        );
+      // Allow read if the user is the shortcut owner OR the owner of the subject referenced by the shortcut
+      allow read: if isSignedIn() && sameInstitution(resource.data) && (
+        resource.data.ownerId == request.auth.uid
+        || (
+          resource.data.targetType == 'subject'
+          && exists(/databases/$(database)/documents/subjects/$(resource.data.targetId))
+          && (
+            get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.ownerId == request.auth.uid
+            || get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.uid == request.auth.uid
+          )
+        )
+        || (
+          resource.data.targetType == 'folder'
+          && exists(/databases/$(database)/documents/folders/$(resource.data.targetId))
+          && (
+            get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.ownerId == request.auth.uid
+            || get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.uid == request.auth.uid
+          )
+        )
+      );
+      allow delete, update: if isSignedIn()
+        && sameInstitution(resource.data)
+        && resource.data.ownerId == request.auth.uid;
+    }
+
+    match /classes/{classId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || request.resource.data.institutionId == currentUserInstitutionId()
+        );
+      allow read: if isSignedIn() && (
+        isGlobalAdmin() || sameInstitution(resource.data)
+      );
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            sameInstitution(resource.data)
+            && request.resource.data.institutionId == resource.data.institutionId
+          )
+        );
+    }
+
+    match /courses/{courseId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || request.resource.data.institutionId == currentUserInstitutionId()
+        );
+      allow read: if isSignedIn() && (
+        isGlobalAdmin() || sameInstitution(resource.data)
+      );
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            sameInstitution(resource.data)
+            && request.resource.data.institutionId == resource.data.institutionId
+          )
+        );
+    }
+
+    match /allowed_teachers/{allowedTeacherId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || request.resource.data.institutionId == currentUserInstitutionId()
+        );
+      allow read: if isSignedIn() && (
+        isGlobalAdmin() || sameInstitution(resource.data)
+      );
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            sameInstitution(resource.data)
+            && request.resource.data.institutionId == resource.data.institutionId
+          )
+        );
+    }
+  }
+}

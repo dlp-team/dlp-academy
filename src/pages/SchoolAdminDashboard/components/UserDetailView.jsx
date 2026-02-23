@@ -1,4 +1,4 @@
-// src/pages/UserDetailView.jsx
+// src/pages/SchoolAdminDashboard/components/UserDetailView.jsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail, Calendar, CheckCircle2, XCircle, BookOpen, Users, TrendingUp } from 'lucide-react';
@@ -52,7 +52,7 @@ const UserDetailView = ({ user, userType }) => {
                         Usuario no encontrado
                     </h2>
                     <button
-                        onClick={() => navigate('/school-admin-dashboard')}
+                        onClick={() => navigate('/institution-admin-dashboard')}
                         className="mt-4 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-all"
                     >
                         Volver al Panel
@@ -69,7 +69,7 @@ const UserDetailView = ({ user, userType }) => {
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
                 {/* Back Button */}
                 <button
-                    onClick={() => navigate('/school-admin-dashboard')}
+                    onClick={() => navigate('/institution-admin-dashboard')}
                     className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 mb-6 transition-colors"
                 >
                     <ArrowLeft size={20} />

@@ -1,5 +1,5 @@
-// src/components/home/HomeContent.jsx
-import React, { useState } from 'react';
+// src/pages/Home/components/HomeContent.jsx
+import React, { useRef } from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp, ArrowUpCircle
 } from 'lucide-react';
@@ -7,9 +7,14 @@ import SubjectIcon from '../../../components/ui/SubjectIcon';
 import SubjectCard from '../../../components/modules/SubjectCard/SubjectCard';
 import FolderCard from '../../../components/modules/FolderCard/FolderCard'; 
 import SubjectListItem from '../../../components/modules/ListItems/SubjectListItem';
-import ListViewItem from '../../../components/modules/ListViewItem'; 
+import ListViewItem from '../../../components/modules/ListViewItem';
+import OrphanedShortcutCard from '../../../components/ui/OrphanedShortcutCard';
+import { isOrphanedShortcut } from '../../../utils/permissionUtils';
+import useHomeContentDnd from '../hooks/useHomeContentDnd';
+import useAutoScrollOnDrag from '../../../hooks/useAutoScrollOnDrag';
 
 const HomeContent = ({
+    user,
     viewMode = 'grid',
     layoutMode = 'grid',
     cardScale = 100,
@@ -24,6 +29,7 @@ const HomeContent = ({
     setSubjectModalConfig,
     setFolderModalConfig,
     setDeleteConfig,
+    onDeleteShortcut,
     
     handleSelectSubject,
     handleOpenFolder,
@@ -34,7 +40,6 @@ const HomeContent = ({
     handleShowFolderContents,
     handleMoveSubjectWithSource, 
     handleMoveFolderWithSource,
-    onShareSubject,
 
     onOpenTopics,
     
@@ -58,9 +63,37 @@ const HomeContent = ({
     filterOverlayOpen = false,
     onCloseFilterOverlay = () => {},
 }) => {
-    const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
-    const [isRootZoneHovered, setIsRootZoneHovered] = useState(false);
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const contentRef = useRef(null);
+
+    // Auto-scroll is always enabled for both grid and list modes
+    useAutoScrollOnDrag({
+        containerRef: contentRef,
+        enabled: isDragAndDropEnabled,
+        scrollContainer: 'window',
+        edgeThreshold: 160
+    });
+
+    const {
+        isPromoteZoneHovered,
+        isRootZoneHovered,
+        setIsRootZoneHovered,
+        handlePromoteZoneDragOver,
+        handlePromoteZoneDragLeave,
+        handlePromoteZoneDrop,
+        handleRootZoneDrop,
+        handleListDrop
+    } = useHomeContentDnd({
+        currentFolder,
+        draggedItem,
+        draggedItemType,
+        handlePromoteSubject,
+        handlePromoteFolder,
+        handleDropOnFolder,
+        handleMoveSubjectWithSource,
+        handleNestFolder,
+        handleMoveFolderWithSource,
+        handleDragEnd
+    });
 
     const showCollapsibleGroups = ['courses', 'tags', 'shared'].includes(viewMode);
 
@@ -73,129 +106,14 @@ const HomeContent = ({
         );
     }
 
-    // --- GRID VIEW PROMOTE ZONE HANDLERS ---
-    const handlePromoteZoneDragOver = (e) => {
-        if (currentFolder && (draggedItemType === 'subject' || draggedItemType === 'folder')) {
-            e.preventDefault(); e.stopPropagation(); setIsPromoteZoneHovered(true);
-        }
-    };
-    const handlePromoteZoneDragLeave = (e) => { e.preventDefault(); setIsPromoteZoneHovered(false); };
-    const handlePromoteZoneDrop = (e) => {
-        e.preventDefault(); e.stopPropagation(); setIsPromoteZoneHovered(false);
-
-        if (!currentFolder || !draggedItem) return;
-        if (draggedItemType === 'subject') {
-            handlePromoteSubject(draggedItem.id);
-        }
-        else if (draggedItemType === 'folder') {
-            handlePromoteFolder(draggedItem.id);
-        }
-    };
-
-    // --- LIST VIEW: MOVE TO CURRENT LEVEL ZONE ---
-    const handleRootZoneDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsRootZoneHovered(false);
-
-        const treeDataString = e.dataTransfer.getData('treeItem');
-        let draggedData;
-
-        if (treeDataString) draggedData = JSON.parse(treeDataString);
-        else {
-            const sId = e.dataTransfer.getData('subjectId');
-            const fId = e.dataTransfer.getData('folderId');
-            if (sId) draggedData = { id: sId, type: 'subject', parentId: undefined };
-            else if (fId) draggedData = { id: fId, type: 'folder', parentId: undefined };
-        }
-
-        if (!draggedData) return;
-
-        // Target is the folder currently being viewed (or null if at root)
-        const targetId = currentFolder ? currentFolder.id : null;
-
-        // Prevent moving if already there
-        if (draggedData.parentId === targetId) return;
-
-        if (draggedData.type === 'subject') {
-            let overlayShown = false;
-            if (handleDropOnFolder) {
-                // Use the same overlay logic as folder drop: pass targetId, subjectId, sourceFolderId
-                const result = handleDropOnFolder(targetId, draggedData.id, draggedData.parentId);
-                if (result === true) overlayShown = true;
-            }
-            if (!overlayShown && handleMoveSubjectWithSource) {
-                handleMoveSubjectWithSource(draggedData.id, targetId, draggedData.parentId);
-            }
-        } else if (draggedData.type === 'folder') {
-            // Use the same overlay logic as handleNestFolder
-            if (handleNestFolder) {
-                handleNestFolder(targetId, draggedData.id);
-            }
-        }
-        // Ensure drag ends
-        if (handleDragEnd) handleDragEnd();
-    };
-
-    // --- LIST VIEW ITEM DROP ---
-    const handleListDrop = (dragged, target) => {
-        if (target.type === 'folder') {
-            if (dragged.id === target.id) return;
-            if (dragged.type === 'subject') {
-                // Call handleDropOnFolder. If it returns true (overlay shown), do NOT move yet. Only move if it returns false/undefined.
-                let overlayShown = false;
-                if (handleDropOnFolder) {
-                    // handleDropOnFolder should return true if overlay is shown and move should be blocked
-                    const result = handleDropOnFolder(target.id, dragged.id, dragged.parentId);
-                    if (result === true) overlayShown = true;
-                }
-                if (!overlayShown && handleMoveSubjectWithSource) {
-                    handleMoveSubjectWithSource(dragged.id, target.id, dragged.parentId);
-                }
-            } else if (dragged.type === 'folder') {
-                if (handleMoveFolderWithSource) handleMoveFolderWithSource(dragged.id, dragged.parentId, target.id);
-                else handleNestFolder(target.id, dragged.id); 
-            }
-        }
-        else if (target.type === 'subject') {
-            const targetParentId = target.parentId || (currentFolder ? currentFolder.id : null);
-            if (dragged.type === 'subject') {
-                if (dragged.parentId !== targetParentId) {
-                    // Overlay logic for subject-to-subject drop
-                    let overlayShown = false;
-                    if (handleDropOnFolder) {
-                        const result = handleDropOnFolder(targetParentId, dragged.id, dragged.parentId);
-                        if (result === true) overlayShown = true;
-                    }
-                    if (!overlayShown && handleMoveSubjectWithSource) {
-                        handleMoveSubjectWithSource(dragged.id, targetParentId, dragged.parentId);
-                    }
-                }
-            } else if (dragged.type === 'folder') {
-                // Overlay logic for folder-to-subject drop
-                let overlayShown = false;
-                if (handleDropOnFolder) {
-                    const result = handleDropOnFolder(targetParentId, dragged.id, dragged.parentId);
-                    if (result === true) overlayShown = true;
-                }
-                if (!overlayShown && handleMoveFolderWithSource) {
-                    handleMoveFolderWithSource(dragged.id, dragged.parentId, targetParentId);
-                } else if (!overlayShown && handleNestFolder) {
-                    handleNestFolder(targetParentId, dragged.id);
-                }
-            }
-        }
-        
-        // Ensure drag ends
-        if (handleDragEnd) handleDragEnd();
-    };
-
     // --- FILTERING LOGIC ---
     // No folder filter logic anymore
 
     
     return (
-        <div className={`transition-opacity duration-200 ${
+        <div
+        ref={contentRef}
+        className={`transition-opacity duration-200 ${
         filterOverlayOpen ? 'pointer-events-none opacity-100' : ''
         }`}>
             {groupedContent && Object.entries(groupedContent).map(([groupName, groupSubjects]) => {
@@ -235,6 +153,39 @@ const HomeContent = ({
                                             className="grid gap-6"
                                             style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` }}
                                         >
+                                            {/* Create Subject Button for courses/tags view */}
+                                            {(viewMode === 'courses' || viewMode === 'tags') && (
+                                                <button
+                                                    onClick={() => {
+                                                        let data = null;
+                                                        if (viewMode === 'courses') {
+                                                            // groupName comes as "6º Universidad" so swap for correct format
+                                                            const parts = groupName.split(' ');
+                                                            const grade = parts[0]; // e.g., "6º"
+                                                            const level = parts.slice(1).join(' '); // e.g., "Universidad"
+                                                            data = { course: groupName, level, grade };
+                                                        }
+                                                        setSubjectModalConfig({ 
+                                                            isOpen: true, 
+                                                            isEditing: false, 
+                                                            data, 
+                                                            currentFolder: null 
+                                                        });
+                                                    }}
+                                                    className="group relative w-full border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center cursor-pointer"
+                                                    style={{ aspectRatio: '16 / 10', gap: `${16 * (cardScale / 100)}px` }}
+                                                >
+                                                    <div className="rounded-full bg-indigo-100 dark:bg-indigo-900/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/60 flex items-center justify-center transition-colors"
+                                                        style={{ width: `${80 * (cardScale / 100)}px`, height: `${80 * (cardScale / 100)}px` }}
+                                                    >
+                                                        <Plus className="text-indigo-600 dark:text-indigo-400" size={40 * (cardScale / 100)} />
+                                                    </div>
+                                                    <span className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors px-4 text-center" style={{ fontSize: `${18 * (cardScale / 100)}px` }}>
+                                                        Crear Nueva Asignatura
+                                                    </span>
+                                                </button>
+                                            )}
+
                                             {/* Promote Zone (Grid) */}
                                             {viewMode === 'grid' && (
                                                  <div>
@@ -283,10 +234,26 @@ const HomeContent = ({
                                             )}
 
                                             {/* Folders in Grid */}
-                                            {viewMode === 'grid' && activeFilter !== 'subjects' && filteredFolders.map((folder, index) => (
+                                            {viewMode === 'grid' && activeFilter !== 'subjects' && filteredFolders.map((folder, index) => {
+                                                // Check if this is an orphaned shortcut
+                                                if (isOrphanedShortcut(folder)) {
+                                                    return (
+                                                        <div key={`orphan-folder-${folder.shortcutId}`}>
+                                                            <OrphanedShortcutCard
+                                                                shortcut={folder}
+                                                                cardScale={cardScale}
+                                                                onDelete={onDeleteShortcut}
+                                                                layoutMode="grid"
+                                                            />
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return (
                                                 <div key={`folder-${folder.id}`}>
                                                     <FolderCard
                                                         folder={folder}
+                                                        user={user}
                                                         allFolders={folders}
                                                         onOpen={handleOpenFolder}
                                                         activeMenu={activeMenu}
@@ -310,19 +277,44 @@ const HomeContent = ({
                                                         onCloseFilterOverlay={onCloseFilterOverlay}
                                                     />
                                                 </div>
-                                            ))}
+                                            );
+                                            })}
 
                                             {/* Subjects in Grid */}
-                                            {activeFilter !== 'folders' && groupSubjects.map((subject, index) => (
+                                            {activeFilter !== 'folders' && groupSubjects.map((subject, index) => {
+                                                // Check if this is an orphaned shortcut
+                                                if (isOrphanedShortcut(subject)) {
+                                                    return (
+                                                        <div key={`orphan-subject-${subject.shortcutId}`}>
+                                                            <OrphanedShortcutCard
+                                                                shortcut={subject}
+                                                                cardScale={cardScale}
+                                                                onDelete={onDeleteShortcut}
+                                                                layoutMode="grid"
+                                                            />
+                                                        </div>
+                                                    );
+                                                }
+
+                                                return (
                                                 <div key={`${groupName}-${subject.id}`}>
                                                     <SubjectCard
                                                         subject={subject}
+                                                        user={user}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
                                                         onSelect={handleSelectSubject}
                                                         onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
                                                         onEdit={(e, s) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
-                                                        onDelete={(e, s) => { e.stopPropagation(); setDeleteConfig({ isOpen: true, type: 'subject', item: s }); setActiveMenu(null); }}
+                                                        onDelete={(e, s) => {
+                                                            e.stopPropagation();
+                                                            if (s?.isShortcut && s?.shortcutId) {
+                                                                onDeleteShortcut && onDeleteShortcut(s.shortcutId);
+                                                            } else {
+                                                                setDeleteConfig({ isOpen: true, type: 'subject', item: s });
+                                                            }
+                                                            setActiveMenu(null);
+                                                        }}
                                                         onShare={(s) => { setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' }); setActiveMenu(null); }}
                                                         cardScale={cardScale}
                                                         isDragging={draggedItem?.id === subject.id}
@@ -336,7 +328,8 @@ const HomeContent = ({
                                                         filterOverlayOpen={filterOverlayOpen}
                                                     />
                                                 </div>
-                                            ))}
+                                            );
+                                            })}
                                         </div>
                                     </div>
                                 )}
@@ -345,32 +338,50 @@ const HomeContent = ({
                                 {layoutMode === 'list' && (
                                      <div className="space-y-2 relative">
                                         
-                                        {/* Crear Nueva Asignatura / Drop Zone for list view */}
-                                        <div
-                                            onDragOver={(e) => { e.preventDefault(); setIsRootZoneHovered(true); }}
-                                            onDragLeave={() => setIsRootZoneHovered(false)}
-                                            onDrop={handleRootZoneDrop}
-                                            onClick={() => { if (!draggedItem) setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder: currentFolder }); }}
-                                            className={`group relative w-full border-3 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer mb-2
-                                                ${draggedItem
-                                                    ? isRootZoneHovered
-                                                        ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 scale-105'
-                                                        : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
-                                                    : isRootZoneHovered
-                                                        ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 scale-105'
-                                                        : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
-                                                }
-                                            `}
-                                            style={{
-                                                // Match SubjectListItem card height: padding (top+bottom) + icon size
-                                                // padding: 16 * scale (top) + 16 * scale (bottom) = 32 * scale
-                                                // iconContainerSize: 48 * scale
-                                                // total: 80 * scale
-                                                minHeight: `${(48 + 32) * (cardScale / 100)}px`,
-                                                gap: `${16 * (cardScale / 100)}px`
-                                            }}
-                                        >
-                                            {draggedItem ? (
+                                        {/* Crear Nueva Asignatura / Drop Zone for list view - only in grid/manual modes */}
+                                        {(viewMode === 'grid' || viewMode === 'courses' || viewMode === 'tags') && (
+                                            <div
+                                                onDragOver={(e) => { e.preventDefault(); setIsRootZoneHovered(true); }}
+                                                onDragLeave={() => setIsRootZoneHovered(false)}
+                                                onDrop={handleRootZoneDrop}
+                                                onClick={() => { 
+                                                    if (!draggedItem) {
+                                                        let data = null;
+                                                        if (viewMode === 'courses') {
+                                                            // groupName comes as "6º Universidad" so swap for correct format
+                                                            const parts = groupName.split(' ');
+                                                            const grade = parts[0]; // e.g., "6º"
+                                                            const level = parts.slice(1).join(' '); // e.g., "Universidad"
+                                                            data = { course: groupName, level, grade };
+                                                        }
+                                                        setSubjectModalConfig({ 
+                                                            isOpen: true, 
+                                                            isEditing: false, 
+                                                            data, 
+                                                            currentFolder: currentFolder 
+                                                        }); 
+                                                    }
+                                                }}
+                                                className={`group relative w-full border-3 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer mb-2
+                                                    ${draggedItem
+                                                        ? isRootZoneHovered
+                                                            ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 scale-105'
+                                                            : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                                        : isRootZoneHovered
+                                                            ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 scale-105'
+                                                            : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                                                    }
+                                                `}
+                                                style={{
+                                                    // Match SubjectListItem card height: padding (top+bottom) + icon size
+                                                    // padding: 16 * scale (top) + 16 * scale (bottom) = 32 * scale
+                                                    // iconContainerSize: 48 * scale
+                                                    // total: 80 * scale
+                                                    minHeight: `${(48 + 32) * (cardScale / 100)}px`,
+                                                    gap: `${16 * (cardScale / 100)}px`
+                                                }}
+                                            >
+                                                {draggedItem ? (
                                                 <div className="flex flex-row items-center justify-center w-full h-full gap-3">
                                                     <ArrowUp className={`transition-colors ${isRootZoneHovered ? 'text-amber-700 dark:text-amber-300' : 'text-amber-600 dark:text-amber-400'}`} style={{ width: `${18 * (cardScale / 100)}px`, height: `${18 * (cardScale / 100)}px` }} />
                                                     <span className={`font-semibold transition-colors text-center ${isRootZoneHovered ? 'text-amber-700 dark:text-amber-300' : 'text-gray-700 dark:text-gray-300 group-hover:text-amber-600 dark:group-hover:text-amber-400'}`}
@@ -387,12 +398,14 @@ const HomeContent = ({
                                                     </span>
                                                 </div>
                                             )}
-                                        </div>
+                                            </div>
+                                        )}
                                         
                                         {/* Render Folders */}
                                         {viewMode === 'grid' && filteredFolders.map((folder) => (
                                             <ListViewItem 
                                                 key={folder.id}
+                                                user={user}
                                                 item={folder}
                                                 type="folder"
                                                 parentId={currentFolder ? currentFolder.id : null}
@@ -402,6 +415,7 @@ const HomeContent = ({
                                                 onNavigateSubject={handleSelectSubject}
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                 onDelete={(f) => setDeleteConfig({ isOpen: true, type: 'folder', item: f })}
+                                                onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
                                                 cardScale={cardScale}
                                                 onDragStart={handleDragStartFolder} 
                                                 onDragEnd={handleDragEnd}
@@ -413,6 +427,7 @@ const HomeContent = ({
                                         {groupSubjects.map((subject) => (
                                             <ListViewItem
                                                 key={subject.id}
+                                                user={user}
                                                 item={subject}
                                                 type="subject"
                                                 parentId={currentFolder ? currentFolder.id : null}
@@ -420,7 +435,13 @@ const HomeContent = ({
                                                 allSubjects={subjects}
                                                 onNavigateSubject={handleSelectSubject}
                                                 onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
-                                                onDelete={(s) => setDeleteConfig({ isOpen: true, type: 'subject', item: s })}
+                                                onDelete={(s) => {
+                                                    if (s?.isShortcut && s?.shortcutId) {
+                                                        onDeleteShortcut && onDeleteShortcut(s.shortcutId);
+                                                        return;
+                                                    }
+                                                    setDeleteConfig({ isOpen: true, type: 'subject', item: s });
+                                                }}
                                                 onShare={(s) => { setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' }); setActiveMenu(null); }}
                                                 cardScale={cardScale}
                                                 onDragStart={handleDragStartSubject}

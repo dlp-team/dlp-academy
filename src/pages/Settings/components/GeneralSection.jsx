@@ -1,4 +1,4 @@
-// src/components/settings/GeneralSection.jsx
+// src/pages/Settings/components/GeneralSection.jsx
 import React from 'react';
 import { Globe } from 'lucide-react';
 

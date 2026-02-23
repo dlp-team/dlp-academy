@@ -1,4 +1,4 @@
-// src/components/home/ListViewItem.jsx
+// src/components/modules/ListViewItem.jsx
 import React, { useState } from 'react';
 import { GripVertical } from 'lucide-react';
 import SubjectListItem from './ListItems/SubjectListItem';
@@ -6,6 +6,7 @@ import FolderListItem from './ListItems/FolderListItem';
 import { useGhostDrag } from '../../hooks/useGhostDrag'; // Adjust path if needed
 
 const ListViewItem = ({ 
+    user,
     item, 
     type, 
     parentId,
@@ -24,13 +25,40 @@ const ListViewItem = ({
     path = []
 }) => {
 
+    // Always call hooks at the top level
+    const [isHovered, setIsHovered] = useState(false);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const currentPath = [...path, item.id];
+    const {
+        isDragging,
+        itemRef,
+        dragHandlers
+    } = useGhostDrag({
+        item,
+        type: 'subject',
+        cardScale,
+        onDragStart: (e) => {
+            //e.stopPropagation();
+            const itemParentId = item.shortcutParentId ?? parentId;
+            const dragData = {
+                id: item.id,
+                type: 'subject',
+                parentId: itemParentId,
+                shortcutId: item.shortcutId || null
+            };
+            e.dataTransfer.setData('subjectId', item.id);
+            e.dataTransfer.setData('subjectParentId', itemParentId || '');
+            e.dataTransfer.setData('subjectShortcutId', item.shortcutId || '');
+            e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
+            if (onDragStart) onDragStart(item);
+        },
+        onDragEnd
+    });
+
     if (path.includes(item.id)) {
         console.warn(`Cycle detected in List View for item: ${item.name}`);
         return null;
     }
-    // Create the new path for children: [grandparent, parent, me]
-    const currentPath = [...path, item.id];
-    
     // Delegate to FolderListItem component if the item is a folder
     if (type === 'folder') {
         return (
@@ -43,6 +71,7 @@ const ListViewItem = ({
                 onNavigate={onNavigate}
                 onNavigateSubject={onNavigateSubject}
                 onEdit={onEdit}
+                onShare={onShare}
                 onDelete={onDelete}
                 cardScale={cardScale}
                 onDragStart={onDragStart}
@@ -53,59 +82,27 @@ const ListViewItem = ({
         );
     }
 
-    // Otherwise, treat the item as a Subject
-    const [isHovered, setIsHovered] = useState(false);
-    const [isDragOver, setIsDragOver] = useState(false);
-
     
     
-    // Ensure dataTransfer payload is correctly set before delegating to the ghost hook
-    const handleLocalDragStart = (e) => {
-        e.stopPropagation();
-        
-        const dragData = {
-            id: item.id,
-            type: 'subject',
-            parentId: parentId 
-        };
-        
-        // Set dataTransfer payloads for drop zones to read!
-        e.dataTransfer.setData('subjectId', item.id);
-        e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
-        
-        // Trigger the external prop if provided
-        if (onDragStart) onDragStart(item); 
-    };
-
-    // Initialize custom ghost drag hook
-    const { 
-        isDragging, 
-        itemRef, 
-        dragHandlers 
-    } = useGhostDrag({ 
-        item, 
-        type: 'subject', 
-        cardScale, 
-        onDragStart: handleLocalDragStart, // Pass the local interceptor here
-        onDragEnd 
-    });
+    // (Removed duplicate useGhostDrag and handleLocalDragStart, now handled at top level)
 
     const scale = cardScale / 100;
     const indent = depth * (100 * scale);
 
     // Drop Zone Handlers
     const handleDragOver = (e) => {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault(); //e.stopPropagation();
         if (!isDragOver) setIsDragOver(true);
     };
 
     const handleDragLeave = (e) => {
-        e.preventDefault(); e.stopPropagation();
+        e.preventDefault(); //e.stopPropagation();
         setIsDragOver(false);
     };
 
     const handleDrop = (e) => {
-        e.preventDefault(); e.stopPropagation(); setIsDragOver(false);
+        e.preventDefault(); e.stopPropagation(); 
+        setIsDragOver(false);
 
         const treeDataString = e.dataTransfer.getData('treeItem');
         let draggedData;
@@ -151,6 +148,7 @@ const ListViewItem = ({
                     </div>
                     <div className="flex-1">
                         <SubjectListItem 
+                            user={user}
                             subject={item} 
                             onSelect={() => onNavigateSubject(item.id)} 
                             onEdit={onEdit} 

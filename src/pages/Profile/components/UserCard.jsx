@@ -1,4 +1,4 @@
-// src/components/profile/UserCard.jsx
+// src/pages/Profile/components/UserCard.jsx
 import React from 'react';
 import { Edit2, LogOut, MapPin, LayoutDashboard } from 'lucide-react';
 import Avatar from '../../../components/ui/Avatar'; // Import the new Avatar component
