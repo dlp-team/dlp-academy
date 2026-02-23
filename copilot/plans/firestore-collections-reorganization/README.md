@@ -16,8 +16,8 @@ These notes were reconstructed from the implementation session after some tracki
 
 ## Current Status
 
-- Completed phases: 00, 01, 02 architecture, 02 fixes, 03.
-- Planned phases: 04, 05, 06, 07.
+- Completed phases: 00, 01, 02 architecture, 02 fixes, 03, 04.
+- Planned phases: 05, 06, 07.
 - Debug protocol is documented at `copilot/protocols/debug-in-depth-protocol.md`.
 
 ## Planning Rules

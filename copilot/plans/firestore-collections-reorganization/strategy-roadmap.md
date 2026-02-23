@@ -39,7 +39,7 @@ Evolve Home/Folder/Subject architecture into a robust hierarchical model, then e
 - Phase 01 — Hierarchical Home stabilization: **COMPLETED**
 - Phase 02 — Shortcuts architecture foundation + fixes: **COMPLETED**
 - Phase 03 — Permission-driven Lecture/Edit mode rollout: **COMPLETED**
-- Phase 04 — Shortcut-aware DnD & content resolution: **PLANNED**
+- Phase 04 — Shortcut-aware DnD & content resolution: **COMPLETED**
 - Phase 05 — Multi-tenant scope: **PLANNED**
 - Phase 06 — Data migration: **PLANNED**
 - Phase 07 — Firestore security rules rewrite: **PLANNED**
