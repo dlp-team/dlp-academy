@@ -93,7 +93,6 @@ export const useSubjects = (user) => {
     const shareSubject = async (subjectId, email) => {
         try {
             const emailLower = email.toLowerCase();
-            
             // 1. Find the user UID by email from your 'users' collection
             const usersRef = collection(db, 'users');
             const q = query(usersRef, where('email', '==', emailLower));
@@ -102,28 +101,24 @@ export const useSubjects = (user) => {
             let targetUid = null;
 
             if (!querySnapshot.empty) {
-                targetUid = querySnapshot.docs[0].id; 
+                targetUid = querySnapshot.docs[0].id;
             } else {
-                console.warn(`User with email ${emailLower} not found.`);
-                alert(`No se encontró usuario con el correo ${email}. El usuario debe crear una cuenta primero.`);
                 return;
             }
 
             // 2. Get the current subject to check if already shared
             const subjectRef = doc(db, 'subjects', subjectId);
             const subjectSnap = await getDocs(query(collection(db, 'subjects'), where('__name__', '==', subjectId)));
-            
+
             if (subjectSnap.empty) {
-                console.error("Subject not found");
                 return;
             }
 
             const subjectData = subjectSnap.docs[0].data();
-            
-            // Check if already shared with this user
-            const alreadyShared = subjectData.sharedWith?.includes(targetUid);
+
+            // Check if already shared with this user (fix: check by uid in sharedWith array)
+            const alreadyShared = Array.isArray(subjectData.sharedWith) && subjectData.sharedWith.some(entry => entry.uid === targetUid);
             if (alreadyShared) {
-                alert("Esta asignatura ya está compartida con este usuario.");
                 return;
             }
 
@@ -134,12 +129,16 @@ export const useSubjects = (user) => {
                 role: 'viewer',
                 sharedAt: new Date()
             };
-            await updateDoc(subjectRef, {
-                sharedWith: arrayUnion(shareData),
-                sharedWithUids: arrayUnion(targetUid),
-                isShared: true,
-                updatedAt: new Date()
-            });
+            try {
+                await updateDoc(subjectRef, {
+                    sharedWith: arrayUnion(shareData),
+                    sharedWithUids: arrayUnion(targetUid),
+                    isShared: true,
+                    updatedAt: new Date()
+                });
+            } catch (err) {
+                throw err;
+            }
 
             // Ensure exactly one shortcut exists for the newly shared user
             const existingShortcutQuery = query(
@@ -151,7 +150,7 @@ export const useSubjects = (user) => {
             const existingShortcutSnap = await getDocs(existingShortcutQuery);
 
             if (existingShortcutSnap.empty) {
-                await addDoc(collection(db, 'shortcuts'), {
+                const shortcutPayload = {
                     ownerId: targetUid,
                     parentId: null,
                     targetId: subjectId,
@@ -164,7 +163,12 @@ export const useSubjects = (user) => {
                     shortcutCardStyle: subjectData.cardStyle || null,
                     shortcutModernFillColor: subjectData.modernFillColor || null,
                     createdAt: new Date()
-                });
+                };
+                try {
+                    await addDoc(collection(db, 'shortcuts'), shortcutPayload);
+                } catch (err) {
+                    throw err;
+                }
             } else if (existingShortcutSnap.docs.length > 1) {
                 // Keep one, remove accidental duplicates
                 const duplicateDocs = existingShortcutSnap.docs.slice(1);
@@ -174,8 +178,6 @@ export const useSubjects = (user) => {
             return shareData;
 
         } catch (error) {
-            console.error("Error sharing subject:", error);
-            alert("Error al compartir la asignatura: " + error.message);
             throw error;
         }
     };
