@@ -34,6 +34,13 @@ const SubjectCard = (props) => {
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('subjectId', subject.id); // Essential for the drop logic
             e.dataTransfer.setData('type', 'subject');
+            e.dataTransfer.setData('subjectType', 'subject');
+            e.dataTransfer.setData('subjectParentId', subject.folderId || '');
+            e.dataTransfer.setData('treeItem', JSON.stringify({
+                id: subject.id,
+                type: 'subject',
+                parentId: subject.folderId || null
+            }));
             
             // Trigger the parent's event (for UI state)
             if (props.onDragStart) {

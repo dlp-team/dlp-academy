@@ -57,6 +57,7 @@ const useHomeContentDnd = ({
             if (subjectId) draggedData = { id: subjectId, type: 'subject', parentId: undefined };
             else if (folderId) draggedData = { id: folderId, type: 'folder', parentId: undefined };
         }
+        console.log('[DND] handleRootZoneDrop:', { draggedData, currentFolder });
 
         if (!draggedData) return;
 
@@ -66,6 +67,12 @@ const useHomeContentDnd = ({
         if (draggedData.type === 'subject') {
             let overlayShown = false;
             if (handleDropOnFolder) {
+                console.log('[DND] handleDropOnFolder call from handleRootZoneDrop:', {
+                    targetId,
+                    draggedId: draggedData.id,
+                    draggedParentId: draggedData.parentId,
+                    draggedType: draggedData.type
+                });
                 const result = handleDropOnFolder(targetId, draggedData.id, draggedData.parentId);
                 if (result === true) overlayShown = true;
             }
@@ -80,11 +87,19 @@ const useHomeContentDnd = ({
     };
 
     const handleListDrop = (dragged, target) => {
+        console.log('[DND] handleListDrop:', { dragged, target, currentFolder });
         if (target.type === 'folder') {
             if (dragged.id === target.id) return;
             if (dragged.type === 'subject') {
                 let overlayShown = false;
                 if (handleDropOnFolder) {
+                    console.log('[DND] handleDropOnFolder call from handleListDrop:', {
+                        targetId: target.id,
+                        draggedId: dragged.id,
+                        draggedParentId: dragged.parentId,
+                        draggedType: dragged.type,
+                        targetType: target.type
+                    });
                     const result = handleDropOnFolder(target.id, dragged.id, dragged.parentId);
                     if (result === true) overlayShown = true;
                 }
@@ -101,6 +116,13 @@ const useHomeContentDnd = ({
                 if (dragged.parentId !== targetParentId) {
                     let overlayShown = false;
                     if (handleDropOnFolder) {
+                        console.log('[DND] handleDropOnFolder call from handleListDrop (subject):', {
+                            targetParentId,
+                            draggedId: dragged.id,
+                            draggedParentId: dragged.parentId,
+                            draggedType: dragged.type,
+                            targetType: target.type
+                        });
                         const result = handleDropOnFolder(targetParentId, dragged.id, dragged.parentId);
                         if (result === true) overlayShown = true;
                     }

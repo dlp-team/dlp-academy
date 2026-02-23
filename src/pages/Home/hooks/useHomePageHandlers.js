@@ -2,6 +2,7 @@
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { isInvalidFolderMove } from '../../../utils/folderUtils';
+import { canEdit } from '../../../utils/permissionUtils';
 
 export const useHomePageHandlers = ({
     logic,
@@ -35,14 +36,67 @@ export const useHomePageHandlers = ({
         }
     };
 
-    const handleDropOnFolderWrapper = (targetFolderId, subjectId, sourceFolderId) => {
-        const currentFolderId = sourceFolderId !== undefined ? sourceFolderId : logic.currentFolder ? logic.currentFolder.id : null;
+    const handleDropOnFolderWrapper = (targetFolderId, subjectId, typeOrSourceFolderId, sourceFolderIdMaybe) => {
+        const isKnownType = typeOrSourceFolderId === 'subject' || typeOrSourceFolderId === 'folder';
+        const type = isKnownType ? typeOrSourceFolderId : 'subject';
+        const explicitSourceFolderId = isKnownType ? sourceFolderIdMaybe : typeOrSourceFolderId;
+
+        if (type === 'folder') {
+            handleNestFolder(targetFolderId, subjectId);
+            return true;
+        }
+
+        const subject = (logic.subjects || []).find(s => s.id === subjectId);
+        const currentFolderId =
+            explicitSourceFolderId !== undefined && explicitSourceFolderId !== null
+                ? explicitSourceFolderId
+                : subject?.folderId || (logic.currentFolder ? logic.currentFolder.id : null);
+
+        console.log('[CALL] handleDropOnFolderWrapper:', {
+            targetFolderId,
+            subjectId,
+            type,
+            typeOrSourceFolderId,
+            sourceFolderIdMaybe,
+            currentFolderId
+        });
+
         if (targetFolderId === currentFolderId) {
             return;
         }
         const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
         const sourceFolder = (logic.folders || []).find(f => f.id === currentFolderId);
-        const subject = (logic.subjects || []).find(s => s.id === subjectId);
+        const userId = logic?.user?.uid || logic?.uid;
+
+        if (subject) {
+            const userCanEdit = userId ? canEdit(subject, userId) : false;
+            if (!userCanEdit) {
+                console.log('[handleDropOnFolderWrapper] viewer detected, creating shortcut:', {
+                    subjectId,
+                    targetFolderId,
+                    currentFolderId,
+                    userId
+                });
+                if (logic?.createShortcut) {
+                    logic
+                        .createShortcut(
+                            subjectId,
+                            'subject',
+                            targetFolderId,
+                            logic?.user?.institutionId || 'default'
+                        )
+                        .then(shortcutId => {
+                            console.log('[handleDropOnFolderWrapper] shortcut created:', shortcutId);
+                        })
+                        .catch(error => {
+                            console.error('[handleDropOnFolderWrapper] shortcut creation failed:', error);
+                        });
+                } else {
+                    console.warn('[handleDropOnFolderWrapper] createShortcut is not available on logic');
+                }
+                return true;
+            }
+        }
 
         const getSharedUids = item => (item && Array.isArray(item.sharedWithUids) ? item.sharedWithUids : []);
 
@@ -88,6 +142,11 @@ export const useHomePageHandlers = ({
                 return true;
             }
         }
+        console.log('[handleDropOnFolderWrapper] moveSubjectBetweenFolders args:', {
+            subjectId,
+            currentFolderId,
+            targetFolderId
+        });
         moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
         return true;
     };
@@ -95,7 +154,7 @@ export const useHomePageHandlers = ({
     const handleBreadcrumbDrop = (targetFolderId, subjectId, droppedFolderId) => {
         const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
         if (subjectId) {
-            return handleDropOnFolderWrapper(targetFolderId, subjectId, currentFolderId);
+            return handleDropOnFolderWrapper(targetFolderId, subjectId, 'subject', currentFolderId);
         }
         if (droppedFolderId) {
             if (isInvalidFolderMove(droppedFolderId, targetFolderId, logic.folders || [])) {

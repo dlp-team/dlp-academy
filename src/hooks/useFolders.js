@@ -455,6 +455,16 @@ export const useFolders = (user) => {
         // 3. Perform Move
         const batch = writeBatch(db);
 
+        // Validate folder IDs (null is allowed for root-level moves)
+        if (sourceId !== null && sourceId !== undefined && (typeof sourceId !== 'string' || sourceId === 'subject')) {
+            console.warn('[moveSubjectBetweenFolders] Invalid sourceId:', sourceId);
+            return;
+        }
+        if (toFolderId !== null && toFolderId !== undefined && (typeof toFolderId !== 'string' || toFolderId === 'subject')) {
+            console.warn('[moveSubjectBetweenFolders] Invalid toFolderId:', toFolderId);
+            return;
+        }
+
         // Remove from old
         if (sourceId) {
             const sourceRef = doc(db, "folders", sourceId);

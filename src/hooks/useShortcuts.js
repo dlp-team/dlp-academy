@@ -149,7 +149,10 @@ export const useShortcuts = (user) => {
      * @returns {Promise<string>} ID of created shortcut
      */
     const createShortcut = async (targetId, targetType, parentId = null, institutionId = 'default') => {
-        if (!user) throw new Error("User must be authenticated to create shortcuts");
+        if (!user) {
+            console.log('[SHORTCUT] createShortcut: user missing');
+            throw new Error("User must be authenticated to create shortcuts");
+        }
 
         const shortcutData = {
             ownerId: user.uid,
@@ -160,9 +163,26 @@ export const useShortcuts = (user) => {
             createdAt: new Date()
         };
 
-        const docRef = await addDoc(collection(db, "shortcuts"), shortcutData);
-        console.log(`Shortcut created: ${docRef.id} → ${targetType}:${targetId}`);
-        return docRef.id;
+        console.log('[SHORTCUT] createShortcut called:', {
+            targetId,
+            targetType,
+            parentId,
+            institutionId,
+            user,
+            shortcutData
+        });
+
+        try {
+            const docRef = await addDoc(collection(db, "shortcuts"), shortcutData);
+            console.log('[SHORTCUT] Shortcut created:', {
+                docId: docRef.id,
+                shortcutData
+            });
+            return docRef.id;
+        } catch (error) {
+            console.error('[SHORTCUT] Error creating shortcut:', error, shortcutData);
+            throw error;
+        }
     };
 
     /**

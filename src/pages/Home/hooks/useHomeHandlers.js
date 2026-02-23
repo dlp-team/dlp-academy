@@ -208,27 +208,66 @@ export const useHomeHandlers = ({
         setDropPosition(position);
     };
 
-    const handleDropOnFolder = async (draggedId, targetFolderId, type) => {
-        if (!draggedId || !targetFolderId) return;
+    const handleDropOnFolder = async (draggedId, targetFolderId, type, parentId, ...extraArgs) => {
+        console.log('[DND] handleDropOnFolder ENTRY:', {
+            draggedId,
+            targetFolderId,
+            type,
+            parentId,
+            user,
+            extraArgs
+        });
+        if (!draggedId || !targetFolderId) {
+            console.log('[DND] Missing draggedId or targetFolderId:', { draggedId, targetFolderId });
+            return;
+        }
 
         try {
+            console.log('[DND] handleDropOnFolder called:', { draggedId, targetFolderId, type, user });
+            const subject = subjects.find(s => s.id === draggedId);
+            if (!subject) {
+                console.log('[DND] Subject not found:', draggedId);
+                return;
+            }
+            const userCanEdit = canEdit(subject, user.uid);
+            console.log('[DND] handleDropOnFolder permission check:', {
+                subject,
+                userId: user.uid,
+                userCanEdit,
+                type
+            });
             if (type === 'subject') {
                 const subject = subjects.find(s => s.id === draggedId);
-                if (!subject) return;
-                
+                if (!subject) {
+                    console.log('[DND] Subject not found:', draggedId);
+                    return;
+                }
                 // Check if user can edit this subject (i.e., owns it or is an editor)
                 const userCanEdit = canEdit(subject, user.uid);
-                
+                console.log('[DND] userCanEdit:', userCanEdit, 'subject:', subject);
                 if (!userCanEdit) {
                     // User is just a viewer - create a shortcut instead of moving
-                    console.log('📌 Creating shortcut for shared subject:', subject.name);
+                    console.log('[DND] handleDropOnFolder: About to call createShortcut', {
+                        draggedId,
+                        targetFolderId,
+                        institutionId: user.institutionId || 'default',
+                        user,
+                        subject
+                    });
                     if (createShortcut) {
-                        await createShortcut(
-                            draggedId,
-                            'subject',
-                            targetFolderId,
-                            user.institutionId || 'default'
-                        );
+                        try {
+                            const shortcutId = await createShortcut(
+                                draggedId,
+                                'subject',
+                                targetFolderId,
+                                user.institutionId || 'default'
+                            );
+                            console.log('[DND] Shortcut created with ID:', shortcutId);
+                        } catch (error) {
+                            console.error('[DND] Error creating shortcut:', error);
+                        }
+                    } else {
+                        console.log('[DND] createShortcut function missing');
                     }
                 } else if (subject.folderId !== targetFolderId) {
                     // User owns or can edit - perform normal move
@@ -236,14 +275,20 @@ export const useHomeHandlers = ({
                     touchSubject(draggedId);
                 }
             } else if (type === 'folder') {
-                if (draggedId === targetFolderId) return;
+                if (draggedId === targetFolderId) {
+                    console.log('[DND] Dragged folder is same as target:', draggedId);
+                    return;
+                }
 
                 const folder = folders.find(f => f.id === draggedId);
-                if (!folder) return;
-                
+                if (!folder) {
+                    console.warn('[DND] updateFolder called with invalid folderId:', draggedId);
+                    return;
+                }
+
                 // Check if user can edit this folder
                 const userCanEdit = canEdit(folder, user.uid);
-                
+
                 if (!userCanEdit) {
                     // User is just a viewer - create a shortcut instead of moving
                     console.log('📌 Creating shortcut for shared folder:', folder.name);

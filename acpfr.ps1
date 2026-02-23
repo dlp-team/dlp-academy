@@ -52,10 +52,12 @@ if ($LASTEXITCODE -ne 0) {
 
 # 5. Firebase Deployment
 Write-Host ">>> Deploying to Firestore..." -ForegroundColor Cyan
-firebase deploy --only firestore:rules
+
+$deployOutput = firebase deploy --only firestore:rules
+$deployOutput # This prints the actual Firebase result to your screen
 
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "`n*** SUCCESS: Rules are live on $branch! ***" -ForegroundColor Green
+    Write-Host "`n*** SUCCESS: Rules are live! ***" -ForegroundColor Green
 } else {
-    Write-Host "`n!!! Deployment failed. Check the logs above." -ForegroundColor Red
+    Write-Host "`n!!! Deployment failed. Did you manually change rules in the console? !!!" -ForegroundColor Red
 }

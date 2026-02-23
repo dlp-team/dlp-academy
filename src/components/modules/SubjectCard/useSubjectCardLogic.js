@@ -28,6 +28,13 @@ export const useSubjectCardLogic = ({
         if (draggable && onDragStart) {
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('subjectId', subject.id);
+            e.dataTransfer.setData('subjectType', 'subject');
+            e.dataTransfer.setData('subjectParentId', subject.folderId || '');
+            e.dataTransfer.setData('treeItem', JSON.stringify({
+                id: subject.id,
+                type: 'subject',
+                parentId: subject.folderId || null
+            }));
             e.dataTransfer.setData('position', position.toString());
             onDragStart(subject, position);
         }
