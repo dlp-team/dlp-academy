@@ -27,6 +27,23 @@ const RoleBadge = ({ role }) => {
     return <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${cfg.cls}`}>{cfg.label}</span>;
 };
 
+const slugifyInstitutionId = (value = '') => {
+    return value
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 48);
+};
+
+const parseCsvEmails = (value = '') => {
+    return value
+        .split(',')
+        .map(v => v.trim().toLowerCase())
+        .filter(Boolean);
+};
+
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
 const OverviewTab = ({ stats, loading }) => {
@@ -70,8 +87,17 @@ const SchoolsTab = () => {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
 
-    const [showModal, setShowModal] = useState(false);
-    const [form, setForm] = useState({ name: '', adminEmail: '', city: '' });
+    const [showCreateForm, setShowCreateForm] = useState(false);
+    const [form, setForm] = useState({
+        name: '',
+        institutionId: '',
+        domain: '',
+        institutionAdministrators: '',
+        type: 'school',
+        city: '',
+        country: '',
+        timezone: 'Europe/Madrid'
+    });
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -87,20 +113,103 @@ const SchoolsTab = () => {
 
     useEffect(() => { fetchSchools(); }, []);
 
+    useEffect(() => {
+        setForm(prev => {
+            if (!prev.name) return prev;
+            if (prev.institutionId && prev.institutionId.length > 0) return prev;
+            return {
+                ...prev,
+                institutionId: slugifyInstitutionId(prev.name)
+            };
+        });
+    }, [form.name]);
+
     const handleCreate = async (e) => {
         e.preventDefault();
         setError(''); setSuccess(''); setSubmitting(true);
-        if (!form.name.trim()) { setError('El nombre es obligatorio.'); setSubmitting(false); return; }
+
+        const name = form.name.trim();
+        const institutionId = slugifyInstitutionId(form.institutionId || form.name);
+        const domain = form.domain.toLowerCase().trim();
+        const admins = parseCsvEmails(form.institutionAdministrators);
+        const institutionType = (form.type || 'school').trim();
+        const city = form.city.trim();
+        const country = form.country.trim();
+        const timezone = form.timezone.trim() || 'Europe/Madrid';
+
+        if (!name) {
+            setError('El nombre es obligatorio.');
+            setSubmitting(false);
+            return;
+        }
+
+        if (!institutionId) {
+            setError('El ID de la institución es obligatorio.');
+            setSubmitting(false);
+            return;
+        }
+
+        if (!domain || !domain.includes('.')) {
+            setError('El dominio es obligatorio y debe ser válido (ej: universidad.edu).');
+            setSubmitting(false);
+            return;
+        }
+
+        if (admins.length === 0) {
+            setError('Debes indicar al menos un administrador institucional.');
+            setSubmitting(false);
+            return;
+        }
+
+        const invalidAdmins = admins.filter(email => !/^\S+@\S+\.\S+$/.test(email));
+        if (invalidAdmins.length > 0) {
+            setError(`Emails de administradores inválidos: ${invalidAdmins.join(', ')}`);
+            setSubmitting(false);
+            return;
+        }
+
+        if (!institutionType) {
+            setError('El tipo de institución es obligatorio.');
+            setSubmitting(false);
+            return;
+        }
+
         try {
+            const existingIdQuery = query(collection(db, 'schools'), where('institutionId', '==', institutionId));
+            const existingIdSnap = await getDocs(existingIdQuery);
+            if (!existingIdSnap.empty) {
+                setError(`El ID institucional "${institutionId}" ya existe. Elige otro.`);
+                setSubmitting(false);
+                return;
+            }
+
             await addDoc(collection(db, 'schools'), {
-                name: form.name.trim(),
-                adminEmail: form.adminEmail.toLowerCase().trim(),
-                city: form.city.trim(),
+                name,
+                institutionId,
+                domain,
+                domains: [domain],
+                institutionAdministrators: admins,
+                adminEmail: admins[0],
+                type: institutionType,
+                city,
+                country,
+                timezone,
                 enabled: true,
                 createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
             });
-            setSuccess(`Institución "${form.name}" creada correctamente.`);
-            setForm({ name: '', adminEmail: '', city: '' });
+            setSuccess(`Institución "${name}" creada correctamente.`);
+            setForm({
+                name: '',
+                institutionId: '',
+                domain: '',
+                institutionAdministrators: '',
+                type: 'school',
+                city: '',
+                country: '',
+                timezone: 'Europe/Madrid'
+            });
+            setShowCreateForm(false);
             fetchSchools();
         } catch { setError('Error al crear la institución.'); }
         finally { setSubmitting(false); }
@@ -139,12 +248,92 @@ const SchoolsTab = () => {
                     />
                 </div>
                 <button
-                    onClick={() => { setError(''); setSuccess(''); setShowModal(true); }}
+                    onClick={() => {
+                        setError('');
+                        setSuccess('');
+                        setShowCreateForm(prev => !prev);
+                    }}
                     className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-purple-200 dark:shadow-purple-900/20 transition-all active:scale-95 text-sm"
                 >
                     <Plus className="w-4 h-4" /> Nueva Institución
                 </button>
             </div>
+
+            {showCreateForm && (
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 mb-6 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="flex justify-between items-center mb-6">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Nueva Institución</h3>
+                        <button onClick={() => setShowCreateForm(false)} className="text-gray-400 hover:text-gray-600"><XCircle className="w-6 h-6" /></button>
+                    </div>
+                    <form onSubmit={handleCreate} className="space-y-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nombre *</label>
+                            <input type="text" placeholder="Ej: IES Ramón y Cajal" value={form.name}
+                                onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" required />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">ID Institucional *</label>
+                            <input type="text" placeholder="ej: ies-ramon-y-cajal" value={form.institutionId}
+                                onChange={e => setForm(p => ({ ...p, institutionId: slugifyInstitutionId(e.target.value) }))}
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all font-mono" required />
+                            <p className="text-xs text-gray-500 mt-2">Identificador único para reglas, consultas y segmentación multi-tenant.</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dominio de la institución *</label>
+                            <input type="text" placeholder="ej: universidad.edu" value={form.domain}
+                                onChange={e => setForm(p => ({ ...p, domain: e.target.value }))}
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" required />
+                            <p className="text-xs text-gray-500 mt-2">Se utilizará para validación de emails institucionales y agrupación por tenant.</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Administradores institucionales *</label>
+                            <input type="text" placeholder="admin1@dominio.com, admin2@dominio.com" value={form.institutionAdministrators}
+                                onChange={e => setForm(p => ({ ...p, institutionAdministrators: e.target.value }))}
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" required />
+                            <p className="text-xs text-gray-500 mt-2">Lista separada por comas.</p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo de institución *</label>
+                            <select value={form.type}
+                                onChange={e => setForm(p => ({ ...p, type: e.target.value }))}
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" required>
+                                <option value="school">School</option>
+                                <option value="academy">Academy</option>
+                                <option value="university">University</option>
+                                <option value="training-center">Training Center</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ciudad</label>
+                            <input type="text" placeholder="Ej: Madrid" value={form.city}
+                                onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">País</label>
+                            <input type="text" placeholder="Ej: España" value={form.country}
+                                onChange={e => setForm(p => ({ ...p, country: e.target.value }))}
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Timezone</label>
+                            <input type="text" placeholder="Ej: Europe/Madrid" value={form.timezone}
+                                onChange={e => setForm(p => ({ ...p, timezone: e.target.value }))}
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" />
+                        </div>
+                        {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2"><XCircle className="w-4 h-4" /> {error}</div>}
+                        {success && <div className="p-3 bg-emerald-50 text-emerald-600 text-sm rounded-lg flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> {success}</div>}
+                        <div className="flex gap-3 mt-6">
+                            <button type="button" onClick={() => setShowCreateForm(false)} className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-900 dark:text-white rounded-xl font-medium transition-all">Cerrar</button>
+                            <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium shadow-lg shadow-purple-200 dark:shadow-purple-900/20 transition-all flex justify-center items-center gap-2">
+                                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Plus className="w-5 h-5" /><span>Crear</span></>}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
 
             {loading ? (
                 <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin text-purple-500" /></div>
@@ -160,20 +349,26 @@ const SchoolsTab = () => {
                             <thead className="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase font-semibold text-slate-500">
                                 <tr>
                                     <th className="px-6 py-4">Institución</th>
+                                    <th className="px-6 py-4">ID</th>
+                                    <th className="px-6 py-4">Dominio</th>
+                                    <th className="px-6 py-4">Tipo</th>
                                     <th className="px-6 py-4">Ciudad</th>
-                                    <th className="px-6 py-4">Admin</th>
+                                    <th className="px-6 py-4">Admins</th>
                                     <th className="px-6 py-4">Estado</th>
                                     <th className="px-6 py-4 text-right">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {filtered.length === 0 ? (
-                                    <tr><td colSpan="5" className="px-6 py-10 text-center text-slate-400">No hay instituciones registradas.</td></tr>
+                                    <tr><td colSpan="8" className="px-6 py-10 text-center text-slate-400">No hay instituciones registradas.</td></tr>
                                 ) : filtered.map(school => (
                                     <tr key={school.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 ${school.enabled === false ? 'opacity-60' : ''}`}>
                                         <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{school.name}</td>
+                                        <td className="px-6 py-4 font-mono text-xs">{school.institutionId || '—'}</td>
+                                        <td className="px-6 py-4">{school.domain || school.domains?.[0] || '—'}</td>
+                                        <td className="px-6 py-4 capitalize">{school.type || 'school'}</td>
                                         <td className="px-6 py-4">{school.city || '—'}</td>
-                                        <td className="px-6 py-4">{school.adminEmail || '—'}</td>
+                                        <td className="px-6 py-4">{Array.isArray(school.institutionAdministrators) ? school.institutionAdministrators.join(', ') : (school.adminEmail || '—')}</td>
                                         <td className="px-6 py-4">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${school.enabled !== false ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
                                                 {school.enabled !== false ? 'Activa' : 'Deshabilitada'}
@@ -199,46 +394,6 @@ const SchoolsTab = () => {
                 </div>
             )}
 
-            {/* MODAL: CREATE SCHOOL */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-xl font-bold text-gray-900 dark:text-white">Nueva Institución</h3>
-                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600"><XCircle className="w-6 h-6" /></button>
-                        </div>
-                        <form onSubmit={handleCreate} className="space-y-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nombre *</label>
-                                <input type="text" placeholder="Ej: IES Ramón y Cajal" value={form.name}
-                                    onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" required />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ciudad</label>
-                                <input type="text" placeholder="Ej: Madrid" value={form.city}
-                                    onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
-                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email del Admin de Escuela</label>
-                                <input type="email" placeholder="admin@escuela.com" value={form.adminEmail}
-                                    onChange={e => setForm(p => ({ ...p, adminEmail: e.target.value }))}
-                                    className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" />
-                                <p className="text-xs text-gray-500 mt-2">Referencia para saber quién gestiona la institución.</p>
-                            </div>
-                            {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2"><XCircle className="w-4 h-4" /> {error}</div>}
-                            {success && <div className="p-3 bg-emerald-50 text-emerald-600 text-sm rounded-lg flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> {success}</div>}
-                            <div className="flex gap-3 mt-6">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-900 dark:text-white rounded-xl font-medium transition-all">Cerrar</button>
-                                <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium shadow-lg shadow-purple-200 dark:shadow-purple-900/20 transition-all flex justify-center items-center gap-2">
-                                    {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Plus className="w-5 h-5" /><span>Crear</span></>}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

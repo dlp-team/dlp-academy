@@ -5,6 +5,39 @@ service cloud.firestore {
     function isSignedIn() {
         return request.auth != null;
     }
+
+    function currentUserPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    function hasCurrentUserDoc() {
+      return isSignedIn() && exists(currentUserPath());
+    }
+
+    function currentUserRole() {
+      return hasCurrentUserDoc() ? get(currentUserPath()).data.role : null;
+    }
+
+    function currentUserInstitutionId() {
+      return hasCurrentUserDoc() ? get(currentUserPath()).data.institutionId : null;
+    }
+
+    function isGlobalAdmin() {
+      return currentUserRole() == 'admin';
+    }
+
+    function isInstitutionAdmin() {
+      return currentUserRole() == 'schooladmin';
+    }
+
+    function canManageInstitution(institutionId) {
+      return isGlobalAdmin()
+        || (
+          isInstitutionAdmin()
+          && currentUserInstitutionId() != null
+          && institutionId == currentUserInstitutionId()
+        );
+    }
     
     function isOwner() {
         return resource.data.ownerId == request.auth.uid || resource.data.userId == request.auth.uid;
@@ -105,6 +138,22 @@ service cloud.firestore {
     match /folders/{folderId} {
       allow create: if isSignedIn();
       allow read, write: if isSignedIn();
+    }
+
+    match /schools/{schoolId} {
+      allow read: if isSignedIn();
+      allow create: if isGlobalAdmin();
+      allow update: if canManageInstitution(resource.data.institutionId)
+        && request.resource.data.institutionId == resource.data.institutionId;
+      allow delete: if isGlobalAdmin();
+    }
+
+    match /institutions/{institutionId} {
+      allow read: if isSignedIn();
+      allow create: if isGlobalAdmin();
+      allow update: if canManageInstitution(resource.data.institutionId)
+        && request.resource.data.institutionId == resource.data.institutionId;
+      allow delete: if isGlobalAdmin();
     }
 
     // Reglas para Shortcuts (en la raíz)
