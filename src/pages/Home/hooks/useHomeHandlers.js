@@ -35,7 +35,8 @@ export const useHomeHandlers = ({
     updatePreference,
     navigate,
     isDescendant,
-    createShortcut
+    createShortcut,
+    updateShortcutAppearance
 }) => {
     const handleSaveSubject = async formData => {
         const payload = {
@@ -54,7 +55,18 @@ export const useHomeHandlers = ({
 
         try {
             if (subjectModalConfig.isEditing) {
-                await updateSubject(formData.id, payload);
+                if (formData?.isShortcut && formData?.shortcutId && updateShortcutAppearance) {
+                    await updateShortcutAppearance(formData.shortcutId, {
+                        name: formData.name,
+                        course: formData.course,
+                        color: formData.color,
+                        icon: formData.icon || 'book',
+                        cardStyle: formData.cardStyle || 'default',
+                        modernFillColor: formData.modernFillColor || null
+                    });
+                } else {
+                    await updateSubject(formData.id, payload);
+                }
             } else {
                 if (currentFolder) {
                     if (currentFolder.isShared || (currentFolder.sharedWith && currentFolder.sharedWith.length > 0)) {

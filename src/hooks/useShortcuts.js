@@ -124,6 +124,12 @@ export const useShortcuts = (user) => {
                     return {
                         ...targetData, // Spread target data first
                         // Override with shortcut-specific properties
+                        name: shortcut.shortcutName || targetData.name,
+                        course: shortcut.shortcutCourse || targetData.course,
+                        color: shortcut.shortcutColor || targetData.color,
+                        icon: shortcut.shortcutIcon || targetData.icon,
+                        cardStyle: shortcut.shortcutCardStyle || targetData.cardStyle,
+                        modernFillColor: shortcut.shortcutModernFillColor || targetData.modernFillColor,
                         shortcutId: shortcut.id,
                         shortcutOwnerId: shortcut.ownerId,
                         shortcutParentId: shortcut.parentId, // Where shortcut lives
@@ -164,7 +170,7 @@ export const useShortcuts = (user) => {
      * @param {string} institutionId - Institution ID (for multi-tenant isolation)
      * @returns {Promise<string>} ID of created shortcut
      */
-    const createShortcut = async (targetId, targetType, parentId = null, institutionId = 'default') => {
+    const createShortcut = async (targetId, targetType, parentId = null, institutionId = 'default', visualOverrides = {}) => {
         if (!user) {
             console.log('[SHORTCUT] createShortcut: user missing');
             throw new Error("User must be authenticated to create shortcuts");
@@ -185,6 +191,12 @@ export const useShortcuts = (user) => {
             await updateDoc(primaryRef, {
                 parentId,
                 institutionId,
+                ...(visualOverrides.shortcutName ? { shortcutName: visualOverrides.shortcutName } : {}),
+                ...(visualOverrides.shortcutCourse ? { shortcutCourse: visualOverrides.shortcutCourse } : {}),
+                ...(visualOverrides.shortcutColor ? { shortcutColor: visualOverrides.shortcutColor } : {}),
+                ...(visualOverrides.shortcutIcon ? { shortcutIcon: visualOverrides.shortcutIcon } : {}),
+                ...(visualOverrides.shortcutCardStyle ? { shortcutCardStyle: visualOverrides.shortcutCardStyle } : {}),
+                ...(visualOverrides.shortcutModernFillColor !== undefined ? { shortcutModernFillColor: visualOverrides.shortcutModernFillColor } : {}),
                 updatedAt: new Date()
             });
 
@@ -211,6 +223,12 @@ export const useShortcuts = (user) => {
             targetId: targetId,
             targetType: targetType,
             institutionId: institutionId,
+            ...(visualOverrides.shortcutName ? { shortcutName: visualOverrides.shortcutName } : {}),
+            ...(visualOverrides.shortcutCourse ? { shortcutCourse: visualOverrides.shortcutCourse } : {}),
+            ...(visualOverrides.shortcutColor ? { shortcutColor: visualOverrides.shortcutColor } : {}),
+            ...(visualOverrides.shortcutIcon ? { shortcutIcon: visualOverrides.shortcutIcon } : {}),
+            ...(visualOverrides.shortcutCardStyle ? { shortcutCardStyle: visualOverrides.shortcutCardStyle } : {}),
+            ...(visualOverrides.shortcutModernFillColor !== undefined ? { shortcutModernFillColor: visualOverrides.shortcutModernFillColor } : {}),
             createdAt: new Date()
         };
 
@@ -268,6 +286,22 @@ export const useShortcuts = (user) => {
         console.log(`Shortcut moved: ${shortcutId} → folder:${newParentId || 'root'}`);
     };
 
+    const updateShortcutAppearance = async (shortcutId, appearanceData = {}) => {
+        if (!shortcutId) throw new Error("Shortcut ID required");
+
+        const payload = {
+            ...(appearanceData.name !== undefined ? { shortcutName: appearanceData.name } : {}),
+            ...(appearanceData.course !== undefined ? { shortcutCourse: appearanceData.course } : {}),
+            ...(appearanceData.color !== undefined ? { shortcutColor: appearanceData.color } : {}),
+            ...(appearanceData.icon !== undefined ? { shortcutIcon: appearanceData.icon } : {}),
+            ...(appearanceData.cardStyle !== undefined ? { shortcutCardStyle: appearanceData.cardStyle } : {}),
+            ...(appearanceData.modernFillColor !== undefined ? { shortcutModernFillColor: appearanceData.modernFillColor } : {}),
+            updatedAt: new Date()
+        };
+
+        await updateDoc(doc(db, "shortcuts", shortcutId), payload);
+    };
+
     /**
      * Batch delete orphaned shortcuts for current user
      * Useful for cleanup after multiple source deletions
@@ -292,6 +326,7 @@ export const useShortcuts = (user) => {
         createShortcut,
         deleteShortcut,
         moveShortcut,
+        updateShortcutAppearance,
         deleteOrphanedShortcuts
     };
 };

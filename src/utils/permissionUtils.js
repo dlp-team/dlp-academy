@@ -204,6 +204,11 @@ export const filterEditableItems = (items, userId) => {
 export const shouldShowEditUI = (item, userId) => {
     // Don't show edit UI for orphaned shortcuts
     if (isOrphanedShortcut(item)) return false;
+
+    // Shortcut owner can edit shortcut presentation (local copy UI)
+    if (item?.isShortcut === true) {
+        return item.ownerId === userId || item.shortcutOwnerId === userId;
+    }
     
     // For shortcuts, check permission on the target
     // (The resolved shortcut should already have target's permission data)

@@ -14,6 +14,54 @@ service cloud.firestore {
       // verify the field exists and the user's UID is inside it
       return request.auth.uid in resource.data.sharedWithUids;
     }
+
+    function validShortcutCreatePayload() {
+      return request.resource.data.keys().hasAll([
+        'ownerId',
+        'parentId',
+        'targetId',
+        'targetType',
+        'institutionId',
+        'createdAt'
+      ])
+      && (request.resource.data.targetType == 'subject' || request.resource.data.targetType == 'folder');
+    }
+
+    function isTargetOwnerForCreate() {
+      return (
+        request.resource.data.targetType == 'subject'
+        && exists(/databases/$(database)/documents/subjects/$(request.resource.data.targetId))
+        && (
+          get(/databases/$(database)/documents/subjects/$(request.resource.data.targetId)).data.ownerId == request.auth.uid
+          || get(/databases/$(database)/documents/subjects/$(request.resource.data.targetId)).data.uid == request.auth.uid
+        )
+      )
+      || (
+        request.resource.data.targetType == 'folder'
+        && exists(/databases/$(database)/documents/folders/$(request.resource.data.targetId))
+        && (
+          get(/databases/$(database)/documents/folders/$(request.resource.data.targetId)).data.ownerId == request.auth.uid
+          || get(/databases/$(database)/documents/folders/$(request.resource.data.targetId)).data.uid == request.auth.uid
+        )
+      );
+    }
+
+    function targetSharedWithShortcutOwner() {
+      return (
+        request.resource.data.targetType == 'subject'
+        && exists(/databases/$(database)/documents/subjects/$(request.resource.data.targetId))
+        && (
+          request.resource.data.ownerId in get(/databases/$(database)/documents/subjects/$(request.resource.data.targetId)).data.sharedWithUids
+        )
+      )
+      || (
+        request.resource.data.targetType == 'folder'
+        && exists(/databases/$(database)/documents/folders/$(request.resource.data.targetId))
+        && (
+          request.resource.data.ownerId in get(/databases/$(database)/documents/folders/$(request.resource.data.targetId)).data.sharedWithUids
+        )
+      );
+    }
     
     // Reglas para usuarios
     match /users/{userId} {
@@ -61,9 +109,18 @@ service cloud.firestore {
 
     // Reglas para Shortcuts (en la raíz)
     match /shortcuts/{shortcutId} {
-      // Solo el dueño del shortcut puede leer, crear o borrar su propio shortcut
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow read, delete: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      // Owner can create own shortcut OR target owner can create shortcut for a shared recipient (share flow)
+      allow create: if isSignedIn()
+                    && validShortcutCreatePayload()
+                    && (
+                      request.resource.data.ownerId == request.auth.uid
+                      || (
+                        request.resource.data.ownerId != request.auth.uid
+                        && isTargetOwnerForCreate()
+                        && targetSharedWithShortcutOwner()
+                      )
+                    );
+      allow read, delete, update: if isSignedIn() && resource.data.ownerId == request.auth.uid;
       // (Opcional) Para multi-tenant: && resource.data.institutionId == request.auth.token.institutionId
     }
   }

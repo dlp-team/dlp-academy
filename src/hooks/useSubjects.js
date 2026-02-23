@@ -24,23 +24,10 @@ export const useSubjects = (user) => {
             where("uid", "==", user.uid)
         );
 
-        // 2. Query subjects shared with the user (Shared)
-        const sharedQuery = query(
-            collection(db, "subjects"), 
-            where("sharedWithUids", "array-contains", user.uid)
-        );
-
         let ownedSubjects = [];
-        let sharedSubjects = [];
 
         const updateSubjectsState = async () => {
-            // Merge owned and shared subjects, avoiding duplicates
-            const allSubjectsMap = new Map();
-
-            ownedSubjects.forEach(s => allSubjectsMap.set(s.id, s));
-            sharedSubjects.forEach(s => allSubjectsMap.set(s.id, s));
-
-            const tempSubjects = Array.from(allSubjectsMap.values());
+            const tempSubjects = [...ownedSubjects];
 
             // Load topics for all subjects
             const subjectsWithTopics = await Promise.all(tempSubjects.map(async (subject) => {
@@ -70,19 +57,8 @@ export const useSubjects = (user) => {
             updateSubjectsState();
         });
 
-        // Real-time listener for shared subjects
-        const unsubscribeShared = onSnapshot(sharedQuery, (snapshot) => {
-            sharedSubjects = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            updateSubjectsState();
-        }, (error) => {
-            console.error("Error listening to shared subjects:", error);
-            sharedSubjects = [];
-            updateSubjectsState();
-        });
-
         return () => {
             unsubscribeOwned();
-            unsubscribeShared();
         };
     }, [user]);
 
@@ -181,6 +157,12 @@ export const useSubjects = (user) => {
                     targetId: subjectId,
                     targetType: 'subject',
                     institutionId: user?.institutionId || 'default',
+                    shortcutName: subjectData.name || null,
+                    shortcutCourse: subjectData.course || null,
+                    shortcutColor: subjectData.color || null,
+                    shortcutIcon: subjectData.icon || null,
+                    shortcutCardStyle: subjectData.cardStyle || null,
+                    shortcutModernFillColor: subjectData.modernFillColor || null,
                     createdAt: new Date()
                 });
             } else if (existingShortcutSnap.docs.length > 1) {
