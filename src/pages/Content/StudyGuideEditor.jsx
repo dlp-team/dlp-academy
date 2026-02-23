@@ -184,7 +184,7 @@ const StudyGuideEditor = ({ user }) => {
             if (!activeDocId) return;
             try {
                 // 1. Check permissions first
-                const topicSnap = await getDoc(doc(db, 'subjects', subjectId, 'topics', topicId));
+                const topicSnap = await getDoc(doc(db, 'topics', topicId));
                 if (!topicSnap.exists()) {
                     showToast('Tema no encontrado', 'error');
                     navigate(-1);

@@ -157,7 +157,7 @@ const Topic = ({ user }) => {
         const tempId = `gen-${Date.now()}`;
         const tempQuiz = { id: tempId, name: logic.quizFormData.title, type: 'generating', createdAt: new Date().toISOString() };
 
-        const topicRef = doc(db, "subjects", logic.subjectId, "topics", logic.topicId);
+        const topicRef = doc(db, "topics", logic.topicId);
         
         try {
             const docSnap = await getDoc(topicRef);

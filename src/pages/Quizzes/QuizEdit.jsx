@@ -109,7 +109,7 @@ const QuizEdit = ({ user }) => {
         const fetchQuiz = async () => {
             try {
                 // Fetch topic to check permissions
-                const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
+                const topicRef = doc(db, "topics", topicId);
                 const topicSnap = await getDoc(topicRef);
                 
                 if (!topicSnap.exists()) {
@@ -129,7 +129,7 @@ const QuizEdit = ({ user }) => {
                 }
                 
                 // Fetch quiz data if user has permission
-                const quizRef = doc(db, "subjects", subjectId, "topics", topicId, "quizzes", quizId);
+                const quizRef = doc(db, "quizzes", quizId);
                 const snap = await getDoc(quizRef);
                 if (snap.exists()) setQuizData(snap.data());
                 else { alert("Test no encontrado"); navigate(-1); }
@@ -184,7 +184,7 @@ const QuizEdit = ({ user }) => {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await updateDoc(doc(db, "subjects", subjectId, "topics", topicId, "quizzes", quizId), {
+            await updateDoc(doc(db, "quizzes", quizId), {
                 ...quizData, updatedAt: serverTimestamp()
             });
             navigate(-1);

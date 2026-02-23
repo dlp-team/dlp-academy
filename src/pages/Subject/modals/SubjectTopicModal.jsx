@@ -19,7 +19,8 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
 
         setLoading(true);
         const q = query(
-            collection(db, "subjects", subject.id, "topics"),
+            collection(db, "topics"),
+            where("subject_id", "==", subject.id),
             orderBy("order", "asc")
         );
 
@@ -77,7 +78,7 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
             
             // FIX: Change 'newOrder' to 'newTopics'
             newTopics.forEach((item, index) => { 
-                const ref = doc(db, "subjects", subject.id, "topics", item.id); 
+                const ref = doc(db, "topics", item.id); 
                 batch.update(ref, { order: index });
             });
             

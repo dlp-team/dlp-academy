@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { 
     collection, query, doc, getDoc, onSnapshot, 
     updateDoc, deleteDoc, addDoc, serverTimestamp, 
-    writeBatch, increment, orderBy 
+    writeBatch, increment, orderBy, where 
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { canView } from '../../../utils/permissionUtils';
@@ -49,7 +49,8 @@ export const useSubjectManager = (user, subjectId) => {
 
         // Real-time listener for Topics (Ordered by 'order')
         const q = query(
-            collection(db, "subjects", subjectId, "topics"),
+            collection(db, "topics"),
+            where("subject_id", "==", subjectId),
             orderBy("order", "asc")
         );
 
@@ -119,7 +120,7 @@ export const useSubjectManager = (user, subjectId) => {
             const existingTopic = topics.find(t => t.id === topicId);
             if (!existingTopic) return;
 
-            await updateDoc(doc(db, "subjects", subjectId, "topics", topicId), {
+            await updateDoc(doc(db, "topics", topicId), {
                 title: data.title, 
                 prompt: data.prompt, 
                 status: 'generating'
@@ -137,21 +138,28 @@ export const useSubjectManager = (user, subjectId) => {
                 order: nextOrder, 
                 number: numberString,
                 pdfs: [], 
-                quizzes: []
+                quizzes: [],
+                subject_id: subjectId,
+                ownerId: subject?.ownerId || user?.uid,
+                institutionId: subject?.institutionId || user?.institutionId || 'default'
             };
             
-            const ref = await addDoc(collection(db, "subjects", subjectId, "topics"), newTopic);
+            const ref = await addDoc(collection(db, "topics"), newTopic);
             topicId = ref.id;
             
             await updateDoc(doc(db, "subjects", subjectId), { topicCount: increment(1) });
             
             if (files.length > 0) {
-                const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
+                const docsRef = collection(db, "documents");
                 files.forEach(f => addDoc(docsRef, { 
                     name: f.name, 
                     type: 'pdf', 
                     size: f.size, 
-                    uploadedAt: serverTimestamp() 
+                    uploadedAt: serverTimestamp(),
+                    topic_id: topicId,
+                    subject_id: subjectId,
+                    ownerId: subject?.ownerId || user?.uid,
+                    institutionId: subject?.institutionId || user?.institutionId || 'default'
                 }));
             }
         }
@@ -163,7 +171,7 @@ export const useSubjectManager = (user, subjectId) => {
     // 5. Update Topic (NEW)
     const updateTopic = async (topicId, data) => {
         try {
-            await updateDoc(doc(db, "subjects", subjectId, "topics", topicId), data);
+            await updateDoc(doc(db, "topics", topicId), data);
         } catch (error) {
             console.error("Error updating topic:", error);
             throw error;
@@ -174,7 +182,7 @@ export const useSubjectManager = (user, subjectId) => {
     const deleteTopic = async (topicId) => {
         // Confirmation is handled in UI now, but safety check remains
         try {
-            await deleteDoc(doc(db, "subjects", subjectId, "topics", topicId));
+            await deleteDoc(doc(db, "topics", topicId));
             await updateDoc(doc(db, "subjects", subjectId), { topicCount: increment(-1) });
         } catch (error) {
             console.error("Error deleting topic:", error);
@@ -209,7 +217,7 @@ export const useSubjectManager = (user, subjectId) => {
                 const newOrder = index + 1;
                 const newNumber = newOrder.toString().padStart(2, '0');
                 
-                const topicRef = doc(db, "subjects", subjectId, "topics", topic.id);
+                const topicRef = doc(db, "topics", topic.id);
                 batch.update(topicRef, {
                     order: newOrder,
                     number: newNumber

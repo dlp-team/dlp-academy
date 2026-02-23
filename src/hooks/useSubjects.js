@@ -1,7 +1,7 @@
 // src/hooks/useSubjects.js
 import { useState, useEffect } from 'react';
 import { 
-    collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove
+    collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -22,7 +22,7 @@ export const useSubjects = (user) => {
         // 1. Query subjects created by the user (Owned)
         const ownedQuery = query(
             collection(db, "subjects"), 
-            where("uid", "==", user.uid)
+            where("ownerId", "==", user.uid)
         );
 
         let ownedSubjects = [];
@@ -38,10 +38,13 @@ export const useSubjects = (user) => {
             // Load topics for all subjects
             const subjectsWithTopics = await Promise.all(tempSubjects.map(async (subject) => {
                 try {
-                    const topicsRef = collection(db, "subjects", subject.id, "topics");
+                    const topicsRef = query(
+                        collection(db, "topics"),
+                        where("subject_id", "==", subject.id),
+                        orderBy("order", "asc")
+                    );
                     const topicsSnap = await getDocs(topicsRef);
                     const topicsList = topicsSnap.docs.map(t => ({ id: t.id, ...t.data() }));
-                    topicsList.sort((a, b) => (a.order || 0) - (b.order || 0));
                     return { ...subject, topics: topicsList };
                 } catch (e) {
                     console.warn(`Failed to load topics for subject ${subject.id}`, e);

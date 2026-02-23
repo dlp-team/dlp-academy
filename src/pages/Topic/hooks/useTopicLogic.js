@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { 
     FileText, Award, Sigma, BookOpen, NotebookPen, Pencil, Target, Trophy 
 } from 'lucide-react';
-import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { canEdit, canView, canDelete, shouldShowEditUI, shouldShowDeleteUI } from '../../../utils/permissionUtils';
 
@@ -78,7 +78,7 @@ export const useTopicLogic = (user) => {
                 const subjectDoc = await getDoc(doc(db, "subjects", subjectId));
                 if (subjectDoc.exists()) setSubject({ id: subjectDoc.id, ...subjectDoc.data() });
 
-                const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
+                const topicRef = doc(db, "topics", topicId);
                 unsubscribeTopic = onSnapshot(topicRef, (topicDoc) => {
                     if (topicDoc.exists()) {
                         const topicData = { id: topicDoc.id, ...topicDoc.data() };
@@ -90,7 +90,7 @@ export const useTopicLogic = (user) => {
                             quizzes: prev?.quizzes || []
                         }));
 
-                        const docsRef = collection(db, "subjects", subjectId, "topics", topicId, "documents");
+                        const docsRef = query(collection(db, "documents"), where("topic_id", "==", topicId));
                         unsubscribeDocs = onSnapshot(docsRef, (docsSnap) => {
                             const manualDocs = docsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
                             const aiPdfs = Array.isArray(topicData.pdfs) ? topicData.pdfs.map((p, i) => ({ ...p, id: p.id || `ai-${i}`, origin: 'AI' })) : [];
@@ -103,7 +103,7 @@ export const useTopicLogic = (user) => {
                             }));
                         });
 
-                        const quizzesRef = collection(db, "subjects", subjectId, "topics", topicId, "quizzes");
+                        const quizzesRef = query(collection(db, "quizzes"), where("topic_id", "==", topicId));
                         unsubscribeQuizzes = onSnapshot(quizzesRef, (quizzesSnap) => {
                             const realQuizzes = quizzesSnap.docs.map(q => ({ id: q.id, ...q.data() }));
                             setTopic(prev => ({ 
@@ -166,7 +166,7 @@ export const useTopicLogic = (user) => {
         if (!tempName.trim()) return;
         try {
             if (file.origin === 'manual') {
-                const docRef = doc(db, "subjects", subjectId, "topics", topicId, "documents", file.id);
+                const docRef = doc(db, "documents", file.id);
                 await updateDoc(docRef, { name: tempName });
             } else {
                 const updatedPdfs = topic.pdfs.map(pdf => {
@@ -174,7 +174,7 @@ export const useTopicLogic = (user) => {
                     return pdf;
                 });
                 const cleanPdfsForDb = updatedPdfs.map(p => ({ name: p.name, type: p.type, url: p.url, id: p.id }));
-                const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
+                const topicRef = doc(db, "topics", topicId);
                 await updateDoc(topicRef, { pdfs: cleanPdfsForDb });
             }
             setRenamingId(null);
@@ -185,10 +185,10 @@ export const useTopicLogic = (user) => {
         if (!window.confirm(`¿Eliminar "${file.name}"?`)) return;
         try {
             if (file.origin === 'manual') {
-                await deleteDoc(doc(db, "subjects", subjectId, "topics", topicId, "documents", file.id));
+                await deleteDoc(doc(db, "documents", file.id));
             } else {
                 const updatedPdfs = topic.pdfs.filter(pdf => pdf.id !== file.id).map(pdf => ({ name: pdf.name, type: pdf.type, url: pdf.url, id: pdf.id }));
-                await updateDoc(doc(db, "subjects", subjectId, "topics", topicId), { pdfs: updatedPdfs });
+                await updateDoc(doc(db, "topics", topicId), { pdfs: updatedPdfs });
             }
             setActiveMenuId(null);
         } catch (error) { console.error(error); alert("Error al eliminar."); }
@@ -197,7 +197,7 @@ export const useTopicLogic = (user) => {
     const deleteQuiz = async (quizId) => {
         if (!window.confirm("¿Eliminar este test permanentemente?")) return;
         try {
-            await deleteDoc(doc(db, "subjects", subjectId, "topics", topicId, "quizzes", quizId));
+            await deleteDoc(doc(db, "quizzes", quizId));
             setActiveMenuId(null);
         } catch (error) { console.error(error); alert("Error al eliminar test"); }
     };
@@ -210,7 +210,7 @@ export const useTopicLogic = (user) => {
     const handleDeleteTopic = async () => {
         if (!window.confirm("¿Eliminar tema completo?")) return;
         try {
-            await deleteDoc(doc(db, "subjects", subjectId, "topics", topicId));
+            await deleteDoc(doc(db, "topics", topicId));
             navigate(`/home/subject/${subjectId}`);
         } catch (error) { console.error(error); }
     };
@@ -218,7 +218,7 @@ export const useTopicLogic = (user) => {
     const handleSaveTopicTitle = async () => {
         if (!editTopicData.title.trim()) return;
         try {
-            await updateDoc(doc(db, "subjects", subjectId, "topics", topicId), { title: editTopicData.title });
+            await updateDoc(doc(db, "topics", topicId), { title: editTopicData.title });
             setIsEditingTopic(false);
         } catch (error) { console.error(error); }
     };
@@ -234,9 +234,13 @@ export const useTopicLogic = (user) => {
             const convert = (f) => new Promise((r) => { const fr = new FileReader(); fr.readAsDataURL(f); fr.onload = () => r(fr.result); });
             await Promise.all(validFiles.map(async (file) => {
                 const base64Url = await convert(file);
-                return addDoc(collection(db, "subjects", subjectId, "topics", topicId, "documents"), {
+                return addDoc(collection(db, "documents"), {
                     name: file.name, type: file.type.includes('pdf') ? 'pdf' : 'doc', size: file.size, 
-                    source: 'manual', uploadedAt: serverTimestamp(), url: base64Url, status: 'ready'
+                    source: 'manual', uploadedAt: serverTimestamp(), url: base64Url, status: 'ready',
+                    topic_id: topicId,
+                    subject_id: subjectId,
+                    ownerId: topic?.ownerId || subject?.ownerId || user?.uid,
+                    institutionId: topic?.institutionId || subject?.institutionId || user?.institutionId || 'default'
                 });
             }));
             if (fileInputRef.current) fileInputRef.current.value = '';

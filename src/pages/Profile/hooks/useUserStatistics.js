@@ -1,7 +1,7 @@
 // src/pages/Profile/hooks/useUserStatistics.js
 import { useState, useEffect } from 'react';
 import { db } from '../../../firebase/config';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 const useUserStatistics = (subjects, userId) => {
     const [stats, setStats] = useState({
@@ -38,7 +38,7 @@ const useUserStatistics = (subjects, userId) => {
                 });
 
                 for (const subject of subjects) {
-                    const topicsRef = collection(db, 'subjects', subject.id, 'topics');
+                    const topicsRef = query(collection(db, 'topics'), where('subject_id', '==', subject.id));
                     const topicsSnapshot = await getDocs(topicsRef);
 
                     for (const topicDoc of topicsSnapshot.docs) {

@@ -47,7 +47,7 @@ const useQuizData = (user, subjectId, topicId, quizId) => {
                     setSubjectIconKey(sData.icon || sData.name?.charAt(0) || "📚");
                 }
 
-                const topicRef = doc(db, "subjects", subjectId, "topics", topicId);
+                const topicRef = doc(db, "topics", topicId);
                 const topicSnap = await getDoc(topicRef);
                 
                 if (topicSnap.exists()) {
@@ -62,7 +62,7 @@ const useQuizData = (user, subjectId, topicId, quizId) => {
                     }
                 }
 
-                const quizRef = doc(db, "subjects", subjectId, "topics", topicId, "quizzes", quizId);
+                const quizRef = doc(db, "quizzes", quizId);
                 const quizSnap = await getDoc(quizRef);
                 
                 if (quizSnap.exists()) {

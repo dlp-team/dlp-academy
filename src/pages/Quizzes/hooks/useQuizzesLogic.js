@@ -40,12 +40,12 @@ export const useQuizzesLogic = (user) => {
                 if (subjectSnap.exists()) setSubject(subjectSnap.data());
 
                 // Fetch Topic
-                const topicRef = doc(db, 'subjects', subjectId, 'topics', topicId);
+                const topicRef = doc(db, 'topics', topicId);
                 const topicSnap = await getDoc(topicRef);
                 if (topicSnap.exists()) setTopic(topicSnap.data());
 
                 // Fetch Quiz
-                const quizRef = doc(db, 'subjects', subjectId, 'topics', topicId, 'quizzes', quizId);
+                const quizRef = doc(db, 'quizzes', quizId);
                 const quizSnap = await getDoc(quizRef);
                 
                 if (quizSnap.exists()) {
