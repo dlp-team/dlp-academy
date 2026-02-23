@@ -17,12 +17,13 @@ These notes were reconstructed from the implementation session after some tracki
 ## Current Status
 
 - Completed phases: 00, 01, 02 architecture, 02 fixes, 03, 04.
-- Planned phases: 05, 06, 07.
+- In progress phases: 05.
+- Planned phases: 06, 07.
 - Debug protocol is documented at `copilot/protocols/debug-in-depth-protocol.md`.
 
 ## Planning Rules
 
-1. `copilot/plans/strategy-roadmap.md` is the source of truth for sequencing and phase status.
+1. `copilot/plans/firestore-collections-reorganization/strategy-roadmap.md` is the source of truth for sequencing and phase status.
 2. Every phase marked IN_PROGRESS or COMPLETED must have a corresponding phase document.
 3. Phase docs must capture scope, rationale, implementation summary, affected systems, and follow-ups.
 4. When a phase status changes, update both roadmap and phase document.

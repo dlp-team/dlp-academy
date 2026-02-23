@@ -51,32 +51,32 @@ Finalize runtime behavior for shortcut-aware drag/drop and merged content resolu
 ## Mandatory Security Verification (you must run)
 Run this checklist in your environment after deploy and before declaring stable:
 
-1. **Share + shortcut creation path**
+- [ ] **Share + shortcut creation path**
    - Share subject A to user B.
    - Expected: subject updates (`sharedWith*`) and one shortcut appears for B.
 
-2. **Shortcut dedupe path**
+- [ ] **Shortcut dedupe path**
    - Re-share same subject A to same user B.
    - Expected: no duplicate share entry and no duplicate shortcut.
 
-3. **Shortcut move path (recipient)**
+- [ ] **Shortcut move path (recipient)**
    - As B, drag shortcut into folder X, then back to root.
    - Expected: shortcut `parentId` changes; source subject `parentId/folderId` unchanged.
 
-4. **Non-owner source mutation denial**
+- [ ] **Non-owner source mutation denial**
    - As B, attempt to move source entity directly without shortcut context.
    - Expected: operation blocked or no source mutation.
 
-5. **Orphan deletion path**
+- [ ] **Orphan deletion path**
    - Delete or unshare source from owner account.
    - As B, confirm orphan card appears, then remove it.
    - Expected: only shortcut deleted; no source-side writes.
 
-6. **Cross-user isolation check**
+- [ ] **Cross-user isolation check**
    - As unrelated user C, query/attempt access to B shortcut docs.
    - Expected: denied by rules.
 
-7. **Tenant boundary check (if institutionId enabled)**
+- [ ] **Tenant boundary check (if institutionId enabled)**
    - Attempt cross-institution read/write for shortcut/source.
    - Expected: denied by rules/query constraints.
 

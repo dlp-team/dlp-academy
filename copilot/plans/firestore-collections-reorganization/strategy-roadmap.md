@@ -40,7 +40,7 @@ Evolve Home/Folder/Subject architecture into a robust hierarchical model, then e
 - Phase 02 — Shortcuts architecture foundation + fixes: **COMPLETED**
 - Phase 03 — Permission-driven Lecture/Edit mode rollout: **COMPLETED**
 - Phase 04 — Shortcut-aware DnD & content resolution: **COMPLETED**
-- Phase 05 — Multi-tenant scope: **PLANNED**
+- Phase 05 — Multi-tenant scope: **IN_PROGRESS**
 - Phase 06 — Data migration: **PLANNED**
 - Phase 07 — Firestore security rules rewrite: **PLANNED**
 
@@ -62,7 +62,7 @@ Evolve Home/Folder/Subject architecture into a robust hierarchical model, then e
 
 ## Immediate Next Actions
 
-1. Finalize Phase 05 tenant constraints and query contract.
+1. Execute Phase 05 tenant constraints and query contract implementation.
 2. Define/execute Phase 06 migration script + verification report.
 3. Complete Phase 07 least-privilege rules and validation matrix.
-4. Run end-to-end regression for share, reshare, unshare, move, and orphan states.
+4. Run end-to-end regression for share, reshare, unshare, move, orphan, and cross-tenant isolation states.
