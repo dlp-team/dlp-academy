@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import styles from './styles/Login.module.css';
 import { auth, provider } from '../../firebase/config'; 
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore'; 
+import { collection, doc, getDoc, getDocs, query, setDoc, serverTimestamp, where } from 'firebase/firestore'; 
 import { db } from '../../firebase/config';
 import { FcGoogle } from 'react-icons/fc';
 import { 
@@ -57,12 +57,44 @@ const Login = () => {
         }
     };
 
+    const resolveInstitutionId = async (email) => {
+        const normalizedEmail = (email || '').toLowerCase();
+        const domain = normalizedEmail.split('@')[1];
+        if (!domain) return null;
+
+        const allowedSnap = await getDocs(
+            query(collection(db, 'allowed_teachers'), where('email', '==', normalizedEmail))
+        );
+        if (!allowedSnap.empty) {
+            return allowedSnap.docs[0].data()?.institutionId || null;
+        }
+
+        const domainSnap = await getDocs(
+            query(collection(db, 'institutions'), where('domains', 'array-contains', domain))
+        );
+        if (!domainSnap.empty) return domainSnap.docs[0].id;
+
+        const singleSnap = await getDocs(
+            query(collection(db, 'institutions'), where('domain', '==', domain))
+        );
+        if (!singleSnap.empty) return singleSnap.docs[0].id;
+
+        return null;
+    };
+
     const saveUserToFirestore = async (user) => {
         const userRef = doc(db, "users", user.uid);
-        await setDoc(userRef, {
-            email: user.email,
-            lastLogin: serverTimestamp(),
-        }, { merge: true });
+        const userSnap = await getDoc(userRef);
+        const resolvedInstitutionId = await resolveInstitutionId(user.email);
+        const updates = { email: user.email, lastLogin: serverTimestamp() };
+
+        if (!userSnap.exists()) {
+            updates.institutionId = resolvedInstitutionId;
+        } else if (!userSnap.data()?.institutionId && resolvedInstitutionId) {
+            updates.institutionId = resolvedInstitutionId;
+        }
+
+        await setDoc(userRef, updates, { merge: true });
     };
 
     return (

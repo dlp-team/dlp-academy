@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, getDocs, query, setDoc, serverTimestamp, where } from 'firebase/firestore';
 import { auth, db } from '../../../firebase/config';
 
 export const useRegister = () => {
@@ -71,6 +71,33 @@ export const useRegister = () => {
                 displayName: `${formData.firstName} ${formData.lastName}`
             });
 
+            const resolveInstitutionId = async (email) => {
+                const normalizedEmail = (email || '').toLowerCase();
+                const domain = normalizedEmail.split('@')[1];
+                if (!domain) return null;
+
+                const allowedSnap = await getDocs(
+                    query(collection(db, 'allowed_teachers'), where('email', '==', normalizedEmail))
+                );
+                if (!allowedSnap.empty) {
+                    return allowedSnap.docs[0].data()?.institutionId || null;
+                }
+
+                const domainSnap = await getDocs(
+                    query(collection(db, 'institutions'), where('domains', 'array-contains', domain))
+                );
+                if (!domainSnap.empty) return domainSnap.docs[0].id;
+
+                const singleSnap = await getDocs(
+                    query(collection(db, 'institutions'), where('domain', '==', domain))
+                );
+                if (!singleSnap.empty) return singleSnap.docs[0].id;
+
+                return null;
+            };
+
+            const institutionId = await resolveInstitutionId(formData.email);
+
             // 3. Create Firestore Document
             await setDoc(doc(db, "users", user.uid), {
                 uid: user.uid,
@@ -80,6 +107,7 @@ export const useRegister = () => {
                 email: formData.email,
                 role: formData.userType,
                 country: formData.country,
+                institutionId,
                 createdAt: serverTimestamp(),
                 settings: {
                     theme: 'system',
