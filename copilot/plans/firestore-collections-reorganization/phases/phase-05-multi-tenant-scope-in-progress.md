@@ -29,6 +29,28 @@ Shortcut-first sharing can work functionally but still fail in production if ten
 ## Current implementation checkpoint
 - Strategy and phase plan updated to IN_PROGRESS.
 - Security verification is now tracked using tickable checklists in worklogs.
+- Tenant-aware filtering implemented in:
+	- `src/hooks/useSubjects.js`
+	- `src/hooks/useFolders.js`
+	- `src/hooks/useShortcuts.js`
+- Share guards added to block cross-institution sharing attempts in subject/folder share flows.
+- New writes now consistently stamp `institutionId` for subject/folder/shortcut create paths.
+- Legacy fallback behavior added for owner-owned records missing `institutionId` (migration window support).
+
+## Implemented details (Session 01)
+
+### Query boundary hardening done
+- `useSubjects`: owned records filtered by current institution, with owner-safe fallback for legacy docs without `institutionId`.
+- `useFolders`: owned records filtered by current institution (with legacy owner fallback), shared records constrained to current institution.
+- `useShortcuts`: shortcut subscription filtered by institution; target resolution marks cross-tenant records as inaccessible/orphan state.
+
+### Write consistency hardening done
+- `addSubject` stamps `institutionId` when missing in payload.
+- `addFolder` stamps `institutionId` when missing in payload.
+- `createShortcut`/share-driven shortcut creation aligns to active institution.
+
+### Runtime validation done
+- Build sanity check passed (`npm run build`).
 
 ## Acceptance criteria
 - Tenant boundary respected in all high-traffic selectors.

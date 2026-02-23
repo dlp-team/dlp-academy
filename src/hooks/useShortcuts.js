@@ -28,6 +28,7 @@ export const useShortcuts = (user) => {
     const [shortcuts, setShortcuts] = useState([]);
     const [resolvedShortcuts, setResolvedShortcuts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const currentInstitutionId = user?.institutionId || 'default';
 
     useEffect(() => {
         if (!user) {
@@ -48,10 +49,14 @@ export const useShortcuts = (user) => {
         const unsubscribe = onSnapshot(
             shortcutsQuery,
             async (snapshot) => {
-                const shortcutDocs = snapshot.docs.map(d => ({ 
-                    id: d.id, 
-                    ...d.data() 
-                }));
+                const shortcutDocs = snapshot.docs
+                    .map(d => ({ id: d.id, ...d.data() }))
+                    .filter(shortcut => {
+                        if (!shortcut?.institutionId) {
+                            return shortcut?.ownerId === user?.uid;
+                        }
+                        return shortcut.institutionId === currentInstitutionId;
+                    });
                 
                 setShortcuts(shortcutDocs);
 
@@ -69,7 +74,7 @@ export const useShortcuts = (user) => {
         );
 
         return () => unsubscribe();
-    }, [user]);
+    }, [user, currentInstitutionId]);
 
     /**
      * Resolve shortcut targets to their actual data
@@ -83,6 +88,20 @@ export const useShortcuts = (user) => {
             shortcuts.map(async (shortcut) => {
                 try {
                     const { targetId, targetType } = shortcut;
+
+                    if (shortcut?.institutionId && shortcut.institutionId !== currentInstitutionId) {
+                        return {
+                            ...shortcut,
+                            isShortcut: true,
+                            isOrphan: true,
+                            shortcutId: shortcut.id,
+                            targetData: null,
+                            name: '(No access)',
+                            _originalTargetId: targetId,
+                            _originalTargetType: targetType,
+                            _reason: 'tenant-mismatch'
+                        };
+                    }
                     
                     // Determine collection based on targetType
                     const collectionName = targetType === 'folder' ? 'folders' : 'subjects';
@@ -106,6 +125,20 @@ export const useShortcuts = (user) => {
 
                     // Target exists - return normalized object with metadata
                     const targetData = { id: targetSnap.id, ...targetSnap.data() };
+
+                    if (targetData?.institutionId && targetData.institutionId !== currentInstitutionId) {
+                        return {
+                            ...shortcut,
+                            isShortcut: true,
+                            isOrphan: true,
+                            shortcutId: shortcut.id,
+                            targetData: null,
+                            name: '(No access)',
+                            _originalTargetId: targetId,
+                            _originalTargetType: targetType,
+                            _reason: 'tenant-mismatch'
+                        };
+                    }
 
                     if (!canView(targetData, user.uid)) {
                         return {
@@ -176,11 +209,14 @@ export const useShortcuts = (user) => {
             throw new Error("User must be authenticated to create shortcuts");
         }
 
+        const effectiveInstitutionId = institutionId || currentInstitutionId;
+
         const existingShortcuts = shortcuts.filter(
             shortcut =>
                 shortcut.ownerId === user.uid &&
                 shortcut.targetId === targetId &&
-                shortcut.targetType === targetType
+            shortcut.targetType === targetType &&
+            (!shortcut?.institutionId || shortcut.institutionId === effectiveInstitutionId)
         );
 
         if (existingShortcuts.length > 0) {
@@ -190,7 +226,7 @@ export const useShortcuts = (user) => {
             const primaryRef = doc(db, "shortcuts", primaryShortcut.id);
             await updateDoc(primaryRef, {
                 parentId,
-                institutionId,
+                institutionId: effectiveInstitutionId,
                 ...(visualOverrides.shortcutName ? { shortcutName: visualOverrides.shortcutName } : {}),
                 ...(visualOverrides.shortcutCourse ? { shortcutCourse: visualOverrides.shortcutCourse } : {}),
                 ...(visualOverrides.shortcutColor ? { shortcutColor: visualOverrides.shortcutColor } : {}),
@@ -222,7 +258,7 @@ export const useShortcuts = (user) => {
             parentId: parentId,
             targetId: targetId,
             targetType: targetType,
-            institutionId: institutionId,
+            institutionId: effectiveInstitutionId,
             ...(visualOverrides.shortcutName ? { shortcutName: visualOverrides.shortcutName } : {}),
             ...(visualOverrides.shortcutCourse ? { shortcutCourse: visualOverrides.shortcutCourse } : {}),
             ...(visualOverrides.shortcutColor ? { shortcutColor: visualOverrides.shortcutColor } : {}),
@@ -236,7 +272,7 @@ export const useShortcuts = (user) => {
             targetId,
             targetType,
             parentId,
-            institutionId,
+            institutionId: effectiveInstitutionId,
             user,
             shortcutData
         });

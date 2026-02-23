@@ -8,6 +8,11 @@ Start multi-tenant scope execution by formalizing institution-boundary requireme
 - Created phase document with explicit multi-tenant scope, execution tracks, and acceptance criteria.
 - Standardized security verification format to checkbox-based tracking.
 - Synced reorganization README status and source-of-truth roadmap path.
+- Implemented institution-boundary filtering in `useSubjects`, `useFolders`, and `useShortcuts`.
+- Added cross-institution share denial checks in subject/folder share handlers.
+- Added write stamping for missing `institutionId` in subject/folder create paths.
+- Added shortcut tenant consistency checks in subscription and resolution paths.
+- Ran build validation successfully (`npm run build`).
 
 ## Technical intent for Phase 05
 1. Query boundary hardening
@@ -53,4 +58,9 @@ Start multi-tenant scope execution by formalizing institution-boundary requireme
 - Follow-up actions:
 
 ## Next execution step
-Implement/query-audit pass for Home/Subject/Topic selectors and record concrete pass/fail evidence for the checklist above.
+Execute manual security verification checklist with multi-user accounts and record pass/fail evidence.
+
+## Manual verification status
+- [ ] Checklist execution started
+- [ ] Evidence log completed
+- [ ] Blockers documented for Phase 06/07 handoff

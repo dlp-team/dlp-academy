@@ -10,6 +10,7 @@ import { isInvalidFolderMove } from '../utils/folderUtils';
 export const useFolders = (user) => {
     const [folders, setFolders] = useState([]);
     const [loading, setLoading] = useState(true);
+    const currentInstitutionId = user?.institutionId || 'default';
 
     useEffect(() => {
         if (!user) {
@@ -33,9 +34,14 @@ export const useFolders = (user) => {
         };
 
         const unsubscribeOwned = onSnapshot(ownedQuery, (snapshot) => {
-            ownedFolders = snapshot.docs.map(d => ({ 
-                id: d.id, ...d.data(), parentId: d.data().parentId || null, isOwner: true 
-            }));
+            ownedFolders = snapshot.docs
+                .map(d => ({ id: d.id, ...d.data(), parentId: d.data().parentId || null, isOwner: true }))
+                .filter(folder => {
+                    if (!folder?.institutionId) {
+                        return folder?.ownerId === user?.uid;
+                    }
+                    return folder.institutionId === currentInstitutionId;
+                });
             updateState();
         });
 
@@ -43,6 +49,9 @@ export const useFolders = (user) => {
             sharedFolders = snapshot.docs.filter(d => {
                 const data = d.data();
                 const userEmail = user.email?.toLowerCase() || '';
+                if (!data?.institutionId || data.institutionId !== currentInstitutionId) {
+                    return false;
+                }
                 return data.sharedWith?.some(share => 
                     share.email?.toLowerCase() === userEmail || share.uid === user.uid
                 );
@@ -53,7 +62,7 @@ export const useFolders = (user) => {
         });
 
         return () => { unsubscribeOwned(); unsubscribeShared(); };
-    }, [user]);
+    }, [user, currentInstitutionId]);
 
     // --- ATOMIC HELPERS ---
     const addFolderToParent = async (parentId, childId) => {
@@ -135,6 +144,7 @@ export const useFolders = (user) => {
             ...payload,
             ownerId: user.uid,
             ownerEmail: user.email,
+            institutionId: payload?.institutionId || currentInstitutionId,
             sharedWith,
             sharedWithUids,
             isShared,
@@ -280,7 +290,13 @@ export const useFolders = (user) => {
             let targetUid = null;
 
             if (!querySnapshot.empty) {
-                targetUid = querySnapshot.docs[0].id; 
+                targetUid = querySnapshot.docs[0].id;
+                const targetUserData = querySnapshot.docs[0].data() || {};
+                const targetInstitutionId = targetUserData.institutionId || null;
+                if (targetInstitutionId && targetInstitutionId !== currentInstitutionId) {
+                    alert("No puedes compartir entre instituciones diferentes.");
+                    return;
+                }
             } else {
                 console.warn(`User with email ${emailLower} not found.`);
                 alert(`No se encontró usuario con el correo ${email}. El usuario debe crear una cuenta primero.`);

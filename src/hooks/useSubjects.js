@@ -8,6 +8,7 @@ import { db } from '../firebase/config';
 export const useSubjects = (user) => {
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
+    const currentInstitutionId = user?.institutionId || 'default';
 
     useEffect(() => {
         if (!user) {
@@ -27,7 +28,12 @@ export const useSubjects = (user) => {
         let ownedSubjects = [];
 
         const updateSubjectsState = async () => {
-            const tempSubjects = [...ownedSubjects];
+            const tempSubjects = ownedSubjects.filter(subject => {
+                if (!subject?.institutionId) {
+                    return subject?.uid === user?.uid;
+                }
+                return subject.institutionId === currentInstitutionId;
+            });
 
             // Load topics for all subjects
             const subjectsWithTopics = await Promise.all(tempSubjects.map(async (subject) => {
@@ -60,10 +66,13 @@ export const useSubjects = (user) => {
         return () => {
             unsubscribeOwned();
         };
-    }, [user]);
+    }, [user, currentInstitutionId]);
 
     const addSubject = async (payload) => {
-        const docRef = await addDoc(collection(db, "subjects"), payload);
+        const docRef = await addDoc(collection(db, "subjects"), {
+            ...payload,
+            institutionId: payload?.institutionId || currentInstitutionId
+        });
         // Return the ID explicitly to handle the folder link correctly
         return docRef.id; 
     };
@@ -102,6 +111,13 @@ export const useSubjects = (user) => {
 
             if (!querySnapshot.empty) {
                 targetUid = querySnapshot.docs[0].id;
+                const targetUserData = querySnapshot.docs[0].data() || {};
+                const targetInstitutionId = targetUserData.institutionId || null;
+
+                if (targetInstitutionId && targetInstitutionId !== currentInstitutionId) {
+                    alert("No puedes compartir entre instituciones diferentes.");
+                    return;
+                }
             } else {
                 return;
             }
@@ -148,14 +164,18 @@ export const useSubjects = (user) => {
                 where('targetType', '==', 'subject')
             );
             const existingShortcutSnap = await getDocs(existingShortcutQuery);
+            const existingShortcutDocs = existingShortcutSnap.docs.filter(d => {
+                const data = d.data() || {};
+                return !data.institutionId || data.institutionId === currentInstitutionId;
+            });
 
-            if (existingShortcutSnap.empty) {
+            if (existingShortcutDocs.length === 0) {
                 const shortcutPayload = {
                     ownerId: targetUid,
                     parentId: null,
                     targetId: subjectId,
                     targetType: 'subject',
-                    institutionId: user?.institutionId || 'default',
+                    institutionId: currentInstitutionId,
                     shortcutName: subjectData.name || null,
                     shortcutCourse: subjectData.course || null,
                     shortcutColor: subjectData.color || null,
@@ -169,9 +189,9 @@ export const useSubjects = (user) => {
                 } catch (err) {
                     throw err;
                 }
-            } else if (existingShortcutSnap.docs.length > 1) {
+            } else if (existingShortcutDocs.length > 1) {
                 // Keep one, remove accidental duplicates
-                const duplicateDocs = existingShortcutSnap.docs.slice(1);
+                const duplicateDocs = existingShortcutDocs.slice(1);
                 await Promise.all(duplicateDocs.map(d => deleteDoc(doc(db, 'shortcuts', d.id))));
             }
 
