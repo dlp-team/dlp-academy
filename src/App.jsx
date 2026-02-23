@@ -21,7 +21,7 @@ import StudyGuide from './pages/Content/StudyGuide';
 import StudyGuideEditor from './pages/Content/StudyGuideEditor';
 
 // Dashboard pages
-import SchoolAdminDashboard from './pages/SchoolAdminDashboard/SchoolAdminDashboard';
+import InstitutionAdminDashboard from './pages/InstitutionAdminDashboard/InstitutionAdminDashboard';
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard/TeacherDashboard';
 
@@ -68,7 +68,7 @@ function App() {
               uid: firebaseUser.uid,
               email: firebaseUser.email,
               photoURL: firebaseUser.photoURL,
-              ...userData // This spreads 'role', 'schoolId', etc. into the user object
+              ...userData // This spreads 'role', 'institutionId', etc. into the user object
             });
           } else {
             // Fallback if no database record exists
@@ -181,12 +181,12 @@ function App() {
           } 
         />
         
-        {/* --- SCHOOL ADMIN DASHBOARD --- */}
+        {/* --- INSTITUTION ADMIN DASHBOARD --- */}
         <Route 
-          path="/school-admin-dashboard" 
+          path="/institution-admin-dashboard" 
           element={
-            <ProtectedRoute user={user} loading={loading} requiredRole="schooladmin">
-              <SchoolAdminDashboard user={user} />
+            <ProtectedRoute user={user} loading={loading} requiredRole="institutionadmin">
+              <InstitutionAdminDashboard user={user} />
             </ProtectedRoute>
           } 
         />

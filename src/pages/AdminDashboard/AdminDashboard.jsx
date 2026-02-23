@@ -19,7 +19,7 @@ import Header from '../../components/layout/Header';
 const RoleBadge = ({ role }) => {
     const map = {
         admin:       { label: 'Admin Global',  cls: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' },
-        schooladmin: { label: 'Admin Escuela', cls: 'bg-amber-100  text-amber-700  dark:bg-amber-900/30  dark:text-amber-400'  },
+        institutionadmin: { label: 'Admin Institución', cls: 'bg-amber-100  text-amber-700  dark:bg-amber-900/30  dark:text-amber-400'  },
         teacher:     { label: 'Profesor',      cls: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' },
         student:     { label: 'Alumno',        cls: 'bg-blue-100   text-blue-700   dark:bg-blue-900/30   dark:text-blue-400'   },
     };
@@ -105,7 +105,7 @@ const SchoolsTab = () => {
     const fetchSchools = async () => {
         setLoading(true);
         try {
-            const snap = await getDocs(collection(db, 'schools'));
+            const snap = await getDocs(collection(db, 'institutions'));
             setSchools(snap.docs.map(d => ({ id: d.id, ...d.data() })));
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
@@ -175,7 +175,7 @@ const SchoolsTab = () => {
         }
 
         try {
-            const existingIdQuery = query(collection(db, 'schools'), where('institutionId', '==', institutionId));
+            const existingIdQuery = query(collection(db, 'institutions'), where('institutionId', '==', institutionId));
             const existingIdSnap = await getDocs(existingIdQuery);
             if (!existingIdSnap.empty) {
                 setError(`El ID institucional "${institutionId}" ya existe. Elige otro.`);
@@ -183,7 +183,7 @@ const SchoolsTab = () => {
                 return;
             }
 
-            await addDoc(collection(db, 'schools'), {
+            await addDoc(collection(db, 'institutions'), {
                 name,
                 institutionId,
                 domain,
@@ -217,13 +217,13 @@ const SchoolsTab = () => {
 
     const handleToggle = async (school) => {
         if (!window.confirm(`¿${school.enabled !== false ? 'Deshabilitar' : 'Habilitar'} "${school.name}"?`)) return;
-        await updateDoc(doc(db, 'schools', school.id), { enabled: !school.enabled });
+        await updateDoc(doc(db, 'institutions', school.id), { enabled: !school.enabled });
         fetchSchools();
     };
 
     const handleDelete = async (school) => {
         if (!window.confirm(`¿Eliminar "${school.name}"? Esta acción no elimina los usuarios asociados.`)) return;
-        await deleteDoc(doc(db, 'schools', school.id));
+        await deleteDoc(doc(db, 'institutions', school.id));
         fetchSchools();
     };
 
@@ -430,7 +430,7 @@ const UsersTab = () => {
         fetchUsers();
     };
 
-    const ROLES = ['all', 'admin', 'schooladmin', 'teacher', 'student'];
+    const ROLES = ['all', 'admin', 'institutionadmin', 'teacher', 'student'];
 
     const filtered = users.filter(u => {
         const matchSearch = u.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -449,7 +449,7 @@ const UsersTab = () => {
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all capitalize ${
                                 roleFilter === r ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
                             }`}>
-                            {r === 'all' ? 'Todos' : r === 'schooladmin' ? 'Admin Esc.' : r.charAt(0).toUpperCase() + r.slice(1)}
+                            {r === 'all' ? 'Todos' : r === 'institutionadmin' ? 'Admin Inst.' : r.charAt(0).toUpperCase() + r.slice(1)}
                         </button>
                     ))}
                 </div>
@@ -500,7 +500,7 @@ const UsersTab = () => {
                                                 className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-purple-400">
                                                 <option value="student">Alumno</option>
                                                 <option value="teacher">Profesor</option>
-                                                <option value="schooladmin">Admin Escuela</option>
+                                                <option value="institutionadmin">Admin Institución</option>
                                                 <option value="admin">Admin Global</option>
                                             </select>
                                         </td>
@@ -541,7 +541,7 @@ const AdminDashboard = ({ user }) => {
             setStatsLoading(true);
             try {
                 const [schoolsSnap, teachersSnap, studentsSnap, usersSnap] = await Promise.all([
-                    getDocs(collection(db, 'schools')),
+                    getDocs(collection(db, 'institutions')),
                     getDocs(query(collection(db, 'users'), where('role', '==', 'teacher'))),
                     getDocs(query(collection(db, 'users'), where('role', '==', 'student'))),
                     getDocs(collection(db, 'users')),

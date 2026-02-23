@@ -1,4 +1,4 @@
-// src/pages/SchoolAdminDashboard/SchoolAdminDashboard.jsx
+// src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -50,12 +50,12 @@ const ClassesCoursesSection = ({ user, allStudents, allTeachers }) => {
     const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444', '#14b8a6'];
 
     const fetchAll = async () => {
-        if (!user?.schoolId) return;
+        if (!user?.institutionId) return;
         setLoading(true);
         try {
             const [cSnap, clSnap] = await Promise.all([
-                getDocs(query(collection(db, 'courses'), where('schoolId', '==', user.schoolId))),
-                getDocs(query(collection(db, 'classes'), where('schoolId', '==', user.schoolId))),
+                getDocs(query(collection(db, 'courses'), where('institutionId', '==', user.institutionId))),
+                getDocs(query(collection(db, 'classes'), where('institutionId', '==', user.institutionId))),
             ]);
             setCourses(cSnap.docs.map(d => ({ id: d.id, ...d.data() })));
             setClasses(clSnap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -72,7 +72,7 @@ const ClassesCoursesSection = ({ user, allStudents, allTeachers }) => {
         setCourseSubmitting(true);
         try {
             await addDoc(collection(db, 'courses'), {
-                ...courseForm, schoolId: user.schoolId, createdBy: user.uid, createdAt: serverTimestamp(),
+                ...courseForm, institutionId: user.institutionId, createdBy: user.uid, createdAt: serverTimestamp(),
             });
             setShowCourseModal(false);
             setCourseForm({ name: '', description: '', color: '#6366f1' });
@@ -88,7 +88,7 @@ const ClassesCoursesSection = ({ user, allStudents, allTeachers }) => {
         setClassSubmitting(true);
         try {
             await addDoc(collection(db, 'classes'), {
-                ...classForm, schoolId: user.schoolId, createdBy: user.uid, createdAt: serverTimestamp(),
+                ...classForm, institutionId: user.institutionId, createdBy: user.uid, createdAt: serverTimestamp(),
             });
             setShowClassModal(false);
             setClassForm({ name: '', courseId: '', teacherId: '', studentIds: [] });
@@ -324,7 +324,7 @@ const ClassesCoursesSection = ({ user, allStudents, allTeachers }) => {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const SchoolAdminDashboard = ({ user }) => {
+const InstitutionAdminDashboard = ({ user }) => {
     const navigate = useNavigate();
 
     const [activeTab, setActiveTab] = useState('users');
@@ -348,26 +348,26 @@ const SchoolAdminDashboard = ({ user }) => {
     const [addSuccess, setAddSuccess] = useState('');
 
     useEffect(() => {
-        if (user && user.role !== 'schooladmin') {
-            console.warn('Unauthorized access attempt to School Admin Dashboard');
+        if (user && user.role !== 'institutionadmin') {
+            console.warn('Unauthorized access attempt to Institution Admin Dashboard');
             navigate('/home');
         }
     }, [user, navigate]);
 
     const fetchData = async () => {
-        if (!user?.schoolId) return;
+        if (!user?.institutionId) return;
         setLoading(true);
         try {
             if (userType === 'teachers') {
                 const [teachersSnap, allowedSnap] = await Promise.all([
-                    getDocs(query(collection(db, 'users'), where('schoolId', '==', user.schoolId), where('role', '==', 'teacher'))),
-                    getDocs(query(collection(db, 'allowed_teachers'), where('schoolId', '==', user.schoolId))),
+                    getDocs(query(collection(db, 'users'), where('institutionId', '==', user.institutionId), where('role', '==', 'teacher'))),
+                    getDocs(query(collection(db, 'allowed_teachers'), where('institutionId', '==', user.institutionId))),
                 ]);
                 setTeachers(teachersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
                 setAllowedTeachers(allowedSnap.docs.map(d => ({ id: d.id, ...d.data() })));
                 setStudents([]);
             } else {
-                const studentsSnap = await getDocs(query(collection(db, 'users'), where('schoolId', '==', user.schoolId), where('role', '==', 'student')));
+                const studentsSnap = await getDocs(query(collection(db, 'users'), where('institutionId', '==', user.institutionId), where('role', '==', 'student')));
                 setStudents(studentsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
                 setTeachers([]);
                 setAllowedTeachers([]);
@@ -383,10 +383,10 @@ const SchoolAdminDashboard = ({ user }) => {
 
     // Always keep full lists for ClassesCoursesSection
     useEffect(() => {
-        if (!user?.schoolId) return;
+        if (!user?.institutionId) return;
         Promise.all([
-            getDocs(query(collection(db, 'users'), where('schoolId', '==', user.schoolId), where('role', '==', 'teacher'))),
-            getDocs(query(collection(db, 'users'), where('schoolId', '==', user.schoolId), where('role', '==', 'student'))),
+            getDocs(query(collection(db, 'users'), where('institutionId', '==', user.institutionId), where('role', '==', 'teacher'))),
+            getDocs(query(collection(db, 'users'), where('institutionId', '==', user.institutionId), where('role', '==', 'student'))),
         ]).then(([tSnap, sSnap]) => {
             setAllTeachers(tSnap.docs.map(d => ({ id: d.id, ...d.data() })));
             setAllStudents(sSnap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -398,11 +398,11 @@ const SchoolAdminDashboard = ({ user }) => {
         setAddError(''); setAddSuccess(''); setIsSubmitting(true);
         if (!newUserEmail.includes('@')) { setAddError('Por favor introduce un email válido.'); setIsSubmitting(false); return; }
         try {
-            const checkSnap = await getDocs(query(collection(db, 'allowed_teachers'), where('email', '==', newUserEmail), where('schoolId', '==', user.schoolId)));
+            const checkSnap = await getDocs(query(collection(db, 'allowed_teachers'), where('email', '==', newUserEmail), where('institutionId', '==', user.institutionId)));
             if (!checkSnap.empty) { setAddError('Este email ya está en la lista de profesores autorizados.'); setIsSubmitting(false); return; }
             await addDoc(collection(db, 'allowed_teachers'), {
                 email: newUserEmail.toLowerCase().trim(),
-                schoolId: user.schoolId,
+                institutionId: user.institutionId,
                 addedBy: user.uid,
                 createdAt: serverTimestamp(),
                 enabled: true,
@@ -442,7 +442,7 @@ const SchoolAdminDashboard = ({ user }) => {
                     <div>
                         <h1 className="text-3xl font-black text-slate-900 dark:text-white">Panel de Administración</h1>
                         <p className="text-slate-500 dark:text-slate-400 mt-1">
-                            {user?.schoolId ? `Escuela ID: ${user.schoolId}` : 'Configuración de Escuela'}
+                            {user?.institutionId ? `Institución ID: ${user.institutionId}` : 'Configuración de Institución'}
                         </p>
                     </div>
                     {activeTab === 'users' && userType === 'teachers' && (
@@ -532,7 +532,7 @@ const SchoolAdminDashboard = ({ user }) => {
                                                     </thead>
                                                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                                         {teachers.filter(u => u.email?.toLowerCase().includes(searchTerm.toLowerCase())).map(u => (
-                                                            <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer" onClick={() => navigate(`/school-admin-dashboard/teacher/${u.id}`)}>
+                                                            <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer" onClick={() => navigate(`/institution-admin-dashboard/teacher/${u.id}`)}>
                                                                 <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{u.displayName || 'Sin Nombre'}</td>
                                                                 <td className="px-6 py-4">{u.email}</td>
                                                                 <td className="px-6 py-4">
@@ -598,7 +598,7 @@ const SchoolAdminDashboard = ({ user }) => {
                                                 </thead>
                                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                                     {students.filter(u => u.email?.toLowerCase().includes(searchTerm.toLowerCase())).map(u => (
-                                                        <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer" onClick={() => navigate(`/school-admin-dashboard/student/${u.id}`)}>
+                                                        <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer" onClick={() => navigate(`/institution-admin-dashboard/student/${u.id}`)}>
                                                             <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{u.displayName || 'Sin Nombre'}</td>
                                                             <td className="px-6 py-4">{u.email}</td>
                                                             <td className="px-6 py-4">
@@ -669,4 +669,4 @@ const SchoolAdminDashboard = ({ user }) => {
     );
 };
 
-export default SchoolAdminDashboard;
+export default InstitutionAdminDashboard;

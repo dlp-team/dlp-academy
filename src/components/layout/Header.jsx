@@ -114,8 +114,8 @@ const Header = ({ user }) => {
     switch (role) {
       case 'admin':
         return '/admin-dashboard';
-      case 'schooladmin':
-        return '/school-admin-dashboard';
+      case 'institutionadmin':
+        return '/institution-admin-dashboard';
       case 'teacher':
         return '/teacher-dashboard';
       default:
@@ -128,8 +128,8 @@ const Header = ({ user }) => {
     switch (role) {
       case 'admin':
         return 'Panel Admin';
-      case 'schooladmin':
-        return 'Panel Escuela';
+      case 'institutionadmin':
+        return 'Panel Institución';
       case 'teacher':
         return 'Panel Profesor';
       default:

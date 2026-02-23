@@ -27,7 +27,7 @@ service cloud.firestore {
     }
 
     function isInstitutionAdmin() {
-      return currentUserRole() == 'schooladmin';
+      return currentUserRole() == 'institutionadmin';
     }
 
     function canManageInstitution(institutionId) {
@@ -138,14 +138,6 @@ service cloud.firestore {
     match /folders/{folderId} {
       allow create: if isSignedIn();
       allow read, write: if isSignedIn();
-    }
-
-    match /schools/{schoolId} {
-      allow read: if isSignedIn();
-      allow create: if isGlobalAdmin();
-      allow update: if canManageInstitution(resource.data.institutionId)
-        && request.resource.data.institutionId == resource.data.institutionId;
-      allow delete: if isGlobalAdmin();
     }
 
     match /institutions/{institutionId} {
