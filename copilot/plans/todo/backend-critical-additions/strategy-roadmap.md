@@ -15,12 +15,12 @@ Stabilize backend-critical flows by formalizing missing infrastructure, safeguar
 
 - Phase 00 — Backend baseline and gap inventory: **COMPLETED**
 - Phase 01 — Reliability safeguards and validation hooks: **COMPLETED**
-- Phase 02 — Security/rules hardening checkpoints: **IN_PROGRESS**
+- Phase 02 — Security/rules hardening checkpoints: **PLANNED (POSTPONED)**
 - Phase 03 — Migration operability and rollback readiness: **PLANNED**
 - Phase 04 — Review gate and closure evidence: **PLANNED**
 
 ## Immediate Next Actions
 
-1. Expand and execute the rules validation matrix against critical permission flows.
-2. Define pass/fail criteria and unresolved risk handling for review gate readiness.
-3. Draft Phase 03 operability tasks based on Phase 02 validation outcomes.
+1. Resume in pre-production window using `working/pre-production-resume-checklist.md`.
+2. Re-validate assumptions against latest Firestore rules, indexes, and migration presets.
+3. Restart Phase 02 execution and continue to inReview only after checklist-driven verification.

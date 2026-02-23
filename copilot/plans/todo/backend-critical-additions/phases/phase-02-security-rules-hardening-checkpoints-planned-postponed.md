@@ -1,4 +1,4 @@
-# Phase 02 — Security/Rules Hardening Checkpoints (IN_PROGRESS)
+# Phase 02 — Security/Rules Hardening Checkpoints (PLANNED - POSTPONED)
 
 ## Objective
 
@@ -16,3 +16,8 @@ Define and operationalize a rules-validation matrix for migration-adjacent backe
 - [ ] Map matrix checks to known critical flows (share, move, edit, read).
 - [ ] Define minimum pass criteria for review gate.
 - [ ] Record unresolved risks and mitigation actions.
+
+## Postpone Note
+
+This phase is intentionally postponed and will resume during the pre-production hardening window.
+Use `working/pre-production-resume-checklist.md` before resuming execution.

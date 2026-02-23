@@ -4,7 +4,7 @@ Use this checklist when backend-critical changes are implemented.
 
 ## Migration Safety
 
-- [x] Dry run executed and output reviewed
+- [ ] Dry run executed and output reviewed
 - [ ] Real run executed with expected updated/scanned counts
 - [ ] Spot-check documents in Firestore confirm expected field-level updates
 - [ ] No unintended field deletions/overwrites detected
