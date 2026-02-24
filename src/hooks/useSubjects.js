@@ -1,7 +1,7 @@
 // src/hooks/useSubjects.js
 import { useState, useEffect } from 'react';
 import { 
-    collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy
+    collection, query, where, getDocs, getDoc, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -107,6 +107,9 @@ export const useSubjects = (user) => {
     const shareSubject = async (subjectId, email) => {
         try {
             const emailLower = email.toLowerCase();
+            if (user?.email?.toLowerCase() === emailLower) {
+                throw new Error("No puedes compartir contigo mismo.");
+            }
             // 1. Find the user UID by email from your 'users' collection
             const usersRef = collection(db, 'users');
             const q = query(usersRef, where('email', '==', emailLower));
@@ -128,16 +131,26 @@ export const useSubjects = (user) => {
 
             // 2. Get the current subject to check if already shared
             const subjectRef = doc(db, 'subjects', subjectId);
-            const subjectSnap = await getDocs(query(collection(db, 'subjects'), where('__name__', '==', subjectId)));
+            const subjectSnap = await getDoc(subjectRef);
 
-            if (subjectSnap.empty) {
+            if (!subjectSnap.exists()) {
                 throw new Error("No se encontró la asignatura.");
             }
 
-            const subjectData = subjectSnap.docs[0].data();
+            const subjectData = subjectSnap.data() || {};
+
+            if (subjectData.ownerId && subjectData.ownerId === targetUid) {
+                throw new Error("No puedes compartir con el propietario.");
+            }
+
+            if (targetUid === user?.uid) {
+                throw new Error("No puedes compartir contigo mismo.");
+            }
 
             // Check if already shared with this user (idempotent behavior)
-            const alreadyShared = Array.isArray(subjectData.sharedWith) && subjectData.sharedWith.some(entry => entry.uid === targetUid);
+            const alreadyShared =
+                (Array.isArray(subjectData.sharedWithUids) && subjectData.sharedWithUids.includes(targetUid)) ||
+                (Array.isArray(subjectData.sharedWith) && subjectData.sharedWith.some(entry => entry.uid === targetUid));
 
             // 3. Build share data
             const shareData = {
@@ -207,7 +220,7 @@ export const useSubjects = (user) => {
                 }
             }
 
-            return shareData;
+            return { ...shareData, alreadyShared };
 
         } catch (error) {
             throw error;

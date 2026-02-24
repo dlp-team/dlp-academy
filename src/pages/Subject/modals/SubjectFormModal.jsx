@@ -89,14 +89,23 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setShareError('Por favor ingresa un correo electrónico.');
             return;
         }
+        const normalizedEmail = shareEmail.toLowerCase();
+        if (sharedList.some(u => u.email === normalizedEmail)) {
+            setShareError('Ya compartiste esta asignatura con ese usuario.');
+            return;
+        }
         setShareLoading(true);
         setShareError('');
         setShareSuccess('');
         try {
-            await onShare(formData.id, shareEmail);
-            setSharedList(prev => [...prev, { email: shareEmail.toLowerCase(), role: 'viewer', sharedAt: new Date() }]);
+            const result = await onShare(formData.id, shareEmail);
+            if (result?.alreadyShared) {
+                setShareError('Ya compartiste esta asignatura con ese usuario.');
+                return;
+            }
+            setSharedList(prev => [...prev, { email: normalizedEmail, role: 'viewer', sharedAt: new Date() }]);
             setShareEmail('');
-            setShareSuccess(`Asignatura compartida con ${shareEmail.toLowerCase()}.`);
+            setShareSuccess(`Asignatura compartida con ${normalizedEmail}.`);
             setTimeout(() => setShareSuccess(''), 4000);
         } catch (error) {
             setShareError(error?.message || 'Error al compartir. Inténtalo de nuevo.');
