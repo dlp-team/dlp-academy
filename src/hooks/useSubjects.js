@@ -160,6 +160,10 @@ export const useSubjects = (user) => {
                 sharedAt: new Date()
             };
 
+            const originalSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
+            const originalSharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
+            let sourceUpdated = false;
+
             // 4. Update source sharing only if needed
             if (!alreadyShared) {
                 try {
@@ -169,55 +173,68 @@ export const useSubjects = (user) => {
                         isShared: true,
                         updatedAt: new Date()
                     });
+                    sourceUpdated = true;
                 } catch (err) {
                     throw err;
                 }
             }
 
             // 5. Ensure exactly one shortcut exists for the recipient (even if already shared)
-            const existingShortcutQuery = query(
-                collection(db, 'shortcuts'),
-                where('ownerId', '==', targetUid),
-                where('targetId', '==', subjectId),
-                where('targetType', '==', 'subject')
-            );
-            const existingShortcutSnap = await getDocs(existingShortcutQuery);
-            const existingShortcutDocs = existingShortcutSnap.docs.filter(d => {
-                const data = d.data() || {};
-                return !data.institutionId || data.institutionId === currentInstitutionId;
-            });
-
-            if (existingShortcutDocs.length === 0) {
-                const shortcutPayload = {
-                    ownerId: targetUid,
-                    parentId: null,
-                    targetId: subjectId,
-                    targetType: 'subject',
-                    institutionId: currentInstitutionId,
-                    shortcutName: subjectData.name || null,
-                    shortcutCourse: subjectData.course || null,
-                    shortcutColor: subjectData.color || null,
-                    shortcutIcon: subjectData.icon || null,
-                    shortcutCardStyle: subjectData.cardStyle || null,
-                    shortcutModernFillColor: subjectData.modernFillColor || null,
-                    createdAt: new Date()
-                };
-                try {
-                    await addDoc(collection(db, 'shortcuts'), shortcutPayload);
-                } catch (err) {
-                    throw err;
-                }
-            } else {
-                const primaryShortcut = existingShortcutDocs[0];
-                await updateDoc(doc(db, 'shortcuts', primaryShortcut.id), {
-                    institutionId: currentInstitutionId,
-                    updatedAt: new Date()
+            try {
+                const existingShortcutQuery = query(
+                    collection(db, 'shortcuts'),
+                    where('ownerId', '==', targetUid),
+                    where('targetId', '==', subjectId),
+                    where('targetType', '==', 'subject')
+                );
+                const existingShortcutSnap = await getDocs(existingShortcutQuery);
+                const existingShortcutDocs = existingShortcutSnap.docs.filter(d => {
+                    const data = d.data() || {};
+                    return !data.institutionId || data.institutionId === currentInstitutionId;
                 });
-                if (existingShortcutDocs.length > 1) {
-                    // Keep one, remove accidental duplicates
-                    const duplicateDocs = existingShortcutDocs.slice(1);
-                    await Promise.all(duplicateDocs.map(d => deleteDoc(doc(db, 'shortcuts', d.id))));
+
+                if (existingShortcutDocs.length === 0) {
+                    const shortcutPayload = {
+                        ownerId: targetUid,
+                        parentId: null,
+                        targetId: subjectId,
+                        targetType: 'subject',
+                        institutionId: currentInstitutionId,
+                        shortcutName: subjectData.name || null,
+                        shortcutCourse: subjectData.course || null,
+                        shortcutColor: subjectData.color || null,
+                        shortcutIcon: subjectData.icon || null,
+                        shortcutCardStyle: subjectData.cardStyle || null,
+                        shortcutModernFillColor: subjectData.modernFillColor || null,
+                        createdAt: new Date()
+                    };
+                    await addDoc(collection(db, 'shortcuts'), shortcutPayload);
+                } else {
+                    const primaryShortcut = existingShortcutDocs[0];
+                    await updateDoc(doc(db, 'shortcuts', primaryShortcut.id), {
+                        institutionId: currentInstitutionId,
+                        updatedAt: new Date()
+                    });
+                    if (existingShortcutDocs.length > 1) {
+                        const duplicateDocs = existingShortcutDocs.slice(1);
+                        await Promise.all(duplicateDocs.map(d => deleteDoc(doc(db, 'shortcuts', d.id))));
+                    }
                 }
+            } catch (shortcutError) {
+                if (sourceUpdated) {
+                    try {
+                        await updateDoc(subjectRef, {
+                            sharedWith: originalSharedWith,
+                            sharedWithUids: originalSharedWithUids,
+                            isShared: originalSharedWithUids.length > 0,
+                            updatedAt: new Date()
+                        });
+                    } catch (rollbackError) {
+                        console.error('Subject share rollback failed:', rollbackError);
+                    }
+                    throw new Error('No se pudo crear el acceso directo. Se revirtió el compartido.');
+                }
+                throw shortcutError;
             }
 
             return { ...shareData, alreadyShared };

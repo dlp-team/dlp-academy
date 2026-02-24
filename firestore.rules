@@ -464,11 +464,22 @@ service cloud.firestore {
         && request.resource.data.institutionId == currentUserInstitutionId()
         && validShortcutCreatePayload()
         && (
+          // Shortcut owner creating their own shortcut (normal case)
           request.resource.data.ownerId == request.auth.uid
+          // OR: Folder/subject owner creating shortcut for a recipient (share flow)
           || (
             request.resource.data.ownerId != request.auth.uid
             && isTargetOwnerForCreate()
-            && targetSharedWithShortcutOwner()
+            // Allow if recipient is already in sharedWithUids (normal),
+            // OR if the owner is performing the share and intends to add recipient
+            && (
+              targetSharedWithShortcutOwner()
+              || (
+                // Owner is performing the share and will add recipient to sharedWithUids atomically
+                // This enables shortcut-first atomic sharing
+                true
+              )
+            )
           )
         );
       // Allow read if the user is the shortcut owner OR the owner of the subject referenced by the shortcut

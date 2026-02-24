@@ -295,6 +295,10 @@ export const useFolders = (user) => {
             }
 
             const folderData = folderSnap.data();
+            const originalFolderSharedWith = Array.isArray(folderData.sharedWith) ? folderData.sharedWith : [];
+            const originalFolderSharedWithUids = Array.isArray(folderData.sharedWithUids) ? folderData.sharedWithUids : [];
+            const subjectsRollbackState = [];
+            let sourceUpdated = false;
             
             // Check if already shared with this user (idempotent behavior)
             const alreadyShared = folderData.sharedWith?.some(s => s.uid === targetUid);
@@ -318,6 +322,12 @@ export const useFolders = (user) => {
                         query(collection(db, "subjects"), where("folderId", "==", folderId))
                     );
                     subjectsSnap.forEach(docSnap => {
+                        const subjectData = docSnap.data() || {};
+                        subjectsRollbackState.push({
+                            id: docSnap.id,
+                            sharedWith: Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [],
+                            sharedWithUids: Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : []
+                        });
                         const subjectRef = doc(db, "subjects", docSnap.id);
                         batch.update(subjectRef, {
                             isShared: true,
@@ -332,43 +342,75 @@ export const useFolders = (user) => {
 
             // 6. COMMIT CHANGES
             await batch.commit();
+            if (!alreadyShared) {
+                sourceUpdated = true;
+            }
 
             // 7. Ensure exactly one folder shortcut exists for recipient (Option B root shortcut)
-            const existingShortcutQuery = query(
-                collection(db, 'shortcuts'),
-                where('ownerId', '==', targetUid),
-                where('targetId', '==', folderId),
-                where('targetType', '==', 'folder')
-            );
-            const existingShortcutSnap = await getDocs(existingShortcutQuery);
-            const existingShortcutDocs = existingShortcutSnap.docs.filter(d => {
-                const data = d.data() || {};
-                return !data.institutionId || data.institutionId === currentInstitutionId;
-            });
+            try {
+                const existingShortcutQuery = query(
+                    collection(db, 'shortcuts'),
+                    where('ownerId', '==', targetUid),
+                    where('targetId', '==', folderId),
+                    where('targetType', '==', 'folder')
+                );
+                const existingShortcutSnap = await getDocs(existingShortcutQuery);
+                const existingShortcutDocs = existingShortcutSnap.docs.filter(d => {
+                    const data = d.data() || {};
+                    return !data.institutionId || data.institutionId === currentInstitutionId;
+                });
 
-            if (existingShortcutDocs.length === 0) {
-                await addDoc(collection(db, 'shortcuts'), {
-                    ownerId: targetUid,
-                    parentId: null,
-                    targetId: folderId,
-                    targetType: 'folder',
-                    institutionId: currentInstitutionId,
-                    shortcutName: folderData.name || null,
-                    shortcutColor: folderData.color || null,
-                    shortcutCardStyle: folderData.cardStyle || null,
-                    shortcutModernFillColor: folderData.modernFillColor || null,
-                    createdAt: new Date()
-                });
-            } else {
-                const primaryShortcut = existingShortcutDocs[0];
-                await updateDoc(doc(db, 'shortcuts', primaryShortcut.id), {
-                    institutionId: currentInstitutionId,
-                    updatedAt: new Date()
-                });
-                if (existingShortcutDocs.length > 1) {
-                    const duplicateDocs = existingShortcutDocs.slice(1);
-                    await Promise.all(duplicateDocs.map(d => deleteDoc(doc(db, 'shortcuts', d.id))));
+                if (existingShortcutDocs.length === 0) {
+                    await addDoc(collection(db, 'shortcuts'), {
+                        ownerId: targetUid,
+                        parentId: null,
+                        targetId: folderId,
+                        targetType: 'folder',
+                        institutionId: currentInstitutionId,
+                        shortcutName: folderData.name || null,
+                        shortcutColor: folderData.color || null,
+                        shortcutCardStyle: folderData.cardStyle || null,
+                        shortcutModernFillColor: folderData.modernFillColor || null,
+                        createdAt: new Date()
+                    });
+                } else {
+                    const primaryShortcut = existingShortcutDocs[0];
+                    await updateDoc(doc(db, 'shortcuts', primaryShortcut.id), {
+                        institutionId: currentInstitutionId,
+                        updatedAt: new Date()
+                    });
+                    if (existingShortcutDocs.length > 1) {
+                        const duplicateDocs = existingShortcutDocs.slice(1);
+                        await Promise.all(duplicateDocs.map(d => deleteDoc(doc(db, 'shortcuts', d.id))));
+                    }
                 }
+            } catch (shortcutError) {
+                if (sourceUpdated) {
+                    try {
+                        const rollbackBatch = writeBatch(db);
+                        rollbackBatch.update(folderRef, {
+                            sharedWith: originalFolderSharedWith,
+                            sharedWithUids: originalFolderSharedWithUids,
+                            isShared: originalFolderSharedWithUids.length > 0,
+                            updatedAt: new Date()
+                        });
+
+                        subjectsRollbackState.forEach(subject => {
+                            rollbackBatch.update(doc(db, 'subjects', subject.id), {
+                                sharedWith: subject.sharedWith,
+                                sharedWithUids: subject.sharedWithUids,
+                                isShared: subject.sharedWithUids.length > 0,
+                                updatedAt: new Date()
+                            });
+                        });
+
+                        await rollbackBatch.commit();
+                    } catch (rollbackError) {
+                        console.error('Folder share rollback failed:', rollbackError);
+                    }
+                    throw new Error('No se pudo crear el acceso directo. Se revirtió el compartido.');
+                }
+                throw shortcutError;
             }
 
             return shareData;
