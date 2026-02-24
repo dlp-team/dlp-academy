@@ -6,6 +6,7 @@ import { canEdit } from '../../../utils/permissionUtils';
 
 export const useHomePageHandlers = ({
     logic,
+    currentUserId,
     updateFolder,
     moveSubjectToParent,
     moveFolderToParent,
@@ -73,7 +74,7 @@ export const useHomePageHandlers = ({
         }
         const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
         const sourceFolder = (logic.folders || []).find(f => f.id === currentFolderId);
-        const userId = logic?.user?.uid || logic?.uid;
+        const userId = currentUserId;
 
         if (draggedShortcutId && logic?.moveShortcut) {
             logic.moveShortcut(draggedShortcutId, targetFolderId || null);
@@ -399,7 +400,7 @@ export const useHomePageHandlers = ({
 
     const handleTreeMoveSubject = async (subjectId, targetFolderId, sourceFolderId) => {
         const subject = (logic.subjects || []).find(s => s.id === subjectId);
-        const userId = logic?.user?.uid || logic?.uid;
+        const userId = currentUserId;
         const userCanEdit = subject && userId ? canEdit(subject, userId) : false;
 
         if (!userCanEdit && logic?.moveShortcut) {

@@ -112,6 +112,7 @@ const Home = ({ user }) => {
         handleTreeReorderSubject
     } = useHomePageHandlers({
         logic,
+        currentUserId: user?.uid || null,
         updateFolder,
         moveSubjectToParent,
         moveFolderToParent,
