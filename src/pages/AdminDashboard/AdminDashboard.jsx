@@ -77,6 +77,9 @@ const SchoolsTab = () => {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
 
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [typeFilter, setTypeFilter] = useState('all');
+
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [form, setForm] = useState({
         name: '',
@@ -188,16 +191,48 @@ const SchoolsTab = () => {
         fetchSchools();
     };
 
-    const filtered = schools.filter(s =>
-        s.name?.toLowerCase().includes(search.toLowerCase()) ||
-        s.city?.toLowerCase().includes(search.toLowerCase()) ||
-        s.adminEmail?.toLowerCase().includes(search.toLowerCase())
-    );
+    const filtered = schools.filter(s => {
+        const matchSearch = s.name?.toLowerCase().includes(search.toLowerCase()) ||
+                            s.city?.toLowerCase().includes(search.toLowerCase()) ||
+                            s.adminEmail?.toLowerCase().includes(search.toLowerCase());
+        
+        const matchStatus = statusFilter === 'all' ? true :
+                            statusFilter === 'active' ? s.enabled !== false :
+                            s.enabled === false;
+                            
+        const matchType = typeFilter === 'all' ? true : s.type === typeFilter;
+
+        return matchSearch && matchStatus && matchType;
+    });
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Filter bar */}
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 mb-6 flex flex-col md:flex-row gap-4 justify-between">
+                <div className="flex gap-2">
+                    <select
+                        value={statusFilter}
+                        onChange={e => setStatusFilter(e.target.value)}
+                        className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-purple-500 text-slate-600 dark:text-slate-300"
+                    >
+                        <option value="all">Todos los estados</option>
+                        <option value="active">Activas</option>
+                        <option value="disabled">Deshabilitadas</option>
+                    </select>
+                    <select
+                        value={typeFilter}
+                        onChange={e => setTypeFilter(e.target.value)}
+                        className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-purple-500 text-slate-600 dark:text-slate-300"
+                    >
+                        <option value="all">Todos los tipos</option>
+                        <option value="school">Escuela</option>
+                        <option value="academy">Academia</option>
+                        <option value="university">Universidad</option>
+                        <option value="training-center">Centro</option>
+                        <option value="other">Otro</option>
+                    </select>
+                </div>
+                
                 <div className="relative flex-1 md:max-w-xs">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
@@ -362,6 +397,8 @@ const UsersTab = () => {
     const [search, setSearch] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
 
+    const [statusFilter, setStatusFilter] = useState('all');
+
     const fetchUsers = async () => {
         setLoading(true);
         try {
@@ -391,7 +428,12 @@ const UsersTab = () => {
         const matchSearch = u.email?.toLowerCase().includes(search.toLowerCase()) ||
                             u.displayName?.toLowerCase().includes(search.toLowerCase());
         const matchRole = roleFilter === 'all' || u.role === roleFilter;
-        return matchSearch && matchRole;
+        
+        const matchStatus = statusFilter === 'all' ? true :
+                            statusFilter === 'active' ? u.enabled !== false :
+                            u.enabled === false;
+
+        return matchSearch && matchRole && matchStatus;
     });
 
     return (
@@ -415,6 +457,17 @@ const UsersTab = () => {
                         className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-purple-500" />
                 </div>
             </div>
+
+            {/* Status Dropdown */}
+            <select
+                value={statusFilter}
+                onChange={e => setStatusFilter(e.target.value)}
+                className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-purple-500 text-slate-600 dark:text-slate-300"
+            >
+                <option value="all">Todos los estados</option>
+                <option value="active">Activos</option>
+                <option value="disabled">Deshabilitados</option>
+            </select>
 
             {loading ? (
                 <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin text-purple-500" /></div>

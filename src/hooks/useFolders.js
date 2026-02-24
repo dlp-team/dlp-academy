@@ -429,6 +429,15 @@ export const useFolders = (user) => {
     const moveSubjectBetweenFolders = async (subjectId, fromFolderId, toFolderId) => {
         // 1. Identify Source
         let sourceId = fromFolderId;
+
+        if (sourceId === undefined) {
+            const localSource = folders.find(
+                folder => Array.isArray(folder.subjectIds) && folder.subjectIds.includes(subjectId)
+            );
+            if (localSource) {
+                sourceId = localSource.id;
+            }
+        }
         
         // Safety: If source not provided, fetch from DB to be 100% sure where it is
         if (sourceId === undefined) {
@@ -446,19 +455,33 @@ export const useFolders = (user) => {
         // Prevent useless move
         if (sourceId === toFolderId) return;
 
-        // 2. Get folder sharing info before moving
+        // 2. Resolve folder sharing info (prefer local cache to avoid network latency)
         let newFolderSharedUids = [];
         let oldFolderSharedUids = [];
-        
+        let targetFolderSharedWith = [];
+
+        const cachedTargetFolder = toFolderId ? folders.find(f => f.id === toFolderId) : null;
+        const cachedSourceFolder = sourceId ? folders.find(f => f.id === sourceId) : null;
+
+        if (cachedTargetFolder) {
+            newFolderSharedUids = cachedTargetFolder.sharedWithUids || [];
+            targetFolderSharedWith = cachedTargetFolder.sharedWith || [];
+        }
+        if (cachedSourceFolder) {
+            oldFolderSharedUids = cachedSourceFolder.sharedWithUids || [];
+        }
+
         try {
-            if (toFolderId) {
+            if (toFolderId && !cachedTargetFolder) {
                 const targetFolderSnap = await getDoc(doc(db, "folders", toFolderId));
                 if (targetFolderSnap.exists()) {
-                    newFolderSharedUids = targetFolderSnap.data().sharedWithUids || [];
+                    const targetData = targetFolderSnap.data();
+                    newFolderSharedUids = targetData.sharedWithUids || [];
+                    targetFolderSharedWith = targetData.sharedWith || [];
                 }
             }
-            
-            if (sourceId) {
+
+            if (sourceId && !cachedSourceFolder) {
                 const sourceFolderSnap = await getDoc(doc(db, "folders", sourceId));
                 if (sourceFolderSnap.exists()) {
                     oldFolderSharedUids = sourceFolderSnap.data().sharedWithUids || [];
@@ -481,6 +504,31 @@ export const useFolders = (user) => {
             return;
         }
 
+        const previousFolders = folders;
+        setFolders(prev => prev.map(folder => {
+            let nextSubjectIds = Array.isArray(folder.subjectIds) ? [...folder.subjectIds] : [];
+
+            if (sourceId && folder.id === sourceId) {
+                nextSubjectIds = nextSubjectIds.filter(id => id !== subjectId);
+            }
+
+            if (toFolderId && folder.id === toFolderId && !nextSubjectIds.includes(subjectId)) {
+                nextSubjectIds.push(subjectId);
+            }
+
+            if (
+                nextSubjectIds.length === (Array.isArray(folder.subjectIds) ? folder.subjectIds.length : 0) &&
+                nextSubjectIds.every((id, index) => (folder.subjectIds || [])[index] === id)
+            ) {
+                return folder;
+            }
+
+            return {
+                ...folder,
+                subjectIds: nextSubjectIds
+            };
+        }));
+
         // Remove from old
         if (sourceId) {
             const sourceRef = doc(db, "folders", sourceId);
@@ -502,6 +550,19 @@ export const useFolders = (user) => {
             updatedAt: new Date(),
             isShared: newFolderSharedUids.length > 0
         };
+
+        // Fast path: no sharing transition, no need to read subject document
+        if (oldFolderSharedUids.length === 0 && newFolderSharedUids.length === 0) {
+            batch.update(subRef, subjectUpdate);
+            try {
+                await batch.commit();
+            } catch (error) {
+                setFolders(previousFolders);
+                throw error;
+            }
+            return;
+        }
+
         try {
             const currentSubSnap = await getDoc(subRef);
             if (currentSubSnap.exists()) {
@@ -521,15 +582,11 @@ export const useFolders = (user) => {
                 });
                 // Add new folder's shared users (user data)
                 if (toFolderId) {
-                    const targetFolderSnap = await getDoc(doc(db, "folders", toFolderId));
-                    if (targetFolderSnap.exists()) {
-                        const targetSharedWith = targetFolderSnap.data().sharedWith || [];
-                        targetSharedWith.forEach(userObj => {
-                            if (!newSharedWith.some(u => u.uid === userObj.uid)) {
-                                newSharedWith.push(userObj);
-                            }
-                        });
-                    }
+                    targetFolderSharedWith.forEach(userObj => {
+                        if (!newSharedWith.some(u => u.uid === userObj.uid)) {
+                            newSharedWith.push(userObj);
+                        }
+                    });
                 }
                 subjectUpdate.sharedWith = newSharedWith;
                 subjectUpdate.sharedWithUids = newSharedWithUids;
@@ -539,7 +596,12 @@ export const useFolders = (user) => {
         }
         batch.update(subRef, subjectUpdate);
 
-        await batch.commit();
+        try {
+            await batch.commit();
+        } catch (error) {
+            setFolders(previousFolders);
+            throw error;
+        }
     };
 
     // Alias for compatibility
