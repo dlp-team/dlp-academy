@@ -427,12 +427,14 @@ export const useFolders = (user) => {
      * Handles sharing propagation when moving between folders
      */
     const moveSubjectBetweenFolders = async (subjectId, fromFolderId, toFolderId) => {
+        alert(`[DEBUG-8] moveSubjectBetweenFolders ENTRY: subjectId=${subjectId}, fromFolderId=${fromFolderId}, toFolderId=${toFolderId}`);
         // 1. Identify Source
         let sourceId = fromFolderId;
         const localSourceFolders = folders.filter(
             folder => Array.isArray(folder.subjectIds) && folder.subjectIds.includes(subjectId)
         );
         const localSourceIds = localSourceFolders.map(folder => folder.id);
+        alert(`[DEBUG-9] Local state: sourceId=${sourceId}, localSourceIds=[${localSourceIds.join(',')}]`);
 
         if (sourceId !== null && sourceId !== undefined && !localSourceIds.includes(sourceId) && localSourceIds.length > 0) {
             sourceId = localSourceIds[0];
@@ -466,6 +468,7 @@ export const useFolders = (user) => {
                 [sourceId, ...localSourceIds].filter(folderId => folderId && folderId !== toFolderId)
             )
         );
+        alert(`[DEBUG-10] removeFromFolderIds=[${removeFromFolderIds.join(',')}]`);
 
         // 2. Resolve folder sharing info (prefer local cache to avoid network latency)
         let newFolderSharedUids = [];
@@ -549,8 +552,11 @@ export const useFolders = (user) => {
             };
         }));
 
+        alert(`[DEBUG-10.5] LOCAL UI STATE UPDATED. Subject removed from ${removeFromFolderIds.length} folders, added to ${toFolderId || 'root'} in React state.`);
+
         // Remove from old
         if (removeFromFolderIds.length > 0) {
+            alert(`[DEBUG-10.6] Building main batch: removing subject from ${removeFromFolderIds.length} folder(s)`);
             removeFromFolderIds.forEach(sourceFolderId => {
                 const sourceRef = doc(db, "folders", sourceFolderId);
                 batch.update(sourceRef, { subjectIds: arrayRemove(subjectId), updatedAt: new Date() });
@@ -618,11 +624,45 @@ export const useFolders = (user) => {
         }
         batch.update(subRef, subjectUpdate);
 
+
         try {
             await batch.commit();
+            alert(`[DEBUG-11] Main batch committed. UX will now reflect the move.`);
         } catch (error) {
             setFolders(previousFolders);
+            alert(`[DEBUG-ERR] Main batch failed: ${error.message}`);
             throw error;
+        }
+
+        // --- POST-MOVE CLEANUP: Remove subject from any folder except destination ---
+        try {
+            alert(`[DEBUG-12] Starting post-move cleanup scan...`);
+            const allFoldersSnap = await getDocs(collection(db, "folders"));
+            alert(`[DEBUG-13] Found ${allFoldersSnap.size} total folders in Firestore`);
+            let foldersWithSubject = [];
+            const cleanupBatch = writeBatch(db);
+            allFoldersSnap.forEach(docSnap => {
+                const folderId = docSnap.id;
+                const data = docSnap.data();
+                if (Array.isArray(data.subjectIds) && data.subjectIds.includes(subjectId)) {
+                    foldersWithSubject.push(folderId);
+                    if (toFolderId && folderId === toFolderId) {
+                        console.log(`[DEBUG] Skipping destination folder: ${folderId}`);
+                        return;
+                    }
+                    console.log(`[DEBUG] Marking folder ${folderId} for cleanup (removing subjectId ${subjectId})`);
+                    cleanupBatch.update(doc(db, "folders", folderId), {
+                        subjectIds: arrayRemove(subjectId),
+                        updatedAt: new Date()
+                    });
+                }
+            });
+            alert(`[DEBUG-14] Folders containing subject: [${foldersWithSubject.join(',')}]. Cleanup batch will remove from all except ${toFolderId}`);
+            await cleanupBatch.commit();
+            alert(`[DEBUG-15] Cleanup batch committed successfully.`);
+        } catch (cleanupErr) {
+            console.error("[moveSubjectBetweenFolders] Post-move cleanup failed:", cleanupErr);
+            alert(`[DEBUG-ERR] Cleanup failed: ${cleanupErr.message}`);
         }
     };
 

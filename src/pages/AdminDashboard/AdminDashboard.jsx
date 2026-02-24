@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 import {
     collection, query, where, getDocs,
-    addDoc, serverTimestamp, deleteDoc, doc, updateDoc
+    addDoc, serverTimestamp, deleteDoc, doc, updateDoc,
+    limit, startAfter
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
@@ -38,7 +39,7 @@ const parseCsvEmails = (value = '') => {
 
 const OverviewTab = ({ stats, loading }) => {
     const cards = [
-        { label: 'Instituciones',  value: stats.schools,  icon: Building2,    color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
+        { label: 'Instituciones',  value: stats.Institutions,  icon: Building2,    color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-900/20' },
         { label: 'Profesores',     value: stats.teachers, icon: BookOpen,     color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-900/20' },
         { label: 'Alumnos',        value: stats.students, icon: GraduationCap,color: 'text-blue-600',   bg: 'bg-blue-50   dark:bg-blue-900/20'   },
         { label: 'Total Usuarios', value: stats.total,    icon: Users,        color: 'text-emerald-600',bg: 'bg-emerald-50 dark:bg-emerald-900/20'},
@@ -70,10 +71,10 @@ const OverviewTab = ({ stats, loading }) => {
     );
 };
 
-// ─── Schools Tab ──────────────────────────────────────────────────────────────
+// ─── Institutions Tab ──────────────────────────────────────────────────────────────
 
-const SchoolsTab = () => {
-    const [schools, setSchools] = useState([]);
+const InstitutionsTab = () => {
+    const [Institutions, setInstitutions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
 
@@ -94,16 +95,16 @@ const SchoolsTab = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
-    const fetchSchools = async () => {
+    const fetchInstitutions = async () => {
         setLoading(true);
         try {
             const snap = await getDocs(collection(db, 'institutions'));
-            setSchools(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            setInstitutions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
         } catch (e) { console.error(e); }
         finally { setLoading(false); }
     };
 
-    useEffect(() => { fetchSchools(); }, []);
+    useEffect(() => { fetchInstitutions(); }, []);
 
     const handleCreate = async (e) => {
         e.preventDefault();
@@ -174,7 +175,7 @@ const SchoolsTab = () => {
                 timezone: 'Europe/Madrid'
             });
             setShowCreateForm(false);
-            fetchSchools();
+            fetchInstitutions();
         } catch { setError('Error al crear la institución.'); }
         finally { setSubmitting(false); }
     };
@@ -182,16 +183,16 @@ const SchoolsTab = () => {
     const handleToggle = async (school) => {
         if (!window.confirm(`¿${school.enabled !== false ? 'Deshabilitar' : 'Habilitar'} "${school.name}"?`)) return;
         await updateDoc(doc(db, 'institutions', school.id), { enabled: !school.enabled });
-        fetchSchools();
+        fetchInstitutions();
     };
 
     const handleDelete = async (school) => {
         if (!window.confirm(`¿Eliminar "${school.name}"? Esta acción no elimina los usuarios asociados.`)) return;
         await deleteDoc(doc(db, 'institutions', school.id));
-        fetchSchools();
+        fetchInstitutions();
     };
 
-    const filtered = schools.filter(s => {
+    const filtered = Institutions.filter(s => {
         const matchSearch = s.name?.toLowerCase().includes(search.toLowerCase()) ||
                             s.city?.toLowerCase().includes(search.toLowerCase()) ||
                             s.adminEmail?.toLowerCase().includes(search.toLowerCase());
@@ -399,13 +400,40 @@ const UsersTab = () => {
 
     const [statusFilter, setStatusFilter] = useState('all');
 
-    const fetchUsers = async () => {
-        setLoading(true);
+    const [lastVisible, setLastVisible] = useState(null);
+    const [hasMore, setHasMore] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const PAGE_SIZE = 50;
+
+    const fetchUsers = async (isNextPage = false) => {
+        if (isNextPage) setLoadingMore(true);
+        else setLoading(true);
+
         try {
-            const snap = await getDocs(collection(db, 'users'));
-            setUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-        } catch (e) { console.error(e); }
-        finally { setLoading(false); }
+            let q = query(collection(db, 'users'), limit(PAGE_SIZE));
+            
+            if (isNextPage && lastVisible) {
+                q = query(collection(db, 'users'), startAfter(lastVisible), limit(PAGE_SIZE));
+            }
+
+            const snap = await getDocs(q);
+            
+            const fetchedUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            
+            setLastVisible(snap.docs[snap.docs.length - 1]);
+            setHasMore(snap.docs.length === PAGE_SIZE);
+            
+            if (isNextPage) {
+                setUsers(prev => [...prev, ...fetchedUsers]);
+            } else {
+                setUsers(fetchedUsers);
+            }
+        } catch (e) { 
+            console.error(e); 
+        } finally { 
+            setLoading(false);
+            setLoadingMore(false);
+        }
     };
 
     useEffect(() => { fetchUsers(); }, []);
@@ -523,6 +551,21 @@ const UsersTab = () => {
                             </tbody>
                         </table>
                     </div>
+                    
+                    {/* Pagination */}
+                    {hasMore && (
+                        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex justify-center">
+                            <button 
+                                onClick={() => fetchUsers(true)}
+                                disabled={loadingMore}
+                                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
+                            >
+                                {loadingMore && <Loader2 className="w-4 h-4 animate-spin" />}
+                                Cargar más usuarios
+                            </button>
+                        </div>
+                    )}
+
                 </div>
             )}
         </div>
@@ -534,7 +577,7 @@ const UsersTab = () => {
 const AdminDashboard = ({ user }) => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('overview');
-    const [stats, setStats] = useState({ schools: null, teachers: null, students: null, total: null });
+    const [stats, setStats] = useState({ Institutions: null, teachers: null, students: null, total: null });
     const [statsLoading, setStatsLoading] = useState(true);
 
     useEffect(() => {
@@ -548,14 +591,14 @@ const AdminDashboard = ({ user }) => {
         const fetchStats = async () => {
             setStatsLoading(true);
             try {
-                const [schoolsSnap, teachersSnap, studentsSnap, usersSnap] = await Promise.all([
+                const [InstitutionsSnap, teachersSnap, studentsSnap, usersSnap] = await Promise.all([
                     getDocs(collection(db, 'institutions')),
                     getDocs(query(collection(db, 'users'), where('role', '==', 'teacher'))),
                     getDocs(query(collection(db, 'users'), where('role', '==', 'student'))),
                     getDocs(collection(db, 'users')),
                 ]);
                 setStats({
-                    schools:  schoolsSnap.size,
+                    Institutions:  InstitutionsSnap.size,
                     teachers: teachersSnap.size,
                     students: studentsSnap.size,
                     total:    usersSnap.size,
@@ -568,7 +611,7 @@ const AdminDashboard = ({ user }) => {
 
     const TABS = [
         { key: 'overview', label: 'Resumen',        icon: BarChart3   },
-        { key: 'schools',  label: 'Instituciones',  icon: Building2   },
+        { key: 'Institutions',  label: 'Instituciones',  icon: Building2   },
         { key: 'users',    label: 'Usuarios',       icon: Users       },
     ];
 
@@ -605,7 +648,7 @@ const AdminDashboard = ({ user }) => {
                 </div>
 
                 {activeTab === 'overview' && <OverviewTab stats={stats} loading={statsLoading} />}
-                {activeTab === 'schools'  && <SchoolsTab />}
+                {activeTab === 'Institutions'  && <InstitutionsTab />}
                 {activeTab === 'users'    && <UsersTab />}
             </main>
         </div>

@@ -43,6 +43,7 @@ export const useHomePageHandlers = ({
     };
 
     const handleDropOnFolderWrapper = (targetFolderId, subjectId, typeOrSourceFolderId, sourceFolderIdMaybe, shortcutIdMaybe) => {
+        alert(`[DEBUG-1] handleDropOnFolderWrapper ENTRY: targetFolderId=${targetFolderId}, subjectId=${subjectId}, typeOrSourceFolderId=${typeOrSourceFolderId}`);
         const isKnownType = typeOrSourceFolderId === 'subject' || typeOrSourceFolderId === 'folder';
         const type = isKnownType ? typeOrSourceFolderId : 'subject';
         const explicitSourceFolderId = isKnownType ? sourceFolderIdMaybe : typeOrSourceFolderId;
@@ -59,13 +60,15 @@ export const useHomePageHandlers = ({
                 ? explicitSourceFolderId
                 : subject?.folderId || (logic.currentFolder ? logic.currentFolder.id : null);
 
+        alert(`[DEBUG-2] Resolved IDs: currentFolderId=${currentFolderId}, subject.folderId=${subject?.folderId}, logic.currentFolder.id=${logic.currentFolder?.id}`);
         console.log('[CALL] handleDropOnFolderWrapper:', {
             targetFolderId,
             subjectId,
             type,
-            typeOrSourceFolderId,
-            sourceFolderIdMaybe,
             currentFolderId,
+            "subject.folderId": subject?.folderId,
+            "logic.currentFolder.id": logic.currentFolder?.id,
+            explicitSourceFolderId,
             draggedShortcutId
         });
 
@@ -132,6 +135,7 @@ export const useHomePageHandlers = ({
                 return true;
             }
         }
+        alert(`[DEBUG-7] FINAL CALL: moveSubjectBetweenFolders(${subjectId}, ${currentFolderId}, ${targetFolderId})`);
         console.log('[handleDropOnFolderWrapper] moveSubjectBetweenFolders args:', {
             subjectId,
             currentFolderId,
