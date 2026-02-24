@@ -97,32 +97,26 @@ export const useHomePageHandlers = ({
         const getSharedUids = item => (item && Array.isArray(item.sharedWithUids) ? item.sharedWithUids : []);
 
         const subjectSharedWithUids = getSharedUids(subject);
+        const sourceFolderSharedWithUids = getSharedUids(sourceFolder);
         const targetFolderSharedWithUids = getSharedUids(targetFolder);
+        const baselineSharedWithUids = sourceFolder ? sourceFolderSharedWithUids : subjectSharedWithUids;
+        const removedUsers = baselineSharedWithUids.filter(uid => !targetFolderSharedWithUids.includes(uid));
 
-        if (
-            sourceFolder &&
-            sourceFolder.isShared &&
-            (!targetFolder || !targetFolder.isShared) &&
-            Array.isArray(sourceFolder.subjectIds) &&
-            sourceFolder.subjectIds.includes(subjectId)
-        ) {
-            const parentFolder = sourceFolder.parentId ? (logic.folders || []).find(f => f.id === sourceFolder.parentId) : null;
-            if (parentFolder && parentFolder.isShared) {
-                setUnshareConfirm({
-                    open: true,
-                    subjectId,
-                    folder: sourceFolder,
-                    onConfirm: async () => {
-                        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-                        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
-                    }
-                });
-                return true;
-            }
+        if (removedUsers.length > 0) {
+            setUnshareConfirm({
+                open: true,
+                subjectId,
+                folder: sourceFolder,
+                onConfirm: async () => {
+                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+                    setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                }
+            });
+            return true;
         }
 
         if (targetFolder && targetFolder.isShared) {
-            const subjectShared = new Set(subjectSharedWithUids);
+            const subjectShared = new Set(baselineSharedWithUids);
             const folderShared = targetFolderSharedWithUids;
             const newUsers = folderShared.filter(uid => !subjectShared.has(uid));
             if (newUsers.length > 0) {

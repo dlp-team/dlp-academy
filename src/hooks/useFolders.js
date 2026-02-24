@@ -429,11 +429,17 @@ export const useFolders = (user) => {
     const moveSubjectBetweenFolders = async (subjectId, fromFolderId, toFolderId) => {
         // 1. Identify Source
         let sourceId = fromFolderId;
+        const localSourceFolders = folders.filter(
+            folder => Array.isArray(folder.subjectIds) && folder.subjectIds.includes(subjectId)
+        );
+        const localSourceIds = localSourceFolders.map(folder => folder.id);
+
+        if (sourceId !== null && sourceId !== undefined && !localSourceIds.includes(sourceId) && localSourceIds.length > 0) {
+            sourceId = localSourceIds[0];
+        }
 
         if (sourceId === undefined) {
-            const localSource = folders.find(
-                folder => Array.isArray(folder.subjectIds) && folder.subjectIds.includes(subjectId)
-            );
+            const localSource = localSourceFolders[0];
             if (localSource) {
                 sourceId = localSource.id;
             }
@@ -455,20 +461,30 @@ export const useFolders = (user) => {
         // Prevent useless move
         if (sourceId === toFolderId) return;
 
+        const removeFromFolderIds = Array.from(
+            new Set(
+                [sourceId, ...localSourceIds].filter(folderId => folderId && folderId !== toFolderId)
+            )
+        );
+
         // 2. Resolve folder sharing info (prefer local cache to avoid network latency)
         let newFolderSharedUids = [];
         let oldFolderSharedUids = [];
         let targetFolderSharedWith = [];
 
         const cachedTargetFolder = toFolderId ? folders.find(f => f.id === toFolderId) : null;
-        const cachedSourceFolder = sourceId ? folders.find(f => f.id === sourceId) : null;
+        const cachedSourceFolders = removeFromFolderIds
+            .map(folderId => folders.find(f => f.id === folderId))
+            .filter(Boolean);
 
         if (cachedTargetFolder) {
             newFolderSharedUids = cachedTargetFolder.sharedWithUids || [];
             targetFolderSharedWith = cachedTargetFolder.sharedWith || [];
         }
-        if (cachedSourceFolder) {
-            oldFolderSharedUids = cachedSourceFolder.sharedWithUids || [];
+        if (cachedSourceFolders.length > 0) {
+            oldFolderSharedUids = Array.from(
+                new Set(cachedSourceFolders.flatMap(folder => folder.sharedWithUids || []))
+            );
         }
 
         try {
@@ -481,11 +497,15 @@ export const useFolders = (user) => {
                 }
             }
 
-            if (sourceId && !cachedSourceFolder) {
-                const sourceFolderSnap = await getDoc(doc(db, "folders", sourceId));
-                if (sourceFolderSnap.exists()) {
-                    oldFolderSharedUids = sourceFolderSnap.data().sharedWithUids || [];
+            if (removeFromFolderIds.length > 0 && cachedSourceFolders.length === 0) {
+                const fetchedSourceShared = [];
+                for (const sourceFolderId of removeFromFolderIds) {
+                    const sourceFolderSnap = await getDoc(doc(db, "folders", sourceFolderId));
+                    if (sourceFolderSnap.exists()) {
+                        fetchedSourceShared.push(...(sourceFolderSnap.data().sharedWithUids || []));
+                    }
                 }
+                oldFolderSharedUids = Array.from(new Set(fetchedSourceShared));
             }
         } catch (e) {
             console.error("Error fetching folder sharing info:", e);
@@ -508,7 +528,7 @@ export const useFolders = (user) => {
         setFolders(prev => prev.map(folder => {
             let nextSubjectIds = Array.isArray(folder.subjectIds) ? [...folder.subjectIds] : [];
 
-            if (sourceId && folder.id === sourceId) {
+            if (removeFromFolderIds.includes(folder.id)) {
                 nextSubjectIds = nextSubjectIds.filter(id => id !== subjectId);
             }
 
@@ -530,9 +550,11 @@ export const useFolders = (user) => {
         }));
 
         // Remove from old
-        if (sourceId) {
-            const sourceRef = doc(db, "folders", sourceId);
-            batch.update(sourceRef, { subjectIds: arrayRemove(subjectId), updatedAt: new Date() });
+        if (removeFromFolderIds.length > 0) {
+            removeFromFolderIds.forEach(sourceFolderId => {
+                const sourceRef = doc(db, "folders", sourceFolderId);
+                batch.update(sourceRef, { subjectIds: arrayRemove(subjectId), updatedAt: new Date() });
+            });
         }
 
         // Add to new
