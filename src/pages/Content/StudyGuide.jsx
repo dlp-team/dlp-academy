@@ -307,7 +307,7 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
                                                 
                                                 <div className="overflow-x-auto custom-scrollbar py-4 relative z-10">
                                                     {/* Usamos SmartTextRenderer para asegurar limpieza de backticks y delimitadores */}
-                                                    <SmartTextRenderer text={formula} />
+                                                    <BlockMath math={cleanMath(formula)} />
                                                 </div>
                                                 
                                                 <div className="absolute bottom-4 right-4 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
@@ -1115,7 +1115,7 @@ const StudyGuide = () => {
                                                                     {/* Área de fórmula — el cuadro crece al ancho de la fórmula */}
                                                                     <div className="flex items-center justify-center px-5 py-7">
                                                                         <div className="overflow-x-auto custom-scrollbar py-4 relative z-10 px-4">
-                                                                            <SmartTextRenderer text={formula} />
+                                                                            <BlockMath math={cleanMath(formula)} />
                                                                         </div>
                                                                     </div>
 
@@ -1165,7 +1165,7 @@ const StudyGuide = () => {
                                                                     <div className={`absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr ${topicGradient} opacity-5 rounded-tr-[3rem]`} />
                                                                     
                                                                     <div className="overflow-x-auto custom-scrollbar py-4 relative z-10 text-center px-2">
-                                                                        <SmartTextRenderer text={formula} />
+                                                                        <BlockMath math={cleanMath(formula)} />
                                                                     </div>
                                                                     
                                                                     <div className="absolute bottom-4 right-4 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
