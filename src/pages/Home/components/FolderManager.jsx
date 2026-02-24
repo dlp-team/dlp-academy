@@ -11,7 +11,6 @@ const FolderManager = ({
         name: '', 
         description: '', 
         color: 'from-amber-400 to-amber-600',
-        subjectIds: [],
         tags: []
     });
     const [shareEmail, setShareEmail] = useState('');
@@ -29,7 +28,6 @@ const FolderManager = ({
                     name: initialData.name || '',
                     description: initialData.description || '',
                     color: initialData.color || 'from-amber-400 to-amber-600',
-                    subjectIds: initialData.subjectIds || [],
                     tags: initialData.tags || []
                 });
                 setSharedList(initialData.sharedWith || []);
@@ -38,7 +36,6 @@ const FolderManager = ({
                     name: '', 
                     description: '', 
                     color: 'from-amber-400 to-amber-600',
-                    subjectIds: [],
                     tags: []
                 });
                 setSharedList([]);

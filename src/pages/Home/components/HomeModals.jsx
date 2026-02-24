@@ -56,7 +56,7 @@ const HomeModals = ({
                 <FolderDeleteModal
                     isOpen={deleteConfig.isOpen}
                     folderName={deleteConfig.item?.name || ''}
-                    itemCount={getSubjectCountInFolder(deleteConfig.item?.id) + (deleteConfig.item?.folderIds?.length || 0)}
+                    itemCount={getSubjectCountInFolder(deleteConfig.item?.id)}
                     onClose={() => setDeleteConfig({ isOpen: false, type: null, item: null })}
                     onDeleteAll={handleDeleteFolderAll}
                     onDeleteFolderOnly={handleDeleteFolderOnly}

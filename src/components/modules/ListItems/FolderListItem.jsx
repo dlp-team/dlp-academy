@@ -49,66 +49,30 @@ const FolderListItem = ({
 
 
     // --- CHILDREN CALCULATION ---
-    // --- 1. RECURSIVE COUNTING LOGIC (Same as FolderCard) ---
+    // Count direct children only (not recursive)
     const { subjectCount, folderCount, totalCount } = useMemo(() => {
-        // Fallback: If no folders list, use shallow count
-        if (!allFolders || allFolders.length === 0) {
-            const s = item.subjectIds?.length || 0;
-            const f = item.folderIds?.length || 0;
-            return { subjectCount: s, folderCount: f, totalCount: s + f };
+        if (!allFolders || !allSubjects) {
+            return { subjectCount: 0, folderCount: 0, totalCount: 0 };
         }
 
-        const folderMap = new Map(allFolders.map(f => [f.id, f]));
-        const visited = new Set();
-
-        const traverse = (currentId) => {
-            if (visited.has(currentId)) return { s: 0, f: 0 };
-            visited.add(currentId);
-
-            const currentFolder = folderMap.get(currentId);
-            if (!currentFolder) return { s: 0, f: 0 };
-
-            let s = currentFolder.subjectIds?.length || 0;
-            const subFolderIds = currentFolder.folderIds || [];
-            let f = subFolderIds.length; 
-
-            subFolderIds.forEach(childId => {
-                const childStats = traverse(childId);
-                s += childStats.s;
-                f += childStats.f;
-            });
-
-            return { s, f };
-        };
-
-        const stats = traverse(item.id);
+        // Direct children only
+        const directFolders = allFolders.filter(f => f.parentId === item.id).length;
+        const directSubjects = allSubjects.filter(s => s.folderId === item.id).length;
         
         return {
-            subjectCount: stats.s,
-            folderCount: stats.f,
-            totalCount: stats.s + stats.f
+            subjectCount: directSubjects,
+            folderCount: directFolders,
+            totalCount: directSubjects + directFolders
         };
-    }, [item, allFolders]);
+    }, [item, allFolders, allSubjects]);
 
     // --- 2. CHILDREN CALCULATION FOR RENDERING ---
     let childFolders = [];
     let childSubjects = [];
 
-    const folderIds = Array.isArray(item.folderIds) ? item.folderIds : [];
-    const subjectIds = Array.isArray(item.subjectIds) ? item.subjectIds : [];
-
-    const safeAllFolders = Array.isArray(allFolders) ? allFolders : [];
-    const safeAllSubjects = Array.isArray(allSubjects) ? allSubjects : [];
-
-    if (folderIds.length > 0) {
-        childFolders = safeAllFolders.filter(f => folderIds.includes(f.id));
-        // Keep sort order
-        childFolders.sort((a, b) => folderIds.indexOf(a.id) - folderIds.indexOf(b.id));
-    }
-    if (subjectIds.length > 0) {
-        childSubjects = safeAllSubjects.filter(s => subjectIds.includes(s.id));
-        childSubjects.sort((a, b) => subjectIds.indexOf(a.id) - subjectIds.indexOf(b.id));
-    }
+    // Query direct children by parentId and folderId (not from arrays)
+    childFolders = Array.isArray(allFolders) ? allFolders.filter(f => f.parentId === item.id) : [];
+    childSubjects = Array.isArray(allSubjects) ? allSubjects.filter(s => s.folderId === item.id) : [];
     
     const hasChildren = childFolders.length > 0 || childSubjects.length > 0;
 
