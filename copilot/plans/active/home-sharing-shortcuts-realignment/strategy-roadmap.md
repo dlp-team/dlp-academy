@@ -5,7 +5,7 @@
 2. Share pipeline shortcut guarantees (done)
 3. Dedupe and idempotency (done)
 4. Orphan shortcut behavior (done)
-5. Cross-view parity
+5. Cross-view parity (in progress)
 6. Verification and handoff
 - Keep single-parent hierarchy pointers (`parentId` for folders, `folderId` for subjects).
 - Respect `institutionId` isolation in queries and rule-compatible write patterns.

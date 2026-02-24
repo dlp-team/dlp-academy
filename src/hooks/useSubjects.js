@@ -231,16 +231,25 @@ export const useSubjects = (user) => {
 
             // 2. Update the subject
             const subjectRef = doc(db, 'subjects', subjectId);
-            // Get current sharedWith array to find the user object
-            const subjectSnap = await getDocs(query(collection(db, 'subjects'), where('__name__', '==', subjectId)));
-            let userObj = null;
-            if (!subjectSnap.empty) {
-                const subjectData = subjectSnap.docs[0].data();
-                userObj = (subjectData.sharedWith || []).find(u => u.uid === targetUid) || null;
+            const subjectSnap = await getDoc(subjectRef);
+            if (!subjectSnap.exists()) {
+                console.error("Subject not found to unshare");
+                return;
             }
+
+            const subjectData = subjectSnap.data() || {};
+            const currentSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
+            const currentSharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
+
+            const newSharedWith = currentSharedWith.filter(u =>
+                u.uid !== targetUid && u.email?.toLowerCase() !== emailLower
+            );
+            const newSharedWithUids = currentSharedWithUids.filter(uid => uid !== targetUid);
+
             await updateDoc(subjectRef, {
-                sharedWith: userObj ? arrayRemove(userObj) : [],
-                sharedWithUids: arrayRemove(targetUid),
+                sharedWith: newSharedWith,
+                sharedWithUids: newSharedWithUids,
+                isShared: newSharedWithUids.length > 0,
                 updatedAt: new Date()
             });
 

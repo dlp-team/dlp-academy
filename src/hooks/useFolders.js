@@ -381,9 +381,10 @@ export const useFolders = (user) => {
 
     const unshareFolder = async (folderId, email) => {
         try {
+            const emailLower = email.toLowerCase();
             // A. Find the user UID for this email (to remove from arrays)
             const usersRef = collection(db, 'users');
-            const q = query(usersRef, where('email', '==', email.toLowerCase()));
+            const q = query(usersRef, where('email', '==', emailLower));
             const querySnapshot = await getDocs(q);
             
             if (querySnapshot.empty) {
@@ -395,19 +396,27 @@ export const useFolders = (user) => {
             // B. Get Folder to find sharing info
             const folderRef = doc(db, 'folders', folderId);
             const folderSnap = await getDoc(folderRef);
+            if (!folderSnap.exists()) {
+                console.error("Folder not found to unshare");
+                return;
+            }
             const folderData = folderSnap.data();
             
             // Filter out the user from the sharedWith array object
-            const currentSharedWith = folderData.sharedWith || [];
-            const newSharedWith = currentSharedWith.filter(u => u.email?.toLowerCase() !== email.toLowerCase());
+            const currentSharedWith = Array.isArray(folderData.sharedWith) ? folderData.sharedWith : [];
+            const currentSharedWithUids = Array.isArray(folderData.sharedWithUids) ? folderData.sharedWithUids : [];
+            const newSharedWith = currentSharedWith.filter(u =>
+                u.uid !== targetUid && u.email?.toLowerCase() !== emailLower
+            );
+            const newSharedWithUids = currentSharedWithUids.filter(uid => uid !== targetUid);
 
             const batch = writeBatch(db);
 
             // C. Update Folder
             batch.update(folderRef, {
                 sharedWith: newSharedWith,        // Update the visual list
-                sharedWithUids: arrayRemove(targetUid), // Remove permissions
-                isShared: newSharedWith.length > 0, // Update isShared flag
+                sharedWithUids: newSharedWithUids, // Remove permissions
+                isShared: newSharedWithUids.length > 0, // Update isShared flag
                 updatedAt: new Date()
             });
 
@@ -418,12 +427,20 @@ export const useFolders = (user) => {
                 );
                 subjectsSnap.forEach(docSnap => {
                     const subjectRef = doc(db, "subjects", docSnap.id);
-                    const userObjToRemove = (folderData.sharedWith || []).find(u => u.uid === targetUid);
-                    const updateData = { sharedWithUids: arrayRemove(targetUid) };
-                    if (userObjToRemove !== undefined) {
-                        updateData.sharedWith = arrayRemove(userObjToRemove);
-                    }
-                    batch.update(subjectRef, updateData);
+                    const subjectData = docSnap.data() || {};
+                    const subjectSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
+                    const subjectSharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
+                    const newSubjectSharedWith = subjectSharedWith.filter(u =>
+                        u.uid !== targetUid && u.email?.toLowerCase() !== emailLower
+                    );
+                    const newSubjectSharedWithUids = subjectSharedWithUids.filter(uid => uid !== targetUid);
+
+                    batch.update(subjectRef, {
+                        sharedWith: newSubjectSharedWith,
+                        sharedWithUids: newSubjectSharedWithUids,
+                        isShared: newSubjectSharedWithUids.length > 0,
+                        updatedAt: new Date()
+                    });
                 });
             } catch (e) {
                 console.error("Error unsharing subjects in folder:", e);

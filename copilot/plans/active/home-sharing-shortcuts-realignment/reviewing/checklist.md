@@ -20,6 +20,7 @@
 - [ ] Moving source card updates source hierarchy fields only.
 - [ ] Deleting shortcut deletes shortcut only.
 - [ ] Deleting source resource preserves expected shortcut orphan behavior.
+- [ ] Unsharing preserves orphan shortcuts (ghost cards) without deleting shortcuts.
 
 ## Cross-View Parity
 
