@@ -46,7 +46,7 @@ export const useHomePageHandlers = ({
         const isKnownType = typeOrSourceFolderId === 'subject' || typeOrSourceFolderId === 'folder';
         const type = isKnownType ? typeOrSourceFolderId : 'subject';
         const explicitSourceFolderId = isKnownType ? sourceFolderIdMaybe : typeOrSourceFolderId;
-        const draggedShortcutId = isKnownType ? shortcutIdMaybe : sourceFolderIdMaybe;
+        let draggedShortcutId = isKnownType ? shortcutIdMaybe : sourceFolderIdMaybe;
 
         if (type === 'folder') {
             handleNestFolder(targetFolderId, subjectId);
@@ -66,6 +66,16 @@ export const useHomePageHandlers = ({
         const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
         const sourceFolder = (logic.folders || []).find(f => f.id === currentFolderId);
         const userId = currentUserId;
+
+        if (!draggedShortcutId && logic?.shortcuts) {
+            const inferredShortcut = (logic.shortcuts || []).find(
+                s =>
+                    s.targetType === 'subject' &&
+                    s.targetId === subjectId &&
+                    (s.parentId || null) === (currentFolderId || null)
+            );
+            draggedShortcutId = inferredShortcut?.id || null;
+        }
 
         if (draggedShortcutId && logic?.moveShortcut) {
             logic.moveShortcut(draggedShortcutId, targetFolderId || null);

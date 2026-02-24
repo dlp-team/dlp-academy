@@ -106,6 +106,7 @@ export const useFolderCardLogic = ({
         setIsOver(false);
 
         const subjectId = e.dataTransfer.getData('subjectId');
+        const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
         const draggedPosition = e.dataTransfer.getData('position');
         const droppedFolderId = e.dataTransfer.getData('folderId');
 
@@ -117,9 +118,10 @@ export const useFolderCardLogic = ({
                 folderId: folder.id,
                 subjectId,
                 subjectType,
-                subjectParentId
+                subjectParentId,
+                subjectShortcutId
             });
-            onDrop(folder.id, subjectId, subjectType, subjectParentId);
+            onDrop(folder.id, subjectId, subjectType, subjectParentId, subjectShortcutId || null);
         }
         else if (canDrop && onDropFolder && droppedFolderId && droppedFolderId !== folder.id) {
             console.log('[DND] FolderCard handleDrop → onDropFolder:', { folderId: folder.id, droppedFolderId });
