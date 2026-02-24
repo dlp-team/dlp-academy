@@ -20,11 +20,11 @@
  */
 export const isOwner = (item, userId) => {
     if (!item || !userId) {
-        console.log('[PERMISSION] isOwner: false', { item, userId });
+        // console.log('[PERMISSION] isOwner: false', { item, userId });
         return false;
     }
     const ownerCheck = item.ownerId === userId || item.uid === userId;
-    console.log('[PERMISSION] isOwner:', { item, userId, ownerCheck });
+    // console.log('[PERMISSION] isOwner:', { item, userId, ownerCheck });
     return ownerCheck;
 };
 
@@ -40,19 +40,19 @@ export const isOwner = (item, userId) => {
  */
 export const canEdit = (item, userId) => {
     if (!item || !userId) {
-        console.log('[PERMISSION] canEdit: false', { item, userId });
+        // console.log('[PERMISSION] canEdit: false', { item, userId });
         return false;
     }
     // Owner can always edit
     const owner = isOwner(item, userId);
     if (owner) {
-        console.log('[PERMISSION] canEdit: true (owner)', { item, userId });
+        // console.log('[PERMISSION] canEdit: true (owner)', { item, userId });
         return true;
     }
     // Check if user is in editorUids array (new schema)
     const editor = Array.isArray(item.editorUids) && item.editorUids.includes(userId);
     if (editor) {
-        console.log('[PERMISSION] canEdit: true (editorUids)', { item, userId });
+        // console.log('[PERMISSION] canEdit: true (editorUids)', { item, userId });
         return true;
     }
     // Legacy fallback: check sharedWith array with canEdit property
@@ -62,11 +62,11 @@ export const canEdit = (item, userId) => {
             (share.uid === userId || share.email === userId) && share.canEdit === true
         );
         if (sharedEdit) {
-            console.log('[PERMISSION] canEdit: true (sharedWith)', { item, userId });
+            // console.log('[PERMISSION] canEdit: true (sharedWith)', { item, userId });
             return true;
         }
     }
-    console.log('[PERMISSION] canEdit: false', { item, userId });
+    // console.log('[PERMISSION] canEdit: false', { item, userId });
     return false;
 };
 

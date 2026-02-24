@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { 
     collection, query, where, addDoc, updateDoc, deleteDoc, doc, 
-    getDoc, arrayUnion, arrayRemove, onSnapshot, writeBatch, getDocs
+    getDoc, setDoc, arrayUnion, arrayRemove, onSnapshot, writeBatch, getDocs
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { isInvalidFolderMove } from '../utils/folderUtils';
@@ -11,6 +11,17 @@ export const useFolders = (user) => {
     const [folders, setFolders] = useState([]);
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
+
+    const debugShare = (stage, payload = {}) => {
+        console.info('[SHARE_DEBUG][folder]', {
+            ts: new Date().toISOString(),
+            stage,
+            actorUid: user?.uid || null,
+            actorEmail: user?.email || null,
+            institutionId: currentInstitutionId,
+            ...payload
+        });
+    };
 
     useEffect(() => {
         if (!user) {
@@ -249,16 +260,19 @@ export const useFolders = (user) => {
     const shareFolder = async (folderId, email, role = 'viewer') => {
 
         if (user && user.email && user.email.toLowerCase() === email.toLowerCase()) {
+            debugShare('validation_fail_self_share', { folderId, email: email.toLowerCase() });
             alert("No puedes compartir una carpeta contigo mismo.");
             return;
         }
 
         try {
             const emailLower = email.toLowerCase();
+            debugShare('start', { folderId, email: emailLower, role });
             
             // 1. Find the user UID by email from your 'users' collection
             const usersRef = collection(db, 'users');
             const q = query(usersRef, where('email', '==', emailLower));
+            debugShare('user_lookup_query', { folderId, email: emailLower });
             const querySnapshot = await getDocs(q);
 
             let targetUid = null;
@@ -267,11 +281,14 @@ export const useFolders = (user) => {
                 targetUid = querySnapshot.docs[0].id;
                 const targetUserData = querySnapshot.docs[0].data() || {};
                 const targetInstitutionId = targetUserData.institutionId || null;
+                debugShare('user_lookup_success', { folderId, targetUid, targetInstitutionId });
                 if (targetInstitutionId && targetInstitutionId !== currentInstitutionId) {
+                    debugShare('validation_fail_cross_institution', { folderId, targetUid, targetInstitutionId });
                     alert("No puedes compartir entre instituciones diferentes.");
                     return;
                 }
             } else {
+                debugShare('validation_fail_user_not_found', { folderId, email: emailLower });
                 console.warn(`User with email ${emailLower} not found.`);
                 alert(`No se encontró usuario con el correo ${email}. El usuario debe crear una cuenta primero.`);
                 return;
@@ -290,6 +307,7 @@ export const useFolders = (user) => {
             const folderSnap = await getDoc(folderRef);
 
             if (!folderSnap.exists()) {
+                debugShare('validation_fail_folder_not_found', { folderId, targetUid });
                 console.error("Folder not found");
                 return;
             }
@@ -302,11 +320,19 @@ export const useFolders = (user) => {
             
             // Check if already shared with this user (idempotent behavior)
             const alreadyShared = folderData.sharedWith?.some(s => s.uid === targetUid);
+            debugShare('folder_loaded', {
+                folderId,
+                targetUid,
+                alreadyShared,
+                sharedWithCount: Array.isArray(folderData.sharedWith) ? folderData.sharedWith.length : 0,
+                sharedWithUidsCount: Array.isArray(folderData.sharedWithUids) ? folderData.sharedWithUids.length : 0
+            });
             
            const batch = writeBatch(db);
 
             // A) Update the Folder only when needed
             if (!alreadyShared) {
+                debugShare('source_update_enqueued_folder', { folderId, targetUid });
                 batch.update(folderRef, {
                     sharedWith: arrayUnion(shareData),      // For UI display
                     sharedWithUids: arrayUnion(targetUid),  // For Security Rules & Perms
@@ -321,6 +347,11 @@ export const useFolders = (user) => {
                     const subjectsSnap = await getDocs(
                         query(collection(db, "subjects"), where("folderId", "==", folderId))
                     );
+                    debugShare('source_update_subjects_query_success', {
+                        folderId,
+                        targetUid,
+                        subjectsCount: subjectsSnap.size
+                    });
                     subjectsSnap.forEach(docSnap => {
                         const subjectData = docSnap.data() || {};
                         subjectsRollbackState.push({
@@ -336,57 +367,60 @@ export const useFolders = (user) => {
                         });
                     });
                 } catch (e) {
+                    debugShare('source_update_subjects_query_fail', {
+                        folderId,
+                        targetUid,
+                        errorCode: e?.code || null,
+                        errorMessage: e?.message || String(e)
+                    });
                     console.error("Error sharing subjects in folder:", e);
                 }
             }
 
             // 6. COMMIT CHANGES
+            debugShare('source_update_commit_attempt', { folderId, targetUid, alreadyShared });
             await batch.commit();
+            debugShare('source_update_commit_success', { folderId, targetUid, alreadyShared });
             if (!alreadyShared) {
                 sourceUpdated = true;
             }
 
-            // 7. Ensure exactly one folder shortcut exists for recipient (Option B root shortcut)
+            // 7. Ensure folder shortcut exists for recipient (deterministic upsert)
             try {
-                const existingShortcutQuery = query(
-                    collection(db, 'shortcuts'),
-                    where('ownerId', '==', targetUid),
-                    where('targetId', '==', folderId),
-                    where('targetType', '==', 'folder')
-                );
-                const existingShortcutSnap = await getDocs(existingShortcutQuery);
-                const existingShortcutDocs = existingShortcutSnap.docs.filter(d => {
-                    const data = d.data() || {};
-                    return !data.institutionId || data.institutionId === currentInstitutionId;
-                });
+                const shortcutId = `${targetUid}_${folderId}_folder`;
+                const shortcutRef = doc(db, 'shortcuts', shortcutId);
+                const shortcutPayload = {
+                    ownerId: targetUid,
+                    parentId: null,
+                    targetId: folderId,
+                    targetType: 'folder',
+                    institutionId: currentInstitutionId,
+                    shortcutName: folderData.name || null,
+                    shortcutColor: folderData.color || null,
+                    shortcutCardStyle: folderData.cardStyle || null,
+                    shortcutModernFillColor: folderData.modernFillColor || null,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                };
 
-                if (existingShortcutDocs.length === 0) {
-                    await addDoc(collection(db, 'shortcuts'), {
-                        ownerId: targetUid,
-                        parentId: null,
-                        targetId: folderId,
-                        targetType: 'folder',
-                        institutionId: currentInstitutionId,
-                        shortcutName: folderData.name || null,
-                        shortcutColor: folderData.color || null,
-                        shortcutCardStyle: folderData.cardStyle || null,
-                        shortcutModernFillColor: folderData.modernFillColor || null,
-                        createdAt: new Date()
-                    });
-                } else {
-                    const primaryShortcut = existingShortcutDocs[0];
-                    await updateDoc(doc(db, 'shortcuts', primaryShortcut.id), {
-                        institutionId: currentInstitutionId,
-                        updatedAt: new Date()
-                    });
-                    if (existingShortcutDocs.length > 1) {
-                        const duplicateDocs = existingShortcutDocs.slice(1);
-                        await Promise.all(duplicateDocs.map(d => deleteDoc(doc(db, 'shortcuts', d.id))));
-                    }
-                }
+                debugShare('shortcut_upsert_attempt', { folderId, targetUid, shortcutId });
+                await setDoc(shortcutRef, shortcutPayload, { merge: true });
+                debugShare('shortcut_upsert_success', { folderId, targetUid, shortcutId });
             } catch (shortcutError) {
+                debugShare('shortcut_step_fail', {
+                    folderId,
+                    targetUid,
+                    sourceUpdated,
+                    errorCode: shortcutError?.code || null,
+                    errorMessage: shortcutError?.message || String(shortcutError)
+                });
                 if (sourceUpdated) {
                     try {
+                        debugShare('rollback_attempt', {
+                            folderId,
+                            targetUid,
+                            subjectsRollbackCount: subjectsRollbackState.length
+                        });
                         const rollbackBatch = writeBatch(db);
                         rollbackBatch.update(folderRef, {
                             sharedWith: originalFolderSharedWith,
@@ -405,7 +439,14 @@ export const useFolders = (user) => {
                         });
 
                         await rollbackBatch.commit();
+                        debugShare('rollback_success', { folderId, targetUid });
                     } catch (rollbackError) {
+                        debugShare('rollback_fail', {
+                            folderId,
+                            targetUid,
+                            errorCode: rollbackError?.code || null,
+                            errorMessage: rollbackError?.message || String(rollbackError)
+                        });
                         console.error('Folder share rollback failed:', rollbackError);
                     }
                     throw new Error('No se pudo crear el acceso directo. Se revirtió el compartido.');
@@ -413,6 +454,7 @@ export const useFolders = (user) => {
                 throw shortcutError;
             }
 
+            debugShare('success', { folderId, targetUid, alreadyShared });
             return shareData;
 
         } catch (error) {

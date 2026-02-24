@@ -1,7 +1,7 @@
 // src/hooks/useSubjects.js
 import { useState, useEffect } from 'react';
 import { 
-    collection, query, where, getDocs, getDoc, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy
+    collection, query, where, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -9,6 +9,17 @@ export const useSubjects = (user) => {
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
+
+    const debugShare = (stage, payload = {}) => {
+        console.info('[SHARE_DEBUG][subject]', {
+            ts: new Date().toISOString(),
+            stage,
+            actorUid: user?.uid || null,
+            actorEmail: user?.email || null,
+            institutionId: currentInstitutionId,
+            ...payload
+        });
+    };
 
     useEffect(() => {
         if (!user) {
@@ -107,12 +118,15 @@ export const useSubjects = (user) => {
     const shareSubject = async (subjectId, email) => {
         try {
             const emailLower = email.toLowerCase();
+            debugShare('start', { subjectId, email: emailLower });
             if (user?.email?.toLowerCase() === emailLower) {
+                debugShare('validation_fail_self_share', { subjectId, email: emailLower });
                 throw new Error("No puedes compartir contigo mismo.");
             }
             // 1. Find the user UID by email from your 'users' collection
             const usersRef = collection(db, 'users');
             const q = query(usersRef, where('email', '==', emailLower));
+            debugShare('user_lookup_query', { subjectId, email: emailLower });
             const querySnapshot = await getDocs(q);
 
             let targetUid = null;
@@ -121,11 +135,18 @@ export const useSubjects = (user) => {
                 targetUid = querySnapshot.docs[0].id;
                 const targetUserData = querySnapshot.docs[0].data() || {};
                 const targetInstitutionId = targetUserData.institutionId || null;
+                debugShare('user_lookup_success', { subjectId, targetUid, targetInstitutionId });
 
                 if (targetInstitutionId && targetInstitutionId !== currentInstitutionId) {
+                    debugShare('validation_fail_cross_institution', {
+                        subjectId,
+                        targetUid,
+                        targetInstitutionId
+                    });
                     throw new Error("No puedes compartir entre instituciones diferentes.");
                 }
             } else {
+                debugShare('validation_fail_user_not_found', { subjectId, email: emailLower });
                 throw new Error("No existe ningún usuario registrado con ese correo.");
             }
 
@@ -134,16 +155,19 @@ export const useSubjects = (user) => {
             const subjectSnap = await getDoc(subjectRef);
 
             if (!subjectSnap.exists()) {
+                debugShare('validation_fail_subject_not_found', { subjectId, targetUid });
                 throw new Error("No se encontró la asignatura.");
             }
 
             const subjectData = subjectSnap.data() || {};
 
             if (subjectData.ownerId && subjectData.ownerId === targetUid) {
+                debugShare('validation_fail_target_is_owner', { subjectId, targetUid });
                 throw new Error("No puedes compartir con el propietario.");
             }
 
             if (targetUid === user?.uid) {
+                debugShare('validation_fail_target_is_actor', { subjectId, targetUid });
                 throw new Error("No puedes compartir contigo mismo.");
             }
 
@@ -151,6 +175,13 @@ export const useSubjects = (user) => {
             const alreadyShared =
                 (Array.isArray(subjectData.sharedWithUids) && subjectData.sharedWithUids.includes(targetUid)) ||
                 (Array.isArray(subjectData.sharedWith) && subjectData.sharedWith.some(entry => entry.uid === targetUid));
+            debugShare('subject_loaded', {
+                subjectId,
+                targetUid,
+                alreadyShared,
+                sharedWithCount: Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith.length : 0,
+                sharedWithUidsCount: Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids.length : 0
+            });
 
             // 3. Build share data
             const shareData = {
@@ -167,6 +198,7 @@ export const useSubjects = (user) => {
             // 4. Update source sharing only if needed
             if (!alreadyShared) {
                 try {
+                    debugShare('source_update_attempt', { subjectId, targetUid });
                     await updateDoc(subjectRef, {
                         sharedWith: arrayUnion(shareData),
                         sharedWithUids: arrayUnion(targetUid),
@@ -174,62 +206,71 @@ export const useSubjects = (user) => {
                         updatedAt: new Date()
                     });
                     sourceUpdated = true;
+                    debugShare('source_update_success', { subjectId, targetUid });
                 } catch (err) {
+                    debugShare('source_update_fail', {
+                        subjectId,
+                        targetUid,
+                        errorCode: err?.code || null,
+                        errorMessage: err?.message || String(err)
+                    });
                     throw err;
                 }
             }
 
-            // 5. Ensure exactly one shortcut exists for the recipient (even if already shared)
+            // 5. Ensure shortcut exists for the recipient (deterministic upsert, avoids query/index/rules read issues)
             try {
-                const existingShortcutQuery = query(
-                    collection(db, 'shortcuts'),
-                    where('ownerId', '==', targetUid),
-                    where('targetId', '==', subjectId),
-                    where('targetType', '==', 'subject')
-                );
-                const existingShortcutSnap = await getDocs(existingShortcutQuery);
-                const existingShortcutDocs = existingShortcutSnap.docs.filter(d => {
-                    const data = d.data() || {};
-                    return !data.institutionId || data.institutionId === currentInstitutionId;
-                });
+                const shortcutId = `${targetUid}_${subjectId}_subject`;
+                const shortcutRef = doc(db, 'shortcuts', shortcutId);
+                const shortcutPayload = {
+                    ownerId: targetUid,
+                    parentId: null,
+                    targetId: subjectId,
+                    targetType: 'subject',
+                    institutionId: currentInstitutionId,
+                    shortcutName: subjectData.name || null,
+                    shortcutCourse: subjectData.course || null,
+                    shortcutColor: subjectData.color || null,
+                    shortcutIcon: subjectData.icon || null,
+                    shortcutCardStyle: subjectData.cardStyle || null,
+                    shortcutModernFillColor: subjectData.modernFillColor || null,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                };
 
-                if (existingShortcutDocs.length === 0) {
-                    const shortcutPayload = {
-                        ownerId: targetUid,
-                        parentId: null,
-                        targetId: subjectId,
-                        targetType: 'subject',
-                        institutionId: currentInstitutionId,
-                        shortcutName: subjectData.name || null,
-                        shortcutCourse: subjectData.course || null,
-                        shortcutColor: subjectData.color || null,
-                        shortcutIcon: subjectData.icon || null,
-                        shortcutCardStyle: subjectData.cardStyle || null,
-                        shortcutModernFillColor: subjectData.modernFillColor || null,
-                        createdAt: new Date()
-                    };
-                    await addDoc(collection(db, 'shortcuts'), shortcutPayload);
-                } else {
-                    const primaryShortcut = existingShortcutDocs[0];
-                    await updateDoc(doc(db, 'shortcuts', primaryShortcut.id), {
-                        institutionId: currentInstitutionId,
-                        updatedAt: new Date()
-                    });
-                    if (existingShortcutDocs.length > 1) {
-                        const duplicateDocs = existingShortcutDocs.slice(1);
-                        await Promise.all(duplicateDocs.map(d => deleteDoc(doc(db, 'shortcuts', d.id))));
-                    }
-                }
+                debugShare('shortcut_upsert_attempt', {
+                    subjectId,
+                    targetUid,
+                    shortcutId,
+                    targetType: shortcutPayload.targetType
+                });
+                await setDoc(shortcutRef, shortcutPayload, { merge: true });
+                debugShare('shortcut_upsert_success', { subjectId, targetUid, shortcutId });
             } catch (shortcutError) {
+                debugShare('shortcut_step_fail', {
+                    subjectId,
+                    targetUid,
+                    sourceUpdated,
+                    errorCode: shortcutError?.code || null,
+                    errorMessage: shortcutError?.message || String(shortcutError)
+                });
                 if (sourceUpdated) {
                     try {
+                        debugShare('rollback_attempt', { subjectId, targetUid });
                         await updateDoc(subjectRef, {
                             sharedWith: originalSharedWith,
                             sharedWithUids: originalSharedWithUids,
                             isShared: originalSharedWithUids.length > 0,
                             updatedAt: new Date()
                         });
+                        debugShare('rollback_success', { subjectId, targetUid });
                     } catch (rollbackError) {
+                        debugShare('rollback_fail', {
+                            subjectId,
+                            targetUid,
+                            errorCode: rollbackError?.code || null,
+                            errorMessage: rollbackError?.message || String(rollbackError)
+                        });
                         console.error('Subject share rollback failed:', rollbackError);
                     }
                     throw new Error('No se pudo crear el acceso directo. Se revirtió el compartido.');
@@ -237,6 +278,7 @@ export const useSubjects = (user) => {
                 throw shortcutError;
             }
 
+            debugShare('success', { subjectId, targetUid, alreadyShared });
             return { ...shareData, alreadyShared };
 
         } catch (error) {
