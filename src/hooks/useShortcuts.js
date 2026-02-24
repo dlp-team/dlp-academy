@@ -30,6 +30,16 @@ export const useShortcuts = (user) => {
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
 
+    const debugVisibility = (stage, payload = {}) => {
+        console.info('[VISIBILITY_DEBUG][shortcuts]', {
+            ts: new Date().toISOString(),
+            stage,
+            userUid: user?.uid || null,
+            institutionId: currentInstitutionId,
+            ...payload
+        });
+    };
+
     useEffect(() => {
         if (!user) {
             setShortcuts([]);
@@ -49,6 +59,7 @@ export const useShortcuts = (user) => {
         const unsubscribe = onSnapshot(
             shortcutsQuery,
             async (snapshot) => {
+                debugVisibility('shortcuts_snapshot', { rawCount: snapshot.docs.length });
                 const shortcutDocs = snapshot.docs
                     .map(d => ({ id: d.id, ...d.data() }))
                     .filter(shortcut => {
@@ -57,6 +68,11 @@ export const useShortcuts = (user) => {
                         if (!currentInstitutionId || !shortcut?.institutionId) return true;
                         return shortcut.institutionId === currentInstitutionId;
                     });
+
+                debugVisibility('shortcuts_filtered', {
+                    visibleCount: shortcutDocs.length,
+                    ids: shortcutDocs.map(s => s.id)
+                });
                 
                 setShortcuts(shortcutDocs);
 
@@ -88,8 +104,18 @@ export const useShortcuts = (user) => {
             shortcuts.map(async (shortcut) => {
                 try {
                     const { targetId, targetType } = shortcut;
+                    debugVisibility('resolve_start', {
+                        shortcutId: shortcut.id,
+                        targetId,
+                        targetType,
+                        shortcutOwnerId: shortcut.ownerId
+                    });
 
                     if (shortcut?.institutionId && shortcut.institutionId !== currentInstitutionId) {
+                        debugVisibility('resolve_tenant_mismatch_shortcut', {
+                            shortcutId: shortcut.id,
+                            shortcutInstitutionId: shortcut.institutionId
+                        });
                         return {
                             ...shortcut,
                             isShortcut: true,
@@ -109,6 +135,7 @@ export const useShortcuts = (user) => {
                     const targetSnap = await getDoc(targetRef);
 
                     if (!targetSnap.exists()) {
+                        debugVisibility('resolve_target_deleted', { shortcutId: shortcut.id, targetId, targetType });
                         // Target was deleted - return ghost object
                         return {
                             ...shortcut,
@@ -127,6 +154,11 @@ export const useShortcuts = (user) => {
                     const targetData = { id: targetSnap.id, ...targetSnap.data() };
 
                     if (targetData?.institutionId && targetData.institutionId !== currentInstitutionId) {
+                        debugVisibility('resolve_tenant_mismatch_target', {
+                            shortcutId: shortcut.id,
+                            targetId,
+                            targetInstitutionId: targetData?.institutionId
+                        });
                         return {
                             ...shortcut,
                             isShortcut: true,
@@ -141,6 +173,13 @@ export const useShortcuts = (user) => {
                     }
 
                     if (!canView(targetData, user.uid)) {
+                        debugVisibility('resolve_access_revoked', {
+                            shortcutId: shortcut.id,
+                            targetId,
+                            targetType,
+                            targetOwnerId: targetData?.ownerId || targetData?.uid || null,
+                            targetSharedWithUids: Array.isArray(targetData?.sharedWithUids) ? targetData.sharedWithUids : []
+                        });
                         return {
                             ...shortcut,
                             isShortcut: true,
@@ -176,6 +215,11 @@ export const useShortcuts = (user) => {
                         parentId: shortcut.parentId
                     };
                 } catch (error) {
+                    debugVisibility('resolve_error', {
+                        shortcutId: shortcut.id,
+                        errorCode: error?.code || null,
+                        errorMessage: error?.message || String(error)
+                    });
                     console.error(`Failed to resolve shortcut ${shortcut.id}:`, error);
                     // Return ghost on error
                     return {

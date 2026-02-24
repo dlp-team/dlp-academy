@@ -12,16 +12,7 @@ export const useFolders = (user) => {
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
 
-    const debugShare = (stage, payload = {}) => {
-        console.info('[SHARE_DEBUG][folder]', {
-            ts: new Date().toISOString(),
-            stage,
-            actorUid: user?.uid || null,
-            actorEmail: user?.email || null,
-            institutionId: currentInstitutionId,
-            ...payload
-        });
-    };
+    const debugShare = () => {};
 
     useEffect(() => {
         if (!user) {

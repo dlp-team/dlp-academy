@@ -26,6 +26,17 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     const [folderModalConfig, setFolderModalConfig] = useState({ isOpen: false, isEditing: false, data: null });
     const [deleteConfig, setDeleteConfig] = useState({ isOpen: false, type: null, item: null });
 
+    const debugVisibility = (stage, payload = {}) => {
+        console.info('[VISIBILITY_DEBUG][home-state]', {
+            ts: new Date().toISOString(),
+            stage,
+            userUid: user?.uid || null,
+            currentFolderId: currentFolder?.id || null,
+            viewMode,
+            ...payload
+        });
+    };
+
     useEffect(() => {
         if (!folders || folders.length === 0) {
             return;
@@ -185,6 +196,15 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
         return merged;
     }, [filteredSubjects, resolvedShortcuts, currentFolder, user]);
+
+    useEffect(() => {
+        debugVisibility('merge_result', {
+            resolvedShortcutsCount: Array.isArray(resolvedShortcuts) ? resolvedShortcuts.length : 0,
+            filteredSubjectsCount: Array.isArray(filteredSubjects) ? filteredSubjects.length : 0,
+            subjectsWithShortcutsCount: Array.isArray(subjectsWithShortcuts) ? subjectsWithShortcuts.length : 0,
+            subjectIds: Array.isArray(subjectsWithShortcuts) ? subjectsWithShortcuts.map(s => s.id || s.shortcutId) : []
+        });
+    }, [resolvedShortcuts, filteredSubjects, subjectsWithShortcuts, currentFolder, viewMode]);
 
     const filteredSubjectsByTags = useMemo(() => {
         if (selectedTags.length === 0) return subjectsWithShortcuts;

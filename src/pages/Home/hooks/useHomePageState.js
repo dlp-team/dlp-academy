@@ -137,7 +137,12 @@ export const useHomePageState = ({ logic, searchQuery }) => {
         if (logic.viewMode) localStorage.setItem('dlp_last_viewMode', logic.viewMode);
     }, [logic.viewMode]);
 
-    const hasContent = (logic.subjects || []).length > 0 || displayedFolders.length > 0;
+    const groupedSubjectsCount = Object.values(logic.groupedContent || {}).reduce((total, bucket) => {
+        if (!Array.isArray(bucket)) return total;
+        return total + bucket.length;
+    }, 0);
+
+    const hasContent = groupedSubjectsCount > 0 || displayedFolders.length > 0;
 
     return {
         isFilterOpen,
