@@ -55,7 +55,7 @@ export const useHomeHandlers = ({
 
         try {
             if (subjectModalConfig.isEditing) {
-                if (formData?.isShortcut && formData?.shortcutId && updateShortcutAppearance) {
+                if (formData?.shortcutId && updateShortcutAppearance) {
                     await updateShortcutAppearance(formData.shortcutId, {
                         name: formData.name,
                         course: formData.course,
@@ -100,7 +100,7 @@ export const useHomeHandlers = ({
 
     const handleSaveFolder = async formData => {
         if (folderModalConfig.isEditing) {
-            if (formData?.isShortcut && formData?.shortcutId && updateShortcutAppearance) {
+            if (formData?.shortcutId && updateShortcutAppearance) {
                 await updateShortcutAppearance(formData.shortcutId, {
                     name: formData.name,
                     tags: formData.tags,

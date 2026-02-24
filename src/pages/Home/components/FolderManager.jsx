@@ -27,6 +27,8 @@ const FolderManager = ({
             if (isEditing && initialData) {
                 setFormData({
                     id: initialData.id,
+                    shortcutId: initialData.shortcutId || null,
+                    isShortcut: initialData.isShortcut === true,
                     name: initialData.name || '',
                     description: initialData.description || '',
                     color: initialData.color || 'from-amber-400 to-amber-600',
@@ -37,6 +39,8 @@ const FolderManager = ({
                 setSharedList(initialData.sharedWith || []);
             } else {
                 setFormData({ 
+                    shortcutId: null,
+                    isShortcut: false,
                     name: '', 
                     description: '', 
                     color: 'from-amber-400 to-amber-600',

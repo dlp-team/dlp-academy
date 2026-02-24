@@ -31,6 +31,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             if (isEditing && initialData) {
                 setFormData({
                     id: initialData.id,
+                    shortcutId: initialData.shortcutId || null,
+                    isShortcut: initialData.isShortcut === true,
                     name: initialData.name || '',
                     course: initialData.course || '',
                     level: '', grade: '', 
@@ -51,6 +53,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 const validGrade = validLevel && prefilledGrade && EDUCATION_LEVELS[validLevel].includes(prefilledGrade) ? prefilledGrade : '';
                 
                 setFormData({ 
+                    shortcutId: null,
+                    isShortcut: false,
                     name: '',
                     level: validLevel,
                     grade: validGrade,

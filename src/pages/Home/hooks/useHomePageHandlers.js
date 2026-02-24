@@ -27,7 +27,7 @@ export const useHomePageHandlers = ({
         const subjectId = e.dataTransfer.getData('subjectId');
         const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
         const folderId = e.dataTransfer.getData('folderId');
-        const folderShortcutId = e.dataTransfer.getData('folderShortcutId');
+        let folderShortcutId = e.dataTransfer.getData('folderShortcutId');
         if (logic.currentFolder) {
             const currentId = logic.currentFolder.id;
             const parentId = logic.currentFolder.parentId;
@@ -40,6 +40,19 @@ export const useHomePageHandlers = ({
             } else if (folderShortcutId && logic?.moveShortcut) {
                 await logic.moveShortcut(folderShortcutId, parentId || null);
             } else if (folderId && folderId !== currentId) {
+                if (logic?.shortcuts) {
+                    const inferredFolderShortcut = (logic.shortcuts || []).find(
+                        s =>
+                            s.targetType === 'folder' &&
+                            s.targetId === folderId &&
+                            (s.parentId || null) === (currentId || null)
+                    );
+                    folderShortcutId = inferredFolderShortcut?.id || null;
+                }
+                if (folderShortcutId && logic?.moveShortcut) {
+                    await logic.moveShortcut(folderShortcutId, parentId || null);
+                    return;
+                }
                 await moveFolderToParent(folderId, currentId, parentId);
             }
         }
@@ -52,6 +65,16 @@ export const useHomePageHandlers = ({
         let draggedShortcutId = isKnownType ? shortcutIdMaybe : sourceFolderIdMaybe;
 
         if (type === 'folder') {
+            const sourceParentId = explicitSourceFolderId !== undefined ? explicitSourceFolderId : (logic.currentFolder ? logic.currentFolder.id : null);
+            if (!draggedShortcutId && logic?.shortcuts) {
+                const inferredFolderShortcut = (logic.shortcuts || []).find(
+                    s =>
+                        s.targetType === 'folder' &&
+                        s.targetId === subjectId &&
+                        (s.parentId || null) === (sourceParentId || null)
+                );
+                draggedShortcutId = inferredFolderShortcut?.id || null;
+            }
             handleNestFolder(targetFolderId, subjectId, draggedShortcutId || null);
             return true;
         }
@@ -140,8 +163,18 @@ export const useHomePageHandlers = ({
         if (subjectId) {
             return handleDropOnFolderWrapper(targetFolderId, subjectId, 'subject', currentFolderId);
         }
-        if (droppedFolderShortcutId && logic?.moveShortcut) {
-            logic.moveShortcut(droppedFolderShortcutId, targetFolderId || null);
+        let resolvedFolderShortcutId = droppedFolderShortcutId;
+        if (!resolvedFolderShortcutId && droppedFolderId && logic?.shortcuts) {
+            const inferredFolderShortcut = (logic.shortcuts || []).find(
+                s =>
+                    s.targetType === 'folder' &&
+                    s.targetId === droppedFolderId &&
+                    (s.parentId || null) === (currentFolderId || null)
+            );
+            resolvedFolderShortcutId = inferredFolderShortcut?.id || null;
+        }
+        if (resolvedFolderShortcutId && logic?.moveShortcut) {
+            logic.moveShortcut(resolvedFolderShortcutId, targetFolderId || null);
             return true;
         }
         if (droppedFolderId) {
