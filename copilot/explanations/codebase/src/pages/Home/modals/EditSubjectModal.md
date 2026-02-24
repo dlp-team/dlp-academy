@@ -1,17 +1,16 @@
-# FolderManager.jsx
+# EditSubjectModal.jsx
 
 ## Overview
-- **Source file:** `src/pages/Home/components/FolderManager.jsx`
+- **Source file:** `src/pages/Home/modals/EditSubjectModal.jsx`
 - **Last documented:** 2026-02-24
-- **Role:** Reusable UI component consumed by the parent page/module.
+- **Role:** Modal/dialog UI used for create, edit, confirm, or detail flows.
 
 ## Responsibilities
 - Manages local UI state and interaction flow.
-- Executes side effects tied to lifecycle or dependency changes.
 - Handles user events and triggers updates/actions.
 
 ## Exports
-- `default FolderManager`
+- `default EditSubjectModal`
 
 ## Main Dependencies
 - `react`

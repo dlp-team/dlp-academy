@@ -1,9 +1,9 @@
-# FolderManager.jsx
+# PositionModal.jsx
 
 ## Overview
-- **Source file:** `src/pages/Home/components/FolderManager.jsx`
+- **Source file:** `src/pages/Subject/modals/PositionModal.jsx`
 - **Last documented:** 2026-02-24
-- **Role:** Reusable UI component consumed by the parent page/module.
+- **Role:** Modal/dialog UI used for create, edit, confirm, or detail flows.
 
 ## Responsibilities
 - Manages local UI state and interaction flow.
@@ -11,12 +11,11 @@
 - Handles user events and triggers updates/actions.
 
 ## Exports
-- `default FolderManager`
+- `default PositionModal`
 
 ## Main Dependencies
 - `react`
 - `lucide-react`
-- `../../../utils/subjectConstants`
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
