@@ -387,6 +387,7 @@ export const useFolders = (user) => {
                     targetType: 'folder',
                     institutionId: currentInstitutionId,
                     shortcutName: folderData.name || null,
+                    shortcutTags: Array.isArray(folderData.tags) ? folderData.tags : [],
                     shortcutColor: folderData.color || null,
                     shortcutCardStyle: folderData.cardStyle || null,
                     shortcutModernFillColor: folderData.modernFillColor || null,

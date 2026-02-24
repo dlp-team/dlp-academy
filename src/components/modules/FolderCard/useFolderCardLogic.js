@@ -124,8 +124,9 @@ export const useFolderCardLogic = ({
             onDrop(folder.id, subjectId, subjectType, subjectParentId, subjectShortcutId || null);
         }
         else if (canDrop && onDropFolder && droppedFolderId && droppedFolderId !== folder.id) {
-            console.log('[DND] FolderCard handleDrop → onDropFolder:', { folderId: folder.id, droppedFolderId });
-            onDropFolder(folder.id, droppedFolderId);
+            const droppedFolderShortcutId = e.dataTransfer.getData('folderShortcutId') || null;
+            console.log('[DND] FolderCard handleDrop → onDropFolder:', { folderId: folder.id, droppedFolderId, droppedFolderShortcutId });
+            onDropFolder(folder.id, droppedFolderId, droppedFolderShortcutId);
         }
         else if (draggable && onDropReorder && droppedFolderId && draggedPosition !== undefined) {
             console.log('[DND] FolderCard handleDrop → onDropReorder:', { droppedFolderId, draggedPosition, position });
@@ -137,7 +138,14 @@ export const useFolderCardLogic = ({
         if (draggable && onDragStart) {
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('folderId', folder.id);
+            e.dataTransfer.setData('folderShortcutId', folder.shortcutId || '');
             e.dataTransfer.setData('position', position.toString());
+            e.dataTransfer.setData('treeItem', JSON.stringify({
+                id: folder.id,
+                type: 'folder',
+                parentId: folder.shortcutParentId ?? folder.parentId ?? null,
+                shortcutId: folder.shortcutId || null
+            }));
             onDragStart(folder, position);
         }
     };

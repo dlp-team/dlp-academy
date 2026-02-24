@@ -1,7 +1,7 @@
 // src/pages/Home/components/FolderManager.jsx
 import React, { useState, useEffect } from 'react';
 import { X, Save, Plus, Trash2, Share2, Users } from 'lucide-react';
-import { COLORS } from '../../../utils/subjectConstants';
+import { COLORS, MODERN_FILL_COLORS } from '../../../utils/subjectConstants';
 
 const FolderManager = ({ 
     isOpen, onClose, onSave, initialData, isEditing, 
@@ -11,7 +11,9 @@ const FolderManager = ({
         name: '', 
         description: '', 
         color: 'from-amber-400 to-amber-600',
-        tags: []
+        tags: [],
+        cardStyle: 'default',
+        modernFillColor: MODERN_FILL_COLORS[0].value
     });
     const [shareEmail, setShareEmail] = useState('');
     const [shareRole, setShareRole] = useState('viewer');
@@ -28,7 +30,9 @@ const FolderManager = ({
                     name: initialData.name || '',
                     description: initialData.description || '',
                     color: initialData.color || 'from-amber-400 to-amber-600',
-                    tags: initialData.tags || []
+                    tags: initialData.tags || [],
+                    cardStyle: initialData.cardStyle || 'default',
+                    modernFillColor: initialData.fillColor || initialData.modernFillColor || MODERN_FILL_COLORS[0].value
                 });
                 setSharedList(initialData.sharedWith || []);
             } else {
@@ -36,7 +40,9 @@ const FolderManager = ({
                     name: '', 
                     description: '', 
                     color: 'from-amber-400 to-amber-600',
-                    tags: []
+                    tags: [],
+                    cardStyle: 'default',
+                    modernFillColor: MODERN_FILL_COLORS[0].value
                 });
                 setSharedList([]);
             }
@@ -217,6 +223,42 @@ const FolderManager = ({
                                     ))}
                                 </div>
                             </div>
+
+                            {/* Style */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Estilo</label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, cardStyle: 'default' })}
+                                        className={`px-3 py-2 rounded-xl border transition-colors ${formData.cardStyle === 'default' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300'}`}
+                                    >
+                                        Default
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, cardStyle: 'modern' })}
+                                        className={`px-3 py-2 rounded-xl border transition-colors ${formData.cardStyle === 'modern' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300'}`}
+                                    >
+                                        Modern
+                                    </button>
+                                </div>
+                            </div>
+
+                            {formData.cardStyle === 'modern' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Relleno moderno</label>
+                                    <select
+                                        value={formData.modernFillColor}
+                                        onChange={(e) => setFormData({ ...formData, modernFillColor: e.target.value })}
+                                        className="w-full px-4 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                                    >
+                                        {MODERN_FILL_COLORS.map((option) => (
+                                            <option key={option.value} value={option.value}>{option.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
 
                             {/* Tags (Simplified for brevity, keep your full logic) */}
                             <div>

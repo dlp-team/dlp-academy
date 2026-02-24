@@ -27,6 +27,7 @@ export const useHomePageHandlers = ({
         const subjectId = e.dataTransfer.getData('subjectId');
         const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
         const folderId = e.dataTransfer.getData('folderId');
+        const folderShortcutId = e.dataTransfer.getData('folderShortcutId');
         if (logic.currentFolder) {
             const currentId = logic.currentFolder.id;
             const parentId = logic.currentFolder.parentId;
@@ -36,6 +37,8 @@ export const useHomePageHandlers = ({
                 } else {
                     await moveSubjectToParent(subjectId, currentId, parentId);
                 }
+            } else if (folderShortcutId && logic?.moveShortcut) {
+                await logic.moveShortcut(folderShortcutId, parentId || null);
             } else if (folderId && folderId !== currentId) {
                 await moveFolderToParent(folderId, currentId, parentId);
             }
@@ -49,7 +52,7 @@ export const useHomePageHandlers = ({
         let draggedShortcutId = isKnownType ? shortcutIdMaybe : sourceFolderIdMaybe;
 
         if (type === 'folder') {
-            handleNestFolder(targetFolderId, subjectId);
+            handleNestFolder(targetFolderId, subjectId, draggedShortcutId || null);
             return true;
         }
 
@@ -132,10 +135,14 @@ export const useHomePageHandlers = ({
         return true;
     };
 
-    const handleBreadcrumbDrop = (targetFolderId, subjectId, droppedFolderId) => {
+    const handleBreadcrumbDrop = (targetFolderId, subjectId, droppedFolderId, droppedFolderShortcutId = null) => {
         const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
         if (subjectId) {
             return handleDropOnFolderWrapper(targetFolderId, subjectId, 'subject', currentFolderId);
+        }
+        if (droppedFolderShortcutId && logic?.moveShortcut) {
+            logic.moveShortcut(droppedFolderShortcutId, targetFolderId || null);
+            return true;
         }
         if (droppedFolderId) {
             if (isInvalidFolderMove(droppedFolderId, targetFolderId, logic.folders || [])) {
@@ -210,7 +217,11 @@ export const useHomePageHandlers = ({
         }
     };
 
-    const handleNestFolder = async (targetFolderId, droppedFolderId) => {
+    const handleNestFolder = async (targetFolderId, droppedFolderId, droppedFolderShortcutId = null) => {
+        if (droppedFolderShortcutId && logic?.moveShortcut) {
+            await logic.moveShortcut(droppedFolderShortcutId, targetFolderId || null);
+            return;
+        }
         if (targetFolderId === droppedFolderId) return;
 
         if (isInvalidFolderMove(droppedFolderId, targetFolderId, logic.folders || [])) {
@@ -307,7 +318,12 @@ export const useHomePageHandlers = ({
         if (currentFolder) await moveSubjectToParent(subjectId, currentFolder.id, parentId);
     };
 
-    const handlePromoteFolderWrapper = async folderId => {
+    const handlePromoteFolderWrapper = async (folderId, folderShortcutId = null) => {
+        if (folderShortcutId && logic?.moveShortcut) {
+            const parentId = logic.currentFolder ? logic.currentFolder.parentId : null;
+            await logic.moveShortcut(folderShortcutId, parentId || null);
+            return;
+        }
         if (logic.currentFolder && folderId !== logic.currentFolder.id) {
             const currentFolder = logic.currentFolder;
             const parentId = currentFolder.parentId;

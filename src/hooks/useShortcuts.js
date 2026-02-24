@@ -198,6 +198,7 @@ export const useShortcuts = (user) => {
                         // Override with shortcut-specific properties
                         name: shortcut.shortcutName || targetData.name,
                         course: shortcut.shortcutCourse || targetData.course,
+                        tags: Array.isArray(shortcut.shortcutTags) ? shortcut.shortcutTags : targetData.tags,
                         color: shortcut.shortcutColor || targetData.color,
                         icon: shortcut.shortcutIcon || targetData.icon,
                         cardStyle: shortcut.shortcutCardStyle || targetData.cardStyle,
@@ -273,6 +274,7 @@ export const useShortcuts = (user) => {
                 institutionId: effectiveInstitutionId,
                 ...(visualOverrides.shortcutName ? { shortcutName: visualOverrides.shortcutName } : {}),
                 ...(visualOverrides.shortcutCourse ? { shortcutCourse: visualOverrides.shortcutCourse } : {}),
+                ...(Array.isArray(visualOverrides.shortcutTags) ? { shortcutTags: visualOverrides.shortcutTags } : {}),
                 ...(visualOverrides.shortcutColor ? { shortcutColor: visualOverrides.shortcutColor } : {}),
                 ...(visualOverrides.shortcutIcon ? { shortcutIcon: visualOverrides.shortcutIcon } : {}),
                 ...(visualOverrides.shortcutCardStyle ? { shortcutCardStyle: visualOverrides.shortcutCardStyle } : {}),
@@ -305,6 +307,7 @@ export const useShortcuts = (user) => {
             institutionId: effectiveInstitutionId,
             ...(visualOverrides.shortcutName ? { shortcutName: visualOverrides.shortcutName } : {}),
             ...(visualOverrides.shortcutCourse ? { shortcutCourse: visualOverrides.shortcutCourse } : {}),
+            ...(Array.isArray(visualOverrides.shortcutTags) ? { shortcutTags: visualOverrides.shortcutTags } : {}),
             ...(visualOverrides.shortcutColor ? { shortcutColor: visualOverrides.shortcutColor } : {}),
             ...(visualOverrides.shortcutIcon ? { shortcutIcon: visualOverrides.shortcutIcon } : {}),
             ...(visualOverrides.shortcutCardStyle ? { shortcutCardStyle: visualOverrides.shortcutCardStyle } : {}),
@@ -372,6 +375,7 @@ export const useShortcuts = (user) => {
         const payload = {
             ...(appearanceData.name !== undefined ? { shortcutName: appearanceData.name } : {}),
             ...(appearanceData.course !== undefined ? { shortcutCourse: appearanceData.course } : {}),
+            ...(Array.isArray(appearanceData.tags) ? { shortcutTags: appearanceData.tags } : {}),
             ...(appearanceData.color !== undefined ? { shortcutColor: appearanceData.color } : {}),
             ...(appearanceData.icon !== undefined ? { shortcutIcon: appearanceData.icon } : {}),
             ...(appearanceData.cardStyle !== undefined ? { shortcutCardStyle: appearanceData.cardStyle } : {}),

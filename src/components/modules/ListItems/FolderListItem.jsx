@@ -82,9 +82,11 @@ const FolderListItem = ({
         const dragData = {
             id: item.id,
             type: type,
-            parentId: parentId 
+            parentId: item.shortcutParentId ?? parentId,
+            shortcutId: item.shortcutId || null
         };
         e.dataTransfer.setData('folderId', item.id);
+        e.dataTransfer.setData('folderShortcutId', item.shortcutId || '');
         e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
         
         if (onDragStart) onDragStart(item); 

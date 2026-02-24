@@ -59,6 +59,7 @@ export const useHomeHandlers = ({
                     await updateShortcutAppearance(formData.shortcutId, {
                         name: formData.name,
                         course: formData.course,
+                        tags: formData.tags,
                         color: formData.color,
                         icon: formData.icon || 'book',
                         cardStyle: formData.cardStyle || 'default',
@@ -99,7 +100,17 @@ export const useHomeHandlers = ({
 
     const handleSaveFolder = async formData => {
         if (folderModalConfig.isEditing) {
-            await updateFolder(formData.id, formData);
+            if (formData?.isShortcut && formData?.shortcutId && updateShortcutAppearance) {
+                await updateShortcutAppearance(formData.shortcutId, {
+                    name: formData.name,
+                    tags: formData.tags,
+                    color: formData.color,
+                    cardStyle: formData.cardStyle || 'default',
+                    modernFillColor: formData.modernFillColor || null
+                });
+            } else {
+                await updateFolder(formData.id, formData);
+            }
         } else {
             await addFolder(formData);
         }

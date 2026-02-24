@@ -191,6 +191,7 @@ export const useSubjects = (user) => {
                     institutionId: currentInstitutionId,
                     shortcutName: subjectData.name || null,
                     shortcutCourse: subjectData.course || null,
+                    shortcutTags: Array.isArray(subjectData.tags) ? subjectData.tags : [],
                     shortcutColor: subjectData.color || null,
                     shortcutIcon: subjectData.icon || null,
                     shortcutCardStyle: subjectData.cardStyle || null,
