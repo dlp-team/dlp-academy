@@ -8,7 +8,7 @@ import { db } from '../firebase/config';
 export const useSubjects = (user) => {
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
-    const currentInstitutionId = user?.institutionId || 'default';
+    const currentInstitutionId = user?.institutionId || null;
 
     useEffect(() => {
         if (!user) {
@@ -29,9 +29,10 @@ export const useSubjects = (user) => {
 
         const updateSubjectsState = async () => {
             const tempSubjects = ownedSubjects.filter(subject => {
-                if (!subject?.institutionId) {
-                    return subject?.uid === user?.uid;
-                }
+                // Owner always sees their own subjects
+                if (subject?.ownerId === user?.uid || subject?.uid === user?.uid) return true;
+                // For institutional subjects, check institution match
+                if (!currentInstitutionId || !subject?.institutionId) return true;
                 return subject.institutionId === currentInstitutionId;
             });
 
@@ -119,11 +120,10 @@ export const useSubjects = (user) => {
                 const targetInstitutionId = targetUserData.institutionId || null;
 
                 if (targetInstitutionId && targetInstitutionId !== currentInstitutionId) {
-                    alert("No puedes compartir entre instituciones diferentes.");
-                    return;
+                    throw new Error("No puedes compartir entre instituciones diferentes.");
                 }
             } else {
-                return;
+                throw new Error("No existe ningún usuario registrado con ese correo.");
             }
 
             // 2. Get the current subject to check if already shared
@@ -131,7 +131,7 @@ export const useSubjects = (user) => {
             const subjectSnap = await getDocs(query(collection(db, 'subjects'), where('__name__', '==', subjectId)));
 
             if (subjectSnap.empty) {
-                return;
+                throw new Error("No se encontró la asignatura.");
             }
 
             const subjectData = subjectSnap.docs[0].data();
@@ -139,7 +139,7 @@ export const useSubjects = (user) => {
             // Check if already shared with this user (fix: check by uid in sharedWith array)
             const alreadyShared = Array.isArray(subjectData.sharedWith) && subjectData.sharedWith.some(entry => entry.uid === targetUid);
             if (alreadyShared) {
-                return;
+                throw new Error("Esta asignatura ya está compartida con ese usuario.");
             }
 
             // 3. Update the subject with the new shared user

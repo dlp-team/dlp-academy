@@ -5,11 +5,13 @@ import { Loader2, AlertTriangle } from 'lucide-react';
 // Hooks
 import { useSubjectManager } from './hooks/useSubjectManager';
 import useSubjectPageState from './hooks/useSubjectPageState';
+import { useClassMembers } from './hooks/useClassMembers';
 
 // Layout
 import Header from '../../components/layout/Header';
 import SubjectHeader from './components/SubjectHeader';
 import TopicGrid from './components/TopicGrid';
+import ClassMembers from './components/ClassMembers';
 
 // Modals
 import EditSubjectModal from '../Home/modals/EditSubjectModal';
@@ -52,6 +54,11 @@ const Subject = ({ user }) => {
         setSearchTerm,
         filteredTopics
     } = useSubjectPageState(topics);
+
+    const isTeacherUser = user?.role === 'teacher';
+
+    // Class members
+    const { members: classMembers, loading: membersLoading } = useClassMembers(subject);
 
     // Handlers
     const handleCreateOrRetry = async (data, files) => {
@@ -107,7 +114,7 @@ const Subject = ({ user }) => {
             <Header user={user} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
-                <SubjectHeader 
+                <SubjectHeader
                     subject={subject}
                     hasTopics={topics.length > 1}
                     onEdit={() => setShowEditModal(true)}
@@ -118,63 +125,66 @@ const Subject = ({ user }) => {
                     onSaveReorder={() => setIsReordering(false)}
                     searchTerm={searchTerm}
                     onSearch={setSearchTerm}
+                    isTeacher={isTeacherUser}
                 />
 
-                <TopicGrid 
-                    topics={filteredTopics}
+                <ClassMembers members={classMembers} loading={membersLoading} />
+
+                <TopicGrid
+                    topics={isTeacherUser ? filteredTopics : filteredTopics.filter(t => t.isVisible !== false)}
                     subjectColor={subject.color}
-                    isReordering={isReordering} 
-                    onOpenCreateModal={() => { setRetryTopicData(null); setShowTopicModal(true); }}
+                    isReordering={isTeacherUser ? isReordering : false}
+                    onOpenCreateModal={isTeacherUser ? () => { setRetryTopicData(null); setShowTopicModal(true); } : null}
                     onSelectTopic={(t) => navigate(`/home/subject/${subjectId}/topic/${t.id}`)}
-                    onDeleteTopic={onDeleteTopicConfirm}
-                    onRetryTopic={onRetryTopic}
-                    onReorderTopics={handleReorderTopics} 
-                    
-                    // NEW PROP passed down
-                    onEditTopic={handleEditTopicClick}
+                    onDeleteTopic={isTeacherUser ? onDeleteTopicConfirm : null}
+                    onRetryTopic={isTeacherUser ? onRetryTopic : null}
+                    onReorderTopics={isTeacherUser ? handleReorderTopics : null}
+                    onEditTopic={isTeacherUser ? handleEditTopicClick : null}
                 />
             </main>
 
-            {/* --- MODALS --- */}
-            
-            <EditSubjectModal 
-                isOpen={showEditModal}
-                onClose={() => setShowEditModal(false)}
-                initialData={subject}
-                onSave={(data) => { updateSubject(data); setShowEditModal(false); }}
-            />
+            {/* --- MODALS (Teacher only) --- */}
+            {isTeacherUser && (
+                <>
+                    <EditSubjectModal
+                        isOpen={showEditModal}
+                        onClose={() => setShowEditModal(false)}
+                        initialData={subject}
+                        onSave={(data) => { updateSubject(data); setShowEditModal(false); }}
+                    />
 
-            <TopicFormModal
-                isOpen={showTopicModal}
-                onClose={() => setShowTopicModal(false)}
-                onSubmit={handleCreateOrRetry}
-                initialData={retryTopicData}
-            />
+                    <TopicFormModal
+                        isOpen={showTopicModal}
+                        onClose={() => setShowTopicModal(false)}
+                        onSubmit={handleCreateOrRetry}
+                        initialData={retryTopicData}
+                    />
 
-            {/* NEW: Edit Topic Modal */}
-            <EditTopicModal
-                isOpen={showEditTopicModal}
-                onClose={() => setShowEditTopicModal(false)}
-                topic={editingTopic}
-                onSave={handleSaveEditedTopic}
-            />
+                    <EditTopicModal
+                        isOpen={showEditTopicModal}
+                        onClose={() => setShowEditTopicModal(false)}
+                        topic={editingTopic}
+                        onSave={handleSaveEditedTopic}
+                    />
 
-            {showDeleteModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200">
-                        <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
+                    {showDeleteModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200">
+                                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">¿Eliminar Asignatura?</h3>
+                                <p className="text-gray-500 dark:text-gray-400 mb-6">
+                                    Se eliminarán <strong>{subject.name}</strong> y todos sus temas.
+                                </p>
+                                <div className="flex gap-3 justify-center">
+                                    <button onClick={() => setShowDeleteModal(false)} className="px-6 py-2 bg-gray-100 dark:bg-slate-800 rounded-xl font-medium">Cancelar</button>
+                                    <button onClick={handleDeleteSubject} disabled={isDeleting} className="px-6 py-2 bg-red-600 text-white rounded-xl font-medium">Eliminar</button>
+                                </div>
+                            </div>
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">¿Eliminar Asignatura?</h3>
-                        <p className="text-gray-500 dark:text-gray-400 mb-6">
-                            Se eliminarán <strong>{subject.name}</strong> y todos sus temas.
-                        </p>
-                        <div className="flex gap-3 justify-center">
-                            <button onClick={() => setShowDeleteModal(false)} className="px-6 py-2 bg-gray-100 dark:bg-slate-800 rounded-xl font-medium">Cancelar</button>
-                            <button onClick={handleDeleteSubject} disabled={isDeleting} className="px-6 py-2 bg-red-600 text-white rounded-xl font-medium">Eliminar</button>
-                        </div>
-                    </div>
-                </div>
+                    )}
+                </>
             )}
         </div>
     );

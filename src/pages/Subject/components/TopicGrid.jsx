@@ -47,11 +47,11 @@ const TopicGrid = ({
                     onEdit={onEditTopic}
                     onRetry={onRetryTopic}
 
-                    // --- DRAG PROPS ---
-                    draggable={true} // Explicitly true
-                    onDragStart={(e) => handleDragStart(e, topic.id)}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, topic.id)}
+                    // --- DRAG PROPS (only if reorder handler exists) ---
+                    draggable={!!onReorderTopics}
+                    onDragStart={onReorderTopics ? (e) => handleDragStart(e, topic.id) : undefined}
+                    onDragOver={onReorderTopics ? handleDragOver : undefined}
+                    onDrop={onReorderTopics ? (e) => handleDrop(e, topic.id) : undefined}
                 />
             ))}
         </div>

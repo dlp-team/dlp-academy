@@ -65,7 +65,7 @@ export const useSubjectManager = (user, subjectId) => {
             // Auto-detect: si n8n ya escribió quizzes/pdfs en el documento, marcar como completed
             topicsData.forEach(topic => {
                 if (topic.status === 'generating' && (topic.quizzes?.length > 0 || topic.pdfs?.length > 0)) {
-                    updateDoc(doc(db, "subjects", subjectId, "topics", topic.id), {
+                    updateDoc(doc(db, "topics", topic.id), {
                         status: 'completed'
                     }).catch(err => console.error("Error auto-updating status:", err));
                 }
@@ -84,20 +84,24 @@ export const useSubjectManager = (user, subjectId) => {
     useEffect(() => {
         if (!subjectId || !generatingIds) return;
 
-        const ids = generatingIds.split(',');
+        const ids = generatingIds.split(',').filter(Boolean);
+        if (ids.length === 0) return;
 
-        const unsubscribes = ids.map(topicId => {
-            const resumenRef = collection(db, "subjects", subjectId, "topics", topicId, "resumen");
-            return onSnapshot(resumenRef, (snapshot) => {
-                if (!snapshot.empty) {
-                    updateDoc(doc(db, "subjects", subjectId, "topics", topicId), {
-                        status: 'completed'
-                    }).catch(err => console.error("Auto-update resumen error:", err));
-                }
+        const resumenRef = query(
+            collection(db, "resumen"),
+            where("topicId", "in", ids)
+        );
+
+        const unsubscribe = onSnapshot(resumenRef, (snapshot) => {
+            const completedTopicIds = new Set(snapshot.docs.map(d => d.data().topicId));
+            completedTopicIds.forEach(topicId => {
+                updateDoc(doc(db, "topics", topicId), {
+                    status: 'completed'
+                }).catch(err => console.error("Auto-update resumen error:", err));
             });
         });
 
-        return () => unsubscribes.forEach(unsub => unsub());
+        return () => unsubscribe();
     }, [generatingIds, subjectId]);
 
     // 2. Actions for Subject
@@ -173,7 +177,7 @@ export const useSubjectManager = (user, subjectId) => {
                 number: numberString,
                 subjectId: subjectId,
                 ownerId: subject?.ownerId || user?.uid,
-                institutionId: subject?.institutionId || user?.institutionId || 'default'
+                institutionId: subject?.institutionId || user?.institutionId || null
             };
             
             const ref = await addDoc(collection(db, "topics"), newTopic);
@@ -192,7 +196,7 @@ export const useSubjectManager = (user, subjectId) => {
                     topicId: topicId,
                     subjectId: subjectId,
                     ownerId: subject?.ownerId || user?.uid,
-                    institutionId: subject?.institutionId || user?.institutionId || 'default'
+                    institutionId: subject?.institutionId || user?.institutionId || null
                 }));
             }
         }

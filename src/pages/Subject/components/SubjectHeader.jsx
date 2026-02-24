@@ -4,18 +4,18 @@ import { Home, Pencil, Trash2, ArrowUpDown, X, Save, Search } from 'lucide-react
 import { useNavigate } from 'react-router-dom';
 import SubjectIcon, { getIconColor } from '../../../components/ui/SubjectIcon';
 
-const SubjectHeader = ({ 
-    subject, 
-    onEdit, 
-    onDelete, 
-    onReorder, 
-    isReordering, 
-    onCancelReorder, 
+const SubjectHeader = ({
+    subject,
+    onEdit,
+    onDelete,
+    onReorder,
+    isReordering,
+    onCancelReorder,
     onSaveReorder,
     hasTopics,
-    // --- New Props ---
     searchTerm,
-    onSearch
+    onSearch,
+    isTeacher
 }) => {
     const navigate = useNavigate();
     const isModern = subject.cardStyle === 'modern';
@@ -86,23 +86,27 @@ const SubjectHeader = ({
                         )}
                     </div>
 
-                    {/* --- EDIT BUTTON --- */}
-                    <button 
-                        onClick={onEdit}
-                        className="p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-300 shadow-sm transition-all hover:scale-105"
-                        title="Editar Asignatura"
-                    >
-                        <Pencil className="w-5 h-5" />
-                    </button>
+                    {/* --- EDIT BUTTON (Teacher only) --- */}
+                    {isTeacher && (
+                        <button
+                            onClick={onEdit}
+                            className="p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800 text-gray-700 dark:text-gray-300 shadow-sm transition-all hover:scale-105"
+                            title="Editar Asignatura"
+                        >
+                            <Pencil className="w-5 h-5" />
+                        </button>
+                    )}
 
-                    {/* --- DELETE BUTTON --- */}
-                    <button 
-                        onClick={onDelete}
-                        className="p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 shadow-sm transition-all hover:scale-105"
-                        title="Eliminar Asignatura"
-                    >
-                        <Trash2 className="w-5 h-5" />
-                    </button>
+                    {/* --- DELETE BUTTON (Teacher only) --- */}
+                    {isTeacher && (
+                        <button
+                            onClick={onDelete}
+                            className="p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 shadow-sm transition-all hover:scale-105"
+                            title="Eliminar Asignatura"
+                        >
+                            <Trash2 className="w-5 h-5" />
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

@@ -1,7 +1,7 @@
 // src/components/onboarding/OnboardingWizard.jsx
 import React, { useState, useEffect } from 'react';
 import { Loader2, GraduationCap, Globe, User } from 'lucide-react';
-import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 // Make sure to import the selector from the correct path
 import UserTypeSelector from '../../Auth/components/UserTypeSelector'; 
@@ -45,12 +45,12 @@ const OnboardingWizard = ({ user }) => {
         } else {
             setSaving(true);
             try {
-                await updateDoc(doc(db, "users", user.uid), {
+                await setDoc(doc(db, "users", user.uid), {
                     ...updated,
                     uid: user.uid,
                     email: user.email,
                     lastLogin: serverTimestamp()
-                });
+                }, { merge: true });
                 setShow(false);
                 window.location.reload();
             } catch (error) {
@@ -101,10 +101,10 @@ const OnboardingWizard = ({ user }) => {
                             <div className="animate-fadeIn">
                                 <div className="flex justify-center mb-4"><Globe size={48} className="text-emerald-600 dark:text-emerald-400"/></div>
                                 <h3 className="text-2xl font-bold text-center mb-2 text-gray-900 dark:text-white">¿De dónde eres?</h3>
-                                <select 
-                                    className="w-full p-3 border dark:border-slate-700 rounded-lg text-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white mt-4 outline-none focus:ring-2 focus:ring-emerald-500" 
-                                    onChange={(e) => handleAnswer('country', e.target.value)} 
-                                    value=""
+                                <select
+                                    className="w-full p-3 border dark:border-slate-700 rounded-lg text-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white mt-4 outline-none focus:ring-2 focus:ring-emerald-500"
+                                    onChange={(e) => handleAnswer('country', e.target.value)}
+                                    defaultValue=""
                                 >
                                     <option value="" disabled className="dark:bg-slate-800">Selecciona tu país...</option>
                                     <option value="es" className="dark:bg-slate-800">España 🇪🇸</option>

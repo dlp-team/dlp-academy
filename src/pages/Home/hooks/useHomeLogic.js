@@ -158,7 +158,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
     return {
         // Data
-        subjects, 
+        user,
+        subjects,
         folders,
         shortcuts,
         searchFolders,

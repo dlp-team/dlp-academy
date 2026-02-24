@@ -21,7 +21,7 @@ export const useProfile = (user) => {
                 }
 
                 // 2. Get Subjects
-                const q = query(collection(db, "subjects"), where("uid", "==", user.uid));
+                const q = query(collection(db, "subjects"), where("ownerId", "==", user.uid));
                 const querySnapshot = await getDocs(q);
                 const subjectsData = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                 setSubjects(subjectsData);

@@ -124,51 +124,57 @@ const TopicCard = ({
             >
                 <div className={`absolute inset-0 bg-gradient-to-br ${subjectColor} opacity-90 transition-opacity`}></div>
                 
-                {/* --- MENU (Top Right) --- */}
-                <div className="absolute top-4 right-4 z-30" ref={menuRef}>
-                    <button
-                        onClick={(e) => { 
-                            e.stopPropagation(); 
-                            setShowMenu(!showMenu); 
-                        }}
-                        onMouseDown={(e) => e.stopPropagation()} 
-                        className={`p-2 rounded-full text-white transition-all duration-200 
-                            ${showMenu 
-                                ? 'bg-white/30 opacity-100 scale-110' 
-                                : 'bg-white/10 hover:bg-white/20 opacity-0 group-hover:opacity-100'
-                            }`}
-                    >
-                        <MoreVertical className="w-5 h-5" />
-                    </button>
+                {/* --- MENU (Top Right) - Only if actions available --- */}
+                {(onEdit || onDelete) && (
+                    <div className="absolute top-4 right-4 z-30" ref={menuRef}>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowMenu(!showMenu);
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            className={`p-2 rounded-full text-white transition-all duration-200
+                                ${showMenu
+                                    ? 'bg-white/30 opacity-100 scale-110'
+                                    : 'bg-white/10 hover:bg-white/20 opacity-0 group-hover:opacity-100'
+                                }`}
+                        >
+                            <MoreVertical className="w-5 h-5" />
+                        </button>
 
-                    {showMenu && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top-right z-40">
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowMenu(false);
-                                    onEdit(topic);
-                                }}
-                                className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2 transition-colors"
-                            >
-                                <Edit className="w-4 h-4 text-indigo-500" />
-                                <span>Editar / Visibilidad</span>
-                            </button>
-                            <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setShowMenu(false);
-                                    onDelete(topic.id);
-                                }}
-                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                                <span>Eliminar</span>
-                            </button>
-                        </div>
-                    )}
-                </div>
+                        {showMenu && (
+                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-100 origin-top-right z-40">
+                                {onEdit && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowMenu(false);
+                                            onEdit(topic);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2 transition-colors"
+                                    >
+                                        <Edit className="w-4 h-4 text-indigo-500" />
+                                        <span>Editar / Visibilidad</span>
+                                    </button>
+                                )}
+                                {onEdit && onDelete && <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>}
+                                {onDelete && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowMenu(false);
+                                            onDelete(topic.id);
+                                        }}
+                                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                        <span>Eliminar</span>
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 {/* --- CONTENT --- */}
                 <div className="relative z-10 p-6 h-full flex flex-col justify-between text-white pointer-events-none">

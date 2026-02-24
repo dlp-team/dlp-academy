@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { canEdit, canView, canDelete, shouldShowEditUI, shouldShowDeleteUI } from '../../../utils/permissionUtils';
+import { canEdit, canView, canDelete, shouldShowEditUI, shouldShowDeleteUI, isTeacher } from '../../../utils/permissionUtils';
 
 export const useTopicLogic = (user) => {
     const navigate = useNavigate();
@@ -255,7 +255,7 @@ export const useTopicLogic = (user) => {
                     topicId: topicId,
                     subjectId: subjectId,
                     ownerId: topic?.ownerId || subject?.ownerId || user?.uid,
-                    institutionId: topic?.institutionId || subject?.institutionId || user?.institutionId || 'default'
+                    institutionId: topic?.institutionId || subject?.institutionId || user?.institutionId || null
                 });
             }));
             if (fileInputRef.current) fileInputRef.current.value = '';
@@ -364,17 +364,30 @@ export const useTopicLogic = (user) => {
             isViewer: false
         };
 
-        const hasEditPermission = canEdit(topic, user);
-        const hasViewPermission = canView(topic, user);
-        const hasDeletePermission = canDelete(topic, user);
+        // Students: always read-only regardless of resource-level ownership
+        if (!isTeacher(user)) {
+            return {
+                canEdit: false,
+                canView: true,
+                canDelete: false,
+                showEditUI: false,
+                showDeleteUI: false,
+                isViewer: true
+            };
+        }
+
+        // Teachers: use resource-level checks
+        const hasEditPermission = canEdit(topic, user.uid);
+        const hasViewPermission = canView(topic, user.uid);
+        const hasDeletePermission = canDelete(topic, user.uid);
         const isViewerOnly = hasViewPermission && !hasEditPermission;
 
         return {
             canEdit: hasEditPermission,
             canView: hasViewPermission,
             canDelete: hasDeletePermission,
-            showEditUI: shouldShowEditUI(topic, user),
-            showDeleteUI: shouldShowDeleteUI(topic, user),
+            showEditUI: shouldShowEditUI(topic, user.uid),
+            showDeleteUI: shouldShowDeleteUI(topic, user.uid),
             isViewer: isViewerOnly
         };
     }, [topic, user]);

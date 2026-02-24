@@ -28,7 +28,7 @@ export const useShortcuts = (user) => {
     const [shortcuts, setShortcuts] = useState([]);
     const [resolvedShortcuts, setResolvedShortcuts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const currentInstitutionId = user?.institutionId || 'default';
+    const currentInstitutionId = user?.institutionId || null;
 
     useEffect(() => {
         if (!user) {
@@ -52,9 +52,9 @@ export const useShortcuts = (user) => {
                 const shortcutDocs = snapshot.docs
                     .map(d => ({ id: d.id, ...d.data() }))
                     .filter(shortcut => {
-                        if (!shortcut?.institutionId) {
-                            return shortcut?.ownerId === user?.uid;
-                        }
+                        // Owner always sees their own shortcuts
+                        if (shortcut?.ownerId === user?.uid) return true;
+                        if (!currentInstitutionId || !shortcut?.institutionId) return true;
                         return shortcut.institutionId === currentInstitutionId;
                     });
                 
@@ -203,7 +203,7 @@ export const useShortcuts = (user) => {
      * @param {string} institutionId - Institution ID (for multi-tenant isolation)
      * @returns {Promise<string>} ID of created shortcut
      */
-    const createShortcut = async (targetId, targetType, parentId = null, institutionId = 'default', visualOverrides = {}) => {
+    const createShortcut = async (targetId, targetType, parentId = null, institutionId = null, visualOverrides = {}) => {
         if (!user) {
             console.log('[SHORTCUT] createShortcut: user missing');
             throw new Error("User must be authenticated to create shortcuts");

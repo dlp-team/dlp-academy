@@ -1,6 +1,6 @@
 // src/pages/Subject/modals/SubjectFormModal.jsx
 import React, { useState, useEffect } from 'react';
-import { X, Save, Users, Trash2, Share2 } from 'lucide-react';
+import { X, Save, Users, Trash2, Share2, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { MODERN_FILL_COLORS, EDUCATION_LEVELS } from '../../../utils/subjectConstants';
 
 // Sub-components
@@ -18,11 +18,16 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [activeTab, setActiveTab] = useState('general');
     const [shareEmail, setShareEmail] = useState('');
     const [sharedList, setSharedList] = useState([]);
+    const [shareLoading, setShareLoading] = useState(false);
+    const [shareError, setShareError] = useState('');
+    const [shareSuccess, setShareSuccess] = useState('');
 
     // 1. Initialize Logic
     useEffect(() => {
         if (isOpen) {
             setActiveTab(initialTab);
+            setShareError('');
+            setShareSuccess('');
             if (isEditing && initialData) {
                 setFormData({
                     id: initialData.id,
@@ -81,15 +86,22 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
     const handleShareAction = async () => {
         if (!shareEmail.trim()) {
-            alert('Por favor ingresa un correo');
+            setShareError('Por favor ingresa un correo electrónico.');
             return;
         }
+        setShareLoading(true);
+        setShareError('');
+        setShareSuccess('');
         try {
             await onShare(formData.id, shareEmail);
             setSharedList(prev => [...prev, { email: shareEmail.toLowerCase(), role: 'viewer', sharedAt: new Date() }]);
             setShareEmail('');
+            setShareSuccess(`Asignatura compartida con ${shareEmail.toLowerCase()}.`);
+            setTimeout(() => setShareSuccess(''), 4000);
         } catch (error) {
-            console.error('Error sharing subject:', error);
+            setShareError(error?.message || 'Error al compartir. Inténtalo de nuevo.');
+        } finally {
+            setShareLoading(false);
         }
     };
 
@@ -171,19 +183,38 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                         <input
                                             type="email"
                                             value={shareEmail}
-                                            onChange={(e) => setShareEmail(e.target.value)}
+                                            onChange={(e) => { setShareEmail(e.target.value); setShareError(''); }}
                                             onKeyDown={handleKeyDown}
                                             placeholder="usuario@ejemplo.com"
-                                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors"
+                                            disabled={shareLoading}
+                                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors disabled:opacity-60"
                                         />
                                         <button
                                             type="button"
                                             onClick={handleShareAction}
-                                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-2"
+                                            disabled={shareLoading}
+                                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                                         >
-                                            <Users size={16} /> Compartir
+                                            {shareLoading ? <Loader2 size={16} className="animate-spin" /> : <Users size={16} />}
+                                            {shareLoading ? 'Compartiendo...' : 'Compartir'}
                                         </button>
                                     </div>
+
+                                    {/* Error message */}
+                                    {shareError && (
+                                        <div className="mt-2 flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+                                            <AlertCircle size={14} className="flex-shrink-0" />
+                                            {shareError}
+                                        </div>
+                                    )}
+
+                                    {/* Success message */}
+                                    {shareSuccess && (
+                                        <div className="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                                            <CheckCircle size={14} className="flex-shrink-0" />
+                                            {shareSuccess}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Shared Users List */}

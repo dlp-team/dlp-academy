@@ -228,7 +228,14 @@ export const shouldShowDeleteUI = (item, userId) => {
     if (item?.isShortcut === true) {
         return item.ownerId === userId || item.shortcutOwnerId === userId;
     }
-    
+
     // For regular items, only owner can delete
     return canDelete(item, userId);
 };
+
+/**
+ * Check if user has the teacher role.
+ * @param {Object} user - User object from App.jsx (contains .role)
+ * @returns {boolean}
+ */
+export const isTeacher = (user) => user?.role === 'teacher';

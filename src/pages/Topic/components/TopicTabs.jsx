@@ -2,12 +2,13 @@
 import React from 'react';
 import { FileText, Upload, CheckCircle2, Plus } from 'lucide-react';
 
-const TopicTabs = ({ 
-    activeTab, 
-    setActiveTab, 
-    topic, 
-    handleCreateCustomPDF, 
-    handleCreateCustomQuiz 
+const TopicTabs = ({
+    activeTab,
+    setActiveTab,
+    topic,
+    handleCreateCustomPDF,
+    handleCreateCustomQuiz,
+    permissions
 }) => {
     return (
         <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
@@ -16,7 +17,7 @@ const TopicTabs = ({
                     {tab === 'materials' && <><FileText className="w-4 h-4" /> Generados por IA</>}
                     {tab === 'uploads' && <><Upload className="w-4 h-4" /> Mis Archivos</>}
                     {tab === 'quizzes' && <><CheckCircle2 className="w-4 h-4" /> Tests Prácticos</>}
-                    {tab !== 'uploads' && activeTab === tab && (
+                    {tab !== 'uploads' && activeTab === tab && permissions?.canEdit && (
                         <div role="button" onClick={(e) => { e.stopPropagation(); tab === 'materials' ? handleCreateCustomPDF() : handleCreateCustomQuiz(); }} className="ml-2 w-5 h-5 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 transition-all z-10"><Plus className="w-3 h-3" /></div>
                     )}
                     <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === tab ? 'bg-white/20 dark:bg-slate-900/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>

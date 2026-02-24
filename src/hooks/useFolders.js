@@ -10,7 +10,7 @@ import { isInvalidFolderMove } from '../utils/folderUtils';
 export const useFolders = (user) => {
     const [folders, setFolders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const currentInstitutionId = user?.institutionId || 'default';
+    const currentInstitutionId = user?.institutionId || null;
 
     useEffect(() => {
         if (!user) {
@@ -37,9 +37,9 @@ export const useFolders = (user) => {
             ownedFolders = snapshot.docs
                 .map(d => ({ id: d.id, ...d.data(), parentId: d.data().parentId || null, isOwner: true }))
                 .filter(folder => {
-                    if (!folder?.institutionId) {
-                        return folder?.ownerId === user?.uid;
-                    }
+                    // Owner always sees their own folders
+                    if (folder?.ownerId === user?.uid) return true;
+                    if (!currentInstitutionId || !folder?.institutionId) return true;
                     return folder.institutionId === currentInstitutionId;
                 });
             updateState();
@@ -49,7 +49,7 @@ export const useFolders = (user) => {
             sharedFolders = snapshot.docs.filter(d => {
                 const data = d.data();
                 const userEmail = user.email?.toLowerCase() || '';
-                if (!data?.institutionId || data.institutionId !== currentInstitutionId) {
+                if (currentInstitutionId && data?.institutionId && data.institutionId !== currentInstitutionId) {
                     return false;
                 }
                 return data.sharedWith?.some(share => 

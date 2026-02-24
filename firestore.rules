@@ -166,12 +166,7 @@ service cloud.firestore {
     
     // Reglas para usuarios
     match /users/{userId} {
-      allow read: if isSignedIn()
-        && (
-          request.auth.uid == userId
-          || isGlobalAdmin()
-          || (hasInstitutionField(resource.data) && sameInstitution(resource.data))
-        );
+      allow read: if isSignedIn();
       allow write: if isSignedIn()
         && (
           request.auth.uid == userId
@@ -192,16 +187,26 @@ service cloud.firestore {
             currentUserInstitutionId() != null
             && request.resource.data.institutionId == currentUserInstitutionId()
           )
+          || request.resource.data.ownerId == request.auth.uid
         );
-      allow read: if isSignedIn() && canReadResource(resource.data);
-      allow update, delete: if isSignedIn()
-        && canWriteResource(resource.data)
+      allow read: if isSignedIn()
         && (
-          request.resource.data.institutionId == resource.data.institutionId
-          || (
-            !hasInstitutionField(resource.data)
-            && request.resource.data.institutionId == currentUserInstitutionId()
-          )
+          canReadResource(resource.data)
+          || resource.data.ownerId == request.auth.uid
+          || resource.data.uid == request.auth.uid
+          || (resource.data.keys().hasAny(['sharedWithUids']) && request.auth.uid in resource.data.sharedWithUids)
+        );
+      allow update: if isSignedIn()
+        && (
+          canWriteResource(resource.data)
+          || resource.data.ownerId == request.auth.uid
+          || resource.data.uid == request.auth.uid
+        );
+      allow delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || resource.data.ownerId == request.auth.uid
+          || resource.data.uid == request.auth.uid
         );
 
       // Reglas para la subcolección "topics"
@@ -246,16 +251,26 @@ service cloud.firestore {
             currentUserInstitutionId() != null
             && request.resource.data.institutionId == currentUserInstitutionId()
           )
+          || request.resource.data.ownerId == request.auth.uid
         );
-      allow read: if isSignedIn() && canReadResource(resource.data);
-      allow update, delete: if isSignedIn()
-        && canWriteResource(resource.data)
+      allow read: if isSignedIn()
         && (
-          request.resource.data.institutionId == resource.data.institutionId
-          || (
-            !hasInstitutionField(resource.data)
-            && request.resource.data.institutionId == currentUserInstitutionId()
-          )
+          canReadResource(resource.data)
+          || resource.data.ownerId == request.auth.uid
+          || resource.data.uid == request.auth.uid
+          || (resource.data.keys().hasAny(['sharedWithUids']) && request.auth.uid in resource.data.sharedWithUids)
+        );
+      allow update: if isSignedIn()
+        && (
+          canWriteResource(resource.data)
+          || resource.data.ownerId == request.auth.uid
+          || resource.data.uid == request.auth.uid
+        );
+      allow delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || resource.data.ownerId == request.auth.uid
+          || resource.data.uid == request.auth.uid
         );
     }
 
@@ -269,6 +284,7 @@ service cloud.firestore {
             && subjectInstitutionMatches(subjectRef(request.resource.data))
             && request.resource.data.institutionId == currentUserInstitutionId()
           )
+          || request.resource.data.ownerId == request.auth.uid
         );
 
       allow read: if isSignedIn()
@@ -278,21 +294,26 @@ service cloud.firestore {
             hasSubjectRef(resource.data)
             && subjectInstitutionMatches(subjectRef(resource.data))
           )
+          || resource.data.ownerId == request.auth.uid
         );
 
-      allow update, delete: if isSignedIn()
+      allow update: if isSignedIn()
         && (
           isGlobalAdmin()
           || (
             hasSubjectRef(resource.data)
             && subjectInstitutionMatches(subjectRef(resource.data))
           )
-        )
+          || resource.data.ownerId == request.auth.uid
+        );
+
+      allow delete: if isSignedIn()
         && (
-          request.resource.data.institutionId == resource.data.institutionId
+          isGlobalAdmin()
+          || resource.data.ownerId == request.auth.uid
           || (
-            !hasInstitutionField(resource.data)
-            && request.resource.data.institutionId == currentUserInstitutionId()
+            hasSubjectRef(resource.data)
+            && subjectInstitutionMatches(subjectRef(resource.data))
           )
         );
     }
@@ -307,6 +328,7 @@ service cloud.firestore {
             && topicInstitutionMatches(topicRef(request.resource.data))
             && request.resource.data.institutionId == currentUserInstitutionId()
           )
+          || request.resource.data.ownerId == request.auth.uid
         );
 
       allow read: if isSignedIn()
@@ -316,21 +338,26 @@ service cloud.firestore {
             hasTopicRef(resource.data)
             && topicInstitutionMatches(topicRef(resource.data))
           )
+          || resource.data.ownerId == request.auth.uid
         );
 
-      allow update, delete: if isSignedIn()
+      allow update: if isSignedIn()
         && (
           isGlobalAdmin()
           || (
             hasTopicRef(resource.data)
             && topicInstitutionMatches(topicRef(resource.data))
           )
-        )
+          || resource.data.ownerId == request.auth.uid
+        );
+
+      allow delete: if isSignedIn()
         && (
-          request.resource.data.institutionId == resource.data.institutionId
+          isGlobalAdmin()
+          || resource.data.ownerId == request.auth.uid
           || (
-            !hasInstitutionField(resource.data)
-            && request.resource.data.institutionId == currentUserInstitutionId()
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
           )
         );
     }
@@ -345,6 +372,7 @@ service cloud.firestore {
             && topicInstitutionMatches(topicRef(request.resource.data))
             && request.resource.data.institutionId == currentUserInstitutionId()
           )
+          || request.resource.data.ownerId == request.auth.uid
         );
 
       allow read: if isSignedIn()
@@ -354,21 +382,26 @@ service cloud.firestore {
             hasTopicRef(resource.data)
             && topicInstitutionMatches(topicRef(resource.data))
           )
+          || resource.data.ownerId == request.auth.uid
         );
 
-      allow update, delete: if isSignedIn()
+      allow update: if isSignedIn()
         && (
           isGlobalAdmin()
           || (
             hasTopicRef(resource.data)
             && topicInstitutionMatches(topicRef(resource.data))
           )
-        )
+          || resource.data.ownerId == request.auth.uid
+        );
+
+      allow delete: if isSignedIn()
         && (
-          request.resource.data.institutionId == resource.data.institutionId
+          isGlobalAdmin()
+          || resource.data.ownerId == request.auth.uid
           || (
-            !hasInstitutionField(resource.data)
-            && request.resource.data.institutionId == currentUserInstitutionId()
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
           )
         );
     }
@@ -383,6 +416,7 @@ service cloud.firestore {
             && topicInstitutionMatches(topicRef(request.resource.data))
             && request.resource.data.institutionId == currentUserInstitutionId()
           )
+          || request.resource.data.ownerId == request.auth.uid
         );
 
       allow read: if isSignedIn()
@@ -392,21 +426,26 @@ service cloud.firestore {
             hasTopicRef(resource.data)
             && topicInstitutionMatches(topicRef(resource.data))
           )
+          || resource.data.ownerId == request.auth.uid
         );
 
-      allow update, delete: if isSignedIn()
+      allow update: if isSignedIn()
         && (
           isGlobalAdmin()
           || (
             hasTopicRef(resource.data)
             && topicInstitutionMatches(topicRef(resource.data))
           )
-        )
+          || resource.data.ownerId == request.auth.uid
+        );
+
+      allow delete: if isSignedIn()
         && (
-          request.resource.data.institutionId == resource.data.institutionId
+          isGlobalAdmin()
+          || resource.data.ownerId == request.auth.uid
           || (
-            !hasInstitutionField(resource.data)
-            && request.resource.data.institutionId == currentUserInstitutionId()
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
           )
         );
     }
@@ -453,8 +492,27 @@ service cloud.firestore {
         )
       );
       allow delete, update: if isSignedIn()
-        && sameInstitution(resource.data)
-        && resource.data.ownerId == request.auth.uid;
+        && (
+          resource.data.ownerId == request.auth.uid
+          || (sameInstitution(resource.data) && (
+            (
+              resource.data.targetType == 'subject'
+              && exists(/databases/$(database)/documents/subjects/$(resource.data.targetId))
+              && (
+                get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.ownerId == request.auth.uid
+                || get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.uid == request.auth.uid
+              )
+            )
+            || (
+              resource.data.targetType == 'folder'
+              && exists(/databases/$(database)/documents/folders/$(resource.data.targetId))
+              && (
+                get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.ownerId == request.auth.uid
+                || get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.uid == request.auth.uid
+              )
+            )
+          ))
+        );
     }
 
     match /classes/{classId} {
