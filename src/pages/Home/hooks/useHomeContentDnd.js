@@ -103,7 +103,6 @@ const useHomeContentDnd = ({
                 let overlayShown = false;
                 if (handleDropOnFolder) {
                     const sourceFolderId = dragged.folderId || dragged.parentId;
-                    alert(`[DEBUG-3] LIST-VIEW: Calling handleDropOnFolder. dragged.folderId=${dragged.folderId}, dragged.parentId=${dragged.parentId}, resolved sourceFolderId=${sourceFolderId}`);
                     console.log('[DND] handleDropOnFolder call from handleListDrop:', {
                         targetId: target.id,
                         draggedId: dragged.id,

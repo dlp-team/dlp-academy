@@ -357,6 +357,7 @@ const Home = ({ user }) => {
                 onUnshareSubject={logic.unshareSubject}
                 currentFolder={logic.currentFolder}
                 allFolders={logic.folders || []}
+                subjects={logic.subjects || []}
             />
             
             <FolderTreeModal 

@@ -109,27 +109,10 @@ export const useHomePageState = ({ logic, searchQuery }) => {
         const allFolders = logic.folders || [];
         const currentId = logic.currentFolder ? logic.currentFolder.id : null;
 
-        const descendantIds = new Set();
-        if (currentId) {
-            const queue = [currentId];
-            while (queue.length > 0) {
-                const parent = queue.shift();
-                const children = allFolders.filter(f => f.parentId === parent);
-                children.forEach(child => {
-                    if (!descendantIds.has(child.id)) {
-                        descendantIds.add(child.id);
-                        queue.push(child.id);
-                    }
-                });
-            }
-        }
-
-        const inCurrentScope = folder => {
-            if (!currentId) return !folder.parentId;
-            return folder.parentId === currentId || descendantIds.has(folder.id);
-        };
-
-        let scopedFolders = allFolders.filter(inCurrentScope);
+        // Show only direct children of current folder (not descendants)
+        let scopedFolders = currentId
+            ? allFolders.filter(f => f.parentId === currentId)
+            : allFolders.filter(f => !f.parentId);
 
         if (logic.selectedTags && logic.selectedTags.length > 0 && logic.filteredFoldersByTags) {
             const tagAllowed = new Set(logic.filteredFoldersByTags.map(f => f.id));
