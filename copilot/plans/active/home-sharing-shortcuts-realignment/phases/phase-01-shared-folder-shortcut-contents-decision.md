@@ -18,6 +18,12 @@ Choose and lock the implementation strategy for how a folder shortcut exposes de
 ## Recommended Start
 - Start with **Option B** for this realignment.
 
+## Decision Outcome (2026-02-24)
+
+- Selected: **Option B — Single root shortcut with live projection** (Google Drive style).
+- Implementation rule: sharing a folder creates/ensures one recipient folder shortcut at root (`parentId: null` unless explicitly chosen).
+- Descendants are rendered from source hierarchy in shortcut context (no recursive share-time shortcut materialization).
+
 ## Required Acceptance Before Phase 02
 - The selected option is documented in roadmap and implementation notes.
 - Data contract for manual/list/tree/grid is explicit for shortcut descendants.
@@ -25,3 +31,6 @@ Choose and lock the implementation strategy for how a folder shortcut exposes de
 
 ## Exit Criteria
 - Decision frozen and signed off; downstream phases can implement without ambiguity.
+
+## Status
+- Phase state: **COMPLETED**

@@ -296,42 +296,80 @@ export const useFolders = (user) => {
 
             const folderData = folderSnap.data();
             
-            // Check if already shared with this user
+            // Check if already shared with this user (idempotent behavior)
             const alreadyShared = folderData.sharedWith?.some(s => s.uid === targetUid);
-            if (alreadyShared) {
-                alert("Esta carpeta ya está compartida con este usuario.");
-                return;
-            }
             
            const batch = writeBatch(db);
 
-            // A) Update the Folder
-            batch.update(folderRef, {
-                sharedWith: arrayUnion(shareData),      // For UI display
-                sharedWithUids: arrayUnion(targetUid),  // For Security Rules & Perms
-                isShared: true,
-                updatedAt: new Date()
-            });
+            // A) Update the Folder only when needed
+            if (!alreadyShared) {
+                batch.update(folderRef, {
+                    sharedWith: arrayUnion(shareData),      // For UI display
+                    sharedWithUids: arrayUnion(targetUid),  // For Security Rules & Perms
+                    isShared: true,
+                    updatedAt: new Date()
+                });
+            }
 
             // B) Retroactively update ALL Subjects inside this folder (query by folderId)
-            try {
-                const subjectsSnap = await getDocs(
-                    query(collection(db, "subjects"), where("folderId", "==", folderId))
-                );
-                subjectsSnap.forEach(docSnap => {
-                    const subjectRef = doc(db, "subjects", docSnap.id);
-                    batch.update(subjectRef, {
-                        isShared: true,
-                        sharedWith: arrayUnion(shareData),
-                        sharedWithUids: arrayUnion(targetUid)
+            if (!alreadyShared) {
+                try {
+                    const subjectsSnap = await getDocs(
+                        query(collection(db, "subjects"), where("folderId", "==", folderId))
+                    );
+                    subjectsSnap.forEach(docSnap => {
+                        const subjectRef = doc(db, "subjects", docSnap.id);
+                        batch.update(subjectRef, {
+                            isShared: true,
+                            sharedWith: arrayUnion(shareData),
+                            sharedWithUids: arrayUnion(targetUid)
+                        });
                     });
-                });
-            } catch (e) {
-                console.error("Error sharing subjects in folder:", e);
+                } catch (e) {
+                    console.error("Error sharing subjects in folder:", e);
+                }
             }
 
             // 6. COMMIT CHANGES
             await batch.commit();
+
+            // 7. Ensure exactly one folder shortcut exists for recipient (Option B root shortcut)
+            const existingShortcutQuery = query(
+                collection(db, 'shortcuts'),
+                where('ownerId', '==', targetUid),
+                where('targetId', '==', folderId),
+                where('targetType', '==', 'folder')
+            );
+            const existingShortcutSnap = await getDocs(existingShortcutQuery);
+            const existingShortcutDocs = existingShortcutSnap.docs.filter(d => {
+                const data = d.data() || {};
+                return !data.institutionId || data.institutionId === currentInstitutionId;
+            });
+
+            if (existingShortcutDocs.length === 0) {
+                await addDoc(collection(db, 'shortcuts'), {
+                    ownerId: targetUid,
+                    parentId: null,
+                    targetId: folderId,
+                    targetType: 'folder',
+                    institutionId: currentInstitutionId,
+                    shortcutName: folderData.name || null,
+                    shortcutColor: folderData.color || null,
+                    shortcutCardStyle: folderData.cardStyle || null,
+                    shortcutModernFillColor: folderData.modernFillColor || null,
+                    createdAt: new Date()
+                });
+            } else {
+                const primaryShortcut = existingShortcutDocs[0];
+                await updateDoc(doc(db, 'shortcuts', primaryShortcut.id), {
+                    institutionId: currentInstitutionId,
+                    updatedAt: new Date()
+                });
+                if (existingShortcutDocs.length > 1) {
+                    const duplicateDocs = existingShortcutDocs.slice(1);
+                    await Promise.all(duplicateDocs.map(d => deleteDoc(doc(db, 'shortcuts', d.id))));
+                }
+            }
 
             return shareData;
 

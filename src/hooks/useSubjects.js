@@ -136,31 +136,32 @@ export const useSubjects = (user) => {
 
             const subjectData = subjectSnap.docs[0].data();
 
-            // Check if already shared with this user (fix: check by uid in sharedWith array)
+            // Check if already shared with this user (idempotent behavior)
             const alreadyShared = Array.isArray(subjectData.sharedWith) && subjectData.sharedWith.some(entry => entry.uid === targetUid);
-            if (alreadyShared) {
-                throw new Error("Esta asignatura ya está compartida con ese usuario.");
-            }
 
-            // 3. Update the subject with the new shared user
+            // 3. Build share data
             const shareData = {
                 email: emailLower,
                 uid: targetUid,
                 role: 'viewer',
                 sharedAt: new Date()
             };
-            try {
-                await updateDoc(subjectRef, {
-                    sharedWith: arrayUnion(shareData),
-                    sharedWithUids: arrayUnion(targetUid),
-                    isShared: true,
-                    updatedAt: new Date()
-                });
-            } catch (err) {
-                throw err;
+
+            // 4. Update source sharing only if needed
+            if (!alreadyShared) {
+                try {
+                    await updateDoc(subjectRef, {
+                        sharedWith: arrayUnion(shareData),
+                        sharedWithUids: arrayUnion(targetUid),
+                        isShared: true,
+                        updatedAt: new Date()
+                    });
+                } catch (err) {
+                    throw err;
+                }
             }
 
-            // Ensure exactly one shortcut exists for the newly shared user
+            // 5. Ensure exactly one shortcut exists for the recipient (even if already shared)
             const existingShortcutQuery = query(
                 collection(db, 'shortcuts'),
                 where('ownerId', '==', targetUid),
@@ -193,10 +194,17 @@ export const useSubjects = (user) => {
                 } catch (err) {
                     throw err;
                 }
-            } else if (existingShortcutDocs.length > 1) {
-                // Keep one, remove accidental duplicates
-                const duplicateDocs = existingShortcutDocs.slice(1);
-                await Promise.all(duplicateDocs.map(d => deleteDoc(doc(db, 'shortcuts', d.id))));
+            } else {
+                const primaryShortcut = existingShortcutDocs[0];
+                await updateDoc(doc(db, 'shortcuts', primaryShortcut.id), {
+                    institutionId: currentInstitutionId,
+                    updatedAt: new Date()
+                });
+                if (existingShortcutDocs.length > 1) {
+                    // Keep one, remove accidental duplicates
+                    const duplicateDocs = existingShortcutDocs.slice(1);
+                    await Promise.all(duplicateDocs.map(d => deleteDoc(doc(db, 'shortcuts', d.id))));
+                }
             }
 
             return shareData;

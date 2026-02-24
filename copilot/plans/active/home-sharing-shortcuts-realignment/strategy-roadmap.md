@@ -1,12 +1,12 @@
 # Home Sharing + Shortcuts Realignment — Strategy Roadmap
 
-## Mission
-
-Re-establish shortcut-first non-owner experience in Home so shared resources appear as recipient-owned shortcut cards (not direct source cards), with deterministic share-time shortcut creation for subjects and folders.
-
-## Constraints
-
-- Preserve source ownership model (`ownerId` remains unchanged on source documents).
+### Decision Track
+1. Manual tab visibility contract (done)
+2. Share pipeline shortcut guarantees (done)
+3. Dedupe and idempotency (done)
+4. Orphan shortcut behavior (done)
+5. Cross-view parity
+6. Verification and handoff
 - Keep single-parent hierarchy pointers (`parentId` for folders, `folderId` for subjects).
 - Respect `institutionId` isolation in queries and rule-compatible write patterns.
 - Maintain idempotent operations (safe re-run, no duplicate shortcuts).
@@ -29,8 +29,8 @@ Re-establish shortcut-first non-owner experience in Home so shared resources app
 - Shortcut card movement updates shortcut `parentId`, not source `parentId/folderId`.
 - Shortcut deletion removes shortcut only, not source resource.
 
-### Shared-folder shortcut internals (decision required)
-When user A shares a folder with user B and B receives a folder shortcut, we must decide how inner content is exposed:
+### Shared-folder shortcut internals (decision locked)
+When user A shares a folder with user B and B receives a folder shortcut, inner content strategy is:
 
 - **Option A — Recursive materialized shortcuts**
   - Create shortcuts for every descendant folder/subject under the shared root.
@@ -42,21 +42,21 @@ When user A shares a folder with user B and B receives a folder shortcut, we mus
   - Pros: minimal writes, simpler dedupe, lower drift risk.
   - Cons: per-descendant independent shortcut moves require extra abstraction.
 
-- **Initial recommendation for implementation start:** Option B (single root shortcut + live projection), then evolve to selective materialization only if a concrete UX need requires it.
+- **Selected approach:** Option B (single root shortcut + live projection), with future selective materialization only if a concrete UX requirement appears.
 
 ## Phase Status
 
-- Phase 00 — Baseline regression mapping: **TODO**
-- Phase 01 — Shared-folder shortcut contents strategy decision (A vs B): **TODO**
-- Phase 02 — Manual tab visibility contract enforcement: **TODO**
-- Phase 03 — Share pipeline shortcut guarantees (subject/folder): **TODO**
+- Phase 00 — Baseline regression mapping: **COMPLETED**
+- Phase 01 — Shared-folder shortcut contents strategy decision (A vs B): **COMPLETED**
+- Phase 02 — Manual tab visibility contract enforcement: **IN_PROGRESS**
+- Phase 03 — Share pipeline shortcut guarantees (subject/folder): **IN_PROGRESS**
 - Phase 04 — Dedupe + idempotency hardening: **TODO**
 - Phase 05 — Cross-view parity (grid/list/tree/manual): **TODO**
 - Phase 06 — Verification + review checklist: **TODO**
 
 ## Phase Dependency Note
 
-- Phase 02 and Phase 03 implementation details are blocked until Phase 01 decision is finalized.
+- Phase 01 decision is finalized (Option B), so Phase 03 and Phase 04 can proceed without architectural ambiguity.
 
 ## Risks and Mitigations
 

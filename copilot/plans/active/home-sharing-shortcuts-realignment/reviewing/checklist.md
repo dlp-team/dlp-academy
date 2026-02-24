@@ -2,8 +2,8 @@
 
 ## Manual Tab Visibility
 
-- [ ] Owner account shows owned source cards correctly.
-- [ ] Non-owner account does not see non-owned source cards directly.
+- [x] Owner account shows owned source cards correctly.
+- [x] Non-owner account does not see non-owned source cards directly.
 - [ ] Non-owner account sees shortcuts where `shortcut.ownerId == currentUser.uid`.
 - [ ] No duplicate card appears for same target in same parent scope.
 
@@ -27,3 +27,8 @@
 - [ ] List view matches manual-tab visibility contract.
 - [ ] Folder tree modal uses shortcut/source separation correctly.
 - [ ] Search respects the same ownership/shortcut visibility contract.
+
+## Orphan Shortcut Behavior
+
+- [x] Decision: Keep orphan shortcuts as ghost cards
+- [x] Implementation: Shortcuts not deleted on unshare, ghost card UI pending verification
