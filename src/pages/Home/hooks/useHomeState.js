@@ -87,8 +87,9 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
                 folder?.isOwner === true ||
                 (folder?.ownerId && user?.uid && folder.ownerId === user.uid);
 
+            if (!isOwnedByCurrentUser) return false;
             if (!shortcutTargetIds.has(folder.id)) return true;
-            return isOwnedByCurrentUser;
+            return true;
         });
 
         // Deduplicate with shortcut priority for non-owners
@@ -157,8 +158,9 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
                 subject?.isOwner === true ||
                 (subject?.ownerId && user?.uid && subject.ownerId === user.uid);
 
+            if (!isOwnedByCurrentUser) return false;
             if (!shortcutTargetIds.has(subject.id)) return true;
-            return isOwnedByCurrentUser;
+            return true;
         });
 
         // Deduplicate with shortcut priority for non-owners
