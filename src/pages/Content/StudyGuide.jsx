@@ -583,7 +583,7 @@ const StudyGuide = () => {
                 }
 
                 // 2. OBTENER LOS DATOS DE LA GUÍA (RESUMEN)
-                const guideRef = doc(db, "subjects", subjectId, "topics", topicId, "resumen", activeDocId);
+                const guideRef = doc(db, "resumen", activeDocId);
                 const guideSnap = await getDoc(guideRef);
 
                 if (guideSnap.exists()) {

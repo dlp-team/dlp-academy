@@ -83,12 +83,6 @@ const TopicContent = ({
     if (activeTab === 'materials') {
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {topic.status === 'generating' && (
-                    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-blue-200 dark:border-blue-800 p-8 shadow-sm dark:shadow-md flex flex-col justify-center items-center h-64 animate-pulse">
-                        <Loader2 className="w-12 h-12 text-blue-500 dark:text-blue-400 animate-spin mb-4" />
-                        <h4 className="font-bold text-2xl text-slate-900 dark:text-slate-100">Generando...</h4>
-                    </div>
-                )}
                 {topic.pdfs?.map((pdf, idx) => (
                     <FileCard 
                         key={pdf.id || idx}
@@ -110,7 +104,7 @@ const TopicContent = ({
                         permissions={permissions}
                     />
                 ))}
-                {(!topic.pdfs || topic.pdfs.length === 0) && topic.status !== 'generating' && (
+                {(!topic.pdfs || topic.pdfs.length === 0) && (
                     <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
                         <FileText className="w-12 h-12 mb-3 opacity-20" />
                         <p className="font-medium">Sin materiales</p>

@@ -13,6 +13,8 @@ export const useTopicLogic = (user) => {
     const { subjectId, topicId } = useParams();
     const fileInputRef = useRef(null);
     const toastTimerRef = useRef(null);
+    const docsFromDocumentsRef = useRef([]);
+    const docsFromResumenRef = useRef([]);
     
     // Estados de Datos
     const [subject, setSubject] = useState(null);
@@ -70,6 +72,7 @@ export const useTopicLogic = (user) => {
         let unsubscribeTopic = () => {};
         let unsubscribeDocs = () => {};
         let unsubscribeQuizzes = () => {};
+        let unsubscribeResumen = () => {};
 
         const fetchTopicDetails = async () => {
             if (!user || !subjectId || !topicId) return;
@@ -96,14 +99,29 @@ export const useTopicLogic = (user) => {
                             const manualUploads = allDocs
                                 .filter(d => d.source === 'manual')
                                 .map(d => ({ ...d, origin: 'manual' }));
-                            const aiPdfs = allDocs
+                            docsFromDocumentsRef.current = allDocs
                                 .filter(d => d.source !== 'manual')
                                 .map(d => ({ ...d, origin: 'AI' }));
 
-                            setTopic(prev => ({ 
-                                ...prev, 
-                                pdfs: aiPdfs, 
-                                uploads: manualUploads 
+                            setTopic(prev => ({
+                                ...prev,
+                                pdfs: [...docsFromDocumentsRef.current, ...docsFromResumenRef.current],
+                                uploads: manualUploads
+                            }));
+                        });
+
+                        const resumenRef = query(collection(db, 'resumen'), where('topicId', '==', topicId));
+                        unsubscribeResumen = onSnapshot(resumenRef, (resumenSnap) => {
+                            docsFromResumenRef.current = resumenSnap.docs.map(d => ({
+                                id: d.id,
+                                ...d.data(),
+                                origin: 'AI',
+                                type: d.data().type || 'summary',
+                                name: d.data().name || d.data().title || 'Sin título'
+                            }));
+                            setTopic(prev => ({
+                                ...prev,
+                                pdfs: [...docsFromDocumentsRef.current, ...docsFromResumenRef.current],
                             }));
                         });
 
@@ -133,6 +151,7 @@ export const useTopicLogic = (user) => {
             if (unsubscribeTopic) unsubscribeTopic();
             if (unsubscribeDocs) unsubscribeDocs();
             if (unsubscribeQuizzes) unsubscribeQuizzes();
+            if (unsubscribeResumen) unsubscribeResumen();
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         };
     }, [user, subjectId, topicId, navigate]);

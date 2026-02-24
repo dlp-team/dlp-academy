@@ -335,6 +335,44 @@ service cloud.firestore {
         );
     }
 
+    // Reglas para Resumen en colección raíz
+    match /resumen/{resumenId} {
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasTopicRef(request.resource.data)
+            && topicInstitutionMatches(topicRef(request.resource.data))
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+
+      allow read: if isSignedIn()
+        && (
+          canReadResource(resource.data)
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+        );
+
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+        )
+        && (
+          request.resource.data.institutionId == resource.data.institutionId
+          || (
+            !hasInstitutionField(resource.data)
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+    }
+
     // Reglas para Quizzes en colección raíz
     match /quizzes/{quizId} {
       allow create: if isSignedIn()
