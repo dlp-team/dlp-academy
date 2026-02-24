@@ -43,7 +43,7 @@ export const isTargetInsideDraggedTree = (draggedFolderId, targetFolderId, allFo
         if (!currentFolder) continue;
 
         // Get children by querying parentId instead of using folderIds array
-        const children = Array.isArray(folders) ? folders.filter(f => f.parentId === currentFolder.id).map(f => f.id) : [];
+            const children = Array.isArray(allFolders) ? allFolders.filter(f => f.parentId === currentFolder.id).map(f => f.id) : [];
         for (const childId of children) {
             if (childId === targetFolderId) return true;
             if (!visited.has(childId)) stack.push(childId);
