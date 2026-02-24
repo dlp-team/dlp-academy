@@ -17,41 +17,36 @@ export const useFolderCardLogic = ({
 }) => {
     const [isOver, setIsOver] = useState(false);
     
-    // --- RECURSIVE COUNTING LOGIC WITH LOUD DEBUGGING ---
+    // --- COUNTING LOGIC: Count all descendants by querying relationships ---
     const { subjectCount, folderCount, totalCount } = useMemo(() => {
-        // 1. Fallback: If allFolders isn't passed, use shallow counts
-        if (!allFolders || allFolders.length === 0) {
-            const sCount = folder.subjectIds?.length || 0;
-            const fCount = folder.folderIds?.length || 0;
+        if (!allFolders) {
             return { 
-                subjectCount: sCount, 
-                folderCount: fCount, 
-                totalCount: sCount + fCount 
+                subjectCount: 0, 
+                folderCount: 0, 
+                totalCount: 0 
             };
         }
 
-        // 2. Preparation
-        const folderMap = new Map(allFolders.map(f => [f.id, f]));
         const visited = new Set();
 
-        // 3. The Recursive Function
-        const traverse = (currentId) => {
-            if (visited.has(currentId)) return { s: 0, f: 0 };
-            visited.add(currentId);
+        const traverse = (folderId) => {
+            if (visited.has(folderId)) return { s: 0, f: 0 };
+            visited.add(folderId);
 
-            const currentFolder = folderMap.get(currentId);
+            // Find this folder
+            const currentFolder = allFolders.find(f => f.id === folderId);
             if (!currentFolder) return { s: 0, f: 0 };
 
-            // Count items in THIS folder
-            let s = currentFolder.subjectIds?.length || 0;
+            // Count direct children by querying parentId/folderId
+            // Get child folders where parentId === folderId
+            const childFolders = allFolders.filter(f => f.parentId === folderId);
             
-            // Count immediate subfolders
-            const subFolderIds = currentFolder.folderIds || [];
-            let f = subFolderIds.length; 
+            let s = 0;
+            let f = childFolders.length;
 
-            // Recursively add counts from children
-            subFolderIds.forEach(childId => {
-                const childStats = traverse(childId);
+            // Recursively count descendants
+            childFolders.forEach(child => {
+                const childStats = traverse(child.id);
                 s += childStats.s;
                 f += childStats.f;
             });
@@ -59,13 +54,8 @@ export const useFolderCardLogic = ({
             return { s, f };
         };
 
-        // 4. Execute
         visited.clear();
         const stats = traverse(folder.id);
-
-        // 5. Apply Adjustments (Subtract 1 from folders as requested)
-        // We use Math.max to ensure we don't display "-1" for empty folders
-        const adjustedFolderCount = Math.max(0, stats.f - 1);
 
         return {
             subjectCount: stats.s,

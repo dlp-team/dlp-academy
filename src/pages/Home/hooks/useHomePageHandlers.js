@@ -6,6 +6,7 @@ import { canEdit } from '../../../utils/permissionUtils';
 
 export const useHomePageHandlers = ({
     logic,
+    currentUserId,
     updateFolder,
     moveSubjectToParent,
     moveFolderToParent,
@@ -58,22 +59,13 @@ export const useHomePageHandlers = ({
                 ? explicitSourceFolderId
                 : subject?.folderId || (logic.currentFolder ? logic.currentFolder.id : null);
 
-        console.log('[CALL] handleDropOnFolderWrapper:', {
-            targetFolderId,
-            subjectId,
-            type,
-            typeOrSourceFolderId,
-            sourceFolderIdMaybe,
-            currentFolderId,
-            draggedShortcutId
-        });
 
         if (targetFolderId === currentFolderId) {
             return;
         }
         const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
         const sourceFolder = (logic.folders || []).find(f => f.id === currentFolderId);
-        const userId = logic?.user?.uid || logic?.uid;
+        const userId = currentUserId;
 
         if (draggedShortcutId && logic?.moveShortcut) {
             logic.moveShortcut(draggedShortcutId, targetFolderId || null);
@@ -83,12 +75,6 @@ export const useHomePageHandlers = ({
         if (subject) {
             const userCanEdit = userId ? canEdit(subject, userId) : false;
             if (!userCanEdit) {
-                console.log('[handleDropOnFolderWrapper] viewer/editor without shortcut cannot move source subject directly:', {
-                    subjectId,
-                    targetFolderId,
-                    currentFolderId,
-                    userId
-                });
                 return true;
             }
         }
@@ -96,32 +82,26 @@ export const useHomePageHandlers = ({
         const getSharedUids = item => (item && Array.isArray(item.sharedWithUids) ? item.sharedWithUids : []);
 
         const subjectSharedWithUids = getSharedUids(subject);
+        const sourceFolderSharedWithUids = getSharedUids(sourceFolder);
         const targetFolderSharedWithUids = getSharedUids(targetFolder);
+        const baselineSharedWithUids = sourceFolder ? sourceFolderSharedWithUids : subjectSharedWithUids;
+        const removedUsers = baselineSharedWithUids.filter(uid => !targetFolderSharedWithUids.includes(uid));
 
-        if (
-            sourceFolder &&
-            sourceFolder.isShared &&
-            (!targetFolder || !targetFolder.isShared) &&
-            Array.isArray(sourceFolder.subjectIds) &&
-            sourceFolder.subjectIds.includes(subjectId)
-        ) {
-            const parentFolder = sourceFolder.parentId ? (logic.folders || []).find(f => f.id === sourceFolder.parentId) : null;
-            if (parentFolder && parentFolder.isShared) {
-                setUnshareConfirm({
-                    open: true,
-                    subjectId,
-                    folder: sourceFolder,
-                    onConfirm: async () => {
-                        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-                        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
-                    }
-                });
-                return true;
-            }
+        if (removedUsers.length > 0) {
+            setUnshareConfirm({
+                open: true,
+                subjectId,
+                folder: sourceFolder,
+                onConfirm: async () => {
+                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+                    setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                }
+            });
+            return true;
         }
 
         if (targetFolder && targetFolder.isShared) {
-            const subjectShared = new Set(subjectSharedWithUids);
+            const subjectShared = new Set(baselineSharedWithUids);
             const folderShared = targetFolderSharedWithUids;
             const newUsers = folderShared.filter(uid => !subjectShared.has(uid));
             if (newUsers.length > 0) {
@@ -137,11 +117,7 @@ export const useHomePageHandlers = ({
                 return true;
             }
         }
-        console.log('[handleDropOnFolderWrapper] moveSubjectBetweenFolders args:', {
-            subjectId,
-            currentFolderId,
-            targetFolderId
-        });
+        
         moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
         return true;
     };
@@ -179,23 +155,20 @@ export const useHomePageHandlers = ({
                                     sharedWithUids: [],
                                     isShared: false
                                 });
-                                if (Array.isArray(droppedFolder.subjectIds)) {
-                                    for (const childSubjectId of droppedFolder.subjectIds) {
-                                        const subject = (logic.subjects || []).find(s => s.id === childSubjectId);
-                                        if (subject) {
-                                            const newSharedWith = (subject.sharedWith || []).filter(
-                                                u => !oldSharedWithUids.includes(u.uid)
-                                            );
-                                            const newSharedWithUids = (subject.sharedWithUids || []).filter(
-                                                uid => !oldSharedWithUids.includes(uid)
-                                            );
-                                            await updateDoc(doc(db, 'subjects', childSubjectId), {
-                                                sharedWith: newSharedWith,
-                                                sharedWithUids: newSharedWithUids,
-                                                isShared: newSharedWithUids.length > 0
-                                            });
-                                        }
-                                    }
+                                // Update all subjects in this folder (query by folderId)
+                                const subjectsInFolder = (logic.subjects || []).filter(s => s.folderId === droppedFolderId);
+                                for (const subject of subjectsInFolder) {
+                                    const newSharedWith = (subject.sharedWith || []).filter(
+                                        u => !oldSharedWithUids.includes(u.uid)
+                                    );
+                                    const newSharedWithUids = (subject.sharedWithUids || []).filter(
+                                        uid => !oldSharedWithUids.includes(uid)
+                                    );
+                                    await updateDoc(doc(db, 'subjects', subject.id), {
+                                        sharedWith: newSharedWith,
+                                        sharedWithUids: newSharedWithUids,
+                                        isShared: newSharedWithUids.length > 0
+                                    });
                                 }
                                 await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
                                 setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
@@ -256,23 +229,20 @@ export const useHomePageHandlers = ({
                             sharedWithUids: [],
                             isShared: false
                         });
-                        if (Array.isArray(droppedFolder.subjectIds)) {
-                            for (const childSubjectId of droppedFolder.subjectIds) {
-                                const subject = (logic.subjects || []).find(s => s.id === childSubjectId);
-                                if (subject) {
-                                    const newSharedWith = (subject.sharedWith || []).filter(
-                                        u => !oldSharedWithUids.includes(u.uid)
-                                    );
-                                    const newSharedWithUids = (subject.sharedWithUids || []).filter(
-                                        uid => !oldSharedWithUids.includes(uid)
-                                    );
-                                    await updateDoc(doc(db, 'subjects', childSubjectId), {
-                                        sharedWith: newSharedWith,
-                                        sharedWithUids: newSharedWithUids,
-                                        isShared: newSharedWithUids.length > 0
-                                    });
-                                }
-                            }
+                        // Update all subjects in this folder (query by folderId)
+                        const subjectsInFolder2 = (logic.subjects || []).filter(s => s.folderId === droppedFolderId);
+                        for (const subject of subjectsInFolder2) {
+                            const newSharedWith = (subject.sharedWith || []).filter(
+                                u => !oldSharedWithUids.includes(u.uid)
+                            );
+                            const newSharedWithUids = (subject.sharedWithUids || []).filter(
+                                uid => !oldSharedWithUids.includes(uid)
+                            );
+                            await updateDoc(doc(db, 'subjects', subject.id), {
+                                sharedWith: newSharedWith,
+                                sharedWithUids: newSharedWithUids,
+                                isShared: newSharedWithUids.length > 0
+                            });
                         }
                         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
                         setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
@@ -349,23 +319,20 @@ export const useHomePageHandlers = ({
                             isShared: false
                         });
                         const folder = (logic.folders || []).find(f => f.id === folderId);
-                        if (folder && Array.isArray(folder.subjectIds)) {
-                            for (const childSubjectId of folder.subjectIds) {
-                                const subject = (logic.subjects || []).find(s => s.id === childSubjectId);
-                                if (subject) {
-                                    const newSharedWith = (subject.sharedWith || []).filter(
-                                        u => !oldSharedWithUids.includes(u.uid)
-                                    );
-                                    const newSharedWithUids = (subject.sharedWithUids || []).filter(
-                                        uid => !oldSharedWithUids.includes(uid)
-                                    );
-                                    await updateDoc(doc(db, 'subjects', childSubjectId), {
-                                        sharedWith: newSharedWith,
-                                        sharedWithUids: newSharedWithUids,
-                                        isShared: newSharedWithUids.length > 0
-                                    });
-                                }
-                            }
+                        // Update all subjects in this folder (query by folderId)
+                        const subjectsInFolder3 = (logic.subjects || []).filter(s => s.folderId === folderId);
+                        for (const subject of subjectsInFolder3) {
+                            const newSharedWith = (subject.sharedWith || []).filter(
+                                u => !oldSharedWithUids.includes(u.uid)
+                            );
+                            const newSharedWithUids = (subject.sharedWithUids || []).filter(
+                                uid => !oldSharedWithUids.includes(uid)
+                            );
+                            await updateDoc(doc(db, 'subjects', subject.id), {
+                                sharedWith: newSharedWith,
+                                sharedWithUids: newSharedWithUids,
+                                isShared: newSharedWithUids.length > 0
+                            });
                         }
                         await moveFolderToParent(folderId, currentFolder.id, parentId);
                         setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
@@ -399,7 +366,7 @@ export const useHomePageHandlers = ({
 
     const handleTreeMoveSubject = async (subjectId, targetFolderId, sourceFolderId) => {
         const subject = (logic.subjects || []).find(s => s.id === subjectId);
-        const userId = logic?.user?.uid || logic?.uid;
+        const userId = currentUserId;
         const userCanEdit = subject && userId ? canEdit(subject, userId) : false;
 
         if (!userCanEdit && logic?.moveShortcut) {

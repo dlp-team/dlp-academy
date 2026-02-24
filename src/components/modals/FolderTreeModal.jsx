@@ -35,15 +35,10 @@ const TreeItem = ({
     let childSubjects = [];
 
     if (type === 'folder') {
-        if (item.folderIds && item.folderIds.length > 0) {
-            childFolders = allFolders.filter(f => item.folderIds.includes(f.id));
-            // Keep original order from folderIds array
-            childFolders.sort((a, b) => item.folderIds.indexOf(a.id) - item.folderIds.indexOf(b.id));
-        }
-        if (item.subjectIds && item.subjectIds.length > 0) {
-            childSubjects = allSubjects.filter(s => item.subjectIds.includes(s.id));
-            childSubjects.sort((a, b) => item.subjectIds.indexOf(a.id) - item.subjectIds.indexOf(b.id));
-        }
+        // Query child folders by parentId (direct children only)
+        childFolders = allFolders.filter(f => f.parentId === item.id);
+        // Query child subjects by folderId (direct children only)
+        childSubjects = allSubjects.filter(s => s.folderId === item.id);
     }
 
     const hasChildren = childFolders.length > 0 || childSubjects.length > 0;
@@ -403,14 +398,9 @@ const FolderTreeModal = ({
                         let childFolders = [];
                         let childSubjects = [];
 
-                        if (rootFolder.folderIds) {
-                            childFolders = allFolders.filter(f => rootFolder.folderIds.includes(f.id));
-                            childFolders.sort((a, b) => rootFolder.folderIds.indexOf(a.id) - rootFolder.folderIds.indexOf(b.id));
-                        }
-                        if (rootFolder.subjectIds) {
-                            childSubjects = allSubjects.filter(s => rootFolder.subjectIds.includes(s.id));
-                            childSubjects.sort((a, b) => rootFolder.subjectIds.indexOf(a.id) - rootFolder.subjectIds.indexOf(b.id));
-                        }
+                        // Query direct children by parentId and folderId
+                        childFolders = allFolders.filter(f => f.parentId === rootFolder.id);
+                        childSubjects = allSubjects.filter(s => s.folderId === rootFolder.id);
                         
                         return (
                             <div className="space-y-1">

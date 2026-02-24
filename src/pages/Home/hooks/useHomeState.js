@@ -43,26 +43,6 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         }
     }, [folders]);
 
-    const descendantFolderIds = useMemo(() => {
-        if (!currentFolder || !Array.isArray(folders) || folders.length === 0) return new Set();
-
-        const descendants = new Set();
-        const queue = [currentFolder.id];
-
-        while (queue.length > 0) {
-            const parentId = queue.shift();
-            const children = folders.filter(folder => folder.parentId === parentId);
-            children.forEach(child => {
-                if (!descendants.has(child.id)) {
-                    descendants.add(child.id);
-                    queue.push(child.id);
-                }
-            });
-        }
-
-        return descendants;
-    }, [folders, currentFolder]);
-
     const filteredFolders = useMemo(() => {
         if (!folders) return [];
 
@@ -71,8 +51,9 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const normalizedQuery = hasQuery ? normalizeText(query) : '';
 
         return folders.filter(folder => {
+            // Show only direct children of current folder (not descendants)
             const inScope = currentFolder
-                ? folder.parentId === currentFolder.id || descendantFolderIds.has(folder.id)
+                ? folder.parentId === currentFolder.id
                 : !folder.parentId;
 
             if (!inScope) return false;
@@ -80,7 +61,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
             return normalizeText(folder.name).includes(normalizedQuery);
         });
-    }, [folders, currentFolder, searchQuery, descendantFolderIds]);
+    }, [folders, currentFolder, searchQuery]);
 
     // Merge shortcuts with folders (deduplication by targetId)
     const foldersWithShortcuts = useMemo(() => {
@@ -90,9 +71,9 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const folderShortcuts = resolvedShortcuts.filter(s => {
             if (s.targetType !== 'folder') return false;
             
-            // Check if shortcut belongs in current scope
+            // Check if shortcut belongs in current scope (direct children only)
             const inScope = currentFolder
-                ? s.parentId === currentFolder.id || descendantFolderIds.has(s.parentId)
+                ? s.parentId === currentFolder.id
                 : !s.parentId;
             
             return inScope;
@@ -131,7 +112,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         });
 
         return merged;
-    }, [filteredFolders, resolvedShortcuts, currentFolder, descendantFolderIds, user]);
+    }, [filteredFolders, resolvedShortcuts, currentFolder, user]);
 
     const filteredSubjects = useMemo(() => {
         if (!subjects) return [];
@@ -142,7 +123,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
         return subjects.filter(subject => {
             const inScope = currentFolder
-                ? subject.folderId === currentFolder.id || descendantFolderIds.has(subject.folderId)
+                ? subject.folderId === currentFolder.id
                 : !subject.folderId;
 
             if (!inScope) return false;
@@ -150,7 +131,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
             return normalizeText(subject.name).includes(normalizedQuery);
         });
-    }, [subjects, currentFolder, searchQuery, descendantFolderIds]);
+    }, [subjects, currentFolder, searchQuery]);
 
     // Merge shortcuts with subjects (deduplication by targetId)
     const subjectsWithShortcuts = useMemo(() => {
@@ -160,9 +141,9 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const subjectShortcuts = resolvedShortcuts.filter(s => {
             if (s.targetType !== 'subject') return false;
             
-            // For subjects, use shortcutParentId (where the shortcut lives)
+            // For subjects, use shortcutParentId (where the shortcut lives - direct children only)
             const inScope = currentFolder
-                ? s.shortcutParentId === currentFolder.id || (s.shortcutParentId && descendantFolderIds.has(s.shortcutParentId))
+                ? s.shortcutParentId === currentFolder.id
                 : !s.shortcutParentId;
             
             return inScope;
@@ -201,7 +182,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         });
 
         return merged;
-    }, [filteredSubjects, resolvedShortcuts, currentFolder, descendantFolderIds, user]);
+    }, [filteredSubjects, resolvedShortcuts, currentFolder, user]);
 
     const filteredSubjectsByTags = useMemo(() => {
         if (selectedTags.length === 0) return subjectsWithShortcuts;
@@ -214,14 +195,13 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     }, [folders, selectedTags]);
 
     const getUnfolderedSubjects = (subjectsList = subjects) => {
-        const allFolderSubjectIds = new Set(folders.flatMap(f => f.subjectIds || []));
-        return subjectsList.filter(s => !allFolderSubjectIds.has(s.id));
+        // Subjects with no folderId (or null folderId) are unfoldered
+        return subjectsList.filter(s => s.folderId === null || s.folderId === undefined);
     };
 
     const getSubjectsInFolder = (folderId, subjectsList = subjects) => {
-        const folder = folders.find(f => f.id === folderId);
-        if (!folder || !folder.subjectIds) return [];
-        return subjectsList.filter(s => folder.subjectIds.includes(s.id));
+        // Query subjects where folderId matches
+        return subjectsList.filter(s => s.folderId === folderId);
     };
 
     const sharedFolders = useMemo(() => {
@@ -229,9 +209,13 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     }, [folders]);
 
     const sharedSubjects = useMemo(() => {
-        const sharedFolderSubjectIds = new Set(sharedFolders.flatMap(f => f.subjectIds || []));
+        // Subjects in shared folders or directly shared with user
         return subjects.filter(
-            s => sharedFolderSubjectIds.has(s.id) || (s.uid !== user.uid && s.sharedWithUids?.includes(user.uid))
+            s => {
+                // Check if subject is in a shared folder
+                const inSharedFolder = sharedFolders.some(f => s.folderId === f.id);
+                return inSharedFolder || (s.uid !== user.uid && s.sharedWithUids?.includes(user.uid));
+            }
         );
     }, [subjects, sharedFolders, user]);
 
@@ -274,8 +258,9 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         }
 
         if (selectedTags.length > 0) {
-            const matchingIds = new Set(filteredSubjectsByTags.map(s => s.id));
-            resultFolders = resultFolders.filter(f => (f.subjectIds || []).some(id => matchingIds.has(id)));
+            const matchingSubjectsInFolders = filteredSubjectsByTags.filter(s => s.folderId !== null && s.folderId !== undefined);
+            const folderIdsWithMatches = new Set(matchingSubjectsInFolders.map(s => s.folderId));
+            resultFolders = resultFolders.filter(f => folderIdsWithMatches.has(f.id));
         }
 
         return applyManualOrder(resultFolders, 'folder');
@@ -441,7 +426,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
             if (!normalizeText(f.name).includes(query)) return false;
 
             if (!currentFolder) return true;
-            return f.parentId === currentFolder.id || descendantFolderIds.has(f.id);
+            return f.parentId === currentFolder.id;
         });
 
         const sSubjects = subjectsWithShortcuts.filter(s => {
@@ -450,11 +435,11 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
             if (!currentFolder) return true;
             const location = s.shortcutParentId !== undefined ? s.shortcutParentId : s.folderId;
-            return location === currentFolder.id || descendantFolderIds.has(location);
+            return location === currentFolder.id;
         });
 
         return { searchFolders: sFolders, searchSubjects: sSubjects };
-    }, [folders, subjectsWithShortcuts, searchQuery, user, currentFolder, descendantFolderIds]);
+    }, [folders, subjectsWithShortcuts, searchQuery, user, currentFolder]);
 
     useEffect(() => {
         const closeMenu = () => setActiveMenu(null);

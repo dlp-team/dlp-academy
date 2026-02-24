@@ -19,8 +19,13 @@ const HomeModals = ({
     onShareSubject,
     onUnshareSubject,
     currentFolder = null,
-    allFolders = []
+    allFolders = [],
+    subjects = []
 }) => {
+    // Calculate subject count in folder dynamically from subjects array
+    const getSubjectCountInFolder = (folderId) => {
+        return subjects.filter(s => s.folderId === folderId).length;
+    };
     return (
         <>
             <SubjectFormModal 
@@ -51,7 +56,7 @@ const HomeModals = ({
                 <FolderDeleteModal
                     isOpen={deleteConfig.isOpen}
                     folderName={deleteConfig.item?.name || ''}
-                    itemCount={(deleteConfig.item?.subjectIds?.length || 0) + (deleteConfig.item?.folderIds?.length || 0)}
+                    itemCount={getSubjectCountInFolder(deleteConfig.item?.id)}
                     onClose={() => setDeleteConfig({ isOpen: false, type: null, item: null })}
                     onDeleteAll={handleDeleteFolderAll}
                     onDeleteFolderOnly={handleDeleteFolderOnly}

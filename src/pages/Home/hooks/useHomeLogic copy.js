@@ -146,14 +146,13 @@ export const useHomeLogic = (user, searchQuery = '') => {
     // --- FOLDER HELPERS ---
     // Allow optional subjectsList to enable applying tag filters when needed
     const getUnfolderedSubjects = (subjectsList = subjects) => {
-        const allFolderSubjectIds = new Set(folders.flatMap(f => f.subjectIds || []));
-        return subjectsList.filter(s => !allFolderSubjectIds.has(s.id));
+        // Subjects with no folderId (or null folderId) are unfoldered
+        return subjectsList.filter(s => s.folderId === null || s.folderId === undefined);
     };
 
     const getSubjectsInFolder = (folderId, subjectsList = subjects) => {
-        const folder = folders.find(f => f.id === folderId);
-        if (!folder || !folder.subjectIds) return [];
-        return subjectsList.filter(s => folder.subjectIds.includes(s.id));
+        // Query subjects where folderId matches
+        return subjectsList.filter(s => s.folderId === folderId);
     };
 
     // --- SHARED CONTENT ---
@@ -162,19 +161,12 @@ export const useHomeLogic = (user, searchQuery = '') => {
     }, [folders]);
 
     const sharedSubjects = useMemo(() => {
-        // Get subjects from shared folders
-        const sharedFolderSubjectIds = new Set(
-            sharedFolders.flatMap(f => f.subjectIds || [])
-        );
-        
-        // Also include directly shared subjects (where uid !== current user's uid)
-        // This handles both:
-        // 1. Subjects inside shared folders
-        // 2. Subjects directly shared with the user
-        return subjects.filter(s => 
-            sharedFolderSubjectIds.has(s.id) || // In a shared folder
-            (s.uid !== user.uid && s.sharedWithUids?.includes(user.uid)) // Directly shared
-        );
+        // Get subjects in shared folders or directly shared with user
+        return subjects.filter(s => {
+            // Check if subject is in a shared folder
+            const inSharedFolder = sharedFolders.some(f => s.folderId === f.id);
+            return inSharedFolder || (s.uid !== user.uid && s.sharedWithUids?.includes(user.uid));
+        });
     }, [subjects, sharedFolders, user]);
 
     // --- MANUAL ORDERING ---
@@ -225,8 +217,9 @@ export const useHomeLogic = (user, searchQuery = '') => {
 
         // 4. Original Tag Filtering Logic
         if (selectedTags.length > 0) {
-            const matchingIds = new Set(filteredSubjectsByTags.map(s => s.id));
-            resultFolders = resultFolders.filter(f => (f.subjectIds || []).some(id => matchingIds.has(id)));
+            const matchingSubjectsInFolders = filteredSubjectsByTags.filter(s => s.folderId !== null && s.folderId !== undefined);
+            const folderIdsWithMatches = new Set(matchingSubjectsInFolders.map(s => s.folderId));
+            resultFolders = resultFolders.filter(f => folderIdsWithMatches.has(f.id));
         }
 
         // 5. Original Manual Order

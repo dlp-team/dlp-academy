@@ -112,6 +112,7 @@ const Home = ({ user }) => {
         handleTreeReorderSubject
     } = useHomePageHandlers({
         logic,
+        currentUserId: user?.uid || null,
         updateFolder,
         moveSubjectToParent,
         moveFolderToParent,
@@ -356,6 +357,7 @@ const Home = ({ user }) => {
                 onUnshareSubject={logic.unshareSubject}
                 currentFolder={logic.currentFolder}
                 allFolders={logic.folders || []}
+                subjects={logic.subjects || []}
             />
             
             <FolderTreeModal 
