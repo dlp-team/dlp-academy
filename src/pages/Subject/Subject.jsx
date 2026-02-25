@@ -55,7 +55,7 @@ const Subject = ({ user }) => {
         filteredTopics
     } = useSubjectPageState(topics);
 
-    const isTeacherUser = user?.role === 'teacher';
+    const isTeacherUser = user?.role !== 'student';
 
     // Class members
     const { members: classMembers, loading: membersLoading } = useClassMembers(subject);

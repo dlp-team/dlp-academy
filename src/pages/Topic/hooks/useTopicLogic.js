@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { canEdit, canView, canDelete, shouldShowEditUI, shouldShowDeleteUI, isTeacher } from '../../../utils/permissionUtils';
+import { canEdit, canView, canDelete, shouldShowEditUI, shouldShowDeleteUI } from '../../../utils/permissionUtils';
 
 export const useTopicLogic = (user) => {
     const navigate = useNavigate();
@@ -364,8 +364,8 @@ export const useTopicLogic = (user) => {
             isViewer: false
         };
 
-        // Students: always read-only regardless of resource-level ownership
-        if (!isTeacher(user)) {
+        // Students never get edit/delete permissions
+        if (user?.role === 'student') {
             return {
                 canEdit: false,
                 canView: true,

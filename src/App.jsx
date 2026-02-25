@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore'; // Import Firestore functions
+import { doc, onSnapshot } from 'firebase/firestore'; // Import Firestore functions
 import { auth, db } from './firebase/config'; // Import db
 
 
@@ -53,40 +53,54 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    let unsubscribeUserDoc = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      // Clean up previous user doc listener
+      if (unsubscribeUserDoc) {
+        unsubscribeUserDoc();
+        unsubscribeUserDoc = null;
+      }
+
       if (firebaseUser) {
-        try {
-          // 1. FETCH USER ROLE FROM FIRESTORE
-          // We need to get the document from the 'users' collection to see the 'role'
-          const userDocRef = doc(db, 'users', firebaseUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          
+        // Listen to user doc in real-time so role updates (e.g. from OnboardingWizard) are reflected immediately
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        unsubscribeUserDoc = onSnapshot(userDocRef, (userDoc) => {
           if (userDoc.exists()) {
-            // 2. Combine Auth info with Database info
             const userData = userDoc.data();
             setUser({
               uid: firebaseUser.uid,
               email: firebaseUser.email,
               photoURL: firebaseUser.photoURL,
-              ...userData // This spreads 'role', 'institutionId', etc. into the user object
+              ...userData
             });
           } else {
-            // Fallback if no database record exists
-            setUser(firebaseUser);
+            setUser({
+              uid: firebaseUser.uid,
+              email: firebaseUser.email,
+              photoURL: firebaseUser.photoURL
+            });
           }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-          setUser(firebaseUser);
-        }
+          setLoading(false);
+        }, (error) => {
+          console.error("Error listening to user data:", error);
+          setUser({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            photoURL: firebaseUser.photoURL
+          });
+          setLoading(false);
+        });
       } else {
         setUser(null);
+        setLoading(false);
       }
-      
-      // 3. Stop loading ONLY after we have the database data
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeUserDoc) unsubscribeUserDoc();
+    };
   }, []);
 
   return (
