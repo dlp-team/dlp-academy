@@ -27,6 +27,8 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     const [folderModalConfig, setFolderModalConfig] = useState({ isOpen: false, isEditing: false, data: null });
     const [deleteConfig, setDeleteConfig] = useState({ isOpen: false, type: null, item: null });
 
+    const isAllLevelsMode = viewMode === 'usage' || viewMode === 'courses' || viewMode === 'shared';
+
     const debugVisibility = (stage, payload = {}) => {
         console.info('[VISIBILITY_DEBUG][home-state]', {
             ts: new Date().toISOString(),
@@ -63,17 +65,19 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const normalizedQuery = hasQuery ? normalizeText(query) : '';
 
         return folders.filter(folder => {
-            // Show only direct children of current folder (not descendants)
-            const inScope = currentFolder
-                ? folder.parentId === currentFolder.id
-                : !folder.parentId;
+            // In usage/courses/shared, include all levels; otherwise only current level
+            const inScope = isAllLevelsMode
+                ? true
+                : currentFolder
+                    ? folder.parentId === currentFolder.id
+                    : !folder.parentId;
 
             if (!inScope) return false;
             if (!hasQuery) return true;
 
             return normalizeText(folder.name).includes(normalizedQuery);
         });
-    }, [folders, currentFolder, searchQuery]);
+    }, [folders, currentFolder, searchQuery, isAllLevelsMode]);
 
     // Merge shortcuts with folders (deduplication by targetId)
     const foldersWithShortcuts = useMemo(() => {
@@ -83,10 +87,12 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const folderShortcuts = resolvedShortcuts.filter(s => {
             if (s.targetType !== 'folder') return false;
             
-            // Check if shortcut belongs in current scope (direct children only)
-            const inScope = currentFolder
-                ? s.parentId === currentFolder.id
-                : !s.parentId;
+            // In usage/courses/shared, include all levels; otherwise only current level
+            const inScope = isAllLevelsMode
+                ? true
+                : currentFolder
+                    ? s.parentId === currentFolder.id
+                    : !s.parentId;
             
             return inScope;
         });
@@ -125,7 +131,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         });
 
         return merged;
-    }, [filteredFolders, resolvedShortcuts, currentFolder, user]);
+    }, [filteredFolders, resolvedShortcuts, currentFolder, user, isAllLevelsMode]);
 
     const filteredSubjects = useMemo(() => {
         if (!subjects) return [];
@@ -135,16 +141,18 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const normalizedQuery = hasQuery ? normalizeText(query) : '';
 
         return subjects.filter(subject => {
-            const inScope = currentFolder
-                ? subject.folderId === currentFolder.id
-                : !subject.folderId;
+            const inScope = isAllLevelsMode
+                ? true
+                : currentFolder
+                    ? subject.folderId === currentFolder.id
+                    : !subject.folderId;
 
             if (!inScope) return false;
             if (!hasQuery) return true;
 
             return normalizeText(subject.name).includes(normalizedQuery);
         });
-    }, [subjects, currentFolder, searchQuery]);
+    }, [subjects, currentFolder, searchQuery, isAllLevelsMode]);
 
     // Merge shortcuts with subjects (deduplication by targetId)
     const subjectsWithShortcuts = useMemo(() => {
@@ -154,10 +162,12 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const subjectShortcuts = resolvedShortcuts.filter(s => {
             if (s.targetType !== 'subject') return false;
             
-            // For subjects, use shortcutParentId (where the shortcut lives - direct children only)
-            const inScope = currentFolder
-                ? s.shortcutParentId === currentFolder.id
-                : !s.shortcutParentId;
+            // In usage/courses/shared, include all levels; otherwise only current level
+            const inScope = isAllLevelsMode
+                ? true
+                : currentFolder
+                    ? s.shortcutParentId === currentFolder.id
+                    : !s.shortcutParentId;
             
             return inScope;
         });
@@ -196,7 +206,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         });
 
         return merged;
-    }, [filteredSubjects, resolvedShortcuts, currentFolder, user]);
+    }, [filteredSubjects, resolvedShortcuts, currentFolder, user, isAllLevelsMode]);
 
     useEffect(() => {
         debugVisibility('merge_result', {
