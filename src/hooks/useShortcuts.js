@@ -196,7 +196,8 @@ export const useShortcuts = (user) => {
                                 _originalTargetId: targetId,
                                 _originalTargetType: targetType,
                                 _reason: 'moved-to-shared-folder',
-                                _movedToFolderName: parentFolderData.name || 'carpeta compartida'
+                                _movedToFolderName: parentFolderData.name || 'carpeta compartida',
+                                _movedToFolderId: parentFolderId
                             };
                         }
                     }

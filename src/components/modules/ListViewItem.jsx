@@ -18,6 +18,7 @@ const ListViewItem = ({
     onEdit,
     onDelete,
     onShare,
+    onGoToFolder,
     cardScale = 100, 
     onDragStart,
     onDragEnd,
@@ -74,6 +75,7 @@ const ListViewItem = ({
                 onEdit={onEdit}
                 onShare={onShare}
                 onDelete={onDelete}
+                onGoToFolder={onGoToFolder}
                 cardScale={cardScale}
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
@@ -155,6 +157,7 @@ const ListViewItem = ({
                             onEdit={onEdit} 
                             onDelete={onDelete} 
                             onShare={onShare}
+                            onGoToFolder={onGoToFolder}
                             cardScale={cardScale} 
                             className="pl-8" 
                         />

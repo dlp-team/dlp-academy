@@ -97,6 +97,7 @@ const FolderCard = (props) => {
                 onDelete={onDelete}
                 onShare={onShare}
                 onShowContents={onShowContents}
+                onGoToFolder={props.onGoToFolder}
                 filterOverlayOpen={filterOverlayOpen}
                 onCloseFilterOverlay={onCloseFilterOverlay}
             />

@@ -106,12 +106,17 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const shortcutTargetIds = new Set(folderShortcuts.map(s => s.targetId));
 
         const directFolders = filteredFolders.filter(folder => {
-            const isOwnedByCurrentUser =
+            const userEmail = user?.email?.toLowerCase() || '';
+            const isRelatedToCurrentUser =
                 (folder?.uid && user?.uid && folder.uid === user.uid) ||
                 folder?.isOwner === true ||
-                (folder?.ownerId && user?.uid && folder.ownerId === user.uid);
+                (folder?.ownerId && user?.uid && folder.ownerId === user.uid) ||
+                (Array.isArray(folder?.sharedWithUids) && user?.uid ? folder.sharedWithUids.includes(user.uid) : false) ||
+                (Array.isArray(folder?.sharedWith) && user?.uid
+                    ? folder.sharedWith.some(share => share?.uid === user.uid || share?.email?.toLowerCase() === userEmail)
+                    : false);
 
-            if (!isOwnedByCurrentUser) return false;
+            if (!isRelatedToCurrentUser) return false;
             if (!shortcutTargetIds.has(folder.id)) return true;
             return true;
         });
@@ -189,12 +194,17 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const shortcutTargetIds = new Set(subjectShortcuts.map(s => s.targetId));
 
         const directSubjects = filteredSubjects.filter(subject => {
-            const isOwnedByCurrentUser =
+            const userEmail = user?.email?.toLowerCase() || '';
+            const isRelatedToCurrentUser =
                 (subject?.uid && user?.uid && subject.uid === user.uid) ||
                 subject?.isOwner === true ||
-                (subject?.ownerId && user?.uid && subject.ownerId === user.uid);
+                (subject?.ownerId && user?.uid && subject.ownerId === user.uid) ||
+                (Array.isArray(subject?.sharedWithUids) && user?.uid ? subject.sharedWithUids.includes(user.uid) : false) ||
+                (Array.isArray(subject?.sharedWith) && user?.uid
+                    ? subject.sharedWith.some(share => share?.uid === user.uid || share?.email?.toLowerCase() === userEmail)
+                    : false);
 
-            if (!isOwnedByCurrentUser) return false;
+            if (!isRelatedToCurrentUser) return false;
             if (!shortcutTargetIds.has(subject.id)) return true;
             return true;
         });

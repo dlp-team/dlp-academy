@@ -165,6 +165,17 @@ const HomeContent = ({
         return merged;
     }, [subjects, allShortcutSubjects]);
 
+    const handleGoToFolderFromGhost = (folderId) => {
+        if (!folderId) return;
+
+        const targetFolder =
+            (allFoldersForTree || []).find(f => f.id === folderId) ||
+            (folders || []).find(f => f.id === folderId) ||
+            { id: folderId };
+
+        handleOpenFolder(targetFolder);
+    };
+
     
     return (
         <div
@@ -322,6 +333,7 @@ const HomeContent = ({
                                                         }}
                                                         onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
                                                         onShowContents={handleShowFolderContents}
+                                                        onGoToFolder={handleGoToFolderFromGhost}
                                                         cardScale={cardScale}
                                                         onDrop={handleDropOnFolder}
                                                         onDropFolder={handleNestFolder}
@@ -382,6 +394,7 @@ const HomeContent = ({
                                                         draggable={isDragAndDropEnabled}
                                                         position={index}
                                                         onOpenTopics={onOpenTopics}
+                                                        onGoToFolder={handleGoToFolderFromGhost}
                                                         filterOverlayOpen={filterOverlayOpen}
                                                     />
                                                 </div>
@@ -490,6 +503,7 @@ const HomeContent = ({
                                                     setDeleteConfig({ isOpen: true, type: 'folder', item: f });
                                                 }}
                                                 onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
+                                                onGoToFolder={handleGoToFolderFromGhost}
                                                 cardScale={cardScale}
                                                 onDragStart={handleDragStartFolder} 
                                                 onDragEnd={handleDragEnd}
@@ -529,6 +543,7 @@ const HomeContent = ({
                                                         setDeleteConfig({ isOpen: true, type: 'subject', item: s });
                                                     }}
                                                     onShare={(s) => { setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' }); setActiveMenu(null); }}
+                                                    onGoToFolder={handleGoToFolderFromGhost}
                                                     cardScale={cardScale}
                                                     onDragStart={handleDragStartSubject}
                                                     onDragEnd={handleDragEnd}

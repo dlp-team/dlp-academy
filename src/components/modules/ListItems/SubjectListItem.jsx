@@ -13,6 +13,7 @@ const SubjectListItem = ({
     onEdit, 
     onDelete, 
     onShare, 
+    onGoToFolder,
     compact = false, 
     cardScale = 100,
     className = ""
@@ -30,6 +31,7 @@ const SubjectListItem = ({
     const isShortcut = isShortcutItem(subject);
     const isHiddenFromManual = subject?.hiddenInManual === true;
     const isOrphan = subject?.isOrphan === true;
+    const isMovedToShared = subject?._reason === 'moved-to-shared-folder';
     const orphanMessage = subject?._reason === 'access-revoked'
         ? 'Archivo original ya no está compartido'
         : subject?._reason === 'moved-to-shared-folder'
@@ -233,13 +235,28 @@ const SubjectListItem = ({
                         </span>
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onDelete(subject, 'deleteShortcut'); }}
-                            className="pointer-events-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
-                            style={{ fontSize: `${13 * scale}px` }}
-                        >
-                            Eliminar
-                        </button>
+                        {isMovedToShared && subject?._movedToFolderId ? (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (typeof onGoToFolder === 'function') {
+                                        onGoToFolder(subject._movedToFolderId);
+                                    }
+                                }}
+                                className="pointer-events-auto px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-lg"
+                                style={{ fontSize: `${13 * scale}px` }}
+                            >
+                                {`Ir a carpeta ${subject?._movedToFolderName || ''}`.trim()}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onDelete(subject, 'deleteShortcut'); }}
+                                className="pointer-events-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
+                                style={{ fontSize: `${13 * scale}px` }}
+                            >
+                                Eliminar
+                            </button>
+                        )}
                     </div>
                 </>
             )}

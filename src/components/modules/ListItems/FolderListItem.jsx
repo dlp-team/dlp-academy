@@ -20,6 +20,7 @@ const FolderListItem = ({
     onEdit,
     onDelete,
     onShare = () => {},
+    onGoToFolder,
     cardScale = 100, 
     onDragStart,
     onDragEnd,
@@ -39,6 +40,7 @@ const FolderListItem = ({
     const isShortcut = isShortcutItem(item);
     const isHiddenFromManual = item?.hiddenInManual === true;
     const isOrphan = item?.isOrphan === true;
+    const isMovedToShared = item?._reason === 'moved-to-shared-folder';
     const orphanMessage = item?._reason === 'access-revoked'
         ? 'Archivo original ya no está compartido'
         : item?._reason === 'moved-to-shared-folder'
@@ -400,13 +402,28 @@ const FolderListItem = ({
 
                 {isOrphan && (
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onDelete(item, 'deleteShortcut'); }}
-                            className="pointer-events-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
-                            style={{ fontSize: `${13 * scale}px` }}
-                        >
-                            Eliminar
-                        </button>
+                        {isMovedToShared && item?._movedToFolderId ? (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (typeof onGoToFolder === 'function') {
+                                        onGoToFolder(item._movedToFolderId);
+                                    }
+                                }}
+                                className="pointer-events-auto px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-lg"
+                                style={{ fontSize: `${13 * scale}px` }}
+                            >
+                                {`Ir a carpeta ${item?._movedToFolderName || ''}`.trim()}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onDelete(item, 'deleteShortcut'); }}
+                                className="pointer-events-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
+                                style={{ fontSize: `${13 * scale}px` }}
+                            >
+                                Eliminar
+                            </button>
+                        )}
                     </div>
                 )}
             </div>
@@ -435,6 +452,7 @@ const FolderListItem = ({
                                         onEdit={onEdit}
                                         onDelete={onDelete}
                                         onShare={onShare}
+                                        onGoToFolder={onGoToFolder}
                                         cardScale={cardScale}
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}
@@ -456,6 +474,7 @@ const FolderListItem = ({
                                         onEdit={onEdit}
                                         onDelete={onDelete}
                                         onShare={onShare}
+                                        onGoToFolder={onGoToFolder}
                                         cardScale={cardScale}
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}

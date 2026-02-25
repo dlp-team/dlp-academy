@@ -22,6 +22,7 @@ const FolderCardBody = ({
     onDelete,
     onShare,
     onShowContents,
+    onGoToFolder,
     filterOverlayOpen,
     onCloseFilterOverlay
 }) => {
@@ -32,6 +33,7 @@ const FolderCardBody = ({
     const isShortcut = isShortcutItem(folder);
     const isHiddenFromManual = folder?.hiddenInManual === true;
     const isOrphan = folder?.isOrphan === true;
+    const isMovedToShared = folder?._reason === 'moved-to-shared-folder';
     const orphanMessage = folder?._reason === 'access-revoked'
         ? 'Archivo original ya no está compartido'
         : folder?._reason === 'moved-to-shared-folder'
@@ -399,13 +401,28 @@ const FolderCardBody = ({
                         </span>
                     </div>
                     <div className="absolute inset-0 z-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onDelete(folder, 'deleteShortcut'); }}
-                            className="pointer-events-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
-                            style={{ fontSize: `${13 * scaleMultiplier}px` }}
-                        >
-                            Eliminar
-                        </button>
+                        {isMovedToShared && folder?._movedToFolderId ? (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (typeof onGoToFolder === 'function') {
+                                        onGoToFolder(folder._movedToFolderId);
+                                    }
+                                }}
+                                className="pointer-events-auto px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-lg"
+                                style={{ fontSize: `${13 * scaleMultiplier}px` }}
+                            >
+                                {`Ir a carpeta ${folder?._movedToFolderName || ''}`.trim()}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onDelete(folder, 'deleteShortcut'); }}
+                                className="pointer-events-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
+                                style={{ fontSize: `${13 * scaleMultiplier}px` }}
+                            >
+                                Eliminar
+                            </button>
+                        )}
                     </div>
                 </>
             )}

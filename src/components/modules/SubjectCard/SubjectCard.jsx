@@ -98,6 +98,7 @@ const SubjectCard = (props) => {
                     scaleMultiplier={scaleMultiplier}
                     topicCount={topicCount}
                     onOpenTopics={onOpenTopics}
+                    onGoToFolder={props.onGoToFolder}
                     filterOverlayOpen={filterOverlayOpen}
                 />
             </div>
