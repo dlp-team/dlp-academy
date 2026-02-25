@@ -83,6 +83,8 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     const foldersWithShortcuts = useMemo(() => {
         if (!resolvedShortcuts || resolvedShortcuts.length === 0) return filteredFolders;
 
+        const isVisibleInManual = item => !(isShortcutItem(item) && item?.hiddenInManual === true);
+
         // Get folder shortcuts that match current scope
         const folderShortcuts = resolvedShortcuts.filter(s => {
             if (s.targetType !== 'folder') return false;
@@ -130,8 +132,12 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
             }
         });
 
+        if (viewMode === 'grid') {
+            return merged.filter(isVisibleInManual);
+        }
+
         return merged;
-    }, [filteredFolders, resolvedShortcuts, currentFolder, user, isAllLevelsMode]);
+    }, [filteredFolders, resolvedShortcuts, currentFolder, user, isAllLevelsMode, viewMode]);
 
     const filteredSubjects = useMemo(() => {
         if (!subjects) return [];

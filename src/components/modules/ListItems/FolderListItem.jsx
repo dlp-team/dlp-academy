@@ -1,6 +1,6 @@
 // src/components/modules/ListItems/FolderListItem.jsx
 import React, { useState, useMemo, useRef, useLayoutEffect } from 'react';
-import { ChevronRight, Folder, GripVertical, Users, MoreVertical, Edit2, Trash2, Share2 } from 'lucide-react';
+import { ChevronRight, Folder, GripVertical, Users, MoreVertical, Edit2, Trash2, Share2, RotateCcw } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import SubjectIcon from '../../ui/SubjectIcon';
 import ListViewItem from '../ListViewItem';
@@ -350,7 +350,7 @@ const FolderListItem = ({
                                                             className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors cursor-pointer"
                                                             style={{ fontSize: `${14 * menuScale}px` }}
                                                         >
-                                                            <Trash2 size={14 * menuScale} /> {isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}
+                                                            {isHiddenFromManual ? <RotateCcw size={14 * menuScale} /> : <Trash2 size={14 * menuScale} />} {isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}
                                                         </button>
                                                     )}
                                                     {isShortcut && (isOrphan || !isSourceOwner) && (

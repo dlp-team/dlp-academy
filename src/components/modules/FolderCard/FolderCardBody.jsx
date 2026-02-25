@@ -1,7 +1,7 @@
 // src/components/modules/FolderCard/FolderCardBody.jsx
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree } from 'lucide-react';
+import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree, RotateCcw } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
 import { SHORTCUT_CARD_MENU_WIDTH } from '../shared/shortcutMenuConfig';
@@ -197,7 +197,7 @@ const FolderCardBody = ({
                                             )}
                                             {isShortcut && (
                                                 <button onClick={(e) => { e.stopPropagation(); onDelete(folder, isHiddenFromManual ? 'showInManual' : 'removeShortcut'); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
-                                                    <Trash2 size={14 * menuScale} />
+                                                    {isHiddenFromManual ? <RotateCcw size={14 * menuScale} /> : <Trash2 size={14 * menuScale} />}
                                                     <span className="whitespace-nowrap">{isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}</span>
                                                 </button>
                                             )}
