@@ -63,6 +63,7 @@ const ListViewItem = ({
     if (type === 'folder') {
         return (
             <FolderListItem
+                user={user}
                 item={item}
                 parentId={parentId}
                 depth={depth}

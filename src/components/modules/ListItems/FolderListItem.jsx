@@ -5,8 +5,10 @@ import { createPortal } from 'react-dom';
 import SubjectIcon from '../../ui/SubjectIcon';
 import ListViewItem from '../ListViewItem';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel } from '../../../utils/permissionUtils';
 
 const FolderListItem = ({ 
+    user,
     item, 
     parentId,
     depth = 0,
@@ -29,6 +31,20 @@ const FolderListItem = ({
     const [showMenu, setShowMenu] = useState(false);
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+    const currentUserId = user?.uid || null;
+    const showEditUI = currentUserId ? shouldShowEditUI(item, currentUserId) : false;
+    const showDeleteUI = currentUserId ? shouldShowDeleteUI(item, currentUserId) : false;
+    const canShare = currentUserId ? canEditItem(item, currentUserId) : false;
+    const isShortcut = item?.isShortcut === true;
+    const isHiddenFromManual = item?.hiddenInManual === true;
+    const isOrphan = item?.isOrphan === true;
+    const orphanMessage = item?._reason === 'access-revoked'
+        ? 'Archivo original ya no está compartido'
+        : 'Archivo original eliminado';
+    const shortcutPermissionLevel = isShortcut && currentUserId ? getPermissionLevel(item, currentUserId) : 'none';
+    const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
+    const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
+    const isSourceOwner = Boolean(currentUserId && item?.ownerId && item.ownerId === currentUserId);
 
     
     const scale = cardScale / 100;
@@ -165,7 +181,7 @@ const FolderListItem = ({
                     isDragOver 
                         ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-500 scale-[1.01] shadow-md'
                         : ''
-                } ${isDragging ? 'opacity-0 scale-95 transition-none' : ''}`}
+                } ${isDragging ? 'opacity-0 scale-95 transition-none' : ''} ${isOrphan ? 'opacity-55' : ''}`}
                 style={{ marginLeft: `${indent}px` }}
             >
                 <div 
@@ -290,27 +306,60 @@ const FolderListItem = ({
                                                 pointerEvents: 'auto'
                                             }}
                                         >
-                                            <button 
-                                                onClick={e => { e.stopPropagation(); onEdit(item); setShowMenu(false); }}
-                                                className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
-                                                style={{ fontSize: `${14 * menuScale}px` }}
-                                            >
-                                                <Edit2 size={14 * menuScale} /> Editar
-                                            </button>
-                                            <button 
-                                                onClick={e => { e.stopPropagation(); onShare(item); setShowMenu(false); }}
-                                                className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
-                                                style={{ fontSize: `${14 * menuScale}px` }}
-                                            >
-                                                <Share2 size={14 * menuScale} /> Compartir
-                                            </button>
-                                            <button 
-                                                onClick={e => { e.stopPropagation(); onDelete(item); setShowMenu(false); }}
-                                                className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
-                                                style={{ fontSize: `${14 * menuScale}px` }}
-                                            >
-                                                <Trash2 size={14 * menuScale} /> Eliminar
-                                            </button>
+                                            {(showEditUI || showDeleteUI || isShortcut) ? (
+                                                <>
+                                                    {showEditUI && (
+                                                        <button 
+                                                            onClick={e => { e.stopPropagation(); onEdit(item); setShowMenu(false); }}
+                                                            className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                                        >
+                                                            <Edit2 size={14 * menuScale} /> Editar
+                                                        </button>
+                                                    )}
+                                                    {canShareFromMenu && (
+                                                        <button 
+                                                            onClick={e => { e.stopPropagation(); onShare(item); setShowMenu(false); }}
+                                                            className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                                        >
+                                                            <Share2 size={14 * menuScale} /> Compartir
+                                                        </button>
+                                                    )}
+                                                    {(showEditUI || canShareFromMenu) && (showDeleteUI || isShortcut) && (
+                                                        <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
+                                                    )}
+                                                    {isShortcut && (
+                                                        <button 
+                                                            onClick={e => { e.stopPropagation(); onDelete(item, isHiddenFromManual ? 'showInManual' : 'removeShortcut'); setShowMenu(false); }}
+                                                            className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors cursor-pointer"
+                                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                                        >
+                                                            <Trash2 size={14 * menuScale} /> {isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}
+                                                        </button>
+                                                    )}
+                                                    {isShortcut && (isOrphan || !isSourceOwner) && (
+                                                        <button 
+                                                            onClick={e => { e.stopPropagation(); onDelete(item, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); setShowMenu(false); }}
+                                                            className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                                        >
+                                                            <Trash2 size={14 * menuScale} /> Eliminar acceso
+                                                        </button>
+                                                    )}
+                                                    {!isShortcut && showDeleteUI && (
+                                                        <button 
+                                                            onClick={e => { e.stopPropagation(); onDelete(item); setShowMenu(false); }}
+                                                            className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                                        >
+                                                            <Trash2 size={14 * menuScale} /> Eliminar
+                                                        </button>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
+                                            )}
                                         </div>
                                     </>,
                                     window.document.body
@@ -320,6 +369,16 @@ const FolderListItem = ({
                     </div>
                     
                 </div>
+
+                {isOrphan && (
+                    <div className="mt-2 ml-10 mr-2">
+                        <div className="rounded-lg bg-black/60 text-white text-center font-semibold py-1.5 px-2"
+                            style={{ fontSize: `${12 * scale}px` }}
+                        >
+                            {orphanMessage}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* CHILDREN (Recursive) */}

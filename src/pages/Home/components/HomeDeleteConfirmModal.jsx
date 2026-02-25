@@ -10,10 +10,13 @@ const HomeDeleteConfirmModal = ({ deleteConfig, setDeleteConfig, handleDelete })
     const isShortcut = isShortcutSubject || isShortcutFolder;
     const isUnshareShortcut = isShortcut && deleteConfig.action === 'unshare';
     const isUnhideShortcut = isShortcut && deleteConfig.action === 'unhide';
+    const isDeleteShortcut = isShortcut && deleteConfig.action === 'deleteShortcut';
 
     const title = isShortcut
         ? isUnshareShortcut
             ? `¿Eliminar acceso a ${isShortcutFolder ? 'la carpeta' : 'la asignatura'}?`
+            : isDeleteShortcut
+                ? `¿Eliminar este acceso directo?`
             : isUnhideShortcut
                 ? `¿Mostrar ${isShortcutFolder ? 'carpeta' : 'asignatura'} en la sección manual?`
                 : `¿Quitar ${isShortcutFolder ? 'carpeta' : 'asignatura'} de la sección manual?`
@@ -22,6 +25,8 @@ const HomeDeleteConfirmModal = ({ deleteConfig, setDeleteConfig, handleDelete })
     const description = isShortcut
         ? isUnshareShortcut
             ? `Se eliminará tu acceso a "${deleteConfig.item?.name}". El acceso directo quedará como no disponible.`
+            : isDeleteShortcut
+                ? `Se eliminará este acceso directo de tu cuenta.`
             : isUnhideShortcut
                 ? `"${deleteConfig.item?.name}" volverá a mostrarse en tu sección manual.`
                 : `Se ocultará "${deleteConfig.item?.name}" en tu sección manual. Seguirá visible en otras vistas.`
@@ -32,6 +37,8 @@ const HomeDeleteConfirmModal = ({ deleteConfig, setDeleteConfig, handleDelete })
     const confirmLabel = isShortcut
         ? isUnshareShortcut
             ? 'Sí, eliminar acceso'
+            : isDeleteShortcut
+                ? 'Sí, eliminar acceso directo'
             : isUnhideShortcut
                 ? 'Sí, mostrar'
                 : 'Sí, ocultar'

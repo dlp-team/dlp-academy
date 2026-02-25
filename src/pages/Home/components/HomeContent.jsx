@@ -8,8 +8,6 @@ import SubjectCard from '../../../components/modules/SubjectCard/SubjectCard';
 import FolderCard from '../../../components/modules/FolderCard/FolderCard'; 
 import SubjectListItem from '../../../components/modules/ListItems/SubjectListItem';
 import ListViewItem from '../../../components/modules/ListViewItem';
-import OrphanedShortcutCard from '../../../components/ui/OrphanedShortcutCard';
-import { isOrphanedShortcut } from '../../../utils/permissionUtils';
 import useHomeContentDnd from '../hooks/useHomeContentDnd';
 import useAutoScrollOnDrag from '../../../hooks/useAutoScrollOnDrag';
 
@@ -235,20 +233,6 @@ const HomeContent = ({
 
                                             {/* Folders in Grid */}
                                             {viewMode === 'grid' && activeFilter !== 'subjects' && filteredFolders.map((folder, index) => {
-                                                // Check if this is an orphaned shortcut
-                                                if (isOrphanedShortcut(folder)) {
-                                                    return (
-                                                        <div key={`orphan-folder-${folder.shortcutId}`}>
-                                                            <OrphanedShortcutCard
-                                                                shortcut={folder}
-                                                                cardScale={cardScale}
-                                                                onDelete={onDeleteShortcut}
-                                                                layoutMode="grid"
-                                                            />
-                                                        </div>
-                                                    );
-                                                }
-
                                                 return (
                                                 <div key={`folder-${folder.id}`}>
                                                     <FolderCard
@@ -266,6 +250,8 @@ const HomeContent = ({
                                                                     type: 'shortcut-folder',
                                                                     action: action === 'unshareAndDelete'
                                                                         ? 'unshare'
+                                                                        : action === 'deleteShortcut'
+                                                                            ? 'deleteShortcut'
                                                                         : action === 'showInManual'
                                                                             ? 'unhide'
                                                                             : 'hide',
@@ -297,20 +283,6 @@ const HomeContent = ({
 
                                             {/* Subjects in Grid */}
                                             {activeFilter !== 'folders' && groupSubjects.map((subject, index) => {
-                                                // Check if this is an orphaned shortcut
-                                                if (isOrphanedShortcut(subject)) {
-                                                    return (
-                                                        <div key={`orphan-subject-${subject.shortcutId}`}>
-                                                            <OrphanedShortcutCard
-                                                                shortcut={subject}
-                                                                cardScale={cardScale}
-                                                                onDelete={onDeleteShortcut}
-                                                                layoutMode="grid"
-                                                            />
-                                                        </div>
-                                                    );
-                                                }
-
                                                 return (
                                                 <div key={`${groupName}-${subject.id}`}>
                                                     <SubjectCard
@@ -329,6 +301,8 @@ const HomeContent = ({
                                                                     type: 'shortcut-subject',
                                                                     action: action === 'unshareAndDelete'
                                                                         ? 'unshare'
+                                                                        : action === 'deleteShortcut'
+                                                                            ? 'deleteShortcut'
                                                                         : action === 'showInManual'
                                                                             ? 'unhide'
                                                                             : 'hide',
@@ -445,6 +419,8 @@ const HomeContent = ({
                                                             type: 'shortcut-folder',
                                                             action: action === 'unshareAndDelete'
                                                                 ? 'unshare'
+                                                                : action === 'deleteShortcut'
+                                                                    ? 'deleteShortcut'
                                                                 : action === 'showInManual'
                                                                     ? 'unhide'
                                                                     : 'hide',
@@ -464,18 +440,6 @@ const HomeContent = ({
 
                                         {/* Render Subjects */}
                                         {groupSubjects.map((subject) => {
-                                            if (isOrphanedShortcut(subject)) {
-                                                return (
-                                                    <OrphanedShortcutCard
-                                                        key={`orphan-list-subject-${subject.shortcutId}`}
-                                                        shortcut={subject}
-                                                        cardScale={cardScale}
-                                                        onDelete={onDeleteShortcut}
-                                                        layoutMode="list"
-                                                    />
-                                                );
-                                            }
-
                                             return (
                                                 <ListViewItem
                                                     key={subject.id}
@@ -494,6 +458,8 @@ const HomeContent = ({
                                                                 type: 'shortcut-subject',
                                                                 action: action === 'unshareAndDelete'
                                                                     ? 'unshare'
+                                                                    : action === 'deleteShortcut'
+                                                                        ? 'deleteShortcut'
                                                                     : action === 'showInManual'
                                                                         ? 'unhide'
                                                                         : 'hide',

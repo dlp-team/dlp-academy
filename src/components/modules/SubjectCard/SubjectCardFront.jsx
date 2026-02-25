@@ -29,6 +29,10 @@ const SubjectCardFront = ({
     const canShare = user && canEditItem(subject, user.uid);
     const isShortcut = subject?.isShortcut === true;
     const isHiddenFromManual = subject?.hiddenInManual === true;
+    const isOrphan = subject?.isOrphan === true;
+    const orphanMessage = subject?._reason === 'access-revoked'
+        ? 'Archivo original ya no está compartido'
+        : 'Archivo original eliminado';
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
@@ -175,8 +179,8 @@ const SubjectCardFront = ({
                                             <Trash2 size={14 * menuScale} /> <span className="whitespace-nowrap">{isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}</span>
                                         </button>
                                     )}
-                                    {isShortcut && !isSourceOwner && (
-                                        <button onClick={(e) => onDelete(e, subject, 'unshareAndDelete')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                    {isShortcut && (isOrphan || !isSourceOwner) && (
+                                        <button onClick={(e) => onDelete(e, subject, isOrphan ? 'deleteShortcut' : 'unshareAndDelete')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                             <Trash2 size={14 * menuScale} /> Eliminar acceso
                                         </button>
                                     )}
@@ -198,7 +202,7 @@ const SubjectCardFront = ({
             {/* Content */}
             <div className={`relative h-full flex flex-col justify-between pointer-events-none ${
                 isModern ? '' : 'text-white'
-            }`}
+            } ${isOrphan ? 'opacity-55' : ''}`}
             style={{ padding: `${24 * scaleMultiplier}px` }}>
                 <div className="flex justify-between items-start">
                     {/* Icon */}
@@ -331,6 +335,16 @@ const SubjectCardFront = ({
                     
                 </div>
             </div>
+
+            {isOrphan && (
+                <div className="absolute bottom-3 left-3 right-3 z-40 pointer-events-none">
+                    <div className="rounded-lg bg-black/60 text-white text-center font-semibold py-1.5 px-2"
+                        style={{ fontSize: `${12 * scaleMultiplier}px` }}
+                    >
+                        {orphanMessage}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

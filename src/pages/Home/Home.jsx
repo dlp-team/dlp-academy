@@ -227,6 +227,8 @@ const Home = ({ user }) => {
                                     type: 'shortcut-folder',
                                     action: action === 'unshareAndDelete'
                                         ? 'unshare'
+                                        : action === 'deleteShortcut'
+                                            ? 'deleteShortcut'
                                         : action === 'showInManual'
                                             ? 'unhide'
                                             : 'hide',
@@ -250,6 +252,8 @@ const Home = ({ user }) => {
                                     type: 'shortcut-subject',
                                     action: action === 'unshareAndDelete'
                                         ? 'unshare'
+                                        : action === 'deleteShortcut'
+                                            ? 'deleteShortcut'
                                         : action === 'showInManual'
                                             ? 'unhide'
                                             : 'hide',

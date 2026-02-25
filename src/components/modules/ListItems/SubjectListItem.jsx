@@ -28,6 +28,10 @@ const SubjectListItem = ({
     const canShare = user && canEditItem(subject, user.uid);
     const isShortcut = subject?.isShortcut === true;
     const isHiddenFromManual = subject?.hiddenInManual === true;
+    const isOrphan = subject?.isOrphan === true;
+    const orphanMessage = subject?._reason === 'access-revoked'
+        ? 'Archivo original ya no está compartido'
+        : 'Archivo original eliminado';
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
@@ -54,7 +58,7 @@ const SubjectListItem = ({
         <div 
             className={`group relative rounded-xl transition-all hover:shadow-md cursor-pointer ${
                 isModern ? `${getIconColor(subject.color)} border border-gradient-to-br ${subject.color} hover:border-gradient-to-br ${subject.color} ` : ` bg-gradient-to-br ${subject.color} hover:border-indigo-300 `
-            } ${className}`} // Apply external className
+            } ${isOrphan ? 'opacity-55' : ''} ${className}`} // Apply external className
             style={{ padding: `${paddingPx}px` }}
             onClick={() => onSelect(subject.id)}
         >
@@ -182,9 +186,9 @@ const SubjectListItem = ({
                                             <Trash2 size={14 * menuScale} /> <span className="whitespace-nowrap">{isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}</span>
                                         </button>
                                     )}
-                                    {isShortcut && !isSourceOwner && (
+                                    {isShortcut && (isOrphan || !isSourceOwner) && (
                                         <button 
-                                            onClick={(e) => { e.stopPropagation(); onDelete(subject, 'unshareAndDelete'); setShowMenu(false); }}
+                                            onClick={(e) => { e.stopPropagation(); onDelete(subject, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); setShowMenu(false); }}
                                             className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
                                             style={{ fontSize: `${14 * menuScale}px` }}
                                         >
@@ -210,6 +214,16 @@ const SubjectListItem = ({
                     )}
                 </div>
             </div>
+
+            {isOrphan && (
+                <div className="mt-2 ml-2 mr-2">
+                    <div className="rounded-lg bg-black/60 text-white text-center font-semibold py-1.5 px-2"
+                        style={{ fontSize: `${12 * scale}px` }}
+                    >
+                        {orphanMessage}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

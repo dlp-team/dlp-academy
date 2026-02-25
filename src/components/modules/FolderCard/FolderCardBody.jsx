@@ -3,7 +3,7 @@ import React, { useRef, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
-import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem } from '../../../utils/permissionUtils';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel } from '../../../utils/permissionUtils';
 
 const FolderCardBody = ({
     folder,
@@ -21,12 +21,23 @@ const FolderCardBody = ({
     onDelete,
     onShare,
     onShowContents,
-    filterOverlayOpen
+    filterOverlayOpen,
+    onCloseFilterOverlay
 }) => {
     // Permission checks
     const showEditUI = user && shouldShowEditUI(folder, user.uid);
     const showDeleteUI = user && shouldShowDeleteUI(folder, user.uid);
     const canShare = user && canEditItem(folder, user.uid); // Only editors can share
+    const isShortcut = folder?.isShortcut === true;
+    const isHiddenFromManual = folder?.hiddenInManual === true;
+    const isOrphan = folder?.isOrphan === true;
+    const orphanMessage = folder?._reason === 'access-revoked'
+        ? 'Archivo original ya no está compartido'
+        : 'Archivo original eliminado';
+    const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(folder, user.uid) : 'none';
+    const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
+    const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
+    const isSourceOwner = user && folder?.ownerId === user.uid;
     // 1. Logic: No useState needed here. We use CSS for hover states.
     // Enforce a minimum scale of 1 for the menu
     const menuScale = Math.max(scaleMultiplier, 1);
@@ -56,7 +67,7 @@ const FolderCardBody = ({
                 isModern 
                     ? 'bg-white dark:bg-slate-950' 
                     : ''
-            }`}>
+            } ${isOrphan ? 'opacity-55' : ''}`}>
                 
                 {/* --- FRONT VISUALS --- */}
                 {!isModern && (
@@ -167,22 +178,33 @@ const FolderCardBody = ({
                                         transformOrigin: 'top left'
                                     }}
                                 >
-                                    {(showEditUI || showDeleteUI) ? (
+                                    {(showEditUI || showDeleteUI || isShortcut) ? (
                                         <>
                                             {showEditUI && (
                                                 <button onClick={(e) => { e.stopPropagation(); onEdit(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                                     <Edit2 size={14 * menuScale} /> Editar
                                                 </button>
                                             )}
-                                            {canShare && (
+                                            {canShareFromMenu && (
                                                 <button onClick={(e) => { e.stopPropagation(); onShare(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                                     <Share2 size={14 * menuScale} /> Compartir
                                                 </button>
                                             )}
-                                            {(showEditUI || showDeleteUI) && canShare && (
+                                            {(showEditUI || canShareFromMenu) && (showDeleteUI || isShortcut) && (
                                                 <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
                                             )}
-                                            {showDeleteUI && (
+                                            {isShortcut && (
+                                                <button onClick={(e) => { e.stopPropagation(); onDelete(folder, isHiddenFromManual ? 'showInManual' : 'removeShortcut'); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                    <Trash2 size={14 * menuScale} />
+                                                    <span className="whitespace-nowrap">{isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}</span>
+                                                </button>
+                                            )}
+                                            {isShortcut && (isOrphan || !isSourceOwner) && (
+                                                <button onClick={(e) => { e.stopPropagation(); onDelete(folder, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                    <Trash2 size={14 * menuScale} /> Eliminar acceso
+                                                </button>
+                                            )}
+                                            {!isShortcut && showDeleteUI && (
                                                 <button onClick={(e) => { e.stopPropagation(); onDelete(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                                     <Trash2 size={14 * menuScale} /> Eliminar
                                                 </button>
@@ -360,6 +382,16 @@ const FolderCardBody = ({
                 </div>
 
             </div>
+
+            {isOrphan && (
+                <div className="absolute bottom-3 left-3 right-3 z-40 pointer-events-none">
+                    <div className="rounded-lg bg-black/60 text-white text-center font-semibold py-1.5 px-2"
+                        style={{ fontSize: `${12 * scaleMultiplier}px` }}
+                    >
+                        {orphanMessage}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
