@@ -99,6 +99,8 @@ const SubjectCard = (props) => {
                     topicCount={topicCount}
                     onOpenTopics={onOpenTopics}
                     onGoToFolder={props.onGoToFolder}
+                    disableAllActions={props.disableAllActions}
+                    disableDeleteActions={props.disableDeleteActions}
                     filterOverlayOpen={filterOverlayOpen}
                 />
             </div>

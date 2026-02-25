@@ -13,7 +13,7 @@ export const useHomePageState = ({ logic, searchQuery }) => {
 
     const [folderContentsModalConfig, setFolderContentsModalConfig] = useState({ isOpen: false, folder: null });
     const [shareConfirm, setShareConfirm] = useState({ open: false, subjectId: null, folder: null, onConfirm: null });
-    const [unshareConfirm, setUnshareConfirm] = useState({ open: false, subjectId: null, folder: null, onConfirm: null });
+    const [unshareConfirm, setUnshareConfirm] = useState({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
     const [topicsModalConfig, setTopicsModalConfig] = useState({
         isOpen: false,
         subject: null

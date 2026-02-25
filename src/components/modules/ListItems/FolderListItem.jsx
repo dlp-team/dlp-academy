@@ -21,10 +21,13 @@ const FolderListItem = ({
     onDelete,
     onShare = () => {},
     onGoToFolder,
+    disableAllActions = false,
+    disableDeleteActions = false,
     cardScale = 100, 
     onDragStart,
     onDragEnd,
     onDropAction,
+    draggable = true,
     path
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -50,8 +53,14 @@ const FolderListItem = ({
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
     const isSourceOwner = Boolean(currentUserId && item?.ownerId && item.ownerId === currentUserId);
+    const effectiveShowEditUI = !disableAllActions && showEditUI;
+    const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
+    const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
+    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || !isSourceOwner);
+    const canShowShortcutVisibility = !disableAllActions && isShortcut;
+    const hasMenuActions = effectiveShowEditUI || effectiveCanShareFromMenu || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete;
 
-    
+
     const scale = cardScale / 100;
     const type = 'folder';
     // Minimum scale for the menu is 1 (100%)
@@ -185,7 +194,7 @@ const FolderListItem = ({
             {/* ROW CONTAINER */}
             <div 
                 ref={itemRef}
-                draggable
+                draggable={draggable}
                 onDragStart={dragHandlers.onDragStart}
                 onDrag={dragHandlers.onDrag}
                 onDragEnd={dragHandlers.onDragEnd}
@@ -294,7 +303,7 @@ const FolderListItem = ({
                     </button>
                     {/* Three Dots Menu Button */}
                     <div className="relative ml-2 flex items-center">
-                        {!isOrphan && (
+                        {!isOrphan && hasMenuActions && (
                             <button
                                 ref={menuBtnRef}
                                 onClick={e => {
@@ -325,9 +334,9 @@ const FolderListItem = ({
                                                 pointerEvents: 'auto'
                                             }}
                                         >
-                                            {(showEditUI || showDeleteUI || isShortcut) ? (
+                                            {(effectiveShowEditUI || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete || effectiveCanShareFromMenu) ? (
                                                 <>
-                                                    {showEditUI && (
+                                                    {effectiveShowEditUI && (
                                                         <button 
                                                             onClick={e => { e.stopPropagation(); onEdit(item); setShowMenu(false); }}
                                                             className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
@@ -336,7 +345,7 @@ const FolderListItem = ({
                                                             <Edit2 size={14 * menuScale} /> Editar
                                                         </button>
                                                     )}
-                                                    {canShareFromMenu && (
+                                                    {effectiveCanShareFromMenu && (
                                                         <button 
                                                             onClick={e => { e.stopPropagation(); onShare(item); setShowMenu(false); }}
                                                             className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
@@ -345,10 +354,10 @@ const FolderListItem = ({
                                                             <Share2 size={14 * menuScale} /> Compartir
                                                         </button>
                                                     )}
-                                                    {(showEditUI || canShareFromMenu) && (showDeleteUI || isShortcut) && (
+                                                    {(effectiveShowEditUI || effectiveCanShareFromMenu) && (effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete) && (
                                                         <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
                                                     )}
-                                                    {isShortcut && (
+                                                    {canShowShortcutVisibility && (
                                                         <button 
                                                             onClick={e => { e.stopPropagation(); onDelete(item, isHiddenFromManual ? 'showInManual' : 'removeShortcut'); setShowMenu(false); }}
                                                             className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors cursor-pointer"
@@ -357,7 +366,7 @@ const FolderListItem = ({
                                                             {isHiddenFromManual ? <RotateCcw size={14 * menuScale} /> : <Trash2 size={14 * menuScale} />} {isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}
                                                         </button>
                                                     )}
-                                                    {isShortcut && (isOrphan || !isSourceOwner) && (
+                                                    {canShowShortcutDelete && (
                                                         <button 
                                                             onClick={e => { e.stopPropagation(); onDelete(item, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); setShowMenu(false); }}
                                                             className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
@@ -366,7 +375,7 @@ const FolderListItem = ({
                                                             <Trash2 size={14 * menuScale} /> Eliminar
                                                         </button>
                                                     )}
-                                                    {!isShortcut && showDeleteUI && (
+                                                    {!isShortcut && effectiveShowDeleteUI && (
                                                         <button 
                                                             onClick={e => { e.stopPropagation(); onDelete(item); setShowMenu(false); }}
                                                             className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
@@ -459,10 +468,13 @@ const FolderListItem = ({
                                         onDelete={onDelete}
                                         onShare={onShare}
                                         onGoToFolder={onGoToFolder}
+                                        disableAllActions={disableAllActions}
+                                        disableDeleteActions={disableDeleteActions}
                                         cardScale={cardScale}
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}
                                         onDropAction={onDropAction}
+                                        draggable={draggable}
                                         path={path}
                                     />
                                 ))}
@@ -481,10 +493,13 @@ const FolderListItem = ({
                                         onDelete={onDelete}
                                         onShare={onShare}
                                         onGoToFolder={onGoToFolder}
+                                        disableAllActions={disableAllActions}
+                                        disableDeleteActions={disableDeleteActions}
                                         cardScale={cardScale}
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}
                                         onDropAction={onDropAction}
+                                        draggable={draggable}
                                         path={path}
                                     />
                                 ))}

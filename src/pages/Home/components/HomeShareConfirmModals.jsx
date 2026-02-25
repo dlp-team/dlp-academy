@@ -2,6 +2,10 @@
 import React from 'react';
 
 const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm, setUnshareConfirm, subjects }) => {
+    const closeUnshareConfirm = () => {
+        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
+    };
+
     return (
         <>
             {shareConfirm.open && (
@@ -93,10 +97,18 @@ const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm,
                         <div className="flex justify-center gap-4">
                             <button
                                 className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
-                                onClick={() => setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null })}
+                                onClick={closeUnshareConfirm}
                             >
                                 Cancelar
                             </button>
+                            {typeof unshareConfirm.onPreserveConfirm === 'function' && (
+                                <button
+                                    className="px-5 py-2 rounded-xl bg-indigo-600 text-white font-bold shadow-lg hover:bg-indigo-700 transition-colors"
+                                    onClick={unshareConfirm.onPreserveConfirm}
+                                >
+                                    Mover sin descompartir
+                                </button>
+                            )}
                             <button
                                 className="px-6 py-2 rounded-xl bg-yellow-600 text-white font-bold shadow-lg hover:bg-yellow-700 transition-colors"
                                 onClick={unshareConfirm.onConfirm}
