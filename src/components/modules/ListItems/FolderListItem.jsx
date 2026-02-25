@@ -6,6 +6,7 @@ import SubjectIcon from '../../ui/SubjectIcon';
 import ListViewItem from '../ListViewItem';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
+import { SHORTCUT_LIST_MENU_WIDTH } from '../shared/shortcutMenuConfig';
 
 const FolderListItem = ({ 
     user,
@@ -55,7 +56,7 @@ const FolderListItem = ({
     React.useEffect(() => {
         if (showMenu && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
-            const menu = { width: 128 * menuScale, height: 48 * 3 * menuScale };
+            const menu = { width: SHORTCUT_LIST_MENU_WIDTH * menuScale, height: 48 * 3 * menuScale };
             setMenuPos({
                 top: rect.bottom - menu.height,
                 left: rect.right - menu.width
@@ -314,7 +315,7 @@ const FolderListItem = ({
                                             style={{
                                                 top: menuPos.top + 'px',
                                                 left: menuPos.left + 'px',
-                                                width: `${128 * menuScale}px`,
+                                                width: `${SHORTCUT_LIST_MENU_WIDTH * menuScale}px`,
                                                 transform: `scale(${menuScale})`,
                                                 transformOrigin: 'bottom right',
                                                 pointerEvents: 'auto'

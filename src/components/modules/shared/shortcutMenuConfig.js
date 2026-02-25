@@ -1,0 +1,2 @@
+export const SHORTCUT_CARD_MENU_WIDTH = 164;
+export const SHORTCUT_LIST_MENU_WIDTH = 128;

@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
+import { SHORTCUT_CARD_MENU_WIDTH } from '../shared/shortcutMenuConfig';
 
 const FolderCardBody = ({
     folder,
@@ -174,7 +175,7 @@ const FolderCardBody = ({
                                         top: menuPos.top,
                                         left: menuPos.left,
                                         zIndex: 9999,
-                                        width: `${120 * menuScale}px`,
+                                        width: `${SHORTCUT_CARD_MENU_WIDTH * menuScale}px`,
                                         transform: `scale(${menuScale})`,
                                         transformOrigin: 'top left'
                                     }}

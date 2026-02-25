@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { ChevronRight, Edit2, Trash2, MoreVertical, Users , Share2 } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
+import { SHORTCUT_LIST_MENU_WIDTH } from '../shared/shortcutMenuConfig';
 
 const SubjectListItem = ({ 
     user,
@@ -42,7 +43,7 @@ const SubjectListItem = ({
     React.useEffect(() => {
         if (showMenu && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
-            const menu = { width: 128 * menuScale, height: 48 * 3 * menuScale };
+            const menu = { width: SHORTCUT_LIST_MENU_WIDTH * menuScale, height: 48 * 3 * menuScale };
             setMenuPos({
                 top: rect.bottom - menu.height,
                 left: rect.right - menu.width
@@ -159,7 +160,7 @@ const SubjectListItem = ({
                                     style={{
                                         top: menuPos.top + 'px',
                                         left: menuPos.left + 'px',
-                                        width: `${128 * menuScale}px`,
+                                        width: `${SHORTCUT_LIST_MENU_WIDTH * menuScale}px`,
                                         transform: `scale(${menuScale})`,
                                         transformOrigin: 'bottom right',
                                         pointerEvents: 'auto'

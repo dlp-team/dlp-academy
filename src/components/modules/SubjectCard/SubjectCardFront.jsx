@@ -5,6 +5,7 @@ import { ChevronRight, MoreVertical, Edit2, Trash2, Share2 } from 'lucide-react'
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon'; // Adjust path if necessary
 import { Users } from 'lucide-react';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
+import { SHORTCUT_CARD_MENU_WIDTH } from '../shared/shortcutMenuConfig';
 
 const SubjectCardFront = ({
     subject,
@@ -155,7 +156,7 @@ const SubjectCardFront = ({
                                 top: menuPos.top,
                                 left: menuPos.left,
                                 zIndex: 9999,
-                                width: `${164 * menuScale}px`,
+                                width: `${SHORTCUT_CARD_MENU_WIDTH * menuScale}px`,
                                 transform: `scale(${menuScale})`,
                                 transformOrigin: 'top left'
                             }}
