@@ -9,20 +9,33 @@ const HomeDeleteConfirmModal = ({ deleteConfig, setDeleteConfig, handleDelete })
     const isShortcutFolder = deleteConfig.type === 'shortcut-folder';
     const isShortcut = isShortcutSubject || isShortcutFolder;
     const isUnshareShortcut = isShortcut && deleteConfig.action === 'unshare';
+    const isUnhideShortcut = isShortcut && deleteConfig.action === 'unhide';
 
     const title = isShortcut
         ? isUnshareShortcut
             ? `¿Eliminar acceso a ${isShortcutFolder ? 'la carpeta' : 'la asignatura'}?`
-            : `¿Quitar ${isShortcutFolder ? 'carpeta' : 'asignatura'} del manual?`
+            : isUnhideShortcut
+                ? `¿Mostrar ${isShortcutFolder ? 'carpeta' : 'asignatura'} en la sección manual?`
+                : `¿Quitar ${isShortcutFolder ? 'carpeta' : 'asignatura'} de la sección manual?`
         : `¿Eliminar ${deleteConfig.type === 'folder' ? 'Carpeta' : 'Asignatura'}?`;
 
     const description = isShortcut
         ? isUnshareShortcut
-            ? `Se eliminará tu acceso a "${deleteConfig.item?.name}". También se quitará este acceso directo de tu manual.`
-            : `Se quitará "${deleteConfig.item?.name}" de tu manual. El contenido original no se eliminará.`
+            ? `Se eliminará tu acceso a "${deleteConfig.item?.name}". El acceso directo quedará como no disponible.`
+            : isUnhideShortcut
+                ? `"${deleteConfig.item?.name}" volverá a mostrarse en tu sección manual.`
+                : `Se ocultará "${deleteConfig.item?.name}" en tu sección manual. Seguirá visible en otras vistas.`
         : deleteConfig.type === 'folder'
             ? `Se eliminará la carpeta "${deleteConfig.item?.name}" pero las asignaturas y subcarpetas se moverán al nivel superior.`
             : `Se eliminarán "${deleteConfig.item?.name}" y sus temas.`;
+
+    const confirmLabel = isShortcut
+        ? isUnshareShortcut
+            ? 'Sí, eliminar acceso'
+            : isUnhideShortcut
+                ? 'Sí, mostrar'
+                : 'Sí, ocultar'
+        : 'Sí, Eliminar';
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
@@ -47,7 +60,7 @@ const HomeDeleteConfirmModal = ({ deleteConfig, setDeleteConfig, handleDelete })
                         onClick={handleDelete}
                         className="px-5 py-2.5 bg-red-600 dark:bg-red-500 hover:bg-red-700 dark:hover:bg-red-600 text-white rounded-xl font-medium flex items-center gap-2 transition-colors cursor-pointer"
                     >
-                        <Trash2 className="w-4 h-4" /> Sí, Eliminar
+                        <Trash2 className="w-4 h-4" /> {confirmLabel}
                     </button>
                 </div>
             </div>

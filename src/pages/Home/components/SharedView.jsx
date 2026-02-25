@@ -10,6 +10,7 @@ import ListViewItem from '../../../components/modules/ListViewItem';
 import TagFilter from '../../../components/ui/TagFilter';
 
 const SharedView = ({ 
+    user,
     sharedFolders = [],   
     sharedSubjects = [],  
     layoutMode = 'grid',  
@@ -25,7 +26,13 @@ const SharedView = ({
     // Navigation fallback
     onSelectTopic,
     // All folders needed for drag/drop logic
-    allFolders = []
+    allFolders = [],
+    onEditFolder = () => {},
+    onDeleteFolder = () => {},
+    onShareFolder = () => {},
+    onEditSubject = () => {},
+    onDeleteSubject = () => {},
+    onShareSubject = () => {}
 }) => {
     const navigate = useNavigate();
 
@@ -107,14 +114,15 @@ const SharedView = ({
                                     .map((folder) => (
                                         <div key={folder.id}>
                                             <FolderCard
+                                                user={user}
                                                 folder={folder}
                                                 allFolders={allFolders}
                                                 onOpen={onOpenFolder}
                                                 activeMenu={activeMenu}
                                                 onToggleMenu={onToggleMenu}
-                                                onEdit={() => {}} // Disabled for shared
-                                                onDelete={() => {}} // Disabled for shared
-                                                onShare={() => {}}
+                                                onEdit={(f) => onEditFolder(f)}
+                                                onDelete={(f, action = 'delete') => onDeleteFolder(f, action)}
+                                                onShare={(f) => onShareFolder(f)}
                                                 isShared={true}
                                                 cardScale={cardScale}
                                             />
@@ -132,12 +140,14 @@ const SharedView = ({
                                     .map((folder) => (
                                         <ListViewItem 
                                             key={folder.id}
+                                            user={user}
                                             item={folder}
                                             type="folder"
                                             onNavigate={() => onOpenFolder(folder)}
                                             cardScale={cardScale}
-                                            onEdit={() => {}}
-                                            onDelete={() => {}}
+                                            onEdit={(f) => onEditFolder(f)}
+                                            onDelete={(f, action = 'delete') => onDeleteFolder(f, action)}
+                                            onShare={(f) => onShareFolder(f)}
                                             draggable={false}
                                             allFolders={filteredFolders}
                                             allSubjects={filteredSubjects}
@@ -172,6 +182,7 @@ const SharedView = ({
                                 {filteredSubjects.map((subject) => (
                                     <div key={subject.id}>
                                         <SubjectCard
+                                            user={user}
                                             subject={subject}
                                             isFlipped={flippedSubjectId === subject.id}
                                             onFlip={(id) => onFlipSubject(flippedSubjectId === id ? null : id)}
@@ -179,8 +190,9 @@ const SharedView = ({
                                             onToggleMenu={onToggleMenu}
                                             onSelect={() => onSelectSubject(subject)}
                                             onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
-                                            onEdit={() => {}} 
-                                            onDelete={() => {}}
+                                            onEdit={(e, s) => onEditSubject(e, s)} 
+                                            onDelete={(e, s, action = 'delete') => onDeleteSubject(e, s, action)}
+                                            onShare={(s) => onShareSubject(s)}
                                             cardScale={cardScale}
                                             isShared={true}
                                         />
@@ -192,12 +204,14 @@ const SharedView = ({
                                 {filteredSubjects.map((subject) => (
                                     <ListViewItem
                                         key={subject.id}
+                                        user={user}
                                         item={subject}
                                         type="subject"
                                         onNavigateSubject={() => onSelectSubject(subject)}
                                         cardScale={cardScale}
-                                        onEdit={() => {}}
-                                        onDelete={() => {}}
+                                        onEdit={(s) => onEditSubject({ stopPropagation: () => {} }, s)}
+                                        onDelete={(s, action = 'delete') => onDeleteSubject({ stopPropagation: () => {} }, s, action)}
+                                        onShare={(s) => onShareSubject(s)}
                                         draggable={false}
                                         onDropAction={() => {}}
                                     />

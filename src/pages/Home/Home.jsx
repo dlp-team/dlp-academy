@@ -194,6 +194,7 @@ const Home = ({ user }) => {
 
                 {logic.viewMode === 'shared' ? (
                     <SharedView 
+                        user={user}
                         sharedFolders={sharedFolders}
                         sharedSubjects={sharedSubjects}
                         cardScale={logic.cardScale}
@@ -217,6 +218,52 @@ const Home = ({ user }) => {
                         // Navigation
                         onSelectTopic={(sid, tid) => logic.navigate(`/home/subject/${sid}/topic/${tid}`)}
                         navigate={logic.navigate}
+
+                        onEditFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
+                        onDeleteFolder={(f, action = 'delete') => {
+                            if (f?.isShortcut && f?.shortcutId) {
+                                logic.setDeleteConfig({
+                                    isOpen: true,
+                                    type: 'shortcut-folder',
+                                    action: action === 'unshareAndDelete'
+                                        ? 'unshare'
+                                        : action === 'showInManual'
+                                            ? 'unhide'
+                                            : 'hide',
+                                    item: f
+                                });
+                                return;
+                            }
+                            logic.setDeleteConfig({ isOpen: true, type: 'folder', item: f });
+                        }}
+                        onShareFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
+                        onEditSubject={(e, s) => {
+                            e.stopPropagation();
+                            logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s });
+                            logic.setActiveMenu(null);
+                        }}
+                        onDeleteSubject={(e, s, action = 'delete') => {
+                            e.stopPropagation();
+                            if (s?.isShortcut && s?.shortcutId) {
+                                logic.setDeleteConfig({
+                                    isOpen: true,
+                                    type: 'shortcut-subject',
+                                    action: action === 'unshareAndDelete'
+                                        ? 'unshare'
+                                        : action === 'showInManual'
+                                            ? 'unhide'
+                                            : 'hide',
+                                    item: s
+                                });
+                            } else {
+                                logic.setDeleteConfig({ isOpen: true, type: 'subject', item: s });
+                            }
+                            logic.setActiveMenu(null);
+                        }}
+                        onShareSubject={(s) => {
+                            logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
+                            logic.setActiveMenu(null);
+                        }}
 
                         // Search
                         searchTerm={searchQuery}

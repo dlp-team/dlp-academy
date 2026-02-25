@@ -39,7 +39,8 @@ export const useHomeHandlers = ({
     navigate,
     isDescendant,
     createShortcut,
-    updateShortcutAppearance
+    updateShortcutAppearance,
+    setShortcutHiddenInManual
 }) => {
     const handleSaveSubject = async formData => {
         const isShortcutEdit = subjectModalConfig.isEditing && Boolean(formData?.shortcutId);
@@ -166,7 +167,11 @@ export const useHomeHandlers = ({
                 }
             }
 
-            if (shortcutId && deleteShortcut) {
+            if (deleteConfig.action === 'hide' && shortcutId && setShortcutHiddenInManual) {
+                await setShortcutHiddenInManual(shortcutId, true);
+            } else if (deleteConfig.action === 'unhide' && shortcutId && setShortcutHiddenInManual) {
+                await setShortcutHiddenInManual(shortcutId, false);
+            } else if (deleteConfig.action !== 'unshare' && shortcutId && deleteShortcut) {
                 await deleteShortcut(shortcutId);
             }
         } else if (deleteConfig.type === 'shortcut-folder' && deleteConfig.item) {
@@ -181,11 +186,15 @@ export const useHomeHandlers = ({
                 }
             }
 
-            if (shortcutId && deleteShortcut) {
+            if (deleteConfig.action === 'hide' && shortcutId && setShortcutHiddenInManual) {
+                await setShortcutHiddenInManual(shortcutId, true);
+            } else if (deleteConfig.action === 'unhide' && shortcutId && setShortcutHiddenInManual) {
+                await setShortcutHiddenInManual(shortcutId, false);
+            } else if (deleteConfig.action !== 'unshare' && shortcutId && deleteShortcut) {
                 await deleteShortcut(shortcutId);
             }
         }
-        setDeleteConfig({ isOpen: false, type: null, item: null });
+        setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
     };
 
     const handleDeleteFolderAll = async () => {

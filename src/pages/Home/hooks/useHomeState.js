@@ -227,19 +227,21 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     };
 
     const sharedFolders = useMemo(() => {
-        return folders.filter(f => !f.isOwner);
-    }, [folders]);
+        const source = Array.isArray(foldersWithShortcuts) ? foldersWithShortcuts : folders;
+        return source.filter(f => {
+            if (f?.isShortcut === true) return true;
+            return !f.isOwner;
+        });
+    }, [foldersWithShortcuts, folders]);
 
     const sharedSubjects = useMemo(() => {
-        // Subjects in shared folders or directly shared with user
-        return subjects.filter(
-            s => {
-                // Check if subject is in a shared folder
-                const inSharedFolder = sharedFolders.some(f => s.folderId === f.id);
-                return inSharedFolder || (s.uid !== user.uid && s.sharedWithUids?.includes(user.uid));
-            }
-        );
-    }, [subjects, sharedFolders, user]);
+        const source = Array.isArray(subjectsWithShortcuts) ? subjectsWithShortcuts : subjects;
+        return source.filter(s => {
+            if (s?.isShortcut === true) return true;
+            const inSharedFolder = sharedFolders.some(f => s.folderId === f.id);
+            return inSharedFolder || (s.uid !== user.uid && s.sharedWithUids?.includes(user.uid));
+        });
+    }, [subjectsWithShortcuts, subjects, sharedFolders, user]);
 
     const applyManualOrder = (items, type) => {
         if (viewMode !== 'grid') return items;
@@ -292,13 +294,14 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         if (activeFilter === 'folders') return {};
 
         const isRelated = item => item.uid === user?.uid || (item.sharedWithUids && item.sharedWithUids.includes(user?.uid));
+        const isVisibleInManual = item => !(item?.isShortcut === true && item?.hiddenInManual === true);
 
         const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
         if (query) {
             const matchedSubjects = subjectsWithShortcuts.filter(s => {
                 const subjectName = (s.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                return subjectName.includes(query) && isRelated(s);
+                return subjectName.includes(query) && isRelated(s) && (viewMode !== 'grid' || isVisibleInManual(s));
             });
             return { 'Resultados de búsqueda': matchedSubjects };
         }
@@ -307,13 +310,13 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
             return { Filtradas: applyManualOrder(filteredSubjectsByTags, 'subject') };
         }
         if (viewMode === 'grid' && currentFolder) {
-            const folderSubjects = subjectsWithShortcuts;
+            const folderSubjects = subjectsWithShortcuts.filter(isVisibleInManual);
             return {
                 [currentFolder.name]: applyManualOrder(folderSubjects, 'subject')
             };
         }
         if (viewMode === 'grid' && !currentFolder) {
-            const unfolderedSubjects = subjectsWithShortcuts;
+            const unfolderedSubjects = subjectsWithShortcuts.filter(isVisibleInManual);
             return {
                 Todas: applyManualOrder(unfolderedSubjects, 'subject')
             };

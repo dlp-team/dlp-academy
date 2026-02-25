@@ -99,7 +99,7 @@ export const useShortcuts = (user) => {
      * @param {Array} shortcuts - Array of shortcut documents
      * @returns {Array} Resolved shortcuts with target data or ghost objects
      */
-    const resolveShortcutTargets = async (shortcuts) => {
+    async function resolveShortcutTargets(shortcuts) {
         const resolved = await Promise.all(
             shortcuts.map(async (shortcut) => {
                 try {
@@ -120,6 +120,7 @@ export const useShortcuts = (user) => {
                             ...shortcut,
                             isShortcut: true,
                             isOrphan: true,
+                            hiddenInManual: shortcut.hiddenInManual === true,
                             shortcutId: shortcut.id,
                             targetData: null,
                             name: '(No access)',
@@ -141,6 +142,7 @@ export const useShortcuts = (user) => {
                             ...shortcut,
                             isShortcut: true,
                             isOrphan: true,
+                            hiddenInManual: shortcut.hiddenInManual === true,
                             shortcutId: shortcut.id,
                             targetData: null,
                             name: '(Deleted)',
@@ -163,6 +165,7 @@ export const useShortcuts = (user) => {
                             ...shortcut,
                             isShortcut: true,
                             isOrphan: true,
+                            hiddenInManual: shortcut.hiddenInManual === true,
                             shortcutId: shortcut.id,
                             targetData: null,
                             name: '(No access)',
@@ -184,6 +187,7 @@ export const useShortcuts = (user) => {
                             ...shortcut,
                             isShortcut: true,
                             isOrphan: true,
+                            hiddenInManual: shortcut.hiddenInManual === true,
                             shortcutId: shortcut.id,
                             targetData: null,
                             name: '(No access)',
@@ -208,6 +212,7 @@ export const useShortcuts = (user) => {
                         shortcutParentId: shortcut.parentId, // Where shortcut lives
                         isShortcut: true,
                         isOrphan: false,
+                        hiddenInManual: shortcut.hiddenInManual === true,
                         targetType: shortcut.targetType,
                         targetId: shortcut.targetId,
                         // Preserve original parentId from target for reference
@@ -227,6 +232,7 @@ export const useShortcuts = (user) => {
                         ...shortcut,
                         isShortcut: true,
                         isOrphan: true,
+                        hiddenInManual: shortcut.hiddenInManual === true,
                         shortcutId: shortcut.id,
                         targetData: null,
                         name: '(Error loading)',
@@ -237,7 +243,7 @@ export const useShortcuts = (user) => {
         );
 
         return resolved;
-    };
+    }
 
     /**
      * Create a new shortcut to a shared item
@@ -272,6 +278,7 @@ export const useShortcuts = (user) => {
             await updateDoc(primaryRef, {
                 parentId,
                 institutionId: effectiveInstitutionId,
+                ...(typeof visualOverrides.hiddenInManual === 'boolean' ? { hiddenInManual: visualOverrides.hiddenInManual } : {}),
                 ...(visualOverrides.shortcutName ? { shortcutName: visualOverrides.shortcutName } : {}),
                 ...(visualOverrides.shortcutCourse ? { shortcutCourse: visualOverrides.shortcutCourse } : {}),
                 ...(Array.isArray(visualOverrides.shortcutTags) ? { shortcutTags: visualOverrides.shortcutTags } : {}),
@@ -305,6 +312,7 @@ export const useShortcuts = (user) => {
             targetId: targetId,
             targetType: targetType,
             institutionId: effectiveInstitutionId,
+            hiddenInManual: typeof visualOverrides.hiddenInManual === 'boolean' ? visualOverrides.hiddenInManual : false,
             ...(visualOverrides.shortcutName ? { shortcutName: visualOverrides.shortcutName } : {}),
             ...(visualOverrides.shortcutCourse ? { shortcutCourse: visualOverrides.shortcutCourse } : {}),
             ...(Array.isArray(visualOverrides.shortcutTags) ? { shortcutTags: visualOverrides.shortcutTags } : {}),
@@ -386,6 +394,15 @@ export const useShortcuts = (user) => {
         await updateDoc(doc(db, "shortcuts", shortcutId), payload);
     };
 
+    const setShortcutHiddenInManual = async (shortcutId, hiddenInManual = true) => {
+        if (!shortcutId) throw new Error("Shortcut ID required");
+
+        await updateDoc(doc(db, "shortcuts", shortcutId), {
+            hiddenInManual: hiddenInManual === true,
+            updatedAt: new Date()
+        });
+    };
+
     /**
      * Batch delete orphaned shortcuts for current user
      * Useful for cleanup after multiple source deletions
@@ -411,6 +428,7 @@ export const useShortcuts = (user) => {
         deleteShortcut,
         moveShortcut,
         updateShortcutAppearance,
+        setShortcutHiddenInManual,
         deleteOrphanedShortcuts
     };
 };

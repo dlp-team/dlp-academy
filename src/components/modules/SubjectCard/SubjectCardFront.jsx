@@ -28,6 +28,7 @@ const SubjectCardFront = ({
     const showDeleteUI = user && shouldShowDeleteUI(subject, user.uid);
     const canShare = user && canEditItem(subject, user.uid);
     const isShortcut = subject?.isShortcut === true;
+    const isHiddenFromManual = subject?.hiddenInManual === true;
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
@@ -170,8 +171,8 @@ const SubjectCardFront = ({
                                         <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
                                     )}
                                     {isShortcut && (
-                                        <button onClick={(e) => onDelete(e, subject, 'removeShortcut')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
-                                            <Trash2 size={14 * menuScale} /> <span className="whitespace-nowrap">Quitar de manual</span>
+                                        <button onClick={(e) => onDelete(e, subject, isHiddenFromManual ? 'showInManual' : 'removeShortcut')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                            <Trash2 size={14 * menuScale} /> <span className="whitespace-nowrap">{isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}</span>
                                         </button>
                                     )}
                                     {isShortcut && !isSourceOwner && (

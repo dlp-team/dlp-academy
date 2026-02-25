@@ -35,6 +35,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         deleteShortcut,
         moveShortcut,
         updateShortcutAppearance,
+        setShortcutHiddenInManual,
         deleteOrphanedShortcuts
     } = useShortcuts(user);
 
@@ -154,7 +155,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
         navigate,
         isDescendant,
         createShortcut,
-        updateShortcutAppearance
+        updateShortcutAppearance,
+        setShortcutHiddenInManual
     });
 
 
@@ -235,6 +237,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         deleteShortcut,
         moveShortcut,
         updateShortcutAppearance,
+        setShortcutHiddenInManual,
         deleteOrphanedShortcuts,
 
         // Navigation
