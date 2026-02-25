@@ -66,7 +66,8 @@ const SubjectHeader = ({
     onSearch,
     isTeacher,
     classMembers = [],
-    membersLoading = false
+    membersLoading = false,
+    topicCount
 }) => {
     const navigate = useNavigate();
     const [showMembers, setShowMembers] = useState(false);
@@ -178,7 +179,7 @@ const SubjectHeader = ({
                             {subject.name}
                         </h1>
                         <p className="text-gray-500 dark:text-gray-400 font-medium">
-                            {subject.topicCount || 0} temas
+                            {topicCount != null ? topicCount : (subject.topicCount || 0)} temas
                         </p>
                     </div>
                 </div>

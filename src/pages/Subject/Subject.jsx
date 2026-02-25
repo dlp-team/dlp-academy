@@ -97,7 +97,11 @@ const Subject = ({ user }) => {
 
     const handleDeleteSubject = async () => {
         setIsDeleting(true);
-        await deleteSubject(); 
+        await deleteSubject();
+    };
+
+    const handleToggleVisibility = async (topicId, makeVisible) => {
+        await updateTopic(topicId, { isVisible: makeVisible });
     };
 
     if (!user || loading || !subject) {
@@ -127,6 +131,7 @@ const Subject = ({ user }) => {
                     isTeacher={isTeacherUser}
                     classMembers={classMembers}
                     membersLoading={membersLoading}
+                    topicCount={isTeacherUser ? topics.length : topics.filter(t => t.isVisible !== false).length}
                 />
 
                 <TopicGrid
@@ -139,6 +144,7 @@ const Subject = ({ user }) => {
                     onRetryTopic={isTeacherUser ? onRetryTopic : null}
                     onReorderTopics={isTeacherUser ? handleReorderTopics : null}
                     onEditTopic={isTeacherUser ? handleEditTopicClick : null}
+                    onToggleVisibility={isTeacherUser ? handleToggleVisibility : null}
                 />
             </main>
 
@@ -157,6 +163,7 @@ const Subject = ({ user }) => {
                         onClose={() => setShowTopicModal(false)}
                         onSubmit={handleCreateOrRetry}
                         initialData={retryTopicData}
+                        subjectColor={subject.color}
                     />
 
                     <EditTopicModal

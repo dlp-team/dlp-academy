@@ -4,16 +4,17 @@ import { Plus } from 'lucide-react';
 import TopicCard from '../../../components/modules/TopicCard/TopicCard';
 import useTopicGridDnD from '../hooks/useTopicGridDnD';
 
-const TopicGrid = ({ 
-    topics, 
+const TopicGrid = ({
+    topics,
     subjectColor,
-    isReordering, 
-    onOpenCreateModal, 
-    onSelectTopic, 
-    onDeleteTopic, 
+    isReordering,
+    onOpenCreateModal,
+    onSelectTopic,
+    onDeleteTopic,
     onRetryTopic,
     onReorderTopics, // Critical for dragging
-    onEditTopic      // Critical for the menu
+    onEditTopic,     // Critical for the menu
+    onToggleVisibility
 }) => {
     const { handleDragStart, handleDragOver, handleDrop } = useTopicGridDnD(onReorderTopics);
 
@@ -46,6 +47,7 @@ const TopicGrid = ({
                     onDelete={onDeleteTopic}
                     onEdit={onEditTopic}
                     onRetry={onRetryTopic}
+                    onToggleVisibility={onToggleVisibility}
 
                     // --- DRAG PROPS (only if reorder handler exists) ---
                     draggable={!!onReorderTopics}

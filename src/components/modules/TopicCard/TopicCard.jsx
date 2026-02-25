@@ -1,18 +1,19 @@
 // src/components/modules/TopicCard/TopicCard.jsx
 import React, { useRef, useState, useEffect } from 'react';
-import { 
-    Trash2, Clock, CheckCircle2, MoreVertical, 
-    Edit, EyeOff
+import {
+    Trash2, Clock, CheckCircle2, MoreVertical,
+    Edit, EyeOff, Eye
 } from 'lucide-react';
 
-const TopicCard = ({ 
-    topic, 
-    subjectColor, 
-    onSelect, 
-    onDelete, 
-    onEdit, 
+const TopicCard = ({
+    topic,
+    subjectColor,
+    onSelect,
+    onDelete,
+    onEdit,
+    onToggleVisibility,
     draggable,
-    onDragStart, 
+    onDragStart,
     onDragOver,
     onDrop
 }) => {
@@ -26,6 +27,7 @@ const TopicCard = ({
     const [isDragging, setIsDragging] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
     const [isCompletedSeen, setIsCompletedSeen] = useState(false);
+    const [visibilityPulse, setVisibilityPulse] = useState(false);
 
     // --- 1. HANDLE "SEEN" LOGIC ---
     useEffect(() => {
@@ -112,9 +114,10 @@ const TopicCard = ({
             onDragEnd={handleDragEndInternal}
             onDragOver={onDragOver}
             onDrop={onDrop}
-            className={`group relative h-64 rounded-2xl shadow-lg dark:shadow-slate-900/50 overflow-hidden transition-transform duration-300 hover:scale-[1.02] hover:shadow-xl dark:hover:shadow-slate-900/70 cursor-pointer 
-            ${isDragging ? 'opacity-0 transition-none' : 'opacity-100'} 
-            ${topic.isVisible === false ? 'grayscale-[0.5] opacity-80' : ''}`}
+            className={`group relative h-64 rounded-2xl shadow-lg dark:shadow-slate-900/50 overflow-hidden transition-all duration-500 hover:scale-[1.02] hover:shadow-xl dark:hover:shadow-slate-900/70 cursor-pointer
+            ${isDragging ? 'opacity-0 transition-none' : 'opacity-100'}
+            ${topic.isVisible === false && !visibilityPulse ? 'grayscale-[0.5] opacity-80' : ''}
+            ${visibilityPulse ? 'scale-[1.04] shadow-2xl' : ''}`}
         >
             <div 
                 onClick={(e) => {
@@ -193,11 +196,34 @@ const TopicCard = ({
                             'group-hover:-translate-x-10'
                         }`}>
                              
-                             {/* Hidden Eye */}
-                             {topic.isVisible === false && (
+                             {/* Visibility Toggle Eye */}
+                             {topic.isVisible === false && !onToggleVisibility && (
                                 <div className="p-1 bg-black/20 rounded-lg" title="Oculto para estudiantes">
                                     <EyeOff className="w-5 h-5 text-white/70" />
                                 </div>
+                            )}
+                             {onToggleVisibility && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setVisibilityPulse(true);
+                                        setTimeout(() => {
+                                            onToggleVisibility(topic.id, topic.isVisible === false);
+                                            setVisibilityPulse(false);
+                                        }, 350);
+                                    }}
+                                    className={`pointer-events-auto p-1.5 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95 ${
+                                        topic.isVisible === false
+                                            ? 'bg-black/30 hover:bg-white/30'
+                                            : 'bg-white/10 hover:bg-white/30 opacity-0 group-hover:opacity-100'
+                                    }`}
+                                    title={topic.isVisible === false ? 'Hacer visible' : 'Ocultar para estudiantes'}
+                                >
+                                    {topic.isVisible === false
+                                        ? <EyeOff className="w-5 h-5 text-white/80" />
+                                        : <Eye className="w-5 h-5 text-white/80" />
+                                    }
+                                </button>
                             )}
                             
                             {/* Generating Clock (Always visible while generating) */}
