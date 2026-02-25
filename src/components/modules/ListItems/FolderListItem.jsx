@@ -44,7 +44,7 @@ const FolderListItem = ({
     const orphanMessage = item?._reason === 'access-revoked'
         ? 'Archivo original ya no está compartido'
         : item?._reason === 'moved-to-shared-folder'
-            ? `Esta carpeta se ha movido a ${item?._movedToFolderName || 'carpeta compartida'}`
+            ? `Esta carpeta se ha movido a la carpeta ${folder?._movedToFolderName || 'compartida del creador'}`
             : 'Archivo original eliminado';
     const shortcutPermissionLevel = isShortcut && currentUserId ? getPermissionLevel(item, currentUserId) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
@@ -410,8 +410,14 @@ const FolderListItem = ({
                                         onGoToFolder(item._movedToFolderId);
                                     }
                                 }}
-                                className="pointer-events-auto px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-lg"
-                                style={{ fontSize: `${13 * scale}px` }}
+                                className="pointer-events-auto px-4 py-2 rounded-lg font-semibold shadow-lg flex justify-center items-center"
+                                style={{
+                                    fontSize: `${13 * scale}px`,
+                                    background: 'rgba(30,41,59,0.35)',
+                                    border: '1px solid #1e293b',
+                                    color: '#fff',
+                                    transition: 'background 0.2s',
+                                }}
                             >
                                 {`Ir a carpeta ${item?._movedToFolderName || ''}`.trim()}
                             </button>

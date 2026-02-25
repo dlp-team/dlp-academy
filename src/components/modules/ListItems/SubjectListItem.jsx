@@ -35,7 +35,7 @@ const SubjectListItem = ({
     const orphanMessage = subject?._reason === 'access-revoked'
         ? 'Archivo original ya no está compartido'
         : subject?._reason === 'moved-to-shared-folder'
-            ? `Esta asignatura se ha movido a ${subject?._movedToFolderName || 'carpeta compartida'}`
+            ? `Esta asignatura se ha movido a la carpeta ${subject?._movedToFolderName || 'compartida'}`
             : 'Archivo original eliminado';
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
@@ -243,8 +243,14 @@ const SubjectListItem = ({
                                         onGoToFolder(subject._movedToFolderId);
                                     }
                                 }}
-                                className="pointer-events-auto px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold shadow-lg"
-                                style={{ fontSize: `${13 * scale}px` }}
+                                className="pointer-events-auto px-4 py-2 rounded-lg font-semibold shadow-lg flex justify-center items-center"
+                                style={{
+                                    fontSize: `${13 * scale}px`,
+                                    background: 'rgba(30,41,59,0.35)',
+                                    border: '1px solid #1e293b',
+                                    color: '#fff',
+                                    transition: 'background 0.2s',
+                                }}
                             >
                                 {`Ir a carpeta ${subject?._movedToFolderName || ''}`.trim()}
                             </button>
