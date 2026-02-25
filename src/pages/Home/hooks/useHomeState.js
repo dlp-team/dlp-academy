@@ -212,9 +212,10 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     }, [subjectsWithShortcuts, selectedTags]);
 
     const filteredFoldersByTags = useMemo(() => {
-        if (selectedTags.length === 0) return folders;
-        return folders.filter(folder => selectedTags.every(tag => folder.tags?.includes(tag)));
-    }, [folders, selectedTags]);
+        const source = Array.isArray(foldersWithShortcuts) ? foldersWithShortcuts : folders;
+        if (selectedTags.length === 0) return source;
+        return source.filter(folder => selectedTags.every(tag => folder.tags?.includes(tag)));
+    }, [foldersWithShortcuts, folders, selectedTags]);
 
     const getUnfolderedSubjects = (subjectsList = subjects) => {
         // Subjects with no folderId (or null folderId) are unfoldered
@@ -270,9 +271,14 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
         if (!query && (viewMode !== 'grid' || currentFolder)) return [];
 
-        let resultFolders = folders.filter(
-            f => f.uid === user?.uid || (f.sharedWithUids && f.sharedWithUids.includes(user?.uid))
-        );
+        const sourceFolders = Array.isArray(foldersWithShortcuts) ? foldersWithShortcuts : folders;
+
+        let resultFolders = sourceFolders.filter(f => {
+            if (f?.isShortcut === true) return true;
+            if (f?.isOwner === true) return true;
+            if (f?.ownerId && user?.uid && f.ownerId === user.uid) return true;
+            return Boolean(f?.sharedWithUids && f.sharedWithUids.includes(user?.uid));
+        });
 
         if (query) {
             resultFolders = resultFolders.filter(f => {
@@ -282,13 +288,24 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         }
 
         if (selectedTags.length > 0) {
-            const matchingSubjectsInFolders = filteredSubjectsByTags.filter(s => s.folderId !== null && s.folderId !== undefined);
-            const folderIdsWithMatches = new Set(matchingSubjectsInFolders.map(s => s.folderId));
+            const matchingSubjectsInFolders = filteredSubjectsByTags.filter(s => {
+                const folderLocation = s?.isShortcut === true
+                    ? (s.shortcutParentId ?? s.folderId ?? null)
+                    : (s.folderId ?? null);
+                return folderLocation !== null;
+            });
+            const folderIdsWithMatches = new Set(
+                matchingSubjectsInFolders.map(s =>
+                    s?.isShortcut === true
+                        ? (s.shortcutParentId ?? s.folderId ?? null)
+                        : (s.folderId ?? null)
+                )
+            );
             resultFolders = resultFolders.filter(f => folderIdsWithMatches.has(f.id));
         }
 
         return applyManualOrder(resultFolders, 'folder');
-    }, [folders, viewMode, currentFolder, manualOrder, selectedTags, filteredSubjectsByTags, searchQuery, activeFilter]);
+    }, [foldersWithShortcuts, folders, viewMode, currentFolder, manualOrder, selectedTags, filteredSubjectsByTags, searchQuery, activeFilter, user]);
 
     const groupedContent = useMemo(() => {
         if (activeFilter === 'folders') return {};
@@ -438,20 +455,25 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const query = normalizeText(searchQuery);
 
         const isRelated = item => {
+            if (item?.isShortcut === true) return true;
             if (item.isOwner === true) return true;
             if (user?.uid && item.uid === user.uid) return true;
+            if (user?.uid && item.ownerId === user.uid) return true;
             if (item.sharedWithUids && Array.isArray(item.sharedWithUids) && user?.uid) {
                 return item.sharedWithUids.includes(user.uid);
             }
             return false;
         };
 
-        const sFolders = folders.filter(f => {
+        const sourceFolders = Array.isArray(foldersWithShortcuts) ? foldersWithShortcuts : folders;
+
+        const sFolders = sourceFolders.filter(f => {
             if (!isRelated(f)) return false;
             if (!normalizeText(f.name).includes(query)) return false;
 
             if (!currentFolder) return true;
-            return f.parentId === currentFolder.id;
+            const location = f.shortcutParentId !== undefined ? f.shortcutParentId : f.parentId;
+            return location === currentFolder.id;
         });
 
         const sSubjects = subjectsWithShortcuts.filter(s => {
@@ -464,7 +486,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         });
 
         return { searchFolders: sFolders, searchSubjects: sSubjects };
-    }, [folders, subjectsWithShortcuts, searchQuery, user, currentFolder]);
+    }, [foldersWithShortcuts, folders, subjectsWithShortcuts, searchQuery, user, currentFolder]);
 
     useEffect(() => {
         const closeMenu = () => setActiveMenu(null);

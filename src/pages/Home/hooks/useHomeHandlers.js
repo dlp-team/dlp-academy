@@ -116,6 +116,15 @@ export const useHomeHandlers = ({
         const isShortcutEdit = folderModalConfig.isEditing && Boolean(formData?.shortcutId);
         const shortcutPermission = formData?.shortcutPermissionLevel || 'viewer';
         const isShortcutEditor = shortcutPermission === 'editor' || shortcutPermission === 'owner';
+        const folderPayload = {
+            name: formData?.name || '',
+            description: formData?.description || '',
+            color: formData?.color || 'from-amber-400 to-amber-600',
+            tags: Array.isArray(formData?.tags) ? formData.tags : [],
+            cardStyle: formData?.cardStyle || 'default',
+            modernFillColor: formData?.modernFillColor || null,
+            ...(formData?.parentId !== undefined ? { parentId: formData.parentId } : {})
+        };
 
         if (folderModalConfig.isEditing) {
             if (isShortcutEdit && updateShortcutAppearance) {
@@ -134,10 +143,10 @@ export const useHomeHandlers = ({
                     modernFillColor: formData.modernFillColor || null
                 });
             } else {
-                await updateFolder(formData.id, formData);
+                await updateFolder(formData.id, folderPayload);
             }
         } else {
-            await addFolder(formData);
+            await addFolder(folderPayload);
         }
         setFolderModalConfig({ isOpen: false, isEditing: false, data: null });
     };

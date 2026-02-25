@@ -117,7 +117,17 @@ export const useFolders = (user) => {
 
     // --- CORE ACTIONS ---
     const addFolder = async (payload) => {
-        const parentId = payload.parentId || null;
+        const sanitizedPayload = {
+            name: payload?.name || '',
+            description: payload?.description || '',
+            color: payload?.color || 'from-amber-400 to-amber-600',
+            tags: Array.isArray(payload?.tags) ? payload.tags : [],
+            cardStyle: payload?.cardStyle || 'default',
+            modernFillColor: payload?.modernFillColor || null,
+            parentId: payload?.parentId || null
+        };
+
+        const parentId = sanitizedPayload.parentId || null;
         let sharedWith = [];
         let sharedWithUids = [];
         let isShared = false;
@@ -136,7 +146,7 @@ export const useFolders = (user) => {
             }
         }
         const docRef = await addDoc(collection(db, "folders"), {
-            ...payload,
+            ...sanitizedPayload,
             ownerId: user.uid,
             ownerEmail: user.email,
             institutionId: payload?.institutionId || currentInstitutionId,
@@ -147,11 +157,28 @@ export const useFolders = (user) => {
             createdAt: new Date(),
             updatedAt: new Date()
         });
-        return { id: docRef.id, ...payload };
+        return { id: docRef.id, ...sanitizedPayload };
     };
 
     const updateFolder = async (id, payload) => {
-        await updateDoc(doc(db, "folders", id), { ...payload, updatedAt: new Date() });
+        const sanitizedPayload = {
+            ...(payload?.name !== undefined ? { name: payload.name } : {}),
+            ...(payload?.description !== undefined ? { description: payload.description } : {}),
+            ...(payload?.color !== undefined ? { color: payload.color } : {}),
+            ...(payload?.tags !== undefined ? { tags: Array.isArray(payload.tags) ? payload.tags : [] } : {}),
+            ...(payload?.cardStyle !== undefined ? { cardStyle: payload.cardStyle } : {}),
+            ...(payload?.modernFillColor !== undefined ? { modernFillColor: payload.modernFillColor } : {}),
+            ...(payload?.parentId !== undefined ? { parentId: payload.parentId } : {}),
+            ...(payload?.sharedWith !== undefined ? { sharedWith: payload.sharedWith } : {}),
+            ...(payload?.sharedWithUids !== undefined ? { sharedWithUids: payload.sharedWithUids } : {}),
+            ...(payload?.isShared !== undefined ? { isShared: payload.isShared } : {}),
+            ...(payload?.institutionId !== undefined ? { institutionId: payload.institutionId } : {}),
+            ...(payload?.ownerId !== undefined ? { ownerId: payload.ownerId } : {}),
+            ...(payload?.ownerEmail !== undefined ? { ownerEmail: payload.ownerEmail } : {}),
+            updatedAt: new Date()
+        };
+
+        await updateDoc(doc(db, "folders", id), sanitizedPayload);
     };
 
     const deleteFolder = async (id) => {
