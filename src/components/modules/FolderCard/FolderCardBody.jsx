@@ -1,9 +1,10 @@
 // src/components/modules/FolderCard/FolderCardBody.jsx
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree } from 'lucide-react';
+import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree, RotateCcw } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
-import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem } from '../../../utils/permissionUtils';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
+import { SHORTCUT_CARD_MENU_WIDTH } from '../shared/shortcutMenuConfig';
 
 const FolderCardBody = ({
     folder,
@@ -21,12 +22,35 @@ const FolderCardBody = ({
     onDelete,
     onShare,
     onShowContents,
-    filterOverlayOpen
+    onGoToFolder,
+    filterOverlayOpen,
+    onCloseFilterOverlay,
+    disableAllActions = false,
+    disableDeleteActions = false
 }) => {
     // Permission checks
     const showEditUI = user && shouldShowEditUI(folder, user.uid);
     const showDeleteUI = user && shouldShowDeleteUI(folder, user.uid);
     const canShare = user && canEditItem(folder, user.uid); // Only editors can share
+    const isShortcut = isShortcutItem(folder);
+    const isHiddenFromManual = folder?.hiddenInManual === true;
+    const isOrphan = folder?.isOrphan === true;
+    const isMovedToShared = folder?._reason === 'moved-to-shared-folder';
+    const orphanMessage = folder?._reason === 'access-revoked'
+        ? 'Archivo original ya no está compartido'
+        : folder?._reason === 'moved-to-shared-folder'
+            ? `Esta carpeta se ha movido a la carpeta ${folder?._movedToFolderName || 'compartida del creador'}`
+            : 'Archivo original eliminado';
+    const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(folder, user.uid) : 'none';
+    const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
+    const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
+    const isSourceOwner = user && folder?.ownerId === user.uid;
+    const effectiveShowEditUI = !disableAllActions && showEditUI;
+    const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
+    const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
+    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || !isSourceOwner);
+    const canShowShortcutVisibility = !disableAllActions && isShortcut;
+    const hasMenuActions = effectiveShowEditUI || effectiveCanShareFromMenu || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete;
     // 1. Logic: No useState needed here. We use CSS for hover states.
     // Enforce a minimum scale of 1 for the menu
     const menuScale = Math.max(scaleMultiplier, 1);
@@ -56,7 +80,7 @@ const FolderCardBody = ({
                 isModern 
                     ? 'bg-white dark:bg-slate-950' 
                     : ''
-            }`}>
+            } ${isOrphan ? 'opacity-55' : ''}`}>
                 
                 {/* --- FRONT VISUALS --- */}
                 {!isModern && (
@@ -71,6 +95,7 @@ const FolderCardBody = ({
                 )}
 
                {/* --- ACTION GROUP WRAPPER (Top Right) --- */}
+                {!isOrphan && (
                 <div 
                     className="absolute z-30 flex items-center justify-end" 
                     style={{
@@ -135,23 +160,25 @@ const FolderCardBody = ({
                     {/* 2. Dots Menu */}
                     {!filterOverlayOpen && (
                         <div className="absolute right-0"> 
-                            <button
-                                ref={menuBtnRef}
-                                onClick={(e) => { e.stopPropagation(); onToggleMenu(folder.id); }}
-                                className={`rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer flex items-center justify-center ${
-                                    isModern
-                                        ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800'
-                                        : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30'
-                                } ${
-                                    activeMenu === folder.id ? 'opacity-100 scale-110' : 'opacity-0 group-hover:opacity-100'
-                                }`}
-                                style={{ 
-                                    width: `${32 * scaleMultiplier}px`, 
-                                    height: `${32 * scaleMultiplier}px` 
-                                }}
-                            >
-                                <MoreVertical size={15 * scaleMultiplier} />
-                            </button>
+                            {hasMenuActions && (
+                                <button
+                                    ref={menuBtnRef}
+                                    onClick={(e) => { e.stopPropagation(); onToggleMenu(folder.id); }}
+                                    className={`rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer flex items-center justify-center ${
+                                        isModern
+                                            ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800'
+                                            : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30'
+                                    } ${
+                                        activeMenu === folder.id ? 'opacity-100 scale-110' : 'opacity-0 group-hover:opacity-100'
+                                    }`}
+                                    style={{ 
+                                        width: `${32 * scaleMultiplier}px`, 
+                                        height: `${32 * scaleMultiplier}px` 
+                                    }}
+                                >
+                                    <MoreVertical size={15 * scaleMultiplier} />
+                                </button>
+                            )}
 
                             {/* Dropdown Menu rendered in a portal */}
                             {activeMenu === folder.id && typeof window !== 'undefined' && createPortal(
@@ -162,27 +189,38 @@ const FolderCardBody = ({
                                         top: menuPos.top,
                                         left: menuPos.left,
                                         zIndex: 9999,
-                                        width: `${120 * menuScale}px`,
+                                        width: `${SHORTCUT_CARD_MENU_WIDTH * menuScale}px`,
                                         transform: `scale(${menuScale})`,
                                         transformOrigin: 'top left'
                                     }}
                                 >
-                                    {(showEditUI || showDeleteUI) ? (
+                                    {(effectiveShowEditUI || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete || effectiveCanShareFromMenu) ? (
                                         <>
-                                            {showEditUI && (
+                                            {effectiveShowEditUI && (
                                                 <button onClick={(e) => { e.stopPropagation(); onEdit(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                                     <Edit2 size={14 * menuScale} /> Editar
                                                 </button>
                                             )}
-                                            {canShare && (
+                                            {effectiveCanShareFromMenu && (
                                                 <button onClick={(e) => { e.stopPropagation(); onShare(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                                     <Share2 size={14 * menuScale} /> Compartir
                                                 </button>
                                             )}
-                                            {(showEditUI || showDeleteUI) && canShare && (
+                                            {(effectiveShowEditUI || effectiveCanShareFromMenu) && (effectiveShowDeleteUI || isShortcut) && (
                                                 <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
                                             )}
-                                            {showDeleteUI && (
+                                            {canShowShortcutVisibility && (
+                                                <button onClick={(e) => { e.stopPropagation(); onDelete(folder, isHiddenFromManual ? 'showInManual' : 'removeShortcut'); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                    {isHiddenFromManual ? <RotateCcw size={14 * menuScale} /> : <Trash2 size={14 * menuScale} />}
+                                                    <span className="whitespace-nowrap">{isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}</span>
+                                                </button>
+                                            )}
+                                            {canShowShortcutDelete && (
+                                                <button onClick={(e) => { e.stopPropagation(); onDelete(folder, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                    <Trash2 size={14 * menuScale} /> Eliminar
+                                                </button>
+                                            )}
+                                            {!isShortcut && effectiveShowDeleteUI && (
                                                 <button onClick={(e) => { e.stopPropagation(); onDelete(folder); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                                     <Trash2 size={14 * menuScale} /> Eliminar
                                                 </button>
@@ -197,6 +235,7 @@ const FolderCardBody = ({
                         </div>
                     )}
                 </div>
+                )}
 
                 {/* --- CONTENT AREA --- */}
                 <div className={`relative h-full flex flex-col justify-between pointer-events-none ${
@@ -360,6 +399,49 @@ const FolderCardBody = ({
                 </div>
 
             </div>
+
+            {isOrphan && (
+                <>
+                    <div className="absolute bottom-4 left-4 right-4 z-20 pointer-events-none text-center">
+                        <span
+                            className={`font-semibold ${isModern ? 'text-slate-700 dark:text-slate-200' : 'text-white/95'}`}
+                            style={{ fontSize: `${12 * scaleMultiplier}px` }}
+                        >
+                            {orphanMessage}
+                        </span>
+                    </div>
+                    <div className="absolute inset-0 z-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        {isMovedToShared && folder?._movedToFolderId ? (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (typeof onGoToFolder === 'function') {
+                                        onGoToFolder(folder._movedToFolderId);
+                                    }
+                                }}
+                                className="pointer-events-auto px-4 py-2 rounded-lg font-semibold shadow-lg flex justify-center items-center"
+                                style={{
+                                    fontSize: `${13 * scaleMultiplier}px`,
+                                    background: 'rgba(30,41,59,0.35)',
+                                    border: '1px solid #1e293b',
+                                    color: '#fff',
+                                    transition: 'background 0.2s',
+                                }}
+                            >
+                                {`Ir a carpeta ${folder?._movedToFolderName || ''}`.trim()}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onDelete(folder, 'deleteShortcut'); }}
+                                className="pointer-events-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
+                                style={{ fontSize: `${13 * scaleMultiplier}px` }}
+                            >
+                                Eliminar
+                            </button>
+                        )}
+                    </div>
+                </>
+            )}
         </div>
     );
 };

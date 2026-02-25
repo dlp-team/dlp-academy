@@ -1,7 +1,7 @@
 // src/hooks/useSubjects.js
 import { useState, useEffect } from 'react';
 import { 
-    collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy
+    collection, query, where, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -9,6 +9,7 @@ export const useSubjects = (user) => {
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
+
 
     useEffect(() => {
         if (!user) {
@@ -26,9 +27,20 @@ export const useSubjects = (user) => {
         );
 
         let ownedSubjects = [];
+        let sharedSubjects = [];
 
         const updateSubjectsState = async () => {
-            const tempSubjects = ownedSubjects.filter(subject => {
+            const merged = [...ownedSubjects, ...sharedSubjects];
+            const dedupMap = new Map();
+
+            merged.forEach(subject => {
+                const existing = dedupMap.get(subject.id);
+                if (!existing || subject.isOwner === true) {
+                    dedupMap.set(subject.id, subject);
+                }
+            });
+
+            const tempSubjects = Array.from(dedupMap.values()).filter(subject => {
                 // Owner always sees their own subjects
                 if (subject?.ownerId === user?.uid || subject?.uid === user?.uid) return true;
                 // For institutional subjects, check institution match
@@ -59,7 +71,7 @@ export const useSubjects = (user) => {
 
         // Real-time listener for owned subjects
         const unsubscribeOwned = onSnapshot(ownedQuery, (snapshot) => {
-            ownedSubjects = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            ownedSubjects = snapshot.docs.map(d => ({ id: d.id, ...d.data(), isOwner: true }));
             updateSubjectsState();
         }, (error) => {
             console.error("Error listening to owned subjects:", error);
@@ -67,8 +79,39 @@ export const useSubjects = (user) => {
             updateSubjectsState();
         });
 
+        const sharedQuery = query(
+            collection(db, "subjects"),
+            where("isShared", "==", true)
+        );
+
+        const unsubscribeShared = onSnapshot(sharedQuery, (snapshot) => {
+            const userEmail = user.email?.toLowerCase() || '';
+            sharedSubjects = snapshot.docs
+                .filter(d => {
+                    const data = d.data() || {};
+                    if (data?.ownerId === user?.uid || data?.uid === user?.uid) return false;
+                    if (currentInstitutionId && data?.institutionId && data.institutionId !== currentInstitutionId) {
+                        return false;
+                    }
+
+                    const byUid = Array.isArray(data.sharedWithUids) && data.sharedWithUids.includes(user.uid);
+                    const bySharedWith = Array.isArray(data.sharedWith) && data.sharedWith.some(share =>
+                        share?.uid === user.uid || share?.email?.toLowerCase() === userEmail
+                    );
+
+                    return byUid || bySharedWith;
+                })
+                .map(d => ({ id: d.id, ...d.data(), isOwner: false }));
+            updateSubjectsState();
+        }, (error) => {
+            console.error("Error listening to shared subjects:", error);
+            sharedSubjects = [];
+            updateSubjectsState();
+        });
+
         return () => {
             unsubscribeOwned();
+            unsubscribeShared();
         };
     }, [user, currentInstitutionId]);
 
@@ -107,6 +150,9 @@ export const useSubjects = (user) => {
     const shareSubject = async (subjectId, email) => {
         try {
             const emailLower = email.toLowerCase();
+            if (user?.email?.toLowerCase() === emailLower) {
+                throw new Error("No puedes compartir contigo mismo.");
+            }
             // 1. Find the user UID by email from your 'users' collection
             const usersRef = collection(db, 'users');
             const q = query(usersRef, where('email', '==', emailLower));
@@ -118,7 +164,6 @@ export const useSubjects = (user) => {
                 targetUid = querySnapshot.docs[0].id;
                 const targetUserData = querySnapshot.docs[0].data() || {};
                 const targetInstitutionId = targetUserData.institutionId || null;
-
                 if (targetInstitutionId && targetInstitutionId !== currentInstitutionId) {
                     throw new Error("No puedes compartir entre instituciones diferentes.");
                 }
@@ -128,52 +173,58 @@ export const useSubjects = (user) => {
 
             // 2. Get the current subject to check if already shared
             const subjectRef = doc(db, 'subjects', subjectId);
-            const subjectSnap = await getDocs(query(collection(db, 'subjects'), where('__name__', '==', subjectId)));
+            const subjectSnap = await getDoc(subjectRef);
 
-            if (subjectSnap.empty) {
+            if (!subjectSnap.exists()) {
                 throw new Error("No se encontró la asignatura.");
             }
 
-            const subjectData = subjectSnap.docs[0].data();
+            const subjectData = subjectSnap.data() || {};
 
-            // Check if already shared with this user (fix: check by uid in sharedWith array)
-            const alreadyShared = Array.isArray(subjectData.sharedWith) && subjectData.sharedWith.some(entry => entry.uid === targetUid);
-            if (alreadyShared) {
-                throw new Error("Esta asignatura ya está compartida con ese usuario.");
+            if (subjectData.ownerId && subjectData.ownerId === targetUid) {
+                throw new Error("No puedes compartir con el propietario.");
             }
 
-            // 3. Update the subject with the new shared user
+            if (targetUid === user?.uid) {
+                throw new Error("No puedes compartir contigo mismo.");
+            }
+
+            // Check if already shared with this user (idempotent behavior)
+            const alreadyShared =
+                (Array.isArray(subjectData.sharedWithUids) && subjectData.sharedWithUids.includes(targetUid)) ||
+                (Array.isArray(subjectData.sharedWith) && subjectData.sharedWith.some(entry => entry.uid === targetUid));
+
+            // 3. Build share data
             const shareData = {
                 email: emailLower,
                 uid: targetUid,
                 role: 'viewer',
                 sharedAt: new Date()
             };
-            try {
-                await updateDoc(subjectRef, {
-                    sharedWith: arrayUnion(shareData),
-                    sharedWithUids: arrayUnion(targetUid),
-                    isShared: true,
-                    updatedAt: new Date()
-                });
-            } catch (err) {
-                throw err;
+
+            const originalSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
+            const originalSharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
+            let sourceUpdated = false;
+
+            // 4. Update source sharing only if needed
+            if (!alreadyShared) {
+                try {
+                    await updateDoc(subjectRef, {
+                        sharedWith: arrayUnion(shareData),
+                        sharedWithUids: arrayUnion(targetUid),
+                        isShared: true,
+                        updatedAt: new Date()
+                    });
+                    sourceUpdated = true;
+                } catch (err) {
+                    throw err;
+                }
             }
 
-            // Ensure exactly one shortcut exists for the newly shared user
-            const existingShortcutQuery = query(
-                collection(db, 'shortcuts'),
-                where('ownerId', '==', targetUid),
-                where('targetId', '==', subjectId),
-                where('targetType', '==', 'subject')
-            );
-            const existingShortcutSnap = await getDocs(existingShortcutQuery);
-            const existingShortcutDocs = existingShortcutSnap.docs.filter(d => {
-                const data = d.data() || {};
-                return !data.institutionId || data.institutionId === currentInstitutionId;
-            });
-
-            if (existingShortcutDocs.length === 0) {
+            // 5. Ensure shortcut exists for the recipient (deterministic upsert, avoids query/index/rules read issues)
+            try {
+                const shortcutId = `${targetUid}_${subjectId}_subject`;
+                const shortcutRef = doc(db, 'shortcuts', shortcutId);
                 const shortcutPayload = {
                     ownerId: targetUid,
                     parentId: null,
@@ -182,24 +233,33 @@ export const useSubjects = (user) => {
                     institutionId: currentInstitutionId,
                     shortcutName: subjectData.name || null,
                     shortcutCourse: subjectData.course || null,
+                    shortcutTags: Array.isArray(subjectData.tags) ? subjectData.tags : [],
                     shortcutColor: subjectData.color || null,
                     shortcutIcon: subjectData.icon || null,
                     shortcutCardStyle: subjectData.cardStyle || null,
                     shortcutModernFillColor: subjectData.modernFillColor || null,
-                    createdAt: new Date()
+                    createdAt: new Date(),
+                    updatedAt: new Date()
                 };
-                try {
-                    await addDoc(collection(db, 'shortcuts'), shortcutPayload);
-                } catch (err) {
-                    throw err;
-                }
-            } else if (existingShortcutDocs.length > 1) {
-                // Keep one, remove accidental duplicates
-                const duplicateDocs = existingShortcutDocs.slice(1);
-                await Promise.all(duplicateDocs.map(d => deleteDoc(doc(db, 'shortcuts', d.id))));
-            }
 
-            return shareData;
+                await setDoc(shortcutRef, shortcutPayload, { merge: true });
+            } catch (shortcutError) {
+                if (sourceUpdated) {
+                    try {
+                        await updateDoc(subjectRef, {
+                            sharedWith: originalSharedWith,
+                            sharedWithUids: originalSharedWithUids,
+                            isShared: originalSharedWithUids.length > 0,
+                            updatedAt: new Date()
+                        });
+                    } catch (rollbackError) {
+                        console.error('Subject share rollback failed:', rollbackError);
+                    }
+                    throw new Error('No se pudo crear el acceso directo. Se revirtió el compartido.');
+                }
+                throw shortcutError;
+            }
+            return { ...shareData, alreadyShared };
 
         } catch (error) {
             throw error;
@@ -223,16 +283,25 @@ export const useSubjects = (user) => {
 
             // 2. Update the subject
             const subjectRef = doc(db, 'subjects', subjectId);
-            // Get current sharedWith array to find the user object
-            const subjectSnap = await getDocs(query(collection(db, 'subjects'), where('__name__', '==', subjectId)));
-            let userObj = null;
-            if (!subjectSnap.empty) {
-                const subjectData = subjectSnap.docs[0].data();
-                userObj = (subjectData.sharedWith || []).find(u => u.uid === targetUid) || null;
+            const subjectSnap = await getDoc(subjectRef);
+            if (!subjectSnap.exists()) {
+                console.error("Subject not found to unshare");
+                return;
             }
+
+            const subjectData = subjectSnap.data() || {};
+            const currentSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
+            const currentSharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
+
+            const newSharedWith = currentSharedWith.filter(u =>
+                u.uid !== targetUid && u.email?.toLowerCase() !== emailLower
+            );
+            const newSharedWithUids = currentSharedWithUids.filter(uid => uid !== targetUid);
+
             await updateDoc(subjectRef, {
-                sharedWith: userObj ? arrayRemove(userObj) : [],
-                sharedWithUids: arrayRemove(targetUid),
+                sharedWith: newSharedWith,
+                sharedWithUids: newSharedWithUids,
+                isShared: newSharedWithUids.length > 0,
                 updatedAt: new Date()
             });
 

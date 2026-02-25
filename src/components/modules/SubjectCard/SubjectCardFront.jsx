@@ -4,7 +4,8 @@ import { createPortal } from 'react-dom';
 import { ChevronRight, MoreVertical, Edit2, Trash2, Share2 } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon'; // Adjust path if necessary
 import { Users } from 'lucide-react';
-import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem } from '../../../utils/permissionUtils';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
+import { SHORTCUT_CARD_MENU_WIDTH } from '../shared/shortcutMenuConfig';
 
 const SubjectCardFront = ({
     subject,
@@ -20,6 +21,7 @@ const SubjectCardFront = ({
     scaleMultiplier,
     topicCount,
     onOpenTopics,
+    onGoToFolder,
         filterOverlayOpen = false,
         onCloseFilterOverlay
 }) => {
@@ -27,7 +29,19 @@ const SubjectCardFront = ({
     const showEditUI = user && shouldShowEditUI(subject, user.uid);
     const showDeleteUI = user && shouldShowDeleteUI(subject, user.uid);
     const canShare = user && canEditItem(subject, user.uid);
-    const isShortcut = subject?.isShortcut === true;
+    const isShortcut = isShortcutItem(subject);
+    const isHiddenFromManual = subject?.hiddenInManual === true;
+    const isOrphan = subject?.isOrphan === true;
+    const isMovedToShared = subject?._reason === 'moved-to-shared-folder';
+    const orphanMessage = subject?._reason === 'access-revoked'
+        ? 'Archivo original ya no está compartido'
+        : subject?._reason === 'moved-to-shared-folder'
+            ? `Esta asignatura se ha movido a la carpeta ${subject?._movedToFolderName || 'compartida'}`
+            : 'Archivo original eliminado';
+    const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
+    const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
+    const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
+    const isSourceOwner = user && subject?.ownerId === user.uid;
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
 
@@ -70,6 +84,7 @@ const SubjectCardFront = ({
             
 
            {/* --- ACTION GROUP WRAPPER --- */}
+            {!isOrphan && (
             <div 
                 className="absolute z-30 flex items-center justify-end" 
                 style={{
@@ -145,7 +160,7 @@ const SubjectCardFront = ({
                                 top: menuPos.top,
                                 left: menuPos.left,
                                 zIndex: 9999,
-                                width: `${128 * menuScale}px`,
+                                width: `${SHORTCUT_CARD_MENU_WIDTH * menuScale}px`,
                                 transform: `scale(${menuScale})`,
                                 transformOrigin: 'top left'
                             }}
@@ -153,25 +168,30 @@ const SubjectCardFront = ({
                             {(showEditUI || showDeleteUI || isShortcut) ? (
                                 <>
                                     {showEditUI && (
-                                        <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                        <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                             <Edit2 size={14 * menuScale} /> Editar
                                         </button>
                                     )}
-                                    {canShare && (
-                                        <button onClick={(e) => { e.stopPropagation(); onShare(subject); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                    {canShareFromMenu && (
+                                        <button onClick={(e) => { e.stopPropagation(); onShare(subject); }} className="w-full flex items-center gap-2 p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                             <Share2 size={14 * menuScale} /> Compartir
                                         </button>
                                     )}
-                                    {(showEditUI || canShare) && (showDeleteUI || isShortcut) && (
+                                    {(showEditUI || canShareFromMenu) && (showDeleteUI || isShortcut) && (
                                         <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
                                     )}
                                     {isShortcut && (
-                                        <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
-                                            <Trash2 size={14 * menuScale} /> Quitar de mi vista
+                                        <button onClick={(e) => onDelete(e, subject, isHiddenFromManual ? 'showInManual' : 'removeShortcut')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                            <Trash2 size={14 * menuScale} /> <span className="whitespace-nowrap">{isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}</span>
                                         </button>
                                     )}
-                                    {showDeleteUI && (
-                                        <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                    {isShortcut && (isOrphan || !isSourceOwner) && (
+                                        <button onClick={(e) => onDelete(e, subject, isOrphan ? 'deleteShortcut' : 'unshareAndDelete')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                            <Trash2 size={14 * menuScale} /> Eliminar
+                                        </button>
+                                    )}
+                                    {!isShortcut && showDeleteUI && (
+                                        <button onClick={(e) => onDelete(e, subject, 'delete')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                             <Trash2 size={14 * menuScale} /> Eliminar
                                         </button>
                                     )}
@@ -184,11 +204,12 @@ const SubjectCardFront = ({
                     )}
                 </div>
             </div>
+            )}
 
             {/* Content */}
             <div className={`relative h-full flex flex-col justify-between pointer-events-none ${
                 isModern ? '' : 'text-white'
-            }`}
+            } ${isOrphan ? 'opacity-55' : ''}`}
             style={{ padding: `${24 * scaleMultiplier}px` }}>
                 <div className="flex justify-between items-start">
                     {/* Icon */}
@@ -321,6 +342,49 @@ const SubjectCardFront = ({
                     
                 </div>
             </div>
+
+            {isOrphan && (
+                <>
+                    <div className="absolute bottom-4 left-4 right-4 z-20 pointer-events-none text-center">
+                        <span
+                            className={`font-semibold ${isModern ? 'text-slate-700 dark:text-slate-200' : 'text-white/95'}`}
+                            style={{ fontSize: `${12 * scaleMultiplier}px` }}
+                        >
+                            {orphanMessage}
+                        </span>
+                    </div>
+                    <div className="absolute inset-0 z-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        {isMovedToShared && subject?._movedToFolderId ? (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (typeof onGoToFolder === 'function') {
+                                        onGoToFolder(subject._movedToFolderId);
+                                    }
+                                }}
+                                className="pointer-events-auto px-4 py-2 rounded-lg font-semibold shadow-lg flex justify-center items-center"
+                                style={{
+                                    fontSize: `${13 * scaleMultiplier}px`,
+                                    background: 'rgba(30,41,59,0.35)', // dark bg with lower opacity
+                                    border: '1px solid #1e293b', // dark border
+                                    color: '#fff', // white text
+                                    transition: 'background 0.2s',
+                                }}
+                            >
+                                {`Ir a carpeta ${subject?._movedToFolderName || ''}`.trim()}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={(e) => onDelete(e, subject, 'deleteShortcut')}
+                                className="pointer-events-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
+                                style={{ fontSize: `${13 * scaleMultiplier}px` }}
+                            >
+                                Eliminar
+                            </button>
+                        )}
+                    </div>
+                </>
+            )}
         </div>
     );
 };

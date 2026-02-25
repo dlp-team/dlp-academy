@@ -74,6 +74,7 @@ const BreadcrumbNav = ({
 
         const subjectId = e.dataTransfer.getData('subjectId');
         const folderId = e.dataTransfer.getData('folderId');
+        const folderShortcutId = e.dataTransfer.getData('folderShortcutId');
         const finalTargetId = targetFolderId === 'root' ? null : targetFolderId;
 
         if (folderId && finalTargetId && isInvalidFolderMove(folderId, finalTargetId, allFolders || [])) {
@@ -81,7 +82,7 @@ const BreadcrumbNav = ({
         }
 
         if (onDropOnBreadcrumb) {
-            onDropOnBreadcrumb(finalTargetId, subjectId, folderId);
+            onDropOnBreadcrumb(finalTargetId, subjectId, folderId, folderShortcutId || null);
         }
     };
 

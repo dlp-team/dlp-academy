@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { 
     collection, query, where, addDoc, deleteDoc, doc, 
-    getDoc, onSnapshot, updateDoc
+    onSnapshot, updateDoc, getDoc
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { canView } from '../utils/permissionUtils';
@@ -30,15 +30,20 @@ export const useShortcuts = (user) => {
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
 
+    const debugVisibility = (stage, payload = {}) => {
+        console.info('[VISIBILITY_DEBUG][shortcuts]', {
+            ts: new Date().toISOString(),
+            stage,
+            userUid: user?.uid || null,
+            institutionId: currentInstitutionId,
+            ...payload
+        });
+    };
+
     useEffect(() => {
         if (!user) {
-            setShortcuts([]);
-            setResolvedShortcuts([]);
-            setLoading(false);
             return;
         }
-
-        setLoading(true);
 
         // Query shortcuts owned by current user
         const shortcutsQuery = query(
@@ -49,6 +54,7 @@ export const useShortcuts = (user) => {
         const unsubscribe = onSnapshot(
             shortcutsQuery,
             async (snapshot) => {
+                debugVisibility('shortcuts_snapshot', { rawCount: snapshot.docs.length });
                 const shortcutDocs = snapshot.docs
                     .map(d => ({ id: d.id, ...d.data() }))
                     .filter(shortcut => {
@@ -57,13 +63,17 @@ export const useShortcuts = (user) => {
                         if (!currentInstitutionId || !shortcut?.institutionId) return true;
                         return shortcut.institutionId === currentInstitutionId;
                     });
+
+                debugVisibility('shortcuts_filtered', {
+                    visibleCount: shortcutDocs.length,
+                    ids: shortcutDocs.map(s => s.id)
+                });
                 
                 setShortcuts(shortcutDocs);
-
-                // Resolve targets for all shortcuts
-                const resolved = await resolveShortcutTargets(shortcutDocs);
-                setResolvedShortcuts(resolved);
-                setLoading(false);
+                if (shortcutDocs.length === 0) {
+                    setResolvedShortcuts([]);
+                    setLoading(false);
+                }
             },
             (error) => {
                 console.error("Error listening to shortcuts:", error);
@@ -76,123 +86,216 @@ export const useShortcuts = (user) => {
         return () => unsubscribe();
     }, [user, currentInstitutionId]);
 
-    /**
-     * Resolve shortcut targets to their actual data
-     * Handles orphaned shortcuts gracefully (target deleted)
-     * 
-     * @param {Array} shortcuts - Array of shortcut documents
-     * @returns {Array} Resolved shortcuts with target data or ghost objects
-     */
-    const resolveShortcutTargets = async (shortcuts) => {
-        const resolved = await Promise.all(
-            shortcuts.map(async (shortcut) => {
+    useEffect(() => {
+        if (!user) return;
+
+        if (!Array.isArray(shortcuts) || shortcuts.length === 0) return;
+
+        let isMounted = true;
+        let loadedCount = 0;
+        const targetUnsubscribers = [];
+        const resolvedMap = new Map();
+
+        const emit = () => {
+            if (!isMounted) return;
+            const ordered = shortcuts.map(s => resolvedMap.get(s.id)).filter(Boolean);
+            setResolvedShortcuts(ordered);
+        };
+
+        const buildResolvedFromSnapshot = async (shortcut, targetSnap) => {
+            const { targetId, targetType } = shortcut;
+            const fallbackAppearance = {
+                name: shortcut.shortcutName || shortcut.name || (targetType === 'folder' ? 'Carpeta' : 'Asignatura'),
+                course: shortcut.shortcutCourse || null,
+                tags: Array.isArray(shortcut.shortcutTags) ? shortcut.shortcutTags : [],
+                color: shortcut.shortcutColor || 'from-slate-500 to-slate-700',
+                icon: shortcut.shortcutIcon || (targetType === 'folder' ? 'folder' : 'book'),
+                cardStyle: shortcut.shortcutCardStyle || 'default',
+                modernFillColor: shortcut.shortcutModernFillColor || null
+            };
+
+            if (shortcut?.institutionId && shortcut.institutionId !== currentInstitutionId) {
+                return {
+                    ...shortcut,
+                    ...fallbackAppearance,
+                    isShortcut: true,
+                    isOrphan: true,
+                    hiddenInManual: shortcut.hiddenInManual === true,
+                    shortcutId: shortcut.id,
+                    targetData: null,
+                    _originalTargetId: targetId,
+                    _originalTargetType: targetType,
+                    _reason: 'tenant-mismatch'
+                };
+            }
+
+            if (!targetSnap.exists()) {
+                return {
+                    ...shortcut,
+                    ...fallbackAppearance,
+                    isShortcut: true,
+                    isOrphan: true,
+                    hiddenInManual: shortcut.hiddenInManual === true,
+                    shortcutId: shortcut.id,
+                    targetData: null,
+                    _originalTargetId: targetId,
+                    _originalTargetType: targetType
+                };
+            }
+
+            const targetData = { id: targetSnap.id, ...targetSnap.data() };
+
+            if (targetData?.institutionId && targetData.institutionId !== currentInstitutionId) {
+                return {
+                    ...shortcut,
+                    ...fallbackAppearance,
+                    isShortcut: true,
+                    isOrphan: true,
+                    hiddenInManual: shortcut.hiddenInManual === true,
+                    shortcutId: shortcut.id,
+                    targetData: null,
+                    _originalTargetId: targetId,
+                    _originalTargetType: targetType,
+                    _reason: 'tenant-mismatch'
+                };
+            }
+
+            if (!canView(targetData, user.uid)) {
+                return {
+                    ...shortcut,
+                    ...fallbackAppearance,
+                    isShortcut: true,
+                    isOrphan: true,
+                    hiddenInManual: shortcut.hiddenInManual === true,
+                    shortcutId: shortcut.id,
+                    targetData: null,
+                    _originalTargetId: targetId,
+                    _originalTargetType: targetType,
+                    _reason: 'access-revoked'
+                };
+            }
+
+            const parentFolderId = targetType === 'subject'
+                ? (targetData.folderId || null)
+                : (targetData.parentId || null);
+
+            if (parentFolderId) {
                 try {
-                    const { targetId, targetType } = shortcut;
-
-                    if (shortcut?.institutionId && shortcut.institutionId !== currentInstitutionId) {
-                        return {
-                            ...shortcut,
-                            isShortcut: true,
-                            isOrphan: true,
-                            shortcutId: shortcut.id,
-                            targetData: null,
-                            name: '(No access)',
-                            _originalTargetId: targetId,
-                            _originalTargetType: targetType,
-                            _reason: 'tenant-mismatch'
-                        };
+                    const parentFolderSnap = await getDoc(doc(db, 'folders', parentFolderId));
+                    if (parentFolderSnap.exists()) {
+                        const parentFolderData = parentFolderSnap.data() || {};
+                        if (parentFolderData.isShared === true) {
+                            return {
+                                ...shortcut,
+                                ...fallbackAppearance,
+                                isShortcut: true,
+                                isOrphan: true,
+                                hiddenInManual: shortcut.hiddenInManual === true,
+                                shortcutId: shortcut.id,
+                                targetData: null,
+                                _originalTargetId: targetId,
+                                _originalTargetType: targetType,
+                                _reason: 'moved-to-shared-folder',
+                                _movedToFolderName: parentFolderData.name || 'carpeta compartida',
+                                _movedToFolderId: parentFolderId
+                            };
+                        }
                     }
-                    
-                    // Determine collection based on targetType
-                    const collectionName = targetType === 'folder' ? 'folders' : 'subjects';
-                    const targetRef = doc(db, collectionName, targetId);
-                    const targetSnap = await getDoc(targetRef);
+                } catch (_) {
+                    // Ignore parent folder lookup failures and continue with normal resolved shortcut
+                }
+            }
 
-                    if (!targetSnap.exists()) {
-                        // Target was deleted - return ghost object
-                        return {
-                            ...shortcut,
-                            isShortcut: true,
-                            isOrphan: true,
-                            shortcutId: shortcut.id,
-                            targetData: null,
-                            name: '(Deleted)',
-                            // Preserve original metadata for cleanup
-                            _originalTargetId: targetId,
-                            _originalTargetType: targetType
-                        };
+            return {
+                ...targetData,
+                name: shortcut.shortcutName || targetData.name,
+                course: shortcut.shortcutCourse || targetData.course,
+                tags: Array.isArray(shortcut.shortcutTags) ? shortcut.shortcutTags : targetData.tags,
+                color: shortcut.shortcutColor || targetData.color,
+                icon: shortcut.shortcutIcon || targetData.icon,
+                cardStyle: shortcut.shortcutCardStyle || targetData.cardStyle,
+                modernFillColor: shortcut.shortcutModernFillColor || targetData.modernFillColor,
+                shortcutId: shortcut.id,
+                shortcutOwnerId: shortcut.ownerId,
+                shortcutParentId: shortcut.parentId,
+                isShortcut: true,
+                isOrphan: false,
+                hiddenInManual: shortcut.hiddenInManual === true,
+                targetType: shortcut.targetType,
+                targetId: shortcut.targetId,
+                _sourceParentId: targetData.parentId || null,
+                parentId: shortcut.parentId
+            };
+        };
+
+        shortcuts.forEach(shortcut => {
+            const collectionName = shortcut.targetType === 'folder' ? 'folders' : 'subjects';
+            const targetRef = doc(db, collectionName, shortcut.targetId);
+
+            const unsub = onSnapshot(targetRef, async (targetSnap) => {
+                try {
+                    const resolved = await buildResolvedFromSnapshot(shortcut, targetSnap);
+                    resolvedMap.set(shortcut.id, resolved);
+                    loadedCount += 1;
+                    if (loadedCount >= shortcuts.length) {
+                        setLoading(false);
                     }
-
-                    // Target exists - return normalized object with metadata
-                    const targetData = { id: targetSnap.id, ...targetSnap.data() };
-
-                    if (targetData?.institutionId && targetData.institutionId !== currentInstitutionId) {
-                        return {
-                            ...shortcut,
-                            isShortcut: true,
-                            isOrphan: true,
-                            shortcutId: shortcut.id,
-                            targetData: null,
-                            name: '(No access)',
-                            _originalTargetId: targetId,
-                            _originalTargetType: targetType,
-                            _reason: 'tenant-mismatch'
-                        };
-                    }
-
-                    if (!canView(targetData, user.uid)) {
-                        return {
-                            ...shortcut,
-                            isShortcut: true,
-                            isOrphan: true,
-                            shortcutId: shortcut.id,
-                            targetData: null,
-                            name: '(No access)',
-                            _originalTargetId: targetId,
-                            _originalTargetType: targetType,
-                            _reason: 'access-revoked'
-                        };
-                    }
-                    
-                    return {
-                        ...targetData, // Spread target data first
-                        // Override with shortcut-specific properties
-                        name: shortcut.shortcutName || targetData.name,
-                        course: shortcut.shortcutCourse || targetData.course,
-                        color: shortcut.shortcutColor || targetData.color,
-                        icon: shortcut.shortcutIcon || targetData.icon,
-                        cardStyle: shortcut.shortcutCardStyle || targetData.cardStyle,
-                        modernFillColor: shortcut.shortcutModernFillColor || targetData.modernFillColor,
-                        shortcutId: shortcut.id,
-                        shortcutOwnerId: shortcut.ownerId,
-                        shortcutParentId: shortcut.parentId, // Where shortcut lives
-                        isShortcut: true,
-                        isOrphan: false,
-                        targetType: shortcut.targetType,
-                        targetId: shortcut.targetId,
-                        // Preserve original parentId from target for reference
-                        _sourceParentId: targetData.parentId || null,
-                        // Use shortcut's parentId for folder navigation
-                        parentId: shortcut.parentId
-                    };
+                    emit();
                 } catch (error) {
-                    console.error(`Failed to resolve shortcut ${shortcut.id}:`, error);
-                    // Return ghost on error
-                    return {
+                    resolvedMap.set(shortcut.id, {
                         ...shortcut,
+                        name: shortcut.shortcutName || shortcut.name || (shortcut.targetType === 'folder' ? 'Carpeta' : 'Asignatura'),
+                        course: shortcut.shortcutCourse || null,
+                        tags: Array.isArray(shortcut.shortcutTags) ? shortcut.shortcutTags : [],
+                        color: shortcut.shortcutColor || 'from-slate-500 to-slate-700',
+                        icon: shortcut.shortcutIcon || (shortcut.targetType === 'folder' ? 'folder' : 'book'),
+                        cardStyle: shortcut.shortcutCardStyle || 'default',
+                        modernFillColor: shortcut.shortcutModernFillColor || null,
                         isShortcut: true,
                         isOrphan: true,
+                        hiddenInManual: shortcut.hiddenInManual === true,
                         shortcutId: shortcut.id,
                         targetData: null,
-                        name: '(Error loading)',
                         _error: error.message
-                    };
+                    });
+                    loadedCount += 1;
+                    if (loadedCount >= shortcuts.length) {
+                        setLoading(false);
+                    }
+                    emit();
                 }
-            })
-        );
+            }, () => {
+                resolvedMap.set(shortcut.id, {
+                    ...shortcut,
+                    name: shortcut.shortcutName || shortcut.name || (shortcut.targetType === 'folder' ? 'Carpeta' : 'Asignatura'),
+                    course: shortcut.shortcutCourse || null,
+                    tags: Array.isArray(shortcut.shortcutTags) ? shortcut.shortcutTags : [],
+                    color: shortcut.shortcutColor || 'from-slate-500 to-slate-700',
+                    icon: shortcut.shortcutIcon || (shortcut.targetType === 'folder' ? 'folder' : 'book'),
+                    cardStyle: shortcut.shortcutCardStyle || 'default',
+                    modernFillColor: shortcut.shortcutModernFillColor || null,
+                    isShortcut: true,
+                    isOrphan: true,
+                    hiddenInManual: shortcut.hiddenInManual === true,
+                    shortcutId: shortcut.id,
+                    targetData: null,
+                    _reason: 'snapshot-error'
+                });
+                loadedCount += 1;
+                if (loadedCount >= shortcuts.length) {
+                    setLoading(false);
+                }
+                emit();
+            });
 
-        return resolved;
-    };
+            targetUnsubscribers.push(unsub);
+        });
+
+        return () => {
+            isMounted = false;
+            targetUnsubscribers.forEach(unsub => unsub());
+        };
+    }, [shortcuts, user, currentInstitutionId]);
 
     /**
      * Create a new shortcut to a shared item
@@ -227,8 +330,10 @@ export const useShortcuts = (user) => {
             await updateDoc(primaryRef, {
                 parentId,
                 institutionId: effectiveInstitutionId,
+                ...(typeof visualOverrides.hiddenInManual === 'boolean' ? { hiddenInManual: visualOverrides.hiddenInManual } : {}),
                 ...(visualOverrides.shortcutName ? { shortcutName: visualOverrides.shortcutName } : {}),
                 ...(visualOverrides.shortcutCourse ? { shortcutCourse: visualOverrides.shortcutCourse } : {}),
+                ...(Array.isArray(visualOverrides.shortcutTags) ? { shortcutTags: visualOverrides.shortcutTags } : {}),
                 ...(visualOverrides.shortcutColor ? { shortcutColor: visualOverrides.shortcutColor } : {}),
                 ...(visualOverrides.shortcutIcon ? { shortcutIcon: visualOverrides.shortcutIcon } : {}),
                 ...(visualOverrides.shortcutCardStyle ? { shortcutCardStyle: visualOverrides.shortcutCardStyle } : {}),
@@ -259,8 +364,10 @@ export const useShortcuts = (user) => {
             targetId: targetId,
             targetType: targetType,
             institutionId: effectiveInstitutionId,
+            hiddenInManual: typeof visualOverrides.hiddenInManual === 'boolean' ? visualOverrides.hiddenInManual : false,
             ...(visualOverrides.shortcutName ? { shortcutName: visualOverrides.shortcutName } : {}),
             ...(visualOverrides.shortcutCourse ? { shortcutCourse: visualOverrides.shortcutCourse } : {}),
+            ...(Array.isArray(visualOverrides.shortcutTags) ? { shortcutTags: visualOverrides.shortcutTags } : {}),
             ...(visualOverrides.shortcutColor ? { shortcutColor: visualOverrides.shortcutColor } : {}),
             ...(visualOverrides.shortcutIcon ? { shortcutIcon: visualOverrides.shortcutIcon } : {}),
             ...(visualOverrides.shortcutCardStyle ? { shortcutCardStyle: visualOverrides.shortcutCardStyle } : {}),
@@ -328,6 +435,7 @@ export const useShortcuts = (user) => {
         const payload = {
             ...(appearanceData.name !== undefined ? { shortcutName: appearanceData.name } : {}),
             ...(appearanceData.course !== undefined ? { shortcutCourse: appearanceData.course } : {}),
+            ...(Array.isArray(appearanceData.tags) ? { shortcutTags: appearanceData.tags } : {}),
             ...(appearanceData.color !== undefined ? { shortcutColor: appearanceData.color } : {}),
             ...(appearanceData.icon !== undefined ? { shortcutIcon: appearanceData.icon } : {}),
             ...(appearanceData.cardStyle !== undefined ? { shortcutCardStyle: appearanceData.cardStyle } : {}),
@@ -336,6 +444,15 @@ export const useShortcuts = (user) => {
         };
 
         await updateDoc(doc(db, "shortcuts", shortcutId), payload);
+    };
+
+    const setShortcutHiddenInManual = async (shortcutId, hiddenInManual = true) => {
+        if (!shortcutId) throw new Error("Shortcut ID required");
+
+        await updateDoc(doc(db, "shortcuts", shortcutId), {
+            hiddenInManual: hiddenInManual === true,
+            updatedAt: new Date()
+        });
     };
 
     /**
@@ -363,6 +480,7 @@ export const useShortcuts = (user) => {
         deleteShortcut,
         moveShortcut,
         updateShortcutAppearance,
+        setShortcutHiddenInManual,
         deleteOrphanedShortcuts
     };
 };

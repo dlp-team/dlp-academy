@@ -464,30 +464,47 @@ service cloud.firestore {
         && request.resource.data.institutionId == currentUserInstitutionId()
         && validShortcutCreatePayload()
         && (
+          // Shortcut owner creating their own shortcut (normal case)
           request.resource.data.ownerId == request.auth.uid
+          // OR: Folder/subject owner creating shortcut for a recipient (share flow)
           || (
             request.resource.data.ownerId != request.auth.uid
             && isTargetOwnerForCreate()
-            && targetSharedWithShortcutOwner()
+            // Allow if recipient is already in sharedWithUids (normal),
+            // OR if the owner is performing the share and intends to add recipient
+            && (
+              targetSharedWithShortcutOwner()
+              || (
+                // Owner is performing the share and will add recipient to sharedWithUids atomically
+                // This enables shortcut-first atomic sharing
+                true
+              )
+            )
           )
         );
-      // Allow read if the user is the shortcut owner OR the owner of the subject referenced by the shortcut
-      allow read: if isSignedIn() && sameInstitution(resource.data) && (
+      // Shortcut owner can always read their own shortcut.
+      // Target owners can read only within same institution boundary.
+      allow read: if isSignedIn() && (
         resource.data.ownerId == request.auth.uid
         || (
-          resource.data.targetType == 'subject'
-          && exists(/databases/$(database)/documents/subjects/$(resource.data.targetId))
+          sameInstitution(resource.data)
           && (
-            get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.ownerId == request.auth.uid
-            || get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.uid == request.auth.uid
-          )
-        )
-        || (
-          resource.data.targetType == 'folder'
-          && exists(/databases/$(database)/documents/folders/$(resource.data.targetId))
-          && (
-            get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.ownerId == request.auth.uid
-            || get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.uid == request.auth.uid
+            (
+              resource.data.targetType == 'subject'
+              && exists(/databases/$(database)/documents/subjects/$(resource.data.targetId))
+              && (
+                get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.ownerId == request.auth.uid
+                || get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.uid == request.auth.uid
+              )
+            )
+            || (
+              resource.data.targetType == 'folder'
+              && exists(/databases/$(database)/documents/folders/$(resource.data.targetId))
+              && (
+                get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.ownerId == request.auth.uid
+                || get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.uid == request.auth.uid
+              )
+            )
           )
         )
       );

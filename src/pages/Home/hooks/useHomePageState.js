@@ -13,7 +13,7 @@ export const useHomePageState = ({ logic, searchQuery }) => {
 
     const [folderContentsModalConfig, setFolderContentsModalConfig] = useState({ isOpen: false, folder: null });
     const [shareConfirm, setShareConfirm] = useState({ open: false, subjectId: null, folder: null, onConfirm: null });
-    const [unshareConfirm, setUnshareConfirm] = useState({ open: false, subjectId: null, folder: null, onConfirm: null });
+    const [unshareConfirm, setUnshareConfirm] = useState({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
     const [topicsModalConfig, setTopicsModalConfig] = useState({
         isOpen: false,
         subject: null
@@ -106,7 +106,7 @@ export const useHomePageState = ({ logic, searchQuery }) => {
     ]);
 
     const displayedFolders = useMemo(() => {
-        const allFolders = logic.folders || [];
+        const allFolders = logic.filteredFolders || logic.folders || [];
         const currentId = logic.currentFolder ? logic.currentFolder.id : null;
 
         // Show only direct children of current folder (not descendants)
@@ -125,7 +125,7 @@ export const useHomePageState = ({ logic, searchQuery }) => {
         }
 
         return scopedFolders;
-    }, [logic.folders, logic.currentFolder, logic.searchFolders, searchQuery, logic.selectedTags, logic.filteredFoldersByTags]);
+    }, [logic.filteredFolders, logic.folders, logic.currentFolder, logic.searchFolders, searchQuery, logic.selectedTags, logic.filteredFoldersByTags]);
 
     const activeModalFolder = useMemo(() => {
         if (!folderContentsModalConfig.folder) return null;
@@ -137,7 +137,12 @@ export const useHomePageState = ({ logic, searchQuery }) => {
         if (logic.viewMode) localStorage.setItem('dlp_last_viewMode', logic.viewMode);
     }, [logic.viewMode]);
 
-    const hasContent = (logic.subjects || []).length > 0 || displayedFolders.length > 0;
+    const groupedSubjectsCount = Object.values(logic.groupedContent || {}).reduce((total, bucket) => {
+        if (!Array.isArray(bucket)) return total;
+        return total + bucket.length;
+    }, 0);
+
+    const hasContent = groupedSubjectsCount > 0 || displayedFolders.length > 0;
 
     return {
         isFilterOpen,

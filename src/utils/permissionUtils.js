@@ -20,11 +20,11 @@
  */
 export const isOwner = (item, userId) => {
     if (!item || !userId) {
-        console.log('[PERMISSION] isOwner: false', { item, userId });
+        // console.log('[PERMISSION] isOwner: false', { item, userId });
         return false;
     }
     const ownerCheck = item.ownerId === userId || item.uid === userId;
-    console.log('[PERMISSION] isOwner:', { item, userId, ownerCheck });
+    // console.log('[PERMISSION] isOwner:', { item, userId, ownerCheck });
     return ownerCheck;
 };
 
@@ -40,33 +40,33 @@ export const isOwner = (item, userId) => {
  */
 export const canEdit = (item, userId) => {
     if (!item || !userId) {
-        console.log('[PERMISSION] canEdit: false', { item, userId });
+        // console.log('[PERMISSION] canEdit: false', { item, userId });
         return false;
     }
     // Owner can always edit
     const owner = isOwner(item, userId);
     if (owner) {
-        console.log('[PERMISSION] canEdit: true (owner)', { item, userId });
+        // console.log('[PERMISSION] canEdit: true (owner)', { item, userId });
         return true;
     }
     // Check if user is in editorUids array (new schema)
     const editor = Array.isArray(item.editorUids) && item.editorUids.includes(userId);
     if (editor) {
-        console.log('[PERMISSION] canEdit: true (editorUids)', { item, userId });
+        // console.log('[PERMISSION] canEdit: true (editorUids)', { item, userId });
         return true;
     }
     // Legacy fallback: check sharedWith array with canEdit property
     let sharedEdit = false;
     if (Array.isArray(item.sharedWith)) {
         sharedEdit = item.sharedWith.some(share => 
-            (share.uid === userId || share.email === userId) && share.canEdit === true
+            (share.uid === userId || share.email === userId) && (share.canEdit === true || share.role === 'editor')
         );
         if (sharedEdit) {
-            console.log('[PERMISSION] canEdit: true (sharedWith)', { item, userId });
+            // console.log('[PERMISSION] canEdit: true (sharedWith)', { item, userId });
             return true;
         }
     }
-    console.log('[PERMISSION] canEdit: false', { item, userId });
+    // console.log('[PERMISSION] canEdit: false', { item, userId });
     return false;
 };
 
@@ -120,6 +120,24 @@ export const canDelete = (item, userId) => {
 };
 
 /**
+ * Detect if an item represents a shortcut entry.
+ * Canonical shortcut signal is targetId + targetType from shortcuts collection.
+ * Resolved shortcuts may also include synthetic flags like isShortcut/shortcutId.
+ *
+ * @param {Object} item
+ * @returns {boolean}
+ */
+export const isShortcutItem = (item) => {
+    if (!item || typeof item !== 'object') return false;
+
+    const hasNativeShortcutShape =
+        typeof item.targetId === 'string' &&
+        (item.targetType === 'subject' || item.targetType === 'folder');
+
+    return hasNativeShortcutShape || item?.isShortcut === true || Boolean(item?.shortcutId);
+};
+
+/**
  * Get user's permission level for an item
  * 
  * @param {Object} item - Subject, folder, or topic document
@@ -147,7 +165,7 @@ export const getPermissionLevel = (item, userId) => {
             s.uid === userId || s.email === userId
         );
         if (share) {
-            return share.canEdit ? 'editor' : 'viewer';
+            return (share.canEdit === true || share.role === 'editor') ? 'editor' : 'viewer';
         }
     }
     
@@ -166,7 +184,7 @@ export const getPermissionLevel = (item, userId) => {
  * @returns {boolean}
  */
 export const isOrphanedShortcut = (shortcut) => {
-    return shortcut?.isShortcut === true && shortcut?.isOrphan === true;
+    return isShortcutItem(shortcut) && shortcut?.isOrphan === true;
 };
 
 /**
@@ -206,7 +224,7 @@ export const shouldShowEditUI = (item, userId) => {
     if (isOrphanedShortcut(item)) return false;
 
     // Shortcut owner can edit shortcut presentation (local copy UI)
-    if (item?.isShortcut === true) {
+    if (isShortcutItem(item)) {
         return item.ownerId === userId || item.shortcutOwnerId === userId;
     }
     
@@ -225,7 +243,7 @@ export const shouldShowEditUI = (item, userId) => {
  */
 export const shouldShowDeleteUI = (item, userId) => {
     // For shortcuts, user can always delete their own shortcut
-    if (item?.isShortcut === true) {
+    if (isShortcutItem(item)) {
         return item.ownerId === userId || item.shortcutOwnerId === userId;
     }
 

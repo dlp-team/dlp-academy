@@ -5,6 +5,7 @@ export const useHomeHandlers = ({
     user,
     subjects,
     folders,
+    filteredFolders,
     currentFolder,
     viewMode,
     groupedContent,
@@ -32,13 +33,21 @@ export const useHomeHandlers = ({
     deleteSubject,
     deleteFolder,
     deleteFolderOnly,
+    deleteShortcut,
+    unshareSubject,
+    unshareFolder,
     updatePreference,
     navigate,
     isDescendant,
     createShortcut,
-    updateShortcutAppearance
+    updateShortcutAppearance,
+    setShortcutHiddenInManual
 }) => {
     const handleSaveSubject = async formData => {
+        const isShortcutEdit = subjectModalConfig.isEditing && Boolean(formData?.shortcutId);
+        const shortcutPermission = formData?.shortcutPermissionLevel || 'viewer';
+        const isShortcutEditor = shortcutPermission === 'editor' || shortcutPermission === 'owner';
+
         const payload = {
             name: formData.name,
             course: formData.course,
@@ -55,12 +64,19 @@ export const useHomeHandlers = ({
 
         try {
             if (subjectModalConfig.isEditing) {
-                if (formData?.isShortcut && formData?.shortcutId && updateShortcutAppearance) {
+                if (isShortcutEdit && updateShortcutAppearance) {
+                    if (isShortcutEditor) {
+                        await updateSubject(formData.id, {
+                            name: formData.name,
+                            course: formData.course,
+                            icon: formData.icon || 'book',
+                            updatedAt: new Date()
+                        });
+                    }
+
                     await updateShortcutAppearance(formData.shortcutId, {
-                        name: formData.name,
-                        course: formData.course,
+                        tags: formData.tags,
                         color: formData.color,
-                        icon: formData.icon || 'book',
                         cardStyle: formData.cardStyle || 'default',
                         modernFillColor: formData.modernFillColor || null
                     });
@@ -98,10 +114,40 @@ export const useHomeHandlers = ({
     };
 
     const handleSaveFolder = async formData => {
+        const isShortcutEdit = folderModalConfig.isEditing && Boolean(formData?.shortcutId);
+        const shortcutPermission = formData?.shortcutPermissionLevel || 'viewer';
+        const isShortcutEditor = shortcutPermission === 'editor' || shortcutPermission === 'owner';
+        const folderPayload = {
+            name: formData?.name || '',
+            description: formData?.description || '',
+            color: formData?.color || 'from-amber-400 to-amber-600',
+            tags: Array.isArray(formData?.tags) ? formData.tags : [],
+            cardStyle: formData?.cardStyle || 'default',
+            modernFillColor: formData?.modernFillColor || null,
+            ...(formData?.parentId !== undefined ? { parentId: formData.parentId } : {})
+        };
+
         if (folderModalConfig.isEditing) {
-            await updateFolder(formData.id, formData);
+            if (isShortcutEdit && updateShortcutAppearance) {
+                if (isShortcutEditor) {
+                    await updateFolder(formData.id, {
+                        name: formData.name,
+                        description: formData.description || '',
+                        updatedAt: new Date()
+                    });
+                }
+
+                await updateShortcutAppearance(formData.shortcutId, {
+                    tags: formData.tags,
+                    color: formData.color,
+                    cardStyle: formData.cardStyle || 'default',
+                    modernFillColor: formData.modernFillColor || null
+                });
+            } else {
+                await updateFolder(formData.id, folderPayload);
+            }
         } else {
-            await addFolder(formData);
+            await addFolder(folderPayload);
         }
         setFolderModalConfig({ isOpen: false, isEditing: false, data: null });
     };
@@ -119,8 +165,46 @@ export const useHomeHandlers = ({
                 ...prev,
                 folders: prev.folders.filter(id => id !== deleteConfig.item.id)
             }));
+        } else if (deleteConfig.type === 'shortcut-subject' && deleteConfig.item) {
+            const shortcutId = deleteConfig.item.shortcutId;
+            const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
+
+            if (deleteConfig.action === 'unshare' && unshareSubject && user?.email) {
+                try {
+                    await unshareSubject(targetId, user.email);
+                } catch (error) {
+                    console.error('Error unsharing shortcut subject access:', error);
+                }
+            }
+
+            if (deleteConfig.action === 'hide' && shortcutId && setShortcutHiddenInManual) {
+                await setShortcutHiddenInManual(shortcutId, true);
+            } else if (deleteConfig.action === 'unhide' && shortcutId && setShortcutHiddenInManual) {
+                await setShortcutHiddenInManual(shortcutId, false);
+            } else if (deleteConfig.action !== 'unshare' && shortcutId && deleteShortcut) {
+                await deleteShortcut(shortcutId);
+            }
+        } else if (deleteConfig.type === 'shortcut-folder' && deleteConfig.item) {
+            const shortcutId = deleteConfig.item.shortcutId;
+            const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
+
+            if (deleteConfig.action === 'unshare' && unshareFolder && user?.email) {
+                try {
+                    await unshareFolder(targetId, user.email);
+                } catch (error) {
+                    console.error('Error unsharing shortcut folder access:', error);
+                }
+            }
+
+            if (deleteConfig.action === 'hide' && shortcutId && setShortcutHiddenInManual) {
+                await setShortcutHiddenInManual(shortcutId, true);
+            } else if (deleteConfig.action === 'unhide' && shortcutId && setShortcutHiddenInManual) {
+                await setShortcutHiddenInManual(shortcutId, false);
+            } else if (deleteConfig.action !== 'unshare' && shortcutId && deleteShortcut) {
+                await deleteShortcut(shortcutId);
+            }
         }
-        setDeleteConfig({ isOpen: false, type: null, item: null });
+        setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
     };
 
     const handleDeleteFolderAll = async () => {
@@ -152,10 +236,19 @@ export const useHomeHandlers = ({
 
     const handleOpenFolder = folder => {
         if (folder && folder.id) {
-            const found = folders.find(f => f.id === folder.id);
-            setCurrentFolder(found || null);
-            if (found) {
-                localStorage.setItem('dlp_last_folderId', found.id);
+            const mergedFolders = Array.isArray(filteredFolders) ? filteredFolders : [];
+            const shortcutCandidate = mergedFolders.find(f =>
+                f?.targetType === 'folder' &&
+                (f.targetId === folder.id || (folder?.targetId && f.targetId === folder.targetId))
+            );
+
+            const foundInMerged = mergedFolders.find(f => f.id === folder.id);
+            const foundInSource = folders.find(f => f.id === folder.id);
+            const selectedFolder = shortcutCandidate || foundInMerged || foundInSource || folder;
+
+            setCurrentFolder(selectedFolder || null);
+            if (selectedFolder) {
+                localStorage.setItem('dlp_last_folderId', selectedFolder.id);
             } else {
                 localStorage.removeItem('dlp_last_folderId');
             }

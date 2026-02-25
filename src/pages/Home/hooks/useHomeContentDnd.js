@@ -36,9 +36,9 @@ const useHomeContentDnd = ({
 
         if (!currentFolder || !draggedItem) return;
         if (draggedItemType === 'subject') {
-            handlePromoteSubject(draggedItem.id);
+            handlePromoteSubject(draggedItem.id, draggedItem.shortcutId || null);
         } else if (draggedItemType === 'folder') {
-            handlePromoteFolder(draggedItem.id);
+            handlePromoteFolder(draggedItem.id, draggedItem.shortcutId || null);
         }
     };
 
@@ -56,6 +56,7 @@ const useHomeContentDnd = ({
             const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
             const subjectParentId = e.dataTransfer.getData('subjectParentId');
             const folderId = e.dataTransfer.getData('folderId');
+            const folderShortcutId = e.dataTransfer.getData('folderShortcutId');
             if (subjectId) {
                 draggedData = {
                     id: subjectId,
@@ -64,7 +65,7 @@ const useHomeContentDnd = ({
                     shortcutId: subjectShortcutId || undefined
                 };
             }
-            else if (folderId) draggedData = { id: folderId, type: 'folder', parentId: undefined };
+            else if (folderId) draggedData = { id: folderId, type: 'folder', parentId: undefined, shortcutId: folderShortcutId || undefined };
         }
         console.log('[DND] handleRootZoneDrop:', { draggedData, currentFolder });
 
@@ -89,7 +90,7 @@ const useHomeContentDnd = ({
                 handleMoveSubjectWithSource(draggedData.id, targetId, draggedData.parentId);
             }
         } else if (draggedData.type === 'folder' && handleNestFolder) {
-            handleNestFolder(targetId, draggedData.id);
+            handleNestFolder(targetId, draggedData.id, draggedData.shortcutId || null);
         }
 
         if (handleDragEnd) handleDragEnd();
@@ -121,7 +122,7 @@ const useHomeContentDnd = ({
                 }
             } else if (dragged.type === 'folder') {
                 if (handleMoveFolderWithSource) handleMoveFolderWithSource(dragged.id, dragged.parentId, target.id);
-                else handleNestFolder(target.id, dragged.id);
+                else handleNestFolder(target.id, dragged.id, dragged.shortcutId || null);
             }
         } else if (target.type === 'subject') {
             const targetParentId = target.parentId || (currentFolder ? currentFolder.id : null);
@@ -151,7 +152,7 @@ const useHomeContentDnd = ({
                 if (handleMoveFolderWithSource) {
                     handleMoveFolderWithSource(dragged.id, dragged.parentId, targetParentId);
                 } else if (handleNestFolder) {
-                    handleNestFolder(targetParentId, dragged.id);
+                    handleNestFolder(targetParentId, dragged.id, dragged.shortcutId || null);
                 }
             }
         }

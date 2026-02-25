@@ -35,6 +35,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         deleteShortcut,
         moveShortcut,
         updateShortcutAppearance,
+        setShortcutHiddenInManual,
         deleteOrphanedShortcuts
     } = useShortcuts(user);
 
@@ -81,11 +82,13 @@ export const useHomeLogic = (user, searchQuery = '') => {
         orderedFolders,
         allTags,
         filteredFoldersByTags,
+        filteredFolders,
         searchFolders,
         searchSubjects,
         sharedFolders,
         sharedSubjects,
-        isDragAndDropEnabled
+        isDragAndDropEnabled,
+        shortcuts: resolvedShortcutItems
     } = useHomeState({
         user,
         searchQuery,
@@ -120,6 +123,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         user,
         subjects,
         folders,
+        filteredFolders,
         currentFolder,
         viewMode,
         groupedContent,
@@ -147,11 +151,15 @@ export const useHomeLogic = (user, searchQuery = '') => {
         deleteSubject,
         deleteFolder,
         deleteFolderOnly,
+        deleteShortcut,
+        unshareSubject,
+        unshareFolder,
         updatePreference,
         navigate,
         isDescendant,
         createShortcut,
-        updateShortcutAppearance
+        updateShortcutAppearance,
+        setShortcutHiddenInManual
     });
 
 
@@ -162,6 +170,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         subjects,
         folders,
         shortcuts,
+        resolvedShortcuts: resolvedShortcutItems,
         searchFolders,
         searchSubjects,
         loading,
@@ -173,6 +182,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         orderedFolders,
         allTags,
         filteredFoldersByTags, 
+        filteredFolders,
         
         // State
         viewMode, setViewMode,
@@ -232,6 +242,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         deleteShortcut,
         moveShortcut,
         updateShortcutAppearance,
+        setShortcutHiddenInManual,
         deleteOrphanedShortcuts,
 
         // Navigation

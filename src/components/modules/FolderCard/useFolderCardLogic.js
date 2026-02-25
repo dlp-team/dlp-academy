@@ -1,9 +1,11 @@
 // src/components/modules/FolderCard/useFolderCardLogic.js
 import { useState, useMemo } from 'react';
+import { isShortcutItem } from '../../../utils/permissionUtils';
 
 export const useFolderCardLogic = ({
     folder,
     allFolders, // <--- NEW PROP: We need the list of ALL folders to look up children
+    allSubjects,
     cardScale,
     canDrop,
     draggable,
@@ -28,20 +30,34 @@ export const useFolderCardLogic = ({
         }
 
         const visited = new Set();
+        const getFolderParentId = (entry) => {
+            if (!entry) return null;
+            if (isShortcutItem(entry)) return entry.shortcutParentId ?? entry.parentId ?? null;
+            return entry.parentId ?? null;
+        };
+
+        const getSubjectParentId = (entry) => {
+            if (!entry) return null;
+            if (isShortcutItem(entry)) return entry.shortcutParentId ?? entry.folderId ?? entry.parentId ?? null;
+            return entry.folderId ?? null;
+        };
 
         const traverse = (folderId) => {
             if (visited.has(folderId)) return { s: 0, f: 0 };
             visited.add(folderId);
 
             // Find this folder
-            const currentFolder = allFolders.find(f => f.id === folderId);
+            const currentFolder = allFolders.find(f => (f.shortcutId || f.id) === folderId || f.id === folderId);
             if (!currentFolder) return { s: 0, f: 0 };
 
             // Count direct children by querying parentId/folderId
-            // Get child folders where parentId === folderId
-            const childFolders = allFolders.filter(f => f.parentId === folderId);
+            // Get child folders where parentId/shortcutParentId === folderId
+            const childFolders = allFolders.filter(f => getFolderParentId(f) === folderId);
+            const childSubjects = Array.isArray(allSubjects)
+                ? allSubjects.filter(s => getSubjectParentId(s) === folderId)
+                : [];
             
-            let s = 0;
+            let s = childSubjects.length;
             let f = childFolders.length;
 
             // Recursively count descendants
@@ -63,7 +79,7 @@ export const useFolderCardLogic = ({
             totalCount: stats.s + stats.f
         };
 
-    }, [folder, allFolders]);
+    }, [folder, allFolders, allSubjects]);
 
     // --- VISUAL & STYLE ---
     const isModern = folder.cardStyle === 'modern';
@@ -106,6 +122,7 @@ export const useFolderCardLogic = ({
         setIsOver(false);
 
         const subjectId = e.dataTransfer.getData('subjectId');
+        const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
         const draggedPosition = e.dataTransfer.getData('position');
         const droppedFolderId = e.dataTransfer.getData('folderId');
 
@@ -117,13 +134,15 @@ export const useFolderCardLogic = ({
                 folderId: folder.id,
                 subjectId,
                 subjectType,
-                subjectParentId
+                subjectParentId,
+                subjectShortcutId
             });
-            onDrop(folder.id, subjectId, subjectType, subjectParentId);
+            onDrop(folder.id, subjectId, subjectType, subjectParentId, subjectShortcutId || null);
         }
         else if (canDrop && onDropFolder && droppedFolderId && droppedFolderId !== folder.id) {
-            console.log('[DND] FolderCard handleDrop → onDropFolder:', { folderId: folder.id, droppedFolderId });
-            onDropFolder(folder.id, droppedFolderId);
+            const droppedFolderShortcutId = e.dataTransfer.getData('folderShortcutId') || null;
+            console.log('[DND] FolderCard handleDrop → onDropFolder:', { folderId: folder.id, droppedFolderId, droppedFolderShortcutId });
+            onDropFolder(folder.id, droppedFolderId, droppedFolderShortcutId);
         }
         else if (draggable && onDropReorder && droppedFolderId && draggedPosition !== undefined) {
             console.log('[DND] FolderCard handleDrop → onDropReorder:', { droppedFolderId, draggedPosition, position });
@@ -135,7 +154,14 @@ export const useFolderCardLogic = ({
         if (draggable && onDragStart) {
             e.dataTransfer.effectAllowed = 'move';
             e.dataTransfer.setData('folderId', folder.id);
+            e.dataTransfer.setData('folderShortcutId', folder.shortcutId || '');
             e.dataTransfer.setData('position', position.toString());
+            e.dataTransfer.setData('treeItem', JSON.stringify({
+                id: folder.id,
+                type: 'folder',
+                parentId: folder.shortcutParentId ?? folder.parentId ?? null,
+                shortcutId: folder.shortcutId || null
+            }));
             onDragStart(folder, position);
         }
     };

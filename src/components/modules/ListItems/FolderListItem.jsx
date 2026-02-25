@@ -1,12 +1,15 @@
 // src/components/modules/ListItems/FolderListItem.jsx
 import React, { useState, useMemo, useRef, useLayoutEffect } from 'react';
-import { ChevronRight, Folder, GripVertical, Users, MoreVertical, Edit2, Trash2, Share2 } from 'lucide-react';
+import { ChevronRight, Folder, GripVertical, Users, MoreVertical, Edit2, Trash2, Share2, RotateCcw } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import SubjectIcon from '../../ui/SubjectIcon';
 import ListViewItem from '../ListViewItem';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
+import { SHORTCUT_LIST_MENU_WIDTH } from '../shared/shortcutMenuConfig';
 
 const FolderListItem = ({ 
+    user,
     item, 
     parentId,
     depth = 0,
@@ -17,10 +20,14 @@ const FolderListItem = ({
     onEdit,
     onDelete,
     onShare = () => {},
+    onGoToFolder,
+    disableAllActions = false,
+    disableDeleteActions = false,
     cardScale = 100, 
     onDragStart,
     onDragEnd,
     onDropAction,
+    draggable = true,
     path
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -29,8 +36,31 @@ const FolderListItem = ({
     const [showMenu, setShowMenu] = useState(false);
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+    const currentUserId = user?.uid || null;
+    const showEditUI = currentUserId ? shouldShowEditUI(item, currentUserId) : false;
+    const showDeleteUI = currentUserId ? shouldShowDeleteUI(item, currentUserId) : false;
+    const canShare = currentUserId ? canEditItem(item, currentUserId) : false;
+    const isShortcut = isShortcutItem(item);
+    const isHiddenFromManual = item?.hiddenInManual === true;
+    const isOrphan = item?.isOrphan === true;
+    const isMovedToShared = item?._reason === 'moved-to-shared-folder';
+    const orphanMessage = item?._reason === 'access-revoked'
+        ? 'Archivo original ya no está compartido'
+        : item?._reason === 'moved-to-shared-folder'
+            ? `Esta carpeta se ha movido a la carpeta ${folder?._movedToFolderName || 'compartida del creador'}`
+            : 'Archivo original eliminado';
+    const shortcutPermissionLevel = isShortcut && currentUserId ? getPermissionLevel(item, currentUserId) : 'none';
+    const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
+    const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
+    const isSourceOwner = Boolean(currentUserId && item?.ownerId && item.ownerId === currentUserId);
+    const effectiveShowEditUI = !disableAllActions && showEditUI;
+    const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
+    const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
+    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || !isSourceOwner);
+    const canShowShortcutVisibility = !disableAllActions && isShortcut;
+    const hasMenuActions = effectiveShowEditUI || effectiveCanShareFromMenu || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete;
 
-    
+
     const scale = cardScale / 100;
     const type = 'folder';
     // Minimum scale for the menu is 1 (100%)
@@ -39,13 +69,25 @@ const FolderListItem = ({
     React.useEffect(() => {
         if (showMenu && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
-            const menu = { width: 128 * menuScale, height: 48 * 3 * menuScale };
+            const menu = { width: SHORTCUT_LIST_MENU_WIDTH * menuScale, height: 48 * 3 * menuScale };
             setMenuPos({
                 top: rect.bottom - menu.height,
                 left: rect.right - menu.width
             });
         }
     }, [showMenu, menuScale]);
+
+    const getFolderParentId = (folderEntry) => {
+        if (!folderEntry) return null;
+        if (isShortcutItem(folderEntry)) return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+        return folderEntry.parentId ?? null;
+    };
+
+    const getSubjectParentId = (subjectEntry) => {
+        if (!subjectEntry) return null;
+        if (isShortcutItem(subjectEntry)) return subjectEntry.shortcutParentId ?? subjectEntry.folderId ?? subjectEntry.parentId ?? null;
+        return subjectEntry.folderId ?? null;
+    };
 
 
     // --- CHILDREN CALCULATION ---
@@ -56,8 +98,8 @@ const FolderListItem = ({
         }
 
         // Direct children only
-        const directFolders = allFolders.filter(f => f.parentId === item.id).length;
-        const directSubjects = allSubjects.filter(s => s.folderId === item.id).length;
+        const directFolders = allFolders.filter(f => getFolderParentId(f) === item.id).length;
+        const directSubjects = allSubjects.filter(s => getSubjectParentId(s) === item.id).length;
         
         return {
             subjectCount: directSubjects,
@@ -71,8 +113,8 @@ const FolderListItem = ({
     let childSubjects = [];
 
     // Query direct children by parentId and folderId (not from arrays)
-    childFolders = Array.isArray(allFolders) ? allFolders.filter(f => f.parentId === item.id) : [];
-    childSubjects = Array.isArray(allSubjects) ? allSubjects.filter(s => s.folderId === item.id) : [];
+    childFolders = Array.isArray(allFolders) ? allFolders.filter(f => getFolderParentId(f) === item.id) : [];
+    childSubjects = Array.isArray(allSubjects) ? allSubjects.filter(s => getSubjectParentId(s) === item.id) : [];
     
     const hasChildren = childFolders.length > 0 || childSubjects.length > 0;
 
@@ -82,9 +124,11 @@ const FolderListItem = ({
         const dragData = {
             id: item.id,
             type: type,
-            parentId: parentId 
+            parentId: item.shortcutParentId ?? parentId,
+            shortcutId: item.shortcutId || null
         };
         e.dataTransfer.setData('folderId', item.id);
+        e.dataTransfer.setData('folderShortcutId', item.shortcutId || '');
         e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
         
         if (onDragStart) onDragStart(item); 
@@ -150,7 +194,7 @@ const FolderListItem = ({
             {/* ROW CONTAINER */}
             <div 
                 ref={itemRef}
-                draggable
+                draggable={draggable}
                 onDragStart={dragHandlers.onDragStart}
                 onDrag={dragHandlers.onDrag}
                 onDragEnd={dragHandlers.onDragEnd}
@@ -163,7 +207,7 @@ const FolderListItem = ({
                     isDragOver 
                         ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-500 scale-[1.01] shadow-md'
                         : ''
-                } ${isDragging ? 'opacity-0 scale-95 transition-none' : ''}`}
+                } ${isDragging ? 'opacity-0 scale-95 transition-none' : ''} ${isOrphan ? 'opacity-55' : ''}`}
                 style={{ marginLeft: `${indent}px` }}
             >
                 <div 
@@ -259,16 +303,18 @@ const FolderListItem = ({
                     </button>
                     {/* Three Dots Menu Button */}
                     <div className="relative ml-2 flex items-center">
-                        <button
-                            ref={menuBtnRef}
-                            onClick={e => {
-                                e.stopPropagation();
-                                setShowMenu(!showMenu);
-                            }}
-                            className={`p-2 rounded-full transition-colors opacity-100 hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400`}
-                        >
-                            <MoreVertical size={20 * scale} />
-                        </button>
+                        {!isOrphan && hasMenuActions && (
+                            <button
+                                ref={menuBtnRef}
+                                onClick={e => {
+                                    e.stopPropagation();
+                                    setShowMenu(!showMenu);
+                                }}
+                                className={`p-2 rounded-full transition-colors opacity-100 hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400`}
+                            >
+                                <MoreVertical size={20 * scale} />
+                            </button>
+                        )}
                         {showMenu && (
                             <>
                                 {typeof window !== 'undefined' && window.document && createPortal(
@@ -282,33 +328,66 @@ const FolderListItem = ({
                                             style={{
                                                 top: menuPos.top + 'px',
                                                 left: menuPos.left + 'px',
-                                                width: `${128 * menuScale}px`,
+                                                width: `${SHORTCUT_LIST_MENU_WIDTH * menuScale}px`,
                                                 transform: `scale(${menuScale})`,
                                                 transformOrigin: 'bottom right',
                                                 pointerEvents: 'auto'
                                             }}
                                         >
-                                            <button 
-                                                onClick={e => { e.stopPropagation(); onEdit(item); setShowMenu(false); }}
-                                                className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
-                                                style={{ fontSize: `${14 * menuScale}px` }}
-                                            >
-                                                <Edit2 size={14 * menuScale} /> Editar
-                                            </button>
-                                            <button 
-                                                onClick={e => { e.stopPropagation(); onShare(item); setShowMenu(false); }}
-                                                className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
-                                                style={{ fontSize: `${14 * menuScale}px` }}
-                                            >
-                                                <Share2 size={14 * menuScale} /> Compartir
-                                            </button>
-                                            <button 
-                                                onClick={e => { e.stopPropagation(); onDelete(item); setShowMenu(false); }}
-                                                className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
-                                                style={{ fontSize: `${14 * menuScale}px` }}
-                                            >
-                                                <Trash2 size={14 * menuScale} /> Eliminar
-                                            </button>
+                                            {(effectiveShowEditUI || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete || effectiveCanShareFromMenu) ? (
+                                                <>
+                                                    {effectiveShowEditUI && (
+                                                        <button 
+                                                            onClick={e => { e.stopPropagation(); onEdit(item); setShowMenu(false); }}
+                                                            className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                                        >
+                                                            <Edit2 size={14 * menuScale} /> Editar
+                                                        </button>
+                                                    )}
+                                                    {effectiveCanShareFromMenu && (
+                                                        <button 
+                                                            onClick={e => { e.stopPropagation(); onShare(item); setShowMenu(false); }}
+                                                            className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                                        >
+                                                            <Share2 size={14 * menuScale} /> Compartir
+                                                        </button>
+                                                    )}
+                                                    {(effectiveShowEditUI || effectiveCanShareFromMenu) && (effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete) && (
+                                                        <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
+                                                    )}
+                                                    {canShowShortcutVisibility && (
+                                                        <button 
+                                                            onClick={e => { e.stopPropagation(); onDelete(item, isHiddenFromManual ? 'showInManual' : 'removeShortcut'); setShowMenu(false); }}
+                                                            className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors cursor-pointer"
+                                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                                        >
+                                                            {isHiddenFromManual ? <RotateCcw size={14 * menuScale} /> : <Trash2 size={14 * menuScale} />} {isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}
+                                                        </button>
+                                                    )}
+                                                    {canShowShortcutDelete && (
+                                                        <button 
+                                                            onClick={e => { e.stopPropagation(); onDelete(item, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); setShowMenu(false); }}
+                                                            className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                                        >
+                                                            <Trash2 size={14 * menuScale} /> Eliminar
+                                                        </button>
+                                                    )}
+                                                    {!isShortcut && effectiveShowDeleteUI && (
+                                                        <button 
+                                                            onClick={e => { e.stopPropagation(); onDelete(item); setShowMenu(false); }}
+                                                            className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                                        >
+                                                            <Trash2 size={14 * menuScale} /> Eliminar
+                                                        </button>
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
+                                            )}
                                         </div>
                                     </>,
                                     window.document.body
@@ -318,6 +397,50 @@ const FolderListItem = ({
                     </div>
                     
                 </div>
+
+                {isOrphan && (
+                    <div className="mt-2 ml-10 mr-2 text-center pointer-events-none">
+                        <span
+                            className="font-semibold text-slate-700 dark:text-slate-200"
+                            style={{ fontSize: `${12 * scale}px` }}
+                        >
+                            {orphanMessage}
+                        </span>
+                    </div>
+                )}
+
+                {isOrphan && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        {isMovedToShared && item?._movedToFolderId ? (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (typeof onGoToFolder === 'function') {
+                                        onGoToFolder(item._movedToFolderId);
+                                    }
+                                }}
+                                className="pointer-events-auto px-4 py-2 rounded-lg font-semibold shadow-lg flex justify-center items-center"
+                                style={{
+                                    fontSize: `${13 * scale}px`,
+                                    background: 'rgba(30,41,59,0.35)',
+                                    border: '1px solid #1e293b',
+                                    color: '#fff',
+                                    transition: 'background 0.2s',
+                                }}
+                            >
+                                {`Ir a carpeta ${item?._movedToFolderName || ''}`.trim()}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onDelete(item, 'deleteShortcut'); }}
+                                className="pointer-events-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
+                                style={{ fontSize: `${13 * scale}px` }}
+                            >
+                                Eliminar
+                            </button>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* CHILDREN (Recursive) */}
@@ -344,10 +467,14 @@ const FolderListItem = ({
                                         onEdit={onEdit}
                                         onDelete={onDelete}
                                         onShare={onShare}
+                                        onGoToFolder={onGoToFolder}
+                                        disableAllActions={disableAllActions}
+                                        disableDeleteActions={disableDeleteActions}
                                         cardScale={cardScale}
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}
                                         onDropAction={onDropAction}
+                                        draggable={draggable}
                                         path={path}
                                     />
                                 ))}
@@ -365,10 +492,14 @@ const FolderListItem = ({
                                         onEdit={onEdit}
                                         onDelete={onDelete}
                                         onShare={onShare}
+                                        onGoToFolder={onGoToFolder}
+                                        disableAllActions={disableAllActions}
+                                        disableDeleteActions={disableDeleteActions}
                                         cardScale={cardScale}
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}
                                         onDropAction={onDropAction}
+                                        draggable={draggable}
                                         path={path}
                                     />
                                 ))}

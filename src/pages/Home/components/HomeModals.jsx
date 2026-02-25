@@ -6,6 +6,7 @@ import HomeDeleteConfirmModal from './HomeDeleteConfirmModal';
 import FolderDeleteModal from '../../../components/modals/FolderDeleteModal';
 
 const HomeModals = ({
+    user,
     subjectModalConfig, setSubjectModalConfig,
     folderModalConfig, setFolderModalConfig,
     deleteConfig, setDeleteConfig,
@@ -13,6 +14,7 @@ const HomeModals = ({
     handleSaveFolder,
     onShare,
     onUnshare,
+    onDeleteShortcut,
     handleDelete,
     handleDeleteFolderAll,
     handleDeleteFolderOnly,
@@ -32,10 +34,12 @@ const HomeModals = ({
                 isOpen={subjectModalConfig.isOpen}
                 isEditing={subjectModalConfig.isEditing}
                 initialData={subjectModalConfig.data}
+                user={user}
                 onClose={() => setSubjectModalConfig({ ...subjectModalConfig, isOpen: false })}
                 onSave={handleSaveSubject}
                 onShare={onShareSubject}
                 onUnshare={onUnshareSubject}
+                onDeleteShortcut={onDeleteShortcut}
                 initialTab={subjectModalConfig.initialTab || 'general'}
             />
 
@@ -45,8 +49,10 @@ const HomeModals = ({
                 onSave={handleSaveFolder}
                 initialData={folderModalConfig.data}
                 isEditing={folderModalConfig.isEditing}
+                user={user}
                 onShare={onShare}
                 onUnshare={onUnshare}
+                onDeleteShortcut={onDeleteShortcut}
                 currentFolder={folderModalConfig.currentFolder || currentFolder}
                 allFolders={allFolders}
                 initialTab={folderModalConfig.initialTab || 'general'}
