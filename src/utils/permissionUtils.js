@@ -59,7 +59,7 @@ export const canEdit = (item, userId) => {
     let sharedEdit = false;
     if (Array.isArray(item.sharedWith)) {
         sharedEdit = item.sharedWith.some(share => 
-            (share.uid === userId || share.email === userId) && share.canEdit === true
+            (share.uid === userId || share.email === userId) && (share.canEdit === true || share.role === 'editor')
         );
         if (sharedEdit) {
             // console.log('[PERMISSION] canEdit: true (sharedWith)', { item, userId });
@@ -147,7 +147,7 @@ export const getPermissionLevel = (item, userId) => {
             s.uid === userId || s.email === userId
         );
         if (share) {
-            return share.canEdit ? 'editor' : 'viewer';
+            return (share.canEdit === true || share.role === 'editor') ? 'editor' : 'viewer';
         }
     }
     

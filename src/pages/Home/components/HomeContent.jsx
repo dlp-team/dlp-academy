@@ -259,7 +259,18 @@ const HomeContent = ({
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
                                                         onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
-                                                        onDelete={(f) => setDeleteConfig({ isOpen: true, type: 'folder', item: f })}
+                                                        onDelete={(f, action = 'delete') => {
+                                                            if (f?.isShortcut && f?.shortcutId) {
+                                                                setDeleteConfig({
+                                                                    isOpen: true,
+                                                                    type: 'shortcut-folder',
+                                                                    action: action === 'unshareAndDelete' ? 'unshare' : 'remove',
+                                                                    item: f
+                                                                });
+                                                                return;
+                                                            }
+                                                            setDeleteConfig({ isOpen: true, type: 'folder', item: f });
+                                                        }}
                                                         onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
                                                         onShowContents={handleShowFolderContents}
                                                         cardScale={cardScale}
@@ -306,10 +317,15 @@ const HomeContent = ({
                                                         onSelect={handleSelectSubject}
                                                         onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
                                                         onEdit={(e, s) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
-                                                        onDelete={(e, s) => {
+                                                        onDelete={(e, s, action = 'delete') => {
                                                             e.stopPropagation();
                                                             if (s?.isShortcut && s?.shortcutId) {
-                                                                onDeleteShortcut && onDeleteShortcut(s.shortcutId);
+                                                                setDeleteConfig({
+                                                                    isOpen: true,
+                                                                    type: 'shortcut-subject',
+                                                                    action: action === 'unshareAndDelete' ? 'unshare' : 'remove',
+                                                                    item: s
+                                                                });
                                                             } else {
                                                                 setDeleteConfig({ isOpen: true, type: 'subject', item: s });
                                                             }
@@ -414,7 +430,18 @@ const HomeContent = ({
                                                 onNavigate={handleOpenFolder}
                                                 onNavigateSubject={handleSelectSubject}
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
-                                                onDelete={(f) => setDeleteConfig({ isOpen: true, type: 'folder', item: f })}
+                                                onDelete={(f, action = 'delete') => {
+                                                    if (f?.isShortcut && f?.shortcutId) {
+                                                        setDeleteConfig({
+                                                            isOpen: true,
+                                                            type: 'shortcut-folder',
+                                                            action: action === 'unshareAndDelete' ? 'unshare' : 'remove',
+                                                            item: f
+                                                        });
+                                                        return;
+                                                    }
+                                                    setDeleteConfig({ isOpen: true, type: 'folder', item: f });
+                                                }}
                                                 onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
                                                 cardScale={cardScale}
                                                 onDragStart={handleDragStartFolder} 
@@ -435,9 +462,14 @@ const HomeContent = ({
                                                 allSubjects={subjects}
                                                 onNavigateSubject={handleSelectSubject}
                                                 onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
-                                                onDelete={(s) => {
+                                                onDelete={(s, action = 'delete') => {
                                                     if (s?.isShortcut && s?.shortcutId) {
-                                                        onDeleteShortcut && onDeleteShortcut(s.shortcutId);
+                                                        setDeleteConfig({
+                                                            isOpen: true,
+                                                            type: 'shortcut-subject',
+                                                            action: action === 'unshareAndDelete' ? 'unshare' : 'remove',
+                                                            item: s
+                                                        });
                                                         return;
                                                     }
                                                     setDeleteConfig({ isOpen: true, type: 'subject', item: s });

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, Edit2, Trash2, MoreVertical, Users , Share2 } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
-import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem } from '../../../utils/permissionUtils';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel } from '../../../utils/permissionUtils';
 
 const SubjectListItem = ({ 
     user,
@@ -27,6 +27,10 @@ const SubjectListItem = ({
     const showDeleteUI = user && shouldShowDeleteUI(subject, user.uid);
     const canShare = user && canEditItem(subject, user.uid);
     const isShortcut = subject?.isShortcut === true;
+    const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
+    const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
+    const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
+    const isSourceOwner = user && subject?.ownerId === user.uid;
 
     // Minimum scale for the menu is 1 (100%)
     const menuScale = Math.max(scale, 1);
@@ -162,30 +166,39 @@ const SubjectListItem = ({
                                     </button>
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onShare && onShare(subject); setShowMenu(false); }}
-                                        disabled={!canShare}
-                                        style={{ fontSize: `${14 * menuScale}px`, display: canShare ? 'flex' : 'none' }}
+                                        disabled={!canShareFromMenu}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: canShareFromMenu ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
                                     >
                                         <Share2 size={14 * menuScale} /> Compartir
                                     </button>
                                     {isShortcut && (
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); onDelete(subject); setShowMenu(false); }}
+                                            onClick={(e) => { e.stopPropagation(); onDelete(subject, 'removeShortcut'); setShowMenu(false); }}
                                             className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors cursor-pointer"
                                             style={{ fontSize: `${14 * menuScale}px` }}
                                         >
-                                            <Trash2 size={14 * menuScale} /> Quitar de mi vista
+                                            <Trash2 size={14 * menuScale} /> <span className="whitespace-nowrap">Quitar de manual</span>
+                                        </button>
+                                    )}
+                                    {isShortcut && !isSourceOwner && (
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); onDelete(subject, 'unshareAndDelete'); setShowMenu(false); }}
+                                            className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
+                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                        >
+                                            <Trash2 size={14 * menuScale} /> Eliminar acceso
                                         </button>
                                     )}
                                     <button 
-                                        onClick={(e) => { e.stopPropagation(); onDelete(subject); setShowMenu(false); }}
+                                        onClick={(e) => { e.stopPropagation(); onDelete(subject, 'delete'); setShowMenu(false); }}
                                         disabled={!showDeleteUI || isShortcut}
                                         style={{ fontSize: `${14 * menuScale}px`, display: !isShortcut && showDeleteUI ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
                                     >
                                         <Trash2 size={14 * menuScale} /> Eliminar
                                     </button>
-                                    {!showEditUI && !canShare && !showDeleteUI && !isShortcut && (
+                                    {!showEditUI && !canShareFromMenu && !showDeleteUI && !isShortcut && (
                                         <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
                                     )}
                                 </div>

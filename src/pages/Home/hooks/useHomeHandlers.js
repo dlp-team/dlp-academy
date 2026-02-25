@@ -32,6 +32,9 @@ export const useHomeHandlers = ({
     deleteSubject,
     deleteFolder,
     deleteFolderOnly,
+    deleteShortcut,
+    unshareSubject,
+    unshareFolder,
     updatePreference,
     navigate,
     isDescendant,
@@ -39,6 +42,10 @@ export const useHomeHandlers = ({
     updateShortcutAppearance
 }) => {
     const handleSaveSubject = async formData => {
+        const isShortcutEdit = subjectModalConfig.isEditing && Boolean(formData?.shortcutId);
+        const shortcutPermission = formData?.shortcutPermissionLevel || 'viewer';
+        const isShortcutEditor = shortcutPermission === 'editor' || shortcutPermission === 'owner';
+
         const payload = {
             name: formData.name,
             course: formData.course,
@@ -55,13 +62,19 @@ export const useHomeHandlers = ({
 
         try {
             if (subjectModalConfig.isEditing) {
-                if (formData?.shortcutId && updateShortcutAppearance) {
+                if (isShortcutEdit && updateShortcutAppearance) {
+                    if (isShortcutEditor) {
+                        await updateSubject(formData.id, {
+                            name: formData.name,
+                            course: formData.course,
+                            icon: formData.icon || 'book',
+                            updatedAt: new Date()
+                        });
+                    }
+
                     await updateShortcutAppearance(formData.shortcutId, {
-                        name: formData.name,
-                        course: formData.course,
                         tags: formData.tags,
                         color: formData.color,
-                        icon: formData.icon || 'book',
                         cardStyle: formData.cardStyle || 'default',
                         modernFillColor: formData.modernFillColor || null
                     });
@@ -99,10 +112,21 @@ export const useHomeHandlers = ({
     };
 
     const handleSaveFolder = async formData => {
+        const isShortcutEdit = folderModalConfig.isEditing && Boolean(formData?.shortcutId);
+        const shortcutPermission = formData?.shortcutPermissionLevel || 'viewer';
+        const isShortcutEditor = shortcutPermission === 'editor' || shortcutPermission === 'owner';
+
         if (folderModalConfig.isEditing) {
-            if (formData?.shortcutId && updateShortcutAppearance) {
+            if (isShortcutEdit && updateShortcutAppearance) {
+                if (isShortcutEditor) {
+                    await updateFolder(formData.id, {
+                        name: formData.name,
+                        description: formData.description || '',
+                        updatedAt: new Date()
+                    });
+                }
+
                 await updateShortcutAppearance(formData.shortcutId, {
-                    name: formData.name,
                     tags: formData.tags,
                     color: formData.color,
                     cardStyle: formData.cardStyle || 'default',
@@ -130,6 +154,36 @@ export const useHomeHandlers = ({
                 ...prev,
                 folders: prev.folders.filter(id => id !== deleteConfig.item.id)
             }));
+        } else if (deleteConfig.type === 'shortcut-subject' && deleteConfig.item) {
+            const shortcutId = deleteConfig.item.shortcutId;
+            const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
+
+            if (deleteConfig.action === 'unshare' && unshareSubject && user?.email) {
+                try {
+                    await unshareSubject(targetId, user.email);
+                } catch (error) {
+                    console.error('Error unsharing shortcut subject access:', error);
+                }
+            }
+
+            if (shortcutId && deleteShortcut) {
+                await deleteShortcut(shortcutId);
+            }
+        } else if (deleteConfig.type === 'shortcut-folder' && deleteConfig.item) {
+            const shortcutId = deleteConfig.item.shortcutId;
+            const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
+
+            if (deleteConfig.action === 'unshare' && unshareFolder && user?.email) {
+                try {
+                    await unshareFolder(targetId, user.email);
+                } catch (error) {
+                    console.error('Error unsharing shortcut folder access:', error);
+                }
+            }
+
+            if (shortcutId && deleteShortcut) {
+                await deleteShortcut(shortcutId);
+            }
         }
         setDeleteConfig({ isOpen: false, type: null, item: null });
     };

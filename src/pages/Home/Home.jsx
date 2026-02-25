@@ -2,13 +2,14 @@
 import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+
+
 // Logic Hook
 import { useHomeLogic } from './hooks/useHomeLogic';
 import { useFolders } from '../../hooks/useFolders'; 
 import { useHomePageState } from './hooks/useHomePageState';
 import { useHomePageHandlers } from './hooks/useHomePageHandlers';
 
-    
 
 // Layout & Global Components
 import Header from '../../components/layout/Header';
@@ -16,7 +17,8 @@ import OnboardingWizard from '../Onboarding/components/OnboardingWizard';
 import BreadcrumbNav from './components/BreadcrumbNav';
 import SharedView from './components/SharedView';
 
-// New Sub-Components
+
+// Sub-Components
 import HomeControls from './components/HomeControls';
 import HomeContent from './components/HomeContent';
 import HomeEmptyState from './components/HomeEmptyState';
@@ -339,6 +341,7 @@ const Home = ({ user }) => {
             </main>
 
             <HomeModals 
+                user={user}
                 subjectModalConfig={logic.subjectModalConfig}
                 setSubjectModalConfig={logic.setSubjectModalConfig}
                 folderModalConfig={logic.folderModalConfig}
@@ -353,6 +356,7 @@ const Home = ({ user }) => {
                 handleDeleteFolderOnly={logic.handleDeleteFolderOnly}
                 onShare={logic.shareFolder}
                 onUnshare={logic.unshareFolder}
+                onDeleteShortcut={logic.deleteShortcut}
                 onShareSubject={logic.shareSubject}
                 onUnshareSubject={logic.unshareSubject}
                 currentFolder={logic.currentFolder}

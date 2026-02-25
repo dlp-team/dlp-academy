@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { ChevronRight, MoreVertical, Edit2, Trash2, Share2 } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon'; // Adjust path if necessary
 import { Users } from 'lucide-react';
-import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem } from '../../../utils/permissionUtils';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel } from '../../../utils/permissionUtils';
 
 const SubjectCardFront = ({
     subject,
@@ -28,6 +28,10 @@ const SubjectCardFront = ({
     const showDeleteUI = user && shouldShowDeleteUI(subject, user.uid);
     const canShare = user && canEditItem(subject, user.uid);
     const isShortcut = subject?.isShortcut === true;
+    const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
+    const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
+    const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
+    const isSourceOwner = user && subject?.ownerId === user.uid;
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
 
@@ -145,7 +149,7 @@ const SubjectCardFront = ({
                                 top: menuPos.top,
                                 left: menuPos.left,
                                 zIndex: 9999,
-                                width: `${128 * menuScale}px`,
+                                width: `${164 * menuScale}px`,
                                 transform: `scale(${menuScale})`,
                                 transformOrigin: 'top left'
                             }}
@@ -153,25 +157,30 @@ const SubjectCardFront = ({
                             {(showEditUI || showDeleteUI || isShortcut) ? (
                                 <>
                                     {showEditUI && (
-                                        <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                        <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                             <Edit2 size={14 * menuScale} /> Editar
                                         </button>
                                     )}
-                                    {canShare && (
-                                        <button onClick={(e) => { e.stopPropagation(); onShare(subject); }} className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                    {canShareFromMenu && (
+                                        <button onClick={(e) => { e.stopPropagation(); onShare(subject); }} className="w-full flex items-center gap-2 p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                             <Share2 size={14 * menuScale} /> Compartir
                                         </button>
                                     )}
-                                    {(showEditUI || canShare) && (showDeleteUI || isShortcut) && (
+                                    {(showEditUI || canShareFromMenu) && (showDeleteUI || isShortcut) && (
                                         <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
                                     )}
                                     {isShortcut && (
-                                        <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
-                                            <Trash2 size={14 * menuScale} /> Quitar de mi vista
+                                        <button onClick={(e) => onDelete(e, subject, 'removeShortcut')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                            <Trash2 size={14 * menuScale} /> <span className="whitespace-nowrap">Quitar de manual</span>
                                         </button>
                                     )}
-                                    {showDeleteUI && (
-                                        <button onClick={(e) => onDelete(e, subject)} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                    {isShortcut && !isSourceOwner && (
+                                        <button onClick={(e) => onDelete(e, subject, 'unshareAndDelete')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                            <Trash2 size={14 * menuScale} /> Eliminar acceso
+                                        </button>
+                                    )}
+                                    {!isShortcut && showDeleteUI && (
+                                        <button onClick={(e) => onDelete(e, subject, 'delete')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                             <Trash2 size={14 * menuScale} /> Eliminar
                                         </button>
                                     )}

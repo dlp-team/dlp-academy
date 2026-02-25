@@ -8,8 +8,9 @@ import BasicInfoFields from './subject-form/BasicInfoFields';
 import TagManager from './subject-form/TagManager';
 import AppearanceSection from './subject-form/AppearanceSection';
 import StyleSelector from './subject-form/StyleSelector';
+import { getPermissionLevel } from '../../../utils/permissionUtils';
 
-const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, initialTab = 'general' }) => {
+const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onDeleteShortcut, user, initialTab = 'general' }) => {
     const [formData, setFormData] = useState({ 
         name: '', level: '', grade: '', course: '', 
         color: 'from-blue-400 to-blue-600', icon: 'book', tags: [],
@@ -22,6 +23,12 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [shareError, setShareError] = useState('');
     const [shareSuccess, setShareSuccess] = useState('');
 
+    const isShortcutEditing = isEditing && formData?.isShortcut === true;
+    const shortcutPermissionLevel = formData?.shortcutPermissionLevel || 'viewer';
+    const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
+    const canManageSharing = !isShortcutEditing || isShortcutEditor;
+    const canEditOriginalFields = !isShortcutEditing || isShortcutEditor;
+
     // 1. Initialize Logic
     useEffect(() => {
         if (isOpen) {
@@ -33,6 +40,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     id: initialData.id,
                     shortcutId: initialData.shortcutId || null,
                     isShortcut: initialData.isShortcut === true,
+                    shortcutPermissionLevel: initialData.isShortcut
+                        ? getPermissionLevel(initialData, user?.uid)
+                        : 'owner',
                     name: initialData.name || '',
                     course: initialData.course || '',
                     level: '', grade: '', 
@@ -55,6 +65,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 setFormData({ 
                     shortcutId: null,
                     isShortcut: false,
+                    shortcutPermissionLevel: 'owner',
                     name: '',
                     level: validLevel,
                     grade: validGrade,
@@ -68,7 +79,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 setSharedList([]);
             }
         }
-    }, [isOpen, isEditing, initialData, initialTab]);
+    }, [isOpen, isEditing, initialData, initialTab, user?.uid]);
 
     // 2. Auto-generate Course Name (only if course is not pre-filled from outside)
     useEffect(() => {
@@ -127,6 +138,21 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         }
     };
 
+    const handleRemoveMyShortcutAccess = async () => {
+        if (!formData?.shortcutId || !user?.email) return;
+        if (!window.confirm('Se eliminará este acceso directo y se revocará el acceso compartido para tu usuario. ¿Continuar?')) {
+            return;
+        }
+
+        try {
+            await onUnshare(formData.id, user.email);
+            await onDeleteShortcut(formData.shortcutId);
+            onClose();
+        } catch (error) {
+            setShareError(error?.message || 'No se pudo eliminar tu acceso.');
+        }
+    };
+
     const handleKeyDown = (e) => {
         if (e.key === 'Enter') {
             handleShareAction();
@@ -178,9 +204,15 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         {/* General Tab */}
                         {activeTab === 'general' && (
                             <>
-                                <BasicInfoFields formData={formData} setFormData={setFormData} />
+                                {canEditOriginalFields && (
+                                    <BasicInfoFields formData={formData} setFormData={setFormData} />
+                                )}
                                 <TagManager formData={formData} setFormData={setFormData} />
-                                <AppearanceSection formData={formData} setFormData={setFormData} />
+                                <AppearanceSection
+                                    formData={formData}
+                                    setFormData={setFormData}
+                                    hideIconSelector={!canEditOriginalFields}
+                                />
                                 <StyleSelector formData={formData} setFormData={setFormData} />
                             </>
                         )}
@@ -188,47 +220,49 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         {/* Sharing Tab */}
                         {activeTab === 'sharing' && (
                             <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        Compartir con
-                                    </label>
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="email"
-                                            value={shareEmail}
-                                            onChange={(e) => { setShareEmail(e.target.value); setShareError(''); }}
-                                            onKeyDown={handleKeyDown}
-                                            placeholder="usuario@ejemplo.com"
-                                            disabled={shareLoading}
-                                            className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors disabled:opacity-60"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={handleShareAction}
-                                            disabled={shareLoading}
-                                            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-                                        >
-                                            {shareLoading ? <Loader2 size={16} className="animate-spin" /> : <Users size={16} />}
-                                            {shareLoading ? 'Compartiendo...' : 'Compartir'}
-                                        </button>
+                                {canManageSharing && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Compartir con
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="email"
+                                                value={shareEmail}
+                                                onChange={(e) => { setShareEmail(e.target.value); setShareError(''); }}
+                                                onKeyDown={handleKeyDown}
+                                                placeholder="usuario@ejemplo.com"
+                                                disabled={shareLoading}
+                                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors disabled:opacity-60"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleShareAction}
+                                                disabled={shareLoading}
+                                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                                            >
+                                                {shareLoading ? <Loader2 size={16} className="animate-spin" /> : <Users size={16} />}
+                                                {shareLoading ? 'Compartiendo...' : 'Compartir'}
+                                            </button>
+                                        </div>
+
+                                        {/* Error message */}
+                                        {shareError && (
+                                            <div className="mt-2 flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+                                                <AlertCircle size={14} className="flex-shrink-0" />
+                                                {shareError}
+                                            </div>
+                                        )}
+
+                                        {/* Success message */}
+                                        {shareSuccess && (
+                                            <div className="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                                                <CheckCircle size={14} className="flex-shrink-0" />
+                                                {shareSuccess}
+                                            </div>
+                                        )}
                                     </div>
-
-                                    {/* Error message */}
-                                    {shareError && (
-                                        <div className="mt-2 flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
-                                            <AlertCircle size={14} className="flex-shrink-0" />
-                                            {shareError}
-                                        </div>
-                                    )}
-
-                                    {/* Success message */}
-                                    {shareSuccess && (
-                                        <div className="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
-                                            <CheckCircle size={14} className="flex-shrink-0" />
-                                            {shareSuccess}
-                                        </div>
-                                    )}
-                                </div>
+                                )}
 
                                 {/* Shared Users List */}
                                 {sharedList.length > 0 && (
@@ -253,8 +287,10 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                     <button
                                                         type="button"
                                                         onClick={() => handleUnshareAction(share.email)}
+                                                        disabled={!canManageSharing}
                                                         className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-colors cursor-pointer"
                                                         title="Dejar de compartir"
+                                                        style={{ display: canManageSharing ? 'inline-flex' : 'none' }}
                                                     >
                                                         <Trash2 size={16} />
                                                     </button>
@@ -271,6 +307,16 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                             Esta asignatura no está compartida con nadie
                                         </p>
                                     </div>
+                                )}
+
+                                {isShortcutEditing && (
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveMyShortcutAccess}
+                                        className="w-full px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 rounded-xl font-medium transition-colors"
+                                    >
+                                        Eliminar acceso para mí
+                                    </button>
                                 )}
                             </div>
                         )}

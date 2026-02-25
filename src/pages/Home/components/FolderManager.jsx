@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Plus, Trash2, Share2, Users } from 'lucide-react';
 import { COLORS, MODERN_FILL_COLORS } from '../../../utils/subjectConstants';
+import { getPermissionLevel } from '../../../utils/permissionUtils';
 
 const FolderManager = ({ 
     isOpen, onClose, onSave, initialData, isEditing, 
-    onShare, onUnshare, initialTab = 'general'
+    onShare, onUnshare, onDeleteShortcut, user, initialTab = 'general'
 }) => {
     const [formData, setFormData] = useState({ 
         name: '', 
@@ -21,6 +22,12 @@ const FolderManager = ({
     const [tagInput, setTagInput] = useState('');
     const [activeTab, setActiveTab] = useState('general');
 
+    const isShortcutEditing = isEditing && formData?.isShortcut === true;
+    const shortcutPermissionLevel = formData?.shortcutPermissionLevel || 'viewer';
+    const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
+    const canManageSharing = !isShortcutEditing || isShortcutEditor;
+    const canEditOriginalFields = !isShortcutEditing || isShortcutEditor;
+
     useEffect(() => {
         if (isOpen) {
             setActiveTab(initialTab);
@@ -29,6 +36,9 @@ const FolderManager = ({
                     id: initialData.id,
                     shortcutId: initialData.shortcutId || null,
                     isShortcut: initialData.isShortcut === true,
+                    shortcutPermissionLevel: initialData.isShortcut
+                        ? getPermissionLevel(initialData, user?.uid)
+                        : 'owner',
                     name: initialData.name || '',
                     description: initialData.description || '',
                     color: initialData.color || 'from-amber-400 to-amber-600',
@@ -41,6 +51,7 @@ const FolderManager = ({
                 setFormData({ 
                     shortcutId: null,
                     isShortcut: false,
+                    shortcutPermissionLevel: 'owner',
                     name: '', 
                     description: '', 
                     color: 'from-amber-400 to-amber-600',
@@ -54,7 +65,7 @@ const FolderManager = ({
             setShareRole('viewer');
             setTagInput('');
         }
-    }, [isOpen, initialData, isEditing, initialTab]);
+    }, [isOpen, initialData, isEditing, initialTab, user?.uid]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -97,6 +108,21 @@ const FolderManager = ({
             setSharedList(prev => prev.filter(user => user.email !== emailToRemove));
         } catch (error) {
             console.error("Failed to unshare", error);
+        }
+    };
+
+    const handleRemoveMyShortcutAccess = async () => {
+        if (!formData?.shortcutId || !user?.email) return;
+        if (!window.confirm('Se eliminará este acceso directo y se revocará el acceso compartido para tu usuario. ¿Continuar?')) {
+            return;
+        }
+
+        try {
+            await onUnshare(formData.id, user.email);
+            await onDeleteShortcut(formData.shortcutId);
+            onClose();
+        } catch (error) {
+            console.error('Failed to remove shortcut access', error);
         }
     };
 
@@ -189,6 +215,7 @@ const FolderManager = ({
                     <div className={activeTab === 'general' ? 'block' : 'hidden'}>
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             {/* Name */}
+                            {canEditOriginalFields && (
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
                                 <input 
@@ -199,8 +226,10 @@ const FolderManager = ({
                                     required 
                                 />
                             </div>
+                            )}
 
                             {/* Description */}
+                            {canEditOriginalFields && (
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
                                 <input 
@@ -210,6 +239,7 @@ const FolderManager = ({
                                     className="w-full px-4 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                                 />
                             </div>
+                            )}
 
                             {/* Colors */}
                             <div>
@@ -327,37 +357,39 @@ const FolderManager = ({
                         <div className="p-6 space-y-6">
                             
                             {/* Add User Input Section */}
-                            <div className="flex gap-2">
-                                <input 
-                                    type="email"
-                                    value={shareEmail} 
-                                    onChange={e => setShareEmail(e.target.value)}
-                                    // --- ENTER KEY HANDLER ---
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') {
-                                            e.preventDefault(); // Stop form submit
-                                            handleShareAction(); // Trigger add
-                                        }
-                                    }}
-                                    placeholder="email@ejemplo.com"
-                                    className="flex-1 px-4 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                                />
-                                <select 
-                                    value={shareRole}
-                                    onChange={(e) => setShareRole(e.target.value)}
-                                    className="px-3 py-2 border rounded-xl bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                                >
-                                    <option value="viewer">Ver</option>
-                                    <option value="editor">Editar</option>
-                                </select>
-                                <button 
-                                    type="button" 
-                                    onClick={handleShareAction} // Call the wrapper
-                                    className="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700"
-                                >
-                                    <Plus size={20}/>
-                                </button>
-                            </div>
+                            {canManageSharing && (
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="email"
+                                        value={shareEmail} 
+                                        onChange={e => setShareEmail(e.target.value)}
+                                        // --- ENTER KEY HANDLER ---
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                                e.preventDefault(); // Stop form submit
+                                                handleShareAction(); // Trigger add
+                                            }
+                                        }}
+                                        placeholder="email@ejemplo.com"
+                                        className="flex-1 px-4 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                                    />
+                                    <select 
+                                        value={shareRole}
+                                        onChange={(e) => setShareRole(e.target.value)}
+                                        className="px-3 py-2 border rounded-xl bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                                    >
+                                        <option value="viewer">Ver</option>
+                                        <option value="editor">Editar</option>
+                                    </select>
+                                    <button 
+                                        type="button" 
+                                        onClick={handleShareAction} // Call the wrapper
+                                        className="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700"
+                                    >
+                                        <Plus size={20}/>
+                                    </button>
+                                </div>
+                            )}
 
                             {/* Shared Users List */}
                             <div className="space-y-3">
@@ -384,7 +416,7 @@ const FolderManager = ({
                                         </div>
 
                                         {/* Owner Controls */}
-                                        {initialData?.isOwner && (
+                                        {canManageSharing && (
                                             <button 
                                                 onClick={() => handleUnshareAction(user.email)} // Call the wrapper
                                                 className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
@@ -396,6 +428,16 @@ const FolderManager = ({
                                     </div>
                                 ))}
                             </div>
+
+                            {isShortcutEditing && (
+                                <button
+                                    type="button"
+                                    onClick={handleRemoveMyShortcutAccess}
+                                    className="w-full px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 rounded-xl font-medium transition-colors"
+                                >
+                                    Eliminar acceso para mí
+                                </button>
+                            )}
                         </div>
                     </div>
 
