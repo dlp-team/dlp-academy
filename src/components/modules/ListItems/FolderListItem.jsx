@@ -41,7 +41,9 @@ const FolderListItem = ({
     const isOrphan = item?.isOrphan === true;
     const orphanMessage = item?._reason === 'access-revoked'
         ? 'Archivo original ya no está compartido'
-        : 'Archivo original eliminado';
+        : item?._reason === 'moved-to-shared-folder'
+            ? `Esta carpeta se ha movido a ${item?._movedToFolderName || 'carpeta compartida'}`
+            : 'Archivo original eliminado';
     const shortcutPermissionLevel = isShortcut && currentUserId ? getPermissionLevel(item, currentUserId) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;

@@ -88,6 +88,10 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         // Get folder shortcuts that match current scope
         const folderShortcuts = resolvedShortcuts.filter(s => {
             if (s.targetType !== 'folder') return false;
+
+            if (viewMode === 'grid' && currentFolder?.isShared === true) {
+                return false;
+            }
             
             // In usage/courses/shared, include all levels; otherwise only current level
             const inScope = isAllLevelsMode
@@ -167,6 +171,10 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         // Get subject shortcuts that match current scope
         const subjectShortcuts = resolvedShortcuts.filter(s => {
             if (s.targetType !== 'subject') return false;
+
+            if (viewMode === 'grid' && currentFolder?.isShared === true) {
+                return false;
+            }
             
             // In usage/courses/shared, include all levels; otherwise only current level
             const inScope = isAllLevelsMode

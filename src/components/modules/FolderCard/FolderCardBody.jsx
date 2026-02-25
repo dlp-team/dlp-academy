@@ -34,7 +34,9 @@ const FolderCardBody = ({
     const isOrphan = folder?.isOrphan === true;
     const orphanMessage = folder?._reason === 'access-revoked'
         ? 'Archivo original ya no está compartido'
-        : 'Archivo original eliminado';
+        : folder?._reason === 'moved-to-shared-folder'
+            ? `Esta carpeta se ha movido a ${folder?._movedToFolderName || 'carpeta compartida'}`
+            : 'Archivo original eliminado';
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(folder, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;

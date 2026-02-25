@@ -33,7 +33,9 @@ const SubjectCardFront = ({
     const isOrphan = subject?.isOrphan === true;
     const orphanMessage = subject?._reason === 'access-revoked'
         ? 'Archivo original ya no está compartido'
-        : 'Archivo original eliminado';
+        : subject?._reason === 'moved-to-shared-folder'
+            ? `Esta asignatura se ha movido a ${subject?._movedToFolderName || 'carpeta compartida'}`
+            : 'Archivo original eliminado';
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;

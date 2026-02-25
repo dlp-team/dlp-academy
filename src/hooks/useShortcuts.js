@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { 
     collection, query, where, addDoc, deleteDoc, doc, 
-    onSnapshot, updateDoc
+    onSnapshot, updateDoc, getDoc
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { canView } from '../utils/permissionUtils';
@@ -173,6 +173,36 @@ export const useShortcuts = (user) => {
                     _originalTargetType: targetType,
                     _reason: 'access-revoked'
                 };
+            }
+
+            const parentFolderId = targetType === 'subject'
+                ? (targetData.folderId || null)
+                : (targetData.parentId || null);
+
+            if (parentFolderId) {
+                try {
+                    const parentFolderSnap = await getDoc(doc(db, 'folders', parentFolderId));
+                    if (parentFolderSnap.exists()) {
+                        const parentFolderData = parentFolderSnap.data() || {};
+                        if (parentFolderData.isShared === true) {
+                            return {
+                                ...shortcut,
+                                ...fallbackAppearance,
+                                isShortcut: true,
+                                isOrphan: true,
+                                hiddenInManual: shortcut.hiddenInManual === true,
+                                shortcutId: shortcut.id,
+                                targetData: null,
+                                _originalTargetId: targetId,
+                                _originalTargetType: targetType,
+                                _reason: 'moved-to-shared-folder',
+                                _movedToFolderName: parentFolderData.name || 'carpeta compartida'
+                            };
+                        }
+                    }
+                } catch (_) {
+                    // Ignore parent folder lookup failures and continue with normal resolved shortcut
+                }
             }
 
             return {

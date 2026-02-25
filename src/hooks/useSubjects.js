@@ -27,9 +27,20 @@ export const useSubjects = (user) => {
         );
 
         let ownedSubjects = [];
+        let sharedSubjects = [];
 
         const updateSubjectsState = async () => {
-            const tempSubjects = ownedSubjects.filter(subject => {
+            const merged = [...ownedSubjects, ...sharedSubjects];
+            const dedupMap = new Map();
+
+            merged.forEach(subject => {
+                const existing = dedupMap.get(subject.id);
+                if (!existing || subject.isOwner === true) {
+                    dedupMap.set(subject.id, subject);
+                }
+            });
+
+            const tempSubjects = Array.from(dedupMap.values()).filter(subject => {
                 // Owner always sees their own subjects
                 if (subject?.ownerId === user?.uid || subject?.uid === user?.uid) return true;
                 // For institutional subjects, check institution match
@@ -60,7 +71,7 @@ export const useSubjects = (user) => {
 
         // Real-time listener for owned subjects
         const unsubscribeOwned = onSnapshot(ownedQuery, (snapshot) => {
-            ownedSubjects = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+            ownedSubjects = snapshot.docs.map(d => ({ id: d.id, ...d.data(), isOwner: true }));
             updateSubjectsState();
         }, (error) => {
             console.error("Error listening to owned subjects:", error);
@@ -68,8 +79,39 @@ export const useSubjects = (user) => {
             updateSubjectsState();
         });
 
+        const sharedQuery = query(
+            collection(db, "subjects"),
+            where("isShared", "==", true)
+        );
+
+        const unsubscribeShared = onSnapshot(sharedQuery, (snapshot) => {
+            const userEmail = user.email?.toLowerCase() || '';
+            sharedSubjects = snapshot.docs
+                .filter(d => {
+                    const data = d.data() || {};
+                    if (data?.ownerId === user?.uid || data?.uid === user?.uid) return false;
+                    if (currentInstitutionId && data?.institutionId && data.institutionId !== currentInstitutionId) {
+                        return false;
+                    }
+
+                    const byUid = Array.isArray(data.sharedWithUids) && data.sharedWithUids.includes(user.uid);
+                    const bySharedWith = Array.isArray(data.sharedWith) && data.sharedWith.some(share =>
+                        share?.uid === user.uid || share?.email?.toLowerCase() === userEmail
+                    );
+
+                    return byUid || bySharedWith;
+                })
+                .map(d => ({ id: d.id, ...d.data(), isOwner: false }));
+            updateSubjectsState();
+        }, (error) => {
+            console.error("Error listening to shared subjects:", error);
+            sharedSubjects = [];
+            updateSubjectsState();
+        });
+
         return () => {
             unsubscribeOwned();
+            unsubscribeShared();
         };
     }, [user, currentInstitutionId]);
 
