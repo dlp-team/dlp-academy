@@ -82,6 +82,7 @@ const FolderCardBody = ({
                 )}
 
                {/* --- ACTION GROUP WRAPPER (Top Right) --- */}
+                {!isOrphan && (
                 <div 
                     className="absolute z-30 flex items-center justify-end" 
                     style={{
@@ -201,7 +202,7 @@ const FolderCardBody = ({
                                             )}
                                             {isShortcut && (isOrphan || !isSourceOwner) && (
                                                 <button onClick={(e) => { e.stopPropagation(); onDelete(folder, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
-                                                    <Trash2 size={14 * menuScale} /> Eliminar acceso
+                                                    <Trash2 size={14 * menuScale} /> Eliminar
                                                 </button>
                                             )}
                                             {!isShortcut && showDeleteUI && (
@@ -219,6 +220,7 @@ const FolderCardBody = ({
                         </div>
                     )}
                 </div>
+                )}
 
                 {/* --- CONTENT AREA --- */}
                 <div className={`relative h-full flex flex-col justify-between pointer-events-none ${
@@ -384,13 +386,25 @@ const FolderCardBody = ({
             </div>
 
             {isOrphan && (
-                <div className="absolute bottom-3 left-3 right-3 z-40 pointer-events-none">
-                    <div className="rounded-lg bg-black/60 text-white text-center font-semibold py-1.5 px-2"
-                        style={{ fontSize: `${12 * scaleMultiplier}px` }}
-                    >
-                        {orphanMessage}
+                <>
+                    <div className="absolute bottom-4 left-4 right-4 z-20 pointer-events-none text-center">
+                        <span
+                            className={`font-semibold ${isModern ? 'text-slate-700 dark:text-slate-200' : 'text-white/95'}`}
+                            style={{ fontSize: `${12 * scaleMultiplier}px` }}
+                        >
+                            {orphanMessage}
+                        </span>
                     </div>
-                </div>
+                    <div className="absolute inset-0 z-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onDelete(folder, 'deleteShortcut'); }}
+                            className="pointer-events-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
+                            style={{ fontSize: `${13 * scaleMultiplier}px` }}
+                        >
+                            Eliminar
+                        </button>
+                    </div>
+                </>
             )}
         </div>
     );

@@ -14,7 +14,7 @@ const HomeDeleteConfirmModal = ({ deleteConfig, setDeleteConfig, handleDelete })
 
     const title = isShortcut
         ? isUnshareShortcut
-            ? `¿Eliminar acceso a ${isShortcutFolder ? 'la carpeta' : 'la asignatura'}?`
+            ? `¿Eliminar ${isShortcutFolder ? 'carpeta' : 'asignatura'}?`
             : isDeleteShortcut
                 ? `¿Eliminar este acceso directo?`
             : isUnhideShortcut
@@ -24,7 +24,7 @@ const HomeDeleteConfirmModal = ({ deleteConfig, setDeleteConfig, handleDelete })
 
     const description = isShortcut
         ? isUnshareShortcut
-            ? `Se eliminará tu acceso a "${deleteConfig.item?.name}". El acceso directo quedará como no disponible.`
+            ? `No se eliminará el contenido original. Se quitará tu acceso a "${deleteConfig.item?.name}" y ya no podrás acceder a sus archivos.`
             : isDeleteShortcut
                 ? `Se eliminará este acceso directo de tu cuenta.`
             : isUnhideShortcut
@@ -36,7 +36,7 @@ const HomeDeleteConfirmModal = ({ deleteConfig, setDeleteConfig, handleDelete })
 
     const confirmLabel = isShortcut
         ? isUnshareShortcut
-            ? 'Sí, eliminar acceso'
+            ? 'Sí, eliminar'
             : isDeleteShortcut
                 ? 'Sí, eliminar acceso directo'
             : isUnhideShortcut

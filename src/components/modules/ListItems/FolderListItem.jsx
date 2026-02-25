@@ -277,16 +277,18 @@ const FolderListItem = ({
                     </button>
                     {/* Three Dots Menu Button */}
                     <div className="relative ml-2 flex items-center">
-                        <button
-                            ref={menuBtnRef}
-                            onClick={e => {
-                                e.stopPropagation();
-                                setShowMenu(!showMenu);
-                            }}
-                            className={`p-2 rounded-full transition-colors opacity-100 hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400`}
-                        >
-                            <MoreVertical size={20 * scale} />
-                        </button>
+                        {!isOrphan && (
+                            <button
+                                ref={menuBtnRef}
+                                onClick={e => {
+                                    e.stopPropagation();
+                                    setShowMenu(!showMenu);
+                                }}
+                                className={`p-2 rounded-full transition-colors opacity-100 hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400`}
+                            >
+                                <MoreVertical size={20 * scale} />
+                            </button>
+                        )}
                         {showMenu && (
                             <>
                                 {typeof window !== 'undefined' && window.document && createPortal(
@@ -344,7 +346,7 @@ const FolderListItem = ({
                                                             className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
                                                             style={{ fontSize: `${14 * menuScale}px` }}
                                                         >
-                                                            <Trash2 size={14 * menuScale} /> Eliminar acceso
+                                                            <Trash2 size={14 * menuScale} /> Eliminar
                                                         </button>
                                                     )}
                                                     {!isShortcut && showDeleteUI && (
@@ -371,12 +373,25 @@ const FolderListItem = ({
                 </div>
 
                 {isOrphan && (
-                    <div className="mt-2 ml-10 mr-2">
-                        <div className="rounded-lg bg-black/60 text-white text-center font-semibold py-1.5 px-2"
+                    <div className="mt-2 ml-10 mr-2 text-center pointer-events-none">
+                        <span
+                            className="font-semibold text-slate-700 dark:text-slate-200"
                             style={{ fontSize: `${12 * scale}px` }}
                         >
                             {orphanMessage}
-                        </div>
+                        </span>
+                    </div>
+                )}
+
+                {isOrphan && (
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onDelete(item, 'deleteShortcut'); }}
+                            className="pointer-events-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
+                            style={{ fontSize: `${13 * scale}px` }}
+                        >
+                            Eliminar
+                        </button>
                     </div>
                 )}
             </div>

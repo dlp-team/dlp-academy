@@ -104,16 +104,25 @@ export const useShortcuts = (user) => {
 
         const buildResolvedFromSnapshot = async (shortcut, targetSnap) => {
             const { targetId, targetType } = shortcut;
+            const fallbackAppearance = {
+                name: shortcut.shortcutName || shortcut.name || (targetType === 'folder' ? 'Carpeta' : 'Asignatura'),
+                course: shortcut.shortcutCourse || null,
+                tags: Array.isArray(shortcut.shortcutTags) ? shortcut.shortcutTags : [],
+                color: shortcut.shortcutColor || 'from-slate-500 to-slate-700',
+                icon: shortcut.shortcutIcon || (targetType === 'folder' ? 'folder' : 'book'),
+                cardStyle: shortcut.shortcutCardStyle || 'default',
+                modernFillColor: shortcut.shortcutModernFillColor || null
+            };
 
             if (shortcut?.institutionId && shortcut.institutionId !== currentInstitutionId) {
                 return {
                     ...shortcut,
+                    ...fallbackAppearance,
                     isShortcut: true,
                     isOrphan: true,
                     hiddenInManual: shortcut.hiddenInManual === true,
                     shortcutId: shortcut.id,
                     targetData: null,
-                    name: '(No access)',
                     _originalTargetId: targetId,
                     _originalTargetType: targetType,
                     _reason: 'tenant-mismatch'
@@ -123,12 +132,12 @@ export const useShortcuts = (user) => {
             if (!targetSnap.exists()) {
                 return {
                     ...shortcut,
+                    ...fallbackAppearance,
                     isShortcut: true,
                     isOrphan: true,
                     hiddenInManual: shortcut.hiddenInManual === true,
                     shortcutId: shortcut.id,
                     targetData: null,
-                    name: '(Deleted)',
                     _originalTargetId: targetId,
                     _originalTargetType: targetType
                 };
@@ -139,12 +148,12 @@ export const useShortcuts = (user) => {
             if (targetData?.institutionId && targetData.institutionId !== currentInstitutionId) {
                 return {
                     ...shortcut,
+                    ...fallbackAppearance,
                     isShortcut: true,
                     isOrphan: true,
                     hiddenInManual: shortcut.hiddenInManual === true,
                     shortcutId: shortcut.id,
                     targetData: null,
-                    name: '(No access)',
                     _originalTargetId: targetId,
                     _originalTargetType: targetType,
                     _reason: 'tenant-mismatch'
@@ -154,12 +163,12 @@ export const useShortcuts = (user) => {
             if (!canView(targetData, user.uid)) {
                 return {
                     ...shortcut,
+                    ...fallbackAppearance,
                     isShortcut: true,
                     isOrphan: true,
                     hiddenInManual: shortcut.hiddenInManual === true,
                     shortcutId: shortcut.id,
                     targetData: null,
-                    name: '(No access)',
                     _originalTargetId: targetId,
                     _originalTargetType: targetType,
                     _reason: 'access-revoked'
@@ -204,12 +213,18 @@ export const useShortcuts = (user) => {
                 } catch (error) {
                     resolvedMap.set(shortcut.id, {
                         ...shortcut,
+                        name: shortcut.shortcutName || shortcut.name || (shortcut.targetType === 'folder' ? 'Carpeta' : 'Asignatura'),
+                        course: shortcut.shortcutCourse || null,
+                        tags: Array.isArray(shortcut.shortcutTags) ? shortcut.shortcutTags : [],
+                        color: shortcut.shortcutColor || 'from-slate-500 to-slate-700',
+                        icon: shortcut.shortcutIcon || (shortcut.targetType === 'folder' ? 'folder' : 'book'),
+                        cardStyle: shortcut.shortcutCardStyle || 'default',
+                        modernFillColor: shortcut.shortcutModernFillColor || null,
                         isShortcut: true,
                         isOrphan: true,
                         hiddenInManual: shortcut.hiddenInManual === true,
                         shortcutId: shortcut.id,
                         targetData: null,
-                        name: '(Error loading)',
                         _error: error.message
                     });
                     loadedCount += 1;
@@ -221,12 +236,18 @@ export const useShortcuts = (user) => {
             }, () => {
                 resolvedMap.set(shortcut.id, {
                     ...shortcut,
+                    name: shortcut.shortcutName || shortcut.name || (shortcut.targetType === 'folder' ? 'Carpeta' : 'Asignatura'),
+                    course: shortcut.shortcutCourse || null,
+                    tags: Array.isArray(shortcut.shortcutTags) ? shortcut.shortcutTags : [],
+                    color: shortcut.shortcutColor || 'from-slate-500 to-slate-700',
+                    icon: shortcut.shortcutIcon || (shortcut.targetType === 'folder' ? 'folder' : 'book'),
+                    cardStyle: shortcut.shortcutCardStyle || 'default',
+                    modernFillColor: shortcut.shortcutModernFillColor || null,
                     isShortcut: true,
                     isOrphan: true,
                     hiddenInManual: shortcut.hiddenInManual === true,
                     shortcutId: shortcut.id,
                     targetData: null,
-                    name: '(Error loading)',
                     _reason: 'snapshot-error'
                 });
                 loadedCount += 1;

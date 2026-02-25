@@ -114,33 +114,37 @@ const SubjectListItem = ({
                             </div>
                         )}
                     </div>
-                    <div className="flex items-center gap-2 mt-1">
-                        <span 
-                            className={`text-xs px-2 py-0.5 rounded-full ${
-                                isModern 
-                                    ? 'bg-white/50 dark:bg-slate-800/50 text-gray-600 dark:text-gray-400' 
-                                    : 'bg-white/20 text-white/90'
-                            }`}
-                            style={{ fontSize: `${16 * scale}px` }}
-                        >
-                            {topicCount} temas
-                        </span>
-                    </div>
+                    {!isOrphan && (
+                        <div className="flex items-center gap-2 mt-1">
+                            <span 
+                                className={`text-xs px-2 py-0.5 rounded-full ${
+                                    isModern 
+                                        ? 'bg-white/50 dark:bg-slate-800/50 text-gray-600 dark:text-gray-400' 
+                                        : 'bg-white/20 text-white/90'
+                                }`}
+                                style={{ fontSize: `${16 * scale}px` }}
+                            >
+                                {topicCount} temas
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* ACTIONS */}
                 <div className="flex items-center gap-2 relative">
-                    <button 
-                        ref={menuBtnRef}
-                        onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                        className={`p-2 rounded-full transition-colors opacity-100 ${
-                            isModern 
-                                ? 'hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400' 
-                                : 'hover:bg-white/20 text-white'
-                        }`}
-                    >
-                        <MoreVertical size={20 * scale} />
-                    </button>
+                    {!isOrphan && (
+                        <button 
+                            ref={menuBtnRef}
+                            onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
+                            className={`p-2 rounded-full transition-colors opacity-100 ${
+                                isModern 
+                                    ? 'hover:bg-black/5 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400' 
+                                    : 'hover:bg-white/20 text-white'
+                            }`}
+                        >
+                            <MoreVertical size={20 * scale} />
+                        </button>
+                    )}
 
                     {showMenu && (
                         <>
@@ -192,7 +196,7 @@ const SubjectListItem = ({
                                             className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
                                             style={{ fontSize: `${14 * menuScale}px` }}
                                         >
-                                            <Trash2 size={14 * menuScale} /> Eliminar acceso
+                                            <Trash2 size={14 * menuScale} /> Eliminar
                                         </button>
                                     )}
                                     <button 
@@ -216,13 +220,25 @@ const SubjectListItem = ({
             </div>
 
             {isOrphan && (
-                <div className="mt-2 ml-2 mr-2">
-                    <div className="rounded-lg bg-black/60 text-white text-center font-semibold py-1.5 px-2"
-                        style={{ fontSize: `${12 * scale}px` }}
-                    >
-                        {orphanMessage}
+                <>
+                    <div className="mt-2 ml-2 mr-2 text-center pointer-events-none">
+                        <span
+                            className={`font-semibold ${isModern ? 'text-slate-700 dark:text-slate-200' : 'text-white/95'}`}
+                            style={{ fontSize: `${12 * scale}px` }}
+                        >
+                            {orphanMessage}
+                        </span>
                     </div>
-                </div>
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onDelete(subject, 'deleteShortcut'); }}
+                            className="pointer-events-auto px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
+                            style={{ fontSize: `${13 * scale}px` }}
+                        >
+                            Eliminar
+                        </button>
+                    </div>
+                </>
             )}
         </div>
     );
