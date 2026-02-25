@@ -10,7 +10,7 @@ import SubjectListItem from '../../../components/modules/ListItems/SubjectListIt
 import ListViewItem from '../../../components/modules/ListViewItem';
 import useHomeContentDnd from '../hooks/useHomeContentDnd';
 import useAutoScrollOnDrag from '../../../hooks/useAutoScrollOnDrag';
-import { isShortcutItem, getPermissionLevel } from '../../../utils/permissionUtils';
+import { isShortcutItem } from '../../../utils/permissionUtils';
 
 const HomeContent = ({
     user,
@@ -64,17 +64,11 @@ const HomeContent = ({
     onCloseFilterOverlay = () => {},
 }) => {
     const contentRef = useRef(null);
-    const currentFolderPermission = currentFolder && user?.uid ? getPermissionLevel(currentFolder, user.uid) : 'none';
-    const isViewerInSharedFolder = Boolean(currentFolder?.isShared && currentFolderPermission === 'viewer');
-    const isEditorInSharedFolder = Boolean(currentFolder?.isShared && currentFolderPermission === 'editor');
-    const disableAllActions = isViewerInSharedFolder;
-    const disableDeleteActions = isViewerInSharedFolder || isEditorInSharedFolder;
-    const effectiveDragAndDropEnabled = Boolean(isDragAndDropEnabled && !isViewerInSharedFolder);
 
     // Auto-scroll is always enabled for both grid and list modes
     useAutoScrollOnDrag({
         containerRef: contentRef,
-        enabled: effectiveDragAndDropEnabled,
+        enabled: isDragAndDropEnabled,
         scrollContainer: 'window',
         edgeThreshold: 160
     });
@@ -318,12 +312,8 @@ const HomeContent = ({
                                                         onOpen={handleOpenFolder}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
-                                                        onEdit={(f) => {
-                                                            if (disableAllActions) return;
-                                                            setFolderModalConfig({ isOpen: true, isEditing: true, data: f });
-                                                        }}
+                                                        onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                         onDelete={(f, action = 'delete') => {
-                                                            if (disableDeleteActions) return;
                                                             if (isShortcutItem(f) && f?.shortcutId) {
                                                                 setDeleteConfig({
                                                                     isOpen: true,
@@ -341,19 +331,14 @@ const HomeContent = ({
                                                             }
                                                             setDeleteConfig({ isOpen: true, type: 'folder', item: f });
                                                         }}
-                                                        onShare={(f) => {
-                                                            if (disableAllActions) return;
-                                                            setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' });
-                                                        }}
+                                                        onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
                                                         onShowContents={handleShowFolderContents}
                                                         onGoToFolder={handleGoToFolderFromGhost}
-                                                        disableAllActions={disableAllActions}
-                                                        disableDeleteActions={disableDeleteActions}
                                                         cardScale={cardScale}
                                                         onDrop={handleDropOnFolder}
                                                         onDropFolder={handleNestFolder}
-                                                        canDrop={effectiveDragAndDropEnabled}
-                                                        draggable={effectiveDragAndDropEnabled}
+                                                        canDrop={isDragAndDropEnabled}
+                                                        draggable={isDragAndDropEnabled}
                                                         onDragStart={handleDragStartFolder}
                                                         onDragEnd={handleDragEnd}
                                                         onDragOver={handleDragOverFolder}
@@ -378,15 +363,9 @@ const HomeContent = ({
                                                         onToggleMenu={setActiveMenu}
                                                         onSelect={handleSelectSubject}
                                                         onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
-                                                        onEdit={(e, s) => {
-                                                            e.stopPropagation();
-                                                            if (disableAllActions) return;
-                                                            setSubjectModalConfig({ isOpen: true, isEditing: true, data: s });
-                                                            setActiveMenu(null);
-                                                        }}
+                                                        onEdit={(e, s) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
                                                         onDelete={(e, s, action = 'delete') => {
                                                             e.stopPropagation();
-                                                            if (disableDeleteActions) return;
                                                             if (isShortcutItem(s) && s?.shortcutId) {
                                                                 setDeleteConfig({
                                                                     isOpen: true,
@@ -405,20 +384,14 @@ const HomeContent = ({
                                                             }
                                                             setActiveMenu(null);
                                                         }}
-                                                        onShare={(s) => {
-                                                            if (disableAllActions) return;
-                                                            setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
-                                                            setActiveMenu(null);
-                                                        }}
-                                                        disableAllActions={disableAllActions}
-                                                        disableDeleteActions={disableDeleteActions}
+                                                        onShare={(s) => { setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' }); setActiveMenu(null); }}
                                                         cardScale={cardScale}
                                                         isDragging={draggedItem?.id === subject.id}
                                                         onDragStart={handleDragStartSubject}
                                                         onDragEnd={handleDragEnd}
                                                         onDragOver={handleDragOverSubject}
                                                         onDrop={handleDropReorderSubject}
-                                                        draggable={effectiveDragAndDropEnabled}
+                                                        draggable={isDragAndDropEnabled}
                                                         position={index}
                                                         onOpenTopics={onOpenTopics}
                                                         onGoToFolder={handleGoToFolderFromGhost}
@@ -510,12 +483,8 @@ const HomeContent = ({
                                                 allSubjects={allSubjectsForTree}
                                                 onNavigate={handleOpenFolder}
                                                 onNavigateSubject={handleSelectSubject}
-                                                onEdit={(f) => {
-                                                    if (disableAllActions) return;
-                                                    setFolderModalConfig({ isOpen: true, isEditing: true, data: f });
-                                                }}
+                                                onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                 onDelete={(f, action = 'delete') => {
-                                                    if (disableDeleteActions) return;
                                                     if (isShortcutItem(f) && f?.shortcutId) {
                                                         setDeleteConfig({
                                                             isOpen: true,
@@ -533,18 +502,12 @@ const HomeContent = ({
                                                     }
                                                     setDeleteConfig({ isOpen: true, type: 'folder', item: f });
                                                 }}
-                                                onShare={(f) => {
-                                                    if (disableAllActions) return;
-                                                    setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' });
-                                                }}
+                                                onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
                                                 onGoToFolder={handleGoToFolderFromGhost}
-                                                disableAllActions={disableAllActions}
-                                                disableDeleteActions={disableDeleteActions}
                                                 cardScale={cardScale}
                                                 onDragStart={handleDragStartFolder} 
                                                 onDragEnd={handleDragEnd}
                                                 onDropAction={handleListDrop}
-                                                draggable={effectiveDragAndDropEnabled}
                                             />
                                         ))}
 
@@ -560,12 +523,8 @@ const HomeContent = ({
                                                     allFolders={allFoldersForTree}
                                                     allSubjects={allSubjectsForTree}
                                                     onNavigateSubject={handleSelectSubject}
-                                                    onEdit={(s) => {
-                                                        if (disableAllActions) return;
-                                                        setSubjectModalConfig({ isOpen: true, isEditing: true, data: s });
-                                                    }}
+                                                    onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                     onDelete={(s, action = 'delete') => {
-                                                        if (disableDeleteActions) return;
                                                         if (isShortcutItem(s) && s?.shortcutId) {
                                                             setDeleteConfig({
                                                                 isOpen: true,
@@ -583,19 +542,12 @@ const HomeContent = ({
                                                         }
                                                         setDeleteConfig({ isOpen: true, type: 'subject', item: s });
                                                     }}
-                                                    onShare={(s) => {
-                                                        if (disableAllActions) return;
-                                                        setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
-                                                        setActiveMenu(null);
-                                                    }}
+                                                    onShare={(s) => { setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' }); setActiveMenu(null); }}
                                                     onGoToFolder={handleGoToFolderFromGhost}
-                                                    disableAllActions={disableAllActions}
-                                                    disableDeleteActions={disableDeleteActions}
                                                     cardScale={cardScale}
                                                     onDragStart={handleDragStartSubject}
                                                     onDragEnd={handleDragEnd}
                                                     onDropAction={handleListDrop}
-                                                    draggable={effectiveDragAndDropEnabled}
                                                 />
                                             );
                                         })}

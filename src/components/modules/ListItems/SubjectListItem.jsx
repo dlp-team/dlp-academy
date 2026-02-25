@@ -14,8 +14,6 @@ const SubjectListItem = ({
     onDelete, 
     onShare, 
     onGoToFolder,
-    disableAllActions = false,
-    disableDeleteActions = false,
     compact = false, 
     cardScale = 100,
     className = ""
@@ -43,12 +41,6 @@ const SubjectListItem = ({
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
     const isSourceOwner = user && subject?.ownerId === user.uid;
-    const effectiveShowEditUI = !disableAllActions && showEditUI;
-    const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
-    const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
-    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || !isSourceOwner);
-    const canShowShortcutVisibility = !disableAllActions && isShortcut;
-    const hasMenuActions = effectiveShowEditUI || effectiveCanShareFromMenu || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete;
 
     // Minimum scale for the menu is 1 (100%)
     const menuScale = Math.max(scale, 1);
@@ -145,7 +137,7 @@ const SubjectListItem = ({
 
                 {/* ACTIONS */}
                 <div className="flex items-center gap-2 relative">
-                    {!isOrphan && hasMenuActions && (
+                    {!isOrphan && (
                         <button 
                             ref={menuBtnRef}
                             onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
@@ -180,21 +172,21 @@ const SubjectListItem = ({
                                 >
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onEdit(subject); setShowMenu(false); }}
-                                        disabled={!effectiveShowEditUI}
-                                        style={{ fontSize: `${14 * menuScale}px`, display: effectiveShowEditUI ? 'flex' : 'none' }}
+                                        disabled={!showEditUI}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: showEditUI ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
                                     >
                                         <Edit2 size={14 * menuScale} /> Editar
                                     </button>
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onShare && onShare(subject); setShowMenu(false); }}
-                                        disabled={!effectiveCanShareFromMenu}
-                                        style={{ fontSize: `${14 * menuScale}px`, display: effectiveCanShareFromMenu ? 'flex' : 'none' }}
+                                        disabled={!canShareFromMenu}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: canShareFromMenu ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
                                     >
                                         <Share2 size={14 * menuScale} /> Compartir
                                     </button>
-                                    {canShowShortcutVisibility && (
+                                    {isShortcut && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onDelete(subject, isHiddenFromManual ? 'showInManual' : 'removeShortcut'); setShowMenu(false); }}
                                             className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors cursor-pointer"
@@ -203,7 +195,7 @@ const SubjectListItem = ({
                                             <Trash2 size={14 * menuScale} /> <span className="whitespace-nowrap">{isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}</span>
                                         </button>
                                     )}
-                                    {canShowShortcutDelete && (
+                                    {isShortcut && (isOrphan || !isSourceOwner) && (
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); onDelete(subject, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); setShowMenu(false); }}
                                             className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
@@ -214,13 +206,13 @@ const SubjectListItem = ({
                                     )}
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onDelete(subject, 'delete'); setShowMenu(false); }}
-                                        disabled={!effectiveShowDeleteUI || isShortcut}
-                                        style={{ fontSize: `${14 * menuScale}px`, display: !isShortcut && effectiveShowDeleteUI ? 'flex' : 'none' }}
+                                        disabled={!showDeleteUI || isShortcut}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: !isShortcut && showDeleteUI ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
                                     >
                                         <Trash2 size={14 * menuScale} /> Eliminar
                                     </button>
-                                    {!effectiveShowEditUI && !effectiveCanShareFromMenu && !effectiveShowDeleteUI && !canShowShortcutVisibility && !canShowShortcutDelete && (
+                                    {!showEditUI && !canShareFromMenu && !showDeleteUI && !isShortcut && (
                                         <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
                                     )}
                                 </div>

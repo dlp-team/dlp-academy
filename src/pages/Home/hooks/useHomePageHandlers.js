@@ -132,10 +132,6 @@ export const useHomePageHandlers = ({
                 onConfirm: async () => {
                     await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
                     setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
-                },
-                onPreserveConfirm: async () => {
-                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, { preserveSharing: true });
-                    setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
                 }
             });
             return true;
