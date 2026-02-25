@@ -306,6 +306,7 @@ const Home = ({ user }) => {
                                         user={user}
                                         subjects={logic.subjects || []}
                                         folders={logic.folders || []}
+                                        resolvedShortcuts={logic.resolvedShortcuts || []}
                                         groupedContent={logic.groupedContent || {}} 
                                         collapsedGroups={logic.collapsedGroups || {}}
                                         orderedFolders={displayedFolders}

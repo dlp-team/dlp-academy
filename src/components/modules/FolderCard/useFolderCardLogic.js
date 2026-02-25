@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 export const useFolderCardLogic = ({
     folder,
     allFolders, // <--- NEW PROP: We need the list of ALL folders to look up children
+    allSubjects,
     cardScale,
     canDrop,
     draggable,
@@ -28,20 +29,34 @@ export const useFolderCardLogic = ({
         }
 
         const visited = new Set();
+        const getFolderParentId = (entry) => {
+            if (!entry) return null;
+            if (entry.isShortcut === true) return entry.shortcutParentId ?? entry.parentId ?? null;
+            return entry.parentId ?? null;
+        };
+
+        const getSubjectParentId = (entry) => {
+            if (!entry) return null;
+            if (entry.isShortcut === true) return entry.shortcutParentId ?? entry.folderId ?? entry.parentId ?? null;
+            return entry.folderId ?? null;
+        };
 
         const traverse = (folderId) => {
             if (visited.has(folderId)) return { s: 0, f: 0 };
             visited.add(folderId);
 
             // Find this folder
-            const currentFolder = allFolders.find(f => f.id === folderId);
+            const currentFolder = allFolders.find(f => (f.shortcutId || f.id) === folderId || f.id === folderId);
             if (!currentFolder) return { s: 0, f: 0 };
 
             // Count direct children by querying parentId/folderId
-            // Get child folders where parentId === folderId
-            const childFolders = allFolders.filter(f => f.parentId === folderId);
+            // Get child folders where parentId/shortcutParentId === folderId
+            const childFolders = allFolders.filter(f => getFolderParentId(f) === folderId);
+            const childSubjects = Array.isArray(allSubjects)
+                ? allSubjects.filter(s => getSubjectParentId(s) === folderId)
+                : [];
             
-            let s = 0;
+            let s = childSubjects.length;
             let f = childFolders.length;
 
             // Recursively count descendants
@@ -63,7 +78,7 @@ export const useFolderCardLogic = ({
             totalCount: stats.s + stats.f
         };
 
-    }, [folder, allFolders]);
+    }, [folder, allFolders, allSubjects]);
 
     // --- VISUAL & STYLE ---
     const isModern = folder.cardStyle === 'modern';

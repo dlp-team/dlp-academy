@@ -326,9 +326,15 @@ export const useHomePageHandlers = ({
         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId, { preserveSharing: true });
     };
 
-    const handlePromoteSubjectWrapper = async subjectId => {
+    const handlePromoteSubjectWrapper = async (subjectId, subjectShortcutId = null) => {
         const currentFolder = logic.currentFolder;
         const parentId = currentFolder ? currentFolder.parentId : null;
+
+        if (subjectShortcutId && logic?.moveShortcut) {
+            await logic.moveShortcut(subjectShortcutId, parentId || null);
+            return;
+        }
+
         const sourceFolder = currentFolder;
         let targetFolder = null;
         if (parentId) {

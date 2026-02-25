@@ -1,5 +1,5 @@
 // src/pages/Home/components/HomeContent.jsx
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp, ArrowUpCircle
 } from 'lucide-react';
@@ -54,6 +54,7 @@ const HomeContent = ({
     
     subjects = [], 
     folders = [],  
+    resolvedShortcuts = [],
     
     navigate,
     activeFilter,
@@ -106,6 +107,62 @@ const HomeContent = ({
 
     // --- FILTERING LOGIC ---
     // No folder filter logic anymore
+
+    const allShortcutFolders = useMemo(
+        () => (Array.isArray(resolvedShortcuts) ? resolvedShortcuts.filter(s => s?.targetType === 'folder') : []),
+        [resolvedShortcuts]
+    );
+
+    const allShortcutSubjects = useMemo(
+        () => (Array.isArray(resolvedShortcuts) ? resolvedShortcuts.filter(s => s?.targetType === 'subject') : []),
+        [resolvedShortcuts]
+    );
+
+    const allFoldersForTree = useMemo(() => {
+        const merged = [];
+        const seen = new Set();
+
+        (folders || []).forEach(folder => {
+            const key = `source:${folder.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(folder);
+            }
+        });
+
+        allShortcutFolders.forEach(folder => {
+            const key = `shortcut:${folder.shortcutId || folder.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(folder);
+            }
+        });
+
+        return merged;
+    }, [folders, allShortcutFolders]);
+
+    const allSubjectsForTree = useMemo(() => {
+        const merged = [];
+        const seen = new Set();
+
+        (subjects || []).forEach(subject => {
+            const key = `source:${subject.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(subject);
+            }
+        });
+
+        allShortcutSubjects.forEach(subject => {
+            const key = `shortcut:${subject.shortcutId || subject.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(subject);
+            }
+        });
+
+        return merged;
+    }, [subjects, allShortcutSubjects]);
 
     
     return (
@@ -238,7 +295,8 @@ const HomeContent = ({
                                                     <FolderCard
                                                         folder={folder}
                                                         user={user}
-                                                        allFolders={folders}
+                                                        allFolders={allFoldersForTree}
+                                                        allSubjects={allSubjectsForTree}
                                                         onOpen={handleOpenFolder}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
@@ -407,8 +465,8 @@ const HomeContent = ({
                                                 item={folder}
                                                 type="folder"
                                                 parentId={currentFolder ? currentFolder.id : null}
-                                                allFolders={folders}
-                                                allSubjects={subjects}
+                                                allFolders={allFoldersForTree}
+                                                allSubjects={allSubjectsForTree}
                                                 onNavigate={handleOpenFolder}
                                                 onNavigateSubject={handleSelectSubject}
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
@@ -447,8 +505,8 @@ const HomeContent = ({
                                                     item={subject}
                                                     type="subject"
                                                     parentId={currentFolder ? currentFolder.id : null}
-                                                    allFolders={folders}
-                                                    allSubjects={subjects}
+                                                    allFolders={allFoldersForTree}
+                                                    allSubjects={allSubjectsForTree}
                                                     onNavigateSubject={handleSelectSubject}
                                                     onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                     onDelete={(s, action = 'delete') => {

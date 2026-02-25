@@ -63,6 +63,18 @@ const FolderListItem = ({
         }
     }, [showMenu, menuScale]);
 
+    const getFolderParentId = (folderEntry) => {
+        if (!folderEntry) return null;
+        if (folderEntry.isShortcut === true) return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+        return folderEntry.parentId ?? null;
+    };
+
+    const getSubjectParentId = (subjectEntry) => {
+        if (!subjectEntry) return null;
+        if (subjectEntry.isShortcut === true) return subjectEntry.shortcutParentId ?? subjectEntry.folderId ?? subjectEntry.parentId ?? null;
+        return subjectEntry.folderId ?? null;
+    };
+
 
     // --- CHILDREN CALCULATION ---
     // Count direct children only (not recursive)
@@ -72,8 +84,8 @@ const FolderListItem = ({
         }
 
         // Direct children only
-        const directFolders = allFolders.filter(f => f.parentId === item.id).length;
-        const directSubjects = allSubjects.filter(s => s.folderId === item.id).length;
+        const directFolders = allFolders.filter(f => getFolderParentId(f) === item.id).length;
+        const directSubjects = allSubjects.filter(s => getSubjectParentId(s) === item.id).length;
         
         return {
             subjectCount: directSubjects,
@@ -87,8 +99,8 @@ const FolderListItem = ({
     let childSubjects = [];
 
     // Query direct children by parentId and folderId (not from arrays)
-    childFolders = Array.isArray(allFolders) ? allFolders.filter(f => f.parentId === item.id) : [];
-    childSubjects = Array.isArray(allSubjects) ? allSubjects.filter(s => s.folderId === item.id) : [];
+    childFolders = Array.isArray(allFolders) ? allFolders.filter(f => getFolderParentId(f) === item.id) : [];
+    childSubjects = Array.isArray(allSubjects) ? allSubjects.filter(s => getSubjectParentId(s) === item.id) : [];
     
     const hasChildren = childFolders.length > 0 || childSubjects.length > 0;
 

@@ -36,7 +36,7 @@ const useHomeContentDnd = ({
 
         if (!currentFolder || !draggedItem) return;
         if (draggedItemType === 'subject') {
-            handlePromoteSubject(draggedItem.id);
+            handlePromoteSubject(draggedItem.id, draggedItem.shortcutId || null);
         } else if (draggedItemType === 'folder') {
             handlePromoteFolder(draggedItem.id, draggedItem.shortcutId || null);
         }

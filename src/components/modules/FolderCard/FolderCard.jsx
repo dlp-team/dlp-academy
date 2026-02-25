@@ -10,7 +10,8 @@ const FolderCard = (props) => {
     // 1. Initialize Logic
     const { state, data, handlers } = useFolderCardLogic({
         ...props,
-        allFolders: props.allFolders
+        allFolders: props.allFolders,
+        allSubjects: props.allSubjects
     });
     
     // 2. Destructure Props for direct usage
