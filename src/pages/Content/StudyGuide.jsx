@@ -92,7 +92,7 @@ const SmartTextRenderer = ({ text }) => {
                 // 2. Manejo de Etiquetas `TEXTO`: (Esto arregla lo rojo en "Operaciones con Infinito")
                 if (part.startsWith('`') && part.endsWith('`')) {
                     return (
-                        <span key={index} className="inline-block mx-1 px-2 py-0.5 rounded-md bg-slate-100 border border-slate-200 text-xs font-bold text-slate-600 tracking-wider font-mono align-middle shadow-sm">
+                        <span key={index} className="inline-block mx-1 px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-300 tracking-wider font-mono align-middle shadow-sm">
                             {part.slice(1, -1)}
                         </span>
                     );
@@ -100,7 +100,7 @@ const SmartTextRenderer = ({ text }) => {
 
                 // 3. Negritas
                 if (part.startsWith('**') && part.endsWith('**')) {
-                    return <strong key={index} className="text-slate-900 font-extrabold">{part.slice(2, -2)}</strong>;
+                    return <strong key={index} className="text-slate-900 dark:text-slate-100 font-extrabold">{part.slice(2, -2)}</strong>;
                 }
 
                 // 4. Texto normal
@@ -115,7 +115,7 @@ const RichTextRenderer = ({ text, topicGradient, formulas = [] }) => {
     const lines = text.split('\n');
 
     return (
-        <div className="space-y-5 text-slate-700 leading-[1.8] text-base lg:text-lg">
+        <div className="space-y-5 text-slate-700 dark:text-slate-300 leading-[1.8] text-base lg:text-lg">
             {lines.map((line, i) => {
                 const cleanLine = line.trim();
                 if (!cleanLine) return null;
@@ -137,14 +137,14 @@ const RichTextRenderer = ({ text, topicGradient, formulas = [] }) => {
                     const titleText = cleanLine.split(':')[1]?.trim() || "";
 
                     return (
-                        <div key={i} className="my-8 p-6 bg-slate-50 rounded-[2rem] border border-slate-100">
+                        <div key={i} className="my-8 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-[2rem] border border-slate-100 dark:border-slate-700">
                             {/* Header del Ejemplo */}
                             <div className="flex items-center gap-3 mb-4">
                                 <span className={`px-3 py-1 rounded-lg bg-gradient-to-r ${topicGradient} text-white text-xs font-bold uppercase tracking-wider shadow-md`}>
                                     Ejemplo {exampleNumber || ''}
                                 </span>
                                 {titleText && (
-                                    <h4 className="text-xl font-black text-slate-800">
+                                    <h4 className="text-xl font-black text-slate-800 dark:text-slate-100">
                                         <SmartTextRenderer text={titleText} />
                                     </h4>
                                 )}
@@ -152,12 +152,12 @@ const RichTextRenderer = ({ text, topicGradient, formulas = [] }) => {
 
                             {/* Fórmula asociada (Si existe en el array) */}
                             {formulaText ? (
-                                <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 overflow-x-auto custom-scrollbar">
+                                <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-100 dark:border-slate-700 overflow-x-auto custom-scrollbar">
                                     <SmartTextRenderer text={formulaText} />
                                 </div>
                             ) : (
                                 /* Si no hay fórmula en el array, quizás Gemini la puso en la siguiente línea del texto */
-                                <div className="text-slate-500 italic text-sm">
+                                <div className="text-slate-500 dark:text-slate-400 italic text-sm">
                                     (Ver explicación a continuación)
                                 </div>
                             )}
@@ -167,7 +167,7 @@ const RichTextRenderer = ({ text, topicGradient, formulas = [] }) => {
 
                 // Renderizado normal
                 return (
-                    <p key={i} className="text-slate-700">
+                    <p key={i} className="text-slate-700 dark:text-slate-300">
                         <SmartTextRenderer text={cleanLine} />
                     </p>
                 );
@@ -177,27 +177,27 @@ const RichTextRenderer = ({ text, topicGradient, formulas = [] }) => {
 };
 
 const LoadingSpinner = () => (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 flex flex-col items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden">
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-indigo-400/20 rounded-full blur-3xl animate-pulse" />
             <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse delay-700" />
         </div>
-        
+
         <div className="relative z-10">
             <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl blur-2xl opacity-40 animate-pulse" />
-                <div className="relative bg-white/90 backdrop-blur-xl rounded-3xl p-10 shadow-2xl border border-white/50">
-                    <BookOpen className="w-16 h-16 text-indigo-600 animate-pulse mb-2" />
+                <div className="relative bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-3xl p-10 shadow-2xl border border-white/50 dark:border-slate-700/50">
+                    <BookOpen className="w-16 h-16 text-indigo-600 dark:text-indigo-400 animate-pulse mb-2" />
                 </div>
             </div>
             <div className="mt-8 text-center">
-                <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/80 backdrop-blur-xl rounded-full shadow-xl border border-white/50">
+                <div className="inline-flex items-center gap-3 px-6 py-3 bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-full shadow-xl border border-white/50 dark:border-slate-700/50">
                     <div className="flex gap-1.5">
-                        <div className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce" />
-                        <div className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce delay-100" />
-                        <div className="w-2 h-2 rounded-full bg-indigo-600 animate-bounce delay-200" />
+                        <div className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-bounce" />
+                        <div className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-bounce delay-100" />
+                        <div className="w-2 h-2 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-bounce delay-200" />
                     </div>
-                    <p className="text-slate-700 text-lg font-bold">Preparando tu experiencia</p>
+                    <p className="text-slate-700 dark:text-slate-300 text-lg font-bold">Preparando tu experiencia</p>
                 </div>
             </div>
         </div>
@@ -212,7 +212,7 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
         >
             <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-[2.5rem] blur-3xl opacity-0 group-hover/section:opacity-15 transition-opacity duration-700`} />
             
-            <div className="relative bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border-2 border-white/80 overflow-hidden transition-all duration-500 group-hover/section:shadow-[0_20px_80px_-20px_rgba(0,0,0,0.3)]">
+            <div className="relative bg-white/95 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border-2 border-white/80 dark:bg-slate-900/95 dark:border-slate-700/80 dark:shadow-slate-900/50 overflow-hidden transition-all duration-500 group-hover/section:shadow-[0_20px_80px_-20px_rgba(0,0,0,0.3)]">
                 <div className="relative h-2 overflow-hidden">
                     <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient}`} />
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer" />
@@ -235,25 +235,25 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
                         
                         <div className="flex-1 text-left">
                             <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                                     Capítulo {index + 1} de {totalSections}
                                 </span>
                             </div>
                             <h3 className={`text-xl md:text-2xl lg:text-3xl font-black leading-tight transition-all duration-500 ${
                                 isActive 
                                     ? `bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent` 
-                                    : 'text-slate-900'
+                                    : 'text-slate-900 dark:text-slate-100'
                             }`}>
                                 {section.title}
                             </h3>
                         </div>
 
                         <div className="shrink-0">
-                            <div className="w-8 h-8 rounded-xl bg-slate-100 group-hover/header:bg-slate-200 flex items-center justify-center transition-all duration-300">
+                            <div className="w-8 h-8 rounded-xl bg-slate-100 group-hover/header:bg-slate-200 dark:bg-slate-800 dark:group-hover/header:bg-slate-700 flex items-center justify-center transition-all duration-300">
                                 {isExpanded ? (
-                                    <ChevronUp className="w-4 h-4 text-slate-700" />
+                                    <ChevronUp className="w-4 h-4 text-slate-700 dark:text-slate-300" />
                                 ) : (
-                                    <ChevronDown className="w-4 h-4 text-slate-700" />
+                                    <ChevronDown className="w-4 h-4 text-slate-700 dark:text-slate-300" />
                                 )}
                             </div>
                         </div>
@@ -281,12 +281,12 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
                                             </div>
                                         </div>
                                         <div className="text-left">
-                                            <h4 className="text-base md:text-lg font-black text-slate-900 uppercase tracking-wider mb-1">
+                                            <h4 className="text-base md:text-lg font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider mb-1">
                                                 Fórmulas Clave
                                             </h4>
                                             <div className="flex items-center gap-2">
                                                 <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${topicGradient}`} />
-                                                <p className="text-sm text-slate-600 font-bold">
+                                                <p className="text-sm text-slate-600 dark:text-slate-400 font-bold">
                                                     {section.formulas.length} {section.formulas.length === 1 ? 'fórmula esencial' : 'fórmulas esenciales'}
                                                 </p>
                                             </div>
@@ -300,8 +300,8 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
                                             className="w-full group/item relative overflow-visible cursor-pointer"
                                         >
                                             <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-3xl blur-2xl opacity-0 group-hover/item:opacity-15 transition-opacity duration-700`} />
-                                            
-                                            <div className="relative bg-gradient-to-br from-white via-slate-50/80 to-white backdrop-blur-2xl rounded-3xl p-8 border-2 border-white shadow-xl group-hover/item:shadow-2xl transition-all duration-500 overflow-visible">
+
+                                            <div className="relative bg-gradient-to-br from-white via-slate-50/80 to-white backdrop-blur-2xl rounded-3xl p-8 border-2 border-white shadow-xl dark:from-slate-900 dark:via-slate-800/80 dark:to-slate-900 dark:border-slate-700 dark:shadow-slate-900/50 group-hover/item:shadow-2xl transition-all duration-500 overflow-visible">
                                                 <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${topicGradient} opacity-5 rounded-bl-[4rem]`} />
                                                 <div className={`absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr ${topicGradient} opacity-5 rounded-tr-[3rem]`} />
                                                 
@@ -311,7 +311,7 @@ const SectionCard = ({ section, index, topicGradient, totalSections, isExpanded,
                                                 </div>
                                                 
                                                 <div className="absolute bottom-4 right-4 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
-                                                    <span className="text-xs font-bold text-slate-400">Ver formulario completo →</span>
+                                                    <span className="text-xs font-bold text-slate-400 dark:text-slate-500">Ver formulario completo →</span>
                                                 </div>
                                             </div>
                                         </button>
@@ -337,14 +337,14 @@ const TableOfContents = ({ sections, topicGradient, onNavigate, activeSection, i
         <div className={`fixed left-0 right-0 z-30 px-6 lg:px-8 transition-all duration-500 ${
             isScrolled && !isMouseAtTop && !isOpen ? '-translate-y-full opacity-0' : isScrolled ? 'top-[4.5rem] translate-y-0 opacity-100' : 'top-[5.5rem] translate-y-0 opacity-100'
         }`}>
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-7xl mx-auto overflow-hidden">
                 <button
                     onClick={() => setIsOpen(!isOpen)}
                     className="w-full group/toc relative"
                 >
                     <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-3xl blur-xl opacity-0 group-hover/toc:opacity-20 transition-opacity duration-500`} />
-                    
-                    <div className={`relative bg-white/95 backdrop-blur-2xl rounded-3xl border-2 border-white shadow-xl group-hover/toc:shadow-2xl transition-all duration-500 flex items-center justify-between ${
+
+                    <div className={`relative bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl border-2 border-white dark:border-slate-700 shadow-xl dark:shadow-slate-900/50 group-hover/toc:shadow-2xl transition-all duration-500 flex items-center justify-between ${
                         isScrolled ? 'p-3 scale-95' : 'p-5 scale-100'
                     }`}>
                         <div className="flex items-center gap-4">
@@ -359,26 +359,26 @@ const TableOfContents = ({ sections, topicGradient, onNavigate, activeSection, i
                                 </div>
                             </div>
                             <div className="text-left">
-                                <h3 className={`font-black text-slate-900 transition-all duration-300 ${
+                                <h3 className={`font-black text-slate-900 dark:text-slate-100 transition-all duration-300 ${
                                     isScrolled ? 'text-sm mb-0' : 'text-base mb-1'
                                 }`}>Navegación Premium</h3>
                                 {!isScrolled && (
                                     <div className="flex items-center gap-2 animate-in fade-in duration-300">
                                         <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${topicGradient}`} />
-                                        <p className="text-sm text-slate-600 font-bold">{sections.length} capítulos disponibles</p>
+                                        <p className="text-sm text-slate-600 dark:text-slate-400 font-bold">{sections.length} capítulos disponibles</p>
                                     </div>
                                 )}
                             </div>
                         </div>
-                        <div className={`rounded-xl bg-slate-100 group-hover/toc:bg-slate-200 transition-all duration-300 ${
+                        <div className={`rounded-xl bg-slate-100 dark:bg-slate-800 group-hover/toc:bg-slate-200 dark:group-hover/toc:bg-slate-700 transition-all duration-300 ${
                             isScrolled ? 'p-2' : 'p-2.5'
                         }`}>
                             {isOpen ? (
-                                <svg className={`text-slate-700 transition-all duration-300 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className={`text-slate-700 dark:text-slate-300 transition-all duration-300 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                                 </svg>
                             ) : (
-                                <svg className={`text-slate-700 transition-all duration-300 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className={`text-slate-700 dark:text-slate-300 transition-all duration-300 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                 </svg>
                             )}
@@ -387,8 +387,8 @@ const TableOfContents = ({ sections, topicGradient, onNavigate, activeSection, i
                 </button>
 
                 {isOpen && (
-                    <div className="mt-4 bg-white/95 backdrop-blur-2xl rounded-3xl p-5 border-2 border-white shadow-xl animate-in slide-in-from-top-4 duration-500">
-                        <div className="space-y-2 max-h-[32rem] overflow-y-auto custom-scrollbar">
+                    <div className="mt-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl rounded-3xl p-5 border-2 border-white dark:border-slate-700 shadow-xl dark:shadow-slate-900/50 animate-in slide-in-from-top-4 duration-500 overflow-hidden">
+                        <div className="space-y-2 max-h-[32rem] overflow-y-auto overflow-x-hidden custom-scrollbar">
                             {sections.map((section, idx) => {
                                 const isActive = activeSection === idx;
                                 return (
@@ -400,29 +400,23 @@ const TableOfContents = ({ sections, topicGradient, onNavigate, activeSection, i
                                             setIsOpen(false);
                                         }}
                                         className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all duration-500 text-left group/item relative overflow-hidden ${
-                                            isActive ? 'bg-slate-50 shadow-lg scale-[1.02]' : 'hover:bg-slate-50 hover:shadow-md'
+                                            isActive ? 'bg-slate-50 dark:bg-slate-800 shadow-lg scale-[1.02]' : 'hover:bg-slate-50 dark:hover:bg-slate-800 hover:shadow-md'
                                         }`}
                                     >
-                                        {isActive && (
-                                            <>
-                                                <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} opacity-10`} />
-                                                <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} opacity-5 animate-pulse`} />
-                                            </>
-                                        )}
-                                        
+
                                         <div className={`relative w-10 h-10 rounded-xl text-white text-sm font-bold flex items-center justify-center shrink-0 transition-all duration-500 shadow-lg ${
-                                            isActive 
-                                                ? `bg-gradient-to-br ${topicGradient} scale-110 shadow-xl ring-4 ring-white` 
+                                            isActive
+                                                ? `bg-gradient-to-br ${topicGradient} scale-110 shadow-xl ring-4 ring-white dark:ring-slate-700`
                                                 : 'bg-gradient-to-br from-slate-700 to-slate-900 group-hover/item:scale-105'
                                         }`}>
                                             {idx + 1}
                                         </div>
-                                        
+
                                         <div className="flex-1">
                                             <span className={`relative text-sm font-bold line-clamp-2 transition-all duration-300 ${
-                                                isActive 
-                                                    ? `bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent` 
-                                                    : 'text-slate-700 group-hover/item:text-slate-900'
+                                                isActive
+                                                    ? `bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent`
+                                                    : 'text-slate-700 dark:text-slate-300 group-hover/item:text-slate-900 dark:group-hover/item:text-slate-100'
                                             }`}>
                                                 {section.title}
                                             </span>
@@ -432,15 +426,15 @@ const TableOfContents = ({ sections, topicGradient, onNavigate, activeSection, i
                                         </div>
 
                                         {isActive && (
-                                            <div className="px-2.5 py-1 bg-emerald-50 rounded-full border border-emerald-200">
-                                                <span className="text-xs font-bold text-emerald-700">Actual</span>
+                                            <div className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-900/30 rounded-full border border-emerald-200 dark:border-emerald-800">
+                                                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-300">Actual</span>
                                             </div>
                                         )}
                                     </button>
                                 );
                             })}
                             
-                            <div className="my-3 h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
+                            <div className="my-3 h-px bg-gradient-to-r from-transparent via-slate-300 dark:via-slate-700 to-transparent" />
                             
                             <button
                                 onClick={() => {
@@ -454,7 +448,7 @@ const TableOfContents = ({ sections, topicGradient, onNavigate, activeSection, i
                                 </div>
                                 
                                 <div className="flex-1">
-                                    <span className="relative text-sm font-bold transition-all duration-300 text-slate-700 group-hover/item:text-slate-900">
+                                    <span className="relative text-sm font-bold transition-all duration-300 text-slate-700 dark:text-slate-300 group-hover/item:text-slate-900 dark:group-hover/item:text-slate-100">
                                         Formulario Completo
                                     </span>
                                 </div>
@@ -484,6 +478,24 @@ const StudyGuide = () => {
     const [isMouseAtTop, setIsMouseAtTop] = useState(true);
     const [keepHeaderVisible, setKeepHeaderVisible] = useState(false);
     const [isGridMode, setIsGridMode] = useState(false);
+    const [isDark, setIsDark] = useState(() => {
+        if (typeof document !== 'undefined') {
+            return document.documentElement.classList.contains('dark');
+        }
+        return false;
+    });
+
+    const toggleDarkMode = () => {
+        const newDark = !isDark;
+        setIsDark(newDark);
+        if (newDark) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    };
 
     useEffect(() => {
         const handleScroll = () => {
@@ -739,7 +751,7 @@ const StudyGuide = () => {
 
     if (!guideData || !Array.isArray(guideData.studyGuide)) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 flex flex-col items-center justify-center text-slate-400 p-6 text-center relative overflow-hidden">
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 p-6 text-center relative overflow-hidden">
                 <div className="absolute inset-0 overflow-hidden">
                     <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-red-400/20 to-orange-400/20 rounded-full blur-3xl" />
                     <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl" />
@@ -748,12 +760,12 @@ const StudyGuide = () => {
                 <div className="relative z-10 max-w-2xl">
                     <div className="relative mb-8">
                         <div className="absolute inset-0 bg-gradient-to-br from-red-500 to-orange-500 rounded-[2.5rem] blur-2xl opacity-30" />
-                        <div className="relative bg-white/90 backdrop-blur-xl rounded-[2.5rem] p-12 shadow-2xl border-2 border-white">
+                        <div className="relative bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-[2.5rem] p-12 shadow-2xl border-2 border-white dark:border-slate-700">
                             <BookOpen className="w-20 h-20 mx-auto text-slate-300 mb-4" />
                         </div>
                     </div>
-                    <h2 className="text-3xl md:text-4xl font-black text-slate-900 mb-4">Contenido No Disponible</h2>
-                    <p className="text-lg text-slate-600 font-medium mb-8 leading-relaxed">
+                    <h2 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-slate-100 mb-4">Contenido No Disponible</h2>
+                    <p className="text-lg text-slate-600 dark:text-slate-400 font-medium mb-8 leading-relaxed">
                         No se pudo cargar la guía de estudio. Es posible que este archivo no sea un resumen generado o los datos no estén disponibles en este momento.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -770,7 +782,7 @@ const StudyGuide = () => {
                         )}
                         <button 
                             onClick={handleGoBack} 
-                            className="px-8 py-4 bg-white text-slate-700 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border-2 border-slate-200"
+                            className="px-8 py-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 border-2 border-slate-200 dark:border-slate-700"
                         >
                             ← Volver atrás
                         </button>
@@ -781,14 +793,14 @@ const StudyGuide = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/20 font-sans text-slate-900 pb-24 relative overflow-hidden">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 font-sans text-slate-900 dark:text-slate-100 pb-24 relative overflow-hidden">
             
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-blue-400/10 to-indigo-400/10 rounded-full blur-3xl animate-float" />
                 <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-purple-400/10 to-pink-400/10 rounded-full blur-3xl animate-float-delayed" />
             </div>
 
-            <div className="fixed top-0 left-0 right-0 h-1.5 z-50 bg-slate-200/50 backdrop-blur-sm">
+            <div className="fixed top-0 left-0 right-0 h-1.5 z-50 bg-slate-200/50 dark:bg-slate-800/50 backdrop-blur-sm">
                 <div className="relative h-full overflow-hidden">
                     <div 
                         className={`h-full bg-gradient-to-r ${topicGradient} transition-all duration-300 ease-out shadow-2xl relative`}
@@ -800,15 +812,15 @@ const StudyGuide = () => {
                 </div>
             </div>
 
-            <div className={`fixed top-0 left-0 right-0 z-40 bg-white/80 backdrop-blur-2xl border-b-2 border-white/50 shadow-2xl transition-all duration-500 ${
+            <div className={`fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl border-b-2 border-white/50 dark:border-slate-700/50 shadow-2xl transition-all duration-500 ${
                 isScrolled && !isMouseAtTop && !keepHeaderVisible ? '-translate-y-full opacity-0' : 'translate-y-0 opacity-100'
             }`}>
                 <div className={`max-w-7xl mx-auto px-6 lg:px-8 transition-all duration-500 flex items-center justify-between ${
                     isScrolled ? 'py-2' : 'py-5'
                 }`}>
-                    <button 
-                        onClick={handleGoBack} 
-                        className={`group p-2 hover:bg-white/80 rounded-2xl text-slate-600 hover:text-slate-900 transition-all duration-300 shadow-md hover:shadow-lg ${
+                    <button
+                        onClick={handleGoBack}
+                        className={`group p-2 hover:bg-white/80 dark:hover:bg-slate-800 rounded-2xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all duration-300 shadow-md hover:shadow-lg ${
                             isScrolled ? 'scale-90' : 'scale-100'
                         }`}
                     >
@@ -818,7 +830,7 @@ const StudyGuide = () => {
                     </button>
                     
                     <div className="flex-1 text-center mx-6">
-                        <h1 className={`font-black text-slate-900 truncate transition-all duration-500 ${
+                        <h1 className={`font-black text-slate-900 dark:text-slate-100 truncate transition-all duration-500 ${
                             isScrolled ? 'text-sm md:text-base mb-0' : 'text-base md:text-lg mb-1'
                         }`}>
                             {guideData.title || "Guía de Estudio Premium"}
@@ -836,7 +848,7 @@ const StudyGuide = () => {
                     <div className="flex items-center gap-2">
                         <button
                             onClick={toggleAllSections}
-                            className={`group p-2 hover:bg-white/80 rounded-2xl text-slate-500 hover:text-slate-900 transition-all duration-300 shadow-md hover:shadow-lg ${
+                            className={`group p-2 hover:bg-white/80 dark:hover:bg-slate-800 rounded-2xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all duration-300 shadow-md hover:shadow-lg ${
                                 isScrolled ? 'scale-90' : 'scale-100'
                             }`}
                             title={allExpanded ? 'Recoger todas las secciones' : 'Desplegar todas las secciones'}
@@ -856,7 +868,7 @@ const StudyGuide = () => {
                                 href={guideData.url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className={`group p-2 hover:bg-white/80 rounded-2xl text-slate-500 hover:text-slate-900 transition-all duration-300 shadow-md hover:shadow-lg hidden md:block ${
+                                className={`group p-2 hover:bg-white/80 dark:hover:bg-slate-800 rounded-2xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all duration-300 shadow-md hover:shadow-lg hidden md:block ${
                                     isScrolled ? 'scale-90' : 'scale-100'
                                 }`}
                                 title="Descargar PDF"
@@ -866,7 +878,45 @@ const StudyGuide = () => {
                                 }`} />
                             </a>
                         )}
-                        <button className={`p-2 hover:bg-white/80 rounded-2xl text-slate-500 hover:text-slate-900 transition-all duration-300 shadow-md hover:shadow-lg ${
+                        <button
+                            onClick={toggleDarkMode}
+                            className={`group relative p-2 hover:bg-white/80 dark:hover:bg-slate-800 rounded-2xl text-slate-500 dark:text-slate-400 hover:text-amber-500 dark:hover:text-blue-300 transition-all duration-300 shadow-md hover:shadow-lg ${
+                                isScrolled ? 'scale-90' : 'scale-100'
+                            }`}
+                            title={isDark ? 'Modo claro' : 'Modo oscuro'}
+                        >
+                            <div className="relative overflow-hidden" style={{ width: isScrolled ? 20 : 24, height: isScrolled ? 20 : 24 }}>
+                                {/* Sun */}
+                                <svg
+                                    className={`absolute inset-0 transition-all duration-500 ease-in-out ${
+                                        isDark ? 'opacity-0 rotate-90 scale-0' : 'opacity-100 rotate-0 scale-100'
+                                    }`}
+                                    fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle cx="12" cy="12" r="5" />
+                                    <line x1="12" y1="1" x2="12" y2="3" />
+                                    <line x1="12" y1="21" x2="12" y2="23" />
+                                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                                    <line x1="1" y1="12" x2="3" y2="12" />
+                                    <line x1="21" y1="12" x2="23" y2="12" />
+                                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                                </svg>
+                                {/* Moon */}
+                                <svg
+                                    className={`absolute inset-0 transition-all duration-500 ease-in-out ${
+                                        isDark ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 -rotate-90 scale-0'
+                                    }`}
+                                    fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                                </svg>
+                            </div>
+                        </button>
+                        <button className={`p-2 hover:bg-white/80 dark:hover:bg-slate-800 rounded-2xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-all duration-300 shadow-md hover:shadow-lg ${
                             isScrolled ? 'scale-90' : 'scale-100'
                         }`}>
                             <MoreVertical className={`transition-all duration-300 ${isScrolled ? 'w-4 h-4' : 'w-5 h-5'}`} />
@@ -895,7 +945,7 @@ const StudyGuide = () => {
                 <div className="relative group/hero">
                     <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-[3rem] blur-3xl opacity-20 group-hover/hero:opacity-30 transition-opacity duration-700`} />
                     
-                    <div className="relative bg-white/90 backdrop-blur-2xl rounded-[3rem] shadow-2xl border-2 border-white/80 overflow-hidden">
+                    <div className="relative bg-white/90 backdrop-blur-2xl rounded-[3rem] shadow-2xl border-2 border-white/80 overflow-hidden dark:bg-slate-900/90 dark:border-slate-700/80 dark:shadow-slate-900/50">
                         <div className="relative h-2 overflow-hidden">
                             <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient}`} />
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer" />
@@ -914,7 +964,7 @@ const StudyGuide = () => {
                                 </div>
                                 
                                 <div className="flex-1">
-                                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 mb-3 tracking-tight leading-tight">
+                                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-black text-slate-900 mb-3 tracking-tight leading-tight dark:text-slate-100">
                                         {guideData.title}
                                     </h2>
                                     <p className={`text-base lg:text-lg font-bold bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent`}>
@@ -924,21 +974,21 @@ const StudyGuide = () => {
                             </div>
                             
                             <div className="flex flex-wrap justify-center gap-4 mt-8">
-                                <div className="group px-6 py-4 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl border-2 border-white/80 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+                                <div className="group px-6 py-4 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl border-2 border-white/80 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 dark:from-slate-800/90 dark:to-slate-800/60 dark:border-slate-700/80">
                                     <div className="flex items-center gap-3">
                                         <div className={`p-2 rounded-xl bg-gradient-to-br ${topicGradient} shadow-lg`}>
                                             <FileText className="w-5 h-5 text-white" />
                                         </div>
                                         <div className="text-left">
-                                            <div className="text-2xl font-black text-slate-900">{guideData.studyGuide.length}</div>
-                                            <div className="text-xs text-slate-600 uppercase font-bold tracking-wider">Capítulos</div>
+                                            <div className="text-2xl font-black text-slate-900 dark:text-slate-100">{guideData.studyGuide.length}</div>
+                                            <div className="text-xs text-slate-600 uppercase font-bold tracking-wider dark:text-slate-400">Capítulos</div>
                                         </div>
                                     </div>
                                 </div>
                                 
                                 <button
                                     onClick={() => scrollToSection('formulas-section')}
-                                    className="group px-6 py-4 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl border-2 border-white/80 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 cursor-pointer relative overflow-hidden"
+                                    className="group px-6 py-4 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl border-2 border-white/80 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 cursor-pointer relative overflow-hidden dark:from-slate-800/90 dark:to-slate-800/60 dark:border-slate-700/80"
                                 >
                                     <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
                                     <div className="flex items-center gap-3 relative z-10">
@@ -946,20 +996,20 @@ const StudyGuide = () => {
                                             <Calculator className="w-5 h-5 text-white" />
                                         </div>
                                         <div className="text-left">
-                                            <div className="text-2xl font-black text-slate-900">{totalFormulas}</div>
-                                            <div className="text-xs text-slate-600 uppercase font-bold tracking-wider">Fórmulas</div>
+                                            <div className="text-2xl font-black text-slate-900 dark:text-slate-100">{totalFormulas}</div>
+                                            <div className="text-xs text-slate-600 uppercase font-bold tracking-wider dark:text-slate-400">Fórmulas</div>
                                         </div>
                                     </div>
                                 </button>
 
-                                <div className="group px-6 py-4 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl border-2 border-white/80 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1">
+                                <div className="group px-6 py-4 bg-gradient-to-br from-white/90 to-white/60 backdrop-blur-xl border-2 border-white/80 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-500 hover:-translate-y-1 dark:from-slate-800/90 dark:to-slate-800/60 dark:border-slate-700/80">
                                     <div className="flex items-center gap-3">
                                         <div className={`p-2 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg`}>
                                             <TrendingUp className="w-5 h-5 text-white" />
                                         </div>
                                         <div className="text-left">
-                                            <div className="text-2xl font-black text-slate-900">A+</div>
-                                            <div className="text-xs text-slate-600 uppercase font-bold tracking-wider">Calidad</div>
+                                            <div className="text-2xl font-black text-slate-900 dark:text-slate-100">A+</div>
+                                            <div className="text-xs text-slate-600 uppercase font-bold tracking-wider dark:text-slate-400">Calidad</div>
                                         </div>
                                     </div>
                                 </div>
@@ -1003,7 +1053,7 @@ const StudyGuide = () => {
                     <div id="formulas-section" className="relative group/formulas scroll-mt-48">
                         <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-[3rem] blur-3xl opacity-20 group-hover/formulas:opacity-30 transition-opacity duration-700`} />
                         
-                        <div className="relative bg-white/90 backdrop-blur-2xl rounded-[3rem] shadow-2xl border-2 border-white/80 overflow-hidden">
+                        <div className="relative bg-white/90 backdrop-blur-2xl rounded-[3rem] shadow-2xl border-2 border-white/80 dark:bg-slate-900/90 dark:border-slate-700/80 dark:shadow-slate-900/50 overflow-hidden">
                             <div className="relative h-2 overflow-hidden">
                                 <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient}`} />
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer" />
@@ -1022,7 +1072,7 @@ const StudyGuide = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 mb-4 tracking-tight leading-tight">
+                                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-black text-slate-900 dark:text-slate-100 mb-4 tracking-tight leading-tight">
                                         Formulario Completo
                                     </h2>
                                     <p className={`text-xl lg:text-2xl font-bold bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent mb-8`}>
@@ -1030,9 +1080,9 @@ const StudyGuide = () => {
                                     </p>
                                     
                                     <div className="flex items-center justify-center gap-4 flex-wrap">
-                                        <div className="flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-slate-50 to-white rounded-full border-2 border-slate-200 shadow-lg">
+                                        <div className="flex items-center justify-center gap-3 px-6 py-3 bg-gradient-to-r from-slate-50 to-white rounded-full border-2 border-slate-200 shadow-lg dark:from-slate-800 dark:to-slate-900 dark:border-slate-700">
                                             <div className={`w-2 h-2 rounded-full bg-gradient-to-r ${topicGradient} animate-pulse`} />
-                                            <span className="text-sm font-bold text-slate-700">{totalFormulas} fórmulas totales</span>
+                                            <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{totalFormulas} fórmulas totales</span>
                                         </div>
                                         
                                         <button
@@ -1040,7 +1090,7 @@ const StudyGuide = () => {
                                             className={`group/toggle relative px-6 py-3 rounded-full border-2 shadow-lg font-bold text-sm transition-all duration-500 hover:scale-105 ${
                                                 isGridMode 
                                                     ? `bg-gradient-to-r ${topicGradient} text-white border-transparent` 
-                                                    : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'
+                                                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                                             }`}
                                         >
                                             <div className="flex items-center gap-2">
@@ -1087,11 +1137,11 @@ const StudyGuide = () => {
                                                                 {sectionIdx + 1}
                                                             </div>
                                                         </div>
-                                                        <h3 className="text-sm font-black text-slate-600 uppercase tracking-widest">
+                                                        <h3 className="text-sm font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest">
                                                             {section.title}
                                                         </h3>
                                                         <div className={`flex-1 h-px bg-gradient-to-r ${topicGradient} opacity-20 rounded-full`} />
-                                                        <span className="text-xs font-bold text-slate-400 shrink-0">
+                                                        <span className="text-xs font-bold text-slate-400 dark:text-slate-500 shrink-0">
                                                             {section.formulas.length} {section.formulas.length === 1 ? 'fórmula' : 'fórmulas'}
                                                         </span>
                                                     </div>
@@ -1107,7 +1157,7 @@ const StudyGuide = () => {
                                                                 {/* Glow on hover */}
                                                                 <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-2xl blur-xl opacity-0 group-hover/formula:opacity-25 transition-opacity duration-500`} />
 
-                                                                <div className="relative bg-white rounded-2xl border-2 border-slate-100 group-hover/formula:border-slate-200 shadow-sm group-hover/formula:shadow-xl transition-all duration-300 group-hover/formula:-translate-y-1">
+                                                                <div className="relative bg-white rounded-2xl border-2 border-slate-100 group-hover/formula:border-slate-200 shadow-sm dark:bg-slate-900 dark:border-slate-700 dark:group-hover/formula:border-slate-600 group-hover/formula:shadow-xl transition-all duration-300 group-hover/formula:-translate-y-1">
 
                                                                     {/* Barra de color superior */}
                                                                     <div className={`h-1.5 w-full bg-gradient-to-r ${topicGradient} shrink-0`} />
@@ -1144,7 +1194,7 @@ const StudyGuide = () => {
                                                             </div>
                                                         </div>
                                                         <div className="flex-1">
-                                                            <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-1">
+                                                            <h3 className="text-xl md:text-2xl font-black text-slate-900 dark:text-slate-100 mb-1">
                                                                 {section.title}
                                                             </h3>
                                                             <div className={`h-1 w-16 bg-gradient-to-r ${topicGradient} rounded-full shadow-md`} />
@@ -1160,7 +1210,7 @@ const StudyGuide = () => {
                                                             >
                                                                 <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-3xl blur-2xl opacity-0 group-hover/item:opacity-15 transition-opacity duration-700`} />
                                                                 
-                                                                <div className="relative bg-gradient-to-br from-white via-slate-50/80 to-white backdrop-blur-2xl rounded-3xl p-8 border-2 border-white shadow-xl group-hover/item:shadow-2xl transition-all duration-500 overflow-visible">
+                                                                <div className="relative bg-gradient-to-br from-white via-slate-50/80 to-white backdrop-blur-2xl rounded-3xl p-8 border-2 border-white shadow-xl group-hover/item:shadow-2xl dark:from-slate-900 dark:via-slate-800/80 dark:to-slate-900 dark:border-slate-700 dark:shadow-slate-900/50 transition-all duration-500 overflow-visible">
                                                                     <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${topicGradient} opacity-5 rounded-bl-[4rem]`} />
                                                                     <div className={`absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr ${topicGradient} opacity-5 rounded-tr-[3rem]`} />
                                                                     
@@ -1169,7 +1219,7 @@ const StudyGuide = () => {
                                                                     </div>
                                                                     
                                                                     <div className="absolute bottom-4 right-4 opacity-0 group-hover/item:opacity-100 transition-opacity duration-300">
-                                                                        <span className="text-xs font-bold text-slate-400">Ir a: {section.title} →</span>
+                                                                        <span className="text-xs font-bold text-slate-400 dark:text-slate-500">Ir a: {section.title} →</span>
                                                                     </div>
                                                                 </div>
                                                             </button>
@@ -1189,7 +1239,7 @@ const StudyGuide = () => {
                     <div className="relative inline-flex flex-col items-center gap-6 p-12 group/footer">
                         <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-[2.5rem] blur-3xl opacity-20 group-hover/footer:opacity-30 transition-opacity duration-700`} />
                         
-                        <div className="relative bg-white/90 backdrop-blur-2xl rounded-[2.5rem] p-12 shadow-2xl border-2 border-white/80">
+                        <div className="relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[2.5rem] p-12 shadow-2xl border-2 border-white/80 dark:border-slate-700/80">
                             <div className="relative mb-6">
                                 <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-3xl blur-xl opacity-50`} />
                                 <div className={`relative p-5 rounded-3xl bg-gradient-to-br ${topicGradient} shadow-xl transform group-hover/footer:scale-110 group-hover/footer:rotate-12 transition-all duration-500`}>
@@ -1197,10 +1247,10 @@ const StudyGuide = () => {
                                 </div>
                             </div>
                             <div>
-                                <p className="text-slate-900 font-black text-xl mb-2">
+                                <p className="text-slate-900 dark:text-slate-100 font-black text-xl mb-2">
                                     ¡Felicitaciones por Completar el Recorrido!
                                 </p>
-                                <p className="text-base text-slate-600 font-medium max-w-md mb-8">
+                                <p className="text-base text-slate-600 dark:text-slate-400 font-medium max-w-md mb-8">
                                     Has explorado todos los capítulos de esta guía premium. Revisa el contenido cuando lo necesites.
                                 </p>
                                 <button 
@@ -1260,19 +1310,31 @@ const StudyGuide = () => {
                 .custom-scrollbar::-webkit-scrollbar {
                     width: 8px;
                 }
-                
+
                 .custom-scrollbar::-webkit-scrollbar-track {
                     background: rgba(241, 245, 249, 0.5);
                     border-radius: 10px;
                 }
-                
+
                 .custom-scrollbar::-webkit-scrollbar-thumb {
                     background: linear-gradient(to bottom, #6366f1, #8b5cf6);
                     border-radius: 10px;
                 }
-                
+
                 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
                     background: linear-gradient(to bottom, #4f46e5, #7c3aed);
+                }
+
+                .dark .custom-scrollbar::-webkit-scrollbar-track {
+                    background: rgba(30, 41, 59, 0.5);
+                }
+
+                .katex {
+                    color: #1e293b;
+                }
+
+                .dark .katex {
+                    color: #e2e8f0;
                 }
             `}</style>
         </div>

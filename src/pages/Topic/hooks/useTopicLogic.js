@@ -98,10 +98,10 @@ export const useTopicLogic = (user) => {
                             const allDocs = docsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
                             const manualUploads = allDocs
                                 .filter(d => d.source === 'manual')
-                                .map(d => ({ ...d, origin: 'manual' }));
+                                .map(d => ({ ...d, origin: 'manual', _collection: 'documents' }));
                             docsFromDocumentsRef.current = allDocs
                                 .filter(d => d.source !== 'manual')
-                                .map(d => ({ ...d, origin: 'AI' }));
+                                .map(d => ({ ...d, origin: 'AI', _collection: 'documents' }));
 
                             setTopic(prev => ({
                                 ...prev,
@@ -116,6 +116,7 @@ export const useTopicLogic = (user) => {
                                 id: d.id,
                                 ...d.data(),
                                 origin: 'AI',
+                                _collection: 'resumen',
                                 type: d.data().type || 'summary',
                                 name: d.data().name || d.data().title || 'Sin título'
                             }));
@@ -195,8 +196,12 @@ export const useTopicLogic = (user) => {
         if (!file?.id) return;
 
         try {
-            const docRef = doc(db, "documents", file.id);
-            await updateDoc(docRef, { name: tempName });
+            const collectionName = file._collection || 'documents';
+            const docRef = doc(db, collectionName, file.id);
+            const updateData = collectionName === 'resumen'
+                ? { name: tempName, title: tempName }
+                : { name: tempName };
+            await updateDoc(docRef, updateData);
             setRenamingId(null);
         } catch (error) { console.error(error); alert("Error al renombrar."); }
     };
@@ -204,7 +209,8 @@ export const useTopicLogic = (user) => {
     const deleteFile = async (file) => {
         if (!window.confirm(`¿Eliminar "${file.name}"?`)) return;
         try {
-            await deleteDoc(doc(db, "documents", file.id));
+            const collectionName = file._collection || 'documents';
+            await deleteDoc(doc(db, collectionName, file.id));
             setActiveMenuId(null);
         } catch (error) { console.error(error); alert("Error al eliminar."); }
     };
@@ -306,22 +312,34 @@ export const useTopicLogic = (user) => {
         try {
             const formData = new FormData();
             formData.append('title', contentFormData.title);
-            formData.append('type', contentFormData.type); // 'summary', 'formulas', etc.
+            formData.append('type', contentFormData.type);
             formData.append('prompt', contentFormData.prompt || '');
-            // NOTA: Ajusta esta acción si tu n8n lo requiere para diferenciar tests de materiales
-            formData.append('action', 'generate_study_material'); 
-            
+            formData.append('action', 'generate_study_material');
+
             formData.append('userId', user?.uid);
             formData.append('subjectId', subjectId);
             formData.append('topicId', topicId);
             formData.append('subjectName', subject?.name);
             formData.append('topicName', topic?.name || topic?.title);
-            
+
+            // Type-specific options for n8n customization
+            const optionKeys = [
+                'includeExamples', 'includeFormulas',
+                'formulaFormat', 'includeDerivations',
+                'difficulty', 'numExercises', 'includeSolutions',
+                'numQuestions', 'examFormat', 'includeAnswerKey',
+                'examDuration', 'examMode', 'showResultsToStudents'
+            ];
+            optionKeys.forEach(key => {
+                if (contentFormData[key] !== undefined && contentFormData[key] !== null) {
+                    formData.append(key, String(contentFormData[key]));
+                }
+            });
+
             if (contentFormData.file) formData.append('files', contentFormData.file);
 
-            // Reutilizamos el mismo webhook (tu n8n debe saber diferenciar por 'action' o estructura)
             const res = await fetch('https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook/711e538b-9d63-42bb-8494-873301ffdf39', {
-                method: 'POST', body: formData 
+                method: 'POST', body: formData
             });
 
             if (!res.ok) throw new Error("Error servidor");
@@ -335,10 +353,11 @@ export const useTopicLogic = (user) => {
 
     // --- HANDLERS PARA ABRIR MODALES ---
     const handleCreateCustomPDF = () => {
-        setContentFormData({ 
-            title: `Resumen: ${topic?.name || topic?.title}`,
-            type: 'summary', 
-            prompt: '' 
+        setContentFormData({
+            title: '',
+            type: 'summary',
+            prompt: '',
+            file: null
         });
         setShowContentModal(true);
     };

@@ -32,25 +32,27 @@ const TopicModals = ({
         <>
             <AppToast show={toast.show} message={toast.message} onClose={() => setToast({ show: false, message: '' })} />
 
-            <QuizModal 
-                isOpen={showQuizModal} 
-                onClose={() => setShowQuizModal(false)} 
-                onSubmit={handleGenerateQuizSubmit} 
-                formData={quizFormData} 
-                setFormData={setQuizFormData} 
-                isGenerating={isGeneratingQuiz} 
-                themeColor={subject?.color} 
+            <QuizModal
+                isOpen={showQuizModal}
+                onClose={() => setShowQuizModal(false)}
+                formData={quizFormData}
+                setFormData={setQuizFormData}
+                themeColor={subject?.color}
                 subjectId={subjectId}
                 topicId={topicId}
+                onToast={setToast}
             />
             
-            <CreateContentModal 
+            <CreateContentModal
                 isOpen={showContentModal}
                 onClose={() => setShowContentModal(false)}
                 onSubmit={handleGenerateContentSubmit}
                 formData={contentFormData}
                 setFormData={setContentFormData}
                 isGenerating={isGeneratingContent}
+                themeColor={subject?.color}
+                subjectId={subjectId}
+                topicId={topicId}
             />
 
             {viewingFile && (

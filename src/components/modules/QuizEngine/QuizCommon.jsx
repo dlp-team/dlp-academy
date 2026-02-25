@@ -67,15 +67,63 @@ export const isPassed = (score) => score >= PASSING_SCORE;
 export const RenderLatex = React.memo(({ text }) => {
     if (!text) return null;
     if (typeof text !== 'string') return text;
-    
-    const parts = text.split('$');
+
+    // Simplified regex — $[^$]+$ catches ANY content between dollar signs
+    const mathRegex = /(\$\$[\s\S]+?\$\$|\$[^$]+\$|\\\([\s\S]+?\\\)|\\\[[\s\S]+?\\\])/g;
+
+    // If no math delimiters found at all, check for bare LaTeX commands
+    if (!mathRegex.test(text)) {
+        if (/\\(?:frac|sqrt|int|sum|prod|lim|vec|partial|alpha|beta|gamma|delta|theta|lambda|pi|infty|cdot|times|div|pm|leq|geq|neq|approx|nabla|text|mathrm|mathbf|begin|end|left|right)/.test(text)) {
+            try { return <InlineMath math={text} errorColor="#dc2626" />; }
+            catch { return <span>{text}</span>; }
+        }
+        return <span>{text}</span>;
+    }
+
+    // Reset lastIndex after .test()
+    mathRegex.lastIndex = 0;
+    const parts = text.split(mathRegex);
+
     return (
         <span>
-            {parts.map((part, index) => (
-                index % 2 === 0 
-                    ? <span key={index}>{part}</span> 
-                    : <InlineMath key={index} math={part} />
-            ))}
+            {parts.map((part, index) => {
+                if (!part) return null;
+
+                // Display math: $$...$$
+                if (part.startsWith('$$') && part.endsWith('$$') && part.length > 4) {
+                    const math = part.slice(2, -2).trim();
+                    if (!math) return null;
+                    try { return <BlockMath key={index} math={math} errorColor="#dc2626" />; }
+                    catch { return <code key={index} className="text-red-500 text-xs bg-red-50 px-1 rounded">{math}</code>; }
+                }
+
+                // Inline math: $...$
+                if (part.startsWith('$') && part.endsWith('$') && part.length > 2) {
+                    const math = part.slice(1, -1);
+                    if (!math) return null;
+                    try { return <InlineMath key={index} math={math} errorColor="#dc2626" />; }
+                    catch { return <code key={index} className="text-red-500 text-xs bg-red-50 px-1 rounded">{math}</code>; }
+                }
+
+                // Inline math: \(...\)
+                if (part.startsWith('\\(') && part.endsWith('\\)')) {
+                    const math = part.slice(2, -2);
+                    if (!math) return null;
+                    try { return <InlineMath key={index} math={math} errorColor="#dc2626" />; }
+                    catch { return <code key={index} className="text-red-500 text-xs bg-red-50 px-1 rounded">{math}</code>; }
+                }
+
+                // Display math: \[...\]
+                if (part.startsWith('\\[') && part.endsWith('\\]')) {
+                    const math = part.slice(2, -2).trim();
+                    if (!math) return null;
+                    try { return <BlockMath key={index} math={math} errorColor="#dc2626" />; }
+                    catch { return <code key={index} className="text-red-500 text-xs bg-red-50 px-1 rounded">{math}</code>; }
+                }
+
+                // Plain text
+                return <span key={index}>{part}</span>;
+            })}
         </span>
     );
 });

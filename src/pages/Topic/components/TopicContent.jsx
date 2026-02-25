@@ -193,29 +193,31 @@ const TopicContent = ({
             const percentage = total > 0 ? (completed / total) * 100 : 0;
 
             return (
-                <div key={levelKey} className="space-y-4">
+                <div key={levelKey} className="space-y-5">
                     {/* Header del Nivel */}
-                    <div className={`bg-gradient-to-r ${gradientBg} rounded-2xl p-8 shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50`}>
+                    <div className={`bg-gradient-to-r ${gradientBg} rounded-3xl p-8 shadow-lg shadow-slate-200/50 dark:shadow-black/40 ring-1 ring-white/10 dark:ring-white/5`}>
                         <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                                <span className="text-4xl">{icon}</span>
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner">
+                                    <span className="text-3xl">{icon}</span>
+                                </div>
                                 <div>
                                     <h3 className="text-3xl font-black text-white tracking-tight">{title}</h3>
-                                    <p className="text-white/80 text-sm font-medium">
+                                    <p className="text-white/80 text-sm font-medium mt-0.5">
                                         {completed}/{quizzesByLevel[levelKey].length} {quizzesByLevel[levelKey].length === 1 ? 'test' : 'tests'} completado{completed !== 1 ? 's' : ''}
                                     </p>
                                 </div>
                             </div>
                             {completed > 0 && averageScore > 0 && (
-                                <div className="text-right">
-                                    <div className="text-white/60 text-xs font-semibold uppercase tracking-wider">Nota media</div>
-                                    <div className="text-3xl font-black text-white">{averageScore}</div>
+                                <div className="text-right bg-white/10 backdrop-blur-sm rounded-2xl px-5 py-3">
+                                    <div className="text-white/70 text-[10px] font-bold uppercase tracking-widest">Nota media</div>
+                                    <div className="text-3xl font-black text-white leading-tight">{averageScore}%</div>
                                 </div>
                             )}
                         </div>
-                        <div className="h-1.5 bg-white/20 rounded-full overflow-hidden mt-4">
-                            <div 
-                                className="h-full bg-white/80 rounded-full transition-all duration-500" 
+                        <div className="h-2 bg-white/20 rounded-full overflow-hidden mt-5">
+                            <div
+                                className="h-full bg-white/90 rounded-full transition-all duration-700 ease-out"
                                 style={{ width: `${percentage}%` }}
                             />
                         </div>
@@ -225,23 +227,24 @@ const TopicContent = ({
                     {quizzesByLevel[levelKey].length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {quizzesByLevel[levelKey].map((quiz) => (
-                                <QuizCard 
+                                <QuizCard
                                     key={quiz.id}
                                     quiz={quiz}
+                                    navigate={navigate}
+                                    subjectId={subjectId}
+                                    topicId={topicId}
+                                    permissions={permissions}
                                     activeMenuId={activeMenuId}
                                     setActiveMenuId={setActiveMenuId}
                                     handleMenuClick={handleMenuClick}
                                     deleteQuiz={deleteQuiz}
-                                    getQuizVisuals={getQuizVisuals}
-                                    navigate={navigate}
-                                    subjectId={subjectId}
-                                    topicId={topicId}
                                 />
                             ))}
                         </div>
                     ) : (
-                        <div className="py-8 flex items-center justify-center text-slate-400 dark:text-slate-500 border border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50/50 dark:bg-slate-800/50">
-                            <span className="text-sm font-medium">No hay tests {title.toLowerCase()}</span>
+                        <div className="py-10 flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700/60 rounded-2xl bg-slate-50/50 dark:bg-slate-800/30">
+                            <span className="text-2xl opacity-40">{icon}</span>
+                            <span className="text-sm font-bold">No hay tests de nivel {title.toLowerCase()}</span>
                         </div>
                     )}
                 </div>
@@ -250,9 +253,9 @@ const TopicContent = ({
 
         return (
             <div className="space-y-12">
-                {renderLevelSection('basico', 'Básico', '🧪', 'from-green-400 to-green-600')}
-                {renderLevelSection('intermedio', 'Intermedio', '📖', 'from-blue-400 to-blue-600')}
-                {renderLevelSection('avanzado', 'Avanzado', '🏆', 'from-purple-400 to-purple-600')}
+                {renderLevelSection('basico', 'Básico', '🧪', 'from-emerald-500 to-teal-600')}
+                {renderLevelSection('intermedio', 'Intermedio', '📖', 'from-blue-500 to-indigo-600')}
+                {renderLevelSection('avanzado', 'Avanzado', '🏆', 'from-violet-500 to-purple-600')}
             </div>
         );
     }

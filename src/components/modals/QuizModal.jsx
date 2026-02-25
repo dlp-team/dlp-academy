@@ -1,23 +1,20 @@
 // src/components/modals/QuizModal.jsx
 import React, { useEffect, useState } from 'react';
-import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Loader2, Wand2, Upload, FileText, Trash2 } from 'lucide-react';
+import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Wand2, Upload, FileText, Trash2 } from 'lucide-react';
 
-const QuizModal = ({ 
-    isOpen, 
-    onClose, 
-    formData, 
-    setFormData, 
+const QuizModal = ({
+    isOpen,
+    onClose,
+    formData,
+    setFormData,
     themeColor,
-    // RECIBIMOS LOS IDS NECESARIOS PARA N8N/FIREBASE
     subjectId,
-    topicId
+    topicId,
+    onToast
 }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [shouldRender, setShouldRender] = useState(false);
-    const [loading, setLoading] = useState(false);
 
-    // TU WEBHOOK DE N8N
-    // NOTA: Si tienes error de CORS, cambia esto por '/api-n8n/webhook/...' y configura el proxy en vite.config.js
     const WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook/711e538b-9d63-42bb-8494-873301ffdf39';
 
     useEffect(() => {
@@ -32,70 +29,54 @@ const QuizModal = ({
         return () => clearTimeout(timeoutId);
     }, [isOpen]);
 
-    // LÓGICA DE ENVÍO
+    // Fire-and-forget: cierra el modal inmediatamente y envía en segundo plano
     const handleInternalSubmit = async (e) => {
         e.preventDefault();
-        
-        // Validación de seguridad
+
         if (!subjectId || !topicId) {
-            alert("Error crítico: No se identificó la Asignatura o el Tema. Recarga la página.");
+            if (onToast) onToast({ show: true, message: 'Error: No se identificó la Asignatura o el Tema.' });
             return;
         }
 
-        setLoading(true);
+        const dataToSend = new FormData();
+        dataToSend.append('title', formData.title);
+        dataToSend.append('level', formData.level);
+        dataToSend.append('numQuestions', formData.numQuestions);
+        dataToSend.append('prompt', formData.prompt);
+        dataToSend.append('subjectId', subjectId);
+        dataToSend.append('topicId', topicId);
+        if (formData.file) dataToSend.append('file', formData.file);
 
+        // Cerrar modal inmediatamente
+        handleClose();
+        if (onToast) onToast({ show: true, message: 'Solicitud enviada. Tu test se está generando...' });
+
+        // Enviar en segundo plano
         try {
-            const dataToSend = new FormData();
-            
-            // Datos del formulario
-            dataToSend.append('title', formData.title);
-            dataToSend.append('level', formData.level);
-            dataToSend.append('numQuestions', formData.numQuestions);
-            dataToSend.append('prompt', formData.prompt);
-            
-            // DATOS CRÍTICOS PARA ARREGLAR EL ERROR DE FIREBASE
-            dataToSend.append('subjectId', subjectId);
-            dataToSend.append('topicId', topicId);
-            
-            // Archivo (si existe)
-            if (formData.file) {
-                dataToSend.append('file', formData.file);
-            }
-
             console.log(`📤 Enviando test a ${subjectId}/${topicId}...`);
-
             const response = await fetch(WEBHOOK_URL, {
                 method: 'POST',
                 body: dataToSend,
             });
 
-            if (!response.ok) {
-                throw new Error(`Error del servidor: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
 
             const result = await response.json();
             console.log("✅ Respuesta de n8n:", result);
-
-            handleClose();
-            alert("¡Solicitud enviada! Tu test aparecerá en unos momentos.");
-
+            if (onToast) onToast({ show: true, message: '¡Test generado correctamente! Recarga para verlo.' });
         } catch (error) {
             console.error("❌ Error enviando al webhook:", error);
-            alert("Error al conectar con el generador de tests. Revisa la consola.");
-        } finally {
-            setLoading(false);
+            if (onToast) onToast({ show: true, message: 'Error al generar el test. Inténtalo de nuevo.' });
         }
     };
 
     if (!shouldRender) return null;
 
-    const baseColorClass = themeColor ? themeColor.split('-')[1] : 'indigo'; 
+    const baseColorClass = themeColor ? themeColor.split('-')[1] : 'indigo';
 
     const handleClose = () => {
-        if (!loading) {
-            setIsVisible(false);
-            onClose(); 
-        }
+        setIsVisible(false);
+        onClose();
     };
 
     const handleFileChange = (e) => {
@@ -141,8 +122,7 @@ const QuizModal = ({
                     
                     <button 
                         onClick={(e) => { e.preventDefault(); handleClose(); }} 
-                        disabled={loading}
-                        className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/25 text-white rounded-full transition-all duration-300 backdrop-blur-sm shadow-inner hover:rotate-90 hover:scale-110 active:scale-95 z-50 cursor-pointer disabled:opacity-0"
+                        className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/25 text-white rounded-full transition-all duration-300 backdrop-blur-sm shadow-inner hover:rotate-90 hover:scale-110 active:scale-95 z-50 cursor-pointer"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -163,7 +143,7 @@ const QuizModal = ({
                                 className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-semibold text-slate-800 placeholder:text-slate-300`} 
                                 placeholder="Ej: Repaso Global - Tema 1" 
                                 required 
-                                disabled={loading}
+
                             />
                         </div>
 
@@ -177,7 +157,7 @@ const QuizModal = ({
                                         value={formData.level} 
                                         onChange={e => setFormData({...formData, level: e.target.value})} 
                                         className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-bold text-slate-700 appearance-none cursor-pointer hover:bg-slate-100 disabled:opacity-50`}
-                                        disabled={loading}
+        
                                     >
                                         <option value="Principiante">Básico</option>
                                         <option value="Intermedio">Medio</option>
@@ -201,7 +181,7 @@ const QuizModal = ({
                                     max="20" 
                                     className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-bold text-slate-700 disabled:opacity-50`} 
                                     required
-                                    disabled={loading}
+    
                                 />
                             </div>
                         </div>
@@ -215,7 +195,7 @@ const QuizModal = ({
                                 onChange={e => setFormData({...formData, prompt: e.target.value})} 
                                 className={`w-full px-5 py-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none h-24 resize-none focus:ring-2 focus:ring-${baseColorClass}-500/20 focus:border-${baseColorClass}-500 transition-all font-medium text-slate-600 placeholder:text-slate-300 disabled:opacity-50`} 
                                 placeholder="Ej: Enfócate en las excepciones y casos prácticos..."
-                                disabled={loading}
+
                             ></textarea>
                         </div>
 
@@ -231,7 +211,7 @@ const QuizModal = ({
                                     accept=".pdf" 
                                     className="hidden" 
                                     onChange={handleFileChange}
-                                    disabled={loading}
+    
                                 />
                                 
                                 {!formData.file ? (
@@ -260,7 +240,7 @@ const QuizModal = ({
                                         <button 
                                             type="button"
                                             onClick={removeFile}
-                                            disabled={loading}
+            
                                             className="p-2 hover:bg-white rounded-full text-indigo-400 hover:text-red-500 transition-colors hover:shadow-sm"
                                         >
                                             <Trash2 className="w-4 h-4" />
@@ -275,31 +255,20 @@ const QuizModal = ({
                 {/* FOOTER */}
                 <div className="p-6 pt-2 bg-white border-t border-slate-50 rounded-b-[2rem]">
                     <div className="flex gap-3">
-                        <button 
-                            type="button" 
-                            onClick={handleClose} 
-                            disabled={loading}
-                            className="flex-1 px-6 py-4 text-slate-500 font-bold hover:bg-slate-100 rounded-2xl transition-all disabled:opacity-50 text-sm tracking-wide"
+                        <button
+                            type="button"
+                            onClick={handleClose}
+                            className="flex-1 px-6 py-4 text-slate-500 font-bold hover:bg-slate-100 rounded-2xl transition-all text-sm tracking-wide"
                         >
                             Cancelar
                         </button>
-                        <button 
+                        <button
                             type="submit"
                             form="quiz-form"
-                            disabled={loading} 
-                            className={`flex-[2] px-6 py-4 bg-gradient-to-r ${themeColor || 'from-slate-800 to-slate-900'} text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-${baseColorClass}-500/30 transition-all flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed`}
+                            className={`flex-[2] px-6 py-4 bg-gradient-to-r ${themeColor || 'from-slate-800 to-slate-900'} text-white rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-${baseColorClass}-500/30 transition-all flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]`}
                         >
-                            {loading ? (
-                                <>
-                                    <Loader2 className="w-5 h-5 animate-spin text-white/80" />
-                                    <span className="animate-pulse">Enviando...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Wand2 className="w-5 h-5" />
-                                    <span>Generar Test</span>
-                                </>
-                            )}
+                            <Wand2 className="w-5 h-5" />
+                            <span>Generar Test</span>
                         </button>
                     </div>
                 </div>

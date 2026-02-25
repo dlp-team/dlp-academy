@@ -33,9 +33,9 @@ const Toast = ({ message, type, onClose }) => {
 
     return (
         <div className={`fixed bottom-8 right-8 z-[100] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border-2 font-bold text-sm transition-all duration-500 animate-in slide-in-from-bottom-4 fade-in ${
-            type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 
-            type === 'error' ? 'bg-red-50 border-red-200 text-red-800' : 
-            'bg-blue-50 border-blue-200 text-blue-800'
+            type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-200' :
+            type === 'error' ? 'bg-red-50 border-red-200 text-red-800 dark:bg-red-950 dark:border-red-800 dark:text-red-200' :
+            'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-200'
         }`}>
             {type === 'success' && <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />}
             {type === 'error' && <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />}
@@ -50,12 +50,12 @@ const Toast = ({ message, type, onClose }) => {
 
 const FormulaEditor = ({ formula, index, onUpdate, onDelete, topicGradient, baseColor }) => {
     return (
-        <div className="group/formula relative bg-white rounded-2xl border-2 border-slate-100 hover:border-slate-200 shadow-sm transition-all duration-300 overflow-hidden">
+        <div className="group/formula relative bg-white dark:bg-slate-900 rounded-2xl border-2 border-slate-100 dark:border-slate-700 hover:border-slate-200 dark:hover:border-slate-600 shadow-sm transition-all duration-300 overflow-hidden">
             <div className={`h-1 w-full bg-gradient-to-r ${topicGradient}`} />
             <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Fórmula #{index + 1}</span>
-                    <button onClick={onDelete} className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all">
+                    <span className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Fórmula #{index + 1}</span>
+                    <button onClick={onDelete} className="p-1.5 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950 transition-all">
                         <Trash2 className="w-3.5 h-3.5" />
                     </button>
                 </div>
@@ -64,9 +64,9 @@ const FormulaEditor = ({ formula, index, onUpdate, onDelete, topicGradient, base
                     onChange={(e) => onUpdate(e.target.value)}
                     placeholder="Ej: F = m \cdot a"
                     rows={2}
-                    className={`w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-${baseColor}-300 focus:border-transparent resize-none transition-all`}
+                    className={`w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-mono text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-${baseColor}-300 focus:border-transparent resize-none transition-all`}
                 />
-                <div className="py-2 px-3 bg-slate-50 rounded-xl border border-slate-200 text-center overflow-x-auto">
+                <div className="py-2 px-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-center overflow-x-auto">
                     <BlockMath math={formula || '\\text{Escribe LaTeX arriba}'} />
                 </div>
             </div>
@@ -91,10 +91,10 @@ const SectionEditor = ({ section, index, total, topicGradient, baseColor, onUpda
     return (
         <div className="relative group/section">
             <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-[2.5rem] blur-2xl opacity-0 group-hover/section:opacity-10 transition-opacity duration-500`} />
-            <div className="relative bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-100 overflow-hidden">
+            <div className="relative bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-xl border-2 border-slate-100 dark:border-slate-700 overflow-hidden">
                 <div className={`h-1.5 w-full bg-gradient-to-r ${topicGradient}`} />
                 <div className="px-6 py-4 flex items-center gap-4">
-                    <div className={`relative w-10 h-10 rounded-xl bg-gradient-to-br ${topicGradient} flex items-center justify-center text-white font-black shadow-lg ring-2 ring-white shrink-0`}>
+                    <div className={`relative w-10 h-10 rounded-xl bg-gradient-to-br ${topicGradient} flex items-center justify-center text-white font-black shadow-lg ring-2 ring-white dark:ring-slate-800 shrink-0`}>
                         {index + 1}
                     </div>
                     <input
@@ -102,11 +102,11 @@ const SectionEditor = ({ section, index, total, topicGradient, baseColor, onUpda
                         value={section.title}
                         onChange={(e) => updateField('title', e.target.value)}
                         placeholder="Título del capítulo..."
-                        className="flex-1 text-lg font-black text-slate-900 bg-transparent border-none outline-none placeholder-slate-300"
+                        className="flex-1 text-lg font-black text-slate-900 dark:text-slate-100 bg-transparent border-none outline-none placeholder-slate-300 dark:placeholder-slate-600"
                     />
                     <div className="flex items-center gap-1">
-                        <button onClick={onMoveUp} disabled={index === 0} className="p-1.5 text-slate-400 hover:text-slate-700 disabled:opacity-20"><MoveUp className="w-4 h-4" /></button>
-                        <button onClick={onMoveDown} disabled={index === total - 1} className="p-1.5 text-slate-400 hover:text-slate-700 disabled:opacity-20"><MoveDown className="w-4 h-4" /></button>
+                        <button onClick={onMoveUp} disabled={index === 0} className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-20"><MoveUp className="w-4 h-4" /></button>
+                        <button onClick={onMoveDown} disabled={index === total - 1} className="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 disabled:opacity-20"><MoveDown className="w-4 h-4" /></button>
                         <button onClick={onDuplicate} className={`p-1.5 text-slate-400 hover:text-${baseColor}-600`}><Copy className="w-4 h-4" /></button>
                         <button onClick={onDelete} className="p-1.5 text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                         <button onClick={() => setIsExpanded(!isExpanded)} className="p-1.5 text-slate-400">
@@ -116,17 +116,17 @@ const SectionEditor = ({ section, index, total, topicGradient, baseColor, onUpda
                 </div>
 
                 {isExpanded && (
-                    <div className="px-6 pb-6 space-y-5 border-t border-slate-50 pt-5">
+                    <div className="px-6 pb-6 space-y-5 border-t border-slate-50 dark:border-slate-800 pt-5">
                         <textarea
                             value={section.content}
                             onChange={(e) => updateField('content', e.target.value)}
                             placeholder="Escribe el contenido..."
                             rows={6}
-                            className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-${baseColor}-300 resize-y transition-all font-mono leading-relaxed`}
+                            className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-${baseColor}-300 resize-y transition-all font-mono leading-relaxed`}
                         />
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
-                                <label className="text-xs font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest flex items-center gap-2">
                                     <Calculator className="w-3.5 h-3.5" /> Fórmulas ({section.formulas?.length || 0})
                                 </label>
                                 <button onClick={addFormula} className={`flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r ${topicGradient} text-white rounded-lg text-xs font-black shadow-md hover:-translate-y-0.5 transition-all`}>
@@ -192,7 +192,7 @@ const StudyGuideEditor = ({ user }) => {
                 }
                 
                 const topicData = { id: topicSnap.id, ...topicSnap.data() };
-                const hasPermission = canEdit(topicData, user);
+                const hasPermission = canEdit(topicData, user?.uid);
                 setHasEditPermission(hasPermission);
                 
                 if (!hasPermission) {
@@ -242,30 +242,30 @@ const StudyGuideEditor = ({ user }) => {
         }
     };
 
-    if (loading) return <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50 font-bold text-slate-400"><Loader2 className="w-10 h-10 animate-spin" /> Cargando editor...</div>;
+    if (loading) return <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-slate-50 dark:bg-slate-950 font-bold text-slate-400 dark:text-slate-500"><Loader2 className="w-10 h-10 animate-spin" /> Cargando editor...</div>;
 
     // *** PERMISSION DENIED UI ***
     if (!hasEditPermission) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-6">
-                <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200 p-12 text-center">
-                    <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <ShieldAlert className="w-10 h-10 text-amber-600" />
+            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 px-6">
+                <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-700 p-12 text-center">
+                    <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <ShieldAlert className="w-10 h-10 text-amber-600 dark:text-amber-400" />
                     </div>
-                    <h1 className="text-3xl font-black text-slate-800 mb-3">Sin permisos de edición</h1>
-                    <p className="text-slate-500 mb-8 leading-relaxed">
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-3">Sin permisos de edición</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
                         No tienes permisos para editar esta guía de estudio. Solo el creador o colaboradores con acceso de edición pueden modificar el contenido.
                     </p>
                     <div className="flex flex-col gap-3">
-                        <button 
+                        <button
                             onClick={() => navigate(-1)}
                             className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all"
                         >
                             <ChevronLeft className="w-5 h-5" /> Volver
                         </button>
-                        <button 
+                        <button
                             onClick={goToView}
-                            className="w-full flex items-center justify-center gap-2 bg-slate-100 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-200 transition-all"
+                            className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-3 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                         >
                             <Eye className="w-5 h-5" /> Ver en modo lectura
                         </button>
@@ -276,23 +276,23 @@ const StudyGuideEditor = ({ user }) => {
     }
 
     return (
-        <div className={`min-h-screen bg-slate-50 pb-32`}>
+        <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 pb-32`}>
             {/* HEADER */}
-            <div className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b-2 border-white/60 shadow-xl p-4">
+            <div className="sticky top-0 z-40 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b-2 border-white/60 dark:border-slate-700/60 shadow-xl p-4">
                 <div className="max-w-5xl mx-auto flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-colors"><ChevronLeft /></button>
+                        <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-600 dark:text-slate-400 transition-colors"><ChevronLeft /></button>
                         <div>
                             <div className="flex items-center gap-2">
                                 <PenLine className={`w-4 h-4 text-${baseColor}-500`} />
-                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Modo Editor</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Modo Editor</span>
                             </div>
-                            <h1 className="font-black text-slate-900 truncate max-w-[200px] sm:max-w-md">{title || 'Sin título'}</h1>
+                            <h1 className="font-black text-slate-900 dark:text-slate-100 truncate max-w-[200px] sm:max-w-md">{title || 'Sin título'}</h1>
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        {/* ✅ BOTÓN VER GUÍA CORREGIDO */}
-                        <button onClick={goToView} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-sm">
+                        {/* BOTÓN VER GUÍA */}
+                        <button onClick={goToView} className="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-bold text-sm flex items-center gap-2 transition-all shadow-sm">
                             <Eye className="w-4 h-4" /> <span>Ver guía</span>
                         </button>
                         <button onClick={handleSave} disabled={saving} className={`px-5 py-2 bg-gradient-to-r ${topicGradient} text-white rounded-xl font-black text-sm shadow-lg flex items-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50`}>
@@ -305,22 +305,22 @@ const StudyGuideEditor = ({ user }) => {
             {/* CONTENT */}
             <div className="max-w-5xl mx-auto px-6 py-10 space-y-10">
                 {/* META FIELDS */}
-                <div className="bg-white rounded-[2.5rem] shadow-xl border-2 border-slate-100 p-8 space-y-6 relative overflow-hidden">
+                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-xl border-2 border-slate-100 dark:border-slate-700 p-8 space-y-6 relative overflow-hidden">
                     <div className={`h-1.5 w-full bg-gradient-to-r ${topicGradient} absolute top-0 left-0`} />
                     <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Título de la guía</label>
-                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xl font-black focus:ring-2 focus:ring-${baseColor}-300 focus:bg-white outline-none transition-all`} />
+                        <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Título de la guía</label>
+                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xl font-black text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-${baseColor}-300 focus:bg-white dark:focus:bg-slate-700 outline-none transition-all`} />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Subtítulo</label>
-                        <input type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} className={`w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold focus:ring-2 focus:ring-${baseColor}-300 focus:bg-white outline-none transition-all`} />
+                        <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Subtítulo</label>
+                        <input type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} className={`w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-${baseColor}-300 focus:bg-white dark:focus:bg-slate-700 outline-none transition-all`} />
                     </div>
                 </div>
 
                 {/* SECTIONS */}
                 <div className="space-y-6">
                     <div className="flex items-center justify-between px-2">
-                        <h2 className="text-xl font-black text-slate-900 flex items-center gap-3"><LayoutList className="text-slate-400" /> Capítulos ({sections.length})</h2>
+                        <h2 className="text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-3"><LayoutList className="text-slate-400 dark:text-slate-500" /> Capítulos ({sections.length})</h2>
                         <button onClick={() => setSections([...sections, EMPTY_SECTION()])} className={`px-4 py-2 bg-gradient-to-r ${topicGradient} text-white rounded-2xl font-black text-sm shadow-md hover:-translate-y-0.5 transition-all`}>+ Nuevo capítulo</button>
                     </div>
                     <div className="space-y-5">
@@ -342,7 +342,7 @@ const StudyGuideEditor = ({ user }) => {
                         {saving ? <Loader2 className="animate-spin" /> : <Save />} Guardar Cambios Finales
                     </button>
                     {/* ✅ ENLACE SECUNDARIO VER GUÍA */}
-                    <button onClick={goToView} className="text-slate-400 hover:text-slate-600 font-bold text-sm transition-colors flex items-center gap-2">
+                    <button onClick={goToView} className="text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 font-bold text-sm transition-colors flex items-center gap-2">
                         <Eye className="w-4 h-4" /> Ver cómo está quedando
                     </button>
                 </div>

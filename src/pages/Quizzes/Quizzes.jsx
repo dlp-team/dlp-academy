@@ -10,10 +10,10 @@ import { db } from '../../firebase/config';
 // ==================== IMPORTACIONES DE COMPONENTES ====================
 // Apuntan a la carpeta components/quizzes
 
-import { 
+import {
     ANSWER_STATUS, VIEW_STATES, DEFAULT_QUIZ, VIBRATION_DURATION, MAX_OPTION_LENGTH_FOR_GRID,
     extractColorFromGradient, calculateScore, isPassed,
-    LoadingSpinner, SubjectIcon, FormulaDisplay, ProgressBar, QuizFooter
+    LoadingSpinner, SubjectIcon, FormulaDisplay, ProgressBar, QuizFooter, RenderLatex
 } from '../../components/modules/QuizEngine/QuizCommon';
 
 import ConfettiEffect, { useConfetti } from '../../components/modules/QuizEngine/QuizFeedback';
@@ -127,10 +127,10 @@ const ReviewView = React.memo(({
                         </div>
                         
                         <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-3 tracking-tight leading-tight">
-                            {quizData.title}
+                            <RenderLatex text={quizData.title} />
                         </h1>
                         <p className={`text-lg font-bold bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent`}>
-                            {quizData.subtitle}
+                            <RenderLatex text={quizData.subtitle} />
                         </p>
                         
                         <div className="flex items-center justify-center gap-6 mt-8">

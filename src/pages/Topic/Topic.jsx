@@ -5,7 +5,7 @@ import Header from '../../components/layout/Header';
 import { useTopicLogic } from './hooks/useTopicLogic';
 
 // Firebase imports
-import { 
+import {
     collection, query, where, onSnapshot
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -26,7 +26,6 @@ const Topic = ({ user }) => {
     // 2. ESTADOS LOCALES
     const [userScores, setUserScores] = useState({});
     const [scoresLoading, setScoresLoading] = useState(true);
-    const [resumenes, setResumenes] = useState([]);
     // 3. EFECTO: Escuchar puntuaciones (Quizzes)
     useEffect(() => {
         if (!user || !logic.subjectId || !logic.topicId) {
@@ -53,44 +52,20 @@ const Topic = ({ user }) => {
         return () => unsubscribe();
     }, [user, logic.subjectId, logic.topicId]);
 
-    // 3.5. EFECTO: Escuchar los resúmenes generados por la IA en Firebase
-    useEffect(() => {
-        if (!logic.subjectId || !logic.topicId) return;
-
-        const resumenRef = collection(db, "resumen");
-        const q = query(
-            resumenRef, 
-            where("subjectId", "==", logic.subjectId),
-            where("topicId", "==", logic.topicId)
-        );
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const fetchedFiles = [];
-            snapshot.forEach(docSnap => {
-                fetchedFiles.push({ id: docSnap.id, ...docSnap.data() });
-            });
-            setResumenes(fetchedFiles);
-        });
-
-        return () => unsubscribe();
-    }, [logic.subjectId, logic.topicId]);
-
-    // 4. MERGE DE DATOS
     // 4. MERGE DE DATOS
     const enrichedTopic = useMemo(() => {
         if (!logic.topic) return null;
 
         return {
             ...logic.topic,
-            // Aquí combinamos los pdfs manuales (si los hay) con los resúmenes de Firebase
-            pdfs: [...(logic.topic.pdfs || []), ...resumenes], 
+            pdfs: logic.topic.pdfs || [],
             uploads: logic.topic.uploads || [],
             quizzes: logic.topic.quizzes?.map(q => ({
                 ...q,
                 score: userScores[q.id] ?? null
             })) || []
         };
-    }, [logic.topic, userScores, resumenes]);
+    }, [logic.topic, userScores]);
 
     // 5. PROGRESO
     const globalProgress = useMemo(() => {

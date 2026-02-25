@@ -11,22 +11,12 @@ import { canEdit } from '../../utils/permissionUtils';
 
 // Importaciones para matemáticas
 import 'katex/dist/katex.min.css';
-import { InlineMath, BlockMath } from 'react-katex';
+import { RenderLatex as BaseRenderLatex } from '../../components/modules/QuizEngine/QuizCommon';
 
-// --- COMPONENTE AUXILIAR: RENDERIZADOR DE LATEX ---
+// --- COMPONENTE AUXILIAR: RENDERIZADOR DE LATEX CON PLACEHOLDER ---
 const RenderLatex = ({ text }) => {
-    if (!text) return <span className="text-slate-300 italic">Haz clic para escribir...</span>;
-    // Separa el texto por el símbolo $ para encontrar las partes matemáticas
-    const parts = text.split('$');
-    return (
-        <span>
-            {parts.map((part, index) => (
-                index % 2 === 0 ? 
-                <span key={index}>{part}</span> : 
-                <span key={index} className="text-indigo-700 font-serif"><InlineMath math={part} /></span>
-            ))}
-        </span>
-    );
+    if (!text) return <span className="text-slate-400 dark:text-slate-500 italic">Haz clic para escribir...</span>;
+    return <BaseRenderLatex text={text} />;
 };
 
 // --- COMPONENTE MAGICO: EDITOR HÍBRIDO (VISTA/EDICIÓN) ---
@@ -51,7 +41,7 @@ const EditableMathText = ({ value, onChange, placeholder, isTextArea = false, cl
                         value={value}
                         onChange={(e) => onChange(e.target.value)}
                         onBlur={() => setIsEditing(false)}
-                        className={`w-full bg-white border-2 border-indigo-400 rounded-xl px-4 py-3 font-mono text-sm text-slate-800 focus:outline-none shadow-lg animate-in fade-in zoom-in-95 duration-200 ${className}`}
+                        className={`w-full bg-white dark:bg-slate-800 border-2 border-indigo-400 dark:border-indigo-500 rounded-xl px-4 py-3 font-mono text-sm text-slate-800 dark:text-slate-200 focus:outline-none shadow-lg animate-in fade-in zoom-in-95 duration-200 ${className}`}
                         rows={3}
                         placeholder={placeholder}
                     />
@@ -62,12 +52,12 @@ const EditableMathText = ({ value, onChange, placeholder, isTextArea = false, cl
                         value={value}
                         onChange={(e) => onChange(e.target.value)}
                         onBlur={() => setIsEditing(false)}
-                        className={`w-full bg-white border-2 border-indigo-400 rounded-lg px-3 py-2 font-mono text-sm text-slate-800 focus:outline-none shadow-lg animate-in fade-in zoom-in-95 duration-200 ${className}`}
+                        className={`w-full bg-white dark:bg-slate-800 border-2 border-indigo-400 dark:border-indigo-500 rounded-lg px-3 py-2 font-mono text-sm text-slate-800 dark:text-slate-200 focus:outline-none shadow-lg animate-in fade-in zoom-in-95 duration-200 ${className}`}
                         placeholder={placeholder}
                     />
                 )}
                 {/* Indicador de que estás editando */}
-                <div className="absolute right-2 top-2 text-xs text-indigo-400 font-bold bg-white px-2 rounded pointer-events-none">
+                <div className="absolute right-2 top-2 text-xs text-indigo-400 dark:text-indigo-300 font-bold bg-white dark:bg-slate-800 px-2 rounded pointer-events-none">
                     Editando LaTeX
                 </div>
             </div>
@@ -76,16 +66,16 @@ const EditableMathText = ({ value, onChange, placeholder, isTextArea = false, cl
 
     // MODO VISUALIZACIÓN: Muestra el resultado bonito
     return (
-        <div 
+        <div
             onClick={() => setIsEditing(true)}
-            className={`cursor-text hover:bg-slate-50 border border-transparent hover:border-slate-200 rounded-xl px-4 py-3 transition-all group relative ${className} ${!value && 'bg-slate-50'}`}
+            className={`cursor-text hover:bg-slate-50 dark:hover:bg-slate-700/50 border border-transparent hover:border-slate-200 dark:hover:border-slate-600 rounded-xl px-4 py-3 transition-all group relative ${className} ${!value && 'bg-slate-50 dark:bg-slate-700/30'}`}
         >
             <div className={isTextArea ? "whitespace-pre-wrap" : "truncate"}>
                 <RenderLatex text={value} />
             </div>
-            
+
             {/* Icono flotante que aparece al pasar el mouse */}
-            <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 bg-white/80 p-1 rounded-md shadow-sm">
+            <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 dark:text-slate-500 bg-white/80 dark:bg-slate-700/80 p-1 rounded-md shadow-sm">
                 <Pencil className="w-3 h-3" />
             </div>
         </div>
@@ -119,7 +109,7 @@ const QuizEdit = ({ user }) => {
                 }
                 
                 const topicData = { id: topicSnap.id, ...topicSnap.data() };
-                const hasPermission = canEdit(topicData, user);
+                const hasPermission = canEdit(topicData, user?.uid);
                 setHasEditPermission(hasPermission);
                 
                 if (!hasPermission) {
@@ -191,30 +181,30 @@ const QuizEdit = ({ user }) => {
         } catch (e) { alert("Error al guardar"); } finally { setSaving(false); }
     };
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="animate-spin w-8 h-8 text-indigo-600"/></div>;
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950"><Loader2 className="animate-spin w-8 h-8 text-indigo-600 dark:text-indigo-400"/></div>;
 
     // *** PERMISSION DENIED UI ***
     if (!hasEditPermission) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 px-6">
-                <div className="max-w-md w-full bg-white rounded-3xl shadow-xl border border-slate-200 p-12 text-center">
-                    <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <ShieldAlert className="w-10 h-10 text-amber-600" />
+            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 px-6">
+                <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 p-12 text-center">
+                    <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <ShieldAlert className="w-10 h-10 text-amber-600 dark:text-amber-400" />
                     </div>
-                    <h1 className="text-3xl font-black text-slate-800 mb-3">Sin permisos de edición</h1>
-                    <p className="text-slate-500 mb-8 leading-relaxed">
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-3">Sin permisos de edición</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
                         No tienes permisos para editar este test. Solo el creador o colaboradores con acceso de edición pueden modificar el contenido.
                     </p>
                     <div className="flex flex-col gap-3">
-                        <button 
+                        <button
                             onClick={() => navigate(-1)}
                             className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all"
                         >
                             <ChevronLeft className="w-5 h-5" /> Volver
                         </button>
-                        <button 
+                        <button
                             onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quizId}`)}
-                            className="w-full flex items-center justify-center gap-2 bg-slate-100 text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-200 transition-all"
+                            className="w-full flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-6 py-3 rounded-xl font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
                         >
                             <Eye className="w-5 h-5" /> Ver en modo lectura
                         </button>
@@ -225,17 +215,17 @@ const QuizEdit = ({ user }) => {
     }
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 pb-32">
-            
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 pb-32">
+
             {/* HEADER */}
-            <div className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm">
+            <div className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex items-center justify-between shadow-sm">
                 <div className="flex items-center gap-4">
-                    <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
+                    <button onClick={() => navigate(-1)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500 dark:text-slate-400">
                         <ChevronLeft className="w-6 h-6" />
                     </button>
                     <div>
-                        <h1 className="text-lg font-bold text-slate-800">Editor de Test</h1>
-                        <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">{quizData.questions.length} Preguntas</p>
+                        <h1 className="text-lg font-bold text-slate-800 dark:text-slate-100">Editor de Test</h1>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">{quizData.questions.length} Preguntas</p>
                     </div>
                 </div>
                 <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg disabled:opacity-50">
@@ -244,13 +234,13 @@ const QuizEdit = ({ user }) => {
             </div>
 
             <main className="max-w-4xl mx-auto px-6 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                
+
                 {/* TÍTULO */}
-                <div className="bg-white p-8 rounded-[2rem] shadow-sm border border-slate-200 mb-8">
-                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Título del Test</label>
-                    <input 
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-800 mb-8">
+                    <label className="block text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2">Título del Test</label>
+                    <input
                         type="text" value={quizData.title} onChange={(e) => updateField('title', e.target.value)}
-                        className="w-full text-4xl font-black text-slate-800 bg-transparent border-b-2 border-transparent focus:border-indigo-100 focus:outline-none py-2"
+                        className="w-full text-4xl font-black text-slate-800 dark:text-slate-100 bg-transparent border-b-2 border-transparent focus:border-indigo-100 dark:focus:border-indigo-900 focus:outline-none py-2 placeholder:text-slate-300 dark:placeholder:text-slate-600"
                         placeholder="Nombre del test..."
                     />
                 </div>
@@ -258,58 +248,56 @@ const QuizEdit = ({ user }) => {
                 {/* PREGUNTAS */}
                 <div className="space-y-6">
                     {quizData.questions.map((q, qIndex) => (
-                        <div key={qIndex} className="bg-white rounded-[2rem] shadow-sm border border-slate-200 overflow-hidden">
-                            
+                        <div key={qIndex} className="bg-white dark:bg-slate-900 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+
                             {/* ENUNCIADO DE LA PREGUNTA */}
-                            <div className="bg-slate-50 border-b border-slate-100 px-6 py-4 flex items-start gap-4">
-                                <div className="mt-2 w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center font-bold text-sm shrink-0">
+                            <div className="bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-700/50 px-6 py-4 flex items-start gap-4">
+                                <div className="mt-2 w-8 h-8 bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400 rounded-lg flex items-center justify-center font-bold text-sm shrink-0">
                                     {qIndex + 1}
                                 </div>
                                 <div className="flex-1">
-                                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Enunciado (Click para editar)</label>
-                                    
-                                    {/* USAMOS EL NUEVO COMPONENTE AQUÍ */}
-                                    <EditableMathText 
-                                        value={q.question} 
+                                    <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">Enunciado (Click para editar)</label>
+
+                                    <EditableMathText
+                                        value={q.question}
                                         onChange={(val) => updateQuestion(qIndex, val)}
                                         isTextArea={true}
-                                        className="text-lg font-bold text-slate-800"
+                                        className="text-lg font-bold text-slate-800 dark:text-slate-100"
                                         placeholder="Escribe la pregunta..."
                                     />
 
                                 </div>
-                                <button onClick={() => deleteQuestion(qIndex)} className="p-2 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                <button onClick={() => deleteQuestion(qIndex)} className="p-2 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-xl transition-all">
                                     <Trash2 className="w-5 h-5" />
                                 </button>
                             </div>
 
                             {/* OPCIONES */}
-                            <div className="p-6 bg-white space-y-3">
+                            <div className="p-6 bg-white dark:bg-slate-900 space-y-3">
                                 {q.options.map((option, oIndex) => {
                                     const isCorrect = q.correctIndex === oIndex;
                                     return (
-                                        <div key={oIndex} className={`flex items-center gap-3 p-2 rounded-xl border transition-all ${isCorrect ? 'border-green-200 bg-green-50/30' : 'border-slate-100 hover:border-slate-200'}`}>
-                                            <button onClick={() => setCorrect(qIndex, oIndex)} className={`p-2 rounded-full transition-all ${isCorrect ? 'text-green-600 bg-white shadow-sm' : 'text-slate-300 hover:text-green-400'}`}>
+                                        <div key={oIndex} className={`flex items-center gap-3 p-2 rounded-xl border transition-all ${isCorrect ? 'border-green-200 dark:border-green-800 bg-green-50/30 dark:bg-green-950/20' : 'border-slate-100 dark:border-slate-700/50 hover:border-slate-200 dark:hover:border-slate-600'}`}>
+                                            <button onClick={() => setCorrect(qIndex, oIndex)} className={`p-2 rounded-full transition-all ${isCorrect ? 'text-green-600 dark:text-green-400 bg-white dark:bg-slate-800 shadow-sm' : 'text-slate-300 dark:text-slate-600 hover:text-green-400'}`}>
                                                 {isCorrect ? <CheckCircle2 className="w-6 h-6 fill-current" /> : <Circle className="w-6 h-6" />}
                                             </button>
 
-                                            {/* USAMOS EL NUEVO COMPONENTE PARA LAS RESPUESTAS */}
                                             <div className="flex-1 min-w-0">
-                                                <EditableMathText 
-                                                    value={option} 
+                                                <EditableMathText
+                                                    value={option}
                                                     onChange={(val) => updateOption(qIndex, oIndex, val)}
-                                                    className={`${isCorrect ? 'text-green-900 font-semibold' : 'text-slate-600'}`}
+                                                    className={`${isCorrect ? 'text-green-900 dark:text-green-300 font-semibold' : 'text-slate-600 dark:text-slate-300'}`}
                                                     placeholder="Opción..."
                                                 />
                                             </div>
 
-                                            <button onClick={() => deleteOption(qIndex, oIndex)} className="p-2 text-slate-300 hover:text-red-500">
+                                            <button onClick={() => deleteOption(qIndex, oIndex)} className="p-2 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400">
                                                 <X className="w-4 h-4" />
                                             </button>
                                         </div>
                                     );
                                 })}
-                                <button onClick={() => addOption(qIndex)} className="ml-14 mt-2 text-xs font-bold text-indigo-500 hover:text-indigo-700 flex items-center gap-1 px-3 py-2 hover:bg-indigo-50 rounded-lg">
+                                <button onClick={() => addOption(qIndex)} className="ml-14 mt-2 text-xs font-bold text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 flex items-center gap-1 px-3 py-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 rounded-lg">
                                     <Plus className="w-3 h-3" /> Añadir Opción
                                 </button>
                             </div>
@@ -318,7 +306,7 @@ const QuizEdit = ({ user }) => {
                 </div>
 
                 <div className="mt-12 flex justify-center">
-                    <button onClick={addQuestion} className="flex items-center gap-3 px-8 py-5 bg-white border-2 border-dashed border-slate-300 text-slate-400 rounded-3xl font-bold hover:border-indigo-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all shadow-sm">
+                    <button onClick={addQuestion} className="flex items-center gap-3 px-8 py-5 bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 text-slate-400 dark:text-slate-500 rounded-3xl font-bold hover:border-indigo-400 dark:hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-all shadow-sm">
                         <Plus className="w-6 h-6" /> Añadir Nueva Pregunta
                     </button>
                 </div>
