@@ -11,7 +11,6 @@ import { useClassMembers } from './hooks/useClassMembers';
 import Header from '../../components/layout/Header';
 import SubjectHeader from './components/SubjectHeader';
 import TopicGrid from './components/TopicGrid';
-import ClassMembers from './components/ClassMembers';
 
 // Modals
 import EditSubjectModal from '../Home/modals/EditSubjectModal';
@@ -126,9 +125,9 @@ const Subject = ({ user }) => {
                     searchTerm={searchTerm}
                     onSearch={setSearchTerm}
                     isTeacher={isTeacherUser}
+                    classMembers={classMembers}
+                    membersLoading={membersLoading}
                 />
-
-                <ClassMembers members={classMembers} loading={membersLoading} />
 
                 <TopicGrid
                     topics={isTeacherUser ? filteredTopics : filteredTopics.filter(t => t.isVisible !== false)}
