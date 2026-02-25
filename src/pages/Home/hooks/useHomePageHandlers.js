@@ -16,6 +16,23 @@ export const useHomePageHandlers = ({
     setTopicsModalConfig,
     setFolderContentsModalConfig
 }) => {
+    const resolveFolderShortcutId = (folderId, sourceParentId = null) => {
+        if (!folderId || !Array.isArray(logic?.shortcuts)) return null;
+
+        const exactMatch = (logic.shortcuts || []).find(
+            s =>
+                s.targetType === 'folder' &&
+                s.targetId === folderId &&
+                (s.parentId || null) === (sourceParentId || null)
+        );
+        if (exactMatch?.id) return exactMatch.id;
+
+        const fallback = (logic.shortcuts || []).find(
+            s => s.targetType === 'folder' && s.targetId === folderId
+        );
+        return fallback?.id || null;
+    };
+
     const handleSaveFolderWrapper = folderData => {
         const dataWithParent = { ...folderData, parentId: logic.currentFolder ? logic.currentFolder.id : null };
         logic.handleSaveFolder(dataWithParent);
@@ -40,15 +57,7 @@ export const useHomePageHandlers = ({
             } else if (folderShortcutId && logic?.moveShortcut) {
                 await logic.moveShortcut(folderShortcutId, parentId || null);
             } else if (folderId && folderId !== currentId) {
-                if (logic?.shortcuts) {
-                    const inferredFolderShortcut = (logic.shortcuts || []).find(
-                        s =>
-                            s.targetType === 'folder' &&
-                            s.targetId === folderId &&
-                            (s.parentId || null) === (currentId || null)
-                    );
-                    folderShortcutId = inferredFolderShortcut?.id || null;
-                }
+                folderShortcutId = folderShortcutId || resolveFolderShortcutId(folderId, currentId || null);
                 if (folderShortcutId && logic?.moveShortcut) {
                     await logic.moveShortcut(folderShortcutId, parentId || null);
                     return;
@@ -66,15 +75,7 @@ export const useHomePageHandlers = ({
 
         if (type === 'folder') {
             const sourceParentId = explicitSourceFolderId !== undefined ? explicitSourceFolderId : (logic.currentFolder ? logic.currentFolder.id : null);
-            if (!draggedShortcutId && logic?.shortcuts) {
-                const inferredFolderShortcut = (logic.shortcuts || []).find(
-                    s =>
-                        s.targetType === 'folder' &&
-                        s.targetId === subjectId &&
-                        (s.parentId || null) === (sourceParentId || null)
-                );
-                draggedShortcutId = inferredFolderShortcut?.id || null;
-            }
+            draggedShortcutId = draggedShortcutId || resolveFolderShortcutId(subjectId, sourceParentId || null);
             handleNestFolder(targetFolderId, subjectId, draggedShortcutId || null);
             return true;
         }
@@ -164,15 +165,7 @@ export const useHomePageHandlers = ({
             return handleDropOnFolderWrapper(targetFolderId, subjectId, 'subject', currentFolderId);
         }
         let resolvedFolderShortcutId = droppedFolderShortcutId;
-        if (!resolvedFolderShortcutId && droppedFolderId && logic?.shortcuts) {
-            const inferredFolderShortcut = (logic.shortcuts || []).find(
-                s =>
-                    s.targetType === 'folder' &&
-                    s.targetId === droppedFolderId &&
-                    (s.parentId || null) === (currentFolderId || null)
-            );
-            resolvedFolderShortcutId = inferredFolderShortcut?.id || null;
-        }
+        resolvedFolderShortcutId = resolvedFolderShortcutId || resolveFolderShortcutId(droppedFolderId, currentFolderId || null);
         if (resolvedFolderShortcutId && logic?.moveShortcut) {
             logic.moveShortcut(resolvedFolderShortcutId, targetFolderId || null);
             return true;
@@ -251,11 +244,19 @@ export const useHomePageHandlers = ({
     };
 
     const handleNestFolder = async (targetFolderId, droppedFolderId, droppedFolderShortcutId = null) => {
-        if (droppedFolderShortcutId && logic?.moveShortcut) {
-            await logic.moveShortcut(droppedFolderShortcutId, targetFolderId || null);
+        const inferredShortcutId = droppedFolderShortcutId || resolveFolderShortcutId(droppedFolderId, logic.currentFolder?.id || null);
+
+        if (inferredShortcutId && logic?.moveShortcut) {
+            await logic.moveShortcut(inferredShortcutId, targetFolderId || null);
             return;
         }
         if (targetFolderId === droppedFolderId) return;
+
+        const droppedFolderSource = (logic.folders || []).find(f => f.id === droppedFolderId);
+        const userCanEditSource = droppedFolderSource && currentUserId ? canEdit(droppedFolderSource, currentUserId) : false;
+        if (!userCanEditSource) {
+            return;
+        }
 
         if (isInvalidFolderMove(droppedFolderId, targetFolderId, logic.folders || [])) {
             console.warn('🚫 BLOCKED: Circular dependency detected.');
@@ -358,11 +359,20 @@ export const useHomePageHandlers = ({
     };
 
     const handlePromoteFolderWrapper = async (folderId, folderShortcutId = null) => {
-        if (folderShortcutId && logic?.moveShortcut) {
+        const resolvedShortcutId = folderShortcutId || resolveFolderShortcutId(folderId, logic.currentFolder?.id || null);
+
+        if (resolvedShortcutId && logic?.moveShortcut) {
             const parentId = logic.currentFolder ? logic.currentFolder.parentId : null;
-            await logic.moveShortcut(folderShortcutId, parentId || null);
+            await logic.moveShortcut(resolvedShortcutId, parentId || null);
             return;
         }
+
+        const sourceFolder = (logic.folders || []).find(f => f.id === folderId);
+        const userCanEditSource = sourceFolder && currentUserId ? canEdit(sourceFolder, currentUserId) : false;
+        if (!userCanEditSource) {
+            return;
+        }
+
         if (logic.currentFolder && folderId !== logic.currentFolder.id) {
             const currentFolder = logic.currentFolder;
             const parentId = currentFolder.parentId;

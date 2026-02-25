@@ -82,6 +82,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         orderedFolders,
         allTags,
         filteredFoldersByTags,
+        filteredFolders,
         searchFolders,
         searchSubjects,
         sharedFolders,
@@ -122,6 +123,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         user,
         subjects,
         folders,
+        filteredFolders,
         currentFolder,
         viewMode,
         groupedContent,
@@ -180,6 +182,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         orderedFolders,
         allTags,
         filteredFoldersByTags, 
+        filteredFolders,
         
         // State
         viewMode, setViewMode,

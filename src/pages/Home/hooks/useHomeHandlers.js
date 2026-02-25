@@ -5,6 +5,7 @@ export const useHomeHandlers = ({
     user,
     subjects,
     folders,
+    filteredFolders,
     currentFolder,
     viewMode,
     groupedContent,
@@ -235,10 +236,19 @@ export const useHomeHandlers = ({
 
     const handleOpenFolder = folder => {
         if (folder && folder.id) {
-            const found = folders.find(f => f.id === folder.id);
-            setCurrentFolder(found || null);
-            if (found) {
-                localStorage.setItem('dlp_last_folderId', found.id);
+            const mergedFolders = Array.isArray(filteredFolders) ? filteredFolders : [];
+            const shortcutCandidate = mergedFolders.find(f =>
+                f?.targetType === 'folder' &&
+                (f.targetId === folder.id || (folder?.targetId && f.targetId === folder.targetId))
+            );
+
+            const foundInMerged = mergedFolders.find(f => f.id === folder.id);
+            const foundInSource = folders.find(f => f.id === folder.id);
+            const selectedFolder = shortcutCandidate || foundInMerged || foundInSource || folder;
+
+            setCurrentFolder(selectedFolder || null);
+            if (selectedFolder) {
+                localStorage.setItem('dlp_last_folderId', selectedFolder.id);
             } else {
                 localStorage.removeItem('dlp_last_folderId');
             }
