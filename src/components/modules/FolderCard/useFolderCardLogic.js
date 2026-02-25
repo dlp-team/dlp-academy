@@ -1,5 +1,6 @@
 // src/components/modules/FolderCard/useFolderCardLogic.js
 import { useState, useMemo } from 'react';
+import { isShortcutItem } from '../../../utils/permissionUtils';
 
 export const useFolderCardLogic = ({
     folder,
@@ -31,13 +32,13 @@ export const useFolderCardLogic = ({
         const visited = new Set();
         const getFolderParentId = (entry) => {
             if (!entry) return null;
-            if (entry.isShortcut === true) return entry.shortcutParentId ?? entry.parentId ?? null;
+            if (isShortcutItem(entry)) return entry.shortcutParentId ?? entry.parentId ?? null;
             return entry.parentId ?? null;
         };
 
         const getSubjectParentId = (entry) => {
             if (!entry) return null;
-            if (entry.isShortcut === true) return entry.shortcutParentId ?? entry.folderId ?? entry.parentId ?? null;
+            if (isShortcutItem(entry)) return entry.shortcutParentId ?? entry.folderId ?? entry.parentId ?? null;
             return entry.folderId ?? null;
         };
 

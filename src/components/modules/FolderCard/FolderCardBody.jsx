@@ -3,7 +3,7 @@ import React, { useRef, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
-import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel } from '../../../utils/permissionUtils';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
 
 const FolderCardBody = ({
     folder,
@@ -28,7 +28,7 @@ const FolderCardBody = ({
     const showEditUI = user && shouldShowEditUI(folder, user.uid);
     const showDeleteUI = user && shouldShowDeleteUI(folder, user.uid);
     const canShare = user && canEditItem(folder, user.uid); // Only editors can share
-    const isShortcut = folder?.isShortcut === true;
+    const isShortcut = isShortcutItem(folder);
     const isHiddenFromManual = folder?.hiddenInManual === true;
     const isOrphan = folder?.isOrphan === true;
     const orphanMessage = folder?._reason === 'access-revoked'

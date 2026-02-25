@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { normalizeText } from '../../../utils/stringUtils';
 import { useShortcuts } from '../../../hooks/useShortcuts';
+import { isShortcutItem } from '../../../utils/permissionUtils';
 
 export const useHomeState = ({ user, searchQuery = '', subjects, folders, preferences, loadingPreferences }) => {
     // Fetch user's shortcuts
@@ -230,7 +231,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     const sharedFolders = useMemo(() => {
         const source = Array.isArray(foldersWithShortcuts) ? foldersWithShortcuts : folders;
         return source.filter(f => {
-            if (f?.isShortcut === true) return true;
+            if (isShortcutItem(f)) return true;
             return !f.isOwner;
         });
     }, [foldersWithShortcuts, folders]);
@@ -238,7 +239,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     const sharedSubjects = useMemo(() => {
         const source = Array.isArray(subjectsWithShortcuts) ? subjectsWithShortcuts : subjects;
         return source.filter(s => {
-            if (s?.isShortcut === true) return true;
+            if (isShortcutItem(s)) return true;
             const inSharedFolder = sharedFolders.some(f => s.folderId === f.id);
             return inSharedFolder || (s.uid !== user.uid && s.sharedWithUids?.includes(user.uid));
         });
@@ -274,7 +275,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const sourceFolders = Array.isArray(foldersWithShortcuts) ? foldersWithShortcuts : folders;
 
         let resultFolders = sourceFolders.filter(f => {
-            if (f?.isShortcut === true) return true;
+            if (isShortcutItem(f)) return true;
             if (f?.isOwner === true) return true;
             if (f?.ownerId && user?.uid && f.ownerId === user.uid) return true;
             return Boolean(f?.sharedWithUids && f.sharedWithUids.includes(user?.uid));
@@ -289,14 +290,14 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
         if (selectedTags.length > 0) {
             const matchingSubjectsInFolders = filteredSubjectsByTags.filter(s => {
-                const folderLocation = s?.isShortcut === true
+                const folderLocation = isShortcutItem(s)
                     ? (s.shortcutParentId ?? s.folderId ?? null)
                     : (s.folderId ?? null);
                 return folderLocation !== null;
             });
             const folderIdsWithMatches = new Set(
                 matchingSubjectsInFolders.map(s =>
-                    s?.isShortcut === true
+                    isShortcutItem(s)
                         ? (s.shortcutParentId ?? s.folderId ?? null)
                         : (s.folderId ?? null)
                 )
@@ -311,7 +312,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         if (activeFilter === 'folders') return {};
 
         const isRelated = item => item.uid === user?.uid || (item.sharedWithUids && item.sharedWithUids.includes(user?.uid));
-        const isVisibleInManual = item => !(item?.isShortcut === true && item?.hiddenInManual === true);
+        const isVisibleInManual = item => !(isShortcutItem(item) && item?.hiddenInManual === true);
 
         const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
@@ -455,7 +456,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const query = normalizeText(searchQuery);
 
         const isRelated = item => {
-            if (item?.isShortcut === true) return true;
+            if (isShortcutItem(item)) return true;
             if (item.isOwner === true) return true;
             if (user?.uid && item.uid === user.uid) return true;
             if (user?.uid && item.ownerId === user.uid) return true;

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, Edit2, Trash2, MoreVertical, Users , Share2 } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
-import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel } from '../../../utils/permissionUtils';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
 
 const SubjectListItem = ({ 
     user,
@@ -26,7 +26,7 @@ const SubjectListItem = ({
     const showEditUI = user && shouldShowEditUI(subject, user.uid);
     const showDeleteUI = user && shouldShowDeleteUI(subject, user.uid);
     const canShare = user && canEditItem(subject, user.uid);
-    const isShortcut = subject?.isShortcut === true;
+    const isShortcut = isShortcutItem(subject);
     const isHiddenFromManual = subject?.hiddenInManual === true;
     const isOrphan = subject?.isOrphan === true;
     const orphanMessage = subject?._reason === 'access-revoked'

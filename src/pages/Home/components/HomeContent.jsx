@@ -10,6 +10,7 @@ import SubjectListItem from '../../../components/modules/ListItems/SubjectListIt
 import ListViewItem from '../../../components/modules/ListViewItem';
 import useHomeContentDnd from '../hooks/useHomeContentDnd';
 import useAutoScrollOnDrag from '../../../hooks/useAutoScrollOnDrag';
+import { isShortcutItem } from '../../../utils/permissionUtils';
 
 const HomeContent = ({
     user,
@@ -302,7 +303,7 @@ const HomeContent = ({
                                                         onToggleMenu={setActiveMenu}
                                                         onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                         onDelete={(f, action = 'delete') => {
-                                                            if (f?.isShortcut && f?.shortcutId) {
+                                                            if (isShortcutItem(f) && f?.shortcutId) {
                                                                 setDeleteConfig({
                                                                     isOpen: true,
                                                                     type: 'shortcut-folder',
@@ -353,7 +354,7 @@ const HomeContent = ({
                                                         onEdit={(e, s) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
                                                         onDelete={(e, s, action = 'delete') => {
                                                             e.stopPropagation();
-                                                            if (s?.isShortcut && s?.shortcutId) {
+                                                            if (isShortcutItem(s) && s?.shortcutId) {
                                                                 setDeleteConfig({
                                                                     isOpen: true,
                                                                     type: 'shortcut-subject',
@@ -471,7 +472,7 @@ const HomeContent = ({
                                                 onNavigateSubject={handleSelectSubject}
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                 onDelete={(f, action = 'delete') => {
-                                                    if (f?.isShortcut && f?.shortcutId) {
+                                                    if (isShortcutItem(f) && f?.shortcutId) {
                                                         setDeleteConfig({
                                                             isOpen: true,
                                                             type: 'shortcut-folder',
@@ -510,7 +511,7 @@ const HomeContent = ({
                                                     onNavigateSubject={handleSelectSubject}
                                                     onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                     onDelete={(s, action = 'delete') => {
-                                                        if (s?.isShortcut && s?.shortcutId) {
+                                                        if (isShortcutItem(s) && s?.shortcutId) {
                                                             setDeleteConfig({
                                                                 isOpen: true,
                                                                 type: 'shortcut-subject',

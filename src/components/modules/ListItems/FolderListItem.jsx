@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import SubjectIcon from '../../ui/SubjectIcon';
 import ListViewItem from '../ListViewItem';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
-import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel } from '../../../utils/permissionUtils';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
 
 const FolderListItem = ({ 
     user,
@@ -35,7 +35,7 @@ const FolderListItem = ({
     const showEditUI = currentUserId ? shouldShowEditUI(item, currentUserId) : false;
     const showDeleteUI = currentUserId ? shouldShowDeleteUI(item, currentUserId) : false;
     const canShare = currentUserId ? canEditItem(item, currentUserId) : false;
-    const isShortcut = item?.isShortcut === true;
+    const isShortcut = isShortcutItem(item);
     const isHiddenFromManual = item?.hiddenInManual === true;
     const isOrphan = item?.isOrphan === true;
     const orphanMessage = item?._reason === 'access-revoked'
@@ -65,13 +65,13 @@ const FolderListItem = ({
 
     const getFolderParentId = (folderEntry) => {
         if (!folderEntry) return null;
-        if (folderEntry.isShortcut === true) return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+        if (isShortcutItem(folderEntry)) return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
         return folderEntry.parentId ?? null;
     };
 
     const getSubjectParentId = (subjectEntry) => {
         if (!subjectEntry) return null;
-        if (subjectEntry.isShortcut === true) return subjectEntry.shortcutParentId ?? subjectEntry.folderId ?? subjectEntry.parentId ?? null;
+        if (isShortcutItem(subjectEntry)) return subjectEntry.shortcutParentId ?? subjectEntry.folderId ?? subjectEntry.parentId ?? null;
         return subjectEntry.folderId ?? null;
     };
 

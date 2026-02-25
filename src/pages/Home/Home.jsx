@@ -26,6 +26,7 @@ import HomeModals from './components/HomeModals';
 import HomeShareConfirmModals from './components/HomeShareConfirmModals';
 import FolderTreeModal from '../../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../Subject/modals/SubjectTopicModal';
+import { isShortcutItem } from '../../utils/permissionUtils';
 
 
 const Home = ({ user }) => {
@@ -221,7 +222,7 @@ const Home = ({ user }) => {
 
                         onEditFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                         onDeleteFolder={(f, action = 'delete') => {
-                            if (f?.isShortcut && f?.shortcutId) {
+                            if (isShortcutItem(f) && f?.shortcutId) {
                                 logic.setDeleteConfig({
                                     isOpen: true,
                                     type: 'shortcut-folder',
@@ -246,7 +247,7 @@ const Home = ({ user }) => {
                         }}
                         onDeleteSubject={(e, s, action = 'delete') => {
                             e.stopPropagation();
-                            if (s?.isShortcut && s?.shortcutId) {
+                            if (isShortcutItem(s) && s?.shortcutId) {
                                 logic.setDeleteConfig({
                                     isOpen: true,
                                     type: 'shortcut-subject',

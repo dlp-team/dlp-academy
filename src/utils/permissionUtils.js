@@ -120,6 +120,24 @@ export const canDelete = (item, userId) => {
 };
 
 /**
+ * Detect if an item represents a shortcut entry.
+ * Canonical shortcut signal is targetId + targetType from shortcuts collection.
+ * Resolved shortcuts may also include synthetic flags like isShortcut/shortcutId.
+ *
+ * @param {Object} item
+ * @returns {boolean}
+ */
+export const isShortcutItem = (item) => {
+    if (!item || typeof item !== 'object') return false;
+
+    const hasNativeShortcutShape =
+        typeof item.targetId === 'string' &&
+        (item.targetType === 'subject' || item.targetType === 'folder');
+
+    return hasNativeShortcutShape || item?.isShortcut === true || Boolean(item?.shortcutId);
+};
+
+/**
  * Get user's permission level for an item
  * 
  * @param {Object} item - Subject, folder, or topic document
@@ -166,7 +184,7 @@ export const getPermissionLevel = (item, userId) => {
  * @returns {boolean}
  */
 export const isOrphanedShortcut = (shortcut) => {
-    return shortcut?.isShortcut === true && shortcut?.isOrphan === true;
+    return isShortcutItem(shortcut) && shortcut?.isOrphan === true;
 };
 
 /**
@@ -206,7 +224,7 @@ export const shouldShowEditUI = (item, userId) => {
     if (isOrphanedShortcut(item)) return false;
 
     // Shortcut owner can edit shortcut presentation (local copy UI)
-    if (item?.isShortcut === true) {
+    if (isShortcutItem(item)) {
         return item.ownerId === userId || item.shortcutOwnerId === userId;
     }
     
@@ -225,7 +243,7 @@ export const shouldShowEditUI = (item, userId) => {
  */
 export const shouldShowDeleteUI = (item, userId) => {
     // For shortcuts, user can always delete their own shortcut
-    if (item?.isShortcut === true) {
+    if (isShortcutItem(item)) {
         return item.ownerId === userId || item.shortcutOwnerId === userId;
     }
 
