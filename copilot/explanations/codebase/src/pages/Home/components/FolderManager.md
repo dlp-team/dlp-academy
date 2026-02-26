@@ -1,3 +1,18 @@
+## [2026-02-26] Feature Update: Owner Row Visibility + Owner Protection in Sharing Tab
+### Context & Architecture
+`FolderManager` now builds sharing list entries with explicit owner context, aligned with subject sharing behavior.
+
+### Previous State
+- Owner was not guaranteed to be visible as a dedicated row.
+- Owner-targeted operations needed explicit guarding.
+
+### New State & Logic
+- Added owner row with `Propietario` label in sharing tab.
+- Blocked owner unshare and permission mutation in UI handlers.
+- Added owner-email validation before share execution.
+
+---
+
 ## [2026-02-26] Feature Update: In-Card Share Confirmations (No Browser Alerts)
 ### Context & Architecture
 `FolderManager` sharing tab now stages share mutations in local state and only executes after inline confirmation.

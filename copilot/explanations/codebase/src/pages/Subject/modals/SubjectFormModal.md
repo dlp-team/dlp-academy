@@ -1,3 +1,18 @@
+## [2026-02-26] Feature Update: Owner Row Visibility + Owner Protection in Sharing Tab
+### Context & Architecture
+`SubjectFormModal` now composes sharing rows as `owner + shared users`, ensuring ownership context is always visible in-card.
+
+### Previous State
+- Owner did not always appear explicitly in the sharing list.
+- Owner could be targeted by generic list actions depending on source data.
+
+### New State & Logic
+- Added synthetic owner row rendering with `Propietario` label.
+- Prevented owner from unshare and permission-change actions at UI level.
+- Added owner-email guard before share execution to avoid sharing with owner.
+
+---
+
 ## [2026-02-26] Feature Update: In-Card Share Confirmations (No Browser Alerts)
 ### Context & Architecture
 `SubjectFormModal` sharing tab now mediates potentially destructive changes through inline confirmation UI state before calling `onShare/onUnshare`.

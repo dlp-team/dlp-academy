@@ -117,6 +117,11 @@ const FolderManager = ({
 
     const executeShareAction = async (emailToShare, roleToShare) => {
         const normalizedEmail = emailToShare.toLowerCase();
+        const ownerEmail = (initialData?.ownerEmail || (formData?.ownerId === user?.uid ? user?.email : '') || '').toLowerCase();
+        if (ownerEmail && normalizedEmail === ownerEmail) {
+            setShareError('No puedes compartir con el propietario.');
+            return;
+        }
         setShareLoading(true);
         setShareError('');
         setShareSuccess('');
@@ -178,6 +183,11 @@ const FolderManager = ({
     };
 
     const handleUnshareAction = (emailToRemove) => {
+        const ownerEmail = (initialData?.ownerEmail || (formData?.ownerId === user?.uid ? user?.email : '') || '').toLowerCase();
+        if (ownerEmail && (emailToRemove || '').toLowerCase() === ownerEmail) {
+            setShareError('No puedes quitar al propietario.');
+            return;
+        }
         setPendingShareAction({
             type: 'unshare',
             email: emailToRemove
@@ -186,6 +196,11 @@ const FolderManager = ({
 
     const handleUpdatePermission = (emailToUpdate, nextRole) => {
         if (!isOwnerManager) return;
+        const ownerEmail = (initialData?.ownerEmail || (formData?.ownerId === user?.uid ? user?.email : '') || '').toLowerCase();
+        if (ownerEmail && (emailToUpdate || '').toLowerCase() === ownerEmail) {
+            setShareError('No puedes cambiar permisos del propietario.');
+            return;
+        }
         const currentEntry = sharedList.find(entry => entry.email === emailToUpdate);
         const currentRole = currentEntry?.role || 'viewer';
         if (currentRole === nextRole) return;
@@ -243,11 +258,19 @@ const FolderManager = ({
         }
     };
 
-    const showShareSearch = sharedList.length > 5;
+    const ownerEmailRaw = initialData?.ownerEmail || (formData?.ownerId === user?.uid ? user?.email : '') || '';
+    const ownerEmailNormalized = ownerEmailRaw.toLowerCase();
+    const ownerEntry = ownerEmailRaw
+        ? [{ email: ownerEmailRaw, role: 'owner', isOwnerEntry: true }]
+        : [];
+    const sharedWithoutOwner = sharedList.filter(share => (share.email || '').toLowerCase() !== ownerEmailNormalized);
+    const allSharedEntries = [...ownerEntry, ...sharedWithoutOwner];
+
+    const showShareSearch = allSharedEntries.length > 5;
     const normalizedShareSearch = shareSearch.trim().toLowerCase();
     const displayedSharedList = showShareSearch
-        ? sharedList.filter(share => (share.email || '').toLowerCase().includes(normalizedShareSearch))
-        : sharedList;
+        ? allSharedEntries.filter(share => (share.email || '').toLowerCase().includes(normalizedShareSearch))
+        : allSharedEntries;
 
     if (!isOpen) return null;
 
@@ -542,7 +565,7 @@ const FolderManager = ({
                                 {sharedList.length > 0 && (
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                            Compartido con ({sharedList.length})
+                                            Compartido con ({allSharedEntries.length})
                                         </h4>
                                         {showShareSearch && (
                                             <input
@@ -563,7 +586,9 @@ const FolderManager = ({
                                                         <p className="text-sm font-medium text-gray-900 dark:text-white">
                                                             {share.email}
                                                         </p>
-                                                        {isOwnerManager ? (
+                                                        {share.role === 'owner' ? (
+                                                            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium mt-1">Propietario</p>
+                                                        ) : isOwnerManager ? (
                                                             <select
                                                                 value={share.role || 'viewer'}
                                                                 onChange={(e) => handleUpdatePermission(share.email, e.target.value)}
@@ -578,16 +603,18 @@ const FolderManager = ({
                                                             </p>
                                                         )}
                                                     </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleUnshareAction(share.email)}
-                                                        disabled={!canManageSharing}
-                                                        className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-colors cursor-pointer"
-                                                        title="Dejar de compartir"
-                                                        style={{ display: canManageSharing ? 'inline-flex' : 'none' }}
-                                                    >
-                                                        <Trash2 size={16} />
-                                                    </button>
+                                                    {share.role !== 'owner' && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleUnshareAction(share.email)}
+                                                            disabled={!canManageSharing}
+                                                            className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-colors cursor-pointer"
+                                                            title="Dejar de compartir"
+                                                            style={{ display: canManageSharing ? 'inline-flex' : 'none' }}
+                                                        >
+                                                            <Trash2 size={16} />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>

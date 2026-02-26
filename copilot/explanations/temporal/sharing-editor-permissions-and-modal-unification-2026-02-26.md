@@ -1,3 +1,29 @@
+## [2026-02-26] Feature Update: Owner Visibility + No-Alert Share Validation
+### Context & Architecture
+This update aligned subject/folder sharing UX around explicit owner presence and card-level error handling through thrown backend errors.
+
+### Previous State
+- Owner was not always shown as explicit `Propietario` row in sharing tabs.
+- Folder share flow still used `alert(...)` in validation paths (self-share, missing user, cross-institution).
+
+### New State & Logic
+1. **Owner visible in sharing tabs**
+   - Added synthetic owner row in `SubjectFormModal` and `FolderManager`.
+   - Owner row is non-editable and non-removable.
+
+2. **Cannot share with owner**
+   - UI guards prevent share attempts targeting owner email.
+   - Backend guard in `useFolders.shareFolder` rejects sharing when target user is folder owner.
+
+3. **No browser alerts in folder share validation**
+   - Replaced `alert(...)` branches in `useFolders.shareFolder` with thrown errors.
+   - Modal cards now render these errors consistently using existing in-card error UI.
+
+### Verification
+- Diagnostics (`get_errors`) reported no issues in updated source files.
+
+---
+
 ## [2026-02-26] Feature Update: Inline Share Confirmation Card UX
 ### Context & Architecture
 This follow-up focused on modal sharing UX in `SubjectFormModal` and `FolderManager`, replacing browser-level confirmations with in-flow UI confirmation.

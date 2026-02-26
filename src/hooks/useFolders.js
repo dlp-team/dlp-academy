@@ -279,8 +279,7 @@ export const useFolders = (user) => {
 
         if (user && user.email && user.email.toLowerCase() === email.toLowerCase()) {
             debugShare('validation_fail_self_share', { folderId, email: email.toLowerCase() });
-            alert("No puedes compartir una carpeta contigo mismo.");
-            return;
+            throw new Error("No puedes compartir una carpeta contigo mismo.");
         }
 
         try {
@@ -303,14 +302,12 @@ export const useFolders = (user) => {
                 debugShare('user_lookup_success', { folderId, targetUid, targetInstitutionId });
                 if (targetInstitutionId && targetInstitutionId !== currentInstitutionId) {
                     debugShare('validation_fail_cross_institution', { folderId, targetUid, targetInstitutionId });
-                    alert("No puedes compartir entre instituciones diferentes.");
-                    return;
+                    throw new Error("No puedes compartir entre instituciones diferentes.");
                 }
             } else {
                 debugShare('validation_fail_user_not_found', { folderId, email: emailLower });
                 console.warn(`User with email ${emailLower} not found.`);
-                alert(`No se encontró usuario con el correo ${email}. El usuario debe crear una cuenta primero.`);
-                return;
+                throw new Error(`No se encontró usuario con el correo ${email}. El usuario debe crear una cuenta primero.`);
             }
 
             // 2. Now you have the verified UID securely
@@ -327,11 +324,13 @@ export const useFolders = (user) => {
 
             if (!folderSnap.exists()) {
                 debugShare('validation_fail_folder_not_found', { folderId, targetUid });
-                console.error("Folder not found");
-                return;
+                throw new Error("No se encontró la carpeta.");
             }
 
             const folderData = folderSnap.data();
+            if (folderData?.ownerId && folderData.ownerId === targetUid) {
+                throw new Error("No puedes compartir con el propietario.");
+            }
             const originalFolderSharedWith = Array.isArray(folderData.sharedWith) ? folderData.sharedWith : [];
             const originalFolderSharedWithUids = Array.isArray(folderData.sharedWithUids) ? folderData.sharedWithUids : [];
             const existingShare = originalFolderSharedWith.find(s => s.uid === targetUid);
