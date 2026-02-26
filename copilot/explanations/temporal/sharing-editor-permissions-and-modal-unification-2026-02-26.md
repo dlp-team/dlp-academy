@@ -1,3 +1,24 @@
+## [2026-02-26] Feature Update: Inline Share Confirmation Card UX
+### Context & Architecture
+This follow-up focused on modal sharing UX in `SubjectFormModal` and `FolderManager`, replacing browser-level confirmations with in-flow UI confirmation.
+
+### Previous State
+- Role updates used browser confirm dialogs.
+- Share and unshare executed immediately.
+
+### New State & Logic
+- Added `pendingShareAction` in both modals to stage user actions.
+- Added inline confirmation panels inside the sharing card for:
+   - Sharing a user,
+   - Changing role (viewer/editor),
+   - Unsharing a user.
+- Confirm/cancel actions now happen in-modal without `window.confirm`.
+
+### Verification
+- Diagnostics (`get_errors`) reported no issues for both updated modal files.
+
+---
+
 ## [2026-02-26] Feature Update: Root Shared Boundary Lock + Edit Preservation Fixes
 ### Context & Architecture
 This continuation updated Home movement guards and modal sharing UX, then fixed subject save payload behavior that affected shared visibility after editor edits.

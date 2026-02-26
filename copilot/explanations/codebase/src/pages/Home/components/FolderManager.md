@@ -1,3 +1,18 @@
+## [2026-02-26] Feature Update: In-Card Share Confirmations (No Browser Alerts)
+### Context & Architecture
+`FolderManager` sharing tab now stages share mutations in local state and only executes after inline confirmation.
+
+### Previous State
+- Permission change confirmations used browser dialogs.
+- Share/unshare actions executed directly from controls.
+
+### New State & Logic
+- Introduced `pendingShareAction` state for `share`, `permission`, and `unshare` intents.
+- Added inline confirmation card within the sharing tab with role-aware and action-aware messages.
+- Centralized confirm execution paths to call `onShare`/`onUnshare` after explicit user confirmation.
+
+---
+
 ## [2026-02-26] Feature Update: Wider Sharing Layout + Permission Change Confirmation
 ### Context & Architecture
 `FolderManager` is the folder edit/share UI in Home and fronts `useFolders.shareFolder` updates.

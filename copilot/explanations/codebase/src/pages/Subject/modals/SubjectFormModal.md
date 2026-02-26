@@ -1,3 +1,18 @@
+## [2026-02-26] Feature Update: In-Card Share Confirmations (No Browser Alerts)
+### Context & Architecture
+`SubjectFormModal` sharing tab now mediates potentially destructive changes through inline confirmation UI state before calling `onShare/onUnshare`.
+
+### Previous State
+- Permission changes relied on browser confirm dialogs.
+- Share and unshare actions executed immediately without a confirmation step.
+
+### New State & Logic
+- Added `pendingShareAction` state to represent pending operations (`share`, `permission`, `unshare`).
+- Added inline confirmation panel inside the sharing card with contextual warning text and explicit confirm/cancel actions.
+- Removed browser alert/confirm dependency for these actions.
+
+---
+
 ## [2026-02-26] Feature Update: Wider Sharing Layout + Permission Change Confirmation
 ### Context & Architecture
 `SubjectFormModal` is the subject edit/share entrypoint in Home and receives `onShare/onUnshare` from hook-backed handlers.

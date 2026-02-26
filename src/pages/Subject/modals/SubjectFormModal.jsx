@@ -21,6 +21,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [shareRole, setShareRole] = useState('viewer');
     const [sharedList, setSharedList] = useState([]);
     const [shareSearch, setShareSearch] = useState('');
+    const [pendingShareAction, setPendingShareAction] = useState(null);
     const [shareLoading, setShareLoading] = useState(false);
     const [shareError, setShareError] = useState('');
     const [shareSuccess, setShareSuccess] = useState('');
@@ -42,6 +43,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setShareSuccess('');
             setShareRole('viewer');
             setShareSearch('');
+            setPendingShareAction(null);
             if (isEditing && initialData) {
                 setFormData({
                     id: initialData.id,
@@ -107,22 +109,18 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         onSave(formData);
     };
 
-    const handleShareAction = async () => {
-        if (!shareEmail.trim()) {
-            setShareError('Por favor ingresa un correo electrónico.');
-            return;
-        }
-        const normalizedEmail = shareEmail.toLowerCase();
+    const executeShareAction = async (emailToShare, roleToShare) => {
+        const normalizedEmail = emailToShare.toLowerCase();
         setShareLoading(true);
         setShareError('');
         setShareSuccess('');
         try {
-            const result = await onShare(formData.id, shareEmail, shareRole);
+            const result = await onShare(formData.id, normalizedEmail, roleToShare);
             const updatedEntry = {
                 email: normalizedEmail,
                 uid: result?.uid,
-                role: shareRole,
-                canEdit: shareRole === 'editor',
+                role: roleToShare,
+                canEdit: roleToShare === 'editor',
                 sharedAt: result?.sharedAt || new Date()
             };
             setSharedList(prev => {
@@ -148,7 +146,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         }
     };
 
-    const handleUnshareAction = async (emailToRemove) => {
+    const executeUnshareAction = async (emailToRemove) => {
         try {
             await onUnshare(formData.id, emailToRemove);
             setSharedList(prev => prev.filter(u => u.email !== emailToRemove));
@@ -157,29 +155,67 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         }
     };
 
-    const handleUpdatePermission = async (emailToUpdate, nextRole) => {
+    const handleShareAction = () => {
+        if (!shareEmail.trim()) {
+            setShareError('Por favor ingresa un correo electrónico.');
+            return;
+        }
+
+        setPendingShareAction({
+            type: 'share',
+            email: shareEmail.trim().toLowerCase(),
+            role: shareRole
+        });
+    };
+
+    const handleUnshareAction = (emailToRemove) => {
+        setPendingShareAction({
+            type: 'unshare',
+            email: emailToRemove
+        });
+    };
+
+    const handleUpdatePermission = (emailToUpdate, nextRole) => {
         if (!isOwnerManager) return;
         const currentEntry = sharedList.find(entry => entry.email === emailToUpdate);
         const currentRole = currentEntry?.role || 'viewer';
         if (currentRole === nextRole) return;
 
-        const warningMessage = nextRole === 'editor'
-            ? `Vas a cambiar a ${emailToUpdate} a Editor. Podrá editar y mover contenido según permisos de carpeta compartida. ¿Deseas continuar?`
-            : `Vas a cambiar a ${emailToUpdate} a Lector. Perderá permisos de edición y movimiento de contenido. ¿Deseas continuar?`;
+        setPendingShareAction({
+            type: 'permission',
+            email: emailToUpdate,
+            currentRole,
+            nextRole
+        });
+    };
 
-        if (!window.confirm(warningMessage)) {
+    const confirmPendingShareAction = async () => {
+        if (!pendingShareAction) return;
+
+        if (pendingShareAction.type === 'share') {
+            await executeShareAction(pendingShareAction.email, pendingShareAction.role);
+            setPendingShareAction(null);
             return;
         }
 
-        try {
-            await onShare(formData.id, emailToUpdate, nextRole);
-            setSharedList(prev => prev.map(entry =>
-                entry.email === emailToUpdate
-                    ? { ...entry, role: nextRole, canEdit: nextRole === 'editor' }
-                    : entry
-            ));
-        } catch (error) {
-            setShareError(error?.message || 'No se pudo actualizar el permiso.');
+        if (pendingShareAction.type === 'permission') {
+            try {
+                await onShare(formData.id, pendingShareAction.email, pendingShareAction.nextRole);
+                setSharedList(prev => prev.map(entry =>
+                    entry.email === pendingShareAction.email
+                        ? { ...entry, role: pendingShareAction.nextRole, canEdit: pendingShareAction.nextRole === 'editor' }
+                        : entry
+                ));
+            } catch (error) {
+                setShareError(error?.message || 'No se pudo actualizar el permiso.');
+            }
+            setPendingShareAction(null);
+            return;
+        }
+
+        if (pendingShareAction.type === 'unshare') {
+            await executeUnshareAction(pendingShareAction.email);
+            setPendingShareAction(null);
         }
     };
 
@@ -321,6 +357,43 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                 {shareSuccess}
                                             </div>
                                         )}
+                                    </div>
+                                )}
+
+                                {pendingShareAction && (
+                                    <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20">
+                                        <p className="text-sm text-amber-800 dark:text-amber-200">
+                                            {pendingShareAction.type === 'share' && (
+                                                <>Vas a compartir esta asignatura con <strong>{pendingShareAction.email}</strong> como <strong>{pendingShareAction.role === 'editor' ? 'Editor' : 'Lector'}</strong>.</>
+                                            )}
+                                            {pendingShareAction.type === 'permission' && (
+                                                <>
+                                                    Vas a cambiar a <strong>{pendingShareAction.email}</strong> de <strong>{pendingShareAction.currentRole === 'editor' ? 'Editor' : 'Lector'}</strong> a <strong>{pendingShareAction.nextRole === 'editor' ? 'Editor' : 'Lector'}</strong>.
+                                                    {pendingShareAction.nextRole === 'editor'
+                                                        ? ' Podrá editar y mover contenido según permisos de carpeta compartida.'
+                                                        : ' Perderá permisos de edición y movimiento de contenido.'}
+                                                </>
+                                            )}
+                                            {pendingShareAction.type === 'unshare' && (
+                                                <>Vas a dejar de compartir esta asignatura con <strong>{pendingShareAction.email}</strong>.</>
+                                            )}
+                                        </p>
+                                        <div className="mt-3 flex justify-end gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setPendingShareAction(null)}
+                                                className="px-3 py-1.5 text-sm rounded-md bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300"
+                                            >
+                                                Cancelar
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={confirmPendingShareAction}
+                                                className="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
+                                            >
+                                                Confirmar
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
 
