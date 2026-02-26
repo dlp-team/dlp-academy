@@ -147,9 +147,10 @@ export const useSubjects = (user) => {
         }
     };
 
-    const shareSubject = async (subjectId, email) => {
+    const shareSubject = async (subjectId, email, role = 'viewer') => {
         try {
             const emailLower = email.toLowerCase();
+            const normalizedRole = role === 'editor' ? 'editor' : 'viewer';
             if (user?.email?.toLowerCase() === emailLower) {
                 throw new Error("No puedes compartir contigo mismo.");
             }
@@ -194,11 +195,14 @@ export const useSubjects = (user) => {
                 (Array.isArray(subjectData.sharedWithUids) && subjectData.sharedWithUids.includes(targetUid)) ||
                 (Array.isArray(subjectData.sharedWith) && subjectData.sharedWith.some(entry => entry.uid === targetUid));
 
+            const currentSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
+            const existingShare = currentSharedWith.find(entry => entry.uid === targetUid);
+
             // 3. Build share data
             const shareData = {
                 email: emailLower,
                 uid: targetUid,
-                role: 'viewer',
+                role: normalizedRole,
                 sharedAt: new Date()
             };
 
@@ -219,6 +223,21 @@ export const useSubjects = (user) => {
                 } catch (err) {
                     throw err;
                 }
+            } else if ((existingShare?.role || 'viewer') !== normalizedRole) {
+                const updatedSharedWith = currentSharedWith.map(entry =>
+                    entry.uid === targetUid
+                        ? {
+                            ...entry,
+                            role: normalizedRole,
+                            canEdit: normalizedRole === 'editor'
+                        }
+                        : entry
+                );
+
+                await updateDoc(subjectRef, {
+                    sharedWith: updatedSharedWith,
+                    updatedAt: new Date()
+                });
             }
 
             // 5. Ensure shortcut exists for the recipient (deterministic upsert, avoids query/index/rules read issues)
@@ -259,7 +278,11 @@ export const useSubjects = (user) => {
                 }
                 throw shortcutError;
             }
-            return { ...shareData, alreadyShared };
+            return {
+                ...shareData,
+                alreadyShared,
+                roleUpdated: alreadyShared && (existingShare?.role || 'viewer') !== normalizedRole
+            };
 
         } catch (error) {
             throw error;

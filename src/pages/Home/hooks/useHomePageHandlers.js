@@ -35,6 +35,15 @@ export const useHomePageHandlers = ({
         return canEdit(targetFolder, currentUserId);
     };
 
+    const canWriteFromSourceFolder = (sourceFolderId) => {
+        if (!sourceFolderId) return true;
+        const sourceFolder = (logic.folders || []).find(f => f.id === sourceFolderId);
+        if (!sourceFolder) return true;
+        if (sourceFolder.isShared !== true) return true;
+        if (!currentUserId) return false;
+        return canEdit(sourceFolder, currentUserId);
+    };
+
     const resolveFolderShortcutId = (folderId, sourceParentId = null) => {
         if (!folderId || !Array.isArray(logic?.shortcuts)) return null;
 
@@ -113,6 +122,10 @@ export const useHomePageHandlers = ({
             explicitSourceFolderId !== undefined && explicitSourceFolderId !== null
                 ? explicitSourceFolderId
                 : subject?.folderId || (logic.currentFolder ? logic.currentFolder.id : null);
+
+        if (!canWriteFromSourceFolder(currentFolderId)) {
+            return true;
+        }
 
 
         if (targetFolderId === currentFolderId) {
@@ -501,6 +514,9 @@ export const useHomePageHandlers = ({
         if (!canWriteIntoTargetFolder(targetFolderId)) return;
 
         const subject = (logic.subjects || []).find(s => s.id === subjectId);
+        const resolvedSourceFolderId = sourceFolderId !== undefined ? sourceFolderId : (subject?.folderId || null);
+
+        if (!canWriteFromSourceFolder(resolvedSourceFolderId)) return;
         const userId = currentUserId;
         const userCanEdit = subject && userId ? canEdit(subject, userId) : false;
 

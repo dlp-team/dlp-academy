@@ -1,3 +1,20 @@
+## [2026-02-26] Feature Update: Folder Modal Parity with Subject Modal
+### Context & Architecture
+`FolderManager` is the Home folder modal and consumes sharing handlers from `useFolders` through `HomeModals`. It now follows the same interaction model as `SubjectFormModal`.
+
+### Previous State
+- General tab structure diverged from subject modal UX.
+- Sharing tab was simpler and lacked robust feedback/search behavior.
+- Shared user permissions were not editable in-row by owner.
+
+### New State & Logic
+- Rebuilt the modal structure to mirror subject tabs (`General` / `Compartir`) while omitting icon controls for folders.
+- Added modern fill selector with collapsed/expand behavior for better edit-tab parity.
+- Added role selection before share, owner-level per-user permission update, and search bar when shared users exceed 5.
+- Added loading/success/error feedback consistency on sharing actions.
+
+---
+
 # FolderManager.jsx
 
 ## Overview

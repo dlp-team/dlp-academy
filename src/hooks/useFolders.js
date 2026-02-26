@@ -285,6 +285,7 @@ export const useFolders = (user) => {
 
         try {
             const emailLower = email.toLowerCase();
+            const normalizedRole = role === 'editor' ? 'editor' : 'viewer';
             debugShare('start', { folderId, email: emailLower, role });
             
             // 1. Find the user UID by email from your 'users' collection
@@ -316,7 +317,7 @@ export const useFolders = (user) => {
             const shareData = {
                 email: emailLower,
                 uid: targetUid,
-                role,
+                role: normalizedRole,
                 sharedAt: new Date()
             };
 
@@ -333,6 +334,7 @@ export const useFolders = (user) => {
             const folderData = folderSnap.data();
             const originalFolderSharedWith = Array.isArray(folderData.sharedWith) ? folderData.sharedWith : [];
             const originalFolderSharedWithUids = Array.isArray(folderData.sharedWithUids) ? folderData.sharedWithUids : [];
+            const existingShare = originalFolderSharedWith.find(s => s.uid === targetUid);
             const subjectsRollbackState = [];
             let sourceUpdated = false;
             
@@ -355,6 +357,21 @@ export const useFolders = (user) => {
                     sharedWith: arrayUnion(shareData),      // For UI display
                     sharedWithUids: arrayUnion(targetUid),  // For Security Rules & Perms
                     isShared: true,
+                    updatedAt: new Date()
+                });
+            } else if ((existingShare?.role || 'viewer') !== normalizedRole) {
+                const updatedSharedWith = originalFolderSharedWith.map(entry =>
+                    entry.uid === targetUid
+                        ? {
+                            ...entry,
+                            role: normalizedRole,
+                            canEdit: normalizedRole === 'editor'
+                        }
+                        : entry
+                );
+
+                batch.update(folderRef, {
+                    sharedWith: updatedSharedWith,
                     updatedAt: new Date()
                 });
             }
@@ -474,7 +491,11 @@ export const useFolders = (user) => {
             }
 
             debugShare('success', { folderId, targetUid, alreadyShared });
-            return shareData;
+            return {
+                ...shareData,
+                alreadyShared,
+                roleUpdated: alreadyShared && (existingShare?.role || 'viewer') !== normalizedRole
+            };
 
         } catch (error) {
             console.error("Error sharing folder:", error);

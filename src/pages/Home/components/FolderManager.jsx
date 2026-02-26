@@ -1,70 +1,88 @@
 // src/pages/Home/components/FolderManager.jsx
 import React, { useState, useEffect } from 'react';
-import { X, Save, Plus, Trash2, Share2, Users } from 'lucide-react';
+import { X, Save, Plus, Trash2, Share2, Users, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { COLORS, MODERN_FILL_COLORS } from '../../../utils/subjectConstants';
 import { getPermissionLevel } from '../../../utils/permissionUtils';
 
-const FolderManager = ({ 
-    isOpen, onClose, onSave, initialData, isEditing, 
+const FolderManager = ({
+    isOpen, onClose, onSave, initialData, isEditing,
     onShare, onUnshare, onDeleteShortcut, user, initialTab = 'general'
 }) => {
-    const [formData, setFormData] = useState({ 
-        name: '', 
-        description: '', 
+    const [formData, setFormData] = useState({
+        name: '',
+        description: '',
         color: 'from-amber-400 to-amber-600',
         tags: [],
         cardStyle: 'default',
         modernFillColor: MODERN_FILL_COLORS[0].value
     });
+
+    const [activeTab, setActiveTab] = useState('general');
+    const [tagInput, setTagInput] = useState('');
+
     const [shareEmail, setShareEmail] = useState('');
     const [shareRole, setShareRole] = useState('viewer');
     const [sharedList, setSharedList] = useState([]);
-    const [tagInput, setTagInput] = useState('');
-    const [activeTab, setActiveTab] = useState('general');
+    const [shareSearch, setShareSearch] = useState('');
+    const [shareLoading, setShareLoading] = useState(false);
+    const [shareError, setShareError] = useState('');
+    const [shareSuccess, setShareSuccess] = useState('');
+
+    const [showModernFillOptions, setShowModernFillOptions] = useState(false);
 
     const isShortcutEditing = isEditing && formData?.isShortcut === true;
     const shortcutPermissionLevel = formData?.shortcutPermissionLevel || 'viewer';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canManageSharing = !isShortcutEditing || isShortcutEditor;
     const canEditOriginalFields = !isShortcutEditing || isShortcutEditor;
+    const isOwnerManager = isShortcutEditing
+        ? shortcutPermissionLevel === 'owner'
+        : Boolean((initialData?.ownerId || formData?.ownerId) && user?.uid && (initialData?.ownerId || formData?.ownerId) === user.uid);
 
     useEffect(() => {
-        if (isOpen) {
-            setActiveTab(initialTab);
-            if (isEditing && initialData) {
-                setFormData({
-                    id: initialData.id,
-                    shortcutId: initialData.shortcutId || null,
-                    isShortcut: initialData.isShortcut === true,
-                    shortcutPermissionLevel: initialData.isShortcut
-                        ? getPermissionLevel(initialData, user?.uid)
-                        : 'owner',
-                    name: initialData.name || '',
-                    description: initialData.description || '',
-                    color: initialData.color || 'from-amber-400 to-amber-600',
-                    tags: initialData.tags || [],
-                    cardStyle: initialData.cardStyle || 'default',
-                    modernFillColor: initialData.fillColor || initialData.modernFillColor || MODERN_FILL_COLORS[0].value
-                });
-                setSharedList(initialData.sharedWith || []);
-            } else {
-                setFormData({ 
-                    shortcutId: null,
-                    isShortcut: false,
-                    shortcutPermissionLevel: 'owner',
-                    name: '', 
-                    description: '', 
-                    color: 'from-amber-400 to-amber-600',
-                    tags: [],
-                    cardStyle: 'default',
-                    modernFillColor: MODERN_FILL_COLORS[0].value
-                });
-                setSharedList([]);
-            }
-            setShareEmail('');
-            setShareRole('viewer');
-            setTagInput('');
+        if (!isOpen) return;
+
+        setActiveTab(initialTab);
+        setTagInput('');
+        setShareEmail('');
+        setShareRole('viewer');
+        setShareSearch('');
+        setShareError('');
+        setShareSuccess('');
+        setShowModernFillOptions(false);
+
+        if (isEditing && initialData) {
+            setFormData({
+                id: initialData.id,
+                ownerId: initialData.ownerId,
+                shortcutId: initialData.shortcutId || null,
+                isShortcut: initialData.isShortcut === true,
+                shortcutPermissionLevel: initialData.isShortcut
+                    ? getPermissionLevel(initialData, user?.uid)
+                    : 'owner',
+                name: initialData.name || '',
+                description: initialData.description || '',
+                color: initialData.color || 'from-amber-400 to-amber-600',
+                tags: initialData.tags || [],
+                cardStyle: initialData.cardStyle || 'default',
+                modernFillColor: initialData.fillColor || initialData.modernFillColor || MODERN_FILL_COLORS[0].value
+            });
+            setSharedList(initialData.sharedWith || []);
+            return;
         }
+
+        setFormData({
+            shortcutId: null,
+            isShortcut: false,
+            shortcutPermissionLevel: 'owner',
+            name: '',
+            description: '',
+            color: 'from-amber-400 to-amber-600',
+            tags: [],
+            cardStyle: 'default',
+            modernFillColor: MODERN_FILL_COLORS[0].value
+        });
+        setSharedList([]);
     }, [isOpen, initialData, isEditing, initialTab, user?.uid]);
 
     const handleSubmit = (e) => {
@@ -72,42 +90,95 @@ const FolderManager = ({
         onSave(formData);
     };
 
-    const handleShare = (e) => {
+    const handleAddTag = (e) => {
         e.preventDefault();
-        if (shareEmail.trim() && isEditing && initialData) {
-            onShare(initialData.id, shareEmail.trim(), shareRole);
-            setShareEmail('');
+        const tag = tagInput.trim().toLowerCase();
+        if (tag && !formData.tags.includes(tag)) {
+            setFormData(prev => ({ ...prev, tags: [...prev.tags, tag] }));
+        }
+        setTagInput('');
+    };
+
+    const handleRemoveTag = (tagToRemove) => {
+        setFormData(prev => ({
+            ...prev,
+            tags: prev.tags.filter(tag => tag !== tagToRemove)
+        }));
+    };
+
+    const handleTagInputKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddTag(e);
         }
     };
 
-    // 3. HANDLE SHARE (Add User)
     const handleShareAction = async () => {
-        if (!shareEmail.trim()) return;
-        
-        try {
-            const newUser = await onShare(initialData.id, shareEmail, shareRole);
+        if (!shareEmail.trim()) {
+            setShareError('Por favor ingresa un correo electrónico.');
+            return;
+        }
 
-            // 2. If successful, update LOCAL state instantly
-            if (newUser) {
-                setSharedList(prev => [...prev, newUser]); 
-                setShareEmail('');
-            }
+        const normalizedEmail = shareEmail.toLowerCase();
+        setShareLoading(true);
+        setShareError('');
+        setShareSuccess('');
+
+        try {
+            const result = await onShare(formData.id, normalizedEmail, shareRole);
+            const updatedEntry = {
+                email: normalizedEmail,
+                uid: result?.uid,
+                role: shareRole,
+                canEdit: shareRole === 'editor',
+                sharedAt: result?.sharedAt || new Date()
+            };
+
+            setSharedList(prev => {
+                const existingIndex = prev.findIndex(u => u.email?.toLowerCase() === normalizedEmail);
+                if (existingIndex >= 0) {
+                    const next = [...prev];
+                    next[existingIndex] = { ...next[existingIndex], ...updatedEntry };
+                    return next;
+                }
+                return [...prev, updatedEntry];
+            });
+
+            setShareEmail('');
+            setShareRole('viewer');
+            setShareSuccess(result?.roleUpdated
+                ? `Permisos actualizados para ${normalizedEmail}.`
+                : `Carpeta compartida con ${normalizedEmail}.`
+            );
+            setTimeout(() => setShareSuccess(''), 4000);
         } catch (error) {
-            alert("Error al compartir. Verifica que el correo exista.");
+            setShareError(error?.message || 'Error al compartir. Inténtalo de nuevo.');
+        } finally {
+            setShareLoading(false);
         }
     };
 
-    // 4. HANDLE UNSHARE (Remove User)
     const handleUnshareAction = async (emailToRemove) => {
-        if (!confirm("¿Dejar de compartir con este usuario?")) return;
+        try {
+            await onUnshare(formData.id, emailToRemove);
+            setSharedList(prev => prev.filter(u => u.email !== emailToRemove));
+        } catch (error) {
+            setShareError(error?.message || 'No se pudo revocar el acceso.');
+        }
+    };
+
+    const handleUpdatePermission = async (emailToUpdate, nextRole) => {
+        if (!isOwnerManager) return;
 
         try {
-            await onUnshare(initialData.id, emailToRemove);
-            
-            // Update UI Instantly
-            setSharedList(prev => prev.filter(user => user.email !== emailToRemove));
+            await onShare(formData.id, emailToUpdate, nextRole);
+            setSharedList(prev => prev.map(entry =>
+                entry.email === emailToUpdate
+                    ? { ...entry, role: nextRole, canEdit: nextRole === 'editor' }
+                    : entry
+            ));
         } catch (error) {
-            console.error("Failed to unshare", error);
+            setShareError(error?.message || 'No se pudo actualizar el permiso.');
         }
     };
 
@@ -122,52 +193,15 @@ const FolderManager = ({
             await onDeleteShortcut(formData.shortcutId);
             onClose();
         } catch (error) {
-            console.error('Failed to remove shortcut access', error);
+            setShareError(error?.message || 'No se pudo eliminar tu acceso.');
         }
     };
 
-    // NEW: Tag management functions
-    const handleAddTag = (e) => {
-        e.preventDefault();
-        const tag = tagInput.trim().toLowerCase();
-        if (tag && !formData.tags.includes(tag)) {
-            setFormData({
-                ...formData,
-                tags: [...formData.tags, tag]
-            });
-            setTagInput('');
-        }
-    };
-
-    const handleRemoveTag = (tagToRemove) => {
-        setFormData({
-            ...formData,
-            tags: formData.tags.filter(tag => tag !== tagToRemove)
-        });
-    };
-
-    const handleTagInputKeyDown = (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleAddTag(e);
-        }
-    };
-
-    const handleAddUser = async () => {
-        if (!shareEmail.trim()) return;
-        const newUser = { email: shareEmail, role: shareRole };
-        setSharedList(prev => [...prev, newUser]); 
-        
-        if (onShare) await onShare(shareEmail, shareRole);
-        setShareEmail('');
-    };
-
-    const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            handleAddUser();
-        }
-    };
+    const showShareSearch = sharedList.length > 5;
+    const normalizedShareSearch = shareSearch.trim().toLowerCase();
+    const displayedSharedList = showShareSearch
+        ? sharedList.filter(share => (share.email || '').toLowerCase().includes(normalizedShareSearch))
+        : sharedList;
 
     if (!isOpen) return null;
 
@@ -175,272 +209,338 @@ const FolderManager = ({
         <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
                 <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity" onClick={onClose} />
-                <div className="relative transform overflow-hidden bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl text-left border border-transparent dark:border-slate-800">
-                    
-                    {/* Header */}
-                    <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-800/50">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                            {isEditing ? 'Editar Carpeta' : 'Nueva Carpeta'}
-                        </h3>
-                        <button onClick={onClose} className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full text-gray-500">
-                            <X className="w-5 h-5" />
-                        </button>
+                <div className="relative transform overflow-hidden bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl text-left animate-in fade-in zoom-in duration-200 border border-transparent dark:border-slate-800 transition-colors">
+
+                    <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-800/50 transition-colors">
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{isEditing ? 'Editar Carpeta' : 'Nueva Carpeta'}</h3>
+                        <button onClick={onClose} className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full text-gray-500 dark:text-gray-400 transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
                     </div>
 
-                    {/* Tabs (Only if Editing) */}
                     {isEditing && (
-                        <div className="flex border-b border-gray-100 dark:border-slate-800">
-                            <button 
+                        <div className="px-6 pt-4 border-b border-gray-100 dark:border-slate-800 flex gap-2">
+                            <button
                                 onClick={() => setActiveTab('general')}
-                                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors ${
-                                    activeTab === 'general' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500'
+                                className={`px-4 py-2 rounded-t-xl font-medium transition-colors ${
+                                    activeTab === 'general'
+                                        ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400'
+                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300'
                                 }`}
                             >
                                 General
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setActiveTab('sharing')}
-                                className={`flex-1 py-3 text-sm font-medium border-b-2 transition-colors flex items-center justify-center gap-2 ${
-                                    activeTab === 'sharing' ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500'
+                                className={`px-4 py-2 rounded-t-xl font-medium transition-colors flex items-center gap-2 ${
+                                    activeTab === 'sharing'
+                                        ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400'
+                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300'
                                 }`}
                             >
-                                <Users size={16} /> Compartir
+                                <Share2 size={16} /> Compartir
                             </button>
                         </div>
                     )}
 
-                    {/* CONTENT BODY */}
-                    
-                    {/* 1. GENERAL TAB */}
-                    <div className={activeTab === 'general' ? 'block' : 'hidden'}>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            {/* Name */}
-                            {canEditOriginalFields && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
-                                <input 
-                                    type="text" 
-                                    value={formData.name} 
-                                    onChange={(e) => setFormData({...formData, name: e.target.value})} 
-                                    className="w-full px-4 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                                    required 
-                                />
-                            </div>
-                            )}
+                    <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[75vh] overflow-y-auto custom-scrollbar">
+                        {activeTab === 'general' && (
+                            <>
+                                {canEditOriginalFields && (
+                                    <>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
+                                            <input
+                                                type="text"
+                                                value={formData.name}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                                                className="w-full px-4 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
+                                            <input
+                                                type="text"
+                                                value={formData.description}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                                                className="w-full px-4 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                                            />
+                                        </div>
+                                    </>
+                                )}
 
-                            {/* Description */}
-                            {canEditOriginalFields && (
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
-                                <input 
-                                    type="text" 
-                                    value={formData.description} 
-                                    onChange={(e) => setFormData({...formData, description: e.target.value})} 
-                                    className="w-full px-4 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                                />
-                            </div>
-                            )}
-
-                            {/* Colors */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color</label>
-                                <div className="grid grid-cols-6 gap-3">
-                                    {COLORS.map((color) => (
-                                        <button 
-                                            key={color} 
-                                            type="button" 
-                                            onClick={() => setFormData({...formData, color})} 
-                                            className={`w-full aspect-square rounded-full bg-gradient-to-br ${color} ${
-                                                formData.color === color ? 'ring-2 ring-indigo-500 scale-110' : ''
-                                            }`} 
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Style */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Estilo</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData({ ...formData, cardStyle: 'default' })}
-                                        className={`px-3 py-2 rounded-xl border transition-colors ${formData.cardStyle === 'default' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300'}`}
-                                    >
-                                        Default
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setFormData({ ...formData, cardStyle: 'modern' })}
-                                        className={`px-3 py-2 rounded-xl border transition-colors ${formData.cardStyle === 'modern' ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300' : 'border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300'}`}
-                                    >
-                                        Modern
-                                    </button>
-                                </div>
-                            </div>
-
-                            {formData.cardStyle === 'modern' && (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Relleno moderno</label>
-                                    <select
-                                        value={formData.modernFillColor}
-                                        onChange={(e) => setFormData({ ...formData, modernFillColor: e.target.value })}
-                                        className="w-full px-4 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                                    >
-                                        {MODERN_FILL_COLORS.map((option) => (
-                                            <option key={option.value} value={option.value}>{option.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            )}
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Etiquetas (Opcional)</label>
+                                    <div className="flex gap-2 mb-2">
+                                        <input
+                                            type="text"
+                                            value={tagInput}
+                                            onChange={(e) => setTagInput(e.target.value)}
+                                            onKeyDown={handleTagInputKeyDown}
+                                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white transition-colors text-sm"
+                                            placeholder="Añadir etiqueta..."
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={handleAddTag}
+                                            disabled={!tagInput.trim()}
+                                            className="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                                        >
+                                            <Plus size={16} />
+                                        </button>
+                                    </div>
 
-                            {/* Tags (Simplified for brevity, keep your full logic) */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Etiquetas (Opcional)
-                                </label>
-                                
-                                {/* Tag Input */}
-                                <div className="flex gap-2 mb-2">
-                                    <input 
-                                        type="text" 
-                                        value={tagInput}
-                                        onChange={(e) => setTagInput(e.target.value)}
-                                        onKeyDown={handleTagInputKeyDown}
-                                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white transition-colors text-sm" 
-                                        placeholder="Añadir etiqueta..."
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={handleAddTag}
-                                        disabled={!tagInput.trim()}
-                                        className="px-4 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-xl font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                                    >
-                                        <Plus size={16} />
-                                    </button>
-                                </div>
-
-                                {/* Tag List */}
-                                {formData.tags.length > 0 && (
-                                    <div className="flex flex-wrap gap-2">
-                                        {formData.tags.map(tag => (
-                                            <div 
-                                                key={tag}
-                                                className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-sm"
-                                            >
-                                                <span>#{tag}</span>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveTag(tag)}
-                                                    className="hover:bg-indigo-200 dark:hover:bg-indigo-800 rounded-full p-0.5 transition-colors"
+                                    {formData.tags.length > 0 && (
+                                        <div className="flex flex-wrap gap-2">
+                                            {formData.tags.map(tag => (
+                                                <div
+                                                    key={tag}
+                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-full text-sm"
                                                 >
-                                                    <X size={12} />
-                                                </button>
-                                            </div>
+                                                    <span>#{tag}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveTag(tag)}
+                                                        className="hover:bg-indigo-200 dark:hover:bg-indigo-800 rounded-full p-0.5 transition-colors"
+                                                    >
+                                                        <X size={12} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Color del Tema</label>
+                                    <div className="grid grid-cols-6 gap-3">
+                                        {COLORS.map((color) => (
+                                            <button
+                                                key={color}
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, color }))}
+                                                className={`w-full aspect-square rounded-full bg-gradient-to-br ${color} transition-transform hover:scale-105 ${
+                                                    formData.color === color
+                                                        ? 'ring-2 ring-offset-2 dark:ring-offset-slate-900 ring-indigo-500 dark:ring-indigo-400 scale-105'
+                                                        : 'cursor-pointer'
+                                                }`}
+                                            />
                                         ))}
                                     </div>
-                                )}
-                            </div>
-
-                            {/* Actions (Only for General Tab) */}
-                            <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
-                                <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl">Cancelar</button>
-                                <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-xl flex items-center gap-2">
-                                    <Save className="w-4 h-4" /> Guardar
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    {/* 2. SHARING TAB */}
-                    <div className={activeTab === 'sharing' ? 'block' : 'hidden'}>
-                        <div className="p-6 space-y-6">
-                            
-                            {/* Add User Input Section */}
-                            {canManageSharing && (
-                                <div className="flex gap-2">
-                                    <input 
-                                        type="email"
-                                        value={shareEmail} 
-                                        onChange={e => setShareEmail(e.target.value)}
-                                        // --- ENTER KEY HANDLER ---
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                e.preventDefault(); // Stop form submit
-                                                handleShareAction(); // Trigger add
-                                            }
-                                        }}
-                                        placeholder="email@ejemplo.com"
-                                        className="flex-1 px-4 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                                    />
-                                    <select 
-                                        value={shareRole}
-                                        onChange={(e) => setShareRole(e.target.value)}
-                                        className="px-3 py-2 border rounded-xl bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                                    >
-                                        <option value="viewer">Ver</option>
-                                        <option value="editor">Editar</option>
-                                    </select>
-                                    <button 
-                                        type="button" 
-                                        onClick={handleShareAction} // Call the wrapper
-                                        className="p-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700"
-                                    >
-                                        <Plus size={20}/>
-                                    </button>
                                 </div>
-                            )}
 
-                            {/* Shared Users List */}
-                            <div className="space-y-3">
-                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    Usuarios con acceso ({sharedList.length})
-                                </h4>
-                                
-                                {sharedList.length === 0 && (
-                                    <p className="text-sm text-gray-400 italic text-center py-4">
-                                        Carpeta privada. Añade usuarios para compartir.
-                                    </p>
-                                )}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Estilo de Tarjeta</label>
+                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, cardStyle: 'default' }))}
+                                            className={`relative p-3 rounded-xl border transition-all duration-200 group ${
+                                                formData.cardStyle === 'default'
+                                                    ? 'border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20 dark:ring-indigo-400/20 bg-indigo-50 dark:bg-indigo-900/20'
+                                                    : 'border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer'
+                                            }`}
+                                        >
+                                            <div className={`w-full h-12 rounded-lg bg-gradient-to-br ${formData.color} shadow-sm mb-2`}></div>
+                                            <span className={`text-sm font-medium ${
+                                                formData.cardStyle === 'default' ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-400'
+                                            }`}>Clásico</span>
+                                        </button>
 
-                                {sharedList.map((user, idx) => (
-                                    <div key={idx} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-800 rounded-xl border border-gray-100 dark:border-slate-700">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-xs">
-                                                {user.email[0].toUpperCase()}
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, cardStyle: 'modern' }))}
+                                            className={`relative p-3 rounded-xl border transition-all duration-200 group ${
+                                                formData.cardStyle === 'modern'
+                                                    ? 'border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20 dark:ring-indigo-400/20 bg-indigo-50 dark:bg-indigo-900/20'
+                                                    : 'border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer'
+                                            }`}
+                                        >
+                                            <div className={`w-full h-12 rounded-lg p-[2px] bg-gradient-to-br ${formData.color} shadow-sm mb-2`}>
+                                                <div className="w-full h-full bg-white dark:bg-slate-900 rounded-[6px]"></div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white">{user.email}</p>
-                                                <p className="text-xs text-gray-500 capitalize">{user.role === 'viewer' ? 'Lector' : 'Editor'}</p>
-                                            </div>
+                                            <span className={`text-sm font-medium ${
+                                                formData.cardStyle === 'modern' ? 'text-indigo-700 dark:text-indigo-300' : 'text-gray-600 dark:text-gray-400'
+                                            }`}>Moderno</span>
+                                        </button>
+                                    </div>
+
+                                    {formData.cardStyle === 'modern' && (
+                                        <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowModernFillOptions(prev => !prev)}
+                                                className="w-full flex items-center justify-between px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
+                                            >
+                                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Color de Fondo (Moderno)</span>
+                                                <span className="text-xs text-gray-500 dark:text-gray-400">{showModernFillOptions ? 'Ocultar' : 'Mostrar'}</span>
+                                            </button>
+
+                                            {showModernFillOptions && (
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    {MODERN_FILL_COLORS.map((fillColor) => (
+                                                        <button
+                                                            key={fillColor.value}
+                                                            type="button"
+                                                            onClick={() => setFormData(prev => ({ ...prev, modernFillColor: fillColor.value }))}
+                                                            className={`group relative overflow-hidden rounded-lg border-2 transition-all ${
+                                                                formData.modernFillColor === fillColor.value
+                                                                    ? 'border-indigo-500 dark:border-indigo-400 ring-2 ring-indigo-500/20 dark:ring-indigo-400/20'
+                                                                    : 'border-gray-200 dark:border-slate-700 hover:border-gray-300 dark:hover:border-slate-600 cursor-pointer'
+                                                            }`}
+                                                        >
+                                                            <div className={`h-12 ${fillColor.value} transition-transform group-hover:scale-105`}></div>
+                                                            <div className="absolute inset-0 flex items-center justify-center">
+                                                                <span className="text-[9px] font-medium text-gray-700 dark:text-gray-300 bg-white/80 dark:bg-slate-900/80 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                                                    {fillColor.name}
+                                                                </span>
+                                                            </div>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
+
+                        {activeTab === 'sharing' && (
+                            <div className="space-y-4">
+                                {canManageSharing && (
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Compartir con
+                                        </label>
+                                        <div className="flex gap-2">
+                                            <input
+                                                type="email"
+                                                value={shareEmail}
+                                                onChange={(e) => { setShareEmail(e.target.value); setShareError(''); }}
+                                                placeholder="usuario@ejemplo.com"
+                                                disabled={shareLoading}
+                                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors disabled:opacity-60"
+                                            />
+                                            <select
+                                                value={shareRole}
+                                                onChange={(e) => setShareRole(e.target.value)}
+                                                disabled={shareLoading}
+                                                className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                                            >
+                                                <option value="viewer">Lector</option>
+                                                <option value="editor">Editor</option>
+                                            </select>
+                                            <button
+                                                type="button"
+                                                onClick={handleShareAction}
+                                                disabled={shareLoading}
+                                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                                            >
+                                                {shareLoading ? <Loader2 size={16} className="animate-spin" /> : <Users size={16} />}
+                                                {shareLoading ? 'Compartiendo...' : 'Compartir'}
+                                            </button>
                                         </div>
 
-                                        {/* Owner Controls */}
-                                        {canManageSharing && (
-                                            <button 
-                                                onClick={() => handleUnshareAction(user.email)} // Call the wrapper
-                                                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                                title="Revocar acceso"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                        {shareError && (
+                                            <div className="mt-2 flex items-center gap-2 text-sm text-red-600 dark:text-red-400">
+                                                <AlertCircle size={14} className="flex-shrink-0" />
+                                                {shareError}
+                                            </div>
+                                        )}
+
+                                        {shareSuccess && (
+                                            <div className="mt-2 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                                                <CheckCircle size={14} className="flex-shrink-0" />
+                                                {shareSuccess}
+                                            </div>
                                         )}
                                     </div>
-                                ))}
-                            </div>
+                                )}
 
-                            {isShortcutEditing && (
-                                <button
-                                    type="button"
-                                    onClick={handleRemoveMyShortcutAccess}
-                                    className="w-full px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 rounded-xl font-medium transition-colors"
-                                >
-                                    Eliminar acceso para mí
+                                {sharedList.length > 0 && (
+                                    <div>
+                                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                            Compartido con ({sharedList.length})
+                                        </h4>
+                                        {showShareSearch && (
+                                            <input
+                                                type="text"
+                                                value={shareSearch}
+                                                onChange={(e) => setShareSearch(e.target.value)}
+                                                placeholder="Buscar usuario compartido..."
+                                                className="w-full mb-3 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                                            />
+                                        )}
+                                        <div className="space-y-2">
+                                            {displayedSharedList.map((share) => (
+                                                <div
+                                                    key={share.email}
+                                                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg transition-colors"
+                                                >
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                            {share.email}
+                                                        </p>
+                                                        {isOwnerManager ? (
+                                                            <select
+                                                                value={share.role || 'viewer'}
+                                                                onChange={(e) => handleUpdatePermission(share.email, e.target.value)}
+                                                                className="mt-1 text-xs px-2 py-1 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300"
+                                                            >
+                                                                <option value="viewer">Lector</option>
+                                                                <option value="editor">Editor</option>
+                                                            </select>
+                                                        ) : (
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                {share.role === 'viewer' ? 'Lector' : 'Editor'}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleUnshareAction(share.email)}
+                                                        disabled={!canManageSharing}
+                                                        className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-colors cursor-pointer"
+                                                        title="Dejar de compartir"
+                                                        style={{ display: canManageSharing ? 'inline-flex' : 'none' }}
+                                                    >
+                                                        <Trash2 size={16} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {sharedList.length === 0 && (
+                                    <div className="text-center py-6">
+                                        <Users className="w-8 h-8 text-gray-300 dark:text-slate-600 mx-auto mb-2" />
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            Esta carpeta no está compartida con nadie
+                                        </p>
+                                    </div>
+                                )}
+
+                                {isShortcutEditing && (
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveMyShortcutAccess}
+                                        className="w-full px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 rounded-xl font-medium transition-colors"
+                                    >
+                                        Eliminar acceso para mí
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
+                            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-colors cursor-pointer">Cancelar</button>
+                            {activeTab === 'general' && (
+                                <button type="submit" className="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 flex items-center gap-2 cursor-pointer transition-colors">
+                                    <Save className="w-4 h-4" /> {isEditing ? 'Guardar' : 'Crear'}
                                 </button>
                             )}
                         </div>
-                    </div>
-
+                    </form>
                 </div>
             </div>
         </div>

@@ -18,7 +18,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     });
     const [activeTab, setActiveTab] = useState('general');
     const [shareEmail, setShareEmail] = useState('');
+    const [shareRole, setShareRole] = useState('viewer');
     const [sharedList, setSharedList] = useState([]);
+    const [shareSearch, setShareSearch] = useState('');
     const [shareLoading, setShareLoading] = useState(false);
     const [shareError, setShareError] = useState('');
     const [shareSuccess, setShareSuccess] = useState('');
@@ -28,6 +30,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canManageSharing = !isShortcutEditing || isShortcutEditor;
     const canEditOriginalFields = !isShortcutEditing || isShortcutEditor;
+    const isOwnerManager = isShortcutEditing
+        ? shortcutPermissionLevel === 'owner'
+        : Boolean((initialData?.ownerId || formData?.ownerId) && user?.uid && (initialData?.ownerId || formData?.ownerId) === user.uid);
 
     // 1. Initialize Logic
     useEffect(() => {
@@ -35,9 +40,12 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setActiveTab(initialTab);
             setShareError('');
             setShareSuccess('');
+            setShareRole('viewer');
+            setShareSearch('');
             if (isEditing && initialData) {
                 setFormData({
                     id: initialData.id,
+                    ownerId: initialData.ownerId,
                     shortcutId: initialData.shortcutId || null,
                     isShortcut: initialData.isShortcut === true,
                     shortcutPermissionLevel: initialData.isShortcut
@@ -105,22 +113,33 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             return;
         }
         const normalizedEmail = shareEmail.toLowerCase();
-        if (sharedList.some(u => u.email === normalizedEmail)) {
-            setShareError('Ya compartiste esta asignatura con ese usuario.');
-            return;
-        }
         setShareLoading(true);
         setShareError('');
         setShareSuccess('');
         try {
-            const result = await onShare(formData.id, shareEmail);
-            if (result?.alreadyShared) {
-                setShareError('Ya compartiste esta asignatura con ese usuario.');
-                return;
-            }
-            setSharedList(prev => [...prev, { email: normalizedEmail, role: 'viewer', sharedAt: new Date() }]);
+            const result = await onShare(formData.id, shareEmail, shareRole);
+            const updatedEntry = {
+                email: normalizedEmail,
+                uid: result?.uid,
+                role: shareRole,
+                canEdit: shareRole === 'editor',
+                sharedAt: result?.sharedAt || new Date()
+            };
+            setSharedList(prev => {
+                const existingIndex = prev.findIndex(u => u.email?.toLowerCase() === normalizedEmail);
+                if (existingIndex >= 0) {
+                    const next = [...prev];
+                    next[existingIndex] = { ...next[existingIndex], ...updatedEntry };
+                    return next;
+                }
+                return [...prev, updatedEntry];
+            });
             setShareEmail('');
-            setShareSuccess(`Asignatura compartida con ${normalizedEmail}.`);
+            setShareRole('viewer');
+            setShareSuccess(result?.roleUpdated
+                ? `Permisos actualizados para ${normalizedEmail}.`
+                : `Asignatura compartida con ${normalizedEmail}.`
+            );
             setTimeout(() => setShareSuccess(''), 4000);
         } catch (error) {
             setShareError(error?.message || 'Error al compartir. Inténtalo de nuevo.');
@@ -135,6 +154,21 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setSharedList(prev => prev.filter(u => u.email !== emailToRemove));
         } catch (error) {
             console.error('Error unsharing subject:', error);
+        }
+    };
+
+    const handleUpdatePermission = async (emailToUpdate, nextRole) => {
+        if (!isOwnerManager) return;
+
+        try {
+            await onShare(formData.id, emailToUpdate, nextRole);
+            setSharedList(prev => prev.map(entry =>
+                entry.email === emailToUpdate
+                    ? { ...entry, role: nextRole, canEdit: nextRole === 'editor' }
+                    : entry
+            ));
+        } catch (error) {
+            setShareError(error?.message || 'No se pudo actualizar el permiso.');
         }
     };
 
@@ -158,6 +192,12 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             handleShareAction();
         }
     };
+
+    const normalizedShareSearch = shareSearch.trim().toLowerCase();
+    const showShareSearch = sharedList.length > 5;
+    const displayedSharedList = showShareSearch
+        ? sharedList.filter(share => (share.email || '').toLowerCase().includes(normalizedShareSearch))
+        : sharedList;
 
     if (!isOpen) return null;
 
@@ -235,6 +275,15 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                 disabled={shareLoading}
                                                 className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors disabled:opacity-60"
                                             />
+                                            <select
+                                                value={shareRole}
+                                                onChange={(e) => setShareRole(e.target.value)}
+                                                disabled={shareLoading}
+                                                className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                                            >
+                                                <option value="viewer">Lector</option>
+                                                <option value="editor">Editor</option>
+                                            </select>
                                             <button
                                                 type="button"
                                                 onClick={handleShareAction}
@@ -270,8 +319,17 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             Compartido con ({sharedList.length})
                                         </h4>
+                                        {showShareSearch && (
+                                            <input
+                                                type="text"
+                                                value={shareSearch}
+                                                onChange={(e) => setShareSearch(e.target.value)}
+                                                placeholder="Buscar usuario compartido..."
+                                                className="w-full mb-3 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400"
+                                            />
+                                        )}
                                         <div className="space-y-2">
-                                            {sharedList.map((share) => (
+                                            {displayedSharedList.map((share) => (
                                                 <div
                                                     key={share.email}
                                                     className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg transition-colors"
@@ -280,9 +338,20 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                         <p className="text-sm font-medium text-gray-900 dark:text-white">
                                                             {share.email}
                                                         </p>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                            {share.role === 'viewer' ? 'Lector' : 'Editor'}
-                                                        </p>
+                                                        {isOwnerManager ? (
+                                                            <select
+                                                                value={share.role || 'viewer'}
+                                                                onChange={(e) => handleUpdatePermission(share.email, e.target.value)}
+                                                                className="mt-1 text-xs px-2 py-1 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300"
+                                                            >
+                                                                <option value="viewer">Lector</option>
+                                                                <option value="editor">Editor</option>
+                                                            </select>
+                                                        ) : (
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                {share.role === 'viewer' ? 'Lector' : 'Editor'}
+                                                            </p>
+                                                        )}
                                                     </div>
                                                     <button
                                                         type="button"
