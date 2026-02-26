@@ -26,6 +26,15 @@ export const useHomePageHandlers = ({
         !canEdit(logic.currentFolder, currentUserId)
     );
 
+    const canWriteIntoTargetFolder = (targetFolderId) => {
+        if (!targetFolderId) return true;
+        const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
+        if (!targetFolder) return true;
+        if (targetFolder.isShared !== true) return true;
+        if (!currentUserId) return false;
+        return canEdit(targetFolder, currentUserId);
+    };
+
     const resolveFolderShortcutId = (folderId, sourceParentId = null) => {
         if (!folderId || !Array.isArray(logic?.shortcuts)) return null;
 
@@ -80,6 +89,10 @@ export const useHomePageHandlers = ({
 
     const handleDropOnFolderWrapper = (targetFolderId, subjectId, typeOrSourceFolderId, sourceFolderIdMaybe, shortcutIdMaybe) => {
         if (isViewerInsideSharedFolder) {
+            return true;
+        }
+
+        if (!canWriteIntoTargetFolder(targetFolderId)) {
             return true;
         }
 
@@ -183,6 +196,10 @@ export const useHomePageHandlers = ({
             return true;
         }
 
+        if (!canWriteIntoTargetFolder(targetFolderId)) {
+            return true;
+        }
+
         const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
         if (subjectId) {
             return handleDropOnFolderWrapper(targetFolderId, subjectId, 'subject', currentFolderId);
@@ -268,6 +285,10 @@ export const useHomePageHandlers = ({
 
     const handleNestFolder = async (targetFolderId, droppedFolderId, droppedFolderShortcutId = null) => {
         if (isViewerInsideSharedFolder) {
+            return;
+        }
+
+        if (!canWriteIntoTargetFolder(targetFolderId)) {
             return;
         }
 
@@ -476,6 +497,8 @@ export const useHomePageHandlers = ({
 
     const handleTreeMoveSubject = async (subjectId, targetFolderId, sourceFolderId) => {
         if (isViewerInsideSharedFolder) return;
+
+        if (!canWriteIntoTargetFolder(targetFolderId)) return;
 
         const subject = (logic.subjects || []).find(s => s.id === subjectId);
         const userId = currentUserId;

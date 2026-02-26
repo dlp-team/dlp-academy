@@ -281,7 +281,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                             {share.email}
                                                         </p>
                                                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                            {share.role === 'viewer' ? 'Visualizador' : 'Editor'}
+                                                            {share.role === 'viewer' ? 'Lector' : 'Editor'}
                                                         </p>
                                                     </div>
                                                     <button
