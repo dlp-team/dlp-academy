@@ -2,6 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Users, Trash2, Share2, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { MODERN_FILL_COLORS, EDUCATION_LEVELS } from '../../../utils/subjectConstants';
+import { collection, getDocs, query, where } from 'firebase/firestore';
+import { db } from '../../../firebase/config';
 
 // Sub-components
 import BasicInfoFields from './subject-form/BasicInfoFields';
@@ -21,6 +23,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [shareRole, setShareRole] = useState('viewer');
     const [sharedList, setSharedList] = useState([]);
     const [shareSearch, setShareSearch] = useState('');
+    const [institutionEmails, setInstitutionEmails] = useState([]);
     const [pendingShareAction, setPendingShareAction] = useState(null);
     const [shareLoading, setShareLoading] = useState(false);
     const [shareError, setShareError] = useState('');
@@ -90,6 +93,38 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             }
         }
     }, [isOpen, isEditing, initialData, initialTab, user?.uid]);
+
+    useEffect(() => {
+        let active = true;
+
+        const loadInstitutionEmails = async () => {
+            if (!isOpen || !user?.institutionId) {
+                if (active) setInstitutionEmails([]);
+                return;
+            }
+
+            try {
+                const usersRef = collection(db, 'users');
+                const usersQuery = query(usersRef, where('institutionId', '==', user.institutionId));
+                const usersSnapshot = await getDocs(usersQuery);
+
+                if (!active) return;
+
+                const uniqueEmails = Array.from(new Set(
+                    usersSnapshot.docs
+                        .map(docSnap => (docSnap.data()?.email || '').toLowerCase().trim())
+                        .filter(Boolean)
+                ));
+
+                setInstitutionEmails(uniqueEmails);
+            } catch (error) {
+                if (active) setInstitutionEmails([]);
+            }
+        };
+
+        loadInstitutionEmails();
+        return () => { active = false; };
+    }, [isOpen, user?.institutionId]);
 
     // 2. Auto-generate Course Name (only if course is not pre-filled from outside)
     useEffect(() => {
@@ -269,6 +304,33 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         ? allSharedEntries.filter(share => (share.email || '').toLowerCase().includes(normalizedShareSearch))
         : allSharedEntries;
 
+    const normalizedTypedEmail = shareEmail.trim().toLowerCase();
+    const currentUserEmail = (user?.email || '').toLowerCase();
+    const currentDomain = currentUserEmail.includes('@') ? currentUserEmail.split('@')[1] : '';
+    const sharedEmailSet = new Set(sharedWithoutOwner.map(entry => (entry.email || '').toLowerCase()));
+
+    const suggestedEmails = normalizedTypedEmail
+        ? institutionEmails
+            .filter(email =>
+                email.includes(normalizedTypedEmail) &&
+                email !== currentUserEmail &&
+                email !== ownerEmailNormalized &&
+                !sharedEmailSet.has(email)
+            )
+            .sort((a, b) => {
+                const aSameDomain = currentDomain && a.endsWith(`@${currentDomain}`) ? 1 : 0;
+                const bSameDomain = currentDomain && b.endsWith(`@${currentDomain}`) ? 1 : 0;
+                if (aSameDomain !== bSameDomain) return bSameDomain - aSameDomain;
+
+                const aStarts = a.startsWith(normalizedTypedEmail) ? 1 : 0;
+                const bStarts = b.startsWith(normalizedTypedEmail) ? 1 : 0;
+                if (aStarts !== bStarts) return bStarts - aStarts;
+
+                return a.localeCompare(b);
+            })
+            .slice(0, 6)
+        : [];
+
     if (!isOpen) return null;
 
     return (
@@ -364,6 +426,24 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                 {shareLoading ? 'Compartiendo...' : 'Compartir'}
                                             </button>
                                         </div>
+
+                                        {suggestedEmails.length > 0 && (
+                                            <div className="mt-2 p-2 border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800">
+                                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Sugerencias de tu institución</p>
+                                                <div className="max-h-32 overflow-y-auto space-y-1">
+                                                    {suggestedEmails.map((email) => (
+                                                        <button
+                                                            key={email}
+                                                            type="button"
+                                                            onClick={() => setShareEmail(email)}
+                                                            className="w-full text-left px-2 py-1 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                                                        >
+                                                            {email}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
 
                                         {/* Error message */}
                                         {shareError && (

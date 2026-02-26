@@ -1,3 +1,18 @@
+## [2026-02-26] Feature Update: Institution Email Autocomplete Suggestions
+### Context & Architecture
+`FolderManager` sharing input now fetches institution users and offers email suggestions inline.
+
+### Previous State
+- Owner had to type full emails manually for sharing.
+
+### New State & Logic
+- Added preload of institution emails from Firestore users collection.
+- Added suggestion panel under input while typing.
+- Prioritizes same-domain suggestions and prefix matches.
+- Excludes owner/current user/already shared entries.
+
+---
+
 ## [2026-02-26] Feature Update: Owner Row Visibility + Owner Protection in Sharing Tab
 ### Context & Architecture
 `FolderManager` now builds sharing list entries with explicit owner context, aligned with subject sharing behavior.

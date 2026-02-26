@@ -1,3 +1,26 @@
+## [2026-02-26] Feature Update: Share Email Suggestions + Direct Non-Shared Drop Behavior
+### Context & Architecture
+This update added autocomplete assistance in sharing forms and adjusted subject move confirmation logic in Home drag handlers.
+
+### Previous State
+- Sharing required fully manual email typing.
+- Dragging a shared subject from root/non-folder context into non-shared folders could trigger unshare confirmation.
+
+### New State & Logic
+1. **Institution + domain-prioritized email suggestions**
+   - `SubjectFormModal` and `FolderManager` now preload institution user emails from Firestore.
+   - Typing in share input shows suggestions, prioritizing same-domain addresses.
+   - Suggestions exclude current user, owner, and already shared users.
+
+2. **Direct drop without unshare confirmation**
+   - In `useHomePageHandlers.handleDropOnFolderWrapper`, if source is root/non-folder and target is non-shared, subject moves directly.
+   - Sharing settings are preserved; no unshare prompt is shown.
+
+### Verification
+- Diagnostics (`get_errors`) reported no issues in all updated files.
+
+---
+
 ## [2026-02-26] Feature Update: Owner Visibility + No-Alert Share Validation
 ### Context & Architecture
 This update aligned subject/folder sharing UX around explicit owner presence and card-level error handling through thrown backend errors.

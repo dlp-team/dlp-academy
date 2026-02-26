@@ -1,3 +1,17 @@
+## [2026-02-26] Feature Update: Direct Move Without Unshare Prompt from Root Shared Subject Context
+### Context & Architecture
+`handleDropOnFolderWrapper` orchestrates subject move decisions including confirmation flows for sharing transitions.
+
+### Previous State
+- Moving a shared subject from root/non-folder context into a non-shared folder could trigger unshare confirmation.
+
+### New State & Logic
+- Added fast-path: when source folder is null and target is non-shared, move directly.
+- Keeps existing sharing metadata unchanged for this transition.
+- Prevents unnecessary unshare modal interruptions.
+
+---
+
 ## [2026-02-26] Feature Update: Editor Lock Inside Root Shared Folder
 ### Context & Architecture
 `useHomePageHandlers` governs drag/drop, promote, breadcrumb drop, and tree move flows in Home. This is the right boundary to enforce folder-context movement rules.

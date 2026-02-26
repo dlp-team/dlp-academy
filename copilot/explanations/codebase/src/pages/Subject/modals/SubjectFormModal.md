@@ -1,3 +1,18 @@
+## [2026-02-26] Feature Update: Institution Email Autocomplete Suggestions
+### Context & Architecture
+`SubjectFormModal` sharing input now preloads institution user emails and suggests candidates while typing.
+
+### Previous State
+- Sharing relied on manual email input without discovery assistance.
+
+### New State & Logic
+- Added Firestore-backed preload of emails from same `institutionId`.
+- Added suggestion list under the share input while typing.
+- Prioritizes same-domain emails (matching current user domain), then prefix matches.
+- Filters out owner/current user/already shared users.
+
+---
+
 ## [2026-02-26] Feature Update: Owner Row Visibility + Owner Protection in Sharing Tab
 ### Context & Architecture
 `SubjectFormModal` now composes sharing rows as `owner + shared users`, ensuring ownership context is always visible in-card.

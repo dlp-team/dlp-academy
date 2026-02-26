@@ -190,6 +190,11 @@ export const useHomePageHandlers = ({
         const sourceFolder = (logic.folders || []).find(f => f.id === currentFolderId);
         const userId = currentUserId;
 
+        if (!sourceFolder && (!targetFolder || targetFolder.isShared !== true)) {
+            moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+            return true;
+        }
+
         if (!draggedShortcutId && logic?.shortcuts) {
             const inferredShortcut = (logic.shortcuts || []).find(
                 s =>
