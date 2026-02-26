@@ -120,6 +120,10 @@ const FolderListItem = ({
 
     // --- DRAG HANDLERS ---
     const handleLocalDragStart = (e) => {
+        if (!draggable) {
+            e.preventDefault();
+            return;
+        }
         //e.stopPropagation();
         const dragData = {
             id: item.id,
@@ -159,6 +163,7 @@ const FolderListItem = ({
 
     const handleDrop = (e) => {
         e.preventDefault(); e.stopPropagation(); 
+        if (!draggable) return;
         setIsDragOver(false);
 
         const treeDataString = e.dataTransfer.getData('treeItem');

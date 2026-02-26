@@ -565,9 +565,11 @@ export const useFolders = (user) => {
      * Simplified approach: Just update the subject's folderId in Firestore
      * No more manipulating subjectIds arrays in folders
      */
-    const moveSubjectBetweenFolders = async (subjectId, fromFolderId, toFolderId) => {
+    const moveSubjectBetweenFolders = async (subjectId, fromFolderId, toFolderId, options = {}) => {
         // Prevent useless move
         if (fromFolderId === toFolderId) return;
+
+        const preserveSharing = options?.preserveSharing === true;
 
         let newFolderSharedUids = [];
         let oldFolderSharedUids = [];
@@ -614,6 +616,21 @@ export const useFolders = (user) => {
             updatedAt: new Date(),
             isShared: newFolderSharedUids.length > 0
         };
+
+        if (preserveSharing) {
+            try {
+                const currentSubSnap = await getDoc(subRef);
+                if (currentSubSnap.exists()) {
+                    const existingSharedWithUids = currentSubSnap.data().sharedWithUids || [];
+                    subjectUpdate.isShared = existingSharedWithUids.length > 0;
+                }
+                await updateDoc(subRef, subjectUpdate);
+            } catch (error) {
+                console.error('Error moving subject while preserving sharing:', error);
+                throw error;
+            }
+            return;
+        }
 
         // If no sharing transition needed, simple update
         if (oldFolderSharedUids.length === 0 && newFolderSharedUids.length === 0) {

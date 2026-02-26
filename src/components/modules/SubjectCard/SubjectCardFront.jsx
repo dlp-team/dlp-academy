@@ -22,8 +22,10 @@ const SubjectCardFront = ({
     topicCount,
     onOpenTopics,
     onGoToFolder,
-        filterOverlayOpen = false,
-        onCloseFilterOverlay
+    filterOverlayOpen = false,
+    onCloseFilterOverlay,
+    disableAllActions = false,
+    disableDeleteActions = false
 }) => {
     // Permission checks
     const showEditUI = user && shouldShowEditUI(subject, user.uid);
@@ -42,6 +44,12 @@ const SubjectCardFront = ({
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
     const isSourceOwner = user && subject?.ownerId === user.uid;
+    const effectiveShowEditUI = !disableAllActions && showEditUI;
+    const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
+    const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
+    const canShowShortcutVisibility = !disableAllActions && isShortcut;
+    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || !isSourceOwner);
+    const hasMenuActions = effectiveShowEditUI || effectiveCanShareFromMenu || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete;
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
 
@@ -133,23 +141,25 @@ const SubjectCardFront = ({
 
                 {/* 2. Dots Menu (Fixed position on the right) */}
                 <div className="absolute right-0"> 
-                    <button
-                        ref={menuBtnRef}
-                        onClick={(e) => { e.stopPropagation(); onToggleMenu(subject.id); }}
-                        className={`rounded-lg transition-all duration-200 cursor-pointer flex items-center justify-center ${
-                            isModern
-                                ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800'
-                                : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30'
-                        } ${
-                            activeMenu === subject.id ? 'opacity-100 scale-110' : (!filterOverlayOpen ? 'opacity-0 group-hover:opacity-100 hover:scale-110' : 'opacity-0')
-                        }`}
-                        style={{ 
-                            width: `${32 * scaleMultiplier}px`, 
-                            height: `${32 * scaleMultiplier}px` 
-                        }}
-                    >
-                        <MoreVertical size={15 * scaleMultiplier} />
-                    </button>
+                    {hasMenuActions && (
+                        <button
+                            ref={menuBtnRef}
+                            onClick={(e) => { e.stopPropagation(); onToggleMenu(subject.id); }}
+                            className={`rounded-lg transition-all duration-200 cursor-pointer flex items-center justify-center ${
+                                isModern
+                                    ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800'
+                                    : 'bg-white/20 backdrop-blur-md text-white hover:bg-white/30'
+                            } ${
+                                activeMenu === subject.id ? 'opacity-100 scale-110' : (!filterOverlayOpen ? 'opacity-0 group-hover:opacity-100 hover:scale-110' : 'opacity-0')
+                            }`}
+                            style={{ 
+                                width: `${32 * scaleMultiplier}px`, 
+                                height: `${32 * scaleMultiplier}px` 
+                            }}
+                        >
+                            <MoreVertical size={15 * scaleMultiplier} />
+                        </button>
+                    )}
 
                     {/* Dropdown Menu rendered in a portal to avoid clipping */}
                     {activeMenu === subject.id && typeof window !== 'undefined' && createPortal(
@@ -165,32 +175,32 @@ const SubjectCardFront = ({
                                 transformOrigin: 'top left'
                             }}
                         >
-                            {(showEditUI || showDeleteUI || isShortcut) ? (
+                            {(effectiveShowEditUI || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete || effectiveCanShareFromMenu) ? (
                                 <>
-                                    {showEditUI && (
+                                    {effectiveShowEditUI && (
                                         <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                             <Edit2 size={14 * menuScale} /> Editar
                                         </button>
                                     )}
-                                    {canShareFromMenu && (
+                                    {effectiveCanShareFromMenu && (
                                         <button onClick={(e) => { e.stopPropagation(); onShare(subject); }} className="w-full flex items-center gap-2 p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                             <Share2 size={14 * menuScale} /> Compartir
                                         </button>
                                     )}
-                                    {(showEditUI || canShareFromMenu) && (showDeleteUI || isShortcut) && (
+                                    {(effectiveShowEditUI || effectiveCanShareFromMenu) && (effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete) && (
                                         <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
                                     )}
-                                    {isShortcut && (
+                                    {canShowShortcutVisibility && (
                                         <button onClick={(e) => onDelete(e, subject, isHiddenFromManual ? 'showInManual' : 'removeShortcut')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                             <Trash2 size={14 * menuScale} /> <span className="whitespace-nowrap">{isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}</span>
                                         </button>
                                     )}
-                                    {isShortcut && (isOrphan || !isSourceOwner) && (
+                                    {canShowShortcutDelete && (
                                         <button onClick={(e) => onDelete(e, subject, isOrphan ? 'deleteShortcut' : 'unshareAndDelete')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                             <Trash2 size={14 * menuScale} /> Eliminar
                                         </button>
                                     )}
-                                    {!isShortcut && showDeleteUI && (
+                                    {!isShortcut && effectiveShowDeleteUI && (
                                         <button onClick={(e) => onDelete(e, subject, 'delete')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                             <Trash2 size={14 * menuScale} /> Eliminar
                                         </button>

@@ -16,6 +16,16 @@ export const useHomePageHandlers = ({
     setTopicsModalConfig,
     setFolderContentsModalConfig
 }) => {
+    const closeUnshareConfirm = () => {
+        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
+    };
+
+    const isViewerInsideSharedFolder = Boolean(
+        logic?.currentFolder?.isShared === true &&
+        currentUserId &&
+        !canEdit(logic.currentFolder, currentUserId)
+    );
+
     const resolveFolderShortcutId = (folderId, sourceParentId = null) => {
         if (!folderId || !Array.isArray(logic?.shortcuts)) return null;
 
@@ -39,6 +49,7 @@ export const useHomePageHandlers = ({
     };
 
     const handleUpwardDrop = async e => {
+        if (isViewerInsideSharedFolder) return;
         e.preventDefault();
         e.stopPropagation();
         const subjectId = e.dataTransfer.getData('subjectId');
@@ -68,6 +79,10 @@ export const useHomePageHandlers = ({
     };
 
     const handleDropOnFolderWrapper = (targetFolderId, subjectId, typeOrSourceFolderId, sourceFolderIdMaybe, shortcutIdMaybe) => {
+        if (isViewerInsideSharedFolder) {
+            return true;
+        }
+
         const isKnownType = typeOrSourceFolderId === 'subject' || typeOrSourceFolderId === 'folder';
         const type = isKnownType ? typeOrSourceFolderId : 'subject';
         const explicitSourceFolderId = isKnownType ? sourceFolderIdMaybe : typeOrSourceFolderId;
@@ -131,8 +146,12 @@ export const useHomePageHandlers = ({
                 folder: sourceFolder,
                 onConfirm: async () => {
                     await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-                    setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
-                }
+                    closeUnshareConfirm();
+                },
+                onPreserveConfirm: async () => {
+                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, { preserveSharing: true });
+                    closeUnshareConfirm();
+                },
             });
             return true;
         }
@@ -160,6 +179,10 @@ export const useHomePageHandlers = ({
     };
 
     const handleBreadcrumbDrop = (targetFolderId, subjectId, droppedFolderId, droppedFolderShortcutId = null) => {
+        if (isViewerInsideSharedFolder) {
+            return true;
+        }
+
         const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
         if (subjectId) {
             return handleDropOnFolderWrapper(targetFolderId, subjectId, 'subject', currentFolderId);
@@ -214,7 +237,7 @@ export const useHomePageHandlers = ({
                                     });
                                 }
                                 await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-                                setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                                closeUnshareConfirm();
                             }
                         });
                         return true;
@@ -244,6 +267,10 @@ export const useHomePageHandlers = ({
     };
 
     const handleNestFolder = async (targetFolderId, droppedFolderId, droppedFolderShortcutId = null) => {
+        if (isViewerInsideSharedFolder) {
+            return;
+        }
+
         const inferredShortcutId = droppedFolderShortcutId || resolveFolderShortcutId(droppedFolderId, logic.currentFolder?.id || null);
 
         if (inferredShortcutId && logic?.moveShortcut) {
@@ -300,7 +327,7 @@ export const useHomePageHandlers = ({
                             });
                         }
                         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-                        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                        closeUnshareConfirm();
                     }
                 });
                 return;
@@ -328,6 +355,8 @@ export const useHomePageHandlers = ({
     };
 
     const handlePromoteSubjectWrapper = async (subjectId, subjectShortcutId = null) => {
+        if (isViewerInsideSharedFolder) return;
+
         const currentFolder = logic.currentFolder;
         const parentId = currentFolder ? currentFolder.parentId : null;
 
@@ -349,8 +378,12 @@ export const useHomePageHandlers = ({
                 folder: sourceFolder,
                 onConfirm: async () => {
                     await moveSubjectToParent(subjectId, currentFolder.id, parentId);
-                    setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
-                }
+                    closeUnshareConfirm();
+                },
+                onPreserveConfirm: async () => {
+                    await moveSubjectBetweenFolders(subjectId, currentFolder.id, parentId, { preserveSharing: true });
+                    closeUnshareConfirm();
+                },
             });
             return;
         }
@@ -359,6 +392,8 @@ export const useHomePageHandlers = ({
     };
 
     const handlePromoteFolderWrapper = async (folderId, folderShortcutId = null) => {
+        if (isViewerInsideSharedFolder) return;
+
         const resolvedShortcutId = folderShortcutId || resolveFolderShortcutId(folderId, logic.currentFolder?.id || null);
 
         if (resolvedShortcutId && logic?.moveShortcut) {
@@ -410,7 +445,7 @@ export const useHomePageHandlers = ({
                             });
                         }
                         await moveFolderToParent(folderId, currentFolder.id, parentId);
-                        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                        closeUnshareConfirm();
                     }
                 });
                 return;
@@ -440,6 +475,8 @@ export const useHomePageHandlers = ({
     };
 
     const handleTreeMoveSubject = async (subjectId, targetFolderId, sourceFolderId) => {
+        if (isViewerInsideSharedFolder) return;
+
         const subject = (logic.subjects || []).find(s => s.id === subjectId);
         const userId = currentUserId;
         const userCanEdit = subject && userId ? canEdit(subject, userId) : false;

@@ -14,6 +14,8 @@ const SubjectListItem = ({
     onDelete, 
     onShare, 
     onGoToFolder,
+    disableAllActions = false,
+    disableDeleteActions = false,
     compact = false, 
     cardScale = 100,
     className = ""
@@ -41,6 +43,11 @@ const SubjectListItem = ({
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
     const isSourceOwner = user && subject?.ownerId === user.uid;
+    const effectiveShowEditUI = !disableAllActions && showEditUI;
+    const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
+    const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
+    const canShowShortcutVisibility = !disableAllActions && isShortcut;
+    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || !isSourceOwner);
 
     // Minimum scale for the menu is 1 (100%)
     const menuScale = Math.max(scale, 1);
@@ -172,21 +179,21 @@ const SubjectListItem = ({
                                 >
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onEdit(subject); setShowMenu(false); }}
-                                        disabled={!showEditUI}
-                                        style={{ fontSize: `${14 * menuScale}px`, display: showEditUI ? 'flex' : 'none' }}
+                                        disabled={!effectiveShowEditUI}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: effectiveShowEditUI ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
                                     >
                                         <Edit2 size={14 * menuScale} /> Editar
                                     </button>
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onShare && onShare(subject); setShowMenu(false); }}
-                                        disabled={!canShareFromMenu}
-                                        style={{ fontSize: `${14 * menuScale}px`, display: canShareFromMenu ? 'flex' : 'none' }}
+                                        disabled={!effectiveCanShareFromMenu}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: effectiveCanShareFromMenu ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
                                     >
                                         <Share2 size={14 * menuScale} /> Compartir
                                     </button>
-                                    {isShortcut && (
+                                    {canShowShortcutVisibility && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onDelete(subject, isHiddenFromManual ? 'showInManual' : 'removeShortcut'); setShowMenu(false); }}
                                             className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors cursor-pointer"
@@ -195,7 +202,7 @@ const SubjectListItem = ({
                                             <Trash2 size={14 * menuScale} /> <span className="whitespace-nowrap">{isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}</span>
                                         </button>
                                     )}
-                                    {isShortcut && (isOrphan || !isSourceOwner) && (
+                                    {canShowShortcutDelete && (
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); onDelete(subject, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); setShowMenu(false); }}
                                             className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
@@ -206,13 +213,13 @@ const SubjectListItem = ({
                                     )}
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onDelete(subject, 'delete'); setShowMenu(false); }}
-                                        disabled={!showDeleteUI || isShortcut}
-                                        style={{ fontSize: `${14 * menuScale}px`, display: !isShortcut && showDeleteUI ? 'flex' : 'none' }}
+                                        disabled={!effectiveShowDeleteUI || isShortcut}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: !isShortcut && effectiveShowDeleteUI ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
                                     >
                                         <Trash2 size={14 * menuScale} /> Eliminar
                                     </button>
-                                    {!showEditUI && !canShareFromMenu && !showDeleteUI && !isShortcut && (
+                                    {!effectiveShowEditUI && !effectiveCanShareFromMenu && !effectiveShowDeleteUI && !canShowShortcutVisibility && !canShowShortcutDelete && (
                                         <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
                                     )}
                                 </div>

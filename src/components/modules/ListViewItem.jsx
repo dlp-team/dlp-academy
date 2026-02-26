@@ -19,10 +19,13 @@ const ListViewItem = ({
     onDelete,
     onShare,
     onGoToFolder,
+    disableAllActions = false,
+    disableDeleteActions = false,
     cardScale = 100, 
     onDragStart,
     onDragEnd,
     onDropAction,
+    draggable = true,
     path = []
 }) => {
 
@@ -39,6 +42,10 @@ const ListViewItem = ({
         type: 'subject',
         cardScale,
         onDragStart: (e) => {
+            if (!draggable) {
+                e.preventDefault();
+                return;
+            }
             //e.stopPropagation();
             const itemParentId = item.shortcutParentId ?? parentId;
             const dragData = {
@@ -76,10 +83,13 @@ const ListViewItem = ({
                 onShare={onShare}
                 onDelete={onDelete}
                 onGoToFolder={onGoToFolder}
+                disableAllActions={disableAllActions}
+                disableDeleteActions={disableDeleteActions}
                 cardScale={cardScale}
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
                 onDropAction={onDropAction}
+                draggable={draggable}
                 path={currentPath}
             />
         );
@@ -129,7 +139,7 @@ const ListViewItem = ({
             {/* ROW CONTAINER - Apply indentation here via margin */}
             <div 
                 ref={itemRef}
-                draggable
+                draggable={draggable}
                 onDragStart={dragHandlers.onDragStart}
                 onDrag={dragHandlers.onDrag}
                 onDragEnd={dragHandlers.onDragEnd}
@@ -158,6 +168,8 @@ const ListViewItem = ({
                             onDelete={onDelete} 
                             onShare={onShare}
                             onGoToFolder={onGoToFolder}
+                            disableAllActions={disableAllActions}
+                            disableDeleteActions={disableDeleteActions}
                             cardScale={cardScale} 
                             className="pl-8" 
                         />

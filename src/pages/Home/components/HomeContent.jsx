@@ -10,7 +10,7 @@ import SubjectListItem from '../../../components/modules/ListItems/SubjectListIt
 import ListViewItem from '../../../components/modules/ListViewItem';
 import useHomeContentDnd from '../hooks/useHomeContentDnd';
 import useAutoScrollOnDrag from '../../../hooks/useAutoScrollOnDrag';
-import { isShortcutItem } from '../../../utils/permissionUtils';
+import { isShortcutItem, getPermissionLevel } from '../../../utils/permissionUtils';
 
 const HomeContent = ({
     user,
@@ -64,11 +64,20 @@ const HomeContent = ({
     onCloseFilterOverlay = () => {},
 }) => {
     const contentRef = useRef(null);
+    const sharedFolderPermission = currentFolder?.isShared && user?.uid
+        ? getPermissionLevel(currentFolder, user.uid)
+        : 'none';
+    const isViewerInSharedFolder = currentFolder?.isShared === true && sharedFolderPermission === 'viewer';
+    const isEditorInSharedFolder = currentFolder?.isShared === true && sharedFolderPermission === 'editor';
+    const disableAllActionsInShared = isViewerInSharedFolder;
+    const disableDeleteActionsInShared = isViewerInSharedFolder || isEditorInSharedFolder;
+    const dndEnabledInContext = isDragAndDropEnabled && !disableAllActionsInShared;
+    const canCreateInCurrentContext = !disableAllActionsInShared;
 
     // Auto-scroll is always enabled for both grid and list modes
     useAutoScrollOnDrag({
         containerRef: contentRef,
-        enabled: isDragAndDropEnabled,
+        enabled: dndEnabledInContext,
         scrollContainer: 'window',
         edgeThreshold: 160
     });
@@ -221,7 +230,7 @@ const HomeContent = ({
                                             style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` }}
                                         >
                                             {/* Create Subject Button for courses/tags view */}
-                                            {(viewMode === 'courses' || viewMode === 'tags') && (
+                                            {(viewMode === 'courses' || viewMode === 'tags') && canCreateInCurrentContext && (
                                                 <button
                                                     onClick={() => {
                                                         let data = null;
@@ -254,7 +263,7 @@ const HomeContent = ({
                                             )}
 
                                             {/* Promote Zone (Grid) */}
-                                            {viewMode === 'grid' && (
+                                                {viewMode === 'grid' && canCreateInCurrentContext && (
                                                  <div>
                                                     {currentFolder && draggedItem && (draggedItemType === 'subject' || draggedItemType === 'folder') ? (
                                                         <div
@@ -314,6 +323,7 @@ const HomeContent = ({
                                                         onToggleMenu={setActiveMenu}
                                                         onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                         onDelete={(f, action = 'delete') => {
+                                                            if (disableAllActionsInShared || disableDeleteActionsInShared) return;
                                                             if (isShortcutItem(f) && f?.shortcutId) {
                                                                 setDeleteConfig({
                                                                     isOpen: true,
@@ -331,14 +341,17 @@ const HomeContent = ({
                                                             }
                                                             setDeleteConfig({ isOpen: true, type: 'folder', item: f });
                                                         }}
-                                                        onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
+                                                        onShare={(f) => {
+                                                            if (disableAllActionsInShared) return;
+                                                            setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' });
+                                                        }}
                                                         onShowContents={handleShowFolderContents}
                                                         onGoToFolder={handleGoToFolderFromGhost}
                                                         cardScale={cardScale}
                                                         onDrop={handleDropOnFolder}
                                                         onDropFolder={handleNestFolder}
-                                                        canDrop={isDragAndDropEnabled}
-                                                        draggable={isDragAndDropEnabled}
+                                                        canDrop={dndEnabledInContext}
+                                                        draggable={dndEnabledInContext}
                                                         onDragStart={handleDragStartFolder}
                                                         onDragEnd={handleDragEnd}
                                                         onDragOver={handleDragOverFolder}
@@ -347,6 +360,8 @@ const HomeContent = ({
                                                         isDragging={draggedItem?.id === folder.id}
                                                         filterOverlayOpen={filterOverlayOpen}
                                                         onCloseFilterOverlay={onCloseFilterOverlay}
+                                                        disableAllActions={disableAllActionsInShared}
+                                                        disableDeleteActions={disableDeleteActionsInShared}
                                                     />
                                                 </div>
                                             );
@@ -365,6 +380,7 @@ const HomeContent = ({
                                                         onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
                                                         onEdit={(e, s) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
                                                         onDelete={(e, s, action = 'delete') => {
+                                                            if (disableAllActionsInShared || disableDeleteActionsInShared) return;
                                                             e.stopPropagation();
                                                             if (isShortcutItem(s) && s?.shortcutId) {
                                                                 setDeleteConfig({
@@ -384,18 +400,24 @@ const HomeContent = ({
                                                             }
                                                             setActiveMenu(null);
                                                         }}
-                                                        onShare={(s) => { setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' }); setActiveMenu(null); }}
+                                                        onShare={(s) => {
+                                                            if (disableAllActionsInShared) return;
+                                                            setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
+                                                            setActiveMenu(null);
+                                                        }}
                                                         cardScale={cardScale}
                                                         isDragging={draggedItem?.id === subject.id}
                                                         onDragStart={handleDragStartSubject}
                                                         onDragEnd={handleDragEnd}
                                                         onDragOver={handleDragOverSubject}
                                                         onDrop={handleDropReorderSubject}
-                                                        draggable={isDragAndDropEnabled}
+                                                        draggable={dndEnabledInContext}
                                                         position={index}
                                                         onOpenTopics={onOpenTopics}
                                                         onGoToFolder={handleGoToFolderFromGhost}
                                                         filterOverlayOpen={filterOverlayOpen}
+                                                        disableAllActions={disableAllActionsInShared}
+                                                        disableDeleteActions={disableDeleteActionsInShared}
                                                     />
                                                 </div>
                                             );
@@ -409,7 +431,7 @@ const HomeContent = ({
                                      <div className="space-y-2 relative">
                                         
                                         {/* Crear Nueva Asignatura / Drop Zone for list view - only in grid/manual modes */}
-                                        {(viewMode === 'grid' || viewMode === 'courses' || viewMode === 'tags') && (
+                                        {(viewMode === 'grid' || viewMode === 'courses' || viewMode === 'tags') && canCreateInCurrentContext && (
                                             <div
                                                 onDragOver={(e) => { e.preventDefault(); setIsRootZoneHovered(true); }}
                                                 onDragLeave={() => setIsRootZoneHovered(false)}
@@ -485,6 +507,7 @@ const HomeContent = ({
                                                 onNavigateSubject={handleSelectSubject}
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                 onDelete={(f, action = 'delete') => {
+                                                    if (disableAllActionsInShared || disableDeleteActionsInShared) return;
                                                     if (isShortcutItem(f) && f?.shortcutId) {
                                                         setDeleteConfig({
                                                             isOpen: true,
@@ -502,12 +525,18 @@ const HomeContent = ({
                                                     }
                                                     setDeleteConfig({ isOpen: true, type: 'folder', item: f });
                                                 }}
-                                                onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
+                                                onShare={(f) => {
+                                                    if (disableAllActionsInShared) return;
+                                                    setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' });
+                                                }}
                                                 onGoToFolder={handleGoToFolderFromGhost}
                                                 cardScale={cardScale}
                                                 onDragStart={handleDragStartFolder} 
                                                 onDragEnd={handleDragEnd}
-                                                onDropAction={handleListDrop}
+                                                onDropAction={disableAllActionsInShared ? () => {} : handleListDrop}
+                                                disableAllActions={disableAllActionsInShared}
+                                                disableDeleteActions={disableDeleteActionsInShared}
+                                                draggable={dndEnabledInContext}
                                             />
                                         ))}
 
@@ -525,6 +554,7 @@ const HomeContent = ({
                                                     onNavigateSubject={handleSelectSubject}
                                                     onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                     onDelete={(s, action = 'delete') => {
+                                                        if (disableAllActionsInShared || disableDeleteActionsInShared) return;
                                                         if (isShortcutItem(s) && s?.shortcutId) {
                                                             setDeleteConfig({
                                                                 isOpen: true,
@@ -542,12 +572,19 @@ const HomeContent = ({
                                                         }
                                                         setDeleteConfig({ isOpen: true, type: 'subject', item: s });
                                                     }}
-                                                    onShare={(s) => { setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' }); setActiveMenu(null); }}
+                                                    onShare={(s) => {
+                                                        if (disableAllActionsInShared) return;
+                                                        setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
+                                                        setActiveMenu(null);
+                                                    }}
                                                     onGoToFolder={handleGoToFolderFromGhost}
                                                     cardScale={cardScale}
                                                     onDragStart={handleDragStartSubject}
                                                     onDragEnd={handleDragEnd}
-                                                    onDropAction={handleListDrop}
+                                                    onDropAction={disableAllActionsInShared ? () => {} : handleListDrop}
+                                                    disableAllActions={disableAllActionsInShared}
+                                                    disableDeleteActions={disableDeleteActionsInShared}
+                                                    draggable={dndEnabledInContext}
                                                 />
                                             );
                                         })}
