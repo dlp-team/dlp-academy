@@ -70,7 +70,8 @@ const HomeContent = ({
     const isViewerInSharedFolder = currentFolder?.isShared === true && sharedFolderPermission === 'viewer';
     const isEditorInSharedFolder = currentFolder?.isShared === true && sharedFolderPermission === 'editor';
     const disableAllActionsInShared = isViewerInSharedFolder;
-    const disableDeleteActionsInShared = isViewerInSharedFolder || isEditorInSharedFolder;
+    const disableFolderDeleteActionsInShared = isViewerInSharedFolder || isEditorInSharedFolder;
+    const disableSubjectDeleteActionsInShared = isViewerInSharedFolder;
     const dndEnabledInContext = isDragAndDropEnabled && !disableAllActionsInShared;
     const canCreateInCurrentContext = !disableAllActionsInShared;
 
@@ -323,7 +324,7 @@ const HomeContent = ({
                                                         onToggleMenu={setActiveMenu}
                                                         onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                         onDelete={(f, action = 'delete') => {
-                                                            if (disableAllActionsInShared || disableDeleteActionsInShared) return;
+                                                            if (disableAllActionsInShared || disableFolderDeleteActionsInShared) return;
                                                             if (isShortcutItem(f) && f?.shortcutId) {
                                                                 setDeleteConfig({
                                                                     isOpen: true,
@@ -361,7 +362,7 @@ const HomeContent = ({
                                                         filterOverlayOpen={filterOverlayOpen}
                                                         onCloseFilterOverlay={onCloseFilterOverlay}
                                                         disableAllActions={disableAllActionsInShared}
-                                                        disableDeleteActions={disableDeleteActionsInShared}
+                                                        disableDeleteActions={disableFolderDeleteActionsInShared}
                                                     />
                                                 </div>
                                             );
@@ -380,7 +381,7 @@ const HomeContent = ({
                                                         onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
                                                         onEdit={(e, s) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
                                                         onDelete={(e, s, action = 'delete') => {
-                                                            if (disableAllActionsInShared || disableDeleteActionsInShared) return;
+                                                            if (disableAllActionsInShared || disableSubjectDeleteActionsInShared) return;
                                                             e.stopPropagation();
                                                             if (isShortcutItem(s) && s?.shortcutId) {
                                                                 setDeleteConfig({
@@ -417,7 +418,7 @@ const HomeContent = ({
                                                         onGoToFolder={handleGoToFolderFromGhost}
                                                         filterOverlayOpen={filterOverlayOpen}
                                                         disableAllActions={disableAllActionsInShared}
-                                                        disableDeleteActions={disableDeleteActionsInShared}
+                                                        disableDeleteActions={disableSubjectDeleteActionsInShared}
                                                     />
                                                 </div>
                                             );
@@ -507,7 +508,7 @@ const HomeContent = ({
                                                 onNavigateSubject={handleSelectSubject}
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                 onDelete={(f, action = 'delete') => {
-                                                    if (disableAllActionsInShared || disableDeleteActionsInShared) return;
+                                                    if (disableAllActionsInShared || disableFolderDeleteActionsInShared) return;
                                                     if (isShortcutItem(f) && f?.shortcutId) {
                                                         setDeleteConfig({
                                                             isOpen: true,
@@ -535,7 +536,7 @@ const HomeContent = ({
                                                 onDragEnd={handleDragEnd}
                                                 onDropAction={disableAllActionsInShared ? () => {} : handleListDrop}
                                                 disableAllActions={disableAllActionsInShared}
-                                                disableDeleteActions={disableDeleteActionsInShared}
+                                                disableDeleteActions={disableFolderDeleteActionsInShared}
                                                 draggable={dndEnabledInContext}
                                             />
                                         ))}
@@ -554,7 +555,7 @@ const HomeContent = ({
                                                     onNavigateSubject={handleSelectSubject}
                                                     onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                     onDelete={(s, action = 'delete') => {
-                                                        if (disableAllActionsInShared || disableDeleteActionsInShared) return;
+                                                        if (disableAllActionsInShared || disableSubjectDeleteActionsInShared) return;
                                                         if (isShortcutItem(s) && s?.shortcutId) {
                                                             setDeleteConfig({
                                                                 isOpen: true,
@@ -583,7 +584,7 @@ const HomeContent = ({
                                                     onDragEnd={handleDragEnd}
                                                     onDropAction={disableAllActionsInShared ? () => {} : handleListDrop}
                                                     disableAllActions={disableAllActionsInShared}
-                                                    disableDeleteActions={disableDeleteActionsInShared}
+                                                    disableDeleteActions={disableSubjectDeleteActionsInShared}
                                                     draggable={dndEnabledInContext}
                                                 />
                                             );

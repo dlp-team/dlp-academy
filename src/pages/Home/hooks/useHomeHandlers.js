@@ -1,5 +1,5 @@
 // src/pages/Home/hooks/useHomeHandlers.js
-import { canEdit } from '../../../utils/permissionUtils';
+import { canEdit, isOwner } from '../../../utils/permissionUtils';
 
 export const useHomeHandlers = ({
     user,
@@ -160,6 +160,11 @@ export const useHomeHandlers = ({
                 subjects: prev.subjects.filter(id => id !== deleteConfig.item.id)
             }));
         } else if (deleteConfig.type === 'folder' && deleteConfig.item) {
+            const isFolderOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
+            if (!isFolderOwner) {
+                setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
+                return;
+            }
             await deleteFolder(deleteConfig.item.id);
             setManualOrder(prev => ({
                 ...prev,
@@ -209,6 +214,11 @@ export const useHomeHandlers = ({
 
     const handleDeleteFolderAll = async () => {
         if (deleteConfig.item) {
+            const isFolderOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
+            if (!isFolderOwner) {
+                setDeleteConfig({ isOpen: false, type: null, item: null });
+                return;
+            }
             await deleteFolder(deleteConfig.item.id);
             setManualOrder(prev => ({
                 ...prev,
@@ -220,6 +230,11 @@ export const useHomeHandlers = ({
 
     const handleDeleteFolderOnly = async () => {
         if (deleteConfig.item) {
+            const isFolderOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
+            if (!isFolderOwner) {
+                setDeleteConfig({ isOpen: false, type: null, item: null });
+                return;
+            }
             await deleteFolderOnly(deleteConfig.item.id);
             setManualOrder(prev => ({
                 ...prev,
