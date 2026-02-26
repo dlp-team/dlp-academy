@@ -315,7 +315,15 @@ export const useFolders = (user) => {
                 email: emailLower,
                 uid: targetUid,
                 role: normalizedRole,
+                canEdit: normalizedRole === 'editor',
+                shareOrigin: 'direct',
                 sharedAt: new Date()
+            };
+
+            const inheritedSubjectShareData = {
+                ...shareData,
+                shareOrigin: 'inherited-folder',
+                inheritedFromFolderId: folderId
             };
 
             // 3. Update the folder document
@@ -393,11 +401,26 @@ export const useFolders = (user) => {
                             sharedWith: Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [],
                             sharedWithUids: Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : []
                         });
+                        const subjectSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
+                        const subjectSharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
+                        const alreadySharedInSubject = subjectSharedWithUids.includes(targetUid)
+                            || subjectSharedWith.some(entry => entry.uid === targetUid);
                         const subjectRef = doc(db, "subjects", docSnap.id);
+                        if (alreadySharedInSubject) {
+                            batch.update(subjectRef, {
+                                isShared: true,
+                                updatedAt: new Date()
+                            });
+                            return;
+                        }
+
+                        const nextSharedWith = [...subjectSharedWith, inheritedSubjectShareData];
+                        const nextSharedWithUids = [...subjectSharedWithUids, targetUid];
                         batch.update(subjectRef, {
                             isShared: true,
-                            sharedWith: arrayUnion(shareData),
-                            sharedWithUids: arrayUnion(targetUid)
+                            sharedWith: nextSharedWith,
+                            sharedWithUids: nextSharedWithUids,
+                            updatedAt: new Date()
                         });
                     });
                 } catch (e) {
@@ -524,52 +547,86 @@ export const useFolders = (user) => {
                 return;
             }
             const folderData = folderSnap.data();
-            
-            // Filter out the user from the sharedWith array object
-            const currentSharedWith = Array.isArray(folderData.sharedWith) ? folderData.sharedWith : [];
-            const currentSharedWithUids = Array.isArray(folderData.sharedWithUids) ? folderData.sharedWithUids : [];
-            const newSharedWith = currentSharedWith.filter(u =>
-                u.uid !== targetUid && u.email?.toLowerCase() !== emailLower
-            );
-            const newSharedWithUids = currentSharedWithUids.filter(uid => uid !== targetUid);
-
-            const batch = writeBatch(db);
-
-            // C. Update Folder
-            batch.update(folderRef, {
-                sharedWith: newSharedWith,        // Update the visual list
-                sharedWithUids: newSharedWithUids, // Remove permissions
-                isShared: newSharedWithUids.length > 0, // Update isShared flag
-                updatedAt: new Date()
-            });
-
-            // D. Remove from Subjects (query by folderId)
-            try {
-                const subjectsSnap = await getDocs(
-                    query(collection(db, "subjects"), where("folderId", "==", folderId))
-                );
-                subjectsSnap.forEach(docSnap => {
-                    const subjectRef = doc(db, "subjects", docSnap.id);
-                    const subjectData = docSnap.data() || {};
-                    const subjectSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
-                    const subjectSharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
-                    const newSubjectSharedWith = subjectSharedWith.filter(u =>
-                        u.uid !== targetUid && u.email?.toLowerCase() !== emailLower
-                    );
-                    const newSubjectSharedWithUids = subjectSharedWithUids.filter(uid => uid !== targetUid);
-
-                    batch.update(subjectRef, {
-                        sharedWith: newSubjectSharedWith,
-                        sharedWithUids: newSubjectSharedWithUids,
-                        isShared: newSubjectSharedWithUids.length > 0,
-                        updatedAt: new Date()
-                    });
-                });
-            } catch (e) {
-                console.error("Error unsharing subjects in folder:", e);
+            if (folderData?.ownerId && folderData.ownerId === targetUid) {
+                throw new Error('No se puede dejar de compartir con el propietario.');
             }
 
-            await batch.commit();
+            const stripShareForUser = (sharedWith = [], sharedWithUids = []) => {
+                const cleanSharedWith = (Array.isArray(sharedWith) ? sharedWith : []).filter(entry =>
+                    entry?.uid !== targetUid && entry?.email?.toLowerCase() !== emailLower
+                );
+                const cleanSharedWithUids = (Array.isArray(sharedWithUids) ? sharedWithUids : []).filter(uid => uid !== targetUid);
+                return {
+                    sharedWith: cleanSharedWith,
+                    sharedWithUids: cleanSharedWithUids,
+                    isShared: cleanSharedWithUids.length > 0
+                };
+            };
+
+            const subtreeFolderIds = [folderId];
+            for (let i = 0; i < subtreeFolderIds.length; i += 1) {
+                const parentFolderId = subtreeFolderIds[i];
+                const childFoldersSnap = await getDocs(
+                    query(collection(db, 'folders'), where('parentId', '==', parentFolderId))
+                );
+                childFoldersSnap.forEach(childDoc => {
+                    subtreeFolderIds.push(childDoc.id);
+                });
+            }
+
+            let batch = writeBatch(db);
+            let batchOps = 0;
+            const commitBatchIfNeeded = async (force = false) => {
+                if (!force && batchOps < 400) return;
+                if (batchOps === 0) return;
+                await batch.commit();
+                batch = writeBatch(db);
+                batchOps = 0;
+            };
+
+            for (const subFolderId of subtreeFolderIds) {
+                const subFolderRef = doc(db, 'folders', subFolderId);
+                const subFolderSnap = await getDoc(subFolderRef);
+                if (subFolderSnap.exists()) {
+                    const subFolderData = subFolderSnap.data() || {};
+                    const strippedFolder = stripShareForUser(subFolderData.sharedWith, subFolderData.sharedWithUids);
+                    batch.update(subFolderRef, {
+                        sharedWith: strippedFolder.sharedWith,
+                        sharedWithUids: strippedFolder.sharedWithUids,
+                        isShared: strippedFolder.isShared,
+                        updatedAt: new Date()
+                    });
+                    batchOps += 1;
+                }
+
+                const subjectsSnap = await getDocs(
+                    query(collection(db, 'subjects'), where('folderId', '==', subFolderId))
+                );
+
+                subjectsSnap.forEach(subjectDoc => {
+                    const subjectData = subjectDoc.data() || {};
+                    const strippedSubject = stripShareForUser(subjectData.sharedWith, subjectData.sharedWithUids);
+                    batch.update(doc(db, 'subjects', subjectDoc.id), {
+                        sharedWith: strippedSubject.sharedWith,
+                        sharedWithUids: strippedSubject.sharedWithUids,
+                        isShared: strippedSubject.isShared,
+                        updatedAt: new Date()
+                    });
+                    batchOps += 1;
+
+                    const subjectShortcutRef = doc(db, 'shortcuts', `${targetUid}_${subjectDoc.id}_subject`);
+                    batch.delete(subjectShortcutRef);
+                    batchOps += 1;
+                });
+
+                const folderShortcutRef = doc(db, 'shortcuts', `${targetUid}_${subFolderId}_folder`);
+                batch.delete(folderShortcutRef);
+                batchOps += 1;
+
+                await commitBatchIfNeeded();
+            }
+
+            await commitBatchIfNeeded(true);
             return true;
 
         } catch (error) {

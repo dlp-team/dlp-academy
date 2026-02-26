@@ -203,6 +203,8 @@ export const useSubjects = (user) => {
                 email: emailLower,
                 uid: targetUid,
                 role: normalizedRole,
+                canEdit: normalizedRole === 'editor',
+                shareOrigin: 'direct',
                 sharedAt: new Date()
             };
 

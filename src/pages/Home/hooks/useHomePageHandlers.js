@@ -32,7 +32,12 @@ export const useHomePageHandlers = ({
         if (!targetFolder) return true;
         if (targetFolder.isShared !== true) return true;
         if (!currentUserId) return false;
-        return canEdit(targetFolder, currentUserId);
+        if (canEdit(targetFolder, currentUserId)) return true;
+
+        const rootSharedFolder = getRootSharedFolder(targetFolderId);
+        if (!rootSharedFolder) return false;
+        const rootPermission = getPermissionLevel(rootSharedFolder, currentUserId);
+        return rootPermission === 'editor' || rootPermission === 'owner';
     };
 
     const canWriteFromSourceFolder = (sourceFolderId) => {
@@ -41,7 +46,12 @@ export const useHomePageHandlers = ({
         if (!sourceFolder) return true;
         if (sourceFolder.isShared !== true) return true;
         if (!currentUserId) return false;
-        return canEdit(sourceFolder, currentUserId);
+        if (canEdit(sourceFolder, currentUserId)) return true;
+
+        const rootSharedFolder = getRootSharedFolder(sourceFolderId);
+        if (!rootSharedFolder) return false;
+        const rootPermission = getPermissionLevel(rootSharedFolder, currentUserId);
+        return rootPermission === 'editor' || rootPermission === 'owner';
     };
 
     const getFolderById = (folderId) => {
@@ -212,7 +222,8 @@ export const useHomePageHandlers = ({
 
         if (subject) {
             const userCanEdit = userId ? canEdit(subject, userId) : false;
-            if (!userCanEdit) {
+            const userCanEditFromContext = canWriteFromSourceFolder(currentFolderId);
+            if (!userCanEdit && !userCanEditFromContext) {
                 return true;
             }
         }
@@ -599,6 +610,7 @@ export const useHomePageHandlers = ({
         if (isEditorLeavingRootSharedBoundary(resolvedSourceFolderId, targetFolderId || null)) return;
         const userId = currentUserId;
         const userCanEdit = subject && userId ? canEdit(subject, userId) : false;
+        const userCanEditFromContext = canWriteFromSourceFolder(resolvedSourceFolderId);
 
         if (!userCanEdit && logic?.moveShortcut) {
             const shortcut = (logic.shortcuts || []).find(
@@ -612,6 +624,14 @@ export const useHomePageHandlers = ({
                 await logic.moveShortcut(shortcut.id, targetFolderId || null);
                 return;
             }
+
+            if (!userCanEditFromContext) {
+                return;
+            }
+        }
+
+        if (!userCanEdit && !userCanEditFromContext) {
+            return;
         }
 
         await moveSubjectBetweenFolders(subjectId, sourceFolderId, targetFolderId);
