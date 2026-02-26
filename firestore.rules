@@ -163,6 +163,16 @@ service cloud.firestore {
         )
       );
     }
+
+    function canManageFolderById(folderId) {
+      return folderId != null
+        && exists(/databases/$(database)/documents/folders/$(folderId))
+        && (
+          isGlobalAdmin()
+          || get(/databases/$(database)/documents/folders/$(folderId)).data.ownerId == request.auth.uid
+          || get(/databases/$(database)/documents/folders/$(folderId)).data.uid == request.auth.uid
+        );
+    }
     
     // Reglas para usuarios
     match /users/{userId} {
@@ -194,6 +204,10 @@ service cloud.firestore {
           canReadResource(resource.data)
           || resource.data.ownerId == request.auth.uid
           || resource.data.uid == request.auth.uid
+          || (
+            resource.data.keys().hasAny(['folderId'])
+            && canManageFolderById(resource.data.folderId)
+          )
           || (resource.data.keys().hasAny(['sharedWithUids']) && request.auth.uid in resource.data.sharedWithUids)
         );
       allow update: if isSignedIn()
@@ -201,6 +215,10 @@ service cloud.firestore {
           canWriteResource(resource.data)
           || resource.data.ownerId == request.auth.uid
           || resource.data.uid == request.auth.uid
+          || (
+            resource.data.keys().hasAny(['folderId'])
+            && canManageFolderById(resource.data.folderId)
+          )
         );
       allow delete: if isSignedIn()
         && (
@@ -258,6 +276,10 @@ service cloud.firestore {
           canReadResource(resource.data)
           || resource.data.ownerId == request.auth.uid
           || resource.data.uid == request.auth.uid
+          || (
+            resource.data.keys().hasAny(['parentId'])
+            && canManageFolderById(resource.data.parentId)
+          )
           || (resource.data.keys().hasAny(['sharedWithUids']) && request.auth.uid in resource.data.sharedWithUids)
         );
       allow update: if isSignedIn()
@@ -265,6 +287,10 @@ service cloud.firestore {
           canWriteResource(resource.data)
           || resource.data.ownerId == request.auth.uid
           || resource.data.uid == request.auth.uid
+          || (
+            resource.data.keys().hasAny(['parentId'])
+            && canManageFolderById(resource.data.parentId)
+          )
         );
       allow delete: if isSignedIn()
         && (
