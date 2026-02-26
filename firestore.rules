@@ -537,24 +537,33 @@ service cloud.firestore {
       allow delete, update: if isSignedIn()
         && (
           resource.data.ownerId == request.auth.uid
-          || (sameInstitution(resource.data) && (
-            (
-              resource.data.targetType == 'subject'
-              && exists(/databases/$(database)/documents/subjects/$(resource.data.targetId))
-              && (
-                get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.ownerId == request.auth.uid
-                || get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.uid == request.auth.uid
+          // Subject shortcut: subject owner, subject manager, or folder manager
+          || (
+            resource.data.targetType == 'subject'
+            && exists(/databases/$(database)/documents/subjects/$(resource.data.targetId))
+            && (
+              get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.ownerId == request.auth.uid
+              || get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.uid == request.auth.uid
+              || (
+                get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.keys().hasAny(['folderId'])
+                && canManageFolderById(get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.folderId)
               )
             )
-            || (
-              resource.data.targetType == 'folder'
-              && exists(/databases/$(database)/documents/folders/$(resource.data.targetId))
-              && (
-                get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.ownerId == request.auth.uid
-                || get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.uid == request.auth.uid
+          )
+          // Folder shortcut: folder owner, folder manager, or manager of parent folder (cascade)
+          || (
+            resource.data.targetType == 'folder'
+            && exists(/databases/$(database)/documents/folders/$(resource.data.targetId))
+            && (
+              get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.ownerId == request.auth.uid
+              || get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.uid == request.auth.uid
+              || canManageFolderById(resource.data.targetId)
+              || (
+                get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.parentId != null
+                && canManageFolderById(get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.parentId)
               )
             )
-          ))
+          )
         );
     }
 

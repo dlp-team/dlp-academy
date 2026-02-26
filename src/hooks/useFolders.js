@@ -723,18 +723,49 @@ export const useFolders = (user) => {
                 }
             }
 
+
             // Best-effort shortcut cleanup for recipient to avoid lingering visibility in manual/shared views.
             for (const targetFolderId of subtreeFolderIds) {
+                const shortcutId = `${targetUid}_${targetFolderId}_folder`;
+                const shortcutRef = doc(db, 'shortcuts', shortcutId);
                 try {
-                    await deleteDoc(doc(db, 'shortcuts', `${targetUid}_${targetFolderId}_folder`));
+                    const shortcutSnap = await getDoc(shortcutRef);
+                    if (shortcutSnap.exists()) {
+                        const shortcutData = shortcutSnap.data();
+                        debug('Shortcut delete attempt', {
+                            shortcutId,
+                            shortcutData,
+                            currentUser: user?.uid,
+                            targetType: 'folder',
+                            targetId: targetFolderId
+                        });
+                    } else {
+                        debug('Shortcut not found for delete', { shortcutId });
+                    }
+                    await deleteDoc(shortcutRef);
                 } catch (shortcutFolderDeleteError) {
                     addFailure('folder-shortcut-delete', targetFolderId, shortcutFolderDeleteError);
                 }
             }
 
             for (const targetSubjectId of subtreeSubjectIds) {
+                const shortcutId = `${targetUid}_${targetSubjectId}_subject`;
+                const shortcutRef = doc(db, 'shortcuts', shortcutId);
                 try {
-                    await deleteDoc(doc(db, 'shortcuts', `${targetUid}_${targetSubjectId}_subject`));
+                    const shortcutSnap = await getDoc(shortcutRef);
+                    if (shortcutSnap.exists()) {
+                        const shortcutData = shortcutSnap.data();
+                        debug('Shortcut delete attempt', {
+                            shortcutId,
+                            shortcutData,
+                            currentUser: user?.uid,
+                            targetType: 'subject',
+                            targetId: targetSubjectId
+                        });
+                    } else {
+                        debug('Shortcut not found for delete', { shortcutId });
+                    }
+                    await deleteDoc(shortcutRef);
                 } catch (shortcutSubjectDeleteError) {
                     addFailure('subject-shortcut-delete', targetSubjectId, shortcutSubjectDeleteError);
                 }
