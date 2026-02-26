@@ -169,6 +169,17 @@ const FolderManager = ({
 
     const handleUpdatePermission = async (emailToUpdate, nextRole) => {
         if (!isOwnerManager) return;
+        const currentEntry = sharedList.find(entry => entry.email === emailToUpdate);
+        const currentRole = currentEntry?.role || 'viewer';
+        if (currentRole === nextRole) return;
+
+        const warningMessage = nextRole === 'editor'
+            ? `Vas a cambiar a ${emailToUpdate} a Editor. Podrá editar y mover contenido según permisos de carpeta compartida. ¿Deseas continuar?`
+            : `Vas a cambiar a ${emailToUpdate} a Lector. Perderá permisos de edición y movimiento de contenido. ¿Deseas continuar?`;
+
+        if (!window.confirm(warningMessage)) {
+            return;
+        }
 
         try {
             await onShare(formData.id, emailToUpdate, nextRole);
@@ -209,7 +220,7 @@ const FolderManager = ({
         <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
                 <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity" onClick={onClose} />
-                <div className="relative transform overflow-hidden bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl text-left animate-in fade-in zoom-in duration-200 border border-transparent dark:border-slate-800 transition-colors">
+                <div className="relative transform overflow-hidden bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl shadow-xl text-left animate-in fade-in zoom-in duration-200 border border-transparent dark:border-slate-800 transition-colors">
 
                     <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-800/50 transition-colors">
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white">{isEditing ? 'Editar Carpeta' : 'Nueva Carpeta'}</h3>

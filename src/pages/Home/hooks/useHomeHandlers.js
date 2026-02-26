@@ -56,10 +56,7 @@ export const useHomeHandlers = ({
             tags: formData.tags,
             cardStyle: formData.cardStyle || 'default',
             modernFillColor: formData.modernFillColor || null,
-            updatedAt: new Date(),
-            uid: user.uid,
-            isShared: false,
-            sharedWith: []
+            updatedAt: new Date()
         };
 
         try {
@@ -84,9 +81,16 @@ export const useHomeHandlers = ({
                     await updateSubject(formData.id, payload);
                 }
             } else {
+                const createPayload = {
+                    ...payload,
+                    uid: user.uid,
+                    isShared: false,
+                    sharedWith: []
+                };
+
                 if (currentFolder) {
                     if (currentFolder.isShared || (currentFolder.sharedWith && currentFolder.sharedWith.length > 0)) {
-                        payload.isShared = true;
+                        createPayload.isShared = true;
 
                         const parentShares = currentFolder.sharedWith || [];
                         const usersToShareWith = new Set(parentShares);
@@ -95,11 +99,11 @@ export const useHomeHandlers = ({
                             usersToShareWith.add(currentFolder.ownerId);
                         }
 
-                        payload.sharedWith = Array.from(usersToShareWith);
+                        createPayload.sharedWith = Array.from(usersToShareWith);
                     }
                 }
 
-                const newSubject = await addSubject(payload);
+                const newSubject = await addSubject(createPayload);
                 const newId = typeof newSubject === 'object' ? newSubject.id : newSubject;
 
                 if (currentFolder) {

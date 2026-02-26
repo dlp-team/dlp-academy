@@ -2,7 +2,7 @@
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { isInvalidFolderMove } from '../../../utils/folderUtils';
-import { canEdit } from '../../../utils/permissionUtils';
+import { canEdit, getPermissionLevel } from '../../../utils/permissionUtils';
 
 export const useHomePageHandlers = ({
     logic,
@@ -44,6 +44,52 @@ export const useHomePageHandlers = ({
         return canEdit(sourceFolder, currentUserId);
     };
 
+    const getFolderById = (folderId) => {
+        if (!folderId) return null;
+        return (logic.folders || []).find(f => f.id === folderId) || null;
+    };
+
+    const getRootSharedFolder = (folderId) => {
+        if (!folderId) return null;
+        let current = getFolderById(folderId);
+        let safety = 0;
+
+        while (current?.parentId && safety < 200) {
+            current = getFolderById(current.parentId);
+            safety += 1;
+        }
+
+        if (!current) return null;
+        return current.isShared === true ? current : null;
+    };
+
+    const isInsideRootSharedTree = (targetFolderId, rootSharedFolderId) => {
+        if (!targetFolderId || !rootSharedFolderId) return false;
+
+        let current = getFolderById(targetFolderId);
+        let safety = 0;
+
+        while (current && safety < 200) {
+            if (current.id === rootSharedFolderId) return true;
+            current = current.parentId ? getFolderById(current.parentId) : null;
+            safety += 1;
+        }
+
+        return false;
+    };
+
+    const isEditorLeavingRootSharedBoundary = (sourceFolderId, targetFolderId) => {
+        if (!sourceFolderId || !currentUserId) return false;
+
+        const rootSharedFolder = getRootSharedFolder(sourceFolderId);
+        if (!rootSharedFolder) return false;
+
+        const rootPermission = getPermissionLevel(rootSharedFolder, currentUserId);
+        if (rootPermission !== 'editor') return false;
+
+        return !isInsideRootSharedTree(targetFolderId, rootSharedFolder.id);
+    };
+
     const resolveFolderShortcutId = (folderId, sourceParentId = null) => {
         if (!folderId || !Array.isArray(logic?.shortcuts)) return null;
 
@@ -77,6 +123,11 @@ export const useHomePageHandlers = ({
         if (logic.currentFolder) {
             const currentId = logic.currentFolder.id;
             const parentId = logic.currentFolder.parentId;
+
+            if (isEditorLeavingRootSharedBoundary(currentId, parentId || null)) {
+                return;
+            }
+
             if (subjectId) {
                 if (subjectShortcutId && logic?.moveShortcut) {
                     await logic.moveShortcut(subjectShortcutId, parentId || null);
@@ -124,6 +175,10 @@ export const useHomePageHandlers = ({
                 : subject?.folderId || (logic.currentFolder ? logic.currentFolder.id : null);
 
         if (!canWriteFromSourceFolder(currentFolderId)) {
+            return true;
+        }
+
+        if (isEditorLeavingRootSharedBoundary(currentFolderId, targetFolderId || null)) {
             return true;
         }
 
@@ -232,6 +287,11 @@ export const useHomePageHandlers = ({
             const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
             if (!droppedFolder) return;
             const currentParentId = droppedFolder.parentId || null;
+
+            if (isEditorLeavingRootSharedBoundary(currentParentId || droppedFolder.id, targetFolderId || null)) {
+                return true;
+            }
+
             const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
             const getSharedUids = item => (item && Array.isArray(item.sharedWithUids) ? item.sharedWithUids : []);
             if (droppedFolder && droppedFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
@@ -327,6 +387,11 @@ export const useHomePageHandlers = ({
         const droppedFolder = (logic.folders || []).find(f => f.id === droppedFolderId);
         if (!droppedFolder) return;
         const currentParentId = droppedFolder.parentId || null;
+
+        if (isEditorLeavingRootSharedBoundary(currentParentId || droppedFolder.id, targetFolderId || null)) {
+            return;
+        }
+
         const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
 
         const getSharedUids = item => (item && Array.isArray(item.sharedWithUids) ? item.sharedWithUids : []);
@@ -405,6 +470,10 @@ export const useHomePageHandlers = ({
             targetFolder = (logic.folders || []).find(f => f.id === parentId);
         }
 
+        if (isEditorLeavingRootSharedBoundary(currentFolder?.id || null, parentId || null)) {
+            return;
+        }
+
         if (sourceFolder && sourceFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
             setUnshareConfirm({
                 open: true,
@@ -446,6 +515,11 @@ export const useHomePageHandlers = ({
             const currentFolder = logic.currentFolder;
             const parentId = currentFolder.parentId;
             const sourceFolder = currentFolder;
+
+            if (isEditorLeavingRootSharedBoundary(currentFolder?.id || null, parentId || null)) {
+                return;
+            }
+
             let targetFolder = null;
             if (parentId) {
                 targetFolder = (logic.folders || []).find(f => f.id === parentId);
@@ -517,6 +591,7 @@ export const useHomePageHandlers = ({
         const resolvedSourceFolderId = sourceFolderId !== undefined ? sourceFolderId : (subject?.folderId || null);
 
         if (!canWriteFromSourceFolder(resolvedSourceFolderId)) return;
+        if (isEditorLeavingRootSharedBoundary(resolvedSourceFolderId, targetFolderId || null)) return;
         const userId = currentUserId;
         const userCanEdit = subject && userId ? canEdit(subject, userId) : false;
 

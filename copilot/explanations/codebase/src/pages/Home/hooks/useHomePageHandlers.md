@@ -1,3 +1,17 @@
+## [2026-02-26] Feature Update: Editor Lock Inside Root Shared Folder
+### Context & Architecture
+`useHomePageHandlers` governs drag/drop, promote, breadcrumb drop, and tree move flows in Home. This is the right boundary to enforce folder-context movement rules.
+
+### Previous State
+- Editors could move elements out of a root shared folder in some movement paths.
+
+### New State & Logic
+- Added root-shared boundary helpers (`getRootSharedFolder`, tree inclusion check, and editor boundary guard).
+- Applied guard across upward drop, drop-on-folder, breadcrumb moves, nest folder, promote subject/folder, and tree move subject.
+- Editors can still move within the root shared tree, but cannot move content outside it.
+
+---
+
 ## [2026-02-26] Feature Update: Move Guard for Source Shared Folder Permissions
 ### Context & Architecture
 `useHomePageHandlers` coordinates DnD and tree move operations between Home UI components and `useFolders` move actions.

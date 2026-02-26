@@ -1,3 +1,35 @@
+## [2026-02-26] Feature Update: Root Shared Boundary Lock + Edit Preservation Fixes
+### Context & Architecture
+This continuation updated Home movement guards and modal sharing UX, then fixed subject save payload behavior that affected shared visibility after editor edits.
+
+### Previous State
+- Editors could still move items out of root shared folders in some paths.
+- Share tab layout could clip controls in narrower modal width.
+- Owner role changes had no confirmation step.
+- Editing a shared original subject could clear sharing metadata in the update payload.
+
+### New State & Logic
+1. **Root shared boundary lock for editors**
+   - Added checks in `useHomePageHandlers` so editors cannot move elements outside a root shared folder tree.
+   - Moves remain allowed inside the same root shared hierarchy.
+
+2. **Wider sharing/editing cards**
+   - Increased modal width for `SubjectFormModal` and `FolderManager` to improve content fit.
+
+3. **Permission-change confirmation for owners**
+   - Added explicit confirm dialogs before changing user role to `editor` or `viewer`.
+   - Messages explain the permission impact of each role.
+
+4. **Preserve sharing on editor updates**
+   - Refactored `handleSaveSubject` payload in `useHomeHandlers`.
+   - Edit path no longer writes `isShared/sharedWith` reset fields.
+   - Create path still initializes and inherits sharing as intended.
+
+### Verification
+- Diagnostics (`get_errors`) reported no errors for all modified files.
+
+---
+
 ## [2026-02-26] Feature Update: Editor Move Restrictions + Subject/Folder Modal Unification
 ### Context & Architecture
 This session touched Home move handlers (`src/pages/Home/hooks/useHomePageHandlers.js`), sharing primitives (`src/hooks/useSubjects.js`, `src/hooks/useFolders.js`), and edit/share UIs (`src/pages/Subject/modals/SubjectFormModal.jsx`, `src/pages/Home/components/FolderManager.jsx`, `src/pages/Subject/modals/subject-form/StyleSelector.jsx`).

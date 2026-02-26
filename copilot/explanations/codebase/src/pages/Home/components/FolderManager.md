@@ -1,3 +1,18 @@
+## [2026-02-26] Feature Update: Wider Sharing Layout + Permission Change Confirmation
+### Context & Architecture
+`FolderManager` is the folder edit/share UI in Home and fronts `useFolders.shareFolder` updates.
+
+### Previous State
+- Sharing row controls could compress in the modal.
+- Owner permission changes had no explicit warning/confirmation step.
+
+### New State & Logic
+- Increased modal width to improve fit for sharing controls and user rows.
+- Added confirmation dialogs before owner changes user role with role-specific warning text.
+- Maintains owner-only role editing and existing unshare behavior.
+
+---
+
 ## [2026-02-26] Feature Update: Folder Modal Parity with Subject Modal
 ### Context & Architecture
 `FolderManager` is the Home folder modal and consumes sharing handlers from `useFolders` through `HomeModals`. It now follows the same interaction model as `SubjectFormModal`.

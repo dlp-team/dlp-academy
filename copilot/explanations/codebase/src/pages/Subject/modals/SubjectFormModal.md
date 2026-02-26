@@ -1,3 +1,18 @@
+## [2026-02-26] Feature Update: Wider Sharing Layout + Permission Change Confirmation
+### Context & Architecture
+`SubjectFormModal` is the subject edit/share entrypoint in Home and receives `onShare/onUnshare` from hook-backed handlers.
+
+### Previous State
+- Share controls could feel cramped in modal width.
+- Owner role changes had no explicit confirmation before applying permission changes.
+
+### New State & Logic
+- Increased modal width for better fit of share input + role selector + action button.
+- Added confirmation dialog before owner changes a user's permission, with role-specific warning text.
+- Keeps owner-only role mutation behavior intact.
+
+---
+
 ## [2026-02-26] Feature Update: Unified Subject Sharing UX + Owner Permission Management
 ### Context & Architecture
 `SubjectFormModal` is used from Home-level modal orchestration and talks to sharing handlers exposed by `useSubjects` through `HomeModals`.
