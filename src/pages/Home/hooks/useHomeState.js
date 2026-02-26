@@ -105,6 +105,17 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
         const shortcutTargetIds = new Set(folderShortcuts.map(s => s.targetId));
 
+        const isOwnerLike = (item) => {
+            if (!item || !user?.uid) return false;
+            if (item?.isOwner === true) return true;
+            if (item?.ownerId && item.ownerId === user.uid) return true;
+            if (item?.uid && item.uid === user.uid) return true;
+            return false;
+        };
+
+        const suppressNonOwnedOriginalsInCurrentContext =
+            viewMode === 'grid' && currentFolder?.isShared !== true;
+
         const directFolders = filteredFolders.filter(folder => {
             const userEmail = user?.email?.toLowerCase() || '';
             const isRelatedToCurrentUser =
@@ -117,6 +128,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
                     : false);
 
             if (!isRelatedToCurrentUser) return false;
+                    if (suppressNonOwnedOriginalsInCurrentContext && !isOwnerLike(folder)) return false;
             if (!shortcutTargetIds.has(folder.id)) return true;
             return true;
         });
@@ -193,6 +205,17 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
         const shortcutTargetIds = new Set(subjectShortcuts.map(s => s.targetId));
 
+        const isOwnerLike = (item) => {
+            if (!item || !user?.uid) return false;
+            if (item?.isOwner === true) return true;
+            if (item?.ownerId && item.ownerId === user.uid) return true;
+            if (item?.uid && item.uid === user.uid) return true;
+            return false;
+        };
+
+        const suppressNonOwnedOriginalsInCurrentContext =
+            viewMode === 'grid' && currentFolder?.isShared !== true;
+
         const directSubjects = filteredSubjects.filter(subject => {
             const userEmail = user?.email?.toLowerCase() || '';
             const isRelatedToCurrentUser =
@@ -205,6 +228,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
                     : false);
 
             if (!isRelatedToCurrentUser) return false;
+                    if (suppressNonOwnedOriginalsInCurrentContext && !isOwnerLike(subject)) return false;
             if (!shortcutTargetIds.has(subject.id)) return true;
             return true;
         });
