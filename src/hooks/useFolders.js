@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { 
     collection, query, where, addDoc, updateDoc, deleteDoc, doc, 
-    getDoc, setDoc, arrayUnion, arrayRemove, onSnapshot, getDocs
+    getDoc, setDoc, arrayUnion, arrayRemove, onSnapshot, writeBatch, getDocs
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { isInvalidFolderMove } from '../utils/folderUtils';
@@ -563,6 +563,34 @@ export const useFolders = (user) => {
                 };
             };
 
+            const stripSubjectShareForUser = (sharedWith = [], sharedWithUids = []) => {
+                const sourceSharedWith = Array.isArray(sharedWith) ? sharedWith : [];
+                const sourceSharedWithUids = Array.isArray(sharedWithUids) ? sharedWithUids : [];
+
+                const directShareEntry = sourceSharedWith.find(entry =>
+                    (entry?.uid === targetUid || entry?.email?.toLowerCase() === emailLower)
+                    && entry?.shareOrigin === 'direct'
+                );
+
+                if (directShareEntry) {
+                    const withoutTarget = sourceSharedWith.filter(entry =>
+                        entry?.uid !== targetUid && entry?.email?.toLowerCase() !== emailLower
+                    );
+                    const rebuiltSharedWith = [...withoutTarget, { ...directShareEntry, shareOrigin: 'direct' }];
+                    const rebuiltUids = Array.from(new Set([
+                        ...sourceSharedWithUids.filter(uid => uid !== targetUid),
+                        targetUid
+                    ]));
+                    return {
+                        sharedWith: rebuiltSharedWith,
+                        sharedWithUids: rebuiltUids,
+                        isShared: rebuiltUids.length > 0
+                    };
+                }
+
+                return stripShareForUser(sourceSharedWith, sourceSharedWithUids);
+            };
+
             const updateFolderUnshare = async (targetFolderId) => {
                 const targetFolderRef = doc(db, 'folders', targetFolderId);
                 const targetFolderSnap = await getDoc(targetFolderRef);
@@ -578,34 +606,18 @@ export const useFolders = (user) => {
             };
 
             const updateSubjectsInFolderUnshare = async (targetFolderId) => {
-                try {
-                    const subjectsSnap = await getDocs(
-                        query(collection(db, 'subjects'), where('folderId', '==', targetFolderId))
-                    );
+                const subjectsSnap = await getDocs(
+                    query(collection(db, 'subjects'), where('folderId', '==', targetFolderId))
+                );
 
-                    for (const subjectDoc of subjectsSnap.docs) {
-                        const subjectData = subjectDoc.data() || {};
-                        const strippedSubject = stripShareForUser(subjectData.sharedWith, subjectData.sharedWithUids);
-                        try {
-                            await updateDoc(doc(db, 'subjects', subjectDoc.id), {
-                                sharedWith: strippedSubject.sharedWith,
-                                sharedWithUids: strippedSubject.sharedWithUids,
-                                isShared: strippedSubject.isShared,
-                                updatedAt: new Date()
-                            });
-                        } catch (subjectUpdateError) {
-                            console.warn('Skipping subject during unshare due to permissions:', {
-                                subjectId: subjectDoc.id,
-                                code: subjectUpdateError?.code || null,
-                                message: subjectUpdateError?.message || String(subjectUpdateError)
-                            });
-                        }
-                    }
-                } catch (subjectsReadError) {
-                    console.warn('Skipping subjects query during unshare due to permissions:', {
-                        folderId: targetFolderId,
-                        code: subjectsReadError?.code || null,
-                        message: subjectsReadError?.message || String(subjectsReadError)
+                for (const subjectDoc of subjectsSnap.docs) {
+                    const subjectData = subjectDoc.data() || {};
+                    const strippedSubject = stripSubjectShareForUser(subjectData.sharedWith, subjectData.sharedWithUids);
+                    await updateDoc(doc(db, 'subjects', subjectDoc.id), {
+                        sharedWith: strippedSubject.sharedWith,
+                        sharedWithUids: strippedSubject.sharedWithUids,
+                        isShared: strippedSubject.isShared,
+                        updatedAt: new Date()
                     });
                 }
             };
@@ -615,40 +627,59 @@ export const useFolders = (user) => {
 
             const queue = [folderId];
             const visited = new Set([folderId]);
+            const subtreeFolderIds = new Set([folderId]);
+            const subtreeSubjectIds = new Set();
+
+            const collectSubjectsInFolder = async (targetFolderId) => {
+                const subjectsSnap = await getDocs(
+                    query(collection(db, 'subjects'), where('folderId', '==', targetFolderId))
+                );
+                subjectsSnap.docs.forEach(subjectDoc => subtreeSubjectIds.add(subjectDoc.id));
+            };
+
+            await collectSubjectsInFolder(folderId);
 
             while (queue.length > 0) {
                 const parentFolderId = queue.shift();
-                let childFolders = [];
-
-                try {
-                    const childFoldersSnap = await getDocs(
-                        query(collection(db, 'folders'), where('parentId', '==', parentFolderId))
-                    );
-                    childFolders = childFoldersSnap.docs.map(childDoc => childDoc.id);
-                } catch (childFoldersReadError) {
-                    console.warn('Skipping child folders query during unshare due to permissions:', {
-                        folderId: parentFolderId,
-                        code: childFoldersReadError?.code || null,
-                        message: childFoldersReadError?.message || String(childFoldersReadError)
-                    });
-                }
+                const childFoldersSnap = await getDocs(
+                    query(collection(db, 'folders'), where('parentId', '==', parentFolderId))
+                );
+                const childFolders = childFoldersSnap.docs.map(childDoc => childDoc.id);
 
                 for (const childFolderId of childFolders) {
                     if (visited.has(childFolderId)) continue;
                     visited.add(childFolderId);
                     queue.push(childFolderId);
+                    subtreeFolderIds.add(childFolderId);
 
-                    try {
-                        await updateFolderUnshare(childFolderId);
-                    } catch (folderUpdateError) {
-                        console.warn('Skipping child folder update during unshare due to permissions:', {
-                            folderId: childFolderId,
-                            code: folderUpdateError?.code || null,
-                            message: folderUpdateError?.message || String(folderUpdateError)
-                        });
-                    }
-
+                    await updateFolderUnshare(childFolderId);
                     await updateSubjectsInFolderUnshare(childFolderId);
+                    await collectSubjectsInFolder(childFolderId);
+                }
+            }
+
+            // Best-effort shortcut cleanup for recipient to avoid lingering visibility in manual/shared views.
+            for (const targetFolderId of subtreeFolderIds) {
+                try {
+                    await deleteDoc(doc(db, 'shortcuts', `${targetUid}_${targetFolderId}_folder`));
+                } catch (shortcutFolderDeleteError) {
+                    console.warn('Unable to delete folder shortcut during unshare:', {
+                        folderId: targetFolderId,
+                        code: shortcutFolderDeleteError?.code || null,
+                        message: shortcutFolderDeleteError?.message || String(shortcutFolderDeleteError)
+                    });
+                }
+            }
+
+            for (const targetSubjectId of subtreeSubjectIds) {
+                try {
+                    await deleteDoc(doc(db, 'shortcuts', `${targetUid}_${targetSubjectId}_subject`));
+                } catch (shortcutSubjectDeleteError) {
+                    console.warn('Unable to delete subject shortcut during unshare:', {
+                        subjectId: targetSubjectId,
+                        code: shortcutSubjectDeleteError?.code || null,
+                        message: shortcutSubjectDeleteError?.message || String(shortcutSubjectDeleteError)
+                    });
                 }
             }
 

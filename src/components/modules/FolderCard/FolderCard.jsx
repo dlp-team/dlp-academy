@@ -80,6 +80,7 @@ const FolderCard = (props) => {
                 isModern={data.isModern}
                 gradientClass={data.gradientClass}
                 scaleMultiplier={data.scaleMultiplier}
+                isOrphan={folder?.isOrphan === true}
             />
 
             {/* --- 2. MAIN CARD BODY --- */}

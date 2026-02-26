@@ -1,14 +1,14 @@
 // src/components/modules/FolderCard/FolderCardTab.jsx
 import React from 'react';
 
-const FolderCardTab = ({ isModern, gradientClass, scaleMultiplier }) => {
+const FolderCardTab = ({ isModern, gradientClass, scaleMultiplier, isOrphan = false }) => {
     return (
         <div 
             className={`absolute top-0 left-0 rounded-t-xl z-0 transition-all ${
                 isModern 
                     ? `bg-gradient-to-br ${gradientClass}` 
                     : `bg-gradient-to-br ${gradientClass} opacity-90`
-            }`}
+            } ${isOrphan ? 'opacity-55' : ''}`}
             style={{ 
                 width: '40%',
                 height: `${21 * scaleMultiplier}px`,
@@ -16,7 +16,7 @@ const FolderCardTab = ({ isModern, gradientClass, scaleMultiplier }) => {
             }}
         >
             {/* Inner shadow for depth */}
-            <div className="absolute inset-0 bg-black/10 rounded-t-xl"></div>
+            <div className={`absolute inset-0 bg-black/10 rounded-t-xl ${isOrphan ? 'opacity-55' : ''}`}></div>
         </div>
     );
 };
