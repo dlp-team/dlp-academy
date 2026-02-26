@@ -214,19 +214,19 @@ service cloud.firestore {
         allow read, write: if isSignedIn()
           && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
 
-        // 1. Pestaña "Generados por IA" (FALTABA ESTO)
+        // 1. Pestaña "Generados por IA"
         match /resumen/{docId} {
           allow read, write: if isSignedIn()
             && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
 
-        // 2. Pestaña "Mis Archivos" (FALTABA ESTO)
+        // 2. Pestaña "Mis Archivos"
         match /materials/{docId} {
           allow read, write: if isSignedIn()
             && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
 
-        // 3. Tests y Resultados (Ya los tenías)
+        // 3. Tests y Resultados
         match /quizzes/{quizId} {
           allow read, write: if isSignedIn()
             && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
@@ -459,31 +459,20 @@ service cloud.firestore {
 
     // Reglas para Shortcuts (en la raíz)
     match /shortcuts/{shortcutId} {
-      // Owner can create own shortcut OR target owner can create shortcut for a shared recipient (share flow)
       allow create: if isSignedIn()
         && request.resource.data.institutionId == currentUserInstitutionId()
         && validShortcutCreatePayload()
         && (
-          // Shortcut owner creating their own shortcut (normal case)
           request.resource.data.ownerId == request.auth.uid
-          // OR: Folder/subject owner creating shortcut for a recipient (share flow)
           || (
             request.resource.data.ownerId != request.auth.uid
             && isTargetOwnerForCreate()
-            // Allow if recipient is already in sharedWithUids (normal),
-            // OR if the owner is performing the share and intends to add recipient
             && (
               targetSharedWithShortcutOwner()
-              || (
-                // Owner is performing the share and will add recipient to sharedWithUids atomically
-                // This enables shortcut-first atomic sharing
-                true
-              )
+              || true
             )
           )
         );
-      // Shortcut owner can always read their own shortcut.
-      // Target owners can read only within same institution boundary.
       allow read: if isSignedIn() && (
         resource.data.ownerId == request.auth.uid
         || (
@@ -596,5 +585,6 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isSignedIn();
     }
+    
   }
 }
