@@ -144,7 +144,7 @@ const HomeContent = ({
 
     const matchesSharedFilter = (item) => {
         if (sharedScopeSelected) return true;
-        return isSharedForCurrentUser(item);
+        return !isSharedForCurrentUser(item);
     };
 
     const itemMatchesFilters = (item) => matchesTagFilter(item) && matchesSharedFilter(item);
@@ -297,12 +297,18 @@ const HomeContent = ({
     const getFilteredSubjectsForGroup = (groupSubjects) => {
         if (!Array.isArray(groupSubjects)) return [];
 
+        const groupKeys = new Set(
+            groupSubjects.map(subject => (subject?.shortcutId ? `shortcut:${subject.shortcutId}` : `source:${subject.id}`))
+        );
+
         if (!isRecursiveFilteringActive) {
             return groupSubjects.filter(subject => itemMatchesFilters(subject));
         }
 
         const currentFolderId = currentFolder?.id ?? null;
         const matchingSubjects = (allSubjectsForTree || []).filter(subject => {
+            const subjectKey = subject?.shortcutId ? `shortcut:${subject.shortcutId}` : `source:${subject.id}`;
+            if (!groupKeys.has(subjectKey)) return false;
             const parentFolderId = getSubjectParentId(subject);
             const insideCurrentTree = currentFolderId
                 ? isFolderWithinCurrentTree(parentFolderId)

@@ -69,7 +69,7 @@ const FolderCardBody = ({
     }, [activeMenu, folder.id]);
     
     return (
-        <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${isOrphan ? 'opacity-80' : ''} ${
+        <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${
             isModern 
             ? `bg-gradient-to-br ${gradientClass} p-[4px] ${isOrphan ? 'saturate-50 brightness-95' : ''}` 
                 : ''

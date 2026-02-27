@@ -72,7 +72,7 @@ const TagFilter = ({
                                         ? 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
                                         : 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400'
                                 }`}
-                                title={sharedScopeSelected ? 'Mostrar todo (desactiva para solo compartidos)' : 'Solo compartidos activo'}
+                                title={sharedScopeSelected ? 'Incluir compartidos' : 'Excluir compartidos'}
                                 aria-label="Alternar filtro de compartidos"
                             >
                                 <Users size={16} />

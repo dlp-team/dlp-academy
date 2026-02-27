@@ -212,7 +212,7 @@ const FolderListItem = ({
                     isDragOver 
                         ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-500 scale-[1.01] shadow-md'
                         : ''
-                } ${isOrphan ? 'opacity-80' : ''} ${isDragging ? 'opacity-0 scale-95 transition-none' : ''}`}
+                } ${isDragging ? 'opacity-0 scale-95 transition-none' : ''}`}
                 style={{ marginLeft: `${indent}px` }}
             >
                 <div 
