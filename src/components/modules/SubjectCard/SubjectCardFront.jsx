@@ -28,7 +28,7 @@ const SubjectCardFront = ({
     disableDeleteActions = false,
     disableUnshareActions = false
 }) => {
-    const HEADER_SAFE_TOP = 120;
+    const HEADER_SAFE_TOP = 112;
     const MENU_MARGIN = 8;
     // Permission checks
     const showEditUI = user && shouldShowEditUI(subject, user.uid);

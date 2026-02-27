@@ -195,30 +195,6 @@ const Home = ({ user }) => {
         return merged;
     }, [logic.subjects, logic.resolvedShortcuts]);
 
-    const getFolderParentId = (folderEntry) => {
-        if (!folderEntry) return null;
-        return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
-    };
-
-    const isInsideSharedFolder = React.useCallback((item, itemType) => {
-        const folders = treeFolders || [];
-        const folderById = new Map(folders.map(folder => [folder.id, folder]));
-        const startFolderId = itemType === 'folder'
-            ? getFolderParentId(item)
-            : (item?.shortcutParentId ?? item?.folderId ?? item?.parentId ?? null);
-
-        let cursorId = startFolderId;
-        let safety = 0;
-        while (cursorId && safety < 200) {
-            const cursor = folderById.get(cursorId);
-            if (!cursor) return false;
-            if (cursor.isShared === true) return true;
-            cursorId = getFolderParentId(cursor);
-            safety += 1;
-        }
-        return false;
-    }, [treeFolders]);
-
     const isSharedForCurrentUser = React.useCallback((item) => {
         if (!item) return false;
         if (isShortcutItem(item)) return true;
@@ -236,20 +212,36 @@ const Home = ({ user }) => {
         return sharedByUid || sharedByEmail || item?.isShared === true;
     }, [user?.uid, user?.email]);
 
-    const availableAllTags = useMemo(() => {
+    const availableControlTags = useMemo(() => {
+        const sourceFolders = logic.viewMode === 'shared' ? (sharedFolders || []) : (logic.filteredFolders || logic.folders || []);
+        const sourceSubjects = logic.viewMode === 'shared' ? (sharedSubjects || []) : (logic.filteredSubjects || logic.subjects || []);
+
+        const effectiveFolders = sharedScopeSelected ? sourceFolders : sourceFolders.filter(item => !isSharedForCurrentUser(item));
+        const effectiveSubjects = sharedScopeSelected ? sourceSubjects : sourceSubjects.filter(item => !isSharedForCurrentUser(item));
+
+        const tagSet = new Set();
+        effectiveFolders.forEach(folder => (Array.isArray(folder?.tags) ? folder.tags : []).forEach(tag => tagSet.add(tag)));
+        effectiveSubjects.forEach(subject => (Array.isArray(subject?.tags) ? subject.tags : []).forEach(tag => tagSet.add(tag)));
+
+        return Array.from(tagSet).filter(Boolean).sort();
+    }, [logic.viewMode, sharedFolders, sharedSubjects, logic.filteredFolders, logic.folders, logic.filteredSubjects, logic.subjects, sharedScopeSelected, isSharedForCurrentUser]);
+
+    React.useEffect(() => {
+        const availableTagSet = new Set(availableControlTags);
         if (logic.viewMode === 'shared') {
-            if (sharedScopeSelected) return sharedAllTags;
-            return [];
+            const pruned = (sharedSelectedTags || []).filter(tag => availableTagSet.has(tag));
+            if (pruned.length !== (sharedSelectedTags || []).length) {
+                setSharedSelectedTags(pruned);
+            }
+            return;
         }
 
-        if (sharedScopeSelected) return logic.allTags || [];
-
-        const nonSharedFolders = (logic.folders || []).filter(folder => !isSharedForCurrentUser(folder));
-        const nonSharedSubjects = (logic.subjects || []).filter(subject => !isSharedForCurrentUser(subject));
-        const folderTags = nonSharedFolders.flatMap(folder => (Array.isArray(folder.tags) ? folder.tags : []));
-        const subjectTags = nonSharedSubjects.flatMap(subject => (Array.isArray(subject.tags) ? subject.tags : []));
-        return Array.from(new Set([...folderTags, ...subjectTags])).filter(Boolean);
-    }, [logic.viewMode, sharedScopeSelected, sharedAllTags, logic.allTags, logic.folders, logic.subjects, isSharedForCurrentUser]);
+        const currentTags = logic.selectedTags || [];
+        const pruned = currentTags.filter(tag => availableTagSet.has(tag));
+        if (pruned.length !== currentTags.length) {
+            logic.setSelectedTags(pruned);
+        }
+    }, [availableControlTags, logic.viewMode, sharedSelectedTags, setSharedSelectedTags, logic.selectedTags, logic.setSelectedTags]);
 
     if (!user || (!hasInitialDataLoaded && (logic.loading || logic.loadingFolders))) {
         return (
@@ -286,7 +278,7 @@ const Home = ({ user }) => {
                         setLayoutMode={logic.setLayoutMode}
                         cardScale={logic.cardScale}
                         setCardScale={logic.setCardScale}
-                        allTags={availableAllTags}
+                        allTags={availableControlTags}
                         selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
                         setSelectedTags={logic.viewMode === 'shared' ? setSharedSelectedTags : logic.setSelectedTags}
                         currentFolder={logic.currentFolder}
@@ -306,6 +298,7 @@ const Home = ({ user }) => {
                         draggedItemType={logic.draggedItemType}
                         onPreferenceChange={logic.handlePreferenceChange}
                         allFolders={logic.folders || []} 
+                        allSubjects={logic.subjects || []}
                         activeFilter={logic.viewMode === 'shared' ? sharedActiveFilter : logic.activeFilter}
                         handleFilterChange={logic.handleFilterChange}
                         onFilterOverlayChange={setIsFilterOpen}
@@ -349,18 +342,15 @@ const Home = ({ user }) => {
 
                         onEditFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                         onDeleteFolder={(f, action = 'delete') => {
-                            const resolvedAction = action === 'unshareAndDelete' && isInsideSharedFolder(f, 'folder')
-                                ? 'deleteShortcut'
-                                : action;
                             if (isShortcutItem(f) && f?.shortcutId) {
                                 logic.setDeleteConfig({
                                     isOpen: true,
                                     type: 'shortcut-folder',
-                                    action: resolvedAction === 'unshareAndDelete'
+                                    action: action === 'unshareAndDelete'
                                         ? 'unshare'
-                                        : resolvedAction === 'deleteShortcut'
+                                        : action === 'deleteShortcut'
                                             ? 'deleteShortcut'
-                                        : resolvedAction === 'showInManual'
+                                        : action === 'showInManual'
                                             ? 'unhide'
                                             : 'hide',
                                     item: f
@@ -377,18 +367,15 @@ const Home = ({ user }) => {
                         }}
                         onDeleteSubject={(e, s, action = 'delete') => {
                             e.stopPropagation();
-                            const resolvedAction = action === 'unshareAndDelete' && isInsideSharedFolder(s, 'subject')
-                                ? 'deleteShortcut'
-                                : action;
                             if (isShortcutItem(s) && s?.shortcutId) {
                                 logic.setDeleteConfig({
                                     isOpen: true,
                                     type: 'shortcut-subject',
-                                    action: resolvedAction === 'unshareAndDelete'
+                                    action: action === 'unshareAndDelete'
                                         ? 'unshare'
-                                        : resolvedAction === 'deleteShortcut'
+                                        : action === 'deleteShortcut'
                                             ? 'deleteShortcut'
-                                        : resolvedAction === 'showInManual'
+                                        : action === 'showInManual'
                                             ? 'unhide'
                                             : 'hide',
                                     item: s

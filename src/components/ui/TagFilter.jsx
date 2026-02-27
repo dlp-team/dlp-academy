@@ -13,7 +13,6 @@ const TagFilter = ({
     onSharedScopeChange = () => {}
 }) => {
     const [showFilter, setShowFilter] = useState(false);
-    const activeFiltersCount = (selectedTags?.length || 0) + (sharedScopeSelected ? 0 : 1);
 
 
     const handleSetShowFilter = (newState) => {
@@ -35,21 +34,25 @@ const TagFilter = ({
         onFilterChange('all'); // Also reset view to all
     };
 
+    const sharedScopeFilterActive = sharedScopeSelected === false;
+    const filterCount = selectedTags.length + (sharedScopeFilterActive ? 1 : 0);
+    const hasActiveFilters = filterCount > 0 || activeFilter !== 'all';
+
     return (
         <div className="relative">
             <button
                 onClick={() => handleSetShowFilter(!showFilter)}
                 className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium transition-colors shadow-sm cursor-pointer ${
-                    activeFiltersCount > 0 || activeFilter !== 'all'
+                    hasActiveFilters
                         ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-300 dark:border-pink-700 text-pink-700 dark:text-pink-300'
                         : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
                 }`}
             >
                 <Filter size={16} />
                 <span className="hidden sm:inline">Filtrar</span>
-                {activeFiltersCount > 0 && (
+                {filterCount > 0 && (
                     <span className="bg-pink-500 dark:bg-pink-600 text-white text-xs px-1.5 py-0.5 rounded-full">
-                        {activeFiltersCount}
+                        {filterCount}
                     </span>
                 )}
             </button>
@@ -59,8 +62,7 @@ const TagFilter = ({
                 <>
                     {/* Backdrop */}
                     <div 
-                        className="fixed inset-x-0 bottom-0 z-10"
-                        style={{ top: '96px' }}
+                        className="fixed inset-0 z-10"
                         onClick={() => handleSetShowFilter(false)}
                     />
                     
@@ -117,7 +119,7 @@ const TagFilter = ({
                         </div>
 
                         {/* Limpiar button moved below tag list */}
-                        {(activeFiltersCount > 0 || activeFilter !== 'all') && (
+                        {hasActiveFilters && (
                             <div className="flex justify-end mt-3">
                                 <button
                                     onClick={clearFilters}

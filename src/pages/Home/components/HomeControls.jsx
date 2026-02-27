@@ -30,6 +30,8 @@ const HomeControls = ({
     draggedItem,
     draggedItemType,
     onPreferenceChange,
+    allFolders = [],
+    allSubjects = [],
     searchQuery = '',
     setSearchQuery = () => {},
     activeFilter,
@@ -100,17 +102,15 @@ const HomeControls = ({
                 />
 
                 {/* Tag Filter - Now available in Manual (grid) mode */}
-                {allTags.length > 0 && (
-                    <TagFilter 
-                        allTags={allTags}
-                        selectedTags={selectedTags}
-                        setSelectedTags={handleTagsChange}
-                        onOverlayToggle={onFilterOverlayChange}
-                        activeFilter={activeFilter}
-                        sharedScopeSelected={sharedScopeSelected}
-                        onSharedScopeChange={onSharedScopeChange}
-                    />
-                )}
+                <TagFilter 
+                    allTags={allTags}
+                    selectedTags={selectedTags}
+                    setSelectedTags={handleTagsChange}
+                    onOverlayToggle={onFilterOverlayChange}
+                    activeFilter={activeFilter}
+                    sharedScopeSelected={sharedScopeSelected}
+                    onSharedScopeChange={onSharedScopeChange}
+                />
 
                 {/* Create Folder Button and Search Bar (Manual mode only) */}
                 {viewMode === 'grid' && (

@@ -144,8 +144,7 @@ const HomeContent = ({
         return sharedByUid || sharedByEmail || item?.isShared === true;
     };
 
-    const matchesSharedFilter = (item, isCurrentLayer = true) => {
-        if (!isCurrentLayer) return true;
+    const matchesSharedFilter = (item) => {
         if (sharedScopeSelected) return true;
         return !isSharedForCurrentUser(item);
     };
@@ -267,14 +266,14 @@ const HomeContent = ({
 
     const filteredFolders = useMemo(() => {
         if (!Array.isArray(orderedFolders)) return [];
-        return orderedFolders.filter(folder => matchesTagFilter(folder) && matchesSharedFilter(folder, true));
+        return orderedFolders.filter(folder => matchesTagFilter(folder) && matchesSharedFilter(folder));
     }, [orderedFolders, selectedTags, sharedScopeSelected, viewMode, user?.uid, user?.email]);
 
     const getFilteredSubjectsForGroup = (groupSubjects) => {
         if (!Array.isArray(groupSubjects)) return [];
 
         if (!isRecursiveFilteringActive) {
-            return groupSubjects.filter(subject => matchesTagFilter(subject) && matchesSharedFilter(subject, true));
+            return groupSubjects.filter(subject => matchesTagFilter(subject) && matchesSharedFilter(subject));
         }
 
         const currentLayerKeys = new Set(
@@ -299,7 +298,8 @@ const HomeContent = ({
         return Array.from(unique.values()).filter(subject => {
             const key = subject?.shortcutId ? `shortcut:${subject.shortcutId}` : `source:${subject.id}`;
             const isCurrentLayer = currentLayerKeys.has(key);
-            return matchesSharedFilter(subject, isCurrentLayer);
+            if (!isCurrentLayer && !isRecursiveFilteringActive) return false;
+            return matchesSharedFilter(subject);
         });
     };
 

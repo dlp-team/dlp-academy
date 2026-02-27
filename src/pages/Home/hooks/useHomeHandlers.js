@@ -43,6 +43,29 @@ export const useHomeHandlers = ({
     updateShortcutAppearance,
     setShortcutHiddenInManual
 }) => {
+    const getFolderById = (folderId) => {
+        if (!folderId) return null;
+        return (folders || []).find(folder => folder?.id === folderId) || null;
+    };
+
+    const getFolderParentId = (folderEntry) => {
+        if (!folderEntry) return null;
+        return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+    };
+
+    const isInsideSharedFolderTree = (folderId) => {
+        if (!folderId) return false;
+        let cursorId = folderId;
+        let safety = 0;
+        while (cursorId && safety < 200) {
+            const cursor = getFolderById(cursorId);
+            if (!cursor) return false;
+            if (cursor.isShared === true) return true;
+            cursorId = getFolderParentId(cursor);
+            safety += 1;
+        }
+        return false;
+    };
     const handleSaveSubject = async formData => {
         const isShortcutEdit = subjectModalConfig.isEditing && Boolean(formData?.shortcutId);
         const shortcutPermission = formData?.shortcutPermissionLevel || 'viewer';
@@ -177,6 +200,13 @@ export const useHomeHandlers = ({
         } else if (deleteConfig.type === 'shortcut-subject' && deleteConfig.item) {
             const shortcutId = deleteConfig.item.shortcutId;
             const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
+            const parentFolderId = deleteConfig.item.shortcutParentId ?? deleteConfig.item.folderId ?? deleteConfig.item.parentId ?? null;
+            const unshareBlocked = isInsideSharedFolderTree(parentFolderId);
+
+            if (deleteConfig.action === 'unshare' && unshareBlocked) {
+                setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
+                return;
+            }
 
             if (deleteConfig.action === 'unshare' && unshareSubject && user?.email) {
                 try {
@@ -196,6 +226,13 @@ export const useHomeHandlers = ({
         } else if (deleteConfig.type === 'shortcut-folder' && deleteConfig.item) {
             const shortcutId = deleteConfig.item.shortcutId;
             const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
+            const parentFolderId = deleteConfig.item.shortcutParentId ?? deleteConfig.item.parentId ?? null;
+            const unshareBlocked = isInsideSharedFolderTree(parentFolderId);
+
+            if (deleteConfig.action === 'unshare' && unshareBlocked) {
+                setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
+                return;
+            }
 
             if (deleteConfig.action === 'unshare' && unshareFolder && user?.email) {
                 try {

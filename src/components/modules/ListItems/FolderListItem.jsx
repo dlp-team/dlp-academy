@@ -33,7 +33,7 @@ const FolderListItem = ({
     draggable = true,
     path
 }) => {
-    const HEADER_SAFE_TOP = 120;
+    const HEADER_SAFE_TOP = 112;
     const MENU_MARGIN = 8;
     const [isExpanded, setIsExpanded] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
