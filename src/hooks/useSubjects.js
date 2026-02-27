@@ -246,20 +246,27 @@ export const useSubjects = (user) => {
             try {
                 const shortcutId = `${targetUid}_${subjectId}_subject`;
                 const shortcutRef = doc(db, 'shortcuts', shortcutId);
+                const shortcutSnap = await getDoc(shortcutRef);
+                const existingShortcut = shortcutSnap.exists() ? shortcutSnap.data() || {} : {};
+                const hasOwnShortcutField = (field) => Object.prototype.hasOwnProperty.call(existingShortcut, field);
                 const shortcutPayload = {
                     ownerId: targetUid,
-                    parentId: null,
+                    parentId: hasOwnShortcutField('parentId') ? existingShortcut.parentId : null,
                     targetId: subjectId,
                     targetType: 'subject',
                     institutionId: currentInstitutionId,
-                    shortcutName: subjectData.name || null,
-                    shortcutCourse: subjectData.course || null,
-                    shortcutTags: Array.isArray(subjectData.tags) ? subjectData.tags : [],
-                    shortcutColor: subjectData.color || null,
-                    shortcutIcon: subjectData.icon || null,
-                    shortcutCardStyle: subjectData.cardStyle || null,
-                    shortcutModernFillColor: subjectData.modernFillColor || null,
-                    createdAt: new Date(),
+                    shortcutName: hasOwnShortcutField('shortcutName') ? existingShortcut.shortcutName : (subjectData.name || null),
+                    shortcutCourse: hasOwnShortcutField('shortcutCourse') ? existingShortcut.shortcutCourse : (subjectData.course || null),
+                    shortcutTags: hasOwnShortcutField('shortcutTags')
+                        ? (Array.isArray(existingShortcut.shortcutTags) ? existingShortcut.shortcutTags : [])
+                        : (Array.isArray(subjectData.tags) ? subjectData.tags : []),
+                    shortcutColor: hasOwnShortcutField('shortcutColor') ? existingShortcut.shortcutColor : (subjectData.color || null),
+                    shortcutIcon: hasOwnShortcutField('shortcutIcon') ? existingShortcut.shortcutIcon : (subjectData.icon || null),
+                    shortcutCardStyle: hasOwnShortcutField('shortcutCardStyle') ? existingShortcut.shortcutCardStyle : (subjectData.cardStyle || null),
+                    shortcutModernFillColor: hasOwnShortcutField('shortcutModernFillColor')
+                        ? existingShortcut.shortcutModernFillColor
+                        : (subjectData.modernFillColor || null),
+                    createdAt: hasOwnShortcutField('createdAt') ? existingShortcut.createdAt : new Date(),
                     updatedAt: new Date()
                 };
 

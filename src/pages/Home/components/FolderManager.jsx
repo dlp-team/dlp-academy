@@ -267,7 +267,9 @@ const FolderManager = ({
             const result = await onUnshare(formData.id, emailToRemove);
             setSharedList(prev => prev.filter(u => u.email !== emailToRemove));
 
-            const failuresCount = Array.isArray(result?.cleanupFailures) ? result.cleanupFailures.length : 0;
+            const failuresCount = Array.isArray(result?.cleanupFailures)
+                ? result.cleanupFailures.filter(failure => !failure?.ignorable).length
+                : 0;
             if (failuresCount > 0) {
                 setShareError(`Acceso revocado, pero ${failuresCount} elementos no se pudieron limpiar automáticamente por permisos.`);
             }

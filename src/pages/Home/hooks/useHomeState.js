@@ -577,7 +577,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         }
     }, [preferences, loadingPreferences]);
 
-    const isDragAndDropEnabled = viewMode === 'grid' && layoutMode === 'grid';
+    const isDragAndDropEnabled = viewMode === 'grid';
 
     return {
         viewMode,

@@ -495,19 +495,26 @@ export const useFolders = (user) => {
             try {
                 const shortcutId = `${targetUid}_${folderId}_folder`;
                 const shortcutRef = doc(db, 'shortcuts', shortcutId);
+                const shortcutSnap = await getDoc(shortcutRef);
+                const existingShortcut = shortcutSnap.exists() ? shortcutSnap.data() || {} : {};
+                const hasOwnShortcutField = (field) => Object.prototype.hasOwnProperty.call(existingShortcut, field);
                 const shortcutPayload = {
                     ownerId: targetUid,
-                    parentId: null,
+                    parentId: hasOwnShortcutField('parentId') ? existingShortcut.parentId : null,
                     targetId: folderId,
                     targetType: 'folder',
                     institutionId: currentInstitutionId,
-                    shortcutName: folderData.name || null,
-                    shortcutTags: Array.isArray(folderData.tags) ? folderData.tags : [],
-                    shortcutColor: folderData.color || null,
-                    shortcutIcon: folderData.icon || null,
-                    shortcutCardStyle: folderData.cardStyle || null,
-                    shortcutModernFillColor: folderData.modernFillColor || null,
-                    createdAt: new Date(),
+                    shortcutName: hasOwnShortcutField('shortcutName') ? existingShortcut.shortcutName : (folderData.name || null),
+                    shortcutTags: hasOwnShortcutField('shortcutTags')
+                        ? (Array.isArray(existingShortcut.shortcutTags) ? existingShortcut.shortcutTags : [])
+                        : (Array.isArray(folderData.tags) ? folderData.tags : []),
+                    shortcutColor: hasOwnShortcutField('shortcutColor') ? existingShortcut.shortcutColor : (folderData.color || null),
+                    shortcutIcon: hasOwnShortcutField('shortcutIcon') ? existingShortcut.shortcutIcon : (folderData.icon || null),
+                    shortcutCardStyle: hasOwnShortcutField('shortcutCardStyle') ? existingShortcut.shortcutCardStyle : (folderData.cardStyle || null),
+                    shortcutModernFillColor: hasOwnShortcutField('shortcutModernFillColor')
+                        ? existingShortcut.shortcutModernFillColor
+                        : (folderData.modernFillColor || null),
+                    createdAt: hasOwnShortcutField('createdAt') ? existingShortcut.createdAt : new Date(),
                     updatedAt: new Date()
                 };
 
@@ -604,12 +611,26 @@ export const useFolders = (user) => {
             }
 
             const cleanupFailures = [];
+            const isMissingShortcutFailure = (scope, error) => {
+                const scopeString = String(scope || '').toLowerCase();
+                const message = String(error?.message || '').toLowerCase();
+                const code = String(error?.code || '').toLowerCase();
+                const isShortcutScope = scopeString.includes('shortcut');
+                const isNotFound =
+                    code === 'not-found' ||
+                    code === 'firestore/not-found' ||
+                    message.includes('not found') ||
+                    message.includes('no document');
+                return isShortcutScope && isNotFound;
+            };
+
             const addFailure = (scope, id, error) => {
                 cleanupFailures.push({
                     scope,
                     id,
                     code: error?.code || null,
-                    message: error?.message || String(error)
+                    message: error?.message || String(error),
+                    ignorable: isMissingShortcutFailure(scope, error)
                 });
             };
 
