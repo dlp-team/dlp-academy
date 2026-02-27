@@ -11,6 +11,7 @@ import { SHORTCUT_LIST_MENU_WIDTH } from '../shared/shortcutMenuConfig';
 const FolderListItem = ({ 
     user,
     item, 
+    index,
     parentId,
     depth = 0,
     allFolders, 
@@ -129,7 +130,8 @@ const FolderListItem = ({
             id: item.id,
             type: type,
             parentId: item.shortcutParentId ?? parentId,
-            shortcutId: item.shortcutId || null
+            shortcutId: item.shortcutId || null,
+            index: typeof index === 'number' ? index : null
         };
         e.dataTransfer.setData('folderId', item.id);
         e.dataTransfer.setData('folderShortcutId', item.shortcutId || '');
@@ -180,7 +182,7 @@ const FolderListItem = ({
 
         if (!draggedData || draggedData.id === item.id) return;
 
-        onDropAction(draggedData, { id: item.id, type: type, parentId: parentId });
+        onDropAction(draggedData, { id: item.id, type: type, parentId: parentId, index });
         
         if (!isExpanded) setIsExpanded(true);
     };
@@ -455,11 +457,12 @@ const FolderListItem = ({
                     <div className="mt-2 flex flex-col gap-2">
                         {hasChildren ? (
                             <>
-                                {childFolders.map((folder) => (
+                                {childFolders.map((folder, childIndex) => (
                                     <ListViewItem
                                         key={folder.id}
                                         item={folder}
                                         type="folder"
+                                        index={childIndex}
                                         parentId={item.id} 
                                         depth={depth + 1}
                                         allFolders={allFolders}
@@ -480,11 +483,12 @@ const FolderListItem = ({
                                         path={path}
                                     />
                                 ))}
-                                {childSubjects.map((subject) => (
+                                {childSubjects.map((subject, childIndex) => (
                                     <ListViewItem
                                         key={subject.id}
                                         item={subject}
                                         type="subject"
+                                        index={childIndex}
                                         parentId={item.id} 
                                         depth={depth + 1}
                                         allFolders={allFolders}

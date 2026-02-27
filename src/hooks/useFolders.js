@@ -342,8 +342,10 @@ export const useFolders = (user) => {
             const originalFolderSharedWith = Array.isArray(folderData.sharedWith) ? folderData.sharedWith : [];
             const originalFolderSharedWithUids = Array.isArray(folderData.sharedWithUids) ? folderData.sharedWithUids : [];
             const existingShare = originalFolderSharedWith.find(s => s.uid === targetUid);
+            const foldersRollbackState = [];
             const subjectsRollbackState = [];
             let sourceUpdated = false;
+            let stagedMutations = 0;
             
             // Check if already shared with this user (idempotent behavior)
             const alreadyShared = folderData.sharedWith?.some(s => s.uid === targetUid);
@@ -355,90 +357,137 @@ export const useFolders = (user) => {
                 sharedWithUidsCount: Array.isArray(folderData.sharedWithUids) ? folderData.sharedWithUids.length : 0
             });
             
-           const batch = writeBatch(db);
+            const batch = writeBatch(db);
 
-            // A) Update the Folder only when needed
-            if (!alreadyShared) {
-                debugShare('source_update_enqueued_folder', { folderId, targetUid });
-                batch.update(folderRef, {
-                    sharedWith: arrayUnion(shareData),      // For UI display
-                    sharedWithUids: arrayUnion(targetUid),  // For Security Rules & Perms
-                    isShared: true,
-                    updatedAt: new Date()
-                });
-            } else if ((existingShare?.role || 'viewer') !== normalizedRole) {
-                const updatedSharedWith = originalFolderSharedWith.map(entry =>
-                    entry.uid === targetUid
-                        ? {
-                            ...entry,
-                            role: normalizedRole,
-                            canEdit: normalizedRole === 'editor'
-                        }
-                        : entry
+            const subtreeFolderIds = new Set([folderId]);
+            const queue = [folderId];
+            while (queue.length > 0) {
+                const currentId = queue.shift();
+                const childFoldersSnap = await getDocs(
+                    query(collection(db, 'folders'), where('parentId', '==', currentId))
                 );
-
-                batch.update(folderRef, {
-                    sharedWith: updatedSharedWith,
-                    updatedAt: new Date()
+                childFoldersSnap.docs.forEach(childDoc => {
+                    if (!subtreeFolderIds.has(childDoc.id)) {
+                        subtreeFolderIds.add(childDoc.id);
+                        queue.push(childDoc.id);
+                    }
                 });
             }
 
-            // B) Retroactively update ALL Subjects inside this folder (query by folderId)
-            if (!alreadyShared) {
-                try {
-                    const subjectsSnap = await getDocs(
-                        query(collection(db, "subjects"), where("folderId", "==", folderId))
-                    );
-                    debugShare('source_update_subjects_query_success', {
-                        folderId,
-                        targetUid,
-                        subjectsCount: subjectsSnap.size
-                    });
-                    subjectsSnap.forEach(docSnap => {
-                        const subjectData = docSnap.data() || {};
-                        subjectsRollbackState.push({
-                            id: docSnap.id,
-                            sharedWith: Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [],
-                            sharedWithUids: Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : []
-                        });
-                        const subjectSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
-                        const subjectSharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
-                        const alreadySharedInSubject = subjectSharedWithUids.includes(targetUid)
-                            || subjectSharedWith.some(entry => entry.uid === targetUid);
-                        const subjectRef = doc(db, "subjects", docSnap.id);
-                        if (alreadySharedInSubject) {
-                            batch.update(subjectRef, {
-                                isShared: true,
-                                updatedAt: new Date()
-                            });
-                            return;
-                        }
+            for (const targetFolderId of subtreeFolderIds) {
+                const targetFolderRef = doc(db, 'folders', targetFolderId);
+                const targetFolderSnap = targetFolderId === folderId ? folderSnap : await getDoc(targetFolderRef);
+                if (!targetFolderSnap.exists()) continue;
 
-                        const nextSharedWith = [...subjectSharedWith, inheritedSubjectShareData];
-                        const nextSharedWithUids = [...subjectSharedWithUids, targetUid];
+                const targetFolderData = targetFolderSnap.data() || {};
+                const targetSharedWith = Array.isArray(targetFolderData.sharedWith) ? targetFolderData.sharedWith : [];
+                const targetSharedWithUids = Array.isArray(targetFolderData.sharedWithUids) ? targetFolderData.sharedWithUids : [];
+                const targetExistingShare = targetSharedWith.find(entry => entry.uid === targetUid);
+                const targetAlreadyShared = targetSharedWithUids.includes(targetUid) || Boolean(targetExistingShare);
+
+                foldersRollbackState.push({
+                    id: targetFolderId,
+                    sharedWith: targetSharedWith,
+                    sharedWithUids: targetSharedWithUids
+                });
+
+                const inheritedFolderShareData = {
+                    ...shareData,
+                    shareOrigin: targetFolderId === folderId ? 'direct' : 'inherited-folder',
+                    inheritedFromFolderId: folderId
+                };
+
+                let nextFolderSharedWith = targetSharedWith;
+                let nextFolderSharedWithUids = targetSharedWithUids;
+                let shouldUpdateFolder = false;
+
+                if (!targetAlreadyShared) {
+                    nextFolderSharedWith = [...targetSharedWith, inheritedFolderShareData];
+                    nextFolderSharedWithUids = [...targetSharedWithUids, targetUid];
+                    shouldUpdateFolder = true;
+                } else if ((targetExistingShare?.role || 'viewer') !== normalizedRole) {
+                    nextFolderSharedWith = targetSharedWith.map(entry =>
+                        entry.uid === targetUid
+                            ? {
+                                ...entry,
+                                role: normalizedRole,
+                                canEdit: normalizedRole === 'editor'
+                            }
+                            : entry
+                    );
+                    shouldUpdateFolder = true;
+                } else if (targetFolderData?.isShared !== true) {
+                    shouldUpdateFolder = true;
+                }
+
+                if (shouldUpdateFolder) {
+                    batch.update(targetFolderRef, {
+                        sharedWith: nextFolderSharedWith,
+                        sharedWithUids: nextFolderSharedWithUids,
+                        isShared: nextFolderSharedWithUids.length > 0,
+                        updatedAt: new Date()
+                    });
+                    stagedMutations += 1;
+                }
+
+                const subjectsSnap = await getDocs(
+                    query(collection(db, 'subjects'), where('folderId', '==', targetFolderId))
+                );
+
+                subjectsSnap.forEach(docSnap => {
+                    const subjectData = docSnap.data() || {};
+                    const subjectSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
+                    const subjectSharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
+                    const subjectExistingShare = subjectSharedWith.find(entry => entry.uid === targetUid);
+                    const subjectAlreadyShared = subjectSharedWithUids.includes(targetUid) || Boolean(subjectExistingShare);
+
+                    subjectsRollbackState.push({
+                        id: docSnap.id,
+                        sharedWith: subjectSharedWith,
+                        sharedWithUids: subjectSharedWithUids
+                    });
+
+                    let nextSubjectSharedWith = subjectSharedWith;
+                    let nextSubjectSharedWithUids = subjectSharedWithUids;
+                    let shouldUpdateSubject = false;
+
+                    if (!subjectAlreadyShared) {
+                        nextSubjectSharedWith = [...subjectSharedWith, inheritedSubjectShareData];
+                        nextSubjectSharedWithUids = [...subjectSharedWithUids, targetUid];
+                        shouldUpdateSubject = true;
+                    } else if ((subjectExistingShare?.role || 'viewer') !== normalizedRole) {
+                        nextSubjectSharedWith = subjectSharedWith.map(entry =>
+                            entry.uid === targetUid
+                                ? {
+                                    ...entry,
+                                    role: normalizedRole,
+                                    canEdit: normalizedRole === 'editor'
+                                }
+                                : entry
+                        );
+                        shouldUpdateSubject = true;
+                    } else if (subjectData?.isShared !== true) {
+                        shouldUpdateSubject = true;
+                    }
+
+                    if (shouldUpdateSubject) {
+                        const subjectRef = doc(db, 'subjects', docSnap.id);
                         batch.update(subjectRef, {
-                            isShared: true,
-                            sharedWith: nextSharedWith,
-                            sharedWithUids: nextSharedWithUids,
+                            isShared: nextSubjectSharedWithUids.length > 0,
+                            sharedWith: nextSubjectSharedWith,
+                            sharedWithUids: nextSubjectSharedWithUids,
                             updatedAt: new Date()
                         });
-                    });
-                } catch (e) {
-                    debugShare('source_update_subjects_query_fail', {
-                        folderId,
-                        targetUid,
-                        errorCode: e?.code || null,
-                        errorMessage: e?.message || String(e)
-                    });
-                    console.error("Error sharing subjects in folder:", e);
-                }
+                        stagedMutations += 1;
+                    }
+                });
             }
 
             // 6. COMMIT CHANGES
             debugShare('source_update_commit_attempt', { folderId, targetUid, alreadyShared });
             await batch.commit();
             debugShare('source_update_commit_success', { folderId, targetUid, alreadyShared });
-            if (!alreadyShared) {
+            if (stagedMutations > 0) {
                 sourceUpdated = true;
             }
 
@@ -481,11 +530,13 @@ export const useFolders = (user) => {
                             subjectsRollbackCount: subjectsRollbackState.length
                         });
                         const rollbackBatch = writeBatch(db);
-                        rollbackBatch.update(folderRef, {
-                            sharedWith: originalFolderSharedWith,
-                            sharedWithUids: originalFolderSharedWithUids,
-                            isShared: originalFolderSharedWithUids.length > 0,
-                            updatedAt: new Date()
+                        foldersRollbackState.forEach(folderState => {
+                            rollbackBatch.update(doc(db, 'folders', folderState.id), {
+                                sharedWith: folderState.sharedWith,
+                                sharedWithUids: folderState.sharedWithUids,
+                                isShared: folderState.sharedWithUids.length > 0,
+                                updatedAt: new Date()
+                            });
                         });
 
                         subjectsRollbackState.forEach(subject => {

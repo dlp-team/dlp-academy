@@ -9,6 +9,7 @@ const ListViewItem = ({
     user,
     item, 
     type, 
+    index,
     parentId,
     depth = 0,
     allFolders, 
@@ -52,7 +53,8 @@ const ListViewItem = ({
                 id: item.id,
                 type: 'subject',
                 parentId: itemParentId,
-                shortcutId: item.shortcutId || null
+                shortcutId: item.shortcutId || null,
+                index: typeof index === 'number' ? index : null
             };
             e.dataTransfer.setData('subjectId', item.id);
             e.dataTransfer.setData('subjectParentId', itemParentId || '');
@@ -73,6 +75,7 @@ const ListViewItem = ({
             <FolderListItem
                 user={user}
                 item={item}
+                index={index}
                 parentId={parentId}
                 depth={depth}
                 allFolders={allFolders}
@@ -131,7 +134,7 @@ const ListViewItem = ({
 
         if (!draggedData || draggedData.id === item.id) return;
 
-        onDropAction(draggedData, { id: item.id, type: type, parentId: parentId });
+        onDropAction(draggedData, { id: item.id, type: type, parentId: parentId, index });
     };
 
     return (

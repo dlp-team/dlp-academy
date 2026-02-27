@@ -103,6 +103,8 @@ const HomeContent = ({
         handleMoveSubjectWithSource,
         handleNestFolder,
         handleMoveFolderWithSource,
+        handleDropReorderSubject,
+        handleDropReorderFolder,
         handleDragEnd
     });
 
@@ -639,12 +641,13 @@ const HomeContent = ({
                                         )}
                                         
                                         {/* Render Folders */}
-                                        {viewMode === 'grid' && filteredFolders.map((folder) => (
+                                        {viewMode === 'grid' && filteredFolders.map((folder, index) => (
                                             <ListViewItem 
                                                 key={folder.id}
                                                 user={user}
                                                 item={folder}
                                                 type="folder"
+                                                index={index}
                                                 parentId={currentFolder ? currentFolder.id : null}
                                                 allFolders={allFoldersForTree}
                                                 allSubjects={allSubjectsForTree}
@@ -686,13 +689,14 @@ const HomeContent = ({
                                         ))}
 
                                         {/* Render Subjects */}
-                                        {groupSubjects && displayedGroupSubjects.map((subject) => {
+                                        {groupSubjects && displayedGroupSubjects.map((subject, index) => {
                                             return (
                                                 <ListViewItem
                                                     key={subject.id}
                                                     user={user}
                                                     item={subject}
                                                     type="subject"
+                                                    index={index}
                                                     parentId={currentFolder ? currentFolder.id : null}
                                                     allFolders={allFoldersForTree}
                                                     allSubjects={allSubjectsForTree}

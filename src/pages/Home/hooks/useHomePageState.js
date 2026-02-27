@@ -106,7 +106,10 @@ export const useHomePageState = ({ logic, searchQuery }) => {
     ]);
 
     const displayedFolders = useMemo(() => {
-        const allFolders = logic.filteredFolders || logic.folders || [];
+        const hasTagFilter = Array.isArray(logic.selectedTags) && logic.selectedTags.length > 0;
+        const allFolders = hasTagFilter
+            ? (logic.folders || [])
+            : (logic.filteredFolders || logic.folders || []);
         const currentId = logic.currentFolder ? logic.currentFolder.id : null;
 
         // Show only direct children of current folder (not descendants)
@@ -120,7 +123,7 @@ export const useHomePageState = ({ logic, searchQuery }) => {
         }
 
         return scopedFolders;
-    }, [logic.filteredFolders, logic.folders, logic.currentFolder, logic.searchFolders, searchQuery]);
+    }, [logic.filteredFolders, logic.folders, logic.currentFolder, logic.searchFolders, searchQuery, logic.selectedTags]);
 
     const activeModalFolder = useMemo(() => {
         if (!folderContentsModalConfig.folder) return null;
