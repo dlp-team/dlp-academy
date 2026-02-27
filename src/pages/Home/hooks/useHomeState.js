@@ -296,10 +296,18 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
     const sharedSubjects = useMemo(() => {
         const source = Array.isArray(subjectsWithShortcuts) ? subjectsWithShortcuts : subjects;
+        const userEmail = user?.email?.toLowerCase() || '';
         return source.filter(s => {
             if (isShortcutItem(s)) return true;
             const inSharedFolder = sharedFolders.some(f => s.folderId === f.id);
-            return inSharedFolder || (s.uid !== user.uid && s.sharedWithUids?.includes(user.uid));
+            const isOwnedByCurrentUser = s?.ownerId === user?.uid || s?.uid === user?.uid;
+            const sharedByUid = Array.isArray(s?.sharedWithUids) && user?.uid
+                ? s.sharedWithUids.includes(user.uid)
+                : false;
+            const sharedByEntry = Array.isArray(s?.sharedWith) && (user?.uid || userEmail)
+                ? s.sharedWith.some(share => share?.uid === user?.uid || share?.email?.toLowerCase() === userEmail)
+                : false;
+            return inSharedFolder || (!isOwnedByCurrentUser && (sharedByUid || sharedByEntry));
         });
     }, [subjectsWithShortcuts, subjects, sharedFolders, user]);
 

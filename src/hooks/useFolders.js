@@ -589,31 +589,7 @@ export const useFolders = (user) => {
             };
 
             const stripSubjectShareForUser = (sharedWith = [], sharedWithUids = []) => {
-                const sourceSharedWith = Array.isArray(sharedWith) ? sharedWith : [];
-                const sourceSharedWithUids = Array.isArray(sharedWithUids) ? sharedWithUids : [];
-
-                const directShareEntry = sourceSharedWith.find(entry =>
-                    (entry?.uid === targetUid || entry?.email?.toLowerCase() === emailLower)
-                    && entry?.shareOrigin === 'direct'
-                );
-
-                if (directShareEntry) {
-                    const withoutTarget = sourceSharedWith.filter(entry =>
-                        entry?.uid !== targetUid && entry?.email?.toLowerCase() !== emailLower
-                    );
-                    const rebuiltSharedWith = [...withoutTarget, { ...directShareEntry, shareOrigin: 'direct' }];
-                    const rebuiltUids = Array.from(new Set([
-                        ...sourceSharedWithUids.filter(uid => uid !== targetUid),
-                        targetUid
-                    ]));
-                    return {
-                        sharedWith: rebuiltSharedWith,
-                        sharedWithUids: rebuiltUids,
-                        isShared: rebuiltUids.length > 0
-                    };
-                }
-
-                return stripShareForUser(sourceSharedWith, sourceSharedWithUids);
+                return stripShareForUser(sharedWith, sharedWithUids);
             };
 
             const updateFolderUnshare = async (targetFolderId) => {
@@ -621,7 +597,24 @@ export const useFolders = (user) => {
                 const targetFolderSnap = await getDoc(targetFolderRef);
                 if (!targetFolderSnap.exists()) return;
                 const targetFolderData = targetFolderSnap.data() || {};
+                const beforeSharedWithUids = Array.isArray(targetFolderData.sharedWithUids) ? targetFolderData.sharedWithUids : [];
+                const beforeSharedWith = Array.isArray(targetFolderData.sharedWith) ? targetFolderData.sharedWith : [];
                 const strippedFolder = stripShareForUser(targetFolderData.sharedWith, targetFolderData.sharedWithUids);
+                const beforeHasTarget = beforeSharedWithUids.includes(targetUid)
+                    || beforeSharedWith.some(entry => entry?.uid === targetUid || entry?.email?.toLowerCase() === emailLower);
+                const afterHasTarget = (Array.isArray(strippedFolder.sharedWithUids) ? strippedFolder.sharedWithUids : []).includes(targetUid)
+                    || (Array.isArray(strippedFolder.sharedWith) ? strippedFolder.sharedWith : []).some(entry => entry?.uid === targetUid || entry?.email?.toLowerCase() === emailLower);
+
+                debug('Folder unshare transform', {
+                    folderId: targetFolderId,
+                    beforeHasTarget,
+                    afterHasTarget,
+                    beforeSharedWithUidsCount: beforeSharedWithUids.length,
+                    afterSharedWithUidsCount: Array.isArray(strippedFolder.sharedWithUids) ? strippedFolder.sharedWithUids.length : 0,
+                    beforeIsShared: targetFolderData?.isShared === true,
+                    afterIsShared: strippedFolder?.isShared === true
+                });
+
                 await updateDoc(targetFolderRef, {
                     sharedWith: strippedFolder.sharedWith,
                     sharedWithUids: strippedFolder.sharedWithUids,
@@ -639,7 +632,25 @@ export const useFolders = (user) => {
 
                 for (const subjectDoc of subjectsSnap.docs) {
                     const subjectData = subjectDoc.data() || {};
+                    const beforeSharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
+                    const beforeSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
                     const strippedSubject = stripSubjectShareForUser(subjectData.sharedWith, subjectData.sharedWithUids);
+                    const beforeHasTarget = beforeSharedWithUids.includes(targetUid)
+                        || beforeSharedWith.some(entry => entry?.uid === targetUid || entry?.email?.toLowerCase() === emailLower);
+                    const afterHasTarget = (Array.isArray(strippedSubject.sharedWithUids) ? strippedSubject.sharedWithUids : []).includes(targetUid)
+                        || (Array.isArray(strippedSubject.sharedWith) ? strippedSubject.sharedWith : []).some(entry => entry?.uid === targetUid || entry?.email?.toLowerCase() === emailLower);
+
+                    debug('Subject unshare transform', {
+                        subjectId: subjectDoc.id,
+                        folderId: targetFolderId,
+                        beforeHasTarget,
+                        afterHasTarget,
+                        beforeSharedWithUidsCount: beforeSharedWithUids.length,
+                        afterSharedWithUidsCount: Array.isArray(strippedSubject.sharedWithUids) ? strippedSubject.sharedWithUids.length : 0,
+                        beforeIsShared: subjectData?.isShared === true,
+                        afterIsShared: strippedSubject?.isShared === true
+                    });
+
                     try {
                         await updateDoc(doc(db, 'subjects', subjectDoc.id), {
                             sharedWith: strippedSubject.sharedWith,
@@ -728,22 +739,76 @@ export const useFolders = (user) => {
             for (const targetFolderId of subtreeFolderIds) {
                 const shortcutId = `${targetUid}_${targetFolderId}_folder`;
                 const shortcutRef = doc(db, 'shortcuts', shortcutId);
+                let probeFailed = false;
+                let shortcutExists = false;
                 try {
                     const shortcutSnap = await getDoc(shortcutRef);
                     if (shortcutSnap.exists()) {
-                        const shortcutData = shortcutSnap.data();
-                        debug('Shortcut delete attempt', {
+                        shortcutExists = true;
+                        debug('Shortcut delete probe', {
                             shortcutId,
-                            shortcutData,
+                            shortcutData: shortcutSnap.data(),
                             currentUser: user?.uid,
                             targetType: 'folder',
-                            targetId: targetFolderId
+                            targetId: targetFolderId,
+                            stage: 'probe'
                         });
                     } else {
-                        debug('Shortcut not found for delete', { shortcutId });
+                        debug('Shortcut delete probe (not found)', {
+                            shortcutId,
+                            currentUser: user?.uid,
+                            targetType: 'folder',
+                            targetId: targetFolderId,
+                            stage: 'probe'
+                        });
                     }
+                } catch (shortcutFolderProbeError) {
+                    probeFailed = true;
+                    debug('Shortcut folder probe error', {
+                        shortcutId,
+                        currentUser: user?.uid,
+                        targetType: 'folder',
+                        targetId: targetFolderId,
+                        stage: 'probe',
+                        errorCode: shortcutFolderProbeError?.code || null,
+                        error: shortcutFolderProbeError?.message || String(shortcutFolderProbeError)
+                    });
+                }
+
+                if (!shortcutExists) {
+                    debug('Shortcut folder delete skipped', {
+                        shortcutId,
+                        currentUser: user?.uid,
+                        targetType: 'folder',
+                        targetId: targetFolderId,
+                        stage: 'delete',
+                        probeFailed,
+                        reason: 'shortcut-not-confirmed'
+                    });
+                    continue;
+                }
+
+                try {
                     await deleteDoc(shortcutRef);
+                    debug('Shortcut folder delete success', {
+                        shortcutId,
+                        currentUser: user?.uid,
+                        targetType: 'folder',
+                        targetId: targetFolderId,
+                        stage: 'delete',
+                        probeFailed
+                    });
                 } catch (shortcutFolderDeleteError) {
+                    debug('Shortcut folder delete error', {
+                        shortcutId,
+                        currentUser: user?.uid,
+                        targetType: 'folder',
+                        targetId: targetFolderId,
+                        stage: 'delete',
+                        probeFailed,
+                        errorCode: shortcutFolderDeleteError?.code || null,
+                        error: shortcutFolderDeleteError?.message || String(shortcutFolderDeleteError)
+                    });
                     addFailure('folder-shortcut-delete', targetFolderId, shortcutFolderDeleteError);
                 }
             }
@@ -751,22 +816,76 @@ export const useFolders = (user) => {
             for (const targetSubjectId of subtreeSubjectIds) {
                 const shortcutId = `${targetUid}_${targetSubjectId}_subject`;
                 const shortcutRef = doc(db, 'shortcuts', shortcutId);
+                let probeFailed = false;
+                let shortcutExists = false;
                 try {
                     const shortcutSnap = await getDoc(shortcutRef);
                     if (shortcutSnap.exists()) {
-                        const shortcutData = shortcutSnap.data();
-                        debug('Shortcut delete attempt', {
+                        shortcutExists = true;
+                        debug('Shortcut delete probe', {
                             shortcutId,
-                            shortcutData,
+                            shortcutData: shortcutSnap.data(),
                             currentUser: user?.uid,
                             targetType: 'subject',
-                            targetId: targetSubjectId
+                            targetId: targetSubjectId,
+                            stage: 'probe'
                         });
                     } else {
-                        debug('Shortcut not found for delete', { shortcutId });
+                        debug('Shortcut delete probe (not found)', {
+                            shortcutId,
+                            currentUser: user?.uid,
+                            targetType: 'subject',
+                            targetId: targetSubjectId,
+                            stage: 'probe'
+                        });
                     }
+                } catch (shortcutSubjectProbeError) {
+                    probeFailed = true;
+                    debug('Shortcut subject probe error', {
+                        shortcutId,
+                        currentUser: user?.uid,
+                        targetType: 'subject',
+                        targetId: targetSubjectId,
+                        stage: 'probe',
+                        errorCode: shortcutSubjectProbeError?.code || null,
+                        error: shortcutSubjectProbeError?.message || String(shortcutSubjectProbeError)
+                    });
+                }
+
+                if (!shortcutExists) {
+                    debug('Shortcut subject delete skipped', {
+                        shortcutId,
+                        currentUser: user?.uid,
+                        targetType: 'subject',
+                        targetId: targetSubjectId,
+                        stage: 'delete',
+                        probeFailed,
+                        reason: 'shortcut-not-confirmed'
+                    });
+                    continue;
+                }
+
+                try {
                     await deleteDoc(shortcutRef);
+                    debug('Shortcut subject delete success', {
+                        shortcutId,
+                        currentUser: user?.uid,
+                        targetType: 'subject',
+                        targetId: targetSubjectId,
+                        stage: 'delete',
+                        probeFailed
+                    });
                 } catch (shortcutSubjectDeleteError) {
+                    debug('Shortcut subject delete error', {
+                        shortcutId,
+                        currentUser: user?.uid,
+                        targetType: 'subject',
+                        targetId: targetSubjectId,
+                        stage: 'delete',
+                        probeFailed,
+                        errorCode: shortcutSubjectDeleteError?.code || null,
+                        error: shortcutSubjectDeleteError?.message || String(shortcutSubjectDeleteError)
+                    });
                     addFailure('subject-shortcut-delete', targetSubjectId, shortcutSubjectDeleteError);
                 }
             }

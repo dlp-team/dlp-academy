@@ -544,6 +544,7 @@ service cloud.firestore {
             && (
               get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.ownerId == request.auth.uid
               || get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.uid == request.auth.uid
+              || canWriteResource(get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data)
               || (
                 get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.keys().hasAny(['folderId'])
                 && canManageFolderById(get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.folderId)
@@ -557,6 +558,7 @@ service cloud.firestore {
             && (
               get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.ownerId == request.auth.uid
               || get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.uid == request.auth.uid
+              || canWriteResource(get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data)
               || canManageFolderById(resource.data.targetId)
               || (
                 get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.parentId != null
