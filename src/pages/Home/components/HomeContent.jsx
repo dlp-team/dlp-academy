@@ -60,6 +60,7 @@ const HomeContent = ({
     navigate,
     activeFilter,
     selectedTags = [],
+    sharedScopeSelected = true,
     filterOverlayOpen = false,
     onCloseFilterOverlay = () => {},
 }) => {
@@ -107,17 +108,47 @@ const HomeContent = ({
 
     const showCollapsibleGroups = ['courses', 'tags', 'shared'].includes(viewMode);
 
-    // --- FILTER FOLDERS IF TAG FILTER IS ACTIVE ---
-    let filteredFolders = orderedFolders;
-    if (selectedTags && selectedTags.length > 0) {
-        // Only show folders that have at least one of the selected tags
-        filteredFolders = orderedFolders.filter(folder =>
-            Array.isArray(folder.tags) && folder.tags.some(tag => selectedTags.includes(tag))
-        );
-    }
+    const getFolderParentId = (folderEntry) => {
+        if (!folderEntry) return null;
+        if (isShortcutItem(folderEntry)) return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+        return folderEntry.parentId ?? null;
+    };
 
-    // --- FILTERING LOGIC ---
-    // No folder filter logic anymore
+    const getSubjectParentId = (subjectEntry) => {
+        if (!subjectEntry) return null;
+        if (isShortcutItem(subjectEntry)) return subjectEntry.shortcutParentId ?? subjectEntry.folderId ?? subjectEntry.parentId ?? null;
+        return subjectEntry.folderId ?? null;
+    };
+
+    const matchesTagFilter = (item) => {
+        if (!Array.isArray(selectedTags) || selectedTags.length === 0) return true;
+        return Array.isArray(item?.tags) && item.tags.some(tag => selectedTags.includes(tag));
+    };
+
+    const isSharedForCurrentUser = (item) => {
+        if (!item) return false;
+        if (isShortcutItem(item)) return true;
+
+        const currentUserId = user?.uid || null;
+        const currentEmail = (user?.email || '').toLowerCase();
+        const sharedWithUids = Array.isArray(item.sharedWithUids) ? item.sharedWithUids : [];
+        const sharedWith = Array.isArray(item.sharedWith) ? item.sharedWith : [];
+
+        const sharedByUid = currentUserId ? sharedWithUids.includes(currentUserId) : false;
+        const sharedByEmail = currentEmail
+            ? sharedWith.some(entry => (entry?.email || '').toLowerCase() === currentEmail)
+            : false;
+
+        return sharedByUid || sharedByEmail || item?.isShared === true;
+    };
+
+    const matchesSharedFilter = (item) => {
+        if (sharedScopeSelected) return true;
+        return isSharedForCurrentUser(item);
+    };
+
+    const itemMatchesFilters = (item) => matchesTagFilter(item) && matchesSharedFilter(item);
+    const isRecursiveFilteringActive = (Array.isArray(selectedTags) && selectedTags.length > 0) || sharedScopeSelected === false;
 
     const allShortcutFolders = useMemo(
         () => (Array.isArray(resolvedShortcuts) ? resolvedShortcuts.filter(s => s?.targetType === 'folder') : []),
@@ -186,6 +217,107 @@ const HomeContent = ({
         handleOpenFolder(targetFolder);
     };
 
+    const folderById = useMemo(() => {
+        const map = new Map();
+        (allFoldersForTree || []).forEach(folder => {
+            if (folder?.id) map.set(folder.id, folder);
+        });
+        return map;
+    }, [allFoldersForTree]);
+
+    const isFolderWithinCurrentTree = (folderId) => {
+        const currentFolderId = currentFolder?.id ?? null;
+        if (!currentFolderId) return true;
+        let cursorId = folderId;
+        while (cursorId) {
+            if (cursorId === currentFolderId) return true;
+            const cursorFolder = folderById.get(cursorId);
+            if (!cursorFolder) return false;
+            cursorId = getFolderParentId(cursorFolder);
+        }
+        return false;
+    };
+
+    const topLevelFolderMatchesByDescendants = useMemo(() => {
+        if (!isRecursiveFilteringActive) return new Set();
+
+        const matchingIds = new Set();
+        (orderedFolders || []).forEach(topFolder => {
+            if (!topFolder?.id) return;
+
+            const stack = [topFolder.id];
+            let hasMatchingDescendant = false;
+
+            while (stack.length > 0 && !hasMatchingDescendant) {
+                const folderId = stack.pop();
+                const folderNode = folderById.get(folderId);
+                if (folderNode && itemMatchesFilters(folderNode)) {
+                    hasMatchingDescendant = true;
+                    break;
+                }
+
+                const descendantSubjects = (allSubjectsForTree || []).filter(subject => getSubjectParentId(subject) === folderId);
+                if (descendantSubjects.some(subject => itemMatchesFilters(subject))) {
+                    hasMatchingDescendant = true;
+                    break;
+                }
+
+                const childFolders = (allFoldersForTree || []).filter(folder => getFolderParentId(folder) === folderId);
+                childFolders.forEach(child => {
+                    if (child?.id) stack.push(child.id);
+                });
+            }
+
+            if (hasMatchingDescendant) {
+                matchingIds.add(topFolder.id);
+            }
+        });
+
+        return matchingIds;
+    }, [
+        isRecursiveFilteringActive,
+        orderedFolders,
+        folderById,
+        allFoldersForTree,
+        allSubjectsForTree,
+        selectedTags,
+        sharedScopeSelected,
+        user?.uid,
+        user?.email
+    ]);
+
+    const filteredFolders = useMemo(() => {
+        if (!Array.isArray(orderedFolders)) return [];
+        if (!isRecursiveFilteringActive) {
+            return orderedFolders.filter(folder => itemMatchesFilters(folder));
+        }
+        return orderedFolders.filter(folder => itemMatchesFilters(folder) || topLevelFolderMatchesByDescendants.has(folder.id));
+    }, [orderedFolders, isRecursiveFilteringActive, topLevelFolderMatchesByDescendants, selectedTags, sharedScopeSelected, user?.uid, user?.email]);
+
+    const getFilteredSubjectsForGroup = (groupSubjects) => {
+        if (!Array.isArray(groupSubjects)) return [];
+
+        if (!isRecursiveFilteringActive) {
+            return groupSubjects.filter(subject => itemMatchesFilters(subject));
+        }
+
+        const currentFolderId = currentFolder?.id ?? null;
+        const matchingSubjects = (allSubjectsForTree || []).filter(subject => {
+            const parentFolderId = getSubjectParentId(subject);
+            const insideCurrentTree = currentFolderId
+                ? isFolderWithinCurrentTree(parentFolderId)
+                : true;
+            return insideCurrentTree && itemMatchesFilters(subject);
+        });
+
+        const unique = new Map();
+        matchingSubjects.forEach(subject => {
+            const key = subject?.shortcutId ? `shortcut:${subject.shortcutId}` : `source:${subject.id}`;
+            if (!unique.has(key)) unique.set(key, subject);
+        });
+        return Array.from(unique.values());
+    };
+
     
     return (
         <div
@@ -195,6 +327,7 @@ const HomeContent = ({
         }`}>
             {groupedContent && Object.entries(groupedContent).map(([groupName, groupSubjects]) => {
                 const isCollapsed = collapsedGroups[groupName];
+                const displayedGroupSubjects = getFilteredSubjectsForGroup(groupSubjects);
 
                 return (
                     <div key={groupName} className="mb-10">
@@ -215,7 +348,7 @@ const HomeContent = ({
                                         ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2 py-1 rounded-full'
                                         : 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 text-xs font-bold px-2 py-1 rounded-full'
                                 }>
-                                    {groupSubjects.length}
+                                    {displayedGroupSubjects.length}
                                 </span>
                                 <span className={`transition-transform ${isCollapsed ? '-rotate-90' : ''}`}>▼</span>
                             </button>
@@ -369,7 +502,7 @@ const HomeContent = ({
                                             })}
 
                                             {/* Subjects in Grid */}
-                                            {activeFilter !== 'folders' && groupSubjects.map((subject, index) => {
+                                            {activeFilter !== 'folders' && displayedGroupSubjects.map((subject, index) => {
                                                 return (
                                                 <div key={`${groupName}-${subject.id}`}>
                                                     <SubjectCard
@@ -542,7 +675,7 @@ const HomeContent = ({
                                         ))}
 
                                         {/* Render Subjects */}
-                                        {groupSubjects.map((subject) => {
+                                        {groupSubjects && displayedGroupSubjects.map((subject) => {
                                             return (
                                                 <ListViewItem
                                                     key={subject.id}

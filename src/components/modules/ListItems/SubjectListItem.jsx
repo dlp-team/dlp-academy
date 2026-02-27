@@ -35,10 +35,10 @@ const SubjectListItem = ({
     const isOrphan = subject?.isOrphan === true;
     const isMovedToShared = subject?._reason === 'moved-to-shared-folder';
     const orphanMessage = subject?._reason === 'access-revoked'
-        ? 'Archivo original ya no está compartido'
+        ? 'La asignatura ya no está compartida'
         : subject?._reason === 'moved-to-shared-folder'
             ? `Esta asignatura se ha movido a la carpeta ${subject?._movedToFolderName || 'compartida'}`
-            : 'Archivo original eliminado';
+            : 'La asignatura se ha eliminado';
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
@@ -142,6 +142,15 @@ const SubjectListItem = ({
                     )}
                 </div>
 
+                {isOrphan && (
+                    <span
+                        className={`font-semibold whitespace-nowrap ${isModern ? 'text-slate-700 dark:text-slate-200' : 'text-white/95'}`}
+                        style={{ fontSize: `${12 * scale}px` }}
+                    >
+                        {orphanMessage}
+                    </span>
+                )}
+
                 {/* ACTIONS */}
                 <div className="flex items-center gap-2 relative">
                     {!isOrphan && (
@@ -233,14 +242,6 @@ const SubjectListItem = ({
 
             {isOrphan && (
                 <>
-                    <div className="mt-2 ml-2 mr-2 text-center pointer-events-none">
-                        <span
-                            className={`font-semibold ${isModern ? 'text-slate-700 dark:text-slate-200' : 'text-white/95'}`}
-                            style={{ fontSize: `${12 * scale}px` }}
-                        >
-                            {orphanMessage}
-                        </span>
-                    </div>
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                         {isMovedToShared && subject?._movedToFolderId ? (
                             <button

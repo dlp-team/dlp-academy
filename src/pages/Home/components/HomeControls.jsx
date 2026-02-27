@@ -34,7 +34,9 @@ const HomeControls = ({
     setSearchQuery = () => {},
     activeFilter,
     onFilterOverlayChange,
-    onScaleOverlayChange
+    onScaleOverlayChange,
+    sharedScopeSelected = true,
+    onSharedScopeChange = () => {}
 }) => {
     const {
         handleViewModeChange,
@@ -104,7 +106,9 @@ const HomeControls = ({
                         selectedTags={selectedTags}
                         setSelectedTags={handleTagsChange}
                         onOverlayToggle={onFilterOverlayChange}
-                        activeFilter={activeFilter} 
+                        activeFilter={activeFilter}
+                        sharedScopeSelected={sharedScopeSelected}
+                        onSharedScopeChange={onSharedScopeChange}
                     />
                 )}
 

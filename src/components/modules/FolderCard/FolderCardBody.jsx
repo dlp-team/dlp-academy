@@ -37,10 +37,10 @@ const FolderCardBody = ({
     const isOrphan = folder?.isOrphan === true;
     const isMovedToShared = folder?._reason === 'moved-to-shared-folder';
     const orphanMessage = folder?._reason === 'access-revoked'
-        ? 'Carpeta descompartida'
+        ? 'La carpeta ya no está compartida'
         : folder?._reason === 'moved-to-shared-folder'
             ? `Esta carpeta se ha movido a la carpeta ${folder?._movedToFolderName || 'compartida del creador'}`
-            : 'Archivo original eliminado';
+            : 'La carpeta se ha eliminado';
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(folder, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
@@ -69,7 +69,7 @@ const FolderCardBody = ({
     }, [activeMenu, folder.id]);
     
     return (
-        <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${
+        <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${isOrphan ? 'opacity-80' : ''} ${
             isModern 
             ? `bg-gradient-to-br ${gradientClass} p-[4px] ${isOrphan ? 'saturate-50 brightness-95' : ''}` 
                 : ''

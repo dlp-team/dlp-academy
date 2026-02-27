@@ -14,10 +14,7 @@ const FolderCardTab = ({ isModern, gradientClass, scaleMultiplier, isOrphan = fa
                 height: `${21 * scaleMultiplier}px`,
                 clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0% 100%)',
             }}
-        >
-            {/* Inner shadow for depth */}
-            <div className="absolute inset-0 bg-black/10 rounded-t-xl"></div>
-        </div>
+        />
     );
 };
 

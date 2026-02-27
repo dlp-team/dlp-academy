@@ -36,10 +36,10 @@ const SubjectCardFront = ({
     const isOrphan = subject?.isOrphan === true;
     const isMovedToShared = subject?._reason === 'moved-to-shared-folder';
     const orphanMessage = subject?._reason === 'access-revoked'
-        ? 'Archivo original ya no está compartido'
+        ? 'La asignatura ya no está compartida'
         : subject?._reason === 'moved-to-shared-folder'
             ? `Esta asignatura se ha movido a la carpeta ${subject?._movedToFolderName || 'compartida'}`
-            : 'Archivo original eliminado';
+            : 'La asignatura se ha eliminado';
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;

@@ -1,6 +1,6 @@
 // src/components/home/TagFilter.jsx
 import React, { useState } from 'react';
-import { Filter, X } from 'lucide-react';
+import { Filter, Users } from 'lucide-react';
 
 const TagFilter = ({ 
     allTags, 
@@ -8,7 +8,9 @@ const TagFilter = ({
     setSelectedTags, 
     activeFilter = 'all', 
     onFilterChange = () => {} ,
-    onOverlayToggle
+    onOverlayToggle,
+    sharedScopeSelected = true,
+    onSharedScopeChange = () => {}
 }) => {
     const [showFilter, setShowFilter] = useState(false);
 
@@ -63,7 +65,18 @@ const TagFilter = ({
                     <div className="absolute top-full mt-2 left-0 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-[60] w-80 max-h-96 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar">
                         <div className="flex items-center justify-between mb-3 relative">
                             <span className="text-sm font-bold text-gray-900 dark:text-white">Filtrar por Etiquetas</span>
-                            {/* Folder filter icon removed */}
+                            <button
+                                onClick={() => onSharedScopeChange(!sharedScopeSelected)}
+                                className={`absolute top-0 right-0 inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-colors cursor-pointer ${
+                                    sharedScopeSelected
+                                        ? 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
+                                        : 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400'
+                                }`}
+                                title={sharedScopeSelected ? 'Mostrar todo (desactiva para solo compartidos)' : 'Solo compartidos activo'}
+                                aria-label="Alternar filtro de compartidos"
+                            >
+                                <Users size={16} />
+                            </button>
                         </div>
 
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">

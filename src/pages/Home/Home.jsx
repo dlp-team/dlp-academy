@@ -34,6 +34,7 @@ const Home = ({ user }) => {
     }, []);
 
     const [searchQuery, setSearchQuery] = useState('');
+    const [sharedScopeSelected, setSharedScopeSelected] = useState(true);
     const [hasInitialDataLoaded, setHasInitialDataLoaded] = useState(false);
     const [searchParams, setSearchParams] = useSearchParams();
     const logic = useHomeLogic(user, searchQuery);
@@ -197,6 +198,8 @@ const Home = ({ user }) => {
                         handleFilterChange={logic.handleFilterChange}
                         onFilterOverlayChange={setIsFilterOpen}
                         onScaleOverlayChange={setIsScaleOverlayOpen}
+                        sharedScopeSelected={sharedScopeSelected}
+                        onSharedScopeChange={setSharedScopeSelected}
 
                         // SEARCH
                         searchQuery={searchQuery}
@@ -374,6 +377,7 @@ const Home = ({ user }) => {
                                         
                                         activeFilter={logic.activeFilter}
                                         selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
+                                        sharedScopeSelected={sharedScopeSelected}
                                         
                                         navigate={logic.navigate}
                                     />
