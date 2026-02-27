@@ -455,6 +455,7 @@ export const useFolders = (user) => {
                     shortcutName: folderData.name || null,
                     shortcutTags: Array.isArray(folderData.tags) ? folderData.tags : [],
                     shortcutColor: folderData.color || null,
+                    shortcutIcon: folderData.icon || null,
                     shortcutCardStyle: folderData.cardStyle || null,
                     shortcutModernFillColor: folderData.modernFillColor || null,
                     createdAt: new Date(),

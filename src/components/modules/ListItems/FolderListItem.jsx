@@ -212,7 +212,7 @@ const FolderListItem = ({
                     isDragOver 
                         ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-500 scale-[1.01] shadow-md'
                         : ''
-                } ${isDragging ? 'opacity-0 scale-95 transition-none' : ''} ${isOrphan ? 'saturate-0' : ''}`}
+                } ${isDragging ? 'opacity-0 scale-95 transition-none' : ''}`}
                 style={{ marginLeft: `${indent}px` }}
             >
                 <div 
@@ -230,7 +230,7 @@ const FolderListItem = ({
                             <ChevronRight size={20} />
                         </div>
                     </div>
-                    <div className={`relative flex items-center justify-center rounded-lg bg-gradient-to-br ${item.color || 'from-indigo-500 to-purple-500'}`} style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px`, flexShrink: 0 }}>
+                    <div className={`relative flex items-center justify-center rounded-lg bg-gradient-to-br ${item.color || 'from-indigo-500 to-purple-500'} ${isOrphan ? 'saturate-50 brightness-95' : ''}`} style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px`, flexShrink: 0 }}>
                         {/* Main folder or subject icon */}
                         {item.icon ? (
                             <SubjectIcon iconName={item.icon} className="text-white" style={{ width: `${iconSize}px`, height: `${iconSize}px` }} />

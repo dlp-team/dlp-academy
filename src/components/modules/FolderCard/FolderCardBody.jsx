@@ -71,7 +71,7 @@ const FolderCardBody = ({
     return (
         <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${
             isModern 
-                ? `bg-gradient-to-br ${gradientClass} p-[3px]` 
+            ? `bg-gradient-to-br ${gradientClass} p-[3px] ${isOrphan ? 'saturate-50 brightness-95' : ''}` 
                 : ''
         }`}>
              
@@ -80,14 +80,14 @@ const FolderCardBody = ({
                 isModern 
                     ? 'bg-white dark:bg-slate-950' 
                     : ''
-            } ${isOrphan ? 'saturate-0' : ''}`}>
+            }`}>
                 
                 {/* --- FRONT VISUALS --- */}
                 {!isModern && (
-                    <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-100`}></div>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-100 ${isOrphan ? 'saturate-50 brightness-95' : ''}`}></div>
                 )}
                 {isModern && fillColor && (
-                    <div className={`absolute inset-0 ${fillColor}`}></div>
+                    <div className={`absolute inset-0 ${fillColor} ${isOrphan ? 'saturate-50 brightness-95' : ''}`}></div>
                 )}
                 {/* Hover Overlay */}
                 {isModern && (
