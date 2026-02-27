@@ -142,13 +142,14 @@ const HomeContent = ({
         return sharedByUid || sharedByEmail || item?.isShared === true;
     };
 
-    const matchesSharedFilter = (item) => {
+    const matchesSharedFilter = (item, isCurrentLayer = true) => {
+        if (!isCurrentLayer) return true;
         if (sharedScopeSelected) return true;
         return !isSharedForCurrentUser(item);
     };
 
-    const itemMatchesFilters = (item) => matchesTagFilter(item) && matchesSharedFilter(item);
-    const isRecursiveFilteringActive = (Array.isArray(selectedTags) && selectedTags.length > 0) || sharedScopeSelected === false;
+    const hasTagFilter = Array.isArray(selectedTags) && selectedTags.length > 0;
+    const isRecursiveFilteringActive = viewMode === 'grid' && hasTagFilter;
 
     const allShortcutFolders = useMemo(
         () => (Array.isArray(resolvedShortcuts) ? resolvedShortcuts.filter(s => s?.targetType === 'folder') : []),
@@ -251,13 +252,13 @@ const HomeContent = ({
             while (stack.length > 0 && !hasMatchingDescendant) {
                 const folderId = stack.pop();
                 const folderNode = folderById.get(folderId);
-                if (folderNode && itemMatchesFilters(folderNode)) {
+                if (folderNode && folderId !== topFolder.id && matchesTagFilter(folderNode)) {
                     hasMatchingDescendant = true;
                     break;
                 }
 
                 const descendantSubjects = (allSubjectsForTree || []).filter(subject => getSubjectParentId(subject) === folderId);
-                if (descendantSubjects.some(subject => itemMatchesFilters(subject))) {
+                if (descendantSubjects.some(subject => matchesTagFilter(subject))) {
                     hasMatchingDescendant = true;
                     break;
                 }
@@ -281,39 +282,38 @@ const HomeContent = ({
         allFoldersForTree,
         allSubjectsForTree,
         selectedTags,
-        sharedScopeSelected,
-        user?.uid,
-        user?.email
+        viewMode
     ]);
 
     const filteredFolders = useMemo(() => {
         if (!Array.isArray(orderedFolders)) return [];
         if (!isRecursiveFilteringActive) {
-            return orderedFolders.filter(folder => itemMatchesFilters(folder));
+            return orderedFolders.filter(folder => matchesTagFilter(folder) && matchesSharedFilter(folder, true));
         }
-        return orderedFolders.filter(folder => itemMatchesFilters(folder) || topLevelFolderMatchesByDescendants.has(folder.id));
-    }, [orderedFolders, isRecursiveFilteringActive, topLevelFolderMatchesByDescendants, selectedTags, sharedScopeSelected, user?.uid, user?.email]);
+        return orderedFolders.filter(folder => {
+            const currentLayerMatch = matchesTagFilter(folder) && matchesSharedFilter(folder, true);
+            return currentLayerMatch || topLevelFolderMatchesByDescendants.has(folder.id);
+        });
+    }, [orderedFolders, isRecursiveFilteringActive, topLevelFolderMatchesByDescendants, selectedTags, sharedScopeSelected, viewMode, user?.uid, user?.email]);
 
     const getFilteredSubjectsForGroup = (groupSubjects) => {
         if (!Array.isArray(groupSubjects)) return [];
 
-        const groupKeys = new Set(
+        if (!isRecursiveFilteringActive) {
+            return groupSubjects.filter(subject => matchesTagFilter(subject) && matchesSharedFilter(subject, true));
+        }
+
+        const currentLayerKeys = new Set(
             groupSubjects.map(subject => (subject?.shortcutId ? `shortcut:${subject.shortcutId}` : `source:${subject.id}`))
         );
 
-        if (!isRecursiveFilteringActive) {
-            return groupSubjects.filter(subject => itemMatchesFilters(subject));
-        }
-
         const currentFolderId = currentFolder?.id ?? null;
         const matchingSubjects = (allSubjectsForTree || []).filter(subject => {
-            const subjectKey = subject?.shortcutId ? `shortcut:${subject.shortcutId}` : `source:${subject.id}`;
-            if (!groupKeys.has(subjectKey)) return false;
             const parentFolderId = getSubjectParentId(subject);
             const insideCurrentTree = currentFolderId
                 ? isFolderWithinCurrentTree(parentFolderId)
                 : true;
-            return insideCurrentTree && itemMatchesFilters(subject);
+            return insideCurrentTree && matchesTagFilter(subject);
         });
 
         const unique = new Map();
@@ -321,7 +321,12 @@ const HomeContent = ({
             const key = subject?.shortcutId ? `shortcut:${subject.shortcutId}` : `source:${subject.id}`;
             if (!unique.has(key)) unique.set(key, subject);
         });
-        return Array.from(unique.values());
+
+        return Array.from(unique.values()).filter(subject => {
+            const key = subject?.shortcutId ? `shortcut:${subject.shortcutId}` : `source:${subject.id}`;
+            const isCurrentLayer = currentLayerKeys.has(key);
+            return matchesSharedFilter(subject, isCurrentLayer);
+        });
     };
 
     

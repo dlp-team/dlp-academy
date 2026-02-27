@@ -69,8 +69,8 @@ const TagFilter = ({
                                 onClick={() => onSharedScopeChange(!sharedScopeSelected)}
                                 className={`absolute top-0 right-0 inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-colors cursor-pointer ${
                                     sharedScopeSelected
-                                        ? 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
-                                        : 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400'
+                                        ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400'
+                                        : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
                                 }`}
                                 title={sharedScopeSelected ? 'Incluir compartidos' : 'Excluir compartidos'}
                                 aria-label="Alternar filtro de compartidos"
