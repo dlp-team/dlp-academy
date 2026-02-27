@@ -129,7 +129,12 @@ const useHomeContentDnd = ({
                     typeof target.index === 'number' &&
                     handleDropReorderFolder
                 ) {
-                    handleDropReorderFolder(dragged.id, dragged.index, target.index);
+                    handleDropReorderFolder(dragged.shortcutId || dragged.id, dragged.index, target.index);
+                    if (handleDragEnd) handleDragEnd();
+                    return;
+                }
+                if (dragged.shortcutId && handleNestFolder) {
+                    handleNestFolder(target.id, dragged.id, dragged.shortcutId);
                     if (handleDragEnd) handleDragEnd();
                     return;
                 }
@@ -145,7 +150,7 @@ const useHomeContentDnd = ({
                     typeof target.index === 'number' &&
                     handleDropReorderSubject
                 ) {
-                    handleDropReorderSubject(dragged.id, dragged.index, target.index);
+                    handleDropReorderSubject(dragged.shortcutId || dragged.id, dragged.index, target.index);
                     if (handleDragEnd) handleDragEnd();
                     return;
                 }
@@ -171,6 +176,11 @@ const useHomeContentDnd = ({
                     }
                 }
             } else if (dragged.type === 'folder') {
+                if (dragged.shortcutId && handleNestFolder) {
+                    handleNestFolder(targetParentId, dragged.id, dragged.shortcutId);
+                    if (handleDragEnd) handleDragEnd();
+                    return;
+                }
                 if (handleMoveFolderWithSource) {
                     handleMoveFolderWithSource(dragged.id, dragged.parentId, targetParentId);
                 } else if (handleNestFolder) {

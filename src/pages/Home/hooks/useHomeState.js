@@ -316,12 +316,13 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
         const orderArray = type === 'subject' ? manualOrder.subjects : manualOrder.folders;
         if (orderArray.length === 0) return items;
+        const getManualKey = (item) => item?.shortcutId || item?.id;
 
         const ordered = [];
         const unordered = [...items];
 
         orderArray.forEach(id => {
-            const index = unordered.findIndex(item => item.id === id);
+            const index = unordered.findIndex(item => getManualKey(item) === id);
             if (index !== -1) {
                 ordered.push(unordered[index]);
                 unordered.splice(index, 1);

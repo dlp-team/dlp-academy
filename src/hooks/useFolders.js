@@ -495,26 +495,11 @@ export const useFolders = (user) => {
             try {
                 const shortcutId = `${targetUid}_${folderId}_folder`;
                 const shortcutRef = doc(db, 'shortcuts', shortcutId);
-                const shortcutSnap = await getDoc(shortcutRef);
-                const existingShortcut = shortcutSnap.exists() ? shortcutSnap.data() || {} : {};
-                const hasOwnShortcutField = (field) => Object.prototype.hasOwnProperty.call(existingShortcut, field);
                 const shortcutPayload = {
                     ownerId: targetUid,
-                    parentId: hasOwnShortcutField('parentId') ? existingShortcut.parentId : null,
                     targetId: folderId,
                     targetType: 'folder',
                     institutionId: currentInstitutionId,
-                    shortcutName: hasOwnShortcutField('shortcutName') ? existingShortcut.shortcutName : (folderData.name || null),
-                    shortcutTags: hasOwnShortcutField('shortcutTags')
-                        ? (Array.isArray(existingShortcut.shortcutTags) ? existingShortcut.shortcutTags : [])
-                        : (Array.isArray(folderData.tags) ? folderData.tags : []),
-                    shortcutColor: hasOwnShortcutField('shortcutColor') ? existingShortcut.shortcutColor : (folderData.color || null),
-                    shortcutIcon: hasOwnShortcutField('shortcutIcon') ? existingShortcut.shortcutIcon : (folderData.icon || null),
-                    shortcutCardStyle: hasOwnShortcutField('shortcutCardStyle') ? existingShortcut.shortcutCardStyle : (folderData.cardStyle || null),
-                    shortcutModernFillColor: hasOwnShortcutField('shortcutModernFillColor')
-                        ? existingShortcut.shortcutModernFillColor
-                        : (folderData.modernFillColor || null),
-                    createdAt: hasOwnShortcutField('createdAt') ? existingShortcut.createdAt : new Date(),
                     updatedAt: new Date()
                 };
 
@@ -621,7 +606,12 @@ export const useFolders = (user) => {
                     code === 'firestore/not-found' ||
                     message.includes('not found') ||
                     message.includes('no document');
-                return isShortcutScope && isNotFound;
+                const isPermissionDenied =
+                    code === 'permission-denied' ||
+                    code === 'firestore/permission-denied' ||
+                    message.includes('permission') ||
+                    message.includes('insufficient permissions');
+                return isShortcutScope && (isNotFound || isPermissionDenied);
             };
 
             const addFailure = (scope, id, error) => {

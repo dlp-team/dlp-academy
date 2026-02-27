@@ -429,9 +429,10 @@ export const useHomeHandlers = ({
 
     const handleDropReorderSubject = (draggedId, fromPosition, toPosition) => {
         if (draggedId === undefined || fromPosition === toPosition) return;
+        const getManualKey = (item) => item?.shortcutId || item?.id;
 
         const currentSubjects = groupedContent[Object.keys(groupedContent)[0]] || [];
-        const newOrder = currentSubjects.map(s => s.id);
+        const newOrder = currentSubjects.map(s => getManualKey(s));
 
         const draggedIndex = newOrder.indexOf(draggedId);
         if (draggedIndex !== -1) {
@@ -450,8 +451,9 @@ export const useHomeHandlers = ({
 
     const handleDropReorderFolder = (draggedId, fromPosition, toPosition) => {
         if (draggedId === undefined || fromPosition === toPosition) return;
+        const getManualKey = (item) => item?.shortcutId || item?.id;
 
-        const newOrder = orderedFolders.map(f => f.id);
+        const newOrder = orderedFolders.map(f => getManualKey(f));
 
         const draggedIndex = newOrder.indexOf(draggedId);
         if (draggedIndex !== -1) {
