@@ -12,7 +12,7 @@ import AppearanceSection from './subject-form/AppearanceSection';
 import StyleSelector from './subject-form/StyleSelector';
 import { getPermissionLevel } from '../../../utils/permissionUtils';
 
-const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onDeleteShortcut, user, initialTab = 'general' }) => {
+const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onDeleteShortcut, user, allFolders = [], initialTab = 'general' }) => {
     const [formData, setFormData] = useState({ 
         name: '', level: '', grade: '', course: '', 
         color: 'from-blue-400 to-blue-600', icon: 'book', tags: [],
@@ -37,6 +37,28 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const isOwnerManager = isShortcutEditing
         ? shortcutPermissionLevel === 'owner'
         : Boolean((initialData?.ownerId || formData?.ownerId) && user?.uid && (initialData?.ownerId || formData?.ownerId) === user.uid);
+
+    const getFolderParentId = (folderEntry) => {
+        if (!folderEntry) return null;
+        return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+    };
+
+    const isInsideSharedFolderTree = (folderId) => {
+        if (!folderId || !Array.isArray(allFolders)) return false;
+        let cursorId = folderId;
+        let safety = 0;
+        while (cursorId && safety < 200) {
+            const cursor = allFolders.find(folder => folder?.id === cursorId);
+            if (!cursor) return false;
+            if (cursor.isShared === true) return true;
+            cursorId = getFolderParentId(cursor);
+            safety += 1;
+        }
+        return false;
+    };
+
+    const subjectParentFolderId = formData?.shortcutParentId ?? formData?.folderId ?? initialData?.shortcutParentId ?? initialData?.folderId ?? null;
+    const unshareBlockedInSharedFolder = isInsideSharedFolderTree(subjectParentFolderId);
 
     // 1. Initialize Logic
     useEffect(() => {
@@ -209,6 +231,10 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     };
 
     const handleUnshareAction = (emailToRemove) => {
+        if (unshareBlockedInSharedFolder) {
+            setShareError('No se puede quitar acceso a elementos dentro de carpetas compartidas.');
+            return;
+        }
         const ownerEmail = (initialData?.ownerEmail || (formData?.ownerId === user?.uid ? user?.email : '') || '').toLowerCase();
         if (ownerEmail && (emailToRemove || '').toLowerCase() === ownerEmail) {
             setShareError('No puedes quitar al propietario.');
@@ -542,7 +568,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                             </p>
                                                         )}
                                                     </div>
-                                                    {share.role !== 'owner' && (
+                                                    {share.role !== 'owner' && !unshareBlockedInSharedFolder && (
                                                         <button
                                                             type="button"
                                                             onClick={() => handleUnshareAction(share.email)}
@@ -569,7 +595,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     </div>
                                 )}
 
-                                {isShortcutEditing && (
+                                {isShortcutEditing && !unshareBlockedInSharedFolder && (
                                     <button
                                         type="button"
                                         onClick={handleRemoveMyShortcutAccess}

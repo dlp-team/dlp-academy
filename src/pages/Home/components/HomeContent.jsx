@@ -182,8 +182,8 @@ const HomeContent = ({
             }
         });
 
-        return merged;
-    }, [folders, allShortcutFolders]);
+        return merged.filter(folder => matchesSharedFilter(folder));
+    }, [folders, allShortcutFolders, sharedScopeSelected, user?.uid, user?.email]);
 
     const allSubjectsForTree = useMemo(() => {
         const merged = [];
@@ -205,8 +205,8 @@ const HomeContent = ({
             }
         });
 
-        return merged;
-    }, [subjects, allShortcutSubjects]);
+        return merged.filter(subject => matchesSharedFilter(subject));
+    }, [subjects, allShortcutSubjects, sharedScopeSelected, user?.uid, user?.email]);
 
     const handleGoToFolderFromGhost = (folderId) => {
         if (!folderId) return;

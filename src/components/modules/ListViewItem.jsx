@@ -23,6 +23,7 @@ const ListViewItem = ({
     onGoToFolder,
     disableAllActions = false,
     disableDeleteActions = false,
+    disableUnshareActions = false,
     cardScale = 100, 
     onDragStart,
     onDragEnd,
@@ -56,9 +57,9 @@ const ListViewItem = ({
         return false;
     };
     const parentFolderId = item?.shortcutParentId ?? item?.folderId ?? parentId ?? null;
-    const disableUnshareActions = type === 'folder'
+    const disableUnshareForItem = disableUnshareActions || (type === 'folder'
         ? hasSharedAncestorFolder(getFolderParentId(item))
-        : hasSharedAncestorFolder(parentFolderId);
+        : hasSharedAncestorFolder(parentFolderId));
     const {
         isDragging,
         itemRef,
@@ -110,7 +111,7 @@ const ListViewItem = ({
                 onGoToFolder={onGoToFolder}
                 disableAllActions={disableAllActions}
                 disableDeleteActions={disableDeleteActions}
-                disableUnshareActions={disableUnshareActions}
+                disableUnshareActions={disableUnshareForItem}
                 cardScale={cardScale}
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
@@ -186,7 +187,7 @@ const ListViewItem = ({
                             onGoToFolder={onGoToFolder}
                             disableAllActions={disableAllActions}
                             disableDeleteActions={disableDeleteActions}
-                            disableUnshareActions={disableUnshareActions}
+                            disableUnshareActions={disableUnshareForItem}
                             cardScale={cardScale} 
                             className="pl-8" 
                         />

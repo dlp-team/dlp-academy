@@ -110,17 +110,17 @@ export const useHomePageState = ({ logic, searchQuery }) => {
         const allFolders = hasTagFilter
             ? (logic.folders || [])
             : (logic.filteredFolders || logic.folders || []);
+
+        if (searchQuery && Array.isArray(logic.searchFolders)) {
+            return logic.searchFolders;
+        }
+
         const currentId = logic.currentFolder ? logic.currentFolder.id : null;
 
         // Show only direct children of current folder (not descendants)
         let scopedFolders = currentId
             ? allFolders.filter(f => f.parentId === currentId)
             : allFolders.filter(f => !f.parentId);
-
-        if (searchQuery && logic.searchFolders) {
-            const searchAllowed = new Set(logic.searchFolders.map(f => f.id));
-            scopedFolders = scopedFolders.filter(f => searchAllowed.has(f.id));
-        }
 
         return scopedFolders;
     }, [logic.filteredFolders, logic.folders, logic.currentFolder, logic.searchFolders, searchQuery, logic.selectedTags]);

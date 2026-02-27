@@ -74,7 +74,7 @@ const SubjectListItem = ({
         <div 
             className={`group relative rounded-xl transition-all hover:shadow-md cursor-pointer ${
                 isModern ? `${getIconColor(subject.color)} border border-gradient-to-br ${subject.color} hover:border-gradient-to-br ${subject.color} ` : ` bg-gradient-to-br ${subject.color} hover:border-indigo-300 `
-            } ${isOrphan ? 'opacity-55' : ''} ${className}`} // Apply external className
+            } ${isOrphan ? 'saturate-[0.22] grayscale-[0.38] brightness-95' : ''} ${className}`} // Apply external className
             style={{ padding: `${paddingPx}px` }}
             onClick={() => {
                 if (isOrphan && isShortcut) return;
@@ -252,24 +252,33 @@ const SubjectListItem = ({
                 <>
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                         {isMovedToShared && subject?._movedToFolderId ? (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (typeof onGoToFolder === 'function') {
-                                        onGoToFolder(subject._movedToFolderId);
-                                    }
-                                }}
-                                className="pointer-events-auto px-4 py-2 rounded-lg font-semibold shadow-lg flex justify-center items-center"
-                                style={{
-                                    fontSize: `${13 * scale}px`,
-                                    background: 'rgba(30,41,59,0.35)',
-                                    border: '1px solid #1e293b',
-                                    color: '#fff',
-                                    transition: 'background 0.2s',
-                                }}
-                            >
-                                {`Ir a carpeta ${subject?._movedToFolderName || ''}`.trim()}
-                            </button>
+                            <div className="pointer-events-auto flex items-center gap-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (typeof onGoToFolder === 'function') {
+                                            onGoToFolder(subject._movedToFolderId);
+                                        }
+                                    }}
+                                    className="px-4 py-2 rounded-lg font-semibold shadow-lg flex justify-center items-center"
+                                    style={{
+                                        fontSize: `${13 * scale}px`,
+                                        background: 'rgba(30,41,59,0.35)',
+                                        border: '1px solid #1e293b',
+                                        color: '#fff',
+                                        transition: 'background 0.2s',
+                                    }}
+                                >
+                                    {`Ir a carpeta ${subject?._movedToFolderName || ''}`.trim()}
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onDelete(subject, 'deleteShortcut'); }}
+                                    className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
+                                    style={{ fontSize: `${13 * scale}px` }}
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
                         ) : (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onDelete(subject, 'deleteShortcut'); }}

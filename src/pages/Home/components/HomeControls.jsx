@@ -30,8 +30,6 @@ const HomeControls = ({
     draggedItem,
     draggedItemType,
     onPreferenceChange,
-    allFolders = [],
-    allSubjects = [],
     searchQuery = '',
     setSearchQuery = () => {},
     activeFilter,

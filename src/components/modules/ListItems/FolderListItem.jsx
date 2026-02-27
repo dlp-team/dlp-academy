@@ -268,7 +268,7 @@ const FolderListItem = ({
                             <ChevronRight size={20} />
                         </div>
                     </div>
-                    <div className={`relative flex items-center justify-center rounded-lg bg-gradient-to-br ${item.color || 'from-indigo-500 to-purple-500'} ${isOrphan ? 'saturate-50 brightness-95' : ''}`} style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px`, flexShrink: 0 }}>
+                    <div className={`relative flex items-center justify-center rounded-lg bg-gradient-to-br ${item.color || 'from-indigo-500 to-purple-500'} ${isOrphan ? 'saturate-[0.22] grayscale-[0.38] brightness-95' : ''}`} style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px`, flexShrink: 0 }}>
                         {/* Main folder or subject icon */}
                         {(item.icon && !isOrphan) ? (
                             <SubjectIcon iconName={item.icon} className="text-white" style={{ width: `${iconSize}px`, height: `${iconSize}px` }} />
@@ -453,24 +453,33 @@ const FolderListItem = ({
                 {isOrphan && (
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                         {isMovedToShared && item?._movedToFolderId ? (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (typeof onGoToFolder === 'function') {
-                                        onGoToFolder(item._movedToFolderId);
-                                    }
-                                }}
-                                className="pointer-events-auto px-4 py-2 rounded-lg font-semibold shadow-lg flex justify-center items-center"
-                                style={{
-                                    fontSize: `${13 * scale}px`,
-                                    background: 'rgba(30,41,59,0.35)',
-                                    border: '1px solid #1e293b',
-                                    color: '#fff',
-                                    transition: 'background 0.2s',
-                                }}
-                            >
-                                {`Ir a carpeta ${item?._movedToFolderName || ''}`.trim()}
-                            </button>
+                            <div className="pointer-events-auto flex items-center gap-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (typeof onGoToFolder === 'function') {
+                                            onGoToFolder(item._movedToFolderId);
+                                        }
+                                    }}
+                                    className="px-4 py-2 rounded-lg font-semibold shadow-lg flex justify-center items-center"
+                                    style={{
+                                        fontSize: `${13 * scale}px`,
+                                        background: 'rgba(30,41,59,0.35)',
+                                        border: '1px solid #1e293b',
+                                        color: '#fff',
+                                        transition: 'background 0.2s',
+                                    }}
+                                >
+                                    {`Ir a carpeta ${item?._movedToFolderName || ''}`.trim()}
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onDelete(item, 'deleteShortcut'); }}
+                                    className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
+                                    style={{ fontSize: `${13 * scale}px` }}
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
                         ) : (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onDelete(item, 'deleteShortcut'); }}
@@ -512,6 +521,7 @@ const FolderListItem = ({
                                         onGoToFolder={onGoToFolder}
                                         disableAllActions={disableAllActions}
                                         disableDeleteActions={disableDeleteActions}
+                                        disableUnshareActions={disableUnshareActions}
                                         cardScale={cardScale}
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}
@@ -538,6 +548,7 @@ const FolderListItem = ({
                                         onGoToFolder={onGoToFolder}
                                         disableAllActions={disableAllActions}
                                         disableDeleteActions={disableDeleteActions}
+                                        disableUnshareActions={disableUnshareActions}
                                         cardScale={cardScale}
                                         onDragStart={onDragStart}
                                         onDragEnd={onDragEnd}
