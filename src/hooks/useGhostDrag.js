@@ -36,13 +36,14 @@ export const useGhostDrag = ({ item, type, onDragStart, onDragEnd }) => {
                 width: `${rect.width}px`,
                 height: `${rect.height}px`,
                 opacity: '1',
-                zIndex: '10000',
+                zIndex: '2147483647',
                 pointerEvents: 'none',
                 margin: '0',
                 transition: 'transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1)', // Smoother ease-out
                 transform: `scale(${DRAG_SCALE})`, // Set initial scale
                 transformOrigin: `${offsetX}px ${offsetY}px`,
-                boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1)'
+                boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+                willChange: 'transform, left, top'
             });
 
             // Remove interference classes

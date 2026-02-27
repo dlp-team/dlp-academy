@@ -310,8 +310,26 @@ const FolderTreeModal = ({
         if (!dragged || !target) return;
 
         if (target.type === 'subject') {
-            if (dragged.type === 'subject' && onReorderSubject) {
-                onReorderSubject(dragged.shortcutId || dragged.id, target.id);
+            const targetParentId = target.parentId ?? rootFolder.id;
+
+            if (dragged.type === 'subject') {
+                const sourceParentId = dragged.parentId ?? null;
+                if (sourceParentId !== targetParentId && onDropWithOverlay) {
+                    onDropWithOverlay(targetParentId, dragged.id, 'subject', sourceParentId, dragged.shortcutId || null);
+                }
+                return;
+            }
+
+            if (dragged.type === 'folder') {
+                if (dragged.id === targetParentId) return;
+                if (isInvalidFolderMove(dragged.id, targetParentId, allFolders)) return;
+                if (onDropWithOverlay) {
+                    onDropWithOverlay(targetParentId, dragged.id, 'folder', dragged.parentId, dragged.shortcutId || null);
+                    return;
+                }
+                if (onNestFolder) {
+                    onNestFolder(targetParentId, dragged.id, dragged.shortcutId || null);
+                }
             }
             return;
         }
