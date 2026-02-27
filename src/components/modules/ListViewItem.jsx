@@ -4,6 +4,7 @@ import { GripVertical } from 'lucide-react';
 import SubjectListItem from './ListItems/SubjectListItem';
 import FolderListItem from './ListItems/FolderListItem';
 import { useGhostDrag } from '../../hooks/useGhostDrag'; // Adjust path if needed
+import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../utils/dragPayloadUtils';
 
 const ListViewItem = ({ 
     user,
@@ -49,17 +50,14 @@ const ListViewItem = ({
             }
             //e.stopPropagation();
             const itemParentId = item.shortcutParentId ?? parentId;
-            const dragData = {
+            const dragData = buildDragPayload({
                 id: item.id,
                 type: 'subject',
                 parentId: itemParentId,
                 shortcutId: item.shortcutId || null,
                 index: typeof index === 'number' ? index : null
-            };
-            e.dataTransfer.setData('subjectId', item.id);
-            e.dataTransfer.setData('subjectParentId', itemParentId || '');
-            e.dataTransfer.setData('subjectShortcutId', item.shortcutId || '');
-            e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
+            });
+            writeDragPayloadToDataTransfer(e.dataTransfer, dragData);
             if (onDragStart) onDragStart(item);
         },
         onDragEnd
@@ -120,17 +118,7 @@ const ListViewItem = ({
         e.preventDefault(); e.stopPropagation(); 
         setIsDragOver(false);
 
-        const treeDataString = e.dataTransfer.getData('treeItem');
-        let draggedData;
-
-        if (treeDataString) {
-            draggedData = JSON.parse(treeDataString);
-        } else {
-            const sId = e.dataTransfer.getData('subjectId');
-            const fId = e.dataTransfer.getData('folderId');
-            if (sId) draggedData = { id: sId, type: 'subject' };
-            else if (fId) draggedData = { id: fId, type: 'folder' };
-        }
+        const draggedData = readDragPayloadFromDataTransfer(e.dataTransfer);
 
         if (!draggedData || draggedData.id === item.id) return;
 

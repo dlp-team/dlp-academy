@@ -5,6 +5,7 @@ import SubjectIcon, { getIconColor } from '../ui/SubjectIcon';
 import { isInvalidFolderMove } from '../../utils/folderUtils';
 import useAutoScrollOnDrag from '../../hooks/useAutoScrollOnDrag';
 import { useGhostDrag } from '../../hooks/useGhostDrag';
+import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../utils/dragPayloadUtils';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
 
@@ -38,23 +39,15 @@ const TreeItem = ({
 
     const handleLocalDragStart = (e) => {
         e.stopPropagation();
-        const dragData = {
+        const dragData = buildDragPayload({
             id: item.id,
             type,
             parentId,
             index,
             shortcutId: item.shortcutId || null
-        };
-        e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
+        });
+        writeDragPayloadToDataTransfer(e.dataTransfer, dragData);
         e.dataTransfer.effectAllowed = 'move';
-        if (type === 'subject') {
-            e.dataTransfer.setData('subjectId', item.id);
-            e.dataTransfer.setData('subjectParentId', parentId || '');
-            e.dataTransfer.setData('subjectShortcutId', item.shortcutId || '');
-        } else if (type === 'folder') {
-            e.dataTransfer.setData('folderId', item.id);
-            e.dataTransfer.setData('folderShortcutId', item.shortcutId || '');
-        }
         if (onDragStart) onDragStart(dragData);
     };
 
@@ -101,34 +94,14 @@ const TreeItem = ({
         e.stopPropagation();
         setIsDragOver(false);
 
-        const treeDataString = e.dataTransfer.getData('treeItem');
-        
+        const draggedData = readDragPayloadFromDataTransfer(e.dataTransfer);
+
         // 1. Internal Drop
-        if (treeDataString) {
-            const draggedData = JSON.parse(treeDataString);
+        if (draggedData) {
             if (draggedData.id === item.id) return;
             if (draggedData.type === 'folder' && type === 'folder' && currentPath.includes(draggedData.id)) return;
             onDropItem(draggedData, { id: item.id, type: type, parentId: parentId, index: index });
             return;
-        }
-
-        // 2. External Drop (Home -> Tree)
-        const subjectId = e.dataTransfer.getData('subjectId');
-        const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
-        const folderId = e.dataTransfer.getData('folderId');
-        const folderShortcutId = e.dataTransfer.getData('folderShortcutId');
-
-        if (subjectId) {
-            onDropItem(
-                { id: subjectId, type: 'subject', parentId: undefined, shortcutId: subjectShortcutId || null },
-                { id: item.id, type: type, parentId: parentId, index: index }
-            );
-        } else if (folderId) {
-            if (folderId === item.id) return;
-            onDropItem(
-                { id: folderId, type: 'folder', parentId: undefined, shortcutId: folderShortcutId || null },
-                { id: item.id, type: type, parentId: parentId, index: index }
-            );
         }
     };
 
@@ -355,19 +328,7 @@ const FolderTreeModal = ({
         setIsRootDropZoneActive(false);
 
         // ... (Keep data parsing logic) ...
-        let draggedData;
-        const treeDataString = e.dataTransfer.getData('treeItem');
-        
-        if (treeDataString) {
-            draggedData = JSON.parse(treeDataString);
-        } else {
-            const subjectId = e.dataTransfer.getData('subjectId');
-            const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
-            const folderId = e.dataTransfer.getData('folderId');
-            const folderShortcutId = e.dataTransfer.getData('folderShortcutId');
-            if (subjectId) draggedData = { id: subjectId, type: 'subject', shortcutId: subjectShortcutId || null };
-            else if (folderId) draggedData = { id: folderId, type: 'folder', shortcutId: folderShortcutId || null };
-        }
+        const draggedData = readDragPayloadFromDataTransfer(e.dataTransfer);
 
         if (!draggedData) return;
 

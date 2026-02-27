@@ -138,6 +138,12 @@ const FolderListItem = ({
     
     const hasChildren = childFolders.length > 0 || childSubjects.length > 0;
 
+    
+    // --- LABELS (must be after counts) ---
+    const totalLabel = totalCount === 1 ? 'elemento' : 'elementos';
+    const subjectLabel = subjectCount === 1 ? 'asignatura' : 'asignaturas';
+    const folderLabel = folderCount === 1 ? 'carpeta' : 'carpetas';
+
     // --- DRAG HANDLERS ---
     const handleLocalDragStart = (e) => {
         if (!draggable) {
@@ -309,17 +315,17 @@ const FolderListItem = ({
                         <div className="flex items-center flex-wrap gap-x-2 text-gray-500 mt-0.5" style={{ fontSize: `${16 * scale}px` }}>
                             {/* Total Count */}
                             <span className="font-medium text-gray-600 dark:text-gray-400">
-                                {totalCount} elementos
+                                {totalCount} {totalLabel}
                             </span>
                             
                             <span className="text-gray-300">•</span>
                             
                             {/* Detail Counts */}
                             <span className="text-gray-400 dark:text-gray-500">
-                                {subjectCount} asignaturas
+                                {subjectCount} {subjectLabel}
                             </span>
                             <span className="text-gray-400 dark:text-gray-500">
-                                {folderCount} carpetas
+                                {folderCount} {folderLabel}
                             </span>
                         </div>
                         
