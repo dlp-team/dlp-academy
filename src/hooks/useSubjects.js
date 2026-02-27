@@ -273,6 +273,13 @@ export const useSubjects = (user) => {
                     targetId: subjectId,
                     targetType: 'subject',
                     institutionId: shortcutInstitutionId,
+                    shortcutName: subjectData?.name || 'Asignatura',
+                    shortcutCourse: subjectData?.course || null,
+                    shortcutTags: Array.isArray(subjectData?.tags) ? subjectData.tags : [],
+                    shortcutColor: subjectData?.color || 'from-slate-500 to-slate-700',
+                    shortcutIcon: subjectData?.icon || 'book',
+                    shortcutCardStyle: subjectData?.cardStyle || 'default',
+                    shortcutModernFillColor: subjectData?.modernFillColor ?? subjectData?.fillColor ?? null,
                     updatedAt: new Date()
                 };
 
@@ -313,6 +320,13 @@ export const useSubjects = (user) => {
                         targetId: subjectId,
                         targetType: 'subject',
                         institutionId: shortcutInstitutionId,
+                        shortcutName: subjectData?.name || 'Asignatura',
+                        shortcutCourse: subjectData?.course || null,
+                        shortcutTags: Array.isArray(subjectData?.tags) ? subjectData.tags : [],
+                        shortcutColor: subjectData?.color || 'from-slate-500 to-slate-700',
+                        shortcutIcon: subjectData?.icon || 'book',
+                        shortcutCardStyle: subjectData?.cardStyle || 'default',
+                        shortcutModernFillColor: subjectData?.modernFillColor ?? subjectData?.fillColor ?? null,
                         createdAt: new Date(),
                         updatedAt: new Date()
                     };

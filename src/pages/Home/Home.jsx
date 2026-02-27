@@ -199,6 +199,11 @@ const Home = ({ user }) => {
         if (!item) return false;
         if (isShortcutItem(item)) return true;
 
+        const isSubjectEntity = item?.targetType === 'subject' || Object.prototype.hasOwnProperty.call(item, 'course') || Object.prototype.hasOwnProperty.call(item, 'folderId');
+        if (isSubjectEntity) {
+            return item?.isShared === true;
+        }
+
         const currentUserId = user?.uid || null;
         const currentEmail = (user?.email || '').toLowerCase();
         const sharedWithUids = Array.isArray(item.sharedWithUids) ? item.sharedWithUids : [];

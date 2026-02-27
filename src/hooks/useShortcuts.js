@@ -122,6 +122,8 @@ export const useShortcuts = (user) => {
                     isOrphan: true,
                     hiddenInManual: shortcut.hiddenInManual === true,
                     shortcutId: shortcut.id,
+                    shortcutParentId: shortcut.parentId ?? null,
+                    parentId: shortcut.parentId ?? null,
                     targetData: null,
                     _originalTargetId: targetId,
                     _originalTargetType: targetType,
@@ -137,6 +139,8 @@ export const useShortcuts = (user) => {
                     isOrphan: true,
                     hiddenInManual: shortcut.hiddenInManual === true,
                     shortcutId: shortcut.id,
+                    shortcutParentId: shortcut.parentId ?? null,
+                    parentId: shortcut.parentId ?? null,
                     targetData: null,
                     _originalTargetId: targetId,
                     _originalTargetType: targetType
@@ -153,6 +157,8 @@ export const useShortcuts = (user) => {
                     isOrphan: true,
                     hiddenInManual: shortcut.hiddenInManual === true,
                     shortcutId: shortcut.id,
+                    shortcutParentId: shortcut.parentId ?? null,
+                    parentId: shortcut.parentId ?? null,
                     targetData: null,
                     _originalTargetId: targetId,
                     _originalTargetType: targetType,
@@ -168,6 +174,8 @@ export const useShortcuts = (user) => {
                     isOrphan: true,
                     hiddenInManual: shortcut.hiddenInManual === true,
                     shortcutId: shortcut.id,
+                    shortcutParentId: shortcut.parentId ?? null,
+                    parentId: shortcut.parentId ?? null,
                     targetData: null,
                     _originalTargetId: targetId,
                     _originalTargetType: targetType,
@@ -192,6 +200,8 @@ export const useShortcuts = (user) => {
                                 isOrphan: true,
                                 hiddenInManual: shortcut.hiddenInManual === true,
                                 shortcutId: shortcut.id,
+                                shortcutParentId: shortcut.parentId ?? null,
+                                parentId: shortcut.parentId ?? null,
                                 targetData: null,
                                 _originalTargetId: targetId,
                                 _originalTargetType: targetType,
@@ -255,6 +265,8 @@ export const useShortcuts = (user) => {
                         isOrphan: true,
                         hiddenInManual: shortcut.hiddenInManual === true,
                         shortcutId: shortcut.id,
+                        shortcutParentId: shortcut.parentId ?? null,
+                        parentId: shortcut.parentId ?? null,
                         targetData: null,
                         _error: error.message
                     });
@@ -278,6 +290,8 @@ export const useShortcuts = (user) => {
                     isOrphan: true,
                     hiddenInManual: shortcut.hiddenInManual === true,
                     shortcutId: shortcut.id,
+                    shortcutParentId: shortcut.parentId ?? null,
+                    parentId: shortcut.parentId ?? null,
                     targetData: null,
                     _reason: 'snapshot-error'
                 });

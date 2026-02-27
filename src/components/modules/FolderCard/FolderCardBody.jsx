@@ -261,7 +261,7 @@ const FolderCardBody = ({
                                     className="flex items-center justify-center"
                                     style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}
                                 >
-                                    {(folder.icon && !isOrphan) ? (
+                                    {folder.icon ? (
                                         <SubjectIcon 
                                             iconName={folder.icon} 
                                             className={`${getIconColor(folder.color)} opacity-80`}
@@ -277,7 +277,7 @@ const FolderCardBody = ({
                             ) : (
                                 // Classic Mode Folder
                                 <div style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}>
-                                    {(folder.icon && !isOrphan) ? (
+                                    {folder.icon ? (
                                         <SubjectIcon 
                                             iconName={folder.icon} 
                                             className="text-white opacity-80"
