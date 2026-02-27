@@ -6,6 +6,7 @@ import SubjectIcon from '../../ui/SubjectIcon';
 import ListViewItem from '../ListViewItem';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
+import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../../utils/dragPayloadUtils';
 import { SHORTCUT_LIST_MENU_WIDTH } from '../shared/shortcutMenuConfig';
 
 const FolderListItem = ({ 
@@ -150,17 +151,14 @@ const FolderListItem = ({
             e.preventDefault();
             return;
         }
-        //e.stopPropagation();
-        const dragData = {
+        const dragData = buildDragPayload({
             id: item.id,
             type: type,
             parentId: item.shortcutParentId ?? parentId,
             shortcutId: item.shortcutId || null,
             index: typeof index === 'number' ? index : null
-        };
-        e.dataTransfer.setData('folderId', item.id);
-        e.dataTransfer.setData('folderShortcutId', item.shortcutId || '');
-        e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
+        });
+        writeDragPayloadToDataTransfer(e.dataTransfer, dragData);
         
         if (onDragStart) onDragStart(item); 
     };
@@ -193,17 +191,7 @@ const FolderListItem = ({
         if (!draggable) return;
         setIsDragOver(false);
 
-        const treeDataString = e.dataTransfer.getData('treeItem');
-        let draggedData;
-
-        if (treeDataString) {
-            draggedData = JSON.parse(treeDataString);
-        } else {
-            const sId = e.dataTransfer.getData('subjectId');
-            const fId = e.dataTransfer.getData('folderId');
-            if (sId) draggedData = { id: sId, type: 'subject' };
-            else if (fId) draggedData = { id: fId, type: 'folder' };
-        }
+        const draggedData = readDragPayloadFromDataTransfer(e.dataTransfer);
 
         if (!draggedData || draggedData.id === item.id) return;
 

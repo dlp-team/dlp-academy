@@ -1,6 +1,7 @@
 // src/components/modules/FolderCard/useFolderCardLogic.js
 import { useState, useMemo } from 'react';
 import { isShortcutItem } from '../../../utils/permissionUtils';
+import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../../utils/dragPayloadUtils';
 
 export const useFolderCardLogic = ({
     folder,
@@ -108,29 +109,29 @@ export const useFolderCardLogic = ({
     };
 
     const handleDrop = (e) => {
+        const draggedData = readDragPayloadFromDataTransfer(e.dataTransfer);
         console.log('[DND] FolderCard handleDrop:', {
             folderId: folder.id,
             canDrop,
             draggable,
             position,
-            subjectId: e.dataTransfer.getData('subjectId'),
-            draggedPosition: e.dataTransfer.getData('position'),
-            droppedFolderId: e.dataTransfer.getData('folderId')
+            subjectId: draggedData?.type === 'subject' ? draggedData.id : null,
+            draggedPosition: draggedData?.position,
+            droppedFolderId: draggedData?.type === 'folder' ? draggedData.id : null
         });
         e.preventDefault();
         e.stopPropagation();
         setIsOver(false);
 
-        const subjectId = e.dataTransfer.getData('subjectId');
-        const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
-        const draggedPosition = e.dataTransfer.getData('position');
-        const droppedFolderId = e.dataTransfer.getData('folderId');
-        const droppedFolderShortcutId = e.dataTransfer.getData('folderShortcutId') || null;
+        const subjectId = draggedData?.type === 'subject' ? draggedData.id : null;
+        const subjectShortcutId = draggedData?.type === 'subject' ? (draggedData.shortcutId || null) : null;
+        const subjectParentId = draggedData?.type === 'subject' ? (draggedData.parentId || null) : null;
+        const draggedPosition = draggedData?.position;
+        const droppedFolderId = draggedData?.type === 'folder' ? draggedData.id : null;
+        const droppedFolderShortcutId = draggedData?.type === 'folder' ? (draggedData.shortcutId || null) : null;
 
         if (canDrop && onDrop && subjectId && !droppedFolderId) {
-            // Try to get subject type and parentId from dataTransfer or context
-            const subjectType = e.dataTransfer.getData('subjectType') || 'subject';
-            const subjectParentId = e.dataTransfer.getData('subjectParentId') || null;
+            const subjectType = 'subject';
             console.log('[DND] FolderCard handleDrop → onDrop:', {
                 folderId: folder.id,
                 subjectId,
@@ -144,25 +145,24 @@ export const useFolderCardLogic = ({
             console.log('[DND] FolderCard handleDrop → onDropFolder:', { folderId: folder.id, droppedFolderId, droppedFolderShortcutId });
             onDropFolder(folder.id, droppedFolderId, droppedFolderShortcutId);
         }
-        else if (draggable && onDropReorder && droppedFolderId && draggedPosition !== undefined) {
+        else if (draggable && onDropReorder && droppedFolderId && draggedPosition !== null && draggedPosition !== undefined) {
             const reorderId = droppedFolderShortcutId || droppedFolderId;
             console.log('[DND] FolderCard handleDrop → onDropReorder:', { reorderId, droppedFolderId, droppedFolderShortcutId, draggedPosition, position });
-            onDropReorder(reorderId, parseInt(draggedPosition), position);
+            onDropReorder(reorderId, draggedPosition, position);
         }
     };
 
     const handleDragStart = (e) => {
         if (draggable && onDragStart) {
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('folderId', folder.id);
-            e.dataTransfer.setData('folderShortcutId', folder.shortcutId || '');
-            e.dataTransfer.setData('position', position.toString());
-            e.dataTransfer.setData('treeItem', JSON.stringify({
+            const dragData = buildDragPayload({
                 id: folder.id,
                 type: 'folder',
                 parentId: folder.shortcutParentId ?? folder.parentId ?? null,
-                shortcutId: folder.shortcutId || null
-            }));
+                shortcutId: folder.shortcutId || null,
+                position
+            });
+            writeDragPayloadToDataTransfer(e.dataTransfer, dragData);
             onDragStart(folder, position);
         }
     };

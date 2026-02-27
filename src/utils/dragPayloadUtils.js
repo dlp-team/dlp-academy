@@ -3,22 +3,30 @@ export const buildDragPayload = ({
     type,
     parentId = null,
     shortcutId = null,
-    index = null
+    index = null,
+    position = null
 }) => ({
     id,
     type,
     parentId,
     shortcutId,
-    index
+    index,
+    position
 });
 
 export const writeDragPayloadToDataTransfer = (dataTransfer, payload) => {
     if (!dataTransfer || !payload?.id || !payload?.type) return;
 
     dataTransfer.setData('treeItem', JSON.stringify(payload));
+    dataTransfer.setData('type', payload.type);
+
+    if (payload.position !== null && payload.position !== undefined) {
+        dataTransfer.setData('position', String(payload.position));
+    }
 
     if (payload.type === 'subject') {
         dataTransfer.setData('subjectId', payload.id);
+        dataTransfer.setData('subjectType', 'subject');
         dataTransfer.setData('subjectParentId', payload.parentId || '');
         dataTransfer.setData('subjectShortcutId', payload.shortcutId || '');
     }
@@ -32,10 +40,19 @@ export const writeDragPayloadToDataTransfer = (dataTransfer, payload) => {
 export const readDragPayloadFromDataTransfer = (dataTransfer) => {
     if (!dataTransfer) return null;
 
+    const positionRaw = dataTransfer.getData('position');
+    const hasPosition = positionRaw !== '';
+    const parsedPosition = hasPosition ? Number.parseInt(positionRaw, 10) : null;
+    const position = Number.isNaN(parsedPosition) ? null : parsedPosition;
+
     const treeDataString = dataTransfer.getData('treeItem');
     if (treeDataString) {
         try {
-            return JSON.parse(treeDataString);
+            const parsed = JSON.parse(treeDataString);
+            return {
+                ...parsed,
+                position: parsed?.position ?? position
+            };
         } catch {
             return null;
         }
@@ -49,7 +66,8 @@ export const readDragPayloadFromDataTransfer = (dataTransfer) => {
             id: subjectId,
             type: 'subject',
             parentId: subjectParentId || null,
-            shortcutId: subjectShortcutId || null
+            shortcutId: subjectShortcutId || null,
+            position
         });
     }
 
@@ -59,7 +77,8 @@ export const readDragPayloadFromDataTransfer = (dataTransfer) => {
         return buildDragPayload({
             id: folderId,
             type: 'folder',
-            shortcutId: folderShortcutId || null
+            shortcutId: folderShortcutId || null,
+            position
         });
     }
 
