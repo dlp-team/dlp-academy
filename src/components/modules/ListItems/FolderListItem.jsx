@@ -303,6 +303,14 @@ const FolderListItem = ({
                         </div>
                         
                     </div>
+                    {isOrphan && (
+                        <span
+                            className="font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap mr-1"
+                            style={{ fontSize: `${12 * scale}px` }}
+                        >
+                            {orphanMessage}
+                        </span>
+                    )}
                     <button onClick={(e) => { e.stopPropagation(); onNavigate(item); }} className="text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors" style={{ padding: `${8 * scale}px` }}>
                         <Folder style={{ width: `${20 * scale}px`, height: `${20 * scale}px` }} />
                     </button>
@@ -402,17 +410,6 @@ const FolderListItem = ({
                     </div>
                     
                 </div>
-
-                {isOrphan && (
-                    <div className="mt-2 ml-10 mr-2 text-center pointer-events-none">
-                        <span
-                            className="font-semibold text-slate-700 dark:text-slate-200"
-                            style={{ fontSize: `${12 * scale}px` }}
-                        >
-                            {orphanMessage}
-                        </span>
-                    </div>
-                )}
 
                 {isOrphan && (
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">

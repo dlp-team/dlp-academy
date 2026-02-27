@@ -527,30 +527,22 @@ export const useFolders = (user) => {
     };
 
     const unshareFolder = async (folderId, email) => {
-        const debug = (step, payload = {}) => {
-            console.log(`[UNSHARE DEBUG] ${step}`, payload);
-        };
-
         try {
-            debug('Step 1: Start unshareFolder', { folderId, email });
             const emailLower = email.toLowerCase();
             // A. Find the user UID for this email (to remove from arrays)
             const usersRef = collection(db, 'users');
             const q = query(usersRef, where('email', '==', emailLower));
             const querySnapshot = await getDocs(q);
-            debug('Step 2: User lookup complete', { found: !querySnapshot.empty, emailLower });
             
             if (querySnapshot.empty) {
                 console.error("User not found to unshare");
                 return;
             }
             const targetUid = querySnapshot.docs[0].id;
-            debug('Step 3: Target user resolved', { targetUid });
 
             // B. Get Folder to find sharing info
             const folderRef = doc(db, 'folders', folderId);
             const folderSnap = await getDoc(folderRef);
-            debug('Step 4: Folder lookup complete', { folderExists: folderSnap.exists(), folderId });
             if (!folderSnap.exists()) {
                 console.error("Folder not found to unshare");
                 return;
@@ -559,17 +551,10 @@ export const useFolders = (user) => {
             if (folderData?.ownerId && folderData.ownerId === targetUid) {
                 throw new Error('No se puede dejar de compartir con el propietario.');
             }
-            debug('Step 5: Validation passed', { ownerId: folderData?.ownerId || null });
 
             const cleanupFailures = [];
             const addFailure = (scope, id, error) => {
                 cleanupFailures.push({
-                    scope,
-                    id,
-                    code: error?.code || null,
-                    message: error?.message || String(error)
-                });
-                console.warn('[UNSHARE DEBUG] Non-blocking cleanup failure', {
                     scope,
                     id,
                     code: error?.code || null,
@@ -598,23 +583,7 @@ export const useFolders = (user) => {
                 const targetFolderSnap = await getDoc(targetFolderRef);
                 if (!targetFolderSnap.exists()) return;
                 const targetFolderData = targetFolderSnap.data() || {};
-                const beforeSharedWithUids = Array.isArray(targetFolderData.sharedWithUids) ? targetFolderData.sharedWithUids : [];
-                const beforeSharedWith = Array.isArray(targetFolderData.sharedWith) ? targetFolderData.sharedWith : [];
                 const strippedFolder = stripShareForUser(targetFolderData.sharedWith, targetFolderData.sharedWithUids);
-                const beforeHasTarget = beforeSharedWithUids.includes(targetUid)
-                    || beforeSharedWith.some(entry => entry?.uid === targetUid || entry?.email?.toLowerCase() === emailLower);
-                const afterHasTarget = (Array.isArray(strippedFolder.sharedWithUids) ? strippedFolder.sharedWithUids : []).includes(targetUid)
-                    || (Array.isArray(strippedFolder.sharedWith) ? strippedFolder.sharedWith : []).some(entry => entry?.uid === targetUid || entry?.email?.toLowerCase() === emailLower);
-
-                debug('Folder unshare transform', {
-                    folderId: targetFolderId,
-                    beforeHasTarget,
-                    afterHasTarget,
-                    beforeSharedWithUidsCount: beforeSharedWithUids.length,
-                    afterSharedWithUidsCount: Array.isArray(strippedFolder.sharedWithUids) ? strippedFolder.sharedWithUids.length : 0,
-                    beforeIsShared: targetFolderData?.isShared === true,
-                    afterIsShared: strippedFolder?.isShared === true
-                });
 
                 await updateDoc(targetFolderRef, {
                     sharedWith: strippedFolder.sharedWith,
@@ -622,35 +591,16 @@ export const useFolders = (user) => {
                     isShared: strippedFolder.isShared,
                     updatedAt: new Date()
                 });
-                debug('Step 6: Folder unshared', { targetFolderId, isShared: strippedFolder.isShared });
             };
 
             const updateSubjectsInFolderUnshare = async (targetFolderId) => {
                 const subjectsSnap = await getDocs(
                     query(collection(db, 'subjects'), where('folderId', '==', targetFolderId))
                 );
-                debug('Step 7: Subjects fetched for folder', { targetFolderId, count: subjectsSnap.size });
 
                 for (const subjectDoc of subjectsSnap.docs) {
                     const subjectData = subjectDoc.data() || {};
-                    const beforeSharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
-                    const beforeSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
                     const strippedSubject = stripSubjectShareForUser(subjectData.sharedWith, subjectData.sharedWithUids);
-                    const beforeHasTarget = beforeSharedWithUids.includes(targetUid)
-                        || beforeSharedWith.some(entry => entry?.uid === targetUid || entry?.email?.toLowerCase() === emailLower);
-                    const afterHasTarget = (Array.isArray(strippedSubject.sharedWithUids) ? strippedSubject.sharedWithUids : []).includes(targetUid)
-                        || (Array.isArray(strippedSubject.sharedWith) ? strippedSubject.sharedWith : []).some(entry => entry?.uid === targetUid || entry?.email?.toLowerCase() === emailLower);
-
-                    debug('Subject unshare transform', {
-                        subjectId: subjectDoc.id,
-                        folderId: targetFolderId,
-                        beforeHasTarget,
-                        afterHasTarget,
-                        beforeSharedWithUidsCount: beforeSharedWithUids.length,
-                        afterSharedWithUidsCount: Array.isArray(strippedSubject.sharedWithUids) ? strippedSubject.sharedWithUids.length : 0,
-                        beforeIsShared: subjectData?.isShared === true,
-                        afterIsShared: strippedSubject?.isShared === true
-                    });
 
                     try {
                         await updateDoc(doc(db, 'subjects', subjectDoc.id), {
@@ -668,11 +618,6 @@ export const useFolders = (user) => {
             try {
                 await updateFolderUnshare(folderId);
             } catch (rootUnshareError) {
-                debug('Step FAIL: Root folder unshare failed', {
-                    folderId,
-                    code: rootUnshareError?.code || null,
-                    message: rootUnshareError?.message || String(rootUnshareError)
-                });
                 throw rootUnshareError;
             }
 
@@ -737,101 +682,20 @@ export const useFolders = (user) => {
 
 
             // Preserve folder shortcuts as orphan/ghost entries after unshare (Google Drive-like behavior).
-            for (const targetFolderId of subtreeFolderIds) {
-                const shortcutId = `${targetUid}_${targetFolderId}_folder`;
-                debug('Shortcut folder preserved as ghost', {
-                    shortcutId,
-                    currentUser: user?.uid,
-                    targetType: 'folder',
-                    targetId: targetFolderId,
-                    stage: 'preserve'
-                });
-            }
 
             for (const targetSubjectId of subtreeSubjectIds) {
                 const shortcutId = `${targetUid}_${targetSubjectId}_subject`;
                 const shortcutRef = doc(db, 'shortcuts', shortcutId);
-                let probeFailed = false;
-                let shortcutExists = false;
                 try {
                     const shortcutSnap = await getDoc(shortcutRef);
-                    if (shortcutSnap.exists()) {
-                        shortcutExists = true;
-                        debug('Shortcut delete probe', {
-                            shortcutId,
-                            shortcutData: shortcutSnap.data(),
-                            currentUser: user?.uid,
-                            targetType: 'subject',
-                            targetId: targetSubjectId,
-                            stage: 'probe'
-                        });
-                    } else {
-                        debug('Shortcut delete probe (not found)', {
-                            shortcutId,
-                            currentUser: user?.uid,
-                            targetType: 'subject',
-                            targetId: targetSubjectId,
-                            stage: 'probe'
-                        });
+                    if (!shortcutSnap.exists()) {
+                        continue;
                     }
-                } catch (shortcutSubjectProbeError) {
-                    probeFailed = true;
-                    debug('Shortcut subject probe error', {
-                        shortcutId,
-                        currentUser: user?.uid,
-                        targetType: 'subject',
-                        targetId: targetSubjectId,
-                        stage: 'probe',
-                        errorCode: shortcutSubjectProbeError?.code || null,
-                        error: shortcutSubjectProbeError?.message || String(shortcutSubjectProbeError)
-                    });
-                }
-
-                if (!shortcutExists) {
-                    debug('Shortcut subject delete skipped', {
-                        shortcutId,
-                        currentUser: user?.uid,
-                        targetType: 'subject',
-                        targetId: targetSubjectId,
-                        stage: 'delete',
-                        probeFailed,
-                        reason: 'shortcut-not-confirmed'
-                    });
-                    continue;
-                }
-
-                try {
                     await deleteDoc(shortcutRef);
-                    debug('Shortcut subject delete success', {
-                        shortcutId,
-                        currentUser: user?.uid,
-                        targetType: 'subject',
-                        targetId: targetSubjectId,
-                        stage: 'delete',
-                        probeFailed
-                    });
                 } catch (shortcutSubjectDeleteError) {
-                    debug('Shortcut subject delete error', {
-                        shortcutId,
-                        currentUser: user?.uid,
-                        targetType: 'subject',
-                        targetId: targetSubjectId,
-                        stage: 'delete',
-                        probeFailed,
-                        errorCode: shortcutSubjectDeleteError?.code || null,
-                        error: shortcutSubjectDeleteError?.message || String(shortcutSubjectDeleteError)
-                    });
                     addFailure('subject-shortcut-delete', targetSubjectId, shortcutSubjectDeleteError);
                 }
             }
-
-            debug('Step 8: Unshare finished', {
-                folderId,
-                targetUid,
-                subtreeFolderCount: subtreeFolderIds.size,
-                subtreeSubjectCount: subtreeSubjectIds.size,
-                cleanupFailures: cleanupFailures.length
-            });
 
             return { success: true, cleanupFailures };
 

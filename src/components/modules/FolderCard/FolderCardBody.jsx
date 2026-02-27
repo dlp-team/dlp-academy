@@ -253,18 +253,19 @@ const FolderCardBody = ({
                             {/* 2. BACKGROUND: The Main Folder Icon */}
                             {isModern ? (
                                 <div 
-                                    className={`${getIconColor(folder.color)} flex items-center justify-center rounded-lg`}
-                                    style={{ width: `${28 * scaleMultiplier}px`, height: `${28 * scaleMultiplier}px` }}
+                                    className="flex items-center justify-center"
+                                    style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}
                                 >
                                     {(folder.icon && !isOrphan) ? (
                                         <SubjectIcon 
                                             iconName={folder.icon} 
-                                            style={{ width: `${16 * scaleMultiplier}px`, height: `${16 * scaleMultiplier}px` }}
+                                            className={`${getIconColor(folder.color)} opacity-80`}
+                                            style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}
                                         />
                                     ) : (
                                         <Folder 
-                                            className="text-indigo-600 dark:text-indigo-400"
-                                            style={{ width: `${16 * scaleMultiplier}px`, height: `${16 * scaleMultiplier}px` }}
+                                            className={`${getIconColor(folder.color)} opacity-80`}
+                                            style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}
                                         />
                                     )}
                                 </div>
