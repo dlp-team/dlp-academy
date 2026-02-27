@@ -4,6 +4,7 @@ import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, Arrow
 import SubjectIcon, { getIconColor } from '../ui/SubjectIcon';
 import { isInvalidFolderMove } from '../../utils/folderUtils';
 import useAutoScrollOnDrag from '../../hooks/useAutoScrollOnDrag';
+import { useGhostDrag } from '../../hooks/useGhostDrag';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
 
@@ -35,6 +36,35 @@ const TreeItem = ({
     const [isHovered, setIsHovered] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
 
+    const handleLocalDragStart = (e) => {
+        e.stopPropagation();
+        const dragData = {
+            id: item.id,
+            type,
+            parentId,
+            index,
+            shortcutId: item.shortcutId || null
+        };
+        e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
+        e.dataTransfer.effectAllowed = 'move';
+        if (type === 'subject') {
+            e.dataTransfer.setData('subjectId', item.id);
+            e.dataTransfer.setData('subjectParentId', parentId || '');
+            e.dataTransfer.setData('subjectShortcutId', item.shortcutId || '');
+        } else if (type === 'folder') {
+            e.dataTransfer.setData('folderId', item.id);
+            e.dataTransfer.setData('folderShortcutId', item.shortcutId || '');
+        }
+        if (onDragStart) onDragStart(dragData);
+    };
+
+    const { isDragging, itemRef, dragHandlers } = useGhostDrag({
+        item,
+        type,
+        onDragStart: handleLocalDragStart,
+        onDragEnd: () => {}
+    });
+
     if (path.includes(item.id)) {
         console.error("Cycle detected in folder structure! Stopping render for:", item.name);
         return null; // Stop rendering this branch immediately
@@ -54,14 +84,6 @@ const TreeItem = ({
     const hasChildren = childFolders.length > 0 || childSubjects.length > 0;
     
     // --- DRAG HANDLERS ---
-    const handleDragStart = (e) => {
-        e.stopPropagation();
-        const dragData = { id: item.id, type: type, parentId: parentId, index: index };
-        e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
-        e.dataTransfer.effectAllowed = 'move';
-        if (onDragStart) onDragStart(dragData);
-    };
-
     const handleDragOver = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -92,13 +114,21 @@ const TreeItem = ({
 
         // 2. External Drop (Home -> Tree)
         const subjectId = e.dataTransfer.getData('subjectId');
+        const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
         const folderId = e.dataTransfer.getData('folderId');
+        const folderShortcutId = e.dataTransfer.getData('folderShortcutId');
 
         if (subjectId) {
-            onDropItem({ id: subjectId, type: 'subject', parentId: undefined }, { id: item.id, type: type, parentId: parentId, index: index });
+            onDropItem(
+                { id: subjectId, type: 'subject', parentId: undefined, shortcutId: subjectShortcutId || null },
+                { id: item.id, type: type, parentId: parentId, index: index }
+            );
         } else if (folderId) {
             if (folderId === item.id) return;
-            onDropItem({ id: folderId, type: 'folder', parentId: undefined }, { id: item.id, type: type, parentId: parentId, index: index });
+            onDropItem(
+                { id: folderId, type: 'folder', parentId: undefined, shortcutId: folderShortcutId || null },
+                { id: item.id, type: type, parentId: parentId, index: index }
+            );
         }
     };
 
@@ -112,8 +142,11 @@ const TreeItem = ({
     return (
         <div className="select-none">
             <div 
+                ref={itemRef}
                 draggable
-                onDragStart={handleDragStart}
+                onDragStart={dragHandlers.onDragStart}
+                onDrag={dragHandlers.onDrag}
+                onDragEnd={dragHandlers.onDragEnd}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -126,7 +159,7 @@ const TreeItem = ({
                         : type === 'folder' 
                             ? 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-800 dark:text-gray-100' 
                             : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-300'
-                }`}
+                } ${isDragging ? 'opacity-0 scale-95 transition-none' : ''}`}
                 style={{ marginLeft: `${depth * 20}px` }}
             >
                 <div className={`text-gray-300 dark:text-gray-600 transition-opacity ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
@@ -276,16 +309,19 @@ const FolderTreeModal = ({
     const handleDropAction = (dragged, target) => {
         if (!dragged || !target) return;
 
-        // 1. Logic for moving SUBJECTS (No changes needed here)
-        if (dragged.type === 'subject') {
-            if (target.type === 'folder') {
-                if (onMoveSubjectToFolder) onMoveSubjectToFolder(dragged.id, target.id);
-            } else if (target.type === 'subject') {
-                if (onReorderSubject) onReorderSubject(dragged.id, target.id);
+        if (target.type === 'subject') {
+            if (dragged.type === 'subject' && onReorderSubject) {
+                onReorderSubject(dragged.shortcutId || dragged.id, target.id);
             }
-        } 
-        // 2. Logic for moving FOLDERS
-        else if (dragged.type === 'folder' && target.type === 'folder') {
+            return;
+        }
+
+        if (target.type === 'folder' && onDropWithOverlay) {
+            onDropWithOverlay(target.id, dragged.id, dragged.type, dragged.parentId, dragged.shortcutId || null);
+            return;
+        }
+
+        if (dragged.type === 'folder' && target.type === 'folder') {
             if (isInvalidFolderMove(dragged.id, target.id, allFolders)) {
                 console.warn("🚫 BLOCKED: Cannot move a folder into its own subfolder.");
                 return;
@@ -308,9 +344,11 @@ const FolderTreeModal = ({
             draggedData = JSON.parse(treeDataString);
         } else {
             const subjectId = e.dataTransfer.getData('subjectId');
+            const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
             const folderId = e.dataTransfer.getData('folderId');
-            if (subjectId) draggedData = { id: subjectId, type: 'subject' };
-            else if (folderId) draggedData = { id: folderId, type: 'folder' };
+            const folderShortcutId = e.dataTransfer.getData('folderShortcutId');
+            if (subjectId) draggedData = { id: subjectId, type: 'subject', shortcutId: subjectShortcutId || null };
+            else if (folderId) draggedData = { id: folderId, type: 'folder', shortcutId: folderShortcutId || null };
         }
 
         if (!draggedData) return;
@@ -318,10 +356,9 @@ const FolderTreeModal = ({
         if (draggedData.parentId === rootFolder.id) return; 
 
         if (draggedData.type === 'subject') {
-             // ... (Keep existing subject logic) ...
             let overlayShown = false;
             if (onDropWithOverlay) {
-                const result = onDropWithOverlay(rootFolder.id, draggedData.id, draggedData.parentId);
+                const result = onDropWithOverlay(rootFolder.id, draggedData.id, 'subject', draggedData.parentId, draggedData.shortcutId || null);
                 if (result === true) overlayShown = true;
             }
             if (!overlayShown && onMoveSubjectToFolder) {
@@ -335,6 +372,10 @@ const FolderTreeModal = ({
                 return;
             }
 
+            if (onDropWithOverlay) {
+                onDropWithOverlay(rootFolder.id, draggedData.id, 'folder', draggedData.parentId, draggedData.shortcutId || null);
+                return;
+            }
             if (onNestFolder) onNestFolder(rootFolder.id, draggedData.id);
         }
     };
