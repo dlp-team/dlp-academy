@@ -71,7 +71,7 @@ const FolderCardBody = ({
     return (
         <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${
             isModern 
-            ? `bg-gradient-to-br ${gradientClass} p-[3px] ${isOrphan ? 'saturate-50 brightness-95' : ''}` 
+            ? `bg-gradient-to-br ${gradientClass} p-[4px] ${isOrphan ? 'saturate-50 brightness-95' : ''}` 
                 : ''
         }`}>
              
@@ -256,9 +256,7 @@ const FolderCardBody = ({
                                     className={`${getIconColor(folder.color)} flex items-center justify-center rounded-lg`}
                                     style={{ width: `${28 * scaleMultiplier}px`, height: `${28 * scaleMultiplier}px` }}
                                 >
-                                    {/* If it's shared, we hide the default folder icon to show the user icon, 
-                                        OR we keep it. Here I keep it but you can remove it if you want ONLY the user icon. */}
-                                    {folder.icon ? (
+                                    {(folder.icon && !isOrphan) ? (
                                         <SubjectIcon 
                                             iconName={folder.icon} 
                                             style={{ width: `${16 * scaleMultiplier}px`, height: `${16 * scaleMultiplier}px` }}
@@ -273,7 +271,7 @@ const FolderCardBody = ({
                             ) : (
                                 // Classic Mode Folder
                                 <div style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}>
-                                    {folder.icon ? (
+                                    {(folder.icon && !isOrphan) ? (
                                         <SubjectIcon 
                                             iconName={folder.icon} 
                                             className="text-white opacity-80"

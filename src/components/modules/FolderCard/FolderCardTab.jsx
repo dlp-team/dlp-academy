@@ -8,7 +8,7 @@ const FolderCardTab = ({ isModern, gradientClass, scaleMultiplier, isOrphan = fa
                 isModern 
                     ? `bg-gradient-to-br ${gradientClass}` 
                     : `bg-gradient-to-br ${gradientClass} opacity-90`
-            } ${isOrphan ? 'opacity-55' : ''}`}
+            } ${isOrphan ? 'saturate-50 brightness-95' : ''}`}
             style={{ 
                 width: '40%',
                 height: `${21 * scaleMultiplier}px`,
@@ -16,7 +16,7 @@ const FolderCardTab = ({ isModern, gradientClass, scaleMultiplier, isOrphan = fa
             }}
         >
             {/* Inner shadow for depth */}
-            <div className={`absolute inset-0 bg-black/10 rounded-t-xl ${isOrphan ? 'opacity-55' : ''}`}></div>
+            <div className="absolute inset-0 bg-black/10 rounded-t-xl"></div>
         </div>
     );
 };

@@ -34,6 +34,7 @@ const Home = ({ user }) => {
     }, []);
 
     const [searchQuery, setSearchQuery] = useState('');
+    const [hasInitialDataLoaded, setHasInitialDataLoaded] = useState(false);
     const [searchParams, setSearchParams] = useSearchParams();
     const logic = useHomeLogic(user, searchQuery);
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
@@ -63,6 +64,17 @@ const Home = ({ user }) => {
     } = useHomePageState({ logic, searchQuery });
 
     const folderIdFromUrl = searchParams.get('folderId');
+
+    React.useEffect(() => {
+        if (!user) {
+            setHasInitialDataLoaded(false);
+            return;
+        }
+
+        if (!logic.loading && !logic.loadingFolders) {
+            setHasInitialDataLoaded(true);
+        }
+    }, [user, logic.loading, logic.loadingFolders]);
 
     React.useEffect(() => {
         if (!folderIdFromUrl || !Array.isArray(logic.folders) || logic.folders.length === 0) return;
@@ -126,7 +138,7 @@ const Home = ({ user }) => {
         setFolderContentsModalConfig
     });
 
-    if (!user || logic.loading || logic.loadingFolders) {
+    if (!user || (!hasInitialDataLoaded && (logic.loading || logic.loadingFolders))) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors">
                 <Loader2 className="w-10 h-10 text-indigo-600 dark:text-indigo-400 animate-spin" />
@@ -296,7 +308,7 @@ const Home = ({ user }) => {
                             draggedItemType={logic.draggedItemType}
                         />
 
-                        {logic.loading ? (
+                        {!hasInitialDataLoaded && logic.loading ? (
                              <div className="flex justify-center py-12">
                                 <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
                             </div>
