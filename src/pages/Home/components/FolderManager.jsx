@@ -28,6 +28,7 @@ const FolderManager = ({
     const [sharedList, setSharedList] = useState([]);
     const [shareSearch, setShareSearch] = useState('');
     const [institutionEmails, setInstitutionEmails] = useState([]);
+    const [shareSuggestionsOpen, setShareSuggestionsOpen] = useState(false);
     const [pendingShareAction, setPendingShareAction] = useState(null);
     const [shareLoading, setShareLoading] = useState(false);
     const [shareError, setShareError] = useState('');
@@ -53,6 +54,7 @@ const FolderManager = ({
         setShareRole('viewer');
         setShareQueue([]);
         setShareSearch('');
+        setShareSuggestionsOpen(false);
         setPendingShareAction(null);
         setShareError('');
         setShareSuccess('');
@@ -302,6 +304,7 @@ const FolderManager = ({
 
         setShareQueue(prev => [...prev, { email, role: shareRole }]);
         setShareEmail('');
+        setShareSuggestionsOpen(false);
         setShareError('');
         setShareSuccess('');
     };
@@ -438,6 +441,8 @@ const FolderManager = ({
             })
             .slice(0, 6)
         : [];
+
+    const shouldShowShareSuggestions = shareSuggestionsOpen && suggestedEmails.length > 0;
 
     if (!isOpen) return null;
 
@@ -647,39 +652,67 @@ const FolderManager = ({
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             Compartir con
                                         </label>
-                                        <div className="flex gap-2">
-                                            <input
-                                                type="email"
-                                                value={shareEmail}
-                                                onChange={(e) => { setShareEmail(e.target.value); setShareError(''); }}
-                                                onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                        e.preventDefault();
-                                                        handleAddToShareQueue();
-                                                    }
-                                                }}
-                                                placeholder="usuario@ejemplo.com"
-                                                disabled={shareLoading}
-                                                className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors disabled:opacity-60"
-                                            />
-                                            <select
-                                                value={shareRole}
-                                                onChange={(e) => setShareRole(e.target.value)}
-                                                disabled={shareLoading}
-                                                className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
-                                            >
-                                                <option value="viewer">Lector</option>
-                                                <option value="editor">Editor</option>
-                                            </select>
-                                            <button
-                                                type="button"
-                                                onClick={handleAddToShareQueue}
-                                                disabled={shareLoading}
-                                                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-                                            >
-                                                <Users size={16} />
-                                                Añadir
-                                            </button>
+                                        <div className="relative">
+                                            <div className="flex gap-2">
+                                                <input
+                                                    type="email"
+                                                    value={shareEmail}
+                                                    onChange={(e) => {
+                                                        setShareEmail(e.target.value);
+                                                        setShareError('');
+                                                        setShareSuggestionsOpen(true);
+                                                    }}
+                                                    onFocus={() => setShareSuggestionsOpen(true)}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter') {
+                                                            e.preventDefault();
+                                                            handleAddToShareQueue();
+                                                        }
+                                                    }}
+                                                    placeholder="usuario@ejemplo.com"
+                                                    disabled={shareLoading}
+                                                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-colors disabled:opacity-60"
+                                                />
+                                                <select
+                                                    value={shareRole}
+                                                    onChange={(e) => setShareRole(e.target.value)}
+                                                    disabled={shareLoading}
+                                                    className="px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-900 dark:text-white"
+                                                >
+                                                    <option value="viewer">Lector</option>
+                                                    <option value="editor">Editor</option>
+                                                </select>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddToShareQueue}
+                                                    disabled={shareLoading}
+                                                    className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-lg font-medium transition-colors cursor-pointer flex items-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                                                >
+                                                    <Users size={16} />
+                                                    Añadir
+                                                </button>
+                                            </div>
+
+                                            {shouldShowShareSuggestions && (
+                                                <div className="absolute left-0 right-0 top-full mt-1 z-20 p-2 border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 shadow-lg">
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Sugerencias de tu institución</p>
+                                                    <div className="max-h-32 overflow-y-auto space-y-1">
+                                                        {suggestedEmails.map((email) => (
+                                                            <button
+                                                                key={email}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setShareEmail(email);
+                                                                    setShareSuggestionsOpen(false);
+                                                                }}
+                                                                className="w-full text-left px-2 py-1 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
+                                                            >
+                                                                {email}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {shareQueue.length > 0 && (
@@ -710,24 +743,6 @@ const FolderManager = ({
                                                                 <Trash2 size={14} />
                                                             </button>
                                                         </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {suggestedEmails.length > 0 && (
-                                            <div className="mt-2 p-2 border border-gray-200 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800">
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Sugerencias de tu institución</p>
-                                                <div className="max-h-32 overflow-y-auto space-y-1">
-                                                    {suggestedEmails.map((email) => (
-                                                        <button
-                                                            key={email}
-                                                            type="button"
-                                                            onClick={() => setShareEmail(email)}
-                                                            className="w-full text-left px-2 py-1 rounded text-sm text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
-                                                        >
-                                                            {email}
-                                                        </button>
                                                     ))}
                                                 </div>
                                             </div>
