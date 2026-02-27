@@ -29,7 +29,7 @@ const FolderCardBody = ({
     disableDeleteActions = false,
     disableUnshareActions = false
 }) => {
-    const HEADER_SAFE_TOP = 96;
+    const HEADER_SAFE_TOP = 120;
     const MENU_MARGIN = 8;
     // Permission checks
     const showEditUI = user && shouldShowEditUI(folder, user.uid);

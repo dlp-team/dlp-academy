@@ -195,6 +195,62 @@ const Home = ({ user }) => {
         return merged;
     }, [logic.subjects, logic.resolvedShortcuts]);
 
+    const getFolderParentId = (folderEntry) => {
+        if (!folderEntry) return null;
+        return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+    };
+
+    const isInsideSharedFolder = React.useCallback((item, itemType) => {
+        const folders = treeFolders || [];
+        const folderById = new Map(folders.map(folder => [folder.id, folder]));
+        const startFolderId = itemType === 'folder'
+            ? getFolderParentId(item)
+            : (item?.shortcutParentId ?? item?.folderId ?? item?.parentId ?? null);
+
+        let cursorId = startFolderId;
+        let safety = 0;
+        while (cursorId && safety < 200) {
+            const cursor = folderById.get(cursorId);
+            if (!cursor) return false;
+            if (cursor.isShared === true) return true;
+            cursorId = getFolderParentId(cursor);
+            safety += 1;
+        }
+        return false;
+    }, [treeFolders]);
+
+    const isSharedForCurrentUser = React.useCallback((item) => {
+        if (!item) return false;
+        if (isShortcutItem(item)) return true;
+
+        const currentUserId = user?.uid || null;
+        const currentEmail = (user?.email || '').toLowerCase();
+        const sharedWithUids = Array.isArray(item.sharedWithUids) ? item.sharedWithUids : [];
+        const sharedWith = Array.isArray(item.sharedWith) ? item.sharedWith : [];
+
+        const sharedByUid = currentUserId ? sharedWithUids.includes(currentUserId) : false;
+        const sharedByEmail = currentEmail
+            ? sharedWith.some(entry => (entry?.email || '').toLowerCase() === currentEmail)
+            : false;
+
+        return sharedByUid || sharedByEmail || item?.isShared === true;
+    }, [user?.uid, user?.email]);
+
+    const availableAllTags = useMemo(() => {
+        if (logic.viewMode === 'shared') {
+            if (sharedScopeSelected) return sharedAllTags;
+            return [];
+        }
+
+        if (sharedScopeSelected) return logic.allTags || [];
+
+        const nonSharedFolders = (logic.folders || []).filter(folder => !isSharedForCurrentUser(folder));
+        const nonSharedSubjects = (logic.subjects || []).filter(subject => !isSharedForCurrentUser(subject));
+        const folderTags = nonSharedFolders.flatMap(folder => (Array.isArray(folder.tags) ? folder.tags : []));
+        const subjectTags = nonSharedSubjects.flatMap(subject => (Array.isArray(subject.tags) ? subject.tags : []));
+        return Array.from(new Set([...folderTags, ...subjectTags])).filter(Boolean);
+    }, [logic.viewMode, sharedScopeSelected, sharedAllTags, logic.allTags, logic.folders, logic.subjects, isSharedForCurrentUser]);
+
     if (!user || (!hasInitialDataLoaded && (logic.loading || logic.loadingFolders))) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -230,7 +286,7 @@ const Home = ({ user }) => {
                         setLayoutMode={logic.setLayoutMode}
                         cardScale={logic.cardScale}
                         setCardScale={logic.setCardScale}
-                        allTags={logic.viewMode === 'shared' ? sharedAllTags : (logic.allTags || [])}
+                        allTags={availableAllTags}
                         selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
                         setSelectedTags={logic.viewMode === 'shared' ? setSharedSelectedTags : logic.setSelectedTags}
                         currentFolder={logic.currentFolder}
@@ -293,15 +349,18 @@ const Home = ({ user }) => {
 
                         onEditFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                         onDeleteFolder={(f, action = 'delete') => {
+                            const resolvedAction = action === 'unshareAndDelete' && isInsideSharedFolder(f, 'folder')
+                                ? 'deleteShortcut'
+                                : action;
                             if (isShortcutItem(f) && f?.shortcutId) {
                                 logic.setDeleteConfig({
                                     isOpen: true,
                                     type: 'shortcut-folder',
-                                    action: action === 'unshareAndDelete'
+                                    action: resolvedAction === 'unshareAndDelete'
                                         ? 'unshare'
-                                        : action === 'deleteShortcut'
+                                        : resolvedAction === 'deleteShortcut'
                                             ? 'deleteShortcut'
-                                        : action === 'showInManual'
+                                        : resolvedAction === 'showInManual'
                                             ? 'unhide'
                                             : 'hide',
                                     item: f
@@ -318,15 +377,18 @@ const Home = ({ user }) => {
                         }}
                         onDeleteSubject={(e, s, action = 'delete') => {
                             e.stopPropagation();
+                            const resolvedAction = action === 'unshareAndDelete' && isInsideSharedFolder(s, 'subject')
+                                ? 'deleteShortcut'
+                                : action;
                             if (isShortcutItem(s) && s?.shortcutId) {
                                 logic.setDeleteConfig({
                                     isOpen: true,
                                     type: 'shortcut-subject',
-                                    action: action === 'unshareAndDelete'
+                                    action: resolvedAction === 'unshareAndDelete'
                                         ? 'unshare'
-                                        : action === 'deleteShortcut'
+                                        : resolvedAction === 'deleteShortcut'
                                             ? 'deleteShortcut'
-                                        : action === 'showInManual'
+                                        : resolvedAction === 'showInManual'
                                             ? 'unhide'
                                             : 'hide',
                                     item: s
