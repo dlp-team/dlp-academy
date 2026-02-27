@@ -64,11 +64,30 @@ const FolderCardBody = ({
     useLayoutEffect(() => {
         if (activeMenu === folder.id && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
+            const menuWidth = SHORTCUT_CARD_MENU_WIDTH * menuScale;
             const estimatedMenuHeight = 48 * 3 * menuScale;
+
+            const defaultLeft = rect.left;
+            const oppositeLeft = rect.right - menuWidth;
+            let left = defaultLeft;
+            if (left + menuWidth > window.innerWidth - MENU_MARGIN) {
+                left = oppositeLeft;
+            }
+            left = Math.min(
+                Math.max(left, MENU_MARGIN),
+                Math.max(MENU_MARGIN, window.innerWidth - menuWidth - MENU_MARGIN)
+            );
+
+            const defaultTop = rect.bottom + 4;
+            const oppositeTop = rect.top - estimatedMenuHeight - 4;
+            let top = defaultTop;
+            if (top + estimatedMenuHeight > window.innerHeight - MENU_MARGIN) {
+                top = oppositeTop;
+            }
             const maxTop = Math.max(HEADER_SAFE_TOP + MENU_MARGIN, window.innerHeight - estimatedMenuHeight - MENU_MARGIN);
             setMenuPos({
-                top: Math.min(Math.max(rect.bottom + 4, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
-                left: rect.left,
+                top: Math.min(Math.max(top, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
+                left,
             });
         }
     }, [activeMenu, folder.id, menuScale]);

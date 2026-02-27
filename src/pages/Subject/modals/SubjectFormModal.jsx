@@ -430,6 +430,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const currentUserEmail = (user?.email || '').toLowerCase();
     const currentDomain = currentUserEmail.includes('@') ? currentUserEmail.split('@')[1] : '';
     const sharedEmailSet = new Set(sharedWithoutOwner.map(entry => (entry.email || '').toLowerCase()));
+    const queuedEmailSet = new Set((shareQueue || []).map(entry => (entry?.email || '').toLowerCase()));
 
     const suggestedEmails = normalizedTypedEmail
         ? institutionEmails
@@ -437,7 +438,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 email.includes(normalizedTypedEmail) &&
                 email !== currentUserEmail &&
                 email !== ownerEmailNormalized &&
-                !sharedEmailSet.has(email)
+                !sharedEmailSet.has(email) &&
+                !queuedEmailSet.has(email)
             )
             .sort((a, b) => {
                 const aSameDomain = currentDomain && a.endsWith(`@${currentDomain}`) ? 1 : 0;
@@ -495,7 +497,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         </div>
                     )}
                     
-                    <form onSubmit={handleSubmit} className="p-6 space-y-5 max-h-[calc(100vh-13rem)] overflow-y-auto custom-scrollbar">
+                    <form onSubmit={handleSubmit} className="p-6 pb-20 space-y-5 max-h-[calc(100vh-13rem)] overflow-y-auto custom-scrollbar">
                         
                         {/* General Tab */}
                         {activeTab === 'general' && (

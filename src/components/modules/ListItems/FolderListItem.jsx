@@ -94,10 +94,27 @@ const FolderListItem = ({
         if (showMenu && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
             const menu = { width: SHORTCUT_LIST_MENU_WIDTH * menuScale, height: 48 * 3 * menuScale };
+            const defaultLeft = rect.right - menu.width;
+            const oppositeLeft = rect.left;
+            let left = defaultLeft;
+            if (left < MENU_MARGIN) {
+                left = oppositeLeft;
+            }
+            left = Math.min(
+                Math.max(left, MENU_MARGIN),
+                Math.max(MENU_MARGIN, window.innerWidth - menu.width - MENU_MARGIN)
+            );
+
+            const defaultTop = rect.bottom - menu.height;
+            const oppositeTop = rect.bottom + 4;
+            let top = defaultTop;
+            if (top < HEADER_SAFE_TOP + MENU_MARGIN) {
+                top = oppositeTop;
+            }
             const maxTop = Math.max(HEADER_SAFE_TOP + MENU_MARGIN, window.innerHeight - menu.height - MENU_MARGIN);
             setMenuPos({
-                top: Math.min(Math.max(rect.bottom - menu.height, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
-                left: rect.right - menu.width
+                top: Math.min(Math.max(top, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
+                left
             });
         }
     }, [showMenu, menuScale]);
