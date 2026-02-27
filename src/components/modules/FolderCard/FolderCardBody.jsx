@@ -37,7 +37,7 @@ const FolderCardBody = ({
     const isOrphan = folder?.isOrphan === true;
     const isMovedToShared = folder?._reason === 'moved-to-shared-folder';
     const orphanMessage = folder?._reason === 'access-revoked'
-        ? 'Archivo original ya no está compartido'
+        ? 'Carpeta descompartida'
         : folder?._reason === 'moved-to-shared-folder'
             ? `Esta carpeta se ha movido a la carpeta ${folder?._movedToFolderName || 'compartida del creador'}`
             : 'Archivo original eliminado';
@@ -80,7 +80,7 @@ const FolderCardBody = ({
                 isModern 
                     ? 'bg-white dark:bg-slate-950' 
                     : ''
-            } ${isOrphan ? 'opacity-55' : ''}`}>
+            } ${isOrphan ? 'saturate-0' : ''}`}>
                 
                 {/* --- FRONT VISUALS --- */}
                 {!isModern && (

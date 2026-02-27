@@ -735,82 +735,16 @@ export const useFolders = (user) => {
             }
 
 
-            // Best-effort shortcut cleanup for recipient to avoid lingering visibility in manual/shared views.
+            // Preserve folder shortcuts as orphan/ghost entries after unshare (Google Drive-like behavior).
             for (const targetFolderId of subtreeFolderIds) {
                 const shortcutId = `${targetUid}_${targetFolderId}_folder`;
-                const shortcutRef = doc(db, 'shortcuts', shortcutId);
-                let probeFailed = false;
-                let shortcutExists = false;
-                try {
-                    const shortcutSnap = await getDoc(shortcutRef);
-                    if (shortcutSnap.exists()) {
-                        shortcutExists = true;
-                        debug('Shortcut delete probe', {
-                            shortcutId,
-                            shortcutData: shortcutSnap.data(),
-                            currentUser: user?.uid,
-                            targetType: 'folder',
-                            targetId: targetFolderId,
-                            stage: 'probe'
-                        });
-                    } else {
-                        debug('Shortcut delete probe (not found)', {
-                            shortcutId,
-                            currentUser: user?.uid,
-                            targetType: 'folder',
-                            targetId: targetFolderId,
-                            stage: 'probe'
-                        });
-                    }
-                } catch (shortcutFolderProbeError) {
-                    probeFailed = true;
-                    debug('Shortcut folder probe error', {
-                        shortcutId,
-                        currentUser: user?.uid,
-                        targetType: 'folder',
-                        targetId: targetFolderId,
-                        stage: 'probe',
-                        errorCode: shortcutFolderProbeError?.code || null,
-                        error: shortcutFolderProbeError?.message || String(shortcutFolderProbeError)
-                    });
-                }
-
-                if (!shortcutExists) {
-                    debug('Shortcut folder delete skipped', {
-                        shortcutId,
-                        currentUser: user?.uid,
-                        targetType: 'folder',
-                        targetId: targetFolderId,
-                        stage: 'delete',
-                        probeFailed,
-                        reason: 'shortcut-not-confirmed'
-                    });
-                    continue;
-                }
-
-                try {
-                    await deleteDoc(shortcutRef);
-                    debug('Shortcut folder delete success', {
-                        shortcutId,
-                        currentUser: user?.uid,
-                        targetType: 'folder',
-                        targetId: targetFolderId,
-                        stage: 'delete',
-                        probeFailed
-                    });
-                } catch (shortcutFolderDeleteError) {
-                    debug('Shortcut folder delete error', {
-                        shortcutId,
-                        currentUser: user?.uid,
-                        targetType: 'folder',
-                        targetId: targetFolderId,
-                        stage: 'delete',
-                        probeFailed,
-                        errorCode: shortcutFolderDeleteError?.code || null,
-                        error: shortcutFolderDeleteError?.message || String(shortcutFolderDeleteError)
-                    });
-                    addFailure('folder-shortcut-delete', targetFolderId, shortcutFolderDeleteError);
-                }
+                debug('Shortcut folder preserved as ghost', {
+                    shortcutId,
+                    currentUser: user?.uid,
+                    targetType: 'folder',
+                    targetId: targetFolderId,
+                    stage: 'preserve'
+                });
             }
 
             for (const targetSubjectId of subtreeSubjectIds) {
