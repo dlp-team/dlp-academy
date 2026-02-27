@@ -125,6 +125,7 @@ export const useFolderCardLogic = ({
         const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
         const draggedPosition = e.dataTransfer.getData('position');
         const droppedFolderId = e.dataTransfer.getData('folderId');
+        const droppedFolderShortcutId = e.dataTransfer.getData('folderShortcutId') || null;
 
         if (canDrop && onDrop && subjectId && !droppedFolderId) {
             // Try to get subject type and parentId from dataTransfer or context
@@ -140,13 +141,13 @@ export const useFolderCardLogic = ({
             onDrop(folder.id, subjectId, subjectType, subjectParentId, subjectShortcutId || null);
         }
         else if (canDrop && onDropFolder && droppedFolderId && droppedFolderId !== folder.id) {
-            const droppedFolderShortcutId = e.dataTransfer.getData('folderShortcutId') || null;
             console.log('[DND] FolderCard handleDrop → onDropFolder:', { folderId: folder.id, droppedFolderId, droppedFolderShortcutId });
             onDropFolder(folder.id, droppedFolderId, droppedFolderShortcutId);
         }
         else if (draggable && onDropReorder && droppedFolderId && draggedPosition !== undefined) {
-            console.log('[DND] FolderCard handleDrop → onDropReorder:', { droppedFolderId, draggedPosition, position });
-            onDropReorder(droppedFolderId, parseInt(draggedPosition), position);
+            const reorderId = droppedFolderShortcutId || droppedFolderId;
+            console.log('[DND] FolderCard handleDrop → onDropReorder:', { reorderId, droppedFolderId, droppedFolderShortcutId, draggedPosition, position });
+            onDropReorder(reorderId, parseInt(draggedPosition), position);
         }
     };
 

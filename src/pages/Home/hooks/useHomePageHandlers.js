@@ -16,6 +16,10 @@ export const useHomePageHandlers = ({
     setTopicsModalConfig,
     setFolderContentsModalConfig
 }) => {
+    const closeShareConfirm = () => {
+        setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null });
+    };
+
     const closeUnshareConfirm = () => {
         setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
     };
@@ -117,6 +121,48 @@ export const useHomePageHandlers = ({
         return fallback?.id || null;
     };
 
+    const requestOwnerMoveForShortcut = ({ shortcutId, targetFolderId, targetType, targetId }) => {
+        const targetFolder = targetFolderId ? getFolderById(targetFolderId) : null;
+        if (!targetFolder || targetFolder.isShared !== true) return false;
+
+        setShareConfirm({
+            open: true,
+            type: 'shortcut-move-request',
+            subjectId: targetType === 'subject' ? targetId : null,
+            folder: targetFolder,
+            requestedShortcutType: targetType,
+            requestedShortcutId: shortcutId,
+            requestedTargetId: targetId,
+            onConfirm: async () => {
+                // TODO(shortcut-move-request): send email to shared folder owner requesting source-item move approval.
+                // TODO(shortcut-move-request): create in-app notification for owner with approve/reject actions.
+                // TODO(shortcut-move-request): if owner approves, execute source move (folder/subject), never move shortcut into shared folder.
+                console.info('[SHORTCUT_MOVE_REQUEST][queued]', {
+                    shortcutId,
+                    targetFolderId,
+                    targetFolderName: targetFolder?.name || null,
+                    targetType,
+                    targetId,
+                    requestedBy: currentUserId || null
+                });
+                closeShareConfirm();
+            }
+        });
+
+        return true;
+    };
+
+    const moveShortcutOrRequest = async (shortcutId, targetFolderId, targetType, targetId) => {
+        if (!shortcutId || !logic?.moveShortcut) return false;
+
+        if (requestOwnerMoveForShortcut({ shortcutId, targetFolderId, targetType, targetId })) {
+            return true;
+        }
+
+        await logic.moveShortcut(shortcutId, targetFolderId || null);
+        return true;
+    };
+
     const handleSaveFolderWrapper = folderData => {
         const dataWithParent = { ...folderData, parentId: logic.currentFolder ? logic.currentFolder.id : null };
         logic.handleSaveFolder(dataWithParent);
@@ -140,16 +186,16 @@ export const useHomePageHandlers = ({
 
             if (subjectId) {
                 if (subjectShortcutId && logic?.moveShortcut) {
-                    await logic.moveShortcut(subjectShortcutId, parentId || null);
+                    await moveShortcutOrRequest(subjectShortcutId, parentId || null, 'subject', subjectId);
                 } else {
                     await moveSubjectToParent(subjectId, currentId, parentId);
                 }
             } else if (folderShortcutId && logic?.moveShortcut) {
-                await logic.moveShortcut(folderShortcutId, parentId || null);
+                await moveShortcutOrRequest(folderShortcutId, parentId || null, 'folder', folderId || null);
             } else if (folderId && folderId !== currentId) {
                 folderShortcutId = folderShortcutId || resolveFolderShortcutId(folderId, currentId || null);
                 if (folderShortcutId && logic?.moveShortcut) {
-                    await logic.moveShortcut(folderShortcutId, parentId || null);
+                    await moveShortcutOrRequest(folderShortcutId, parentId || null, 'folder', folderId);
                     return;
                 }
                 await moveFolderToParent(folderId, currentId, parentId);
@@ -162,14 +208,31 @@ export const useHomePageHandlers = ({
             return true;
         }
 
-        if (!canWriteIntoTargetFolder(targetFolderId)) {
-            return true;
-        }
-
         const isKnownType = typeOrSourceFolderId === 'subject' || typeOrSourceFolderId === 'folder';
         const type = isKnownType ? typeOrSourceFolderId : 'subject';
         const explicitSourceFolderId = isKnownType ? sourceFolderIdMaybe : typeOrSourceFolderId;
         let draggedShortcutId = isKnownType ? shortcutIdMaybe : sourceFolderIdMaybe;
+
+        const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
+
+        if (draggedShortcutId) {
+            if (requestOwnerMoveForShortcut({
+                shortcutId: draggedShortcutId,
+                targetFolderId,
+                targetType: type,
+                targetId: subjectId
+            })) {
+                return true;
+            }
+            if (logic?.moveShortcut) {
+                logic.moveShortcut(draggedShortcutId, targetFolderId || null);
+                return true;
+            }
+        }
+
+        if (!canWriteIntoTargetFolder(targetFolderId)) {
+            return true;
+        }
 
         if (type === 'folder') {
             const sourceParentId = explicitSourceFolderId !== undefined ? explicitSourceFolderId : (logic.currentFolder ? logic.currentFolder.id : null);
@@ -196,7 +259,6 @@ export const useHomePageHandlers = ({
         if (targetFolderId === currentFolderId) {
             return;
         }
-        const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
         const sourceFolder = (logic.folders || []).find(f => f.id === currentFolderId);
         const userId = currentUserId;
 
@@ -213,11 +275,6 @@ export const useHomePageHandlers = ({
                     (s.parentId || null) === (currentFolderId || null)
             );
             draggedShortcutId = inferredShortcut?.id || null;
-        }
-
-        if (draggedShortcutId && logic?.moveShortcut) {
-            logic.moveShortcut(draggedShortcutId, targetFolderId || null);
-            return true;
         }
 
         if (subject) {
@@ -275,23 +332,23 @@ export const useHomePageHandlers = ({
         return true;
     };
 
-    const handleBreadcrumbDrop = (targetFolderId, subjectId, droppedFolderId, droppedFolderShortcutId = null) => {
+    const handleBreadcrumbDrop = (targetFolderId, subjectId, droppedFolderId, droppedFolderShortcutId = null, subjectShortcutId = null) => {
         if (isViewerInsideSharedFolder) {
-            return true;
-        }
-
-        if (!canWriteIntoTargetFolder(targetFolderId)) {
             return true;
         }
 
         const currentFolderId = logic.currentFolder ? logic.currentFolder.id : null;
         if (subjectId) {
-            return handleDropOnFolderWrapper(targetFolderId, subjectId, 'subject', currentFolderId);
+            return handleDropOnFolderWrapper(targetFolderId, subjectId, 'subject', currentFolderId, subjectShortcutId || null);
         }
         let resolvedFolderShortcutId = droppedFolderShortcutId;
         resolvedFolderShortcutId = resolvedFolderShortcutId || resolveFolderShortcutId(droppedFolderId, currentFolderId || null);
         if (resolvedFolderShortcutId && logic?.moveShortcut) {
-            logic.moveShortcut(resolvedFolderShortcutId, targetFolderId || null);
+            moveShortcutOrRequest(resolvedFolderShortcutId, targetFolderId || null, 'folder', droppedFolderId || null);
+            return true;
+        }
+
+        if (!canWriteIntoTargetFolder(targetFolderId)) {
             return true;
         }
         if (droppedFolderId) {
@@ -377,14 +434,14 @@ export const useHomePageHandlers = ({
             return;
         }
 
-        if (!canWriteIntoTargetFolder(targetFolderId)) {
-            return;
-        }
-
         const inferredShortcutId = droppedFolderShortcutId || resolveFolderShortcutId(droppedFolderId, logic.currentFolder?.id || null);
 
         if (inferredShortcutId && logic?.moveShortcut) {
-            await logic.moveShortcut(inferredShortcutId, targetFolderId || null);
+            await moveShortcutOrRequest(inferredShortcutId, targetFolderId || null, 'folder', droppedFolderId);
+            return;
+        }
+
+        if (!canWriteIntoTargetFolder(targetFolderId)) {
             return;
         }
         if (targetFolderId === droppedFolderId) return;
@@ -476,7 +533,7 @@ export const useHomePageHandlers = ({
         const parentId = currentFolder ? currentFolder.parentId : null;
 
         if (subjectShortcutId && logic?.moveShortcut) {
-            await logic.moveShortcut(subjectShortcutId, parentId || null);
+            await moveShortcutOrRequest(subjectShortcutId, parentId || null, 'subject', subjectId);
             return;
         }
 
@@ -517,7 +574,7 @@ export const useHomePageHandlers = ({
 
         if (resolvedShortcutId && logic?.moveShortcut) {
             const parentId = logic.currentFolder ? logic.currentFolder.parentId : null;
-            await logic.moveShortcut(resolvedShortcutId, parentId || null);
+            await moveShortcutOrRequest(resolvedShortcutId, parentId || null, 'folder', folderId);
             return;
         }
 
@@ -621,7 +678,7 @@ export const useHomePageHandlers = ({
             );
 
             if (shortcut?.id) {
-                await logic.moveShortcut(shortcut.id, targetFolderId || null);
+                await moveShortcutOrRequest(shortcut.id, targetFolderId || null, 'subject', subjectId);
                 return;
             }
 

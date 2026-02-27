@@ -61,8 +61,9 @@ export const useSubjectCardLogic = ({
             e.preventDefault();
             e.stopPropagation();
             const draggedSubjectId = e.dataTransfer.getData('subjectId');
+            const draggedSubjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
             const draggedPosition = parseInt(e.dataTransfer.getData('position'));
-            onDrop(draggedSubjectId, draggedPosition, position);
+            onDrop(draggedSubjectShortcutId || draggedSubjectId, draggedPosition, position);
         }
     };
 

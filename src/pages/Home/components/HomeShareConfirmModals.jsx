@@ -2,6 +2,8 @@
 import React from 'react';
 
 const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm, setUnshareConfirm, subjects }) => {
+    const closeShareConfirm = () => setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null });
+
     return (
         <>
             {shareConfirm.open && (
@@ -12,7 +14,18 @@ const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm,
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C7.305 20.5 3.5 16.695 3.5 12S7.305 3.5 12 3.5 20.5 7.305 20.5 12 16.695 20.5 12 20.5z" />
                             </svg>
                         </div>
-                        {(() => {
+                        {shareConfirm.type === 'shortcut-move-request' ? (
+                            <>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                    No se puede mover un acceso directo a una carpeta compartida
+                                </h3>
+                                <p className="text-gray-500 dark:text-gray-400 mb-6">
+                                    Los accesos directos no pueden vivir dentro de carpetas compartidas. Solo el propietario puede mover el elemento original a{' '}
+                                    <span className="font-semibold">"{shareConfirm.folder?.name || 'carpeta compartida'}"</span>.
+                                    <br />¿Quieres solicitar este movimiento al propietario?
+                                </p>
+                            </>
+                        ) : (() => {
                             const isFolder = !shareConfirm.subjectId;
                             const itemType = isFolder ? 'carpeta' : 'asignatura';
                             const itemName = isFolder
@@ -41,7 +54,7 @@ const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm,
                         <div className="flex justify-center gap-4">
                             <button
                                 className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
-                                onClick={() => setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null })}
+                                onClick={closeShareConfirm}
                             >
                                 Cancelar
                             </button>
@@ -49,7 +62,7 @@ const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm,
                                 className="px-6 py-2 rounded-xl bg-indigo-600 text-white font-bold shadow-lg hover:bg-indigo-700 transition-colors"
                                 onClick={shareConfirm.onConfirm}
                             >
-                                Sí, compartir
+                                {shareConfirm.type === 'shortcut-move-request' ? 'Solicitar al propietario' : 'Sí, compartir'}
                             </button>
                         </div>
                     </div>

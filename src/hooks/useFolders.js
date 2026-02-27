@@ -12,7 +12,16 @@ export const useFolders = (user) => {
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
 
-    const debugShare = () => {};
+    const debugShare = (stage, payload = {}) => {
+        console.info('[SHARE_DEBUG][folder]', {
+            ts: new Date().toISOString(),
+            stage,
+            actorUid: user?.uid || null,
+            actorEmail: user?.email || null,
+            actorInstitutionId: currentInstitutionId,
+            ...payload
+        });
+    };
 
     useEffect(() => {
         if (!user) {
@@ -495,16 +504,60 @@ export const useFolders = (user) => {
             try {
                 const shortcutId = `${targetUid}_${folderId}_folder`;
                 const shortcutRef = doc(db, 'shortcuts', shortcutId);
-                const shortcutPayload = {
+                const shortcutInstitutionId = folderData?.institutionId || currentInstitutionId || null;
+                const shortcutUpdatePayload = {
                     ownerId: targetUid,
                     targetId: folderId,
                     targetType: 'folder',
-                    institutionId: currentInstitutionId,
+                    institutionId: shortcutInstitutionId,
                     updatedAt: new Date()
                 };
 
                 debugShare('shortcut_upsert_attempt', { folderId, targetUid, shortcutId });
-                await setDoc(shortcutRef, shortcutPayload, { merge: true });
+                try {
+                    await updateDoc(shortcutRef, shortcutUpdatePayload);
+                    debugShare('shortcut_upsert_updated_existing', { folderId, targetUid, shortcutId });
+                } catch (updateShortcutError) {
+                    const updateCode = updateShortcutError?.code || '';
+                    const updateMessage = String(updateShortcutError?.message || '').toLowerCase();
+                    const isNotFound =
+                        updateCode === 'not-found' ||
+                        updateCode === 'firestore/not-found' ||
+                        updateMessage.includes('not found') ||
+                        updateMessage.includes('no document');
+                    const isPermissionDenied =
+                        updateCode === 'permission-denied' ||
+                        updateCode === 'firestore/permission-denied' ||
+                        updateMessage.includes('permission') ||
+                        updateMessage.includes('insufficient permissions');
+
+                    debugShare('shortcut_update_fail', {
+                        folderId,
+                        targetUid,
+                        shortcutId,
+                        errorCode: updateCode,
+                        errorMessage: updateShortcutError?.message || String(updateShortcutError),
+                        isNotFound,
+                        isPermissionDenied
+                    });
+
+                    if (!isNotFound && !isPermissionDenied) {
+                        throw updateShortcutError;
+                    }
+
+                    const shortcutCreatePayload = {
+                        ownerId: targetUid,
+                        parentId: null,
+                        targetId: folderId,
+                        targetType: 'folder',
+                        institutionId: shortcutInstitutionId,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+
+                    await setDoc(shortcutRef, shortcutCreatePayload);
+                    debugShare('shortcut_upsert_created_missing', { folderId, targetUid, shortcutId, shortcutInstitutionId });
+                }
                 debugShare('shortcut_upsert_success', { folderId, targetUid, shortcutId });
             } catch (shortcutError) {
                 debugShare('shortcut_step_fail', {
