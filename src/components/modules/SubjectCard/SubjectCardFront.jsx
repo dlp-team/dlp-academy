@@ -71,7 +71,10 @@ const SubjectCardFront = ({
     return (
         <div 
             className="absolute inset-0 cursor-pointer" 
-            onClick={() => onSelect(subject.id)}
+            onClick={() => {
+                if (isOrphan && isShortcut) return;
+                onSelect(subject.id);
+            }}
         >
             
             {/* Classic Background: Full Gradient */}

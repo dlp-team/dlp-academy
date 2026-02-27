@@ -311,7 +311,7 @@ const FolderListItem = ({
                             {orphanMessage}
                         </span>
                     )}
-                    <button onClick={(e) => { e.stopPropagation(); onNavigate(item); }} className="text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors" style={{ padding: `${8 * scale}px` }}>
+                    <button onClick={(e) => { e.stopPropagation(); if (isOrphan && isShortcut) return; onNavigate(item); }} className="text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors" style={{ padding: `${8 * scale}px` }}>
                         <Folder style={{ width: `${20 * scale}px`, height: `${20 * scale}px` }} />
                     </button>
                     {/* Three Dots Menu Button */}

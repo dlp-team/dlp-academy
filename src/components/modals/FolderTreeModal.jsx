@@ -7,6 +7,16 @@ import useAutoScrollOnDrag from '../../hooks/useAutoScrollOnDrag';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
 
+const getFolderParentId = (folderEntry) => {
+    if (!folderEntry) return null;
+    return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+};
+
+const getSubjectParentId = (subjectEntry) => {
+    if (!subjectEntry) return null;
+    return subjectEntry.shortcutParentId ?? subjectEntry.folderId ?? subjectEntry.parentId ?? null;
+};
+
 
 const TreeItem = ({ 
     item, 
@@ -36,9 +46,9 @@ const TreeItem = ({
 
     if (type === 'folder') {
         // Query child folders by parentId (direct children only)
-        childFolders = allFolders.filter(f => f.parentId === item.id);
+        childFolders = allFolders.filter(f => getFolderParentId(f) === item.id);
         // Query child subjects by folderId (direct children only)
-        childSubjects = allSubjects.filter(s => s.folderId === item.id);
+        childSubjects = allSubjects.filter(s => getSubjectParentId(s) === item.id);
     }
 
     const hasChildren = childFolders.length > 0 || childSubjects.length > 0;
@@ -94,6 +104,7 @@ const TreeItem = ({
 
     const handleClick = (e) => {
         e.stopPropagation();
+        if (item?.isOrphan === true && item?.shortcutId) return;
         if (type === 'folder') onNavigateFolder(item);
         else onNavigateSubject(item);
     };
@@ -195,7 +206,7 @@ const TreeItem = ({
                     {/* CRASH FIX: PASS THE PATH PROP DOWN */}
                     {childFolders.map((folder, idx) => (
                         <TreeItem 
-                            key={folder.id} 
+                            key={folder.shortcutId || folder.id} 
                             item={folder} 
                             type="folder" 
                             index={idx} 
@@ -212,7 +223,7 @@ const TreeItem = ({
                     ))}
                     {childSubjects.map((subject, idx) => (
                         <TreeItem 
-                            key={subject.id} 
+                            key={subject.shortcutId || subject.id} 
                             item={subject} 
                             type="subject" 
                             index={idx} 
@@ -399,14 +410,14 @@ const FolderTreeModal = ({
                         let childSubjects = [];
 
                         // Query direct children by parentId and folderId
-                        childFolders = allFolders.filter(f => f.parentId === rootFolder.id);
-                        childSubjects = allSubjects.filter(s => s.folderId === rootFolder.id);
+                        childFolders = allFolders.filter(f => getFolderParentId(f) === rootFolder.id);
+                        childSubjects = allSubjects.filter(s => getSubjectParentId(s) === rootFolder.id);
                         
                         return (
                             <div className="space-y-1">
                                 {childFolders.map((folder, idx) => (
                                     <TreeItem
-                                        key={folder.id}
+                                        key={folder.shortcutId || folder.id}
                                         item={folder}
                                         type="folder"
                                         index={idx}
@@ -421,7 +432,7 @@ const FolderTreeModal = ({
                                 ))}
                                 {childSubjects.map((subject, idx) => (
                                     <TreeItem
-                                        key={subject.id}
+                                        key={subject.shortcutId || subject.id}
                                         item={subject}
                                         type="subject"
                                         index={idx}

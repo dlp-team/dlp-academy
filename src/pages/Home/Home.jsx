@@ -1,5 +1,5 @@
 // src/pages/Home/Home.jsx
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -138,6 +138,62 @@ const Home = ({ user }) => {
         setTopicsModalConfig,
         setFolderContentsModalConfig
     });
+
+    const treeFolders = useMemo(() => {
+        const baseFolders = Array.isArray(logic.folders) ? logic.folders : [];
+        const shortcutFolders = Array.isArray(logic.resolvedShortcuts)
+            ? logic.resolvedShortcuts.filter(item => item?.targetType === 'folder')
+            : [];
+
+        const merged = [];
+        const seen = new Set();
+
+        baseFolders.forEach(folder => {
+            const key = `source:${folder.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(folder);
+            }
+        });
+
+        shortcutFolders.forEach(folder => {
+            const key = `shortcut:${folder.shortcutId || folder.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(folder);
+            }
+        });
+
+        return merged;
+    }, [logic.folders, logic.resolvedShortcuts]);
+
+    const treeSubjects = useMemo(() => {
+        const baseSubjects = Array.isArray(logic.subjects) ? logic.subjects : [];
+        const shortcutSubjects = Array.isArray(logic.resolvedShortcuts)
+            ? logic.resolvedShortcuts.filter(item => item?.targetType === 'subject')
+            : [];
+
+        const merged = [];
+        const seen = new Set();
+
+        baseSubjects.forEach(subject => {
+            const key = `source:${subject.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(subject);
+            }
+        });
+
+        shortcutSubjects.forEach(subject => {
+            const key = `shortcut:${subject.shortcutId || subject.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(subject);
+            }
+        });
+
+        return merged;
+    }, [logic.subjects, logic.resolvedShortcuts]);
 
     if (!user || (!hasInitialDataLoaded && (logic.loading || logic.loadingFolders))) {
         return (
@@ -437,8 +493,8 @@ const Home = ({ user }) => {
                 isOpen={folderContentsModalConfig.isOpen}
                 onClose={() => setFolderContentsModalConfig({ isOpen: false, folder: null })}
                 rootFolder={activeModalFolder}
-                allFolders={logic.folders || []}
-                allSubjects={logic.subjects || []}
+                allFolders={treeFolders}
+                allSubjects={treeSubjects}
                 onNavigateFolder={(folder) => {
                     handleNavigateFromTree(folder);
                     if (folder && folder.id) {

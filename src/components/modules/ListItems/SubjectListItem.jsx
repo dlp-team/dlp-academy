@@ -72,7 +72,10 @@ const SubjectListItem = ({
                 isModern ? `${getIconColor(subject.color)} border border-gradient-to-br ${subject.color} hover:border-gradient-to-br ${subject.color} ` : ` bg-gradient-to-br ${subject.color} hover:border-indigo-300 `
             } ${isOrphan ? 'opacity-55' : ''} ${className}`} // Apply external className
             style={{ padding: `${paddingPx}px` }}
-            onClick={() => onSelect(subject.id)}
+            onClick={() => {
+                if (isOrphan && isShortcut) return;
+                onSelect(subject.id);
+            }}
         >
             <div className="flex items-center gap-4">
                 {/* ICON */}

@@ -4,6 +4,7 @@ import { useFolderCardLogic } from './useFolderCardLogic';
 import FolderCardTab from './FolderCardTab';
 import FolderCardBody from './FolderCardBody';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
+import { isShortcutItem } from '../../../utils/permissionUtils';
 
 const FolderCard = (props) => {
 
@@ -56,7 +57,10 @@ const FolderCard = (props) => {
                 state.isOver && canDrop ? 'ring-4 ring-indigo-400 rounded-2xl dark:ring-indigo-500' : ''
             }`}
             style={{ aspectRatio: '16 / 10' }}
-            onClick={() => onOpen(folder)}
+            onClick={() => {
+                if (folder?.isOrphan === true && isShortcutItem(folder)) return;
+                onOpen(folder);
+            }}
             // Drag Events
             draggable={draggable}
             {...dragHandlers}

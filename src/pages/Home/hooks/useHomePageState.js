@@ -114,18 +114,13 @@ export const useHomePageState = ({ logic, searchQuery }) => {
             ? allFolders.filter(f => f.parentId === currentId)
             : allFolders.filter(f => !f.parentId);
 
-        if (logic.selectedTags && logic.selectedTags.length > 0 && logic.filteredFoldersByTags) {
-            const tagAllowed = new Set(logic.filteredFoldersByTags.map(f => f.id));
-            scopedFolders = scopedFolders.filter(f => tagAllowed.has(f.id));
-        }
-
         if (searchQuery && logic.searchFolders) {
             const searchAllowed = new Set(logic.searchFolders.map(f => f.id));
             scopedFolders = scopedFolders.filter(f => searchAllowed.has(f.id));
         }
 
         return scopedFolders;
-    }, [logic.filteredFolders, logic.folders, logic.currentFolder, logic.searchFolders, searchQuery, logic.selectedTags, logic.filteredFoldersByTags]);
+    }, [logic.filteredFolders, logic.folders, logic.currentFolder, logic.searchFolders, searchQuery]);
 
     const activeModalFolder = useMemo(() => {
         if (!folderContentsModalConfig.folder) return null;
