@@ -29,7 +29,8 @@ const SubjectCard = (props) => {
         onOpenTopics,
         filterOverlayOpen = false,
         disableAllActions = false,
-        disableDeleteActions = false
+        disableDeleteActions = false,
+        disableUnshareActions = false
     } = props;
 
     const handleLocalDragStart = (e) => {
@@ -101,6 +102,7 @@ const SubjectCard = (props) => {
                     filterOverlayOpen={filterOverlayOpen}
                     disableAllActions={disableAllActions}
                     disableDeleteActions={disableDeleteActions}
+                    disableUnshareActions={disableUnshareActions}
                 />
             </div>
         </div>

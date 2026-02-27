@@ -35,6 +35,30 @@ const ListViewItem = ({
     const [isHovered, setIsHovered] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
     const currentPath = [...path, item.id];
+    const getFolderParentId = (folderEntry) => {
+        if (!folderEntry) return null;
+        if (folderEntry?.shortcutId || folderEntry?.targetType === 'folder') {
+            return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+        }
+        return folderEntry.parentId ?? null;
+    };
+    const hasSharedAncestorFolder = (folderId) => {
+        if (!folderId || !Array.isArray(allFolders)) return false;
+        let cursorId = folderId;
+        let safety = 0;
+        while (cursorId && safety < 200) {
+            const cursor = allFolders.find(folder => folder?.id === cursorId);
+            if (!cursor) return false;
+            if (cursor.isShared === true) return true;
+            cursorId = getFolderParentId(cursor);
+            safety += 1;
+        }
+        return false;
+    };
+    const parentFolderId = item?.shortcutParentId ?? item?.folderId ?? parentId ?? null;
+    const disableUnshareActions = type === 'folder'
+        ? hasSharedAncestorFolder(getFolderParentId(item))
+        : hasSharedAncestorFolder(parentFolderId);
     const {
         isDragging,
         itemRef,
@@ -86,6 +110,7 @@ const ListViewItem = ({
                 onGoToFolder={onGoToFolder}
                 disableAllActions={disableAllActions}
                 disableDeleteActions={disableDeleteActions}
+                disableUnshareActions={disableUnshareActions}
                 cardScale={cardScale}
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
@@ -161,6 +186,7 @@ const ListViewItem = ({
                             onGoToFolder={onGoToFolder}
                             disableAllActions={disableAllActions}
                             disableDeleteActions={disableDeleteActions}
+                            disableUnshareActions={disableUnshareActions}
                             cardScale={cardScale} 
                             className="pl-8" 
                         />

@@ -25,8 +25,11 @@ const SubjectCardFront = ({
     filterOverlayOpen = false,
     onCloseFilterOverlay,
     disableAllActions = false,
-    disableDeleteActions = false
+    disableDeleteActions = false,
+    disableUnshareActions = false
 }) => {
+    const HEADER_SAFE_TOP = 96;
+    const MENU_MARGIN = 8;
     // Permission checks
     const showEditUI = user && shouldShowEditUI(subject, user.uid);
     const showDeleteUI = user && shouldShowDeleteUI(subject, user.uid);
@@ -48,7 +51,7 @@ const SubjectCardFront = ({
     const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
     const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
     const canShowShortcutVisibility = !disableAllActions && isShortcut;
-    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || !isSourceOwner);
+    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || (!isSourceOwner && !disableUnshareActions));
     const hasMenuActions = effectiveShowEditUI || effectiveCanShareFromMenu || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete;
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
@@ -58,12 +61,14 @@ const SubjectCardFront = ({
     useLayoutEffect(() => {
         if (activeMenu === subject.id && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
+            const estimatedMenuHeight = 48 * 3 * menuScale;
+            const maxTop = Math.max(HEADER_SAFE_TOP + MENU_MARGIN, window.innerHeight - estimatedMenuHeight - MENU_MARGIN);
             setMenuPos({
-                top: rect.bottom + 4,
+                top: Math.min(Math.max(rect.bottom + 4, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
                 left: rect.left,
             });
         }
-    }, [activeMenu, subject.id]);
+    }, [activeMenu, subject.id, menuScale]);
 
     // Calculate shift factor based on scale - smaller cards have less shift
     const shiftX = 48 * scaleMultiplier;
@@ -199,7 +204,7 @@ const SubjectCardFront = ({
                                         </button>
                                     )}
                                     {canShowShortcutDelete && (
-                                        <button onClick={(e) => onDelete(e, subject, isOrphan ? 'deleteShortcut' : 'unshareAndDelete')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                        <button onClick={(e) => onDelete(e, subject, (isOrphan || disableUnshareActions) ? 'deleteShortcut' : 'unshareAndDelete')} className="w-full flex items-center gap-2 p-2 text-left hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                             <Trash2 size={14 * menuScale} /> Eliminar
                                         </button>
                                     )}

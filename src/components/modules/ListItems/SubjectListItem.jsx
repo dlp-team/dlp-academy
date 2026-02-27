@@ -16,10 +16,13 @@ const SubjectListItem = ({
     onGoToFolder,
     disableAllActions = false,
     disableDeleteActions = false,
+    disableUnshareActions = false,
     compact = false, 
     cardScale = 100,
     className = ""
 }) => {
+    const HEADER_SAFE_TOP = 96;
+    const MENU_MARGIN = 8;
     const [showMenu, setShowMenu] = useState(false);
     const menuBtnRef = React.useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
@@ -47,7 +50,7 @@ const SubjectListItem = ({
     const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
     const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
     const canShowShortcutVisibility = !disableAllActions && isShortcut;
-    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || !isSourceOwner);
+    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || (!isSourceOwner && !disableUnshareActions));
 
     // Minimum scale for the menu is 1 (100%)
     const menuScale = Math.max(scale, 1);
@@ -55,8 +58,9 @@ const SubjectListItem = ({
         if (showMenu && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
             const menu = { width: SHORTCUT_LIST_MENU_WIDTH * menuScale, height: 48 * 3 * menuScale };
+            const maxTop = Math.max(HEADER_SAFE_TOP + MENU_MARGIN, window.innerHeight - menu.height - MENU_MARGIN);
             setMenuPos({
-                top: rect.bottom - menu.height,
+                top: Math.min(Math.max(rect.bottom - menu.height, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
                 left: rect.right - menu.width
             });
         }
@@ -175,7 +179,8 @@ const SubjectListItem = ({
                         {typeof window !== 'undefined' && window.document && createPortal(
                             <>
                                 <div 
-                                    className="fixed inset-0 z-[100]" 
+                                    className="fixed inset-x-0 bottom-0 z-[100]" 
+                                    style={{ top: `${HEADER_SAFE_TOP}px` }}
                                     onClick={(e) => { e.stopPropagation(); setShowMenu(false); }}
                                 />
                                 <div
@@ -216,7 +221,7 @@ const SubjectListItem = ({
                                     )}
                                     {canShowShortcutDelete && (
                                         <button 
-                                            onClick={(e) => { e.stopPropagation(); onDelete(subject, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); setShowMenu(false); }}
+                                            onClick={(e) => { e.stopPropagation(); onDelete(subject, (isOrphan || disableUnshareActions) ? 'deleteShortcut' : 'unshareAndDelete'); setShowMenu(false); }}
                                             className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
                                             style={{ fontSize: `${14 * menuScale}px` }}
                                         >

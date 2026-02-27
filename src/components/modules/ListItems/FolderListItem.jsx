@@ -25,6 +25,7 @@ const FolderListItem = ({
     onGoToFolder,
     disableAllActions = false,
     disableDeleteActions = false,
+    disableUnshareActions = false,
     cardScale = 100, 
     onDragStart,
     onDragEnd,
@@ -32,6 +33,8 @@ const FolderListItem = ({
     draggable = true,
     path
 }) => {
+    const HEADER_SAFE_TOP = 96;
+    const MENU_MARGIN = 8;
     const [isExpanded, setIsExpanded] = useState(false);
     const [isHovered, setIsHovered] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
@@ -55,10 +58,29 @@ const FolderListItem = ({
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
     const isSourceOwner = Boolean(currentUserId && item?.ownerId && item.ownerId === currentUserId);
+    const resolveFolderParentId = (folderEntry) => {
+        if (!folderEntry) return null;
+        if (isShortcutItem(folderEntry)) return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+        return folderEntry.parentId ?? null;
+    };
+    const isInsideSharedFolder = useMemo(() => {
+        if (!Array.isArray(allFolders)) return false;
+        let cursorId = resolveFolderParentId(item);
+        let safety = 0;
+        while (cursorId && safety < 200) {
+            const cursor = allFolders.find(folder => folder?.id === cursorId);
+            if (!cursor) return false;
+            if (cursor.isShared === true) return true;
+            cursorId = resolveFolderParentId(cursor);
+            safety += 1;
+        }
+        return false;
+    }, [item, allFolders]);
     const effectiveShowEditUI = !disableAllActions && showEditUI;
     const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
     const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
-    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || !isSourceOwner);
+    const unshareBlocked = disableUnshareActions || isInsideSharedFolder;
+    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || (!isSourceOwner && !unshareBlocked));
     const canShowShortcutVisibility = !disableAllActions && isShortcut;
     const hasMenuActions = effectiveShowEditUI || effectiveCanShareFromMenu || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete;
 
@@ -72,8 +94,9 @@ const FolderListItem = ({
         if (showMenu && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
             const menu = { width: SHORTCUT_LIST_MENU_WIDTH * menuScale, height: 48 * 3 * menuScale };
+            const maxTop = Math.max(HEADER_SAFE_TOP + MENU_MARGIN, window.innerHeight - menu.height - MENU_MARGIN);
             setMenuPos({
-                top: rect.bottom - menu.height,
+                top: Math.min(Math.max(rect.bottom - menu.height, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
                 left: rect.right - menu.width
             });
         }
@@ -348,7 +371,8 @@ const FolderListItem = ({
                                 {typeof window !== 'undefined' && window.document && createPortal(
                                     <>
                                         <div 
-                                            className="fixed inset-0 z-[100]" 
+                                            className="fixed inset-x-0 bottom-0 z-[100]" 
+                                            style={{ top: `${HEADER_SAFE_TOP}px` }}
                                             onClick={e => { e.stopPropagation(); setShowMenu(false); }}
                                         />
                                         <div
@@ -396,7 +420,7 @@ const FolderListItem = ({
                                                     )}
                                                     {canShowShortcutDelete && (
                                                         <button 
-                                                            onClick={e => { e.stopPropagation(); onDelete(item, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); setShowMenu(false); }}
+                                                            onClick={e => { e.stopPropagation(); onDelete(item, (isOrphan || unshareBlocked) ? 'deleteShortcut' : 'unshareAndDelete'); setShowMenu(false); }}
                                                             className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
                                                             style={{ fontSize: `${14 * menuScale}px` }}
                                                         >

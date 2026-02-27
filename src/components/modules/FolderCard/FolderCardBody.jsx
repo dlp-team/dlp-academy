@@ -26,8 +26,11 @@ const FolderCardBody = ({
     filterOverlayOpen,
     onCloseFilterOverlay,
     disableAllActions = false,
-    disableDeleteActions = false
+    disableDeleteActions = false,
+    disableUnshareActions = false
 }) => {
+    const HEADER_SAFE_TOP = 96;
+    const MENU_MARGIN = 8;
     // Permission checks
     const showEditUI = user && shouldShowEditUI(folder, user.uid);
     const showDeleteUI = user && shouldShowDeleteUI(folder, user.uid);
@@ -48,7 +51,7 @@ const FolderCardBody = ({
     const effectiveShowEditUI = !disableAllActions && showEditUI;
     const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
     const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
-    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || !isSourceOwner);
+    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || (!isSourceOwner && !disableUnshareActions));
     const canShowShortcutVisibility = !disableAllActions && isShortcut;
     const hasMenuActions = effectiveShowEditUI || effectiveCanShareFromMenu || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete;
     // 1. Logic: No useState needed here. We use CSS for hover states.
@@ -61,12 +64,14 @@ const FolderCardBody = ({
     useLayoutEffect(() => {
         if (activeMenu === folder.id && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
+            const estimatedMenuHeight = 48 * 3 * menuScale;
+            const maxTop = Math.max(HEADER_SAFE_TOP + MENU_MARGIN, window.innerHeight - estimatedMenuHeight - MENU_MARGIN);
             setMenuPos({
-                top: rect.bottom + 4,
+                top: Math.min(Math.max(rect.bottom + 4, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
                 left: rect.left,
             });
         }
-    }, [activeMenu, folder.id]);
+    }, [activeMenu, folder.id, menuScale]);
     
     return (
         <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${
@@ -216,7 +221,7 @@ const FolderCardBody = ({
                                                 </button>
                                             )}
                                             {canShowShortcutDelete && (
-                                                <button onClick={(e) => { e.stopPropagation(); onDelete(folder, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                <button onClick={(e) => { e.stopPropagation(); onDelete(folder, (isOrphan || disableUnshareActions) ? 'deleteShortcut' : 'unshareAndDelete'); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                                     <Trash2 size={14 * menuScale} /> Eliminar
                                                 </button>
                                             )}

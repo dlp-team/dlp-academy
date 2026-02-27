@@ -241,62 +241,34 @@ const HomeContent = ({
         return false;
     };
 
-    const topLevelFolderMatchesByDescendants = useMemo(() => {
-        if (!isRecursiveFilteringActive) return new Set();
+    const hasSharedAncestorFolder = (folderId) => {
+        if (!folderId) return false;
+        let cursorId = folderId;
+        let safety = 0;
+        while (cursorId && safety < 200) {
+            const cursor = folderById.get(cursorId);
+            if (!cursor) return false;
+            if (cursor.isShared === true) return true;
+            cursorId = getFolderParentId(cursor);
+            safety += 1;
+        }
+        return false;
+    };
 
-        const matchingIds = new Set();
-        (orderedFolders || []).forEach(topFolder => {
-            if (!topFolder?.id) return;
-
-            const stack = [topFolder.id];
-            let hasMatchingDescendant = false;
-
-            while (stack.length > 0 && !hasMatchingDescendant) {
-                const folderId = stack.pop();
-                const folderNode = folderById.get(folderId);
-                if (folderNode && folderId !== topFolder.id && matchesTagFilter(folderNode)) {
-                    hasMatchingDescendant = true;
-                    break;
-                }
-
-                const descendantSubjects = (allSubjectsForTree || []).filter(subject => getSubjectParentId(subject) === folderId);
-                if (descendantSubjects.some(subject => matchesTagFilter(subject))) {
-                    hasMatchingDescendant = true;
-                    break;
-                }
-
-                const childFolders = (allFoldersForTree || []).filter(folder => getFolderParentId(folder) === folderId);
-                childFolders.forEach(child => {
-                    if (child?.id) stack.push(child.id);
-                });
-            }
-
-            if (hasMatchingDescendant) {
-                matchingIds.add(topFolder.id);
-            }
-        });
-
-        return matchingIds;
-    }, [
-        isRecursiveFilteringActive,
-        orderedFolders,
-        folderById,
-        allFoldersForTree,
-        allSubjectsForTree,
-        selectedTags,
-        viewMode
-    ]);
+    const isInsideSharedFolderForItem = (item, itemType) => {
+        if (!item) return false;
+        if (itemType === 'folder') {
+            const parentId = getFolderParentId(item);
+            return hasSharedAncestorFolder(parentId);
+        }
+        const parentId = getSubjectParentId(item);
+        return hasSharedAncestorFolder(parentId);
+    };
 
     const filteredFolders = useMemo(() => {
         if (!Array.isArray(orderedFolders)) return [];
-        if (!isRecursiveFilteringActive) {
-            return orderedFolders.filter(folder => matchesTagFilter(folder) && matchesSharedFilter(folder, true));
-        }
-        return orderedFolders.filter(folder => {
-            const currentLayerMatch = matchesTagFilter(folder) && matchesSharedFilter(folder, true);
-            return currentLayerMatch || topLevelFolderMatchesByDescendants.has(folder.id);
-        });
-    }, [orderedFolders, isRecursiveFilteringActive, topLevelFolderMatchesByDescendants, selectedTags, sharedScopeSelected, viewMode, user?.uid, user?.email]);
+        return orderedFolders.filter(folder => matchesTagFilter(folder) && matchesSharedFilter(folder, true));
+    }, [orderedFolders, selectedTags, sharedScopeSelected, viewMode, user?.uid, user?.email]);
 
     const getFilteredSubjectsForGroup = (groupSubjects) => {
         if (!Array.isArray(groupSubjects)) return [];
@@ -471,6 +443,7 @@ const HomeContent = ({
                                                         onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                         onDelete={(f, action = 'delete') => {
                                                             if (disableAllActionsInShared || disableFolderDeleteActionsInShared) return;
+                                                            if (action === 'unshareAndDelete' && isInsideSharedFolderForItem(f, 'folder')) return;
                                                             if (isShortcutItem(f) && f?.shortcutId) {
                                                                 setDeleteConfig({
                                                                     isOpen: true,
@@ -509,6 +482,7 @@ const HomeContent = ({
                                                         onCloseFilterOverlay={onCloseFilterOverlay}
                                                         disableAllActions={disableAllActionsInShared}
                                                         disableDeleteActions={disableFolderDeleteActionsInShared}
+                                                        disableUnshareActions={isInsideSharedFolderForItem(folder, 'folder')}
                                                     />
                                                 </div>
                                             );
@@ -529,6 +503,7 @@ const HomeContent = ({
                                                         onDelete={(e, s, action = 'delete') => {
                                                             if (disableAllActionsInShared || disableSubjectDeleteActionsInShared) return;
                                                             e.stopPropagation();
+                                                            if (action === 'unshareAndDelete' && isInsideSharedFolderForItem(s, 'subject')) return;
                                                             if (isShortcutItem(s) && s?.shortcutId) {
                                                                 setDeleteConfig({
                                                                     isOpen: true,
@@ -565,6 +540,7 @@ const HomeContent = ({
                                                         filterOverlayOpen={filterOverlayOpen}
                                                         disableAllActions={disableAllActionsInShared}
                                                         disableDeleteActions={disableSubjectDeleteActionsInShared}
+                                                        disableUnshareActions={isInsideSharedFolderForItem(subject, 'subject')}
                                                     />
                                                 </div>
                                             );
@@ -656,6 +632,7 @@ const HomeContent = ({
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                 onDelete={(f, action = 'delete') => {
                                                     if (disableAllActionsInShared || disableFolderDeleteActionsInShared) return;
+                                                    if (action === 'unshareAndDelete' && isInsideSharedFolderForItem(f, 'folder')) return;
                                                     if (isShortcutItem(f) && f?.shortcutId) {
                                                         setDeleteConfig({
                                                             isOpen: true,
@@ -704,6 +681,7 @@ const HomeContent = ({
                                                     onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                     onDelete={(s, action = 'delete') => {
                                                         if (disableAllActionsInShared || disableSubjectDeleteActionsInShared) return;
+                                                        if (action === 'unshareAndDelete' && isInsideSharedFolderForItem(s, 'subject')) return;
                                                         if (isShortcutItem(s) && s?.shortcutId) {
                                                             setDeleteConfig({
                                                                 isOpen: true,

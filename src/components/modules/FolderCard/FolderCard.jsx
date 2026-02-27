@@ -32,6 +32,7 @@ const FolderCard = (props) => {
         cardScale = 100,
         disableAllActions = false,
         disableDeleteActions = false,
+        disableUnshareActions = false,
         filterOverlayOpen = false,
         onCloseFilterOverlay
     } = props;
@@ -109,6 +110,7 @@ const FolderCard = (props) => {
                 onCloseFilterOverlay={onCloseFilterOverlay}
                 disableAllActions={disableAllActions}
                 disableDeleteActions={disableDeleteActions}
+                disableUnshareActions={disableUnshareActions}
             />
         </div>
     );

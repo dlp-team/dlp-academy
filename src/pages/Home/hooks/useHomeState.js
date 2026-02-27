@@ -356,24 +356,13 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         }
 
         if (selectedTags.length > 0) {
-            const matchingSubjectsInFolders = filteredSubjectsByTags.filter(s => {
-                const folderLocation = isShortcutItem(s)
-                    ? (s.shortcutParentId ?? s.folderId ?? null)
-                    : (s.folderId ?? null);
-                return folderLocation !== null;
-            });
-            const folderIdsWithMatches = new Set(
-                matchingSubjectsInFolders.map(s =>
-                    isShortcutItem(s)
-                        ? (s.shortcutParentId ?? s.folderId ?? null)
-                        : (s.folderId ?? null)
-                )
+            resultFolders = resultFolders.filter(f =>
+                selectedTags.every(tag => Array.isArray(f.tags) && f.tags.includes(tag))
             );
-            resultFolders = resultFolders.filter(f => folderIdsWithMatches.has(f.id));
         }
 
         return applyManualOrder(resultFolders, 'folder');
-    }, [foldersWithShortcuts, folders, viewMode, currentFolder, manualOrder, selectedTags, filteredSubjectsByTags, searchQuery, activeFilter, user]);
+    }, [foldersWithShortcuts, folders, viewMode, currentFolder, manualOrder, selectedTags, searchQuery, activeFilter, user]);
 
     const groupedContent = useMemo(() => {
         if (activeFilter === 'folders') return {};
