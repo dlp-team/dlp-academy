@@ -14,8 +14,9 @@ Tree modal drag and drop still uses partially independent logic and payloads, ca
 - Add new notification/email infrastructure implementation.
 
 ## Current Status
-- Plan initialized and active.
-- Implementation started: Tree modal DnD payload + drop routing refactor.
+- Phase 01 completed: Tree modal shortcut-safe drop routing integrated with Home handler path.
+- Phase 02 completed: Tree modal ghost drag parity implemented.
+- Phase 03 started: shared helper extraction for list/tree DnD centralization.
 
 ## Key Decisions / Assumptions
 - Shortcut movement policy is global: shortcuts never move into shared folders.

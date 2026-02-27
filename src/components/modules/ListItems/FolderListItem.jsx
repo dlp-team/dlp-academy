@@ -92,20 +92,39 @@ const FolderListItem = ({
 
 
     // --- CHILDREN CALCULATION ---
-    // Count direct children only (not recursive)
+    // Count all descendants recursively (matches grid mode behavior)
     const { subjectCount, folderCount, totalCount } = useMemo(() => {
         if (!allFolders || !allSubjects) {
             return { subjectCount: 0, folderCount: 0, totalCount: 0 };
         }
 
-        // Direct children only
-        const directFolders = allFolders.filter(f => getFolderParentId(f) === item.id).length;
-        const directSubjects = allSubjects.filter(s => getSubjectParentId(s) === item.id).length;
+        const visited = new Set();
+
+        const traverse = (folderId) => {
+            if (visited.has(folderId)) return { s: 0, f: 0 };
+            visited.add(folderId);
+
+            const childFolders = allFolders.filter(f => getFolderParentId(f) === folderId);
+            const childSubjects = allSubjects.filter(s => getSubjectParentId(s) === folderId);
+
+            let s = childSubjects.length;
+            let f = childFolders.length;
+
+            childFolders.forEach(child => {
+                const childStats = traverse(child.id);
+                s += childStats.s;
+                f += childStats.f;
+            });
+
+            return { s, f };
+        };
+
+        const stats = traverse(item.id);
         
         return {
-            subjectCount: directSubjects,
-            folderCount: directFolders,
-            totalCount: directSubjects + directFolders
+            subjectCount: stats.s,
+            folderCount: stats.f,
+            totalCount: stats.s + stats.f
         };
     }, [item, allFolders, allSubjects]);
 
