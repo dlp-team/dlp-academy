@@ -11,6 +11,59 @@
 /* THE FIX: Manual Dark Mode for v4 */
 @custom-variant dark (&:where(.dark, .dark *));
 
+.home-page {
+  --home-primary: #6366f1;
+  --home-secondary: #f59e0b;
+  --home-accent: #14b8a6;
+  --home-muted-text: #6b7280;
+  --home-card-border: #d1d5db;
+  --home-card-background: #ffffff;
+  --home-primary-soft: rgba(99, 102, 241, 0.12);
+  --home-primary-soft-dark: rgba(99, 102, 241, 0.24);
+  --home-secondary-soft: rgba(245, 158, 11, 0.12);
+  --home-secondary-soft-dark: rgba(245, 158, 11, 0.24);
+}
+
+.home-page .home-token-muted-text {
+  color: var(--home-muted-text);
+}
+
+.home-page .home-token-dashed-create-card,
+.home-page .home-token-dashed-primary-card,
+.home-page .home-token-dashed-secondary-card {
+  border-color: var(--home-card-border);
+  background-color: var(--home-card-background);
+}
+
+.home-page .home-token-dashed-create-card:hover,
+.home-page .home-token-dashed-primary-card:hover {
+  border-color: var(--home-primary);
+  background-color: var(--home-primary-soft);
+}
+
+.home-page .home-token-dashed-secondary-card:hover {
+  border-color: var(--home-secondary);
+  background-color: var(--home-secondary-soft);
+}
+
+.dark .home-page .home-token-dashed-create-card,
+.dark .home-page .home-token-dashed-primary-card,
+.dark .home-page .home-token-dashed-secondary-card {
+  border-color: var(--home-card-border);
+  background-color: color-mix(in srgb, var(--home-card-background) 16%, #0f172a 84%);
+}
+
+.dark .home-page .home-token-dashed-create-card:hover,
+.dark .home-page .home-token-dashed-primary-card:hover {
+  border-color: var(--home-primary);
+  background-color: var(--home-primary-soft-dark);
+}
+
+.dark .home-page .home-token-dashed-secondary-card:hover {
+  border-color: var(--home-secondary);
+  background-color: var(--home-secondary-soft-dark);
+}
+
 .home-page button:not(:disabled),
 .home-page [role='button']:not([aria-disabled='true']),
 .home-page a[href],

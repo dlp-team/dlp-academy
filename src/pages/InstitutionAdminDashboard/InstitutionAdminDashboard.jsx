@@ -12,6 +12,12 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
+import {
+    HOME_THEME_DEFAULT_COLORS,
+    HOME_THEME_TOKENS,
+    getEffectiveHomeThemeColors,
+    buildHomeThemeCssVariables
+} from '../../utils/themeTokens';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -29,68 +35,36 @@ const Modal = ({ title, onClose, children }) => (
     </div>
 );
 
-const HOME_THEME_PRESETS = [
-    {
-        id: 'indigo-soft',
-        label: 'Índigo Suave',
-        description: 'Estilo equilibrado y limpio.',
-        tokens: {
-            modalBackdropClass: 'absolute inset-0 bg-black/50 dark:bg-black/70 transition-colors',
-            modalCardClass:
-                'bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[calc(100vh-10rem)] overflow-y-auto shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors',
-            mutedTextClass: 'text-gray-500 dark:text-gray-400',
-            dashedCreateCardIndigoClass:
-                'group relative w-full border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center cursor-pointer',
-            dashedCardAmberIdleClass:
-                'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20',
-            dashedCardIndigoIdleClass:
-                'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
-        }
-    },
-    {
-        id: 'emerald-soft',
-        label: 'Esmeralda Suave',
-        description: 'Paleta calmada con tonos verdes.',
-        tokens: {
-            modalBackdropClass: 'absolute inset-0 bg-black/45 dark:bg-black/70 transition-colors',
-            modalCardClass:
-                'bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[calc(100vh-10rem)] overflow-y-auto shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors',
-            mutedTextClass: 'text-slate-500 dark:text-slate-400',
-            dashedCreateCardIndigoClass:
-                'group relative w-full border-3 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-emerald-400 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all flex flex-col items-center justify-center cursor-pointer',
-            dashedCardAmberIdleClass:
-                'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-teal-400 dark:hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20',
-            dashedCardIndigoIdleClass:
-                'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-emerald-400 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
-        }
-    },
-    {
-        id: 'rose-soft',
-        label: 'Rosa Suave',
-        description: 'Más cálido para branding creativo.',
-        tokens: {
-            modalBackdropClass: 'absolute inset-0 bg-black/45 dark:bg-black/70 transition-colors',
-            modalCardClass:
-                'bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[calc(100vh-10rem)] overflow-y-auto shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors',
-            mutedTextClass: 'text-slate-500 dark:text-slate-400',
-            dashedCreateCardIndigoClass:
-                'group relative w-full border-3 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-rose-400 dark:hover:border-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all flex flex-col items-center justify-center cursor-pointer',
-            dashedCardAmberIdleClass:
-                'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20',
-            dashedCardIndigoIdleClass:
-                'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-rose-400 dark:hover:border-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20'
-        }
-    }
+const HOME_COLOR_OPTIONS = [
+    { label: 'Índigo', value: '#6366f1' },
+    { label: 'Azul', value: '#3b82f6' },
+    { label: 'Cian', value: '#06b6d4' },
+    { label: 'Turquesa', value: '#14b8a6' },
+    { label: 'Verde', value: '#22c55e' },
+    { label: 'Lima', value: '#84cc16' },
+    { label: 'Amarillo', value: '#eab308' },
+    { label: 'Ámbar', value: '#f59e0b' },
+    { label: 'Naranja', value: '#f97316' },
+    { label: 'Rojo', value: '#ef4444' },
+    { label: 'Rosa', value: '#ec4899' },
+    { label: 'Fucsia', value: '#d946ef' },
+    { label: 'Púrpura', value: '#a855f7' },
+    { label: 'Violeta', value: '#8b5cf6' },
+    { label: 'Pizarra', value: '#64748b' },
+    { label: 'Gris', value: '#6b7280' }
+];
+
+const HOME_COLOR_FIELDS = [
+    { key: 'primary', label: 'Color primario (Home)' },
+    { key: 'secondary', label: 'Color secundario (Home)' },
+    { key: 'accent', label: 'Color acento (Home)' },
+    { key: 'mutedText', label: 'Color texto secundario' }
 ];
 
 const DEFAULT_CUSTOMIZATION_FORM = {
     institutionDisplayName: '',
     logoUrl: '',
-    homeThemePreset: 'indigo-soft'
-};
-
-const getPresetById = (presetId) => {
-    return HOME_THEME_PRESETS.find((preset) => preset.id === presetId) || HOME_THEME_PRESETS[0];
+    homeThemeColors: { ...HOME_THEME_DEFAULT_COLORS }
 };
 
 // ─── Classes & Courses Section ────────────────────────────────────────────────
@@ -465,13 +439,15 @@ const InstitutionAdminDashboard = ({ user }) => {
 
                 const institutionData = institutionSnap.data() || {};
                 const customizationData = institutionData.customization || {};
-                const preset = getPresetById(customizationData.homeThemePreset || DEFAULT_CUSTOMIZATION_FORM.homeThemePreset);
+                const resolvedColors = getEffectiveHomeThemeColors(
+                    customizationData.homeThemeColors || customizationData.home?.colors || null
+                );
 
                 setInstitutionName(institutionData.name || '');
                 setCustomizationForm({
                     institutionDisplayName: customizationData.institutionDisplayName || institutionData.name || '',
                     logoUrl: customizationData.logoUrl || '',
-                    homeThemePreset: preset.id
+                    homeThemeColors: resolvedColors
                 });
             } catch (error) {
                 console.error('Error loading institution customization:', error);
@@ -544,15 +520,16 @@ const InstitutionAdminDashboard = ({ user }) => {
         setCustomizationSaving(true);
 
         try {
-            const preset = getPresetById(customizationForm.homeThemePreset);
             const institutionRef = doc(db, 'institutions', user.institutionId);
+            const resolvedColors = getEffectiveHomeThemeColors(customizationForm.homeThemeColors);
 
             await updateDoc(institutionRef, {
                 'customization.institutionDisplayName': customizationForm.institutionDisplayName.trim() || institutionName || '',
                 'customization.logoUrl': customizationForm.logoUrl.trim(),
-                'customization.homeThemePreset': preset.id,
-                'customization.homeThemeTokens': preset.tokens,
-                'customization.home.tokens': preset.tokens,
+                'customization.homeThemeColors': resolvedColors,
+                'customization.home.colors': resolvedColors,
+                'customization.homeThemeTokens': HOME_THEME_TOKENS,
+                'customization.home.tokens': HOME_THEME_TOKENS,
                 updatedAt: serverTimestamp()
             });
 
@@ -565,7 +542,19 @@ const InstitutionAdminDashboard = ({ user }) => {
         }
     };
 
-    const selectedThemePreset = getPresetById(customizationForm.homeThemePreset);
+    const handleThemeColorChange = (key, value) => {
+        setCustomizationSuccess('');
+        setCustomizationForm((prev) => ({
+            ...prev,
+            homeThemeColors: {
+                ...prev.homeThemeColors,
+                [key]: value
+            }
+        }));
+    };
+
+    const previewThemeColors = getEffectiveHomeThemeColors(customizationForm.homeThemeColors);
+    const previewThemeVariables = buildHomeThemeCssVariables(previewThemeColors);
 
     const TABS = [
         { key: 'users',         label: 'Usuarios',        icon: Users },
@@ -806,24 +795,55 @@ const InstitutionAdminDashboard = ({ user }) => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Estilo de Home</label>
-                                        <div className="space-y-2">
-                                            {HOME_THEME_PRESETS.map((preset) => (
-                                                <button
-                                                    key={preset.id}
-                                                    type="button"
-                                                    onClick={() => {
-                                                        setCustomizationSuccess('');
-                                                        setCustomizationForm((prev) => ({ ...prev, homeThemePreset: preset.id }));
-                                                    }}
-                                                    className={`w-full text-left p-3 rounded-xl border transition-all ${customizationForm.homeThemePreset === preset.id
-                                                        ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/20'
-                                                        : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600'
-                                                        }`}
-                                                >
-                                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{preset.label}</p>
-                                                    <p className="text-xs text-slate-500 mt-1">{preset.description}</p>
-                                                </button>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Colores de Home</label>
+                                        <div className="space-y-4">
+                                            {HOME_COLOR_FIELDS.map((field) => (
+                                                <div key={field.key} className="space-y-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{field.label}</p>
+                                                        <span
+                                                            className="w-5 h-5 rounded-full border border-slate-300 dark:border-slate-600"
+                                                            style={{ backgroundColor: previewThemeColors[field.key] }}
+                                                        />
+                                                    </div>
+                                                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                                        {HOME_COLOR_OPTIONS.map((option) => {
+                                                            const isSelected = previewThemeColors[field.key] === option.value;
+                                                            return (
+                                                                <button
+                                                                    key={`${field.key}-${option.value}`}
+                                                                    type="button"
+                                                                    onClick={() => handleThemeColorChange(field.key, option.value)}
+                                                                    className={`flex items-center justify-between px-2.5 py-2 rounded-lg border text-xs transition-all ${isSelected
+                                                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
+                                                                        : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-500'
+                                                                        }`}
+                                                                >
+                                                                    <span className="text-slate-700 dark:text-slate-200">{option.label}</span>
+                                                                    <span
+                                                                        className="w-4 h-4 rounded-full border border-slate-200 dark:border-slate-600"
+                                                                        style={{ backgroundColor: option.value }}
+                                                                    />
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="color"
+                                                            value={previewThemeColors[field.key]}
+                                                            onChange={(e) => handleThemeColorChange(field.key, e.target.value)}
+                                                            className="w-10 h-8 p-0 bg-transparent border border-slate-200 dark:border-slate-700 rounded-md"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            value={previewThemeColors[field.key]}
+                                                            onChange={(e) => handleThemeColorChange(field.key, e.target.value)}
+                                                            className="flex-1 px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-mono"
+                                                            placeholder="#6366f1"
+                                                        />
+                                                    </div>
+                                                </div>
                                             ))}
                                         </div>
                                     </div>
@@ -852,39 +872,58 @@ const InstitutionAdminDashboard = ({ user }) => {
 
                                 <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
                                     <h3 className="text-lg font-bold text-slate-900 dark:text-white">Vista previa</h3>
-                                    <p className={`${selectedThemePreset.tokens.mutedTextClass} text-sm mt-1`}>Así se verá el estilo aplicado en Home.</p>
+                                    <p className="text-slate-500 text-sm mt-1">Mock de Home con estructura equivalente para validar el estilo.</p>
 
-                                    <div className="mt-5 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/40">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            {customizationForm.logoUrl ? (
-                                                <img
-                                                    src={customizationForm.logoUrl}
-                                                    alt="Logo"
-                                                    className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
-                                                />
-                                            ) : (
-                                                <div className="w-10 h-10 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500">
-                                                    <Palette className="w-5 h-5" />
+                                    <div className="mt-5 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
+                                        <div className="home-page bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4" style={previewThemeVariables}>
+                                            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3 mb-3">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        {customizationForm.logoUrl ? (
+                                                            <img
+                                                                src={customizationForm.logoUrl}
+                                                                alt="Logo"
+                                                                className="w-8 h-8 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500">
+                                                                <Palette className="w-4 h-4" />
+                                                            </div>
+                                                        )}
+                                                        <div className="min-w-0">
+                                                            <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{customizationForm.institutionDisplayName || institutionName || 'Tu institución'}</p>
+                                                            <p className={`${HOME_THEME_TOKENS.mutedTextClass} text-[11px] truncate`}>Inicio · Manual</p>
+                                                        </div>
+                                                    </div>
+                                                    <button type="button" className="px-2.5 py-1 text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg">Nueva asignatura</button>
                                                 </div>
-                                            )}
-                                            <div>
-                                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                                                    {customizationForm.institutionDisplayName || institutionName || 'Tu institución'}
-                                                </p>
-                                                <p className={`${selectedThemePreset.tokens.mutedTextClass} text-xs`}>Tema: {selectedThemePreset.label}</p>
-                                            </div>
-                                        </div>
 
-                                        <button type="button" className={`${selectedThemePreset.tokens.dashedCreateCardIndigoClass} h-24 text-sm font-medium text-slate-600 dark:text-slate-200`}>
-                                            Botón principal en Home
-                                        </button>
-
-                                        <div className="grid grid-cols-2 gap-3 mt-3">
-                                            <div className={`rounded-xl p-3 border-2 border-dashed ${selectedThemePreset.tokens.dashedCardIndigoIdleClass}`}>
-                                                <p className="text-xs font-medium text-slate-700 dark:text-slate-200">Tarjeta A</p>
+                                                <div className="mt-3 flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+                                                    <span>Inicio</span>
+                                                    <ChevronRight className="w-3 h-3" />
+                                                    <span>Carpeta Demo</span>
+                                                </div>
                                             </div>
-                                            <div className={`rounded-xl p-3 border-2 border-dashed ${selectedThemePreset.tokens.dashedCardAmberIdleClass}`}>
-                                                <p className="text-xs font-medium text-slate-700 dark:text-slate-200">Tarjeta B</p>
+
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <button type="button" className={`${HOME_THEME_TOKENS.dashedCreateCardIndigoClass} h-24 text-[11px] font-medium text-slate-600 dark:text-slate-200`}>
+                                                    + Crear asignatura
+                                                </button>
+
+                                                <div className={`rounded-2xl p-3 border-2 border-dashed transition-all ${HOME_THEME_TOKENS.dashedCardIndigoIdleClass}`}>
+                                                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">Matemáticas</p>
+                                                    <p className={`${HOME_THEME_TOKENS.mutedTextClass} text-[11px] mt-1`}>12 temas · actualizado hoy</p>
+                                                </div>
+
+                                                <div className={`rounded-2xl p-3 border-2 border-dashed transition-all ${HOME_THEME_TOKENS.dashedCardSecondaryIdleClass || HOME_THEME_TOKENS.dashedCardAmberIdleClass}`}>
+                                                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">Ciencias</p>
+                                                    <p className={`${HOME_THEME_TOKENS.mutedTextClass} text-[11px] mt-1`}>8 temas · compartido</p>
+                                                </div>
+
+                                                <div className="rounded-2xl p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                                                    <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">Historial</p>
+                                                    <p className={`${HOME_THEME_TOKENS.mutedTextClass} text-[11px] mt-1`}>Último acceso hace 2h</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
