@@ -96,7 +96,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
         subjects,
         folders,
         preferences,
-        loadingPreferences
+        loadingPreferences,
+        updatePreference
     });
 
     const {

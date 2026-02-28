@@ -1,10 +1,36 @@
 // src/pages/Home/hooks/useHomeState.js
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { normalizeText } from '../../../utils/stringUtils';
 import { useShortcuts } from '../../../hooks/useShortcuts';
 import { isShortcutItem, isOwnedByCurrentUser, isSharedWithCurrentUser } from '../../../utils/permissionUtils';
 
-export const useHomeState = ({ user, searchQuery = '', subjects, folders, preferences, loadingPreferences }) => {
+const EMPTY_MANUAL_ORDER = { subjects: [], folders: [] };
+
+const normalizeManualOrder = (value) => {
+    const safeValue = value && typeof value === 'object' ? value : EMPTY_MANUAL_ORDER;
+    return {
+        subjects: Array.isArray(safeValue.subjects) ? safeValue.subjects.filter(Boolean) : [],
+        folders: Array.isArray(safeValue.folders) ? safeValue.folders.filter(Boolean) : []
+    };
+};
+
+const areManualOrdersEqual = (left, right) => {
+    if (!left || !right) return false;
+    if (left.subjects.length !== right.subjects.length) return false;
+    if (left.folders.length !== right.folders.length) return false;
+
+    for (let index = 0; index < left.subjects.length; index += 1) {
+        if (left.subjects[index] !== right.subjects[index]) return false;
+    }
+
+    for (let index = 0; index < left.folders.length; index += 1) {
+        if (left.folders[index] !== right.folders[index]) return false;
+    }
+
+    return true;
+};
+
+export const useHomeState = ({ user, searchQuery = '', subjects, folders, preferences, loadingPreferences, updatePreference }) => {
     // Fetch user's shortcuts
     const { resolvedShortcuts, loading: loadingShortcuts } = useShortcuts(user);
     const [viewMode, setViewMode] = useState(preferences?.viewMode || 'grid');
@@ -21,7 +47,8 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     const [draggedItemType, setDraggedItemType] = useState(null);
     const [dropPosition, setDropPosition] = useState(null);
 
-    const [manualOrder, setManualOrder] = useState({ subjects: [], folders: [] });
+    const [manualOrder, setManualOrder] = useState(() => normalizeManualOrder(preferences?.manualOrder));
+    const hasHydratedManualOrderRef = useRef(false);
 
     const [subjectModalConfig, setSubjectModalConfig] = useState({ isOpen: false, isEditing: false, data: null });
     const [folderModalConfig, setFolderModalConfig] = useState({ isOpen: false, isEditing: false, data: null });
@@ -545,6 +572,28 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
             setSelectedTags(preferences.selectedTags || []);
         }
     }, [preferences, loadingPreferences]);
+
+    useEffect(() => {
+        if (loadingPreferences) return;
+
+        const incomingOrder = normalizeManualOrder(preferences?.manualOrder);
+        setManualOrder(prevOrder => (areManualOrdersEqual(prevOrder, incomingOrder) ? prevOrder : incomingOrder));
+    }, [preferences?.manualOrder, loadingPreferences]);
+
+    useEffect(() => {
+        if (loadingPreferences) return;
+        if (!user?.uid) return;
+
+        if (!hasHydratedManualOrderRef.current) {
+            hasHydratedManualOrderRef.current = true;
+            return;
+        }
+
+        const persistedOrder = normalizeManualOrder(preferences?.manualOrder);
+        if (areManualOrdersEqual(manualOrder, persistedOrder)) return;
+
+        updatePreference('manualOrder', manualOrder);
+    }, [manualOrder, loadingPreferences, preferences?.manualOrder, updatePreference, user?.uid]);
 
     const isDragAndDropEnabled = viewMode === 'grid';
 

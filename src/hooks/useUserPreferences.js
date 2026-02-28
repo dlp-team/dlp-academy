@@ -21,7 +21,11 @@ export const useUserPreferences = (user, page = 'home') => {
                 cardScale: 100, // M (Medium) by default
                 viewMode: 'grid', // manual, uso, cursos, compartido
                 layoutMode: 'grid', // grid, list, folders
-                selectedTags: []
+                selectedTags: [],
+                manualOrder: {
+                    subjects: [],
+                    folders: []
+                }
             },
             subject: {
                 viewMode: 'topics', // topics, calendar, progress
