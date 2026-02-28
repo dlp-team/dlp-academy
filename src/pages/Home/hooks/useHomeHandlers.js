@@ -40,7 +40,8 @@ export const useHomeHandlers = ({
     createShortcut,
     updateShortcutAppearance,
     setShortcutHiddenInManual,
-    studentShortcutTagOnlyMode = false
+    studentShortcutTagOnlyMode = false,
+    rememberOrganization = true
 }) => {
     const getFolderById = (folderId) => {
         if (!folderId) return null;
@@ -317,14 +318,16 @@ export const useHomeHandlers = ({
             const selectedFolder = shortcutCandidate || foundInMerged || foundInSource || folder;
 
             setCurrentFolder(selectedFolder || null);
-            if (selectedFolder) {
+            if (rememberOrganization && selectedFolder) {
                 localStorage.setItem('dlp_last_folderId', selectedFolder.id);
-            } else {
+            } else if (rememberOrganization) {
                 localStorage.removeItem('dlp_last_folderId');
             }
         } else {
             setCurrentFolder(null);
-            localStorage.removeItem('dlp_last_folderId');
+            if (rememberOrganization) {
+                localStorage.removeItem('dlp_last_folderId');
+            }
         }
     };
 

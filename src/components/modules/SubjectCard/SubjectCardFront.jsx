@@ -321,7 +321,7 @@ const SubjectCardFront = ({
                         </h3>
 
                         {/* 2. Shared Icon (at the right) */}
-                        {(
+                        {!hideSharedIndicator && (
                             subject.isShared === true ||
                             (Array.isArray(subject.sharedWith) && subject.sharedWith.length > 0) ||
                             (Array.isArray(subject.sharedWithUids) && subject.sharedWithUids.length > 0)

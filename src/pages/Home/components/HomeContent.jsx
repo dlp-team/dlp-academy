@@ -685,24 +685,26 @@ const HomeContent = ({
                                          
                                         {/* --- MOVE TO ROOT ZONE (STABLE) --- */}
                                         {/* We keep the div ALWAYS rendered but hide it via CSS to prevent DOM layout shift crashes */}
-                                        <div 
-                                            onDragOver={(e) => { e.preventDefault(); setIsRootZoneHovered(true); }}
-                                            onDragLeave={() => setIsRootZoneHovered(false)}
-                                            onDrop={handleRootZoneDrop}
-                                            className={`transition-all duration-200 overflow-hidden flex items-center justify-center gap-2 rounded-xl border-dashed font-medium text-sm
-                                                ${draggedItem 
-                                                    ? 'h-14 mb-4 border-2 opacity-100' // EXPAND when dragging
-                                                    : 'h-0 mb-0 border-0 opacity-0'    // COLLAPSE when not dragging
-                                                }
-                                                ${isRootZoneHovered 
-                                                    ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 scale-[1.02]' 
-                                                    : 'border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:border-indigo-300 hover:text-indigo-500'
-                                                }
-                                            `}
-                                        >
-                                            <ArrowUpCircle size={18} />
-                                            {currentFolder ? `Mover al inicio de ${currentFolder.name}` : "Mover al inicio"}
-                                        </div>
+                                        {!studentMode && (
+                                            <div 
+                                                onDragOver={(e) => { e.preventDefault(); setIsRootZoneHovered(true); }}
+                                                onDragLeave={() => setIsRootZoneHovered(false)}
+                                                onDrop={handleRootZoneDrop}
+                                                className={`transition-all duration-200 overflow-hidden flex items-center justify-center gap-2 rounded-xl border-dashed font-medium text-sm
+                                                    ${draggedItem 
+                                                        ? 'h-14 mb-4 border-2 opacity-100' // EXPAND when dragging
+                                                        : 'h-0 mb-0 border-0 opacity-0'    // COLLAPSE when not dragging
+                                                    }
+                                                    ${isRootZoneHovered 
+                                                        ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 scale-[1.02]' 
+                                                        : 'border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 hover:border-indigo-300 hover:text-indigo-500'
+                                                    }
+                                                `}
+                                            >
+                                                <ArrowUpCircle size={18} />
+                                                {currentFolder ? `Mover al inicio de ${currentFolder.name}` : "Mover al inicio"}
+                                            </div>
+                                        )}
                                         {/* ------------------------------------------- */}
 
 

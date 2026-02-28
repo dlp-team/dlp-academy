@@ -39,6 +39,8 @@ const HomeControls = ({
     onSharedScopeChange = () => {},
     canCreateFolder = true,
     showSharedTab = true,
+    hideSharedScopeToggle = false,
+    studentMode = false,
 }) => {
     const {
         handleViewModeChange,
@@ -115,6 +117,7 @@ const HomeControls = ({
                     activeFilter={activeFilter}
                     sharedScopeSelected={sharedScopeSelected}
                     onSharedScopeChange={onSharedScopeChange}
+                    hideSharedScopeToggle={hideSharedScopeToggle}
                 />
 
                 {/* Create Folder Button and Search Bar (Manual mode only) */}
@@ -141,7 +144,9 @@ const HomeControls = ({
                 {isDragAndDropEnabled && draggedItem && (
                     <div className="flex items-center gap-2 px-3 py-2 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 rounded-xl text-xs text-indigo-700 dark:text-indigo-300">
                         <span className="font-medium">
-                            {draggedItemType === 'subject' && currentFolder 
+                            {studentMode && draggedItemType === 'subject'
+                                ? 'Arrastra para reordenar asignaturas'
+                                : draggedItemType === 'subject' && currentFolder 
                                 ? 'Arrastra sobre carpeta, zona de promoción o reordena'
                                 : draggedItemType === 'subject' 
                                     ? 'Arrastra sobre carpeta o reordena'

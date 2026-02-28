@@ -4,7 +4,7 @@ import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { normalizeText } from '../../../utils/stringUtils';
 
-export const useHomePageState = ({ logic, searchQuery }) => {
+export const useHomePageState = ({ logic, searchQuery, rememberOrganization = true, defaultViewMode = 'grid', showSharedTab = true }) => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isScaleOverlayOpen, setIsScaleOverlayOpen] = useState(false);
 
@@ -50,15 +50,46 @@ export const useHomePageState = ({ logic, searchQuery }) => {
     React.useEffect(() => {
         if (didRestoreRef.current) return;
         if (!logic || !logic.folders) return;
+
+        const allowedModes = new Set(['grid', 'usage', 'courses', 'tags', 'shared']);
+        let safeDefaultMode = allowedModes.has(defaultViewMode) ? defaultViewMode : 'grid';
+        if (!showSharedTab && safeDefaultMode === 'shared') {
+            safeDefaultMode = 'grid';
+        }
+
+        if (!rememberOrganization) {
+            if (logic.setViewMode && logic.viewMode !== safeDefaultMode) {
+                logic.setViewMode(safeDefaultMode);
+            }
+            if (logic.setCurrentFolder) {
+                logic.setCurrentFolder(null);
+            }
+            localStorage.removeItem('dlp_last_viewMode');
+            localStorage.removeItem('dlp_last_folderId');
+            didRestoreRef.current = true;
+            return;
+        }
+
         const lastTab = localStorage.getItem('dlp_last_viewMode');
         const lastFolderId = localStorage.getItem('dlp_last_folderId');
-        if (lastTab && logic.setViewMode) logic.setViewMode(lastTab);
+
+        if (logic.setViewMode) {
+            let nextMode = lastTab || safeDefaultMode;
+            if (!allowedModes.has(nextMode)) {
+                nextMode = safeDefaultMode;
+            }
+            if (!showSharedTab && nextMode === 'shared') {
+                nextMode = 'grid';
+            }
+            logic.setViewMode(nextMode);
+        }
+
         if (lastFolderId && logic.setCurrentFolder) {
             const folder = logic.folders.find(f => f.id === lastFolderId);
             if (folder) logic.setCurrentFolder(folder);
         }
         didRestoreRef.current = true;
-    }, [logic.folders]);
+    }, [logic.folders, rememberOrganization, defaultViewMode, showSharedTab]);
 
     const sharedAllTags = useMemo(() => {
         const folderTags = (logic.sharedFolders || []).flatMap(f => (Array.isArray(f.tags) ? f.tags : []));
@@ -132,8 +163,15 @@ export const useHomePageState = ({ logic, searchQuery }) => {
     }, [logic.folders, folderContentsModalConfig.folder]);
 
     React.useEffect(() => {
+        if (!rememberOrganization) return;
         if (logic.viewMode) localStorage.setItem('dlp_last_viewMode', logic.viewMode);
-    }, [logic.viewMode]);
+    }, [logic.viewMode, rememberOrganization]);
+
+    React.useEffect(() => {
+        if (rememberOrganization) return;
+        localStorage.removeItem('dlp_last_viewMode');
+        localStorage.removeItem('dlp_last_folderId');
+    }, [rememberOrganization]);
 
     const groupedSubjectsCount = Object.values(logic.groupedContent || {}).reduce((total, bucket) => {
         if (!Array.isArray(bucket)) return total;

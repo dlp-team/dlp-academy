@@ -14,7 +14,8 @@ export const useHomePageHandlers = ({
     setShareConfirm,
     setUnshareConfirm,
     setTopicsModalConfig,
-    setFolderContentsModalConfig
+    setFolderContentsModalConfig,
+    rememberOrganization = true
 }) => {
     const closeShareConfirm = () => {
         setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null, onMergeConfirm: null });
@@ -822,10 +823,10 @@ export const useHomePageHandlers = ({
     const handleNavigateFromTree = folder => {
         setFolderContentsModalConfig({ isOpen: false, folder: null });
         logic.setCurrentFolder(folder);
-        if (folder && folder.id) {
+        if (rememberOrganization && folder && folder.id) {
             localStorage.setItem('dlp_last_folderId', folder.id);
         }
-        if (!folder) {
+        if (rememberOrganization && !folder) {
             localStorage.removeItem('dlp_last_folderId');
         }
     };

@@ -30,7 +30,7 @@ const areManualOrdersEqual = (left, right) => {
     return true;
 };
 
-export const useHomeState = ({ user, searchQuery = '', subjects, folders, preferences, loadingPreferences, updatePreference }) => {
+export const useHomeState = ({ user, searchQuery = '', subjects, folders, preferences, loadingPreferences, updatePreference, rememberOrganization = true }) => {
     // Fetch user's shortcuts
     const { resolvedShortcuts, loading: loadingShortcuts } = useShortcuts(user);
     const [viewMode, setViewMode] = useState(preferences?.viewMode || 'grid');
@@ -79,6 +79,14 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     };
 
     useEffect(() => {
+        if (!rememberOrganization) {
+            if (currentFolder) {
+                setCurrentFolder(null);
+            }
+            localStorage.removeItem('dlp_last_folderId');
+            return;
+        }
+
         if (!folders || folders.length === 0) {
             return;
         }
@@ -93,7 +101,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         } else if (currentFolder) {
             setCurrentFolder(null);
         }
-    }, [folders]);
+    }, [folders, rememberOrganization]);
 
     const filteredFolders = useMemo(() => {
         if (!folders) return [];

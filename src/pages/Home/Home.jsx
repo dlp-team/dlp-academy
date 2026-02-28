@@ -48,7 +48,10 @@ const Home = ({ user }) => {
     const [hasInitialDataLoaded, setHasInitialDataLoaded] = useState(false);
     const [searchParams, setSearchParams] = useSearchParams();
     const homeThemeTokens = useInstitutionHomeThemeTokens(user);
-    const logic = useHomeLogic(user, searchQuery);
+    const isStudentRole = useMemo(() => getNormalizedRole(user) === 'student', [user]);
+    const rememberOrganization = user?.rememberSort !== false;
+    const defaultViewMode = user?.viewMode || 'grid';
+    const logic = useHomeLogic(user, searchQuery, rememberOrganization);
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
     const {
         isFilterOpen,
@@ -73,10 +76,30 @@ const Home = ({ user }) => {
         hasContent,
         sharedActiveFilter,
         setSharedActiveFilter
-    } = useHomePageState({ logic, searchQuery });
+    } = useHomePageState({
+        logic,
+        searchQuery,
+        rememberOrganization,
+        defaultViewMode,
+        showSharedTab: !isStudentRole
+    });
 
     const folderIdFromUrl = searchParams.get('folderId');
-    const isStudentRole = useMemo(() => getNormalizedRole(user) === 'student', [user]);
+    const setPersistedFolderId = React.useCallback((folder) => {
+        if (!rememberOrganization) return;
+        if (folder && folder.id) {
+            localStorage.setItem('dlp_last_folderId', folder.id);
+        } else {
+            localStorage.removeItem('dlp_last_folderId');
+        }
+    }, [rememberOrganization]);
+
+    const setPersistedViewMode = React.useCallback((mode) => {
+        if (!rememberOrganization) return;
+        if (mode) {
+            localStorage.setItem('dlp_last_viewMode', mode);
+        }
+    }, [rememberOrganization]);
 
     React.useEffect(() => {
         if (!user) {
@@ -97,7 +120,9 @@ const Home = ({ user }) => {
             if (logic.viewMode === 'shared') {
                 logic.setViewMode('grid');
             }
-            localStorage.removeItem('dlp_last_folderId');
+            if (rememberOrganization) {
+                localStorage.removeItem('dlp_last_folderId');
+            }
             const next = new URLSearchParams(searchParams);
             if (next.has('folderId')) {
                 next.delete('folderId');
@@ -112,7 +137,7 @@ const Home = ({ user }) => {
 
         if (targetFolder && (!logic.currentFolder || logic.currentFolder.id !== targetFolder.id)) {
             logic.setCurrentFolder(targetFolder);
-            localStorage.setItem('dlp_last_folderId', targetFolder.id);
+            setPersistedFolderId(targetFolder);
         }
 
         if (!targetFolder) {
@@ -120,7 +145,7 @@ const Home = ({ user }) => {
             next.delete('folderId');
             setSearchParams(next, { replace: true });
         }
-    }, [folderIdFromUrl, logic.folders, isStudentRole, logic.currentFolder, logic.viewMode, searchParams]);
+    }, [folderIdFromUrl, logic.folders, isStudentRole, logic.currentFolder, logic.viewMode, searchParams, rememberOrganization, setPersistedFolderId]);
 
     React.useEffect(() => {
         if (isStudentRole) return;
@@ -165,7 +190,8 @@ const Home = ({ user }) => {
         setShareConfirm,
         setUnshareConfirm,
         setTopicsModalConfig,
-        setFolderContentsModalConfig
+        setFolderContentsModalConfig,
+        rememberOrganization
     });
 
     const treeFolders = useMemo(() => {
@@ -284,7 +310,7 @@ const Home = ({ user }) => {
                         viewMode={logic.viewMode}
                         setViewMode={(mode) => {
                             logic.setViewMode(mode);
-                            if (mode) localStorage.setItem('dlp_last_viewMode', mode);
+                            setPersistedViewMode(mode);
                         }}
                         layoutMode={logic.layoutMode}
                         setLayoutMode={logic.setLayoutMode}
@@ -298,12 +324,7 @@ const Home = ({ user }) => {
                         { ...(logic.setCollapsedGroups ? { setCollapsedGroups: logic.setCollapsedGroups } : {}) }
                         setCurrentFolder={(folder) => {
                             logic.setCurrentFolder(folder);
-                            if (folder && folder.id) {
-                                localStorage.setItem('dlp_last_folderId', folder.id);
-                            }
-                            if (!folder) {
-                                localStorage.removeItem('dlp_last_folderId');
-                            }
+                            setPersistedFolderId(folder);
                         }}
                         isDragAndDropEnabled={logic.isDragAndDropEnabled}
                         draggedItem={logic.draggedItem}
@@ -319,6 +340,8 @@ const Home = ({ user }) => {
                         onSharedScopeChange={setSharedScopeSelected}
                         canCreateFolder={canCreateFolderInManualContext}
                         showSharedTab={!isStudentRole}
+                        hideSharedScopeToggle={isStudentRole}
+                        studentMode={isStudentRole}
 
                         // SEARCH
                         searchQuery={searchQuery}
@@ -333,8 +356,7 @@ const Home = ({ user }) => {
                             currentFolder={logic.currentFolder}
                             onNavigate={(folder) => {
                                 logic.setCurrentFolder(folder);
-                                if (folder && folder.id) localStorage.setItem('dlp_last_folderId', folder.id);
-                                if (!folder) localStorage.removeItem('dlp_last_folderId');
+                                setPersistedFolderId(folder);
                             }}
                             allFolders={logic.folders || []}
                             onDropOnBreadcrumb={handleBreadcrumbDrop}
@@ -439,8 +461,7 @@ const Home = ({ user }) => {
                             currentFolder={logic.currentFolder} 
                             onNavigate={(folder) => {
                                 logic.setCurrentFolder(folder);
-                                if (folder && folder.id) localStorage.setItem('dlp_last_folderId', folder.id);
-                                if (!folder) localStorage.removeItem('dlp_last_folderId');
+                                setPersistedFolderId(folder);
                             }}
                             allFolders={logic.folders || []}
                             onDropOnBreadcrumb={handleBreadcrumbDrop}
@@ -484,12 +505,7 @@ const Home = ({ user }) => {
                                         handleSelectSubject={(id) => logic.navigate(`/home/subject/${id}`)}
                                         handleOpenFolder={(folder) => {
                                             logic.setCurrentFolder(folder);
-                                            if (folder && folder.id) {
-                                                localStorage.setItem('dlp_last_folderId', folder.id);
-                                            }
-                                            if (!folder) {
-                                                localStorage.removeItem('dlp_last_folderId');
-                                            }
+                                            setPersistedFolderId(folder);
                                         }}
                                         handleShareFolder={logic.handleShareFolder}
                                         handlePromoteSubject={handlePromoteSubjectWrapper}
@@ -592,12 +608,7 @@ const Home = ({ user }) => {
                 allSubjects={treeSubjects}
                 onNavigateFolder={(folder) => {
                     handleNavigateFromTree(folder);
-                    if (folder && folder.id) {
-                        localStorage.setItem('dlp_last_folderId', folder.id);
-                    }
-                    if (!folder) {
-                        localStorage.removeItem('dlp_last_folderId');
-                    }
+                    setPersistedFolderId(folder);
                 }}
                 onNavigateSubject={handleNavigateSubjectFromTree}
                 onMoveSubjectToFolder={handleTreeMoveSubject}

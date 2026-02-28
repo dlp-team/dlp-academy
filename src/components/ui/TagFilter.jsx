@@ -10,7 +10,8 @@ const TagFilter = ({
     onFilterChange = () => {} ,
     onOverlayToggle,
     sharedScopeSelected = true,
-    onSharedScopeChange = () => {}
+    onSharedScopeChange = () => {},
+    hideSharedScopeToggle = false
 }) => {
     const [showFilter, setShowFilter] = useState(false);
     const triggerRef = useRef(null);
@@ -38,7 +39,7 @@ const TagFilter = ({
         onFilterChange('all'); // Also reset view to all
     };
 
-    const sharedScopeFilterActive = sharedScopeSelected === false;
+    const sharedScopeFilterActive = !hideSharedScopeToggle && sharedScopeSelected === false;
     const filterCount = selectedTags.length + (sharedScopeFilterActive ? 1 : 0);
     const hasActiveFilters = filterCount > 0 || activeFilter !== 'all';
 
@@ -110,18 +111,20 @@ const TagFilter = ({
                     >
                         <div className="flex items-center justify-between mb-3 relative">
                             <span className="text-sm font-bold text-gray-900 dark:text-white">Filtrar por Etiquetas</span>
-                            <button
-                                onClick={() => onSharedScopeChange(!sharedScopeSelected)}
-                                className={`absolute top-0 right-0 inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-colors cursor-pointer ${
-                                    sharedScopeSelected
-                                        ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400'
-                                        : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
-                                }`}
-                                title={sharedScopeSelected ? 'Incluir compartidos' : 'Excluir compartidos'}
-                                aria-label="Alternar filtro de compartidos"
-                            >
-                                <Users size={16} />
-                            </button>
+                            {!hideSharedScopeToggle && (
+                                <button
+                                    onClick={() => onSharedScopeChange(!sharedScopeSelected)}
+                                    className={`absolute top-0 right-0 inline-flex items-center justify-center w-8 h-8 rounded-lg border transition-colors cursor-pointer ${
+                                        sharedScopeSelected
+                                            ? 'bg-indigo-50 dark:bg-indigo-900/30 border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400'
+                                            : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
+                                    }`}
+                                    title={sharedScopeSelected ? 'Incluir compartidos' : 'Excluir compartidos'}
+                                    aria-label="Alternar filtro de compartidos"
+                                >
+                                    <Users size={16} />
+                                </button>
+                            )}
                         </div>
 
                         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">

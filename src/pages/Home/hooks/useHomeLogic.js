@@ -10,7 +10,7 @@ import { useHomeHandlers } from './useHomeHandlers';
 import { isReadOnlyRole } from '../../../utils/permissionUtils';
 
 
-export const useHomeLogic = (user, searchQuery = '') => {
+export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true) => {
     const navigate = useNavigate();
     const studentShortcutTagOnlyMode = isReadOnlyRole(user);
     
@@ -99,7 +99,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
         folders,
         preferences,
         loadingPreferences,
-        updatePreference
+        updatePreference,
+        rememberOrganization
     });
 
     const {
@@ -162,7 +163,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
         createShortcut,
         updateShortcutAppearance,
         setShortcutHiddenInManual,
-        studentShortcutTagOnlyMode
+        studentShortcutTagOnlyMode,
+        rememberOrganization
     });
 
 
