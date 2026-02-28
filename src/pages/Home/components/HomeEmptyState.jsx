@@ -5,6 +5,7 @@ import { LayoutGrid, Plus, Users } from 'lucide-react';
 const HomeEmptyState = ({
     setSubjectModalConfig,
     viewMode = 'grid',
+    layoutMode = 'grid',
     canCreateSubject = true,
     cardScale = 100,
     currentFolder = null
@@ -21,6 +22,35 @@ const HomeEmptyState = ({
                 <p className="text-gray-500 dark:text-gray-400 max-w-sm text-center">
                     Solo los editores de esta carpeta compartida pueden crear nuevas asignaturas.
                 </p>
+            </div>
+        );
+    }
+
+    if (viewMode === 'grid' && layoutMode === 'list') {
+        const scale = cardScale / 100;
+        return (
+            <div className="space-y-2 relative mb-4">
+                <button
+                    onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder })}
+                    className="group relative w-full border-3 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                    style={{
+                        minHeight: `${(48 + 32) * scale}px`,
+                        gap: `${16 * scale}px`
+                    }}
+                >
+                    <div className="flex flex-row items-center justify-center w-full h-full gap-3">
+                        <Plus
+                            className="text-indigo-600 dark:text-indigo-400"
+                            style={{ width: `${18 * scale}px`, height: `${18 * scale}px` }}
+                        />
+                        <span
+                            className="font-semibold text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors text-center"
+                            style={{ fontSize: `${18 * scale}px` }}
+                        >
+                            Crear Nueva Asignatura
+                        </span>
+                    </div>
+                </button>
             </div>
         );
     }

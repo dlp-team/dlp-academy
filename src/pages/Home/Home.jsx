@@ -518,6 +518,7 @@ const Home = ({ user }) => {
                                     <HomeEmptyState 
                                         setSubjectModalConfig={logic.setSubjectModalConfig}
                                         viewMode={logic.viewMode}
+                                        layoutMode={logic.layoutMode}
                                         canCreateSubject={canCreateInManualContext}
                                         cardScale={logic.cardScale || 100}
                                         currentFolder={logic.currentFolder}
