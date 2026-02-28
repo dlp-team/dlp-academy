@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { normalizeText } from '../../../utils/stringUtils';
 import { useShortcuts } from '../../../hooks/useShortcuts';
-import { isShortcutItem } from '../../../utils/permissionUtils';
+import { isShortcutItem, isOwnedByCurrentUser, isSharedWithCurrentUser } from '../../../utils/permissionUtils';
 
 export const useHomeState = ({ user, searchQuery = '', subjects, folders, preferences, loadingPreferences }) => {
     // Fetch user's shortcuts
@@ -117,15 +117,9 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
             viewMode === 'grid' && currentFolder?.isShared !== true;
 
         const directFolders = filteredFolders.filter(folder => {
-            const userEmail = user?.email?.toLowerCase() || '';
             const isRelatedToCurrentUser =
-                (folder?.uid && user?.uid && folder.uid === user.uid) ||
-                folder?.isOwner === true ||
-                (folder?.ownerId && user?.uid && folder.ownerId === user.uid) ||
-                (Array.isArray(folder?.sharedWithUids) && user?.uid ? folder.sharedWithUids.includes(user.uid) : false) ||
-                (Array.isArray(folder?.sharedWith) && user?.uid
-                    ? folder.sharedWith.some(share => share?.uid === user.uid || share?.email?.toLowerCase() === userEmail)
-                    : false);
+                isOwnedByCurrentUser(folder, user) ||
+                isSharedWithCurrentUser(folder, user, { shortcutTreatAsSharedForNonOwner: false });
 
             if (!isRelatedToCurrentUser) return false;
                     if (suppressNonOwnedOriginalsInCurrentContext && !isOwnerLike(folder)) return false;
@@ -219,14 +213,9 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
             viewMode === 'grid' && currentFolder?.isShared !== true;
 
         const directSubjects = filteredSubjects.filter(subject => {
-            const userEmail = user?.email?.toLowerCase() || '';
             const isRelatedToCurrentUser =
-                subject?.isOwner === true ||
-                (subject?.ownerId && user?.uid && subject.ownerId === user.uid) ||
-                (Array.isArray(subject?.sharedWithUids) && user?.uid ? subject.sharedWithUids.includes(user.uid) : false) ||
-                (Array.isArray(subject?.sharedWith) && user?.uid
-                    ? subject.sharedWith.some(share => share?.uid === user.uid || share?.email?.toLowerCase() === userEmail)
-                    : false);
+                isOwnedByCurrentUser(subject, user) ||
+                isSharedWithCurrentUser(subject, user, { shortcutTreatAsSharedForNonOwner: false });
 
             if (!isRelatedToCurrentUser) return false;
                     if (suppressNonOwnedOriginalsInCurrentContext && !isOwnerLike(subject)) return false;
@@ -289,60 +278,12 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
     const sharedFolders = useMemo(() => {
         const source = Array.isArray(foldersWithShortcuts) ? foldersWithShortcuts : folders;
-        const currentUserId = user?.uid || null;
-        const currentUserEmail = (user?.email || '').toLowerCase();
-
-        const isOwnedByCurrentUser = (item) => {
-            if (!item || !currentUserId) return false;
-            if (item?.isOwner === true) return true;
-            return item?.ownerId === currentUserId || item?.uid === currentUserId;
-        };
-
-        const isSharedWithCurrentUser = (item) => {
-            const sharedByUid = Array.isArray(item?.sharedWithUids) && currentUserId
-                ? item.sharedWithUids.includes(currentUserId)
-                : false;
-            const sharedByEntry = Array.isArray(item?.sharedWith) && (currentUserId || currentUserEmail)
-                ? item.sharedWith.some(entry => entry?.uid === currentUserId || (entry?.email || '').toLowerCase() === currentUserEmail)
-                : false;
-
-            if (isShortcutItem(item)) {
-                return !isOwnedByCurrentUser(item);
-            }
-
-            return sharedByUid || sharedByEntry;
-        };
-
-        return source.filter(item => !isOwnedByCurrentUser(item) && isSharedWithCurrentUser(item));
+        return source.filter(item => !isOwnedByCurrentUser(item, user) && isSharedWithCurrentUser(item, user));
     }, [foldersWithShortcuts, folders, user?.uid, user?.email]);
 
     const sharedSubjects = useMemo(() => {
         const source = Array.isArray(subjectsWithShortcuts) ? subjectsWithShortcuts : subjects;
-        const currentUserId = user?.uid || null;
-        const currentUserEmail = (user?.email || '').toLowerCase();
-
-        const isOwnedByCurrentUser = (item) => {
-            if (!item || !currentUserId) return false;
-            if (item?.isOwner === true) return true;
-            return item?.ownerId === currentUserId || item?.uid === currentUserId;
-        };
-
-        const isSharedWithCurrentUser = (item) => {
-            const sharedByUid = Array.isArray(item?.sharedWithUids) && currentUserId
-                ? item.sharedWithUids.includes(currentUserId)
-                : false;
-            const sharedByEntry = Array.isArray(item?.sharedWith) && (currentUserId || currentUserEmail)
-                ? item.sharedWith.some(entry => entry?.uid === currentUserId || (entry?.email || '').toLowerCase() === currentUserEmail)
-                : false;
-
-            if (isShortcutItem(item)) {
-                return !isOwnedByCurrentUser(item);
-            }
-
-            return sharedByUid || sharedByEntry;
-        };
-
-        return source.filter(item => !isOwnedByCurrentUser(item) && isSharedWithCurrentUser(item));
+        return source.filter(item => !isOwnedByCurrentUser(item, user) && isSharedWithCurrentUser(item, user));
     }, [subjectsWithShortcuts, subjects, user?.uid, user?.email]);
 
     const applyManualOrder = (items, type) => {
