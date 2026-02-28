@@ -8,6 +8,6 @@
 5. **Phase 05 — Validation and Rollout Guardrails**: PLANNED
 
 ## Immediate next actions
-- Build an inventory of repeated Home logic and classify by risk/impact.
-- Define extraction candidates (utilities/hooks/constants) with smallest viable diff.
-- Propose token model for colors, spacing, and layout primitives consumable by Home and AdminInstitutionDashboard.
+- Execute Candidate 1: canonical shared relation helpers (owner/shared/shortcut visibility).
+- Replace duplicated `isSharedForCurrentUser` call sites in Home surfaces with shared helper.
+- Prepare Phase 02 implementation notes and lossless verification checklist.
