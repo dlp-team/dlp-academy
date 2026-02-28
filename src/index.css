@@ -10,3 +10,18 @@
 
 /* THE FIX: Manual Dark Mode for v4 */
 @custom-variant dark (&:where(.dark, .dark *));
+
+.home-page button:not(:disabled),
+.home-page [role='button']:not([aria-disabled='true']),
+.home-page a[href],
+.home-page summary,
+.home-page select:not(:disabled),
+.home-page [data-clickable='true'] {
+  cursor: pointer;
+}
+
+.home-page button:disabled,
+.home-page select:disabled,
+.home-page [role='button'][aria-disabled='true'] {
+  cursor: not-allowed;
+}

@@ -314,24 +314,25 @@ const FolderManager = ({
     };
 
     const handleUnshareAction = (emailToRemove) => {
+        const normalizedEmailToRemove = (emailToRemove || '').toLowerCase();
         if (unshareBlockedInSharedFolder) {
             setShareError('No se puede quitar acceso a elementos dentro de carpetas compartidas.');
             return;
         }
         const ownerEmail = (initialData?.ownerEmail || (formData?.ownerId === user?.uid ? user?.email : '') || '').toLowerCase();
-        if (ownerEmail && (emailToRemove || '').toLowerCase() === ownerEmail) {
+        if (ownerEmail && normalizedEmailToRemove === ownerEmail) {
             setShareError('No puedes quitar al propietario.');
             return;
         }
         setPendingUnshares(prev => (
-            prev.includes(emailToRemove)
-                ? prev.filter(email => email !== emailToRemove)
-                : [...prev, emailToRemove]
+            prev.includes(normalizedEmailToRemove)
+                ? prev.filter(email => email !== normalizedEmailToRemove)
+                : [...prev, normalizedEmailToRemove]
         ));
         setPendingPermissionChanges(prev => {
-            if (!prev[emailToRemove]) return prev;
+            if (!prev[normalizedEmailToRemove]) return prev;
             const next = { ...prev };
-            delete next[emailToRemove];
+            delete next[normalizedEmailToRemove];
             return next;
         });
         setShareError('');
@@ -340,25 +341,27 @@ const FolderManager = ({
 
     const handleUpdatePermission = (emailToUpdate, nextRole) => {
         if (!isOwnerManager) return;
+        const normalizedEmailToUpdate = (emailToUpdate || '').toLowerCase();
         const ownerEmail = (initialData?.ownerEmail || (formData?.ownerId === user?.uid ? user?.email : '') || '').toLowerCase();
-        if (ownerEmail && (emailToUpdate || '').toLowerCase() === ownerEmail) {
+        if (ownerEmail && normalizedEmailToUpdate === ownerEmail) {
             setShareError('No puedes cambiar permisos del propietario.');
             return;
         }
-        const currentEntry = sharedList.find(entry => entry.email === emailToUpdate);
-        const currentRole = currentEntry?.role || 'viewer';
-        if (currentRole === nextRole) return;
+        const currentEntry = sharedList.find(entry => (entry.email || '').toLowerCase() === normalizedEmailToUpdate);
+        const baseCurrentRole = currentEntry?.role || 'viewer';
+        const stagedCurrentRole = pendingPermissionChanges[normalizedEmailToUpdate] || baseCurrentRole;
+        if (stagedCurrentRole === nextRole) return;
 
         setPendingPermissionChanges(prev => {
             const next = { ...prev };
-            if (nextRole === currentRole) {
-                delete next[emailToUpdate];
+            if (nextRole === baseCurrentRole) {
+                delete next[normalizedEmailToUpdate];
             } else {
-                next[emailToUpdate] = nextRole;
+                next[normalizedEmailToUpdate] = nextRole;
             }
             return next;
         });
-        setPendingUnshares(prev => prev.filter(email => email !== emailToUpdate));
+        setPendingUnshares(prev => prev.filter(email => email !== normalizedEmailToUpdate));
         setShareError('');
         setShareSuccess('');
     };
@@ -949,10 +952,11 @@ const FolderManager = ({
                                         )}
                                         <div className="space-y-2">
                                             {displayedSharedList.map((share) => {
-                                                const isPendingUnshare = pendingUnshares.includes(share.email);
+                                                const normalizedShareEmail = (share.email || '').toLowerCase();
+                                                const isPendingUnshare = pendingUnshares.includes(normalizedShareEmail);
                                                 const avatarUrl = getAvatarUrl(share);
                                                 const displayName = getDisplayName(share);
-                                                const currentRole = pendingPermissionChanges[share.email] || share.role || 'viewer';
+                                                const currentRole = pendingPermissionChanges[normalizedShareEmail] || share.role || 'viewer';
                                                 return (
                                                 <div
                                                     key={share.email}
