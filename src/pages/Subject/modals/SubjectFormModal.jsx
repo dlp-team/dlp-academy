@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Users, Trash2, Share2, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { MODERN_FILL_COLORS, EDUCATION_LEVELS } from '../../../utils/subjectConstants';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 
 // Sub-components
@@ -26,7 +26,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [shareSearch, setShareSearch] = useState('');
     const [institutionEmails, setInstitutionEmails] = useState([]);
     const [shareSuggestionsOpen, setShareSuggestionsOpen] = useState(false);
+    const [ownerEmailResolved, setOwnerEmailResolved] = useState('');
     const [pendingShareAction, setPendingShareAction] = useState(null);
+    const [pendingPermissionChanges, setPendingPermissionChanges] = useState({});
+    const [pendingUnshares, setPendingUnshares] = useState([]);
+    const [pendingRemoveMyAccess, setPendingRemoveMyAccess] = useState(false);
     const [shareLoading, setShareLoading] = useState(false);
     const [shareError, setShareError] = useState('');
     const [shareSuccess, setShareSuccess] = useState('');
@@ -93,7 +97,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setShareQueue([]);
             setShareSearch('');
             setShareSuggestionsOpen(false);
+            setOwnerEmailResolved('');
             setPendingShareAction(null);
+            setPendingPermissionChanges({});
+            setPendingUnshares([]);
+            setPendingRemoveMyAccess(false);
             if (isEditing && initialData) {
                 const resolvedSelectors = resolveCourseSelectors(
                     initialData.course || '',
@@ -146,6 +154,42 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             }
         }
     }, [isOpen, isEditing, initialData, initialTab, user?.uid]);
+
+    useEffect(() => {
+        let active = true;
+
+        const resolveOwnerEmail = async () => {
+            if (!isOpen || !isEditing || !initialData?.ownerId) {
+                if (active) setOwnerEmailResolved('');
+                return;
+            }
+
+            if (initialData?.ownerEmail) {
+                if (active) setOwnerEmailResolved(initialData.ownerEmail);
+                return;
+            }
+
+            try {
+                const ownerDoc = await getDoc(doc(db, 'users', initialData.ownerId));
+                const ownerEmailFromDoc = ownerDoc.exists() ? (ownerDoc.data()?.email || '') : '';
+                if (ownerEmailFromDoc) {
+                    if (active) setOwnerEmailResolved(ownerEmailFromDoc);
+                    return;
+                }
+
+                const usersRef = collection(db, 'users');
+                const ownerQuery = query(usersRef, where('uid', '==', initialData.ownerId));
+                const ownerSnapshot = await getDocs(ownerQuery);
+                const ownerEmailFromQuery = ownerSnapshot.docs[0]?.data()?.email || '';
+                if (active) setOwnerEmailResolved(ownerEmailFromQuery);
+            } catch (error) {
+                if (active) setOwnerEmailResolved('');
+            }
+        };
+
+        resolveOwnerEmail();
+        return () => { active = false; };
+    }, [isOpen, isEditing, initialData?.ownerId, initialData?.ownerEmail]);
 
     useEffect(() => {
         let active = true;
@@ -239,76 +283,6 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         }
     };
 
-    const executeUnshareAction = async (emailToRemove) => {
-        try {
-            await onUnshare(formData.id, emailToRemove);
-            setSharedList(prev => prev.filter(u => u.email !== emailToRemove));
-        } catch (error) {
-            console.error('Error unsharing subject:', error);
-        }
-    };
-
-    const executeBatchShareAction = async (entries) => {
-        if (!Array.isArray(entries) || entries.length === 0) {
-            setShareError('No hay usuarios seleccionados para compartir.');
-            return;
-        }
-
-        setShareLoading(true);
-        setShareError('');
-        setShareSuccess('');
-
-        const successEntries = [];
-        const failedEntries = [];
-
-        for (const entry of entries) {
-            try {
-                const result = await onShare(formData.id, entry.email, entry.role);
-                successEntries.push({
-                    email: entry.email,
-                    uid: result?.uid,
-                    role: entry.role,
-                    canEdit: entry.role === 'editor',
-                    sharedAt: result?.sharedAt || new Date()
-                });
-            } catch (error) {
-                failedEntries.push({
-                    email: entry.email,
-                    message: error?.message || 'Error al compartir'
-                });
-            }
-        }
-
-        if (successEntries.length > 0) {
-            setSharedList(prev => {
-                const next = [...prev];
-                successEntries.forEach(updatedEntry => {
-                    const existingIndex = next.findIndex(u => (u.email || '').toLowerCase() === updatedEntry.email);
-                    if (existingIndex >= 0) {
-                        next[existingIndex] = { ...next[existingIndex], ...updatedEntry };
-                    } else {
-                        next.push(updatedEntry);
-                    }
-                });
-                return next;
-            });
-        }
-
-        if (failedEntries.length > 0) {
-            const failedSummary = failedEntries.slice(0, 3).map(item => item.email).join(', ');
-            const overflow = failedEntries.length > 3 ? ` y ${failedEntries.length - 3} más` : '';
-            setShareError(`Se compartió con ${successEntries.length} usuario(s), pero falló con ${failedEntries.length}: ${failedSummary}${overflow}.`);
-        } else {
-            setShareSuccess(`Asignatura compartida con ${successEntries.length} usuario(s).`);
-        }
-
-        setShareQueue([]);
-        setShareEmail('');
-        setShareRole('viewer');
-        setTimeout(() => setShareSuccess(''), 4000);
-        setShareLoading(false);
-    };
-
     const validateShareCandidate = (email) => {
         if (!email) return 'Por favor ingresa un correo electrónico.';
 
@@ -346,18 +320,6 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         setShareQueue(prev => prev.filter(entry => entry.email !== emailToRemove));
     };
 
-    const handleShareAction = () => {
-        if (shareQueue.length === 0) {
-            setShareError('Debes añadir al menos un usuario a la lista para compartir.');
-            return;
-        }
-
-        setPendingShareAction({
-            type: 'share-batch',
-            entries: [...shareQueue]
-        });
-    };
-
     const handleUnshareAction = (emailToRemove) => {
         if (unshareBlockedInSharedFolder) {
             setShareError('No se puede quitar acceso a elementos dentro de carpetas compartidas.');
@@ -368,10 +330,19 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setShareError('No puedes quitar al propietario.');
             return;
         }
-        setPendingShareAction({
-            type: 'unshare',
-            email: emailToRemove
+        setPendingUnshares(prev => (
+            prev.includes(emailToRemove)
+                ? prev.filter(email => email !== emailToRemove)
+                : [...prev, emailToRemove]
+        ));
+        setPendingPermissionChanges(prev => {
+            if (!prev[emailToRemove]) return prev;
+            const next = { ...prev };
+            delete next[emailToRemove];
+            return next;
         });
+        setShareError('');
+        setShareSuccess('');
     };
 
     const handleUpdatePermission = (emailToUpdate, nextRole) => {
@@ -385,60 +356,138 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         const currentRole = currentEntry?.role || 'viewer';
         if (currentRole === nextRole) return;
 
-        setPendingShareAction({
-            type: 'permission',
-            email: emailToUpdate,
-            currentRole,
-            nextRole
+        setPendingPermissionChanges(prev => {
+            const next = { ...prev };
+            if (nextRole === currentRole) {
+                delete next[emailToUpdate];
+            } else {
+                next[emailToUpdate] = nextRole;
+            }
+            return next;
         });
+        setPendingUnshares(prev => prev.filter(email => email !== emailToUpdate));
+        setShareError('');
+        setShareSuccess('');
+    };
+
+    const stagedPermissionEntries = Object.entries(pendingPermissionChanges).filter(([email, nextRole]) => {
+        const currentEntry = sharedList.find(entry => (entry.email || '').toLowerCase() === (email || '').toLowerCase());
+        const currentRole = currentEntry?.role || 'viewer';
+        return currentRole !== nextRole && !pendingUnshares.includes(email);
+    });
+
+    const hasPendingSharingChanges =
+        shareQueue.length > 0 ||
+        pendingUnshares.length > 0 ||
+        stagedPermissionEntries.length > 0 ||
+        pendingRemoveMyAccess;
+
+    const handleApplySharingChanges = () => {
+        if (!hasPendingSharingChanges) {
+            setShareError('No hay cambios pendientes para aplicar.');
+            return;
+        }
+
+        setPendingShareAction({ type: 'apply-all' });
+    };
+
+    const toggleRemoveMyShortcutAccess = () => {
+        setPendingRemoveMyAccess(prev => !prev);
+        setShareError('');
+        setShareSuccess('');
     };
 
     const confirmPendingShareAction = async () => {
         if (!pendingShareAction) return;
 
-        if (pendingShareAction.type === 'share-batch') {
-            await executeBatchShareAction(pendingShareAction.entries || []);
+        if (pendingShareAction.type !== 'apply-all') {
             setPendingShareAction(null);
             return;
         }
 
-        if (pendingShareAction.type === 'permission') {
+        setShareLoading(true);
+        setShareError('');
+        setShareSuccess('');
+
+        const failures = [];
+        let localSharedList = [...sharedList];
+
+        for (const entry of shareQueue) {
             try {
-                await onShare(formData.id, pendingShareAction.email, pendingShareAction.nextRole);
-                setSharedList(prev => prev.map(entry =>
-                    entry.email === pendingShareAction.email
-                        ? { ...entry, role: pendingShareAction.nextRole, canEdit: pendingShareAction.nextRole === 'editor' }
-                        : entry
-                ));
+                const result = await onShare(formData.id, entry.email, entry.role);
+                const updatedEntry = {
+                    email: entry.email,
+                    uid: result?.uid,
+                    role: entry.role,
+                    canEdit: entry.role === 'editor',
+                    sharedAt: result?.sharedAt || new Date()
+                };
+                const existingIndex = localSharedList.findIndex(u => (u.email || '').toLowerCase() === entry.email);
+                if (existingIndex >= 0) {
+                    localSharedList[existingIndex] = { ...localSharedList[existingIndex], ...updatedEntry };
+                } else {
+                    localSharedList.push(updatedEntry);
+                }
             } catch (error) {
-                setShareError(error?.message || 'No se pudo actualizar el permiso.');
+                failures.push(`No se pudo compartir con ${entry.email}`);
             }
-            setPendingShareAction(null);
-            return;
         }
 
-        if (pendingShareAction.type === 'unshare') {
-            await executeUnshareAction(pendingShareAction.email);
-            setPendingShareAction(null);
+        for (const [email, nextRole] of stagedPermissionEntries) {
+            try {
+                await onShare(formData.id, email, nextRole);
+                localSharedList = localSharedList.map(entry =>
+                    (entry.email || '').toLowerCase() === (email || '').toLowerCase()
+                        ? { ...entry, role: nextRole, canEdit: nextRole === 'editor' }
+                        : entry
+                );
+            } catch (error) {
+                failures.push(`No se pudo actualizar permiso de ${email}`);
+            }
         }
-    };
 
-    const handleRemoveMyShortcutAccess = async () => {
-        if (!formData?.shortcutId || !user?.email) return;
-        if (!window.confirm('Se eliminará este acceso directo y se revocará el acceso compartido para tu usuario. ¿Continuar?')) {
-            return;
+        for (const email of pendingUnshares) {
+            try {
+                await onUnshare(formData.id, email);
+                localSharedList = localSharedList.filter(entry => (entry.email || '').toLowerCase() !== (email || '').toLowerCase());
+            } catch (error) {
+                failures.push(`No se pudo quitar acceso a ${email}`);
+            }
         }
 
-        try {
-            await onUnshare(formData.id, user.email);
-            await onDeleteShortcut(formData.shortcutId);
+        if (pendingRemoveMyAccess && formData?.shortcutId && user?.email) {
+            try {
+                await onUnshare(formData.id, user.email);
+                await onDeleteShortcut(formData.shortcutId);
+            } catch (error) {
+                failures.push('No se pudo eliminar tu acceso');
+            }
+        }
+
+        setSharedList(localSharedList);
+        setShareQueue([]);
+        setPendingPermissionChanges({});
+        setPendingUnshares([]);
+        setPendingRemoveMyAccess(false);
+        setPendingShareAction(null);
+
+        if (failures.length > 0) {
+            const preview = failures.slice(0, 3).join('. ');
+            const overflow = failures.length > 3 ? ` y ${failures.length - 3} más` : '';
+            setShareError(`${preview}${overflow}.`);
+        } else if (hasPendingSharingChanges) {
+            setShareSuccess('Cambios de compartición aplicados correctamente.');
+            setTimeout(() => setShareSuccess(''), 4000);
+        }
+
+        setShareLoading(false);
+
+        if (pendingRemoveMyAccess && failures.length === 0) {
             onClose();
-        } catch (error) {
-            setShareError(error?.message || 'No se pudo eliminar tu acceso.');
         }
     };
 
-    const ownerEmailRaw = initialData?.ownerEmail || (formData?.ownerId === user?.uid ? user?.email : '') || '';
+    const ownerEmailRaw = initialData?.ownerEmail || ownerEmailResolved || (formData?.ownerId === user?.uid ? user?.email : '') || '';
     const ownerEmailNormalized = ownerEmailRaw.toLowerCase();
     const ownerEntry = ownerEmailRaw
         ? [{ email: ownerEmailRaw, role: 'owner', isOwnerEntry: true }]
@@ -616,14 +665,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                             <div className="mt-3 p-3 border border-gray-200 dark:border-slate-700 rounded-lg bg-gray-50 dark:bg-slate-800/40">
                                                 <div className="flex items-center justify-between mb-2">
                                                     <p className="text-xs text-gray-600 dark:text-gray-300">En espera para compartir ({shareQueue.length})</p>
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleShareAction}
-                                                        disabled={shareLoading}
-                                                        className="px-3 py-1.5 text-xs bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white rounded-md font-medium transition-colors disabled:opacity-60"
-                                                    >
-                                                        Compartir seleccionados
-                                                    </button>
+                                                    <span className="text-xs text-indigo-600 dark:text-indigo-300 font-medium">
+                                                        Se aplicará al guardar cambios
+                                                    </span>
                                                 </div>
                                                 <div className="space-y-2 max-h-32 overflow-y-auto">
                                                     {shareQueue.map((entry) => (
@@ -663,24 +707,30 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     </div>
                                 )}
 
-                                {pendingShareAction && (
+                                {pendingShareAction?.type === 'apply-all' && (
                                     <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20">
                                         <p className="text-sm text-amber-800 dark:text-amber-200">
-                                            {pendingShareAction.type === 'share-batch' && (
-                                                <>Vas a compartir esta asignatura con <strong>{pendingShareAction.entries?.length || 0}</strong> usuario(s) seleccionados.</>
-                                            )}
-                                            {pendingShareAction.type === 'permission' && (
-                                                <>
-                                                    Vas a cambiar a <strong>{pendingShareAction.email}</strong> de <strong>{pendingShareAction.currentRole === 'editor' ? 'Editor' : 'Lector'}</strong> a <strong>{pendingShareAction.nextRole === 'editor' ? 'Editor' : 'Lector'}</strong>.
-                                                    {pendingShareAction.nextRole === 'editor'
-                                                        ? ' Podrá editar y mover contenido según permisos de carpeta compartida.'
-                                                        : ' Perderá permisos de edición y movimiento de contenido.'}
-                                                </>
-                                            )}
-                                            {pendingShareAction.type === 'unshare' && (
-                                                <>Vas a dejar de compartir esta asignatura con <strong>{pendingShareAction.email}</strong>.</>
-                                            )}
+                                            Se aplicarán los cambios pendientes:
                                         </p>
+                                        <ul className="mt-2 list-disc list-inside text-sm text-amber-800 dark:text-amber-200 space-y-1">
+                                            {shareQueue.length > 0 && <li>Compartir con {shareQueue.length} usuario(s) nuevos.</li>}
+                                            {stagedPermissionEntries.length > 0 && <li>Actualizar permisos de {stagedPermissionEntries.length} usuario(s).</li>}
+                                            {pendingUnshares.length > 0 && <li>Quitar acceso a {pendingUnshares.length} usuario(s).</li>}
+                                            {pendingRemoveMyAccess && <li>Eliminar tu acceso directo y revocar tu acceso a este elemento.</li>}
+                                        </ul>
+                                        {(stagedPermissionEntries.length > 0 || pendingUnshares.length > 0 || shareQueue.length > 0) && (
+                                            <div className="mt-2 max-h-28 overflow-y-auto rounded-md border border-amber-200/70 dark:border-amber-700/70 p-2 text-xs text-amber-900 dark:text-amber-100">
+                                                {shareQueue.map(entry => (
+                                                    <p key={`add-${entry.email}`}>• {entry.email}: se añadirá como {entry.role === 'editor' ? 'Editor' : 'Lector'}.</p>
+                                                ))}
+                                                {stagedPermissionEntries.map(([email, role]) => (
+                                                    <p key={`perm-${email}`}>• {email}: permiso cambiará a {role === 'editor' ? 'Editor' : 'Lector'}.</p>
+                                                ))}
+                                                {pendingUnshares.map(email => (
+                                                    <p key={`del-${email}`}>• {email}: perderá acceso a esta asignatura.</p>
+                                                ))}
+                                            </div>
+                                        )}
                                         <div className="mt-3 flex justify-end gap-2">
                                             <button
                                                 type="button"
@@ -701,7 +751,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                 )}
 
                                 {/* Shared Users List */}
-                                {sharedList.length > 0 && (
+                                {allSharedEntries.length > 0 && (
                                     <div>
                                         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             Compartido con ({allSharedEntries.length})
@@ -729,8 +779,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                             <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium mt-1">Propietario</p>
                                                         ) : isOwnerManager ? (
                                                             <select
-                                                                value={share.role || 'viewer'}
+                                                                value={pendingPermissionChanges[share.email] || share.role || 'viewer'}
                                                                 onChange={(e) => handleUpdatePermission(share.email, e.target.value)}
+                                                                disabled={pendingUnshares.includes(share.email)}
                                                                 className="mt-1 text-xs px-2 py-1 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300"
                                                             >
                                                                 <option value="viewer">Lector</option>
@@ -748,7 +799,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                             onClick={() => handleUnshareAction(share.email)}
                                                             disabled={!canManageSharing}
                                                             className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-colors cursor-pointer"
-                                                            title="Dejar de compartir"
+                                                            title={pendingUnshares.includes(share.email) ? 'Deshacer quitar acceso' : 'Quitar acceso al aplicar cambios'}
                                                             style={{ display: canManageSharing ? 'inline-flex' : 'none' }}
                                                         >
                                                             <Trash2 size={16} />
@@ -760,7 +811,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     </div>
                                 )}
 
-                                {sharedList.length === 0 && (
+                                {allSharedEntries.length === 0 && (
                                     <div className="text-center py-6">
                                         <Users className="w-8 h-8 text-gray-300 dark:text-slate-600 mx-auto mb-2" />
                                         <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -772,10 +823,10 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                 {isShortcutEditing && !unshareBlockedInSharedFolder && (
                                     <button
                                         type="button"
-                                        onClick={handleRemoveMyShortcutAccess}
+                                        onClick={toggleRemoveMyShortcutAccess}
                                         className="w-full px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 rounded-xl font-medium transition-colors"
                                     >
-                                        Eliminar acceso para mí
+                                        {pendingRemoveMyAccess ? 'Deshacer eliminar acceso para mí' : 'Marcar eliminar acceso para mí'}
                                     </button>
                                 )}
                             </div>
@@ -787,6 +838,17 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                             {activeTab === 'general' && (
                                 <button type="submit" className="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 flex items-center gap-2 cursor-pointer transition-colors">
                                     <Save className="w-4 h-4" /> {isEditing ? 'Guardar' : 'Crear'}
+                                </button>
+                            )}
+                            {activeTab === 'sharing' && canManageSharing && (
+                                <button
+                                    type="button"
+                                    onClick={handleApplySharingChanges}
+                                    disabled={!hasPendingSharingChanges || shareLoading}
+                                    className="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {shareLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                    Aplicar cambios
                                 </button>
                             )}
                         </div>
