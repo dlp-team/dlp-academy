@@ -15,7 +15,7 @@ import React, {
 } from 'react';
 import {
   Palette, Save, Upload, ChevronLeft, ChevronRight,
-  Check, Eye, RefreshCw, Monitor, Tablet, Smartphone,
+  Check, RefreshCw,
   RotateCcw, Maximize2, Minimize2, Zap, Info,
 } from 'lucide-react';
 
@@ -49,9 +49,31 @@ const InstitutionCustomizationView = ({
   const [fullscreen,  setFullscreen]  = useState(false);
   // Which token is currently being edited (for highlight mode)
   const [activeToken, setActiveToken] = useState(null);
-  const highlightTimerRef = useRef(null);
 
   const iframeRef = useRef(null);
+  const lastValidPreviewRef = useRef({ ...DEFAULTS, ...(initialValues || {}) });
+
+  const COLOR_FIELDS = ['primary', 'secondary', 'accent', 'cardBorder'];
+
+  const isValidHexColor = useCallback((value) => {
+    if (typeof value !== 'string') return false;
+    return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value.trim());
+  }, []);
+
+  const getPreviewSafeForm = useCallback((candidate, fallback) => {
+    const source = candidate || {};
+    const safeFallback = fallback || DEFAULTS;
+    const safe = { ...source };
+
+    COLOR_FIELDS.forEach((field) => {
+      const nextValue = source[field];
+      safe[field] = isValidHexColor(nextValue)
+        ? nextValue
+        : (safeFallback[field] || DEFAULTS[field]);
+    });
+
+    return safe;
+  }, [isValidHexColor]);
 
   // ── Sync initialValues (Firestore arrives async) ──
   useEffect(() => {
@@ -63,7 +85,9 @@ const InstitutionCustomizationView = ({
   // ── Re-inject theme when iframe becomes ready ──
   useEffect(() => {
     if (iframeReady && iframeRef.current) {
-      injectTheme(iframeRef.current, form);
+      const safeForm = getPreviewSafeForm(form, lastValidPreviewRef.current);
+      lastValidPreviewRef.current = safeForm;
+      injectTheme(iframeRef.current, safeForm);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [iframeReady]);
@@ -71,11 +95,13 @@ const InstitutionCustomizationView = ({
   // ── Keep preview fully live on every change (fail-safe) ──
   useEffect(() => {
     if (!iframeReady || !iframeRef.current) return;
-    injectTheme(iframeRef.current, form);
+    const safeForm = getPreviewSafeForm(form, lastValidPreviewRef.current);
+    lastValidPreviewRef.current = safeForm;
+    injectTheme(iframeRef.current, safeForm);
     if (activeToken) {
-      injectHighlight(iframeRef.current, activeToken, form[activeToken]);
+      injectHighlight(iframeRef.current, activeToken, safeForm[activeToken]);
     }
-  }, [form, iframeReady, activeToken]);
+  }, [form, iframeReady, activeToken, getPreviewSafeForm]);
 
   // ── Persist sidebar preference ──
   useEffect(() => {
@@ -93,39 +119,41 @@ const InstitutionCustomizationView = ({
   const handleChange = useCallback((field, value) => {
     setForm(prev => {
       const next = { ...prev, [field]: value };
+      const safeNext = getPreviewSafeForm(next, lastValidPreviewRef.current);
+      lastValidPreviewRef.current = safeNext;
       if (iframeRef.current) {
-        injectTheme(iframeRef.current, next);
-        if (activeToken === field) injectHighlight(iframeRef.current, field, value);
+        injectTheme(iframeRef.current, safeNext);
+        if (activeToken === field) injectHighlight(iframeRef.current, field, safeNext[field]);
       }
       return next;
     });
     setSaved(false);
-  }, [activeToken]);
+  }, [activeToken, getPreviewSafeForm]);
 
   const handleFocus = useCallback((token) => {
     setActiveToken(token);
-    clearTimeout(highlightTimerRef.current);
+    const safeForm = getPreviewSafeForm(form, lastValidPreviewRef.current);
+    lastValidPreviewRef.current = safeForm;
     if (iframeRef.current) {
-      injectHighlight(iframeRef.current, token, form[token]);
+      injectHighlight(iframeRef.current, token, safeForm[token]);
     }
-  }, [form]);
+  }, [form, getPreviewSafeForm]);
 
   const handleBlur = useCallback(() => {
-    // Keep highlight for 1.5 s after blur so admin can see what changed
-    highlightTimerRef.current = setTimeout(() => {
-      setActiveToken(null);
-      if (iframeRef.current) injectHighlight(iframeRef.current, null, null);
-    }, 1500);
+    // Keep token highlight persistent while editing so the affected preview
+    // rectangles remain visible during continuous color changes.
   }, []);
 
   const handleReset = () => {
     const next = { ...DEFAULTS, ...(initialValues || {}) };
     setForm(next);
     setSaved(false);
+    lastValidPreviewRef.current = getPreviewSafeForm(next, DEFAULTS);
     if (iframeRef.current) {
-      injectTheme(iframeRef.current, next);
+      injectTheme(iframeRef.current, lastValidPreviewRef.current);
       injectHighlight(iframeRef.current, null, null);
     }
+    setActiveToken(null);
   };
 
   const handleSave = async () => {
@@ -150,9 +178,11 @@ const InstitutionCustomizationView = ({
       }
     } catch { /* cross-origin */ }
     setIframeReady(true);
-    injectTheme(iframe, form);
+    const safeForm = getPreviewSafeForm(form, lastValidPreviewRef.current);
+    lastValidPreviewRef.current = safeForm;
+    injectTheme(iframe, safeForm);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [homeUrl]);
+  }, [homeUrl, form, getPreviewSafeForm]);
 
   const reloadIframe = () => {
     setIframeReady(false);

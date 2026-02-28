@@ -16,6 +16,8 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
       `}
       style={isActive ? { borderColor: value, boxShadow: `0 0 0 3px ${hexToRgba(value, 0.18)}` } : {}}
       onClick={() => inputRef.current?.click()}
+      onFocusCapture={() => onFocus(token)}
+      onBlurCapture={onBlur}
     >
       <div className="flex items-center gap-3 p-3">
         <div className="relative shrink-0">
@@ -34,8 +36,6 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
             type="color"
             value={value}
             onChange={(e) => onChange(token, e.target.value)}
-            onFocus={() => onFocus(token)}
-            onBlur={onBlur}
             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
           />
         </div>
@@ -60,8 +60,6 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
           type="text"
           value={value}
           onChange={(e) => onChange(token, e.target.value)}
-          onFocus={() => onFocus(token)}
-          onBlur={onBlur}
           onClick={(e) => e.stopPropagation()}
           className="w-20 text-[11px] font-mono bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 transition shrink-0"
           style={{ focusRingColor: value }}
