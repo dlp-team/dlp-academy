@@ -38,12 +38,12 @@ const useInstitutionBranding = (user) => {
 
     React.useEffect(() => {
         const root = document.documentElement;
-        const cssVariables = buildGlobalBrandCssVariables(branding.primaryColor);
+        const cssVariables = buildGlobalBrandCssVariables(branding);
 
         Object.entries(cssVariables).forEach(([variable, value]) => {
             root.style.setProperty(variable, value);
         });
-    }, [branding.primaryColor]);
+    }, [branding]);
 
     return branding;
 };

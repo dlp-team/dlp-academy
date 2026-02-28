@@ -42,6 +42,8 @@ const DEFAULT_CUSTOMIZATION_FORM = {
     institutionDisplayName: '',
     logoUrl: '',
     primaryBrandColor: GLOBAL_BRAND_DEFAULTS.primaryColor,
+    secondaryBrandColor: GLOBAL_BRAND_DEFAULTS.secondaryColor,
+    tertiaryBrandColor: GLOBAL_BRAND_DEFAULTS.tertiaryColor,
     homeThemeColors: { ...HOME_THEME_DEFAULT_COLORS }
 };
 
@@ -154,7 +156,7 @@ const ClassesCoursesSection = ({ user, allStudents, allTeachers }) => {
                 </div>
                 <button
                     onClick={() => view === 'courses' ? setShowCourseModal(true) : setShowClassModal(true)}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 transition-all active:scale-95 text-sm"
+                    className="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-[var(--color-primary-200)] dark:shadow-[var(--color-primary-900)/0.2] transition-all active:scale-95 text-sm"
                 >
                     <Plus className="w-4 h-4" />
                     {view === 'courses' ? 'Nuevo Curso' : 'Nueva Clase'}
@@ -268,7 +270,7 @@ const ClassesCoursesSection = ({ user, allStudents, allTeachers }) => {
                         {courseError && <p className="text-sm text-red-500 flex items-center gap-1"><XCircle className="w-4 h-4" />{courseError}</p>}
                         <div className="flex gap-3 mt-6">
                             <button type="button" onClick={() => setShowCourseModal(false)} className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-900 dark:text-white rounded-xl font-medium transition-all">Cancelar</button>
-                            <button type="submit" disabled={courseSubmitting} className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 transition-all flex justify-center items-center gap-2">
+                            <button type="submit" disabled={courseSubmitting} className="flex-1 px-4 py-2.5 bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white rounded-xl font-medium shadow-lg shadow-[var(--color-primary-200)] dark:shadow-[var(--color-primary-900)/0.2] transition-all flex justify-center items-center gap-2">
                                 {courseSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> Crear</>}
                             </button>
                         </div>
@@ -326,7 +328,7 @@ const ClassesCoursesSection = ({ user, allStudents, allTeachers }) => {
                             {classError && <p className="text-sm text-red-500 flex items-center gap-1"><XCircle className="w-4 h-4" />{classError}</p>}
                             <div className="flex gap-3 mt-6">
                                 <button type="button" onClick={() => setShowClassModal(false)} className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-900 dark:text-white rounded-xl font-medium transition-all">Cancelar</button>
-                                <button type="submit" disabled={classSubmitting} className="flex-1 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 transition-all flex justify-center items-center gap-2">
+                                <button type="submit" disabled={classSubmitting} className="flex-1 px-4 py-2.5 bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white rounded-xl font-medium shadow-lg shadow-[var(--color-primary-200)] dark:shadow-[var(--color-primary-900)/0.2] transition-all flex justify-center items-center gap-2">
                                     {classSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> Crear Clase</>}
                                 </button>
                             </div>
@@ -427,6 +429,8 @@ const InstitutionAdminDashboard = ({ user }) => {
                     institutionDisplayName: branding.institutionDisplayName || institutionData.name || '',
                     logoUrl: branding.logoUrl || '',
                     primaryBrandColor: branding.primaryColor || GLOBAL_BRAND_DEFAULTS.primaryColor,
+                    secondaryBrandColor: branding.secondaryColor || GLOBAL_BRAND_DEFAULTS.secondaryColor,
+                    tertiaryBrandColor: branding.tertiaryColor || GLOBAL_BRAND_DEFAULTS.tertiaryColor,
                     homeThemeColors: resolvedColors
                 });
             } catch (error) {
@@ -499,13 +503,15 @@ const InstitutionAdminDashboard = ({ user }) => {
                 institutionDisplayName: incomingFormValues.institutionName || '',
                 logoUrl: incomingFormValues.logoUrl || '',
                 primaryBrandColor: incomingFormValues.primary || GLOBAL_BRAND_DEFAULTS.primaryColor,
+                secondaryBrandColor: incomingFormValues.secondary || GLOBAL_BRAND_DEFAULTS.secondaryColor,
+                tertiaryBrandColor: incomingFormValues.accent || GLOBAL_BRAND_DEFAULTS.tertiaryColor,
                 homeThemeColors: getEffectiveHomeThemeColors({
                     primary: incomingFormValues.primary,
                     secondary: incomingFormValues.secondary,
                     accent: incomingFormValues.accent,
-                    mutedText: incomingFormValues.mutedText,
+                    mutedText: HOME_THEME_DEFAULT_COLORS.mutedText,
                     cardBorder: incomingFormValues.cardBorder,
-                    cardBackground: incomingFormValues.cardBackground
+                    cardBackground: HOME_THEME_DEFAULT_COLORS.cardBackground
                 })
             }
             : customizationForm;
@@ -518,12 +524,18 @@ const InstitutionAdminDashboard = ({ user }) => {
             const institutionRef = doc(db, 'institutions', user.institutionId);
             const resolvedColors = getEffectiveHomeThemeColors(nextCustomizationForm.homeThemeColors);
             const normalizedPrimaryBrandColor = normalizeHexColor(nextCustomizationForm.primaryBrandColor) || GLOBAL_BRAND_DEFAULTS.primaryColor;
+            const normalizedSecondaryBrandColor = normalizeHexColor(nextCustomizationForm.secondaryBrandColor) || GLOBAL_BRAND_DEFAULTS.secondaryColor;
+            const normalizedTertiaryBrandColor = normalizeHexColor(nextCustomizationForm.tertiaryBrandColor) || GLOBAL_BRAND_DEFAULTS.tertiaryColor;
 
             await updateDoc(institutionRef, {
                 'customization.institutionDisplayName': nextCustomizationForm.institutionDisplayName.trim() || institutionName || '',
                 'customization.logoUrl': nextCustomizationForm.logoUrl.trim(),
                 'customization.primaryBrandColor': normalizedPrimaryBrandColor,
+                'customization.secondaryBrandColor': normalizedSecondaryBrandColor,
+                'customization.tertiaryBrandColor': normalizedTertiaryBrandColor,
                 'customization.brand.primaryColor': normalizedPrimaryBrandColor,
+                'customization.brand.secondaryColor': normalizedSecondaryBrandColor,
+                'customization.brand.tertiaryColor': normalizedTertiaryBrandColor,
                 'customization.homeThemeColors': resolvedColors,
                 'customization.home.colors': resolvedColors,
                 'customization.homeThemeTokens': HOME_THEME_TOKENS,
@@ -546,11 +558,11 @@ const InstitutionAdminDashboard = ({ user }) => {
         institutionName: customizationForm.institutionDisplayName || institutionName || '',
         logoUrl: customizationForm.logoUrl || '',
         primary: customizationForm.primaryBrandColor || customizationForm.homeThemeColors?.primary || HOME_THEME_DEFAULT_COLORS.primary,
-        secondary: customizationForm.homeThemeColors?.secondary || HOME_THEME_DEFAULT_COLORS.secondary,
-        accent: customizationForm.homeThemeColors?.accent || HOME_THEME_DEFAULT_COLORS.accent,
-        mutedText: customizationForm.homeThemeColors?.mutedText || HOME_THEME_DEFAULT_COLORS.mutedText,
+        secondary: customizationForm.secondaryBrandColor || customizationForm.homeThemeColors?.secondary || GLOBAL_BRAND_DEFAULTS.secondaryColor,
+        accent: customizationForm.tertiaryBrandColor || customizationForm.homeThemeColors?.accent || GLOBAL_BRAND_DEFAULTS.tertiaryColor,
+        mutedText: HOME_THEME_DEFAULT_COLORS.mutedText,
         cardBorder: customizationForm.homeThemeColors?.cardBorder || HOME_THEME_DEFAULT_COLORS.cardBorder,
-        cardBackground: customizationForm.homeThemeColors?.cardBackground || HOME_THEME_DEFAULT_COLORS.cardBackground
+        cardBackground: HOME_THEME_DEFAULT_COLORS.cardBackground
     };
 
     const TABS = [
@@ -575,7 +587,7 @@ const InstitutionAdminDashboard = ({ user }) => {
                     {activeTab === 'users' && userType === 'teachers' && (
                         <button
                             onClick={() => { setAddError(''); setAddSuccess(''); setShowAddUserModal(true); }}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 transition-all active:scale-95"
+                            className="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-[var(--color-primary-200)] dark:shadow-[var(--color-primary-900)/0.2] transition-all active:scale-95"
                         >
                             <UserPlus className="w-5 h-5" /> Autorizar Profesor
                         </button>
