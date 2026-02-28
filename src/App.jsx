@@ -26,6 +26,7 @@ import { StudentDetailView, TeacherDetailView } from './pages/InstitutionAdminDa
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard/TeacherDashboard';
 import TeacherStudentDetailView from './pages/TeacherDashboard/components/TeacherStudentDetailView';
+import { hasRequiredRoleAccess } from './utils/permissionUtils';
 
 // Updated ProtectedRoute to handle Role Checks
 const ProtectedRoute = ({ children, user, loading, requiredRole }) => {
@@ -42,7 +43,7 @@ const ProtectedRoute = ({ children, user, loading, requiredRole }) => {
   if (!user) return <Navigate to="/login" />;
 
   // 3. Wrong Role? -> Home (Prevent access to Admin Dashboard)
-  if (requiredRole && user.role !== requiredRole) {
+  if (requiredRole && !hasRequiredRoleAccess(user, requiredRole)) {
     console.warn(`Access denied: User role '${user.role}' is not '${requiredRole}'`);
     return <Navigate to="/home" />;
   }

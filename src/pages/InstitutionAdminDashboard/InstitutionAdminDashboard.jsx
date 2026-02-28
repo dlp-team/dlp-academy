@@ -27,6 +27,7 @@ import InstitutionCustomizationView from './components/InstitutionCustomizationV
 import ClassesCoursesSection from './components/ClassesCoursesSection';
 import UsersTabContent from './components/UsersTabContent';
 import AddTeacherModal from './components/AddTeacherModal';
+import { hasRequiredRoleAccess } from '../../utils/permissionUtils';
 import {
   GLOBAL_BRAND_DEFAULTS,
   HOME_THEME_DEFAULT_COLORS,
@@ -81,7 +82,7 @@ const InstitutionAdminDashboard = ({ user }) => {
   const [customizationSuccess, setCustomizationSuccess] = useState('');
 
   useEffect(() => {
-    if (user && user.role !== 'institutionadmin') {
+    if (user && !hasRequiredRoleAccess(user, 'institutionadmin')) {
       console.warn('Unauthorized access attempt to Institution Admin Dashboard');
       navigate('/home');
     }

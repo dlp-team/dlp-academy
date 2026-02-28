@@ -344,9 +344,67 @@ export const shouldShowDeleteUI = (item, userId) => {
     return canDelete(item, userId);
 };
 
+const ROLE_RANK = {
+    student: 0,
+    teacher: 1,
+    institutionadmin: 2,
+    admin: 3,
+};
+
+/**
+ * Normalize role value from user/profile docs.
+ * Unknown roles are treated as student for safety.
+ *
+ * @param {Object|string|null|undefined} userOrRole
+ * @returns {'student'|'teacher'|'institutionadmin'|'admin'}
+ */
+export const getNormalizedRole = (userOrRole) => {
+    const rawRole = typeof userOrRole === 'string' ? userOrRole : userOrRole?.role;
+    const normalized = typeof rawRole === 'string' ? rawRole.trim().toLowerCase() : 'student';
+    return Object.prototype.hasOwnProperty.call(ROLE_RANK, normalized) ? normalized : 'student';
+};
+
+/**
+ * Role inheritance check.
+ * admin >= institutionadmin >= teacher >= student
+ *
+ * @param {Object|string|null|undefined} userOrRole
+ * @param {'student'|'teacher'|'institutionadmin'|'admin'} requiredRole
+ * @returns {boolean}
+ */
+export const hasRequiredRoleAccess = (userOrRole, requiredRole = 'student') => {
+    const userRole = getNormalizedRole(userOrRole);
+    const required = getNormalizedRole(requiredRole);
+    return ROLE_RANK[userRole] >= ROLE_RANK[required];
+};
+
+/**
+ * Students are read-only for academic content management surfaces.
+ *
+ * @param {Object|string|null|undefined} userOrRole
+ * @returns {boolean}
+ */
+export const isReadOnlyRole = (userOrRole) => !hasRequiredRoleAccess(userOrRole, 'teacher');
+
+/**
+ * Role-level capability for creating subjects.
+ *
+ * @param {Object|string|null|undefined} userOrRole
+ * @returns {boolean}
+ */
+export const canCreateSubjectByRole = (userOrRole) => hasRequiredRoleAccess(userOrRole, 'teacher');
+
+/**
+ * Role-level capability for creating folders.
+ *
+ * @param {Object|string|null|undefined} userOrRole
+ * @returns {boolean}
+ */
+export const canCreateFolderByRole = (userOrRole) => hasRequiredRoleAccess(userOrRole, 'teacher');
+
 /**
  * Check if user has the teacher role.
  * @param {Object} user - User object from App.jsx (contains .role)
  * @returns {boolean}
  */
-export const isTeacher = (user) => user?.role === 'teacher';
+export const isTeacher = (user) => hasRequiredRoleAccess(user, 'teacher');

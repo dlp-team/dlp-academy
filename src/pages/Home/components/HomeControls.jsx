@@ -36,7 +36,8 @@ const HomeControls = ({
     onFilterOverlayChange,
     onScaleOverlayChange,
     sharedScopeSelected = true,
-    onSharedScopeChange = () => {}
+    onSharedScopeChange = () => {},
+    canCreateFolder = true,
 }) => {
     const {
         handleViewModeChange,
@@ -111,7 +112,7 @@ const HomeControls = ({
                 />
 
                 {/* Create Folder Button and Search Bar (Manual mode only) */}
-                {viewMode === 'grid' && (
+                {viewMode === 'grid' && canCreateFolder && (
                     <>
                         <div className="flex items-center gap-2 flex-grow">
                             <button

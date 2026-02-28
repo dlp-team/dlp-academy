@@ -66,6 +66,7 @@ const HomeContent = ({
     sharedScopeSelected = true,
     filterOverlayOpen = false,
     onCloseFilterOverlay = () => {},
+    readOnlyByRole = false,
 }) => {
     const contentRef = useRef(null);
     const sharedFolderPermission = currentFolder?.isShared && user?.uid
@@ -73,7 +74,7 @@ const HomeContent = ({
         : 'none';
     const isViewerInSharedFolder = currentFolder?.isShared === true && sharedFolderPermission === 'viewer';
     const isEditorInSharedFolder = currentFolder?.isShared === true && sharedFolderPermission === 'editor';
-    const disableAllActionsInShared = isViewerInSharedFolder;
+    const disableAllActionsInShared = isViewerInSharedFolder || readOnlyByRole;
     const disableFolderDeleteActionsInShared = isViewerInSharedFolder || isEditorInSharedFolder;
     const disableSubjectDeleteActionsInShared = isViewerInSharedFolder;
     const dndEnabledInContext = isDragAndDropEnabled && !disableAllActionsInShared;

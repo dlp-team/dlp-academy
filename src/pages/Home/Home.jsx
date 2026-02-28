@@ -26,7 +26,14 @@ import HomeModals from './components/HomeModals';
 import HomeShareConfirmModals from './components/HomeShareConfirmModals';
 import FolderTreeModal from '../../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../Subject/modals/SubjectTopicModal';
-import { getPermissionLevel, isShortcutItem, isSharedForCurrentUser as isSharedForCurrentUserUtil } from '../../utils/permissionUtils';
+import {
+    canCreateFolderByRole,
+    canCreateSubjectByRole,
+    getPermissionLevel,
+    isReadOnlyRole,
+    isShortcutItem,
+    isSharedForCurrentUser as isSharedForCurrentUserUtil
+} from '../../utils/permissionUtils';
 import { mergeSourceAndShortcutItems } from '../../utils/mergeUtils';
 import { useInstitutionHomeThemeTokens } from './hooks/useInstitutionHomeThemeTokens';
 
@@ -185,11 +192,22 @@ const Home = ({ user }) => {
     }, [logic.viewMode, sharedFolders, sharedSubjects, logic.filteredFolders, logic.folders, logic.filteredSubjects, logic.subjects, sharedScopeSelected, isSharedForCurrentUser]);
 
     const canCreateInManualContext = useMemo(() => {
+        if (!canCreateSubjectByRole(user)) return false;
         if (logic.viewMode !== 'grid') return true;
         if (logic.currentFolder?.isShared !== true) return true;
         const permission = user?.uid ? getPermissionLevel(logic.currentFolder, user.uid) : 'none';
         return permission === 'editor' || permission === 'owner';
-    }, [logic.viewMode, logic.currentFolder, user?.uid]);
+    }, [logic.viewMode, logic.currentFolder, user]);
+
+    const canCreateFolderInManualContext = useMemo(() => {
+        if (!canCreateFolderByRole(user)) return false;
+        if (logic.viewMode !== 'grid') return false;
+        if (logic.currentFolder?.isShared !== true) return true;
+        const permission = user?.uid ? getPermissionLevel(logic.currentFolder, user.uid) : 'none';
+        return permission === 'editor' || permission === 'owner';
+    }, [logic.viewMode, logic.currentFolder, user]);
+
+    const readOnlyByRole = useMemo(() => isReadOnlyRole(user), [user]);
 
     React.useEffect(() => {
         const availableTagSet = new Set(availableControlTags);
@@ -273,6 +291,7 @@ const Home = ({ user }) => {
                         onScaleOverlayChange={setIsScaleOverlayOpen}
                         sharedScopeSelected={sharedScopeSelected}
                         onSharedScopeChange={setSharedScopeSelected}
+                        canCreateFolder={canCreateFolderInManualContext}
 
                         // SEARCH
                         searchQuery={searchQuery}
@@ -470,6 +489,7 @@ const Home = ({ user }) => {
                                         activeFilter={logic.activeFilter}
                                         selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
                                         sharedScopeSelected={sharedScopeSelected}
+                                        readOnlyByRole={readOnlyByRole}
                                         
                                         navigate={logic.navigate}
                                     />
