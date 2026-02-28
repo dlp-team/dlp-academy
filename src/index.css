@@ -8,8 +8,8 @@
   --color-slate-900: #0f172a;
 }
 
-/* THE FIX: Manual Dark Mode for v4 */
-@custom-variant dark (&:where(.dark, .dark *));
+/* The dark variant below follows main.css and is the authoritative one. */
+@variant dark (&:is(.dark *));
 
 .home-page {
   --home-primary: #6366f1;
