@@ -1,6 +1,7 @@
 // src/components/modals/FolderDeleteModal.jsx
 import React, { useState } from 'react';
 import { AlertTriangle, Trash2, FolderOpen, X, ArrowLeft } from 'lucide-react';
+import { OVERLAY_TOP_OFFSET_STYLE } from '../../utils/layoutConstants';
 
 const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, folderName, itemCount }) => {
     const [confirmationType, setConfirmationType] = useState(null);
@@ -33,7 +34,7 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
     // Confirmation Screen
     if (confirmationType) {
         return (
-            <div className="fixed inset-x-0 top-28 bottom-0 z-50 overflow-y-auto transition-colors">
+            <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto transition-colors" style={OVERLAY_TOP_OFFSET_STYLE}>
                 <div onClick={handleBackdropClick} className="flex min-h-full items-center justify-center p-4 text-center">
                     <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" />
                     <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[calc(100vh-10rem)] overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200 text-left">
@@ -126,7 +127,7 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
 
     // Main Selection Screen
     return (
-        <div className="fixed inset-x-0 top-28 bottom-0 z-50 overflow-y-auto transition-colors">
+        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto transition-colors" style={OVERLAY_TOP_OFFSET_STYLE}>
             <div onClick={handleBackdropClick} className="flex min-h-full items-center justify-center p-4 text-center">
                 <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" />
                 <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[calc(100vh-10rem)] overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200 text-left">

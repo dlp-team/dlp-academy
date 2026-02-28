@@ -1017,22 +1017,6 @@ export const useFolders = (user) => {
                 throw new Error('No puedes transferir la propiedad a tu propio usuario.');
             }
 
-            const usersRef = collection(db, 'users');
-            const userQuery = query(usersRef, where('email', '==', normalizedEmail));
-            const userSnapshot = await getDocs(userQuery);
-
-            if (userSnapshot.empty) {
-                throw new Error('No existe un usuario registrado con ese correo.');
-            }
-
-            const nextOwnerDoc = userSnapshot.docs[0];
-            const nextOwnerUid = nextOwnerDoc.id;
-            const nextOwnerData = nextOwnerDoc.data() || {};
-
-            if (currentInstitutionId && nextOwnerData?.institutionId && nextOwnerData.institutionId !== currentInstitutionId) {
-                throw new Error('No puedes transferir propiedad entre instituciones diferentes.');
-            }
-
             const folderRef = doc(db, 'folders', folderId);
             const folderSnap = await getDoc(folderRef);
 
@@ -1049,24 +1033,12 @@ export const useFolders = (user) => {
 
             const currentSharedWith = Array.isArray(folderData.sharedWith) ? folderData.sharedWith : [];
             const currentSharedWithUids = Array.isArray(folderData.sharedWithUids) ? folderData.sharedWithUids : [];
-            const recipientAlreadyShared = currentSharedWithUids.includes(nextOwnerUid) ||
-                currentSharedWith.some(entry => entry?.uid === nextOwnerUid || (entry?.email || '').toLowerCase() === normalizedEmail);
+            const recipientShareEntry = currentSharedWith.find(entry => (entry?.email || '').toLowerCase() === normalizedEmail);
+            const nextOwnerUid = recipientShareEntry?.uid || null;
 
-            if (!recipientAlreadyShared) {
+            if (!nextOwnerUid || !currentSharedWithUids.includes(nextOwnerUid)) {
                 throw new Error('Solo puedes transferir la propiedad a un usuario que ya tenga acceso compartido.');
             }
-
-            const recipientShortcutQuery = query(
-                collection(db, 'shortcuts'),
-                where('ownerId', '==', nextOwnerUid),
-                where('targetId', '==', folderId),
-                where('targetType', '==', 'folder')
-            );
-            const recipientShortcutSnapshot = await getDocs(recipientShortcutQuery);
-            const recipientShortcutDocs = recipientShortcutSnapshot.docs;
-            const recipientShortcutData = recipientShortcutDocs[0]?.data() || null;
-
-            const nextParentId = recipientShortcutData?.parentId ?? folderData?.parentId ?? null;
 
             const updatedSharedWith = currentSharedWith
                 .filter(entry => entry?.uid !== nextOwnerUid && (entry?.email || '').toLowerCase() !== normalizedEmail);
@@ -1112,28 +1084,15 @@ export const useFolders = (user) => {
 
             const folderUpdatePayload = {
                 ownerId: nextOwnerUid,
-                ownerEmail: nextOwnerData?.email || normalizedEmail,
-                ownerName: nextOwnerData?.displayName || nextOwnerData?.name || '',
-                parentId: nextParentId,
+                ownerEmail: recipientShareEntry?.email || normalizedEmail,
+                ownerName: recipientShareEntry?.displayName || recipientShareEntry?.name || '',
                 sharedWith: updatedSharedWith,
                 sharedWithUids: updatedSharedWithUids,
                 isShared: updatedSharedWithUids.length > 0,
                 updatedAt: new Date()
             };
 
-            if (recipientShortcutData?.shortcutName) folderUpdatePayload.name = recipientShortcutData.shortcutName;
-            if (Array.isArray(recipientShortcutData?.shortcutTags)) folderUpdatePayload.tags = recipientShortcutData.shortcutTags;
-            if (recipientShortcutData?.shortcutColor) folderUpdatePayload.color = recipientShortcutData.shortcutColor;
-            if (recipientShortcutData?.shortcutCardStyle) folderUpdatePayload.cardStyle = recipientShortcutData.shortcutCardStyle;
-            if (recipientShortcutData?.shortcutModernFillColor !== undefined) {
-                folderUpdatePayload.modernFillColor = recipientShortcutData.shortcutModernFillColor;
-            }
-
             await updateDoc(folderRef, folderUpdatePayload);
-
-            for (const shortcutDoc of recipientShortcutDocs) {
-                await deleteDoc(doc(db, 'shortcuts', shortcutDoc.id));
-            }
 
             return {
                 success: true,

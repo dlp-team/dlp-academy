@@ -433,22 +433,6 @@ export const useSubjects = (user) => {
                 throw new Error('No puedes transferir la propiedad a tu propio usuario.');
             }
 
-            const usersRef = collection(db, 'users');
-            const userQuery = query(usersRef, where('email', '==', normalizedEmail));
-            const userSnapshot = await getDocs(userQuery);
-
-            if (userSnapshot.empty) {
-                throw new Error('No existe un usuario registrado con ese correo.');
-            }
-
-            const nextOwnerDoc = userSnapshot.docs[0];
-            const nextOwnerUid = nextOwnerDoc.id;
-            const nextOwnerData = nextOwnerDoc.data() || {};
-
-            if (currentInstitutionId && nextOwnerData?.institutionId && nextOwnerData.institutionId !== currentInstitutionId) {
-                throw new Error('No puedes transferir propiedad entre instituciones diferentes.');
-            }
-
             const subjectRef = doc(db, 'subjects', subjectId);
             const subjectSnap = await getDoc(subjectRef);
 
@@ -465,24 +449,12 @@ export const useSubjects = (user) => {
 
             const currentSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
             const currentSharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
-            const recipientAlreadyShared = currentSharedWithUids.includes(nextOwnerUid) ||
-                currentSharedWith.some(entry => entry?.uid === nextOwnerUid || (entry?.email || '').toLowerCase() === normalizedEmail);
+            const recipientShareEntry = currentSharedWith.find(entry => (entry?.email || '').toLowerCase() === normalizedEmail);
+            const nextOwnerUid = recipientShareEntry?.uid || null;
 
-            if (!recipientAlreadyShared) {
+            if (!nextOwnerUid || !currentSharedWithUids.includes(nextOwnerUid)) {
                 throw new Error('Solo puedes transferir la propiedad a un usuario que ya tenga acceso compartido.');
             }
-
-            const recipientShortcutQuery = query(
-                collection(db, 'shortcuts'),
-                where('ownerId', '==', nextOwnerUid),
-                where('targetId', '==', subjectId),
-                where('targetType', '==', 'subject')
-            );
-            const recipientShortcutSnapshot = await getDocs(recipientShortcutQuery);
-            const recipientShortcutDocs = recipientShortcutSnapshot.docs;
-            const recipientShortcutData = recipientShortcutDocs[0]?.data() || null;
-
-            const nextFolderId = recipientShortcutData?.parentId ?? subjectData?.folderId ?? null;
 
             const updatedSharedWith = currentSharedWith
                 .filter(entry => entry?.uid !== nextOwnerUid && (entry?.email || '').toLowerCase() !== normalizedEmail);
@@ -529,30 +501,15 @@ export const useSubjects = (user) => {
 
             const subjectUpdatePayload = {
                 ownerId: nextOwnerUid,
-                ownerEmail: nextOwnerData?.email || normalizedEmail,
-                ownerName: nextOwnerData?.displayName || nextOwnerData?.name || '',
-                folderId: nextFolderId,
+                ownerEmail: recipientShareEntry?.email || normalizedEmail,
+                ownerName: recipientShareEntry?.displayName || recipientShareEntry?.name || '',
                 sharedWith: updatedSharedWith,
                 sharedWithUids: updatedSharedWithUids,
                 isShared: updatedSharedWithUids.length > 0,
                 updatedAt: new Date()
             };
 
-            if (recipientShortcutData?.shortcutName) subjectUpdatePayload.name = recipientShortcutData.shortcutName;
-            if (recipientShortcutData?.shortcutCourse !== undefined) subjectUpdatePayload.course = recipientShortcutData.shortcutCourse;
-            if (Array.isArray(recipientShortcutData?.shortcutTags)) subjectUpdatePayload.tags = recipientShortcutData.shortcutTags;
-            if (recipientShortcutData?.shortcutColor) subjectUpdatePayload.color = recipientShortcutData.shortcutColor;
-            if (recipientShortcutData?.shortcutIcon) subjectUpdatePayload.icon = recipientShortcutData.shortcutIcon;
-            if (recipientShortcutData?.shortcutCardStyle) subjectUpdatePayload.cardStyle = recipientShortcutData.shortcutCardStyle;
-            if (recipientShortcutData?.shortcutModernFillColor !== undefined) {
-                subjectUpdatePayload.modernFillColor = recipientShortcutData.shortcutModernFillColor;
-            }
-
             await updateDoc(subjectRef, subjectUpdatePayload);
-
-            for (const shortcutDoc of recipientShortcutDocs) {
-                await deleteDoc(doc(db, 'shortcuts', shortcutDoc.id));
-            }
 
             return {
                 success: true,

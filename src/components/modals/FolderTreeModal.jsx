@@ -6,6 +6,7 @@ import { isInvalidFolderMove } from '../../utils/folderUtils';
 import useAutoScrollOnDrag from '../../hooks/useAutoScrollOnDrag';
 import { useGhostDrag } from '../../hooks/useGhostDrag';
 import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../utils/dragPayloadUtils';
+import { OVERLAY_TOP_OFFSET_STYLE } from '../../utils/layoutConstants';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
 
@@ -360,7 +361,7 @@ const FolderTreeModal = ({
     };
 
     return (
-        <div className="fixed inset-x-0 top-21 bottom-0 z-50 overflow-y-auto animate-in fade-in duration-200">
+        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto animate-in fade-in duration-200" style={OVERLAY_TOP_OFFSET_STYLE}>
             <div className="flex min-h-full items-center justify-center p-4 text-center" onClick={onClose}>
                 <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" />
                 <div 

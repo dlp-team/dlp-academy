@@ -5,6 +5,7 @@ import { COLORS, MODERN_FILL_COLORS } from '../../../utils/subjectConstants';
 import { getPermissionLevel } from '../../../utils/permissionUtils';
 import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 
 const FolderManager = ({
     isOpen, onClose, onSave, initialData, isEditing,
@@ -619,7 +620,7 @@ const FolderManager = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-x-0 top-28 bottom-0 z-50 overflow-y-auto">
+        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto" style={OVERLAY_TOP_OFFSET_STYLE}>
             <div className="flex min-h-full items-center justify-center p-4 text-center">
                 <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" onClick={handleBackdropCloseRequest} />
                 <div className="relative transform overflow-hidden bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[calc(100vh-10rem)] shadow-xl text-left animate-in fade-in zoom-in duration-200 border border-transparent dark:border-slate-800 transition-colors">

@@ -1,5 +1,6 @@
 // src/pages/Home/components/HomeShareConfirmModals.jsx
 import React from 'react';
+import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 
 const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm, setUnshareConfirm, subjects }) => {
     const closeShareConfirm = () => setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null });
@@ -9,7 +10,7 @@ const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm,
             {shareConfirm.open && (
                 <div className="fixed inset-0 z-51">
                     <div className="absolute inset-0 bg-black/50 dark:bg-black/70 transition-colors" />
-                    <div className="absolute inset-x-0 top-28 bottom-0 flex items-center justify-center p-4">
+                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-center p-4" style={OVERLAY_TOP_OFFSET_STYLE}>
                     <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[calc(100vh-10rem)] overflow-y-auto shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
                         <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
                             <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -75,7 +76,7 @@ const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm,
             {unshareConfirm.open && (
                 <div className="fixed inset-0 z-51">
                     <div className="absolute inset-0 bg-black/50 dark:bg-black/70 transition-colors" />
-                    <div className="absolute inset-x-0 top-25 bottom-0 flex items-center justify-center p-4">
+                    <div className="absolute inset-x-0 bottom-0 flex items-center justify-center p-4" style={OVERLAY_TOP_OFFSET_STYLE}>
                     <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[calc(100vh-10rem)] overflow-y-auto shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
                         <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
                             <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
