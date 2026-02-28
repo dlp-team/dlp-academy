@@ -22,8 +22,10 @@ import StudyGuideEditor from './pages/Content/StudyGuideEditor';
 
 // Dashboard pages
 import InstitutionAdminDashboard from './pages/InstitutionAdminDashboard/InstitutionAdminDashboard';
+import { StudentDetailView, TeacherDetailView } from './pages/InstitutionAdminDashboard/components/UserDetailView';
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard/TeacherDashboard';
+import TeacherStudentDetailView from './pages/TeacherDashboard/components/TeacherStudentDetailView';
 
 // Updated ProtectedRoute to handle Role Checks
 const ProtectedRoute = ({ children, user, loading, requiredRole }) => {
@@ -204,6 +206,22 @@ function App() {
             </ProtectedRoute>
           } 
         />
+        <Route
+          path="/institution-admin-dashboard/teacher/:teacherId"
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="institutionadmin">
+              <TeacherDetailView user={user} />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/institution-admin-dashboard/student/:studentId"
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="institutionadmin">
+              <StudentDetailView user={user} />
+            </ProtectedRoute>
+          }
+        />
         
         {/* --- TEACHER DASHBOARD --- */}
         <Route 
@@ -213,6 +231,14 @@ function App() {
               <TeacherDashboard user={user} />
             </ProtectedRoute>
           } 
+        />
+        <Route
+          path="/teacher-dashboard/student/:studentId"
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="teacher">
+              <TeacherStudentDetailView user={user} />
+            </ProtectedRoute>
+          }
         />
 
         {/* --- RUTAS DE VISUALIZACIÓN DE CONTENIDO (NUEVAS) --- */}
