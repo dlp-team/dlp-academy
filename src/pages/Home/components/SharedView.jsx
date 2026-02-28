@@ -15,6 +15,7 @@ const SharedView = ({
     sharedSubjects = [],  
     layoutMode = 'grid',  
     cardScale = 100,      
+    currentFolder = null,
     // Actions
     onOpenFolder,
     onSelectSubject,
@@ -86,16 +87,42 @@ const SharedView = ({
         return hasSharedAncestorFolder(parentId);
     };
 
-    // Filtered shared folders/subjects by selected tags
-    const filteredFolders = useMemo(() => {
+    const tagFilteredFolders = useMemo(() => {
         if (selectedTags.length === 0) return sharedFolders;
         return sharedFolders.filter(f => Array.isArray(f.tags) && selectedTags.every(tag => f.tags.includes(tag)));
     }, [sharedFolders, selectedTags]);
 
+    const filteredFolders = useMemo(() => {
+        const folderIdsInScope = new Set(tagFilteredFolders.map(folder => folder.id));
+        const currentFolderId = currentFolder?.id || null;
+
+        return tagFilteredFolders.filter(folder => {
+            const parentId = getFolderParentId(folder);
+
+            if (currentFolderId) {
+                return parentId === currentFolderId;
+            }
+
+            if (!parentId) return true;
+            return !folderIdsInScope.has(parentId);
+        });
+    }, [tagFilteredFolders, currentFolder]);
+
     const filteredSubjects = useMemo(() => {
-        if (selectedTags.length === 0) return sharedSubjects;
-        return sharedSubjects.filter(s => Array.isArray(s.tags) && selectedTags.every(tag => s.tags.includes(tag)));
-    }, [sharedSubjects, selectedTags]);
+        const tagFilteredSubjects = selectedTags.length === 0
+            ? sharedSubjects
+            : sharedSubjects.filter(s => Array.isArray(s.tags) && selectedTags.every(tag => s.tags.includes(tag)));
+
+        const currentFolderId = currentFolder?.id || null;
+        if (!currentFolderId) {
+            return tagFilteredSubjects;
+        }
+
+        return tagFilteredSubjects.filter(subject => {
+            const parentId = subject.shortcutParentId ?? subject.folderId ?? subject.parentId ?? null;
+            return parentId === currentFolderId;
+        });
+    }, [sharedSubjects, selectedTags, currentFolder]);
     // Calculate grid column width based on scale (matches HomeContent logic)
     const gridStyle = { 
         gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` 
@@ -145,11 +172,6 @@ const SharedView = ({
                         {layoutMode === 'grid' ? (
                             <div className="grid gap-6" style={gridStyle}>
                                 {filteredFolders
-                                    .filter(folder => {
-                                        // Only show folders that are not inside another shared folder
-                                        if (!folder.parentId) return true;
-                                        return !filteredFolders.some(f => f.id === folder.parentId);
-                                    })
                                     .map((folder) => (
                                         <div key={folder.id}>
                                             <FolderCard
@@ -175,11 +197,6 @@ const SharedView = ({
                         ) : (
                             <div className="space-y-2">
                                 {filteredFolders
-                                    .filter(folder => {
-                                        // Only show folders that are not inside another shared folder
-                                        if (!folder.parentId) return true;
-                                        return !filteredFolders.some(f => f.id === folder.parentId);
-                                    })
                                     .map((folder) => (
                                         <ListViewItem 
                                             key={folder.id}

@@ -7,7 +7,6 @@ export const useHomeHandlers = ({
     folders,
     filteredFolders,
     currentFolder,
-    viewMode,
     groupedContent,
     orderedFolders,
     subjectModalConfig,
@@ -17,7 +16,6 @@ export const useHomeHandlers = ({
     setFolderModalConfig,
     setDeleteConfig,
     setCurrentFolder,
-    setViewMode,
     setCollapsedGroups,
     setManualOrder,
     setActiveFilter,
@@ -311,9 +309,6 @@ export const useHomeHandlers = ({
         } else {
             setCurrentFolder(null);
             localStorage.removeItem('dlp_last_folderId');
-        }
-        if (viewMode === 'shared') {
-            setViewMode('grid');
         }
     };
 

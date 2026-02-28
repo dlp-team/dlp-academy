@@ -326,86 +326,101 @@ const Home = ({ user }) => {
                 </div>
 
                 {logic.viewMode === 'shared' ? (
-                    <SharedView 
-                        user={user}
-                        sharedFolders={sharedFolders}
-                        sharedSubjects={sharedSubjects}
-                        cardScale={logic.cardScale}
-                        allFolders={logic.folders || []}
-                        
-                        layoutMode={logic.layoutMode} 
+                    <>
+                        <BreadcrumbNav
+                            currentFolder={logic.currentFolder}
+                            onNavigate={(folder) => {
+                                logic.setCurrentFolder(folder);
+                                if (folder && folder.id) localStorage.setItem('dlp_last_folderId', folder.id);
+                                if (!folder) localStorage.removeItem('dlp_last_folderId');
+                            }}
+                            allFolders={logic.folders || []}
+                            onDropOnBreadcrumb={handleBreadcrumbDrop}
+                            draggedItem={logic.draggedItem}
+                            draggedItemType={logic.draggedItemType}
+                        />
+                        <SharedView 
+                            user={user}
+                            sharedFolders={sharedFolders}
+                            sharedSubjects={sharedSubjects}
+                            cardScale={logic.cardScale}
+                            allFolders={logic.folders || []}
+                            currentFolder={logic.currentFolder}
+                            
+                            layoutMode={logic.layoutMode} 
 
-                        // Handlers
-                        onOpenFolder={logic.handleOpenFolder}
-                        onSelectSubject={(subject) => {
-                            logic.touchSubject(subject.id);
-                            logic.navigate(`/home/subject/${subject.id}`);
-                        }}
-                        
-                        // UI State
-                        activeMenu={logic.activeMenu}
-                        onToggleMenu={logic.setActiveMenu}
-                        flippedSubjectId={logic.flippedSubjectId}
-                        onFlipSubject={logic.setFlippedSubjectId}
-                        
-                        // Navigation
-                        onSelectTopic={(sid, tid) => logic.navigate(`/home/subject/${sid}/topic/${tid}`)}
-                        navigate={logic.navigate}
+                            // Handlers
+                            onOpenFolder={logic.handleOpenFolder}
+                            onSelectSubject={(subject) => {
+                                logic.touchSubject(subject.id);
+                                logic.navigate(`/home/subject/${subject.id}`);
+                            }}
+                            
+                            // UI State
+                            activeMenu={logic.activeMenu}
+                            onToggleMenu={logic.setActiveMenu}
+                            flippedSubjectId={logic.flippedSubjectId}
+                            onFlipSubject={logic.setFlippedSubjectId}
+                            
+                            // Navigation
+                            onSelectTopic={(sid, tid) => logic.navigate(`/home/subject/${sid}/topic/${tid}`)}
+                            navigate={logic.navigate}
 
-                        onEditFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
-                        onDeleteFolder={(f, action = 'delete') => {
-                            if (isShortcutItem(f) && f?.shortcutId) {
-                                logic.setDeleteConfig({
-                                    isOpen: true,
-                                    type: 'shortcut-folder',
-                                    action: action === 'unshareAndDelete'
-                                        ? 'unshare'
-                                        : action === 'deleteShortcut'
-                                            ? 'deleteShortcut'
-                                        : action === 'showInManual'
-                                            ? 'unhide'
-                                            : 'hide',
-                                    item: f
-                                });
-                                return;
-                            }
-                            logic.setDeleteConfig({ isOpen: true, type: 'folder', item: f });
-                        }}
-                        onShareFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
-                        onEditSubject={(e, s) => {
-                            e.stopPropagation();
-                            logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s });
-                            logic.setActiveMenu(null);
-                        }}
-                        onDeleteSubject={(e, s, action = 'delete') => {
-                            e.stopPropagation();
-                            if (isShortcutItem(s) && s?.shortcutId) {
-                                logic.setDeleteConfig({
-                                    isOpen: true,
-                                    type: 'shortcut-subject',
-                                    action: action === 'unshareAndDelete'
-                                        ? 'unshare'
-                                        : action === 'deleteShortcut'
-                                            ? 'deleteShortcut'
-                                        : action === 'showInManual'
-                                            ? 'unhide'
-                                            : 'hide',
-                                    item: s
-                                });
-                            } else {
-                                logic.setDeleteConfig({ isOpen: true, type: 'subject', item: s });
-                            }
-                            logic.setActiveMenu(null);
-                        }}
-                        onShareSubject={(s) => {
-                            logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
-                            logic.setActiveMenu(null);
-                        }}
+                            onEditFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
+                            onDeleteFolder={(f, action = 'delete') => {
+                                if (isShortcutItem(f) && f?.shortcutId) {
+                                    logic.setDeleteConfig({
+                                        isOpen: true,
+                                        type: 'shortcut-folder',
+                                        action: action === 'unshareAndDelete'
+                                            ? 'unshare'
+                                            : action === 'deleteShortcut'
+                                                ? 'deleteShortcut'
+                                            : action === 'showInManual'
+                                                ? 'unhide'
+                                                : 'hide',
+                                        item: f
+                                    });
+                                    return;
+                                }
+                                logic.setDeleteConfig({ isOpen: true, type: 'folder', item: f });
+                            }}
+                            onShareFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
+                            onEditSubject={(e, s) => {
+                                e.stopPropagation();
+                                logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s });
+                                logic.setActiveMenu(null);
+                            }}
+                            onDeleteSubject={(e, s, action = 'delete') => {
+                                e.stopPropagation();
+                                if (isShortcutItem(s) && s?.shortcutId) {
+                                    logic.setDeleteConfig({
+                                        isOpen: true,
+                                        type: 'shortcut-subject',
+                                        action: action === 'unshareAndDelete'
+                                            ? 'unshare'
+                                            : action === 'deleteShortcut'
+                                                ? 'deleteShortcut'
+                                            : action === 'showInManual'
+                                                ? 'unhide'
+                                                : 'hide',
+                                        item: s
+                                    });
+                                } else {
+                                    logic.setDeleteConfig({ isOpen: true, type: 'subject', item: s });
+                                }
+                                logic.setActiveMenu(null);
+                            }}
+                            onShareSubject={(s) => {
+                                logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
+                                logic.setActiveMenu(null);
+                            }}
 
-                        // Search
-                        searchTerm={searchQuery}
-                        onSearchChange={setSearchQuery}
-                    />
+                            // Search
+                            searchTerm={searchQuery}
+                            onSearchChange={setSearchQuery}
+                        />
+                    </>
                 ) : (
                     <>
                         <HomeShareConfirmModals
