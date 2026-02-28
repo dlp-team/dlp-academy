@@ -244,6 +244,19 @@ export const useShortcuts = (user) => {
 
             const unsub = onSnapshot(targetRef, async (targetSnap) => {
                 try {
+                    if (targetSnap.exists()) {
+                        const targetData = targetSnap.data() || {};
+                        const targetOwnerId = targetData?.ownerId || targetData?.uid || null;
+                        if (targetOwnerId && targetOwnerId === user?.uid) {
+                            try {
+                                await deleteDoc(doc(db, 'shortcuts', shortcut.id));
+                            } catch (_) {
+                                // Best effort cleanup.
+                            }
+                            return;
+                        }
+                    }
+
                     const resolved = await buildResolvedFromSnapshot(shortcut, targetSnap);
                     resolvedMap.set(shortcut.id, resolved);
                     loadedCount += 1;

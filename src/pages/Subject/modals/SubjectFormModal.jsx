@@ -924,7 +924,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     </div>
                                 )}
 
-                                {isShortcutEditing && !unshareBlockedInSharedFolder && (
+                                {isShortcutEditing && !isOwnerManager && !unshareBlockedInSharedFolder && (
                                     <div className="space-y-2">
                                         <button
                                             type="button"

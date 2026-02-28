@@ -1047,7 +1047,7 @@ const FolderManager = ({
                                     </div>
                                 )}
 
-                                {isShortcutEditing && !unshareBlockedInSharedFolder && (
+                                {isShortcutEditing && !isOwnerManager && !unshareBlockedInSharedFolder && (
                                     <div className="space-y-2">
                                         <button
                                             type="button"
