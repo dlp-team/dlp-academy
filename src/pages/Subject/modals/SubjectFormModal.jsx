@@ -29,6 +29,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [ownerEmailResolved, setOwnerEmailResolved] = useState('');
     const [pendingShareAction, setPendingShareAction] = useState(null);
     const [showSelfUnshareConfirm, setShowSelfUnshareConfirm] = useState(false);
+    const [showDiscardPendingConfirm, setShowDiscardPendingConfirm] = useState(false);
     const [pendingPermissionChanges, setPendingPermissionChanges] = useState({});
     const [pendingUnshares, setPendingUnshares] = useState([]);
     const [shareLoading, setShareLoading] = useState(false);
@@ -100,6 +101,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setOwnerEmailResolved('');
             setPendingShareAction(null);
             setShowSelfUnshareConfirm(false);
+            setShowDiscardPendingConfirm(false);
             setPendingPermissionChanges({});
             setPendingUnshares([]);
             if (isEditing && initialData) {
@@ -381,6 +383,35 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         pendingUnshares.length > 0 ||
         stagedPermissionEntries.length > 0;
 
+    const hasUnsavedSharingChanges =
+        hasPendingSharingChanges ||
+        showSelfUnshareConfirm;
+
+    const handleBackdropCloseRequest = () => {
+        if (pendingShareAction?.type === 'apply-all') {
+            return;
+        }
+
+        if (hasUnsavedSharingChanges) {
+            setShowDiscardPendingConfirm(true);
+            return;
+        }
+
+        onClose();
+    };
+
+    const discardPendingAndClose = () => {
+        setShareQueue([]);
+        setPendingPermissionChanges({});
+        setPendingUnshares([]);
+        setPendingShareAction(null);
+        setShowSelfUnshareConfirm(false);
+        setShowDiscardPendingConfirm(false);
+        setShareError('');
+        setShareSuccess('');
+        onClose();
+    };
+
     const handleApplySharingChanges = () => {
         if (!hasPendingSharingChanges) {
             setShareError('No hay cambios pendientes para aplicar.');
@@ -565,7 +596,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex min-h-full items-start justify-center p-4 pt-28 text-center">
-                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" onClick={onClose} />
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" onClick={handleBackdropCloseRequest} />
                 <div className="relative transform overflow-hidden bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[calc(100vh-8rem)] shadow-xl text-left animate-in fade-in zoom-in duration-200 border border-transparent dark:border-slate-800 transition-colors">
                     
                     {/* Header */}
@@ -899,9 +930,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     </form>
 
                     {pendingShareAction?.type === 'apply-all' && (
-                        <div className="absolute inset-0 z-40 flex items-center justify-center p-4">
-                            <div className="absolute inset-0 bg-black/55" onClick={() => setPendingShareAction(null)} />
-                            <div className="relative w-full max-w-lg rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-2xl">
+                        <div className="absolute inset-0 z-40 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="absolute inset-0 bg-black/55" onClick={(e) => { e.stopPropagation(); setPendingShareAction(null); }} />
+                            <div className="relative w-full max-w-lg rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
                                 <h4 className="text-base font-semibold text-gray-900 dark:text-white">Confirmar aplicación de cambios</h4>
                                 <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Se aplicarán los siguientes cambios de compartición:</p>
                                 <ul className="mt-3 list-disc list-inside text-sm text-gray-700 dark:text-gray-200 space-y-1">
@@ -935,6 +966,34 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                         className="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
                                     >
                                         Confirmar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {showDiscardPendingConfirm && (
+                        <div className="absolute inset-0 z-40 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="absolute inset-0 bg-black/55" onClick={(e) => { e.stopPropagation(); setShowDiscardPendingConfirm(false); }} />
+                            <div className="relative w-full max-w-lg rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                                <h4 className="text-base font-semibold text-gray-900 dark:text-white">Descartar cambios sin guardar</h4>
+                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                                    Tienes cambios pendientes en Compartir. ¿Quieres descartarlos y cerrar la ventana?
+                                </p>
+                                <div className="mt-5 flex justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowDiscardPendingConfirm(false)}
+                                        className="px-3 py-1.5 text-sm rounded-md bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={discardPendingAndClose}
+                                        className="px-3 py-1.5 text-sm rounded-md bg-red-600 hover:bg-red-700 text-white"
+                                    >
+                                        Descartar y cerrar
                                     </button>
                                 </div>
                             </div>
