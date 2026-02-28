@@ -3,6 +3,7 @@ import React from 'react';
 import { useSubjectCardLogic } from './useSubjectCardLogic';
 import SubjectCardFront from './SubjectCardFront';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
+import { buildDragPayload, writeDragPayloadToDataTransfer } from '../../../utils/dragPayloadUtils';
 
 const SubjectCard = (props) => {
 
@@ -26,24 +27,23 @@ const SubjectCard = (props) => {
         isDragging = false,
         cardScale = 100,
         onOpenTopics,
-        filterOverlayOpen = false
+        filterOverlayOpen = false,
+        disableAllActions = false,
+        disableDeleteActions = false,
+        disableUnshareActions = false
     } = props;
 
     const handleLocalDragStart = (e) => {
         if (draggable) {
             const subjectParentId = subject.shortcutParentId ?? subject.folderId ?? null;
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('subjectId', subject.id); // Essential for the drop logic
-            e.dataTransfer.setData('type', 'subject');
-            e.dataTransfer.setData('subjectType', 'subject');
-            e.dataTransfer.setData('subjectParentId', subjectParentId || '');
-            e.dataTransfer.setData('subjectShortcutId', subject.shortcutId || '');
-            e.dataTransfer.setData('treeItem', JSON.stringify({
+            const dragData = buildDragPayload({
                 id: subject.id,
                 type: 'subject',
                 parentId: subjectParentId,
                 shortcutId: subject.shortcutId || null
-            }));
+            });
+            writeDragPayloadToDataTransfer(e.dataTransfer, dragData);
             
             // Trigger the parent's event (for UI state)
             if (props.onDragStart) {
@@ -100,6 +100,9 @@ const SubjectCard = (props) => {
                     onOpenTopics={onOpenTopics}
                     onGoToFolder={props.onGoToFolder}
                     filterOverlayOpen={filterOverlayOpen}
+                    disableAllActions={disableAllActions}
+                    disableDeleteActions={disableDeleteActions}
+                    disableUnshareActions={disableUnshareActions}
                 />
             </div>
         </div>

@@ -1,3 +1,80 @@
+## [2026-02-26] Feature Update: Institution Email Autocomplete Suggestions
+### Context & Architecture
+`FolderManager` sharing input now fetches institution users and offers email suggestions inline.
+
+### Previous State
+- Owner had to type full emails manually for sharing.
+
+### New State & Logic
+- Added preload of institution emails from Firestore users collection.
+- Added suggestion panel under input while typing.
+- Prioritizes same-domain suggestions and prefix matches.
+- Excludes owner/current user/already shared entries.
+
+---
+
+## [2026-02-26] Feature Update: Owner Row Visibility + Owner Protection in Sharing Tab
+### Context & Architecture
+`FolderManager` now builds sharing list entries with explicit owner context, aligned with subject sharing behavior.
+
+### Previous State
+- Owner was not guaranteed to be visible as a dedicated row.
+- Owner-targeted operations needed explicit guarding.
+
+### New State & Logic
+- Added owner row with `Propietario` label in sharing tab.
+- Blocked owner unshare and permission mutation in UI handlers.
+- Added owner-email validation before share execution.
+
+---
+
+## [2026-02-26] Feature Update: In-Card Share Confirmations (No Browser Alerts)
+### Context & Architecture
+`FolderManager` sharing tab now stages share mutations in local state and only executes after inline confirmation.
+
+### Previous State
+- Permission change confirmations used browser dialogs.
+- Share/unshare actions executed directly from controls.
+
+### New State & Logic
+- Introduced `pendingShareAction` state for `share`, `permission`, and `unshare` intents.
+- Added inline confirmation card within the sharing tab with role-aware and action-aware messages.
+- Centralized confirm execution paths to call `onShare`/`onUnshare` after explicit user confirmation.
+
+---
+
+## [2026-02-26] Feature Update: Wider Sharing Layout + Permission Change Confirmation
+### Context & Architecture
+`FolderManager` is the folder edit/share UI in Home and fronts `useFolders.shareFolder` updates.
+
+### Previous State
+- Sharing row controls could compress in the modal.
+- Owner permission changes had no explicit warning/confirmation step.
+
+### New State & Logic
+- Increased modal width to improve fit for sharing controls and user rows.
+- Added confirmation dialogs before owner changes user role with role-specific warning text.
+- Maintains owner-only role editing and existing unshare behavior.
+
+---
+
+## [2026-02-26] Feature Update: Folder Modal Parity with Subject Modal
+### Context & Architecture
+`FolderManager` is the Home folder modal and consumes sharing handlers from `useFolders` through `HomeModals`. It now follows the same interaction model as `SubjectFormModal`.
+
+### Previous State
+- General tab structure diverged from subject modal UX.
+- Sharing tab was simpler and lacked robust feedback/search behavior.
+- Shared user permissions were not editable in-row by owner.
+
+### New State & Logic
+- Rebuilt the modal structure to mirror subject tabs (`General` / `Compartir`) while omitting icon controls for folders.
+- Added modern fill selector with collapsed/expand behavior for better edit-tab parity.
+- Added role selection before share, owner-level per-user permission update, and search bar when shared users exceed 5.
+- Added loading/success/error feedback consistency on sharing actions.
+
+---
+
 # FolderManager.jsx
 
 ## Overview

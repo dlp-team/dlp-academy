@@ -1,5 +1,5 @@
 // src/pages/Home/hooks/useHomeHandlers.js
-import { canEdit } from '../../../utils/permissionUtils';
+import { canEdit, isOwner } from '../../../utils/permissionUtils';
 
 export const useHomeHandlers = ({
     user,
@@ -7,7 +7,6 @@ export const useHomeHandlers = ({
     folders,
     filteredFolders,
     currentFolder,
-    viewMode,
     groupedContent,
     orderedFolders,
     subjectModalConfig,
@@ -17,7 +16,6 @@ export const useHomeHandlers = ({
     setFolderModalConfig,
     setDeleteConfig,
     setCurrentFolder,
-    setViewMode,
     setCollapsedGroups,
     setManualOrder,
     setActiveFilter,
@@ -43,6 +41,29 @@ export const useHomeHandlers = ({
     updateShortcutAppearance,
     setShortcutHiddenInManual
 }) => {
+    const getFolderById = (folderId) => {
+        if (!folderId) return null;
+        return (folders || []).find(folder => folder?.id === folderId) || null;
+    };
+
+    const getFolderParentId = (folderEntry) => {
+        if (!folderEntry) return null;
+        return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+    };
+
+    const isInsideSharedFolderTree = (folderId) => {
+        if (!folderId) return false;
+        let cursorId = folderId;
+        let safety = 0;
+        while (cursorId && safety < 200) {
+            const cursor = getFolderById(cursorId);
+            if (!cursor) return false;
+            if (cursor.isShared === true) return true;
+            cursorId = getFolderParentId(cursor);
+            safety += 1;
+        }
+        return false;
+    };
     const handleSaveSubject = async formData => {
         const isShortcutEdit = subjectModalConfig.isEditing && Boolean(formData?.shortcutId);
         const shortcutPermission = formData?.shortcutPermissionLevel || 'viewer';
@@ -56,10 +77,7 @@ export const useHomeHandlers = ({
             tags: formData.tags,
             cardStyle: formData.cardStyle || 'default',
             modernFillColor: formData.modernFillColor || null,
-            updatedAt: new Date(),
-            uid: user.uid,
-            isShared: false,
-            sharedWith: []
+            updatedAt: new Date()
         };
 
         try {
@@ -84,9 +102,16 @@ export const useHomeHandlers = ({
                     await updateSubject(formData.id, payload);
                 }
             } else {
+                const createPayload = {
+                    ...payload,
+                    uid: user.uid,
+                    isShared: false,
+                    sharedWith: []
+                };
+
                 if (currentFolder) {
                     if (currentFolder.isShared || (currentFolder.sharedWith && currentFolder.sharedWith.length > 0)) {
-                        payload.isShared = true;
+                        createPayload.isShared = true;
 
                         const parentShares = currentFolder.sharedWith || [];
                         const usersToShareWith = new Set(parentShares);
@@ -95,11 +120,11 @@ export const useHomeHandlers = ({
                             usersToShareWith.add(currentFolder.ownerId);
                         }
 
-                        payload.sharedWith = Array.from(usersToShareWith);
+                        createPayload.sharedWith = Array.from(usersToShareWith);
                     }
                 }
 
-                const newSubject = await addSubject(payload);
+                const newSubject = await addSubject(createPayload);
                 const newId = typeof newSubject === 'object' ? newSubject.id : newSubject;
 
                 if (currentFolder) {
@@ -160,6 +185,11 @@ export const useHomeHandlers = ({
                 subjects: prev.subjects.filter(id => id !== deleteConfig.item.id)
             }));
         } else if (deleteConfig.type === 'folder' && deleteConfig.item) {
+            const isFolderOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
+            if (!isFolderOwner) {
+                setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
+                return;
+            }
             await deleteFolder(deleteConfig.item.id);
             setManualOrder(prev => ({
                 ...prev,
@@ -168,6 +198,13 @@ export const useHomeHandlers = ({
         } else if (deleteConfig.type === 'shortcut-subject' && deleteConfig.item) {
             const shortcutId = deleteConfig.item.shortcutId;
             const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
+            const parentFolderId = deleteConfig.item.shortcutParentId ?? deleteConfig.item.folderId ?? deleteConfig.item.parentId ?? null;
+            const unshareBlocked = isInsideSharedFolderTree(parentFolderId);
+
+            if (deleteConfig.action === 'unshare' && unshareBlocked) {
+                setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
+                return;
+            }
 
             if (deleteConfig.action === 'unshare' && unshareSubject && user?.email) {
                 try {
@@ -187,6 +224,13 @@ export const useHomeHandlers = ({
         } else if (deleteConfig.type === 'shortcut-folder' && deleteConfig.item) {
             const shortcutId = deleteConfig.item.shortcutId;
             const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
+            const parentFolderId = deleteConfig.item.shortcutParentId ?? deleteConfig.item.parentId ?? null;
+            const unshareBlocked = isInsideSharedFolderTree(parentFolderId);
+
+            if (deleteConfig.action === 'unshare' && unshareBlocked) {
+                setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
+                return;
+            }
 
             if (deleteConfig.action === 'unshare' && unshareFolder && user?.email) {
                 try {
@@ -209,6 +253,11 @@ export const useHomeHandlers = ({
 
     const handleDeleteFolderAll = async () => {
         if (deleteConfig.item) {
+            const isFolderOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
+            if (!isFolderOwner) {
+                setDeleteConfig({ isOpen: false, type: null, item: null });
+                return;
+            }
             await deleteFolder(deleteConfig.item.id);
             setManualOrder(prev => ({
                 ...prev,
@@ -220,6 +269,11 @@ export const useHomeHandlers = ({
 
     const handleDeleteFolderOnly = async () => {
         if (deleteConfig.item) {
+            const isFolderOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
+            if (!isFolderOwner) {
+                setDeleteConfig({ isOpen: false, type: null, item: null });
+                return;
+            }
             await deleteFolderOnly(deleteConfig.item.id);
             setManualOrder(prev => ({
                 ...prev,
@@ -255,9 +309,6 @@ export const useHomeHandlers = ({
         } else {
             setCurrentFolder(null);
             localStorage.removeItem('dlp_last_folderId');
-        }
-        if (viewMode === 'shared') {
-            setViewMode('grid');
         }
     };
 
@@ -410,9 +461,10 @@ export const useHomeHandlers = ({
 
     const handleDropReorderSubject = (draggedId, fromPosition, toPosition) => {
         if (draggedId === undefined || fromPosition === toPosition) return;
+        const getManualKey = (item) => item?.shortcutId || item?.id;
 
         const currentSubjects = groupedContent[Object.keys(groupedContent)[0]] || [];
-        const newOrder = currentSubjects.map(s => s.id);
+        const newOrder = currentSubjects.map(s => getManualKey(s));
 
         const draggedIndex = newOrder.indexOf(draggedId);
         if (draggedIndex !== -1) {
@@ -431,8 +483,9 @@ export const useHomeHandlers = ({
 
     const handleDropReorderFolder = (draggedId, fromPosition, toPosition) => {
         if (draggedId === undefined || fromPosition === toPosition) return;
+        const getManualKey = (item) => item?.shortcutId || item?.id;
 
-        const newOrder = orderedFolders.map(f => f.id);
+        const newOrder = orderedFolders.map(f => getManualKey(f));
 
         const draggedIndex = newOrder.indexOf(draggedId);
         if (draggedIndex !== -1) {

@@ -1,9 +1,13 @@
 // src/components/home/CardScaleSlider.jsx
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Maximize2 } from 'lucide-react';
 
 const CardScaleSlider = ({ cardScale, setCardScale, onOverlayToggle }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const triggerRef = useRef(null);
+    const [panelPos, setPanelPos] = useState({ top: 0, left: 0 });
+    const PANEL_WIDTH = 288;
+    const VIEWPORT_MARGIN = 8;
 
     
     // 4 scales: XS (60% - 5 cards), S (75% - 4 cards), M (100% - 3 cards), L (125% - 2 cards)
@@ -20,11 +24,44 @@ const CardScaleSlider = ({ cardScale, setCardScale, onOverlayToggle }) => {
         if (onOverlayToggle) onOverlayToggle(newState);
     };
 
+    useLayoutEffect(() => {
+        if (!isOpen || !triggerRef.current) return;
+
+        const rect = triggerRef.current.getBoundingClientRect();
+        const panelHeight = 300;
+
+        const defaultLeft = rect.right - PANEL_WIDTH;
+        const oppositeLeft = rect.left;
+
+        let left = defaultLeft;
+        if (left < VIEWPORT_MARGIN) {
+            left = oppositeLeft;
+        }
+        left = Math.min(
+            Math.max(left, VIEWPORT_MARGIN),
+            Math.max(VIEWPORT_MARGIN, window.innerWidth - PANEL_WIDTH - VIEWPORT_MARGIN)
+        );
+
+        const defaultTop = rect.bottom + 8;
+        const oppositeTop = rect.top - panelHeight - 8;
+
+        let top = defaultTop;
+        if (top + panelHeight > window.innerHeight - VIEWPORT_MARGIN) {
+            top = oppositeTop;
+        }
+        top = Math.min(
+            Math.max(top, VIEWPORT_MARGIN),
+            Math.max(VIEWPORT_MARGIN, window.innerHeight - panelHeight - VIEWPORT_MARGIN)
+        );
+
+        setPanelPos({ top, left });
+    }, [isOpen]);
+
     return (
-        <div className="relative">
+        <div className="relative" ref={triggerRef}>
             <button
                 onClick={() => handleSetIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer shadow-sm"
             >
                 <Maximize2 size={16} />
                 <span className="hidden sm:inline">Escala</span>
@@ -39,7 +76,10 @@ const CardScaleSlider = ({ cardScale, setCardScale, onOverlayToggle }) => {
                     />
                     
                     {/* Slider Panel */}
-                    <div className="absolute top-full right-0 mt-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-50 w-72 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div
+                        className="fixed bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-50 w-72"
+                        style={{ top: panelPos.top, left: panelPos.left }}
+                    >
                         <div className="flex items-center justify-between mb-3">
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Tamaño de Tarjetas</span>
                             <span className="text-xs text-gray-500 dark:text-gray-400">{cardScale}%</span>

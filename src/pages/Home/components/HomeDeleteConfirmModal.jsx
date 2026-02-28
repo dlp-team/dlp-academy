@@ -60,7 +60,7 @@ const HomeDeleteConfirmModal = ({ deleteConfig, setDeleteConfig, handleDelete })
         : 'Sí, Eliminar';
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
+        <div className="fixed inset-x-0 bottom-0 top-28 z-50 flex items-start justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
             <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
                 <div className={`w-16 h-16 ${accent.circleBg} rounded-full flex items-center justify-center mx-auto mb-4 transition-colors`}>
                     <ActionIcon className={`w-8 h-8 ${accent.iconColor}`} />

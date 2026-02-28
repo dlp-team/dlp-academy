@@ -1,3 +1,33 @@
+## [2026-02-26] Feature Update: Share Validation Errors as Exceptions (No UI Alerts)
+### Context & Architecture
+`useFolders.shareFolder` is consumed by modal UI that renders error messages in-card. Backend-style validations must therefore throw errors, not call browser alerts.
+
+### Previous State
+- `shareFolder` used `alert(...)` for self-share, cross-institution, and missing-user paths.
+
+### New State & Logic
+- Replaced alert paths with `throw new Error(...)` so UI can display errors in modal cards.
+- Added owner-target guard (`targetUid === folder.ownerId`) and throw with explicit message.
+- Keeps existing shortcut upsert/rollback semantics intact.
+
+---
+
+## [2026-02-26] Feature Update: Folder Share Role Upsert
+### Context & Architecture
+`useFolders.shareFolder` is the folder-side share primitive used by Home modal flows and propagates sharing to folder-level data while preserving shortcut guarantees.
+
+### Previous State
+- Existing shares could not be role-updated through the same API path.
+- UI-driven permission changes required additional custom logic not available in this hook.
+
+### New State & Logic
+- Kept method signature role-aware and normalized role at write-time.
+- Added already-shared role mutation path that updates `sharedWith` role in place.
+- Preserved idempotent shortcut upsert behavior and rollback semantics for failed shortcut steps.
+- Return payload now includes `alreadyShared` and `roleUpdated` flags for UI messaging.
+
+---
+
 # useFolders.js
 
 ## Purpose

@@ -14,10 +14,15 @@ const SubjectListItem = ({
     onDelete, 
     onShare, 
     onGoToFolder,
+    disableAllActions = false,
+    disableDeleteActions = false,
+    disableUnshareActions = false,
     compact = false, 
     cardScale = 100,
     className = ""
 }) => {
+    const HEADER_SAFE_TOP = 112;
+    const MENU_MARGIN = 8;
     const [showMenu, setShowMenu] = useState(false);
     const menuBtnRef = React.useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
@@ -33,14 +38,19 @@ const SubjectListItem = ({
     const isOrphan = subject?.isOrphan === true;
     const isMovedToShared = subject?._reason === 'moved-to-shared-folder';
     const orphanMessage = subject?._reason === 'access-revoked'
-        ? 'Archivo original ya no está compartido'
+        ? 'La asignatura ya no está compartida'
         : subject?._reason === 'moved-to-shared-folder'
             ? `Esta asignatura se ha movido a la carpeta ${subject?._movedToFolderName || 'compartida'}`
-            : 'Archivo original eliminado';
+            : 'La asignatura se ha eliminado';
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
     const isSourceOwner = user && subject?.ownerId === user.uid;
+    const effectiveShowEditUI = !disableAllActions && showEditUI;
+    const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
+    const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
+    const canShowShortcutVisibility = !disableAllActions && isShortcut;
+    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || (!isSourceOwner && !disableUnshareActions));
 
     // Minimum scale for the menu is 1 (100%)
     const menuScale = Math.max(scale, 1);
@@ -48,9 +58,27 @@ const SubjectListItem = ({
         if (showMenu && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
             const menu = { width: SHORTCUT_LIST_MENU_WIDTH * menuScale, height: 48 * 3 * menuScale };
+            const defaultLeft = rect.right - menu.width;
+            const oppositeLeft = rect.left;
+            let left = defaultLeft;
+            if (left < MENU_MARGIN) {
+                left = oppositeLeft;
+            }
+            left = Math.min(
+                Math.max(left, MENU_MARGIN),
+                Math.max(MENU_MARGIN, window.innerWidth - menu.width - MENU_MARGIN)
+            );
+
+            const defaultTop = rect.bottom - menu.height;
+            const oppositeTop = rect.bottom + 4;
+            let top = defaultTop;
+            if (top < HEADER_SAFE_TOP + MENU_MARGIN) {
+                top = oppositeTop;
+            }
+            const maxTop = Math.max(HEADER_SAFE_TOP + MENU_MARGIN, window.innerHeight - menu.height - MENU_MARGIN);
             setMenuPos({
-                top: rect.bottom - menu.height,
-                left: rect.right - menu.width
+                top: Math.min(Math.max(top, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
+                left
             });
         }
     }, [showMenu, menuScale]);
@@ -63,9 +91,12 @@ const SubjectListItem = ({
         <div 
             className={`group relative rounded-xl transition-all hover:shadow-md cursor-pointer ${
                 isModern ? `${getIconColor(subject.color)} border border-gradient-to-br ${subject.color} hover:border-gradient-to-br ${subject.color} ` : ` bg-gradient-to-br ${subject.color} hover:border-indigo-300 `
-            } ${isOrphan ? 'opacity-55' : ''} ${className}`} // Apply external className
+            } ${isOrphan ? 'saturate-[0.22] grayscale-[0.38] brightness-95' : ''} ${className}`} // Apply external className
             style={{ padding: `${paddingPx}px` }}
-            onClick={() => onSelect(subject.id)}
+            onClick={() => {
+                if (isOrphan && isShortcut) return;
+                onSelect(subject.id);
+            }}
         >
             <div className="flex items-center gap-4">
                 {/* ICON */}
@@ -135,6 +166,15 @@ const SubjectListItem = ({
                     )}
                 </div>
 
+                {isOrphan && (
+                    <span
+                        className={`font-semibold whitespace-nowrap ${isModern ? 'text-slate-700 dark:text-slate-200' : 'text-white/95'}`}
+                        style={{ fontSize: `${12 * scale}px` }}
+                    >
+                        {orphanMessage}
+                    </span>
+                )}
+
                 {/* ACTIONS */}
                 <div className="flex items-center gap-2 relative">
                     {!isOrphan && (
@@ -156,7 +196,8 @@ const SubjectListItem = ({
                         {typeof window !== 'undefined' && window.document && createPortal(
                             <>
                                 <div 
-                                    className="fixed inset-0 z-[100]" 
+                                    className="fixed inset-x-0 bottom-0 z-[100]" 
+                                    style={{ top: `${HEADER_SAFE_TOP}px` }}
                                     onClick={(e) => { e.stopPropagation(); setShowMenu(false); }}
                                 />
                                 <div
@@ -172,21 +213,21 @@ const SubjectListItem = ({
                                 >
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onEdit(subject); setShowMenu(false); }}
-                                        disabled={!showEditUI}
-                                        style={{ fontSize: `${14 * menuScale}px`, display: showEditUI ? 'flex' : 'none' }}
+                                        disabled={!effectiveShowEditUI}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: effectiveShowEditUI ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
                                     >
                                         <Edit2 size={14 * menuScale} /> Editar
                                     </button>
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onShare && onShare(subject); setShowMenu(false); }}
-                                        disabled={!canShareFromMenu}
-                                        style={{ fontSize: `${14 * menuScale}px`, display: canShareFromMenu ? 'flex' : 'none' }}
+                                        disabled={!effectiveCanShareFromMenu}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: effectiveCanShareFromMenu ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
                                     >
                                         <Share2 size={14 * menuScale} /> Compartir
                                     </button>
-                                    {isShortcut && (
+                                    {canShowShortcutVisibility && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onDelete(subject, isHiddenFromManual ? 'showInManual' : 'removeShortcut'); setShowMenu(false); }}
                                             className="w-full flex items-center gap-2 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg text-amber-700 dark:text-amber-400 transition-colors cursor-pointer"
@@ -195,9 +236,9 @@ const SubjectListItem = ({
                                             <Trash2 size={14 * menuScale} /> <span className="whitespace-nowrap">{isHiddenFromManual ? 'Mostrar en manual' : 'Quitar de manual'}</span>
                                         </button>
                                     )}
-                                    {isShortcut && (isOrphan || !isSourceOwner) && (
+                                    {canShowShortcutDelete && (
                                         <button 
-                                            onClick={(e) => { e.stopPropagation(); onDelete(subject, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); setShowMenu(false); }}
+                                            onClick={(e) => { e.stopPropagation(); onDelete(subject, (isOrphan || disableUnshareActions) ? 'deleteShortcut' : 'unshareAndDelete'); setShowMenu(false); }}
                                             className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
                                             style={{ fontSize: `${14 * menuScale}px` }}
                                         >
@@ -206,13 +247,13 @@ const SubjectListItem = ({
                                     )}
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); onDelete(subject, 'delete'); setShowMenu(false); }}
-                                        disabled={!showDeleteUI || isShortcut}
-                                        style={{ fontSize: `${14 * menuScale}px`, display: !isShortcut && showDeleteUI ? 'flex' : 'none' }}
+                                        disabled={!effectiveShowDeleteUI || isShortcut}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: !isShortcut && effectiveShowDeleteUI ? 'flex' : 'none' }}
                                         className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors cursor-pointer"
                                     >
                                         <Trash2 size={14 * menuScale} /> Eliminar
                                     </button>
-                                    {!showEditUI && !canShareFromMenu && !showDeleteUI && !isShortcut && (
+                                    {!effectiveShowEditUI && !effectiveCanShareFromMenu && !effectiveShowDeleteUI && !canShowShortcutVisibility && !canShowShortcutDelete && (
                                         <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
                                     )}
                                 </div>
@@ -226,34 +267,35 @@ const SubjectListItem = ({
 
             {isOrphan && (
                 <>
-                    <div className="mt-2 ml-2 mr-2 text-center pointer-events-none">
-                        <span
-                            className={`font-semibold ${isModern ? 'text-slate-700 dark:text-slate-200' : 'text-white/95'}`}
-                            style={{ fontSize: `${12 * scale}px` }}
-                        >
-                            {orphanMessage}
-                        </span>
-                    </div>
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                         {isMovedToShared && subject?._movedToFolderId ? (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (typeof onGoToFolder === 'function') {
-                                        onGoToFolder(subject._movedToFolderId);
-                                    }
-                                }}
-                                className="pointer-events-auto px-4 py-2 rounded-lg font-semibold shadow-lg flex justify-center items-center"
-                                style={{
-                                    fontSize: `${13 * scale}px`,
-                                    background: 'rgba(30,41,59,0.35)',
-                                    border: '1px solid #1e293b',
-                                    color: '#fff',
-                                    transition: 'background 0.2s',
-                                }}
-                            >
-                                {`Ir a carpeta ${subject?._movedToFolderName || ''}`.trim()}
-                            </button>
+                            <div className="pointer-events-auto flex items-center gap-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (typeof onGoToFolder === 'function') {
+                                            onGoToFolder(subject._movedToFolderId);
+                                        }
+                                    }}
+                                    className="px-4 py-2 rounded-lg font-semibold shadow-lg flex justify-center items-center"
+                                    style={{
+                                        fontSize: `${13 * scale}px`,
+                                        background: 'rgba(30,41,59,0.35)',
+                                        border: '1px solid #1e293b',
+                                        color: '#fff',
+                                        transition: 'background 0.2s',
+                                    }}
+                                >
+                                    {`Ir a carpeta ${subject?._movedToFolderName || ''}`.trim()}
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onDelete(subject, 'deleteShortcut'); }}
+                                    className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
+                                    style={{ fontSize: `${13 * scale}px` }}
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
                         ) : (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onDelete(subject, 'deleteShortcut'); }}

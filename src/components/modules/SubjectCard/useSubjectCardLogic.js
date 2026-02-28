@@ -1,5 +1,7 @@
 // src/components/modules/SubjectCard/useSubjectCardLogic.js
 
+import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../../utils/dragPayloadUtils';
+
 export const useSubjectCardLogic = ({ 
     subject, 
     cardScale, 
@@ -28,17 +30,14 @@ export const useSubjectCardLogic = ({
         if (draggable && onDragStart) {
             const subjectParentId = subject.shortcutParentId ?? subject.folderId ?? null;
             e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('subjectId', subject.id);
-            e.dataTransfer.setData('subjectType', 'subject');
-            e.dataTransfer.setData('subjectParentId', subjectParentId || '');
-            e.dataTransfer.setData('subjectShortcutId', subject.shortcutId || '');
-            e.dataTransfer.setData('treeItem', JSON.stringify({
+            const dragData = buildDragPayload({
                 id: subject.id,
                 type: 'subject',
                 parentId: subjectParentId,
-                shortcutId: subject.shortcutId || null
-            }));
-            e.dataTransfer.setData('position', position.toString());
+                shortcutId: subject.shortcutId || null,
+                position
+            });
+            writeDragPayloadToDataTransfer(e.dataTransfer, dragData);
             onDragStart(subject, position);
         }
     };
@@ -60,9 +59,9 @@ export const useSubjectCardLogic = ({
         if (draggable && onDrop) {
             e.preventDefault();
             e.stopPropagation();
-            const draggedSubjectId = e.dataTransfer.getData('subjectId');
-            const draggedPosition = parseInt(e.dataTransfer.getData('position'));
-            onDrop(draggedSubjectId, draggedPosition, position);
+            const draggedData = readDragPayloadFromDataTransfer(e.dataTransfer);
+            if (!draggedData || draggedData.type !== 'subject') return;
+            onDrop(draggedData.shortcutId || draggedData.id, draggedData.position, position);
         }
     };
 

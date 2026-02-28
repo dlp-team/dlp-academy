@@ -106,7 +106,15 @@ export const useHomePageState = ({ logic, searchQuery }) => {
     ]);
 
     const displayedFolders = useMemo(() => {
-        const allFolders = logic.filteredFolders || logic.folders || [];
+        const hasTagFilter = Array.isArray(logic.selectedTags) && logic.selectedTags.length > 0;
+        const allFolders = hasTagFilter
+            ? (logic.folders || [])
+            : (logic.filteredFolders || logic.folders || []);
+
+        if (searchQuery && Array.isArray(logic.searchFolders)) {
+            return logic.searchFolders;
+        }
+
         const currentId = logic.currentFolder ? logic.currentFolder.id : null;
 
         // Show only direct children of current folder (not descendants)
@@ -114,18 +122,8 @@ export const useHomePageState = ({ logic, searchQuery }) => {
             ? allFolders.filter(f => f.parentId === currentId)
             : allFolders.filter(f => !f.parentId);
 
-        if (logic.selectedTags && logic.selectedTags.length > 0 && logic.filteredFoldersByTags) {
-            const tagAllowed = new Set(logic.filteredFoldersByTags.map(f => f.id));
-            scopedFolders = scopedFolders.filter(f => tagAllowed.has(f.id));
-        }
-
-        if (searchQuery && logic.searchFolders) {
-            const searchAllowed = new Set(logic.searchFolders.map(f => f.id));
-            scopedFolders = scopedFolders.filter(f => searchAllowed.has(f.id));
-        }
-
         return scopedFolders;
-    }, [logic.filteredFolders, logic.folders, logic.currentFolder, logic.searchFolders, searchQuery, logic.selectedTags, logic.filteredFoldersByTags]);
+    }, [logic.filteredFolders, logic.folders, logic.currentFolder, logic.searchFolders, searchQuery, logic.selectedTags]);
 
     const activeModalFolder = useMemo(() => {
         if (!folderContentsModalConfig.folder) return null;

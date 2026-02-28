@@ -15,6 +15,7 @@ const SharedView = ({
     sharedSubjects = [],  
     layoutMode = 'grid',  
     cardScale = 100,      
+    currentFolder = null,
     // Actions
     onOpenFolder,
     onSelectSubject,
@@ -47,16 +48,81 @@ const SharedView = ({
     const [selectedTags, setSelectedTags] = useState([]);
     const [activeFilter, setActiveFilter] = useState('all');
 
-    // Filtered shared folders/subjects by selected tags
-    const filteredFolders = useMemo(() => {
+    const folderById = useMemo(() => {
+        const map = new Map();
+        (allFolders || []).forEach(folder => {
+            if (folder?.id) map.set(folder.id, folder);
+        });
+        (sharedFolders || []).forEach(folder => {
+            if (folder?.id && !map.has(folder.id)) map.set(folder.id, folder);
+        });
+        return map;
+    }, [allFolders, sharedFolders]);
+
+    const getFolderParentId = (folderEntry) => {
+        if (!folderEntry) return null;
+        return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+    };
+
+    const hasSharedAncestorFolder = (folderId) => {
+        if (!folderId) return false;
+        let cursorId = folderId;
+        let safety = 0;
+        while (cursorId && safety < 200) {
+            const cursor = folderById.get(cursorId);
+            if (!cursor) return false;
+            if (cursor.isShared === true) return true;
+            cursorId = getFolderParentId(cursor);
+            safety += 1;
+        }
+        return false;
+    };
+
+    const isInsideSharedFolderForItem = (item, itemType) => {
+        if (!item) return false;
+        if (itemType === 'folder') {
+            return hasSharedAncestorFolder(getFolderParentId(item));
+        }
+        const parentId = item.shortcutParentId ?? item.folderId ?? item.parentId ?? null;
+        return hasSharedAncestorFolder(parentId);
+    };
+
+    const tagFilteredFolders = useMemo(() => {
         if (selectedTags.length === 0) return sharedFolders;
         return sharedFolders.filter(f => Array.isArray(f.tags) && selectedTags.every(tag => f.tags.includes(tag)));
     }, [sharedFolders, selectedTags]);
 
+    const filteredFolders = useMemo(() => {
+        const folderIdsInScope = new Set(tagFilteredFolders.map(folder => folder.id));
+        const currentFolderId = currentFolder?.id || null;
+
+        return tagFilteredFolders.filter(folder => {
+            const parentId = getFolderParentId(folder);
+
+            if (currentFolderId) {
+                return parentId === currentFolderId;
+            }
+
+            if (!parentId) return true;
+            return !folderIdsInScope.has(parentId);
+        });
+    }, [tagFilteredFolders, currentFolder]);
+
     const filteredSubjects = useMemo(() => {
-        if (selectedTags.length === 0) return sharedSubjects;
-        return sharedSubjects.filter(s => Array.isArray(s.tags) && selectedTags.every(tag => s.tags.includes(tag)));
-    }, [sharedSubjects, selectedTags]);
+        const tagFilteredSubjects = selectedTags.length === 0
+            ? sharedSubjects
+            : sharedSubjects.filter(s => Array.isArray(s.tags) && selectedTags.every(tag => s.tags.includes(tag)));
+
+        const currentFolderId = currentFolder?.id || null;
+        if (!currentFolderId) {
+            return tagFilteredSubjects;
+        }
+
+        return tagFilteredSubjects.filter(subject => {
+            const parentId = subject.shortcutParentId ?? subject.folderId ?? subject.parentId ?? null;
+            return parentId === currentFolderId;
+        });
+    }, [sharedSubjects, selectedTags, currentFolder]);
     // Calculate grid column width based on scale (matches HomeContent logic)
     const gridStyle = { 
         gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` 
@@ -106,11 +172,6 @@ const SharedView = ({
                         {layoutMode === 'grid' ? (
                             <div className="grid gap-6" style={gridStyle}>
                                 {filteredFolders
-                                    .filter(folder => {
-                                        // Only show folders that are not inside another shared folder
-                                        if (!folder.parentId) return true;
-                                        return !filteredFolders.some(f => f.id === folder.parentId);
-                                    })
                                     .map((folder) => (
                                         <div key={folder.id}>
                                             <FolderCard
@@ -121,10 +182,14 @@ const SharedView = ({
                                                 activeMenu={activeMenu}
                                                 onToggleMenu={onToggleMenu}
                                                 onEdit={(f) => onEditFolder(f)}
-                                                onDelete={(f, action = 'delete') => onDeleteFolder(f, action)}
+                                                onDelete={(f, action = 'delete') => {
+                                                    if (action === 'unshareAndDelete' && isInsideSharedFolderForItem(f, 'folder')) return;
+                                                    onDeleteFolder(f, action);
+                                                }}
                                                 onShare={(f) => onShareFolder(f)}
                                                 isShared={true}
                                                 cardScale={cardScale}
+                                                disableUnshareActions={isInsideSharedFolderForItem(folder, 'folder')}
                                             />
                                         </div>
                                     ))}
@@ -132,11 +197,6 @@ const SharedView = ({
                         ) : (
                             <div className="space-y-2">
                                 {filteredFolders
-                                    .filter(folder => {
-                                        // Only show folders that are not inside another shared folder
-                                        if (!folder.parentId) return true;
-                                        return !filteredFolders.some(f => f.id === folder.parentId);
-                                    })
                                     .map((folder) => (
                                         <ListViewItem 
                                             key={folder.id}
@@ -146,12 +206,16 @@ const SharedView = ({
                                             onNavigate={() => onOpenFolder(folder)}
                                             cardScale={cardScale}
                                             onEdit={(f) => onEditFolder(f)}
-                                            onDelete={(f, action = 'delete') => onDeleteFolder(f, action)}
+                                            onDelete={(f, action = 'delete') => {
+                                                if (action === 'unshareAndDelete' && isInsideSharedFolderForItem(f, 'folder')) return;
+                                                onDeleteFolder(f, action);
+                                            }}
                                             onShare={(f) => onShareFolder(f)}
                                             draggable={false}
                                             allFolders={filteredFolders}
                                             allSubjects={filteredSubjects}
                                             onDropAction={() => {}}
+                                            disableUnshareActions={isInsideSharedFolderForItem(folder, 'folder')}
                                         />
                                     ))}
                             </div>
@@ -191,10 +255,14 @@ const SharedView = ({
                                             onSelect={() => onSelectSubject(subject)}
                                             onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
                                             onEdit={(e, s) => onEditSubject(e, s)} 
-                                            onDelete={(e, s, action = 'delete') => onDeleteSubject(e, s, action)}
+                                            onDelete={(e, s, action = 'delete') => {
+                                                if (action === 'unshareAndDelete' && isInsideSharedFolderForItem(s, 'subject')) return;
+                                                onDeleteSubject(e, s, action);
+                                            }}
                                             onShare={(s) => onShareSubject(s)}
                                             cardScale={cardScale}
                                             isShared={true}
+                                            disableUnshareActions={isInsideSharedFolderForItem(subject, 'subject')}
                                         />
                                     </div>
                                 ))}
@@ -210,10 +278,16 @@ const SharedView = ({
                                         onNavigateSubject={() => onSelectSubject(subject)}
                                         cardScale={cardScale}
                                         onEdit={(s) => onEditSubject({ stopPropagation: () => {} }, s)}
-                                        onDelete={(s, action = 'delete') => onDeleteSubject({ stopPropagation: () => {} }, s, action)}
+                                        onDelete={(s, action = 'delete') => {
+                                            if (action === 'unshareAndDelete' && isInsideSharedFolderForItem(s, 'subject')) return;
+                                            onDeleteSubject({ stopPropagation: () => {} }, s, action);
+                                        }}
                                         onShare={(s) => onShareSubject(s)}
                                         draggable={false}
                                         onDropAction={() => {}}
+                                        allFolders={allFolders}
+                                        allSubjects={filteredSubjects}
+                                        disableUnshareActions={isInsideSharedFolderForItem(subject, 'subject')}
                                     />
                                 ))}
                             </div>

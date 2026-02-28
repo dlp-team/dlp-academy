@@ -1,5 +1,5 @@
 // src/pages/Home/Home.jsx
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -26,7 +26,7 @@ import HomeModals from './components/HomeModals';
 import HomeShareConfirmModals from './components/HomeShareConfirmModals';
 import FolderTreeModal from '../../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../Subject/modals/SubjectTopicModal';
-import { isShortcutItem } from '../../utils/permissionUtils';
+import { getPermissionLevel, isShortcutItem } from '../../utils/permissionUtils';
 
 
 const Home = ({ user }) => {
@@ -34,6 +34,8 @@ const Home = ({ user }) => {
     }, []);
 
     const [searchQuery, setSearchQuery] = useState('');
+    const [sharedScopeSelected, setSharedScopeSelected] = useState(true);
+    const [hasInitialDataLoaded, setHasInitialDataLoaded] = useState(false);
     const [searchParams, setSearchParams] = useSearchParams();
     const logic = useHomeLogic(user, searchQuery);
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
@@ -63,6 +65,17 @@ const Home = ({ user }) => {
     } = useHomePageState({ logic, searchQuery });
 
     const folderIdFromUrl = searchParams.get('folderId');
+
+    React.useEffect(() => {
+        if (!user) {
+            setHasInitialDataLoaded(false);
+            return;
+        }
+
+        if (!logic.loading && !logic.loadingFolders) {
+            setHasInitialDataLoaded(true);
+        }
+    }, [user, logic.loading, logic.loadingFolders]);
 
     React.useEffect(() => {
         if (!folderIdFromUrl || !Array.isArray(logic.folders) || logic.folders.length === 0) return;
@@ -126,7 +139,123 @@ const Home = ({ user }) => {
         setFolderContentsModalConfig
     });
 
-    if (!user || logic.loading || logic.loadingFolders) {
+    const treeFolders = useMemo(() => {
+        const baseFolders = Array.isArray(logic.folders) ? logic.folders : [];
+        const shortcutFolders = Array.isArray(logic.resolvedShortcuts)
+            ? logic.resolvedShortcuts.filter(item => item?.targetType === 'folder')
+            : [];
+
+        const merged = [];
+        const seen = new Set();
+
+        baseFolders.forEach(folder => {
+            const key = `source:${folder.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(folder);
+            }
+        });
+
+        shortcutFolders.forEach(folder => {
+            const key = `shortcut:${folder.shortcutId || folder.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(folder);
+            }
+        });
+
+        return merged;
+    }, [logic.folders, logic.resolvedShortcuts]);
+
+    const treeSubjects = useMemo(() => {
+        const baseSubjects = Array.isArray(logic.subjects) ? logic.subjects : [];
+        const shortcutSubjects = Array.isArray(logic.resolvedShortcuts)
+            ? logic.resolvedShortcuts.filter(item => item?.targetType === 'subject')
+            : [];
+
+        const merged = [];
+        const seen = new Set();
+
+        baseSubjects.forEach(subject => {
+            const key = `source:${subject.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(subject);
+            }
+        });
+
+        shortcutSubjects.forEach(subject => {
+            const key = `shortcut:${subject.shortcutId || subject.id}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                merged.push(subject);
+            }
+        });
+
+        return merged;
+    }, [logic.subjects, logic.resolvedShortcuts]);
+
+    const isSharedForCurrentUser = React.useCallback((item) => {
+        if (!item) return false;
+        if (isShortcutItem(item)) return true;
+
+        const isSubjectEntity = item?.targetType === 'subject' || Object.prototype.hasOwnProperty.call(item, 'course') || Object.prototype.hasOwnProperty.call(item, 'folderId');
+        if (isSubjectEntity) {
+            return item?.isShared === true;
+        }
+
+        const currentUserId = user?.uid || null;
+        const currentEmail = (user?.email || '').toLowerCase();
+        const sharedWithUids = Array.isArray(item.sharedWithUids) ? item.sharedWithUids : [];
+        const sharedWith = Array.isArray(item.sharedWith) ? item.sharedWith : [];
+
+        const sharedByUid = currentUserId ? sharedWithUids.includes(currentUserId) : false;
+        const sharedByEmail = currentEmail
+            ? sharedWith.some(entry => (entry?.email || '').toLowerCase() === currentEmail)
+            : false;
+
+        return sharedByUid || sharedByEmail || item?.isShared === true;
+    }, [user?.uid, user?.email]);
+
+    const availableControlTags = useMemo(() => {
+        const sourceFolders = logic.viewMode === 'shared' ? (sharedFolders || []) : (logic.filteredFolders || logic.folders || []);
+        const sourceSubjects = logic.viewMode === 'shared' ? (sharedSubjects || []) : (logic.filteredSubjects || logic.subjects || []);
+
+        const effectiveFolders = sharedScopeSelected ? sourceFolders : sourceFolders.filter(item => !isSharedForCurrentUser(item));
+        const effectiveSubjects = sharedScopeSelected ? sourceSubjects : sourceSubjects.filter(item => !isSharedForCurrentUser(item));
+
+        const tagSet = new Set();
+        effectiveFolders.forEach(folder => (Array.isArray(folder?.tags) ? folder.tags : []).forEach(tag => tagSet.add(tag)));
+        effectiveSubjects.forEach(subject => (Array.isArray(subject?.tags) ? subject.tags : []).forEach(tag => tagSet.add(tag)));
+
+        return Array.from(tagSet).filter(Boolean).sort();
+    }, [logic.viewMode, sharedFolders, sharedSubjects, logic.filteredFolders, logic.folders, logic.filteredSubjects, logic.subjects, sharedScopeSelected, isSharedForCurrentUser]);
+
+    const canCreateInManualContext = useMemo(() => {
+        if (logic.viewMode !== 'grid') return true;
+        if (logic.currentFolder?.isShared !== true) return true;
+        const permission = user?.uid ? getPermissionLevel(logic.currentFolder, user.uid) : 'none';
+        return permission === 'editor' || permission === 'owner';
+    }, [logic.viewMode, logic.currentFolder, user?.uid]);
+
+    React.useEffect(() => {
+        const availableTagSet = new Set(availableControlTags);
+        if (logic.viewMode === 'shared') {
+            const pruned = (sharedSelectedTags || []).filter(tag => availableTagSet.has(tag));
+            if (pruned.length !== (sharedSelectedTags || []).length) {
+                setSharedSelectedTags(pruned);
+            }
+            return;
+        }
+
+        const currentTags = logic.selectedTags || [];
+        const pruned = currentTags.filter(tag => availableTagSet.has(tag));
+        if (pruned.length !== currentTags.length) {
+            logic.setSelectedTags(pruned);
+        }
+    }, [availableControlTags, logic.viewMode, sharedSelectedTags, setSharedSelectedTags, logic.selectedTags, logic.setSelectedTags]);
+
+    if (!user || (!hasInitialDataLoaded && (logic.loading || logic.loadingFolders))) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors">
                 <Loader2 className="w-10 h-10 text-indigo-600 dark:text-indigo-400 animate-spin" />
@@ -161,7 +290,7 @@ const Home = ({ user }) => {
                         setLayoutMode={logic.setLayoutMode}
                         cardScale={logic.cardScale}
                         setCardScale={logic.setCardScale}
-                        allTags={logic.viewMode === 'shared' ? sharedAllTags : (logic.allTags || [])}
+                        allTags={availableControlTags}
                         selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
                         setSelectedTags={logic.viewMode === 'shared' ? setSharedSelectedTags : logic.setSelectedTags}
                         currentFolder={logic.currentFolder}
@@ -181,10 +310,13 @@ const Home = ({ user }) => {
                         draggedItemType={logic.draggedItemType}
                         onPreferenceChange={logic.handlePreferenceChange}
                         allFolders={logic.folders || []} 
+                        allSubjects={logic.subjects || []}
                         activeFilter={logic.viewMode === 'shared' ? sharedActiveFilter : logic.activeFilter}
                         handleFilterChange={logic.handleFilterChange}
                         onFilterOverlayChange={setIsFilterOpen}
                         onScaleOverlayChange={setIsScaleOverlayOpen}
+                        sharedScopeSelected={sharedScopeSelected}
+                        onSharedScopeChange={setSharedScopeSelected}
 
                         // SEARCH
                         searchQuery={searchQuery}
@@ -194,86 +326,101 @@ const Home = ({ user }) => {
                 </div>
 
                 {logic.viewMode === 'shared' ? (
-                    <SharedView 
-                        user={user}
-                        sharedFolders={sharedFolders}
-                        sharedSubjects={sharedSubjects}
-                        cardScale={logic.cardScale}
-                        allFolders={logic.folders || []}
-                        
-                        layoutMode={logic.layoutMode} 
+                    <>
+                        <BreadcrumbNav
+                            currentFolder={logic.currentFolder}
+                            onNavigate={(folder) => {
+                                logic.setCurrentFolder(folder);
+                                if (folder && folder.id) localStorage.setItem('dlp_last_folderId', folder.id);
+                                if (!folder) localStorage.removeItem('dlp_last_folderId');
+                            }}
+                            allFolders={logic.folders || []}
+                            onDropOnBreadcrumb={handleBreadcrumbDrop}
+                            draggedItem={logic.draggedItem}
+                            draggedItemType={logic.draggedItemType}
+                        />
+                        <SharedView 
+                            user={user}
+                            sharedFolders={sharedFolders}
+                            sharedSubjects={sharedSubjects}
+                            cardScale={logic.cardScale}
+                            allFolders={logic.folders || []}
+                            currentFolder={logic.currentFolder}
+                            
+                            layoutMode={logic.layoutMode} 
 
-                        // Handlers
-                        onOpenFolder={logic.handleOpenFolder}
-                        onSelectSubject={(subject) => {
-                            logic.touchSubject(subject.id);
-                            logic.navigate(`/home/subject/${subject.id}`);
-                        }}
-                        
-                        // UI State
-                        activeMenu={logic.activeMenu}
-                        onToggleMenu={logic.setActiveMenu}
-                        flippedSubjectId={logic.flippedSubjectId}
-                        onFlipSubject={logic.setFlippedSubjectId}
-                        
-                        // Navigation
-                        onSelectTopic={(sid, tid) => logic.navigate(`/home/subject/${sid}/topic/${tid}`)}
-                        navigate={logic.navigate}
+                            // Handlers
+                            onOpenFolder={logic.handleOpenFolder}
+                            onSelectSubject={(subject) => {
+                                logic.touchSubject(subject.id);
+                                logic.navigate(`/home/subject/${subject.id}`);
+                            }}
+                            
+                            // UI State
+                            activeMenu={logic.activeMenu}
+                            onToggleMenu={logic.setActiveMenu}
+                            flippedSubjectId={logic.flippedSubjectId}
+                            onFlipSubject={logic.setFlippedSubjectId}
+                            
+                            // Navigation
+                            onSelectTopic={(sid, tid) => logic.navigate(`/home/subject/${sid}/topic/${tid}`)}
+                            navigate={logic.navigate}
 
-                        onEditFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
-                        onDeleteFolder={(f, action = 'delete') => {
-                            if (isShortcutItem(f) && f?.shortcutId) {
-                                logic.setDeleteConfig({
-                                    isOpen: true,
-                                    type: 'shortcut-folder',
-                                    action: action === 'unshareAndDelete'
-                                        ? 'unshare'
-                                        : action === 'deleteShortcut'
-                                            ? 'deleteShortcut'
-                                        : action === 'showInManual'
-                                            ? 'unhide'
-                                            : 'hide',
-                                    item: f
-                                });
-                                return;
-                            }
-                            logic.setDeleteConfig({ isOpen: true, type: 'folder', item: f });
-                        }}
-                        onShareFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
-                        onEditSubject={(e, s) => {
-                            e.stopPropagation();
-                            logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s });
-                            logic.setActiveMenu(null);
-                        }}
-                        onDeleteSubject={(e, s, action = 'delete') => {
-                            e.stopPropagation();
-                            if (isShortcutItem(s) && s?.shortcutId) {
-                                logic.setDeleteConfig({
-                                    isOpen: true,
-                                    type: 'shortcut-subject',
-                                    action: action === 'unshareAndDelete'
-                                        ? 'unshare'
-                                        : action === 'deleteShortcut'
-                                            ? 'deleteShortcut'
-                                        : action === 'showInManual'
-                                            ? 'unhide'
-                                            : 'hide',
-                                    item: s
-                                });
-                            } else {
-                                logic.setDeleteConfig({ isOpen: true, type: 'subject', item: s });
-                            }
-                            logic.setActiveMenu(null);
-                        }}
-                        onShareSubject={(s) => {
-                            logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
-                            logic.setActiveMenu(null);
-                        }}
+                            onEditFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
+                            onDeleteFolder={(f, action = 'delete') => {
+                                if (isShortcutItem(f) && f?.shortcutId) {
+                                    logic.setDeleteConfig({
+                                        isOpen: true,
+                                        type: 'shortcut-folder',
+                                        action: action === 'unshareAndDelete'
+                                            ? 'unshare'
+                                            : action === 'deleteShortcut'
+                                                ? 'deleteShortcut'
+                                            : action === 'showInManual'
+                                                ? 'unhide'
+                                                : 'hide',
+                                        item: f
+                                    });
+                                    return;
+                                }
+                                logic.setDeleteConfig({ isOpen: true, type: 'folder', item: f });
+                            }}
+                            onShareFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
+                            onEditSubject={(e, s) => {
+                                e.stopPropagation();
+                                logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s });
+                                logic.setActiveMenu(null);
+                            }}
+                            onDeleteSubject={(e, s, action = 'delete') => {
+                                e.stopPropagation();
+                                if (isShortcutItem(s) && s?.shortcutId) {
+                                    logic.setDeleteConfig({
+                                        isOpen: true,
+                                        type: 'shortcut-subject',
+                                        action: action === 'unshareAndDelete'
+                                            ? 'unshare'
+                                            : action === 'deleteShortcut'
+                                                ? 'deleteShortcut'
+                                            : action === 'showInManual'
+                                                ? 'unhide'
+                                                : 'hide',
+                                        item: s
+                                    });
+                                } else {
+                                    logic.setDeleteConfig({ isOpen: true, type: 'subject', item: s });
+                                }
+                                logic.setActiveMenu(null);
+                            }}
+                            onShareSubject={(s) => {
+                                logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
+                                logic.setActiveMenu(null);
+                            }}
 
-                        // Search
-                        searchTerm={searchQuery}
-                        onSearchChange={setSearchQuery}
-                    />
+                            // Search
+                            searchTerm={searchQuery}
+                            onSearchChange={setSearchQuery}
+                        />
+                    </>
                 ) : (
                     <>
                         <HomeShareConfirmModals
@@ -296,7 +443,7 @@ const Home = ({ user }) => {
                             draggedItemType={logic.draggedItemType}
                         />
 
-                        {logic.loading ? (
+                        {!hasInitialDataLoaded && logic.loading ? (
                              <div className="flex justify-center py-12">
                                 <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
                             </div>
@@ -362,6 +509,7 @@ const Home = ({ user }) => {
                                         
                                         activeFilter={logic.activeFilter}
                                         selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
+                                        sharedScopeSelected={sharedScopeSelected}
                                         
                                         navigate={logic.navigate}
                                     />
@@ -384,7 +532,11 @@ const Home = ({ user }) => {
                                 ) : (
                                     <HomeEmptyState 
                                         setSubjectModalConfig={logic.setSubjectModalConfig}
-                                        setFolderModalConfig={logic.setFolderModalConfig}
+                                        viewMode={logic.viewMode}
+                                        layoutMode={logic.layoutMode}
+                                        canCreateSubject={canCreateInManualContext}
+                                        cardScale={logic.cardScale || 100}
+                                        currentFolder={logic.currentFolder}
                                     />
                                 )}
                             </>
@@ -421,8 +573,8 @@ const Home = ({ user }) => {
                 isOpen={folderContentsModalConfig.isOpen}
                 onClose={() => setFolderContentsModalConfig({ isOpen: false, folder: null })}
                 rootFolder={activeModalFolder}
-                allFolders={logic.folders || []}
-                allSubjects={logic.subjects || []}
+                allFolders={treeFolders}
+                allSubjects={treeSubjects}
                 onNavigateFolder={(folder) => {
                     handleNavigateFromTree(folder);
                     if (folder && folder.id) {

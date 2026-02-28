@@ -1,3 +1,19 @@
+## [2026-02-26] Feature Update: Subject Share Role Upsert
+### Context & Architecture
+`useSubjects.shareSubject` is invoked by subject sharing UIs and writes sharing metadata to Firestore (`subjects`) while ensuring recipient shortcut provisioning.
+
+### Previous State
+- `shareSubject` treated all new shares as `viewer`.
+- If a user was already shared, there was no role update path in this method.
+
+### New State & Logic
+- Extended signature to `shareSubject(subjectId, email, role = 'viewer')`.
+- Added role normalization and role-aware share payload.
+- Added in-place update of `sharedWith` role when user was already shared (without duplicating entries).
+- Return payload now indicates `alreadyShared` and `roleUpdated`, enabling richer UI feedback.
+
+---
+
 # useSubjects.js
 
 ## Purpose

@@ -9,6 +9,16 @@ export const useSubjects = (user) => {
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
+    const debugShare = (stage, payload = {}) => {
+        console.info('[SHARE_DEBUG][subject]', {
+            ts: new Date().toISOString(),
+            stage,
+            actorUid: user?.uid || null,
+            actorEmail: user?.email || null,
+            actorInstitutionId: currentInstitutionId,
+            ...payload
+        });
+    };
 
 
     useEffect(() => {
@@ -147,9 +157,11 @@ export const useSubjects = (user) => {
         }
     };
 
-    const shareSubject = async (subjectId, email) => {
+    const shareSubject = async (subjectId, email, role = 'viewer') => {
         try {
             const emailLower = email.toLowerCase();
+            const normalizedRole = role === 'editor' ? 'editor' : 'viewer';
+            debugShare('start', { subjectId, email: emailLower, role: normalizedRole });
             if (user?.email?.toLowerCase() === emailLower) {
                 throw new Error("No puedes compartir contigo mismo.");
             }
@@ -164,10 +176,12 @@ export const useSubjects = (user) => {
                 targetUid = querySnapshot.docs[0].id;
                 const targetUserData = querySnapshot.docs[0].data() || {};
                 const targetInstitutionId = targetUserData.institutionId || null;
+                debugShare('user_lookup_success', { subjectId, targetUid, targetInstitutionId });
                 if (targetInstitutionId && targetInstitutionId !== currentInstitutionId) {
                     throw new Error("No puedes compartir entre instituciones diferentes.");
                 }
             } else {
+                debugShare('user_lookup_fail', { subjectId, email: emailLower });
                 throw new Error("No existe ningún usuario registrado con ese correo.");
             }
 
@@ -194,11 +208,16 @@ export const useSubjects = (user) => {
                 (Array.isArray(subjectData.sharedWithUids) && subjectData.sharedWithUids.includes(targetUid)) ||
                 (Array.isArray(subjectData.sharedWith) && subjectData.sharedWith.some(entry => entry.uid === targetUid));
 
+            const currentSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
+            const existingShare = currentSharedWith.find(entry => entry.uid === targetUid);
+
             // 3. Build share data
             const shareData = {
                 email: emailLower,
                 uid: targetUid,
-                role: 'viewer',
+                role: normalizedRole,
+                canEdit: normalizedRole === 'editor',
+                shareOrigin: 'direct',
                 sharedAt: new Date()
             };
 
@@ -216,34 +235,113 @@ export const useSubjects = (user) => {
                         updatedAt: new Date()
                     });
                     sourceUpdated = true;
+                    debugShare('subject_source_updated_new_share', { subjectId, targetUid });
                 } catch (err) {
+                    debugShare('subject_source_update_fail', {
+                        subjectId,
+                        targetUid,
+                        errorCode: err?.code || null,
+                        errorMessage: err?.message || String(err)
+                    });
                     throw err;
                 }
+            } else if ((existingShare?.role || 'viewer') !== normalizedRole) {
+                const updatedSharedWith = currentSharedWith.map(entry =>
+                    entry.uid === targetUid
+                        ? {
+                            ...entry,
+                            role: normalizedRole,
+                            canEdit: normalizedRole === 'editor'
+                        }
+                        : entry
+                );
+
+                await updateDoc(subjectRef, {
+                    sharedWith: updatedSharedWith,
+                    updatedAt: new Date()
+                });
+                debugShare('subject_source_updated_role', { subjectId, targetUid, role: normalizedRole });
             }
 
             // 5. Ensure shortcut exists for the recipient (deterministic upsert, avoids query/index/rules read issues)
             try {
                 const shortcutId = `${targetUid}_${subjectId}_subject`;
                 const shortcutRef = doc(db, 'shortcuts', shortcutId);
-                const shortcutPayload = {
+                const shortcutInstitutionId = subjectData?.institutionId || currentInstitutionId || null;
+                const shortcutUpdatePayload = {
                     ownerId: targetUid,
-                    parentId: null,
                     targetId: subjectId,
                     targetType: 'subject',
-                    institutionId: currentInstitutionId,
-                    shortcutName: subjectData.name || null,
-                    shortcutCourse: subjectData.course || null,
-                    shortcutTags: Array.isArray(subjectData.tags) ? subjectData.tags : [],
-                    shortcutColor: subjectData.color || null,
-                    shortcutIcon: subjectData.icon || null,
-                    shortcutCardStyle: subjectData.cardStyle || null,
-                    shortcutModernFillColor: subjectData.modernFillColor || null,
-                    createdAt: new Date(),
+                    institutionId: shortcutInstitutionId,
+                    shortcutName: subjectData?.name || 'Asignatura',
+                    shortcutCourse: subjectData?.course || null,
+                    shortcutTags: Array.isArray(subjectData?.tags) ? subjectData.tags : [],
+                    shortcutColor: subjectData?.color || 'from-slate-500 to-slate-700',
+                    shortcutIcon: subjectData?.icon || 'book',
+                    shortcutCardStyle: subjectData?.cardStyle || 'default',
+                    shortcutModernFillColor: subjectData?.modernFillColor ?? subjectData?.fillColor ?? null,
                     updatedAt: new Date()
                 };
 
-                await setDoc(shortcutRef, shortcutPayload, { merge: true });
+                try {
+                    await updateDoc(shortcutRef, shortcutUpdatePayload);
+                    debugShare('shortcut_upsert_updated_existing', { subjectId, targetUid, shortcutId });
+                } catch (updateShortcutError) {
+                    const updateCode = updateShortcutError?.code || '';
+                    const updateMessage = String(updateShortcutError?.message || '').toLowerCase();
+                    const isNotFound =
+                        updateCode === 'not-found' ||
+                        updateCode === 'firestore/not-found' ||
+                        updateMessage.includes('not found') ||
+                        updateMessage.includes('no document');
+                    const isPermissionDenied =
+                        updateCode === 'permission-denied' ||
+                        updateCode === 'firestore/permission-denied' ||
+                        updateMessage.includes('permission') ||
+                        updateMessage.includes('insufficient permissions');
+
+                    debugShare('shortcut_update_fail', {
+                        subjectId,
+                        targetUid,
+                        shortcutId,
+                        errorCode: updateCode,
+                        errorMessage: updateShortcutError?.message || String(updateShortcutError),
+                        isNotFound,
+                        isPermissionDenied
+                    });
+
+                    if (!isNotFound && !isPermissionDenied) {
+                        throw updateShortcutError;
+                    }
+
+                    const shortcutCreatePayload = {
+                        ownerId: targetUid,
+                        parentId: null,
+                        targetId: subjectId,
+                        targetType: 'subject',
+                        institutionId: shortcutInstitutionId,
+                        shortcutName: subjectData?.name || 'Asignatura',
+                        shortcutCourse: subjectData?.course || null,
+                        shortcutTags: Array.isArray(subjectData?.tags) ? subjectData.tags : [],
+                        shortcutColor: subjectData?.color || 'from-slate-500 to-slate-700',
+                        shortcutIcon: subjectData?.icon || 'book',
+                        shortcutCardStyle: subjectData?.cardStyle || 'default',
+                        shortcutModernFillColor: subjectData?.modernFillColor ?? subjectData?.fillColor ?? null,
+                        createdAt: new Date(),
+                        updatedAt: new Date()
+                    };
+
+                    await setDoc(shortcutRef, shortcutCreatePayload);
+                    debugShare('shortcut_upsert_created_missing', { subjectId, targetUid, shortcutId, shortcutInstitutionId });
+                }
             } catch (shortcutError) {
+                debugShare('shortcut_upsert_fail', {
+                    subjectId,
+                    targetUid,
+                    sourceUpdated,
+                    errorCode: shortcutError?.code || null,
+                    errorMessage: shortcutError?.message || String(shortcutError)
+                });
                 if (sourceUpdated) {
                     try {
                         await updateDoc(subjectRef, {
@@ -259,9 +357,20 @@ export const useSubjects = (user) => {
                 }
                 throw shortcutError;
             }
-            return { ...shareData, alreadyShared };
+            debugShare('success', { subjectId, targetUid, alreadyShared });
+            return {
+                ...shareData,
+                alreadyShared,
+                roleUpdated: alreadyShared && (existingShare?.role || 'viewer') !== normalizedRole
+            };
 
         } catch (error) {
+            debugShare('fail', {
+                subjectId,
+                email,
+                errorCode: error?.code || null,
+                errorMessage: error?.message || String(error)
+            });
             throw error;
         }
     };

@@ -109,14 +109,14 @@ export const canView = (item, userId) => {
 
 /**
  * Check if user can delete an item
- * Only owners can delete (editors cannot)
+ * Owners and editors can delete
  * 
  * @param {Object} item - Subject, folder, or topic document
  * @param {string} userId - Current user's UID
  * @returns {boolean}
  */
 export const canDelete = (item, userId) => {
-    return isOwner(item, userId);
+    return canEdit(item, userId);
 };
 
 /**
@@ -247,7 +247,7 @@ export const shouldShowDeleteUI = (item, userId) => {
         return item.ownerId === userId || item.shortcutOwnerId === userId;
     }
 
-    // For regular items, only owner can delete
+    // For regular items, owners and editors can delete
     return canDelete(item, userId);
 };
 

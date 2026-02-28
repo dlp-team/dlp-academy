@@ -35,6 +35,7 @@ const HomeModals = ({
                 isEditing={subjectModalConfig.isEditing}
                 initialData={subjectModalConfig.data}
                 user={user}
+                allFolders={allFolders}
                 onClose={() => setSubjectModalConfig({ ...subjectModalConfig, isOpen: false })}
                 onSave={handleSaveSubject}
                 onShare={onShareSubject}

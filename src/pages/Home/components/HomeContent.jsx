@@ -10,7 +10,7 @@ import SubjectListItem from '../../../components/modules/ListItems/SubjectListIt
 import ListViewItem from '../../../components/modules/ListViewItem';
 import useHomeContentDnd from '../hooks/useHomeContentDnd';
 import useAutoScrollOnDrag from '../../../hooks/useAutoScrollOnDrag';
-import { isShortcutItem } from '../../../utils/permissionUtils';
+import { isShortcutItem, getPermissionLevel } from '../../../utils/permissionUtils';
 
 const HomeContent = ({
     user,
@@ -60,15 +60,26 @@ const HomeContent = ({
     navigate,
     activeFilter,
     selectedTags = [],
+    sharedScopeSelected = true,
     filterOverlayOpen = false,
     onCloseFilterOverlay = () => {},
 }) => {
     const contentRef = useRef(null);
+    const sharedFolderPermission = currentFolder?.isShared && user?.uid
+        ? getPermissionLevel(currentFolder, user.uid)
+        : 'none';
+    const isViewerInSharedFolder = currentFolder?.isShared === true && sharedFolderPermission === 'viewer';
+    const isEditorInSharedFolder = currentFolder?.isShared === true && sharedFolderPermission === 'editor';
+    const disableAllActionsInShared = isViewerInSharedFolder;
+    const disableFolderDeleteActionsInShared = isViewerInSharedFolder || isEditorInSharedFolder;
+    const disableSubjectDeleteActionsInShared = isViewerInSharedFolder;
+    const dndEnabledInContext = isDragAndDropEnabled && !disableAllActionsInShared;
+    const canCreateInCurrentContext = !disableAllActionsInShared;
 
     // Auto-scroll is always enabled for both grid and list modes
     useAutoScrollOnDrag({
         containerRef: contentRef,
-        enabled: isDragAndDropEnabled,
+        enabled: dndEnabledInContext,
         scrollContainer: 'window',
         edgeThreshold: 160
     });
@@ -92,22 +103,59 @@ const HomeContent = ({
         handleMoveSubjectWithSource,
         handleNestFolder,
         handleMoveFolderWithSource,
+        handleDropReorderSubject,
+        handleDropReorderFolder,
         handleDragEnd
     });
 
     const showCollapsibleGroups = ['courses', 'tags', 'shared'].includes(viewMode);
 
-    // --- FILTER FOLDERS IF TAG FILTER IS ACTIVE ---
-    let filteredFolders = orderedFolders;
-    if (selectedTags && selectedTags.length > 0) {
-        // Only show folders that have at least one of the selected tags
-        filteredFolders = orderedFolders.filter(folder =>
-            Array.isArray(folder.tags) && folder.tags.some(tag => selectedTags.includes(tag))
-        );
-    }
+    const getFolderParentId = (folderEntry) => {
+        if (!folderEntry) return null;
+        if (isShortcutItem(folderEntry)) return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+        return folderEntry.parentId ?? null;
+    };
 
-    // --- FILTERING LOGIC ---
-    // No folder filter logic anymore
+    const getSubjectParentId = (subjectEntry) => {
+        if (!subjectEntry) return null;
+        if (isShortcutItem(subjectEntry)) return subjectEntry.shortcutParentId ?? subjectEntry.folderId ?? subjectEntry.parentId ?? null;
+        return subjectEntry.folderId ?? null;
+    };
+
+    const matchesTagFilter = (item) => {
+        if (!Array.isArray(selectedTags) || selectedTags.length === 0) return true;
+        return Array.isArray(item?.tags) && item.tags.some(tag => selectedTags.includes(tag));
+    };
+
+    const isSharedForCurrentUser = (item) => {
+        if (!item) return false;
+        if (isShortcutItem(item)) return true;
+
+        const isSubjectEntity = item?.targetType === 'subject' || Object.prototype.hasOwnProperty.call(item, 'course') || Object.prototype.hasOwnProperty.call(item, 'folderId');
+        if (isSubjectEntity) {
+            return item?.isShared === true;
+        }
+
+        const currentUserId = user?.uid || null;
+        const currentEmail = (user?.email || '').toLowerCase();
+        const sharedWithUids = Array.isArray(item.sharedWithUids) ? item.sharedWithUids : [];
+        const sharedWith = Array.isArray(item.sharedWith) ? item.sharedWith : [];
+
+        const sharedByUid = currentUserId ? sharedWithUids.includes(currentUserId) : false;
+        const sharedByEmail = currentEmail
+            ? sharedWith.some(entry => (entry?.email || '').toLowerCase() === currentEmail)
+            : false;
+
+        return sharedByUid || sharedByEmail || item?.isShared === true;
+    };
+
+    const matchesSharedFilter = (item) => {
+        if (sharedScopeSelected) return true;
+        return !isSharedForCurrentUser(item);
+    };
+
+    const hasTagFilter = Array.isArray(selectedTags) && selectedTags.length > 0;
+    const isRecursiveFilteringActive = viewMode === 'grid' && hasTagFilter;
 
     const allShortcutFolders = useMemo(
         () => (Array.isArray(resolvedShortcuts) ? resolvedShortcuts.filter(s => s?.targetType === 'folder') : []),
@@ -139,8 +187,8 @@ const HomeContent = ({
             }
         });
 
-        return merged;
-    }, [folders, allShortcutFolders]);
+        return merged.filter(folder => matchesSharedFilter(folder));
+    }, [folders, allShortcutFolders, sharedScopeSelected, user?.uid, user?.email]);
 
     const allSubjectsForTree = useMemo(() => {
         const merged = [];
@@ -162,8 +210,8 @@ const HomeContent = ({
             }
         });
 
-        return merged;
-    }, [subjects, allShortcutSubjects]);
+        return merged.filter(subject => matchesSharedFilter(subject));
+    }, [subjects, allShortcutSubjects, sharedScopeSelected, user?.uid, user?.email]);
 
     const handleGoToFolderFromGhost = (folderId) => {
         if (!folderId) return;
@@ -176,6 +224,90 @@ const HomeContent = ({
         handleOpenFolder(targetFolder);
     };
 
+    const folderById = useMemo(() => {
+        const map = new Map();
+        (allFoldersForTree || []).forEach(folder => {
+            if (folder?.id) map.set(folder.id, folder);
+        });
+        return map;
+    }, [allFoldersForTree]);
+
+    const isFolderWithinCurrentTree = (folderId) => {
+        const currentFolderId = currentFolder?.id ?? null;
+        if (!currentFolderId) return true;
+        let cursorId = folderId;
+        while (cursorId) {
+            if (cursorId === currentFolderId) return true;
+            const cursorFolder = folderById.get(cursorId);
+            if (!cursorFolder) return false;
+            cursorId = getFolderParentId(cursorFolder);
+        }
+        return false;
+    };
+
+    const hasSharedAncestorFolder = (folderId) => {
+        if (!folderId) return false;
+        let cursorId = folderId;
+        let safety = 0;
+        while (cursorId && safety < 200) {
+            const cursor = folderById.get(cursorId);
+            if (!cursor) return false;
+            if (cursor.isShared === true) return true;
+            cursorId = getFolderParentId(cursor);
+            safety += 1;
+        }
+        return false;
+    };
+
+    const isInsideSharedFolderForItem = (item, itemType) => {
+        if (!item) return false;
+        if (itemType === 'folder') {
+            const parentId = getFolderParentId(item);
+            return hasSharedAncestorFolder(parentId);
+        }
+        const parentId = getSubjectParentId(item);
+        return hasSharedAncestorFolder(parentId);
+    };
+
+    const filteredFolders = useMemo(() => {
+        if (!Array.isArray(orderedFolders)) return [];
+        return orderedFolders.filter(folder => matchesTagFilter(folder) && matchesSharedFilter(folder));
+    }, [orderedFolders, selectedTags, sharedScopeSelected, viewMode, user?.uid, user?.email]);
+
+    const getFilteredSubjectsForGroup = (groupSubjects) => {
+        if (!Array.isArray(groupSubjects)) return [];
+
+        if (!isRecursiveFilteringActive) {
+            return groupSubjects.filter(subject => matchesTagFilter(subject) && matchesSharedFilter(subject));
+        }
+
+        const currentLayerKeys = new Set(
+            groupSubjects.map(subject => (subject?.shortcutId ? `shortcut:${subject.shortcutId}` : `source:${subject.id}`))
+        );
+
+        const currentFolderId = currentFolder?.id ?? null;
+        const matchingSubjects = (allSubjectsForTree || []).filter(subject => {
+            const parentFolderId = getSubjectParentId(subject);
+            const insideCurrentTree = currentFolderId
+                ? isFolderWithinCurrentTree(parentFolderId)
+                : true;
+            return insideCurrentTree && matchesTagFilter(subject);
+        });
+
+        const unique = new Map();
+        matchingSubjects.forEach(subject => {
+            const key = subject?.shortcutId ? `shortcut:${subject.shortcutId}` : `source:${subject.id}`;
+            if (!unique.has(key)) unique.set(key, subject);
+        });
+
+        return Array.from(unique.values()).filter(subject => {
+            const key = subject?.shortcutId ? `shortcut:${subject.shortcutId}` : `source:${subject.id}`;
+            const isCurrentLayer = currentLayerKeys.has(key);
+            if (!isCurrentLayer && !isRecursiveFilteringActive) return false;
+            return matchesSharedFilter(subject);
+        });
+    };
+
     
     return (
         <div
@@ -185,6 +317,7 @@ const HomeContent = ({
         }`}>
             {groupedContent && Object.entries(groupedContent).map(([groupName, groupSubjects]) => {
                 const isCollapsed = collapsedGroups[groupName];
+                const displayedGroupSubjects = getFilteredSubjectsForGroup(groupSubjects);
 
                 return (
                     <div key={groupName} className="mb-10">
@@ -205,7 +338,7 @@ const HomeContent = ({
                                         ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2 py-1 rounded-full'
                                         : 'bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400 text-xs font-bold px-2 py-1 rounded-full'
                                 }>
-                                    {groupSubjects.length}
+                                    {displayedGroupSubjects.length}
                                 </span>
                                 <span className={`transition-transform ${isCollapsed ? '-rotate-90' : ''}`}>▼</span>
                             </button>
@@ -221,7 +354,7 @@ const HomeContent = ({
                                             style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` }}
                                         >
                                             {/* Create Subject Button for courses/tags view */}
-                                            {(viewMode === 'courses' || viewMode === 'tags') && (
+                                            {(viewMode === 'courses' || viewMode === 'tags') && canCreateInCurrentContext && (
                                                 <button
                                                     onClick={() => {
                                                         let data = null;
@@ -254,7 +387,7 @@ const HomeContent = ({
                                             )}
 
                                             {/* Promote Zone (Grid) */}
-                                            {viewMode === 'grid' && (
+                                                {viewMode === 'grid' && canCreateInCurrentContext && (
                                                  <div>
                                                     {currentFolder && draggedItem && (draggedItemType === 'subject' || draggedItemType === 'folder') ? (
                                                         <div
@@ -314,6 +447,8 @@ const HomeContent = ({
                                                         onToggleMenu={setActiveMenu}
                                                         onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                         onDelete={(f, action = 'delete') => {
+                                                            if (disableAllActionsInShared || disableFolderDeleteActionsInShared) return;
+                                                            if (action === 'unshareAndDelete' && isInsideSharedFolderForItem(f, 'folder')) return;
                                                             if (isShortcutItem(f) && f?.shortcutId) {
                                                                 setDeleteConfig({
                                                                     isOpen: true,
@@ -331,14 +466,17 @@ const HomeContent = ({
                                                             }
                                                             setDeleteConfig({ isOpen: true, type: 'folder', item: f });
                                                         }}
-                                                        onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
+                                                        onShare={(f) => {
+                                                            if (disableAllActionsInShared) return;
+                                                            setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' });
+                                                        }}
                                                         onShowContents={handleShowFolderContents}
                                                         onGoToFolder={handleGoToFolderFromGhost}
                                                         cardScale={cardScale}
                                                         onDrop={handleDropOnFolder}
                                                         onDropFolder={handleNestFolder}
-                                                        canDrop={isDragAndDropEnabled}
-                                                        draggable={isDragAndDropEnabled}
+                                                        canDrop={dndEnabledInContext}
+                                                        draggable={dndEnabledInContext}
                                                         onDragStart={handleDragStartFolder}
                                                         onDragEnd={handleDragEnd}
                                                         onDragOver={handleDragOverFolder}
@@ -347,13 +485,16 @@ const HomeContent = ({
                                                         isDragging={draggedItem?.id === folder.id}
                                                         filterOverlayOpen={filterOverlayOpen}
                                                         onCloseFilterOverlay={onCloseFilterOverlay}
+                                                        disableAllActions={disableAllActionsInShared}
+                                                        disableDeleteActions={disableFolderDeleteActionsInShared}
+                                                        disableUnshareActions={isInsideSharedFolderForItem(folder, 'folder')}
                                                     />
                                                 </div>
                                             );
                                             })}
 
                                             {/* Subjects in Grid */}
-                                            {activeFilter !== 'folders' && groupSubjects.map((subject, index) => {
+                                            {activeFilter !== 'folders' && displayedGroupSubjects.map((subject, index) => {
                                                 return (
                                                 <div key={`${groupName}-${subject.id}`}>
                                                     <SubjectCard
@@ -365,7 +506,9 @@ const HomeContent = ({
                                                         onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
                                                         onEdit={(e, s) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
                                                         onDelete={(e, s, action = 'delete') => {
+                                                            if (disableAllActionsInShared || disableSubjectDeleteActionsInShared) return;
                                                             e.stopPropagation();
+                                                            if (action === 'unshareAndDelete' && isInsideSharedFolderForItem(s, 'subject')) return;
                                                             if (isShortcutItem(s) && s?.shortcutId) {
                                                                 setDeleteConfig({
                                                                     isOpen: true,
@@ -384,18 +527,25 @@ const HomeContent = ({
                                                             }
                                                             setActiveMenu(null);
                                                         }}
-                                                        onShare={(s) => { setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' }); setActiveMenu(null); }}
+                                                        onShare={(s) => {
+                                                            if (disableAllActionsInShared) return;
+                                                            setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
+                                                            setActiveMenu(null);
+                                                        }}
                                                         cardScale={cardScale}
                                                         isDragging={draggedItem?.id === subject.id}
                                                         onDragStart={handleDragStartSubject}
                                                         onDragEnd={handleDragEnd}
                                                         onDragOver={handleDragOverSubject}
                                                         onDrop={handleDropReorderSubject}
-                                                        draggable={isDragAndDropEnabled}
+                                                        draggable={dndEnabledInContext}
                                                         position={index}
                                                         onOpenTopics={onOpenTopics}
                                                         onGoToFolder={handleGoToFolderFromGhost}
                                                         filterOverlayOpen={filterOverlayOpen}
+                                                        disableAllActions={disableAllActionsInShared}
+                                                        disableDeleteActions={disableSubjectDeleteActionsInShared}
+                                                        disableUnshareActions={isInsideSharedFolderForItem(subject, 'subject')}
                                                     />
                                                 </div>
                                             );
@@ -409,7 +559,7 @@ const HomeContent = ({
                                      <div className="space-y-2 relative">
                                         
                                         {/* Crear Nueva Asignatura / Drop Zone for list view - only in grid/manual modes */}
-                                        {(viewMode === 'grid' || viewMode === 'courses' || viewMode === 'tags') && (
+                                        {(viewMode === 'grid' || viewMode === 'courses' || viewMode === 'tags') && canCreateInCurrentContext && (
                                             <div
                                                 onDragOver={(e) => { e.preventDefault(); setIsRootZoneHovered(true); }}
                                                 onDragLeave={() => setIsRootZoneHovered(false)}
@@ -472,12 +622,13 @@ const HomeContent = ({
                                         )}
                                         
                                         {/* Render Folders */}
-                                        {viewMode === 'grid' && filteredFolders.map((folder) => (
+                                        {viewMode === 'grid' && filteredFolders.map((folder, index) => (
                                             <ListViewItem 
                                                 key={folder.id}
                                                 user={user}
                                                 item={folder}
                                                 type="folder"
+                                                index={index}
                                                 parentId={currentFolder ? currentFolder.id : null}
                                                 allFolders={allFoldersForTree}
                                                 allSubjects={allSubjectsForTree}
@@ -485,6 +636,8 @@ const HomeContent = ({
                                                 onNavigateSubject={handleSelectSubject}
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                 onDelete={(f, action = 'delete') => {
+                                                    if (disableAllActionsInShared || disableFolderDeleteActionsInShared) return;
+                                                    if (action === 'unshareAndDelete' && isInsideSharedFolderForItem(f, 'folder')) return;
                                                     if (isShortcutItem(f) && f?.shortcutId) {
                                                         setDeleteConfig({
                                                             isOpen: true,
@@ -502,29 +655,38 @@ const HomeContent = ({
                                                     }
                                                     setDeleteConfig({ isOpen: true, type: 'folder', item: f });
                                                 }}
-                                                onShare={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
+                                                onShare={(f) => {
+                                                    if (disableAllActionsInShared) return;
+                                                    setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' });
+                                                }}
                                                 onGoToFolder={handleGoToFolderFromGhost}
                                                 cardScale={cardScale}
                                                 onDragStart={handleDragStartFolder} 
                                                 onDragEnd={handleDragEnd}
-                                                onDropAction={handleListDrop}
+                                                onDropAction={disableAllActionsInShared ? () => {} : handleListDrop}
+                                                disableAllActions={disableAllActionsInShared}
+                                                disableDeleteActions={disableFolderDeleteActionsInShared}
+                                                draggable={dndEnabledInContext}
                                             />
                                         ))}
 
                                         {/* Render Subjects */}
-                                        {groupSubjects.map((subject) => {
+                                        {groupSubjects && displayedGroupSubjects.map((subject, index) => {
                                             return (
                                                 <ListViewItem
                                                     key={subject.id}
                                                     user={user}
                                                     item={subject}
                                                     type="subject"
+                                                    index={index}
                                                     parentId={currentFolder ? currentFolder.id : null}
                                                     allFolders={allFoldersForTree}
                                                     allSubjects={allSubjectsForTree}
                                                     onNavigateSubject={handleSelectSubject}
                                                     onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                     onDelete={(s, action = 'delete') => {
+                                                        if (disableAllActionsInShared || disableSubjectDeleteActionsInShared) return;
+                                                        if (action === 'unshareAndDelete' && isInsideSharedFolderForItem(s, 'subject')) return;
                                                         if (isShortcutItem(s) && s?.shortcutId) {
                                                             setDeleteConfig({
                                                                 isOpen: true,
@@ -542,12 +704,19 @@ const HomeContent = ({
                                                         }
                                                         setDeleteConfig({ isOpen: true, type: 'subject', item: s });
                                                     }}
-                                                    onShare={(s) => { setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' }); setActiveMenu(null); }}
+                                                    onShare={(s) => {
+                                                        if (disableAllActionsInShared) return;
+                                                        setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
+                                                        setActiveMenu(null);
+                                                    }}
                                                     onGoToFolder={handleGoToFolderFromGhost}
                                                     cardScale={cardScale}
                                                     onDragStart={handleDragStartSubject}
                                                     onDragEnd={handleDragEnd}
-                                                    onDropAction={handleListDrop}
+                                                    onDropAction={disableAllActionsInShared ? () => {} : handleListDrop}
+                                                    disableAllActions={disableAllActionsInShared}
+                                                    disableDeleteActions={disableSubjectDeleteActionsInShared}
+                                                    draggable={dndEnabledInContext}
                                                 />
                                             );
                                         })}

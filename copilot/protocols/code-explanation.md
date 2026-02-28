@@ -22,6 +22,8 @@ For every prompt where you modify or create code, your response structure MUST b
 3.  **Verification:** How to test the change.
 4.  **Temporal Cleanup Check:** If this is a new session or a completely different topic from previous prompts, check if there are older files in `copilot/explanations/temporal/`. If so, ask the user: *"I see older session files in the temporal folder. Should I delete them to keep the workspace clean for this new topic?"*
 5.  **Protocol Execution:** Generate the explanation content for BOTH the `codebase/` mirror and the `temporal/` directory, according to the `copilot/explanations/README.md` strategy.
+6.  **Lossless Review Execution (Required):** Apply `copilot/explanations/codebase/src/lossless-change-review-checklist.md` and create a per-file verification report in `copilot/explanations/temporal/lossless-reports/YYYY-MM-DD/<short-task-name>.md`.
+7.  **Temporal Retention Rule:** Do not clean temporal reports before 48 hours. If cleanup is needed due to age/size, ask the user first and include timestamp, candidate paths, and age.
 
 ## 4. Content Requirements for the Documentation
 When writing the explanation file, ensure you:

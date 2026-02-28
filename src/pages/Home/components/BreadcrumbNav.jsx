@@ -73,6 +73,7 @@ const BreadcrumbNav = ({
         if (targetFolderId === currentId) return;
 
         const subjectId = e.dataTransfer.getData('subjectId');
+        const subjectShortcutId = e.dataTransfer.getData('subjectShortcutId');
         const folderId = e.dataTransfer.getData('folderId');
         const folderShortcutId = e.dataTransfer.getData('folderShortcutId');
         const finalTargetId = targetFolderId === 'root' ? null : targetFolderId;
@@ -82,7 +83,7 @@ const BreadcrumbNav = ({
         }
 
         if (onDropOnBreadcrumb) {
-            onDropOnBreadcrumb(finalTargetId, subjectId, folderId, folderShortcutId || null);
+            onDropOnBreadcrumb(finalTargetId, subjectId, folderId, folderShortcutId || null, subjectShortcutId || null);
         }
     };
 

@@ -163,6 +163,16 @@ service cloud.firestore {
         )
       );
     }
+
+    function canManageFolderById(folderId) {
+      return folderId != null
+        && exists(/databases/$(database)/documents/folders/$(folderId))
+        && (
+          isGlobalAdmin()
+          || get(/databases/$(database)/documents/folders/$(folderId)).data.ownerId == request.auth.uid
+          || get(/databases/$(database)/documents/folders/$(folderId)).data.uid == request.auth.uid
+        );
+    }
     
     // Reglas para usuarios
     match /users/{userId} {
@@ -194,6 +204,10 @@ service cloud.firestore {
           canReadResource(resource.data)
           || resource.data.ownerId == request.auth.uid
           || resource.data.uid == request.auth.uid
+          || (
+            resource.data.keys().hasAny(['folderId'])
+            && canManageFolderById(resource.data.folderId)
+          )
           || (resource.data.keys().hasAny(['sharedWithUids']) && request.auth.uid in resource.data.sharedWithUids)
         );
       allow update: if isSignedIn()
@@ -201,6 +215,10 @@ service cloud.firestore {
           canWriteResource(resource.data)
           || resource.data.ownerId == request.auth.uid
           || resource.data.uid == request.auth.uid
+          || (
+            resource.data.keys().hasAny(['folderId'])
+            && canManageFolderById(resource.data.folderId)
+          )
         );
       allow delete: if isSignedIn()
         && (
@@ -258,6 +276,10 @@ service cloud.firestore {
           canReadResource(resource.data)
           || resource.data.ownerId == request.auth.uid
           || resource.data.uid == request.auth.uid
+          || (
+            resource.data.keys().hasAny(['parentId'])
+            && canManageFolderById(resource.data.parentId)
+          )
           || (resource.data.keys().hasAny(['sharedWithUids']) && request.auth.uid in resource.data.sharedWithUids)
         );
       allow update: if isSignedIn()
@@ -265,6 +287,10 @@ service cloud.firestore {
           canWriteResource(resource.data)
           || resource.data.ownerId == request.auth.uid
           || resource.data.uid == request.auth.uid
+          || (
+            resource.data.keys().hasAny(['parentId'])
+            && canManageFolderById(resource.data.parentId)
+          )
         );
       allow delete: if isSignedIn()
         && (
@@ -511,24 +537,35 @@ service cloud.firestore {
       allow delete, update: if isSignedIn()
         && (
           resource.data.ownerId == request.auth.uid
-          || (sameInstitution(resource.data) && (
-            (
-              resource.data.targetType == 'subject'
-              && exists(/databases/$(database)/documents/subjects/$(resource.data.targetId))
-              && (
-                get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.ownerId == request.auth.uid
-                || get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.uid == request.auth.uid
+          // Subject shortcut: subject owner, subject manager, or folder manager
+          || (
+            resource.data.targetType == 'subject'
+            && exists(/databases/$(database)/documents/subjects/$(resource.data.targetId))
+            && (
+              get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.ownerId == request.auth.uid
+              || get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.uid == request.auth.uid
+              || canWriteResource(get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data)
+              || (
+                get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.keys().hasAny(['folderId'])
+                && canManageFolderById(get(/databases/$(database)/documents/subjects/$(resource.data.targetId)).data.folderId)
               )
             )
-            || (
-              resource.data.targetType == 'folder'
-              && exists(/databases/$(database)/documents/folders/$(resource.data.targetId))
-              && (
-                get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.ownerId == request.auth.uid
-                || get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.uid == request.auth.uid
+          )
+          // Folder shortcut: folder owner, folder manager, or manager of parent folder (cascade)
+          || (
+            resource.data.targetType == 'folder'
+            && exists(/databases/$(database)/documents/folders/$(resource.data.targetId))
+            && (
+              get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.ownerId == request.auth.uid
+              || get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.uid == request.auth.uid
+              || canWriteResource(get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data)
+              || canManageFolderById(resource.data.targetId)
+              || (
+                get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.parentId != null
+                && canManageFolderById(get(/databases/$(database)/documents/folders/$(resource.data.targetId)).data.parentId)
               )
             )
-          ))
+          )
         );
     }
 
@@ -587,6 +624,14 @@ service cloud.firestore {
             && request.resource.data.institutionId == resource.data.institutionId
           )
         );
+    }
+
+    // -----------------------------------------
+    // NUEVAS REGLAS PARA EXÁMENES (EXAMS)
+    // -----------------------------------------
+    match /exams/{examId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn();
     }
   }
 }

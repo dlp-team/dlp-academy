@@ -65,8 +65,8 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const normalizedQuery = hasQuery ? normalizeText(query) : '';
 
         return folders.filter(folder => {
-            // In usage/courses/shared, include all levels; otherwise only current level
-            const inScope = isAllLevelsMode
+            // In usage/courses/shared or while searching, include all levels; otherwise only current level
+            const inScope = hasQuery || isAllLevelsMode
                 ? true
                 : currentFolder
                     ? folder.parentId === currentFolder.id
@@ -82,6 +82,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     // Merge shortcuts with folders (deduplication by targetId)
     const foldersWithShortcuts = useMemo(() => {
         if (!resolvedShortcuts || resolvedShortcuts.length === 0) return filteredFolders;
+        const hasQuery = Boolean(searchQuery?.trim());
 
         const isVisibleInManual = item => !(isShortcutItem(item) && item?.hiddenInManual === true);
 
@@ -93,8 +94,8 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
                 return false;
             }
             
-            // In usage/courses/shared, include all levels; otherwise only current level
-            const inScope = isAllLevelsMode
+            // In usage/courses/shared or while searching, include all levels; otherwise only current level
+            const inScope = hasQuery || isAllLevelsMode
                 ? true
                 : currentFolder
                     ? s.parentId === currentFolder.id
@@ -104,6 +105,17 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         });
 
         const shortcutTargetIds = new Set(folderShortcuts.map(s => s.targetId));
+
+        const isOwnerLike = (item) => {
+            if (!item || !user?.uid) return false;
+            if (item?.isOwner === true) return true;
+            if (item?.ownerId && item.ownerId === user.uid) return true;
+            if (item?.uid && item.uid === user.uid) return true;
+            return false;
+        };
+
+        const suppressNonOwnedOriginalsInCurrentContext =
+            viewMode === 'grid' && currentFolder?.isShared !== true;
 
         const directFolders = filteredFolders.filter(folder => {
             const userEmail = user?.email?.toLowerCase() || '';
@@ -117,6 +129,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
                     : false);
 
             if (!isRelatedToCurrentUser) return false;
+                    if (suppressNonOwnedOriginalsInCurrentContext && !isOwnerLike(folder)) return false;
             if (!shortcutTargetIds.has(folder.id)) return true;
             return true;
         });
@@ -146,7 +159,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         }
 
         return merged;
-    }, [filteredFolders, resolvedShortcuts, currentFolder, user, isAllLevelsMode, viewMode]);
+    }, [filteredFolders, resolvedShortcuts, currentFolder, user, isAllLevelsMode, viewMode, searchQuery]);
 
     const filteredSubjects = useMemo(() => {
         if (!subjects) return [];
@@ -156,7 +169,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const normalizedQuery = hasQuery ? normalizeText(query) : '';
 
         return subjects.filter(subject => {
-            const inScope = isAllLevelsMode
+            const inScope = hasQuery || isAllLevelsMode
                 ? true
                 : currentFolder
                     ? subject.folderId === currentFolder.id
@@ -173,6 +186,8 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     const subjectsWithShortcuts = useMemo(() => {
         if (!resolvedShortcuts || resolvedShortcuts.length === 0) return filteredSubjects;
 
+        const hasQuery = Boolean(searchQuery?.trim());
+
         // Get subject shortcuts that match current scope
         const subjectShortcuts = resolvedShortcuts.filter(s => {
             if (s.targetType !== 'subject') return false;
@@ -181,8 +196,8 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
                 return false;
             }
             
-            // In usage/courses/shared, include all levels; otherwise only current level
-            const inScope = isAllLevelsMode
+            // In usage/courses/shared or while searching, include all levels; otherwise only current level
+            const inScope = hasQuery || isAllLevelsMode
                 ? true
                 : currentFolder
                     ? s.shortcutParentId === currentFolder.id
@@ -192,6 +207,17 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         });
 
         const shortcutTargetIds = new Set(subjectShortcuts.map(s => s.targetId));
+
+        const isOwnerLike = (item) => {
+            if (!item || !user?.uid) return false;
+            if (item?.isOwner === true) return true;
+            if (item?.ownerId && item.ownerId === user.uid) return true;
+            if (item?.uid && item.uid === user.uid) return true;
+            return false;
+        };
+
+        const suppressNonOwnedOriginalsInCurrentContext =
+            viewMode === 'grid' && currentFolder?.isShared !== true;
 
         const directSubjects = filteredSubjects.filter(subject => {
             const userEmail = user?.email?.toLowerCase() || '';
@@ -205,6 +231,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
                     : false);
 
             if (!isRelatedToCurrentUser) return false;
+                    if (suppressNonOwnedOriginalsInCurrentContext && !isOwnerLike(subject)) return false;
             if (!shortcutTargetIds.has(subject.id)) return true;
             return true;
         });
@@ -230,7 +257,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         });
 
         return merged;
-    }, [filteredSubjects, resolvedShortcuts, currentFolder, user, isAllLevelsMode]);
+    }, [filteredSubjects, resolvedShortcuts, currentFolder, user, isAllLevelsMode, searchQuery]);
 
     useEffect(() => {
         debugVisibility('merge_result', {
@@ -272,10 +299,18 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
     const sharedSubjects = useMemo(() => {
         const source = Array.isArray(subjectsWithShortcuts) ? subjectsWithShortcuts : subjects;
+        const userEmail = user?.email?.toLowerCase() || '';
         return source.filter(s => {
             if (isShortcutItem(s)) return true;
             const inSharedFolder = sharedFolders.some(f => s.folderId === f.id);
-            return inSharedFolder || (s.uid !== user.uid && s.sharedWithUids?.includes(user.uid));
+            const isOwnedByCurrentUser = s?.ownerId === user?.uid || s?.uid === user?.uid;
+            const sharedByUid = Array.isArray(s?.sharedWithUids) && user?.uid
+                ? s.sharedWithUids.includes(user.uid)
+                : false;
+            const sharedByEntry = Array.isArray(s?.sharedWith) && (user?.uid || userEmail)
+                ? s.sharedWith.some(share => share?.uid === user?.uid || share?.email?.toLowerCase() === userEmail)
+                : false;
+            return inSharedFolder || (!isOwnedByCurrentUser && (sharedByUid || sharedByEntry));
         });
     }, [subjectsWithShortcuts, subjects, sharedFolders, user]);
 
@@ -284,12 +319,13 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
         const orderArray = type === 'subject' ? manualOrder.subjects : manualOrder.folders;
         if (orderArray.length === 0) return items;
+        const getManualKey = (item) => item?.shortcutId || item?.id;
 
         const ordered = [];
         const unordered = [...items];
 
         orderArray.forEach(id => {
-            const index = unordered.findIndex(item => item.id === id);
+            const index = unordered.findIndex(item => getManualKey(item) === id);
             if (index !== -1) {
                 ordered.push(unordered[index]);
                 unordered.splice(index, 1);
@@ -323,24 +359,13 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         }
 
         if (selectedTags.length > 0) {
-            const matchingSubjectsInFolders = filteredSubjectsByTags.filter(s => {
-                const folderLocation = isShortcutItem(s)
-                    ? (s.shortcutParentId ?? s.folderId ?? null)
-                    : (s.folderId ?? null);
-                return folderLocation !== null;
-            });
-            const folderIdsWithMatches = new Set(
-                matchingSubjectsInFolders.map(s =>
-                    isShortcutItem(s)
-                        ? (s.shortcutParentId ?? s.folderId ?? null)
-                        : (s.folderId ?? null)
-                )
+            resultFolders = resultFolders.filter(f =>
+                selectedTags.every(tag => Array.isArray(f.tags) && f.tags.includes(tag))
             );
-            resultFolders = resultFolders.filter(f => folderIdsWithMatches.has(f.id));
         }
 
         return applyManualOrder(resultFolders, 'folder');
-    }, [foldersWithShortcuts, folders, viewMode, currentFolder, manualOrder, selectedTags, filteredSubjectsByTags, searchQuery, activeFilter, user]);
+    }, [foldersWithShortcuts, folders, viewMode, currentFolder, manualOrder, selectedTags, searchQuery, activeFilter, user]);
 
     const groupedContent = useMemo(() => {
         if (activeFilter === 'folders') return {};
@@ -545,7 +570,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         }
     }, [preferences, loadingPreferences]);
 
-    const isDragAndDropEnabled = viewMode === 'grid' && layoutMode === 'grid';
+    const isDragAndDropEnabled = viewMode === 'grid';
 
     return {
         viewMode,

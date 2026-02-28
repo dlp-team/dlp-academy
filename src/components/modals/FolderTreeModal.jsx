@@ -4,8 +4,20 @@ import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, Arrow
 import SubjectIcon, { getIconColor } from '../ui/SubjectIcon';
 import { isInvalidFolderMove } from '../../utils/folderUtils';
 import useAutoScrollOnDrag from '../../hooks/useAutoScrollOnDrag';
+import { useGhostDrag } from '../../hooks/useGhostDrag';
+import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../utils/dragPayloadUtils';
 
 const getGradient = (color) => color || 'from-indigo-500 to-purple-500';
+
+const getFolderParentId = (folderEntry) => {
+    if (!folderEntry) return null;
+    return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+};
+
+const getSubjectParentId = (subjectEntry) => {
+    if (!subjectEntry) return null;
+    return subjectEntry.shortcutParentId ?? subjectEntry.folderId ?? subjectEntry.parentId ?? null;
+};
 
 
 const TreeItem = ({ 
@@ -25,6 +37,27 @@ const TreeItem = ({
     const [isHovered, setIsHovered] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
 
+    const handleLocalDragStart = (e) => {
+        e.stopPropagation();
+        const dragData = buildDragPayload({
+            id: item.id,
+            type,
+            parentId,
+            index,
+            shortcutId: item.shortcutId || null
+        });
+        writeDragPayloadToDataTransfer(e.dataTransfer, dragData);
+        e.dataTransfer.effectAllowed = 'move';
+        if (onDragStart) onDragStart(dragData);
+    };
+
+    const { isDragging, itemRef, dragHandlers } = useGhostDrag({
+        item,
+        type,
+        onDragStart: handleLocalDragStart,
+        onDragEnd: () => {}
+    });
+
     if (path.includes(item.id)) {
         console.error("Cycle detected in folder structure! Stopping render for:", item.name);
         return null; // Stop rendering this branch immediately
@@ -36,22 +69,14 @@ const TreeItem = ({
 
     if (type === 'folder') {
         // Query child folders by parentId (direct children only)
-        childFolders = allFolders.filter(f => f.parentId === item.id);
+        childFolders = allFolders.filter(f => getFolderParentId(f) === item.id);
         // Query child subjects by folderId (direct children only)
-        childSubjects = allSubjects.filter(s => s.folderId === item.id);
+        childSubjects = allSubjects.filter(s => getSubjectParentId(s) === item.id);
     }
 
     const hasChildren = childFolders.length > 0 || childSubjects.length > 0;
     
     // --- DRAG HANDLERS ---
-    const handleDragStart = (e) => {
-        e.stopPropagation();
-        const dragData = { id: item.id, type: type, parentId: parentId, index: index };
-        e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
-        e.dataTransfer.effectAllowed = 'move';
-        if (onDragStart) onDragStart(dragData);
-    };
-
     const handleDragOver = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -69,31 +94,20 @@ const TreeItem = ({
         e.stopPropagation();
         setIsDragOver(false);
 
-        const treeDataString = e.dataTransfer.getData('treeItem');
-        
+        const draggedData = readDragPayloadFromDataTransfer(e.dataTransfer);
+
         // 1. Internal Drop
-        if (treeDataString) {
-            const draggedData = JSON.parse(treeDataString);
+        if (draggedData) {
             if (draggedData.id === item.id) return;
             if (draggedData.type === 'folder' && type === 'folder' && currentPath.includes(draggedData.id)) return;
             onDropItem(draggedData, { id: item.id, type: type, parentId: parentId, index: index });
             return;
         }
-
-        // 2. External Drop (Home -> Tree)
-        const subjectId = e.dataTransfer.getData('subjectId');
-        const folderId = e.dataTransfer.getData('folderId');
-
-        if (subjectId) {
-            onDropItem({ id: subjectId, type: 'subject', parentId: undefined }, { id: item.id, type: type, parentId: parentId, index: index });
-        } else if (folderId) {
-            if (folderId === item.id) return;
-            onDropItem({ id: folderId, type: 'folder', parentId: undefined }, { id: item.id, type: type, parentId: parentId, index: index });
-        }
     };
 
     const handleClick = (e) => {
         e.stopPropagation();
+        if (item?.isOrphan === true && item?.shortcutId) return;
         if (type === 'folder') onNavigateFolder(item);
         else onNavigateSubject(item);
     };
@@ -101,8 +115,11 @@ const TreeItem = ({
     return (
         <div className="select-none">
             <div 
+                ref={itemRef}
                 draggable
-                onDragStart={handleDragStart}
+                onDragStart={dragHandlers.onDragStart}
+                onDrag={dragHandlers.onDrag}
+                onDragEnd={dragHandlers.onDragEnd}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -115,7 +132,7 @@ const TreeItem = ({
                         : type === 'folder' 
                             ? 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-gray-800 dark:text-gray-100' 
                             : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-gray-600 dark:text-gray-300'
-                }`}
+                } ${isDragging ? 'opacity-0 scale-95 transition-none' : ''}`}
                 style={{ marginLeft: `${depth * 20}px` }}
             >
                 <div className={`text-gray-300 dark:text-gray-600 transition-opacity ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
@@ -195,7 +212,7 @@ const TreeItem = ({
                     {/* CRASH FIX: PASS THE PATH PROP DOWN */}
                     {childFolders.map((folder, idx) => (
                         <TreeItem 
-                            key={folder.id} 
+                            key={folder.shortcutId || folder.id} 
                             item={folder} 
                             type="folder" 
                             index={idx} 
@@ -212,7 +229,7 @@ const TreeItem = ({
                     ))}
                     {childSubjects.map((subject, idx) => (
                         <TreeItem 
-                            key={subject.id} 
+                            key={subject.shortcutId || subject.id} 
                             item={subject} 
                             type="subject" 
                             index={idx} 
@@ -265,16 +282,37 @@ const FolderTreeModal = ({
     const handleDropAction = (dragged, target) => {
         if (!dragged || !target) return;
 
-        // 1. Logic for moving SUBJECTS (No changes needed here)
-        if (dragged.type === 'subject') {
-            if (target.type === 'folder') {
-                if (onMoveSubjectToFolder) onMoveSubjectToFolder(dragged.id, target.id);
-            } else if (target.type === 'subject') {
-                if (onReorderSubject) onReorderSubject(dragged.id, target.id);
+        if (target.type === 'subject') {
+            const targetParentId = target.parentId ?? rootFolder.id;
+
+            if (dragged.type === 'subject') {
+                const sourceParentId = dragged.parentId ?? null;
+                if (sourceParentId !== targetParentId && onDropWithOverlay) {
+                    onDropWithOverlay(targetParentId, dragged.id, 'subject', sourceParentId, dragged.shortcutId || null);
+                }
+                return;
             }
-        } 
-        // 2. Logic for moving FOLDERS
-        else if (dragged.type === 'folder' && target.type === 'folder') {
+
+            if (dragged.type === 'folder') {
+                if (dragged.id === targetParentId) return;
+                if (isInvalidFolderMove(dragged.id, targetParentId, allFolders)) return;
+                if (onDropWithOverlay) {
+                    onDropWithOverlay(targetParentId, dragged.id, 'folder', dragged.parentId, dragged.shortcutId || null);
+                    return;
+                }
+                if (onNestFolder) {
+                    onNestFolder(targetParentId, dragged.id, dragged.shortcutId || null);
+                }
+            }
+            return;
+        }
+
+        if (target.type === 'folder' && onDropWithOverlay) {
+            onDropWithOverlay(target.id, dragged.id, dragged.type, dragged.parentId, dragged.shortcutId || null);
+            return;
+        }
+
+        if (dragged.type === 'folder' && target.type === 'folder') {
             if (isInvalidFolderMove(dragged.id, target.id, allFolders)) {
                 console.warn("🚫 BLOCKED: Cannot move a folder into its own subfolder.");
                 return;
@@ -290,27 +328,16 @@ const FolderTreeModal = ({
         setIsRootDropZoneActive(false);
 
         // ... (Keep data parsing logic) ...
-        let draggedData;
-        const treeDataString = e.dataTransfer.getData('treeItem');
-        
-        if (treeDataString) {
-            draggedData = JSON.parse(treeDataString);
-        } else {
-            const subjectId = e.dataTransfer.getData('subjectId');
-            const folderId = e.dataTransfer.getData('folderId');
-            if (subjectId) draggedData = { id: subjectId, type: 'subject' };
-            else if (folderId) draggedData = { id: folderId, type: 'folder' };
-        }
+        const draggedData = readDragPayloadFromDataTransfer(e.dataTransfer);
 
         if (!draggedData) return;
 
         if (draggedData.parentId === rootFolder.id) return; 
 
         if (draggedData.type === 'subject') {
-             // ... (Keep existing subject logic) ...
             let overlayShown = false;
             if (onDropWithOverlay) {
-                const result = onDropWithOverlay(rootFolder.id, draggedData.id, draggedData.parentId);
+                const result = onDropWithOverlay(rootFolder.id, draggedData.id, 'subject', draggedData.parentId, draggedData.shortcutId || null);
                 if (result === true) overlayShown = true;
             }
             if (!overlayShown && onMoveSubjectToFolder) {
@@ -324,17 +351,21 @@ const FolderTreeModal = ({
                 return;
             }
 
+            if (onDropWithOverlay) {
+                onDropWithOverlay(rootFolder.id, draggedData.id, 'folder', draggedData.parentId, draggedData.shortcutId || null);
+                return;
+            }
             if (onNestFolder) onNestFolder(rootFolder.id, draggedData.id);
         }
     };
 
     return (
         <div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-28 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
             onClick={onClose}
         >
             <div 
-            className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col border border-gray-100 dark:border-slate-700 animate-in zoom-in-95 duration-200"
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100vh-8rem)] flex flex-col border border-gray-100 dark:border-slate-700 animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
             >
                 
@@ -399,14 +430,14 @@ const FolderTreeModal = ({
                         let childSubjects = [];
 
                         // Query direct children by parentId and folderId
-                        childFolders = allFolders.filter(f => f.parentId === rootFolder.id);
-                        childSubjects = allSubjects.filter(s => s.folderId === rootFolder.id);
+                        childFolders = allFolders.filter(f => getFolderParentId(f) === rootFolder.id);
+                        childSubjects = allSubjects.filter(s => getSubjectParentId(s) === rootFolder.id);
                         
                         return (
                             <div className="space-y-1">
                                 {childFolders.map((folder, idx) => (
                                     <TreeItem
-                                        key={folder.id}
+                                        key={folder.shortcutId || folder.id}
                                         item={folder}
                                         type="folder"
                                         index={idx}
@@ -421,7 +452,7 @@ const FolderTreeModal = ({
                                 ))}
                                 {childSubjects.map((subject, idx) => (
                                     <TreeItem
-                                        key={subject.id}
+                                        key={subject.shortcutId || subject.id}
                                         item={subject}
                                         type="subject"
                                         index={idx}

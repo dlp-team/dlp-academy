@@ -11,6 +11,8 @@ const useHomeContentDnd = ({
     handleMoveSubjectWithSource,
     handleNestFolder,
     handleMoveFolderWithSource,
+    handleDropReorderSubject,
+    handleDropReorderFolder,
     handleDragEnd
 }) => {
     const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
@@ -121,12 +123,37 @@ const useHomeContentDnd = ({
                     handleMoveSubjectWithSource(dragged.id, target.id, sourceFolderId);
                 }
             } else if (dragged.type === 'folder') {
+                if (
+                    dragged.parentId === target.parentId &&
+                    typeof dragged.index === 'number' &&
+                    typeof target.index === 'number' &&
+                    handleDropReorderFolder
+                ) {
+                    handleDropReorderFolder(dragged.shortcutId || dragged.id, dragged.index, target.index);
+                    if (handleDragEnd) handleDragEnd();
+                    return;
+                }
+                if (dragged.shortcutId && handleNestFolder) {
+                    handleNestFolder(target.id, dragged.id, dragged.shortcutId);
+                    if (handleDragEnd) handleDragEnd();
+                    return;
+                }
                 if (handleMoveFolderWithSource) handleMoveFolderWithSource(dragged.id, dragged.parentId, target.id);
                 else handleNestFolder(target.id, dragged.id, dragged.shortcutId || null);
             }
         } else if (target.type === 'subject') {
             const targetParentId = target.parentId || (currentFolder ? currentFolder.id : null);
             if (dragged.type === 'subject') {
+                if (
+                    dragged.parentId === targetParentId &&
+                    typeof dragged.index === 'number' &&
+                    typeof target.index === 'number' &&
+                    handleDropReorderSubject
+                ) {
+                    handleDropReorderSubject(dragged.shortcutId || dragged.id, dragged.index, target.index);
+                    if (handleDragEnd) handleDragEnd();
+                    return;
+                }
                 if (dragged.parentId !== targetParentId) {
                     let overlayShown = false;
                     if (handleDropOnFolder) {
@@ -149,6 +176,11 @@ const useHomeContentDnd = ({
                     }
                 }
             } else if (dragged.type === 'folder') {
+                if (dragged.shortcutId && handleNestFolder) {
+                    handleNestFolder(targetParentId, dragged.id, dragged.shortcutId);
+                    if (handleDragEnd) handleDragEnd();
+                    return;
+                }
                 if (handleMoveFolderWithSource) {
                     handleMoveFolderWithSource(dragged.id, dragged.parentId, targetParentId);
                 } else if (handleNestFolder) {

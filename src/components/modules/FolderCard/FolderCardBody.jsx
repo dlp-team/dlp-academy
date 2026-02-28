@@ -26,8 +26,11 @@ const FolderCardBody = ({
     filterOverlayOpen,
     onCloseFilterOverlay,
     disableAllActions = false,
-    disableDeleteActions = false
+    disableDeleteActions = false,
+    disableUnshareActions = false
 }) => {
+    const HEADER_SAFE_TOP = 112;
+    const MENU_MARGIN = 8;
     // Permission checks
     const showEditUI = user && shouldShowEditUI(folder, user.uid);
     const showDeleteUI = user && shouldShowDeleteUI(folder, user.uid);
@@ -37,10 +40,10 @@ const FolderCardBody = ({
     const isOrphan = folder?.isOrphan === true;
     const isMovedToShared = folder?._reason === 'moved-to-shared-folder';
     const orphanMessage = folder?._reason === 'access-revoked'
-        ? 'Archivo original ya no está compartido'
+        ? 'La carpeta ya no está compartida'
         : folder?._reason === 'moved-to-shared-folder'
             ? `Esta carpeta se ha movido a la carpeta ${folder?._movedToFolderName || 'compartida del creador'}`
-            : 'Archivo original eliminado';
+            : 'La carpeta se ha eliminado';
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(folder, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
@@ -48,7 +51,7 @@ const FolderCardBody = ({
     const effectiveShowEditUI = !disableAllActions && showEditUI;
     const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
     const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
-    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || !isSourceOwner);
+    const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || (!isSourceOwner && !disableUnshareActions));
     const canShowShortcutVisibility = !disableAllActions && isShortcut;
     const hasMenuActions = effectiveShowEditUI || effectiveCanShareFromMenu || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete;
     // 1. Logic: No useState needed here. We use CSS for hover states.
@@ -61,17 +64,38 @@ const FolderCardBody = ({
     useLayoutEffect(() => {
         if (activeMenu === folder.id && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
+            const menuWidth = SHORTCUT_CARD_MENU_WIDTH * menuScale;
+            const estimatedMenuHeight = 48 * 3 * menuScale;
+
+            const defaultLeft = rect.left;
+            const oppositeLeft = rect.right - menuWidth;
+            let left = defaultLeft;
+            if (left + menuWidth > window.innerWidth - MENU_MARGIN) {
+                left = oppositeLeft;
+            }
+            left = Math.min(
+                Math.max(left, MENU_MARGIN),
+                Math.max(MENU_MARGIN, window.innerWidth - menuWidth - MENU_MARGIN)
+            );
+
+            const defaultTop = rect.bottom + 4;
+            const oppositeTop = rect.top - estimatedMenuHeight - 4;
+            let top = defaultTop;
+            if (top + estimatedMenuHeight > window.innerHeight - MENU_MARGIN) {
+                top = oppositeTop;
+            }
+            const maxTop = Math.max(HEADER_SAFE_TOP + MENU_MARGIN, window.innerHeight - estimatedMenuHeight - MENU_MARGIN);
             setMenuPos({
-                top: rect.bottom + 4,
-                left: rect.left,
+                top: Math.min(Math.max(top, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
+                left,
             });
         }
-    }, [activeMenu, folder.id]);
+    }, [activeMenu, folder.id, menuScale]);
     
     return (
         <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${
             isModern 
-                ? `bg-gradient-to-br ${gradientClass} p-[3px]` 
+            ? `bg-gradient-to-br ${gradientClass} p-[4px] ${isOrphan ? 'saturate-[0.22] grayscale-[0.38] brightness-95' : ''}` 
                 : ''
         }`}>
              
@@ -80,14 +104,14 @@ const FolderCardBody = ({
                 isModern 
                     ? 'bg-white dark:bg-slate-950' 
                     : ''
-            } ${isOrphan ? 'opacity-55' : ''}`}>
+            }`}>
                 
                 {/* --- FRONT VISUALS --- */}
                 {!isModern && (
-                    <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-100`}></div>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-100 ${isOrphan ? 'saturate-[0.22] grayscale-[0.38] brightness-95' : ''}`}></div>
                 )}
                 {isModern && fillColor && (
-                    <div className={`absolute inset-0 ${fillColor}`}></div>
+                    <div className={`absolute inset-0 ${fillColor} ${isOrphan ? 'saturate-[0.22] grayscale-[0.38] brightness-95' : ''}`}></div>
                 )}
                 {/* Hover Overlay */}
                 {isModern && (
@@ -216,7 +240,7 @@ const FolderCardBody = ({
                                                 </button>
                                             )}
                                             {canShowShortcutDelete && (
-                                                <button onClick={(e) => { e.stopPropagation(); onDelete(folder, isOrphan ? 'deleteShortcut' : 'unshareAndDelete'); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                                <button onClick={(e) => { e.stopPropagation(); onDelete(folder, (isOrphan || disableUnshareActions) ? 'deleteShortcut' : 'unshareAndDelete'); onToggleMenu(null); }} className="w-full flex items-center gap-2 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg text-red-600 dark:text-red-400 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
                                                     <Trash2 size={14 * menuScale} /> Eliminar
                                                 </button>
                                             )}
@@ -253,20 +277,19 @@ const FolderCardBody = ({
                             {/* 2. BACKGROUND: The Main Folder Icon */}
                             {isModern ? (
                                 <div 
-                                    className={`${getIconColor(folder.color)} flex items-center justify-center rounded-lg`}
-                                    style={{ width: `${28 * scaleMultiplier}px`, height: `${28 * scaleMultiplier}px` }}
+                                    className="flex items-center justify-center"
+                                    style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}
                                 >
-                                    {/* If it's shared, we hide the default folder icon to show the user icon, 
-                                        OR we keep it. Here I keep it but you can remove it if you want ONLY the user icon. */}
                                     {folder.icon ? (
                                         <SubjectIcon 
                                             iconName={folder.icon} 
-                                            style={{ width: `${16 * scaleMultiplier}px`, height: `${16 * scaleMultiplier}px` }}
+                                            className={`${getIconColor(folder.color)} opacity-80`}
+                                            style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}
                                         />
                                     ) : (
                                         <Folder 
-                                            className="text-indigo-600 dark:text-indigo-400"
-                                            style={{ width: `${16 * scaleMultiplier}px`, height: `${16 * scaleMultiplier}px` }}
+                                            className={`${getIconColor(folder.color)} opacity-80`}
+                                            style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}
                                         />
                                     )}
                                 </div>
@@ -412,24 +435,33 @@ const FolderCardBody = ({
                     </div>
                     <div className="absolute inset-0 z-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                         {isMovedToShared && folder?._movedToFolderId ? (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (typeof onGoToFolder === 'function') {
-                                        onGoToFolder(folder._movedToFolderId);
-                                    }
-                                }}
-                                className="pointer-events-auto px-4 py-2 rounded-lg font-semibold shadow-lg flex justify-center items-center"
-                                style={{
-                                    fontSize: `${13 * scaleMultiplier}px`,
-                                    background: 'rgba(30,41,59,0.35)',
-                                    border: '1px solid #1e293b',
-                                    color: '#fff',
-                                    transition: 'background 0.2s',
-                                }}
-                            >
-                                {`Ir a carpeta ${folder?._movedToFolderName || ''}`.trim()}
-                            </button>
+                            <div className="pointer-events-auto flex items-center gap-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (typeof onGoToFolder === 'function') {
+                                            onGoToFolder(folder._movedToFolderId);
+                                        }
+                                    }}
+                                    className="px-4 py-2 rounded-lg font-semibold shadow-lg flex justify-center items-center"
+                                    style={{
+                                        fontSize: `${13 * scaleMultiplier}px`,
+                                        background: 'rgba(30,41,59,0.35)',
+                                        border: '1px solid #1e293b',
+                                        color: '#fff',
+                                        transition: 'background 0.2s',
+                                    }}
+                                >
+                                    {`Ir a carpeta ${folder?._movedToFolderName || ''}`.trim()}
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onDelete(folder, 'deleteShortcut'); }}
+                                    className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow-lg"
+                                    style={{ fontSize: `${13 * scaleMultiplier}px` }}
+                                >
+                                    Eliminar
+                                </button>
+                            </div>
                         ) : (
                             <button
                                 onClick={(e) => { e.stopPropagation(); onDelete(folder, 'deleteShortcut'); }}

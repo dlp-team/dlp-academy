@@ -4,11 +4,13 @@ import { GripVertical } from 'lucide-react';
 import SubjectListItem from './ListItems/SubjectListItem';
 import FolderListItem from './ListItems/FolderListItem';
 import { useGhostDrag } from '../../hooks/useGhostDrag'; // Adjust path if needed
+import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../utils/dragPayloadUtils';
 
 const ListViewItem = ({ 
     user,
     item, 
     type, 
+    index,
     parentId,
     depth = 0,
     allFolders, 
@@ -19,10 +21,14 @@ const ListViewItem = ({
     onDelete,
     onShare,
     onGoToFolder,
+    disableAllActions = false,
+    disableDeleteActions = false,
+    disableUnshareActions = false,
     cardScale = 100, 
     onDragStart,
     onDragEnd,
     onDropAction,
+    draggable = true,
     path = []
 }) => {
 
@@ -30,6 +36,30 @@ const ListViewItem = ({
     const [isHovered, setIsHovered] = useState(false);
     const [isDragOver, setIsDragOver] = useState(false);
     const currentPath = [...path, item.id];
+    const getFolderParentId = (folderEntry) => {
+        if (!folderEntry) return null;
+        if (folderEntry?.shortcutId || folderEntry?.targetType === 'folder') {
+            return folderEntry.shortcutParentId ?? folderEntry.parentId ?? null;
+        }
+        return folderEntry.parentId ?? null;
+    };
+    const hasSharedAncestorFolder = (folderId) => {
+        if (!folderId || !Array.isArray(allFolders)) return false;
+        let cursorId = folderId;
+        let safety = 0;
+        while (cursorId && safety < 200) {
+            const cursor = allFolders.find(folder => folder?.id === cursorId);
+            if (!cursor) return false;
+            if (cursor.isShared === true) return true;
+            cursorId = getFolderParentId(cursor);
+            safety += 1;
+        }
+        return false;
+    };
+    const parentFolderId = item?.shortcutParentId ?? item?.folderId ?? parentId ?? null;
+    const disableUnshareForItem = disableUnshareActions || (type === 'folder'
+        ? hasSharedAncestorFolder(getFolderParentId(item))
+        : hasSharedAncestorFolder(parentFolderId));
     const {
         isDragging,
         itemRef,
@@ -39,18 +69,20 @@ const ListViewItem = ({
         type: 'subject',
         cardScale,
         onDragStart: (e) => {
+            if (!draggable) {
+                e.preventDefault();
+                return;
+            }
             //e.stopPropagation();
             const itemParentId = item.shortcutParentId ?? parentId;
-            const dragData = {
+            const dragData = buildDragPayload({
                 id: item.id,
                 type: 'subject',
                 parentId: itemParentId,
-                shortcutId: item.shortcutId || null
-            };
-            e.dataTransfer.setData('subjectId', item.id);
-            e.dataTransfer.setData('subjectParentId', itemParentId || '');
-            e.dataTransfer.setData('subjectShortcutId', item.shortcutId || '');
-            e.dataTransfer.setData('treeItem', JSON.stringify(dragData));
+                shortcutId: item.shortcutId || null,
+                index: typeof index === 'number' ? index : null
+            });
+            writeDragPayloadToDataTransfer(e.dataTransfer, dragData);
             if (onDragStart) onDragStart(item);
         },
         onDragEnd
@@ -66,6 +98,7 @@ const ListViewItem = ({
             <FolderListItem
                 user={user}
                 item={item}
+                index={index}
                 parentId={parentId}
                 depth={depth}
                 allFolders={allFolders}
@@ -76,10 +109,14 @@ const ListViewItem = ({
                 onShare={onShare}
                 onDelete={onDelete}
                 onGoToFolder={onGoToFolder}
+                disableAllActions={disableAllActions}
+                disableDeleteActions={disableDeleteActions}
+                disableUnshareActions={disableUnshareForItem}
                 cardScale={cardScale}
                 onDragStart={onDragStart}
                 onDragEnd={onDragEnd}
                 onDropAction={onDropAction}
+                draggable={draggable}
                 path={currentPath}
             />
         );
@@ -107,21 +144,11 @@ const ListViewItem = ({
         e.preventDefault(); e.stopPropagation(); 
         setIsDragOver(false);
 
-        const treeDataString = e.dataTransfer.getData('treeItem');
-        let draggedData;
-
-        if (treeDataString) {
-            draggedData = JSON.parse(treeDataString);
-        } else {
-            const sId = e.dataTransfer.getData('subjectId');
-            const fId = e.dataTransfer.getData('folderId');
-            if (sId) draggedData = { id: sId, type: 'subject' };
-            else if (fId) draggedData = { id: fId, type: 'folder' };
-        }
+        const draggedData = readDragPayloadFromDataTransfer(e.dataTransfer);
 
         if (!draggedData || draggedData.id === item.id) return;
 
-        onDropAction(draggedData, { id: item.id, type: type, parentId: parentId });
+        onDropAction(draggedData, { id: item.id, type: type, parentId: parentId, index });
     };
 
     return (
@@ -129,7 +156,7 @@ const ListViewItem = ({
             {/* ROW CONTAINER - Apply indentation here via margin */}
             <div 
                 ref={itemRef}
-                draggable
+                draggable={draggable}
                 onDragStart={dragHandlers.onDragStart}
                 onDrag={dragHandlers.onDrag}
                 onDragEnd={dragHandlers.onDragEnd}
@@ -158,6 +185,9 @@ const ListViewItem = ({
                             onDelete={onDelete} 
                             onShare={onShare}
                             onGoToFolder={onGoToFolder}
+                            disableAllActions={disableAllActions}
+                            disableDeleteActions={disableDeleteActions}
+                            disableUnshareActions={disableUnshareForItem}
                             cardScale={cardScale} 
                             className="pl-8" 
                         />
