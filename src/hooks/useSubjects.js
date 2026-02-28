@@ -52,7 +52,7 @@ export const useSubjects = (user) => {
 
             const tempSubjects = Array.from(dedupMap.values()).filter(subject => {
                 // Owner always sees their own subjects
-                if (subject?.ownerId === user?.uid || subject?.uid === user?.uid) return true;
+                if (subject?.ownerId === user?.uid) return true;
                 // For institutional subjects, check institution match
                 if (!currentInstitutionId || !subject?.institutionId) return true;
                 return subject.institutionId === currentInstitutionId;
@@ -99,7 +99,7 @@ export const useSubjects = (user) => {
             sharedSubjects = snapshot.docs
                 .filter(d => {
                     const data = d.data() || {};
-                    if (data?.ownerId === user?.uid || data?.uid === user?.uid) return false;
+                    if (data?.ownerId === user?.uid) return false;
                     if (currentInstitutionId && data?.institutionId && data.institutionId !== currentInstitutionId) {
                         return false;
                     }
@@ -441,7 +441,7 @@ export const useSubjects = (user) => {
             }
 
             const subjectData = subjectSnap.data() || {};
-            const currentOwnerUid = subjectData?.ownerId || subjectData?.uid || null;
+            const currentOwnerUid = subjectData?.ownerId || null;
 
             if (!currentOwnerUid || currentOwnerUid !== user?.uid) {
                 throw new Error('Solo el propietario actual puede transferir la propiedad.');

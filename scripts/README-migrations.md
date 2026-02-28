@@ -65,6 +65,28 @@ For backward compatibility, you can still run:
 node scripts/migrate-relations-to-camelcase.cjs
 ```
 
+### 7. Subjects ownerId-only migration (remove `uid`)
+
+Dry run:
+
+```powershell
+$env:DRY_RUN='true'
+node scripts/run-migration.cjs --config scripts/migrations/subjects-ownerid-only.cjs
+```
+
+Apply:
+
+```powershell
+$env:DRY_RUN='false'
+node scripts/run-migration.cjs --config scripts/migrations/subjects-ownerid-only.cjs
+```
+
+Backward-compatible wrapper:
+
+```powershell
+node scripts/migrate-subjects-uid-to-ownerId.cjs
+```
+
 ---
 
 ## How to Create a Migration Preset

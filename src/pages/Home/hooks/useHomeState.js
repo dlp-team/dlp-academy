@@ -110,7 +110,6 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
             if (!item || !user?.uid) return false;
             if (item?.isOwner === true) return true;
             if (item?.ownerId && item.ownerId === user.uid) return true;
-            if (item?.uid && item.uid === user.uid) return true;
             return false;
         };
 
@@ -222,7 +221,6 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         const directSubjects = filteredSubjects.filter(subject => {
             const userEmail = user?.email?.toLowerCase() || '';
             const isRelatedToCurrentUser =
-                (subject?.uid && user?.uid && subject.uid === user.uid) ||
                 subject?.isOwner === true ||
                 (subject?.ownerId && user?.uid && subject.ownerId === user.uid) ||
                 (Array.isArray(subject?.sharedWithUids) && user?.uid ? subject.sharedWithUids.includes(user.uid) : false) ||

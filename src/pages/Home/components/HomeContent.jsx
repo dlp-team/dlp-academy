@@ -131,15 +131,15 @@ const HomeContent = ({
         if (!item) return false;
         const currentUserId = user?.uid || null;
         const currentEmail = (user?.email || '').toLowerCase();
+        const isSubjectEntity = item?.targetType === 'subject' || Object.prototype.hasOwnProperty.call(item, 'course') || Object.prototype.hasOwnProperty.call(item, 'folderId');
         const isOwnedByCurrentUser = Boolean(
-            currentUserId && (item?.ownerId === currentUserId || item?.uid === currentUserId || item?.isOwner === true)
+            currentUserId && (item?.ownerId === currentUserId || (!isSubjectEntity && item?.uid === currentUserId) || item?.isOwner === true)
         );
 
         if (isOwnedByCurrentUser) return false;
 
         if (isShortcutItem(item)) return true;
 
-        const isSubjectEntity = item?.targetType === 'subject' || Object.prototype.hasOwnProperty.call(item, 'course') || Object.prototype.hasOwnProperty.call(item, 'folderId');
         if (isSubjectEntity && item?.isShared !== true) {
             return false;
         }

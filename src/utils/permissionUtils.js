@@ -23,7 +23,7 @@ export const isOwner = (item, userId) => {
         // console.log('[PERMISSION] isOwner: false', { item, userId });
         return false;
     }
-    const ownerCheck = item.ownerId === userId || item.uid === userId;
+    const ownerCheck = item.ownerId === userId;
     // console.log('[PERMISSION] isOwner:', { item, userId, ownerCheck });
     return ownerCheck;
 };

@@ -17,7 +17,7 @@ export const useClassMembers = (subject) => {
                 const userRoles = new Map();
 
                 // Owner / Creator
-                const ownerId = subject.ownerId || subject.uid;
+                const ownerId = subject.ownerId;
                 if (ownerId) {
                     userRoles.set(ownerId, 'creator');
                 }

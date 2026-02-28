@@ -104,7 +104,7 @@ export const useHomeHandlers = ({
             } else {
                 const createPayload = {
                     ...payload,
-                    uid: user.uid,
+                    ownerId: user.uid,
                     isShared: false,
                     sharedWith: []
                 };
