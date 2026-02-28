@@ -17,8 +17,8 @@ In parallel, the product needs institution-level visual customization (driven fr
 - Changing existing user-facing Spanish copy to English.
 
 ## Current status summary
-- Status: ACTIVE
-- Next step: execute Phase 01 audit and inventory of repeated Home logic.
+- Status: COMPLETED
+- Next step: reviewer manual smoke execution for operational sign-off (artifacts prepared).
 
 ## Key decisions and assumptions
 - Reports and planning artifacts are written in English.

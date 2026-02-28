@@ -137,33 +137,90 @@ export const isShortcutItem = (item) => {
     return hasNativeShortcutShape || item?.isShortcut === true || Boolean(item?.shortcutId);
 };
 
-const isSubjectEntity = (item) => {
-    if (!item || typeof item !== 'object') return false;
-    return item?.targetType === 'subject'
-        || Object.prototype.hasOwnProperty.call(item, 'course')
-        || Object.prototype.hasOwnProperty.call(item, 'folderId');
-};
-
+/**
+ * Check if an item is owned by the current user in Home surfaces.
+ *
+ * @param {Object} item
+ * @param {Object} user
+ * @returns {boolean}
+ */
 export const isOwnedByCurrentUser = (item, user) => {
-    if (!item) return false;
-    const currentUserId = typeof user === 'string' ? user : user?.uid;
-    if (!currentUserId) return false;
-
-    const subjectEntity = isSubjectEntity(item);
-    return Boolean(
-        item?.ownerId === currentUserId
-        || (!subjectEntity && item?.uid === currentUserId)
-        || item?.isOwner === true
-    );
+    const currentUserId = user?.uid || null;
+    if (!item || !currentUserId) return false;
+    if (item?.isOwner === true) return true;
+    return item?.ownerId === currentUserId || item?.uid === currentUserId;
 };
 
-export const isSharedWithCurrentUser = (item, user) => {
+/**
+ * Check if an item is shared with the current user (excluding ownership).
+ *
+ * @param {Object} item
+ * @param {Object} user
+ * @param {Object} options
+ * @param {boolean} options.shortcutTreatAsSharedForNonOwner
+ * @returns {boolean}
+ */
+export const isSharedWithCurrentUser = (
+    item,
+    user,
+    { shortcutTreatAsSharedForNonOwner = true } = {}
+) => {
     if (!item) return false;
-    const currentUserId = typeof user === 'string' ? user : user?.uid;
-    const currentEmail = (typeof user === 'string' ? '' : user?.email || '').toLowerCase();
 
-    const sharedWithUids = Array.isArray(item?.sharedWithUids) ? item.sharedWithUids : [];
-    const sharedWith = Array.isArray(item?.sharedWith) ? item.sharedWith : [];
+    if (shortcutTreatAsSharedForNonOwner && isShortcutItem(item)) {
+        return !isOwnedByCurrentUser(item, user);
+    }
+
+    const currentUserId = user?.uid || null;
+    const currentUserEmail = (user?.email || '').toLowerCase();
+
+    const sharedByUid = Array.isArray(item?.sharedWithUids) && currentUserId
+        ? item.sharedWithUids.includes(currentUserId)
+        : false;
+
+    const sharedByEntry = Array.isArray(item?.sharedWith) && (currentUserId || currentUserEmail)
+        ? item.sharedWith.some(entry =>
+            entry?.uid === currentUserId || (entry?.email || '').toLowerCase() === currentUserEmail
+        )
+        : false;
+
+    return sharedByUid || sharedByEntry;
+};
+
+/**
+ * Check whether an item is shared for the current user in Home surfaces.
+ * Mirrors existing Home/HomeContent semantics for owner/shortcut/shared checks.
+ *
+ * @param {Object} item - Subject, folder, or shortcut-like entry
+ * @param {Object} user - Current user object ({ uid, email })
+ * @returns {boolean}
+ */
+export const isSharedForCurrentUser = (item, user) => {
+    if (!item) return false;
+
+    const currentUserId = user?.uid || null;
+    const currentEmail = (user?.email || '').toLowerCase();
+    const isSubjectEntity =
+        item?.targetType === 'subject' ||
+        Object.prototype.hasOwnProperty.call(item, 'course') ||
+        Object.prototype.hasOwnProperty.call(item, 'folderId');
+
+    const isOwnedByCurrentUser = Boolean(
+        currentUserId &&
+            (item?.ownerId === currentUserId ||
+                (!isSubjectEntity && item?.uid === currentUserId) ||
+                item?.isOwner === true)
+    );
+
+    if (isOwnedByCurrentUser) return false;
+    if (isShortcutItem(item)) return true;
+
+    if (isSubjectEntity && item?.isShared !== true) {
+        return false;
+    }
+
+    const sharedWithUids = Array.isArray(item.sharedWithUids) ? item.sharedWithUids : [];
+    const sharedWith = Array.isArray(item.sharedWith) ? item.sharedWith : [];
 
     const sharedByUid = currentUserId ? sharedWithUids.includes(currentUserId) : false;
     const sharedByEmail = currentEmail
@@ -171,18 +228,6 @@ export const isSharedWithCurrentUser = (item, user) => {
         : false;
 
     return sharedByUid || sharedByEmail;
-};
-
-export const isSharedForCurrentUser = (item, user, options = {}) => {
-    if (!item) return false;
-    const treatShortcutAsShared = options?.treatShortcutAsShared !== false;
-    const requireSubjectSharedFlag = options?.requireSubjectSharedFlag === true;
-
-    if (isOwnedByCurrentUser(item, user)) return false;
-    if (treatShortcutAsShared && isShortcutItem(item)) return true;
-    if (requireSubjectSharedFlag && isSubjectEntity(item) && item?.isShared !== true) return false;
-
-    return isSharedWithCurrentUser(item, user);
 };
 
 /**
