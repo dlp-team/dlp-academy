@@ -545,7 +545,7 @@ const InstitutionAdminDashboard = ({ user }) => {
     const customizationInitialValues = {
         institutionName: customizationForm.institutionDisplayName || institutionName || '',
         logoUrl: customizationForm.logoUrl || '',
-        primary: customizationForm.homeThemeColors?.primary || HOME_THEME_DEFAULT_COLORS.primary,
+        primary: customizationForm.primaryBrandColor || customizationForm.homeThemeColors?.primary || HOME_THEME_DEFAULT_COLORS.primary,
         secondary: customizationForm.homeThemeColors?.secondary || HOME_THEME_DEFAULT_COLORS.secondary,
         accent: customizationForm.homeThemeColors?.accent || HOME_THEME_DEFAULT_COLORS.accent,
         mutedText: customizationForm.homeThemeColors?.mutedText || HOME_THEME_DEFAULT_COLORS.mutedText,

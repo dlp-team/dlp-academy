@@ -1,5 +1,5 @@
 import React from 'react';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import {
     GLOBAL_BRAND_DEFAULTS,
@@ -12,40 +12,28 @@ const useInstitutionBranding = (user) => {
     const [branding, setBranding] = React.useState(GLOBAL_BRAND_DEFAULTS);
 
     React.useEffect(() => {
-        let isMounted = true;
+        if (!institutionId) {
+            setBranding(GLOBAL_BRAND_DEFAULTS);
+            return;
+        }
 
-        const loadInstitutionBranding = async () => {
-            if (!institutionId) {
-                if (isMounted) {
-                    setBranding(GLOBAL_BRAND_DEFAULTS);
-                }
-                return;
-            }
-
-            try {
-                const institutionDocRef = doc(db, 'institutions', institutionId);
-                const institutionSnapshot = await getDoc(institutionDocRef);
-
-                if (!isMounted) return;
-
+        const institutionDocRef = doc(db, 'institutions', institutionId);
+        const unsubscribe = onSnapshot(
+            institutionDocRef,
+            (institutionSnapshot) => {
                 if (!institutionSnapshot.exists()) {
                     setBranding(GLOBAL_BRAND_DEFAULTS);
                     return;
                 }
 
                 setBranding(resolveInstitutionBranding(institutionSnapshot.data()));
-            } catch {
-                if (isMounted) {
-                    setBranding(GLOBAL_BRAND_DEFAULTS);
-                }
+            },
+            () => {
+                setBranding(GLOBAL_BRAND_DEFAULTS);
             }
-        };
+        );
 
-        loadInstitutionBranding();
-
-        return () => {
-            isMounted = false;
-        };
+        return () => unsubscribe();
     }, [institutionId]);
 
     React.useEffect(() => {

@@ -32,7 +32,64 @@ const hexToRgba = (hex, alpha) => {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 };
 
-const buildCssBlock = (c) => `
+const hexToRgb = (hex) => {
+  if (!hex) return null;
+  const h = hex.trim();
+  const full = h.length === 4
+    ? `#${h[1]}${h[1]}${h[2]}${h[2]}${h[3]}${h[3]}`
+    : h;
+  const n = parseInt(full.slice(1), 16);
+  if (isNaN(n)) return null;
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+};
+
+const mixHex = (baseHex, mixHexColor, baseWeight) => {
+  const base = hexToRgb(baseHex);
+  const mix = hexToRgb(mixHexColor);
+  if (!base || !mix) return null;
+
+  const weight = Math.max(0, Math.min(1, baseWeight));
+  const mixWeight = 1 - weight;
+  const channelToHex = (v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0');
+
+  const r = base.r * weight + mix.r * mixWeight;
+  const g = base.g * weight + mix.g * mixWeight;
+  const b = base.b * weight + mix.b * mixWeight;
+
+  return `#${channelToHex(r)}${channelToHex(g)}${channelToHex(b)}`;
+};
+
+const buildPrimaryScale = (primary) => ({
+  50:  mixHex(primary, '#ffffff', 0.10) || '#eef2ff',
+  100: mixHex(primary, '#ffffff', 0.18) || '#e0e7ff',
+  200: mixHex(primary, '#ffffff', 0.30) || '#c7d2fe',
+  300: mixHex(primary, '#ffffff', 0.45) || '#a5b4fc',
+  400: mixHex(primary, '#ffffff', 0.65) || '#818cf8',
+  500: mixHex(primary, '#ffffff', 0.82) || '#6366f1',
+  600: primary || '#6366f1',
+  700: mixHex(primary, '#000000', 0.85) || '#4f46e5',
+  800: mixHex(primary, '#000000', 0.70) || '#4338ca',
+  900: mixHex(primary, '#000000', 0.55) || '#312e81',
+});
+
+const buildCssBlock = (c) => {
+  const scale = buildPrimaryScale(c.primary);
+
+  return `
+  :root {
+    --color-primary:             ${c.primary};
+    --color-primary-50:          ${scale[50]};
+    --color-primary-100:         ${scale[100]};
+    --color-primary-200:         ${scale[200]};
+    --color-primary-300:         ${scale[300]};
+    --color-primary-400:         ${scale[400]};
+    --color-primary-500:         ${scale[500]};
+    --color-primary-600:         ${scale[600]};
+    --color-primary-700:         ${scale[700]};
+    --color-primary-800:         ${scale[800]};
+    --color-primary-900:         ${scale[900]};
+  }
+
   .home-page {
     --home-primary:            ${c.primary}                                          !important;
     --home-secondary:          ${c.secondary}                                        !important;
@@ -46,6 +103,7 @@ const buildCssBlock = (c) => `
     --home-secondary-soft-dark:${hexToRgba(c.secondary,  0.24) ?? 'rgba(245,158,11,0.24)'}  !important;
   }
 `;
+};
 
 const injectTheme = (iframeEl, colors) => {
   try {

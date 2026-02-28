@@ -21,7 +21,7 @@ export const HOME_THEME_DEFAULT_COLORS = {
 };
 
 export const GLOBAL_BRAND_DEFAULTS = {
-    primaryColor: '#4f46e5',
+    primaryColor: '#6366f1',
     institutionDisplayName: 'DLP Academy',
     logoUrl: ''
 };
