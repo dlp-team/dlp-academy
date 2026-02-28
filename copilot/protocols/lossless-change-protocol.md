@@ -1,5 +1,7 @@
 # Lossless Change Protocol
 
+**This protocol must be followed for all changes unless the user explicitly states otherwise. No exceptions are allowed without clear, written instruction.**
+
 ## Purpose
 Ensure every adjustment is **lossless**: only the requested behavior changes, and no existing feature/property/regression is introduced.
 
