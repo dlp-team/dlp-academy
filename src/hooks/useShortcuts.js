@@ -41,6 +41,58 @@ export const useShortcuts = (user) => {
         });
     };
 
+    const buildAppearanceFromTargetData = (targetType, targetData = {}) => {
+        if (targetType === 'folder') {
+            return {
+                shortcutName: targetData.name,
+                shortcutTags: Array.isArray(targetData.tags) ? targetData.tags : [],
+                shortcutColor: targetData.color,
+                shortcutIcon: targetData.icon,
+                shortcutCardStyle: targetData.cardStyle,
+                shortcutModernFillColor: targetData.modernFillColor
+            };
+        }
+
+        return {
+            shortcutName: targetData.name,
+            shortcutCourse: targetData.course,
+            shortcutTags: Array.isArray(targetData.tags) ? targetData.tags : [],
+            shortcutColor: targetData.color,
+            shortcutIcon: targetData.icon,
+            shortcutCardStyle: targetData.cardStyle,
+            shortcutModernFillColor: targetData.modernFillColor
+        };
+    };
+
+    const buildMissingShortcutAppearanceUpdate = (shortcut, targetType, targetData = {}) => {
+        const sourceAppearance = buildAppearanceFromTargetData(targetType, targetData);
+        const updateData = {};
+
+        if (!shortcut?.shortcutName && sourceAppearance.shortcutName) {
+            updateData.shortcutName = sourceAppearance.shortcutName;
+        }
+        if (targetType === 'subject' && shortcut?.shortcutCourse === undefined && sourceAppearance.shortcutCourse !== undefined) {
+            updateData.shortcutCourse = sourceAppearance.shortcutCourse;
+        }
+        if (!Array.isArray(shortcut?.shortcutTags) && Array.isArray(sourceAppearance.shortcutTags)) {
+            updateData.shortcutTags = sourceAppearance.shortcutTags;
+        }
+        if (!shortcut?.shortcutColor && sourceAppearance.shortcutColor) {
+            updateData.shortcutColor = sourceAppearance.shortcutColor;
+        }
+        if (!shortcut?.shortcutIcon && sourceAppearance.shortcutIcon) {
+            updateData.shortcutIcon = sourceAppearance.shortcutIcon;
+        }
+        if (!shortcut?.shortcutCardStyle && sourceAppearance.shortcutCardStyle) {
+            updateData.shortcutCardStyle = sourceAppearance.shortcutCardStyle;
+        }
+        if (shortcut?.shortcutModernFillColor === undefined && sourceAppearance.shortcutModernFillColor !== undefined) {
+            updateData.shortcutModernFillColor = sourceAppearance.shortcutModernFillColor;
+        }
+
+        return updateData;
+    };
+
     useEffect(() => {
         if (!user) {
             return;
@@ -247,6 +299,19 @@ export const useShortcuts = (user) => {
                 try {
                     if (targetSnap.exists()) {
                         const targetData = targetSnap.data() || {};
+
+                        const missingAppearanceUpdate = buildMissingShortcutAppearanceUpdate(shortcut, shortcut.targetType, targetData);
+                        if (Object.keys(missingAppearanceUpdate).length > 0) {
+                            try {
+                                await updateDoc(doc(db, 'shortcuts', shortcut.id), {
+                                    ...missingAppearanceUpdate,
+                                    updatedAt: new Date()
+                                });
+                            } catch (_) {
+                                // Best effort cache update.
+                            }
+                        }
+
                         const targetOwnerId = targetData?.ownerId || targetData?.uid || null;
                         if (targetOwnerId && targetOwnerId === user?.uid) {
                             if (promotingShortcutIdsRef.current.has(shortcut.id)) {
@@ -273,6 +338,7 @@ export const useShortcuts = (user) => {
                                     if (shortcut?.shortcutName) targetUpdate.name = shortcut.shortcutName;
                                     if (Array.isArray(shortcut?.shortcutTags)) targetUpdate.tags = shortcut.shortcutTags;
                                     if (shortcut?.shortcutColor) targetUpdate.color = shortcut.shortcutColor;
+                                    if (shortcut?.shortcutIcon) targetUpdate.icon = shortcut.shortcutIcon;
                                     if (shortcut?.shortcutCardStyle) targetUpdate.cardStyle = shortcut.shortcutCardStyle;
                                     if (shortcut?.shortcutModernFillColor !== undefined) targetUpdate.modernFillColor = shortcut.shortcutModernFillColor;
                                 }
@@ -376,6 +442,22 @@ export const useShortcuts = (user) => {
         }
 
         const effectiveInstitutionId = institutionId || currentInstitutionId;
+        let sourceAppearance = {};
+
+        try {
+            const targetCollection = targetType === 'folder' ? 'folders' : 'subjects';
+            const targetSnapshot = await getDoc(doc(db, targetCollection, targetId));
+            if (targetSnapshot.exists()) {
+                sourceAppearance = buildAppearanceFromTargetData(targetType, targetSnapshot.data() || {});
+            }
+        } catch (_) {
+            sourceAppearance = {};
+        }
+
+        const effectiveVisualOverrides = {
+            ...sourceAppearance,
+            ...visualOverrides
+        };
 
         const existingShortcuts = shortcuts.filter(
             shortcut =>
@@ -393,14 +475,14 @@ export const useShortcuts = (user) => {
             await updateDoc(primaryRef, {
                 parentId,
                 institutionId: effectiveInstitutionId,
-                ...(typeof visualOverrides.hiddenInManual === 'boolean' ? { hiddenInManual: visualOverrides.hiddenInManual } : {}),
-                ...(visualOverrides.shortcutName ? { shortcutName: visualOverrides.shortcutName } : {}),
-                ...(visualOverrides.shortcutCourse ? { shortcutCourse: visualOverrides.shortcutCourse } : {}),
-                ...(Array.isArray(visualOverrides.shortcutTags) ? { shortcutTags: visualOverrides.shortcutTags } : {}),
-                ...(visualOverrides.shortcutColor ? { shortcutColor: visualOverrides.shortcutColor } : {}),
-                ...(visualOverrides.shortcutIcon ? { shortcutIcon: visualOverrides.shortcutIcon } : {}),
-                ...(visualOverrides.shortcutCardStyle ? { shortcutCardStyle: visualOverrides.shortcutCardStyle } : {}),
-                ...(visualOverrides.shortcutModernFillColor !== undefined ? { shortcutModernFillColor: visualOverrides.shortcutModernFillColor } : {}),
+                ...(typeof effectiveVisualOverrides.hiddenInManual === 'boolean' ? { hiddenInManual: effectiveVisualOverrides.hiddenInManual } : {}),
+                ...(effectiveVisualOverrides.shortcutName ? { shortcutName: effectiveVisualOverrides.shortcutName } : {}),
+                ...(effectiveVisualOverrides.shortcutCourse !== undefined ? { shortcutCourse: effectiveVisualOverrides.shortcutCourse } : {}),
+                ...(Array.isArray(effectiveVisualOverrides.shortcutTags) ? { shortcutTags: effectiveVisualOverrides.shortcutTags } : {}),
+                ...(effectiveVisualOverrides.shortcutColor ? { shortcutColor: effectiveVisualOverrides.shortcutColor } : {}),
+                ...(effectiveVisualOverrides.shortcutIcon ? { shortcutIcon: effectiveVisualOverrides.shortcutIcon } : {}),
+                ...(effectiveVisualOverrides.shortcutCardStyle ? { shortcutCardStyle: effectiveVisualOverrides.shortcutCardStyle } : {}),
+                ...(effectiveVisualOverrides.shortcutModernFillColor !== undefined ? { shortcutModernFillColor: effectiveVisualOverrides.shortcutModernFillColor } : {}),
                 updatedAt: new Date()
             });
 
@@ -427,14 +509,14 @@ export const useShortcuts = (user) => {
             targetId: targetId,
             targetType: targetType,
             institutionId: effectiveInstitutionId,
-            hiddenInManual: typeof visualOverrides.hiddenInManual === 'boolean' ? visualOverrides.hiddenInManual : false,
-            ...(visualOverrides.shortcutName ? { shortcutName: visualOverrides.shortcutName } : {}),
-            ...(visualOverrides.shortcutCourse ? { shortcutCourse: visualOverrides.shortcutCourse } : {}),
-            ...(Array.isArray(visualOverrides.shortcutTags) ? { shortcutTags: visualOverrides.shortcutTags } : {}),
-            ...(visualOverrides.shortcutColor ? { shortcutColor: visualOverrides.shortcutColor } : {}),
-            ...(visualOverrides.shortcutIcon ? { shortcutIcon: visualOverrides.shortcutIcon } : {}),
-            ...(visualOverrides.shortcutCardStyle ? { shortcutCardStyle: visualOverrides.shortcutCardStyle } : {}),
-            ...(visualOverrides.shortcutModernFillColor !== undefined ? { shortcutModernFillColor: visualOverrides.shortcutModernFillColor } : {}),
+            hiddenInManual: typeof effectiveVisualOverrides.hiddenInManual === 'boolean' ? effectiveVisualOverrides.hiddenInManual : false,
+            ...(effectiveVisualOverrides.shortcutName ? { shortcutName: effectiveVisualOverrides.shortcutName } : {}),
+            ...(effectiveVisualOverrides.shortcutCourse !== undefined ? { shortcutCourse: effectiveVisualOverrides.shortcutCourse } : {}),
+            ...(Array.isArray(effectiveVisualOverrides.shortcutTags) ? { shortcutTags: effectiveVisualOverrides.shortcutTags } : {}),
+            ...(effectiveVisualOverrides.shortcutColor ? { shortcutColor: effectiveVisualOverrides.shortcutColor } : {}),
+            ...(effectiveVisualOverrides.shortcutIcon ? { shortcutIcon: effectiveVisualOverrides.shortcutIcon } : {}),
+            ...(effectiveVisualOverrides.shortcutCardStyle ? { shortcutCardStyle: effectiveVisualOverrides.shortcutCardStyle } : {}),
+            ...(effectiveVisualOverrides.shortcutModernFillColor !== undefined ? { shortcutModernFillColor: effectiveVisualOverrides.shortcutModernFillColor } : {}),
             createdAt: new Date()
         };
 

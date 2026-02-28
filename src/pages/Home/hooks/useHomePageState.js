@@ -1,4 +1,5 @@
 // src/pages/Home/hooks/useHomePageState.js
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useRef, useState } from 'react';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';

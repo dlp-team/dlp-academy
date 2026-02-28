@@ -7,7 +7,6 @@ import { useNavigate } from 'react-router-dom';
 import FolderCard from '../../../components/modules/FolderCard/FolderCard';
 import SubjectCard from '../../../components/modules/SubjectCard/SubjectCard';
 import ListViewItem from '../../../components/modules/ListViewItem';
-import TagFilter from '../../../components/ui/TagFilter';
 import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
 import { mergeSourceAndShortcutItems } from '../../../utils/mergeUtils';
 import { isShortcutItem } from '../../../utils/permissionUtils';
@@ -28,8 +27,6 @@ const SharedView = ({
     onToggleMenu,
     flippedSubjectId,
     onFlipSubject,
-    // Navigation fallback
-    onSelectTopic,
     // All folders needed for drag/drop logic
     allFolders = [],
     allSubjects = [],
@@ -42,16 +39,7 @@ const SharedView = ({
 }) => {
     const navigate = useNavigate();
 
-    // --- TAG FILTER STATE ---
-    // Collect all tags from shared folders and subjects
-    const allTags = useMemo(() => {
-        const folderTags = sharedFolders.flatMap(f => Array.isArray(f.tags) ? f.tags : []);
-        const subjectTags = sharedSubjects.flatMap(s => Array.isArray(s.tags) ? s.tags : []);
-        return Array.from(new Set([...folderTags, ...subjectTags])).filter(Boolean);
-    }, [sharedFolders, sharedSubjects]);
-
-    const [selectedTags, setSelectedTags] = useState([]);
-    const [activeFilter, setActiveFilter] = useState('all');
+    const [selectedTags] = useState([]);
 
     const fullFolderTreeForCounts = useMemo(() => {
         const shortcutFolders = (sharedFolders || []).filter(folder => isShortcutItem(folder));

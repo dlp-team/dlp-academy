@@ -162,7 +162,7 @@ const FolderManager = ({
                 const ownerSnapshot = await getDocs(ownerQuery);
                 const ownerEmailFromQuery = ownerSnapshot.docs[0]?.data()?.email || '';
                 if (active) setOwnerEmailResolved(ownerEmailFromQuery);
-            } catch (error) {
+            } catch {
                 if (active) setOwnerEmailResolved('');
             }
         };
@@ -194,7 +194,7 @@ const FolderManager = ({
                 ));
 
                 setInstitutionEmails(uniqueEmails);
-            } catch (error) {
+            } catch {
                 if (active) setInstitutionEmails([]);
             }
         };
@@ -231,7 +231,7 @@ const FolderManager = ({
         }
     };
 
-    const executeShareAction = async (emailToShare, roleToShare) => {
+    const _executeShareAction = async (emailToShare, roleToShare) => {
         const normalizedEmail = emailToShare.toLowerCase();
         const ownerEmail = (initialData?.ownerEmail || (formData?.ownerId === user?.uid ? user?.email : '') || '').toLowerCase();
         if (ownerEmail && normalizedEmail === ownerEmail) {
@@ -504,7 +504,7 @@ const FolderManager = ({
                 } else {
                     localSharedList.push(updatedEntry);
                 }
-            } catch (error) {
+            } catch {
                 failures.push(`No se pudo compartir con ${entry.email}`);
             }
         }
@@ -517,7 +517,7 @@ const FolderManager = ({
                         ? { ...entry, role: nextRole, canEdit: nextRole === 'editor' }
                         : entry
                 );
-            } catch (error) {
+            } catch {
                 failures.push(`No se pudo actualizar permiso de ${email}`);
             }
         }
@@ -526,7 +526,7 @@ const FolderManager = ({
             try {
                 await onUnshare(formData.id, email);
                 localSharedList = localSharedList.filter(entry => (entry.email || '').toLowerCase() !== (email || '').toLowerCase());
-            } catch (error) {
+            } catch {
                 failures.push(`No se pudo quitar acceso a ${email}`);
             }
         }

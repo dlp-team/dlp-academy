@@ -14,6 +14,7 @@ export const saveLastHomeViewMode = (mode) => {
     try {
         localStorage.setItem(HOME_LAST_VIEW_KEY, mode);
     } catch {
+        return undefined;
     }
 };
 
@@ -30,6 +31,7 @@ export const saveLastHomeFolderId = (folderId) => {
     try {
         localStorage.setItem(HOME_LAST_FOLDER_KEY, folderId);
     } catch {
+        return undefined;
     }
 };
 
@@ -37,6 +39,7 @@ export const clearLastHomeFolderId = () => {
     try {
         localStorage.removeItem(HOME_LAST_FOLDER_KEY);
     } catch {
+        return undefined;
     }
 };
 
@@ -45,5 +48,6 @@ export const clearHomePersistence = () => {
         localStorage.removeItem(HOME_LAST_VIEW_KEY);
         localStorage.removeItem(HOME_LAST_FOLDER_KEY);
     } catch {
+        return undefined;
     }
 };

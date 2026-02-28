@@ -32,7 +32,6 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
     // Shortcuts Logic
     const { 
         shortcuts,
-        resolvedShortcuts,
         loading: loadingShortcuts,
         createShortcut,
         deleteShortcut,
@@ -71,9 +70,7 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         setDraggedItem,
         draggedItemType,
         setDraggedItemType,
-        dropPosition,
         setDropPosition,
-        manualOrder,
         setManualOrder,
         subjectModalConfig,
         setSubjectModalConfig,

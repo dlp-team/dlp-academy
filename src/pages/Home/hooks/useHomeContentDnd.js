@@ -12,7 +12,6 @@ const useHomeContentDnd = ({
     handleNestFolder,
     handleMoveFolderWithSource,
     handleDropReorderSubject,
-    handleDropReorderFolder,
     handleDragEnd
 }) => {
     const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);

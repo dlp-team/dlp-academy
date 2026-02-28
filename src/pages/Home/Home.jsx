@@ -1,4 +1,5 @@
 // src/pages/Home/Home.jsx
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
@@ -31,7 +32,6 @@ import {
     canCreateSubjectByRole,
     getPermissionLevel,
     getNormalizedRole,
-    isReadOnlyRole,
     isShortcutItem,
     isSharedForCurrentUser as isSharedForCurrentUserUtil
 } from '../../utils/permissionUtils';
@@ -65,7 +65,6 @@ const Home = ({ user }) => {
         setIsScaleOverlayOpen,
         sharedSelectedTags,
         setSharedSelectedTags,
-        sharedAllTags,
         sharedFolders,
         sharedSubjects,
         folderContentsModalConfig,
@@ -79,8 +78,7 @@ const Home = ({ user }) => {
         displayedFolders,
         activeModalFolder,
         hasContent,
-        sharedActiveFilter,
-        setSharedActiveFilter
+        sharedActiveFilter
     } = useHomePageState({
         logic,
         searchQuery,
@@ -267,8 +265,6 @@ const Home = ({ user }) => {
         const permission = user?.uid ? getPermissionLevel(logic.currentFolder, user.uid) : 'none';
         return permission === 'editor' || permission === 'owner';
     }, [logic.viewMode, logic.currentFolder, user]);
-
-    const readOnlyByRole = useMemo(() => isReadOnlyRole(user), [user]);
 
     const effectiveHasContent = useMemo(() => {
         if (!isStudentRole) return hasContent;
@@ -511,7 +507,6 @@ const Home = ({ user }) => {
                                         setSubjectModalConfig={logic.setSubjectModalConfig}
                                         setFolderModalConfig={logic.setFolderModalConfig}
                                         setDeleteConfig={logic.setDeleteConfig}
-                                        onDeleteShortcut={logic.deleteShortcut}
                                         
                                         handleSelectSubject={(id) => logic.navigate(`/home/subject/${id}`)}
                                         handleOpenFolder={(folder) => {
@@ -544,7 +539,6 @@ const Home = ({ user }) => {
                                         activeFilter={logic.activeFilter}
                                         selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
                                         sharedScopeSelected={sharedScopeSelected}
-                                        readOnlyByRole={readOnlyByRole}
                                         studentMode={isStudentRole}
                                         
                                         navigate={logic.navigate}

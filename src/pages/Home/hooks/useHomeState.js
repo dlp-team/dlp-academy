@@ -1,9 +1,11 @@
 // src/pages/Home/hooks/useHomeState.js
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { normalizeText } from '../../../utils/stringUtils';
 import { useShortcuts } from '../../../hooks/useShortcuts';
 import { getNormalizedRole, isShortcutItem, isOwnedByCurrentUser, isSharedWithCurrentUser } from '../../../utils/permissionUtils';
 import { clearLastHomeFolderId, loadLastHomeFolderId } from '../utils/homePersistence';
+import { EDUCATION_LEVELS } from '../../../utils/subjectConstants';
 
 const EMPTY_MANUAL_ORDER = { subjects: [], folders: [] };
 
@@ -313,16 +315,6 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         return source.filter(folder => selectedTags.every(tag => folder.tags?.includes(tag)));
     }, [foldersWithShortcuts, folders, selectedTags]);
 
-    const getUnfolderedSubjects = (subjectsList = subjects) => {
-        // Subjects with no folderId (or null folderId) are unfoldered
-        return subjectsList.filter(s => s.folderId === null || s.folderId === undefined);
-    };
-
-    const getSubjectsInFolder = (folderId, subjectsList = subjects) => {
-        // Query subjects where folderId matches
-        return subjectsList.filter(s => s.folderId === folderId);
-    };
-
     const sharedFolders = useMemo(() => {
         const source = Array.isArray(foldersWithShortcuts) ? foldersWithShortcuts : folders;
         return source.filter(item => !isOwnedByCurrentUser(item, user) && isSharedWithCurrentUser(item, user));
@@ -441,16 +433,13 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         }
 
         if (viewMode === 'courses') {
-            let currentEducationLevels = {
+            const currentEducationLevels = EDUCATION_LEVELS || {
                 Primaria: ['1º', '2º', '3º', '4º', '5º', '6º'],
                 ESO: ['1º', '2º', '3º', '4º'],
                 Bachillerato: ['1º', '2º'],
                 FP: ['Grado Medio 1', 'Grado Medio 2', 'Grado Superior 1', 'Grado Superior 2'],
                 Universidad: ['1º', '2º', '3º', '4º', '5º', '6º', 'Máster', 'Doctorado']
             };
-            try {
-                currentEducationLevels = require('../../../utils/subjectConstants').EDUCATION_LEVELS || currentEducationLevels;
-            } catch (e) {}
 
             function parseCourse(course) {
                 if (!course || course === null || course === undefined || course === '') return { group: null, year: null };

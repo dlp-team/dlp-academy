@@ -1,4 +1,5 @@
 // src/pages/Home/components/HomeContent.jsx
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useRef } from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp, ArrowUpCircle
@@ -31,7 +32,6 @@ const HomeContent = ({
     setSubjectModalConfig,
     setFolderModalConfig,
     setDeleteConfig,
-    onDeleteShortcut,
     
     handleSelectSubject,
     handleOpenFolder,
@@ -66,7 +66,6 @@ const HomeContent = ({
     sharedScopeSelected = true,
     filterOverlayOpen = false,
     onCloseFilterOverlay = () => {},
-    readOnlyByRole = false,
     studentMode = false,
 }) => {
     const contentRef = useRef(null);

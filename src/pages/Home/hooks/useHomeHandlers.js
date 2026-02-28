@@ -38,7 +38,6 @@ export const useHomeHandlers = ({
     updatePreference,
     navigate,
     isDescendant,
-    createShortcut,
     updateShortcutAppearance,
     setShortcutHiddenInManual,
     studentShortcutTagOnlyMode = false,
@@ -332,11 +331,11 @@ export const useHomeHandlers = ({
         }
     };
 
-    const handleShareFolder = async (folderId, email, role) => {
+    const handleShareFolder = () => {
         setFolderModalConfig({
             isOpen: true,
             isEditing: true,
-            data: folder,
+            data: null,
             currentFolder: null,
             initialTab: 'sharing'
         });
@@ -363,7 +362,7 @@ export const useHomeHandlers = ({
         }
     };
 
-    const handleDragStartFolder = (folder, position) => {
+    const handleDragStartFolder = (folder) => {
         setDraggedItem(folder);
         setDraggedItemType('folder');
     };

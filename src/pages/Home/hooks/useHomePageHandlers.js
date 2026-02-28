@@ -791,7 +791,6 @@ export const useHomePageHandlers = ({
                             sharedWithUids: [],
                             isShared: false
                         });
-                        const folder = (logic.folders || []).find(f => f.id === folderId);
                         // Update all subjects in this folder (query by folderId)
                         const subjectsInFolder3 = (logic.subjects || []).filter(s => s.folderId === folderId);
                         for (const subject of subjectsInFolder3) {
