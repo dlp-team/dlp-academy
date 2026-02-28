@@ -342,7 +342,11 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     const groupedContent = useMemo(() => {
         if (activeFilter === 'folders') return {};
 
-        const isRelated = item => item.uid === user?.uid || (item.sharedWithUids && item.sharedWithUids.includes(user?.uid));
+        const isRelated = item => {
+            if (!item) return false;
+            if (isShortcutItem(item)) return true;
+            return isOwnedByCurrentUser(item, user) || isSharedWithCurrentUser(item, user);
+        };
         const isVisibleInManual = item => !(isShortcutItem(item) && item?.hiddenInManual === true);
 
         const query = searchQuery?.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');

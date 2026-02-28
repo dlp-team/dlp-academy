@@ -299,6 +299,7 @@ const Home = ({ user }) => {
                             sharedSubjects={sharedSubjects}
                             cardScale={logic.cardScale}
                             allFolders={logic.folders || []}
+                            allSubjects={logic.subjects || []}
                             currentFolder={logic.currentFolder}
                             
                             layoutMode={logic.layoutMode} 

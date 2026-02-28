@@ -123,16 +123,6 @@ const useHomeContentDnd = ({
                     handleMoveSubjectWithSource(dragged.id, target.id, sourceFolderId);
                 }
             } else if (dragged.type === 'folder') {
-                if (
-                    dragged.parentId === target.parentId &&
-                    typeof dragged.index === 'number' &&
-                    typeof target.index === 'number' &&
-                    handleDropReorderFolder
-                ) {
-                    handleDropReorderFolder(dragged.shortcutId || dragged.id, dragged.index, target.index);
-                    if (handleDragEnd) handleDragEnd();
-                    return;
-                }
                 if (dragged.shortcutId && handleNestFolder) {
                     handleNestFolder(target.id, dragged.id, dragged.shortcutId);
                     if (handleDragEnd) handleDragEnd();

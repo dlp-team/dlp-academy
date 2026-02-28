@@ -9,6 +9,8 @@ import SubjectCard from '../../../components/modules/SubjectCard/SubjectCard';
 import ListViewItem from '../../../components/modules/ListViewItem';
 import TagFilter from '../../../components/ui/TagFilter';
 import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
+import { mergeSourceAndShortcutItems } from '../../../utils/mergeUtils';
+import { isShortcutItem } from '../../../utils/permissionUtils';
 
 const SharedView = ({ 
     user,
@@ -30,6 +32,7 @@ const SharedView = ({
     onSelectTopic,
     // All folders needed for drag/drop logic
     allFolders = [],
+    allSubjects = [],
     onEditFolder = () => {},
     onDeleteFolder = () => {},
     onShareFolder = () => {},
@@ -50,16 +53,32 @@ const SharedView = ({
     const [selectedTags, setSelectedTags] = useState([]);
     const [activeFilter, setActiveFilter] = useState('all');
 
+    const fullFolderTreeForCounts = useMemo(() => {
+        const shortcutFolders = (sharedFolders || []).filter(folder => isShortcutItem(folder));
+        return mergeSourceAndShortcutItems({
+            sourceItems: allFolders || [],
+            shortcutItems: shortcutFolders
+        });
+    }, [allFolders, sharedFolders]);
+
+    const fullSubjectTreeForCounts = useMemo(() => {
+        const shortcutSubjects = (sharedSubjects || []).filter(subject => isShortcutItem(subject));
+        return mergeSourceAndShortcutItems({
+            sourceItems: allSubjects || [],
+            shortcutItems: shortcutSubjects
+        });
+    }, [allSubjects, sharedSubjects]);
+
     const folderById = useMemo(() => {
         const map = new Map();
-        (allFolders || []).forEach(folder => {
+        (fullFolderTreeForCounts || []).forEach(folder => {
             if (folder?.id) map.set(folder.id, folder);
         });
         (sharedFolders || []).forEach(folder => {
             if (folder?.id && !map.has(folder.id)) map.set(folder.id, folder);
         });
         return map;
-    }, [allFolders, sharedFolders]);
+    }, [fullFolderTreeForCounts, sharedFolders]);
 
     const getFolderParentId = (folderEntry) => {
         if (!folderEntry) return null;
@@ -179,7 +198,8 @@ const SharedView = ({
                                             <FolderCard
                                                 user={user}
                                                 folder={folder}
-                                                allFolders={allFolders}
+                                                allFolders={fullFolderTreeForCounts}
+                                                allSubjects={fullSubjectTreeForCounts}
                                                 onOpen={onOpenFolder}
                                                 activeMenu={activeMenu}
                                                 onToggleMenu={onToggleMenu}
@@ -214,8 +234,8 @@ const SharedView = ({
                                             }}
                                             onShare={(f) => onShareFolder(f)}
                                             draggable={false}
-                                            allFolders={filteredFolders}
-                                            allSubjects={filteredSubjects}
+                                            allFolders={fullFolderTreeForCounts}
+                                            allSubjects={fullSubjectTreeForCounts}
                                             onDropAction={() => {}}
                                             disableUnshareActions={isInsideSharedFolderForItem(folder, 'folder')}
                                         />
