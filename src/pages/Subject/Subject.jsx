@@ -174,8 +174,14 @@ const Subject = ({ user }) => {
                     />
 
                     {showDeleteModal && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200">
+                        <div
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                            onClick={() => setShowDeleteModal(false)}
+                        >
+                            <div
+                                className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200"
+                                onClick={(e) => e.stopPropagation()}
+                            >
                                 <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
                                 </div>

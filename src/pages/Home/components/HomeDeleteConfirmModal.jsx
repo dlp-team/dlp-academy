@@ -60,11 +60,13 @@ const HomeDeleteConfirmModal = ({ deleteConfig, setDeleteConfig, handleDelete })
                 : 'Sí, ocultar'
         : 'Sí, Eliminar';
 
+    const onClose = () => setDeleteConfig({ isOpen: false, type: null, item: null });
+
     return (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-50" onClick={onClose}>
             <div className="absolute inset-0 bg-black/50 dark:bg-black/70 transition-colors" />
             <div className="absolute inset-x-0 bottom-0 flex items-center justify-center p-4" style={OVERLAY_TOP_OFFSET_STYLE}>
-            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[calc(100vh-10rem)] overflow-y-auto shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[calc(100vh-10rem)] overflow-y-auto shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors" onClick={(e) => e.stopPropagation()}>
                 <div className={`w-16 h-16 ${accent.circleBg} rounded-full flex items-center justify-center mx-auto mb-4 transition-colors`}>
                     <ActionIcon className={`w-8 h-8 ${accent.iconColor}`} />
                 </div>
@@ -76,7 +78,7 @@ const HomeDeleteConfirmModal = ({ deleteConfig, setDeleteConfig, handleDelete })
                 </p>
                 <div className="flex gap-3 justify-center">
                     <button
-                        onClick={() => setDeleteConfig({ isOpen: false, type: null, item: null })}
+                        onClick={onClose}
                         className="px-5 py-2.5 bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors cursor-pointer"
                     >
                         Cancelar
