@@ -4,6 +4,7 @@ import { LayoutGrid, Plus, Users } from 'lucide-react';
 import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
 
 const HomeEmptyState = ({
+    homeThemeTokens = HOME_THEME_TOKENS,
     setSubjectModalConfig,
     viewMode = 'grid',
     layoutMode = 'grid',
@@ -20,7 +21,7 @@ const HomeEmptyState = ({
                 <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">
                     No tienes permisos para crear aquí
                 </h3>
-                <p className={`${HOME_THEME_TOKENS.mutedTextClass} max-w-sm text-center`}>
+                <p className={`${homeThemeTokens.mutedTextClass} max-w-sm text-center`}>
                     Solo los editores de esta carpeta compartida pueden crear nuevas asignaturas.
                 </p>
             </div>
@@ -33,7 +34,7 @@ const HomeEmptyState = ({
             <div className="space-y-2 relative mb-4">
                 <button
                     onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder })}
-                    className={HOME_THEME_TOKENS.dashedCreateCardIndigoClass}
+                    className={homeThemeTokens.dashedCreateCardIndigoClass}
                     style={{
                         minHeight: `${(48 + 32) * scale}px`,
                         gap: `${16 * scale}px`
@@ -65,7 +66,7 @@ const HomeEmptyState = ({
                 >
                     <button
                         onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder })}
-                        className={HOME_THEME_TOKENS.dashedCreateCardIndigoClass}
+                        className={homeThemeTokens.dashedCreateCardIndigoClass}
                         style={{ aspectRatio: '16 / 10', gap: `${16 * (cardScale / 100)}px` }}
                     >
                         <div
@@ -92,7 +93,7 @@ const HomeEmptyState = ({
                 <LayoutGrid className="w-12 h-12 text-gray-400 dark:text-gray-500" />
             </div>
             <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">No hay contenido todavía</h3>
-            <p className={`${HOME_THEME_TOKENS.mutedTextClass} mb-6`}>No hay elementos en esta vista.</p>
+            <p className={`${homeThemeTokens.mutedTextClass} mb-6`}>No hay elementos en esta vista.</p>
         </div>
     );
 };

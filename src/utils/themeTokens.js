@@ -10,3 +10,53 @@ export const HOME_THEME_TOKENS = {
     dashedCardIndigoIdleClass:
         'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
 };
+
+const HOME_THEME_TOKEN_KEYS = Object.keys(HOME_THEME_TOKENS);
+
+const isValidThemeTokenOverride = (value) => {
+    return typeof value === 'string' && value.trim().length > 0;
+};
+
+const pickHomeThemeTokenOverrides = (candidate) => {
+    if (!candidate || typeof candidate !== 'object') return null;
+
+    const overrides = HOME_THEME_TOKEN_KEYS.reduce((acc, key) => {
+        const value = candidate[key];
+        if (isValidThemeTokenOverride(value)) {
+            acc[key] = value;
+        }
+        return acc;
+    }, {});
+
+    return Object.keys(overrides).length > 0 ? overrides : null;
+};
+
+export const resolveInstitutionHomeThemeOverrides = (institutionData) => {
+    if (!institutionData || typeof institutionData !== 'object') return null;
+
+    const candidates = [
+        institutionData.homeThemeTokens,
+        institutionData.homeTheme,
+        institutionData.settings?.homeThemeTokens,
+        institutionData.settings?.homeTheme,
+        institutionData.customization?.homeThemeTokens,
+        institutionData.customization?.homeTheme,
+        institutionData.customization?.home?.tokens
+    ];
+
+    for (const candidate of candidates) {
+        const overrides = pickHomeThemeTokenOverrides(candidate);
+        if (overrides) {
+            return overrides;
+        }
+    }
+
+    return null;
+};
+
+export const getEffectiveHomeThemeTokens = (overrides) => {
+    return {
+        ...HOME_THEME_TOKENS,
+        ...(overrides || {})
+    };
+};

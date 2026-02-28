@@ -7,6 +7,7 @@ import FolderDeleteModal from '../../../components/modals/FolderDeleteModal';
 
 const HomeModals = ({
     user,
+    homeThemeTokens,
     subjectModalConfig, setSubjectModalConfig,
     folderModalConfig, setFolderModalConfig,
     deleteConfig, setDeleteConfig,
@@ -74,6 +75,7 @@ const HomeModals = ({
                 />
             ) : (
                 <HomeDeleteConfirmModal
+                    homeThemeTokens={homeThemeTokens}
                     deleteConfig={deleteConfig}
                     setDeleteConfig={setDeleteConfig}
                     handleDelete={handleDelete}
