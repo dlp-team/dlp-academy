@@ -3,6 +3,7 @@ import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { isInvalidFolderMove } from '../../../utils/folderUtils';
 import { canEdit, getPermissionLevel } from '../../../utils/permissionUtils';
+import { clearLastHomeFolderId, saveLastHomeFolderId } from '../utils/homePersistence';
 
 export const useHomePageHandlers = ({
     logic,
@@ -824,10 +825,10 @@ export const useHomePageHandlers = ({
         setFolderContentsModalConfig({ isOpen: false, folder: null });
         logic.setCurrentFolder(folder);
         if (rememberOrganization && folder && folder.id) {
-            localStorage.setItem('dlp_last_folderId', folder.id);
+            saveLastHomeFolderId(folder.id);
         }
         if (rememberOrganization && !folder) {
-            localStorage.removeItem('dlp_last_folderId');
+            clearLastHomeFolderId();
         }
     };
 

@@ -1,5 +1,6 @@
 // src/pages/Home/hooks/useHomeHandlers.js
 import { canEdit, isOwner } from '../../../utils/permissionUtils';
+import { clearLastHomeFolderId, saveLastHomeFolderId } from '../utils/homePersistence';
 
 export const useHomeHandlers = ({
     user,
@@ -319,14 +320,14 @@ export const useHomeHandlers = ({
 
             setCurrentFolder(selectedFolder || null);
             if (rememberOrganization && selectedFolder) {
-                localStorage.setItem('dlp_last_folderId', selectedFolder.id);
+                saveLastHomeFolderId(selectedFolder.id);
             } else if (rememberOrganization) {
-                localStorage.removeItem('dlp_last_folderId');
+                clearLastHomeFolderId();
             }
         } else {
             setCurrentFolder(null);
             if (rememberOrganization) {
-                localStorage.removeItem('dlp_last_folderId');
+                clearLastHomeFolderId();
             }
         }
     };

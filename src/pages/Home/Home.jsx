@@ -37,6 +37,11 @@ import {
 } from '../../utils/permissionUtils';
 import { mergeSourceAndShortcutItems } from '../../utils/mergeUtils';
 import { useInstitutionHomeThemeTokens } from './hooks/useInstitutionHomeThemeTokens';
+import {
+    saveLastHomeFolderId,
+    clearLastHomeFolderId,
+    saveLastHomeViewMode
+} from './utils/homePersistence';
 
 
 const Home = ({ user }) => {
@@ -88,18 +93,27 @@ const Home = ({ user }) => {
     const setPersistedFolderId = React.useCallback((folder) => {
         if (!rememberOrganization) return;
         if (folder && folder.id) {
-            localStorage.setItem('dlp_last_folderId', folder.id);
+            saveLastHomeFolderId(folder.id);
         } else {
-            localStorage.removeItem('dlp_last_folderId');
+            clearLastHomeFolderId();
         }
     }, [rememberOrganization]);
 
     const setPersistedViewMode = React.useCallback((mode) => {
         if (!rememberOrganization) return;
         if (mode) {
-            localStorage.setItem('dlp_last_viewMode', mode);
+            saveLastHomeViewMode(mode);
         }
     }, [rememberOrganization]);
+
+    const handleSetCurrentFolder = React.useCallback((folder) => {
+        logic.setCurrentFolder(folder);
+        setPersistedFolderId(folder);
+    }, [logic, setPersistedFolderId]);
+
+    const handleOpenSubjectSharing = React.useCallback((subject) => {
+        logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: subject, initialTab: 'sharing' });
+    }, [logic]);
 
     React.useEffect(() => {
         if (!user) {
@@ -121,7 +135,7 @@ const Home = ({ user }) => {
                 logic.setViewMode('grid');
             }
             if (rememberOrganization) {
-                localStorage.removeItem('dlp_last_folderId');
+                clearLastHomeFolderId();
             }
             const next = new URLSearchParams(searchParams);
             if (next.has('folderId')) {
@@ -323,8 +337,7 @@ const Home = ({ user }) => {
                         setFolderModalConfig={logic.setFolderModalConfig}
                         { ...(logic.setCollapsedGroups ? { setCollapsedGroups: logic.setCollapsedGroups } : {}) }
                         setCurrentFolder={(folder) => {
-                            logic.setCurrentFolder(folder);
-                            setPersistedFolderId(folder);
+                            handleSetCurrentFolder(folder);
                         }}
                         isDragAndDropEnabled={logic.isDragAndDropEnabled}
                         draggedItem={logic.draggedItem}
@@ -355,8 +368,7 @@ const Home = ({ user }) => {
                         <BreadcrumbNav
                             currentFolder={logic.currentFolder}
                             onNavigate={(folder) => {
-                                logic.setCurrentFolder(folder);
-                                setPersistedFolderId(folder);
+                                handleSetCurrentFolder(folder);
                             }}
                             allFolders={logic.folders || []}
                             onDropOnBreadcrumb={handleBreadcrumbDrop}
@@ -438,7 +450,7 @@ const Home = ({ user }) => {
                                 logic.setActiveMenu(null);
                             }}
                             onShareSubject={(s) => {
-                                logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
+                                handleOpenSubjectSharing(s);
                                 logic.setActiveMenu(null);
                             }}
 
@@ -460,8 +472,7 @@ const Home = ({ user }) => {
                         <BreadcrumbNav 
                             currentFolder={logic.currentFolder} 
                             onNavigate={(folder) => {
-                                logic.setCurrentFolder(folder);
-                                setPersistedFolderId(folder);
+                                handleSetCurrentFolder(folder);
                             }}
                             allFolders={logic.folders || []}
                             onDropOnBreadcrumb={handleBreadcrumbDrop}
@@ -504,8 +515,7 @@ const Home = ({ user }) => {
                                         
                                         handleSelectSubject={(id) => logic.navigate(`/home/subject/${id}`)}
                                         handleOpenFolder={(folder) => {
-                                            logic.setCurrentFolder(folder);
-                                            setPersistedFolderId(folder);
+                                            handleSetCurrentFolder(folder);
                                         }}
                                         handleShareFolder={logic.handleShareFolder}
                                         handlePromoteSubject={handlePromoteSubjectWrapper}
@@ -513,7 +523,7 @@ const Home = ({ user }) => {
                                         handleDropOnFolder={handleDropOnFolderWrapper}
                                         handleNestFolder={handleNestFolder}
                                         handleShowFolderContents={handleShowFolderContents}
-                                        onShareSubject={(subject) => logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: subject, initialTab: 'sharing' })}
+                                        onShareSubject={handleOpenSubjectSharing}
                                         
                                         handleMoveSubjectWithSource={handleTreeMoveSubject}
                                         onOpenTopics={handleOpenTopics}

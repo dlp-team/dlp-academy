@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { normalizeText } from '../../../utils/stringUtils';
 import { useShortcuts } from '../../../hooks/useShortcuts';
 import { getNormalizedRole, isShortcutItem, isOwnedByCurrentUser, isSharedWithCurrentUser } from '../../../utils/permissionUtils';
+import { clearLastHomeFolderId, loadLastHomeFolderId } from '../utils/homePersistence';
 
 const EMPTY_MANUAL_ORDER = { subjects: [], folders: [] };
 
@@ -83,14 +84,14 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
             if (currentFolder) {
                 setCurrentFolder(null);
             }
-            localStorage.removeItem('dlp_last_folderId');
+            clearLastHomeFolderId();
             return;
         }
 
         if (!folders || folders.length === 0) {
             return;
         }
-        const lastFolderId = localStorage.getItem('dlp_last_folderId');
+        const lastFolderId = loadLastHomeFolderId();
         if (lastFolderId) {
             const folder = folders.find(f => f.id === lastFolderId);
             if (folder && (!currentFolder || currentFolder.id !== folder.id)) {

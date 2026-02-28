@@ -3,6 +3,12 @@ import React, { useMemo, useRef, useState } from 'react';
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { normalizeText } from '../../../utils/stringUtils';
+import {
+    clearHomePersistence,
+    loadLastHomeFolderId,
+    loadLastHomeViewMode,
+    saveLastHomeViewMode
+} from '../utils/homePersistence';
 
 export const useHomePageState = ({ logic, searchQuery, rememberOrganization = true, defaultViewMode = 'grid', showSharedTab = true }) => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -64,14 +70,13 @@ export const useHomePageState = ({ logic, searchQuery, rememberOrganization = tr
             if (logic.setCurrentFolder) {
                 logic.setCurrentFolder(null);
             }
-            localStorage.removeItem('dlp_last_viewMode');
-            localStorage.removeItem('dlp_last_folderId');
+            clearHomePersistence();
             didRestoreRef.current = true;
             return;
         }
 
-        const lastTab = localStorage.getItem('dlp_last_viewMode');
-        const lastFolderId = localStorage.getItem('dlp_last_folderId');
+        const lastTab = loadLastHomeViewMode();
+        const lastFolderId = loadLastHomeFolderId();
 
         if (logic.setViewMode) {
             let nextMode = lastTab || safeDefaultMode;
@@ -164,13 +169,12 @@ export const useHomePageState = ({ logic, searchQuery, rememberOrganization = tr
 
     React.useEffect(() => {
         if (!rememberOrganization) return;
-        if (logic.viewMode) localStorage.setItem('dlp_last_viewMode', logic.viewMode);
+        if (logic.viewMode) saveLastHomeViewMode(logic.viewMode);
     }, [logic.viewMode, rememberOrganization]);
 
     React.useEffect(() => {
         if (rememberOrganization) return;
-        localStorage.removeItem('dlp_last_viewMode');
-        localStorage.removeItem('dlp_last_folderId');
+        clearHomePersistence();
     }, [rememberOrganization]);
 
     const groupedSubjectsCount = Object.values(logic.groupedContent || {}).reduce((total, bucket) => {
