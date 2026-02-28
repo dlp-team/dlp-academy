@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Settings, Moon, Sun, LayoutDashboard } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config'; 
+import useInstitutionBranding from '../../hooks/useInstitutionBranding';
 
 // Import UI Helpers
 import Avatar from '../ui/Avatar';
@@ -99,6 +100,7 @@ const Header = ({ user }) => {
 
   // Determine which data to show
   const userData = firestoreUser || user;
+  const institutionBranding = useInstitutionBranding(userData);
 
   const getDisplayName = () => {
     if (userData?.displayName) return userData.displayName;
@@ -152,11 +154,19 @@ const Header = ({ user }) => {
             className="flex items-center gap-3 cursor-pointer group" 
             onClick={() => navigate('/home')}
         >
-          <div className="bg-indigo-50 dark:bg-indigo-900/20 p-2 rounded-lg group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors">
-            <GraduationCap className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
-          </div>
+          {institutionBranding.logoUrl ? (
+            <img
+              src={institutionBranding.logoUrl}
+              alt={institutionBranding.institutionDisplayName || 'Institution logo'}
+              className="w-12 h-12 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
+            />
+          ) : (
+            <div className="bg-indigo-50 dark:bg-indigo-900/20 p-2 rounded-lg group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors">
+              <GraduationCap className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+            </div>
+          )}
           <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight transition-colors">
-            DLP Academy
+            {institutionBranding.institutionDisplayName}
           </h1>
         </div>
         

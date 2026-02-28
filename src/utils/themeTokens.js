@@ -20,6 +20,12 @@ export const HOME_THEME_DEFAULT_COLORS = {
     cardBackground: '#ffffff'
 };
 
+export const GLOBAL_BRAND_DEFAULTS = {
+    primaryColor: '#4f46e5',
+    institutionDisplayName: 'DLP Academy',
+    logoUrl: ''
+};
+
 const HOME_THEME_TOKEN_KEYS = Object.keys(HOME_THEME_TOKENS);
 const HOME_THEME_COLOR_KEYS = Object.keys(HOME_THEME_DEFAULT_COLORS);
 
@@ -31,13 +37,52 @@ const isHexColor = (value) => {
     return typeof value === 'string' && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value.trim());
 };
 
-const normalizeHexColor = (value) => {
+export const normalizeHexColor = (value) => {
     if (!isHexColor(value)) return null;
     const trimmed = value.trim();
     if (trimmed.length === 7) return trimmed.toLowerCase();
 
     const short = trimmed.slice(1).toLowerCase();
     return `#${short[0]}${short[0]}${short[1]}${short[1]}${short[2]}${short[2]}`;
+};
+
+const clampChannel = (value) => Math.max(0, Math.min(255, Math.round(value)));
+
+const rgbToHex = ({ r, g, b }) => {
+    const toHex = (channel) => clampChannel(channel).toString(16).padStart(2, '0');
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
+const mixHexColors = (baseHex, mixHex, baseWeight) => {
+    const base = hexToRgb(baseHex);
+    const mix = hexToRgb(mixHex);
+    if (!base || !mix) return null;
+
+    const weight = Math.max(0, Math.min(1, baseWeight));
+    const mixWeight = 1 - weight;
+
+    return rgbToHex({
+        r: base.r * weight + mix.r * mixWeight,
+        g: base.g * weight + mix.g * mixWeight,
+        b: base.b * weight + mix.b * mixWeight
+    });
+};
+
+const buildPrimaryColorScale = (primaryColor) => {
+    const primary = normalizeHexColor(primaryColor) || GLOBAL_BRAND_DEFAULTS.primaryColor;
+
+    return {
+        50: mixHexColors(primary, '#ffffff', 0.10) || '#eef2ff',
+        100: mixHexColors(primary, '#ffffff', 0.18) || '#e0e7ff',
+        200: mixHexColors(primary, '#ffffff', 0.30) || '#c7d2fe',
+        300: mixHexColors(primary, '#ffffff', 0.45) || '#a5b4fc',
+        400: mixHexColors(primary, '#ffffff', 0.65) || '#818cf8',
+        500: mixHexColors(primary, '#ffffff', 0.82) || '#6366f1',
+        600: primary,
+        700: mixHexColors(primary, '#000000', 0.85) || '#4338ca',
+        800: mixHexColors(primary, '#000000', 0.70) || '#3730a3',
+        900: mixHexColors(primary, '#000000', 0.55) || '#312e81'
+    };
 };
 
 const hexToRgb = (hex) => {
@@ -140,6 +185,53 @@ export const getEffectiveHomeThemeColors = (overrides) => {
     return {
         ...HOME_THEME_DEFAULT_COLORS,
         ...(overrides || {})
+    };
+};
+
+export const resolveInstitutionBranding = (institutionData) => {
+    if (!institutionData || typeof institutionData !== 'object') {
+        return { ...GLOBAL_BRAND_DEFAULTS };
+    }
+
+    const customization = institutionData.customization || {};
+
+    const primaryColor =
+        normalizeHexColor(
+            customization.primaryBrandColor ||
+            customization.brand?.primaryColor ||
+            institutionData.primaryBrandColor ||
+            institutionData.brand?.primaryColor ||
+            customization.homeThemeColors?.primary ||
+            customization.home?.colors?.primary
+        ) || GLOBAL_BRAND_DEFAULTS.primaryColor;
+
+    return {
+        primaryColor,
+        institutionDisplayName:
+            (typeof customization.institutionDisplayName === 'string' && customization.institutionDisplayName.trim()) ||
+            (typeof institutionData.name === 'string' && institutionData.name.trim()) ||
+            GLOBAL_BRAND_DEFAULTS.institutionDisplayName,
+        logoUrl:
+            (typeof customization.logoUrl === 'string' && customization.logoUrl.trim()) ||
+            GLOBAL_BRAND_DEFAULTS.logoUrl
+    };
+};
+
+export const buildGlobalBrandCssVariables = (primaryColor) => {
+    const colorScale = buildPrimaryColorScale(primaryColor);
+
+    return {
+        '--color-primary': colorScale[600],
+        '--color-primary-50': colorScale[50],
+        '--color-primary-100': colorScale[100],
+        '--color-primary-200': colorScale[200],
+        '--color-primary-300': colorScale[300],
+        '--color-primary-400': colorScale[400],
+        '--color-primary-500': colorScale[500],
+        '--color-primary-600': colorScale[600],
+        '--color-primary-700': colorScale[700],
+        '--color-primary-800': colorScale[800],
+        '--color-primary-900': colorScale[900]
     };
 };
 
