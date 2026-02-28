@@ -10,7 +10,7 @@ import SubjectListItem from '../../../components/modules/ListItems/SubjectListIt
 import ListViewItem from '../../../components/modules/ListViewItem';
 import useHomeContentDnd from '../hooks/useHomeContentDnd';
 import useAutoScrollOnDrag from '../../../hooks/useAutoScrollOnDrag';
-import { isShortcutItem, getPermissionLevel } from '../../../utils/permissionUtils';
+import { isShortcutItem, getPermissionLevel, isSharedForCurrentUser as isItemSharedForCurrentUser } from '../../../utils/permissionUtils';
 
 const HomeContent = ({
     user,
@@ -128,31 +128,10 @@ const HomeContent = ({
     };
 
     const isSharedForCurrentUser = (item) => {
-        if (!item) return false;
-        const currentUserId = user?.uid || null;
-        const currentEmail = (user?.email || '').toLowerCase();
-        const isSubjectEntity = item?.targetType === 'subject' || Object.prototype.hasOwnProperty.call(item, 'course') || Object.prototype.hasOwnProperty.call(item, 'folderId');
-        const isOwnedByCurrentUser = Boolean(
-            currentUserId && (item?.ownerId === currentUserId || (!isSubjectEntity && item?.uid === currentUserId) || item?.isOwner === true)
-        );
-
-        if (isOwnedByCurrentUser) return false;
-
-        if (isShortcutItem(item)) return true;
-
-        if (isSubjectEntity && item?.isShared !== true) {
-            return false;
-        }
-
-        const sharedWithUids = Array.isArray(item.sharedWithUids) ? item.sharedWithUids : [];
-        const sharedWith = Array.isArray(item.sharedWith) ? item.sharedWith : [];
-
-        const sharedByUid = currentUserId ? sharedWithUids.includes(currentUserId) : false;
-        const sharedByEmail = currentEmail
-            ? sharedWith.some(entry => (entry?.email || '').toLowerCase() === currentEmail)
-            : false;
-
-        return sharedByUid || sharedByEmail;
+        return isItemSharedForCurrentUser(item, user, {
+            treatShortcutAsShared: true,
+            requireSubjectSharedFlag: true
+        });
     };
 
     const matchesSharedFilter = (item) => {

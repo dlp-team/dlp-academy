@@ -26,7 +26,7 @@ import HomeModals from './components/HomeModals';
 import HomeShareConfirmModals from './components/HomeShareConfirmModals';
 import FolderTreeModal from '../../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../Subject/modals/SubjectTopicModal';
-import { getPermissionLevel, isShortcutItem } from '../../utils/permissionUtils';
+import { getPermissionLevel, isSharedForCurrentUser as isItemSharedForCurrentUser } from '../../utils/permissionUtils';
 
 
 const Home = ({ user }) => {
@@ -196,32 +196,11 @@ const Home = ({ user }) => {
     }, [logic.subjects, logic.resolvedShortcuts]);
 
     const isSharedForCurrentUser = React.useCallback((item) => {
-        if (!item) return false;
-        const currentUserId = user?.uid || null;
-        const currentEmail = (user?.email || '').toLowerCase();
-        const isSubjectEntity = item?.targetType === 'subject' || Object.prototype.hasOwnProperty.call(item, 'course') || Object.prototype.hasOwnProperty.call(item, 'folderId');
-        const isOwnedByCurrentUser = Boolean(
-            currentUserId && (item?.ownerId === currentUserId || (!isSubjectEntity && item?.uid === currentUserId) || item?.isOwner === true)
-        );
-
-        if (isOwnedByCurrentUser) return false;
-
-        if (isShortcutItem(item)) return true;
-
-        if (isSubjectEntity && item?.isShared !== true) {
-            return false;
-        }
-
-        const sharedWithUids = Array.isArray(item.sharedWithUids) ? item.sharedWithUids : [];
-        const sharedWith = Array.isArray(item.sharedWith) ? item.sharedWith : [];
-
-        const sharedByUid = currentUserId ? sharedWithUids.includes(currentUserId) : false;
-        const sharedByEmail = currentEmail
-            ? sharedWith.some(entry => (entry?.email || '').toLowerCase() === currentEmail)
-            : false;
-
-        return sharedByUid || sharedByEmail;
-    }, [user?.uid, user?.email]);
+        return isItemSharedForCurrentUser(item, user, {
+            treatShortcutAsShared: true,
+            requireSubjectSharedFlag: true
+        });
+    }, [user]);
 
     const availableControlTags = useMemo(() => {
         const sourceFolders = logic.viewMode === 'shared' ? (sharedFolders || []) : (logic.filteredFolders || logic.folders || []);

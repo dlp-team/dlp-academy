@@ -137,6 +137,54 @@ export const isShortcutItem = (item) => {
     return hasNativeShortcutShape || item?.isShortcut === true || Boolean(item?.shortcutId);
 };
 
+const isSubjectEntity = (item) => {
+    if (!item || typeof item !== 'object') return false;
+    return item?.targetType === 'subject'
+        || Object.prototype.hasOwnProperty.call(item, 'course')
+        || Object.prototype.hasOwnProperty.call(item, 'folderId');
+};
+
+export const isOwnedByCurrentUser = (item, user) => {
+    if (!item) return false;
+    const currentUserId = typeof user === 'string' ? user : user?.uid;
+    if (!currentUserId) return false;
+
+    const subjectEntity = isSubjectEntity(item);
+    return Boolean(
+        item?.ownerId === currentUserId
+        || (!subjectEntity && item?.uid === currentUserId)
+        || item?.isOwner === true
+    );
+};
+
+export const isSharedWithCurrentUser = (item, user) => {
+    if (!item) return false;
+    const currentUserId = typeof user === 'string' ? user : user?.uid;
+    const currentEmail = (typeof user === 'string' ? '' : user?.email || '').toLowerCase();
+
+    const sharedWithUids = Array.isArray(item?.sharedWithUids) ? item.sharedWithUids : [];
+    const sharedWith = Array.isArray(item?.sharedWith) ? item.sharedWith : [];
+
+    const sharedByUid = currentUserId ? sharedWithUids.includes(currentUserId) : false;
+    const sharedByEmail = currentEmail
+        ? sharedWith.some(entry => (entry?.email || '').toLowerCase() === currentEmail)
+        : false;
+
+    return sharedByUid || sharedByEmail;
+};
+
+export const isSharedForCurrentUser = (item, user, options = {}) => {
+    if (!item) return false;
+    const treatShortcutAsShared = options?.treatShortcutAsShared !== false;
+    const requireSubjectSharedFlag = options?.requireSubjectSharedFlag === true;
+
+    if (isOwnedByCurrentUser(item, user)) return false;
+    if (treatShortcutAsShared && isShortcutItem(item)) return true;
+    if (requireSubjectSharedFlag && isSubjectEntity(item) && item?.isShared !== true) return false;
+
+    return isSharedWithCurrentUser(item, user);
+};
+
 /**
  * Get user's permission level for an item
  * 
