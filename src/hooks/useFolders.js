@@ -832,14 +832,16 @@ export const useFolders = (user) => {
         if (fromFolderId === toFolderId) return;
 
         const preserveSharing = options?.preserveSharing === true;
+        const forceRefreshSharing = options?.forceRefreshSharing === true;
+        const alignToTargetFolder = options?.alignToTargetFolder === true;
 
         let newFolderSharedUids = [];
         let oldFolderSharedUids = [];
         let targetFolderSharedWith = [];
 
         // Resolve folder sharing info (prefer local cache)
-        const cachedTargetFolder = toFolderId ? folders.find(f => f.id === toFolderId) : null;
-        const cachedSourceFolder = fromFolderId ? folders.find(f => f.id === fromFolderId) : null;
+        const cachedTargetFolder = !forceRefreshSharing && toFolderId ? folders.find(f => f.id === toFolderId) : null;
+        const cachedSourceFolder = !forceRefreshSharing && fromFolderId ? folders.find(f => f.id === fromFolderId) : null;
 
         if (cachedTargetFolder) {
             newFolderSharedUids = cachedTargetFolder.sharedWithUids || [];
@@ -878,6 +880,18 @@ export const useFolders = (user) => {
             updatedAt: new Date(),
             isShared: newFolderSharedUids.length > 0
         };
+
+        if (alignToTargetFolder) {
+            subjectUpdate.sharedWithUids = [...newFolderSharedUids];
+            subjectUpdate.sharedWith = [...targetFolderSharedWith];
+            try {
+                await updateDoc(subRef, subjectUpdate);
+            } catch (error) {
+                console.error('Error aligning subject sharing to target folder:', error);
+                throw error;
+            }
+            return;
+        }
 
         if (preserveSharing) {
             try {

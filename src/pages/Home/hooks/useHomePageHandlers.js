@@ -17,7 +17,7 @@ export const useHomePageHandlers = ({
     setFolderContentsModalConfig
 }) => {
     const closeShareConfirm = () => {
-        setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null });
+        setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null, onMergeConfirm: null });
     };
 
     const closeUnshareConfirm = () => {
@@ -61,6 +61,46 @@ export const useHomePageHandlers = ({
     const getFolderById = (folderId) => {
         if (!folderId) return null;
         return (logic.folders || []).find(f => f.id === folderId) || null;
+    };
+
+    const getSharedUids = item => (item && Array.isArray(item.sharedWithUids) ? item.sharedWithUids : []);
+    const getSharedWithEntries = item => (item && Array.isArray(item.sharedWith) ? item.sharedWith : []);
+
+    const areSharedSetsEqual = (leftUids = [], rightUids = []) => {
+        const leftSet = new Set(leftUids || []);
+        const rightSet = new Set(rightUids || []);
+        if (leftSet.size !== rightSet.size) return false;
+        for (const uid of leftSet) {
+            if (!rightSet.has(uid)) return false;
+        }
+        return true;
+    };
+
+    const mergeTargetFolderShares = async (targetFolderId, incomingUids = [], incomingSharedWith = []) => {
+        const targetFolder = getFolderById(targetFolderId);
+        if (!targetFolder) return;
+
+        const targetUids = getSharedUids(targetFolder);
+        const targetSharedWith = getSharedWithEntries(targetFolder);
+
+        const mergedUids = Array.from(new Set([...(targetUids || []), ...(incomingUids || [])]));
+        const mergedSharedWithMap = new Map();
+
+        [...targetSharedWith, ...(incomingSharedWith || [])].forEach(entry => {
+            const entryUid = entry?.uid || null;
+            const entryEmail = (entry?.email || '').toLowerCase();
+            const key = entryUid || `email:${entryEmail}`;
+            if (!key) return;
+            if (!mergedSharedWithMap.has(key)) {
+                mergedSharedWithMap.set(key, entry);
+            }
+        });
+
+        await updateFolder(targetFolderId, {
+            sharedWithUids: mergedUids,
+            sharedWith: Array.from(mergedSharedWithMap.values()),
+            isShared: mergedUids.length > 0
+        });
     };
 
     const getRootSharedFolder = (folderId) => {
@@ -285,12 +325,43 @@ export const useHomePageHandlers = ({
             }
         }
 
-        const getSharedUids = item => (item && Array.isArray(item.sharedWithUids) ? item.sharedWithUids : []);
-
         const subjectSharedWithUids = getSharedUids(subject);
         const sourceFolderSharedWithUids = getSharedUids(sourceFolder);
         const targetFolderSharedWithUids = getSharedUids(targetFolder);
+        const baselineSharedWith = [
+            ...getSharedWithEntries(sourceFolder),
+            ...getSharedWithEntries(subject)
+        ];
         const baselineSharedWithUids = sourceFolder ? sourceFolderSharedWithUids : subjectSharedWithUids;
+        const effectiveSourceSharedWithUids = Array.from(new Set([
+            ...baselineSharedWithUids,
+            ...subjectSharedWithUids
+        ]));
+
+        if (targetFolder && targetFolder.isShared && effectiveSourceSharedWithUids.length > 0 && !areSharedSetsEqual(effectiveSourceSharedWithUids, targetFolderSharedWithUids)) {
+            setShareConfirm({
+                open: true,
+                type: 'shared-mismatch-move',
+                subjectId,
+                folder: targetFolder,
+                sourceType: 'subject',
+                sourceName: subject?.name || '',
+                onConfirm: async () => {
+                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, {
+                        alignToTargetFolder: true,
+                        forceRefreshSharing: true
+                    });
+                    closeShareConfirm();
+                },
+                onMergeConfirm: async () => {
+                    await mergeTargetFolderShares(targetFolderId, effectiveSourceSharedWithUids, baselineSharedWith);
+                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, { forceRefreshSharing: true });
+                    closeShareConfirm();
+                }
+            });
+            return true;
+        }
+
         const removedUsers = baselineSharedWithUids.filter(uid => !targetFolderSharedWithUids.includes(uid));
 
         if (removedUsers.length > 0) {
@@ -366,7 +437,6 @@ export const useHomePageHandlers = ({
             }
 
             const targetFolder = (logic.folders || []).find(f => f.id === targetFolderId);
-            const getSharedUids = item => (item && Array.isArray(item.sharedWithUids) ? item.sharedWithUids : []);
             if (droppedFolder && droppedFolder.isShared && (!targetFolder || !targetFolder.isShared)) {
                 if (droppedFolder.parentId) {
                     const parentFolder = (logic.folders || []).find(f => f.id === droppedFolder.parentId);
@@ -408,8 +478,30 @@ export const useHomePageHandlers = ({
                 }
             }
             if (targetFolder && targetFolder.isShared) {
-                const droppedShared = new Set(getSharedUids(droppedFolder));
+                const droppedSharedUids = getSharedUids(droppedFolder);
                 const targetShared = getSharedUids(targetFolder);
+                if (droppedSharedUids.length > 0 && !areSharedSetsEqual(droppedSharedUids, targetShared)) {
+                    setShareConfirm({
+                        open: true,
+                        type: 'shared-mismatch-move',
+                        folder: targetFolder,
+                        subjectId: null,
+                        sourceType: 'folder',
+                        sourceName: droppedFolder?.name || '',
+                        onConfirm: async () => {
+                            await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                            closeShareConfirm();
+                        },
+                        onMergeConfirm: async () => {
+                            await mergeTargetFolderShares(targetFolderId, droppedSharedUids, getSharedWithEntries(droppedFolder));
+                            await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                            closeShareConfirm();
+                        }
+                    });
+                    return true;
+                }
+
+                const droppedShared = new Set(droppedSharedUids);
                 const newUsers = targetShared.filter(uid => !droppedShared.has(uid));
                 if (newUsers.length > 0) {
                     setShareConfirm({
@@ -507,8 +599,30 @@ export const useHomePageHandlers = ({
         }
 
         if (targetFolder && targetFolder.isShared) {
-            const droppedShared = new Set(getSharedUids(droppedFolder));
+            const droppedSharedUids = getSharedUids(droppedFolder);
             const targetShared = getSharedUids(targetFolder);
+            if (droppedSharedUids.length > 0 && !areSharedSetsEqual(droppedSharedUids, targetShared)) {
+                setShareConfirm({
+                    open: true,
+                    type: 'shared-mismatch-move',
+                    folder: targetFolder,
+                    subjectId: null,
+                    sourceType: 'folder',
+                    sourceName: droppedFolder?.name || '',
+                    onConfirm: async () => {
+                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                        closeShareConfirm();
+                    },
+                    onMergeConfirm: async () => {
+                        await mergeTargetFolderShares(targetFolderId, droppedSharedUids, getSharedWithEntries(droppedFolder));
+                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                        closeShareConfirm();
+                    }
+                });
+                return;
+            }
+
+            const droppedShared = new Set(droppedSharedUids);
             const newUsers = targetShared.filter(uid => !droppedShared.has(uid));
             if (newUsers.length > 0) {
                 setShareConfirm({

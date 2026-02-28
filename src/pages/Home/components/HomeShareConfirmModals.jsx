@@ -17,7 +17,18 @@ const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm,
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C7.305 20.5 3.5 16.695 3.5 12S7.305 3.5 12 3.5 20.5 7.305 20.5 12 16.695 20.5 12 20.5z" />
                             </svg>
                         </div>
-                        {shareConfirm.type === 'shortcut-move-request' ? (
+                        {shareConfirm.type === 'shared-mismatch-move' ? (
+                            <>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                    Usuarios compartidos diferentes detectados
+                                </h3>
+                                <p className="text-gray-500 dark:text-gray-400 mb-6">
+                                    Al mover <span className="font-semibold">"{shareConfirm.sourceName || (shareConfirm.sourceType === 'folder' ? 'esta carpeta' : 'esta asignatura')}"</span> dentro de la carpeta compartida{' '}
+                                    <span className="font-semibold">"{shareConfirm.folder?.name || 'carpeta compartida'}"</span>, los usuarios compartidos no coinciden.
+                                    <br />Elige cómo deseas continuar.
+                                </p>
+                            </>
+                        ) : shareConfirm.type === 'shortcut-move-request' ? (
                             <>
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                                     No se puede mover un acceso directo a una carpeta compartida
@@ -54,19 +65,37 @@ const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm,
                                 </>
                             );
                         })()}
-                        <div className="flex justify-center gap-4">
+                        <div className="flex justify-center gap-3 flex-wrap">
                             <button
                                 className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
                                 onClick={closeShareConfirm}
                             >
                                 Cancelar
                             </button>
+                            {shareConfirm.type === 'shared-mismatch-move' && typeof shareConfirm.onConfirm === 'function' && (
+                                <button
+                                    className="px-6 py-2 rounded-xl bg-yellow-600 text-white font-bold shadow-lg hover:bg-yellow-700 transition-colors"
+                                    onClick={shareConfirm.onConfirm}
+                                >
+                                    Mover y ajustar a carpeta destino
+                                </button>
+                            )}
+                            {shareConfirm.type === 'shared-mismatch-move' && typeof shareConfirm.onMergeConfirm === 'function' && (
+                                <button
+                                    className="px-6 py-2 rounded-xl bg-indigo-600 text-white font-bold shadow-lg hover:bg-indigo-700 transition-colors"
+                                    onClick={shareConfirm.onMergeConfirm}
+                                >
+                                    Mover y fusionar usuarios
+                                </button>
+                            )}
+                            {shareConfirm.type !== 'shared-mismatch-move' && (
                             <button
                                 className="px-6 py-2 rounded-xl bg-indigo-600 text-white font-bold shadow-lg hover:bg-indigo-700 transition-colors"
                                 onClick={shareConfirm.onConfirm}
                             >
                                 {shareConfirm.type === 'shortcut-move-request' ? 'Solicitar al propietario' : 'Sí, compartir'}
                             </button>
+                            )}
                         </div>
                     </div>
                     </div>
