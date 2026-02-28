@@ -10,11 +10,13 @@ import SubjectListItem from '../../../components/modules/ListItems/SubjectListIt
 import ListViewItem from '../../../components/modules/ListViewItem';
 import useHomeContentDnd from '../hooks/useHomeContentDnd';
 import useAutoScrollOnDrag from '../../../hooks/useAutoScrollOnDrag';
-import { isShortcutItem, getPermissionLevel, isSharedForCurrentUser as isItemSharedForCurrentUser } from '../../../utils/permissionUtils';
-import { mergeSourceAndShortcutItems } from '../../../utils/homeMergeUtils';
+import { isShortcutItem, getPermissionLevel, isSharedForCurrentUser as isSharedForCurrentUserUtil } from '../../../utils/permissionUtils';
+import { mergeSourceAndShortcutItems } from '../../../utils/mergeUtils';
+import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
 
 const HomeContent = ({
     user,
+    homeThemeTokens = HOME_THEME_TOKENS,
     viewMode = 'grid',
     layoutMode = 'grid',
     cardScale = 100,
@@ -129,10 +131,7 @@ const HomeContent = ({
     };
 
     const isSharedForCurrentUser = (item) => {
-        return isItemSharedForCurrentUser(item, user, {
-            treatShortcutAsShared: true,
-            requireSubjectSharedFlag: true
-        });
+        return isSharedForCurrentUserUtil(item, user);
     };
 
     const matchesSharedFilter = (item) => {
@@ -154,17 +153,21 @@ const HomeContent = ({
     );
 
     const allFoldersForTree = useMemo(() => {
-        return mergeSourceAndShortcutItems({
+        const merged = mergeSourceAndShortcutItems({
             sourceItems: folders || [],
             shortcutItems: allShortcutFolders
-        }).filter(folder => matchesSharedFilter(folder));
+        });
+
+        return merged.filter(folder => matchesSharedFilter(folder));
     }, [folders, allShortcutFolders, sharedScopeSelected, user?.uid, user?.email]);
 
     const allSubjectsForTree = useMemo(() => {
-        return mergeSourceAndShortcutItems({
+        const merged = mergeSourceAndShortcutItems({
             sourceItems: subjects || [],
             shortcutItems: allShortcutSubjects
-        }).filter(subject => matchesSharedFilter(subject));
+        });
+
+        return merged.filter(subject => matchesSharedFilter(subject));
     }, [subjects, allShortcutSubjects, sharedScopeSelected, user?.uid, user?.email]);
 
     const handleGoToFolderFromGhost = (folderId) => {
@@ -326,7 +329,7 @@ const HomeContent = ({
                                                             currentFolder: null 
                                                         });
                                                     }}
-                                                    className="group relative w-full border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center cursor-pointer"
+                                                    className={homeThemeTokens.dashedCreateCardIndigoClass}
                                                     style={{ aspectRatio: '16 / 10', gap: `${16 * (cardScale / 100)}px` }}
                                                 >
                                                     <div className="rounded-full bg-indigo-100 dark:bg-indigo-900/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/60 flex items-center justify-center transition-colors"
@@ -351,7 +354,7 @@ const HomeContent = ({
                                                             className={`group relative w-full border-3 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center ${
                                                                 isPromoteZoneHovered
                                                                     ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 scale-105'
-                                                                    : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                                                    : homeThemeTokens.dashedCardAmberIdleClass
                                                             }`}
                                                             style={{ aspectRatio: '16 / 10', gap: `${16 * (cardScale / 100)}px` }}
                                                         >
@@ -371,7 +374,7 @@ const HomeContent = ({
                                                     ) : (
                                                         <button
                                                             onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder: currentFolder })}
-                                                            className="group relative w-full border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center cursor-pointer"
+                                                            className={homeThemeTokens.dashedCreateCardIndigoClass}
                                                             style={{ aspectRatio: '16 / 10', gap: `${16 * (cardScale / 100)}px` }}
                                                         >
                                                             <div className="rounded-full bg-indigo-100 dark:bg-indigo-900/40 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800/60 flex items-center justify-center transition-colors"
@@ -540,10 +543,10 @@ const HomeContent = ({
                                                     ${draggedItem
                                                         ? isRootZoneHovered
                                                             ? 'border-amber-400 dark:border-amber-500 bg-amber-50 dark:bg-amber-900/20 scale-105'
-                                                            : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+                                                            : homeThemeTokens.dashedCardAmberIdleClass
                                                         : isRootZoneHovered
                                                             ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 scale-105'
-                                                            : 'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+                                                            : homeThemeTokens.dashedCardIndigoIdleClass
                                                     }
                                                 `}
                                                 style={{
