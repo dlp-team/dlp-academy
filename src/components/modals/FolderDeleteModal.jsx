@@ -33,11 +33,10 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
     // Confirmation Screen
     if (confirmationType) {
         return (
-            <div 
-                onClick={handleBackdropClick}
-                className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4 transition-colors"
-            >
-                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[calc(100vh-10rem)] overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200">
+            <div className="fixed inset-x-0 top-28 bottom-0 z-50 overflow-y-auto transition-colors">
+                <div onClick={handleBackdropClick} className="flex min-h-full items-center justify-center p-4 text-center">
+                    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" />
+                    <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[calc(100vh-10rem)] overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200 text-left">
                     {/* Confirmation Header */}
                     <div className={`p-6 relative ${confirmationType === 'all' ? 'bg-gradient-to-r from-red-600 to-red-700' : 'bg-gradient-to-r from-blue-600 to-blue-700'}`}>
                         <div className="flex items-center gap-4">
@@ -119,6 +118,7 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
                             </button>
                         </div>
                     </div>
+                    </div>
                 </div>
             </div>
         );
@@ -126,11 +126,10 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
 
     // Main Selection Screen
     return (
-        <div 
-            onClick={handleBackdropClick}
-            className="fixed inset-0 bg-black/50 dark:bg-black/70 z-50 flex items-center justify-center p-4 transition-colors"
-        >
-            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[calc(100vh-10rem)] overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-x-0 top-28 bottom-0 z-50 overflow-y-auto transition-colors">
+            <div onClick={handleBackdropClick} className="flex min-h-full items-center justify-center p-4 text-center">
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" />
+                <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[calc(100vh-10rem)] overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200 text-left">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 relative">
                     <div className="flex items-start gap-4">
@@ -216,6 +215,7 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
                             </div>
                         </button>
                     </div>
+                </div>
                 </div>
             </div>
         </div>

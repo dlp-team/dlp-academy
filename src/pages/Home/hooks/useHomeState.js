@@ -291,28 +291,61 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
 
     const sharedFolders = useMemo(() => {
         const source = Array.isArray(foldersWithShortcuts) ? foldersWithShortcuts : folders;
-        return source.filter(f => {
-            if (isShortcutItem(f)) return true;
-            return !f.isOwner;
-        });
-    }, [foldersWithShortcuts, folders]);
+        const currentUserId = user?.uid || null;
+        const currentUserEmail = (user?.email || '').toLowerCase();
+
+        const isOwnedByCurrentUser = (item) => {
+            if (!item || !currentUserId) return false;
+            if (item?.isOwner === true) return true;
+            return item?.ownerId === currentUserId || item?.uid === currentUserId;
+        };
+
+        const isSharedWithCurrentUser = (item) => {
+            const sharedByUid = Array.isArray(item?.sharedWithUids) && currentUserId
+                ? item.sharedWithUids.includes(currentUserId)
+                : false;
+            const sharedByEntry = Array.isArray(item?.sharedWith) && (currentUserId || currentUserEmail)
+                ? item.sharedWith.some(entry => entry?.uid === currentUserId || (entry?.email || '').toLowerCase() === currentUserEmail)
+                : false;
+
+            if (isShortcutItem(item)) {
+                return !isOwnedByCurrentUser(item);
+            }
+
+            return sharedByUid || sharedByEntry;
+        };
+
+        return source.filter(item => !isOwnedByCurrentUser(item) && isSharedWithCurrentUser(item));
+    }, [foldersWithShortcuts, folders, user?.uid, user?.email]);
 
     const sharedSubjects = useMemo(() => {
         const source = Array.isArray(subjectsWithShortcuts) ? subjectsWithShortcuts : subjects;
-        const userEmail = user?.email?.toLowerCase() || '';
-        return source.filter(s => {
-            if (isShortcutItem(s)) return true;
-            const inSharedFolder = sharedFolders.some(f => s.folderId === f.id);
-            const isOwnedByCurrentUser = s?.ownerId === user?.uid || s?.uid === user?.uid;
-            const sharedByUid = Array.isArray(s?.sharedWithUids) && user?.uid
-                ? s.sharedWithUids.includes(user.uid)
+        const currentUserId = user?.uid || null;
+        const currentUserEmail = (user?.email || '').toLowerCase();
+
+        const isOwnedByCurrentUser = (item) => {
+            if (!item || !currentUserId) return false;
+            if (item?.isOwner === true) return true;
+            return item?.ownerId === currentUserId || item?.uid === currentUserId;
+        };
+
+        const isSharedWithCurrentUser = (item) => {
+            const sharedByUid = Array.isArray(item?.sharedWithUids) && currentUserId
+                ? item.sharedWithUids.includes(currentUserId)
                 : false;
-            const sharedByEntry = Array.isArray(s?.sharedWith) && (user?.uid || userEmail)
-                ? s.sharedWith.some(share => share?.uid === user?.uid || share?.email?.toLowerCase() === userEmail)
+            const sharedByEntry = Array.isArray(item?.sharedWith) && (currentUserId || currentUserEmail)
+                ? item.sharedWith.some(entry => entry?.uid === currentUserId || (entry?.email || '').toLowerCase() === currentUserEmail)
                 : false;
-            return inSharedFolder || (!isOwnedByCurrentUser && (sharedByUid || sharedByEntry));
-        });
-    }, [subjectsWithShortcuts, subjects, sharedFolders, user]);
+
+            if (isShortcutItem(item)) {
+                return !isOwnedByCurrentUser(item);
+            }
+
+            return sharedByUid || sharedByEntry;
+        };
+
+        return source.filter(item => !isOwnedByCurrentUser(item) && isSharedWithCurrentUser(item));
+    }, [subjectsWithShortcuts, subjects, user?.uid, user?.email]);
 
     const applyManualOrder = (items, type) => {
         if (viewMode !== 'grid') return items;

@@ -14,12 +14,14 @@ const HomeModals = ({
     handleSaveFolder,
     onShare,
     onUnshare,
+    onTransferOwnership,
     onDeleteShortcut,
     handleDelete,
     handleDeleteFolderAll,
     handleDeleteFolderOnly,
     onShareSubject,
     onUnshareSubject,
+    onTransferSubjectOwnership,
     currentFolder = null,
     allFolders = [],
     subjects = []
@@ -40,6 +42,7 @@ const HomeModals = ({
                 onSave={handleSaveSubject}
                 onShare={onShareSubject}
                 onUnshare={onUnshareSubject}
+                onTransferOwnership={onTransferSubjectOwnership}
                 onDeleteShortcut={onDeleteShortcut}
                 initialTab={subjectModalConfig.initialTab || 'general'}
             />
@@ -53,6 +56,7 @@ const HomeModals = ({
                 user={user}
                 onShare={onShare}
                 onUnshare={onUnshare}
+                onTransferOwnership={onTransferOwnership}
                 onDeleteShortcut={onDeleteShortcut}
                 currentFolder={folderModalConfig.currentFolder || currentFolder}
                 allFolders={allFolders}

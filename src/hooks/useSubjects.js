@@ -422,6 +422,150 @@ export const useSubjects = (user) => {
         }
     };
 
+    const transferSubjectOwnership = async (subjectId, nextOwnerEmail) => {
+        try {
+            const normalizedEmail = String(nextOwnerEmail || '').trim().toLowerCase();
+            if (!normalizedEmail) {
+                throw new Error('Debes seleccionar un usuario válido para transferir la propiedad.');
+            }
+
+            if (normalizedEmail === (user?.email || '').toLowerCase()) {
+                throw new Error('No puedes transferir la propiedad a tu propio usuario.');
+            }
+
+            const usersRef = collection(db, 'users');
+            const userQuery = query(usersRef, where('email', '==', normalizedEmail));
+            const userSnapshot = await getDocs(userQuery);
+
+            if (userSnapshot.empty) {
+                throw new Error('No existe un usuario registrado con ese correo.');
+            }
+
+            const nextOwnerDoc = userSnapshot.docs[0];
+            const nextOwnerUid = nextOwnerDoc.id;
+            const nextOwnerData = nextOwnerDoc.data() || {};
+
+            if (currentInstitutionId && nextOwnerData?.institutionId && nextOwnerData.institutionId !== currentInstitutionId) {
+                throw new Error('No puedes transferir propiedad entre instituciones diferentes.');
+            }
+
+            const subjectRef = doc(db, 'subjects', subjectId);
+            const subjectSnap = await getDoc(subjectRef);
+
+            if (!subjectSnap.exists()) {
+                throw new Error('No se encontró la asignatura.');
+            }
+
+            const subjectData = subjectSnap.data() || {};
+            const currentOwnerUid = subjectData?.ownerId || subjectData?.uid || null;
+
+            if (!currentOwnerUid || currentOwnerUid !== user?.uid) {
+                throw new Error('Solo el propietario actual puede transferir la propiedad.');
+            }
+
+            const currentSharedWith = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
+            const currentSharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
+            const recipientAlreadyShared = currentSharedWithUids.includes(nextOwnerUid) ||
+                currentSharedWith.some(entry => entry?.uid === nextOwnerUid || (entry?.email || '').toLowerCase() === normalizedEmail);
+
+            if (!recipientAlreadyShared) {
+                throw new Error('Solo puedes transferir la propiedad a un usuario que ya tenga acceso compartido.');
+            }
+
+            const recipientShortcutQuery = query(
+                collection(db, 'shortcuts'),
+                where('ownerId', '==', nextOwnerUid),
+                where('targetId', '==', subjectId),
+                where('targetType', '==', 'subject')
+            );
+            const recipientShortcutSnapshot = await getDocs(recipientShortcutQuery);
+            const recipientShortcutDocs = recipientShortcutSnapshot.docs;
+            const recipientShortcutData = recipientShortcutDocs[0]?.data() || null;
+
+            const nextFolderId = recipientShortcutData?.parentId ?? subjectData?.folderId ?? null;
+
+            const updatedSharedWith = currentSharedWith
+                .filter(entry => entry?.uid !== nextOwnerUid && (entry?.email || '').toLowerCase() !== normalizedEmail);
+            const updatedSharedWithUids = currentSharedWithUids.filter(uid => uid !== nextOwnerUid);
+
+            const currentOwnerEmail = (user?.email || subjectData?.ownerEmail || '').toLowerCase();
+            const hasCurrentOwnerShare = updatedSharedWith.some(entry =>
+                entry?.uid === currentOwnerUid || (entry?.email || '').toLowerCase() === currentOwnerEmail
+            );
+
+            if (!hasCurrentOwnerShare) {
+                updatedSharedWith.push({
+                    uid: currentOwnerUid,
+                    email: currentOwnerEmail,
+                    role: 'editor',
+                    canEdit: true,
+                    shareOrigin: 'ownership-transfer',
+                    sharedAt: new Date()
+                });
+                if (!updatedSharedWithUids.includes(currentOwnerUid)) {
+                    updatedSharedWithUids.push(currentOwnerUid);
+                }
+            }
+
+            const currentOwnerShortcutId = `${currentOwnerUid}_${subjectId}_subject`;
+            const currentOwnerShortcutRef = doc(db, 'shortcuts', currentOwnerShortcutId);
+            await setDoc(currentOwnerShortcutRef, {
+                ownerId: currentOwnerUid,
+                parentId: subjectData?.folderId ?? null,
+                targetId: subjectId,
+                targetType: 'subject',
+                institutionId: subjectData?.institutionId || currentInstitutionId || null,
+                hiddenInManual: false,
+                shortcutName: subjectData?.name || 'Asignatura',
+                shortcutCourse: subjectData?.course || null,
+                shortcutTags: Array.isArray(subjectData?.tags) ? subjectData.tags : [],
+                shortcutColor: subjectData?.color || 'from-slate-500 to-slate-700',
+                shortcutIcon: subjectData?.icon || 'book',
+                shortcutCardStyle: subjectData?.cardStyle || 'default',
+                shortcutModernFillColor: subjectData?.modernFillColor ?? subjectData?.fillColor ?? null,
+                updatedAt: new Date(),
+                createdAt: new Date()
+            }, { merge: true });
+
+            const subjectUpdatePayload = {
+                ownerId: nextOwnerUid,
+                ownerEmail: nextOwnerData?.email || normalizedEmail,
+                ownerName: nextOwnerData?.displayName || nextOwnerData?.name || '',
+                folderId: nextFolderId,
+                sharedWith: updatedSharedWith,
+                sharedWithUids: updatedSharedWithUids,
+                isShared: updatedSharedWithUids.length > 0,
+                updatedAt: new Date()
+            };
+
+            if (recipientShortcutData?.shortcutName) subjectUpdatePayload.name = recipientShortcutData.shortcutName;
+            if (recipientShortcutData?.shortcutCourse !== undefined) subjectUpdatePayload.course = recipientShortcutData.shortcutCourse;
+            if (Array.isArray(recipientShortcutData?.shortcutTags)) subjectUpdatePayload.tags = recipientShortcutData.shortcutTags;
+            if (recipientShortcutData?.shortcutColor) subjectUpdatePayload.color = recipientShortcutData.shortcutColor;
+            if (recipientShortcutData?.shortcutIcon) subjectUpdatePayload.icon = recipientShortcutData.shortcutIcon;
+            if (recipientShortcutData?.shortcutCardStyle) subjectUpdatePayload.cardStyle = recipientShortcutData.shortcutCardStyle;
+            if (recipientShortcutData?.shortcutModernFillColor !== undefined) {
+                subjectUpdatePayload.modernFillColor = recipientShortcutData.shortcutModernFillColor;
+            }
+
+            await updateDoc(subjectRef, subjectUpdatePayload);
+
+            for (const shortcutDoc of recipientShortcutDocs) {
+                await deleteDoc(doc(db, 'shortcuts', shortcutDoc.id));
+            }
+
+            return {
+                success: true,
+                previousOwnerUid: currentOwnerUid,
+                newOwnerUid: nextOwnerUid,
+                newOwnerEmail: normalizedEmail
+            };
+        } catch (error) {
+            console.error('Error transferring subject ownership:', error);
+            throw error;
+        }
+    };
+
     return { 
         subjects, 
         loading, 
@@ -430,6 +574,7 @@ export const useSubjects = (user) => {
         deleteSubject,
         touchSubject,
         shareSubject,
-        unshareSubject
+        unshareSubject,
+        transferSubjectOwnership
     };
 };

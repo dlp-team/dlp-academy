@@ -12,7 +12,7 @@ import AppearanceSection from './subject-form/AppearanceSection';
 import StyleSelector from './subject-form/StyleSelector';
 import { getPermissionLevel } from '../../../utils/permissionUtils';
 
-const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onDeleteShortcut, user, allFolders = [], initialTab = 'general' }) => {
+const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onTransferOwnership, onDeleteShortcut, user, allFolders = [], initialTab = 'general' }) => {
     const [formData, setFormData] = useState({ 
         name: '', level: '', grade: '', course: '', 
         color: 'from-blue-400 to-blue-600', icon: 'book', tags: [],
@@ -66,6 +66,12 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
     const subjectParentFolderId = formData?.shortcutParentId ?? formData?.folderId ?? initialData?.shortcutParentId ?? initialData?.folderId ?? null;
     const unshareBlockedInSharedFolder = isInsideSharedFolderTree(subjectParentFolderId);
+    const canTransferOwnership = Boolean(
+        isOwnerManager &&
+        canManageSharing &&
+        !unshareBlockedInSharedFolder &&
+        !isShortcutEditing
+    );
 
     const resolveCourseSelectors = (courseValue = '', fallbackLevel = '', fallbackGrade = '') => {
         if (fallbackLevel && fallbackGrade && Array.isArray(EDUCATION_LEVELS[fallbackLevel]) && EDUCATION_LEVELS[fallbackLevel].includes(fallbackGrade)) {
@@ -428,6 +434,23 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         setShareSuccess('');
     };
 
+    const requestTransferOwnership = (emailToTransfer) => {
+        if (!canTransferOwnership) return;
+        if (!onTransferOwnership) {
+            setShareError('La transferencia de propiedad no está disponible en este momento.');
+            return;
+        }
+        if (hasPendingSharingChanges) {
+            setShareError('Aplica o descarta los cambios pendientes antes de transferir la propiedad.');
+            return;
+        }
+        const normalizedEmail = (emailToTransfer || '').toLowerCase();
+        if (!normalizedEmail) return;
+        setPendingShareAction({ type: 'transfer-ownership', email: normalizedEmail });
+        setShareError('');
+        setShareSuccess('');
+    };
+
     const confirmRemoveMyShortcutAccess = async () => {
         if (!formData?.shortcutId || !user?.email) return;
 
@@ -446,6 +469,24 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
     const confirmPendingShareAction = async () => {
         if (!pendingShareAction) return;
+
+        if (pendingShareAction.type === 'transfer-ownership') {
+            try {
+                setShareLoading(true);
+                setShareError('');
+                setShareSuccess('');
+                await onTransferOwnership(formData.id, pendingShareAction.email);
+                setPendingShareAction(null);
+                setShareSuccess(`Propiedad transferida a ${pendingShareAction.email}.`);
+                setTimeout(() => setShareSuccess(''), 4000);
+                setShareLoading(false);
+                onClose();
+            } catch (error) {
+                setShareLoading(false);
+                setShareError(error?.message || 'No se pudo transferir la propiedad.');
+            }
+            return;
+        }
 
         if (pendingShareAction.type !== 'apply-all') {
             setPendingShareAction(null);
@@ -838,6 +879,17 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                                 {share.role === 'viewer' ? 'Lector' : 'Editor'}
                                                             </span>
                                                         )}
+                                                        {share.role !== 'owner' && canTransferOwnership && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => requestTransferOwnership(share.email)}
+                                                                disabled={isPendingUnshare || shareLoading}
+                                                                className="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 hover:bg-amber-200 dark:hover:bg-amber-900/45 disabled:opacity-60"
+                                                                title="Transferir propiedad"
+                                                            >
+                                                                Transferir
+                                                            </button>
+                                                        )}
                                                         {share.role !== 'owner' && !unshareBlockedInSharedFolder && (
                                                             <button
                                                                 type="button"
@@ -967,6 +1019,37 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                         className="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
                                     >
                                         Confirmar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {pendingShareAction?.type === 'transfer-ownership' && (
+                        <div className="absolute inset-0 z-40 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="absolute inset-0 bg-black/55" onClick={(e) => { e.stopPropagation(); setPendingShareAction(null); }} />
+                            <div className="relative w-full max-w-lg rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                                <h4 className="text-base font-semibold text-gray-900 dark:text-white">Confirmar transferencia de propiedad</h4>
+                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                                    Esta asignatura dejará de ser tuya y pasará a <span className="font-semibold">{pendingShareAction.email}</span>.
+                                </p>
+                                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                    Se conservará un acceso directo para ti y se ajustará la ubicación/estilo según la vista del nuevo propietario.
+                                </p>
+                                <div className="mt-5 flex justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPendingShareAction(null)}
+                                        className="px-3 py-1.5 text-sm rounded-md bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={confirmPendingShareAction}
+                                        className="px-3 py-1.5 text-sm rounded-md bg-amber-600 hover:bg-amber-700 text-white"
+                                    >
+                                        Transferir propiedad
                                     </button>
                                 </div>
                             </div>

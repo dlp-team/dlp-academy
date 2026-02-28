@@ -360,14 +360,13 @@ const FolderTreeModal = ({
     };
 
     return (
-        <div 
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 animate-in fade-in duration-200"
-            onClick={onClose}
-        >
-            <div 
-            className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100vh-10rem)] flex flex-col border border-gray-100 dark:border-slate-700 animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-            >
+        <div className="fixed inset-x-0 top-21 bottom-0 z-50 overflow-y-auto animate-in fade-in duration-200">
+            <div className="flex min-h-full items-center justify-center p-4 text-center" onClick={onClose}>
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" />
+                <div 
+                className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100vh-10rem)] flex flex-col border border-gray-100 dark:border-slate-700 animate-in zoom-in-95 duration-200 text-left"
+                onClick={(e) => e.stopPropagation()}
+                >
                 
                 {/* Header */}
                 <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-slate-800">
@@ -471,6 +470,7 @@ const FolderTreeModal = ({
                 
                 <div className="p-3 border-t border-gray-100 dark:border-slate-800 text-center text-xs text-gray-400">
                     Arrastra los elementos para organizarlos
+                </div>
                 </div>
             </div>
         </div>

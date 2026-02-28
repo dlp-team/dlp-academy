@@ -1006,11 +1006,153 @@ export const useFolders = (user) => {
         await batch.commit();
     };
 
+    const transferFolderOwnership = async (folderId, nextOwnerEmail) => {
+        try {
+            const normalizedEmail = String(nextOwnerEmail || '').trim().toLowerCase();
+            if (!normalizedEmail) {
+                throw new Error('Debes seleccionar un usuario válido para transferir la propiedad.');
+            }
+
+            if (normalizedEmail === (user?.email || '').toLowerCase()) {
+                throw new Error('No puedes transferir la propiedad a tu propio usuario.');
+            }
+
+            const usersRef = collection(db, 'users');
+            const userQuery = query(usersRef, where('email', '==', normalizedEmail));
+            const userSnapshot = await getDocs(userQuery);
+
+            if (userSnapshot.empty) {
+                throw new Error('No existe un usuario registrado con ese correo.');
+            }
+
+            const nextOwnerDoc = userSnapshot.docs[0];
+            const nextOwnerUid = nextOwnerDoc.id;
+            const nextOwnerData = nextOwnerDoc.data() || {};
+
+            if (currentInstitutionId && nextOwnerData?.institutionId && nextOwnerData.institutionId !== currentInstitutionId) {
+                throw new Error('No puedes transferir propiedad entre instituciones diferentes.');
+            }
+
+            const folderRef = doc(db, 'folders', folderId);
+            const folderSnap = await getDoc(folderRef);
+
+            if (!folderSnap.exists()) {
+                throw new Error('No se encontró la carpeta.');
+            }
+
+            const folderData = folderSnap.data() || {};
+            const currentOwnerUid = folderData?.ownerId || null;
+
+            if (!currentOwnerUid || currentOwnerUid !== user?.uid) {
+                throw new Error('Solo el propietario actual puede transferir la propiedad.');
+            }
+
+            const currentSharedWith = Array.isArray(folderData.sharedWith) ? folderData.sharedWith : [];
+            const currentSharedWithUids = Array.isArray(folderData.sharedWithUids) ? folderData.sharedWithUids : [];
+            const recipientAlreadyShared = currentSharedWithUids.includes(nextOwnerUid) ||
+                currentSharedWith.some(entry => entry?.uid === nextOwnerUid || (entry?.email || '').toLowerCase() === normalizedEmail);
+
+            if (!recipientAlreadyShared) {
+                throw new Error('Solo puedes transferir la propiedad a un usuario que ya tenga acceso compartido.');
+            }
+
+            const recipientShortcutQuery = query(
+                collection(db, 'shortcuts'),
+                where('ownerId', '==', nextOwnerUid),
+                where('targetId', '==', folderId),
+                where('targetType', '==', 'folder')
+            );
+            const recipientShortcutSnapshot = await getDocs(recipientShortcutQuery);
+            const recipientShortcutDocs = recipientShortcutSnapshot.docs;
+            const recipientShortcutData = recipientShortcutDocs[0]?.data() || null;
+
+            const nextParentId = recipientShortcutData?.parentId ?? folderData?.parentId ?? null;
+
+            const updatedSharedWith = currentSharedWith
+                .filter(entry => entry?.uid !== nextOwnerUid && (entry?.email || '').toLowerCase() !== normalizedEmail);
+            const updatedSharedWithUids = currentSharedWithUids.filter(uid => uid !== nextOwnerUid);
+
+            const currentOwnerEmail = (user?.email || folderData?.ownerEmail || '').toLowerCase();
+            const hasCurrentOwnerShare = updatedSharedWith.some(entry =>
+                entry?.uid === currentOwnerUid || (entry?.email || '').toLowerCase() === currentOwnerEmail
+            );
+
+            if (!hasCurrentOwnerShare) {
+                updatedSharedWith.push({
+                    uid: currentOwnerUid,
+                    email: currentOwnerEmail,
+                    role: 'editor',
+                    canEdit: true,
+                    shareOrigin: 'ownership-transfer',
+                    sharedAt: new Date()
+                });
+                if (!updatedSharedWithUids.includes(currentOwnerUid)) {
+                    updatedSharedWithUids.push(currentOwnerUid);
+                }
+            }
+
+            const currentOwnerShortcutId = `${currentOwnerUid}_${folderId}_folder`;
+            const currentOwnerShortcutRef = doc(db, 'shortcuts', currentOwnerShortcutId);
+            await setDoc(currentOwnerShortcutRef, {
+                ownerId: currentOwnerUid,
+                parentId: folderData?.parentId ?? null,
+                targetId: folderId,
+                targetType: 'folder',
+                institutionId: folderData?.institutionId || currentInstitutionId || null,
+                hiddenInManual: false,
+                shortcutName: folderData?.name || 'Carpeta',
+                shortcutTags: Array.isArray(folderData?.tags) ? folderData.tags : [],
+                shortcutColor: folderData?.color || 'from-amber-400 to-amber-600',
+                shortcutIcon: folderData?.icon || 'folder',
+                shortcutCardStyle: folderData?.cardStyle || 'default',
+                shortcutModernFillColor: folderData?.modernFillColor ?? null,
+                updatedAt: new Date(),
+                createdAt: new Date()
+            }, { merge: true });
+
+            const folderUpdatePayload = {
+                ownerId: nextOwnerUid,
+                ownerEmail: nextOwnerData?.email || normalizedEmail,
+                ownerName: nextOwnerData?.displayName || nextOwnerData?.name || '',
+                parentId: nextParentId,
+                sharedWith: updatedSharedWith,
+                sharedWithUids: updatedSharedWithUids,
+                isShared: updatedSharedWithUids.length > 0,
+                updatedAt: new Date()
+            };
+
+            if (recipientShortcutData?.shortcutName) folderUpdatePayload.name = recipientShortcutData.shortcutName;
+            if (Array.isArray(recipientShortcutData?.shortcutTags)) folderUpdatePayload.tags = recipientShortcutData.shortcutTags;
+            if (recipientShortcutData?.shortcutColor) folderUpdatePayload.color = recipientShortcutData.shortcutColor;
+            if (recipientShortcutData?.shortcutCardStyle) folderUpdatePayload.cardStyle = recipientShortcutData.shortcutCardStyle;
+            if (recipientShortcutData?.shortcutModernFillColor !== undefined) {
+                folderUpdatePayload.modernFillColor = recipientShortcutData.shortcutModernFillColor;
+            }
+
+            await updateDoc(folderRef, folderUpdatePayload);
+
+            for (const shortcutDoc of recipientShortcutDocs) {
+                await deleteDoc(doc(db, 'shortcuts', shortcutDoc.id));
+            }
+
+            return {
+                success: true,
+                previousOwnerUid: currentOwnerUid,
+                newOwnerUid: nextOwnerUid,
+                newOwnerEmail: normalizedEmail
+            };
+        } catch (error) {
+            console.error('Error transferring folder ownership:', error);
+            throw error;
+        }
+    };
+
     return { 
         folders, loading, addFolder, updateFolder, deleteFolder, deleteFolderOnly,
         shareFolder, unshareFolder, 
         moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders,
         addSubjectToFolder,
-        moveFolderBetweenParents // Export the new function
+        moveFolderBetweenParents, // Export the new function
+        transferFolderOwnership
     };
 };

@@ -13,7 +13,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
     const navigate = useNavigate();
     
     // Data Logic
-    const { subjects, loading, addSubject, updateSubject, deleteSubject, touchSubject, shareSubject, unshareSubject } = useSubjects(user);
+    const { subjects, loading, addSubject, updateSubject, deleteSubject, touchSubject, shareSubject, unshareSubject, transferSubjectOwnership } = useSubjects(user);
     const { 
         folders, 
         loading: loadingFolders, 
@@ -23,6 +23,7 @@ export const useHomeLogic = (user, searchQuery = '') => {
         deleteFolderOnly,
         shareFolder,
         unshareFolder,
+        transferFolderOwnership,
         addSubjectToFolder
     } = useFolders(user);
     
@@ -232,8 +233,10 @@ export const useHomeLogic = (user, searchQuery = '') => {
         // Share Functions
         shareFolder,
         unshareFolder,
+        transferFolderOwnership,
         shareSubject,
         unshareSubject,
+        transferSubjectOwnership,
         
         // Shortcut Functions
         createShortcut,
