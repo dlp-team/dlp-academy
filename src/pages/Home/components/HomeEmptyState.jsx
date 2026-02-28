@@ -1,6 +1,7 @@
 // src/pages/Home/components/HomeEmptyState.jsx
 import React from 'react';
 import { LayoutGrid, Plus, Users } from 'lucide-react';
+import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
 
 const HomeEmptyState = ({
     setSubjectModalConfig,
@@ -19,7 +20,7 @@ const HomeEmptyState = ({
                 <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">
                     No tienes permisos para crear aquí
                 </h3>
-                <p className="text-gray-500 dark:text-gray-400 max-w-sm text-center">
+                <p className={`${HOME_THEME_TOKENS.mutedTextClass} max-w-sm text-center`}>
                     Solo los editores de esta carpeta compartida pueden crear nuevas asignaturas.
                 </p>
             </div>
@@ -32,7 +33,7 @@ const HomeEmptyState = ({
             <div className="space-y-2 relative mb-4">
                 <button
                     onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder })}
-                    className="group relative w-full border-3 border-dashed rounded-2xl transition-all flex flex-col items-center justify-center cursor-pointer border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                    className={HOME_THEME_TOKENS.dashedCreateCardIndigoClass}
                     style={{
                         minHeight: `${(48 + 32) * scale}px`,
                         gap: `${16 * scale}px`
@@ -64,7 +65,7 @@ const HomeEmptyState = ({
                 >
                     <button
                         onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder })}
-                        className="group relative w-full border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center cursor-pointer"
+                        className={HOME_THEME_TOKENS.dashedCreateCardIndigoClass}
                         style={{ aspectRatio: '16 / 10', gap: `${16 * (cardScale / 100)}px` }}
                     >
                         <div
@@ -91,7 +92,7 @@ const HomeEmptyState = ({
                 <LayoutGrid className="w-12 h-12 text-gray-400 dark:text-gray-500" />
             </div>
             <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">No hay contenido todavía</h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-6">No hay elementos en esta vista.</p>
+            <p className={`${HOME_THEME_TOKENS.mutedTextClass} mb-6`}>No hay elementos en esta vista.</p>
         </div>
     );
 };

@@ -8,6 +8,7 @@ import FolderCard from '../../../components/modules/FolderCard/FolderCard';
 import SubjectCard from '../../../components/modules/SubjectCard/SubjectCard';
 import ListViewItem from '../../../components/modules/ListViewItem';
 import TagFilter from '../../../components/ui/TagFilter';
+import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
 
 const SharedView = ({ 
     user,
@@ -143,7 +144,7 @@ const SharedView = ({
                 <h3 className="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">
                     No hay elementos compartidos
                 </h3>
-                <p className="text-gray-500 dark:text-gray-400 max-w-sm text-center">
+                <p className={`${HOME_THEME_TOKENS.mutedTextClass} max-w-sm text-center`}>
                     Los elementos que otros usuarios compartan contigo aparecerán aquí.
                 </p>
             </div>
