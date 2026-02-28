@@ -30,6 +30,7 @@ import {
     canCreateFolderByRole,
     canCreateSubjectByRole,
     getPermissionLevel,
+    getNormalizedRole,
     isReadOnlyRole,
     isShortcutItem,
     isSharedForCurrentUser as isSharedForCurrentUserUtil
@@ -75,6 +76,7 @@ const Home = ({ user }) => {
     } = useHomePageState({ logic, searchQuery });
 
     const folderIdFromUrl = searchParams.get('folderId');
+    const isStudentRole = useMemo(() => getNormalizedRole(user) === 'student', [user]);
 
     React.useEffect(() => {
         if (!user) {
@@ -88,6 +90,22 @@ const Home = ({ user }) => {
     }, [user, logic.loading, logic.loadingFolders]);
 
     React.useEffect(() => {
+        if (isStudentRole) {
+            if (logic.currentFolder) {
+                logic.setCurrentFolder(null);
+            }
+            if (logic.viewMode === 'shared') {
+                logic.setViewMode('grid');
+            }
+            localStorage.removeItem('dlp_last_folderId');
+            const next = new URLSearchParams(searchParams);
+            if (next.has('folderId')) {
+                next.delete('folderId');
+                setSearchParams(next, { replace: true });
+            }
+            return;
+        }
+
         if (!folderIdFromUrl || !Array.isArray(logic.folders) || logic.folders.length === 0) return;
 
         const targetFolder = logic.folders.find(folder => folder.id === folderIdFromUrl);
@@ -102,9 +120,10 @@ const Home = ({ user }) => {
             next.delete('folderId');
             setSearchParams(next, { replace: true });
         }
-    }, [folderIdFromUrl, logic.folders]);
+    }, [folderIdFromUrl, logic.folders, isStudentRole, logic.currentFolder, logic.viewMode, searchParams]);
 
     React.useEffect(() => {
+        if (isStudentRole) return;
         const next = new URLSearchParams(searchParams);
         const currentId = logic.currentFolder ? logic.currentFolder.id : null;
 
@@ -120,7 +139,7 @@ const Home = ({ user }) => {
             next.delete('folderId');
             setSearchParams(next, { replace: true });
         }
-    }, [logic.currentFolder?.id]);
+    }, [logic.currentFolder?.id, isStudentRole]);
 
     const {
         handleSaveFolderWrapper,
@@ -181,7 +200,9 @@ const Home = ({ user }) => {
         const sourceFolders = logic.viewMode === 'shared' ? (sharedFolders || []) : (logic.filteredFolders || logic.folders || []);
         const sourceSubjects = logic.viewMode === 'shared' ? (sharedSubjects || []) : (logic.filteredSubjects || logic.subjects || []);
 
-        const effectiveFolders = sharedScopeSelected ? sourceFolders : sourceFolders.filter(item => !isSharedForCurrentUser(item));
+        const roleScopedFolders = isStudentRole ? [] : sourceFolders;
+
+        const effectiveFolders = sharedScopeSelected ? roleScopedFolders : roleScopedFolders.filter(item => !isSharedForCurrentUser(item));
         const effectiveSubjects = sharedScopeSelected ? sourceSubjects : sourceSubjects.filter(item => !isSharedForCurrentUser(item));
 
         const tagSet = new Set();
@@ -189,7 +210,7 @@ const Home = ({ user }) => {
         effectiveSubjects.forEach(subject => (Array.isArray(subject?.tags) ? subject.tags : []).forEach(tag => tagSet.add(tag)));
 
         return Array.from(tagSet).filter(Boolean).sort();
-    }, [logic.viewMode, sharedFolders, sharedSubjects, logic.filteredFolders, logic.folders, logic.filteredSubjects, logic.subjects, sharedScopeSelected, isSharedForCurrentUser]);
+    }, [logic.viewMode, sharedFolders, sharedSubjects, logic.filteredFolders, logic.folders, logic.filteredSubjects, logic.subjects, sharedScopeSelected, isSharedForCurrentUser, isStudentRole]);
 
     const canCreateInManualContext = useMemo(() => {
         if (!canCreateSubjectByRole(user)) return false;
@@ -208,6 +229,11 @@ const Home = ({ user }) => {
     }, [logic.viewMode, logic.currentFolder, user]);
 
     const readOnlyByRole = useMemo(() => isReadOnlyRole(user), [user]);
+
+    const effectiveHasContent = useMemo(() => {
+        if (!isStudentRole) return hasContent;
+        return Object.values(logic.groupedContent || {}).some((bucket) => Array.isArray(bucket) && bucket.length > 0);
+    }, [isStudentRole, hasContent, logic.groupedContent]);
 
     React.useEffect(() => {
         const availableTagSet = new Set(availableControlTags);
@@ -292,6 +318,7 @@ const Home = ({ user }) => {
                         sharedScopeSelected={sharedScopeSelected}
                         onSharedScopeChange={setSharedScopeSelected}
                         canCreateFolder={canCreateFolderInManualContext}
+                        showSharedTab={!isStudentRole}
 
                         // SEARCH
                         searchQuery={searchQuery}
@@ -300,7 +327,7 @@ const Home = ({ user }) => {
                     
                 </div>
 
-                {logic.viewMode === 'shared' ? (
+                {logic.viewMode === 'shared' && !isStudentRole ? (
                     <>
                         <BreadcrumbNav
                             currentFolder={logic.currentFolder}
@@ -427,16 +454,18 @@ const Home = ({ user }) => {
                             </div>
                         ) : (
                             <>
-                                {hasContent ? (
+                                {effectiveHasContent ? (
                                     <HomeContent 
                                         user={user}
                                         homeThemeTokens={homeThemeTokens}
                                         subjects={logic.subjects || []}
-                                        folders={logic.folders || []}
-                                        resolvedShortcuts={logic.resolvedShortcuts || []}
+                                        folders={isStudentRole ? [] : (logic.folders || [])}
+                                        resolvedShortcuts={isStudentRole
+                                            ? (logic.resolvedShortcuts || []).filter(item => item?.targetType === 'subject')
+                                            : (logic.resolvedShortcuts || [])}
                                         groupedContent={logic.groupedContent || {}} 
                                         collapsedGroups={logic.collapsedGroups || {}}
-                                        orderedFolders={displayedFolders}
+                                        orderedFolders={isStudentRole ? [] : displayedFolders}
                                         
                                         layoutMode={logic.layoutMode || 'grid'}
                                         cardScale={logic.cardScale || 100}
@@ -490,6 +519,7 @@ const Home = ({ user }) => {
                                         selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
                                         sharedScopeSelected={sharedScopeSelected}
                                         readOnlyByRole={readOnlyByRole}
+                                        studentMode={isStudentRole}
                                         
                                         navigate={logic.navigate}
                                     />
@@ -549,15 +579,16 @@ const Home = ({ user }) => {
                 onUnshareSubject={logic.unshareSubject}
                 onTransferSubjectOwnership={logic.transferSubjectOwnership}
                 currentFolder={logic.currentFolder}
-                allFolders={logic.folders || []}
+                allFolders={isStudentRole ? [] : (logic.folders || [])}
                 subjects={logic.subjects || []}
+                studentShortcutTagOnlyMode={isStudentRole}
             />
             
             <FolderTreeModal 
                 isOpen={folderContentsModalConfig.isOpen}
                 onClose={() => setFolderContentsModalConfig({ isOpen: false, folder: null })}
                 rootFolder={activeModalFolder}
-                allFolders={treeFolders}
+                allFolders={isStudentRole ? [] : treeFolders}
                 allSubjects={treeSubjects}
                 onNavigateFolder={(folder) => {
                     handleNavigateFromTree(folder);

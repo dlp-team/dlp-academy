@@ -25,7 +25,8 @@ const HomeModals = ({
     onTransferSubjectOwnership,
     currentFolder = null,
     allFolders = [],
-    subjects = []
+    subjects = [],
+    studentShortcutTagOnlyMode = false
 }) => {
     // Calculate subject count in folder dynamically from subjects array
     const getSubjectCountInFolder = (folderId) => {
@@ -46,6 +47,7 @@ const HomeModals = ({
                 onTransferOwnership={onTransferSubjectOwnership}
                 onDeleteShortcut={onDeleteShortcut}
                 initialTab={subjectModalConfig.initialTab || 'general'}
+                studentShortcutTagOnlyMode={studentShortcutTagOnlyMode}
             />
 
             <FolderManager

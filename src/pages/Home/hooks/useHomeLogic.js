@@ -7,10 +7,12 @@ import { useUserPreferences } from '../../../hooks/useUserPreferences';
 import { isDescendant } from '../../../utils/folderUtils';
 import { useHomeState } from './useHomeState';
 import { useHomeHandlers } from './useHomeHandlers';
+import { isReadOnlyRole } from '../../../utils/permissionUtils';
 
 
 export const useHomeLogic = (user, searchQuery = '') => {
     const navigate = useNavigate();
+    const studentShortcutTagOnlyMode = isReadOnlyRole(user);
     
     // Data Logic
     const { subjects, loading, addSubject, updateSubject, deleteSubject, touchSubject, shareSubject, unshareSubject, transferSubjectOwnership } = useSubjects(user);
@@ -159,7 +161,8 @@ export const useHomeLogic = (user, searchQuery = '') => {
         isDescendant,
         createShortcut,
         updateShortcutAppearance,
-        setShortcutHiddenInManual
+        setShortcutHiddenInManual,
+        studentShortcutTagOnlyMode
     });
 
 

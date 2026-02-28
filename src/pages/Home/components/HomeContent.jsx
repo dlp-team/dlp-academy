@@ -67,6 +67,7 @@ const HomeContent = ({
     filterOverlayOpen = false,
     onCloseFilterOverlay = () => {},
     readOnlyByRole = false,
+    studentMode = false,
 }) => {
     const contentRef = useRef(null);
     const sharedFolderPermission = currentFolder?.isShared && user?.uid
@@ -74,11 +75,11 @@ const HomeContent = ({
         : 'none';
     const isViewerInSharedFolder = currentFolder?.isShared === true && sharedFolderPermission === 'viewer';
     const isEditorInSharedFolder = currentFolder?.isShared === true && sharedFolderPermission === 'editor';
-    const disableAllActionsInShared = isViewerInSharedFolder || readOnlyByRole;
-    const disableFolderDeleteActionsInShared = isViewerInSharedFolder || isEditorInSharedFolder;
-    const disableSubjectDeleteActionsInShared = isViewerInSharedFolder;
+    const disableAllActionsInShared = isViewerInSharedFolder;
+    const disableFolderDeleteActionsInShared = isViewerInSharedFolder || isEditorInSharedFolder || studentMode;
+    const disableSubjectDeleteActionsInShared = isViewerInSharedFolder || studentMode;
     const dndEnabledInContext = isDragAndDropEnabled && !disableAllActionsInShared;
-    const canCreateInCurrentContext = !disableAllActionsInShared;
+    const canCreateInCurrentContext = !disableAllActionsInShared && !studentMode;
 
     // Auto-scroll is always enabled for both grid and list modes
     useAutoScrollOnDrag({
@@ -392,7 +393,7 @@ const HomeContent = ({
                                             )}
 
                                             {/* Folders in Grid */}
-                                            {viewMode === 'grid' && activeFilter !== 'subjects' && filteredFolders.map((folder, index) => {
+                                            {!studentMode && viewMode === 'grid' && activeFilter !== 'subjects' && filteredFolders.map((folder, index) => {
                                                 return (
                                                 <div key={`folder-${folder.id}`}>
                                                     <FolderCard
@@ -486,7 +487,7 @@ const HomeContent = ({
                                                             setActiveMenu(null);
                                                         }}
                                                         onShare={(s) => {
-                                                            if (disableAllActionsInShared) return;
+                                                            if (disableAllActionsInShared || studentMode) return;
                                                             setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
                                                             setActiveMenu(null);
                                                         }}
@@ -580,7 +581,7 @@ const HomeContent = ({
                                         )}
                                         
                                         {/* Render Folders */}
-                                        {viewMode === 'grid' && filteredFolders.map((folder, index) => (
+                                        {!studentMode && viewMode === 'grid' && filteredFolders.map((folder, index) => (
                                             <ListViewItem 
                                                 key={folder.id}
                                                 user={user}
@@ -663,7 +664,7 @@ const HomeContent = ({
                                                         setDeleteConfig({ isOpen: true, type: 'subject', item: s });
                                                     }}
                                                     onShare={(s) => {
-                                                        if (disableAllActionsInShared) return;
+                                                        if (disableAllActionsInShared || studentMode) return;
                                                         setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
                                                         setActiveMenu(null);
                                                     }}

@@ -13,7 +13,7 @@ import AppearanceSection from './subject-form/AppearanceSection';
 import StyleSelector from './subject-form/StyleSelector';
 import { getPermissionLevel } from '../../../utils/permissionUtils';
 
-const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onTransferOwnership, onDeleteShortcut, user, allFolders = [], initialTab = 'general' }) => {
+const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onTransferOwnership, onDeleteShortcut, user, allFolders = [], initialTab = 'general', studentShortcutTagOnlyMode = false }) => {
     const [formData, setFormData] = useState({ 
         name: '', level: '', grade: '', course: '', 
         color: 'from-blue-400 to-blue-600', icon: 'book', tags: [],
@@ -38,9 +38,10 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [shareSuccess, setShareSuccess] = useState('');
 
     const isShortcutEditing = isEditing && formData?.isShortcut === true;
+    const isTagOnlyShortcutEdit = studentShortcutTagOnlyMode && isShortcutEditing;
     const shortcutPermissionLevel = formData?.shortcutPermissionLevel || 'viewer';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
-    const canManageSharing = !isShortcutEditing || isShortcutEditor;
+    const canManageSharing = !isTagOnlyShortcutEdit && (!isShortcutEditing || isShortcutEditor);
     const canEditOriginalFields = !isShortcutEditing || isShortcutEditor;
     const isOwnerManager = isShortcutEditing
         ? shortcutPermissionLevel === 'owner'
@@ -244,6 +245,12 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             }
         }
     }, [formData.level, formData.grade, isEditing]);
+
+    useEffect(() => {
+        if (isTagOnlyShortcutEdit && activeTab === 'sharing') {
+            setActiveTab('general');
+        }
+    }, [isTagOnlyShortcutEdit, activeTab]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -664,16 +671,18 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                             >
                                 General
                             </button>
-                            <button
-                                onClick={() => setActiveTab('sharing')}
-                                className={`px-4 py-2 rounded-t-xl font-medium transition-colors flex items-center gap-2 ${
-                                    activeTab === 'sharing'
-                                        ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400'
-                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300'
-                                }`}
-                            >
-                                <Share2 size={16} /> Compartir
-                            </button>
+                            {!isTagOnlyShortcutEdit && (
+                                <button
+                                    onClick={() => setActiveTab('sharing')}
+                                    className={`px-4 py-2 rounded-t-xl font-medium transition-colors flex items-center gap-2 ${
+                                        activeTab === 'sharing'
+                                            ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400'
+                                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300'
+                                    }`}
+                                >
+                                    <Share2 size={16} /> Compartir
+                                </button>
+                            )}
                         </div>
                     )}
                     
@@ -682,16 +691,22 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         {/* General Tab */}
                         {activeTab === 'general' && (
                             <>
-                                {canEditOriginalFields && (
-                                    <BasicInfoFields formData={formData} setFormData={setFormData} />
+                                {isTagOnlyShortcutEdit ? (
+                                    <TagManager formData={formData} setFormData={setFormData} />
+                                ) : (
+                                    <>
+                                        {canEditOriginalFields && (
+                                            <BasicInfoFields formData={formData} setFormData={setFormData} />
+                                        )}
+                                        <TagManager formData={formData} setFormData={setFormData} />
+                                        <AppearanceSection
+                                            formData={formData}
+                                            setFormData={setFormData}
+                                            hideIconSelector={!canEditOriginalFields}
+                                        />
+                                        <StyleSelector formData={formData} setFormData={setFormData} />
+                                    </>
                                 )}
-                                <TagManager formData={formData} setFormData={setFormData} />
-                                <AppearanceSection
-                                    formData={formData}
-                                    setFormData={setFormData}
-                                    hideIconSelector={!canEditOriginalFields}
-                                />
-                                <StyleSelector formData={formData} setFormData={setFormData} />
                             </>
                         )}
 

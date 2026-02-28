@@ -38,6 +38,7 @@ const HomeControls = ({
     sharedScopeSelected = true,
     onSharedScopeChange = () => {},
     canCreateFolder = true,
+    showSharedTab = true,
 }) => {
     const {
         handleViewModeChange,
@@ -54,6 +55,11 @@ const HomeControls = ({
         onPreferenceChange
     });
 
+    const visibleViewModes = React.useMemo(
+        () => (showSharedTab ? HOME_VIEW_MODES : HOME_VIEW_MODES.filter(mode => mode.id !== 'shared')),
+        [showSharedTab]
+    );
+
     return (
         <div className="mb-8">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
@@ -64,7 +70,7 @@ const HomeControls = ({
                 
                 {/* View Mode Switcher */}
                 <div className="bg-white dark:bg-slate-900 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 inline-flex transition-colors">
-                    {HOME_VIEW_MODES.map(mode => {
+                    {visibleViewModes.map(mode => {
                         const Icon = VIEW_MODE_ICONS[mode.id];
                         return (
                         <button 

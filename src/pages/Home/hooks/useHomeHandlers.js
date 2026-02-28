@@ -39,7 +39,8 @@ export const useHomeHandlers = ({
     isDescendant,
     createShortcut,
     updateShortcutAppearance,
-    setShortcutHiddenInManual
+    setShortcutHiddenInManual,
+    studentShortcutTagOnlyMode = false
 }) => {
     const getFolderById = (folderId) => {
         if (!folderId) return null;
@@ -68,6 +69,20 @@ export const useHomeHandlers = ({
         const isShortcutEdit = subjectModalConfig.isEditing && Boolean(formData?.shortcutId);
         const shortcutPermission = formData?.shortcutPermissionLevel || 'viewer';
         const isShortcutEditor = shortcutPermission === 'editor' || shortcutPermission === 'owner';
+
+        if (studentShortcutTagOnlyMode) {
+            try {
+                if (isShortcutEdit && updateShortcutAppearance) {
+                    await updateShortcutAppearance(formData.shortcutId, {
+                        tags: Array.isArray(formData?.tags) ? formData.tags : []
+                    });
+                }
+                setSubjectModalConfig({ isOpen: false, isEditing: false, data: null });
+            } catch (error) {
+                console.error('Error saving shortcut tags:', error);
+            }
+            return;
+        }
 
         const payload = {
             name: formData.name,
