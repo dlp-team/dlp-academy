@@ -2,6 +2,7 @@
 import React from 'react';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
+import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
 
 const HomeDeleteConfirmModal = ({ deleteConfig, setDeleteConfig, handleDelete }) => {
     if (!deleteConfig.isOpen) return null;
@@ -64,16 +65,16 @@ const HomeDeleteConfirmModal = ({ deleteConfig, setDeleteConfig, handleDelete })
 
     return (
         <div className="fixed inset-0 z-50" onClick={onClose}>
-            <div className="absolute inset-0 bg-black/50 dark:bg-black/70 transition-colors" />
+            <div className={HOME_THEME_TOKENS.modalBackdropClass} />
             <div className="absolute inset-x-0 bottom-0 flex items-center justify-center p-4" style={OVERLAY_TOP_OFFSET_STYLE}>
-            <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[calc(100vh-10rem)] overflow-y-auto shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors" onClick={(e) => e.stopPropagation()}>
+            <div className={HOME_THEME_TOKENS.modalCardClass} onClick={(e) => e.stopPropagation()}>
                 <div className={`w-16 h-16 ${accent.circleBg} rounded-full flex items-center justify-center mx-auto mb-4 transition-colors`}>
                     <ActionIcon className={`w-8 h-8 ${accent.iconColor}`} />
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                     {title}
                 </h3>
-                <p className="text-gray-500 dark:text-gray-400 mb-6">
+                <p className={`${HOME_THEME_TOKENS.mutedTextClass} mb-6`}>
                     {description}
                 </p>
                 <div className="flex gap-3 justify-center">
