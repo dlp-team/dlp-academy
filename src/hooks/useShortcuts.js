@@ -1,5 +1,5 @@
 // src/hooks/useShortcuts.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { 
     collection, query, where, addDoc, deleteDoc, doc, 
     onSnapshot, updateDoc, getDoc
@@ -29,6 +29,7 @@ export const useShortcuts = (user) => {
     const [resolvedShortcuts, setResolvedShortcuts] = useState([]);
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
+    const promotingShortcutIdsRef = useRef(new Set());
 
     const debugVisibility = (stage, payload = {}) => {
         console.info('[VISIBILITY_DEBUG][shortcuts]', {
@@ -248,10 +249,45 @@ export const useShortcuts = (user) => {
                         const targetData = targetSnap.data() || {};
                         const targetOwnerId = targetData?.ownerId || targetData?.uid || null;
                         if (targetOwnerId && targetOwnerId === user?.uid) {
+                            if (promotingShortcutIdsRef.current.has(shortcut.id)) {
+                                return;
+                            }
+                            promotingShortcutIdsRef.current.add(shortcut.id);
                             try {
+                                const shortcutParentId = shortcut?.parentId ?? null;
+                                const targetUpdate = {
+                                    updatedAt: new Date()
+                                };
+
+                                if (shortcut.targetType === 'subject') {
+                                    targetUpdate.folderId = shortcutParentId;
+                                    if (shortcut?.shortcutName) targetUpdate.name = shortcut.shortcutName;
+                                    if (shortcut?.shortcutCourse !== undefined) targetUpdate.course = shortcut.shortcutCourse;
+                                    if (Array.isArray(shortcut?.shortcutTags)) targetUpdate.tags = shortcut.shortcutTags;
+                                    if (shortcut?.shortcutColor) targetUpdate.color = shortcut.shortcutColor;
+                                    if (shortcut?.shortcutIcon) targetUpdate.icon = shortcut.shortcutIcon;
+                                    if (shortcut?.shortcutCardStyle) targetUpdate.cardStyle = shortcut.shortcutCardStyle;
+                                    if (shortcut?.shortcutModernFillColor !== undefined) targetUpdate.modernFillColor = shortcut.shortcutModernFillColor;
+                                } else {
+                                    targetUpdate.parentId = shortcutParentId;
+                                    if (shortcut?.shortcutName) targetUpdate.name = shortcut.shortcutName;
+                                    if (Array.isArray(shortcut?.shortcutTags)) targetUpdate.tags = shortcut.shortcutTags;
+                                    if (shortcut?.shortcutColor) targetUpdate.color = shortcut.shortcutColor;
+                                    if (shortcut?.shortcutCardStyle) targetUpdate.cardStyle = shortcut.shortcutCardStyle;
+                                    if (shortcut?.shortcutModernFillColor !== undefined) targetUpdate.modernFillColor = shortcut.shortcutModernFillColor;
+                                }
+
+                                await updateDoc(targetRef, targetUpdate);
                                 await deleteDoc(doc(db, 'shortcuts', shortcut.id));
-                            } catch (_) {
+                            } catch (promoteError) {
                                 // Best effort cleanup.
+                                console.warn('[SHORTCUT] Could not promote owned shortcut into source item', {
+                                    shortcutId: shortcut.id,
+                                    targetType: shortcut.targetType,
+                                    error: promoteError?.message || String(promoteError)
+                                });
+                            } finally {
+                                promotingShortcutIdsRef.current.delete(shortcut.id);
                             }
                             return;
                         }

@@ -479,6 +479,18 @@ export const useSubjects = (user) => {
                 }
             }
 
+            const subjectUpdatePayload = {
+                ownerId: nextOwnerUid,
+                ownerEmail: recipientShareEntry?.email || normalizedEmail,
+                ownerName: recipientShareEntry?.displayName || recipientShareEntry?.name || '',
+                sharedWith: updatedSharedWith,
+                sharedWithUids: updatedSharedWithUids,
+                isShared: updatedSharedWithUids.length > 0,
+                updatedAt: new Date()
+            };
+
+            await updateDoc(subjectRef, subjectUpdatePayload);
+
             const currentOwnerShortcutId = `${currentOwnerUid}_${subjectId}_subject`;
             const currentOwnerShortcutRef = doc(db, 'shortcuts', currentOwnerShortcutId);
             await setDoc(currentOwnerShortcutRef, {
@@ -498,18 +510,6 @@ export const useSubjects = (user) => {
                 updatedAt: new Date(),
                 createdAt: new Date()
             }, { merge: true });
-
-            const subjectUpdatePayload = {
-                ownerId: nextOwnerUid,
-                ownerEmail: recipientShareEntry?.email || normalizedEmail,
-                ownerName: recipientShareEntry?.displayName || recipientShareEntry?.name || '',
-                sharedWith: updatedSharedWith,
-                sharedWithUids: updatedSharedWithUids,
-                isShared: updatedSharedWithUids.length > 0,
-                updatedAt: new Date()
-            };
-
-            await updateDoc(subjectRef, subjectUpdatePayload);
 
             return {
                 success: true,

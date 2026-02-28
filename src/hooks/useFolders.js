@@ -1063,6 +1063,18 @@ export const useFolders = (user) => {
                 }
             }
 
+            const folderUpdatePayload = {
+                ownerId: nextOwnerUid,
+                ownerEmail: recipientShareEntry?.email || normalizedEmail,
+                ownerName: recipientShareEntry?.displayName || recipientShareEntry?.name || '',
+                sharedWith: updatedSharedWith,
+                sharedWithUids: updatedSharedWithUids,
+                isShared: updatedSharedWithUids.length > 0,
+                updatedAt: new Date()
+            };
+
+            await updateDoc(folderRef, folderUpdatePayload);
+
             const currentOwnerShortcutId = `${currentOwnerUid}_${folderId}_folder`;
             const currentOwnerShortcutRef = doc(db, 'shortcuts', currentOwnerShortcutId);
             await setDoc(currentOwnerShortcutRef, {
@@ -1081,18 +1093,6 @@ export const useFolders = (user) => {
                 updatedAt: new Date(),
                 createdAt: new Date()
             }, { merge: true });
-
-            const folderUpdatePayload = {
-                ownerId: nextOwnerUid,
-                ownerEmail: recipientShareEntry?.email || normalizedEmail,
-                ownerName: recipientShareEntry?.displayName || recipientShareEntry?.name || '',
-                sharedWith: updatedSharedWith,
-                sharedWithUids: updatedSharedWithUids,
-                isShared: updatedSharedWithUids.length > 0,
-                updatedAt: new Date()
-            };
-
-            await updateDoc(folderRef, folderUpdatePayload);
 
             return {
                 success: true,
