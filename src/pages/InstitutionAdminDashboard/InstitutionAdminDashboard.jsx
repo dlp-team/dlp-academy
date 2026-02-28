@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import {
     collection, query, where, getDocs,
-    addDoc, serverTimestamp, deleteDoc, doc
+    addDoc, serverTimestamp, deleteDoc, doc, getDoc, updateDoc
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
@@ -28,6 +28,70 @@ const Modal = ({ title, onClose, children }) => (
         </div>
     </div>
 );
+
+const HOME_THEME_PRESETS = [
+    {
+        id: 'indigo-soft',
+        label: 'Índigo Suave',
+        description: 'Estilo equilibrado y limpio.',
+        tokens: {
+            modalBackdropClass: 'absolute inset-0 bg-black/50 dark:bg-black/70 transition-colors',
+            modalCardClass:
+                'bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[calc(100vh-10rem)] overflow-y-auto shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors',
+            mutedTextClass: 'text-gray-500 dark:text-gray-400',
+            dashedCreateCardIndigoClass:
+                'group relative w-full border-3 border-dashed border-gray-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all flex flex-col items-center justify-center cursor-pointer',
+            dashedCardAmberIdleClass:
+                'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20',
+            dashedCardIndigoIdleClass:
+                'border-gray-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20'
+        }
+    },
+    {
+        id: 'emerald-soft',
+        label: 'Esmeralda Suave',
+        description: 'Paleta calmada con tonos verdes.',
+        tokens: {
+            modalBackdropClass: 'absolute inset-0 bg-black/45 dark:bg-black/70 transition-colors',
+            modalCardClass:
+                'bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[calc(100vh-10rem)] overflow-y-auto shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors',
+            mutedTextClass: 'text-slate-500 dark:text-slate-400',
+            dashedCreateCardIndigoClass:
+                'group relative w-full border-3 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-emerald-400 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all flex flex-col items-center justify-center cursor-pointer',
+            dashedCardAmberIdleClass:
+                'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-teal-400 dark:hover:border-teal-500 hover:bg-teal-50 dark:hover:bg-teal-900/20',
+            dashedCardIndigoIdleClass:
+                'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-emerald-400 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20'
+        }
+    },
+    {
+        id: 'rose-soft',
+        label: 'Rosa Suave',
+        description: 'Más cálido para branding creativo.',
+        tokens: {
+            modalBackdropClass: 'absolute inset-0 bg-black/45 dark:bg-black/70 transition-colors',
+            modalCardClass:
+                'bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[calc(100vh-10rem)] overflow-y-auto shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors',
+            mutedTextClass: 'text-slate-500 dark:text-slate-400',
+            dashedCreateCardIndigoClass:
+                'group relative w-full border-3 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl bg-white dark:bg-slate-900 hover:border-rose-400 dark:hover:border-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all flex flex-col items-center justify-center cursor-pointer',
+            dashedCardAmberIdleClass:
+                'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20',
+            dashedCardIndigoIdleClass:
+                'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 hover:border-rose-400 dark:hover:border-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20'
+        }
+    }
+];
+
+const DEFAULT_CUSTOMIZATION_FORM = {
+    institutionDisplayName: '',
+    logoUrl: '',
+    homeThemePreset: 'indigo-soft'
+};
+
+const getPresetById = (presetId) => {
+    return HOME_THEME_PRESETS.find((preset) => preset.id === presetId) || HOME_THEME_PRESETS[0];
+};
 
 // ─── Classes & Courses Section ────────────────────────────────────────────────
 
@@ -346,6 +410,12 @@ const InstitutionAdminDashboard = ({ user }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [addError, setAddError] = useState('');
     const [addSuccess, setAddSuccess] = useState('');
+    const [institutionName, setInstitutionName] = useState('');
+    const [customizationForm, setCustomizationForm] = useState(DEFAULT_CUSTOMIZATION_FORM);
+    const [customizationLoading, setCustomizationLoading] = useState(false);
+    const [customizationSaving, setCustomizationSaving] = useState(false);
+    const [customizationError, setCustomizationError] = useState('');
+    const [customizationSuccess, setCustomizationSuccess] = useState('');
 
     useEffect(() => {
         if (user && user.role !== 'institutionadmin') {
@@ -380,6 +450,45 @@ const InstitutionAdminDashboard = ({ user }) => {
     };
 
     useEffect(() => { fetchData(); }, [user, userType]);
+
+    useEffect(() => {
+        let active = true;
+
+        const fetchInstitutionCustomization = async () => {
+            if (!user?.institutionId) return;
+            setCustomizationLoading(true);
+            try {
+                const institutionRef = doc(db, 'institutions', user.institutionId);
+                const institutionSnap = await getDoc(institutionRef);
+
+                if (!active || !institutionSnap.exists()) return;
+
+                const institutionData = institutionSnap.data() || {};
+                const customizationData = institutionData.customization || {};
+                const preset = getPresetById(customizationData.homeThemePreset || DEFAULT_CUSTOMIZATION_FORM.homeThemePreset);
+
+                setInstitutionName(institutionData.name || '');
+                setCustomizationForm({
+                    institutionDisplayName: customizationData.institutionDisplayName || institutionData.name || '',
+                    logoUrl: customizationData.logoUrl || '',
+                    homeThemePreset: preset.id
+                });
+            } catch (error) {
+                console.error('Error loading institution customization:', error);
+                if (active) {
+                    setCustomizationError('No se pudo cargar la personalización de la institución.');
+                }
+            } finally {
+                if (active) setCustomizationLoading(false);
+            }
+        };
+
+        fetchInstitutionCustomization();
+
+        return () => {
+            active = false;
+        };
+    }, [user?.institutionId]);
 
     // Always keep full lists for ClassesCoursesSection
     useEffect(() => {
@@ -425,6 +534,38 @@ const InstitutionAdminDashboard = ({ user }) => {
             fetchData();
         } catch (error) { console.error('Error removing access', error); }
     };
+
+    const handleSaveCustomization = async (event) => {
+        event.preventDefault();
+        if (!user?.institutionId) return;
+
+        setCustomizationError('');
+        setCustomizationSuccess('');
+        setCustomizationSaving(true);
+
+        try {
+            const preset = getPresetById(customizationForm.homeThemePreset);
+            const institutionRef = doc(db, 'institutions', user.institutionId);
+
+            await updateDoc(institutionRef, {
+                'customization.institutionDisplayName': customizationForm.institutionDisplayName.trim() || institutionName || '',
+                'customization.logoUrl': customizationForm.logoUrl.trim(),
+                'customization.homeThemePreset': preset.id,
+                'customization.homeThemeTokens': preset.tokens,
+                'customization.home.tokens': preset.tokens,
+                updatedAt: serverTimestamp()
+            });
+
+            setCustomizationSuccess('Personalización guardada correctamente.');
+        } catch (error) {
+            console.error('Error saving customization:', error);
+            setCustomizationError('No se pudieron guardar los cambios. Inténtalo de nuevo.');
+        } finally {
+            setCustomizationSaving(false);
+        }
+    };
+
+    const selectedThemePreset = getPresetById(customizationForm.homeThemePreset);
 
     const TABS = [
         { key: 'users',         label: 'Usuarios',        icon: Users },
@@ -625,13 +766,131 @@ const InstitutionAdminDashboard = ({ user }) => {
 
                 {/* ── CUSTOMIZATION TAB ── */}
                 {activeTab === 'customization' && (
-                    <div className="flex flex-col items-center justify-center py-16 text-center animate-in fade-in slide-in-from-bottom-4">
-                        <Palette className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-4" />
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">Personalización</h3>
-                        <p className="text-slate-500 max-w-md mx-auto mt-2">
-                            Configura el logo, nombre y colores de tu institución.
-                        </p>
-                        <span className="mt-4 inline-block px-3 py-1 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-500 rounded-full text-xs font-medium">Próximamente</span>
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        {customizationLoading ? (
+                            <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin text-indigo-500" /></div>
+                        ) : (
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <form onSubmit={handleSaveCustomization} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 space-y-5">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Identidad de Institución</h3>
+                                        <p className="text-sm text-slate-500 mt-1">Estos cambios se guardan en tu documento de institución en Firestore.</p>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Nombre visible</label>
+                                        <input
+                                            type="text"
+                                            value={customizationForm.institutionDisplayName}
+                                            onChange={(e) => {
+                                                setCustomizationSuccess('');
+                                                setCustomizationForm((prev) => ({ ...prev, institutionDisplayName: e.target.value }));
+                                            }}
+                                            placeholder={institutionName || 'Nombre de la institución'}
+                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">URL del logo</label>
+                                        <input
+                                            type="url"
+                                            value={customizationForm.logoUrl}
+                                            onChange={(e) => {
+                                                setCustomizationSuccess('');
+                                                setCustomizationForm((prev) => ({ ...prev, logoUrl: e.target.value }));
+                                            }}
+                                            placeholder="https://..."
+                                            className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all text-sm"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Estilo de Home</label>
+                                        <div className="space-y-2">
+                                            {HOME_THEME_PRESETS.map((preset) => (
+                                                <button
+                                                    key={preset.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setCustomizationSuccess('');
+                                                        setCustomizationForm((prev) => ({ ...prev, homeThemePreset: preset.id }));
+                                                    }}
+                                                    className={`w-full text-left p-3 rounded-xl border transition-all ${customizationForm.homeThemePreset === preset.id
+                                                        ? 'border-indigo-500 bg-indigo-50/60 dark:bg-indigo-900/20'
+                                                        : 'border-slate-200 dark:border-slate-700 hover:border-indigo-300 dark:hover:border-indigo-600'
+                                                        }`}
+                                                >
+                                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">{preset.label}</p>
+                                                    <p className="text-xs text-slate-500 mt-1">{preset.description}</p>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    {customizationError && (
+                                        <div className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 text-sm rounded-lg flex items-center gap-2">
+                                            <XCircle className="w-4 h-4" /> {customizationError}
+                                        </div>
+                                    )}
+                                    {customizationSuccess && (
+                                        <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-300 text-sm rounded-lg flex items-center gap-2">
+                                            <CheckCircle2 className="w-4 h-4" /> {customizationSuccess}
+                                        </div>
+                                    )}
+
+                                    <div className="pt-2">
+                                        <button
+                                            type="submit"
+                                            disabled={customizationSaving}
+                                            className="w-full px-4 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 transition-all flex justify-center items-center gap-2"
+                                        >
+                                            {customizationSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> Guardar personalización</>}
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Vista previa</h3>
+                                    <p className={`${selectedThemePreset.tokens.mutedTextClass} text-sm mt-1`}>Así se verá el estilo aplicado en Home.</p>
+
+                                    <div className="mt-5 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 bg-slate-50 dark:bg-slate-800/40">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            {customizationForm.logoUrl ? (
+                                                <img
+                                                    src={customizationForm.logoUrl}
+                                                    alt="Logo"
+                                                    className="w-10 h-10 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
+                                                />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-lg bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-500">
+                                                    <Palette className="w-5 h-5" />
+                                                </div>
+                                            )}
+                                            <div>
+                                                <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                                                    {customizationForm.institutionDisplayName || institutionName || 'Tu institución'}
+                                                </p>
+                                                <p className={`${selectedThemePreset.tokens.mutedTextClass} text-xs`}>Tema: {selectedThemePreset.label}</p>
+                                            </div>
+                                        </div>
+
+                                        <button type="button" className={`${selectedThemePreset.tokens.dashedCreateCardIndigoClass} h-24 text-sm font-medium text-slate-600 dark:text-slate-200`}>
+                                            Botón principal en Home
+                                        </button>
+
+                                        <div className="grid grid-cols-2 gap-3 mt-3">
+                                            <div className={`rounded-xl p-3 border-2 border-dashed ${selectedThemePreset.tokens.dashedCardIndigoIdleClass}`}>
+                                                <p className="text-xs font-medium text-slate-700 dark:text-slate-200">Tarjeta A</p>
+                                            </div>
+                                            <div className={`rounded-xl p-3 border-2 border-dashed ${selectedThemePreset.tokens.dashedCardAmberIdleClass}`}>
+                                                <p className="text-xs font-medium text-slate-700 dark:text-slate-200">Tarjeta B</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </main>
