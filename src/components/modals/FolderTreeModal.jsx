@@ -361,11 +361,11 @@ const FolderTreeModal = ({
 
     return (
         <div 
-            className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-28 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 dark:bg-black/70 animate-in fade-in duration-200"
             onClick={onClose}
         >
             <div 
-            className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100vh-8rem)] flex flex-col border border-gray-100 dark:border-slate-700 animate-in zoom-in-95 duration-200"
+            className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg max-h-[calc(100vh-10rem)] flex flex-col border border-gray-100 dark:border-slate-700 animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
             >
                 

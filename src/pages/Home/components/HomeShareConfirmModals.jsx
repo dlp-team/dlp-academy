@@ -7,8 +7,10 @@ const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm,
     return (
         <>
             {shareConfirm.open && (
-                <div className="fixed inset-x-0 bottom-0 top-28 z-51 flex items-start justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
+                <div className="fixed inset-0 z-51">
+                    <div className="absolute inset-0 bg-black/50 dark:bg-black/70 transition-colors" />
+                    <div className="relative inset-x-0 top-28 bottom-0 flex items-center justify-center p-4 min-h-[calc(100vh-7rem)]">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[calc(100vh-10rem)] overflow-y-auto shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
                         <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
                             <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C7.305 20.5 3.5 16.695 3.5 12S7.305 3.5 12 3.5 20.5 7.305 20.5 12 16.695 20.5 12 20.5z" />
@@ -66,12 +68,15 @@ const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm,
                             </button>
                         </div>
                     </div>
+                    </div>
                 </div>
             )}
 
             {unshareConfirm.open && (
-                <div className="fixed inset-x-0 bottom-0 top-28 z-51 flex items-start justify-center p-4 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-colors">
-                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
+                <div className="fixed inset-0 z-51">
+                    <div className="absolute inset-0 bg-black/50 dark:bg-black/70 transition-colors" />
+                    <div className="relative inset-x-0 top-28 bottom-0 flex items-center justify-center p-4 min-h-[calc(100vh-7rem)]">
+                    <div className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md max-h-[calc(100vh-10rem)] overflow-y-auto shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200 transition-colors">
                         <div className="w-16 h-16 bg-yellow-100 dark:bg-yellow-900/30 rounded-full flex items-center justify-center mx-auto mb-4 transition-colors">
                             <svg className="w-8 h-8 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5C7.305 20.5 3.5 16.695 3.5 12S7.305 3.5 12 3.5 20.5 7.305 20.5 12 16.695 20.5 12 20.5z" />
@@ -125,6 +130,7 @@ const HomeShareConfirmModals = ({ shareConfirm, setShareConfirm, unshareConfirm,
                                 Sí, dejar de compartir
                             </button>
                         </div>
+                    </div>
                     </div>
                 </div>
             )}

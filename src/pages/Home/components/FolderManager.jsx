@@ -578,10 +578,10 @@ const FolderManager = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="flex min-h-full items-start justify-center p-4 pt-28 text-center">
+        <div className="fixed inset-x-0 top-28 bottom-0 z-50 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
                 <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" onClick={handleBackdropCloseRequest} />
-                <div className="relative transform overflow-hidden bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[calc(100vh-8rem)] shadow-xl text-left animate-in fade-in zoom-in duration-200 border border-transparent dark:border-slate-800 transition-colors">
+                <div className="relative transform overflow-hidden bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[calc(100vh-10rem)] shadow-xl text-left animate-in fade-in zoom-in duration-200 border border-transparent dark:border-slate-800 transition-colors">
 
                     <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-800/50 transition-colors">
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white">{isEditing ? 'Editar Carpeta' : 'Nueva Carpeta'}</h3>
@@ -613,7 +613,7 @@ const FolderManager = ({
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="p-6 pb-20 space-y-5 max-h-[calc(100vh-13rem)] overflow-y-auto custom-scrollbar">
+                    <form onSubmit={handleSubmit} className="p-6 pb-20 space-y-5 max-h-[calc(100vh-15rem)] overflow-y-auto custom-scrollbar">
                         {activeTab === 'general' && (
                             <>
                                 {canEditOriginalFields && (
