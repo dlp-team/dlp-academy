@@ -95,7 +95,7 @@ const FolderCardBody = ({
     return (
         <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${
             isModern 
-            ? `bg-gradient-to-br ${gradientClass} p-[4px] ${isOrphan ? 'saturate-[0.18] grayscale-[0.55] brightness-[0.92]' : ''}` 
+            ? `bg-gradient-to-br ${gradientClass} p-[4px] ${isOrphan ? 'saturate-[0.45] grayscale-[0.32] brightness-[1.05]' : ''}` 
                 : ''
         }`}>
              
@@ -108,10 +108,10 @@ const FolderCardBody = ({
                 
                 {/* --- FRONT VISUALS --- */}
                 {!isModern && (
-                    <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-100 ${isOrphan ? 'saturate-[0.18] grayscale-[0.55] brightness-[0.92]' : ''}`}></div>
+                    <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-100 ${isOrphan ? 'saturate-[0.45] grayscale-[0.32] brightness-[1.05]' : ''}`}></div>
                 )}
                 {isModern && fillColor && (
-                    <div className={`absolute inset-0 ${fillColor} ${isOrphan ? 'saturate-[0.18] grayscale-[0.55] brightness-[0.92]' : ''}`}></div>
+                    <div className={`absolute inset-0 ${fillColor} ${isOrphan ? 'saturate-[0.45] grayscale-[0.32] brightness-[1.05]' : ''}`}></div>
                 )}
                 {/* Hover Overlay */}
                 {isModern && (
@@ -280,7 +280,7 @@ const FolderCardBody = ({
                                     className="flex items-center justify-center"
                                     style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}
                                 >
-                                    {folder.icon ? (
+                                    {!isOrphan && folder.icon ? (
                                         <SubjectIcon 
                                             iconName={folder.icon} 
                                             className={`${getIconColor(folder.color)} opacity-80`}
@@ -296,7 +296,7 @@ const FolderCardBody = ({
                             ) : (
                                 // Classic Mode Folder
                                 <div style={{ width: `${48 * scaleMultiplier}px`, height: `${48 * scaleMultiplier}px` }}>
-                                    {folder.icon ? (
+                                    {!isOrphan && folder.icon ? (
                                         <SubjectIcon 
                                             iconName={folder.icon} 
                                             className="text-white opacity-80"
