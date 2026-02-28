@@ -78,7 +78,12 @@ export const useHomePageHandlers = ({
 
     const mergeTargetFolderShares = async (targetFolderId, incomingUids = [], incomingSharedWith = []) => {
         const targetFolder = getFolderById(targetFolderId);
-        if (!targetFolder) return;
+        if (!targetFolder) {
+            return {
+                mergedUids: Array.from(new Set(incomingUids || [])),
+                mergedSharedWith: Array.isArray(incomingSharedWith) ? incomingSharedWith : []
+            };
+        }
 
         const targetUids = getSharedUids(targetFolder);
         const targetSharedWith = getSharedWithEntries(targetFolder);
@@ -101,6 +106,64 @@ export const useHomePageHandlers = ({
             sharedWith: Array.from(mergedSharedWithMap.values()),
             isShared: mergedUids.length > 0
         });
+
+        return {
+            mergedUids,
+            mergedSharedWith: Array.from(mergedSharedWithMap.values())
+        };
+    };
+
+    const syncSharedStateToFolderTree = async (rootFolderId, sharedWithUids = [], sharedWith = []) => {
+        if (!rootFolderId) return;
+
+        const normalizedUids = Array.from(new Set((sharedWithUids || []).filter(Boolean)));
+        const normalizedSharedWithMap = new Map();
+
+        (Array.isArray(sharedWith) ? sharedWith : []).forEach(entry => {
+            const uid = entry?.uid || null;
+            const email = (entry?.email || '').toLowerCase();
+            const key = uid || (email ? `email:${email}` : null);
+            if (!key || normalizedSharedWithMap.has(key)) return;
+            normalizedSharedWithMap.set(key, entry);
+        });
+
+        const normalizedSharedWith = Array.from(normalizedSharedWithMap.values());
+        const allFolders = Array.isArray(logic?.folders) ? logic.folders : [];
+        const allSubjects = Array.isArray(logic?.subjects) ? logic.subjects : [];
+
+        const subtreeFolderIds = new Set([rootFolderId]);
+        const queue = [rootFolderId];
+
+        while (queue.length > 0) {
+            const currentFolderId = queue.shift();
+            allFolders
+                .filter(folder => (folder?.parentId || null) === currentFolderId)
+                .forEach(childFolder => {
+                    if (!childFolder?.id || subtreeFolderIds.has(childFolder.id)) return;
+                    subtreeFolderIds.add(childFolder.id);
+                    queue.push(childFolder.id);
+                });
+        }
+
+        const descendantFolderIds = Array.from(subtreeFolderIds).filter(folderId => folderId !== rootFolderId);
+
+        for (const folderId of descendantFolderIds) {
+            await updateFolder(folderId, {
+                sharedWithUids: [...normalizedUids],
+                sharedWith: [...normalizedSharedWith],
+                isShared: normalizedUids.length > 0
+            });
+        }
+
+        const subjectsInTree = allSubjects.filter(subject => subtreeFolderIds.has(subject?.folderId || null));
+        for (const subject of subjectsInTree) {
+            await updateDoc(doc(db, 'subjects', subject.id), {
+                sharedWithUids: [...normalizedUids],
+                sharedWith: [...normalizedSharedWith],
+                isShared: normalizedUids.length > 0,
+                updatedAt: new Date()
+            });
+        }
     };
 
     const getRootSharedFolder = (folderId) => {
@@ -354,7 +417,8 @@ export const useHomePageHandlers = ({
                     closeShareConfirm();
                 },
                 onMergeConfirm: async () => {
-                    await mergeTargetFolderShares(targetFolderId, effectiveSourceSharedWithUids, baselineSharedWith);
+                    const { mergedUids, mergedSharedWith } = await mergeTargetFolderShares(targetFolderId, effectiveSourceSharedWithUids, baselineSharedWith);
+                    await syncSharedStateToFolderTree(targetFolderId, mergedUids, mergedSharedWith);
                     await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, { forceRefreshSharing: true });
                     closeShareConfirm();
                 }
@@ -493,7 +557,8 @@ export const useHomePageHandlers = ({
                             closeShareConfirm();
                         },
                         onMergeConfirm: async () => {
-                            await mergeTargetFolderShares(targetFolderId, droppedSharedUids, getSharedWithEntries(droppedFolder));
+                            const { mergedUids, mergedSharedWith } = await mergeTargetFolderShares(targetFolderId, droppedSharedUids, getSharedWithEntries(droppedFolder));
+                            await syncSharedStateToFolderTree(targetFolderId, mergedUids, mergedSharedWith);
                             await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
                             closeShareConfirm();
                         }
@@ -614,7 +679,8 @@ export const useHomePageHandlers = ({
                         closeShareConfirm();
                     },
                     onMergeConfirm: async () => {
-                        await mergeTargetFolderShares(targetFolderId, droppedSharedUids, getSharedWithEntries(droppedFolder));
+                        const { mergedUids, mergedSharedWith } = await mergeTargetFolderShares(targetFolderId, droppedSharedUids, getSharedWithEntries(droppedFolder));
+                        await syncSharedStateToFolderTree(targetFolderId, mergedUids, mergedSharedWith);
                         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
                         closeShareConfirm();
                     }
