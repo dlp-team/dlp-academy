@@ -26,7 +26,7 @@ import HomeModals from './components/HomeModals';
 import HomeShareConfirmModals from './components/HomeShareConfirmModals';
 import FolderTreeModal from '../../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../Subject/modals/SubjectTopicModal';
-import { isShortcutItem } from '../../utils/permissionUtils';
+import { getPermissionLevel, isShortcutItem } from '../../utils/permissionUtils';
 
 
 const Home = ({ user }) => {
@@ -230,6 +230,13 @@ const Home = ({ user }) => {
 
         return Array.from(tagSet).filter(Boolean).sort();
     }, [logic.viewMode, sharedFolders, sharedSubjects, logic.filteredFolders, logic.folders, logic.filteredSubjects, logic.subjects, sharedScopeSelected, isSharedForCurrentUser]);
+
+    const canCreateInManualContext = useMemo(() => {
+        if (logic.viewMode !== 'grid') return true;
+        if (logic.currentFolder?.isShared !== true) return true;
+        const permission = user?.uid ? getPermissionLevel(logic.currentFolder, user.uid) : 'none';
+        return permission === 'editor' || permission === 'owner';
+    }, [logic.viewMode, logic.currentFolder, user?.uid]);
 
     React.useEffect(() => {
         const availableTagSet = new Set(availableControlTags);
@@ -510,7 +517,10 @@ const Home = ({ user }) => {
                                 ) : (
                                     <HomeEmptyState 
                                         setSubjectModalConfig={logic.setSubjectModalConfig}
-                                        setFolderModalConfig={logic.setFolderModalConfig}
+                                        viewMode={logic.viewMode}
+                                        canCreateSubject={canCreateInManualContext}
+                                        cardScale={logic.cardScale || 100}
+                                        currentFolder={logic.currentFolder}
                                     />
                                 )}
                             </>

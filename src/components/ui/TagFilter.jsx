@@ -79,7 +79,7 @@ const TagFilter = ({
         <div className="relative" ref={triggerRef}>
             <button
                 onClick={() => handleSetShowFilter(!showFilter)}
-                className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium transition-colors shadow-sm cursor-pointer ${
+                className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium shadow-sm cursor-pointer ${
                     hasActiveFilters
                         ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-300 dark:border-pink-700 text-pink-700 dark:text-pink-300'
                         : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
@@ -105,7 +105,7 @@ const TagFilter = ({
                     
                     {/* Filter Panel */}
                     <div
-                        className="fixed bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-[60] w-80 max-h-96 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200 custom-scrollbar"
+                        className="fixed bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-[60] w-80 max-h-96 overflow-y-auto custom-scrollbar"
                         style={{ top: panelPos.top, left: panelPos.left }}
                     >
                         <div className="flex items-center justify-between mb-3 relative">

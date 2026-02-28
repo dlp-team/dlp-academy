@@ -62,6 +62,26 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const subjectParentFolderId = formData?.shortcutParentId ?? formData?.folderId ?? initialData?.shortcutParentId ?? initialData?.folderId ?? null;
     const unshareBlockedInSharedFolder = isInsideSharedFolderTree(subjectParentFolderId);
 
+    const resolveCourseSelectors = (courseValue = '', fallbackLevel = '', fallbackGrade = '') => {
+        if (fallbackLevel && fallbackGrade && Array.isArray(EDUCATION_LEVELS[fallbackLevel]) && EDUCATION_LEVELS[fallbackLevel].includes(fallbackGrade)) {
+            return { level: fallbackLevel, grade: fallbackGrade };
+        }
+
+        const normalizedCourse = String(courseValue || '').trim();
+        if (!normalizedCourse) return { level: '', grade: '' };
+
+        for (const level of Object.keys(EDUCATION_LEVELS)) {
+            const grades = Array.isArray(EDUCATION_LEVELS[level]) ? EDUCATION_LEVELS[level] : [];
+            for (const grade of grades) {
+                if (normalizedCourse === `${grade} ${level}` || normalizedCourse === `${level} ${grade}`) {
+                    return { level, grade };
+                }
+            }
+        }
+
+        return { level: '', grade: '' };
+    };
+
     // 1. Initialize Logic
     useEffect(() => {
         if (isOpen) {
@@ -75,6 +95,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setShareSuggestionsOpen(false);
             setPendingShareAction(null);
             if (isEditing && initialData) {
+                const resolvedSelectors = resolveCourseSelectors(
+                    initialData.course || '',
+                    initialData.level || '',
+                    initialData.grade || ''
+                );
                 setFormData({
                     id: initialData.id,
                     ownerId: initialData.ownerId,
@@ -85,7 +110,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         : 'owner',
                     name: initialData.name || '',
                     course: initialData.course || '',
-                    level: '', grade: '', 
+                    level: resolvedSelectors.level,
+                    grade: resolvedSelectors.grade,
                     color: initialData.color || 'from-blue-400 to-blue-600',
                     icon: initialData.icon || 'book',
                     tags: initialData.tags || [],

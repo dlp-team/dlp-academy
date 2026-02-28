@@ -61,7 +61,7 @@ const CardScaleSlider = ({ cardScale, setCardScale, onOverlayToggle }) => {
         <div className="relative" ref={triggerRef}>
             <button
                 onClick={() => handleSetIsOpen(!isOpen)}
-                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer shadow-sm"
             >
                 <Maximize2 size={16} />
                 <span className="hidden sm:inline">Escala</span>
@@ -77,7 +77,7 @@ const CardScaleSlider = ({ cardScale, setCardScale, onOverlayToggle }) => {
                     
                     {/* Slider Panel */}
                     <div
-                        className="fixed bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-50 w-72 animate-in fade-in slide-in-from-top-2 duration-200"
+                        className="fixed bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-50 w-72"
                         style={{ top: panelPos.top, left: panelPos.left }}
                     >
                         <div className="flex items-center justify-between mb-3">
