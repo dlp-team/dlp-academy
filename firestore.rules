@@ -30,6 +30,14 @@ service cloud.firestore {
       return currentUserRole() == 'institutionadmin';
     }
 
+    function isTeacherRole() {
+      return currentUserRole() == 'teacher';
+    }
+
+    function isStudentRole() {
+      return currentUserRole() == 'student';
+    }
+
     function hasInstitutionField(data) {
       return data.keys().hasAny(['institutionId']);
     }
@@ -263,6 +271,7 @@ service cloud.firestore {
     // Reglas para Carpetas (Folders)
     match /folders/{folderId} {
       allow create: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -272,6 +281,7 @@ service cloud.firestore {
           || request.resource.data.ownerId == request.auth.uid
         );
       allow read: if isSignedIn()
+        && !isStudentRole()
         && (
           canReadResource(resource.data)
           || resource.data.ownerId == request.auth.uid
@@ -283,6 +293,7 @@ service cloud.firestore {
           || (resource.data.keys().hasAny(['sharedWithUids']) && request.auth.uid in resource.data.sharedWithUids)
         );
       allow update: if isSignedIn()
+        && !isStudentRole()
         && (
           canWriteResource(resource.data)
           || resource.data.ownerId == request.auth.uid
@@ -293,6 +304,7 @@ service cloud.firestore {
           )
         );
       allow delete: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || resource.data.ownerId == request.auth.uid
@@ -487,6 +499,7 @@ service cloud.firestore {
     match /shortcuts/{shortcutId} {
       // Owner can create own shortcut OR target owner can create shortcut for a shared recipient (share flow)
       allow create: if isSignedIn()
+        && !(isStudentRole() && request.resource.data.targetType == 'folder')
         && request.resource.data.institutionId == currentUserInstitutionId()
         && validShortcutCreatePayload()
         && (
@@ -511,7 +524,10 @@ service cloud.firestore {
       // Shortcut owner can always read their own shortcut.
       // Target owners can read only within same institution boundary.
       allow read: if isSignedIn() && (
-        resource.data.ownerId == request.auth.uid
+        (
+          resource.data.ownerId == request.auth.uid
+          && !(isStudentRole() && resource.data.targetType == 'folder')
+        )
         || (
           sameInstitution(resource.data)
           && (
@@ -535,6 +551,7 @@ service cloud.firestore {
         )
       );
       allow delete, update: if isSignedIn()
+        && !(isStudentRole() && resource.data.targetType == 'folder')
         && (
           resource.data.ownerId == request.auth.uid
           // Subject shortcut: subject owner, subject manager, or folder manager
@@ -573,7 +590,10 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && (
           isGlobalAdmin()
-          || request.resource.data.institutionId == currentUserInstitutionId()
+          || (
+            isInstitutionAdmin()
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
         );
       allow read: if isSignedIn() && (
         isGlobalAdmin() || sameInstitution(resource.data)
@@ -582,7 +602,45 @@ service cloud.firestore {
         && (
           isGlobalAdmin()
           || (
+            isInstitutionAdmin()
+            &&
             sameInstitution(resource.data)
+            && request.resource.data.institutionId == resource.data.institutionId
+          )
+        );
+    }
+
+    match /subject_class_requests/{requestId} {
+      allow create: if isSignedIn()
+        && request.resource.data.institutionId == currentUserInstitutionId()
+        && (
+          isGlobalAdmin()
+          || isInstitutionAdmin()
+          || (
+            isTeacherRole()
+            && request.resource.data.teacherId == request.auth.uid
+            && request.resource.data.status == 'pending'
+          )
+        );
+
+      allow read: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            sameInstitution(resource.data)
+            && (
+              isInstitutionAdmin()
+              || resource.data.teacherId == request.auth.uid
+            )
+          )
+        );
+
+      allow update, delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            isInstitutionAdmin()
+            && sameInstitution(resource.data)
             && request.resource.data.institutionId == resource.data.institutionId
           )
         );

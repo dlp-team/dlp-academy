@@ -103,6 +103,7 @@ const SubjectCard = (props) => {
                     disableAllActions={disableAllActions}
                     disableDeleteActions={disableDeleteActions}
                     disableUnshareActions={disableUnshareActions}
+                    hideSharedIndicator={props.hideSharedIndicator}
                 />
             </div>
         </div>

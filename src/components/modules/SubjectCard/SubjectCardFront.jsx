@@ -26,7 +26,8 @@ const SubjectCardFront = ({
     onCloseFilterOverlay,
     disableAllActions = false,
     disableDeleteActions = false,
-    disableUnshareActions = false
+    disableUnshareActions = false,
+    hideSharedIndicator = false
 }) => {
     const HEADER_SAFE_TOP = 112;
     const MENU_MARGIN = 8;

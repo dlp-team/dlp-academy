@@ -17,6 +17,7 @@ const SubjectListItem = ({
     disableAllActions = false,
     disableDeleteActions = false,
     disableUnshareActions = false,
+    hideSharedIndicator = false,
     compact = false, 
     cardScale = 100,
     className = ""
@@ -129,7 +130,7 @@ const SubjectListItem = ({
                             {subject.name}
                         </h3>
                         {/* Shared icon for subjects, right of title */}
-                        {(
+                        {!hideSharedIndicator && (
                             subject.isShared === true ||
                             (Array.isArray(subject.sharedWith) && subject.sharedWith.length > 0) ||
                             (Array.isArray(subject.sharedWithUids) && subject.sharedWithUids.length > 0)

@@ -308,10 +308,14 @@ export const useFolders = (user) => {
                 targetUid = querySnapshot.docs[0].id;
                 const targetUserData = querySnapshot.docs[0].data() || {};
                 const targetInstitutionId = targetUserData.institutionId || null;
+                const targetRole = (targetUserData.role || '').toLowerCase();
                 debugShare('user_lookup_success', { folderId, targetUid, targetInstitutionId });
                 if (targetInstitutionId && targetInstitutionId !== currentInstitutionId) {
                     debugShare('validation_fail_cross_institution', { folderId, targetUid, targetInstitutionId });
                     throw new Error("No puedes compartir entre instituciones diferentes.");
+                }
+                if (targetRole === 'student') {
+                    throw new Error('No se puede compartir carpetas con estudiantes. Los alumnos reciben asignaturas por clases.');
                 }
             } else {
                 debugShare('validation_fail_user_not_found', { folderId, email: emailLower });

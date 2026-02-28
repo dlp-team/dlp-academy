@@ -90,6 +90,7 @@ export const useHomeHandlers = ({
             color: formData.color,
             icon: formData.icon || 'book',
             tags: formData.tags,
+            ...(Array.isArray(formData.classIds) ? { classIds: formData.classIds } : {}),
             cardStyle: formData.cardStyle || 'default',
             modernFillColor: formData.modernFillColor || null,
             updatedAt: new Date()

@@ -176,9 +176,13 @@ export const useSubjects = (user) => {
                 targetUid = querySnapshot.docs[0].id;
                 const targetUserData = querySnapshot.docs[0].data() || {};
                 const targetInstitutionId = targetUserData.institutionId || null;
+                const targetRole = (targetUserData.role || '').toLowerCase();
                 debugShare('user_lookup_success', { subjectId, targetUid, targetInstitutionId });
                 if (targetInstitutionId && targetInstitutionId !== currentInstitutionId) {
                     throw new Error("No puedes compartir entre instituciones diferentes.");
+                }
+                if (targetRole === 'student') {
+                    throw new Error('Los estudiantes se asignan por clases. No se permite compartir asignaturas directamente a alumnos.');
                 }
             } else {
                 debugShare('user_lookup_fail', { subjectId, email: emailLower });

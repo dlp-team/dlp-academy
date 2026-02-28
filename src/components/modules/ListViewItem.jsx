@@ -24,6 +24,7 @@ const ListViewItem = ({
     disableAllActions = false,
     disableDeleteActions = false,
     disableUnshareActions = false,
+    hideSharedIndicator = false,
     cardScale = 100, 
     onDragStart,
     onDragEnd,
@@ -188,6 +189,7 @@ const ListViewItem = ({
                             disableAllActions={disableAllActions}
                             disableDeleteActions={disableDeleteActions}
                             disableUnshareActions={disableUnshareForItem}
+                            hideSharedIndicator={hideSharedIndicator}
                             cardScale={cardScale} 
                             className="pl-8" 
                         />

@@ -505,6 +505,7 @@ const HomeContent = ({
                                                         disableAllActions={disableAllActionsInShared}
                                                         disableDeleteActions={disableSubjectDeleteActionsInShared}
                                                         disableUnshareActions={isInsideSharedFolderForItem(subject, 'subject')}
+                                                        hideSharedIndicator={studentMode}
                                                     />
                                                 </div>
                                             );
@@ -676,6 +677,7 @@ const HomeContent = ({
                                                     disableAllActions={disableAllActionsInShared}
                                                     disableDeleteActions={disableSubjectDeleteActionsInShared}
                                                     draggable={dndEnabledInContext}
+                                                    hideSharedIndicator={studentMode}
                                                 />
                                             );
                                         })}

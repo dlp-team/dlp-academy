@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Save, Users, Trash2, Share2, Loader2, CheckCircle, AlertCircle, RotateCcw } from 'lucide-react';
 import { MODERN_FILL_COLORS, EDUCATION_LEVELS } from '../../../utils/subjectConstants';
-import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
+import { addDoc, collection, getDocs, query, where, getDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 
@@ -11,7 +11,7 @@ import BasicInfoFields from './subject-form/BasicInfoFields';
 import TagManager from './subject-form/TagManager';
 import AppearanceSection from './subject-form/AppearanceSection';
 import StyleSelector from './subject-form/StyleSelector';
-import { getPermissionLevel } from '../../../utils/permissionUtils';
+import { getNormalizedRole, getPermissionLevel } from '../../../utils/permissionUtils';
 
 const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onTransferOwnership, onDeleteShortcut, user, allFolders = [], initialTab = 'general', studentShortcutTagOnlyMode = false }) => {
     const [formData, setFormData] = useState({ 
@@ -36,9 +36,18 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [shareLoading, setShareLoading] = useState(false);
     const [shareError, setShareError] = useState('');
     const [shareSuccess, setShareSuccess] = useState('');
+    const [availableClasses, setAvailableClasses] = useState([]);
+    const [classesLoading, setClassesLoading] = useState(false);
+    const [selectedClassIds, setSelectedClassIds] = useState([]);
+    const [classesActionLoading, setClassesActionLoading] = useState(false);
+    const [classesActionError, setClassesActionError] = useState('');
+    const [classesActionSuccess, setClassesActionSuccess] = useState('');
 
     const isShortcutEditing = isEditing && formData?.isShortcut === true;
     const isTagOnlyShortcutEdit = studentShortcutTagOnlyMode && isShortcutEditing;
+    const currentRole = getNormalizedRole(user);
+    const canManageClassesTab = isEditing && (currentRole === 'teacher' || currentRole === 'institutionadmin' || currentRole === 'admin');
+    const canDirectAssignClasses = currentRole === 'institutionadmin' || currentRole === 'admin';
     const shortcutPermissionLevel = formData?.shortcutPermissionLevel || 'viewer';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canManageSharing = !isTagOnlyShortcutEdit && (!isShortcutEditing || isShortcutEditor);
@@ -112,6 +121,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setShowDiscardPendingConfirm(false);
             setPendingPermissionChanges({});
             setPendingUnshares([]);
+            setClassesActionError('');
+            setClassesActionSuccess('');
             if (isEditing && initialData) {
                 const resolvedSelectors = resolveCourseSelectors(
                     initialData.course || '',
@@ -133,9 +144,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     color: initialData.color || 'from-blue-400 to-blue-600',
                     icon: initialData.icon || 'book',
                     tags: initialData.tags || [],
+                    classIds: Array.isArray(initialData.classIds) ? initialData.classIds : [],
                     cardStyle: initialData.cardStyle || 'default',
                     modernFillColor: initialData.fillColor || initialData.modernFillColor || MODERN_FILL_COLORS[0].value
                 });
+                setSelectedClassIds(Array.isArray(initialData.classIds) ? initialData.classIds : []);
                 // Load shared list
                 setSharedList(initialData.sharedWith || []);
             } else {
@@ -157,9 +170,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     color: 'from-blue-400 to-blue-600',
                     icon: 'book',
                     tags: [],
+                    classIds: [],
                     cardStyle: 'default',
                     modernFillColor: MODERN_FILL_COLORS[0].value
                 });
+                setSelectedClassIds([]);
                 setSharedList([]);
             }
         }
@@ -251,6 +266,104 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setActiveTab('general');
         }
     }, [isTagOnlyShortcutEdit, activeTab]);
+
+    useEffect(() => {
+        let active = true;
+
+        const loadClasses = async () => {
+            if (!isOpen || !canManageClassesTab || !user?.institutionId) {
+                if (active) {
+                    setAvailableClasses([]);
+                    setClassesLoading(false);
+                }
+                return;
+            }
+
+            setClassesLoading(true);
+            try {
+                const classesRef = collection(db, 'classes');
+                const baseConstraints = [where('institutionId', '==', user.institutionId)];
+                if (currentRole === 'teacher') {
+                    baseConstraints.push(where('teacherId', '==', user.uid));
+                }
+                const classesQuery = query(classesRef, ...baseConstraints);
+                const classesSnap = await getDocs(classesQuery);
+
+                if (!active) return;
+                const loaded = classesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+                setAvailableClasses(loaded);
+            } catch (error) {
+                if (active) {
+                    setAvailableClasses([]);
+                }
+            } finally {
+                if (active) {
+                    setClassesLoading(false);
+                }
+            }
+        };
+
+        loadClasses();
+        return () => {
+            active = false;
+        };
+    }, [isOpen, canManageClassesTab, user?.institutionId, user?.uid, currentRole]);
+
+    const toggleClassSelection = (classId) => {
+        setSelectedClassIds((prev) => (
+            prev.includes(classId)
+                ? prev.filter((id) => id !== classId)
+                : [...prev, classId]
+        ));
+    };
+
+    const handleSaveClassAssignments = () => {
+        if (!canDirectAssignClasses) return;
+        onSave({
+            ...formData,
+            classIds: selectedClassIds
+        });
+        setClassesActionSuccess('Clases actualizadas correctamente.');
+        setTimeout(() => setClassesActionSuccess(''), 2500);
+    };
+
+    const handleRequestClassAssignments = async () => {
+        if (canDirectAssignClasses || !isEditing || !formData?.id || !user?.institutionId || !user?.uid) return;
+
+        setClassesActionLoading(true);
+        setClassesActionError('');
+        setClassesActionSuccess('');
+        try {
+            const existingClassIds = Array.isArray(formData.classIds) ? formData.classIds : [];
+            const requestClassIds = selectedClassIds.filter((id) => !existingClassIds.includes(id));
+
+            if (requestClassIds.length === 0) {
+                setClassesActionError('Selecciona al menos una clase nueva para solicitar.');
+                setClassesActionLoading(false);
+                return;
+            }
+
+            await Promise.all(requestClassIds.map((classId) => addDoc(collection(db, 'subject_class_requests'), {
+                subjectId: formData.id,
+                subjectName: formData.name || initialData?.name || 'Asignatura',
+                classId,
+                teacherId: user.uid,
+                institutionId: user.institutionId,
+                status: 'pending',
+                requestedByRole: currentRole,
+                requestedAt: serverTimestamp(),
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            })));
+
+            setClassesActionSuccess('Solicitud enviada a administración de institución.');
+            setTimeout(() => setClassesActionSuccess(''), 3500);
+        } catch (error) {
+            setClassesActionError(error?.message || 'No se pudo enviar la solicitud de clases.');
+        } finally {
+            setClassesActionLoading(false);
+        }
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -683,6 +796,18 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     <Share2 size={16} /> Compartir
                                 </button>
                             )}
+                            {canManageClassesTab && (
+                                <button
+                                    onClick={() => setActiveTab('classes')}
+                                    className={`px-4 py-2 rounded-t-xl font-medium transition-colors ${
+                                        activeTab === 'classes'
+                                            ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 border-b-2 border-indigo-600 dark:border-indigo-400'
+                                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300'
+                                    }`}
+                                >
+                                    Clases
+                                </button>
+                            )}
                         </div>
                     )}
                     
@@ -980,6 +1105,56 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                             </div>
                         )}
 
+                        {activeTab === 'classes' && canManageClassesTab && (
+                            <div className="space-y-4">
+                                <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 p-4">
+                                    <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Gestión por clases</h4>
+                                    <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                                        {canDirectAssignClasses
+                                            ? 'Selecciona las clases que tendrán acceso a esta asignatura.'
+                                            : 'Selecciona tus clases y envía una solicitud para que administración la apruebe.'}
+                                    </p>
+                                </div>
+
+                                {classesActionError && (
+                                    <div className="rounded-lg border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300">
+                                        {classesActionError}
+                                    </div>
+                                )}
+
+                                {classesActionSuccess && (
+                                    <div className="rounded-lg border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 p-3 text-sm text-emerald-700 dark:text-emerald-300">
+                                        {classesActionSuccess}
+                                    </div>
+                                )}
+
+                                {classesLoading ? (
+                                    <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                                        <Loader2 className="w-4 h-4 animate-spin" /> Cargando clases...
+                                    </div>
+                                ) : availableClasses.length === 0 ? (
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">No hay clases disponibles para asignar.</p>
+                                ) : (
+                                    <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                                        {availableClasses.map((cl) => (
+                                            <label key={cl.id} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedClassIds.includes(cl.id)}
+                                                    onChange={() => toggleClassSelection(cl.id)}
+                                                    className="w-4 h-4 text-indigo-600 rounded border-slate-300"
+                                                />
+                                                <div>
+                                                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{cl.name || 'Clase'}</p>
+                                                    <p className="text-xs text-slate-500 dark:text-slate-400">{(cl.studentIds || []).length} alumno(s)</p>
+                                                </div>
+                                            </label>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Actions */}
                         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
                             <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-colors cursor-pointer">Cancelar</button>
@@ -997,6 +1172,25 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                 >
                                     {shareLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     Aplicar cambios
+                                </button>
+                            )}
+                            {activeTab === 'classes' && canManageClassesTab && canDirectAssignClasses && (
+                                <button
+                                    type="button"
+                                    onClick={handleSaveClassAssignments}
+                                    className="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 flex items-center gap-2 transition-colors"
+                                >
+                                    <Save className="w-4 h-4" /> Guardar clases
+                                </button>
+                            )}
+                            {activeTab === 'classes' && canManageClassesTab && !canDirectAssignClasses && (
+                                <button
+                                    type="button"
+                                    onClick={handleRequestClassAssignments}
+                                    disabled={classesActionLoading}
+                                    className="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {classesActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />} Solicitar asignación
                                 </button>
                             )}
                         </div>
