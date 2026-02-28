@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { normalizeText } from '../../../utils/stringUtils';
 import { useShortcuts } from '../../../hooks/useShortcuts';
-import { isShortcutItem, isOwnedByCurrentUser, isSharedWithCurrentUser } from '../../../utils/permissionUtils';
+import { getNormalizedRole, isShortcutItem, isOwnedByCurrentUser, isSharedWithCurrentUser } from '../../../utils/permissionUtils';
 
 const EMPTY_MANUAL_ORDER = { subjects: [], folders: [] };
 
@@ -55,6 +55,17 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     const [deleteConfig, setDeleteConfig] = useState({ isOpen: false, type: null, item: null });
 
     const isAllLevelsMode = viewMode === 'usage' || viewMode === 'courses' || viewMode === 'shared';
+    const isStudentRole = getNormalizedRole(user) === 'student';
+
+    const getSubjectParentId = (subjectEntry) => {
+        if (!subjectEntry) return null;
+        if (isShortcutItem(subjectEntry)) {
+            return subjectEntry.shortcutParentId ?? subjectEntry.folderId ?? subjectEntry.parentId ?? null;
+        }
+        return subjectEntry.folderId ?? null;
+    };
+
+    const isRootLevelSubject = (subjectEntry) => !getSubjectParentId(subjectEntry);
 
     const debugVisibility = (stage, payload = {}) => {
         console.info('[VISIBILITY_DEBUG][home-state]', {
@@ -381,7 +392,8 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         if (query) {
             const matchedSubjects = subjectsWithShortcuts.filter(s => {
                 const subjectName = (s.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-                return subjectName.includes(query) && isRelated(s) && (viewMode !== 'grid' || isVisibleInManual(s));
+                const studentScopeAllowed = !(isStudentRole && (viewMode === 'usage' || viewMode === 'courses')) || isRootLevelSubject(s);
+                return subjectName.includes(query) && isRelated(s) && studentScopeAllowed && (viewMode !== 'grid' || isVisibleInManual(s));
             });
             return { 'Resultados de búsqueda': matchedSubjects };
         }
@@ -407,7 +419,12 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         }
 
         const sourceSubjects = selectedTags.length > 0 || viewMode === 'tags' ? filteredSubjectsByTags : subjectsWithShortcuts;
-        const subjectsToGroup = sourceSubjects.filter(isRelated);
+        const subjectsToGroup = sourceSubjects
+            .filter(isRelated)
+            .filter(sub => {
+                if (!(isStudentRole && (viewMode === 'usage' || viewMode === 'courses'))) return true;
+                return isRootLevelSubject(sub);
+            });
 
         if (viewMode === 'usage') {
             const sorted = [...subjectsToGroup].sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
@@ -508,7 +525,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
         }
 
         return { Todas: subjectsToGroup };
-    }, [subjects, subjectsWithShortcuts, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery]);
+    }, [subjects, subjectsWithShortcuts, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery, isStudentRole]);
 
     const { searchFolders, searchSubjects } = useMemo(() => {
         if (!searchQuery || searchQuery.trim() === '') {

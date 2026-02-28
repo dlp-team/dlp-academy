@@ -8,7 +8,7 @@ const FolderCardTab = ({ isModern, gradientClass, scaleMultiplier, isOrphan = fa
                 isModern 
                     ? `bg-gradient-to-br ${gradientClass}` 
                     : `bg-gradient-to-br ${gradientClass} opacity-90`
-            } ${isOrphan ? 'saturate-50 brightness-95' : ''}`}
+            } ${isOrphan ? 'saturate-[0.18] grayscale-[0.55] brightness-[0.92]' : ''}`}
             style={{ 
                 width: '40%',
                 height: `${21 * scaleMultiplier}px`,

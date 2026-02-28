@@ -285,7 +285,7 @@ const FolderListItem = ({
                             <ChevronRight size={20} />
                         </div>
                     </div>
-                    <div className={`relative flex items-center justify-center rounded-lg bg-gradient-to-br ${item.color || 'from-indigo-500 to-purple-500'} ${isOrphan ? 'saturate-[0.22] grayscale-[0.38] brightness-95' : ''}`} style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px`, flexShrink: 0 }}>
+                    <div className={`relative flex items-center justify-center rounded-lg bg-gradient-to-br ${item.color || 'from-indigo-500 to-purple-500'} ${isOrphan ? 'saturate-[0.18] grayscale-[0.55] brightness-[0.92]' : ''}`} style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px`, flexShrink: 0 }}>
                         {/* Main folder or subject icon */}
                         {item.icon ? (
                             <SubjectIcon iconName={item.icon} className="text-white" style={{ width: `${iconSize}px`, height: `${iconSize}px` }} />
