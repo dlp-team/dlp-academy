@@ -26,8 +26,9 @@ import HomeModals from './components/HomeModals';
 import HomeShareConfirmModals from './components/HomeShareConfirmModals';
 import FolderTreeModal from '../../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../Subject/modals/SubjectTopicModal';
-import { getPermissionLevel, isSharedForCurrentUser as isItemSharedForCurrentUser } from '../../utils/permissionUtils';
-import { mergeSourceAndShortcutItems } from '../../utils/homeMergeUtils';
+import { getPermissionLevel, isShortcutItem, isSharedForCurrentUser as isSharedForCurrentUserUtil } from '../../utils/permissionUtils';
+import { mergeSourceAndShortcutItems } from '../../utils/mergeUtils';
+import { useInstitutionHomeThemeTokens } from './hooks/useInstitutionHomeThemeTokens';
 
 
 const Home = ({ user }) => {
@@ -38,6 +39,7 @@ const Home = ({ user }) => {
     const [sharedScopeSelected, setSharedScopeSelected] = useState(true);
     const [hasInitialDataLoaded, setHasInitialDataLoaded] = useState(false);
     const [searchParams, setSearchParams] = useSearchParams();
+    const homeThemeTokens = useInstitutionHomeThemeTokens(user);
     const logic = useHomeLogic(user, searchQuery);
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
     const {
@@ -165,10 +167,7 @@ const Home = ({ user }) => {
     }, [logic.subjects, logic.resolvedShortcuts]);
 
     const isSharedForCurrentUser = React.useCallback((item) => {
-        return isItemSharedForCurrentUser(item, user, {
-            treatShortcutAsShared: true,
-            requireSubjectSharedFlag: true
-        });
+        return isSharedForCurrentUserUtil(item, user);
     }, [user]);
 
     const availableControlTags = useMemo(() => {
@@ -295,6 +294,7 @@ const Home = ({ user }) => {
                         />
                         <SharedView 
                             user={user}
+                            homeThemeTokens={homeThemeTokens}
                             sharedFolders={sharedFolders}
                             sharedSubjects={sharedSubjects}
                             cardScale={logic.cardScale}
@@ -378,6 +378,7 @@ const Home = ({ user }) => {
                 ) : (
                     <>
                         <HomeShareConfirmModals
+                            homeThemeTokens={homeThemeTokens}
                             shareConfirm={shareConfirm}
                             setShareConfirm={setShareConfirm}
                             unshareConfirm={unshareConfirm}
@@ -406,6 +407,7 @@ const Home = ({ user }) => {
                                 {hasContent ? (
                                     <HomeContent 
                                         user={user}
+                                        homeThemeTokens={homeThemeTokens}
                                         subjects={logic.subjects || []}
                                         folders={logic.folders || []}
                                         resolvedShortcuts={logic.resolvedShortcuts || []}
@@ -473,7 +475,7 @@ const Home = ({ user }) => {
                                         <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                                             No se encontraron resultados
                                         </h3>
-                                        <p className="text-gray-500 dark:text-gray-400 text-center max-w-md">
+                                        <p className={`${homeThemeTokens.mutedTextClass} text-center max-w-md`}>
                                             No hay asignaturas o carpetas que coincidan con "<span className="font-semibold">{searchQuery}</span>"
                                         </p>
                                         <button
@@ -485,6 +487,7 @@ const Home = ({ user }) => {
                                     </div>
                                 ) : (
                                     <HomeEmptyState 
+                                        homeThemeTokens={homeThemeTokens}
                                         setSubjectModalConfig={logic.setSubjectModalConfig}
                                         viewMode={logic.viewMode}
                                         layoutMode={logic.layoutMode}
@@ -501,6 +504,7 @@ const Home = ({ user }) => {
 
             <HomeModals 
                 user={user}
+                homeThemeTokens={homeThemeTokens}
                 subjectModalConfig={logic.subjectModalConfig}
                 setSubjectModalConfig={logic.setSubjectModalConfig}
                 folderModalConfig={logic.folderModalConfig}
