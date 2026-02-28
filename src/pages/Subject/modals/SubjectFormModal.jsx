@@ -600,9 +600,10 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 <div className="relative transform overflow-hidden bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[calc(100vh-10rem)] shadow-xl text-left animate-in fade-in zoom-in duration-200 border border-transparent dark:border-slate-800 transition-colors">
                     
                     {/* Header */}
-                    <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-800/50 transition-colors">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{isEditing ? 'Editar Asignatura' : 'Nueva Asignatura'}</h3>
-                        <button onClick={onClose} className="p-1 hover:bg-gray-200 dark:hover:bg-slate-700 rounded-full text-gray-500 dark:text-gray-400 transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
+                    <div className="relative px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center transition-colors overflow-hidden">
+                        <div className={`absolute inset-0 bg-gradient-to-r ${formData.color || 'from-blue-400 to-blue-600'} opacity-15 dark:opacity-20`} />
+                        <h3 className="relative text-lg font-bold text-gray-900 dark:text-white">{isEditing ? 'Editar Asignatura' : 'Nueva Asignatura'}</h3>
+                        <button onClick={onClose} className="relative p-1 hover:bg-gray-200/80 dark:hover:bg-slate-700/80 rounded-full text-gray-600 dark:text-gray-300 transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
                     </div>
 
                     {/* Tabs */}
