@@ -31,6 +31,7 @@ const FolderManager = ({
     const [shareSuggestionsOpen, setShareSuggestionsOpen] = useState(false);
     const [ownerEmailResolved, setOwnerEmailResolved] = useState('');
     const [pendingShareAction, setPendingShareAction] = useState(null);
+    const [showSelfUnshareConfirm, setShowSelfUnshareConfirm] = useState(false);
     const [pendingPermissionChanges, setPendingPermissionChanges] = useState({});
     const [pendingUnshares, setPendingUnshares] = useState([]);
     const [shareLoading, setShareLoading] = useState(false);
@@ -82,6 +83,7 @@ const FolderManager = ({
         setShareSuggestionsOpen(false);
         setOwnerEmailResolved('');
         setPendingShareAction(null);
+        setShowSelfUnshareConfirm(false);
         setPendingPermissionChanges({});
         setPendingUnshares([]);
         setShareError('');
@@ -374,29 +376,29 @@ const FolderManager = ({
 
     const requestRemoveMyShortcutAccess = () => {
         if (!formData?.shortcutId || !user?.email) return;
-        setPendingShareAction({ type: 'self-unshare' });
+        setShowSelfUnshareConfirm(true);
         setShareError('');
         setShareSuccess('');
     };
 
+    const confirmRemoveMyShortcutAccess = async () => {
+        if (!formData?.shortcutId || !user?.email) return;
+
+        try {
+            setShareLoading(true);
+            await onUnshare(formData.id, user.email);
+            await onDeleteShortcut(formData.shortcutId);
+            setShowSelfUnshareConfirm(false);
+            setShareLoading(false);
+            onClose();
+        } catch (error) {
+            setShareLoading(false);
+            setShareError(error?.message || 'No se pudo eliminar tu acceso.');
+        }
+    };
+
     const confirmPendingShareAction = async () => {
         if (!pendingShareAction) return;
-
-        if (pendingShareAction.type === 'self-unshare') {
-            try {
-                setShareLoading(true);
-                await onUnshare(formData.id, user.email);
-                await onDeleteShortcut(formData.shortcutId);
-                setPendingShareAction(null);
-                setShareLoading(false);
-                onClose();
-            } catch (error) {
-                setShareLoading(false);
-                setShareError(error?.message || 'No se pudo eliminar tu acceso.');
-                setPendingShareAction(null);
-            }
-            return;
-        }
 
         if (pendingShareAction.type !== 'apply-all') {
             setPendingShareAction(null);
@@ -481,11 +483,26 @@ const FolderManager = ({
         return entry?.photoURL || entry?.photoUrl || entry?.avatarUrl || entry?.avatar || '';
     };
 
+    const getDisplayName = (entry) => {
+        const explicitName = entry?.displayName || entry?.name || entry?.fullName || entry?.userName || '';
+        if (explicitName) return explicitName;
+
+        const email = String(entry?.email || '').trim();
+        if (!email.includes('@')) return email || 'Usuario';
+        const localPart = email.split('@')[0];
+        return localPart
+            .replace(/[._-]+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .replace(/\b\w/g, (char) => char.toUpperCase());
+    };
+
     const ownerEmailRaw = initialData?.ownerEmail || ownerEmailResolved || (formData?.ownerId === user?.uid ? user?.email : '') || '';
     const ownerAvatar = initialData?.ownerPhotoURL || initialData?.ownerPhotoUrl || initialData?.ownerAvatar || (formData?.ownerId === user?.uid ? (user?.photoURL || user?.avatarUrl || '') : '');
+    const ownerDisplayName = initialData?.ownerName || initialData?.ownerDisplayName || (formData?.ownerId === user?.uid ? (user?.displayName || user?.name || '') : '');
     const ownerEmailNormalized = ownerEmailRaw.toLowerCase();
     const ownerEntry = ownerEmailRaw
-        ? [{ email: ownerEmailRaw, role: 'owner', isOwnerEntry: true, photoURL: ownerAvatar }]
+        ? [{ email: ownerEmailRaw, role: 'owner', isOwnerEntry: true, photoURL: ownerAvatar, displayName: ownerDisplayName }]
         : [];
     const sharedWithoutOwner = sharedList.filter(share => (share.email || '').toLowerCase() !== ownerEmailNormalized);
     const allSharedEntries = [...ownerEntry, ...sharedWithoutOwner];
@@ -857,11 +874,12 @@ const FolderManager = ({
                                             />
                                         )}
                                         <div className="space-y-2">
-                                            {displayedSharedList.map((share) => (
-                                                (() => {
-                                                    const isPendingUnshare = pendingUnshares.includes(share.email);
-                                                    const avatarUrl = getAvatarUrl(share);
-                                                    return (
+                                            {displayedSharedList.map((share) => {
+                                                const isPendingUnshare = pendingUnshares.includes(share.email);
+                                                const avatarUrl = getAvatarUrl(share);
+                                                const displayName = getDisplayName(share);
+                                                const currentRole = pendingPermissionChanges[share.email] || share.role || 'viewer';
+                                                return (
                                                 <div
                                                     key={share.email}
                                                     className={`flex items-center justify-between p-3 rounded-lg transition-colors border ${
@@ -883,48 +901,54 @@ const FolderManager = ({
                                                             </div>
                                                         )}
                                                         <div>
-                                                        <p className={`text-sm font-medium ${isPendingUnshare ? 'text-red-700 dark:text-red-300 line-through' : 'text-gray-900 dark:text-white'}`}>
+                                                        <p className={`text-sm font-semibold ${isPendingUnshare ? 'text-red-700 dark:text-red-300' : 'text-gray-900 dark:text-white'}`}>
+                                                            {displayName}
+                                                        </p>
+                                                        <p className={`text-xs mt-0.5 ${isPendingUnshare ? 'text-red-600 dark:text-red-300 line-through' : 'text-gray-500 dark:text-gray-400'}`}>
                                                             {share.email}
                                                         </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
                                                         {share.role === 'owner' ? (
-                                                            <p className="text-xs text-indigo-600 dark:text-indigo-400 font-medium mt-1">Propietario</p>
+                                                            <span className="text-xs px-2 py-1 rounded-md bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium">
+                                                                Propietario
+                                                            </span>
                                                         ) : isOwnerManager ? (
                                                             <select
-                                                                value={pendingPermissionChanges[share.email] || share.role || 'viewer'}
+                                                                value={currentRole}
                                                                 onChange={(e) => handleUpdatePermission(share.email, e.target.value)}
-                                                                disabled={pendingUnshares.includes(share.email)}
+                                                                disabled={isPendingUnshare}
                                                                 className="mt-1 text-xs px-2 py-1 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 disabled:opacity-70"
                                                             >
                                                                 <option value="viewer">Lector</option>
                                                                 <option value="editor">Editor</option>
                                                             </select>
                                                         ) : (
-                                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                            <span className="text-xs px-2 py-1 rounded-md bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300">
                                                                 {share.role === 'viewer' ? 'Lector' : 'Editor'}
-                                                            </p>
+                                                            </span>
                                                         )}
-                                                        </div>
+                                                        {share.role !== 'owner' && !unshareBlockedInSharedFolder && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleUnshareAction(share.email)}
+                                                                disabled={!canManageSharing}
+                                                                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                                                                    isPendingUnshare
+                                                                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/45'
+                                                                        : 'hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400'
+                                                                }`}
+                                                                title={isPendingUnshare ? 'Deshacer quitar acceso' : 'Quitar acceso al aplicar cambios'}
+                                                                style={{ display: canManageSharing ? 'inline-flex' : 'none' }}
+                                                            >
+                                                                {isPendingUnshare ? <RotateCcw size={16} /> : <Trash2 size={16} />}
+                                                            </button>
+                                                        )}
                                                     </div>
-                                                    {share.role !== 'owner' && !unshareBlockedInSharedFolder && (
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => handleUnshareAction(share.email)}
-                                                            disabled={!canManageSharing}
-                                                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                                                                isPendingUnshare
-                                                                    ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/45'
-                                                                    : 'hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400'
-                                                            }`}
-                                                            title={pendingUnshares.includes(share.email) ? 'Deshacer quitar acceso' : 'Quitar acceso al aplicar cambios'}
-                                                            style={{ display: canManageSharing ? 'inline-flex' : 'none' }}
-                                                        >
-                                                            {isPendingUnshare ? <RotateCcw size={16} /> : <Trash2 size={16} />}
-                                                        </button>
-                                                    )}
                                                 </div>
-                                                    );
-                                                })()
-                                            ))}
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 )}
@@ -939,13 +963,38 @@ const FolderManager = ({
                                 )}
 
                                 {isShortcutEditing && !unshareBlockedInSharedFolder && (
-                                    <button
-                                        type="button"
-                                        onClick={requestRemoveMyShortcutAccess}
-                                        className="w-full px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 rounded-xl font-medium transition-colors"
-                                    >
-                                        Eliminar acceso para mí
-                                    </button>
+                                    <div className="space-y-2">
+                                        <button
+                                            type="button"
+                                            onClick={requestRemoveMyShortcutAccess}
+                                            className="w-full px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 rounded-xl font-medium transition-colors"
+                                        >
+                                            Eliminar acceso para mí
+                                        </button>
+                                        {showSelfUnshareConfirm && (
+                                            <div className="p-3 rounded-lg border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20">
+                                                <p className="text-sm text-red-800 dark:text-red-200">
+                                                    Confirma si deseas eliminar tu acceso. Esta acción solo revocará tu acceso y eliminará tu acceso directo, sin aplicar otros cambios pendientes.
+                                                </p>
+                                                <div className="mt-3 flex justify-end gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowSelfUnshareConfirm(false)}
+                                                        className="px-3 py-1.5 text-sm rounded-md bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300"
+                                                    >
+                                                        Cancelar
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={confirmRemoveMyShortcutAccess}
+                                                        className="px-3 py-1.5 text-sm rounded-md bg-red-600 hover:bg-red-700 text-white"
+                                                    >
+                                                        Confirmar eliminación
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 )}
                             </div>
                         )}
@@ -971,39 +1020,28 @@ const FolderManager = ({
                         </div>
                     </form>
 
-                    {pendingShareAction?.type && (
+                    {pendingShareAction?.type === 'apply-all' && (
                         <div className="absolute inset-0 z-40 flex items-center justify-center p-4">
                             <div className="absolute inset-0 bg-black/55" onClick={() => setPendingShareAction(null)} />
                             <div className="relative w-full max-w-lg rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-2xl">
-                                {pendingShareAction.type === 'apply-all' ? (
-                                    <>
-                                        <h4 className="text-base font-semibold text-gray-900 dark:text-white">Confirmar aplicación de cambios</h4>
-                                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Se aplicarán los siguientes cambios de compartición:</p>
-                                        <ul className="mt-3 list-disc list-inside text-sm text-gray-700 dark:text-gray-200 space-y-1">
-                                            {shareQueue.length > 0 && <li>Compartir con {shareQueue.length} usuario(s) nuevos.</li>}
-                                            {stagedPermissionEntries.length > 0 && <li>Actualizar permisos de {stagedPermissionEntries.length} usuario(s).</li>}
-                                            {pendingUnshares.length > 0 && <li>Quitar acceso a {pendingUnshares.length} usuario(s).</li>}
-                                        </ul>
-                                        <div className="mt-3 max-h-32 overflow-y-auto rounded-md border border-gray-200 dark:border-slate-700 p-2 text-xs text-gray-700 dark:text-gray-300">
-                                            {shareQueue.map(entry => (
-                                                <p key={`add-${entry.email}`}>• {entry.email}: se añadirá como {entry.role === 'editor' ? 'Editor' : 'Lector'}.</p>
-                                            ))}
-                                            {stagedPermissionEntries.map(([email, role]) => (
-                                                <p key={`perm-${email}`}>• {email}: permiso cambiará a {role === 'editor' ? 'Editor' : 'Lector'}.</p>
-                                            ))}
-                                            {pendingUnshares.map(email => (
-                                                <p key={`del-${email}`}>• {email}: perderá acceso a esta carpeta.</p>
-                                            ))}
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <h4 className="text-base font-semibold text-gray-900 dark:text-white">Confirmar eliminar acceso para mí</h4>
-                                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                                            Esta acción revocará tu acceso compartido y eliminará tu acceso directo a esta carpeta. Este será el único cambio aplicado.
-                                        </p>
-                                    </>
-                                )}
+                                <h4 className="text-base font-semibold text-gray-900 dark:text-white">Confirmar aplicación de cambios</h4>
+                                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Se aplicarán los siguientes cambios de compartición:</p>
+                                <ul className="mt-3 list-disc list-inside text-sm text-gray-700 dark:text-gray-200 space-y-1">
+                                    {shareQueue.length > 0 && <li>Compartir con {shareQueue.length} usuario(s) nuevos.</li>}
+                                    {stagedPermissionEntries.length > 0 && <li>Actualizar permisos de {stagedPermissionEntries.length} usuario(s).</li>}
+                                    {pendingUnshares.length > 0 && <li>Quitar acceso a {pendingUnshares.length} usuario(s).</li>}
+                                </ul>
+                                <div className="mt-3 max-h-32 overflow-y-auto rounded-md border border-gray-200 dark:border-slate-700 p-2 text-xs text-gray-700 dark:text-gray-300">
+                                    {shareQueue.map(entry => (
+                                        <p key={`add-${entry.email}`}>• {entry.email}: se añadirá como {entry.role === 'editor' ? 'Editor' : 'Lector'}.</p>
+                                    ))}
+                                    {stagedPermissionEntries.map(([email, role]) => (
+                                        <p key={`perm-${email}`}>• {email}: permiso cambiará a {role === 'editor' ? 'Editor' : 'Lector'}.</p>
+                                    ))}
+                                    {pendingUnshares.map(email => (
+                                        <p key={`del-${email}`}>• {email}: perderá acceso a esta carpeta.</p>
+                                    ))}
+                                </div>
 
                                 <div className="mt-5 flex justify-end gap-2">
                                     <button
