@@ -27,6 +27,7 @@ import HomeShareConfirmModals from './components/HomeShareConfirmModals';
 import FolderTreeModal from '../../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../Subject/modals/SubjectTopicModal';
 import { getPermissionLevel, isSharedForCurrentUser as isItemSharedForCurrentUser } from '../../utils/permissionUtils';
+import { mergeSourceAndShortcutItems } from '../../utils/homeMergeUtils';
 
 
 const Home = ({ user }) => {
@@ -145,26 +146,10 @@ const Home = ({ user }) => {
             ? logic.resolvedShortcuts.filter(item => item?.targetType === 'folder')
             : [];
 
-        const merged = [];
-        const seen = new Set();
-
-        baseFolders.forEach(folder => {
-            const key = `source:${folder.id}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                merged.push(folder);
-            }
+        return mergeSourceAndShortcutItems({
+            sourceItems: baseFolders,
+            shortcutItems: shortcutFolders
         });
-
-        shortcutFolders.forEach(folder => {
-            const key = `shortcut:${folder.shortcutId || folder.id}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                merged.push(folder);
-            }
-        });
-
-        return merged;
     }, [logic.folders, logic.resolvedShortcuts]);
 
     const treeSubjects = useMemo(() => {
@@ -173,26 +158,10 @@ const Home = ({ user }) => {
             ? logic.resolvedShortcuts.filter(item => item?.targetType === 'subject')
             : [];
 
-        const merged = [];
-        const seen = new Set();
-
-        baseSubjects.forEach(subject => {
-            const key = `source:${subject.id}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                merged.push(subject);
-            }
+        return mergeSourceAndShortcutItems({
+            sourceItems: baseSubjects,
+            shortcutItems: shortcutSubjects
         });
-
-        shortcutSubjects.forEach(subject => {
-            const key = `shortcut:${subject.shortcutId || subject.id}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                merged.push(subject);
-            }
-        });
-
-        return merged;
     }, [logic.subjects, logic.resolvedShortcuts]);
 
     const isSharedForCurrentUser = React.useCallback((item) => {

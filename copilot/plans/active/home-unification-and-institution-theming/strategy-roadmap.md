@@ -8,6 +8,6 @@
 5. **Phase 05 — Validation and Rollout Guardrails**: PLANNED
 
 ## Immediate next actions
-- Execute Candidate 2: unify source+shortcut merge/dedup helpers for Home trees/lists.
-- Keep behavior parity for shortcut precedence and shared-scope filtering.
-- Produce lossless report for each incremental extraction step.
+- Execute checklist: `reviewing/verification-checklist-2026-02-28-phase-02-candidates-1-2.md`.
+- Execute Candidate 3: centralize repeated modal shell style primitives.
+- Keep incremental lossless reports per candidate.

@@ -11,6 +11,7 @@ import ListViewItem from '../../../components/modules/ListViewItem';
 import useHomeContentDnd from '../hooks/useHomeContentDnd';
 import useAutoScrollOnDrag from '../../../hooks/useAutoScrollOnDrag';
 import { isShortcutItem, getPermissionLevel, isSharedForCurrentUser as isItemSharedForCurrentUser } from '../../../utils/permissionUtils';
+import { mergeSourceAndShortcutItems } from '../../../utils/homeMergeUtils';
 
 const HomeContent = ({
     user,
@@ -153,49 +154,17 @@ const HomeContent = ({
     );
 
     const allFoldersForTree = useMemo(() => {
-        const merged = [];
-        const seen = new Set();
-
-        (folders || []).forEach(folder => {
-            const key = `source:${folder.id}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                merged.push(folder);
-            }
-        });
-
-        allShortcutFolders.forEach(folder => {
-            const key = `shortcut:${folder.shortcutId || folder.id}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                merged.push(folder);
-            }
-        });
-
-        return merged.filter(folder => matchesSharedFilter(folder));
+        return mergeSourceAndShortcutItems({
+            sourceItems: folders || [],
+            shortcutItems: allShortcutFolders
+        }).filter(folder => matchesSharedFilter(folder));
     }, [folders, allShortcutFolders, sharedScopeSelected, user?.uid, user?.email]);
 
     const allSubjectsForTree = useMemo(() => {
-        const merged = [];
-        const seen = new Set();
-
-        (subjects || []).forEach(subject => {
-            const key = `source:${subject.id}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                merged.push(subject);
-            }
-        });
-
-        allShortcutSubjects.forEach(subject => {
-            const key = `shortcut:${subject.shortcutId || subject.id}`;
-            if (!seen.has(key)) {
-                seen.add(key);
-                merged.push(subject);
-            }
-        });
-
-        return merged.filter(subject => matchesSharedFilter(subject));
+        return mergeSourceAndShortcutItems({
+            sourceItems: subjects || [],
+            shortcutItems: allShortcutSubjects
+        }).filter(subject => matchesSharedFilter(subject));
     }, [subjects, allShortcutSubjects, sharedScopeSelected, user?.uid, user?.email]);
 
     const handleGoToFolderFromGhost = (folderId) => {
