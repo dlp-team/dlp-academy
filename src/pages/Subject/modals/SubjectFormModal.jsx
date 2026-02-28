@@ -1,6 +1,6 @@
 // src/pages/Subject/modals/SubjectFormModal.jsx
 import React, { useState, useEffect } from 'react';
-import { X, Save, Users, Trash2, Share2, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Save, Users, Trash2, Share2, Loader2, CheckCircle, AlertCircle, RotateCcw } from 'lucide-react';
 import { MODERN_FILL_COLORS, EDUCATION_LEVELS } from '../../../utils/subjectConstants';
 import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
@@ -30,7 +30,6 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [pendingShareAction, setPendingShareAction] = useState(null);
     const [pendingPermissionChanges, setPendingPermissionChanges] = useState({});
     const [pendingUnshares, setPendingUnshares] = useState([]);
-    const [pendingRemoveMyAccess, setPendingRemoveMyAccess] = useState(false);
     const [shareLoading, setShareLoading] = useState(false);
     const [shareError, setShareError] = useState('');
     const [shareSuccess, setShareSuccess] = useState('');
@@ -101,7 +100,6 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setPendingShareAction(null);
             setPendingPermissionChanges({});
             setPendingUnshares([]);
-            setPendingRemoveMyAccess(false);
             if (isEditing && initialData) {
                 const resolvedSelectors = resolveCourseSelectors(
                     initialData.course || '',
@@ -379,8 +377,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const hasPendingSharingChanges =
         shareQueue.length > 0 ||
         pendingUnshares.length > 0 ||
-        stagedPermissionEntries.length > 0 ||
-        pendingRemoveMyAccess;
+        stagedPermissionEntries.length > 0;
 
     const handleApplySharingChanges = () => {
         if (!hasPendingSharingChanges) {
@@ -391,14 +388,31 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         setPendingShareAction({ type: 'apply-all' });
     };
 
-    const toggleRemoveMyShortcutAccess = () => {
-        setPendingRemoveMyAccess(prev => !prev);
+    const requestRemoveMyShortcutAccess = () => {
+        if (!formData?.shortcutId || !user?.email) return;
+        setPendingShareAction({ type: 'self-unshare' });
         setShareError('');
         setShareSuccess('');
     };
 
     const confirmPendingShareAction = async () => {
         if (!pendingShareAction) return;
+
+        if (pendingShareAction.type === 'self-unshare') {
+            try {
+                setShareLoading(true);
+                await onUnshare(formData.id, user.email);
+                await onDeleteShortcut(formData.shortcutId);
+                setPendingShareAction(null);
+                setShareLoading(false);
+                onClose();
+            } catch (error) {
+                setShareLoading(false);
+                setShareError(error?.message || 'No se pudo eliminar tu acceso.');
+                setPendingShareAction(null);
+            }
+            return;
+        }
 
         if (pendingShareAction.type !== 'apply-all') {
             setPendingShareAction(null);
@@ -455,20 +469,10 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             }
         }
 
-        if (pendingRemoveMyAccess && formData?.shortcutId && user?.email) {
-            try {
-                await onUnshare(formData.id, user.email);
-                await onDeleteShortcut(formData.shortcutId);
-            } catch (error) {
-                failures.push('No se pudo eliminar tu acceso');
-            }
-        }
-
         setSharedList(localSharedList);
         setShareQueue([]);
         setPendingPermissionChanges({});
         setPendingUnshares([]);
-        setPendingRemoveMyAccess(false);
         setPendingShareAction(null);
 
         if (failures.length > 0) {
@@ -481,16 +485,23 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         }
 
         setShareLoading(false);
+    };
 
-        if (pendingRemoveMyAccess && failures.length === 0) {
-            onClose();
-        }
+    const getAvatarText = (email = '') => {
+        const normalized = String(email || '').trim();
+        if (!normalized) return '?';
+        return normalized.charAt(0).toUpperCase();
+    };
+
+    const getAvatarUrl = (entry) => {
+        return entry?.photoURL || entry?.photoUrl || entry?.avatarUrl || entry?.avatar || '';
     };
 
     const ownerEmailRaw = initialData?.ownerEmail || ownerEmailResolved || (formData?.ownerId === user?.uid ? user?.email : '') || '';
+    const ownerAvatar = initialData?.ownerPhotoURL || initialData?.ownerPhotoUrl || initialData?.ownerAvatar || (formData?.ownerId === user?.uid ? (user?.photoURL || user?.avatarUrl || '') : '');
     const ownerEmailNormalized = ownerEmailRaw.toLowerCase();
     const ownerEntry = ownerEmailRaw
-        ? [{ email: ownerEmailRaw, role: 'owner', isOwnerEntry: true }]
+        ? [{ email: ownerEmailRaw, role: 'owner', isOwnerEntry: true, photoURL: ownerAvatar }]
         : [];
     const sharedWithoutOwner = sharedList.filter(share => (share.email || '').toLowerCase() !== ownerEmailNormalized);
     const allSharedEntries = [...ownerEntry, ...sharedWithoutOwner];
@@ -537,7 +548,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto">
             <div className="flex min-h-full items-start justify-center p-4 pt-28 text-center">
-                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm transition-opacity" onClick={onClose} />
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" onClick={onClose} />
                 <div className="relative transform overflow-hidden bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[calc(100vh-8rem)] shadow-xl text-left animate-in fade-in zoom-in duration-200 border border-transparent dark:border-slate-800 transition-colors">
                     
                     {/* Header */}
@@ -707,49 +718,6 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     </div>
                                 )}
 
-                                {pendingShareAction?.type === 'apply-all' && (
-                                    <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20">
-                                        <p className="text-sm text-amber-800 dark:text-amber-200">
-                                            Se aplicarán los cambios pendientes:
-                                        </p>
-                                        <ul className="mt-2 list-disc list-inside text-sm text-amber-800 dark:text-amber-200 space-y-1">
-                                            {shareQueue.length > 0 && <li>Compartir con {shareQueue.length} usuario(s) nuevos.</li>}
-                                            {stagedPermissionEntries.length > 0 && <li>Actualizar permisos de {stagedPermissionEntries.length} usuario(s).</li>}
-                                            {pendingUnshares.length > 0 && <li>Quitar acceso a {pendingUnshares.length} usuario(s).</li>}
-                                            {pendingRemoveMyAccess && <li>Eliminar tu acceso directo y revocar tu acceso a este elemento.</li>}
-                                        </ul>
-                                        {(stagedPermissionEntries.length > 0 || pendingUnshares.length > 0 || shareQueue.length > 0) && (
-                                            <div className="mt-2 max-h-28 overflow-y-auto rounded-md border border-amber-200/70 dark:border-amber-700/70 p-2 text-xs text-amber-900 dark:text-amber-100">
-                                                {shareQueue.map(entry => (
-                                                    <p key={`add-${entry.email}`}>• {entry.email}: se añadirá como {entry.role === 'editor' ? 'Editor' : 'Lector'}.</p>
-                                                ))}
-                                                {stagedPermissionEntries.map(([email, role]) => (
-                                                    <p key={`perm-${email}`}>• {email}: permiso cambiará a {role === 'editor' ? 'Editor' : 'Lector'}.</p>
-                                                ))}
-                                                {pendingUnshares.map(email => (
-                                                    <p key={`del-${email}`}>• {email}: perderá acceso a esta asignatura.</p>
-                                                ))}
-                                            </div>
-                                        )}
-                                        <div className="mt-3 flex justify-end gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => setPendingShareAction(null)}
-                                                className="px-3 py-1.5 text-sm rounded-md bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300"
-                                            >
-                                                Cancelar
-                                            </button>
-                                            <button
-                                                type="button"
-                                                onClick={confirmPendingShareAction}
-                                                className="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
-                                            >
-                                                Confirmar
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
                                 {/* Shared Users List */}
                                 {allSharedEntries.length > 0 && (
                                     <div>
@@ -767,12 +735,32 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                         )}
                                         <div className="space-y-2">
                                             {displayedSharedList.map((share) => (
+                                                (() => {
+                                                    const isPendingUnshare = pendingUnshares.includes(share.email);
+                                                    const avatarUrl = getAvatarUrl(share);
+                                                    return (
                                                 <div
                                                     key={share.email}
-                                                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-slate-800 rounded-lg transition-colors"
+                                                    className={`flex items-center justify-between p-3 rounded-lg transition-colors border ${
+                                                        isPendingUnshare
+                                                            ? 'bg-red-50 border-red-200 dark:bg-red-900/25 dark:border-red-800/70'
+                                                            : 'bg-gray-50 border-transparent dark:bg-slate-800'
+                                                    }`}
                                                 >
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                                    <div className="flex items-center gap-3">
+                                                        {avatarUrl ? (
+                                                            <img
+                                                                src={avatarUrl}
+                                                                alt={share.email}
+                                                                className="w-9 h-9 rounded-full object-cover border border-gray-200 dark:border-slate-700"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/35 text-indigo-700 dark:text-indigo-300 flex items-center justify-center text-sm font-semibold border border-indigo-200 dark:border-indigo-800">
+                                                                {getAvatarText(share.email)}
+                                                            </div>
+                                                        )}
+                                                        <div>
+                                                        <p className={`text-sm font-medium ${isPendingUnshare ? 'text-red-700 dark:text-red-300 line-through' : 'text-gray-900 dark:text-white'}`}>
                                                             {share.email}
                                                         </p>
                                                         {share.role === 'owner' ? (
@@ -782,7 +770,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                                 value={pendingPermissionChanges[share.email] || share.role || 'viewer'}
                                                                 onChange={(e) => handleUpdatePermission(share.email, e.target.value)}
                                                                 disabled={pendingUnshares.includes(share.email)}
-                                                                className="mt-1 text-xs px-2 py-1 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300"
+                                                                className="mt-1 text-xs px-2 py-1 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-gray-700 dark:text-gray-300 disabled:opacity-70"
                                                             >
                                                                 <option value="viewer">Lector</option>
                                                                 <option value="editor">Editor</option>
@@ -792,20 +780,27 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                                 {share.role === 'viewer' ? 'Lector' : 'Editor'}
                                                             </p>
                                                         )}
+                                                        </div>
                                                     </div>
                                                     {share.role !== 'owner' && !unshareBlockedInSharedFolder && (
                                                         <button
                                                             type="button"
                                                             onClick={() => handleUnshareAction(share.email)}
                                                             disabled={!canManageSharing}
-                                                            className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg transition-colors cursor-pointer"
+                                                            className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                                                                isPendingUnshare
+                                                                    ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/45'
+                                                                    : 'hover:bg-red-100 dark:hover:bg-red-900/30 text-red-600 dark:text-red-400'
+                                                            }`}
                                                             title={pendingUnshares.includes(share.email) ? 'Deshacer quitar acceso' : 'Quitar acceso al aplicar cambios'}
                                                             style={{ display: canManageSharing ? 'inline-flex' : 'none' }}
                                                         >
-                                                            <Trash2 size={16} />
+                                                            {isPendingUnshare ? <RotateCcw size={16} /> : <Trash2 size={16} />}
                                                         </button>
                                                     )}
                                                 </div>
+                                                    );
+                                                })()
                                             ))}
                                         </div>
                                     </div>
@@ -823,10 +818,10 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                 {isShortcutEditing && !unshareBlockedInSharedFolder && (
                                     <button
                                         type="button"
-                                        onClick={toggleRemoveMyShortcutAccess}
+                                        onClick={requestRemoveMyShortcutAccess}
                                         className="w-full px-4 py-2 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 rounded-xl font-medium transition-colors"
                                     >
-                                        {pendingRemoveMyAccess ? 'Deshacer eliminar acceso para mí' : 'Marcar eliminar acceso para mí'}
+                                        Eliminar acceso para mí
                                     </button>
                                 )}
                             </div>
@@ -853,6 +848,60 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                             )}
                         </div>
                     </form>
+
+                    {pendingShareAction?.type && (
+                        <div className="absolute inset-0 z-40 flex items-center justify-center p-4">
+                            <div className="absolute inset-0 bg-black/55" onClick={() => setPendingShareAction(null)} />
+                            <div className="relative w-full max-w-lg rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-2xl">
+                                {pendingShareAction.type === 'apply-all' ? (
+                                    <>
+                                        <h4 className="text-base font-semibold text-gray-900 dark:text-white">Confirmar aplicación de cambios</h4>
+                                        <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Se aplicarán los siguientes cambios de compartición:</p>
+                                        <ul className="mt-3 list-disc list-inside text-sm text-gray-700 dark:text-gray-200 space-y-1">
+                                            {shareQueue.length > 0 && <li>Compartir con {shareQueue.length} usuario(s) nuevos.</li>}
+                                            {stagedPermissionEntries.length > 0 && <li>Actualizar permisos de {stagedPermissionEntries.length} usuario(s).</li>}
+                                            {pendingUnshares.length > 0 && <li>Quitar acceso a {pendingUnshares.length} usuario(s).</li>}
+                                        </ul>
+                                        <div className="mt-3 max-h-32 overflow-y-auto rounded-md border border-gray-200 dark:border-slate-700 p-2 text-xs text-gray-700 dark:text-gray-300">
+                                            {shareQueue.map(entry => (
+                                                <p key={`add-${entry.email}`}>• {entry.email}: se añadirá como {entry.role === 'editor' ? 'Editor' : 'Lector'}.</p>
+                                            ))}
+                                            {stagedPermissionEntries.map(([email, role]) => (
+                                                <p key={`perm-${email}`}>• {email}: permiso cambiará a {role === 'editor' ? 'Editor' : 'Lector'}.</p>
+                                            ))}
+                                            {pendingUnshares.map(email => (
+                                                <p key={`del-${email}`}>• {email}: perderá acceso a esta asignatura.</p>
+                                            ))}
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <h4 className="text-base font-semibold text-gray-900 dark:text-white">Confirmar eliminar acceso para mí</h4>
+                                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                                            Esta acción revocará tu acceso compartido y eliminará tu acceso directo a esta asignatura. Este será el único cambio aplicado.
+                                        </p>
+                                    </>
+                                )}
+
+                                <div className="mt-5 flex justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setPendingShareAction(null)}
+                                        className="px-3 py-1.5 text-sm rounded-md bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={confirmPendingShareAction}
+                                        className="px-3 py-1.5 text-sm rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
+                                    >
+                                        Confirmar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
