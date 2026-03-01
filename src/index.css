@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+@property --tw-gradient-from {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: transparent;
+}
+
+@property --tw-gradient-via {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: transparent;
+}
+
+@property --tw-gradient-to {
+  syntax: "<color>";
+  inherits: false;
+  initial-value: transparent;
+}
+
 :root {
   --theme-transition-duration: 260ms;
   --theme-transition-easing: ease-in-out;
@@ -45,7 +63,7 @@ html.theme-switching,
 html.theme-switching *,
 html.theme-switching *::before,
 html.theme-switching *::after {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, box-shadow;
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, box-shadow, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
   transition-duration: var(--theme-transition-duration);
   transition-timing-function: var(--theme-transition-easing);
 }
