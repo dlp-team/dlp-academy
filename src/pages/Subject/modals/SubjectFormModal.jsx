@@ -678,7 +678,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             const overflow = failures.length > 3 ? ` y ${failures.length - 3} más` : '';
             setShareError(`${preview}${overflow}.`);
         } else if (hasPendingSharingChanges) {
-            setShareSuccess('Cambios de compartición aplicados correctamente.');
+            setShareSuccess('Cambios de accesibilidad aplicados correctamente.');
             setTimeout(() => setShareSuccess(''), 4000);
         }
 
@@ -1201,7 +1201,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                             <div className="absolute inset-0 bg-black/55" onClick={(e) => { e.stopPropagation(); setPendingShareAction(null); }} />
                             <div className="relative w-full max-w-lg rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
                                 <h4 className="text-base font-semibold text-gray-900 dark:text-white">Confirmar aplicación de cambios</h4>
-                                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Se aplicarán los siguientes cambios de compartición:</p>
+                                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Se aplicarán los siguientes cambios de accesibilidad:</p>
                                 <ul className="mt-3 list-disc list-inside text-sm text-gray-700 dark:text-gray-200 space-y-1">
                                     {shareQueue.length > 0 && <li>Compartir con {shareQueue.length} usuario(s) nuevos.</li>}
                                     {stagedPermissionEntries.length > 0 && <li>Actualizar permisos de {stagedPermissionEntries.length} usuario(s).</li>}

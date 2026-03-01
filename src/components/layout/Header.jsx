@@ -158,7 +158,7 @@ const Header = ({ user }) => {
             <img
               src={institutionBranding.logoUrl}
               alt={institutionBranding.institutionDisplayName || 'Institution logo'}
-              className="w-12 h-12 rounded-lg object-cover border border-slate-200 dark:border-slate-700"
+              className="w-12 h-12 rounded-lg object-cover"
             />
           ) : (
             <div className="bg-indigo-50 dark:bg-indigo-900/20 p-2 rounded-lg group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors">
