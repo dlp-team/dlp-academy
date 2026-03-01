@@ -1,0 +1,9 @@
+npm install -D vitest jsdom @testing-library/react @vitejs/plugin-react
+
+npx vitest
+
+npm init playwright@latest
+
+npx playwright test
+
+npx playwright test --ui
