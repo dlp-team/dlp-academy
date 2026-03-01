@@ -1,4 +1,4 @@
-npm install -D vitest jsdom @testing-library/react @vitejs/plugin-react
+git npm install -D vitest jsdom @testing-library/react @vitejs/plugin-react
 
 npx vitest
 
