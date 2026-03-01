@@ -157,7 +157,7 @@ const Home = ({ user }) => {
             next.delete('folderId');
             setSearchParams(next, { replace: true });
         }
-    }, [folderIdFromUrl, logic.folders, isStudentRole, logic.currentFolder, logic.viewMode, searchParams, rememberOrganization, setPersistedFolderId]);
+    }, [folderIdFromUrl, logic.folders, isStudentRole, rememberOrganization, setSearchParams, setPersistedFolderId]);
 
     React.useEffect(() => {
         if (isStudentRole) return;

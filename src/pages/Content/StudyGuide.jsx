@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { applyThemeToDom } from '../../utils/themeMode';
 
 import 'katex/dist/katex.min.css';
 import { BlockMath, InlineMath } from 'react-katex';
@@ -487,14 +488,8 @@ const StudyGuide = () => {
 
     const toggleDarkMode = () => {
         const newDark = !isDark;
+        applyThemeToDom(newDark ? 'dark' : 'light', { animate: true, persist: true });
         setIsDark(newDark);
-        if (newDark) {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-        }
     };
 
     useEffect(() => {

@@ -1,23 +1,7 @@
 // src/pages/Settings/hooks/useSettingsPageState.js
 import { useState, useEffect } from 'react';
 import { doc, updateDoc, onSnapshot } from 'firebase/firestore';
-
-const applyThemeToDom = (theme) => {
-  if (typeof window === 'undefined') return;
-
-  const root = window.document.documentElement;
-  const resolvedTheme = theme === 'system'
-    ? (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-    : theme;
-
-  if (resolvedTheme === 'dark') {
-    root.classList.add('dark');
-  } else {
-    root.classList.remove('dark');
-  }
-
-  localStorage.setItem('theme', theme);
-};
+import { applyThemeToDom } from '../../../utils/themeMode';
 
 /**
  * Custom hook to manage settings page state, Firestore sync, and update logic.
@@ -85,7 +69,7 @@ export default function useSettingsPageState({ user, db }) {
     }
 
     if (key === 'theme') {
-      applyThemeToDom(value);
+      applyThemeToDom(value, { animate: true, persist: true });
     }
 
     setSavingStatus('saving');

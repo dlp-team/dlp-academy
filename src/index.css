@@ -1,6 +1,9 @@
 @import "tailwindcss";
 
 :root {
+  --theme-transition-duration: 260ms;
+  --theme-transition-easing: ease-in-out;
+
   --color-primary: #6366f1;
   --color-primary-50: #eef2ff;
   --color-primary-100: #e0e7ff;
@@ -36,6 +39,24 @@
   --color-tertiary-700: #7e22ce;
   --color-tertiary-800: #6b21a8;
   --color-tertiary-900: #581c87;
+}
+
+html.theme-switching,
+html.theme-switching *,
+html.theme-switching *::before,
+html.theme-switching *::after {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, box-shadow;
+  transition-duration: var(--theme-transition-duration);
+  transition-timing-function: var(--theme-transition-easing);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-switching,
+  html.theme-switching *,
+  html.theme-switching *::before,
+  html.theme-switching *::after {
+    transition-duration: 1ms;
+  }
 }
 
 @theme {

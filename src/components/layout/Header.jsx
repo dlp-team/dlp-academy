@@ -4,6 +4,7 @@ import { GraduationCap, Settings, Moon, Sun, LayoutDashboard } from 'lucide-reac
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config'; 
 import useInstitutionBranding from '../../hooks/useInstitutionBranding';
+import { applyThemeToDom } from '../../utils/themeMode';
 
 // Import UI Helpers
 import Avatar from '../ui/Avatar';
@@ -24,19 +25,13 @@ const Header = ({ user }) => {
 
   // Apply theme to DOM and LocalStorage whenever state changes
   useEffect(() => {
-    const root = window.document.documentElement;
-    if (darkMode) {
-      root.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
-    } else {
-      root.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-    }
+    applyThemeToDom(darkMode ? 'dark' : 'light', { animate: false, persist: true });
   }, [darkMode]);
 
   // --- NEW: Handle Toggle Click (Updates State + Firestore) ---
   const handleThemeToggle = async (isDark) => {
     // 1. Update UI immediately
+    applyThemeToDom(isDark ? 'dark' : 'light', { animate: true, persist: true });
     setDarkMode(isDark);
 
     // 2. Update Firestore in background
