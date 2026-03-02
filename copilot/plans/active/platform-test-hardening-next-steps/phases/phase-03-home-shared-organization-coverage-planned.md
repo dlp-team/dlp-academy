@@ -38,3 +38,21 @@ Protect the main organization surface in Home, including folder/subject creation
 - Validation evidence:
   - `npm run test:unit -- tests/unit/hooks/useHomeContentDnd.test.js` → ✅ `1 file`, `4 tests` passed.
   - `npm run test:unit` → ✅ `7 files`, `19 tests` passed.
+- Added shortcut sharing + role matrix suite: `tests/unit/hooks/useHomeHandlers.shortcuts.test.js`.
+- Covered sharing and permission cases:
+  - Shortcut subject unshare is blocked when nested under shared-folder trees.
+  - Shortcut subject unshare proceeds outside shared trees.
+  - Shortcut folder hide path toggles manual hidden state.
+  - Non-owner folder delete path is denied.
+  - Viewer cannot move subject via Home DnD handler; editor can.
+- Additional validation evidence:
+  - `npm run test:unit -- tests/unit/hooks/useHomeHandlers.shortcuts.test.js` → ✅ `1 file`, `6 tests` passed.
+  - `npm run test:unit` → ✅ `8 files`, `25 tests` passed.
+- Added Home page-level shortcut/role suite: `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`.
+- Covered page-level sharing permission gates:
+  - Shortcut move into shared target requests owner approval workflow.
+  - Viewer is blocked from moving source content into shared target folder.
+  - Editor can move source content into shared target folder.
+- Additional validation evidence:
+  - `npm run test:unit -- tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js` → ✅ `1 file`, `3 tests` passed.
+  - `npm run test:unit` → ✅ `9 files`, `28 tests` passed.
