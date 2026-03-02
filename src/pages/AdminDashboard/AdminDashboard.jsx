@@ -5,11 +5,11 @@ import {
     Building2, Users, Search, CheckCircle2, XCircle,
     Loader2, Trash2, BookOpen, GraduationCap,
     Plus, ChevronRight, ToggleLeft, ToggleRight,
-    ShieldAlert, Globe, BarChart3
+    ShieldAlert, Globe, BarChart3, Pencil
 } from 'lucide-react';
 import {
     collection, query, where, getDocs,
-    addDoc, serverTimestamp, deleteDoc, doc, updateDoc,
+    serverTimestamp, deleteDoc, doc, updateDoc, writeBatch,
     limit, startAfter
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -82,6 +82,7 @@ const InstitutionsTab = () => {
     const [typeFilter, setTypeFilter] = useState('all');
 
     const [showCreateForm, setShowCreateForm] = useState(false);
+    const [editingInstitutionId, setEditingInstitutionId] = useState(null);
     const [form, setForm] = useState({
         name: '',
         domain: '',
@@ -150,7 +151,7 @@ const InstitutionsTab = () => {
         }
 
         try {
-            const institutionDocRef = await addDoc(collection(db, 'institutions'), {
+            const institutionPayload = {
                 name,
                 domain,
                 domains: [domain],
@@ -160,25 +161,41 @@ const InstitutionsTab = () => {
                 city,
                 country,
                 timezone,
-                onboarding_settings: {
-                    whitelist_enabled: true,
-                    magic_code_enabled: false,
-                    magic_code_value: ''
-                },
-                enabled: true,
-                createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
-            });
+            };
 
-            const invitePromises = admins.map(email => addDoc(collection(db, 'institution_invites'), {
-                email: email,
-                role: 'institutionadmin',
-                institutionId: institutionDocRef.id,
-                invitedAt: serverTimestamp()
-            }));
-            await Promise.all(invitePromises);
+            if (editingInstitutionId) {
+                await updateDoc(doc(db, 'institutions', editingInstitutionId), institutionPayload);
+                setSuccess(`Institución "${name}" actualizada correctamente.`);
+            } else {
+                const batch = writeBatch(db);
+                const institutionDocRef = doc(collection(db, 'institutions'));
 
-            setSuccess(`Institución "${name}" creada correctamente.`);
+                batch.set(institutionDocRef, {
+                    ...institutionPayload,
+                    onboarding_settings: {
+                        whitelist_enabled: true,
+                        magic_code_enabled: false,
+                        magic_code_value: ''
+                    },
+                    enabled: true,
+                    createdAt: serverTimestamp(),
+                });
+
+                admins.forEach(email => {
+                    const inviteRef = doc(collection(db, 'institution_invites'));
+                    batch.set(inviteRef, {
+                        email: email,
+                        role: 'institutionadmin',
+                        institutionId: institutionDocRef.id,
+                        invitedAt: serverTimestamp()
+                    });
+                });
+
+                await batch.commit();
+                setSuccess(`Institución "${name}" creada correctamente.`);
+            }
+
             setForm({
                 name: '',
                 domain: '',
@@ -188,6 +205,7 @@ const InstitutionsTab = () => {
                 country: '',
                 timezone: 'Europe/Madrid'
             });
+            setEditingInstitutionId(null);
             setShowCreateForm(false);
             fetchInstitutions();
         } catch { setError('Error al crear la institución.'); }
@@ -262,6 +280,7 @@ const InstitutionsTab = () => {
                     onClick={() => {
                         setError('');
                         setSuccess('');
+                        setEditingInstitutionId(null);
                         setShowCreateForm(prev => !prev);
                     }}
                     className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-purple-200 dark:shadow-purple-900/20 transition-all active:scale-95 text-sm"
@@ -273,8 +292,8 @@ const InstitutionsTab = () => {
             {showCreateForm && (
                 <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 mb-6 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Nueva Institución</h3>
-                        <button onClick={() => setShowCreateForm(false)} className="text-gray-400 hover:text-gray-600"><XCircle className="w-6 h-6" /></button>
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{editingInstitutionId ? 'Editar Institución' : 'Nueva Institución'}</h3>
+                        <button onClick={() => { setShowCreateForm(false); setEditingInstitutionId(null); }} className="text-gray-400 hover:text-gray-600"><XCircle className="w-6 h-6" /></button>
                     </div>
                     <form onSubmit={handleCreate} className="space-y-4">
                         <div>
@@ -331,9 +350,9 @@ const InstitutionsTab = () => {
                         {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2"><XCircle className="w-4 h-4" /> {error}</div>}
                         {success && <div className="p-3 bg-emerald-50 text-emerald-600 text-sm rounded-lg flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> {success}</div>}
                         <div className="flex gap-3 mt-6">
-                            <button type="button" onClick={() => setShowCreateForm(false)} className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-900 dark:text-white rounded-xl font-medium transition-all">Cerrar</button>
+                            <button type="button" onClick={() => { setShowCreateForm(false); setEditingInstitutionId(null); }} className="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-gray-900 dark:text-white rounded-xl font-medium transition-all">Cerrar</button>
                             <button type="submit" disabled={submitting} className="flex-1 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium shadow-lg shadow-purple-200 dark:shadow-purple-900/20 transition-all flex justify-center items-center gap-2">
-                                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Plus className="w-5 h-5" /><span>Crear</span></>}
+                                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (editingInstitutionId ? <><Pencil className="w-5 h-5" /><span>Guardar</span></> : <><Plus className="w-5 h-5" /><span>Crear</span></>)}
                             </button>
                         </div>
                     </form>
@@ -381,6 +400,29 @@ const InstitutionsTab = () => {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1">
+                                                <button
+                                                    onClick={() => {
+                                                        setError('');
+                                                        setSuccess('');
+                                                        setEditingInstitutionId(school.id);
+                                                        setForm({
+                                                            name: school.name || '',
+                                                            domain: school.domain || school.domains?.[0] || '',
+                                                            institutionAdministrators: Array.isArray(school.institutionAdministrators)
+                                                                ? school.institutionAdministrators.join(', ')
+                                                                : (school.adminEmail || ''),
+                                                            type: school.type || 'school',
+                                                            city: school.city || '',
+                                                            country: school.country || '',
+                                                            timezone: school.timezone || 'Europe/Madrid'
+                                                        });
+                                                        setShowCreateForm(true);
+                                                    }}
+                                                    title="Editar"
+                                                    className="text-slate-400 hover:text-indigo-500 p-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
                                                 <button onClick={() => handleToggle(school)} title={school.enabled !== false ? 'Deshabilitar' : 'Habilitar'}
                                                     className="text-slate-400 hover:text-amber-500 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors">
                                                     {school.enabled !== false ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}

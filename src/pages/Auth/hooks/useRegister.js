@@ -16,6 +16,7 @@ export const useRegister = () => {
         firstName: '',
         lastName: '',
         email: '',
+        magicCode: '',
         country: '',
         password: '',
         confirmPassword: '',
@@ -58,55 +59,78 @@ export const useRegister = () => {
         setLoading(true);
 
         try {
+            const normalizedEmail = (formData.email || '').toLowerCase().trim();
+
+            if (!normalizedEmail) {
+                throw new Error('Debes indicar un correo válido.');
+            }
+
+            const inviteSnap = await getDocs(
+                query(collection(db, 'institution_invites'), where('email', '==', normalizedEmail))
+            );
+
+            let resolvedRole = formData.userType;
+            let institutionId = null;
+
+            if (!inviteSnap.empty) {
+                const inviteDocs = inviteSnap.docs.map(d => d.data());
+                const adminInvite = inviteDocs.find(inv => ['admin', 'institutionadmin'].includes(inv.role));
+
+                if (adminInvite?.institutionId) {
+                    resolvedRole = 'institutionadmin';
+                    institutionId = adminInvite.institutionId;
+                } else if (formData.userType === 'teacher') {
+                    const teacherInvite = inviteDocs[0];
+                    resolvedRole = 'teacher';
+                    institutionId = teacherInvite?.institutionId || null;
+                }
+            } else if (formData.userType === 'teacher') {
+                const magicCode = (formData.magicCode || '').trim();
+
+                if (!magicCode) {
+                    throw new Error('Código inválido o correo no invitado');
+                }
+
+                const magicCodeSnap = await getDocs(
+                    query(
+                        collection(db, 'institutions'),
+                        where('onboarding_settings.magic_code_enabled', '==', true),
+                        where('onboarding_settings.magic_code_value', '==', magicCode)
+                    )
+                );
+
+                if (magicCodeSnap.empty) {
+                    throw new Error('Código inválido o correo no invitado');
+                }
+
+                resolvedRole = 'teacher';
+                institutionId = magicCodeSnap.docs[0].id;
+            }
+
             // 1. Create Auth User
             const userCredential = await createUserWithEmailAndPassword(
                 auth, 
-                formData.email, 
+                normalizedEmail,
                 formData.password
             );
             const user = userCredential.user;
+            const displayName = `${(formData.firstName || '').trim()} ${(formData.lastName || '').trim()}`.trim() || normalizedEmail.split('@')[0];
+            const country = (formData.country || '').trim() || 'other';
 
             // 2. Update Display Name
             await updateProfile(user, {
-                displayName: `${formData.firstName} ${formData.lastName}`
+                displayName
             });
-
-            const resolveInstitutionId = async (email) => {
-                const normalizedEmail = (email || '').toLowerCase();
-                const domain = normalizedEmail.split('@')[1];
-                if (!domain) return null;
-
-                const allowedSnap = await getDocs(
-                    query(collection(db, 'allowed_teachers'), where('email', '==', normalizedEmail))
-                );
-                if (!allowedSnap.empty) {
-                    return allowedSnap.docs[0].data()?.institutionId || null;
-                }
-
-                const domainSnap = await getDocs(
-                    query(collection(db, 'institutions'), where('domains', 'array-contains', domain))
-                );
-                if (!domainSnap.empty) return domainSnap.docs[0].id;
-
-                const singleSnap = await getDocs(
-                    query(collection(db, 'institutions'), where('domain', '==', domain))
-                );
-                if (!singleSnap.empty) return singleSnap.docs[0].id;
-
-                return null;
-            };
-
-            const institutionId = await resolveInstitutionId(formData.email);
 
             // 3. Create Firestore Document
             await setDoc(doc(db, "users", user.uid), {
                 uid: user.uid,
                 firstName: formData.firstName,
                 lastName: formData.lastName,
-                displayName: `${formData.firstName} ${formData.lastName}`,
-                email: formData.email,
-                role: formData.userType,
-                country: formData.country,
+                displayName,
+                email: normalizedEmail,
+                role: resolvedRole,
+                country,
                 institutionId,
                 createdAt: serverTimestamp(),
                 settings: {
@@ -125,6 +149,10 @@ export const useRegister = () => {
                 setError('Este correo electrónico ya está registrado.');
             } else if (err.code === 'auth/weak-password') {
                 setError('La contraseña debe tener al menos 6 caracteres.');
+            } else if (err.message === 'Código inválido o correo no invitado') {
+                setError('Código inválido o correo no invitado');
+            } else if (err.message === 'Debes indicar un correo válido.') {
+                setError('Debes indicar un correo válido.');
             } else {
                 setError('Ocurrió un error al crear la cuenta. Inténtalo de nuevo.');
             }

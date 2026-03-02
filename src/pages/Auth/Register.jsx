@@ -1,6 +1,6 @@
 // src/pages/Auth/Register.jsx
 import React from 'react';
-import { Mail, Lock, GraduationCap, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, GraduationCap, ArrowRight, Loader2, AlertCircle, KeyRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Hook
@@ -101,6 +101,24 @@ const Register = () => {
                                 />
                             </div>
                         </div>
+
+                        {formData.userType === 'teacher' && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Código Institucional</label>
+                                <div className="relative">
+                                    <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
+                                    <input
+                                        type="text"
+                                        name="magicCode"
+                                        value={formData.magicCode || ''}
+                                        onChange={handleChange}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-all text-gray-900 dark:text-white"
+                                        placeholder="Ej: INST-2026"
+                                    />
+                                </div>
+                                <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Déjalo en blanco si recibiste una invitación directa.</p>
+                            </div>
+                        )}
 
                         <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">País</label>
