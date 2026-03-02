@@ -2,25 +2,48 @@
 
 ## Mission
 
-Establish a dependable testing progression from local smoke confidence to CI-enforced protection for critical user and admin workflows.
+Establish complete platform-level automated coverage so regressions across any major page, journey, or critical hook are detected before deployment.
 
 ## Guiding Principles
 
-- Validate foundations first, then expand coverage.
-- Prioritize high-risk logic and permission boundaries.
+- Validate foundations first, then expand by module slice.
+- Cover real user journeys end-to-end for every major page family.
+- Prioritize high-risk logic hooks and permission boundaries.
 - Keep tests deterministic and environment-aware.
 - Use CI as an enforcement layer, not as first discovery of breakages.
 
 ## Phase Status
 
 - Phase 01 — Smoke Test Baseline: **COMPLETED**
-- Phase 02 — Customization Integration Verification: **IN_PROGRESS**
-- Phase 03 — Danger Zone Unit Hardening: **PLANNED**
-- Phase 04 — Full Automation in CI: **PLANNED**
-- Phase 05 — Review Gate and Closure Evidence: **PLANNED**
+- Phase 02 — Auth and Onboarding Coverage Foundation: **PLANNED**
+- Phase 03 — Home and Shared Organization Coverage: **PLANNED**
+- Phase 04 — Subject, Topic, and Content Navigation Coverage: **PLANNED**
+- Phase 05 — Quiz Engine and Results Coverage: **PLANNED**
+- Phase 06 — Profile and Settings Coverage: **PLANNED**
+- Phase 07 — Admin Surfaces and Permissions Hardening: **PLANNED**
+- Phase 08 — Full Automation in CI: **PLANNED**
+- Phase 09 — Review Gate and Closure Evidence: **PLANNED**
 
 ## Immediate Next Actions
 
-1. Provide `E2E_EMAIL` and `E2E_PASSWORD` to execute `tests/e2e/branding.spec.js` without skip.
-2. Confirm live update assertion for branding preview/CSS variable path in customization flow.
-3. Record Phase 02 execution details and decide whether selector/data refinements are needed.
+1. Define deterministic Auth + Onboarding test accounts and env variables for Playwright.
+2. Build Phase 02 E2E journeys (Login, Register, Wizard completion) and Phase 02 unit tests for auth hooks.
+3. Expand unit hook matrix for `useQuizzesLogic.js`, `useSubjectManager.js`, `useProfile.js`, and `useTopicLogic.js` in upcoming phases.
+
+## Coverage Matrix (Target)
+
+### E2E Journeys (Playwright)
+
+- Auth: login, register, onboarding wizard.
+- Home: folder creation, subject creation, folder tree navigation, shared view behavior.
+- Subject/Topic/Content: open subject, render topic grid, open resources/study guides.
+- Quiz engine: start quiz, submit answers, verify results views.
+- Profile/Settings: view statistics, update profile details, switch theme modes.
+- Admin surfaces: institution admin customization/users, teacher/admin dashboard guard rails.
+
+### Unit/Logic Coverage (Vitest)
+
+- Core hooks in `src/hooks`: `useFolders.js`, `useSubjects.js`, `useShortcuts.js`, `useUserPreferences.js`, `useInstitutionBranding.js`.
+- Home hooks in `src/pages/Home/hooks`: `useHomeLogic.js`, `useHomeHandlers.js`, `useHomePageHandlers.js`, `useHomeContentDnd.js`, `useHomeState.js`.
+- Module hooks in `src/pages/**/hooks`: `useQuizzesLogic.js`, `useSubjectManager.js`, `useProfile.js`, `useTopicLogic.js`, `useSettingsPageState.js`, `useLogin.js`, `useRegister.js`.
+- Permission and role utils in `src/utils/permissionUtils.js` and related access helpers.
