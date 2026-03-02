@@ -1,4 +1,4 @@
-# Phase 02 — Auth and Onboarding Coverage Foundation (PLANNED)
+# Phase 02 — Auth and Onboarding Coverage Foundation (IN_PROGRESS)
 
 ## Objective
 
@@ -23,3 +23,12 @@ Guarantee that authentication and first-run onboarding flows work reliably acros
 - Auth and onboarding E2E tests pass with deterministic fixtures.
 - Hook tests validate success/error branches and persistence writes.
 - Failures and fixes are documented in working logs.
+
+## Execution Notes
+
+- Credential validation succeeded with real E2E login (`tests/e2e/auth.spec.js` passed).
+- Added Phase 2 E2E suite `tests/e2e/auth-onboarding.spec.js` covering register-page rendering, credential login, and onboarding completion path (env-gated for incomplete-profile user).
+- Added Phase 2 unit hook suites:
+  - `tests/unit/hooks/useLogin.test.js`
+  - `tests/unit/hooks/useRegister.test.js`
+- Current remaining blocker for full Phase 2 completion: `E2E_ONBOARDING_EMAIL` and `E2E_ONBOARDING_PASSWORD` are required to run onboarding completion test without skip.

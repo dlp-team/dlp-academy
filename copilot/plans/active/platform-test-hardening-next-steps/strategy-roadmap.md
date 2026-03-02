@@ -15,7 +15,7 @@ Establish complete platform-level automated coverage so regressions across any m
 ## Phase Status
 
 - Phase 01 — Smoke Test Baseline: **COMPLETED**
-- Phase 02 — Auth and Onboarding Coverage Foundation: **PLANNED**
+- Phase 02 — Auth and Onboarding Coverage Foundation: **IN_PROGRESS**
 - Phase 03 — Home and Shared Organization Coverage: **PLANNED**
 - Phase 04 — Subject, Topic, and Content Navigation Coverage: **PLANNED**
 - Phase 05 — Quiz Engine and Results Coverage: **PLANNED**
