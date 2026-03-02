@@ -150,7 +150,7 @@ const InstitutionsTab = () => {
         }
 
         try {
-            await addDoc(collection(db, 'institutions'), {
+            const institutionDocRef = await addDoc(collection(db, 'institutions'), {
                 name,
                 domain,
                 domains: [domain],
@@ -160,10 +160,24 @@ const InstitutionsTab = () => {
                 city,
                 country,
                 timezone,
+                onboarding_settings: {
+                    whitelist_enabled: true,
+                    magic_code_enabled: false,
+                    magic_code_value: ''
+                },
                 enabled: true,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp(),
             });
+
+            const invitePromises = admins.map(email => addDoc(collection(db, 'institution_invites'), {
+                email: email,
+                role: 'institutionadmin',
+                institutionId: institutionDocRef.id,
+                invitedAt: serverTimestamp()
+            }));
+            await Promise.all(invitePromises);
+
             setSuccess(`Institución "${name}" creada correctamente.`);
             setForm({
                 name: '',
