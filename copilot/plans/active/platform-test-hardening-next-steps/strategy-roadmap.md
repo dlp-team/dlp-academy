@@ -15,8 +15,8 @@ Establish complete platform-level automated coverage so regressions across any m
 ## Phase Status
 
 - Phase 01 — Smoke Test Baseline: **COMPLETED**
-- Phase 02 — Auth and Onboarding Coverage Foundation: **IN_PROGRESS**
-- Phase 03 — Home and Shared Organization Coverage: **PLANNED**
+- Phase 02 — Auth and Onboarding Coverage Foundation: **IN_PROGRESS (BLOCKED: onboarding credentials)**
+- Phase 03 — Home and Shared Organization Coverage: **IN_PROGRESS**
 - Phase 04 — Subject, Topic, and Content Navigation Coverage: **PLANNED**
 - Phase 05 — Quiz Engine and Results Coverage: **PLANNED**
 - Phase 06 — Profile and Settings Coverage: **PLANNED**
@@ -26,9 +26,9 @@ Establish complete platform-level automated coverage so regressions across any m
 
 ## Immediate Next Actions
 
-1. Define deterministic Auth + Onboarding test accounts and env variables for Playwright.
-2. Build Phase 02 E2E journeys (Login, Register, Wizard completion) and Phase 02 unit tests for auth hooks.
-3. Expand unit hook matrix for `useQuizzesLogic.js`, `useSubjectManager.js`, `useProfile.js`, and `useTopicLogic.js` in upcoming phases.
+1. Add remaining Home hook coverage in Phase 03 (`useHomeHandlers.js`, `useHomePageHandlers.js`, `useHomeLogic.js`).
+2. Add Phase 03 E2E for Home organization navigation and shared-view behavior.
+3. Resume Phase 02 closure once `E2E_ONBOARDING_EMAIL` and `E2E_ONBOARDING_PASSWORD` are available.
 
 ## Coverage Matrix (Target)
 
