@@ -13,14 +13,14 @@ Establish a dependable testing progression from local smoke confidence to CI-enf
 
 ## Phase Status
 
-- Phase 01 — Smoke Test Baseline: **PLANNED**
-- Phase 02 — Customization Integration Verification: **PLANNED**
+- Phase 01 — Smoke Test Baseline: **COMPLETED**
+- Phase 02 — Customization Integration Verification: **IN_PROGRESS**
 - Phase 03 — Danger Zone Unit Hardening: **PLANNED**
 - Phase 04 — Full Automation in CI: **PLANNED**
 - Phase 05 — Review Gate and Closure Evidence: **PLANNED**
 
 ## Immediate Next Actions
 
-1. Run `npm run test:unit` and capture failures/flakes in `working/smoke-log-2026-03-01.md`.
-2. Run `npx playwright test --ui` and confirm local app reachability plus baseline flow execution.
-3. Record smoke outcomes and move this plan to `active/` when Phase 01 execution begins.
+1. Provide `E2E_EMAIL` and `E2E_PASSWORD` to execute `tests/e2e/branding.spec.js` without skip.
+2. Confirm live update assertion for branding preview/CSS variable path in customization flow.
+3. Record Phase 02 execution details and decide whether selector/data refinements are needed.

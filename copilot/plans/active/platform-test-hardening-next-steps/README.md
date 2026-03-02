@@ -21,10 +21,10 @@ Test infrastructure now exists (Vitest + Playwright), but execution and coverage
 
 ## Current Status
 
-- Plan state: **TODO**
-- Current phase: **Phase 01 — Smoke Test Baseline (PLANNED)**
-- Last updated: **2026-03-01**
-- Blockers: None documented at plan initialization.
+- Plan state: **ACTIVE**
+- Current phase: **Phase 02 — Customization Integration Verification (IN_PROGRESS)**
+- Last updated: **2026-03-02**
+- Blockers: `branding.spec.js` currently skips without `E2E_EMAIL` / `E2E_PASSWORD` environment credentials.
 
 ## Key Decisions and Assumptions
 

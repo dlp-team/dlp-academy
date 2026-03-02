@@ -1,5 +1,6 @@
 // src/pages/Auth/Login.jsx
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import styles from './styles/Login.module.css';
 import { auth, provider } from '../../firebase/config'; 
 import { collection, doc, getDoc, getDocs, query, setDoc, serverTimestamp, where } from 'firebase/firestore'; 
@@ -106,7 +107,7 @@ const Login = () => {
                     <div className={styles.logoSection}>
                         <div className={styles.logo}>
                             <div className={styles.logoIcon}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-graduation-cap w-8 h-8 text-indigo-600" aria-hidden="true">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-graduation-cap w-8 h-8 text-indigo-600" aria-hidden="true">
                                     <path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z">
                                     </path>
                                     <path d="M22 10v6">
@@ -212,7 +213,7 @@ const Login = () => {
                     </div>
 
                     <div className={styles.registerLink}>
-                        ¿No tienes cuenta? <a href="#">Regístrate aquí</a>
+                        ¿No tienes cuenta? <Link to="/register">Regístrate aquí</Link>
                     </div>
                 </div>
             </div>

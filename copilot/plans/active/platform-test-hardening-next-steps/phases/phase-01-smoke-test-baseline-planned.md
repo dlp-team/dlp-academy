@@ -1,4 +1,4 @@
-# Phase 01 — Smoke Test Baseline (PLANNED)
+# Phase 01 — Smoke Test Baseline (COMPLETED)
 
 ## Objective
 
@@ -20,3 +20,9 @@ Confirm that unit and E2E test engines run reliably in the current local environ
 - Unit suite executes with no unresolved infrastructure/config errors.
 - Playwright UI opens and can execute baseline tests against the app.
 - Smoke outcomes documented in `working/smoke-log-2026-03-01.md`.
+
+## Completion Notes
+
+- `npm run test:unit` passed (`4` files / `11` tests).
+- Playwright test registry validated (`4` tests discovered) and UI mode launch initiated.
+- Smoke evidence documented in `working/smoke-log-2026-03-01.md`.
