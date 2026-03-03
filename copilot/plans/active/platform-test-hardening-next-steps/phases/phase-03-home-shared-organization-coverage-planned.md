@@ -69,3 +69,11 @@ Protect the main organization surface in Home, including folder/subject creation
 - Additional validation evidence:
   - `npm run test:unit -- tests/unit/hooks/useHomeLogic.test.js` → ✅ `1 file`, `2 tests` passed.
   - `npm run test:unit` → ✅ `10 files`, `36 tests` passed.
+- Added Home sharing-role E2E suite: `tests/e2e/home-sharing-roles.spec.js`.
+- Added scenarios for role behavior in shared contexts:
+  - Owner can open shared tab and render shared surface.
+  - Editor can create content in designated shared folder.
+  - Viewer cannot create content in designated shared folder.
+- E2E validation evidence (without onboarding dependency):
+  - `npm run test:e2e -- tests/e2e/home-sharing-roles.spec.js --reporter=list` → ⚠️ `3 skipped` (missing role fixture env vars).
+  - `npm run test:e2e -- tests/e2e/auth.spec.js tests/e2e/user-journey.spec.js --reporter=list` → ✅ `2 passed`.

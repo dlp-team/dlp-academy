@@ -15,7 +15,7 @@ Establish complete platform-level automated coverage so regressions across any m
 ## Phase Status
 
 - Phase 01 — Smoke Test Baseline: **COMPLETED**
-- Phase 02 — Auth and Onboarding Coverage Foundation: **IN_PROGRESS (BLOCKED: onboarding credentials)**
+- Phase 02 — Auth and Onboarding Coverage Foundation: **IN_PROGRESS (ONBOARDING DEFERRED)**
 - Phase 03 — Home and Shared Organization Coverage: **IN_PROGRESS**
 - Phase 04 — Subject, Topic, and Content Navigation Coverage: **PLANNED**
 - Phase 05 — Quiz Engine and Results Coverage: **PLANNED**
@@ -27,8 +27,8 @@ Establish complete platform-level automated coverage so regressions across any m
 ## Immediate Next Actions
 
 1. Add remaining Phase 03 unit coverage for uncovered tree-move/sharing branches in Home handlers where callback branches are still untested.
-2. Add Phase 03 E2E for Home organization navigation, shortcut flows, and shared-view role behavior.
-3. Resume Phase 02 closure once `E2E_ONBOARDING_EMAIL` and `E2E_ONBOARDING_PASSWORD` are available.
+2. Provide role fixtures for Phase 03 E2E sharing matrix (`E2E_OWNER_*`, `E2E_EDITOR_*`, `E2E_VIEWER_*`, `E2E_SHARED_FOLDER_ID`) and re-run role journeys.
+3. Resume Phase 02 onboarding closure later once `E2E_ONBOARDING_EMAIL` and `E2E_ONBOARDING_PASSWORD` are available.
 
 ## Coverage Matrix (Target)
 
