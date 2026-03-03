@@ -180,4 +180,92 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
     expect(config.updateSubject).toHaveBeenCalledWith('subject-a', { folderId: 'folder-b' });
     expect(config.touchSubject).toHaveBeenCalledWith('subject-a');
   });
+
+  it('blocks shortcut-folder unshare when nested in shared tree', async () => {
+    const config = createBaseConfig({
+      folders: [
+        { id: 'root-shared', isShared: true, parentId: null },
+        { id: 'child-folder', isShared: false, parentId: 'root-shared' },
+      ],
+      deleteConfig: {
+        isOpen: true,
+        type: 'shortcut-folder',
+        action: 'unshare',
+        item: {
+          id: 'folder-5',
+          targetId: 'folder-5',
+          shortcutParentId: 'child-folder',
+          shortcutId: 'shortcut-folder-5',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.unshareFolder).not.toHaveBeenCalled();
+    expect(config.deleteShortcut).not.toHaveBeenCalled();
+  });
+
+  it('unshares shortcut-folder when outside shared tree', async () => {
+    const config = createBaseConfig({
+      folders: [{ id: 'regular-folder', isShared: false, parentId: null }],
+      deleteConfig: {
+        isOpen: true,
+        type: 'shortcut-folder',
+        action: 'unshare',
+        item: {
+          id: 'folder-6',
+          targetId: 'folder-6',
+          shortcutParentId: 'regular-folder',
+          shortcutId: 'shortcut-folder-6',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.unshareFolder).toHaveBeenCalledWith('folder-6', 'user1@test.com');
+    expect(config.deleteShortcut).not.toHaveBeenCalled();
+  });
+
+  it('unhides shortcut-subject and supports direct shortcut deletion action', async () => {
+    const unhideConfig = createBaseConfig({
+      deleteConfig: {
+        isOpen: true,
+        type: 'shortcut-subject',
+        action: 'unhide',
+        item: {
+          id: 'subject-9',
+          targetId: 'subject-9',
+          shortcutId: 'shortcut-sub-9',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(unhideConfig);
+    await handlers.handleDelete();
+
+    expect(unhideConfig.setShortcutHiddenInManual).toHaveBeenCalledWith('shortcut-sub-9', false);
+    expect(unhideConfig.deleteShortcut).not.toHaveBeenCalled();
+
+    const deleteConfig = createBaseConfig({
+      deleteConfig: {
+        isOpen: true,
+        type: 'shortcut-subject',
+        action: 'delete',
+        item: {
+          id: 'subject-10',
+          targetId: 'subject-10',
+          shortcutId: 'shortcut-sub-10',
+        },
+      },
+    });
+
+    const deleteHandlers = useHomeHandlers(deleteConfig);
+    await deleteHandlers.handleDelete();
+
+    expect(deleteConfig.deleteShortcut).toHaveBeenCalledWith('shortcut-sub-10');
+  });
 });

@@ -26,7 +26,7 @@ Establish complete platform-level automated coverage so regressions across any m
 
 ## Immediate Next Actions
 
-1. Add remaining Home hook coverage in Phase 03 for unresolved sharing branches (`useHomeLogic.js` + confirm modal merge/preserve callbacks).
+1. Add remaining Phase 03 unit coverage for uncovered tree-move/sharing branches in Home handlers where callback branches are still untested.
 2. Add Phase 03 E2E for Home organization navigation, shortcut flows, and shared-view role behavior.
 3. Resume Phase 02 closure once `E2E_ONBOARDING_EMAIL` and `E2E_ONBOARDING_PASSWORD` are available.
 

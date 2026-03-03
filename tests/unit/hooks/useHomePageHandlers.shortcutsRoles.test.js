@@ -131,4 +131,166 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     expect(result).toBe(true);
     expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith('subject-1', 'source-folder', 'shared-target');
   });
+
+  it('executes merge callback for shared mismatch move into shared target', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        folders: [
+          {
+            id: 'source-folder',
+            isShared: true,
+            ownerId: 'owner-1',
+            parentId: null,
+            sharedWithUids: ['u-alpha'],
+            sharedWith: [{ uid: 'u-alpha', email: 'alpha@test.com' }],
+          },
+          {
+            id: 'shared-target',
+            isShared: true,
+            ownerId: 'owner-1',
+            parentId: null,
+            sharedWithUids: ['u-beta'],
+            sharedWith: [{ uid: 'u-beta', email: 'beta@test.com' }],
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'owner-1',
+            folderId: 'source-folder',
+            sharedWithUids: ['u-alpha'],
+            sharedWith: [{ uid: 'u-alpha', email: 'alpha@test.com' }],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleDropOnFolderWrapper('shared-target', 'subject-1', 'subject', 'source-folder', null);
+
+    expect(result).toBe(true);
+    expect(config.setShareConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        open: true,
+        type: 'shared-mismatch-move',
+      })
+    );
+
+    const confirmPayload = config.setShareConfirm.mock.calls[0][0];
+    await confirmPayload.onMergeConfirm();
+
+    expect(config.updateFolder).toHaveBeenCalledWith(
+      'shared-target',
+      expect.objectContaining({
+        isShared: true,
+        sharedWithUids: expect.arrayContaining(['u-alpha', 'u-beta']),
+      })
+    );
+    expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith(
+      'subject-1',
+      'source-folder',
+      'shared-target',
+      { forceRefreshSharing: true }
+    );
+  });
+
+  it('executes preserve-sharing callback for unshare confirmation path', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        folders: [
+          {
+            id: 'source-folder',
+            isShared: true,
+            ownerId: 'owner-1',
+            parentId: null,
+            sharedWithUids: ['u-alpha'],
+            sharedWith: [{ uid: 'u-alpha', email: 'alpha@test.com' }],
+          },
+          {
+            id: 'target-private',
+            isShared: false,
+            ownerId: 'owner-1',
+            parentId: null,
+            sharedWithUids: [],
+            sharedWith: [],
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'owner-1',
+            folderId: 'source-folder',
+            sharedWithUids: ['u-alpha'],
+            sharedWith: [{ uid: 'u-alpha', email: 'alpha@test.com' }],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleDropOnFolderWrapper('target-private', 'subject-1', 'subject', 'source-folder', null);
+
+    expect(result).toBe(true);
+    expect(config.setUnshareConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        open: true,
+        subjectId: 'subject-1',
+      })
+    );
+
+    const unsharePayload = config.setUnshareConfirm.mock.calls[0][0];
+    await unsharePayload.onPreserveConfirm();
+
+    expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith(
+      'subject-1',
+      'source-folder',
+      'target-private',
+      { preserveSharing: true }
+    );
+  });
+
+  it('executes standard unshare confirm callback for source shared -> private target move', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        folders: [
+          {
+            id: 'source-folder',
+            isShared: true,
+            ownerId: 'owner-1',
+            parentId: null,
+            sharedWithUids: ['u-alpha'],
+            sharedWith: [{ uid: 'u-alpha', email: 'alpha@test.com' }],
+          },
+          {
+            id: 'target-private',
+            isShared: false,
+            ownerId: 'owner-1',
+            parentId: null,
+            sharedWithUids: [],
+            sharedWith: [],
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'owner-1',
+            folderId: 'source-folder',
+            sharedWithUids: ['u-alpha'],
+            sharedWith: [{ uid: 'u-alpha', email: 'alpha@test.com' }],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    handlers.handleDropOnFolderWrapper('target-private', 'subject-1', 'subject', 'source-folder', null);
+
+    const unsharePayload = config.setUnshareConfirm.mock.calls[0][0];
+    await unsharePayload.onConfirm();
+
+    expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith('subject-1', 'source-folder', 'target-private');
+  });
 });
