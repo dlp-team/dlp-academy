@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { collection, doc, getDocs, query, setDoc, serverTimestamp, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, setDoc, serverTimestamp, where, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase/config';
 
 export const useRegister = () => {
@@ -16,7 +16,7 @@ export const useRegister = () => {
         firstName: '',
         lastName: '',
         email: '',
-        magicCode: '',
+        verificationCode: '',
         country: '',
         password: '',
         confirmPassword: '',
@@ -69,42 +69,52 @@ export const useRegister = () => {
                 query(collection(db, 'institution_invites'), where('email', '==', normalizedEmail))
             );
 
-            let resolvedRole = formData.userType;
+            let resolvedRole = 'student';
             let institutionId = null;
 
-            if (!inviteSnap.empty) {
-                const inviteDocs = inviteSnap.docs.map(d => d.data());
-                const adminInvite = inviteDocs.find(inv => ['admin', 'institutionadmin'].includes(inv.role));
-
-                if (adminInvite?.institutionId) {
-                    resolvedRole = 'institutionadmin';
-                    institutionId = adminInvite.institutionId;
-                } else if (formData.userType === 'teacher') {
-                    const teacherInvite = inviteDocs[0];
-                    resolvedRole = 'teacher';
-                    institutionId = teacherInvite?.institutionId || null;
-                }
-            } else if (formData.userType === 'teacher') {
-                const magicCode = (formData.magicCode || '').trim();
-
-                if (!magicCode) {
-                    throw new Error('Código inválido o correo no invitado');
+            if (formData.userType === 'teacher' || formData.userType === 'admin') {
+                const code = formData.verificationCode?.trim();
+                
+                if (!code) {
+                    throw new Error('missing-verification-code');
                 }
 
-                const magicCodeSnap = await getDocs(
-                    query(
-                        collection(db, 'institutions'),
-                        where('onboarding_settings.magic_code_enabled', '==', true),
-                        where('onboarding_settings.magic_code_value', '==', magicCode)
-                    )
-                );
+                // 1. LOOKUP 1: Check if it's a Direct Invite (Lookup securely by Document ID)
+                const inviteRef = doc(db, 'institution_invites', code);
+                const inviteSnap = await getDoc(inviteRef);
 
-                if (magicCodeSnap.empty) {
-                    throw new Error('Código inválido o correo no invitado');
+                if (inviteSnap.exists()) {
+                    const inviteData = inviteSnap.data();
+                    
+                    // Security Check: Does the email they typed match the email we invited?
+                    if (inviteData.email.toLowerCase() !== normalizedEmail) {
+                        throw new Error('invalid-invite-email');
+                    }
+                    
+                    resolvedRole = inviteData.role || 'teacher'; // This will correctly apply 'institutionadmin' if it's an admin invite
+                    institutionId = inviteData.institutionId;
+
+                    // Consume the invite so it can't be reused by a student later!
+                    await deleteDoc(inviteRef);
+                    
+                } else {
+                    // 2. LOOKUP 2: Check if it's a Magic Code
+                    const qInstitutions = query(
+                        collection(db, 'institutions'), 
+                        where('onboarding_settings.magic_code_enabled', '==', true), 
+                        where('onboarding_settings.magic_code_value', '==', code)
+                    );
+                    const querySnapshot = await getDocs(qInstitutions);
+
+                    if (!querySnapshot.empty) {
+                        const institutionDoc = querySnapshot.docs[0];
+                        resolvedRole = 'teacher'; // Magic codes only grant teacher access, never admin
+                        institutionId = institutionDoc.id;
+                    } else {
+                        // If it's neither a valid invite ID nor a valid Magic Code
+                        throw new Error('invalid-verification-code');
+                    }
                 }
-
-                resolvedRole = 'teacher';
-                institutionId = magicCodeSnap.docs[0].id;
             }
 
             // 1. Create Auth User
@@ -149,10 +159,12 @@ export const useRegister = () => {
                 setError('Este correo electrónico ya está registrado.');
             } else if (err.code === 'auth/weak-password') {
                 setError('La contraseña debe tener al menos 6 caracteres.');
-            } else if (err.message === 'Código inválido o correo no invitado') {
-                setError('Código inválido o correo no invitado');
-            } else if (err.message === 'Debes indicar un correo válido.') {
-                setError('Debes indicar un correo válido.');
+            } else if (err.message === 'missing-verification-code') {
+                setError('Debes ingresar tu Código de Verificación o Código Institucional.');
+            } else if (err.message === 'invalid-invite-email') {
+                setError('El correo ingresado no coincide con el de la invitación.');
+            } else if (err.message === 'invalid-verification-code') {
+                setError('Código de verificación inválido o expirado.');
             } else {
                 setError('Ocurrió un error al crear la cuenta. Inténtalo de nuevo.');
             }

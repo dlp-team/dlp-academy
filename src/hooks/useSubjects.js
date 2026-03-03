@@ -9,6 +9,7 @@ export const useSubjects = (user) => {
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
+    const canReadHomeData = Boolean(user?.role && user?.country && user?.displayName);
     const debugShare = (stage, payload = {}) => {
         console.info('[SHARE_DEBUG][subject]', {
             ts: new Date().toISOString(),
@@ -22,7 +23,7 @@ export const useSubjects = (user) => {
 
 
     useEffect(() => {
-        if (!user) {
+        if (!user || !canReadHomeData) {
             setSubjects([]);
             setLoading(false);
             return;
@@ -123,7 +124,7 @@ export const useSubjects = (user) => {
             unsubscribeOwned();
             unsubscribeShared();
         };
-    }, [user, currentInstitutionId]);
+    }, [user, currentInstitutionId, canReadHomeData]);
 
     const addSubject = async (payload) => {
         const docRef = await addDoc(collection(db, "subjects"), {

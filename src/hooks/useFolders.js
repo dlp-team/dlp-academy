@@ -11,6 +11,7 @@ export const useFolders = (user) => {
     const [folders, setFolders] = useState([]);
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
+    const canReadHomeData = Boolean(user?.role && user?.country && user?.displayName);
 
     const debugShare = (stage, payload = {}) => {
         console.info('[SHARE_DEBUG][folder]', {
@@ -24,7 +25,7 @@ export const useFolders = (user) => {
     };
 
     useEffect(() => {
-        if (!user) {
+        if (!user || !canReadHomeData) {
             setFolders([]);
             setLoading(false);
             return;
@@ -73,7 +74,7 @@ export const useFolders = (user) => {
         });
 
         return () => { unsubscribeOwned(); unsubscribeShared(); };
-    }, [user, currentInstitutionId]);
+    }, [user, currentInstitutionId, canReadHomeData]);
 
     // --- ATOMIC HELPERS ---
 

@@ -30,16 +30,7 @@ export const useShortcuts = (user) => {
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
     const promotingShortcutIdsRef = useRef(new Set());
-
-    const debugVisibility = (stage, payload = {}) => {
-        console.info('[VISIBILITY_DEBUG][shortcuts]', {
-            ts: new Date().toISOString(),
-            stage,
-            userUid: user?.uid || null,
-            institutionId: currentInstitutionId,
-            ...payload
-        });
-    };
+    const canReadHomeData = Boolean(user?.role && user?.country && user?.displayName);
 
     const buildAppearanceFromTargetData = (targetType, targetData = {}) => {
         if (targetType === 'folder') {
@@ -94,7 +85,10 @@ export const useShortcuts = (user) => {
     };
 
     useEffect(() => {
-        if (!user) {
+        if (!user || !canReadHomeData) {
+            setShortcuts([]);
+            setResolvedShortcuts([]);
+            setLoading(false);
             return;
         }
 
@@ -107,7 +101,6 @@ export const useShortcuts = (user) => {
         const unsubscribe = onSnapshot(
             shortcutsQuery,
             async (snapshot) => {
-                debugVisibility('shortcuts_snapshot', { rawCount: snapshot.docs.length });
                 const shortcutDocs = snapshot.docs
                     .map(d => ({ id: d.id, ...d.data() }))
                     .filter(shortcut => {
@@ -116,11 +109,6 @@ export const useShortcuts = (user) => {
                         if (!currentInstitutionId || !shortcut?.institutionId) return true;
                         return shortcut.institutionId === currentInstitutionId;
                     });
-
-                debugVisibility('shortcuts_filtered', {
-                    visibleCount: shortcutDocs.length,
-                    ids: shortcutDocs.map(s => s.id)
-                });
                 
                 setShortcuts(shortcutDocs);
                 if (shortcutDocs.length === 0) {
@@ -137,10 +125,10 @@ export const useShortcuts = (user) => {
         );
 
         return () => unsubscribe();
-    }, [user, currentInstitutionId]);
+    }, [user, currentInstitutionId, canReadHomeData]);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !canReadHomeData) return;
 
         if (!Array.isArray(shortcuts) || shortcuts.length === 0) return;
 
@@ -424,7 +412,7 @@ export const useShortcuts = (user) => {
             isMounted = false;
             targetUnsubscribers.forEach(unsub => unsub());
         };
-    }, [shortcuts, user, currentInstitutionId]);
+    }, [shortcuts, user, currentInstitutionId, canReadHomeData]);
 
     /**
      * Create a new shortcut to a shared item
