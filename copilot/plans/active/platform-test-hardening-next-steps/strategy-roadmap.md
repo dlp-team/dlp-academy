@@ -27,8 +27,8 @@ Establish complete platform-level automated coverage so regressions across any m
 ## Immediate Next Actions
 
 1. Add remaining Phase 03 unit coverage for uncovered tree-move/sharing branches in Home handlers where callback branches are still untested.
-2. Provide role fixtures for Phase 03 E2E sharing matrix (`E2E_OWNER_*`, `E2E_EDITOR_*`, `E2E_VIEWER_*`, `E2E_SHARED_FOLDER_ID`) and re-run role journeys.
-3. Resume Phase 02 onboarding closure later once `E2E_ONBOARDING_EMAIL` and `E2E_ONBOARDING_PASSWORD` are available.
+2. Keep Phase 02 onboarding closure deferred until onboarding test fixtures are explicitly resumed.
+3. Start Phase 04 E2E expansion for subject/topic/content navigation now that Phase 03 non-onboarding E2E is stable.
 
 ## Coverage Matrix (Target)
 

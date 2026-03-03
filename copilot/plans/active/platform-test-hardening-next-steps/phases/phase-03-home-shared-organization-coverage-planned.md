@@ -75,5 +75,11 @@ Protect the main organization surface in Home, including folder/subject creation
   - Editor can create content in designated shared folder.
   - Viewer cannot create content in designated shared folder.
 - E2E validation evidence (without onboarding dependency):
-  - `npm run test:e2e -- tests/e2e/home-sharing-roles.spec.js --reporter=list` → ⚠️ `3 skipped` (missing role fixture env vars).
+  - `npm run test:e2e -- tests/e2e/home-sharing-roles.spec.js --reporter=list` → ✅ `3 passed`.
   - `npm run test:e2e -- tests/e2e/auth.spec.js tests/e2e/user-journey.spec.js --reporter=list` → ✅ `2 passed`.
+
+- 2026-03-04 continuation (onboarding intentionally deferred):
+  - Re-ran non-onboarding baseline E2E and role matrix after onboarding pause decision.
+  - Confirmed stable pass set remains:
+    - `tests/e2e/auth.spec.js` + `tests/e2e/user-journey.spec.js` → ✅ pass.
+    - `tests/e2e/home-sharing-roles.spec.js` (owner/editor/viewer) → ✅ pass.
