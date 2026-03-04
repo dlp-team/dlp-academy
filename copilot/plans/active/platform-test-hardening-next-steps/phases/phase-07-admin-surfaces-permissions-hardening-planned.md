@@ -35,6 +35,10 @@ Ensure admin surfaces and role permissions are protected against unauthorized ac
   - Viewer denied for `/admin-dashboard` and `/institution-admin-dashboard` (redirect to `/home`).
 - Added optional institution-admin allow-path check (env-gated):
   - Verifies access to institution admin dashboard and primary tabs when institution-admin credentials are provided.
+- Extended institution-admin positive-path assertions across dashboard surfaces:
+  - Users tab checks include registered-teachers and pending-invitations section visibility.
+  - Organization tab checks include create-course action visibility and classes-section render.
+  - Customization tab checks include institution-name field and save action visibility.
 - Expanded permission utility unit coverage:
   - Added explicit viewer denial checks for edit/delete capabilities and UI visibility guards.
   - Added role-rank access checks for institution-admin route requirements.

@@ -37,7 +37,7 @@ async function resolveInstitutionIdByEmail(email) {
   if (!domain) return null;
 
   const allowedSnap = await db
-    .collection('allowed_teachers')
+    .collection('institution_invites')
     .where('email', '==', normalizedEmail)
     .limit(1)
     .get();
@@ -126,7 +126,7 @@ async function backfillClassesAndCourses() {
 }
 
 async function backfillAllowedTeachers() {
-  const snap = await db.collection('allowed_teachers').get();
+  const snap = await db.collection('institution_invites').get();
   const updates = [];
 
   for (const doc of snap.docs) {

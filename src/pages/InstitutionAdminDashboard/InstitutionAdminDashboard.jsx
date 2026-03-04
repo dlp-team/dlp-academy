@@ -187,7 +187,7 @@ const InstitutionAdminDashboard = ({ user }) => {
 
     try {
       const checkSnap = await getDocs(
-        query(collection(db, 'allowed_teachers'), where('email', '==', newUserEmail), where('institutionId', '==', user.institutionId)),
+        query(collection(db, 'institution_invites'), where('email', '==', newUserEmail), where('institutionId', '==', user.institutionId)),
       );
       if (!checkSnap.empty) {
         setAddError('Este email ya está en la lista de profesores autorizados.');
@@ -195,7 +195,7 @@ const InstitutionAdminDashboard = ({ user }) => {
         return;
       }
 
-      await addDoc(collection(db, 'allowed_teachers'), {
+      await addDoc(collection(db, 'institution_invites'), {
         email: newUserEmail.toLowerCase().trim(),
         institutionId: user.institutionId,
         addedBy: user.uid,
@@ -217,7 +217,7 @@ const InstitutionAdminDashboard = ({ user }) => {
   const handleRemoveAccess = async (docId) => {
     if (!window.confirm('¿Seguro que quieres eliminar el acceso a este profesor?')) return;
     try {
-      await deleteDoc(doc(db, 'allowed_teachers', docId));
+      await deleteDoc(doc(db, 'institution_invites', docId));
       fetchData();
     } catch (error) {
       console.error('Error removing access', error);

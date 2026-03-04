@@ -668,24 +668,6 @@ service cloud.firestore {
         );
     }
 
-    match /allowed_teachers/{allowedTeacherId} {
-      allow create: if isSignedIn()
-        && (
-          isGlobalAdmin()
-          || request.resource.data.institutionId == currentUserInstitutionId()
-        );
-      allow read: if isSignedIn() && (
-        isGlobalAdmin() || sameInstitution(resource.data)
-      );
-      allow update, delete: if isSignedIn()
-        && (
-          isGlobalAdmin()
-          || (
-            sameInstitution(resource.data)
-            && request.resource.data.institutionId == resource.data.institutionId
-          )
-        );
-    }
 
 
     // -----------------------------------------
@@ -699,11 +681,32 @@ service cloud.firestore {
       allow delete: if isGlobalAdmin();
     }
     match /institution_invites/{inviteId} {
+      // Anyone with the exact code can read it to register
       allow get: if true; 
-      allow list: if isGlobalAdmin();
-      allow create, update: if isGlobalAdmin();
+      
+      // LIST: Global Admins can see all. Institution Admins can only see invites for their own school.
+      allow list: if isGlobalAdmin() || 
+                  (request.auth != null && 
+                   get(/databases/$(database)/documents/users/$(request.auth.uid)).data.institutionId == resource.data.institutionId);
+      
+      // CREATE: Global Admins can create anything. 
+      // Institution Admins can only create invites if:
+      // 1. They are an institutionadmin
+      // 2. The invite is for their own institutionId
+      // 3. They are only inviting 'teacher' roles (prevents them from creating other admins)
+      allow create: if isGlobalAdmin() || 
+                    (request.auth != null && 
+                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'institutionadmin' &&
+                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.institutionId == request.resource.data.institutionId &&
+                     request.resource.data.role == 'teacher');
+                     
+      allow update: if isGlobalAdmin();
+      
+      // DELETE: Global Admins, the user who owns the email, OR the Institution Admin of that school
       allow delete: if isGlobalAdmin() || 
-                   (request.auth != null && request.auth.token.email == resource.data.email);
+                   (request.auth != null && request.auth.token.email == resource.data.email) ||
+                   (request.auth != null && 
+                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.institutionId == resource.data.institutionId);
     }
 
 

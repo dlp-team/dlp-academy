@@ -9,7 +9,7 @@ Backfill `institutionId` on legacy documents that were created before institutio
 - shortcuts
 - classes
 - courses
-- allowed_teachers
+- institution_invites
 - user documents missing institutionId
 
 ## Migration Strategy
@@ -19,10 +19,10 @@ Backfill `institutionId` on legacy documents that were created before institutio
   - If no ownerId, infer from parent or shared user where possible.
 - For classes/courses:
   - Infer from `createdBy` user or associated teacher.
-- For allowed_teachers:
+- For institution_invites:
   - Infer from matching institution by email domain if missing.
 - For users without institutionId:
-  - Resolve by allowed_teachers, then institution domain, else leave null for manual review.
+  - Resolve by institution_invites, then institution domain, else leave null for manual review.
 
 ## Validation
 - No document remains without institutionId where required for tenant isolation.

@@ -31,7 +31,7 @@ export const useLogin = () => {
         if (!domain) return null;
 
         const allowedSnap = await getDocs(
-            query(collection(db, 'allowed_teachers'), where('email', '==', normalizedEmail))
+            query(collection(db, 'institution_invites'), where('email', '==', normalizedEmail))
         );
         if (!allowedSnap.empty) {
             return allowedSnap.docs[0].data()?.institutionId || null;

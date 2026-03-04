@@ -57,8 +57,27 @@ test.describe('Admin guardrails', () => {
     await page.goto('/institution-admin-dashboard');
     await page.waitForURL(/\/institution-admin-dashboard/);
 
-    await expect(page.getByRole('button', { name: /usuarios/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /cursos y clases/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /personalización/i })).toBeVisible();
+    const usersTab = page.getByRole('button', { name: /usuarios/i });
+    const organizationTab = page.getByRole('button', { name: /cursos y clases/i });
+    const customizationTab = page.getByRole('button', { name: /personalización/i });
+
+    await expect(usersTab).toBeVisible();
+    await expect(organizationTab).toBeVisible();
+    await expect(customizationTab).toBeVisible();
+
+    await usersTab.click();
+    await expect(page.getByRole('heading', { name: /profesores registrados/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /invitaciones pendientes/i })).toBeVisible();
+
+    await organizationTab.click();
+    await expect(page.getByRole('button', { name: /nuevo curso/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^clases$/i })).toBeVisible();
+
+    await page.getByRole('button', { name: /^clases$/i }).click();
+    await expect(page.getByText(/clases registradas/i)).toBeVisible();
+
+    await customizationTab.click();
+    await expect(page.getByText(/nombre de la institución/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /guardar cambios|guardar/i })).toBeVisible();
   });
 });

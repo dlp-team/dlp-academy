@@ -11,7 +11,7 @@ Enforce tenant isolation in reads and security rules using `institutionId` (inst
 ## Actions Completed
 - Teacher dashboard reads updated to use `institutionId`.
 - Institutions rules use document path id for update authorization.
-- Enforced institution scoping in rules for users, subjects, folders, shortcuts, classes, courses, and allowed_teachers.
+- Enforced institution scoping in rules for users, subjects, folders, shortcuts, classes, courses, and institution_invites.
 
 ## Remaining Work
 - None for Phase 03. Validate in staging after backfill.

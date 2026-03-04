@@ -5,11 +5,11 @@ Ensure all new documents and user records are created with `institutionId` set t
 
 ## Scope
 - User registration and login flows
-- Create paths for subjects, folders, shortcuts, classes, courses, allowed_teachers
+- Create paths for subjects, folders, shortcuts, classes, courses, institution_invites
 - Teacher and admin dashboards creating scoped data
 
 ## Actions Completed
-- Added institution resolution by email (allowed_teachers or domain match) on user register/login.
+- Added institution resolution by email (institution_invites or domain match) on user register/login.
 - Persist `institutionId` on new users and fill missing `institutionId` for existing users.
 - Updated teacher dashboard queries to use `institutionId` (previously `schoolId`).
 
@@ -19,5 +19,5 @@ Ensure all new documents and user records are created with `institutionId` set t
 - Validate onboarding does not overwrite `institutionId`.
 
 ## Risks
-- Some users may not match any institution by email domain or allowed_teachers.
+- Some users may not match any institution by email domain or institution_invites.
 - Existing users without institutionId will remain unscoped until backfill.
