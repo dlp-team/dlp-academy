@@ -94,11 +94,28 @@ const canAccessSubject = (subjectData, ownerId) => {
   return false;
 };
 
-const resolveSubjectAndTopic = async () => {
-  if (E2E_SUBJECT_ID && E2E_TOPIC_ID) {
-    return { subjectId: E2E_SUBJECT_ID, topicId: E2E_TOPIC_ID };
-  }
+const ensureTopicHasSeededContent = async (db, subjectId, topicId, ownerId, institutionId) => {
+  if (!db || !subjectId || !topicId || !ownerId) return;
 
+  const resumenSnap = await db.collection('resumen').where('topicId', '==', topicId).limit(1).get();
+  if (!resumenSnap.empty) return;
+
+  await db.collection('resumen').add({
+    name: 'E2E Seed Summary',
+    title: 'E2E Seed Summary',
+    type: 'summary',
+    content: 'Contenido de semilla para validación E2E.',
+    topicId,
+    subjectId,
+    ownerId,
+    ...(institutionId ? { institutionId } : {}),
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    e2eSeed: true,
+  });
+};
+
+const resolveSubjectAndTopic = async () => {
   const db = ensureAdmin();
   if (!db || !E2E_EMAIL) {
     return { subjectId: E2E_SUBJECT_ID || null, topicId: E2E_TOPIC_ID || null };
@@ -163,6 +180,8 @@ const resolveSubjectAndTopic = async () => {
     topicId = await createTopicSeed(db, subjectId, ownerId, institutionId);
   }
 
+  await ensureTopicHasSeededContent(db, subjectId, topicId, ownerId, institutionId);
+
   return { subjectId, topicId };
 };
 
@@ -219,14 +238,7 @@ test.describe('Subject topic content navigation', () => {
     await page.waitForURL(new RegExp(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}`));
 
     const viewButtons = page.getByRole('button', { name: /^ver$/i });
-    try {
-      await viewButtons.first().waitFor({ state: 'visible', timeout: 8000 });
-    } catch {
-      // Keep deterministic skip behavior below when no material is available
-    }
-    const buttonCount = await viewButtons.count();
-
-    test.skip(buttonCount === 0, 'No material/resource cards with Ver action were found for this seeded topic.');
+    await expect(viewButtons.first()).toBeVisible({ timeout: 12000 });
 
     await viewButtons.first().click();
     await page.waitForURL(/\/home\/subject\/.*\/topic\/.*\/(resumen|resource)\/.+/);

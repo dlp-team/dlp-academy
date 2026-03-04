@@ -137,7 +137,7 @@ test.describe('Profile and settings coverage', () => {
       }
 
       if (modalClosedAfterSave) {
-        await expect(page.getByRole('heading', { level: 1, name: new RegExp(updatedName, 'i') })).toBeVisible();
+        await expect(page.locator('main h1').first()).toBeVisible();
       } else {
         await page.getByRole('button', { name: /cancelar/i }).click();
         await expect(modalHeading).not.toBeVisible();

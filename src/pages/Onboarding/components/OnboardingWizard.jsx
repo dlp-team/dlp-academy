@@ -1,7 +1,7 @@
 // src/components/onboarding/OnboardingWizard.jsx
 import React, { useState, useEffect } from 'react';
 import { Loader2, GraduationCap, Globe, User } from 'lucide-react';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 // Make sure to import the selector from the correct path
 import UserTypeSelector from '../../Auth/components/UserTypeSelector'; 
@@ -14,26 +14,34 @@ const OnboardingWizard = ({ user }) => {
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
-        const checkProfile = async () => {
-            if (!user) return;
-            const userRef = doc(db, "users", user.uid);
-            const snap = await getDoc(userRef);
-            let missing = [];
-
+        if (!user) return;
+        
+        const userRef = doc(db, "users", user.uid);
+        
+        // Setup listener
+        const unsubscribe = onSnapshot(userRef, (snap) => {
             if (snap.exists()) {
                 const data = snap.data();
                 const required = ['role', 'country', 'displayName'];
-                missing = required.filter(k => !data[k] || data[k] === "");
+                const missing = required.filter(k => !data[k] || data[k] === "");
+                
+                if (missing.length > 0) {
+                    setMissingFields(missing);
+                    setShow(true);
+                } else {
+                    // Data is complete! Hide wizard and KILL the listener immediately.
+                    setMissingFields([]);
+                    setShow(false); 
+                    unsubscribe(); // This ensures no background requests are made ever again
+                }
             } else {
-                missing = ['displayName', 'role', 'country'];
+                // If document doesn't exist yet, just show the wizard temporarily
+                setMissingFields(['displayName', 'role', 'country']);
             }
+        });
 
-            if (missing.length > 0) {
-                setMissingFields(missing);
-                setShow(true);
-            }
-        };
-        checkProfile();
+        // Cleanup in case the component unmounts before the snapshot finishes
+        return () => unsubscribe();
     }, [user]);
 
     const handleAnswer = async (key, value) => {
