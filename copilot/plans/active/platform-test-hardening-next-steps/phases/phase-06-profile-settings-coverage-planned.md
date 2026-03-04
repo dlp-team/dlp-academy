@@ -36,6 +36,9 @@ Verify profile and settings surfaces so personal data and theme preferences rema
     - Theme toggle `Oscuro` => `.dark` class set.
     - Theme toggle `Claro` => `.dark` class removed.
     - Language selector update and saved state signal.
+    - Profile edit modal open/field interaction/close flow.
+    - Notification toggle interaction path.
+    - Organization `rememberSort` + `viewMode` interaction path.
 
 - Added Phase 06 hook unit baselines:
   - `tests/unit/hooks/useProfile.test.js`

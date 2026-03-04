@@ -87,6 +87,7 @@ const InstitutionsTab = () => {
         name: '',
         domain: '',
         institutionAdministrators: '',
+        institutionalCode: '',
         type: 'school',
         city: '',
         country: '',
@@ -118,7 +119,7 @@ const InstitutionsTab = () => {
         const city = form.city.trim();
         const country = form.country.trim();
         const timezone = form.timezone.trim() || 'Europe/Madrid';
-
+        const institutionalCode = (form.institutionalCode || '').trim();
         if (!name) {
             setError('El nombre es obligatorio.');
             setSubmitting(false);
@@ -203,6 +204,15 @@ const InstitutionsTab = () => {
                     });
                 });
 
+                if (institutionalCode) {
+                    const newCodeRef = doc(db, 'institution_invites', institutionalCode);
+                    batch.set(newCodeRef, {
+                        type: 'institutional',
+                        institutionId: editingInstitutionId,
+                        createdAt: serverTimestamp()
+                    });
+                }
+
                 await batch.commit();
                 setSuccess(`Institución "${name}" actualizada y administradores sincronizados.`);
             } else {
@@ -211,11 +221,6 @@ const InstitutionsTab = () => {
 
                 batch.set(institutionDocRef, {
                     ...institutionPayload,
-                    onboarding_settings: {
-                        whitelist_enabled: true,
-                        magic_code_enabled: false,
-                        magic_code_value: ''
-                    },
                     enabled: true,
                     createdAt: serverTimestamp(),
                 });
@@ -230,6 +235,15 @@ const InstitutionsTab = () => {
                     });
                 });
 
+                if (institutionalCode) {
+                    const newCodeRef = doc(db, 'institution_invites', institutionalCode);
+                    batch.set(newCodeRef, {
+                        type: 'institutional',
+                        institutionId: institutionDocRef.id,
+                        createdAt: serverTimestamp()
+                    });
+                }
+
                 await batch.commit();
                 setSuccess(`Institución "${name}" creada correctamente.`);
             }
@@ -241,7 +255,8 @@ const InstitutionsTab = () => {
                 type: 'school',
                 city: '',
                 country: '',
-                timezone: 'Europe/Madrid'
+                timezone: 'Europe/Madrid',
+                institutionalCode: ''
             });
             setEditingInstitutionId(null);
             setShowCreateForm(false);
@@ -385,6 +400,13 @@ const InstitutionsTab = () => {
                                 onChange={e => setForm(p => ({ ...p, timezone: e.target.value }))}
                                 className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" />
                         </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Código Institucional (Opcional)</label>
+                            <input type="text" placeholder="Ej: CIENCIAS-2026" value={form.institutionalCode}
+                                onChange={e => setForm(p => ({ ...p, institutionalCode: e.target.value.toUpperCase().replace(/\s+/g, '-') }))}
+                                className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none transition-all" />
+                            <p className="text-xs text-gray-500 mt-2">Código compartido para que los profesores se registren. Se guardará de forma segura. Dejar en blanco para no crear ninguno nuevo.</p>
+                        </div>
                         {error && <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2"><XCircle className="w-4 h-4" /> {error}</div>}
                         {success && <div className="p-3 bg-emerald-50 text-emerald-600 text-sm rounded-lg flex items-center gap-2"><CheckCircle2 className="w-4 h-4" /> {success}</div>}
                         <div className="flex gap-3 mt-6">
@@ -452,7 +474,8 @@ const InstitutionsTab = () => {
                                                             type: school.type || 'school',
                                                             city: school.city || '',
                                                             country: school.country || '',
-                                                            timezone: school.timezone || 'Europe/Madrid'
+                                                            timezone: school.timezone || 'Europe/Madrid',
+                                                            institutionalCode: ''
                                                         });
                                                         setShowCreateForm(true);
                                                     }}
