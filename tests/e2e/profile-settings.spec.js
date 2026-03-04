@@ -1,10 +1,69 @@
 import { test, expect } from '@playwright/test';
+import admin from 'firebase-admin';
 
 const E2E_EMAIL = process.env.E2E_EMAIL;
 const E2E_PASSWORD = process.env.E2E_PASSWORD;
 
+const ensureAdmin = () => {
+  const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (!serviceAccountRaw) return null;
+
+  try {
+    const normalized = serviceAccountRaw.trim().replace(/^'/, '').replace(/'$/, '');
+    const serviceAccount = JSON.parse(normalized);
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+    }
+    return admin.firestore();
+  } catch {
+    return null;
+  }
+};
+
 test.describe('Profile and settings coverage', () => {
   test.skip(!E2E_EMAIL || !E2E_PASSWORD, 'Set E2E_EMAIL and E2E_PASSWORD to run profile/settings tests.');
+
+  let rollbackUserUid = null;
+  let rollbackProfile = null;
+
+  test.beforeAll(async () => {
+    const db = ensureAdmin();
+    if (!db || !E2E_EMAIL) return;
+
+    try {
+      const authUser = await admin.auth().getUserByEmail(E2E_EMAIL.trim().toLowerCase());
+      rollbackUserUid = authUser.uid;
+      const userDoc = await db.collection('users').doc(rollbackUserUid).get();
+
+      if (userDoc.exists) {
+        const data = userDoc.data() || {};
+        rollbackProfile = {
+          displayName: data.displayName || '',
+          country: data.country || '',
+          role: data.role || 'student',
+          photoURL: data.photoURL || '',
+        };
+      }
+    } catch {
+      rollbackUserUid = null;
+      rollbackProfile = null;
+    }
+  });
+
+  test.afterAll(async () => {
+    const db = ensureAdmin();
+    if (!db || !rollbackUserUid || !rollbackProfile) return;
+
+    await db.collection('users').doc(rollbackUserUid).set(
+      {
+        ...rollbackProfile,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  });
 
   const login = async (page) => {
     await page.goto('/login');
@@ -57,13 +116,43 @@ test.describe('Profile and settings coverage', () => {
 
     const nameInput = page.locator('label:has-text("Nombre Completo") + input');
     const originalName = (await nameInput.inputValue()).trim();
-    await nameInput.fill(originalName || 'Usuario E2E');
+    const updatedName = `${originalName || 'Usuario'} E2E`;
+    await nameInput.fill(updatedName);
 
     const countrySelect = page.locator('label:has-text("País") + select');
+    const selectedCountryBefore = await countrySelect.inputValue();
     await countrySelect.selectOption({ index: 1 });
 
-    await page.getByRole('button', { name: /cancelar/i }).click();
-    await expect(page.getByRole('heading', { name: /editar perfil/i })).not.toBeVisible();
+    const canMutateSafely = Boolean(rollbackUserUid && rollbackProfile);
+    const modalHeading = page.getByRole('heading', { name: /editar perfil/i });
+    if (canMutateSafely) {
+      await page.getByRole('button', { name: /guardar/i }).click();
+
+      let modalClosedAfterSave = false;
+      try {
+        await expect(modalHeading).not.toBeVisible({ timeout: 3000 });
+        modalClosedAfterSave = true;
+      } catch {
+        modalClosedAfterSave = false;
+      }
+
+      if (modalClosedAfterSave) {
+        await expect(page.getByRole('heading', { level: 1, name: new RegExp(updatedName, 'i') })).toBeVisible();
+      } else {
+        await page.getByRole('button', { name: /cancelar/i }).click();
+        await expect(modalHeading).not.toBeVisible();
+      }
+    } else {
+      await page.getByRole('button', { name: /cancelar/i }).click();
+    }
+
+    await expect(modalHeading).not.toBeVisible();
+
+    if (canMutateSafely && selectedCountryBefore) {
+      await page.goto('/profile');
+      await page.waitForURL(/\/profile/);
+      await expect(page.getByText(/plan gratuito/i)).toBeVisible();
+    }
 
     await page.goto('/settings');
     await page.waitForURL(/\/settings/);

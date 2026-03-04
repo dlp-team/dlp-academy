@@ -701,7 +701,9 @@ service cloud.firestore {
     match /institution_invites/{inviteId} {
       allow get: if true; 
       allow list: if isGlobalAdmin();
-      allow write: if isGlobalAdmin();
+      allow create, update: if isGlobalAdmin();
+      allow delete: if isGlobalAdmin() || 
+                   (request.auth != null && request.auth.token.email == resource.data.email);
     }
 
 

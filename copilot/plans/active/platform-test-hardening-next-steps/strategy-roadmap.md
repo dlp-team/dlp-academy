@@ -28,7 +28,7 @@ Establish complete platform-level automated coverage so regressions across any m
 
 1. Add remaining Phase 03 unit coverage for uncovered tree-move/sharing branches in Home handlers where callback branches are still untested.
 2. Keep Phase 02 onboarding closure deferred until onboarding test fixtures are explicitly resumed.
-3. Continue Phase 06 by adding profile-save mutation assertions with deterministic rollback guard.
+3. Continue Phase 06 by hardening deterministic subject-topic content seeds to eliminate residual content-route skips in bundled regressions.
 4. Start Phase 07 with deterministic institution-admin guardrail E2E smoke and role-block assertions.
 
 ## Coverage Matrix (Target)

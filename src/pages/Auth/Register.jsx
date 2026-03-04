@@ -109,9 +109,10 @@ const Register = () => {
                                     <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
                                     <input
                                         type="text"
-                                        name="magicCode"
-                                        value={formData.magicCode || ''}
+                                        name="verificationCode"
+                                        value={formData.verificationCode}
                                         onChange={handleChange}
+                                        required
                                         className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-all text-gray-900 dark:text-white"
                                         placeholder="Ej: INST-2026"
                                     />

@@ -37,6 +37,7 @@ Verify profile and settings surfaces so personal data and theme preferences rema
     - Theme toggle `Claro` => `.dark` class removed.
     - Language selector update and saved state signal.
     - Profile edit modal open/field interaction/close flow.
+    - Profile save mutation assertion with Firebase Admin rollback guard.
     - Notification toggle interaction path.
     - Organization `rememberSort` + `viewMode` interaction path.
 

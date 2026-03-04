@@ -65,52 +65,44 @@ export const useRegister = () => {
                 throw new Error('Debes indicar un correo válido.');
             }
 
-            const inviteSnap = await getDocs(
-                query(collection(db, 'institution_invites'), where('email', '==', normalizedEmail))
-            );
-
             let resolvedRole = 'student';
             let institutionId = null;
+            let shouldDeleteInvite = false;
 
             if (formData.userType === 'teacher' || formData.userType === 'admin') {
-                const code = formData.verificationCode?.trim();
-                
-                if (!code) {
+                const code = (formData.verificationCode || '').trim();
+                console.log("Datos de registro:", { type: formData.userType, code: code }); // Para ver qué llega
+
+                if ((formData.userType === 'teacher' || formData.userType === 'admin') && !code) {
                     throw new Error('missing-verification-code');
                 }
 
-                // 1. ONE SECURE LOOKUP: Just look inside institution_invites (Exactly as you suggested!)
+                // 1. ONE SECURE LOOKUP: Buscar solo por ID
                 const inviteRef = doc(db, 'institution_invites', code);
-                const inviteSnap = await getDoc(inviteRef);
+                const inviteDocSnap = await getDoc(inviteRef);
 
-                // If the code doesn't exist in institution_invites, block them immediately. No fallback queries.
-                if (!inviteSnap.exists()) {
+                if (!inviteDocSnap.exists()) {
                     throw new Error('invalid-verification-code');
                 }
 
-                const inviteData = inviteSnap.data();
+                const inviteData = inviteDocSnap.data();
 
-                // 2. We found the code! Now check if it's a magic code or a direct invite.
+                // 2. BEHAVIOR BASED ON TYPE
                 if (inviteData.type === 'institutional') {
-                    // It's a multi-use magic code
                     resolvedRole = 'teacher'; 
                     institutionId = inviteData.institutionId;
-                    // Note: We do NOT delete magic codes, so other teachers can use them.
-
                 } else {
-                    // It's a direct, single-use email invite
                     if (inviteData.email.toLowerCase() !== normalizedEmail) {
                         throw new Error('invalid-invite-email');
                     }
                     resolvedRole = inviteData.role || 'teacher';
                     institutionId = inviteData.institutionId;
                     
-                    // Consume the direct invite so it can't be reused
-                    await deleteDoc(inviteRef);
+                    shouldDeleteInvite = true;
                 }
             }
 
-            // 1. Create Auth User
+            // 3. Create Auth User 
             const userCredential = await createUserWithEmailAndPassword(
                 auth, 
                 normalizedEmail,
@@ -120,12 +112,17 @@ export const useRegister = () => {
             const displayName = `${(formData.firstName || '').trim()} ${(formData.lastName || '').trim()}`.trim() || normalizedEmail.split('@')[0];
             const country = (formData.country || '').trim() || 'other';
 
-            // 2. Update Display Name
-            await updateProfile(user, {
-                displayName
-            });
+            // 4. Update Display Name
+            await updateProfile(user, { displayName });
 
-            // 3. Create Firestore Document
+            // 5. Borramos la invitación directa porque ya estamos logueados
+            if (shouldDeleteInvite) {
+                const code = formData.verificationCode.trim();
+                const inviteRef = doc(db, 'institution_invites', code);
+                await deleteDoc(inviteRef);
+            }
+
+            // 6. Create Firestore Document en 'users'
             await setDoc(doc(db, "users", user.uid), {
                 uid: user.uid,
                 firstName: formData.firstName,
@@ -143,7 +140,7 @@ export const useRegister = () => {
                 }
             });
 
-            // 4. Redirect
+            // 7. Redirect
             navigate('/home');
 
         } catch (err) {
