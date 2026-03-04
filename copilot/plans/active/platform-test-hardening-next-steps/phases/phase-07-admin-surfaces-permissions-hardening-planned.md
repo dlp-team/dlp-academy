@@ -1,4 +1,4 @@
-# Phase 07 — Admin Surfaces and Permissions Hardening (PLANNED)
+# Phase 07 — Admin Surfaces and Permissions Hardening (IN_PROGRESS)
 
 ## Objective
 
@@ -24,3 +24,19 @@ Ensure admin surfaces and role permissions are protected against unauthorized ac
 - Admin E2E tests pass for allowed roles and fail/redirect for disallowed roles.
 - Permission unit tests include explicit viewer denial scenarios.
 - No unauthorized edit action is reachable by regression.
+
+## Execution Notes
+
+- Added new Phase 07 E2E suite:
+  - `tests/e2e/admin-guardrails.spec.js`
+- Implemented route-guard negative-path checks for non-admin roles:
+  - Owner denied for `/admin-dashboard` and `/institution-admin-dashboard` (redirect to `/home`).
+  - Editor denied for `/admin-dashboard` and `/institution-admin-dashboard` (redirect to `/home`).
+  - Viewer denied for `/admin-dashboard` and `/institution-admin-dashboard` (redirect to `/home`).
+- Added optional institution-admin allow-path check (env-gated):
+  - Verifies access to institution admin dashboard and primary tabs when institution-admin credentials are provided.
+
+## Validation Evidence
+
+- `npm run test:e2e -- tests/e2e/admin-guardrails.spec.js --reporter=list` → ✅ `3 passed`, ⚠️ `1 skipped` (institution-admin allow-path creds not configured in this run).
+- `npm run test:e2e -- tests/e2e/auth.spec.js tests/e2e/user-journey.spec.js tests/e2e/home-sharing-roles.spec.js tests/e2e/subject-topic-content.spec.js tests/e2e/quiz-lifecycle.spec.js tests/e2e/profile-settings.spec.js tests/e2e/admin-guardrails.spec.js --reporter=list` → ✅ `15 passed`, ⚠️ `1 skipped`.
