@@ -175,40 +175,67 @@ const InstitutionAdminDashboard = ({ user }) => {
 
   const handleAddUser = async (e) => {
     e.preventDefault();
+    const normalizedEmail = newUserEmail.toLowerCase().trim();
+    if (!normalizedEmail) return;
+
+    setIsSubmitting(true);
     setAddError('');
     setAddSuccess('');
-    setIsSubmitting(true);
-
-    if (!newUserEmail.includes('@')) {
-      setAddError('Por favor introduce un email válido.');
-      setIsSubmitting(false);
-      return;
-    }
 
     try {
-      const checkSnap = await getDocs(
-        query(collection(db, 'institution_invites'), where('email', '==', newUserEmail), where('institutionId', '==', user.institutionId)),
+      // 1. FIRST CHECK: Is the teacher already fully registered in the platform?
+      const usersRef = collection(db, 'users');
+      const qUser = query(
+        usersRef, 
+        where('email', '==', normalizedEmail),
+        where('institutionId', '==', user.institutionId)
       );
-      if (!checkSnap.empty) {
-        setAddError('Este email ya está en la lista de profesores autorizados.');
+      const existingUserSnap = await getDocs(qUser);
+
+      if (!existingUserSnap.empty) {
+        setAddError('Este profesor ya está registrado y activo en tu institución.');
         setIsSubmitting(false);
         return;
       }
 
+      // 2. SECOND CHECK: Is there already a pending invite for this email?
+      const invitesRef = collection(db, 'institution_invites');
+      const qInvite = query(
+        invitesRef, 
+        where('email', '==', normalizedEmail),
+        where('institutionId', '==', user.institutionId)
+      );
+      const existingInviteSnap = await getDocs(qInvite);
+
+      if (!existingInviteSnap.empty) {
+        setAddError('Este profesor ya tiene una invitación pendiente.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 3. CREATE INVITE: If they aren't registered and don't have an invite, create one.
       await addDoc(collection(db, 'institution_invites'), {
-        email: newUserEmail.toLowerCase().trim(),
+        email: normalizedEmail,
         institutionId: user.institutionId,
-        addedBy: user.uid,
-        createdAt: serverTimestamp(),
-        enabled: true,
+        role: 'teacher', 
+        type: 'direct',  
+        createdAt: serverTimestamp()
       });
 
-      setAddSuccess(`Acceso concedido a ${newUserEmail}`);
+      setAddSuccess('Profesor invitado correctamente. Puede copiar el código de acceso en la tabla.');
       setNewUserEmail('');
+      
+      // Close modal after a short delay so they can read the success message
+      setTimeout(() => {
+        setShowAddUserModal(false);
+      }, 2000);
+      
+      // Reload the table data
       fetchData();
+
     } catch (error) {
-      console.error(error);
-      setAddError('Error al guardar en la base de datos.');
+      console.error('Error adding user:', error);
+      setAddError('Ocurrió un error al invitar al profesor.');
     } finally {
       setIsSubmitting(false);
     }
