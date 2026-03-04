@@ -688,17 +688,9 @@ service cloud.firestore {
     }
 
 
-    // Allow anyone to check a SPECIFIC invite if they have the exact code
-    match /institution_invites/{inviteId} {
-      allow get: if true; 
-      allow list: if false; // Blocks people from searching/listing emails
-      allow write: if request.auth != null; // Only admins can create
-    }
-
     // -----------------------------------------
     // INSTITUTIONS
     // -----------------------------------------
-    // Allow anyone to check a SPECIFIC institution for a magic code
     match /institutions/{institutionId} {
       allow get: if true;
       allow read: if isSignedIn();
@@ -706,6 +698,12 @@ service cloud.firestore {
       allow update: if canManageInstitution(institutionId);
       allow delete: if isGlobalAdmin();
     }
+    match /institution_invites/{inviteId} {
+      allow get: if true; 
+      allow list: if isGlobalAdmin();
+      allow write: if isGlobalAdmin();
+    }
+
 
     // -----------------------------------------
     // NUEVAS REGLAS PARA EXÁMENES (EXAMS)

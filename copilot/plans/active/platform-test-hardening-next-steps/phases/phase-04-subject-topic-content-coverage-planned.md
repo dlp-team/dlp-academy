@@ -1,4 +1,4 @@
-# Phase 04 — Subject, Topic, and Content Navigation Coverage (IN_PROGRESS)
+# Phase 04 — Subject, Topic, and Content Navigation Coverage (COMPLETED)
 
 ## Objective
 
@@ -45,7 +45,22 @@ Ensure core learning navigation from subject to topics and content viewers remai
     - Drag payload setup.
     - Drag-over drop enablement.
     - Reorder callback execution and same-target guard.
+  - `tests/unit/hooks/useTopicLogic.test.js`
+    - Student viewer-only permission branch.
+    - Teacher permission mapping via permission utils.
+    - Topic delete handler navigation path.
+    - Resumen rename payload (`name` + `title`) persistence path.
+
+- Deterministic E2E seed hardening completed in `tests/e2e/subject-topic-content.spec.js`:
+  - Supports env institution override via `E2E_INSTITUTION_ID`.
+  - Resolves owner via Firebase Auth UID.
+  - Validates env subject/topic IDs before using them.
+  - Auto-creates subject/topic/resumen seed docs when missing.
+  - Avoids writing `institutionId: null` (field omitted when unknown).
 
 - Validation evidence:
   - `npm run test:unit -- tests/unit/hooks/useSubjectManager.test.js tests/unit/hooks/useTopicGridDnD.test.js` → ✅ `2 files`, `7 tests` passed.
-  - `npm run test:e2e -- tests/e2e/subject-topic-content.spec.js --reporter=list` → ⚠️ `2 skipped` (no resolvable subject/topic seed for current E2E account in this run).
+  - `npm run test:unit -- tests/unit/hooks/useTopicLogic.test.js` → ✅ `1 file`, `6 tests` passed.
+  - `npm run test:unit -- tests/unit/hooks/useSubjectManager.test.js tests/unit/hooks/useTopicGridDnD.test.js tests/unit/hooks/useTopicLogic.test.js` → ✅ `3 files`, `13 tests` passed.
+  - `npm run test:e2e -- tests/e2e/subject-topic-content.spec.js --reporter=list` → ✅ `2 passed`.
+  - `npm run test:e2e -- tests/e2e/auth.spec.js tests/e2e/user-journey.spec.js tests/e2e/home-sharing-roles.spec.js tests/e2e/subject-topic-content.spec.js --reporter=list` → ✅ `7 passed`.

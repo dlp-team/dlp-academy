@@ -17,7 +17,7 @@ Establish complete platform-level automated coverage so regressions across any m
 - Phase 01 — Smoke Test Baseline: **COMPLETED**
 - Phase 02 — Auth and Onboarding Coverage Foundation: **IN_PROGRESS (ONBOARDING DEFERRED)**
 - Phase 03 — Home and Shared Organization Coverage: **IN_PROGRESS**
-- Phase 04 — Subject, Topic, and Content Navigation Coverage: **IN_PROGRESS**
+- Phase 04 — Subject, Topic, and Content Navigation Coverage: **COMPLETED**
 - Phase 05 — Quiz Engine and Results Coverage: **PLANNED**
 - Phase 06 — Profile and Settings Coverage: **PLANNED**
 - Phase 07 — Admin Surfaces and Permissions Hardening: **PLANNED**
@@ -28,7 +28,8 @@ Establish complete platform-level automated coverage so regressions across any m
 
 1. Add remaining Phase 03 unit coverage for uncovered tree-move/sharing branches in Home handlers where callback branches are still untested.
 2. Keep Phase 02 onboarding closure deferred until onboarding test fixtures are explicitly resumed.
-3. Continue Phase 04 expansion with seed-stable Subject/Topic/Content E2E evidence and additional hook-level unit coverage.
+3. Start Phase 05 with a first deterministic quiz lifecycle E2E (open quiz, submit attempt, validate results route render).
+4. Add Phase 05 hook-level unit baseline for `src/pages/Quizzes/hooks/useQuizzesLogic.js` covering load + submit paths.
 
 ## Coverage Matrix (Target)
 
