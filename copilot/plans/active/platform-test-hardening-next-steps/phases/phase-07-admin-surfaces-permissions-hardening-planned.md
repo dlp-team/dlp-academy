@@ -35,8 +35,12 @@ Ensure admin surfaces and role permissions are protected against unauthorized ac
   - Viewer denied for `/admin-dashboard` and `/institution-admin-dashboard` (redirect to `/home`).
 - Added optional institution-admin allow-path check (env-gated):
   - Verifies access to institution admin dashboard and primary tabs when institution-admin credentials are provided.
+- Expanded permission utility unit coverage:
+  - Added explicit viewer denial checks for edit/delete capabilities and UI visibility guards.
+  - Added role-rank access checks for institution-admin route requirements.
 
 ## Validation Evidence
 
-- `npm run test:e2e -- tests/e2e/admin-guardrails.spec.js --reporter=list` → ✅ `3 passed`, ⚠️ `1 skipped` (institution-admin allow-path creds not configured in this run).
-- `npm run test:e2e -- tests/e2e/auth.spec.js tests/e2e/user-journey.spec.js tests/e2e/home-sharing-roles.spec.js tests/e2e/subject-topic-content.spec.js tests/e2e/quiz-lifecycle.spec.js tests/e2e/profile-settings.spec.js tests/e2e/admin-guardrails.spec.js --reporter=list` → ✅ `15 passed`, ⚠️ `1 skipped`.
+- `npm run test:unit -- tests/unit/utils/permissionUtils.test.js` → ✅ `1` file, `8` tests passed.
+- `npm run test:e2e -- tests/e2e/admin-guardrails.spec.js` → ✅ `4 passed`.
+- `npm run test:e2e -- tests/e2e/subject-topic-content.spec.js tests/e2e/quiz-lifecycle.spec.js tests/e2e/profile-settings.spec.js tests/e2e/admin-guardrails.spec.js` → ✅ `11 passed`.

@@ -29,7 +29,7 @@ Establish complete platform-level automated coverage so regressions across any m
 1. Add remaining Phase 03 unit coverage for uncovered tree-move/sharing branches in Home handlers where callback branches are still untested.
 2. Keep Phase 02 onboarding closure deferred until onboarding test fixtures are explicitly resumed.
 3. Continue Phase 06 by expanding deterministic profile-save assertions with explicit post-save data checks when backend latency allows.
-4. Expand Phase 07 with institution-admin allow-path fixtures and permission utility unit denials for viewer/edit actions.
+4. Continue Phase 07 by extending positive-path admin dashboard assertions beyond guardrails while keeping deny-path regressions green.
 
 ## Coverage Matrix (Target)
 

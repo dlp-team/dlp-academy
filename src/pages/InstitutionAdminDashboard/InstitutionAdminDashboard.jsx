@@ -95,7 +95,7 @@ const InstitutionAdminDashboard = ({ user }) => {
       if (userType === 'teachers') {
         const [teachersSnap, allowedSnap] = await Promise.all([
           getDocs(query(collection(db, 'users'), where('institutionId', '==', user.institutionId), where('role', '==', 'teacher'))),
-          getDocs(query(collection(db, 'allowed_teachers'), where('institutionId', '==', user.institutionId))),
+          getDocs(query(collection(db, 'institution_invites'), where('institutionId', '==', user.institutionId))),
         ]);
         setTeachers(teachersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         setAllowedTeachers(allowedSnap.docs.map(d => ({ id: d.id, ...d.data() })));

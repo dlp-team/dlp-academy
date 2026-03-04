@@ -105,24 +105,51 @@ const UsersTabContent = ({
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
               <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-indigo-50/50 dark:bg-indigo-900/10">
                 <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                  <UserPlus className="w-4 h-4 text-indigo-500" /> Profesores Invitados (Lista Blanca)
+                  <UserPlus className="w-4 h-4 text-indigo-500" /> Invitaciones Pendientes
                 </h3>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                  <thead className="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase font-semibold text-slate-500">
+                    <tr>
+                      <th className="px-6 py-4">Tipo / Email</th>
+                      <th className="px-6 py-4">Código de Acceso</th>
+                      <th className="px-6 py-4 w-10"></th>
+                    </tr>
+                  </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {allowedTeachers.map(t => (
                       <tr key={t.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                        <td className="px-6 py-4 font-medium">{t.email}</td>
+                        <td className="px-6 py-4 font-medium">
+                          {t.type === 'institutional' ? (
+                            <span className="text-purple-600 dark:text-purple-400">Código Institucional General</span>
+                          ) : (
+                            t.email
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                           <div className="flex items-center gap-3">
+                              <code className="px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-md font-mono font-bold tracking-wide">
+                                {t.id}
+                              </code>
+                              <button 
+                                onClick={() => navigator.clipboard.writeText(t.id)}
+                                className="text-xs text-slate-400 hover:text-indigo-500 transition-colors"
+                                title="Copiar código"
+                              >
+                                Copiar
+                              </button>
+                           </div>
+                        </td>
                         <td className="px-6 py-4 w-32 text-right">
-                          <button onClick={() => onRemoveAccess(t.id)} className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors" title="Revocar acceso">
+                          <button onClick={() => onRemoveAccess(t.id)} className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar invitación">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </td>
                       </tr>
                     ))}
                     {allowedTeachers.length === 0 && (
-                      <tr><td colSpan="2" className="px-6 py-8 text-center text-slate-400">No has autorizado a ningún profesor extra aún.</td></tr>
+                      <tr><td colSpan="3" className="px-6 py-8 text-center text-slate-400">No hay invitaciones pendientes.</td></tr>
                     )}
                   </tbody>
                 </table>
