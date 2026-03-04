@@ -18,7 +18,7 @@ Establish complete platform-level automated coverage so regressions across any m
 - Phase 02 — Auth and Onboarding Coverage Foundation: **IN_PROGRESS (ONBOARDING DEFERRED)**
 - Phase 03 — Home and Shared Organization Coverage: **IN_PROGRESS**
 - Phase 04 — Subject, Topic, and Content Navigation Coverage: **COMPLETED**
-- Phase 05 — Quiz Engine and Results Coverage: **IN_PROGRESS**
+- Phase 05 — Quiz Engine and Results Coverage: **COMPLETED**
 - Phase 06 — Profile and Settings Coverage: **PLANNED**
 - Phase 07 — Admin Surfaces and Permissions Hardening: **PLANNED**
 - Phase 08 — Full Automation in CI: **PLANNED**
@@ -28,8 +28,8 @@ Establish complete platform-level automated coverage so regressions across any m
 
 1. Add remaining Phase 03 unit coverage for uncovered tree-move/sharing branches in Home handlers where callback branches are still untested.
 2. Keep Phase 02 onboarding closure deferred until onboarding test fixtures are explicitly resumed.
-3. Expand Phase 05 with additional quiz edge-case E2E coverage (retry flow + non-passing score state rendering).
-4. Add extra `useQuizzesLogic` unit branches for incorrect-answer/reset and progress-color helpers.
+3. Start Phase 06 with deterministic profile/settings route and theme-toggle E2E coverage.
+4. Add Phase 06 hook-level unit baseline for `useProfile` and `useSettingsPageState` logic branches.
 
 ## Coverage Matrix (Target)
 

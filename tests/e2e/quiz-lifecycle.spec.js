@@ -295,4 +295,32 @@ test.describe('Quiz lifecycle', () => {
     expect(resultDoc.data()?.quizId).toBe(discoveredQuizId);
     expect(typeof resultDoc.data()?.score).toBe('number');
   });
+
+  test('quiz failing score renders retry flow and can restart from review', async ({ page }) => {
+    test.skip(!discoveredSubjectId || !discoveredTopicId || !discoveredQuizId, 'No deterministic seed context found for retry coverage.');
+
+    await page.goto('/login');
+    await page.locator('#email').fill(E2E_EMAIL || '');
+    await page.locator('#password').fill(E2E_PASSWORD || '');
+    await page.getByRole('button', { name: /iniciar sesión/i }).click();
+
+    await page.waitForURL(/\/home/);
+    await page.goto(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}/quiz/${discoveredQuizId}`);
+    await page.waitForURL(new RegExp(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}/quiz/${discoveredQuizId}`));
+
+    await page.getByRole('button', { name: /comenzar test/i }).click();
+    await page.getByRole('button', { name: /a\s*3/i }).first().click();
+    await page.getByRole('button', { name: /comprobar/i }).click();
+    await page.getByRole('button', { name: /siguiente/i }).click();
+    await page.getByRole('button', { name: /a\s*1/i }).first().click();
+    await page.getByRole('button', { name: /comprobar/i }).click();
+    await page.getByRole('button', { name: /finalizar/i }).click();
+
+    await expect(page.getByText(/sigue practicando/i)).toBeVisible();
+    await expect(page.getByText(/^0%$/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: /intentar de nuevo/i })).toBeVisible();
+
+    await page.getByRole('button', { name: /intentar de nuevo/i }).click();
+    await expect(page.getByRole('button', { name: /comenzar test/i })).toBeVisible();
+  });
 });

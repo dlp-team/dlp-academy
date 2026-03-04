@@ -79,41 +79,33 @@ export const useRegister = () => {
                     throw new Error('missing-verification-code');
                 }
 
-                // 1. LOOKUP 1: Check if it's a Direct Invite (Lookup securely by Document ID)
+                // 1. ONE SECURE LOOKUP: Fetch the document by ID (Works for both Direct Invites and Magic Codes)
                 const inviteRef = doc(db, 'institution_invites', code);
                 const inviteSnap = await getDoc(inviteRef);
 
-                if (inviteSnap.exists()) {
-                    const inviteData = inviteSnap.data();
-                    
-                    // Security Check: Does the email they typed match the email we invited?
+                if (!inviteSnap.exists()) {
+                    throw new Error('invalid-verification-code');
+                }
+
+                const inviteData = inviteSnap.data();
+
+                // 2. BEHAVIOR BASED ON TYPE
+                if (inviteData.type === 'direct' || !inviteData.type) { 
+                    // It's a single-use email invitation
                     if (inviteData.email.toLowerCase() !== normalizedEmail) {
                         throw new Error('invalid-invite-email');
                     }
-                    
-                    resolvedRole = inviteData.role || 'teacher'; // This will correctly apply 'institutionadmin' if it's an admin invite
+                    resolvedRole = inviteData.role || 'teacher';
                     institutionId = inviteData.institutionId;
-
-                    // Consume the invite so it can't be reused by a student later!
-                    await deleteDoc(inviteRef);
                     
-                } else {
-                    // 2. LOOKUP 2: Check if it's a Magic Code
-                    const qInstitutions = query(
-                        collection(db, 'institutions'), 
-                        where('onboarding_settings.magic_code_enabled', '==', true), 
-                        where('onboarding_settings.magic_code_value', '==', code)
-                    );
-                    const querySnapshot = await getDocs(qInstitutions);
+                    // Consume it!
+                    await deleteDoc(inviteRef);
 
-                    if (!querySnapshot.empty) {
-                        const institutionDoc = querySnapshot.docs[0];
-                        resolvedRole = 'teacher'; // Magic codes only grant teacher access, never admin
-                        institutionId = institutionDoc.id;
-                    } else {
-                        // If it's neither a valid invite ID nor a valid Magic Code
-                        throw new Error('invalid-verification-code');
-                    }
+                } else if (inviteData.type === 'magic') {
+                    // It's a multi-use magic code (e.g., "SCIENCE-2026")
+                    resolvedRole = 'teacher'; // Magic codes only grant teacher access
+                    institutionId = inviteData.institutionId;
+                    // We DO NOT delete it so other teachers can use it
                 }
             }
 

@@ -145,4 +145,111 @@ describe('useQuizzesLogic', () => {
 
     expect(mocks.navigate).toHaveBeenCalledWith('/home/subject/subject-1/topic/topic-1');
   });
+
+  it('applies incorrect answer flow and resets streak', async () => {
+    const { result } = renderHook(() => useQuizzesLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      result.current.handleOptionSelect(0);
+    });
+    await act(async () => {
+      result.current.handleCheckAnswer();
+    });
+
+    await waitFor(() => {
+      expect(result.current.showResult).toBe(true);
+    });
+    expect(result.current.showResult).toBe(true);
+    expect(result.current.showExplanation).toBe(true);
+    expect(result.current.wrongCount).toBe(1);
+    expect(result.current.streak).toBe(0);
+    expect(result.current.score).toBe(0);
+  });
+
+  it('resets quiz state on retry', async () => {
+    const { result } = renderHook(() => useQuizzesLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      result.current.handleOptionSelect(1);
+    });
+    await act(async () => {
+      result.current.handleCheckAnswer();
+    });
+    await act(async () => {
+      await result.current.handleNextQuestion();
+    });
+    await act(async () => {
+      result.current.handleOptionSelect(0);
+    });
+    await act(async () => {
+      result.current.handleCheckAnswer();
+    });
+    await act(async () => {
+      await result.current.handleNextQuestion();
+    });
+
+    await waitFor(() => {
+      expect(result.current.quizFinished).toBe(true);
+    });
+
+    await act(async () => {
+      result.current.handleRetry();
+    });
+
+    expect(result.current.quizFinished).toBe(false);
+    expect(result.current.currentQuestionIndex).toBe(0);
+    expect(result.current.selectedOption).toBe(null);
+    expect(result.current.showResult).toBe(false);
+    expect(result.current.showExplanation).toBe(false);
+    expect(result.current.score).toBe(0);
+    expect(result.current.streak).toBe(0);
+    expect(result.current.correctCount).toBe(0);
+    expect(result.current.wrongCount).toBe(0);
+  });
+
+  it('computes progress and streak helper colors across branches', async () => {
+    const { result } = renderHook(() => useQuizzesLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.getProgressColor()).toBe('bg-purple-500');
+    expect(result.current.getStreakColor()).toBe('text-slate-300');
+
+    await act(async () => {
+      result.current.handleOptionSelect(1);
+    });
+    await act(async () => {
+      result.current.handleCheckAnswer();
+    });
+    await waitFor(() => {
+      expect(result.current.getStreakColor()).toBe('text-emerald-500');
+    });
+
+    await act(async () => {
+      await result.current.handleNextQuestion();
+    });
+    expect(result.current.getProgressColor()).toBe('bg-emerald-500');
+
+    await act(async () => {
+      result.current.handleOptionSelect(1);
+    });
+    await act(async () => {
+      result.current.handleCheckAnswer();
+    });
+    await act(async () => {
+      result.current.handleCheckAnswer();
+      result.current.handleCheckAnswer();
+    });
+    expect(result.current.getStreakColor()).toBe('text-orange-500');
+  });
 });

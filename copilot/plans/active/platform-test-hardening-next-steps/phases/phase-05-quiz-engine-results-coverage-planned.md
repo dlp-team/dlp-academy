@@ -1,4 +1,4 @@
-# Phase 05 — Quiz Engine and Results Coverage (IN_PROGRESS)
+# Phase 05 — Quiz Engine and Results Coverage (COMPLETED)
 
 ## Objective
 
@@ -35,6 +35,7 @@ Protect quiz runtime behavior from start to submission and results rendering.
 - New quiz journeys implemented:
   - Start quiz from topic tab, complete all questions, and return to topic.
   - Verify quiz completion persists a `quiz_results` document for the active user.
+  - Force a non-passing score path and validate failed-results rendering + retry return-to-review behavior.
 
 - Added focused unit suite:
   - `tests/unit/hooks/useQuizzesLogic.test.js`
@@ -42,9 +43,13 @@ Protect quiz runtime behavior from start to submission and results rendering.
     - Correct-answer scoring/streak path.
     - End-of-quiz result save path (`setDoc` merge write).
     - Back-navigation handler path.
+    - Incorrect-answer + wrong-count/streak-reset path.
+    - Retry state reset path.
+    - Progress/streak helper color branches.
 
 ## Validation Evidence
 
 - `npm run test:unit -- tests/unit/hooks/useQuizzesLogic.test.js` → ✅ `1 file`, `4 tests` passed.
-- `npm run test:e2e -- tests/e2e/quiz-lifecycle.spec.js --reporter=list` → ✅ `2 passed`.
-- `npm run test:e2e -- tests/e2e/auth.spec.js tests/e2e/user-journey.spec.js tests/e2e/home-sharing-roles.spec.js tests/e2e/subject-topic-content.spec.js tests/e2e/quiz-lifecycle.spec.js --reporter=list` → ✅ `9 passed`.
+- `npm run test:unit -- tests/unit/hooks/useQuizzesLogic.test.js` → ✅ `1 file`, `7 tests` passed.
+- `npm run test:e2e -- tests/e2e/quiz-lifecycle.spec.js --reporter=list` → ✅ `3 passed`.
+- `npm run test:e2e -- tests/e2e/auth.spec.js tests/e2e/user-journey.spec.js tests/e2e/home-sharing-roles.spec.js tests/e2e/subject-topic-content.spec.js tests/e2e/quiz-lifecycle.spec.js --reporter=list` → ✅ `10 passed`.
