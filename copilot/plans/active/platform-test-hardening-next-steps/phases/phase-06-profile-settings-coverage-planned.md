@@ -1,4 +1,4 @@
-# Phase 06 — Profile and Settings Coverage (PLANNED)
+# Phase 06 — Profile and Settings Coverage (IN_PROGRESS)
 
 ## Objective
 
@@ -25,3 +25,30 @@ Verify profile and settings surfaces so personal data and theme preferences rema
 - Profile/settings E2E tests pass across expected user states.
 - Hook tests validate loading, update, and persistence behavior.
 - Theme class toggling is covered and stable.
+
+## Execution Notes
+
+- Added Phase 06 E2E suite:
+  - `tests/e2e/profile-settings.spec.js`
+  - Validates:
+    - Profile route user surface render (`Cerrar Sesión`, `Plan Gratuito`).
+    - Settings route render (`Configuración`, `Apariencia`).
+    - Theme toggle `Oscuro` => `.dark` class set.
+    - Theme toggle `Claro` => `.dark` class removed.
+    - Language selector update and saved state signal.
+
+- Added Phase 06 hook unit baselines:
+  - `tests/unit/hooks/useProfile.test.js`
+    - Profile + owned-subject load path.
+    - Profile update (`updateDoc`) and local state merge.
+    - Logout (`signOut`) path.
+  - `tests/unit/hooks/useSettingsPageState.test.js`
+    - Snapshot load + `applyThemeToDom` path.
+    - Theme update optimistic state + Firestore persistence path.
+    - Nested notifications update + error-state path.
+
+## Validation Evidence
+
+- `npm run test:unit -- tests/unit/hooks/useProfile.test.js tests/unit/hooks/useSettingsPageState.test.js` → ✅ `2 files`, `6 tests` passed.
+- `npm run test:e2e -- tests/e2e/profile-settings.spec.js --reporter=list` → ✅ `1 passed`.
+- `npm run test:e2e -- tests/e2e/auth.spec.js tests/e2e/user-journey.spec.js tests/e2e/home-sharing-roles.spec.js tests/e2e/subject-topic-content.spec.js tests/e2e/quiz-lifecycle.spec.js tests/e2e/profile-settings.spec.js --reporter=list` → ✅ `11 passed`.

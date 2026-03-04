@@ -79,33 +79,34 @@ export const useRegister = () => {
                     throw new Error('missing-verification-code');
                 }
 
-                // 1. ONE SECURE LOOKUP: Fetch the document by ID (Works for both Direct Invites and Magic Codes)
+                // 1. ONE SECURE LOOKUP: Just look inside institution_invites (Exactly as you suggested!)
                 const inviteRef = doc(db, 'institution_invites', code);
                 const inviteSnap = await getDoc(inviteRef);
 
+                // If the code doesn't exist in institution_invites, block them immediately. No fallback queries.
                 if (!inviteSnap.exists()) {
                     throw new Error('invalid-verification-code');
                 }
 
                 const inviteData = inviteSnap.data();
 
-                // 2. BEHAVIOR BASED ON TYPE
-                if (inviteData.type === 'direct' || !inviteData.type) { 
-                    // It's a single-use email invitation
+                // 2. We found the code! Now check if it's a magic code or a direct invite.
+                if (inviteData.type === 'institutional') {
+                    // It's a multi-use magic code
+                    resolvedRole = 'teacher'; 
+                    institutionId = inviteData.institutionId;
+                    // Note: We do NOT delete magic codes, so other teachers can use them.
+
+                } else {
+                    // It's a direct, single-use email invite
                     if (inviteData.email.toLowerCase() !== normalizedEmail) {
                         throw new Error('invalid-invite-email');
                     }
                     resolvedRole = inviteData.role || 'teacher';
                     institutionId = inviteData.institutionId;
                     
-                    // Consume it!
+                    // Consume the direct invite so it can't be reused
                     await deleteDoc(inviteRef);
-
-                } else if (inviteData.type === 'magic') {
-                    // It's a multi-use magic code (e.g., "SCIENCE-2026")
-                    resolvedRole = 'teacher'; // Magic codes only grant teacher access
-                    institutionId = inviteData.institutionId;
-                    // We DO NOT delete it so other teachers can use it
                 }
             }
 

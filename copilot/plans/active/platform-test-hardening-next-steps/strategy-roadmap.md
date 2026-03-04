@@ -19,7 +19,7 @@ Establish complete platform-level automated coverage so regressions across any m
 - Phase 03 — Home and Shared Organization Coverage: **IN_PROGRESS**
 - Phase 04 — Subject, Topic, and Content Navigation Coverage: **COMPLETED**
 - Phase 05 — Quiz Engine and Results Coverage: **COMPLETED**
-- Phase 06 — Profile and Settings Coverage: **PLANNED**
+- Phase 06 — Profile and Settings Coverage: **IN_PROGRESS**
 - Phase 07 — Admin Surfaces and Permissions Hardening: **PLANNED**
 - Phase 08 — Full Automation in CI: **PLANNED**
 - Phase 09 — Review Gate and Closure Evidence: **PLANNED**
@@ -28,8 +28,8 @@ Establish complete platform-level automated coverage so regressions across any m
 
 1. Add remaining Phase 03 unit coverage for uncovered tree-move/sharing branches in Home handlers where callback branches are still untested.
 2. Keep Phase 02 onboarding closure deferred until onboarding test fixtures are explicitly resumed.
-3. Start Phase 06 with deterministic profile/settings route and theme-toggle E2E coverage.
-4. Add Phase 06 hook-level unit baseline for `useProfile` and `useSettingsPageState` logic branches.
+3. Expand Phase 06 with additional profile editing and settings notification/view-mode interaction coverage.
+4. Start Phase 07 with deterministic institution-admin guardrail E2E smoke and role-block assertions.
 
 ## Coverage Matrix (Target)
 
