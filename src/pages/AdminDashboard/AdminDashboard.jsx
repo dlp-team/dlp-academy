@@ -165,8 +165,46 @@ const InstitutionsTab = () => {
             };
 
             if (editingInstitutionId) {
-                await updateDoc(doc(db, 'institutions', editingInstitutionId), institutionPayload);
-                setSuccess(`Institución "${name}" actualizada correctamente.`);
+                const batch = writeBatch(db);
+                const institutionRef = doc(db, 'institutions', editingInstitutionId);
+                batch.update(institutionRef, institutionPayload);
+
+                // 1. Fetch current invites for this institution
+                const invitesQuery = query(
+                    collection(db, 'institution_invites'), 
+                    where('institutionId', '==', editingInstitutionId),
+                    where('role', '==', 'institutionadmin')
+                );
+                const invitesSnap = await getDocs(invitesQuery);
+                
+                const existingInvites = [];
+                invitesSnap.forEach(snapDoc => {
+                    existingInvites.push({ id: snapDoc.id, email: snapDoc.data().email });
+                });
+                const existingEmails = existingInvites.map(inv => inv.email);
+
+                // 2. Identify which emails to add and which to delete
+                const emailsToAdd = admins.filter(email => !existingEmails.includes(email));
+                const invitesToDelete = existingInvites.filter(inv => !admins.includes(inv.email));
+
+                // 3. Add deletion tasks to batch
+                invitesToDelete.forEach(inv => {
+                    batch.delete(doc(db, 'institution_invites', inv.id));
+                });
+
+                // 4. Add creation tasks to batch
+                emailsToAdd.forEach(email => {
+                    const newInviteRef = doc(collection(db, 'institution_invites'));
+                    batch.set(newInviteRef, {
+                        email: email,
+                        role: 'institutionadmin',
+                        institutionId: editingInstitutionId,
+                        invitedAt: serverTimestamp()
+                    });
+                });
+
+                await batch.commit();
+                setSuccess(`Institución "${name}" actualizada y administradores sincronizados.`);
             } else {
                 const batch = writeBatch(db);
                 const institutionDocRef = doc(collection(db, 'institutions'));

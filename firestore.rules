@@ -497,12 +497,6 @@ service cloud.firestore {
         );
     }
 
-    match /institutions/{institutionId} {
-      allow read: if isSignedIn();
-      allow create: if isGlobalAdmin();
-      allow update: if canManageInstitution(institutionId);
-      allow delete: if isGlobalAdmin();
-    }
 
     // Reglas para Shortcuts (en la raíz)
     match /shortcuts/{shortcutId} {
@@ -707,8 +701,10 @@ service cloud.firestore {
     // Allow anyone to check a SPECIFIC institution for a magic code
     match /institutions/{institutionId} {
       allow get: if true;
-      allow list: if false;
-      allow write: if request.auth != null;
+      allow read: if isSignedIn();
+      allow create, write, update, list: if isGlobalAdmin();
+      allow update: if canManageInstitution(institutionId);
+      allow delete: if isGlobalAdmin();
     }
 
     // -----------------------------------------
