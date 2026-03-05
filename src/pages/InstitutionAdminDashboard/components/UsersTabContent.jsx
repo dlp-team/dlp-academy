@@ -11,12 +11,20 @@ import {
   Eye,
   EyeOff,
   Copy,
+  ShieldAlert,
+  Save,
   XCircle
 } from 'lucide-react';
+import { generateDynamicCode } from '../../../utils/securityUtils';
 
 const UsersTabContent = ({
   userType,
   setUserType,
+  institutionId,
+  accessPolicies,
+  onSavePolicies,
+  isUpdatingPolicies,
+  policyMessage,
   searchTerm,
   setSearchTerm,
   loading,
@@ -37,6 +45,22 @@ const UsersTabContent = ({
 
   const [showCode, setShowCode] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Get the current policy based on the selected tab (teachers or students)
+  const currentPolicy = accessPolicies[userType];
+  
+  // Calculate the LIVE code right now so the admin can see it
+  const liveCode = currentPolicy.requireCode 
+    ? generateDynamicCode(institutionId, userType, currentPolicy.rotationIntervalHours) 
+    : 'DESACTIVADO';
+
+  // Local state for edits
+  const [editPolicy, setEditPolicy] = useState(currentPolicy);
+
+  // Update local state when tab changes
+  React.useEffect(() => {
+    setEditPolicy(accessPolicies[userType]);
+  }, [userType, accessPolicies]);
 
   const handleCopyCode = () => {
     const code = document.getElementById('instCodeInput').value;
@@ -94,65 +118,92 @@ const UsersTabContent = ({
             <>
               {/* Código General para Profesores */}
               <div className="bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/10 dark:to-slate-900 p-6 rounded-2xl shadow-sm border border-indigo-100 dark:border-indigo-500/20 mb-6">
-                <div className="flex flex-col md:flex-row gap-6 justify-between items-start md:items-center">
+                <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-6">
                   <div>
                     <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2 mb-1">
-                      <BookOpen className="w-5 h-5 text-indigo-500" />
-                      Código General para Profesores
+                      <ShieldAlert className="w-5 h-5 text-indigo-500" />
+                      Seguridad de Acceso ({userType === 'teachers' ? 'Profesores' : 'Alumnos'})
                     </h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xl">
-                      Comparte este código con tus profesores. Podrán usarlo en la pantalla de registro para unirse automáticamente a tu institución sin necesidad de recibir una invitación por email.
+                    <p className="text-sm text-slate-500 dark:text-slate-400 max-w-2xl">
+                      Configura cómo pueden registrarse los {userType === 'teachers' ? 'profesores' : 'alumnos'} en tu institución.
                     </p>
                   </div>
                   
-                  <div className="flex flex-col w-full md:w-auto gap-3">
-                    <div className="flex w-full md:w-auto gap-2">
-                      <div className="relative w-full md:w-64">
-                        <input
-                          id="instCodeInput"
-                          type={showCode ? "text" : "password"}
-                          defaultValue={institutionalCode}
-                          placeholder="Ej. MADRID-2026"
-                          className="w-full pl-4 pr-20 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-mono text-center font-bold text-indigo-600 dark:text-indigo-400 focus:ring-2 focus:ring-indigo-500 outline-none transition-all uppercase"
-                        />
-                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1 text-slate-400">
-                          <button
-                            onClick={() => setShowCode(!showCode)}
-                            className="p-1.5 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-md transition-colors"
-                            title={showCode ? "Ocultar código" : "Mostrar código"}
-                          >
-                            {showCode ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                          <button
-                            onClick={handleCopyCode}
-                            className="p-1.5 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-md transition-colors"
-                            title="Copiar código"
-                          >
-                            {copied ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => onUpdateInstitutionalCode(document.getElementById('instCodeInput').value)}
-                        disabled={isUpdatingCode}
-                        className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 transition-all whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
-                      >
-                        {isUpdatingCode ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Guardar'}
-                      </button>
-                    </div>
-                    
-                    {/* IN-APP NOTIFICATIONS (replaces window.alert) */}
-                    {codeUpdateSuccess && (
-                      <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
-                        <CheckCircle2 className="w-4 h-4" /> {codeUpdateSuccess}
-                      </p>
-                    )}
-                    {codeUpdateError && (
-                      <p className="text-sm font-medium text-red-600 dark:text-red-400 flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1">
-                        <XCircle className="w-4 h-4" /> {codeUpdateError}
-                      </p>
+                  {/* LIVE CODE DISPLAY */}
+                  <div className="bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-center min-w-[150px]">
+                    <p className="text-xs text-slate-500 font-semibold uppercase mb-1">Código Actual</p>
+                    <p className="font-mono text-xl font-bold tracking-widest text-indigo-600 dark:text-indigo-400">
+                      {liveCode}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* DOMAIN SETTINGS */}
+                  <div className="space-y-3 p-4 bg-white/50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                    <label className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
+                      <input 
+                        type="checkbox" 
+                        checked={editPolicy.requireDomain}
+                        onChange={(e) => setEditPolicy({...editPolicy, requireDomain: e.target.checked})}
+                        className="rounded text-indigo-600 focus:ring-indigo-500"
+                      />
+                      Requerir Dominio de Email
+                    </label>
+                    {editPolicy.requireDomain && (
+                      <input 
+                        type="text"
+                        placeholder="Ej: escuela.com, alumnos.org"
+                        value={editPolicy.allowedDomains}
+                        onChange={(e) => setEditPolicy({...editPolicy, allowedDomains: e.target.value})}
+                        className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
                     )}
                   </div>
+
+                  {/* CODE SETTINGS */}
+                  <div className="space-y-3 p-4 bg-white/50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                    <label className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
+                      <input 
+                        type="checkbox" 
+                        checked={editPolicy.requireCode}
+                        onChange={(e) => setEditPolicy({...editPolicy, requireCode: e.target.checked})}
+                        className="rounded text-indigo-600 focus:ring-indigo-500"
+                      />
+                      Requerir Código Dinámico
+                    </label>
+                    {editPolicy.requireCode && (
+                      <select
+                        value={editPolicy.rotationIntervalHours}
+                        onChange={(e) => setEditPolicy({...editPolicy, rotationIntervalHours: Number(e.target.value)})}
+                        className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-indigo-500"
+                      >
+                        <option value={1}>Cambiar cada 1 Hora</option>
+                        <option value={4}>Cambiar cada 4 Horas</option>
+                        <option value={12}>Cambiar cada 12 Horas</option>
+                        <option value={24}>Cambiar cada Día</option>
+                        <option value={168}>Cambiar cada Semana</option>
+                      </select>
+                    )}
+                  </div>
+                </div>
+
+                {/* SAVE BUTTON */}
+                <div className="mt-6 flex items-center justify-end gap-4 border-t border-slate-200 dark:border-slate-700 pt-4">
+                  {policyMessage.text && (
+                      <p className={`text-sm font-medium flex items-center gap-1.5 animate-in fade-in ${policyMessage.type === 'success' ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {policyMessage.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />} 
+                        {policyMessage.text}
+                      </p>
+                    )}
+                  <button
+                    onClick={() => onSavePolicies({ ...accessPolicies, [userType]: editPolicy })}
+                    disabled={isUpdatingPolicies}
+                    className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-md transition-all flex items-center gap-2"
+                  >
+                    {isUpdatingPolicies ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Guardar Políticas
+                  </button>
                 </div>
               </div>
               <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">

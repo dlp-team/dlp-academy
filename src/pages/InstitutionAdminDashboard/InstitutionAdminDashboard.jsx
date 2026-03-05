@@ -30,6 +30,7 @@ import ClassesCoursesSection from './components/ClassesCoursesSection';
 import UsersTabContent from './components/UsersTabContent';
 import AddTeacherModal from './components/AddTeacherModal';
 import { hasRequiredRoleAccess } from '../../utils/permissionUtils';
+import { generateDynamicCode } from '../../utils/securityUtils';
 import {
   GLOBAL_BRAND_DEFAULTS,
   HOME_THEME_DEFAULT_COLORS,
@@ -84,8 +85,14 @@ const InstitutionAdminDashboard = ({ user }) => {
   const [customizationSuccess, setCustomizationSuccess] = useState('');
 
   const [institutionalCode, setInstitutionalCode] = useState('');
-  const [isUpdatingCode, setIsUpdatingCode] = useState(false);
+  const [isUpdatingCode, setisUpdatingCode] = useState('');
 
+  const [accessPolicies, setAccessPolicies] = useState({
+    teachers: { requireDomain: false, allowedDomains: '', requireCode: true, rotationIntervalHours: 24 },
+    students: { requireDomain: false, allowedDomains: '', requireCode: true, rotationIntervalHours: 1 }
+  });
+  const [isUpdatingPolicies, setIsUpdatingPolicies] = useState(false);
+  const [policyMessage, setPolicyMessage] = useState({ type: '', text: '' });
   const [codeUpdateSuccess, setCodeUpdateSuccess] = useState('');
   const [codeUpdateError, setCodeUpdateError] = useState('');
 
@@ -115,6 +122,14 @@ const InstitutionAdminDashboard = ({ user }) => {
         setStudents(studentsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         setTeachers([]);
         setAllowedTeachers([]);
+      }
+      const instDoc = await getDoc(doc(db, 'institutions', user.institutionId));
+      if (instDoc.exists() && instDoc.data().accessPolicies) {
+        // Merge with defaults in case some fields are missing
+        setAccessPolicies(prev => ({
+          ...prev,
+          ...instDoc.data().accessPolicies
+        }));
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -296,6 +311,24 @@ const InstitutionAdminDashboard = ({ user }) => {
     }
   };
 
+  const handleSavePolicies = async (updatedPolicies) => {
+    setIsUpdatingPolicies(true);
+    setPolicyMessage({ type: '', text: '' });
+    try {
+      await updateDoc(doc(db, 'institutions', user.institutionId), {
+        accessPolicies: updatedPolicies
+      });
+      setAccessPolicies(updatedPolicies);
+      setPolicyMessage({ type: 'success', text: 'Políticas de acceso actualizadas correctamente.' });
+      setTimeout(() => setPolicyMessage({ type: '', text: '' }), 4000);
+    } catch (error) {
+      console.error('Error saving policies:', error);
+      setPolicyMessage({ type: 'error', text: 'Error al guardar las políticas.' });
+    } finally {
+      setIsUpdatingPolicies(false);
+    }
+  };
+
   const handleRemoveAccess = async (docId) => {
     if (!window.confirm('¿Seguro que quieres eliminar el acceso a este profesor?')) return;
     try {
@@ -422,6 +455,11 @@ const InstitutionAdminDashboard = ({ user }) => {
           <UsersTabContent
             userType={userType}
             setUserType={setUserType}
+            institutionId={user.institutionId}
+            accessPolicies={accessPolicies}
+            onSavePolicies={handleSavePolicies}
+            isUpdatingPolicies={isUpdatingPolicies}
+            policyMessage={policyMessage}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
             loading={loading}
