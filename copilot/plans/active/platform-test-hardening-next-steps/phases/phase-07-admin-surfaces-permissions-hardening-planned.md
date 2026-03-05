@@ -1,4 +1,4 @@
-# Phase 07 — Admin Surfaces and Permissions Hardening (IN_PROGRESS)
+# Phase 07 — Admin Surfaces and Permissions Hardening (COMPLETED)
 
 ## Objective
 
@@ -46,6 +46,12 @@ Ensure admin surfaces and role permissions are protected against unauthorized ac
 - Added institution-admin mutation-path regression coverage on users tab:
   - Invite lifecycle: create teacher invite from `Autorizar Profesor` modal and delete it from `Invitaciones Pendientes`.
   - Institutional code lifecycle: update `Código General para Profesores`, assert in-app success, and restore prior code within test cleanup.
+- Extended denial-path hardening for non-admin fixtures (`owner`, `editor`, `viewer`):
+  - After blocked navigation to `/institution-admin-dashboard`, assert mutation controls are absent (`Autorizar Profesor`, `#instCodeInput`).
+- Extended denial-path coverage for nested institution-admin routes:
+  - Owner/editor/viewer denied for `/institution-admin-dashboard/teacher/:id` and `/institution-admin-dashboard/student/:id` (redirect to `/home`).
+- Added inherited-access role check for global-admin credentials on institution-admin surface:
+  - Global admin can access `/institution-admin-dashboard` through role-rank inheritance and route guard compatibility.
 - Expanded permission utility unit coverage:
   - Added explicit viewer denial checks for edit/delete capabilities and UI visibility guards.
   - Added role-rank access checks for institution-admin route requirements.
@@ -54,5 +60,10 @@ Ensure admin surfaces and role permissions are protected against unauthorized ac
 ## Validation Evidence
 
 - `npm run test -- tests/unit/utils/permissionUtils.test.js` → ✅ `1` file, `12` tests passed.
+- `npm run test -- tests/unit/utils/permissionUtils.test.js` (teacher route-rank assertions added) → ✅ `1` file, `13` tests passed.
 - `npm run test:e2e -- tests/e2e/admin-guardrails.spec.js` → ✅ `8 passed`, `0 skipped`.
+- `npm run test:e2e -- tests/e2e/admin-guardrails.spec.js` (after non-admin mutation-denial assertions) → ✅ `8 passed`, `0 skipped`.
+- `npm run test:e2e -- tests/e2e/admin-guardrails.spec.js` (nested-route denials + inherited admin-role access) → ✅ `9 passed`, `0 skipped`.
 - `npm run test:e2e -- tests/e2e/subject-topic-content.spec.js tests/e2e/quiz-lifecycle.spec.js tests/e2e/profile-settings.spec.js tests/e2e/admin-guardrails.spec.js` → ✅ `12 passed`, ⚠️ `1 skipped`.
+- `npm run test:e2e -- tests/e2e/subject-topic-content.spec.js tests/e2e/quiz-lifecycle.spec.js tests/e2e/profile-settings.spec.js tests/e2e/admin-guardrails.spec.js` (post-dashboard updates) → ✅ `15 passed`, `0 skipped`.
+- `npm run test:e2e -- tests/e2e/subject-topic-content.spec.js tests/e2e/quiz-lifecycle.spec.js tests/e2e/profile-settings.spec.js tests/e2e/admin-guardrails.spec.js` (Phase 07 closure run) → ✅ `16 passed`, `0 skipped`.

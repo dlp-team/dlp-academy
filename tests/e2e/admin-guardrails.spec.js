@@ -23,12 +23,24 @@ const E2E_INSTITUTION_ADMIN_PASSWORD = process.env.E2E_INSTITUTION_ADMIN_PASSWOR
 const E2E_ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL;
 const E2E_ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD;
 
+const PRIVILEGED_ROUTES = [
+  '/admin-dashboard',
+  '/institution-admin-dashboard',
+  '/institution-admin-dashboard/teacher/e2e-denied-teacher',
+  '/institution-admin-dashboard/student/e2e-denied-student',
+];
+
 const loginAs = async (page, email, password) => {
   await page.goto('/login');
   await page.locator('#email').fill(email || '');
   await page.locator('#password').fill(password || '');
   await page.getByRole('button', { name: /iniciar sesión/i }).click();
   await page.waitForURL(/\/home/);
+};
+
+const assertRedirectedToHome = async (page, route) => {
+  await page.goto(route);
+  await expect(page).toHaveURL(/\/home/);
 };
 
 const loginAsInstitutionAdmin = async (page) => {
@@ -46,18 +58,17 @@ const loginAsInstitutionAdmin = async (page) => {
 
 test.describe('Admin guardrails', () => {
   for (const fixture of ROLE_FIXTURES) {
-    test(`${fixture.role} cannot access admin dashboard routes`, async ({ page }) => {
+    test(`${fixture.role} cannot access privileged dashboard routes`, async ({ page }) => {
       test.skip(!fixture.email || !fixture.password, `Set ${fixture.role.toUpperCase()} E2E credentials to validate guardrails.`);
 
       await loginAs(page, fixture.email, fixture.password);
 
-      await page.goto('/admin-dashboard');
-      await page.waitForURL(/\/home/);
-      await expect(page).toHaveURL(/\/home/);
+      for (const route of PRIVILEGED_ROUTES) {
+        await assertRedirectedToHome(page, route);
+      }
 
-      await page.goto('/institution-admin-dashboard');
-      await page.waitForURL(/\/home/);
-      await expect(page).toHaveURL(/\/home/);
+      await expect(page.getByRole('button', { name: /autorizar profesor/i })).toHaveCount(0);
+      await expect(page.locator('#instCodeInput')).toHaveCount(0);
     });
   }
 
@@ -104,9 +115,7 @@ test.describe('Admin guardrails', () => {
 
     await loginAs(page, E2E_INSTITUTION_ADMIN_EMAIL, E2E_INSTITUTION_ADMIN_PASSWORD);
 
-    await page.goto('/admin-dashboard');
-    await page.waitForURL(/\/home/);
-    await expect(page).toHaveURL(/\/home/);
+    await assertRedirectedToHome(page, '/admin-dashboard');
   });
 
   test('institution admin can create and remove teacher invite', async ({ page }) => {
@@ -181,5 +190,19 @@ test.describe('Admin guardrails', () => {
     await usersTab.click();
     await expect(page.getByRole('heading', { name: /todos los usuarios/i })).toBeVisible();
     await expect(page.getByPlaceholder(/buscar por nombre o email/i)).toBeVisible();
+  });
+
+  test('global admin can access institution-admin dashboard (inherited role)', async ({ page }) => {
+    test.skip(
+      !E2E_ADMIN_EMAIL || !E2E_ADMIN_PASSWORD,
+      'Set E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD to validate inherited-role access on /institution-admin-dashboard.'
+    );
+
+    await loginAs(page, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD);
+
+    await page.goto('/institution-admin-dashboard');
+    await page.waitForURL(/\/institution-admin-dashboard/);
+    await expect(page).toHaveURL(/\/institution-admin-dashboard/);
+    await expect(page.getByRole('heading', { name: /panel de administración/i })).toBeVisible();
   });
 });

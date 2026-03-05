@@ -72,6 +72,16 @@ describe('route role guard helpers', () => {
     expect(hasRequiredRoleAccess({ role: 'admin' }, 'institutionadmin')).toBe(true);
   });
 
+  it('enforces teacher route access without granting higher dashboards', () => {
+    expect(hasRequiredRoleAccess({ role: 'student' }, 'teacher')).toBe(false);
+    expect(hasRequiredRoleAccess({ role: 'teacher' }, 'teacher')).toBe(true);
+    expect(hasRequiredRoleAccess({ role: 'institutionadmin' }, 'teacher')).toBe(true);
+    expect(hasRequiredRoleAccess({ role: 'admin' }, 'teacher')).toBe(true);
+
+    expect(hasRequiredRoleAccess({ role: 'teacher' }, 'institutionadmin')).toBe(false);
+    expect(hasRequiredRoleAccess({ role: 'teacher' }, 'admin')).toBe(false);
+  });
+
   it('normalizes unknown/dirty roles safely', () => {
     expect(getNormalizedRole(' ADMIN ')).toBe('admin');
     expect(getNormalizedRole({ role: 'institutionadmin' })).toBe('institutionadmin');
