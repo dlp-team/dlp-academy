@@ -20,6 +20,8 @@ import {
   serverTimestamp,
   updateDoc,
   where,
+  setDoc,
+  writeBatch
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
@@ -81,6 +83,12 @@ const InstitutionAdminDashboard = ({ user }) => {
   const [customizationError, setCustomizationError] = useState('');
   const [customizationSuccess, setCustomizationSuccess] = useState('');
 
+  const [institutionalCode, setInstitutionalCode] = useState('');
+  const [isUpdatingCode, setIsUpdatingCode] = useState(false);
+
+  const [codeUpdateSuccess, setCodeUpdateSuccess] = useState('');
+  const [codeUpdateError, setCodeUpdateError] = useState('');
+
   useEffect(() => {
     if (user && !hasRequiredRoleAccess(user, 'institutionadmin')) {
       console.warn('Unauthorized access attempt to Institution Admin Dashboard');
@@ -99,6 +107,8 @@ const InstitutionAdminDashboard = ({ user }) => {
         ]);
         setTeachers(teachersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         setAllowedTeachers(allowedSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        const generalInvite = allowedSnap.docs.find(d => d.data().type === 'institutional');
+        setInstitutionalCode(generalInvite ? generalInvite.id : '');
         setStudents([]);
       } else {
         const studentsSnap = await getDocs(query(collection(db, 'users'), where('institutionId', '==', user.institutionId), where('role', '==', 'student')));
@@ -241,6 +251,51 @@ const InstitutionAdminDashboard = ({ user }) => {
     }
   };
 
+  const handleUpdateInstitutionalCode = async (newCode) => {
+    if (!newCode.trim()) return;
+    const finalCode = newCode.trim().toUpperCase();
+    setIsUpdatingCode(true);
+    setCodeUpdateSuccess('');
+    setCodeUpdateError('');
+
+    try {
+      const invitesRef = collection(db, 'institution_invites');
+      const q = query(
+        invitesRef,
+        where('institutionId', '==', user.institutionId),
+        where('type', '==', 'institutional')
+      );
+      const snap = await getDocs(q);
+      
+      const batch = writeBatch(db);
+      snap.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+
+      const newCodeRef = doc(db, 'institution_invites', finalCode);
+      await setDoc(newCodeRef, {
+        institutionId: user.institutionId,
+        role: 'teacher',
+        type: 'institutional',
+        createdAt: serverTimestamp()
+      });
+
+      setInstitutionalCode(finalCode);
+      fetchData(); 
+      
+      // NEW: In-app success message
+      setCodeUpdateSuccess('Código actualizado con éxito.');
+      setTimeout(() => setCodeUpdateSuccess(''), 4000); // Clear after 4s
+
+    } catch (error) {
+      console.error('Error updating code:', error);
+      // NEW: In-app error message
+      setCodeUpdateError('Este código ya está en uso. Intenta con otro.');
+      setTimeout(() => setCodeUpdateError(''), 5000);
+    } finally {
+      setIsUpdatingCode(false);
+    }
+  };
+
   const handleRemoveAccess = async (docId) => {
     if (!window.confirm('¿Seguro que quieres eliminar el acceso a este profesor?')) return;
     try {
@@ -376,6 +431,11 @@ const InstitutionAdminDashboard = ({ user }) => {
             onNavigateTeacher={(id) => navigate(`/institution-admin-dashboard/teacher/${id}`)}
             onNavigateStudent={(id) => navigate(`/institution-admin-dashboard/student/${id}`)}
             onRemoveAccess={handleRemoveAccess}
+            institutionalCode={institutionalCode}
+            onUpdateInstitutionalCode={handleUpdateInstitutionalCode}
+            isUpdatingCode={isUpdatingCode}
+            codeUpdateSuccess={codeUpdateSuccess}
+            codeUpdateError={codeUpdateError}
           />
         )}
 

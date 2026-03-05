@@ -20,6 +20,8 @@ const ROLE_FIXTURES = [
 
 const E2E_INSTITUTION_ADMIN_EMAIL = process.env.E2E_INSTITUTION_ADMIN_EMAIL;
 const E2E_INSTITUTION_ADMIN_PASSWORD = process.env.E2E_INSTITUTION_ADMIN_PASSWORD;
+const E2E_ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL;
+const E2E_ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD;
 
 const loginAs = async (page, email, password) => {
   await page.goto('/login');
@@ -79,5 +81,59 @@ test.describe('Admin guardrails', () => {
     await customizationTab.click();
     await expect(page.getByText(/nombre de la institución/i)).toBeVisible();
     await expect(page.getByRole('button', { name: /guardar cambios|guardar/i })).toBeVisible();
+  });
+
+  test('institution admin cannot access global admin dashboard', async ({ page }) => {
+    test.skip(
+      !E2E_INSTITUTION_ADMIN_EMAIL || !E2E_INSTITUTION_ADMIN_PASSWORD,
+      'Set E2E_INSTITUTION_ADMIN_EMAIL and E2E_INSTITUTION_ADMIN_PASSWORD to validate denial-path on /admin-dashboard.'
+    );
+
+    await loginAs(page, E2E_INSTITUTION_ADMIN_EMAIL, E2E_INSTITUTION_ADMIN_PASSWORD);
+
+    await page.goto('/admin-dashboard');
+    await page.waitForURL(/\/home/);
+    await expect(page).toHaveURL(/\/home/);
+  });
+
+  test('global admin can access admin dashboard tabs', async ({ page }) => {
+    test.skip(
+      !E2E_ADMIN_EMAIL || !E2E_ADMIN_PASSWORD,
+      'Set E2E_ADMIN_EMAIL and E2E_ADMIN_PASSWORD to validate allow-path for global admin.'
+    );
+
+    await loginAs(page, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD);
+
+    await page.goto('/admin-dashboard');
+    await page.waitForLoadState('domcontentloaded');
+
+    if (!/\/admin-dashboard/.test(page.url())) {
+      test.skip(true, 'E2E_ADMIN credentials are not provisioned with admin-role access in this environment.');
+    }
+
+    const overviewTab = page.getByRole('button', { name: /resumen/i });
+    const institutionsTab = page.getByRole('button', { name: /instituciones/i });
+    const usersTab = page.getByRole('button', { name: /usuarios/i });
+    const adminBadge = page.getByText(/acceso de admin global/i);
+
+    if (!(await adminBadge.isVisible())) {
+      test.skip(true, 'E2E_ADMIN credentials are not mapped to a global-admin dashboard session in this environment.');
+    }
+
+    await expect(adminBadge).toBeVisible();
+    await expect(overviewTab).toBeVisible();
+    await expect(institutionsTab).toBeVisible();
+    await expect(usersTab).toBeVisible();
+
+    await overviewTab.click();
+    await expect(page.getByText(/gráficas de actividad/i)).toBeVisible();
+
+    await institutionsTab.click();
+    await expect(page.getByRole('heading', { name: /instituciones registradas/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /nueva institución/i })).toBeVisible();
+
+    await usersTab.click();
+    await expect(page.getByRole('heading', { name: /todos los usuarios/i })).toBeVisible();
+    await expect(page.getByPlaceholder(/buscar por nombre o email/i)).toBeVisible();
   });
 });

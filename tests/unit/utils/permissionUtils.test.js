@@ -6,6 +6,11 @@ import {
   shouldShowEditUI,
   shouldShowDeleteUI,
   hasRequiredRoleAccess,
+  getNormalizedRole,
+  isReadOnlyRole,
+  canCreateSubjectByRole,
+  canCreateFolderByRole,
+  isShortcutItem,
 } from '../../../src/utils/permissionUtils';
 
 describe('getPermissionLevel', () => {
@@ -65,5 +70,51 @@ describe('route role guard helpers', () => {
     expect(hasRequiredRoleAccess({ role: 'teacher' }, 'institutionadmin')).toBe(false);
     expect(hasRequiredRoleAccess({ role: 'institutionadmin' }, 'institutionadmin')).toBe(true);
     expect(hasRequiredRoleAccess({ role: 'admin' }, 'institutionadmin')).toBe(true);
+  });
+
+  it('normalizes unknown/dirty roles safely', () => {
+    expect(getNormalizedRole(' ADMIN ')).toBe('admin');
+    expect(getNormalizedRole({ role: 'institutionadmin' })).toBe('institutionadmin');
+    expect(getNormalizedRole({ role: 'unknown-role' })).toBe('student');
+    expect(getNormalizedRole(null)).toBe('student');
+  });
+
+  it('applies read-only and create capabilities by role', () => {
+    expect(isReadOnlyRole('student')).toBe(true);
+    expect(isReadOnlyRole('teacher')).toBe(false);
+
+    expect(canCreateSubjectByRole('student')).toBe(false);
+    expect(canCreateSubjectByRole('teacher')).toBe(true);
+
+    expect(canCreateFolderByRole('student')).toBe(false);
+    expect(canCreateFolderByRole('institutionadmin')).toBe(true);
+  });
+});
+
+describe('shortcut and orphan guard helpers', () => {
+  it('detects shortcut item shapes', () => {
+    expect(isShortcutItem({ targetId: 's-1', targetType: 'subject' })).toBe(true);
+    expect(isShortcutItem({ isShortcut: true })).toBe(true);
+    expect(isShortcutItem({ shortcutId: 'sc-1' })).toBe(true);
+    expect(isShortcutItem({ ownerId: 'u-1' })).toBe(false);
+  });
+
+  it('hides edit UI for orphaned shortcuts and allows delete for shortcut owner', () => {
+    const orphanShortcut = {
+      targetId: 's-1',
+      targetType: 'subject',
+      ownerId: 'owner-1',
+      isOrphan: true,
+    };
+
+    const ownedShortcut = {
+      targetId: 'f-1',
+      targetType: 'folder',
+      ownerId: 'owner-1',
+    };
+
+    expect(shouldShowEditUI(orphanShortcut, 'owner-1')).toBe(false);
+    expect(shouldShowDeleteUI(ownedShortcut, 'owner-1')).toBe(true);
+    expect(shouldShowDeleteUI(ownedShortcut, 'other-user')).toBe(false);
   });
 });

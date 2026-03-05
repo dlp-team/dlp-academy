@@ -29,7 +29,7 @@ Establish complete platform-level automated coverage so regressions across any m
 1. Add remaining Phase 03 unit coverage for uncovered tree-move/sharing branches in Home handlers where callback branches are still untested.
 2. Keep Phase 02 onboarding closure deferred until onboarding test fixtures are explicitly resumed.
 3. Continue Phase 06 by expanding deterministic profile-save assertions with explicit post-save data checks when backend latency allows.
-4. Continue Phase 07 by adding `/admin-dashboard` allow-path checks for admin-role fixtures while keeping deny-path regressions green.
+4. Continue Phase 07 by de-skipping `/admin-dashboard` allow-path through deterministic global-admin fixture provisioning while keeping deny-path regressions green.
 
 ## Coverage Matrix (Target)
 
