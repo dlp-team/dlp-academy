@@ -31,6 +31,19 @@ const loginAs = async (page, email, password) => {
   await page.waitForURL(/\/home/);
 };
 
+const loginAsInstitutionAdmin = async (page) => {
+  test.skip(
+    !E2E_INSTITUTION_ADMIN_EMAIL || !E2E_INSTITUTION_ADMIN_PASSWORD,
+    'Set E2E_INSTITUTION_ADMIN_EMAIL and E2E_INSTITUTION_ADMIN_PASSWORD to validate institution-admin mutation paths.'
+  );
+
+  await loginAs(page, E2E_INSTITUTION_ADMIN_EMAIL, E2E_INSTITUTION_ADMIN_PASSWORD);
+  await page.goto('/institution-admin-dashboard');
+  await page.waitForURL(/\/institution-admin-dashboard/);
+  await page.getByRole('button', { name: /usuarios/i }).click();
+  await page.getByRole('button', { name: /profesores/i }).click();
+};
+
 test.describe('Admin guardrails', () => {
   for (const fixture of ROLE_FIXTURES) {
     test(`${fixture.role} cannot access admin dashboard routes`, async ({ page }) => {
@@ -96,6 +109,46 @@ test.describe('Admin guardrails', () => {
     await expect(page).toHaveURL(/\/home/);
   });
 
+  test('institution admin can create and remove teacher invite', async ({ page }) => {
+    await loginAsInstitutionAdmin(page);
+
+    const inviteEmail = `e2e.invite.${Date.now()}@example.com`;
+
+    await page.getByRole('button', { name: /autorizar profesor/i }).click();
+    await page.getByPlaceholder(/ejemplo@escuela.com/i).fill(inviteEmail);
+    await page.getByRole('button', { name: /^autorizar$/i }).click();
+
+    await expect(page.getByText(/profesor invitado correctamente/i)).toBeVisible();
+
+    const inviteRow = page.locator('tr', { hasText: inviteEmail }).first();
+    await expect(inviteRow).toBeVisible();
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await inviteRow.getByTitle(/eliminar invitación/i).click();
+    await expect(page.locator('tr', { hasText: inviteEmail })).toHaveCount(0);
+  });
+
+  test('institution admin can update institutional code', async ({ page }) => {
+    await loginAsInstitutionAdmin(page);
+
+    const codeInput = page.locator('#instCodeInput');
+    const originalCode = await codeInput.inputValue();
+    const nextCode = `AUTO-${Date.now().toString().slice(-8)}`;
+
+    try {
+      await codeInput.fill(nextCode);
+      await page.getByRole('button', { name: /^guardar$/i }).first().click();
+      await expect(page.getByText(/código actualizado con éxito/i)).toBeVisible();
+      await expect(codeInput).toHaveValue(nextCode);
+    } finally {
+      if (originalCode?.trim() && originalCode.trim() !== nextCode) {
+        await codeInput.fill(originalCode.trim());
+        await page.getByRole('button', { name: /^guardar$/i }).first().click();
+        await expect(page.getByText(/código actualizado con éxito/i)).toBeVisible();
+      }
+    }
+  });
+
   test('global admin can access admin dashboard tabs', async ({ page }) => {
     test.skip(
       !E2E_ADMIN_EMAIL || !E2E_ADMIN_PASSWORD,
@@ -105,20 +158,13 @@ test.describe('Admin guardrails', () => {
     await loginAs(page, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD);
 
     await page.goto('/admin-dashboard');
-    await page.waitForLoadState('domcontentloaded');
-
-    if (!/\/admin-dashboard/.test(page.url())) {
-      test.skip(true, 'E2E_ADMIN credentials are not provisioned with admin-role access in this environment.');
-    }
+    await page.waitForURL(/\/admin-dashboard/);
+    await expect(page).toHaveURL(/\/admin-dashboard/);
 
     const overviewTab = page.getByRole('button', { name: /resumen/i });
     const institutionsTab = page.getByRole('button', { name: /instituciones/i });
     const usersTab = page.getByRole('button', { name: /usuarios/i });
     const adminBadge = page.getByText(/acceso de admin global/i);
-
-    if (!(await adminBadge.isVisible())) {
-      test.skip(true, 'E2E_ADMIN credentials are not mapped to a global-admin dashboard session in this environment.');
-    }
 
     await expect(adminBadge).toBeVisible();
     await expect(overviewTab).toBeVisible();
