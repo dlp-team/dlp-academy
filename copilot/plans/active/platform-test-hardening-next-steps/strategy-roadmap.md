@@ -21,7 +21,7 @@ Establish complete platform-level automated coverage so regressions across any m
 - Phase 05 — Quiz Engine and Results Coverage: **COMPLETED**
 - Phase 06 — Profile and Settings Coverage: **IN_PROGRESS**
 - Phase 07 — Admin Surfaces and Permissions Hardening: **COMPLETED**
-- Phase 08 — Full Automation in CI: **PLANNED**
+- Phase 08 — Full Automation in CI: **IN_PROGRESS**
 - Phase 09 — Review Gate and Closure Evidence: **PLANNED**
 
 ## Immediate Next Actions
@@ -29,7 +29,7 @@ Establish complete platform-level automated coverage so regressions across any m
 1. Add remaining Phase 03 unit coverage for uncovered tree-move/sharing branches in Home handlers where callback branches are still untested.
 2. Keep Phase 02 onboarding closure deferred until onboarding test fixtures are explicitly resumed.
 3. Continue Phase 06 by expanding deterministic profile-save assertions with explicit post-save data checks when backend latency allows.
-4. Start Phase 08 by wiring the current non-onboarding matrix (`subject-topic-content`, `quiz-lifecycle`, `profile-settings`, `admin-guardrails`) into CI enforcement with failure gating.
+4. Validate the new Phase 08 CI matrix gate in GitHub Actions and tune secret/fixture parity until all four specs run without skips.
 
 ## Coverage Matrix (Target)
 

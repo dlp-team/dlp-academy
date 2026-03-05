@@ -1,0 +1,101 @@
+name: Phase 08 - CI Gating
+on:
+  push:
+    branches: [ main, test ]
+  pull_request:
+    branches: [ main, test ]
+
+jobs:
+  test-matrix:
+    name: E2E Matrix (${{ matrix.spec }})
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        spec:
+          - subject-topic-content
+          - quiz-lifecycle
+          - profile-settings
+          - admin-guardrails
+
+    env:
+      CI: true
+      E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      E2E_SUBJECT_ID: ${{ secrets.E2E_SUBJECT_ID }}
+      E2E_TOPIC_ID: ${{ secrets.E2E_TOPIC_ID }}
+      E2E_QUIZ_ID: ${{ secrets.E2E_QUIZ_ID }}
+      E2E_INSTITUTION_ID: ${{ secrets.E2E_INSTITUTION_ID }}
+      E2E_OWNER_EMAIL: ${{ secrets.E2E_OWNER_EMAIL }}
+      E2E_OWNER_PASSWORD: ${{ secrets.E2E_OWNER_PASSWORD }}
+      E2E_EDITOR_EMAIL: ${{ secrets.E2E_EDITOR_EMAIL }}
+      E2E_EDITOR_PASSWORD: ${{ secrets.E2E_EDITOR_PASSWORD }}
+      E2E_VIEWER_EMAIL: ${{ secrets.E2E_VIEWER_EMAIL }}
+      E2E_VIEWER_PASSWORD: ${{ secrets.E2E_VIEWER_PASSWORD }}
+      E2E_INSTITUTION_ADMIN_EMAIL: ${{ secrets.E2E_INSTITUTION_ADMIN_EMAIL }}
+      E2E_INSTITUTION_ADMIN_PASSWORD: ${{ secrets.E2E_INSTITUTION_ADMIN_PASSWORD }}
+      E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+      E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+      FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate required E2E secrets
+        run: |
+          required_vars=(
+            E2E_EMAIL
+            E2E_PASSWORD
+            E2E_OWNER_EMAIL
+            E2E_OWNER_PASSWORD
+            E2E_EDITOR_EMAIL
+            E2E_EDITOR_PASSWORD
+            E2E_VIEWER_EMAIL
+            E2E_VIEWER_PASSWORD
+            E2E_INSTITUTION_ADMIN_EMAIL
+            E2E_INSTITUTION_ADMIN_PASSWORD
+            E2E_ADMIN_EMAIL
+            E2E_ADMIN_PASSWORD
+            FIREBASE_SERVICE_ACCOUNT_JSON
+          )
+
+          missing=()
+          for var_name in "${required_vars[@]}"; do
+            if [ -z "${!var_name}" ]; then
+              missing+=("$var_name")
+            fi
+          done
+
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "Missing required GitHub secrets: ${missing[*]}"
+            exit 1
+          fi
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Spec Matrix
+        run: npx playwright test tests/e2e/${{ matrix.spec }}.spec.js --project=chromium
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-${{ matrix.spec }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
