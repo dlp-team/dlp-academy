@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config'; 
+import { canUserAccessSubject } from '../../utils/subjectAccessUtils';
 
 // ==================== IMPORTACIONES DE COMPONENTES ====================
 // Apuntan a la carpeta components/quizzes
@@ -24,7 +25,7 @@ import ResultsView from '../../components/modules/QuizEngine/QuizResults';
 
 // ==================== CUSTOM HOOKS ====================
 
-const useQuizData = (user, subjectId, topicId, quizId) => {
+const useQuizData = (user, subjectId, topicId, quizId, navigate) => {
     const [loading, setLoading] = useState(true);
     const [quizData, setQuizData] = useState(null);
     const [subjectIconKey, setSubjectIconKey] = useState(null);
@@ -44,7 +45,22 @@ const useQuizData = (user, subjectId, topicId, quizId) => {
                 
                 if (subjectSnap.exists()) {
                     const sData = subjectSnap.data();
-                    setSubjectIconKey(sData.icon || sData.name?.charAt(0) || "📚");
+                    const hasSubjectAccess = await canUserAccessSubject({
+                        subject: { id: subjectSnap.id, ...sData },
+                        user
+                    });
+
+                    if (!hasSubjectAccess) {
+                        navigate('/home');
+                        setLoading(false);
+                        return;
+                    }
+
+                    setSubjectIconKey(sData.icon || sData.name?.charAt(0) || 'book');
+                } else {
+                    navigate('/home');
+                    setLoading(false);
+                    return;
                 }
 
                 const topicRef = doc(db, "topics", topicId);
@@ -85,7 +101,7 @@ const useQuizData = (user, subjectId, topicId, quizId) => {
         };
 
         loadData();
-    }, [user, subjectId, topicId, quizId]);
+    }, [user, subjectId, topicId, quizId, navigate]);
 
     return { loading, quizData, subjectIconKey, accentColor, topicGradient };
 };
@@ -259,7 +275,7 @@ const Quizzes = ({ user }) => {
     const navigate = useNavigate();
 
     const { loading, quizData, subjectIconKey, accentColor, topicGradient } = 
-        useQuizData(user, subjectId, topicId, quizId);
+        useQuizData(user, subjectId, topicId, quizId, navigate);
 
     const [viewState, setViewState] = useState(VIEW_STATES.REVIEW);
     const [currentStep, setCurrentStep] = useState(0);

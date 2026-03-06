@@ -1,4 +1,4 @@
-// src/hooks/useSubjectManager.js
+// src/pages/Subject/hooks/useSubjectManager.js
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -7,7 +7,7 @@ import {
     writeBatch, increment, orderBy, where 
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { canView } from '../../../utils/permissionUtils';
+import { canUserAccessSubject } from '../../../utils/subjectAccessUtils';
 
 const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39';
 
@@ -27,7 +27,8 @@ export const useSubjectManager = (user, subjectId) => {
                 const docSnap = await getDoc(doc(db, "subjects", subjectId));
                 if (docSnap.exists()) {
                     const subjectData = { id: docSnap.id, ...docSnap.data() };
-                    if (!canView(subjectData, user.uid)) {
+                    const hasSubjectAccess = await canUserAccessSubject({ subject: subjectData, user });
+                    if (!hasSubjectAccess) {
                         navigate('/home');
                         setLoading(false);
                         return;

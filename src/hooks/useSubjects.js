@@ -4,6 +4,7 @@ import {
     collection, query, where, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy, serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { generateSubjectInviteCode, normalizeSubjectAccessPayload } from '../utils/subjectAccessUtils';
 
 export const useSubjects = (user) => {
     const [subjects, setSubjects] = useState([]);
@@ -129,18 +130,74 @@ export const useSubjects = (user) => {
     }, [user, currentInstitutionId, canReadHomeData]);
 
     const addSubject = async (payload) => {
+        const normalizedPayload = normalizeSubjectAccessPayload(payload, { requireCourse: true });
+        const targetInstitutionId = normalizedPayload?.institutionId || currentInstitutionId || null;
+        let inviteCode = normalizedPayload.inviteCode;
+
+        // Best-effort uniqueness check by institution to avoid invite collisions.
+        for (let attempt = 0; attempt < 5; attempt += 1) {
+            const inviteQuery = targetInstitutionId
+                ? query(
+                    collection(db, 'subjects'),
+                    where('institutionId', '==', targetInstitutionId),
+                    where('inviteCode', '==', inviteCode)
+                )
+                : query(collection(db, 'subjects'), where('inviteCode', '==', inviteCode));
+
+            const inviteSnapshot = await getDocs(inviteQuery);
+            if (inviteSnapshot.empty) break;
+            inviteCode = generateSubjectInviteCode();
+        }
+
         const docRef = await addDoc(collection(db, "subjects"), {
-            ...payload,
-            ownerId: payload?.ownerId || user.uid,
-            institutionId: payload?.institutionId || currentInstitutionId
+            ...normalizedPayload,
+            inviteCode,
+            ownerId: normalizedPayload?.ownerId || user.uid,
+            institutionId: normalizedPayload?.institutionId || currentInstitutionId,
+            enrolledStudentUids: Array.isArray(normalizedPayload?.enrolledStudentUids)
+                ? normalizedPayload.enrolledStudentUids
+                : []
         });
         // Return the ID explicitly to handle the folder link correctly
         return docRef.id;
     };
 
     const updateSubject = async (id, payload) => {
-        await updateDoc(doc(db, "subjects", id), payload);
-        setSubjects(prev => prev.map(s => s.id === id ? { ...s, ...payload } : s));
+        const updatePayload = { ...payload };
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'course')) {
+            const courseValue = String(updatePayload.course || '').trim();
+            if (!courseValue) {
+                throw new Error('El curso es obligatorio para la asignatura.');
+            }
+            updatePayload.course = courseValue;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'classIds') && !Object.prototype.hasOwnProperty.call(updatePayload, 'classId')) {
+            const firstClassId = Array.isArray(updatePayload.classIds)
+                ? String(updatePayload.classIds[0] || '').trim()
+                : '';
+            updatePayload.classId = firstClassId || null;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'classId')) {
+            const classId = String(updatePayload.classId || '').trim();
+            updatePayload.classId = classId || null;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'enrolledStudentUids')) {
+            updatePayload.enrolledStudentUids = Array.isArray(updatePayload.enrolledStudentUids)
+                ? Array.from(new Set(updatePayload.enrolledStudentUids.filter(Boolean).map(uid => String(uid).trim())))
+                : [];
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'inviteCode')) {
+            const inviteCode = String(updatePayload.inviteCode || '').trim();
+            updatePayload.inviteCode = inviteCode || generateSubjectInviteCode();
+        }
+
+        await updateDoc(doc(db, "subjects", id), updatePayload);
+        setSubjects(prev => prev.map(s => s.id === id ? { ...s, ...updatePayload } : s));
     };
 
     const deleteSubject = async (id) => {

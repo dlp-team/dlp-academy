@@ -1,123 +1,74 @@
 // src/pages/Home/components/BinView.jsx
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import {
-    Trash2,
-    RotateCcw,
-    AlertTriangle,
-    Loader2,
-    XCircle,
-    Info,
-    ChevronRight,
-    ChevronDown,
-    FileText,
-    BookOpen,
-    CheckSquare,
-    PanelRightClose
-} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Trash2, Loader2, XCircle } from 'lucide-react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import SubjectCard from '../../../components/modules/SubjectCard/SubjectCard';
 import ListViewItem from '../../../components/modules/ListViewItem';
 import { db } from '../../../firebase/config';
 import { useSubjects } from '../../../hooks/useSubjects';
-import {
-    getRemainingMs,
-    getDaysRemaining,
-    getDaysRemainingTextClass,
-    toJsDate
-} from '../utils/binViewUtils';
+import { getRemainingMs, getDaysRemaining, getDaysRemainingTextClass, toJsDate } from '../utils/binViewUtils';
+
+import BinGridItem          from './bin/BinGridItem';
+import BinSelectionOverlay  from './bin/BinSelectionOverlay';
+import BinDescriptionModal  from './bin/BinDescriptionModal';
+import { DeleteConfirmModal, EmptyBinConfirmModal } from './bin/BinConfirmModals';
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
-    const [trashedSubjects, setTrashedSubjects] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [actionLoading, setActionLoading] = useState(null);
-    const [deleteConfirm, setDeleteConfirm] = useState(null);
-    const [emptyConfirmOpen, setEmptyConfirmOpen] = useState(false);
-    const [errorMessage, setErrorMessage] = useState(null);
+    const [trashedSubjects,   setTrashedSubjects]   = useState([]);
+    const [loading,           setLoading]           = useState(true);
+    const [actionLoading,     setActionLoading]     = useState(null);
+    const [deleteConfirm,     setDeleteConfirm]     = useState(null);
+    const [emptyConfirmOpen,  setEmptyConfirmOpen]  = useState(false);
+    const [errorMessage,      setErrorMessage]      = useState(null);
     const [selectedSubjectId, setSelectedSubjectId] = useState(null);
-    const [descriptionModal, setDescriptionModal] = useState(null);
-    const [loadingDescription, setLoadingDescription] = useState(false);
-    const [expandedTopics, setExpandedTopics] = useState({});
-    const [panelPlacement, setPanelPlacement] = useState('right');
-    const [panelTop, setPanelTop] = useState(0);
-    const cardsContainerRef = useRef(null);
+    const [descriptionModal,  setDescriptionModal]  = useState(null);
+    const [loadingDescription,setLoadingDescription]= useState(false);
+    const [expandedTopics,    setExpandedTopics]    = useState({});
+
     const selectedCardRef = useRef(null);
 
     const { getTrashedSubjects, restoreSubject, permanentlyDeleteSubject } = useSubjects(user);
 
     const selectedSubject = useMemo(
-        () => trashedSubjects.find(subject => subject.id === selectedSubjectId) || null,
+        () => trashedSubjects.find(s => s.id === selectedSubjectId) ?? null,
         [trashedSubjects, selectedSubjectId]
     );
 
-    useLayoutEffect(() => {
-        if (layoutMode !== 'grid' || !selectedSubjectId || !cardsContainerRef.current || !selectedCardRef.current) {
-            return;
-        }
-
-        const containerRect = cardsContainerRef.current.getBoundingClientRect();
-        const selectedRect = selectedCardRef.current.getBoundingClientRect();
-
-        const panelWidth = 360;
-        const minGap = 16;
-        const spaceLeft = selectedRect.left - containerRect.left;
-        const spaceRight = containerRect.right - selectedRect.right;
-
-        let nextPlacement = 'right';
-        if (spaceRight >= panelWidth + minGap) {
-            nextPlacement = 'right';
-        } else if (spaceLeft >= panelWidth + minGap) {
-            nextPlacement = 'left';
-        } else {
-            nextPlacement = spaceRight >= spaceLeft ? 'right' : 'left';
-        }
-
-        const relativeTop = selectedRect.top - containerRect.top;
-        const maxTop = Math.max(0, cardsContainerRef.current.scrollHeight - 420);
-        setPanelPlacement(nextPlacement);
-        setPanelTop(Math.max(0, Math.min(relativeTop, maxTop)));
-    }, [selectedSubjectId, trashedSubjects.length, layoutMode]);
-
-    useEffect(() => {
-        loadTrashedItems();
-    }, []);
+    // ── Data loading ───────────────────────────────────────────────────────────
+    useEffect(() => { loadTrashedItems(); }, []);
 
     const loadTrashedItems = async () => {
         setLoading(true);
         try {
             const items = await getTrashedSubjects();
-            const now = new Date();
-            const validItems = [];
-            const expiredItems = [];
+            const now   = new Date();
+            const valid   = [];
+            const expired = [];
 
-            items.forEach(item => {
-                const remainingMs = getRemainingMs(item, now);
-                if (remainingMs > 0) {
-                    validItems.push(item);
-                } else {
-                    expiredItems.push(item);
-                }
-            });
+            items.forEach(item =>
+                (getRemainingMs(item, now) > 0 ? valid : expired).push(item)
+            );
 
-            if (expiredItems.length > 0) {
-                await Promise.allSettled(
-                    expiredItems.map(item => permanentlyDeleteSubject(item.id))
-                );
+            if (expired.length > 0) {
+                await Promise.allSettled(expired.map(item => permanentlyDeleteSubject(item.id)));
             }
 
-            const sortedByUrgency = [...validItems].sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
-            setTrashedSubjects(sortedByUrgency);
+            const sorted = [...valid].sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
+            setTrashedSubjects(sorted);
 
-            if (selectedSubjectId && !sortedByUrgency.some(item => item.id === selectedSubjectId)) {
+            if (selectedSubjectId && !sorted.some(s => s.id === selectedSubjectId)) {
                 setSelectedSubjectId(null);
             }
-        } catch (error) {
-            console.error('Error loading trashed items:', error);
+        } catch (err) {
+            console.error('Error loading trashed items:', err);
             setErrorMessage('Error al cargar los elementos de la papelera. Por favor, intenta mas tarde.');
         } finally {
             setLoading(false);
         }
     };
 
+    // ── Action handlers ────────────────────────────────────────────────────────
     const handleRestore = async (subjectId) => {
         setActionLoading(subjectId);
         setErrorMessage(null);
@@ -125,8 +76,8 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
             await restoreSubject(subjectId);
             if (selectedSubjectId === subjectId) setSelectedSubjectId(null);
             await loadTrashedItems();
-        } catch (error) {
-            console.error('Error restoring subject:', error);
+        } catch (err) {
+            console.error('Error restoring subject:', err);
             setErrorMessage('No se pudo restaurar la asignatura. Verifica tus permisos e intenta nuevamente.');
         } finally {
             setActionLoading(null);
@@ -141,60 +92,68 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
             if (selectedSubjectId === subjectId) setSelectedSubjectId(null);
             await loadTrashedItems();
             setDeleteConfirm(null);
-        } catch (error) {
-            console.error('Error permanently deleting subject:', error);
-            const isPermissionError = error?.code === 'permission-denied'
-                || error?.message?.includes('permission')
-                || error?.message?.includes('insufficient');
-
-            if (isPermissionError) {
-                setErrorMessage('No tienes permisos para eliminar algunos elementos relacionados. Intenta vaciar la papelera completa o contacta al administrador.');
-            } else {
-                setErrorMessage('Error al eliminar la asignatura. Por favor, intenta mas tarde.');
-            }
+        } catch (err) {
+            console.error('Error permanently deleting subject:', err);
+            const isPermErr = err?.code === 'permission-denied'
+                || err?.message?.includes('permission')
+                || err?.message?.includes('insufficient');
+            setErrorMessage(isPermErr
+                ? 'No tienes permisos para eliminar algunos elementos relacionados. Intenta vaciar la papelera completa o contacta al administrador.'
+                : 'Error al eliminar la asignatura. Por favor, intenta mas tarde.'
+            );
             setDeleteConfirm(null);
         } finally {
             setActionLoading(null);
         }
     };
 
+    const handleEmptyBin = async () => {
+        setLoading(true);
+        setErrorMessage(null);
+        try {
+            const results  = await Promise.allSettled(
+                trashedSubjects.map(s => permanentlyDeleteSubject(s.id))
+            );
+            const failures = results.filter(r => r.status === 'rejected');
+            if (failures.length > 0) {
+                setErrorMessage(`Se eliminaron ${results.length - failures.length} de ${results.length} elementos. Algunos fallaron por permisos insuficientes.`);
+            }
+            setSelectedSubjectId(null);
+            await loadTrashedItems();
+            setEmptyConfirmOpen(false);
+        } catch (err) {
+            console.error('Error emptying bin:', err);
+            setErrorMessage('Error al vaciar la papelera. Por favor, intenta mas tarde.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleShowDescription = async (subject) => {
         setLoadingDescription(true);
         setDescriptionModal({ subject, topics: [] });
-
         try {
-            const topicsQuery = query(
-                collection(db, 'topics'),
-                where('subjectId', '==', subject.id)
+            const topicsSnap = await getDocs(
+                query(collection(db, 'topics'), where('subjectId', '==', subject.id))
             );
-            const topicsSnapshot = await getDocs(topicsQuery);
-
             const topicsWithDetails = await Promise.all(
-                topicsSnapshot.docs.map(async (topicDoc) => {
+                topicsSnap.docs.map(async (topicDoc) => {
                     const topicData = { id: topicDoc.id, ...topicDoc.data() };
 
-                    const documentsQuery = query(
-                        collection(db, 'documents'),
-                        where('topicId', '==', topicDoc.id)
-                    );
-                    const documentsSnapshot = await getDocs(documentsQuery);
-                    topicData.documents = documentsSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+                    const [docsSnap, quizzesSnap] = await Promise.all([
+                        getDocs(query(collection(db, 'documents'), where('topicId', '==', topicDoc.id))),
+                        getDocs(query(collection(db, 'quizzes'),   where('topicId', '==', topicDoc.id))),
+                    ]);
 
-                    const quizzesQuery = query(
-                        collection(db, 'quizzes'),
-                        where('topicId', '==', topicDoc.id)
-                    );
-                    const quizzesSnapshot = await getDocs(quizzesQuery);
-                    topicData.quizzes = quizzesSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
-
+                    topicData.documents = docsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    topicData.quizzes   = quizzesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
                     return topicData;
                 })
             );
-
             topicsWithDetails.sort((a, b) => (a.order || 0) - (b.order || 0));
             setDescriptionModal({ subject, topics: topicsWithDetails });
-        } catch (error) {
-            console.error('Error loading description:', error);
+        } catch (err) {
+            console.error('Error loading description:', err);
             setErrorMessage('Error al cargar la descripcion del elemento.');
             setDescriptionModal(null);
         } finally {
@@ -202,105 +161,13 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
         }
     };
 
-    const toggleTopic = (topicId) => {
-        setExpandedTopics(prev => ({
-            ...prev,
-            [topicId]: !prev[topicId]
-        }));
-    };
+    const toggleTopic = (topicId) =>
+        setExpandedTopics(prev => ({ ...prev, [topicId]: !prev[topicId] }));
 
-    const handleEmptyBin = async () => {
-        setLoading(true);
-        setErrorMessage(null);
-        try {
-            const results = await Promise.allSettled(
-                trashedSubjects.map(subject => permanentlyDeleteSubject(subject.id))
-            );
+    const handleSelectSubject = (id) =>
+        setSelectedSubjectId(prev => (prev === id ? null : id));
 
-            const failures = results.filter(result => result.status === 'rejected');
-            if (failures.length > 0) {
-                setErrorMessage(`Se eliminaron ${results.length - failures.length} de ${results.length} elementos. Algunos fallaron por permisos insuficientes.`);
-            }
-
-            setSelectedSubjectId(null);
-            await loadTrashedItems();
-            setEmptyConfirmOpen(false);
-        } catch (error) {
-            console.error('Error emptying bin:', error);
-            setErrorMessage('Error al vaciar la papelera. Por favor, intenta mas tarde.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const renderSelectionActions = (subject) => {
-        if (!subject) return null;
-
-        const daysRemaining = getDaysRemaining(subject);
-        return (
-            <>
-                <div className="flex items-start justify-between gap-3">
-                    <div>
-                        <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Elemento seleccionado</p>
-                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mt-1">
-                            {subject.name}
-                        </h4>
-                    </div>
-                    <button
-                        onClick={() => setSelectedSubjectId(null)}
-                        className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-slate-800 hover:bg-gray-200 dark:hover:bg-slate-700 flex items-center justify-center"
-                        title="Cerrar panel"
-                    >
-                        <PanelRightClose size={16} className="text-gray-600 dark:text-gray-300" />
-                    </button>
-                </div>
-
-                <div className="rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 p-3">
-                    <p className={`text-sm font-semibold ${getDaysRemainingTextClass(daysRemaining)}`}>
-                        {daysRemaining} {daysRemaining === 1 ? 'dia' : 'dias'} restantes
-                    </p>
-                    <p className="text-xs text-amber-700/80 dark:text-amber-300/80 mt-1">
-                        Despues de ese plazo, se elimina automaticamente.
-                    </p>
-                </div>
-
-                <div className="space-y-2">
-                    <button
-                        onClick={() => handleShowDescription(subject)}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all"
-                    >
-                        <Info size={18} />
-                        Ver contenido
-                    </button>
-
-                    <button
-                        onClick={() => handleRestore(subject.id)}
-                        disabled={actionLoading === subject.id}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-xl font-semibold transition-all"
-                    >
-                        {actionLoading === subject.id ? (
-                            <Loader2 className="animate-spin" size={18} />
-                        ) : (
-                            <>
-                                <RotateCcw size={18} />
-                                Restaurar
-                            </>
-                        )}
-                    </button>
-
-                    <button
-                        onClick={() => setDeleteConfirm(subject.id)}
-                        disabled={actionLoading === subject.id}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-xl font-semibold transition-all"
-                    >
-                        <Trash2 size={18} />
-                        Eliminar permanentemente
-                    </button>
-                </div>
-            </>
-        );
-    };
-
+    // ── Early returns ──────────────────────────────────────────────────────────
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -323,8 +190,11 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
         gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))`
     };
 
+    // ── Render ─────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-4">
+
+            {/* Error banner */}
             {errorMessage && (
                 <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3 mb-4">
                     <XCircle className="text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" size={20} />
@@ -340,6 +210,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
                 </div>
             )}
 
+            {/* Toolbar */}
             <div className="flex items-center justify-between mb-2">
                 <div>
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -358,338 +229,141 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
                 </button>
             </div>
 
-            <div className="relative" ref={cardsContainerRef}>
-                <div className="relative">
-                    {selectedSubject && (
-                        <div className="absolute inset-0 bg-black/30 rounded-2xl z-10 pointer-events-none" />
-                    )}
+            {/* Grid / List */}
+            {layoutMode === 'grid' ? (
+                <div className="grid gap-6" style={gridStyle}>
+                    {trashedSubjects.map((subject) => {
+                        const isSelected  = selectedSubjectId === subject.id;
+                        const hasSelection = Boolean(selectedSubjectId);
 
-                    {layoutMode === 'grid' ? (
-                        <div className="grid gap-6 relative z-20" style={gridStyle}>
-                            {trashedSubjects.map((subject) => {
-                                const trashedDate = toJsDate(subject.trashedAt);
-                                const daysRemaining = getDaysRemaining(subject);
-                                const isSelected = selectedSubjectId === subject.id;
-                                const hasSelection = Boolean(selectedSubjectId);
-
-                                return (
-                                    <div
-                                        key={subject.id}
-                                        ref={isSelected ? selectedCardRef : null}
-                                        className={`transition-all duration-200 ${
-                                            isSelected
-                                                ? 'scale-[1.03] z-30 relative'
-                                                : hasSelection
-                                                    ? 'opacity-45'
-                                                    : 'hover:scale-[1.02]'
-                                        }`}
-                                    >
-                                        <div
-                                            data-testid={`bin-subject-card-${subject.id}`}
-                                            className={`rounded-2xl cursor-pointer ${isSelected ? 'ring-4 ring-blue-400/70 shadow-2xl' : ''}`}
-                                            onClick={() => setSelectedSubjectId(prev => (prev === subject.id ? null : subject.id))}
-                                        >
-                                            <SubjectCard
-                                                subject={subject}
-                                                user={user}
-                                                onSelect={() => {}}
-                                                activeMenu={null}
-                                                onToggleMenu={() => {}}
-                                                onEdit={() => {}}
-                                                onDelete={() => {}}
-                                                onShare={() => {}}
-                                                draggable={false}
-                                                cardScale={cardScale}
-                                                filterOverlayOpen={true}
-                                                disableAllActions={true}
-                                                onOpenTopics={null}
-                                            />
-                                        </div>
-
-                                        <div className="mt-2 px-1">
-                                            <p className={`text-xs font-semibold ${getDaysRemainingTextClass(daysRemaining)}`}>
-                                                {daysRemaining} {daysRemaining === 1 ? 'dia' : 'dias'} restantes
-                                            </p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                Eliminada: {trashedDate ? trashedDate.toLocaleDateString() : 'Fecha no disponible'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="space-y-2 relative z-20">
-                            {trashedSubjects.map((subject) => {
-                                const isSelected = selectedSubjectId === subject.id;
-                                const daysRemaining = getDaysRemaining(subject);
-                                const trashedDate = toJsDate(subject.trashedAt);
-
-                                return (
-                                    <div
-                                        key={subject.id}
-                                        className={`rounded-xl transition-all ${isSelected ? 'ring-2 ring-blue-400 bg-blue-50/40 dark:bg-blue-900/10' : ''}`}
-                                    >
-                                        <ListViewItem
-                                            user={user}
-                                            item={subject}
-                                            type="subject"
-                                            onNavigateSubject={() => setSelectedSubjectId(prev => (prev === subject.id ? null : subject.id))}
-                                            onEdit={() => {}}
-                                            onDelete={() => {}}
-                                            onShare={() => {}}
-                                            draggable={false}
-                                            cardScale={cardScale}
-                                            onDropAction={() => {}}
-                                            allFolders={[]}
-                                            allSubjects={trashedSubjects}
-                                            disableAllActions={true}
-                                        />
-                                        <div className="px-3 pb-2">
-                                            <p className={`text-xs font-semibold ${getDaysRemainingTextClass(daysRemaining)}`}>
-                                                {daysRemaining} {daysRemaining === 1 ? 'dia' : 'dias'} restantes
-                                            </p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                Eliminada: {trashedDate ? trashedDate.toLocaleDateString() : 'Fecha no disponible'}
-                                            </p>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
+                        return (
+                            <BinGridItem
+                                key={subject.id}
+                                ref={isSelected ? selectedCardRef : null}
+                                subject={subject}
+                                user={user}
+                                cardScale={cardScale}
+                                isSelected={isSelected}
+                                hasSelection={hasSelection}
+                                onSelect={() => handleSelectSubject(subject.id)}
+                            />
+                        );
+                    })}
                 </div>
+            ) : (
+                <div className="space-y-2">
+                    {trashedSubjects.map((subject) => {
+                        const isSelected   = selectedSubjectId === subject.id;
+                        const daysRemaining = getDaysRemaining(subject);
+                        const trashedDate   = toJsDate(subject.trashedAt);
 
-                {selectedSubject && layoutMode === 'grid' && (
-                    <aside
-                        data-testid="bin-side-panel"
-                        className={`hidden xl:block absolute z-40 w-[360px] h-fit rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-4 space-y-4 ${panelPlacement === 'left' ? 'left-0' : 'right-0'}`}
-                        style={{ top: `${panelTop}px` }}
-                    >
-                        {renderSelectionActions(selectedSubject)}
-                    </aside>
-                )}
-
-                {selectedSubject && layoutMode !== 'grid' && (
-                    <aside data-testid="bin-side-panel" className="hidden xl:block mt-4 h-fit rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-4 space-y-4">
-                        {renderSelectionActions(selectedSubject)}
-                    </aside>
-                )}
-            </div>
-
-            {selectedSubject && (
-                <aside data-testid="bin-side-panel" className="xl:hidden h-fit rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-4 space-y-4">
-                    {renderSelectionActions(selectedSubject)}
-                </aside>
-            )}
-
-            {descriptionModal && (
-                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setDescriptionModal(null)}>
-                    <div
-                        className="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-6 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                                    <Info className="text-white" size={24} />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-white">{descriptionModal.subject.name}</h3>
-                                    <p className="text-blue-100 text-sm">Contenido de la asignatura</p>
+                        return (
+                            <div
+                                key={subject.id}
+                                className={`rounded-xl transition-all ${isSelected ? 'ring-2 ring-blue-400 bg-blue-50/40 dark:bg-blue-900/10' : ''}`}
+                            >
+                                <ListViewItem
+                                    user={user}
+                                    item={subject}
+                                    type="subject"
+                                    onNavigateSubject={() => handleSelectSubject(subject.id)}
+                                    onEdit={() => {}}
+                                    onDelete={() => {}}
+                                    onShare={() => {}}
+                                    draggable={false}
+                                    cardScale={cardScale}
+                                    onDropAction={() => {}}
+                                    allFolders={[]}
+                                    allSubjects={trashedSubjects}
+                                    disableAllActions={true}
+                                />
+                                <div className="px-3 pb-2">
+                                    <p className={`text-xs font-semibold ${getDaysRemainingTextClass(daysRemaining)}`}>
+                                        {daysRemaining} {daysRemaining === 1 ? 'dia' : 'dias'} restantes
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        Eliminada: {trashedDate ? trashedDate.toLocaleDateString() : 'Fecha no disponible'}
+                                    </p>
                                 </div>
                             </div>
-                            <button
-                                onClick={() => setDescriptionModal(null)}
-                                className="w-10 h-10 bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-xl flex items-center justify-center transition-colors"
-                            >
-                                <XCircle className="text-white" size={20} />
-                            </button>
-                        </div>
-
-                        <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
-                            {loadingDescription ? (
-                                <div className="flex items-center justify-center py-12">
-                                    <Loader2 className="animate-spin text-blue-600" size={32} />
-                                </div>
-                            ) : descriptionModal.topics.length === 0 ? (
-                                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                                    <BookOpen size={48} className="mx-auto mb-4 opacity-30" />
-                                    <p className="font-medium">No hay temas en esta asignatura</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-3">
-                                    {descriptionModal.topics.map((topic, index) => {
-                                        const isExpanded = expandedTopics[topic.id];
-                                        const hasDocuments = topic.documents?.length > 0;
-                                        const hasQuizzes = topic.quizzes?.length > 0;
-                                        const hasContent = hasDocuments || hasQuizzes;
-
-                                        return (
-                                            <div
-                                                key={topic.id}
-                                                className="border border-gray-200 dark:border-slate-700 rounded-xl overflow-hidden"
-                                            >
-                                                <button
-                                                    onClick={() => toggleTopic(topic.id)}
-                                                    className="w-full flex items-center gap-3 p-4 bg-gray-50 dark:bg-slate-900/50 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                                                >
-                                                    <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
-                                                        <span className="text-blue-600 dark:text-blue-400 font-bold text-sm">
-                                                            {topic.number || index + 1}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex-1 text-left">
-                                                        <p className="font-semibold text-gray-900 dark:text-white">{topic.name}</p>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                                            {topic.documents?.length || 0} documentos, {topic.quizzes?.length || 0} cuestionarios
-                                                        </p>
-                                                    </div>
-                                                    {hasContent && (
-                                                        <div className="flex-shrink-0">
-                                                            {isExpanded ? (
-                                                                <ChevronDown className="text-gray-400" size={20} />
-                                                            ) : (
-                                                                <ChevronRight className="text-gray-400" size={20} />
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </button>
-
-                                                {isExpanded && hasContent && (
-                                                    <div className="p-4 bg-white dark:bg-slate-900 space-y-4">
-                                                        {hasDocuments && (
-                                                            <div>
-                                                                <div className="flex items-center gap-2 mb-2">
-                                                                    <FileText className="text-gray-400" size={16} />
-                                                                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                                                        Documentos ({topic.documents.length})
-                                                                    </h4>
-                                                                </div>
-                                                                <div className="space-y-1 pl-6">
-                                                                    {topic.documents.map((docItem) => (
-                                                                        <div
-                                                                            key={docItem.id}
-                                                                            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 py-1"
-                                                                        >
-                                                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-                                                                            <span>{docItem.name || 'Documento sin nombre'}</span>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-
-                                                        {hasQuizzes && (
-                                                            <div>
-                                                                <div className="flex items-center gap-2 mb-2">
-                                                                    <CheckSquare className="text-gray-400" size={16} />
-                                                                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                                                        Cuestionarios ({topic.quizzes.length})
-                                                                    </h4>
-                                                                </div>
-                                                                <div className="space-y-1 pl-6">
-                                                                    {topic.quizzes.map((quizItem) => (
-                                                                        <div
-                                                                            key={quizItem.id}
-                                                                            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 py-1"
-                                                                        >
-                                                                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-                                                                            <span>{quizItem.title || 'Cuestionario sin titulo'}</span>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                        );
+                    })}
                 </div>
             )}
 
-            {deleteConfirm && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-xl">
-                        <div className="flex items-center gap-3 mb-4 text-red-600 dark:text-red-400">
-                            <AlertTriangle size={24} />
-                            <h3 className="text-xl font-bold">Eliminar permanentemente</h3>
-                        </div>
+            {/* ── Selection overlay (grid mode) ────────────────────────────────── */}
+            {selectedSubject && layoutMode === 'grid' && (
+                <BinSelectionOverlay
+                    subject={selectedSubject}
+                    selectedCardRef={selectedCardRef}
+                    actionLoading={actionLoading}
+                    onClose={() => setSelectedSubjectId(null)}
+                    onShowDescription={handleShowDescription}
+                    onRestore={handleRestore}
+                    onDeleteConfirm={setDeleteConfirm}
+                >
+                    {/* Re-render the card inside the overlay so it sits above the dim */}
+                    <BinGridItem
+                        subject={selectedSubject}
+                        user={user}
+                        cardScale={cardScale}
+                        isSelected={true}
+                        hasSelection={false}
+                        onSelect={() => setSelectedSubjectId(null)}
+                    />
+                </BinSelectionOverlay>
+            )}
 
-                        <p className="text-gray-700 dark:text-gray-300 mb-4">
-                            Estas seguro de que quieres eliminar permanentemente esta asignatura?
-                        </p>
-
-                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-6">
-                            <p className="text-sm text-red-800 dark:text-red-300 font-medium mb-2">
-                                Esta accion no se puede deshacer y eliminara:
-                            </p>
-                            <ul className="text-sm text-red-700 dark:text-red-400 space-y-1 ml-4">
-                                <li>- La asignatura</li>
-                                <li>- Todos sus temas</li>
-                                <li>- Todos los documentos</li>
-                                <li>- Todos los archivos asociados</li>
-                            </ul>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setDeleteConfirm(null)}
-                                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
-                            >
-                                Cancelar
+            {/* List-mode inline panel (below the list, unchanged) */}
+            {selectedSubject && layoutMode !== 'grid' && (
+                <aside className="mt-4 h-fit rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-4">
+                    <div className="space-y-4">
+                        <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Elemento seleccionado</p>
+                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedSubject.name}</h4>
+                        <div className="space-y-2">
+                            <button onClick={() => handleShowDescription(selectedSubject)}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all">
+                                Ver contenido
                             </button>
-                            <button
-                                onClick={() => handlePermanentDelete(deleteConfirm)}
-                                disabled={actionLoading === deleteConfirm}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-xl font-medium transition-colors"
-                            >
-                                {actionLoading === deleteConfirm ? (
-                                    <Loader2 className="animate-spin" size={16} />
-                                ) : (
-                                    <Trash2 size={16} />
-                                )}
+                            <button onClick={() => handleRestore(selectedSubject.id)}
+                                disabled={actionLoading === selectedSubject.id}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-xl font-semibold transition-all">
+                                {actionLoading === selectedSubject.id ? <Loader2 className="animate-spin" size={18} /> : 'Restaurar'}
+                            </button>
+                            <button onClick={() => setDeleteConfirm(selectedSubject.id)}
+                                disabled={actionLoading === selectedSubject.id}
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-xl font-semibold transition-all">
                                 Eliminar permanentemente
                             </button>
                         </div>
                     </div>
-                </div>
+                </aside>
+            )}
+
+            {/* ── Modals ──────────────────────────────────────────────────────── */}
+            <BinDescriptionModal
+                descriptionModal={descriptionModal}
+                loadingDescription={loadingDescription}
+                expandedTopics={expandedTopics}
+                onClose={() => setDescriptionModal(null)}
+                onToggleTopic={toggleTopic}
+            />
+
+            {deleteConfirm && (
+                <DeleteConfirmModal
+                    subjectId={deleteConfirm}
+                    actionLoading={actionLoading}
+                    onConfirm={handlePermanentDelete}
+                    onCancel={() => setDeleteConfirm(null)}
+                />
             )}
 
             {emptyConfirmOpen && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 max-w-md w-full shadow-xl">
-                        <div className="flex items-center gap-3 mb-4 text-red-600 dark:text-red-400">
-                            <AlertTriangle size={24} />
-                            <h3 className="text-xl font-bold">Vaciar papelera</h3>
-                        </div>
-
-                        <p className="text-gray-700 dark:text-gray-300 mb-6">
-                            Seguro que deseas eliminar permanentemente los {trashedSubjects.length} elementos de la papelera?
-                        </p>
-
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setEmptyConfirmOpen(false)}
-                                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-300 dark:hover:bg-slate-600 transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleEmptyBin}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
-                            >
-                                <Trash2 size={16} />
-                                Vaciar papelera
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <EmptyBinConfirmModal
+                    count={trashedSubjects.length}
+                    onConfirm={handleEmptyBin}
+                    onCancel={() => setEmptyConfirmOpen(false)}
+                />
             )}
         </div>
     );

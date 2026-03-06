@@ -7,6 +7,7 @@ import {
 import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { canEdit, canView, canDelete, shouldShowEditUI, shouldShowDeleteUI } from '../../../utils/permissionUtils';
+import { canUserAccessSubject } from '../../../utils/subjectAccessUtils';
 
 export const useTopicLogic = (user) => {
     const navigate = useNavigate();
@@ -79,7 +80,21 @@ export const useTopicLogic = (user) => {
 
             try {
                 const subjectDoc = await getDoc(doc(db, "subjects", subjectId));
-                if (subjectDoc.exists()) setSubject({ id: subjectDoc.id, ...subjectDoc.data() });
+                if (!subjectDoc.exists()) {
+                    setLoading(false);
+                    navigate('/home');
+                    return;
+                }
+
+                const subjectData = { id: subjectDoc.id, ...subjectDoc.data() };
+                const hasSubjectAccess = await canUserAccessSubject({ subject: subjectData, user });
+                if (!hasSubjectAccess) {
+                    setLoading(false);
+                    navigate('/home');
+                    return;
+                }
+
+                setSubject(subjectData);
 
                 const topicRef = doc(db, "topics", topicId);
                 unsubscribeTopic = onSnapshot(topicRef, (topicDoc) => {

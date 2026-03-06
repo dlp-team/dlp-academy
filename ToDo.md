@@ -1,81 +1,42 @@
-📘 DLP Academy: Auth & Onboarding Roadmap
-This document explains the multi-tier invitation system and the upcoming email infrastructure.
+1. Data Structure Evolution
+Make the course field of a subject be mandatory and required.
 
-1. The Verification Logic (Current Implementation)
-We moved from a "Search by Email" logic to a "Secure Token" logic to prevent "Email Squatting" (students stealing teacher accounts).
+It should support multiple access vectors:
 
-How it works:
-Tier 1: Direct Invite (Most Secure)
+Bulk Access: supplement the course field with a classId. This links the subject to a specific cohort.
 
-Action: Admin Dashboard creates a doc in institution_invites.
+Individual Access: Add an enrolledStudentUids array to the subject document. This stores the UIDs of students who joined via a code, regardless of their assigned class.
 
-The "Code": Is the Firestore Document ID.
+Discovery: Add a unique inviteCode to each subject during creation to facilitate these manual joins.
 
-Validation: The system checks if the Document ID exists AND matches the user's email.
+2. Subject Creation & Assignment
+When a teacher creates a subject, the flow should change:
 
-Consumption: Once used, the document is deleted automatically.
+Teachers should have the ability to create a new subject and share it with classes with no permission of the institution admin(by default), this will be an option of the institution that can be changed on the institutionadmindashboard or on the admin dashboard.
 
-Tier 2: Magic Code (Flexible)
+The teacher selects a Course (academic level) and then a specific Class (group).
 
-Action: An Institution has a magic_code_value in its settings.
+The system generates a unique inviteCode automatically that will only work inside the institutionId users.
 
-Validation: If no direct invite is found, the system checks if the code matches an institution's master code.
+The subject document is initialized with an empty enrolledStudentUids array, ready for individual students.
 
-Use Case: Bulk onboarding of teachers without pre-registering their emails.
+3. Permission & Query Logic
+You must update how the application "sees" subjects. Instead of a simple where clause, use a logical OR query:
 
-2. Firestore Security Rules
-To keep the app secure while allowing registration, your rules must follow the "Get vs. List" principle.
+Teachers: Fetch where ownerId matches their UID.
 
-Rule to add in Firebase Console:
+Standard Students: Fetch where the subject's classId matches the student's classId.
 
-JavaScript
-// Verification: Users can "GET" a specific invite if they have the ID,
-// but they cannot "LIST" (search) all invites.
-match /institution_invites/{inviteId} {
-  allow get: if true; 
-  allow list: if false; 
-  allow write: if request.auth != null && request.auth.token.admin == true;
-}
-3. Future Email Infrastructure (The "Professional" Path)
-Since the web browser cannot send emails directly for security reasons, we use a backend trigger.
+Guest Students: Fetch where the student's UID exists within the subject's enrolledStudentUids array.
 
-Recommended Stack:
-Provider: Resend.com (Free tier: 3,000 emails/month).
+4. Transition & Archiving (The "Completed" State) - I'm not sure about this, audit is necessary before execution.
+To handle students passing a subject without deleting data or cluttering the UI:
 
-Trigger: Firebase Cloud Functions (Requires Blaze Plan).
+Avoid Deletion: Do not remove the shortcut or the student's ID from the subject, as they may need to review materials later. 
 
-Domain: dlpacademy.com (Requires DNS records: SPF, DKIM, DMARC).
+Make it invisible on the manual tab?
+Disabling the user from entering quizzes or exams?
 
-The Automation Flow:
-Create: You click "Create Institution" in your Dashboard.
+User-Level State: Store a completedSubjects array in the User's profile.
 
-Store: Firestore stores the invite document.
-
-Function: A Background Function (Node.js) detects the new document.
-
-Send: The Function calls Resend's API to send the invitation email containing the inviteId.
-
-4. Development Workflow (Phase 2)
-When you are ready to move from manual copy-pasting to automated emails, follow these steps:
-
-Upgrade to Blaze Plan: Necessary to allow Firebase to talk to external APIs (like Resend).
-
-Verify Domain: Add the DNS records provided by Resend to your domain registrar.
-
-Deploy Cloud Function:
-
-Initialize functions: firebase init functions.
-
-Install Resend: npm install resend.
-
-Write an onCreate trigger for the institution_invites collection.
-
-
-4. Technical Checklist for your Domain
-When you finally buy your domain (e.g., via Namecheap, Cloudflare, or GoDaddy), you will need to set up these three specific DNS records. You can save this list for that day:
-
-SPF (Sender Policy Framework): Tells servers which IP addresses are allowed to send mail for you.
-
-DKIM (DomainKeys Identified Mail): Adds a digital signature to every email.
-
-DMARC (Domain-based Message Authentication): Tells Gmail/Outlook what to do if SPF or DKIM fails (prevents spoofing).
+Frontend Filtering: The application should fetch all accessible subjects and then split them into two UI sections: "Active" (not in the completed array) and "History/Archived" (present in the completed array).
