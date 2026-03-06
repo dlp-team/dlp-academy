@@ -25,6 +25,7 @@ import HomeContent from './components/HomeContent';
 import HomeEmptyState from './components/HomeEmptyState';
 import HomeModals from './components/HomeModals';
 import HomeShareConfirmModals from './components/HomeShareConfirmModals';
+import BinView from './components/BinView';
 import FolderTreeModal from '../../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../Subject/modals/SubjectTopicModal';
 import {
@@ -359,7 +360,9 @@ const Home = ({ user }) => {
                     
                 </div>
 
-                {logic.viewMode === 'shared' && !isStudentRole ? (
+                {logic.viewMode === 'bin' ? (
+                    <BinView user={user} />
+                ) : logic.viewMode === 'shared' && !isStudentRole ? (
                     <>
                         <BreadcrumbNav
                             currentFolder={logic.currentFolder}

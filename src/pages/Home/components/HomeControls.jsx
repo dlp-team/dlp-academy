@@ -1,7 +1,7 @@
 // src/pages/Home/components/HomeControls.jsx
 import React from 'react';
 import { 
-    LayoutGrid, Clock, Folder as FolderIcon, Users, FolderPlus, Move 
+    LayoutGrid, Clock, Folder as FolderIcon, Users, FolderPlus, Move, Trash2 
 } from 'lucide-react';
 import ViewLayoutSelector from '../../../components/ui/ViewLayoutSelector';
 import CardScaleSlider from '../../../components/ui/CardScaleSlider';
@@ -13,7 +13,8 @@ const VIEW_MODE_ICONS = {
     grid: Move,
     usage: Clock,
     courses: FolderIcon,
-    shared: Users
+    shared: Users,
+    bin: Trash2
 };
 
 const HomeControls = ({

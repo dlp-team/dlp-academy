@@ -118,7 +118,11 @@ export const useSubjectManager = (user, subjectId) => {
     const deleteSubject = async () => {
         if (!subject) return;
         try {
-            await deleteDoc(doc(db, "subjects", subject.id));
+            // Soft delete: mark as trashed instead of deleting
+            await updateDoc(doc(db, "subjects", subject.id), {
+                status: 'trashed',
+                trashedAt: serverTimestamp()
+            });
             navigate('/home');
         } catch (error) {
             console.error("Error deleting subject:", error);

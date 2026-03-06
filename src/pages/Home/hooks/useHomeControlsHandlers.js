@@ -5,7 +5,8 @@ export const HOME_VIEW_MODES = [
     { id: 'grid', label: 'Manual' },
     { id: 'usage', label: 'Uso' },
     { id: 'courses', label: 'Cursos' },
-    { id: 'shared', label: 'Compartido' }
+    { id: 'shared', label: 'Compartido' },
+    { id: 'bin', label: 'Papelera' }
 ];
 
 const useHomeControlsHandlers = ({

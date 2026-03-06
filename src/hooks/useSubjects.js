@@ -1,7 +1,7 @@
 // src/hooks/useSubjects.js
 import { useState, useEffect } from 'react';
 import { 
-    collection, query, where, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy
+    collection, query, where, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy, writeBatch, serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -52,6 +52,8 @@ export const useSubjects = (user) => {
             });
 
             const tempSubjects = Array.from(dedupMap.values()).filter(subject => {
+                // Filter out trashed items (soft deleted)
+                if (subject?.status === 'trashed') return false;
                 // Owner always sees their own subjects
                 if (subject?.ownerId === user?.uid) return true;
                 // For institutional subjects, check institution match
@@ -142,7 +144,11 @@ export const useSubjects = (user) => {
     };
 
     const deleteSubject = async (id) => {
-        await deleteDoc(doc(db, "subjects", id));
+        // Soft delete: mark as trashed instead of deleting
+        await updateDoc(doc(db, "subjects", id), { 
+            status: 'trashed',
+            trashedAt: serverTimestamp()
+        });
         setSubjects(prev => prev.filter(s => s.id !== id));
     };
 
@@ -528,6 +534,93 @@ export const useSubjects = (user) => {
         }
     };
 
+    const getTrashedSubjects = async () => {
+        try {
+            if (!user || !canReadHomeData) return [];
+            
+            const q = query(
+                collection(db, "subjects"),
+                where("ownerId", "==", user.uid),
+                where("status", "==", "trashed")
+            );
+            
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        } catch (error) {
+            console.error("Error fetching trashed subjects:", error);
+            return [];
+        }
+    };
+
+    const restoreSubject = async (id) => {
+        try {
+            const subjectRef = doc(db, "subjects", id);
+            await updateDoc(subjectRef, {
+                status: 'active',
+                restoredAt: serverTimestamp(),
+                trashedAt: null
+            });
+        } catch (error) {
+            console.error("Error restoring subject:", error);
+            throw error;
+        }
+    };
+
+    const permanentlyDeleteSubject = async (id) => {
+        try {
+            const batch = writeBatch(db);
+            
+            // 1. Get all topics for this subject
+            const topicsQuery = query(
+                collection(db, "topics"),
+                where("subjectId", "==", id)
+            );
+            const topicsSnapshot = await getDocs(topicsQuery);
+            
+            // 2. For each topic, get all documents and delete them
+            for (const topicDoc of topicsSnapshot.docs) {
+                const topicId = topicDoc.id;
+                
+                // Get all documents for this topic
+                const documentsQuery = query(
+                    collection(db, "documents"),
+                    where("topicId", "==", topicId)
+                );
+                const documentsSnapshot = await getDocs(documentsQuery);
+                
+                // Delete all documents
+                documentsSnapshot.docs.forEach(docSnapshot => {
+                    batch.delete(doc(db, "documents", docSnapshot.id));
+                });
+                
+                // Delete the topic
+                batch.delete(doc(db, "topics", topicId));
+            }
+            
+            // 3. Delete all shortcuts pointing to this subject
+            const shortcutsQuery = query(
+                collection(db, "shortcuts"),
+                where("targetId", "==", id),
+                where("targetType", "==", "subject")
+            );
+            const shortcutsSnapshot = await getDocs(shortcutsQuery);
+            shortcutsSnapshot.docs.forEach(shortcutDoc => {
+                batch.delete(doc(db, "shortcuts", shortcutDoc.id));
+            });
+            
+            // 4. Finally delete the subject itself
+            batch.delete(doc(db, "subjects", id));
+            
+            // Commit all deletions
+            await batch.commit();
+            
+            console.log(`Permanently deleted subject ${id} with all related data`);
+        } catch (error) {
+            console.error("Error permanently deleting subject:", error);
+            throw error;
+        }
+    };
+
     return { 
         subjects, 
         loading, 
@@ -537,6 +630,9 @@ export const useSubjects = (user) => {
         touchSubject,
         shareSubject,
         unshareSubject,
-        transferSubjectOwnership
+        transferSubjectOwnership,
+        getTrashedSubjects,
+        restoreSubject,
+        permanentlyDeleteSubject
     };
 };
