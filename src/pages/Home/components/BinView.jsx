@@ -1,5 +1,5 @@
 // src/pages/Home/components/BinView.jsx
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
     Trash2,
     RotateCcw,
@@ -19,36 +19,12 @@ import SubjectCard from '../../../components/modules/SubjectCard/SubjectCard';
 import ListViewItem from '../../../components/modules/ListViewItem';
 import { db } from '../../../firebase/config';
 import { useSubjects } from '../../../hooks/useSubjects';
-
-const DAYS_UNTIL_AUTO_DELETE = 15;
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-const toJsDate = (timestampLike) => {
-    if (!timestampLike) return null;
-    if (typeof timestampLike.toDate === 'function') return timestampLike.toDate();
-    if (typeof timestampLike?.seconds === 'number') return new Date(timestampLike.seconds * 1000);
-    return null;
-};
-
-const getRemainingMs = (subject, now = new Date()) => {
-    const trashedDate = toJsDate(subject?.trashedAt);
-    if (!trashedDate) return DAYS_UNTIL_AUTO_DELETE * DAY_MS;
-    const expiresAt = trashedDate.getTime() + (DAYS_UNTIL_AUTO_DELETE * DAY_MS);
-    return expiresAt - now.getTime();
-};
-
-const getDaysRemaining = (subject) => {
-    const remaining = getRemainingMs(subject);
-    if (remaining <= 0) return 0;
-    return Math.ceil(remaining / DAY_MS);
-};
-
-const getDaysRemainingTextClass = (daysRemaining) => {
-    if (daysRemaining <= 1) return 'text-red-700 dark:text-red-400';
-    if (daysRemaining <= 3) return 'text-orange-700 dark:text-orange-300';
-    if (daysRemaining <= 7) return 'text-amber-700 dark:text-amber-300';
-    return 'text-emerald-700 dark:text-emerald-300';
-};
+import {
+    getRemainingMs,
+    getDaysRemaining,
+    getDaysRemainingTextClass,
+    toJsDate
+} from './binViewUtils';
 
 const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
     const [trashedSubjects, setTrashedSubjects] = useState([]);
@@ -61,6 +37,10 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
     const [descriptionModal, setDescriptionModal] = useState(null);
     const [loadingDescription, setLoadingDescription] = useState(false);
     const [expandedTopics, setExpandedTopics] = useState({});
+    const [panelPlacement, setPanelPlacement] = useState('right');
+    const [panelTop, setPanelTop] = useState(0);
+    const cardsContainerRef = useRef(null);
+    const selectedCardRef = useRef(null);
 
     const { getTrashedSubjects, restoreSubject, permanentlyDeleteSubject } = useSubjects(user);
 
@@ -68,6 +48,34 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
         () => trashedSubjects.find(subject => subject.id === selectedSubjectId) || null,
         [trashedSubjects, selectedSubjectId]
     );
+
+    useLayoutEffect(() => {
+        if (layoutMode !== 'grid' || !selectedSubjectId || !cardsContainerRef.current || !selectedCardRef.current) {
+            return;
+        }
+
+        const containerRect = cardsContainerRef.current.getBoundingClientRect();
+        const selectedRect = selectedCardRef.current.getBoundingClientRect();
+
+        const panelWidth = 360;
+        const minGap = 16;
+        const spaceLeft = selectedRect.left - containerRect.left;
+        const spaceRight = containerRect.right - selectedRect.right;
+
+        let nextPlacement = 'right';
+        if (spaceRight >= panelWidth + minGap) {
+            nextPlacement = 'right';
+        } else if (spaceLeft >= panelWidth + minGap) {
+            nextPlacement = 'left';
+        } else {
+            nextPlacement = spaceRight >= spaceLeft ? 'right' : 'left';
+        }
+
+        const relativeTop = selectedRect.top - containerRect.top;
+        const maxTop = Math.max(0, cardsContainerRef.current.scrollHeight - 420);
+        setPanelPlacement(nextPlacement);
+        setPanelTop(Math.max(0, Math.min(relativeTop, maxTop)));
+    }, [selectedSubjectId, trashedSubjects.length, layoutMode]);
 
     useEffect(() => {
         loadTrashedItems();
@@ -350,7 +358,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
                 </button>
             </div>
 
-            <div className={`grid gap-6 ${selectedSubject ? 'xl:grid-cols-[minmax(0,1fr)_360px]' : 'grid-cols-1'}`}>
+            <div className="relative" ref={cardsContainerRef}>
                 <div className="relative">
                     {selectedSubject && (
                         <div className="absolute inset-0 bg-black/30 rounded-2xl z-10 pointer-events-none" />
@@ -367,6 +375,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
                                 return (
                                     <div
                                         key={subject.id}
+                                        ref={isSelected ? selectedCardRef : null}
                                         className={`transition-all duration-200 ${
                                             isSelected
                                                 ? 'scale-[1.03] z-30 relative'
@@ -376,6 +385,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
                                         }`}
                                     >
                                         <div
+                                            data-testid={`bin-subject-card-${subject.id}`}
                                             className={`rounded-2xl cursor-pointer ${isSelected ? 'ring-4 ring-blue-400/70 shadow-2xl' : ''}`}
                                             onClick={() => setSelectedSubjectId(prev => (prev === subject.id ? null : subject.id))}
                                         >
@@ -451,15 +461,25 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
                     )}
                 </div>
 
-                {selectedSubject && (
-                    <aside className="hidden xl:block h-fit rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-4 space-y-4">
+                {selectedSubject && layoutMode === 'grid' && (
+                    <aside
+                        data-testid="bin-side-panel"
+                        className={`hidden xl:block absolute z-40 w-[360px] h-fit rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-4 space-y-4 ${panelPlacement === 'left' ? 'left-0' : 'right-0'}`}
+                        style={{ top: `${panelTop}px` }}
+                    >
+                        {renderSelectionActions(selectedSubject)}
+                    </aside>
+                )}
+
+                {selectedSubject && layoutMode !== 'grid' && (
+                    <aside data-testid="bin-side-panel" className="hidden xl:block mt-4 h-fit rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-4 space-y-4">
                         {renderSelectionActions(selectedSubject)}
                     </aside>
                 )}
             </div>
 
             {selectedSubject && (
-                <aside className="xl:hidden h-fit rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-4 space-y-4">
+                <aside data-testid="bin-side-panel" className="xl:hidden h-fit rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-4 space-y-4">
                     {renderSelectionActions(selectedSubject)}
                 </aside>
             )}

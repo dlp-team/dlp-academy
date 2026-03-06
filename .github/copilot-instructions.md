@@ -421,6 +421,7 @@ Before completing ANY interaction, verify:
 1. **Icons over Emojis**: Avoid using emojis for any visible web elements. Use icons instead for a professional and consistent look.
 2. **Text-Based Info Instead of Alerts**: Do not use browser alerts for displaying information. Instead, display the information as text on or near the related element for better user experience and context.
 3. **Spanish Text Only**: All visible text must be written in Spanish and adhere to proper grammar and style as a native Spanish speaker would write.
+4. **English for Chat**: All communication in the chat must be in English.
 
 ---
 
