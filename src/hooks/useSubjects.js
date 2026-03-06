@@ -1,7 +1,7 @@
 // src/hooks/useSubjects.js
 import { useState, useEffect } from 'react';
 import { 
-    collection, query, where, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy, serverTimestamp
+    collection, query, where, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy, serverTimestamp, runTransaction
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { generateSubjectInviteCode, normalizeSubjectAccessPayload } from '../utils/subjectAccessUtils';
@@ -132,34 +132,68 @@ export const useSubjects = (user) => {
     const addSubject = async (payload) => {
         const normalizedPayload = normalizeSubjectAccessPayload(payload, { requireCourse: true });
         const targetInstitutionId = normalizedPayload?.institutionId || currentInstitutionId || null;
-        let inviteCode = normalizedPayload.inviteCode;
 
-        // Best-effort uniqueness check by institution to avoid invite collisions.
-        for (let attempt = 0; attempt < 5; attempt += 1) {
-            const inviteQuery = targetInstitutionId
-                ? query(
-                    collection(db, 'subjects'),
-                    where('institutionId', '==', targetInstitutionId),
-                    where('inviteCode', '==', inviteCode)
-                )
-                : query(collection(db, 'subjects'), where('inviteCode', '==', inviteCode));
-
-            const inviteSnapshot = await getDocs(inviteQuery);
-            if (inviteSnapshot.empty) break;
-            inviteCode = generateSubjectInviteCode();
+        if (!targetInstitutionId && !user?.uid) {
+            throw new Error('No se pudo resolver la institucion para crear la asignatura.');
         }
 
-        const docRef = await addDoc(collection(db, "subjects"), {
-            ...normalizedPayload,
-            inviteCode,
-            ownerId: normalizedPayload?.ownerId || user.uid,
-            institutionId: normalizedPayload?.institutionId || currentInstitutionId,
-            enrolledStudentUids: Array.isArray(normalizedPayload?.enrolledStudentUids)
-                ? normalizedPayload.enrolledStudentUids
-                : []
-        });
+        let inviteCode = normalizedPayload.inviteCode;
+        let createdSubjectId = null;
+
+        for (let attempt = 0; attempt < 10; attempt += 1) {
+            const subjectRef = doc(collection(db, 'subjects'));
+            const inviteCodeKey = `${targetInstitutionId || 'global'}_${inviteCode}`;
+            const inviteCodeRef = doc(db, 'subjectInviteCodes', inviteCodeKey);
+
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const inviteCodeSnapshot = await transaction.get(inviteCodeRef);
+                    if (inviteCodeSnapshot.exists()) {
+                        const collisionError = new Error('INVITE_CODE_COLLISION');
+                        collisionError.code = 'invite-code-collision';
+                        throw collisionError;
+                    }
+
+                    transaction.set(inviteCodeRef, {
+                        inviteCode,
+                        institutionId: targetInstitutionId,
+                        subjectId: subjectRef.id,
+                        createdBy: normalizedPayload?.ownerId || user.uid,
+                        createdAt: new Date()
+                    });
+
+                    transaction.set(subjectRef, {
+                        ...normalizedPayload,
+                        inviteCode,
+                        ownerId: normalizedPayload?.ownerId || user.uid,
+                        institutionId: targetInstitutionId,
+                        enrolledStudentUids: Array.isArray(normalizedPayload?.enrolledStudentUids)
+                            ? normalizedPayload.enrolledStudentUids
+                            : []
+                    });
+                });
+
+                createdSubjectId = subjectRef.id;
+                break;
+            } catch (error) {
+                const isCollision =
+                    error?.code === 'invite-code-collision'
+                    || String(error?.message || '').includes('INVITE_CODE_COLLISION');
+
+                if (!isCollision) {
+                    throw error;
+                }
+
+                inviteCode = generateSubjectInviteCode();
+            }
+        }
+
+        if (!createdSubjectId) {
+            throw new Error('No se pudo generar un codigo de invitacion unico. Intentalo de nuevo.');
+        }
+
         // Return the ID explicitly to handle the folder link correctly
-        return docRef.id;
+        return createdSubjectId;
     };
 
     const updateSubject = async (id, payload) => {

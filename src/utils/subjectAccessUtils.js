@@ -1,10 +1,15 @@
 // src/utils/subjectAccessUtils.js
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { getNormalizedRole } from './permissionUtils';
 
 const INVITE_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const classCache = new Map();
+const ROLE_RANK = {
+    student: 0,
+    teacher: 1,
+    institutionadmin: 2,
+    admin: 3
+};
 
 const sanitizeString = (value) => {
     if (typeof value !== 'string') return '';
@@ -20,6 +25,12 @@ const uniqueStringArray = (value) => {
                 .filter(Boolean)
         )
     );
+};
+
+const getNormalizedRole = (userOrRole) => {
+    const rawRole = typeof userOrRole === 'string' ? userOrRole : userOrRole?.role;
+    const normalized = typeof rawRole === 'string' ? rawRole.trim().toLowerCase() : 'student';
+    return Object.prototype.hasOwnProperty.call(ROLE_RANK, normalized) ? normalized : 'student';
 };
 
 const deriveClassId = (payload = {}) => {
@@ -122,6 +133,12 @@ export const canUserAccessSubject = async ({ subject, user }) => {
 
     const classId = deriveClassId(subject);
     const enrolledStudentUids = uniqueStringArray(subject.enrolledStudentUids);
+    const hasClassOrEnrollmentGate = Boolean(classId) || enrolledStudentUids.length > 0;
+
+    // Backward compatibility for legacy subjects while migration is in progress.
+    if (!hasClassOrEnrollmentGate) {
+        return true;
+    }
 
     if (role === 'teacher') {
         if (!classId) return false;

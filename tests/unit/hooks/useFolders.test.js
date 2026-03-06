@@ -42,6 +42,9 @@ describe('useFolders', () => {
   const user = {
     uid: 'user-1',
     email: 'teacher@test.com',
+    displayName: 'Teacher Test',
+    role: 'teacher',
+    country: 'ES',
     institutionId: 'inst-1',
   };
 

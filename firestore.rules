@@ -298,6 +298,33 @@ service cloud.firestore {
         }
       }
     }
+
+    // Reserva atomica de codigos de invitacion para asignaturas
+    match /subjectInviteCodes/{inviteCodeKey} {
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasAll(['inviteCode', 'institutionId', 'subjectId', 'createdBy', 'createdAt'])
+        && request.resource.data.inviteCode is string
+        && request.resource.data.inviteCode.size() > 0
+        && request.resource.data.subjectId is string
+        && request.resource.data.subjectId.size() > 0
+        && request.resource.data.createdBy == request.auth.uid
+        && (
+          isGlobalAdmin()
+          || (
+            currentUserInstitutionId() != null
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+      allow read: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            currentUserInstitutionId() != null
+            && resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+      allow update, delete: if false;
+    }
     
     // Reglas para Carpetas (Folders)
     match /folders/{folderId} {
