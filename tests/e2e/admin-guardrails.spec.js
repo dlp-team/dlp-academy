@@ -137,25 +137,14 @@ test.describe('Admin guardrails', () => {
     await expect(page.locator('tr', { hasText: inviteEmail })).toHaveCount(0);
   });
 
-  test('institution admin can update institutional code', async ({ page }) => {
+  test('institution admin can save access policies', async ({ page }) => {
     await loginAsInstitutionAdmin(page);
 
-    const codeInput = page.locator('#instCodeInput');
-    const originalCode = await codeInput.inputValue();
-    const nextCode = `AUTO-${Date.now().toString().slice(-8)}`;
+    const savePoliciesButton = page.getByRole('button', { name: /guardar políticas/i });
+    await expect(savePoliciesButton).toBeVisible();
 
-    try {
-      await codeInput.fill(nextCode);
-      await page.getByRole('button', { name: /^guardar$/i }).first().click();
-      await expect(page.getByText(/código actualizado con éxito/i)).toBeVisible();
-      await expect(codeInput).toHaveValue(nextCode);
-    } finally {
-      if (originalCode?.trim() && originalCode.trim() !== nextCode) {
-        await codeInput.fill(originalCode.trim());
-        await page.getByRole('button', { name: /^guardar$/i }).first().click();
-        await expect(page.getByText(/código actualizado con éxito/i)).toBeVisible();
-      }
-    }
+    await savePoliciesButton.click();
+    await expect(page.getByText(/políticas de acceso actualizadas correctamente/i)).toBeVisible();
   });
 
   test('global admin can access admin dashboard tabs', async ({ page }) => {

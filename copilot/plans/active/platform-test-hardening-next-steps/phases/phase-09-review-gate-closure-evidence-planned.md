@@ -1,14 +1,28 @@
-# Phase 09 — Review Gate and Closure Evidence (PLANNED)
+# Phase 09 — Review Gate and Closure Evidence (IN_PROGRESS)
 
 ## Objective
 
 Close the plan only after checklist-driven evidence proves platform-wide coverage goals are met.
 
-## Planned Changes / Actions
+## Active Review Actions
 
-- Move plan to `inReview/` when implementation phases are done.
-- Execute comprehensive verification checklist in `reviewing/`.
-- Log failures with reproduction steps, fixes, and re-test results.
+- Execute matrix-equivalent local verification for CI-targeted non-onboarding specs.
+- Log failures with reproduction steps, fixes, and re-test results in smoke evidence.
+- Validate workflow readiness and secret contract before branch-protection enforcement.
+
+## Evidence Snapshot
+
+- Matrix-equivalent local run (`2026-03-06`):
+	- `npm run test:e2e -- tests/e2e/subject-topic-content.spec.js tests/e2e/quiz-lifecycle.spec.js tests/e2e/profile-settings.spec.js tests/e2e/admin-guardrails.spec.js`
+	- Result: ✅ `16` passed.
+- Regression resolved during review:
+	- `admin-guardrails` mutation path updated from removed `#instCodeInput` flow to current `Guardar Políticas` success-path assertion.
+
+## Remaining for Final Closure
+
+- Keep Phase 02 onboarding deferred until dedicated onboarding fixtures are resumed.
+- Complete remaining Phase 03 and Phase 06 in-progress items before final plan-wide closure.
+- Apply branch-protection required checks once CI runs are confirmed green in GitHub-hosted executions.
 
 ## Risks
 

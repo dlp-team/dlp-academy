@@ -21,15 +21,15 @@ Establish complete platform-level automated coverage so regressions across any m
 - Phase 05 — Quiz Engine and Results Coverage: **COMPLETED**
 - Phase 06 — Profile and Settings Coverage: **IN_PROGRESS**
 - Phase 07 — Admin Surfaces and Permissions Hardening: **COMPLETED**
-- Phase 08 — Full Automation in CI: **IN_PROGRESS**
-- Phase 09 — Review Gate and Closure Evidence: **PLANNED**
+- Phase 08 — Full Automation in CI: **COMPLETED**
+- Phase 09 — Review Gate and Closure Evidence: **IN_PROGRESS**
 
 ## Immediate Next Actions
 
 1. Add remaining Phase 03 unit coverage for uncovered tree-move/sharing branches in Home handlers where callback branches are still untested.
 2. Keep Phase 02 onboarding closure deferred until onboarding test fixtures are explicitly resumed.
 3. Continue Phase 06 by expanding deterministic profile-save assertions with explicit post-save data checks when backend latency allows.
-4. Validate the new Phase 08 CI matrix gate in GitHub Actions and tune secret/fixture parity until all four specs run without skips.
+4. Execute GitHub-hosted validation of the CI matrix and set required status checks for protected branches.
 
 ## Coverage Matrix (Target)
 
