@@ -1,4 +1,4 @@
-// src/pages/Home/components/binViewUtils.js
+// src/pages/Home/utils/binViewUtils.js
 export const DAYS_UNTIL_AUTO_DELETE = 15;
 export const DAY_MS = 24 * 60 * 60 * 1000;
 

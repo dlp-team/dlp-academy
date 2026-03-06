@@ -6,7 +6,7 @@ import {
   getRemainingMs,
   getDaysRemaining,
   getDaysRemainingTextClass,
-} from '../../../../src/pages/Home/components/binViewUtils';
+} from '../../../../src/pages/Home/utils/binViewUtils';
 
 describe('binViewUtils', () => {
   it('toJsDate converts firestore timestamp-like objects', () => {

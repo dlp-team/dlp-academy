@@ -24,7 +24,7 @@ import {
     getDaysRemaining,
     getDaysRemainingTextClass,
     toJsDate
-} from './binViewUtils';
+} from '../utils/binViewUtils';
 
 const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
     const [trashedSubjects, setTrashedSubjects] = useState([]);
@@ -392,7 +392,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
                                             <SubjectCard
                                                 subject={subject}
                                                 user={user}
-                                                onSelect={() => setSelectedSubjectId(prev => (prev === subject.id ? null : subject.id))}
+                                                onSelect={() => {}}
                                                 activeMenu={null}
                                                 onToggleMenu={() => {}}
                                                 onEdit={() => {}}
@@ -429,7 +429,6 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
                                     <div
                                         key={subject.id}
                                         className={`rounded-xl transition-all ${isSelected ? 'ring-2 ring-blue-400 bg-blue-50/40 dark:bg-blue-900/10' : ''}`}
-                                        onClick={() => setSelectedSubjectId(prev => (prev === subject.id ? null : subject.id))}
                                     >
                                         <ListViewItem
                                             user={user}
