@@ -1,3 +1,13 @@
+## [2026-03-06] Feature Addition: Join Subject by Invite Code
+### Context & Behavior
+- Added `joinSubjectByInviteCode(inviteCodeInput)` to support runtime join-by-code from the client hook.
+- Flow now validates invite key format, checks `subjectInviteCodes` ownership/institution scope, resolves the target subject, and blocks trashed/non-existent targets.
+- If the user is already owner/shared/enrolled, method returns early with `{ alreadyJoined: true }`.
+- On first join, the hook now:
+  - appends access via `sharedWithUids/sharedWith`,
+  - auto-enrolls students in `enrolledStudentUids`,
+  - upserts deterministic shortcut document for Home access.
+
 ## [2026-03-06] Test Hardening: Invite Code Transaction Paths
 ### Context & Validation Additions
 - Added focused unit coverage for `useSubjects.addSubject` transactional invite reservation behavior in `tests/unit/hooks/useSubjects.test.js`.

@@ -196,6 +196,114 @@ export const useSubjects = (user) => {
         return createdSubjectId;
     };
 
+    const joinSubjectByInviteCode = async (inviteCodeInput) => {
+        if (!user?.uid) {
+            throw new Error('Debes iniciar sesion para unirte a una asignatura.');
+        }
+
+        const normalizedInviteCode = String(inviteCodeInput || '').trim().toUpperCase();
+        if (!normalizedInviteCode) {
+            throw new Error('Debes ingresar un codigo de invitacion valido.');
+        }
+
+        const inviteCodeKey = `${currentInstitutionId || 'global'}_${normalizedInviteCode}`;
+        const inviteCodeRef = doc(db, 'subjectInviteCodes', inviteCodeKey);
+        const inviteCodeSnap = await getDoc(inviteCodeRef);
+
+        if (!inviteCodeSnap.exists()) {
+            throw new Error('El codigo de invitacion no existe o no esta disponible.');
+        }
+
+        const inviteData = inviteCodeSnap.data() || {};
+        const subjectId = String(inviteData.subjectId || '').trim();
+
+        if (!subjectId) {
+            throw new Error('El codigo de invitacion es invalido.');
+        }
+
+        const inviteInstitutionId = inviteData?.institutionId || null;
+        if (
+            currentInstitutionId
+            && inviteInstitutionId
+            && inviteInstitutionId !== currentInstitutionId
+            && String(user?.role || '').toLowerCase() !== 'admin'
+        ) {
+            throw new Error('El codigo pertenece a otra institucion.');
+        }
+
+        const subjectRef = doc(db, 'subjects', subjectId);
+        const subjectSnap = await getDoc(subjectRef);
+
+        if (!subjectSnap.exists()) {
+            throw new Error('La asignatura asociada al codigo no existe.');
+        }
+
+        const subjectData = subjectSnap.data() || {};
+        if (subjectData?.status === 'trashed') {
+            throw new Error('La asignatura asociada al codigo ya no esta disponible.');
+        }
+
+        const normalizedEmail = String(user?.email || '').toLowerCase().trim();
+        const sharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
+        const sharedWithEntries = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
+        const enrolledStudentUids = Array.isArray(subjectData.enrolledStudentUids) ? subjectData.enrolledStudentUids : [];
+
+        const alreadyOwner = subjectData.ownerId === user.uid || subjectData.uid === user.uid;
+        const alreadySharedByUid = sharedWithUids.includes(user.uid);
+        const alreadySharedByEntry = sharedWithEntries.some(entry =>
+            entry?.uid === user.uid || (normalizedEmail && String(entry?.email || '').toLowerCase() === normalizedEmail)
+        );
+        const alreadyEnrolled = enrolledStudentUids.includes(user.uid);
+
+        if (alreadyOwner || alreadySharedByUid || alreadySharedByEntry || alreadyEnrolled) {
+            return { subjectId, alreadyJoined: true };
+        }
+
+        const shareEntry = {
+            uid: user.uid,
+            email: normalizedEmail,
+            role: 'viewer',
+            canEdit: false,
+            shareOrigin: 'invite-code',
+            sharedAt: new Date()
+        };
+
+        const subjectUpdatePayload = {
+            sharedWithUids: arrayUnion(user.uid),
+            sharedWith: arrayUnion(shareEntry),
+            isShared: true,
+            updatedAt: new Date()
+        };
+
+        if (String(user?.role || '').toLowerCase() === 'student') {
+            subjectUpdatePayload.enrolledStudentUids = arrayUnion(user.uid);
+        }
+
+        await updateDoc(subjectRef, subjectUpdatePayload);
+
+        const shortcutId = `${user.uid}_${subjectId}_subject`;
+        const shortcutRef = doc(db, 'shortcuts', shortcutId);
+        await setDoc(shortcutRef, {
+            ownerId: user.uid,
+            parentId: null,
+            targetId: subjectId,
+            targetType: 'subject',
+            institutionId: subjectData?.institutionId || inviteInstitutionId || currentInstitutionId || null,
+            hiddenInManual: false,
+            shortcutName: subjectData?.name || 'Asignatura',
+            shortcutCourse: subjectData?.course || null,
+            shortcutTags: Array.isArray(subjectData?.tags) ? subjectData.tags : [],
+            shortcutColor: subjectData?.color || 'from-slate-500 to-slate-700',
+            shortcutIcon: subjectData?.icon || 'book',
+            shortcutCardStyle: subjectData?.cardStyle || 'default',
+            shortcutModernFillColor: subjectData?.modernFillColor ?? subjectData?.fillColor ?? null,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        }, { merge: true });
+
+        return { subjectId, alreadyJoined: false };
+    };
+
     const updateSubject = async (id, payload) => {
         const updatePayload = { ...payload };
 
@@ -782,6 +890,7 @@ export const useSubjects = (user) => {
         subjects, 
         loading, 
         addSubject, 
+        joinSubjectByInviteCode,
         updateSubject, 
         deleteSubject,
         touchSubject,

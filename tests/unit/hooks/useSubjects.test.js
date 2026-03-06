@@ -189,3 +189,119 @@ describe('useSubjects addSubject transaction hardening', () => {
     expect(subjectAccessMocks.mockGenerateInviteCode).not.toHaveBeenCalled();
   });
 });
+
+describe('useSubjects joinSubjectByInviteCode', () => {
+  const baseUser = {
+    uid: 'student-1',
+    email: 'student1@test.com',
+    role: 'student',
+    institutionId: 'inst-1',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    firestoreMocks.state.resetAutoId();
+    firestoreMocks.mockOnSnapshot.mockReturnValue(vi.fn());
+  });
+
+  it('joins a subject from invite code and creates shortcut', async () => {
+    firestoreMocks.mockGetDoc.mockImplementation(async (ref) => {
+      if (ref?.name === 'subjectInviteCodes') {
+        return {
+          exists: () => true,
+          data: () => ({
+            inviteCode: 'JOIN1234',
+            subjectId: 'subject-join-1',
+            institutionId: 'inst-1',
+          }),
+        };
+      }
+
+      if (ref?.name === 'subjects') {
+        return {
+          exists: () => true,
+          data: () => ({
+            name: 'Historia',
+            course: '5A',
+            institutionId: 'inst-1',
+            ownerId: 'teacher-1',
+            sharedWithUids: [],
+            sharedWith: [],
+            enrolledStudentUids: [],
+          }),
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    const { result } = renderHook(() => useSubjects(baseUser));
+
+    let joinResult = null;
+    await act(async () => {
+      joinResult = await result.current.joinSubjectByInviteCode('join1234');
+    });
+
+    expect(joinResult).toEqual({ subjectId: 'subject-join-1', alreadyJoined: false });
+    expect(firestoreMocks.mockUpdateDoc).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.mockSetDoc).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails when invite code is missing or invalid', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => false,
+      data: () => ({}),
+    });
+
+    const { result } = renderHook(() => useSubjects(baseUser));
+
+    await expect(result.current.joinSubjectByInviteCode('')).rejects.toThrow(
+      'Debes ingresar un codigo de invitacion valido.'
+    );
+
+    await expect(result.current.joinSubjectByInviteCode('BADCODE')).rejects.toThrow(
+      'El codigo de invitacion no existe o no esta disponible.'
+    );
+  });
+
+  it('returns alreadyJoined when user already has access', async () => {
+    firestoreMocks.mockGetDoc.mockImplementation(async (ref) => {
+      if (ref?.name === 'subjectInviteCodes') {
+        return {
+          exists: () => true,
+          data: () => ({
+            inviteCode: 'JOIN1234',
+            subjectId: 'subject-join-2',
+            institutionId: 'inst-1',
+          }),
+        };
+      }
+
+      if (ref?.name === 'subjects') {
+        return {
+          exists: () => true,
+          data: () => ({
+            name: 'Biologia',
+            institutionId: 'inst-1',
+            ownerId: 'teacher-1',
+            sharedWithUids: ['student-1'],
+            sharedWith: [],
+            enrolledStudentUids: [],
+          }),
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    const { result } = renderHook(() => useSubjects(baseUser));
+
+    await expect(result.current.joinSubjectByInviteCode('JOIN1234')).resolves.toEqual({
+      subjectId: 'subject-join-2',
+      alreadyJoined: true,
+    });
+
+    expect(firestoreMocks.mockUpdateDoc).not.toHaveBeenCalled();
+    expect(firestoreMocks.mockSetDoc).not.toHaveBeenCalled();
+  });
+});

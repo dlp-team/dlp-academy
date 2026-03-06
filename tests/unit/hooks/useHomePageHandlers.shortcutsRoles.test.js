@@ -293,4 +293,139 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
 
     expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith('subject-1', 'source-folder', 'target-private');
   });
+
+  it('opens shortcut move request overlay when breadcrumb drops folder shortcut into shared target', () => {
+    const config = createBaseConfig({
+      logic: {
+        currentFolder: { id: 'source-folder', parentId: null, isShared: false, ownerId: 'owner-1' },
+        folders: [
+          { id: 'source-folder', parentId: null, isShared: false, ownerId: 'owner-1' },
+          { id: 'shared-target', parentId: null, isShared: true, ownerId: 'owner-2', editorUids: [] },
+        ],
+        shortcuts: [
+          { id: 'shortcut-folder-1', targetType: 'folder', targetId: 'folder-source', parentId: 'source-folder' },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleBreadcrumbDrop('shared-target', null, 'folder-source', 'shortcut-folder-1', null);
+
+    expect(result).toBe(true);
+    expect(config.setShareConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        open: true,
+        type: 'shortcut-move-request',
+        requestedShortcutType: 'folder',
+        requestedShortcutId: 'shortcut-folder-1',
+      })
+    );
+    expect(config.moveFolderToParent).not.toHaveBeenCalled();
+  });
+
+  it('handles breadcrumb shared mismatch folder move with merge confirmation callback', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        currentFolder: { id: 'source-parent', parentId: null, isShared: false, ownerId: 'owner-1' },
+        folders: [
+          { id: 'source-parent', parentId: null, isShared: false, ownerId: 'owner-1' },
+          {
+            id: 'folder-source',
+            parentId: 'source-parent',
+            isShared: true,
+            ownerId: 'owner-1',
+            sharedWithUids: ['u-alpha'],
+            sharedWith: [{ uid: 'u-alpha', email: 'alpha@test.com' }],
+          },
+          {
+            id: 'shared-target',
+            parentId: null,
+            isShared: true,
+            ownerId: 'owner-1',
+            sharedWithUids: ['u-beta'],
+            sharedWith: [{ uid: 'u-beta', email: 'beta@test.com' }],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleBreadcrumbDrop('shared-target', null, 'folder-source', null, null);
+
+    expect(result).toBe(true);
+    expect(config.setShareConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        open: true,
+        type: 'shared-mismatch-move',
+        sourceType: 'folder',
+      })
+    );
+
+    const confirmPayload = config.setShareConfirm.mock.calls[0][0];
+    await confirmPayload.onMergeConfirm();
+
+    expect(config.updateFolder).toHaveBeenCalledWith(
+      'shared-target',
+      expect.objectContaining({
+        isShared: true,
+        sharedWithUids: expect.arrayContaining(['u-alpha', 'u-beta']),
+      })
+    );
+    expect(config.moveFolderToParent).toHaveBeenCalledWith('folder-source', 'source-parent', 'shared-target');
+  });
+
+  it('opens unshare overlay when promoting subject out of shared folder and supports preserve callback', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        currentFolder: {
+          id: 'shared-source',
+          parentId: 'private-parent',
+          isShared: true,
+          ownerId: 'owner-1',
+          sharedWithUids: ['u-alpha'],
+          sharedWith: [{ uid: 'u-alpha', email: 'alpha@test.com' }],
+        },
+        folders: [
+          {
+            id: 'shared-source',
+            parentId: 'private-parent',
+            isShared: true,
+            ownerId: 'owner-1',
+            sharedWithUids: ['u-alpha'],
+            sharedWith: [{ uid: 'u-alpha', email: 'alpha@test.com' }],
+          },
+          {
+            id: 'private-parent',
+            parentId: null,
+            isShared: false,
+            ownerId: 'owner-1',
+            sharedWithUids: [],
+            sharedWith: [],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    await handlers.handlePromoteSubjectWrapper('subject-1');
+
+    expect(config.setUnshareConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        open: true,
+        subjectId: 'subject-1',
+      })
+    );
+
+    const unsharePayload = config.setUnshareConfirm.mock.calls[0][0];
+    await unsharePayload.onPreserveConfirm();
+
+    expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith(
+      'subject-1',
+      'shared-source',
+      'private-parent',
+      { preserveSharing: true }
+    );
+  });
 });
