@@ -1,13 +1,11 @@
 // src/pages/Profile/components/UserCard.jsx
 import React from 'react';
-import { Edit2, LogOut, MapPin, LayoutDashboard } from 'lucide-react';
-import Avatar from '../../../components/ui/Avatar'; // Import the new Avatar component
-import { COUNTRIES } from '../../../utils/profileConstants';
+import { Edit2, LogOut, BookOpen, GraduationCap } from 'lucide-react';
+import Avatar from '../../../components/ui/Avatar'; 
 
 const UserCard = ({ user, userProfile, onEdit, onLogout }) => {
     const displayName = userProfile?.displayName || user?.displayName || "Usuario";
     const photoURL = userProfile?.photoURL || user?.photoURL;
-    const countryData = userProfile?.country ? COUNTRIES[userProfile.country] : null;
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8 relative overflow-hidden transition-colors">
@@ -15,7 +13,6 @@ const UserCard = ({ user, userProfile, onEdit, onLogout }) => {
                 <div className="flex flex-col md:flex-row items-center gap-6">
                     <div className="relative">
                         <Avatar photoURL={photoURL} name={displayName} />
-                        <div className="absolute bottom-1 right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-white dark:border-gray-800"></div>
                     </div>
                     
                     <div className="text-center md:text-left">
@@ -28,20 +25,15 @@ const UserCard = ({ user, userProfile, onEdit, onLogout }) => {
                        
                         <div className="flex flex-col md:flex-row items-center gap-3 text-gray-500 dark:text-gray-400 mb-3">
                             <span>{user?.email}</span>
-                            {countryData && (
-                                <span className="flex items-center gap-1 bg-slate-100 dark:bg-gray-700 px-2 py-0.5 rounded text-sm text-gray-700 dark:text-gray-300">
-                                    <MapPin size={14} /> {countryData.name} {countryData.flag}
-                                </span>
-                            )}
                         </div>
 
                         <div className="flex gap-2 justify-center md:justify-start">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-full text-xs font-bold uppercase tracking-wide">
-                                {userProfile?.role === 'teacher' ? '👨‍🏫 Docente' : '👨‍🎓 Estudiante'}
-                            </div>
-                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 rounded-full text-xs font-bold uppercase tracking-wide">
-                                <LayoutDashboard className="w-3 h-3" />
-                                Plan Gratuito
+                                {userProfile?.role === 'teacher' ? (
+                                    <><BookOpen className="w-4 h-4" /> Docente</>
+                                ) : (
+                                    <><GraduationCap className="w-4 h-4" /> Estudiante</>
+                                )}
                             </div>
                         </div>
                     </div>

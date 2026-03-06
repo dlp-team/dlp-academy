@@ -2,10 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { X, Camera, Edit2, Loader2, Save } from 'lucide-react';
 import Avatar from '../../../components/ui/Avatar';
-import { COUNTRIES } from '../../../utils/profileConstants';
 
 const EditProfileModal = ({ isOpen, onClose, initialData, onSave }) => {
-    const [formData, setFormData] = useState({ displayName: '', role: 'student', country: '' });
+    const [formData, setFormData] = useState({ displayName: '' });
     const [photoFile, setPhotoFile] = useState(null);
     const [photoPreview, setPhotoPreview] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
@@ -13,9 +12,7 @@ const EditProfileModal = ({ isOpen, onClose, initialData, onSave }) => {
     useEffect(() => {
         if (isOpen && initialData) {
             setFormData({
-                displayName: initialData.displayName || '',
-                role: initialData.role || 'student',
-                country: initialData.country || ''
+                displayName: initialData.displayName || ''
             });
             setPhotoPreview(null);
             setPhotoFile(null);
@@ -42,7 +39,7 @@ const EditProfileModal = ({ isOpen, onClose, initialData, onSave }) => {
         e.preventDefault();
         setIsSaving(true);
         try {
-            let finalPhoto = initialData.photoURL; // Default to existing
+            let finalPhoto = initialData.photoURL; 
             if (photoFile) {
                 finalPhoto = await convertToBase64(photoFile);
             }
@@ -58,11 +55,13 @@ const EditProfileModal = ({ isOpen, onClose, initialData, onSave }) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-fadeIn">
-                <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h3 className="text-lg font-bold text-gray-900">Editar Perfil</h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
+        <div className="fixed inset-0 z-50 bg-black/50 dark:bg-slate-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-fadeIn border border-transparent dark:border-gray-700">
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100">Editar Perfil</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <X size={20} />
+                    </button>
                 </div>
                 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -79,53 +78,29 @@ const EditProfileModal = ({ isOpen, onClose, initialData, onSave }) => {
                                 <Camera size={32} />
                                 <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
                             </label>
-                            <div className="absolute bottom-0 right-0 bg-indigo-600 p-2 rounded-full text-white border-4 border-white">
+                            <div className="absolute bottom-0 right-0 bg-indigo-600 p-2 rounded-full text-white border-4 border-white dark:border-gray-800">
                                 <Edit2 size={14} />
                             </div>
                         </div>
-                        <p className="text-xs text-gray-500 mt-2">Click para cambiar foto</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Click para cambiar foto</p>
                     </div>
 
                     {/* Inputs */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre Completo</label>
                         <input 
                             value={formData.displayName} 
                             onChange={(e) => setFormData({...formData, displayName: e.target.value})} 
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none" 
+                            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100" 
                             required 
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">País</label>
-                        <select 
-                            value={formData.country} 
-                            onChange={(e) => setFormData({...formData, country: e.target.value})} 
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white"
-                        >
-                            {Object.entries(COUNTRIES).map(([key, val]) => (
-                                <option key={key} value={key}>{val.name} {val.flag}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Rol</label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {['student', 'teacher'].map(role => (
-                                <label key={role} className={`cursor-pointer border rounded-xl p-3 flex flex-col items-center justify-center transition-all ${formData.role === role ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 hover:bg-gray-50'}`}>
-                                    <input type="radio" name="role" value={role} checked={formData.role === role} onChange={(e) => setFormData({...formData, role: e.target.value})} className="hidden" />
-                                    <span className="text-2xl mb-1">{role === 'student' ? '👨‍🎓' : '👨‍🏫'}</span>
-                                    <span className="text-sm font-bold">{role === 'student' ? 'Estudiante' : 'Docente'}</span>
-                                </label>
-                            ))}
-                        </div>
-                    </div>
-
                     <div className="pt-4 flex gap-3">
-                        <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50">Cancelar</button>
-                        <button type="submit" disabled={isSaving} className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2">
+                        <button type="button" onClick={onClose} className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-xl font-semibold hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit" disabled={isSaving} className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-xl font-semibold hover:bg-indigo-700 flex items-center justify-center gap-2 transition-colors disabled:opacity-70">
                             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Guardar
                         </button>
                     </div>
