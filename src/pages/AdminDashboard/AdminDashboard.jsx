@@ -14,6 +14,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
+import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -693,6 +694,7 @@ const UsersTab = () => {
 
 const AdminDashboard = ({ user }) => {
     const navigate = useNavigate();
+    useIdleTimeout(15);
     const [activeTab, setActiveTab] = useState('overview');
     const [stats, setStats] = useState({ Institutions: null, teachers: null, students: null, total: null });
     const [statsLoading, setStatsLoading] = useState(true);

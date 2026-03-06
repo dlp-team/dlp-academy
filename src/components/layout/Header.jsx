@@ -115,6 +115,8 @@ const Header = ({ user }) => {
         return '/institution-admin-dashboard';
       case 'teacher':
         return '/teacher-dashboard';
+      case 'student':
+        return '/student-dashboard';
       default:
         return null;
     }
@@ -129,6 +131,8 @@ const Header = ({ user }) => {
         return 'Panel Institución';
       case 'teacher':
         return 'Panel Profesor';
+      case 'student':
+        return 'Panel Estudiante';
       default:
         return null;
     }

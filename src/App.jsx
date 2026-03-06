@@ -25,6 +25,7 @@ import InstitutionAdminDashboard from './pages/InstitutionAdminDashboard/Institu
 import { StudentDetailView, TeacherDetailView } from './pages/InstitutionAdminDashboard/components/UserDetailView';
 import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard/TeacherDashboard';
+import StudentDashboard from './pages/StudentDashboard/StudentDashboard';
 import TeacherStudentDetailView from './pages/TeacherDashboard/components/TeacherStudentDetailView';
 import { hasRequiredRoleAccess } from './utils/permissionUtils';
 
@@ -238,6 +239,15 @@ function App() {
           element={
             <ProtectedRoute user={user} loading={loading} requiredRole="teacher">
               <TeacherStudentDetailView user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/student-dashboard"
+          element={
+            <ProtectedRoute user={user} loading={loading} requiredRole="student">
+              <StudentDashboard user={user} />
             </ProtectedRoute>
           }
         />

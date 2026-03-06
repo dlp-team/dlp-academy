@@ -12,6 +12,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
+import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
@@ -246,6 +247,7 @@ const MyStudentsTab = ({ allStudents, loading }) => {
 
 const TeacherDashboard = ({ user }) => {
     const navigate = useNavigate();
+    useIdleTimeout(15);
     const [activeTab, setActiveTab] = useState('overview');
 
     const [myClasses, setMyClasses] = useState([]);

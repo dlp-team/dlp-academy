@@ -25,12 +25,13 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
+import SudoModal from '../../components/modals/SudoModal';
 import InstitutionCustomizationView from './components/InstitutionCustomizationView';
 import ClassesCoursesSection from './components/ClassesCoursesSection';
 import UsersTabContent from './components/UsersTabContent';
 import AddTeacherModal from './components/AddTeacherModal';
+import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { hasRequiredRoleAccess } from '../../utils/permissionUtils';
-import { generateDynamicCode } from '../../utils/securityUtils';
 import {
   GLOBAL_BRAND_DEFAULTS,
   HOME_THEME_DEFAULT_COLORS,
@@ -57,6 +58,7 @@ const TABS = [
 
 const InstitutionAdminDashboard = ({ user }) => {
   const navigate = useNavigate();
+  useIdleTimeout(15);
 
   const [activeTab, setActiveTab] = useState('users');
   const [userType, setUserType] = useState('teachers');
@@ -85,7 +87,7 @@ const InstitutionAdminDashboard = ({ user }) => {
   const [customizationSuccess, setCustomizationSuccess] = useState('');
 
   const [institutionalCode, setInstitutionalCode] = useState('');
-  const [isUpdatingCode, setisUpdatingCode] = useState('');
+  const [isUpdatingCode, setIsUpdatingCode] = useState(false);
 
   const [accessPolicies, setAccessPolicies] = useState({
     teachers: { requireDomain: false, allowedDomains: '', requireCode: true, rotationIntervalHours: 24 },
@@ -93,6 +95,8 @@ const InstitutionAdminDashboard = ({ user }) => {
   });
   const [isUpdatingPolicies, setIsUpdatingPolicies] = useState(false);
   const [policyMessage, setPolicyMessage] = useState({ type: '', text: '' });
+  const [showSudoModal, setShowSudoModal] = useState(false);
+  const [pendingPolicies, setPendingPolicies] = useState(null);
   const [codeUpdateSuccess, setCodeUpdateSuccess] = useState('');
   const [codeUpdateError, setCodeUpdateError] = useState('');
 
@@ -311,14 +315,23 @@ const InstitutionAdminDashboard = ({ user }) => {
     }
   };
 
-  const handleSavePolicies = async (updatedPolicies) => {
+  const handleSavePolicies = (updatedPolicies) => {
+    setPendingPolicies(updatedPolicies);
+    setPolicyMessage({ type: '', text: '' });
+    setShowSudoModal(true);
+  };
+
+  const handleConfirmSavePolicies = async () => {
+    if (!pendingPolicies) return;
+
     setIsUpdatingPolicies(true);
     setPolicyMessage({ type: '', text: '' });
     try {
       await updateDoc(doc(db, 'institutions', user.institutionId), {
-        accessPolicies: updatedPolicies
+        accessPolicies: pendingPolicies
       });
-      setAccessPolicies(updatedPolicies);
+      setAccessPolicies(pendingPolicies);
+      setPendingPolicies(null);
       setPolicyMessage({ type: 'success', text: 'Políticas de acceso actualizadas correctamente.' });
       setTimeout(() => setPolicyMessage({ type: '', text: '' }), 4000);
     } catch (error) {
@@ -528,6 +541,16 @@ const InstitutionAdminDashboard = ({ user }) => {
           addSuccess={addSuccess}
         />
       )}
+
+      <SudoModal
+        isOpen={showSudoModal}
+        onClose={() => {
+          setShowSudoModal(false);
+          setPendingPolicies(null);
+        }}
+        onConfirm={handleConfirmSavePolicies}
+        actionName="guardar las políticas de acceso"
+      />
     </div>
   );
 };
