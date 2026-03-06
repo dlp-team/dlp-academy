@@ -12,6 +12,7 @@
 5. **Minimize back-and-forth** - Infer reasonable assumptions and document them rather than asking trivial questions
 6. **Validate all changes** - Always run `get_errors` after edits and verify adjacent functionality
 7. **Document comprehensively** - Update explanation files per protocol requirements
+8. **Maximize code organization & efficiency** - Create new files when needed, split oversized files, centralize logic for maintainability
 
 ---
 
@@ -29,6 +30,116 @@
 - **Permissions**: Role-based with inheritance (Admin → Institution Admin → Teacher → Student)
 - **Content Hierarchy**: Subjects → Folders → Topics → Resources
 - **Customization**: Institution-level theming and branding
+
+---
+
+## Code Organization & Efficiency Standards
+
+### Mandatory Principles
+
+#### 1. File Organization Strategy
+- **Create new files proactively**: When adding complex logic, create dedicated utility/helper files rather than bloating existing files
+- **Split oversized files**: If a file exceeds ~500 lines or has multiple distinct concerns, split it into focused modules
+- **Centralize reusable logic**: Extract duplicated code into shared utilities, hooks, or components
+- **Follow the single responsibility principle**: Each file should have one clear purpose
+
+#### 2. When to Create New Files
+✅ **Create a new file when:**
+- Adding a new utility function that could be reused elsewhere
+- Implementing a feature that's 100+ lines and self-contained
+- Multiple components/files would benefit from shared logic
+- A file is growing beyond 500 lines
+- Logic is becoming hard to navigate or maintain
+
+❌ **Don't create a new file when:**
+- The logic is tightly coupled to a single component (< 50 lines)
+- It's a one-off helper used only once
+- The existing file is well-organized and < 300 lines
+
+#### 3. Code Centralization Checklist
+Before implementing, check if similar logic exists:
+- [ ] Search for existing utilities in `src/utils/`
+- [ ] Check for relevant hooks in `src/hooks/`
+- [ ] Look for similar patterns in `src/components/modules/`
+- [ ] Review `copilot/explanations/codebase/` for documentation
+- [ ] If duplicating logic, extract to shared location instead
+
+#### 4. File Splitting Strategy
+When a file needs splitting:
+1. **Identify distinct concerns** (e.g., UI logic vs. data logic vs. utilities)
+2. **Extract to appropriate locations**:
+   - Pure functions → `src/utils/`
+   - React hooks → `src/hooks/`
+   - Reusable components → `src/components/modules/`
+   - UI primitives → `src/components/ui/`
+3. **Maintain backward compatibility** - Update imports carefully
+4. **Document the split** - Update explanation files
+5. **Validate thoroughly** - Ensure no broken imports
+
+### Example: Good vs. Bad Organization
+
+**❌ BAD - Bloated component:**
+```jsx
+// AdminDashboard.jsx (800 lines)
+// - Component logic
+// - Data fetching logic
+// - Utility functions
+// - Validation functions
+// - Formatting helpers
+```
+
+**✅ GOOD - Organized structure:**
+```jsx
+// AdminDashboard.jsx (200 lines) - UI logic only
+// hooks/useAdminData.js (100 lines) - Data fetching
+// utils/adminValidation.js (80 lines) - Validation
+// utils/adminFormatters.js (60 lines) - Formatting
+```
+
+---
+
+## Asking Clarifying Questions (Without Stopping)
+
+### When to Ask Questions
+Use `vscode_askQuestions` tool to ask clarifying questions **without stopping the task** when:
+- **Ambiguity in requirements** - Multiple valid interpretations exist
+- **Major architectural decisions** - Choice significantly impacts structure
+- **Out-of-scope concerns** - Request seems to extend beyond stated scope
+- **Risk of breaking changes** - Change might affect multiple systems
+- **File organization choices** - Uncertain where new code should live
+
+### Question Guidelines
+✅ **DO ask about:**
+- "This could mean X or Y - which approach?"
+- "Should I split this 600-line file now or handle it separately?"
+- "This change affects authentication - proceed or create a plan?"
+- "Extract to new utility file or keep inline?"
+
+❌ **DON'T ask about:**
+- Trivial formatting choices (use existing patterns)
+- Standard conventions (follow the codebase style)
+- Minor parameter names (choose sensible defaults)
+- Whether to validate (always validate)
+
+### Using vscode_askQuestions
+```javascript
+// Ask questions INLINE without stopping the task
+await vscode_askQuestions({
+  questions: [
+    {
+      header: "File Split Decision",
+      question: "AdminDashboard.jsx is 650 lines. Split now or separate task?",
+      options: [
+        { label: "Split now", recommended: true },
+        { label: "Separate task" },
+        { label: "Keep as-is" }
+      ]
+    }
+  ]
+});
+```
+
+**After receiving answers, continue immediately with the task.**
 
 ---
 
@@ -127,6 +238,8 @@ Workflow documentation and task-specific guides (e.g., `shortcut-move-request-wo
 - [ ] Preserve all props, handlers, states not explicitly mentioned
 - [ ] Maintain backward compatibility
 - [ ] No scope drift or "while we're here" changes
+- [ ] Apply code organization standards (extract utils, centralize logic)
+- [ ] Use `vscode_askQuestions` if major decisions needed (don't wait)
 
 ### 4. Validation (REQUIRED)
 - [ ] Run `get_errors` on all touched files
@@ -250,15 +363,17 @@ Before multiple grep searches, try one broad semantic search to understand the l
 5. **Re-validate fully** - Ensure fix doesn't introduce new issues
 
 ### If Scope is Unclear
-1. **State your interpretation** - "I understand you want X, which means Y changes"
-2. **List assumptions** - "I'm assuming A, B, C remain unchanged"
-3. **Proceed with safest path** - Choose the most lossless approach
-4. **Document assumptions** - In lossless report
+1. **Use `vscode_askQuestions`** - Ask specific questions inline without stopping
+2. **State your interpretation** - "I understand you want X, which means Y changes"
+3. **List assumptions** - "I'm assuming A, B, C remain unchanged"
+4. **Proceed with safest path** - Choose the most lossless approach
+5. **Document assumptions** - In lossless report
 
 ### If Multiple Approaches Exist
-1. **Choose the most lossless** - Least disruption wins
-2. **Explain trade-offs briefly** - "Using approach X because it preserves Y"
-3. **Implement fully** - Don't stop to ask which approach
+1. **Ask via `vscode_askQuestions` if significant** - Major architectural impacts warrant quick clarification
+2. **Choose the most lossless** - Least disruption wins if minor
+3. **Explain trade-offs briefly** - "Using approach X because it preserves Y"
+4. **Implement fully** - Don't stop to deliberate; ask and proceed
 
 ---
 
@@ -300,3 +415,9 @@ Before completing ANY interaction, verify:
 **You have ONE job**: Deliver complete, validated, documented solutions that maximize the value of each limited premium request. No partial work. No "let me know if you want me to continue." No cutting corners on validation or documentation. 
 
 **Every session should leave the user thinking: "That was worth it."**
+
+### User Preferences
+
+1. **Icons over Emojis**: Avoid using emojis for any visible web elements. Use icons instead for a professional and consistent look.
+2. **Text-Based Info Instead of Alerts**: Do not use browser alerts for displaying information. Instead, display the information as text on or near the related element for better user experience and context.
+3. **Spanish Text Only**: All visible text must be written in Spanish and adhere to proper grammar and style as a native Spanish speaker would write.

@@ -58,13 +58,13 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
                             {confirmationType === 'all' ? (
                                 <>
                                     <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
-                                        ¿Eliminar todo permanentemente?
+                                        ¿Mover todo a la papelera?
                                     </h4>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        Se eliminará la carpeta <strong>"{folderName}"</strong> {itemCount === 1
+                                        Se moverá la carpeta <strong>"{folderName}"</strong> {itemCount === 1
                                             ? 'y su elemento'
                                             : <>y todos sus <strong>{itemCount}</strong> elementos</>
-                                        }. Esta acción no se puede deshacer.
+                                        } a la papelera. Podrás restaurarlos dentro de los próximos 15 días.
                                     </p>
                                 </>
                             ) : (
@@ -73,7 +73,7 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
                                         ¿Mover contenido al nivel superior?
                                     </h4>
                                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        La carpeta <strong>"{folderName}"</strong> se eliminará, {itemCount === 1
+                                        La carpeta <strong>"{folderName}"</strong> se moverá a la papelera, {itemCount === 1
                                             ? 'pero su elemento se moverá'
                                             : <>pero sus <strong>{itemCount}</strong> elementos se moverán</>
                                         } a la carpeta anterior.
@@ -99,7 +99,7 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
                             >
                                 {confirmationType === 'all' ? (
                                     <>
-                                        <Trash2 className="w-4 h-4" /> Sí, Eliminar Todo
+                                        <Trash2 className="w-4 h-4" /> Sí, Mover a Papelera
                                     </>
                                 ) : (
                                     <>
@@ -131,7 +131,7 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
                         </div>
                         <div className="flex-1">
                             <h3 className="text-xl font-bold text-white mb-1">
-                                Eliminar Carpeta
+                                Mover Carpeta a la Papelera
                             </h3>
                             <p className="text-white/90 text-sm">
                                 ¿Qué deseas hacer con el contenido de "{folderName}"?
@@ -162,10 +162,10 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
                             </div>
                             <div className="flex-1 text-left">
                                 <div className="font-semibold text-red-900 dark:text-red-100">
-                                    Eliminar todo
+                                    Mover todo a papelera
                                 </div>
                                 <div className="text-xs text-red-700 dark:text-red-300">
-                                    Borrar la carpeta y todos sus elementos
+                                    Mover carpeta y todos sus elementos a la papelera
                                 </div>
                             </div>
                         </button>
@@ -180,10 +180,10 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
                             </div>
                             <div className="flex-1 text-left">
                                 <div className="font-semibold text-blue-900 dark:text-blue-100">
-                                    Solo eliminar carpeta
+                                    Mover solo carpeta a papelera
                                 </div>
                                 <div className="text-xs text-blue-700 dark:text-blue-300">
-                                    Mover el contenido a la carpeta anterior
+                                    Carpeta a papelera, contenido a carpeta anterior
                                 </div>
                             </div>
                         </button>

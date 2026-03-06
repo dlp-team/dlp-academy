@@ -370,7 +370,7 @@ const SubjectHeader = ({
                         <button
                             onClick={onDelete}
                             className="p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 shadow-sm transition-all hover:scale-105"
-                            title="Eliminar Asignatura"
+                            title="Mover a Papelera"
                         >
                             <Trash2 className="w-5 h-5" />
                         </button>

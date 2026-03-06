@@ -42,7 +42,7 @@ const HomeDeleteConfirmModal = ({
             : isUnhideShortcut
                 ? `¿Mostrar ${isShortcutFolder ? 'carpeta' : 'asignatura'} en la sección manual?`
                 : `¿Quitar ${isShortcutFolder ? 'carpeta' : 'asignatura'} de la sección manual?`
-        : `¿Eliminar ${deleteConfig.type === 'folder' ? 'Carpeta' : 'Asignatura'}?`;
+        : `¿Mover ${deleteConfig.type === 'folder' ? 'Carpeta' : 'Asignatura'} a la Papelera?`;
 
     const description = isShortcut
         ? isUnshareShortcut
@@ -53,8 +53,8 @@ const HomeDeleteConfirmModal = ({
                 ? `"${deleteConfig.item?.name}" volverá a mostrarse en tu sección manual.`
                 : `Se ocultará "${deleteConfig.item?.name}" en tu sección manual. Seguirá visible en otras vistas.`
         : deleteConfig.type === 'folder'
-            ? `Se eliminará la carpeta "${deleteConfig.item?.name}" pero las asignaturas y subcarpetas se moverán al nivel superior.`
-            : `Se eliminarán "${deleteConfig.item?.name}" y sus temas.`;
+            ? `Se moverá la carpeta "${deleteConfig.item?.name}" a la papelera (las asignaturas y subcarpetas se moverán al nivel superior).`
+            : `"${deleteConfig.item?.name}" se moverá a la papelera. Podrás restaurarla dentro de los próximos 15 días.`;
 
     const confirmLabel = isShortcut
         ? isUnshareShortcut
@@ -64,7 +64,7 @@ const HomeDeleteConfirmModal = ({
             : isUnhideShortcut
                 ? 'Sí, mostrar'
                 : 'Sí, ocultar'
-        : 'Sí, Eliminar';
+        : 'Sí, Mover a Papelera';
 
     const onClose = () => setDeleteConfig({ isOpen: false, type: null, item: null });
 

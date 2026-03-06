@@ -568,7 +568,20 @@ export const useSubjects = (user) => {
 
     const permanentlyDeleteSubject = async (id) => {
         try {
-            const batch = writeBatch(db);
+            // Get subject details first to verify ownership and institution
+            const subjectRef = doc(db, "subjects", id);
+            const subjectSnap = await getDoc(subjectRef);
+            
+            if (!subjectSnap.exists()) {
+                throw new Error('Subject not found');
+            }
+            
+            const subjectData = subjectSnap.data();
+            const isOwner = subjectData.ownerId === user?.uid;
+            
+            if (!isOwner) {
+                throw new Error('Only the owner can permanently delete this subject');
+            }
             
             // 1. Get all topics for this subject
             const topicsQuery = query(
@@ -577,7 +590,8 @@ export const useSubjects = (user) => {
             );
             const topicsSnapshot = await getDocs(topicsQuery);
             
-            // 2. For each topic, get all documents and delete them
+            // 2. For each topic, try to delete documents
+            const documentDeletionPromises = [];
             for (const topicDoc of topicsSnapshot.docs) {
                 const topicId = topicDoc.id;
                 
@@ -586,35 +600,56 @@ export const useSubjects = (user) => {
                     collection(db, "documents"),
                     where("topicId", "==", topicId)
                 );
-                const documentsSnapshot = await getDocs(documentsQuery);
                 
-                // Delete all documents
-                documentsSnapshot.docs.forEach(docSnapshot => {
-                    batch.delete(doc(db, "documents", docSnapshot.id));
-                });
-                
-                // Delete the topic
-                batch.delete(doc(db, "topics", topicId));
+                try {
+                    const documentsSnapshot = await getDocs(documentsQuery);
+                    documentsSnapshot.docs.forEach(docSnapshot => {
+                        documentDeletionPromises.push(
+                            deleteDoc(doc(db, "documents", docSnapshot.id)).catch(err => {
+                                console.warn(`Failed to delete document ${docSnapshot.id}:`, err);
+                            })
+                        );
+                    });
+                } catch (err) {
+                    console.warn(`Failed to query documents for topic ${topicId}:`, err);
+                }
             }
             
-            // 3. Delete all shortcuts pointing to this subject
-            const shortcutsQuery = query(
-                collection(db, "shortcuts"),
-                where("targetId", "==", id),
-                where("targetType", "==", "subject")
+            // Wait for all document deletions (with error handling)
+            await Promise.allSettled(documentDeletionPromises);
+            
+            // 3. Delete all topics
+            const topicDeletionPromises = topicsSnapshot.docs.map(topicDoc =>
+                deleteDoc(doc(db, "topics", topicDoc.id)).catch(err => {
+                    console.warn(`Failed to delete topic ${topicDoc.id}:`, err);
+                })
             );
-            const shortcutsSnapshot = await getDocs(shortcutsQuery);
-            shortcutsSnapshot.docs.forEach(shortcutDoc => {
-                batch.delete(doc(db, "shortcuts", shortcutDoc.id));
-            });
+            await Promise.allSettled(topicDeletionPromises);
             
-            // 4. Finally delete the subject itself
-            batch.delete(doc(db, "subjects", id));
+            // 4. Try to delete shortcuts (only ones owned by current user)
+            try {
+                const shortcutsQuery = query(
+                    collection(db, "shortcuts"),
+                    where("targetId", "==", id),
+                    where("targetType", "==", "subject"),
+                    where("ownerId", "==", user.uid)
+                );
+                const shortcutsSnapshot = await getDocs(shortcutsQuery);
+                const shortcutDeletions = shortcutsSnapshot.docs.map(shortcutDoc =>
+                    deleteDoc(doc(db, "shortcuts", shortcutDoc.id)).catch(err => {
+                        console.warn(`Failed to delete shortcut ${shortcutDoc.id}:`, err);
+                    })
+                );
+                await Promise.allSettled(shortcutDeletions);
+            } catch (err) {
+                console.warn('Failed to delete some shortcuts:', err);
+                // Continue even if shortcuts fail
+            }
             
-            // Commit all deletions
-            await batch.commit();
+            // 5. Finally delete the subject itself
+            await deleteDoc(doc(db, "subjects", id));
             
-            console.log(`Permanently deleted subject ${id} with all related data`);
+            console.log(`Successfully deleted subject ${id} and related data`);
         } catch (error) {
             console.error("Error permanently deleting subject:", error);
             throw error;
