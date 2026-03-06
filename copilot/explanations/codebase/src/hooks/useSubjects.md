@@ -1,3 +1,11 @@
+## [2026-03-06] Test Hardening: Invite Code Transaction Paths
+### Context & Validation Additions
+- Added focused unit coverage for `useSubjects.addSubject` transactional invite reservation behavior in `tests/unit/hooks/useSubjects.test.js`.
+- New tests now assert:
+  - collision retry regenerates a code and succeeds,
+  - repeated collisions stop after 10 attempts with the expected user-facing error,
+  - non-collision transaction failures (for example permission denied) do not retry and bubble the failure.
+
 ## [2026-02-26] Feature Update: Subject Share Role Upsert
 ### Context & Architecture
 `useSubjects.shareSubject` is invoked by subject sharing UIs and writes sharing metadata to Firestore (`subjects`) while ensuring recipient shortcut provisioning.
