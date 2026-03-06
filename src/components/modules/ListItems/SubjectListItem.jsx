@@ -40,6 +40,8 @@ const SubjectListItem = ({
     const isMovedToShared = subject?._reason === 'moved-to-shared-folder';
     const orphanMessage = subject?._reason === 'access-revoked'
         ? 'La asignatura ya no está compartida'
+        : subject?._reason === 'deleted-by-owner'
+            ? 'La asignatura fue eliminada por el propietario'
         : subject?._reason === 'moved-to-shared-folder'
             ? `Esta asignatura se ha movido a la carpeta ${subject?._movedToFolderName || 'compartida'}`
             : 'La asignatura se ha eliminado';

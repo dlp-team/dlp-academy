@@ -21,3 +21,6 @@
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+- **2026-03-06:** Added `bin` to allowed persisted view modes during restore, fixing reload fallback that forced users out of the paper bin tab.

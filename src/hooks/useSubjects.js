@@ -1,7 +1,7 @@
 // src/hooks/useSubjects.js
 import { useState, useEffect } from 'react';
 import { 
-    collection, query, where, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy, writeBatch, serverTimestamp
+    collection, query, where, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy, serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -144,11 +144,42 @@ export const useSubjects = (user) => {
     };
 
     const deleteSubject = async (id) => {
-        // Soft delete: mark as trashed instead of deleting
-        await updateDoc(doc(db, "subjects", id), { 
-            status: 'trashed',
-            trashedAt: serverTimestamp()
+        const subjectRef = doc(db, "subjects", id);
+        const subjectSnap = await getDoc(subjectRef);
+
+        if (!subjectSnap.exists()) {
+            throw new Error('Subject not found');
+        }
+
+        const subjectData = subjectSnap.data() || {};
+        const sharedWithUids = Array.isArray(subjectData.sharedWithUids)
+            ? subjectData.sharedWithUids.filter(uid => uid && uid !== user?.uid)
+            : [];
+
+        // Mark recipient shortcuts so they render as "eliminada" once access is revoked.
+        const shortcutHintUpdates = sharedWithUids.map(targetUid => {
+            const shortcutId = `${targetUid}_${id}_subject`;
+            return updateDoc(doc(db, 'shortcuts', shortcutId), {
+                orphanReason: 'deleted-by-owner',
+                orphanedAt: serverTimestamp(),
+                updatedAt: new Date()
+            }).catch(() => {
+                // Best effort: missing/unauthorized shortcut docs should not block trashing.
+            });
         });
+
+        await Promise.allSettled(shortcutHintUpdates);
+
+        // Soft delete + force unshare, so recipients lose live access immediately.
+        await updateDoc(subjectRef, {
+            status: 'trashed',
+            trashedAt: serverTimestamp(),
+            isShared: false,
+            sharedWith: [],
+            sharedWithUids: [],
+            updatedAt: new Date()
+        });
+
         setSubjects(prev => prev.filter(s => s.id !== id));
     };
 

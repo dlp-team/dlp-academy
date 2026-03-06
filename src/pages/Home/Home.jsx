@@ -361,7 +361,7 @@ const Home = ({ user }) => {
                 </div>
 
                 {logic.viewMode === 'bin' ? (
-                    <BinView user={user} cardScale={logic.cardScale} />
+                    <BinView user={user} cardScale={logic.cardScale} layoutMode={logic.layoutMode} />
                 ) : logic.viewMode === 'shared' && !isStudentRole ? (
                     <>
                         <BreadcrumbNav

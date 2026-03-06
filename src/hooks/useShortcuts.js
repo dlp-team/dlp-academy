@@ -184,7 +184,8 @@ export const useShortcuts = (user) => {
                     parentId: shortcut.parentId ?? null,
                     targetData: null,
                     _originalTargetId: targetId,
-                    _originalTargetType: targetType
+                    _originalTargetType: targetType,
+                    _reason: shortcut?.orphanReason || 'target-missing'
                 };
             }
 
@@ -220,7 +221,7 @@ export const useShortcuts = (user) => {
                     targetData: null,
                     _originalTargetId: targetId,
                     _originalTargetType: targetType,
-                    _reason: 'access-revoked'
+                    _reason: shortcut?.orphanReason || 'access-revoked'
                 };
             }
 
