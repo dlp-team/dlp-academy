@@ -17,9 +17,15 @@
 - `tests/unit/hooks/useSubjects.test.js`
 - `tests/rules/firestore.rules.test.js`
 - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+- `tests/unit/hooks/useHomePageHandlers.dndMatrix.test.js`
+- `tests/unit/hooks/useHomeContentDnd.test.js`
+- `tests/unit/components/BinConfirmModals.test.jsx`
+- `tests/unit/components/BinSelectionOverlay.test.jsx`
 - `package.json`
 - `package-lock.json`
 - `copilot/explanations/codebase/src/hooks/useSubjects.md`
+- `copilot/explanations/codebase/src/pages/Home/hooks/useHomePageHandlers.md`
+- `copilot/explanations/codebase/src/pages/Home/hooks/useHomeContentDnd.md`
 
 ## File-by-File Verification
 ### `src/hooks/useSubjects.js`
@@ -48,6 +54,22 @@
   - breadcrumb shared-mismatch folder merge callback,
   - promote-subject unshare overlay preserve callback.
 
+### `tests/unit/hooks/useHomePageHandlers.dndMatrix.test.js`
+- Added branch-matrix tests for:
+  - `handleUpwardDrop` direct and shortcut paths,
+  - `handleNestFolder` permission block + shared mismatch merge callback,
+  - `handlePromoteFolderWrapper` shortcut path and unshare cascade path,
+  - `handleTreeMoveSubject` shortcut fallback and editable direct move path.
+
+### `tests/unit/hooks/useHomeContentDnd.test.js`
+- Added extra branch tests for:
+  - empty root payload no-op,
+  - fallback move path,
+  - folder shortcut drop onto subject target parent.
+
+### `tests/unit/components/BinConfirmModals.test.jsx` and `tests/unit/components/BinSelectionOverlay.test.jsx`
+- Added component-level overlay tests for modal actions and selection-overlay rendering/backdrop behavior.
+
 ### `package.json` / `package-lock.json`
 - Added `@firebase/rules-unit-testing` dev dependency.
 - Added scripts:
@@ -60,7 +82,7 @@
   - Result: passed.
 - Full unit suite:
   - `npm run test`
-  - Result: `19/19` files, `94/94` tests passed.
+  - Result: `22/22` files, `111/111` tests passed.
 - Diagnostics:
   - `get_errors` on touched source/tests/config files: no errors.
 
@@ -69,5 +91,5 @@
 - The rules tests are implemented and ready; they will execute once Java is installed.
 
 ## Remaining Risk Notes
-- Drag/drop + shared overlay coverage is now broader but still not mathematically exhaustive across every branch permutation.
-- There are still no component-level tests for visual modal/overlay rendering interactions in Home; current coverage remains behavior-focused at hook level.
+- Firestore rules suite remains implemented but blocked on this machine by missing Java runtime (emulator dependency).
+- DnD/overlay behavior now has both branch-level hook tests and component-level modal/overlay tests for the Home bin flows.

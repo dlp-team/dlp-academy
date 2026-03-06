@@ -1,3 +1,13 @@
+## [2026-03-06] Test Hardening: DnD Matrix and Confirmation Overlay Branches
+### Context & Validation Additions
+- Added a dedicated matrix suite `tests/unit/hooks/useHomePageHandlers.dndMatrix.test.js` to close high-risk drag/drop branches.
+- Newly covered branches include:
+	- upward drop direct-vs-shortcut movement paths,
+	- folder nesting permission blocks,
+	- shared mismatch merge callbacks during folder moves,
+	- promote-folder unshare confirmation cascade,
+	- tree move subject shortcut fallback and editable direct move path.
+
 ## [2026-02-26] Feature Update: Direct Move Without Unshare Prompt from Root Shared Subject Context
 ### Context & Architecture
 `handleDropOnFolderWrapper` orchestrates subject move decisions including confirmation flows for sharing transitions.

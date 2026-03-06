@@ -141,4 +141,94 @@ describe('useHomeContentDnd', () => {
     expect(handleMoveFolderWithSource).toHaveBeenCalledWith('folder-child', 'folder-root', 'folder-target');
     expect(handleDragEnd).toHaveBeenCalledTimes(1);
   });
+
+  it('ignores root drop when payload is empty', () => {
+    const handleDropOnFolder = vi.fn();
+    const handleDragEnd = vi.fn();
+
+    const { result } = renderHook(() =>
+      useHomeContentDnd({
+        currentFolder: { id: 'folder-target' },
+        draggedItem: null,
+        draggedItemType: null,
+        handleDropOnFolder,
+        handleDragEnd,
+      })
+    );
+
+    act(() => {
+      result.current.handleRootZoneDrop(createEvent());
+    });
+
+    expect(handleDropOnFolder).not.toHaveBeenCalled();
+    expect(handleDragEnd).not.toHaveBeenCalled();
+  });
+
+  it('uses fallback moveSubjectWithSource when overlay is not shown', () => {
+    const handleMoveSubjectWithSource = vi.fn();
+    const handleDragEnd = vi.fn();
+
+    const { result } = renderHook(() =>
+      useHomeContentDnd({
+        currentFolder: { id: 'folder-target' },
+        draggedItem: null,
+        draggedItemType: null,
+        handleMoveSubjectWithSource,
+        handleDragEnd,
+      })
+    );
+
+    act(() => {
+      result.current.handleListDrop(
+        {
+          id: 'subject-a',
+          type: 'subject',
+          parentId: 'folder-source',
+          folderId: 'folder-source',
+          shortcutId: 'shortcut-a',
+        },
+        {
+          id: 'folder-target',
+          type: 'folder',
+        }
+      );
+    });
+
+    expect(handleMoveSubjectWithSource).toHaveBeenCalledWith('subject-a', 'folder-target', 'folder-source');
+    expect(handleDragEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('nests folder shortcut directly when dropped on subject target parent', () => {
+    const handleNestFolder = vi.fn();
+    const handleDragEnd = vi.fn();
+
+    const { result } = renderHook(() =>
+      useHomeContentDnd({
+        currentFolder: { id: 'folder-current' },
+        draggedItem: null,
+        draggedItemType: null,
+        handleNestFolder,
+        handleDragEnd,
+      })
+    );
+
+    act(() => {
+      result.current.handleListDrop(
+        {
+          id: 'folder-shortcut',
+          type: 'folder',
+          parentId: 'folder-source',
+          shortcutId: 'shortcut-folder-1',
+        },
+        {
+          id: 'subject-target',
+          type: 'subject',
+          parentId: 'folder-target',
+        }
+      );
+    });
+
+    expect(handleNestFolder).toHaveBeenCalledWith('folder-target', 'folder-shortcut', 'shortcut-folder-1');
+    expect(handleDragEnd).toHaveBeenCalledTimes(1);
+  });
 });

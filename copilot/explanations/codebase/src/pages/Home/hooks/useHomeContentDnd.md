@@ -1,3 +1,10 @@
+## [2026-03-06] Test Hardening: Additional DnD Branch Paths
+### Context & Validation Additions
+- Extended `tests/unit/hooks/useHomeContentDnd.test.js` with branch-level checks for:
+	- root drop with empty payload (no-op),
+	- fallback `handleMoveSubjectWithSource` path when no folder-drop handler is provided,
+	- folder-shortcut drop onto subject-target parent resolution.
+
 # useHomeContentDnd.js
 
 ## Overview
