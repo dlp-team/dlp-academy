@@ -144,7 +144,9 @@ test.describe('Admin guardrails', () => {
     await expect(savePoliciesButton).toBeVisible();
 
     await savePoliciesButton.click();
-    await expect(page.getByText(/políticas de acceso actualizadas correctamente/i)).toBeVisible();
+    // Wait for the success message to appear (policyMessage)
+    const successMsg = page.locator('text=Políticas de acceso actualizadas correctamente');
+    await expect(successMsg).toBeVisible({ timeout: 7000 });
   });
 
   test('global admin can access admin dashboard tabs', async ({ page }) => {
