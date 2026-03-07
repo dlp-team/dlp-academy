@@ -75,6 +75,19 @@
 
 ---
 
+# [2026-03-07] Clase Tab: Subject Invite Code Visibility
+
+## Context
+- Teachers needed to retrieve the subject invite code from the existing three-dots edit flow without leaving the subject modal.
+
+## Change
+- Added an invite-code panel in the `Clases` tab of `SubjectFormModal`.
+- The panel displays the current subject invite code and includes a copy action.
+- Messaging clarifies this code is for enrolling students not tied to a class.
+
+## Validation
+- Manual UI path validated in code: `activeTab === 'classes'` block now renders invite-code panel using `formData.inviteCode || initialData.inviteCode`.
+
 # SubjectFormModal.jsx
 
 ## Overview

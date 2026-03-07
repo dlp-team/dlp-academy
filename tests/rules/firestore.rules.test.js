@@ -150,6 +150,18 @@ describe('Firestore rules: subjects + subjectInviteCodes', () => {
     await assertFails(getDoc(doc(teacher2Db, 'subjectInviteCodes', 'inst-1_JOINE111')));
   });
 
+  it('allows reading missing invite code key in same institution (existence check)', async () => {
+    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+    await assertSucceeds(getDoc(doc(teacherDb, 'subjectInviteCodes', 'inst-1_MISSING001')));
+  });
+
+  it('denies reading missing invite code key from other institution', async () => {
+    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+    await assertFails(getDoc(doc(teacherDb, 'subjectInviteCodes', 'inst-2_MISSING002')));
+  });
+
   it('allows admin reading invite code across institutions', async () => {
     await seedDoc('subjectInviteCodes', 'inst-2_JOINF111', {
       inviteCode: 'JOINF111',

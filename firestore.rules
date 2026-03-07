@@ -185,6 +185,11 @@ service cloud.firestore {
           || get(/databases/$(database)/documents/folders/$(folderId)).data.uid == request.auth.uid
         );
     }
+
+    function inviteCodeKeyMatchesCurrentInstitution(inviteCodeKey) {
+      return currentUserInstitutionId() != null
+        && inviteCodeKey.matches('^' + currentUserInstitutionId() + '_.*$');
+    }
     
     // Reglas para usuarios
     match /users/{userId} {
@@ -320,6 +325,7 @@ service cloud.firestore {
             currentUserInstitutionId() != null
             && resource.data.institutionId == currentUserInstitutionId()
           )
+          || inviteCodeKeyMatchesCurrentInstitution(inviteCodeKey)
         );
       allow update, delete: if false;
     }
