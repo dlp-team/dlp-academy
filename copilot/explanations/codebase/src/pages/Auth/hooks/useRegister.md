@@ -1,3 +1,15 @@
+# [2026-03-07] Country Persistence Removed From Registration
+
+## Context
+- User profile bootstrap no longer depends on `country` for post-login data access.
+
+## Change
+- Removed `country` from `formData` default state in `src/pages/Auth/hooks/useRegister.js`.
+- Removed `country` from the user document payload written to `users/{uid}` on registration.
+
+## Validation
+- Updated and passed `tests/unit/hooks/useRegister.test.js` without `country` input interactions.
+
 # [2026-03-07] Student Institutional Code Registration Path
 
 ## Context

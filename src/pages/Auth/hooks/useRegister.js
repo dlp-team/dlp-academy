@@ -18,7 +18,6 @@ export const useRegister = () => {
         lastName: '',
         email: '',
         verificationCode: '',
-        country: '',
         password: '',
         confirmPassword: '',
         rememberMe: false
@@ -141,7 +140,6 @@ export const useRegister = () => {
             );
             const user = userCredential.user;
             const displayName = `${(formData.firstName || '').trim()} ${(formData.lastName || '').trim()}`.trim() || normalizedEmail.split('@')[0];
-            const country = (formData.country || '').trim() || 'other';
 
             // 4. Update Display Name
             await updateProfile(user, { displayName });
@@ -160,7 +158,6 @@ export const useRegister = () => {
                 displayName,
                 email: normalizedEmail,
                 role: resolvedRole,
-                country,
                 institutionId,
                 createdAt: serverTimestamp(),
                 settings: {

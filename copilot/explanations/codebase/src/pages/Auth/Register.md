@@ -1,3 +1,15 @@
+# [2026-03-07] Country Field Removed From Registration UI
+
+## Context
+- Registration already captures role and institutional linkage, and country was no longer required for access gating.
+
+## Change
+- Removed the `country` selector from `src/pages/Auth/Register.jsx`.
+- Registration form now focuses on identity, credentials, and institutional code flow only.
+
+## Validation
+- Unit registration flow remains green via `tests/unit/hooks/useRegister.test.js`.
+
 # [2026-03-07] Student Institutional Code Input Support
 
 ## Context

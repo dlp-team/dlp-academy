@@ -30,7 +30,7 @@ export const useShortcuts = (user) => {
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
     const promotingShortcutIdsRef = useRef(new Set());
-    const canReadHomeData = Boolean(user?.role && user?.country && user?.displayName);
+    const canReadHomeData = Boolean(user?.role && user?.displayName);
 
     const buildAppearanceFromTargetData = (targetType, targetData = {}) => {
         if (targetType === 'folder') {

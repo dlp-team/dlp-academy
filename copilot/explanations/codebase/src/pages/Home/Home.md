@@ -28,4 +28,5 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- **2026-03-07:** Removed `OnboardingWizard` mount from `Home` render path to stop onboarding prompts for authenticated users in the current registration/login model.
 - **2026-03-06:** Updated `BinView` integration to pass `layoutMode` in addition to `cardScale`, so trash section follows the same grid/list contracts as the other Home tabs.

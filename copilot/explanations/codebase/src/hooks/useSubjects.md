@@ -1,3 +1,13 @@
+## [2026-03-07] Home Data Readiness No Longer Requires Country
+### Context
+- Country was removed from required registration profile fields.
+
+### Change
+- `canReadHomeData` now requires `role` + `displayName` only in `src/hooks/useSubjects.js`.
+
+### Validation
+- Unit suite remained green (`npm run test`).
+
 ## [2026-03-07] Subject Code Generation Ownership Update
 ### Context
 - Subject invite codes must be system-generated; teachers should not manually define invite codes during creation.

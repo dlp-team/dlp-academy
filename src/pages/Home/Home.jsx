@@ -14,7 +14,6 @@ import { useHomePageHandlers } from './hooks/useHomePageHandlers';
 
 // Layout & Global Components
 import Header from '../../components/layout/Header';
-import OnboardingWizard from '../Onboarding/components/OnboardingWizard';
 import BreadcrumbNav from './components/BreadcrumbNav';
 import SharedView from './components/SharedView';
 
@@ -303,7 +302,6 @@ const Home = ({ user }) => {
             style={homeThemeTokens.cssVariables}
         >
             <Header user={user} />
-            <OnboardingWizard user={user} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
                 {/* Drag Up Zone (Omitted for brevity, logic same) */}

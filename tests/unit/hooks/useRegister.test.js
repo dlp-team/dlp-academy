@@ -78,7 +78,6 @@ describe('useRegister', () => {
       result.current.handleChange({ target: { name: 'firstName', value: 'Ana', type: 'text' } });
       result.current.handleChange({ target: { name: 'lastName', value: 'Test', type: 'text' } });
       result.current.handleChange({ target: { name: 'email', value: 'ana@test.com', type: 'text' } });
-      result.current.handleChange({ target: { name: 'country', value: 'es', type: 'text' } });
       result.current.handleChange({ target: { name: 'password', value: 'Password123!', type: 'text' } });
       result.current.handleChange({ target: { name: 'confirmPassword', value: 'Password1234!', type: 'text' } });
     });
@@ -102,7 +101,6 @@ describe('useRegister', () => {
       result.current.handleChange({ target: { name: 'firstName', value: 'Ana', type: 'text' } });
       result.current.handleChange({ target: { name: 'lastName', value: 'Test', type: 'text' } });
       result.current.handleChange({ target: { name: 'email', value: 'ana@test.com', type: 'text' } });
-      result.current.handleChange({ target: { name: 'country', value: 'es', type: 'text' } });
       result.current.handleChange({ target: { name: 'password', value: 'Password123!', type: 'text' } });
       result.current.handleChange({ target: { name: 'confirmPassword', value: 'Password123!', type: 'text' } });
     });
@@ -138,7 +136,6 @@ describe('useRegister', () => {
       result.current.handleChange({ target: { name: 'firstName', value: 'Laura', type: 'text' } });
       result.current.handleChange({ target: { name: 'lastName', value: 'Profe', type: 'text' } });
       result.current.handleChange({ target: { name: 'email', value: 'laura@test.com', type: 'text' } });
-      result.current.handleChange({ target: { name: 'country', value: 'es', type: 'text' } });
       result.current.handleChange({ target: { name: 'verificationCode', value: 'ab12cd', type: 'text' } });
       result.current.handleChange({ target: { name: 'password', value: 'Password123!', type: 'text' } });
       result.current.handleChange({ target: { name: 'confirmPassword', value: 'Password123!', type: 'text' } });
@@ -179,7 +176,6 @@ describe('useRegister', () => {
       result.current.handleChange({ target: { name: 'firstName', value: 'Ana', type: 'text' } });
       result.current.handleChange({ target: { name: 'lastName', value: 'Invite', type: 'text' } });
       result.current.handleChange({ target: { name: 'email', value: 'code@test.com', type: 'text' } });
-      result.current.handleChange({ target: { name: 'country', value: 'es', type: 'text' } });
       result.current.handleChange({ target: { name: 'verificationCode', value: 'aBcDeF12', type: 'text' } });
       result.current.handleChange({ target: { name: 'password', value: 'Password123!', type: 'text' } });
       result.current.handleChange({ target: { name: 'confirmPassword', value: 'Password123!', type: 'text' } });
@@ -212,7 +208,6 @@ describe('useRegister', () => {
       result.current.handleChange({ target: { name: 'firstName', value: 'Mario', type: 'text' } });
       result.current.handleChange({ target: { name: 'lastName', value: 'Docente', type: 'text' } });
       result.current.handleChange({ target: { name: 'email', value: 'mario@escuela.com', type: 'text' } });
-      result.current.handleChange({ target: { name: 'country', value: 'es', type: 'text' } });
       result.current.handleChange({ target: { name: 'verificationCode', value: 'zz99aa', type: 'text' } });
       result.current.handleChange({ target: { name: 'password', value: 'Password123!', type: 'text' } });
       result.current.handleChange({ target: { name: 'confirmPassword', value: 'Password123!', type: 'text' } });
@@ -252,7 +247,6 @@ describe('useRegister', () => {
       result.current.handleChange({ target: { name: 'firstName', value: 'Lucia', type: 'text' } });
       result.current.handleChange({ target: { name: 'lastName', value: 'Alumno', type: 'text' } });
       result.current.handleChange({ target: { name: 'email', value: 'lucia@colegio.com', type: 'text' } });
-      result.current.handleChange({ target: { name: 'country', value: 'es', type: 'text' } });
       result.current.handleChange({ target: { name: 'verificationCode', value: 'st99aa', type: 'text' } });
       result.current.handleChange({ target: { name: 'password', value: 'Password123!', type: 'text' } });
       result.current.handleChange({ target: { name: 'confirmPassword', value: 'Password123!', type: 'text' } });

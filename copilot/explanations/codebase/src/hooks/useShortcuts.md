@@ -1,3 +1,14 @@
+## [2026-03-07] Home Data Readiness No Longer Requires Country
+
+### Context
+- Country is no longer a required registration/profile field.
+
+### Change
+- Updated `canReadHomeData` in `src/hooks/useShortcuts.js` to require `role` and `displayName` only.
+
+### Validation
+- No type/lint errors on touched files and full unit suite passes.
+
 # useShortcuts.js
 
 ## Purpose

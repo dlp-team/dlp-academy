@@ -1,3 +1,13 @@
+## [2026-03-07] Home Data Readiness No Longer Requires Country
+### Context & Architecture
+Folder loading is gated by `canReadHomeData` to avoid premature reads before profile bootstrap.
+
+### Change
+- Updated readiness gate in `src/hooks/useFolders.js` from `role + country + displayName` to `role + displayName`.
+
+### Validation
+- Frontend unit tests pass with the updated gate (`npm run test`).
+
 ## [2026-02-26] Feature Update: Share Validation Errors as Exceptions (No UI Alerts)
 ### Context & Architecture
 `useFolders.shareFolder` is consumed by modal UI that renders error messages in-card. Backend-style validations must therefore throw errors, not call browser alerts.

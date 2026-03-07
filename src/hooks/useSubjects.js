@@ -10,7 +10,7 @@ export const useSubjects = (user) => {
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
-    const canReadHomeData = Boolean(user?.role && user?.country && user?.displayName);
+    const canReadHomeData = Boolean(user?.role && user?.displayName);
     const debugShare = (stage, payload = {}) => {
         console.info('[SHARE_DEBUG][subject]', {
             ts: new Date().toISOString(),

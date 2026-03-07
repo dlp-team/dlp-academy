@@ -128,23 +128,6 @@ const Register = () => {
                         )}
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">País</label>
-                            <select 
-                                name="country" required
-                                value={formData.country} onChange={handleChange}
-                                className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-gray-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 outline-none transition-all text-gray-900 dark:text-white"
-                            >
-                                <option value="" disabled>Selecciona tu país</option>
-                                <option value="es">España 🇪🇸</option>
-                                <option value="mx">México 🇲🇽</option>
-                                <option value="ar">Argentina 🇦🇷</option>
-                                <option value="co">Colombia 🇨🇴</option>
-                                <option value="cl">Chile 🇨🇱</option>
-                                <option value="other">Otro 🌍</option>
-                            </select>
-                        </div>
-
-                        <div>
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contraseña</label>
                             <div className="relative">
                                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />

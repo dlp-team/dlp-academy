@@ -7,6 +7,10 @@ const E2E_SUBJECT_ID = process.env.E2E_SUBJECT_ID;
 const E2E_TOPIC_ID = process.env.E2E_TOPIC_ID;
 const E2E_INSTITUTION_ID = process.env.E2E_INSTITUTION_ID;
 
+const buildE2eSubjectId = (ownerId) => `e2e-subject-${ownerId}`;
+const buildE2eTopicId = (ownerId, subjectId) => `e2e-topic-${ownerId}-${subjectId}`;
+const buildE2eSummaryId = (topicId) => `e2e-summary-${topicId}`;
+
 const ensureAdmin = () => {
   const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (!serviceAccountRaw) return null;
@@ -26,9 +30,9 @@ const ensureAdmin = () => {
 };
 
 const createSubjectSeed = async (db, ownerId, institutionId) => {
-  const now = Date.now();
+  const subjectId = buildE2eSubjectId(ownerId);
   const subjectPayload = {
-    name: `E2E Subject Seed ${now}`,
+    name: 'E2E Subject Seed',
     color: 'from-blue-400 to-blue-600',
     ownerId,
     ...(institutionId ? { institutionId } : {}),
@@ -38,14 +42,14 @@ const createSubjectSeed = async (db, ownerId, institutionId) => {
     e2eSeed: true,
   };
 
-  const subjectRef = await db.collection('subjects').add(subjectPayload);
-  return subjectRef.id;
+  await db.collection('subjects').doc(subjectId).set(subjectPayload, { merge: true });
+  return subjectId;
 };
 
 const createTopicSeed = async (db, subjectId, ownerId, institutionId) => {
-  const now = Date.now();
+  const topicId = buildE2eTopicId(ownerId, subjectId);
   const topicPayload = {
-    name: `E2E Topic Seed ${now}`,
+    name: 'E2E Topic Seed',
     prompt: 'Deterministic E2E seed topic',
     status: 'completed',
     color: 'from-blue-400 to-blue-600',
@@ -58,14 +62,14 @@ const createTopicSeed = async (db, subjectId, ownerId, institutionId) => {
     e2eSeed: true,
   };
 
-  const topicRef = await db.collection('topics').add(topicPayload);
+  await db.collection('topics').doc(topicId).set(topicPayload, { merge: true });
 
-  await db.collection('resumen').add({
+  await db.collection('resumen').doc(buildE2eSummaryId(topicId)).set({
     name: 'E2E Seed Summary',
     title: 'E2E Seed Summary',
     type: 'summary',
     content: 'Contenido de semilla para validación E2E.',
-    topicId: topicRef.id,
+    topicId,
     subjectId,
     ownerId,
     ...(institutionId ? { institutionId } : {}),
@@ -82,7 +86,7 @@ const createTopicSeed = async (db, subjectId, ownerId, institutionId) => {
     { merge: true }
   );
 
-  return topicRef.id;
+  return topicId;
 };
 
 const canAccessSubject = (subjectData, ownerId) => {
@@ -100,7 +104,7 @@ const ensureTopicHasSeededContent = async (db, subjectId, topicId, ownerId, inst
   const resumenSnap = await db.collection('resumen').where('topicId', '==', topicId).limit(1).get();
   if (!resumenSnap.empty) return;
 
-  await db.collection('resumen').add({
+  await db.collection('resumen').doc(buildE2eSummaryId(topicId)).set({
     name: 'E2E Seed Summary',
     title: 'E2E Seed Summary',
     type: 'summary',

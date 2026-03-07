@@ -12,7 +12,7 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:rules": "firebase emulators:exec --only firestore \"npm run test:rules:unit\"",
-    "test:rules:unit": "vitest run tests/rules/firestore.rules.test.js",
+    "test:rules:unit": "vitest run --config vitest.rules.config.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
