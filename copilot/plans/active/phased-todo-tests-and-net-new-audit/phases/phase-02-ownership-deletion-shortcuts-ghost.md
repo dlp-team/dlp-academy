@@ -2,16 +2,16 @@
 # Phase 02 - Ownership, Deletion, Shortcuts, and Ghost Backlog
 
 ## Ownership transfer
-- [ ] Transfer subject ownership: owner can transfer to valid shared user
+- [x] Transfer subject ownership: owner can transfer to valid shared user
 - [ ] Transfer subject ownership: error on invalid user/self/permission
-- [ ] Transfer folder ownership: owner can transfer to valid shared user
+- [x] Transfer folder ownership: owner can transfer to valid shared user
 - [ ] Transfer folder ownership: error on invalid user/self/permission
 
 ## Advanced shortcuts and deletion behavior
 - [ ] Shortcut deduplication: re-sharing same subject/folder does not create duplicate shortcuts
-- [ ] Shortcut move: moving shortcut between folders updates only shortcut, not source item
+- [x] Shortcut move: moving shortcut between folders updates only shortcut, not source item
 - [ ] Non-owner mutation denial via shortcut context
-- [ ] Orphan shortcut deletion when source is deleted/unshared
+- [x] Orphan shortcut deletion when source is deleted/unshared
 - [ ] Cross-view parity across grid/list/tree/manual/shared
 - [ ] Real-time sync for deletion/shortcut/ghost actions
 - [ ] Breadcrumb behavior for shared and non-shared moves
@@ -32,7 +32,7 @@
 - [ ] Subject deletion with failed topic/document/shortcut deletion (error handling)
 
 ## Folder deletion coverage
-- [ ] Delete folder only (subjects moved, no deletion)
+- [x] Delete folder only (subjects moved, no deletion)
 - [ ] Delete folder and all contents (cascade)
 - [ ] Unshare folder (shortcuts hidden/deleted)
 - [ ] Folder deletion with shared subjects
@@ -52,7 +52,7 @@
 - [ ] Topic deletion with failed resource/document deletion (error handling)
 
 ## Shortcut behavior coverage
-- [ ] Delete shortcut to subject/folder/topic
+- [x] Delete shortcut to subject/folder/topic
 - [ ] Shortcut owned by another user (permission denied)
 - [ ] Shortcut deletion in ghost mode
 - [ ] Shortcut deletion with missing institutionId

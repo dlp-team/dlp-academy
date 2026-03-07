@@ -15,16 +15,20 @@ The user requested a phased organization of `tests/todo-tests.md` and the previo
 
 ## Current Status
 - Plan state: **ACTIVE**
-- Current phase: **Phase 01 - Build Unified Phased Checklist (IN_PROGRESS)**
+- Current phase: **Phase 02 - Ownership, Deletion, Shortcuts, and Ghost Backlog (IN_PROGRESS)**
 - Last updated: **2026-03-07**
 
 ## Key Decisions and Assumptions
-- The phased checklist lives in `tests/todo-tests-phased.md`.
-- `tests/todo-tests.md` remains a canonical raw backlog.
+- The phased checklist lives in `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/todo-tests-phased.md`.
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/todo-tests-phased.md` remains the canonical implementation tracker for this plan.
 - Net-new audited items must be included verbatim in intent and grouped by phase.
 
 ## Artifacts
 - `strategy-roadmap.md`
-- `phases/phase-01-build-unified-phased-checklist.md`
-- `phases/phase-02-execution-order-and-readiness.md`
+- `phases/phase-01-core-routing-session-theme-utilities.md`
+- `phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `phases/phase-03-user-and-content-experience.md`
+- `phases/phase-04-admin-and-security-reinforcement.md`
+- `phases/phase-05-firestore-rules-expansion.md`
+- `phases/todo-tests-phased.md`
 - `reviewing/verification-checklist-2026-03-07.md`

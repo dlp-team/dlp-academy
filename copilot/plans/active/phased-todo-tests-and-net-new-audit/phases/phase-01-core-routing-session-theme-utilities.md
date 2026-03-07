@@ -5,7 +5,7 @@
 - [x] `src/App.jsx` - unauthenticated user redirected from protected routes to `/login` (`e2e`)
 - [x] `src/App.jsx` - authenticated user redirected away from `/login` and `/register` to `/home` (`e2e`)
 - [x] `src/App.jsx` - role guard redirects unauthorized roles from `/admin-dashboard` and `/institution-admin-dashboard` to `/home` (`e2e`)
-- [ ] `src/App.jsx` - auth listener fallback keeps session usable when `users/{uid}` read fails (`unit`)
+- [x] `src/App.jsx` - auth listener fallback keeps session usable when `users/{uid}` read fails (`unit`)
 
 ## Idle session and preference state
 - [x] `src/hooks/useIdleTimeout.js` - signs out and navigates to `/login` after inactivity timeout (`unit`)

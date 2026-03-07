@@ -304,3 +304,99 @@ describe('useSubjects joinSubjectByInviteCode', () => {
     expect(firestoreMocks.mockSetDoc).not.toHaveBeenCalled();
   });
 });
+
+describe('useSubjects transferSubjectOwnership', () => {
+  const ownerUser = {
+    uid: 'owner-1',
+    email: 'owner@test.com',
+    role: 'teacher',
+    displayName: 'Owner User',
+    institutionId: 'inst-1',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    firestoreMocks.state.resetAutoId();
+    firestoreMocks.mockOnSnapshot.mockReturnValue(vi.fn());
+  });
+
+  it('transfers ownership to a shared user and creates shortcut for previous owner', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        ownerId: 'owner-1',
+        ownerEmail: 'owner@test.com',
+        ownerName: 'Owner User',
+        folderId: 'folder-1',
+        institutionId: 'inst-1',
+        name: 'Historia',
+        course: '2A',
+        tags: ['humanidades'],
+        color: 'from-sky-400 to-sky-600',
+        icon: 'book-open',
+        cardStyle: 'modern',
+        modernFillColor: '#ABCDEF',
+        sharedWithUids: ['owner-1', 'user-2'],
+        sharedWith: [
+          { uid: 'owner-1', email: 'owner@test.com' },
+          { uid: 'user-2', email: 'newowner@test.com', displayName: 'New Owner' },
+        ],
+      }),
+    });
+
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(
+      result.current.transferSubjectOwnership('subject-1', 'newowner@test.com')
+    ).resolves.toEqual({
+      success: true,
+      previousOwnerUid: 'owner-1',
+      newOwnerUid: 'user-2',
+      newOwnerEmail: 'newowner@test.com',
+    });
+
+    expect(firestoreMocks.mockUpdateDoc).toHaveBeenCalledTimes(1);
+    const [subjectRef, subjectPayload] = firestoreMocks.mockUpdateDoc.mock.calls[0];
+    expect(subjectRef).toMatchObject({ name: 'subjects', id: 'subject-1' });
+    expect(subjectPayload.ownerId).toBe('user-2');
+    expect(subjectPayload.ownerEmail).toBe('newowner@test.com');
+    expect(subjectPayload.ownerName).toBe('New Owner');
+    expect(subjectPayload.sharedWithUids).toContain('owner-1');
+    expect(subjectPayload.sharedWithUids).not.toContain('user-2');
+    expect(subjectPayload.isShared).toBe(true);
+
+    expect(firestoreMocks.mockSetDoc).toHaveBeenCalledTimes(1);
+    const [shortcutRef, shortcutPayload, shortcutOptions] = firestoreMocks.mockSetDoc.mock.calls[0];
+    expect(shortcutRef).toMatchObject({ name: 'shortcuts', id: 'owner-1_subject-1_subject' });
+    expect(shortcutPayload).toMatchObject({
+      ownerId: 'owner-1',
+      targetId: 'subject-1',
+      targetType: 'subject',
+      parentId: 'folder-1',
+      institutionId: 'inst-1',
+      shortcutName: 'Historia',
+      shortcutCourse: '2A',
+    });
+    expect(shortcutOptions).toEqual({ merge: true });
+  });
+
+  it('throws when recipient is not an already shared user', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        ownerId: 'owner-1',
+        sharedWithUids: ['owner-1'],
+        sharedWith: [{ uid: 'owner-1', email: 'owner@test.com' }],
+      }),
+    });
+
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(
+      result.current.transferSubjectOwnership('subject-1', 'outsider@test.com')
+    ).rejects.toThrow('Solo puedes transferir la propiedad a un usuario que ya tenga acceso compartido.');
+
+    expect(firestoreMocks.mockUpdateDoc).not.toHaveBeenCalled();
+    expect(firestoreMocks.mockSetDoc).not.toHaveBeenCalled();
+  });
+});
