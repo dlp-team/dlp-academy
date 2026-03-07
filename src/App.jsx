@@ -9,6 +9,7 @@ import { auth, db } from './firebase/config'; // Import db
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import Profile from './pages/Profile/Profile';
+import OnboardingWizard from './pages/Onboarding/components/OnboardingWizard';
 import Settings from './pages/Settings/Settings';
 
 // Main app pages
@@ -109,6 +110,9 @@ function App() {
 
   return (
     <BrowserRouter>
+
+      {user && <OnboardingWizard user={user} />}
+      
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" />} />

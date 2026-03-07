@@ -1,4 +1,4 @@
-<!-- tests/phases/phase-05-firestore-rules-expansion.md -->
+<!-- copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-05-firestore-rules-expansion.md -->
 # Phase 05 - Firestore Rules Expansion
 
 - [ ] `tests/rules/firestore.rules.test.js` - coverage for `institution_invites` create/read/update/delete boundaries (`rules/integration`)

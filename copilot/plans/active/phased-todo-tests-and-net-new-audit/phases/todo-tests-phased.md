@@ -1,4 +1,4 @@
-<!-- tests/todo-tests-phased.md -->
+<!-- copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/todo-tests-phased.md -->
 # Test Implementation Plan by Phases
 
 This plan splits backlog execution into separate files per phase for easier implementation tracking.
@@ -8,11 +8,11 @@ This plan splits backlog execution into separate files per phase for easier impl
 - Net-new audited gaps (deduplicated against `tests/todo-tests.md`)
 
 ## Phase Files
-- `tests/phases/phase-01-core-routing-session-theme-utilities.md`
-- `tests/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
-- `tests/phases/phase-03-user-and-content-experience.md`
-- `tests/phases/phase-04-admin-and-security-reinforcement.md`
-- `tests/phases/phase-05-firestore-rules-expansion.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-01-core-routing-session-theme-utilities.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-03-user-and-content-experience.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-04-admin-and-security-reinforcement.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-05-firestore-rules-expansion.md`
 
 ## Suggested Execution Order
 1. Phase 01
@@ -25,4 +25,4 @@ This plan splits backlog execution into separate files per phase for easier impl
 
 **Legend**
 - Keep `tests/todo-tests.md` as canonical raw backlog.
-- Use `tests/phases/*.md` for implementation sequencing.
+- Use this plan's `phases/*.md` files for implementation sequencing.

@@ -1,4 +1,4 @@
-<!-- tests/phases/phase-03-user-and-content-experience.md -->
+<!-- copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-03-user-and-content-experience.md -->
 # Phase 03 - User and Content Experience Flows
 
 - [ ] `src/pages/Settings/Settings.jsx` - persistence of theme + language + notification toggles after reload (`e2e`)

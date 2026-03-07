@@ -1,4 +1,4 @@
-<!-- tests/phases/phase-02-ownership-deletion-shortcuts-ghost.md -->
+<!-- copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md -->
 # Phase 02 - Ownership, Deletion, Shortcuts, and Ghost Backlog
 
 ## Ownership transfer

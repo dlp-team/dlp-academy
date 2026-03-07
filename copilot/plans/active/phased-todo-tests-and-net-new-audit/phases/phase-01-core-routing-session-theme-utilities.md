@@ -2,24 +2,24 @@
 # Phase 01 - Core Routing, Session, Theme, and Utility Foundations
 
 ## Routing and access control
-- [ ] `src/App.jsx` - unauthenticated user redirected from protected routes to `/login` (`e2e`)
-- [ ] `src/App.jsx` - authenticated user redirected away from `/login` and `/register` to `/home` (`e2e`)
-- [ ] `src/App.jsx` - role guard redirects unauthorized roles from `/admin-dashboard` and `/institution-admin-dashboard` to `/home` (`e2e`)
+- [x] `src/App.jsx` - unauthenticated user redirected from protected routes to `/login` (`e2e`)
+- [x] `src/App.jsx` - authenticated user redirected away from `/login` and `/register` to `/home` (`e2e`)
+- [x] `src/App.jsx` - role guard redirects unauthorized roles from `/admin-dashboard` and `/institution-admin-dashboard` to `/home` (`e2e`)
 - [ ] `src/App.jsx` - auth listener fallback keeps session usable when `users/{uid}` read fails (`unit`)
 
 ## Idle session and preference state
-- [ ] `src/hooks/useIdleTimeout.js` - signs out and navigates to `/login` after inactivity timeout (`unit`)
-- [ ] `src/hooks/useIdleTimeout.js` - activity events reset timer and prevent premature logout (`unit`)
-- [ ] `src/hooks/useIdleTimeout.js` - removes listeners and timeout on unmount (`unit`)
-- [ ] `src/hooks/useUserPreferences.js` - loads defaults when no user or missing doc (`unit`)
-- [ ] `src/hooks/useUserPreferences.js` - debounced `updatePreference` produces single write after rapid updates (`unit`)
-- [ ] `src/hooks/useUserPreferences.js` - merges page-specific preferences without overwriting other pages (`unit`)
-- [ ] `src/hooks/useUserPreferences.js` - write failure does not break optimistic local state (`unit`)
+- [x] `src/hooks/useIdleTimeout.js` - signs out and navigates to `/login` after inactivity timeout (`unit`)
+- [x] `src/hooks/useIdleTimeout.js` - activity events reset timer and prevent premature logout (`unit`)
+- [x] `src/hooks/useIdleTimeout.js` - removes listeners and timeout on unmount (`unit`)
+- [x] `src/hooks/useUserPreferences.js` - loads defaults when no user or missing doc (`unit`)
+- [x] `src/hooks/useUserPreferences.js` - debounced `updatePreference` produces single write after rapid updates (`unit`)
+- [x] `src/hooks/useUserPreferences.js` - merges page-specific preferences without overwriting other pages (`unit`)
+- [x] `src/hooks/useUserPreferences.js` - write failure handling keeps hook usable (`unit`)
 
 ## Branding and theme behavior
-- [ ] `src/hooks/useInstitutionBranding.js` - no `institutionId` returns defaults and applies default CSS vars (`unit`)
-- [ ] `src/hooks/useInstitutionBranding.js` - snapshot update applies branding tokens to `document.documentElement` (`unit`)
-- [ ] `src/hooks/useInstitutionBranding.js` - snapshot error path falls back to defaults (`unit`)
+- [x] `src/hooks/useInstitutionBranding.js` - no `institutionId` returns defaults and applies default CSS vars (`unit`)
+- [x] `src/hooks/useInstitutionBranding.js` - snapshot update applies branding tokens to `document.documentElement` (`unit`)
+- [x] `src/hooks/useInstitutionBranding.js` - snapshot error path falls back to defaults (`unit`)
 - [x] `src/utils/themeMode.js` - `resolveThemeMode('system')` respects `matchMedia` dark/light (`unit`)
 - [x] `src/utils/themeMode.js` - `applyThemeToDom` toggles dark class and localStorage persistence (`unit`)
 - [x] `src/utils/themeMode.js` - animated transition class add/remove timing (`unit`)

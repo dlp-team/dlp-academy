@@ -1,9 +1,9 @@
 // src/components/onboarding/OnboardingWizard.jsx
 import React, { useState, useEffect } from 'react';
-import { Loader2, GraduationCap, Key, User, AlertCircle } from 'lucide-react';
+import { Loader2, GraduationCap, Key, User, AlertCircle, ArrowLeft } from 'lucide-react';
 import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
-import { db, functions } from '../../../firebase/config'; // Asegúrate de importar functions
+import { db, functions } from '../../../firebase/config'; 
 import UserTypeSelector from '../../Auth/components/UserTypeSelector'; 
 
 const OnboardingWizard = ({ user }) => {
@@ -13,7 +13,7 @@ const OnboardingWizard = ({ user }) => {
     const [tempData, setTempData] = useState({});
     const [saving, setSaving] = useState(false);
     
-    // Nuevos estados para la validación del código
+    // Estados para la validación del código
     const [validating, setValidating] = useState(false);
     const [codeError, setCodeError] = useState("");
 
@@ -23,7 +23,6 @@ const OnboardingWizard = ({ user }) => {
         const userRef = doc(db, "users", user.uid);
         
         const unsubscribe = onSnapshot(userRef, (snap) => {
-            // Ahora buscamos que tenga 'institutionId', no el código suelto
             const required = ['role', 'institutionId', 'displayName'];
 
             if (snap.exists()) {
@@ -72,7 +71,14 @@ const OnboardingWizard = ({ user }) => {
         }
     };
 
-    // Nueva función exclusiva para validar el código contra el backend
+    // Función para ir al paso anterior
+    const handleBack = () => {
+        if (stepIndex > 0) {
+            setStepIndex(prev => prev - 1);
+            setCodeError(""); // Limpiamos errores por si acaso
+        }
+    };
+
     const handleCodeValidation = async (e) => {
         e.preventDefault();
         const code = new FormData(e.target).get('code').toUpperCase();
@@ -84,18 +90,17 @@ const OnboardingWizard = ({ user }) => {
             const validateFn = httpsCallable(functions, 'validateInstitutionalAccessCode');
             const result = await validateFn({ 
                 code: code, 
-                userType: tempData.role // Pasamos el rol que eligió en el paso 1
+                userType: tempData.role // Pasamos el rol elegido
             });
 
             if (result.data && result.data.institutionId) {
-                // Si es válido, avanzamos y guardamos el ID real de la institución
                 handleAnswer('institutionId', result.data.institutionId);
             } else {
                 setCodeError("El código no es válido o ha expirado.");
             }
         } catch (error) {
             console.error("Error al validar:", error);
-            setCodeError("Error de conexión. Comprueba el código e inténtalo de nuevo.");
+            setCodeError("Error de conexión o código incorrecto.");
         } finally {
             setValidating(false);
         }
@@ -106,14 +111,28 @@ const OnboardingWizard = ({ user }) => {
     const currentField = missingFields[stepIndex];
 
     return (
-        <div className="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4">
+        // CAMBIO: z-50 a z-[9999] para cubrir cualquier Header
+        <div className="fixed inset-0 z-[9999] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4">
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-8 max-w-md w-full relative overflow-hidden border border-transparent dark:border-slate-800">
+                
+                {/* Progress Bar */}
                 <div className="absolute top-0 left-0 h-2 bg-indigo-100 dark:bg-slate-800 w-full">
                     <div 
                         className="h-full bg-indigo-600 transition-all duration-500" 
                         style={{ width: `${((stepIndex + 1) / missingFields.length) * 100}%` }} 
                     />
                 </div>
+
+                {/* CAMBIO: Botón de ir atrás */}
+                {stepIndex > 0 && !saving && (
+                    <button 
+                        onClick={handleBack}
+                        className="absolute top-6 left-6 p-2 text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-slate-800"
+                        title="Volver al paso anterior"
+                    >
+                        <ArrowLeft size={24} />
+                    </button>
+                )}
 
                 {saving ? (
                     <div className="flex flex-col items-center py-8">
@@ -123,7 +142,7 @@ const OnboardingWizard = ({ user }) => {
                 ) : (
                     <>
                         {currentField === 'role' && (
-                            <div className="animate-fadeIn">
+                            <div className="animate-fadeIn mt-4">
                                 <div className="flex justify-center mb-4"><GraduationCap size={48} className="text-indigo-600 dark:text-indigo-400"/></div>
                                 <h3 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-white">¿Cuál es tu rol?</h3>
                                 
@@ -134,9 +153,8 @@ const OnboardingWizard = ({ user }) => {
                             </div>
                         )}
 
-                        {/* Paso del código actualizado con validación */}
                         {currentField === 'institutionId' && (
-                            <div className="animate-fadeIn">
+                            <div className="animate-fadeIn mt-4">
                                 <div className="flex justify-center mb-4"><Key size={48} className="text-emerald-600 dark:text-emerald-400"/></div>
                                 <h3 className="text-2xl font-bold text-center mb-2 text-gray-900 dark:text-white">Código de acceso</h3>
                                 <p className="text-center text-gray-500 dark:text-gray-400 mb-6 text-sm">
@@ -173,7 +191,7 @@ const OnboardingWizard = ({ user }) => {
                         )}
 
                         {currentField === 'displayName' && (
-                            <div className="animate-fadeIn">
+                            <div className="animate-fadeIn mt-4">
                                 <div className="flex justify-center mb-4"><User size={48} className="text-blue-600 dark:text-blue-400"/></div>
                                 <h3 className="text-2xl font-bold text-center mb-2 text-gray-900 dark:text-white">¿Cómo te llamas?</h3>
                                 <p className="text-center text-gray-500 dark:text-gray-400 mb-6 text-sm">
