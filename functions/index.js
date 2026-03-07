@@ -46,7 +46,11 @@ const generateDynamicCodeServer = ({ institutionId, role, intervalHours, current
 };
 
 export const validateInstitutionalAccessCode = onCall(
-  { region: 'europe-west1', secrets: [INSTITUTION_CODE_SALT] },
+  { 
+    region: 'europe-west1',
+    secrets: [INSTITUTION_CODE_SALT],
+    invoker: 'public',
+  },
   async (request) => {
     const verificationCode = String(request.data?.verificationCode || '').trim().toUpperCase();
     const normalizedEmail = String(request.data?.email || '').trim().toLowerCase();
@@ -115,7 +119,11 @@ export const validateInstitutionalAccessCode = onCall(
 );
 
 export const getInstitutionalAccessCodePreview = onCall(
-  { region: 'europe-west1', secrets: [INSTITUTION_CODE_SALT] },
+  {
+    region: 'europe-west1',
+    secrets: [INSTITUTION_CODE_SALT],
+    invoker: 'public',
+  },
   async (request) => {
     if (!request.auth?.uid) {
       throw new HttpsError('unauthenticated', 'Authentication is required.');
