@@ -58,3 +58,33 @@
 ## Residual Risks
 - Onboarding component still exists but is not mounted; if future routes mount it again, old behavior can reappear.
 - E2E deterministic IDs are shared per owner; parallel E2E runs with the same owner could contend on same seeded docs.
+
+---
+
+## Follow-up CI Fixes (2026-03-07)
+
+### Additional Requested Scope
+- Resolve remaining GitHub Actions failures in:
+	- `tests/e2e/profile-settings.spec.js`
+	- `tests/e2e/admin-guardrails.spec.js`
+
+### Additional Files Touched
+- `tests/e2e/profile-settings.spec.js`
+- `tests/e2e/admin-guardrails.spec.js`
+
+### Additional Verification Notes
+- `tests/e2e/profile-settings.spec.js`
+	- Confirmed no stale references to removed country-related test variables.
+	- Removed stale branch that depended on deleted profile UI elements (`selectedCountryBefore`, `plan gratuito`).
+- `tests/e2e/admin-guardrails.spec.js`
+	- Updated policy-save test to complete the required `SudoModal` reauthentication flow:
+		- Click `Guardar Políticas`
+		- Wait for `Confirmación de seguridad`
+		- Fill password input
+		- Click `Confirmar`
+		- Assert success message appears
+	- Replaced brittle text-only locator with a scoped `<p>` success-message assertion after modal confirmation.
+
+### Additional Validation Summary
+- `get_errors` on both updated E2E specs: no errors.
+- Local Playwright execution in this shell was not reliable due runner/project resolution mismatch, so final verification relied on deterministic code-path alignment with runtime UI flow.
