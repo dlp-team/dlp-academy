@@ -59,8 +59,14 @@ const HomeControls = ({
     });
 
     const visibleViewModes = React.useMemo(
-        () => (showSharedTab ? HOME_VIEW_MODES : HOME_VIEW_MODES.filter(mode => mode.id !== 'shared')),
-        [showSharedTab]
+        () => {
+            let modes = showSharedTab ? HOME_VIEW_MODES : HOME_VIEW_MODES.filter(mode => mode.id !== 'shared');
+            if (studentMode) {
+                modes = modes.filter(mode => mode.id !== 'bin');
+            }
+            return modes;
+        },
+        [showSharedTab, studentMode]
     );
 
     return (
@@ -70,24 +76,24 @@ const HomeControls = ({
                     <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Mis Asignaturas</h2>
                     <p className="text-gray-600 dark:text-gray-400">Gestiona tu contenido educativo</p>
                 </div>
-                
                 {/* View Mode Switcher */}
                 <div className="bg-white dark:bg-slate-900 p-1 rounded-xl shadow-sm border border-gray-200 dark:border-slate-700 inline-flex transition-colors">
                     {visibleViewModes.map(mode => {
                         const Icon = VIEW_MODE_ICONS[mode.id];
                         return (
-                        <button 
-                            key={mode.id}
-                            onClick={() => handleViewModeChange(mode.id)}
-                            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                                viewMode === mode.id 
-                                    ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400' 
-                                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer'
-                            }`}
-                        >
-                            <Icon size={16} /> 
-                            <span className="hidden sm:inline">{mode.label}</span>
-                        </button>
+                            <button
+                                key={mode.id}
+                                onClick={() => handleViewModeChange(mode.id)}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                                    viewMode === mode.id
+                                        ? 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400'
+                                        : 'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 cursor-pointer'
+                                }`}
+                                aria-label={mode.label}
+                            >
+                                <Icon size={16} />
+                                <span className="hidden sm:inline">{mode.label}</span>
+                            </button>
                         );
                     })}
                 </div>
