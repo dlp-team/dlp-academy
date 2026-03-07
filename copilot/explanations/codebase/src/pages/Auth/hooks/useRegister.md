@@ -1,3 +1,16 @@
+# [2026-03-07] Verification Code Normalization Fix
+
+## Context
+- Teacher registration with institutional code could fail with "Código de verificación inválido o expirado" when users typed a lowercase code.
+- Institutional codes are stored as uppercase Firestore document IDs under `institution_invites`.
+
+## Change
+- Normalized `verificationCode` to uppercase before invite lookup in `src/pages/Auth/hooks/useRegister.js`.
+- Normalized code to uppercase in the direct-invite deletion path as well.
+
+## Validation
+- Added/ran `tests/unit/hooks/useRegister.test.js` case: teacher registration accepts lowercase user input and resolves uppercase invite lookup.
+
 # useRegister.js
 
 ## Overview

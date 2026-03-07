@@ -70,7 +70,7 @@ export const useRegister = () => {
             let shouldDeleteInvite = false;
 
             if (formData.userType === 'teacher' || formData.userType === 'admin') {
-                const code = (formData.verificationCode || '').trim();
+                const code = (formData.verificationCode || '').trim().toUpperCase();
                 console.log("Datos de registro:", { type: formData.userType, code: code }); // Para ver qué llega
 
                 if ((formData.userType === 'teacher' || formData.userType === 'admin') && !code) {
@@ -117,7 +117,7 @@ export const useRegister = () => {
 
             // 5. Borramos la invitación directa porque ya estamos logueados
             if (shouldDeleteInvite) {
-                const code = formData.verificationCode.trim();
+                const code = (formData.verificationCode || '').trim().toUpperCase();
                 const inviteRef = doc(db, 'institution_invites', code);
                 await deleteDoc(inviteRef);
             }
