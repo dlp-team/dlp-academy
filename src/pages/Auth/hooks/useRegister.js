@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { collection, doc, getDoc, getDocs, query, setDoc, serverTimestamp, where, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase/config';
+import { validateInstitutionalAccessCode } from '../../../services/accessCodeService';
 
 export const useRegister = () => {
     const navigate = useNavigate();
@@ -68,10 +69,12 @@ export const useRegister = () => {
             let resolvedRole = 'student';
             let institutionId = null;
             let shouldDeleteInvite = false;
+            let directInviteCodeToDelete = null;
 
             if (formData.userType === 'teacher' || formData.userType === 'admin') {
-                const code = (formData.verificationCode || '').trim().toUpperCase();
-                console.log("Datos de registro:", { type: formData.userType, code: code }); // Para ver qué llega
+                const code = (formData.verificationCode || '').trim();
+                const normalizedCode = code.toUpperCase();
+                console.log("Datos de registro:", { type: formData.userType, code: normalizedCode }); // Para ver qué llega
 
                 if ((formData.userType === 'teacher' || formData.userType === 'admin') && !code) {
                     throw new Error('missing-verification-code');
@@ -79,26 +82,52 @@ export const useRegister = () => {
 
                 // 1. ONE SECURE LOOKUP: Buscar solo por ID
                 const inviteRef = doc(db, 'institution_invites', code);
-                const inviteDocSnap = await getDoc(inviteRef);
+                let inviteDocSnap = await getDoc(inviteRef);
+                let resolvedInviteCode = code;
 
-                if (!inviteDocSnap.exists()) {
-                    throw new Error('invalid-verification-code');
+                // Legacy/normalized compatibility for institutional static docs using uppercase IDs.
+                if (!inviteDocSnap.exists() && normalizedCode !== code) {
+                    const normalizedInviteRef = doc(db, 'institution_invites', normalizedCode);
+                    const normalizedInviteSnap = await getDoc(normalizedInviteRef);
+                    if (normalizedInviteSnap.exists()) {
+                        inviteDocSnap = normalizedInviteSnap;
+                        resolvedInviteCode = normalizedCode;
+                    }
                 }
 
-                const inviteData = inviteDocSnap.data();
+                if (inviteDocSnap.exists()) {
+                    const inviteData = inviteDocSnap.data();
 
-                // 2. BEHAVIOR BASED ON TYPE
-                if (inviteData.type === 'institutional') {
-                    resolvedRole = 'teacher'; 
-                    institutionId = inviteData.institutionId;
-                } else {
-                    if (inviteData.email.toLowerCase() !== normalizedEmail) {
-                        throw new Error('invalid-invite-email');
+                    // 2. Direct email invites remain Firestore-based and one-time.
+                    if (inviteData.type !== 'institutional') {
+                        if (inviteData.email.toLowerCase() !== normalizedEmail) {
+                            throw new Error('invalid-invite-email');
+                        }
+                        resolvedRole = inviteData.role || 'teacher';
+                        institutionId = inviteData.institutionId;
+                        shouldDeleteInvite = true;
+                        directInviteCodeToDelete = resolvedInviteCode;
+                    } else {
+                        // Backward compatibility for legacy institutional invite docs.
+                        resolvedRole = 'teacher';
+                        institutionId = inviteData.institutionId;
                     }
-                    resolvedRole = inviteData.role || 'teacher';
-                    institutionId = inviteData.institutionId;
-                    
-                    shouldDeleteInvite = true;
+                } else if (formData.userType === 'teacher') {
+                    // 3. Institutional teacher code is validated server-side (deterministic + hidden salt).
+                    const validationResult = await validateInstitutionalAccessCode({
+                        verificationCode: normalizedCode,
+                        email: normalizedEmail,
+                        userType: 'teacher',
+                    });
+
+                    if (!validationResult?.valid || !validationResult?.institutionId) {
+                        throw new Error('invalid-verification-code');
+                    }
+
+                    resolvedRole = 'teacher';
+                    institutionId = validationResult.institutionId;
+                } else {
+                    throw new Error('invalid-verification-code');
                 }
             }
 
@@ -117,8 +146,7 @@ export const useRegister = () => {
 
             // 5. Borramos la invitación directa porque ya estamos logueados
             if (shouldDeleteInvite) {
-                const code = (formData.verificationCode || '').trim().toUpperCase();
-                const inviteRef = doc(db, 'institution_invites', code);
+                const inviteRef = doc(db, 'institution_invites', directInviteCodeToDelete || (formData.verificationCode || '').trim());
                 await deleteDoc(inviteRef);
             }
 

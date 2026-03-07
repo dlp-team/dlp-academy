@@ -1,3 +1,21 @@
+# [2026-03-07] Secure Institutional Code Validation via Cloud Function
+
+## Context
+- Institutional teacher access code must be deterministic by institution/time/frequency without storing a shared institutional code document in Firestore.
+- Direct invites still use case-sensitive document IDs in `institution_invites`.
+
+## Change
+- Registration now uses a dual-path strategy:
+	- direct invite lookup by exact code first (case-sensitive doc ID preserved),
+	- secure callable validation (`validateInstitutionalAccessCode`) for teacher institutional rotating codes when no direct invite doc exists.
+- Added normalized uppercase fallback only for compatibility checks where needed, without breaking direct invite IDs.
+
+## Validation
+- Added/ran tests in `tests/unit/hooks/useRegister.test.js` for:
+	- direct invite case-preserving lookup/deletion,
+	- dynamic institutional code callable validation path,
+	- lowercase-to-uppercase institutional compatibility.
+
 # [2026-03-07] Verification Code Normalization Fix
 
 ## Context

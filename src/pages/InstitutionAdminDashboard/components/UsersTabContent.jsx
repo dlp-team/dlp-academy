@@ -15,7 +15,6 @@ import {
   Save,
   XCircle
 } from 'lucide-react';
-import { generateDynamicCode } from '../../../utils/securityUtils';
 
 const UsersTabContent = ({
   userType,
@@ -38,7 +37,10 @@ const UsersTabContent = ({
   onUpdateInstitutionalCode,
   isUpdatingCode,
   codeUpdateSuccess,
-  codeUpdateError
+  codeUpdateError,
+  liveAccessCode,
+  liveCodeLoading,
+  liveCodeError
 }) => {
   // 1. Filter out the general code so it doesn't appear in the specific invites table
   const specificInvites = allowedTeachers.filter(t => t.type !== 'institutional');
@@ -60,8 +62,8 @@ const UsersTabContent = ({
   }, [userType, accessPolicies]);
 
   // 3. Generate the LIVE code based on the current tab
-  const liveCode = editPolicy.requireCode && institutionId
-    ? generateDynamicCode(institutionId, userType, editPolicy.rotationIntervalHours) 
+  const liveCode = editPolicy.requireCode
+    ? (liveAccessCode || '------')
     : 'DESACTIVADO';
 
   const handleCopyLiveCode = () => {
@@ -133,7 +135,7 @@ const UsersTabContent = ({
                   <p className="text-xs text-slate-500 font-semibold uppercase mb-1">Código Actual</p>
                   <div className="flex items-center gap-2">
                     <p className="font-mono text-xl font-bold tracking-widest text-indigo-600 dark:text-indigo-400">
-                      {liveCode}
+                      {liveCodeLoading ? '......' : liveCode}
                     </p>
                     {liveCode !== 'DESACTIVADO' && (
                       <button 
@@ -145,6 +147,9 @@ const UsersTabContent = ({
                       </button>
                     )}
                   </div>
+                  {liveCodeError && (
+                    <p className="mt-2 text-[11px] text-red-500 font-medium">{liveCodeError}</p>
+                  )}
                 </div>
               </div>
 

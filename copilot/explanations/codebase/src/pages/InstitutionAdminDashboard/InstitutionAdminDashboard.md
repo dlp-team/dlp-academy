@@ -1,3 +1,12 @@
+# [2026-03-07] Server-Side Live Access Code Preview
+
+## Context
+- Institutional rotating access codes should not be generated client-side with exposed logic/salt.
+
+## Change
+- `InstitutionAdminDashboard` now requests live access code previews from backend callable `getInstitutionalAccessCodePreview`.
+- Added refresh cycle every 30 seconds and safe UI fallback/error state for code preview.
+
 # InstitutionAdminDashboard.jsx
 
 ## Overview

@@ -1,0 +1,13 @@
+{
+  "name": "dlp-academy-functions",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "firebase-admin": "^13.6.1",
+    "firebase-functions": "^6.5.0"
+  }
+}
