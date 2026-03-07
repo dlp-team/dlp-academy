@@ -78,6 +78,22 @@ describe('Firestore rules: subjects + subjectInviteCodes', () => {
     );
   });
 
+  it('allows subject creation without enrolledStudentUids', async () => {
+    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+    await assertSucceeds(
+      setDoc(doc(teacherDb, 'subjects', 'subject-allow-1b'), {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        name: 'Fisica',
+        course: '2A',
+        inviteCode: 'JOINA112',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    );
+  });
+
   it('rejects subject creation missing required fields', async () => {
     const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
 

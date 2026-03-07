@@ -233,4 +233,44 @@ describe('useRegister', () => {
     );
     expect(mocks.navigate).toHaveBeenCalledWith('/home');
   });
+
+  it('registers student with institutional student code via callable when provided', async () => {
+    mocks.getDoc.mockResolvedValue({ exists: () => false, data: () => ({}) });
+    mocks.validateInstitutionalAccessCode.mockResolvedValue({
+      valid: true,
+      institutionId: 'inst-student-1',
+      role: 'student',
+    });
+    mocks.createUserWithEmailAndPassword.mockResolvedValue({
+      user: { uid: 'u-student-dynamic' },
+    });
+
+    const { result } = renderHook(() => useRegister());
+
+    await act(async () => {
+      result.current.handleChange({ target: { name: 'userType', value: 'student', type: 'text' } });
+      result.current.handleChange({ target: { name: 'firstName', value: 'Lucia', type: 'text' } });
+      result.current.handleChange({ target: { name: 'lastName', value: 'Alumno', type: 'text' } });
+      result.current.handleChange({ target: { name: 'email', value: 'lucia@colegio.com', type: 'text' } });
+      result.current.handleChange({ target: { name: 'country', value: 'es', type: 'text' } });
+      result.current.handleChange({ target: { name: 'verificationCode', value: 'st99aa', type: 'text' } });
+      result.current.handleChange({ target: { name: 'password', value: 'Password123!', type: 'text' } });
+      result.current.handleChange({ target: { name: 'confirmPassword', value: 'Password123!', type: 'text' } });
+    });
+
+    await act(async () => {
+      await result.current.registerUser({ preventDefault: () => {} });
+    });
+
+    expect(mocks.validateInstitutionalAccessCode).toHaveBeenCalledWith({
+      verificationCode: 'ST99AA',
+      email: 'lucia@colegio.com',
+      userType: 'student',
+    });
+    expect(mocks.setDoc).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ role: 'student', institutionId: 'inst-student-1' })
+    );
+    expect(mocks.navigate).toHaveBeenCalledWith('/home');
+  });
 });

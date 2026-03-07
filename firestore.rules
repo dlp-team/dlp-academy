@@ -211,12 +211,11 @@ service cloud.firestore {
           )
           || request.resource.data.ownerId == request.auth.uid
         )
-        && request.resource.data.keys().hasAll(['course', 'inviteCode', 'enrolledStudentUids'])
+        && request.resource.data.keys().hasAll(['course', 'inviteCode'])
         && request.resource.data.course is string
         && request.resource.data.course.size() > 0
         && request.resource.data.inviteCode is string
         && request.resource.data.inviteCode.size() > 0
-        && request.resource.data.enrolledStudentUids is list
         && (
           !request.resource.data.keys().hasAny(['classId'])
           || request.resource.data.classId == null
@@ -248,12 +247,11 @@ service cloud.firestore {
             && canManageFolderById(resource.data.folderId)
           )
         )
-        && request.resource.data.keys().hasAll(['course', 'inviteCode', 'enrolledStudentUids'])
+        && request.resource.data.keys().hasAll(['course', 'inviteCode'])
         && request.resource.data.course is string
         && request.resource.data.course.size() > 0
         && request.resource.data.inviteCode is string
         && request.resource.data.inviteCode.size() > 0
-        && request.resource.data.enrolledStudentUids is list
         && (
           !request.resource.data.keys().hasAny(['classId'])
           || request.resource.data.classId == null

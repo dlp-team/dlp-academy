@@ -1,3 +1,16 @@
+# [2026-03-07] Student Institutional Code Input Support
+
+## Context
+- Students needed the ability to register using an institutional student code, similar to the teacher path.
+
+## Change
+- The institutional code field is now shown for `student`, `teacher`, and `admin` registration types.
+- For students, the field is optional and relabeled to `Código Institucional de Estudiante` with helper guidance.
+- For teachers/admins, the field remains required.
+
+## Validation
+- Integration path verified through updated `useRegister` logic and passing registration unit tests.
+
 # Register.jsx
 
 ## Overview

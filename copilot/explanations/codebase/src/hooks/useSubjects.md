@@ -1,3 +1,15 @@
+## [2026-03-07] Subject Code Generation Ownership Update
+### Context
+- Subject invite codes must be system-generated; teachers should not manually define invite codes during creation.
+- Enrollment lists should not be required as an input constraint at creation time.
+
+### Change
+- Updated `addSubject` in `src/hooks/useSubjects.js` to always initialize `inviteCode` using `generateSubjectInviteCode()`.
+- This ignores any incoming `payload.inviteCode` at creation and guarantees platform-generated code ownership.
+
+### Validation
+- Updated and passed unit tests in `tests/unit/hooks/useSubjects.test.js` to reflect the additional initial code-generation call.
+
 ## [2026-03-06] Feature Addition: Join Subject by Invite Code
 ### Context & Behavior
 - Added `joinSubjectByInviteCode(inviteCodeInput)` to support runtime join-by-code from the client hook.

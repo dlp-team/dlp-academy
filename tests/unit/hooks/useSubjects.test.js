@@ -96,7 +96,6 @@ describe('useSubjects addSubject transaction hardening', () => {
       course: '1A',
       institutionId: 'inst-1',
       ownerId: 'owner-1',
-      inviteCode: 'FIRST111',
       enrolledStudentUids: ['student-1'],
     });
 
@@ -137,7 +136,7 @@ describe('useSubjects addSubject transaction hardening', () => {
     });
 
     expect(firestoreMocks.mockRunTransaction).toHaveBeenCalledTimes(2);
-    expect(subjectAccessMocks.mockGenerateInviteCode).toHaveBeenCalledTimes(1);
+    expect(subjectAccessMocks.mockGenerateInviteCode).toHaveBeenCalledTimes(2);
     expect(createdSubjectId).toBe('subject-auto-2');
 
     const inviteWrite = transactionSet.mock.calls.find(([, payload]) => payload?.subjectId);
@@ -165,7 +164,7 @@ describe('useSubjects addSubject transaction hardening', () => {
     ).rejects.toThrow('No se pudo generar un codigo de invitacion unico. Intentalo de nuevo.');
 
     expect(firestoreMocks.mockRunTransaction).toHaveBeenCalledTimes(10);
-    expect(subjectAccessMocks.mockGenerateInviteCode).toHaveBeenCalledTimes(10);
+    expect(subjectAccessMocks.mockGenerateInviteCode).toHaveBeenCalledTimes(11);
   });
 
   it('does not retry on non-collision transaction failures', async () => {
@@ -186,7 +185,7 @@ describe('useSubjects addSubject transaction hardening', () => {
     ).rejects.toThrow('Missing or insufficient permissions.');
 
     expect(firestoreMocks.mockRunTransaction).toHaveBeenCalledTimes(1);
-    expect(subjectAccessMocks.mockGenerateInviteCode).not.toHaveBeenCalled();
+    expect(subjectAccessMocks.mockGenerateInviteCode).toHaveBeenCalledTimes(1);
   });
 });
 

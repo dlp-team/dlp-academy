@@ -137,7 +137,7 @@ export const useSubjects = (user) => {
             throw new Error('No se pudo resolver la institucion para crear la asignatura.');
         }
 
-        let inviteCode = normalizedPayload.inviteCode;
+        let inviteCode = generateSubjectInviteCode();
         let createdSubjectId = null;
 
         for (let attempt = 0; attempt < 10; attempt += 1) {

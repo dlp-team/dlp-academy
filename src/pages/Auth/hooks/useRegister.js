@@ -71,7 +71,7 @@ export const useRegister = () => {
             let shouldDeleteInvite = false;
             let directInviteCodeToDelete = null;
 
-            if (formData.userType === 'teacher' || formData.userType === 'admin') {
+            if (formData.userType === 'teacher' || formData.userType === 'admin' || formData.userType === 'student') {
                 const code = (formData.verificationCode || '').trim();
                 const normalizedCode = code.toUpperCase();
                 console.log("Datos de registro:", { type: formData.userType, code: normalizedCode }); // Para ver qué llega
@@ -80,54 +80,56 @@ export const useRegister = () => {
                     throw new Error('missing-verification-code');
                 }
 
-                // 1. ONE SECURE LOOKUP: Buscar solo por ID
-                const inviteRef = doc(db, 'institution_invites', code);
-                let inviteDocSnap = await getDoc(inviteRef);
-                let resolvedInviteCode = code;
+                if (code) {
+                    // 1. ONE SECURE LOOKUP: Buscar solo por ID
+                    const inviteRef = doc(db, 'institution_invites', code);
+                    let inviteDocSnap = await getDoc(inviteRef);
+                    let resolvedInviteCode = code;
 
-                // Legacy/normalized compatibility for institutional static docs using uppercase IDs.
-                if (!inviteDocSnap.exists() && normalizedCode !== code) {
-                    const normalizedInviteRef = doc(db, 'institution_invites', normalizedCode);
-                    const normalizedInviteSnap = await getDoc(normalizedInviteRef);
-                    if (normalizedInviteSnap.exists()) {
-                        inviteDocSnap = normalizedInviteSnap;
-                        resolvedInviteCode = normalizedCode;
-                    }
-                }
-
-                if (inviteDocSnap.exists()) {
-                    const inviteData = inviteDocSnap.data();
-
-                    // 2. Direct email invites remain Firestore-based and one-time.
-                    if (inviteData.type !== 'institutional') {
-                        if (inviteData.email.toLowerCase() !== normalizedEmail) {
-                            throw new Error('invalid-invite-email');
+                    // Legacy/normalized compatibility for institutional static docs using uppercase IDs.
+                    if (!inviteDocSnap.exists() && normalizedCode !== code) {
+                        const normalizedInviteRef = doc(db, 'institution_invites', normalizedCode);
+                        const normalizedInviteSnap = await getDoc(normalizedInviteRef);
+                        if (normalizedInviteSnap.exists()) {
+                            inviteDocSnap = normalizedInviteSnap;
+                            resolvedInviteCode = normalizedCode;
                         }
-                        resolvedRole = inviteData.role || 'teacher';
-                        institutionId = inviteData.institutionId;
-                        shouldDeleteInvite = true;
-                        directInviteCodeToDelete = resolvedInviteCode;
-                    } else {
-                        // Backward compatibility for legacy institutional invite docs.
-                        resolvedRole = 'teacher';
-                        institutionId = inviteData.institutionId;
                     }
-                } else if (formData.userType === 'teacher') {
-                    // 3. Institutional teacher code is validated server-side (deterministic + hidden salt).
-                    const validationResult = await validateInstitutionalAccessCode({
-                        verificationCode: normalizedCode,
-                        email: normalizedEmail,
-                        userType: 'teacher',
-                    });
 
-                    if (!validationResult?.valid || !validationResult?.institutionId) {
+                    if (inviteDocSnap.exists()) {
+                        const inviteData = inviteDocSnap.data();
+
+                        // 2. Direct email invites remain Firestore-based and one-time.
+                        if (inviteData.type !== 'institutional') {
+                            if (inviteData.email.toLowerCase() !== normalizedEmail) {
+                                throw new Error('invalid-invite-email');
+                            }
+                            resolvedRole = inviteData.role || formData.userType || 'teacher';
+                            institutionId = inviteData.institutionId;
+                            shouldDeleteInvite = true;
+                            directInviteCodeToDelete = resolvedInviteCode;
+                        } else {
+                            // Backward compatibility for legacy institutional invite docs.
+                            resolvedRole = formData.userType === 'student' ? 'student' : 'teacher';
+                            institutionId = inviteData.institutionId;
+                        }
+                    } else if (formData.userType === 'teacher' || formData.userType === 'student') {
+                        // 3. Institutional role code is validated server-side (deterministic + hidden salt).
+                        const validationResult = await validateInstitutionalAccessCode({
+                            verificationCode: normalizedCode,
+                            email: normalizedEmail,
+                            userType: formData.userType,
+                        });
+
+                        if (!validationResult?.valid || !validationResult?.institutionId) {
+                            throw new Error('invalid-verification-code');
+                        }
+
+                        resolvedRole = formData.userType;
+                        institutionId = validationResult.institutionId;
+                    } else {
                         throw new Error('invalid-verification-code');
                     }
-
-                    resolvedRole = 'teacher';
-                    institutionId = validationResult.institutionId;
-                } else {
-                    throw new Error('invalid-verification-code');
                 }
             }
 

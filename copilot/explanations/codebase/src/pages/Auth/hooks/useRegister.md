@@ -1,3 +1,21 @@
+# [2026-03-07] Student Institutional Code Registration Path
+
+## Context
+- Student self-registration needed parity with teachers for institutional code onboarding.
+- Student users should be able to provide a student institutional code and be attached to the institution at sign-up.
+
+## Change
+- Extended validation entry logic in `useRegister` to include `student` in the verification-code flow.
+- For students:
+	- verification code is optional,
+	- if provided, backend callable `validateInstitutionalAccessCode` is invoked with `userType: 'student'`,
+	- on success, created user document persists `institutionId` from validated result.
+- Kept direct invite behavior intact and one-time invite deletion unchanged.
+
+## Validation
+- Added and passed unit test in `tests/unit/hooks/useRegister.test.js`:
+	- `registers student with institutional student code via callable when provided`.
+
 # [2026-03-07] Secure Institutional Code Validation via Cloud Function
 
 ## Context
