@@ -144,8 +144,8 @@ test.describe('Admin guardrails', () => {
     await expect(savePoliciesButton).toBeVisible();
 
     await savePoliciesButton.click();
-    // Wait for the success message to appear (policyMessage)
-    const successMsg = page.locator('text=Políticas de acceso actualizadas correctamente');
+    // Wait for the success message to appear inside a <p> element
+    const successMsg = page.locator('p', { hasText: 'Políticas de acceso actualizadas correctamente' });
     await expect(successMsg).toBeVisible({ timeout: 7000 });
   });
 

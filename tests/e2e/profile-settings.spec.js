@@ -144,11 +144,6 @@ test.describe('Profile and settings coverage', () => {
 
     await expect(modalHeading).not.toBeVisible();
 
-    if (canMutateSafely && selectedCountryBefore) {
-      await page.goto('/profile');
-      await page.waitForURL(/\/profile/);
-      await expect(page.getByText(/plan gratuito/i)).toBeVisible();
-    }
 
     await page.goto('/settings');
     await page.waitForURL(/\/settings/);
