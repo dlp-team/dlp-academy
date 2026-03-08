@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Settings, Moon, Sun, LayoutDashboard } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -10,6 +10,9 @@ import { applyThemeToDom } from '../../utils/themeMode';
 import Avatar from '../ui/Avatar';
 import Toggle from '../ui/Toggle';
 import MailboxIcon from '../ui/MailboxIcon';
+import NotificationsPanel from '../ui/NotificationsPanel';
+import AppToast from '../ui/AppToast';
+import { useNotifications } from '../../hooks/useNotifications';
 
 const Header = ({ user }) => {
   const navigate = useNavigate();
@@ -141,10 +144,28 @@ const Header = ({ user }) => {
   const dashboardRoute = getDashboardRoute();
   const dashboardLabel = getDashboardLabel();
 
-  // (Assuming you'll fetch this from a hook later, hardcoding for UI testing)
-  const unreadMailCount = 6;
+  // --- 4. NOTIFICATIONS ---
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.uid);
+  const [showPanel, setShowPanel] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '' });
+  const prevCountRef = useRef(null);
+  const isFirstLoadRef = useRef(true);
+
+  useEffect(() => {
+    if (isFirstLoadRef.current) {
+      prevCountRef.current = notifications.length;
+      isFirstLoadRef.current = false;
+      return;
+    }
+    if (notifications.length > prevCountRef.current) {
+      const newest = notifications[0];
+      setToast({ show: true, message: newest?.message || '¡Un tema tiene contenido listo!' });
+    }
+    prevCountRef.current = notifications.length;
+  }, [notifications.length]);
 
   return (
+    <>
     <header className="fixed top-0 w-full h-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-slate-800 z-[9999] transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
         
@@ -229,16 +250,32 @@ const Header = ({ user }) => {
             </div>
 
             {/* 5. MAILBOX ICON - PLACED RIGHT OF AVATAR */}
-            <div className="border-l pl-4 border-gray-200 dark:border-slate-700">
-                <MailboxIcon 
-                    mailCount={unreadMailCount} 
-                    onClick={() => navigate('/messages')} // Or open a dropdown
+            <div className="border-l pl-4 border-gray-200 dark:border-slate-700 relative">
+                <MailboxIcon
+                    mailCount={unreadCount}
+                    onClick={() => setShowPanel(prev => !prev)}
+                    dark={darkMode}
                 />
+                {showPanel && (
+                    <NotificationsPanel
+                        notifications={notifications}
+                        onMarkAsRead={markAsRead}
+                        onMarkAllAsRead={markAllAsRead}
+                        onClose={() => setShowPanel(false)}
+                    />
+                )}
             </div>
         </div>
 
       </div>
     </header>
+
+    <AppToast
+        show={toast.show}
+        message={toast.message}
+        onClose={() => setToast({ show: false, message: '' })}
+    />
+    </>
   );
 };
 

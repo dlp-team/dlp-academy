@@ -74,6 +74,7 @@ export const useTopicLogic = (user) => {
         let unsubscribeDocs = () => {};
         let unsubscribeQuizzes = () => {};
         let unsubscribeResumen = () => {};
+        let unsubscribeExams = () => {};
 
         const fetchTopicDetails = async () => {
             if (!user || !subjectId || !topicId) return;
@@ -100,12 +101,13 @@ export const useTopicLogic = (user) => {
                 unsubscribeTopic = onSnapshot(topicRef, (topicDoc) => {
                     if (topicDoc.exists()) {
                         const topicData = { id: topicDoc.id, ...topicDoc.data() };
-                        setTopic(prev => ({ 
-                            ...prev, 
+                        setTopic(prev => ({
+                            ...prev,
                             ...topicData,
                             pdfs: prev?.pdfs || [],
                             uploads: prev?.uploads || [],
-                            quizzes: prev?.quizzes || []
+                            quizzes: prev?.quizzes || [],
+                            exams: prev?.exams || []
                         }));
 
                         const docsRef = query(collection(db, "documents"), where("topicId", "==", topicId));
@@ -144,12 +146,13 @@ export const useTopicLogic = (user) => {
                         const quizzesRef = query(collection(db, "quizzes"), where("topicId", "==", topicId));
                         unsubscribeQuizzes = onSnapshot(quizzesRef, (quizzesSnap) => {
                             const realQuizzes = quizzesSnap.docs.map(q => ({ id: q.id, ...q.data() }));
-                            setTopic(prev => ({ 
-                                ...prev, 
-                                quizzes: realQuizzes 
+                            setTopic(prev => ({
+                                ...prev,
+                                quizzes: realQuizzes
                             }));
                             setLoading(false);
                         });
+
                     } else {
                         setLoading(false);
                         navigate('/home');
@@ -163,11 +166,28 @@ export const useTopicLogic = (user) => {
 
         fetchTopicDetails();
 
+        // Listener independiente para exams (usa "topicid" en minúsculas)
+        if (user && topicId) {
+            const examsQ = query(collection(db, "exams"), where("topicid", "==", topicId));
+            unsubscribeExams = onSnapshot(examsQ, (snap) => {
+                console.log("[EXAMS] query topicid ==", topicId, "=> docs:", snap.size);
+                const examsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                console.log("[EXAMS] data:", examsData);
+                setTopic(prev => ({
+                    ...prev,
+                    exams: examsData
+                }));
+            }, (error) => {
+                console.error("[EXAMS] Firestore error:", error);
+            });
+        }
+
         return () => {
             if (unsubscribeTopic) unsubscribeTopic();
             if (unsubscribeDocs) unsubscribeDocs();
             if (unsubscribeQuizzes) unsubscribeQuizzes();
             if (unsubscribeResumen) unsubscribeResumen();
+            if (unsubscribeExams) unsubscribeExams();
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         };
     }, [user, subjectId, topicId, navigate]);

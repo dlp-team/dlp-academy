@@ -37,7 +37,6 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         deleteShortcut,
         moveShortcut,
         updateShortcutAppearance,
-        setShortcutHiddenInManual,
         deleteOrphanedShortcuts
     } = useShortcuts(user);
 
@@ -82,13 +81,11 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         orderedFolders,
         allTags,
         filteredFoldersByTags,
-        filteredFolders,
         searchFolders,
         searchSubjects,
         sharedFolders,
         sharedSubjects,
-        isDragAndDropEnabled,
-        shortcuts: resolvedShortcutItems
+        isDragAndDropEnabled
     } = useHomeState({
         user,
         searchQuery,
@@ -125,7 +122,6 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         user,
         subjects,
         folders,
-        filteredFolders,
         currentFolder,
         groupedContent,
         orderedFolders,
@@ -151,9 +147,6 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         deleteSubject,
         deleteFolder,
         deleteFolderOnly,
-        deleteShortcut,
-        unshareSubject,
-        unshareFolder,
         updatePreference,
         navigate,
         isDescendant,
@@ -172,7 +165,6 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         subjects,
         folders,
         shortcuts,
-        resolvedShortcuts: resolvedShortcutItems,
         searchFolders,
         searchSubjects,
         loading,
@@ -184,7 +176,6 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         orderedFolders,
         allTags,
         filteredFoldersByTags, 
-        filteredFolders,
         
         // State
         viewMode, setViewMode,
@@ -246,7 +237,6 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         deleteShortcut,
         moveShortcut,
         updateShortcutAppearance,
-        setShortcutHiddenInManual,
         deleteOrphanedShortcuts,
 
         // Navigation

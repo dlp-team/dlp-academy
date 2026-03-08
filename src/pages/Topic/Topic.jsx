@@ -63,7 +63,8 @@ const Topic = ({ user }) => {
             quizzes: logic.topic.quizzes?.map(q => ({
                 ...q,
                 score: userScores[q.id] ?? null
-            })) || []
+            })) || [],
+            exams: logic.topic.exams || []
         };
     }, [logic.topic, userScores]);
 

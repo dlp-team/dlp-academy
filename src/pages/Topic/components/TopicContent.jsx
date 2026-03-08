@@ -1,6 +1,6 @@
 // src/pages/Topic/components/TopicContent.jsx
 import React, { useMemo } from 'react';
-import { Loader2, FileText, Upload } from 'lucide-react';
+import { Loader2, FileText, Upload, BookOpen, Calculator, ClipboardList, Clock } from 'lucide-react';
 import FileCard from '../FileCard/FileCard';
 import QuizCard from '../../../components/modules/QuizCard/QuizCard';
 
@@ -81,33 +81,124 @@ const TopicContent = ({
 
     // --- MATERIALS TAB ---
     if (activeTab === 'materials') {
+        const mainGuide = topic.pdfs?.find(f =>
+            ['summary', 'resumen'].includes((f.type || '').toLowerCase())
+        ) || topic.pdfs?.[0];
+
+        let hasFormulas = false;
+        if (mainGuide?.studyGuide) {
+            try {
+                const sections = typeof mainGuide.studyGuide === 'string'
+                    ? JSON.parse(mainGuide.studyGuide)
+                    : mainGuide.studyGuide;
+                hasFormulas = Array.isArray(sections) && sections.some(s => s.formulas?.length > 0);
+            } catch { hasFormulas = false; }
+        }
+
+        const subjectColor = subject?.color || 'from-indigo-500 to-purple-600';
+
+        const hasExams = topic.exams?.length > 0;
+
+        if (!mainGuide && !hasExams) {
+            return (
+                <div className="py-16 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
+                    <FileText className="w-12 h-12 mb-3 opacity-20" />
+                    <p className="font-medium">Sin materiales</p>
+                </div>
+            );
+        }
+
         return (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {topic.pdfs?.map((pdf, idx) => (
-                    <FileCard 
-                        key={pdf.id || idx}
-                        file={pdf}
-                        topic={topic}
-                        subject={subject}
-                        activeMenuId={activeMenuId}
-                        setActiveMenuId={setActiveMenuId}
-                        renamingId={renamingId}
-                        setRenamingId={setRenamingId}
-                        tempName={tempName}
-                        setTempName={setTempName}
-                        handleMenuClick={handleMenuClick}
-                        startRenaming={startRenaming}
-                        saveRename={saveRename}
-                        deleteFile={deleteFile}
-                        handleViewFile={handleViewFile}
-                        getFileVisuals={getFileVisuals}
-                        permissions={permissions}
-                    />
-                ))}
-                {(!topic.pdfs || topic.pdfs.length === 0) && (
-                    <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
-                        <FileText className="w-12 h-12 mb-3 opacity-20" />
-                        <p className="font-medium">Sin materiales</p>
+            <div className="space-y-8">
+                {mainGuide && (
+                    <div className="flex gap-6 items-stretch">
+                    {/* LEFT: Guía Completa */}
+                    <button
+                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/resumen/${mainGuide.id}`)}
+                        className="flex-1 group relative overflow-hidden rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-[1.01] text-left"
+                    >
+                        <div className={`absolute inset-0 bg-gradient-to-br ${subjectColor} opacity-90 group-hover:opacity-100 transition-opacity`} />
+                        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                            <BookOpen className="w-40 h-40 text-white absolute -bottom-8 -right-8 opacity-10 rotate-12" />
+                        </div>
+                        <div className="relative z-10 p-8 flex flex-col justify-between h-full min-h-[12rem]">
+                            <div>
+                                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
+                                    <BookOpen className="w-6 h-6 text-white" />
+                                </div>
+                                <h3 className="text-2xl font-black text-white mb-2 leading-tight">
+                                    Guía Completa
+                                </h3>
+                                <p className="text-white/80 text-sm font-medium line-clamp-2">
+                                    {mainGuide.title || mainGuide.name || 'Guía de estudio'}
+                                </p>
+                            </div>
+                            <span className="text-white/60 text-xs font-bold mt-4 group-hover:text-white/90 transition-colors">
+                                Ver guía →
+                            </span>
+                        </div>
+                    </button>
+
+                    {/* RIGHT: Calculadora (solo si hay fórmulas) */}
+                    {hasFormulas && (
+                        <button
+                            onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/formulas/${mainGuide.id}`)}
+                            className="group relative w-40 shrink-0 overflow-hidden rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 hover:scale-[1.03]"
+                        >
+                            <div className={`absolute inset-0 bg-gradient-to-br ${subjectColor} opacity-90 group-hover:opacity-100 transition-opacity`} />
+                            <div className="relative z-10 h-full flex flex-col items-center justify-center gap-3 p-6">
+                                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                    <Calculator className="w-8 h-8 text-white" />
+                                </div>
+                                <span className="text-white font-bold text-sm text-center">Fórmulas</span>
+                            </div>
+                        </button>
+                    )}
+                </div>
+                )}
+
+                {/* Exámenes de Prueba */}
+                {topic.exams?.length > 0 && (
+                    <div>
+                        <h3 className="text-xl font-black text-slate-800 dark:text-slate-200 mb-4">
+                            Exámenes de Prueba
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {topic.exams.map(exam => (
+                                <button
+                                    key={exam.id}
+                                    onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/exam/${exam.id}`)}
+                                    className="group relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 hover:scale-[1.02] text-left"
+                                >
+                                    <div className={`absolute inset-0 bg-gradient-to-br ${subjectColor} opacity-85 group-hover:opacity-100 transition-opacity`} />
+                                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                        <ClipboardList className="w-28 h-28 text-white absolute -bottom-4 -right-4 opacity-10 rotate-6" />
+                                    </div>
+                                    <div className="relative z-10 p-6 flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
+                                            <ClipboardList className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <h4 className="text-lg font-black text-white truncate">
+                                                {exam.examen_titulo || 'Examen'}
+                                            </h4>
+                                            <div className="flex items-center gap-3 mt-1">
+                                                <span className="text-white/70 text-xs font-bold">
+                                                    {exam.preguntas?.length || 0} preguntas
+                                                </span>
+                                                <span className="text-white/40">·</span>
+                                                <span className="text-white/70 text-xs font-bold flex items-center gap-1">
+                                                    <Clock className="w-3 h-3" /> 1 hora
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <span className="text-white/60 text-xs font-bold group-hover:text-white/90 transition-colors shrink-0">
+                                            Empezar →
+                                        </span>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
             </div>

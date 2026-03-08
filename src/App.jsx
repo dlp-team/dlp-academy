@@ -19,6 +19,8 @@ import Quizzes from './pages/Quizzes/Quizzes';
 import EditQuiz from './pages/Quizzes/QuizEdit';
 import StudyGuide from './pages/Content/StudyGuide';
 import StudyGuideEditor from './pages/Content/StudyGuideEditor';
+import Formula from './pages/Content/Formula';
+import Exam from './pages/Content/Exam';
 
 // Dashboard pages
 import InstitutionAdminDashboard from './pages/InstitutionAdminDashboard/InstitutionAdminDashboard';
@@ -284,6 +286,26 @@ function App() {
           } 
         />
         
+        {/* Ruta para Fórmulas (nueva) */}
+        <Route
+          path="/home/subject/:subjectId/topic/:topicId/formulas/:fileId"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <Formula user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Ruta para Exámenes de Prueba */}
+        <Route
+          path="/home/subject/:subjectId/topic/:topicId/exam/:examId"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <Exam user={user} />
+            </ProtectedRoute>
+          }
+        />
+
         {/* Catch-all: Si no coincide ninguna, vuelve a Home */}
         <Route path="*" element={<Navigate to="/home" />} />
       </Routes>
