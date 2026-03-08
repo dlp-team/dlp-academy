@@ -263,6 +263,82 @@ describe('useTopicLogic', () => {
     expect(mocks.navigate).toHaveBeenCalledWith('/home/subject/subject-1');
   });
 
+  it('still deletes topic when child resources are orphaned (not-found deletes)', async () => {
+    const user = { uid: 'teacher-1', role: 'teacher' };
+
+    mocks.getDocs.mockImplementation(async (queryRef) => {
+      const collectionName = queryRef?.base?.name;
+      if (collectionName === 'documents') {
+        return { docs: [{ id: 'doc-orphan' }] };
+      }
+      if (collectionName === 'resumen') {
+        return { docs: [{ id: 'res-orphan' }] };
+      }
+      if (collectionName === 'quizzes') {
+        return { docs: [{ id: 'quiz-orphan' }] };
+      }
+      return { docs: [] };
+    });
+
+    mocks.deleteDoc.mockImplementation(async (docRef) => {
+      if (docRef?.name !== 'topics') {
+        const err = new Error('No document to update: missing target');
+        err.code = 'not-found';
+        throw err;
+      }
+      return undefined;
+    });
+
+    const { result } = renderHook(() => useTopicLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.handleDeleteTopic();
+    });
+
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'documents', id: 'doc-orphan' })
+    );
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'resumen', id: 'res-orphan' })
+    );
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'quizzes', id: 'quiz-orphan' })
+    );
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'topics', id: 'topic-1' })
+    );
+    expect(mocks.navigate).toHaveBeenCalledWith('/home/subject/subject-1');
+  });
+
+  it('deletes topic when subject metadata has no institutionId', async () => {
+    const user = { uid: 'teacher-1', role: 'teacher' };
+
+    mocks.getDoc.mockResolvedValueOnce({
+      exists: () => true,
+      id: 'subject-1',
+      data: () => ({ id: 'subject-1', name: 'Math', ownerId: 'owner-1' }),
+    });
+
+    const { result } = renderHook(() => useTopicLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.handleDeleteTopic();
+    });
+
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'topics', id: 'topic-1' })
+    );
+    expect(mocks.navigate).toHaveBeenCalledWith('/home/subject/subject-1');
+  });
+
   it('renames resumen files with both name and title fields', async () => {
     const user = { uid: 'teacher-1', role: 'teacher' };
 

@@ -186,3 +186,14 @@
   - `tests/unit/hooks/useTopicLogic.test.js`
   - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
   - Aggregate: 62 tests passing.
+
+## Additional progress (2026-03-08 - Topic Orphan + Missing Institution Variants)
+- Added `useTopicLogic` edge-case tests for:
+  - orphaned topic child entries (`documents`, `resumen`, `quizzes`) where delete calls return `not-found`
+  - subject metadata without `institutionId` during topic deletion flow
+- Synced Phase 2 checklist for completed topic orphan/missing-institution coverage.
+
+### Validation
+- Passed focused run:
+  - `tests/unit/hooks/useTopicLogic.test.js`
+  - Aggregate: 10 tests passing.

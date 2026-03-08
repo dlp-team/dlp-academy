@@ -256,3 +256,19 @@
   - batch commit failure fallback,
   - shortcut cleanup failure tolerance,
   - existing query-failure tolerance with new shortcut cleanup paths.
+
+## Additional Progress Update (2026-03-08 - Topic Orphan + Missing Institution Variants)
+
+### Additional Files Updated
+- `tests/unit/hooks/useTopicLogic.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+
+### Additional Verification
+- Focused run passed:
+  - `npm run test -- tests/unit/hooks/useTopicLogic.test.js`
+  - Result: 1 file passed, 10 tests passed.
+
+### Additional Completed Coverage
+- `useTopicLogic.handleDeleteTopic` tolerates orphaned child entries (`not-found` deletes for documents/resources/quizzes) and still deletes topic.
+- Topic deletion flow remains valid when subject metadata omits `institutionId`.

@@ -46,9 +46,9 @@
 - [x] Deletes quizzes/resources inside topic
 - [x] Deletes documents inside topic
 - [x] Topic deletion when subject is deleted (cascade)
-- [ ] Topic deletion with orphaned resources/quizzes/documents
+- [x] Topic deletion with orphaned resources/quizzes/documents
 - [ ] Topic deletion in ghost mode
-- [ ] Topic deletion with missing institutionId
+- [x] Topic deletion with missing institutionId
 - [x] Topic deletion with failed resource/document deletion (error handling)
 
 ## Shortcut behavior coverage

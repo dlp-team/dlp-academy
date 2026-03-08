@@ -12,6 +12,18 @@
 ### Validation
 - Focused unit suite passed: `npm run test -- tests/unit/hooks/useTopicLogic.test.js`.
 
+## [2026-03-08] Topic Deletion Orphan and Missing-Metadata Variants
+### Context
+- Topic deletion needed edge-case verification for orphaned child entries and missing institution metadata.
+
+### Change
+- Added unit coverage to verify deletion flow tolerates:
+	- `not-found` child deletes for `documents`, `resumen`, and `quizzes`.
+	- subject metadata without `institutionId`.
+
+### Validation
+- Focused unit suite passed: `npm run test -- tests/unit/hooks/useTopicLogic.test.js`.
+
 # useTopicLogic.js
 
 ## Overview

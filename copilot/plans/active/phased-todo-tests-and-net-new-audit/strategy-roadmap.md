@@ -12,7 +12,7 @@ Transform test backlog planning into a phased, implementation-ready sequence tha
 - Phase 05 - Firestore Rules Expansion: **PLANNED**
 
 ## Immediate Next Actions
-1. Expand topic deletion matrix (orphan resources/quizzes/documents + ghost-mode variants).
-2. Add ghost-mode variants for shortcut and deletion paths.
-3. Extend cross-view parity coverage (grid/list/tree/manual/shared) for deletion and shortcut behavior.
+1. Add ghost-mode variants for topic, shortcut, folder, and subject deletion paths.
+2. Extend cross-view parity coverage (grid/list/tree/manual/shared) for deletion and shortcut behavior.
+3. Add lecture-mode/read-only mutation-block tests in remaining handler entry points.
 4. Re-run targeted phase suites and update phase checklists with completed items.
