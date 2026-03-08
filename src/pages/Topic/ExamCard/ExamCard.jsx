@@ -1,6 +1,6 @@
 // src/pages/Topic/ExamCard/ExamCard.jsx
 import React, { useMemo } from 'react';
-import { ClipboardList, Clock } from 'lucide-react';
+import { ClipboardList, Clock, Play, ChevronRight } from 'lucide-react';
 
 const ExamCard = ({ 
     exam, 
@@ -19,37 +19,41 @@ const ExamCard = ({
     };
 
     return (
-        <button
-            onClick={handleClick}
-            className="group relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 hover:scale-[1.02] text-left"
-        >
-            <div className={`absolute inset-0 bg-gradient-to-br ${subjectColor} opacity-85 group-hover:opacity-100 transition-opacity`} />
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                <ClipboardList className="w-28 h-28 text-white absolute -bottom-4 -right-4 opacity-10 rotate-6" />
+        <article className="group relative rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-900 dark:bg-slate-900 p-6 shadow-md transition-all duration-300 hover:shadow-lg">
+            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-3xl">
+                <div className={`absolute top-0 right-0 w-36 h-36 bg-gradient-to-br ${subjectColor} opacity-20 blur-2xl -translate-y-1/3 translate-x-1/3`} />
             </div>
-            <div className="relative z-10 p-6 flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
-                    <ClipboardList className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                    <h4 className="text-lg font-black text-white truncate">
-                        {exam.examen_titulo || 'Examen'}
-                    </h4>
-                    <div className="flex items-center gap-3 mt-1">
-                        <span className="text-white/70 text-xs font-bold">
-                            {exam.preguntas?.length || 0} preguntas
-                        </span>
-                        <span className="text-white/40">·</span>
-                        <span className="text-white/70 text-xs font-bold flex items-center gap-1">
-                            <Clock className="w-3 h-3" /> 1 hora
-                        </span>
+
+            <div className="relative z-10">
+                <div className="flex items-start gap-4 mb-4">
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${subjectColor} flex items-center justify-center shrink-0 shadow-lg`}>
+                        <ClipboardList className="w-6 h-6 text-white" />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                        <h4 className="text-lg font-medium text-white leading-tight line-clamp-2 mb-2">
+                            {exam.examen_titulo || 'Examen'}
+                        </h4>
+                        <div className="flex items-center gap-3 text-slate-400 text-sm">
+                            <span className="opacity-85 font-medium">{exam.preguntas?.length || 0} preguntas</span>
+                            <span className="opacity-40">·</span>
+                            <span className="opacity-80 flex items-center gap-1.5">
+                                <Clock className="w-3.5 h-3.5" /> 1 hora
+                            </span>
+                        </div>
                     </div>
                 </div>
-                <span className="text-white/60 text-xs font-bold group-hover:text-white/90 transition-colors shrink-0">
-                    Empezar →
-                </span>
+
+                <button
+                    onClick={handleClick}
+                    className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold text-white bg-gradient-to-r ${subjectColor} transition-all hover:brightness-110 active:scale-[0.99]`}
+                >
+                    <Play className="w-4 h-4" />
+                    Comenzar Examen
+                    <ChevronRight className="w-4 h-4" />
+                </button>
             </div>
-        </button>
+        </article>
     );
 };
 
