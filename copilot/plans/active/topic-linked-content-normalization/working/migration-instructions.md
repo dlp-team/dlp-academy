@@ -1,7 +1,11 @@
 <!-- copilot/plans/active/topic-linked-content-normalization/working/migration-instructions.md -->
-# Migration Instructions - Exams topicId Normalization
+# Migration Instructions - Exams Field Normalization
 
 ## Quick Start
+
+This migration normalizes:
+- **Relation fields**: `topicid` → `topicId`, `subject_id` → `subjectId` (camelCase)
+- **Spanish → English**: `examen_titulo` → `title`, `preguntas` → `questions`, `enunciado` → `question`, `respuesta_detallada` → `detailedAnswer`
 
 ### Prerequisites
 1. Node.js installed
@@ -132,9 +136,13 @@ Migration completed successfully.
 2. Open `exams` collection
 3. Select a random exam document
 4. Verify fields:
-   - ✅ `topicId` exists (camelCase)
-   - ❌ `topicid` does NOT exist (removed)
-   - ❌ `topic_id` does NOT exist (removed)
+   - ✅ `topicId` exists (camelCase, not `topicid`)
+   - ✅ `subjectId` exists (camelCase, not `subject_id`)
+   - ✅ `title` exists (English, not `examen_titulo`)
+   - ✅ `questions` exists (English, not `preguntas`)
+   - ✅ `questions[0].question` exists (English, not `enunciado`)
+   - ✅ `questions[0].detailedAnswer` exists if answer provided (English, not `respuesta_detallada`)
+   - ❌ Old Spanish/lowercase fields do NOT exist
 
 ### 2. Test App Functionality
 1. Log into DLP Academy
@@ -147,17 +155,20 @@ Migration completed successfully.
 Use Firebase Admin SDK or Firestore console:
 
 ```javascript
-// Count exams with new canonical field
+// Count exams with new canonical fields
 db.collection('exams')
   .where('topicId', '!=', null)
   .get()
   .then(snap => console.log('Exams with topicId:', snap.size));
 
-// Verify no exams with old field (should return 0)
-db.collection('exams')
-  .where('topicid', '!=', null)
-  .get()
-  .then(snap => console.log('Exams with topicid:', snap.size));
+// Verify English field names
+db.collection('exams').limit(1).get().then(snap => {
+  const exam = snap.docs[0].data();
+  console.log('Has title (English):', exam.title !== undefined);
+  console.log('Has questions (English):', exam.questions !== undefined);
+  console.log('Has OLD examen_titulo (Spanish):', exam.examen_titulo !== undefined); // Should be false
+  console.log('Has OLD preguntas (Spanish):', exam.preguntas !== undefined); // Should be false
+});
 ```
 
 ---

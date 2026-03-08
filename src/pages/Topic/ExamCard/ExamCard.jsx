@@ -32,10 +32,10 @@ const ExamCard = ({
 
                     <div className="flex-1 min-w-0">
                         <h4 className="text-lg font-medium text-white leading-tight line-clamp-2 mb-2">
-                            {exam.examen_titulo || 'Examen'}
+                            {exam.title || 'Examen'}
                         </h4>
                         <div className="flex items-center gap-3 text-slate-400 text-sm">
-                            <span className="opacity-85 font-medium">{exam.preguntas?.length || 0} preguntas</span>
+                            <span className="opacity-85 font-medium">{exam.questions?.length || 0} preguntas</span>
                             <span className="opacity-40">·</span>
                             <span className="opacity-80 flex items-center gap-1.5">
                                 <Clock className="w-3.5 h-3.5" /> 1 hora

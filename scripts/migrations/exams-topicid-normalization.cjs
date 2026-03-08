@@ -1,16 +1,19 @@
 // scripts/migrations/exams-topicid-normalization.cjs
-// Preset for normalizing exams collection to use canonical camelCase relation fields
+// Preset for normalizing exams collection to use canonical English field names
 // Operations:
-// - exams.topicid -> exams.topicId (with compatibility for both during transition)
-// - Backfill missing subjectId/institutionId/ownerId where derivable (future enhancement)
+// - Relation fields: topicid → topicId, subject_id → subjectId (camelCase)
+// - Spanish → English: examen_titulo → title, preguntas → questions, etc.
+// - Nested fields: respuesta_detallada.procedimiento → detailedAnswer.procedure, etc.
 
 module.exports = {
-  name: 'exams-topicid-normalization',
+  name: 'exams-field-normalization',
   batchLimit: 400,
   collections: [
     {
       collection: 'exams',
       operations: [
+        // ─── RELATION FIELDS (camelCase normalization) ───
+        
         // Rename topicid (lowercase) to topicId (camelCase)
         { 
           type: 'renameField', 
@@ -35,6 +38,29 @@ module.exports = {
           overwrite: false, 
           removeSource: true 
         },
+        
+        // ─── SPANISH → ENGLISH FIELD NAMES ───
+        
+        // Main exam title
+        { 
+          type: 'renameField', 
+          from: 'examen_titulo', 
+          to: 'title', 
+          overwrite: false, 
+          removeSource: true 
+        },
+        // Questions array
+        { 
+          type: 'renameField', 
+          from: 'preguntas', 
+          to: 'questions', 
+          overwrite: false, 
+          removeSource: true 
+        },
+        
+        // Note: Nested field transformations (numero_pregunta, enunciado, respuesta_detallada)
+        // require custom code in the migration runner since renameField only handles top-level fields.
+        // These will be handled programmatically in migrate-exams-topicid.cjs
       ],
     },
   ],

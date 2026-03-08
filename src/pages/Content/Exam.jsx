@@ -253,7 +253,7 @@ const CompletionScreen = ({ examData, revealedAnswers, timeLeft, total, gradient
                             Examen completado
                         </h2>
                         <p className={`font-bold mb-8 bg-gradient-to-r ${gradient} bg-clip-text text-transparent`}>
-                            {examData.examen_titulo}
+                            {examData.title}
                         </p>
 
                         {/* Stats grid */}
@@ -330,8 +330,9 @@ const Exam = () => {
                 const examSnap = await getDoc(doc(db, 'exams', examId));
                 if (examSnap.exists()) {
                     const data = examSnap.data();
-                    const preguntas = (data.preguntas || []).sort((a, b) => (a.numero_pregunta || 0) - (b.numero_pregunta || 0));
-                    setExamData({ ...data, preguntas });
+                    // Questions should already be in order from migration, but sort just in case
+                    const questions = (data.questions || []);
+                    setExamData({ ...data, questions });
                 }
             } catch (err) {
                 console.error('Error loading exam:', err);
@@ -376,7 +377,7 @@ const Exam = () => {
     useEffect(() => {
         const handler = (e) => {
             if (!examData) return;
-            const total = examData.preguntas.length;
+            const total = examData.questions.length;
             if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
                 e.preventDefault();
                 navigateQuestion(Math.min(total - 1, currentQ + 1));
@@ -430,7 +431,7 @@ const Exam = () => {
     if (loading) return <ExamLoading />;
 
     // No data
-    if (!examData || !examData.preguntas?.length) {
+    if (!examData || !examData.questions?.length) {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 gap-6 p-6 relative overflow-hidden">
                 <div className="absolute inset-0 overflow-hidden">
@@ -464,7 +465,7 @@ const Exam = () => {
                 examData={examData}
                 revealedAnswers={revealedAnswers}
                 timeLeft={timeLeft}
-                total={examData.preguntas.length}
+                total={examData.questions.length}
                 gradient={topicGradient}
                 onRestart={handleRestart}
                 onBack={goBack}
@@ -472,8 +473,8 @@ const Exam = () => {
         );
     }
 
-    const total = examData.preguntas.length;
-    const pregunta = examData.preguntas[currentQ];
+    const total = examData.questions.length;
+    const question = examData.questions[currentQ];
     const isRevealed = revealedAnswers[currentQ];
     const isTimeUp = timeLeft <= 0;
     const isLowTime = timeLeft < 300;
@@ -524,7 +525,7 @@ const Exam = () => {
                         </div>
                         <div className="min-w-0">
                             <h1 className="font-black text-slate-900 dark:text-white text-sm md:text-base truncate">
-                                {examData.examen_titulo || 'Examen'}
+                                {examData.title || 'Examen'}
                             </h1>
                             {!isScrolled && (
                                 <div className="flex items-center gap-1.5 animate-in fade-in duration-300">
@@ -573,7 +574,7 @@ const Exam = () => {
 
                 {/* Question navigation dots */}
                 <div className="flex justify-center gap-1.5 sm:gap-2 mb-8 flex-wrap">
-                    {examData.preguntas.map((_, idx) => (
+                    {examData.questions.map((_, idx) => (
                         <QuestionDot
                             key={idx}
                             index={idx}
@@ -633,7 +634,7 @@ const Exam = () => {
 
                             {/* Enunciado */}
                             <div className="text-base sm:text-lg leading-relaxed text-slate-700 dark:text-slate-300 font-medium mb-8">
-                                <SmartText text={pregunta.enunciado} />
+                                <SmartText text={question.question} />
                             </div>
 
                             {/* Divider */}
@@ -672,10 +673,10 @@ const Exam = () => {
                             </button>
 
                             {/* ─── ANSWER SECTION ─── */}
-                            {isRevealed && pregunta.respuesta_detallada && (
+                            {isRevealed && question.detailedAnswer && (
                                 <div className="mt-8 space-y-5 animate-in slide-in-from-top-4 duration-500 fade-in">
                                     {/* Procedimiento */}
-                                    {pregunta.respuesta_detallada.procedimiento && (
+                                    {question.detailedAnswer.procedure && (
                                         <div className="group/proc relative overflow-hidden">
                                             <div className={`absolute -inset-2 bg-gradient-to-br ${topicGradient} rounded-[2rem] blur-2xl opacity-0 group-hover/proc:opacity-10 transition-opacity duration-700`} />
                                             <div className="relative rounded-2xl overflow-hidden border-2 border-white/80 dark:border-slate-700/60 bg-gradient-to-b from-white to-slate-50/50 dark:from-slate-800/50 dark:to-slate-900/50 shadow-xl group-hover/proc:shadow-2xl transition-all duration-500">
@@ -685,14 +686,14 @@ const Exam = () => {
                                                     <span className="font-black text-sm text-white tracking-wide relative z-10 uppercase">Procedimiento</span>
                                                 </div>
                                                 <div className="p-5 sm:p-6 text-slate-700 dark:text-slate-300 leading-relaxed">
-                                                    <SmartText text={pregunta.respuesta_detallada.procedimiento} />
+                                                    <SmartText text={question.detailedAnswer.procedure} />
                                                 </div>
                                             </div>
                                         </div>
                                     )}
 
                                     {/* Resultado */}
-                                    {pregunta.respuesta_detallada.resultado && (
+                                    {question.detailedAnswer.result && (
                                         <div className="group/result relative overflow-hidden">
                                             <div className="absolute -inset-2 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-[2rem] blur-2xl opacity-0 group-hover/result:opacity-10 transition-opacity duration-700" />
                                             <div className="relative rounded-2xl overflow-hidden border-2 border-emerald-200/60 dark:border-emerald-800/40 bg-gradient-to-b from-emerald-50/50 to-white dark:from-emerald-900/10 dark:to-slate-900/50 shadow-xl group-hover/result:shadow-2xl transition-all duration-500">
@@ -702,7 +703,7 @@ const Exam = () => {
                                                     <span className="font-black text-sm text-white tracking-wide relative z-10 uppercase">Resultado</span>
                                                 </div>
                                                 <div className="p-5 sm:p-6 text-slate-800 dark:text-slate-200 leading-relaxed font-semibold">
-                                                    <SmartText text={pregunta.respuesta_detallada.resultado} />
+                                                    <SmartText text={question.detailedAnswer.result} />
                                                 </div>
                                             </div>
                                         </div>

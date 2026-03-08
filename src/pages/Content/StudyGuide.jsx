@@ -1235,12 +1235,7 @@ const StudyGuide = () => {
                         <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-[2.5rem] blur-3xl opacity-20 group-hover/footer:opacity-30 transition-opacity duration-700`} />
                         
                         <div className="relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[2.5rem] p-12 shadow-2xl border-2 border-white/80 dark:border-slate-700/80">
-                            <div className="relative mb-6">
-                                <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-3xl blur-xl opacity-50`} />
-                                <div className={`relative p-5 rounded-3xl bg-gradient-to-br ${topicGradient} shadow-xl transform group-hover/footer:scale-110 group-hover/footer:rotate-12 transition-all duration-500`}>
-                                    <Sparkles className="w-10 h-10 text-white" />
-                                </div>
-                            </div>
+                            {/* Removed Gemini/Sparkles icon for completion. Only text and button remain. */}
                             <div>
                                 <p className="text-slate-900 dark:text-slate-100 font-black text-xl mb-2">
                                     ¡Felicitaciones por Completar el Recorrido!

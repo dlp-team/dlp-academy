@@ -33,9 +33,20 @@
 ### Target: `exams` Collection
 
 **Field Normalizations**:
+
+*Relation Fields (camelCase):*
 - `topicid` (lowercase) → `topicId` (camelCase)
 - `topic_id` (snake_case) → `topicId` (camelCase)
 - `subject_id` (snake_case) → `subjectId` (camelCase)
+
+*Spanish → English Field Names:*
+- `examen_titulo` → `title`
+- `preguntas` → `questions`
+- `preguntas[].enunciado` → `questions[].question`
+- `preguntas[].numero_pregunta` → removed (use array index)
+- `preguntas[].respuesta_detallada` → `questions[].detailedAnswer`
+- `preguntas[].respuesta_detallada.procedimiento` → `questions[].detailedAnswer.procedure`
+- `preguntas[].respuesta_detallada.resultado` → `questions[].detailedAnswer.result`
 
 **Safety Features**:
 - Won't overwrite existing canonical fields
@@ -104,10 +115,19 @@ $env:DRY_RUN="false"; node scripts/migrate-exams-topicid.cjs
 // Exam document in Firestore
 {
   id: "exam_123",
-  examen_titulo: "Final Exam",
-  topicid: "topic_456",        // ❌ lowercase
-  subject_id: "subject_789",   // ❌ snake_case
-  preguntas: [...]
+  examen_titulo: "Final Exam",           // ❌ Spanish
+  topicid: "topic_456",                  // ❌ lowercase
+  subject_id: "subject_789",             // ❌ snake_case
+  preguntas: [                           // ❌ Spanish
+    {
+      numero_pregunta: 1,                // ❌ Spanish (removed)
+      enunciado: "What is 2+2?",         // ❌ Spanish
+      respuesta_detallada: {             // ❌ Spanish
+        procedimiento: "Add 2 and 2",    // ❌ Spanish
+        resultado: "4"                   // ❌ Spanish
+      }
+    }
+  ]
 }
 ```
 
@@ -116,22 +136,34 @@ $env:DRY_RUN="false"; node scripts/migrate-exams-topicid.cjs
 // Exam document in Firestore
 {
   id: "exam_123",
-  examen_titulo: "Final Exam",
-  topicId: "topic_456",        // ✅ camelCase
-  subjectId: "subject_789",    // ✅ camelCase
-  preguntas: [...]
+  title: "Final Exam",                   // ✅ English
+  topicId: "topic_456",                  // ✅ camelCase
+  subjectId: "subject_789",              // ✅ camelCase
+  questions: [                           // ✅ English
+    {
+      question: "What is 2+2?",          // ✅ English
+      detailedAnswer: {                  // ✅ English
+        procedure: "Add 2 and 2",        // ✅ English
+        result: "4"                      // ✅ English
+      }
+    }
+  ]
 }
 ```
 
 ### App Query Impact
 ```javascript
 // Before: Won't find exams (field mismatch)
-where("topicId", "==", topicId)  // App uses topicId
+where("topicId", "==", topicId)         // App uses topicId
 // But data has "topicid" (lowercase)
+// And uses "examen_titulo" (Spanish)
+// And uses "preguntas[].enunciado" (Spanish)
 
 // After: Will find exams (field match)
-where("topicId", "==", topicId)  // App uses topicId
+where("topicId", "==", topicId)         // App uses topicId
 // Data also has "topicId" ✅
+// Data uses "title" (English) ✅
+// Data uses "questions[].question" (English) ✅
 ```
 
 ---
