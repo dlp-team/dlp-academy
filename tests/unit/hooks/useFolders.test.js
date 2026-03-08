@@ -323,6 +323,98 @@ describe('useFolders', () => {
     expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
   });
 
+  it('deleteFolder falls back to root delete when batch commit fails', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
+      const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
+
+      if (isOwnedQuery) {
+        callback({
+          docs: [
+            createDoc('folder-1', {
+              name: 'Folder 1',
+              ownerId: user.uid,
+              institutionId: user.institutionId,
+              parentId: null,
+            }),
+          ],
+        });
+      } else {
+        callback({ docs: [] });
+      }
+
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDocs.mockResolvedValue({ docs: [], forEach: () => {} });
+    firestoreMocks.mockBatchCommit.mockRejectedValueOnce(new Error('batch commit failed'));
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.deleteFolder('folder-1');
+    });
+
+    expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-1' })
+    );
+  });
+
+  it('deleteFolder continues when shortcut cleanup fails', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
+      const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
+
+      if (isOwnedQuery) {
+        callback({
+          docs: [
+            createDoc('folder-1', {
+              name: 'Folder 1',
+              ownerId: user.uid,
+              institutionId: user.institutionId,
+              parentId: null,
+            }),
+          ],
+        });
+      } else {
+        callback({ docs: [] });
+      }
+
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filters = queryObj.parts.filter((entry) => entry?.field);
+      const fieldMap = new Map(filters.map((f) => [f.field, f.value]));
+
+      if (fieldMap.get('targetId') === 'folder-1' && fieldMap.get('targetType') === 'folder') {
+        return {
+          docs: [createDoc('shortcut-folder-1', { targetId: 'folder-1', targetType: 'folder' })],
+          forEach: (fn) => [createDoc('shortcut-folder-1', { targetId: 'folder-1', targetType: 'folder' })].forEach(fn),
+        };
+      }
+
+      return { docs: [], forEach: () => {} };
+    });
+
+    firestoreMocks.mockDeleteDoc.mockImplementation(async (docRef) => {
+      if (docRef?.name === 'shortcuts') {
+        throw new Error('shortcut delete failed');
+      }
+      return undefined;
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.deleteFolder('folder-1');
+    });
+
+    expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-1' })
+    );
+  });
+
   it('deleteFolderOnly still deletes folder when move queries fail', async () => {
     firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
       const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
@@ -354,6 +446,98 @@ describe('useFolders', () => {
     });
 
     expect(firestoreMocks.mockBatchUpdate).not.toHaveBeenCalled();
+    expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-1' })
+    );
+  });
+
+  it('deleteFolderOnly still deletes folder when batch commit fails', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
+      const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
+
+      if (isOwnedQuery) {
+        callback({
+          docs: [
+            createDoc('folder-1', {
+              name: 'Folder 1',
+              ownerId: user.uid,
+              institutionId: user.institutionId,
+              parentId: 'parent-1',
+            }),
+          ],
+        });
+      } else {
+        callback({ docs: [] });
+      }
+
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDocs.mockResolvedValue({ docs: [], forEach: () => {} });
+    firestoreMocks.mockBatchCommit.mockRejectedValueOnce(new Error('batch commit failed'));
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.deleteFolderOnly('folder-1');
+    });
+
+    expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-1' })
+    );
+  });
+
+  it('deleteFolderOnly still deletes folder when shortcut cleanup fails', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
+      const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
+
+      if (isOwnedQuery) {
+        callback({
+          docs: [
+            createDoc('folder-1', {
+              name: 'Folder 1',
+              ownerId: user.uid,
+              institutionId: user.institutionId,
+              parentId: null,
+            }),
+          ],
+        });
+      } else {
+        callback({ docs: [] });
+      }
+
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filters = queryObj.parts.filter((entry) => entry?.field);
+      const fieldMap = new Map(filters.map((f) => [f.field, f.value]));
+
+      if (fieldMap.get('targetId') === 'folder-1' && fieldMap.get('targetType') === 'folder') {
+        return {
+          docs: [createDoc('shortcut-folder-1', { targetId: 'folder-1', targetType: 'folder' })],
+          forEach: (fn) => [createDoc('shortcut-folder-1', { targetId: 'folder-1', targetType: 'folder' })].forEach(fn),
+        };
+      }
+
+      return { docs: [], forEach: () => {} };
+    });
+
+    firestoreMocks.mockDeleteDoc.mockImplementation(async (docRef) => {
+      if (docRef?.name === 'shortcuts') {
+        throw new Error('shortcut delete failed');
+      }
+      return undefined;
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.deleteFolderOnly('folder-1');
+    });
+
     expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
     expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'folders', id: 'folder-1' })
@@ -392,6 +576,76 @@ describe('useFolders', () => {
 
     expect(firestoreMocks.mockBatchCommit).not.toHaveBeenCalled();
     expect(firestoreMocks.mockDeleteDoc).not.toHaveBeenCalled();
+  });
+
+  it('deleteFolder still cascades when folder institutionId is missing', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
+      const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
+
+      if (isOwnedQuery) {
+        callback({
+          docs: [
+            createDoc('folder-no-inst', {
+              name: 'Folder No Inst',
+              ownerId: user.uid,
+              parentId: null,
+            }),
+          ],
+        });
+      } else {
+        callback({ docs: [] });
+      }
+
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDocs.mockResolvedValue({ docs: [], forEach: () => {} });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.deleteFolder('folder-no-inst');
+    });
+
+    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-no-inst' })
+    );
+    expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it('deleteFolderOnly still deletes folder when institutionId is missing', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
+      const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
+
+      if (isOwnedQuery) {
+        callback({
+          docs: [
+            createDoc('folder-no-inst', {
+              name: 'Folder No Inst',
+              ownerId: user.uid,
+              parentId: null,
+            }),
+          ],
+        });
+      } else {
+        callback({ docs: [] });
+      }
+
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDocs.mockResolvedValue({ docs: [], forEach: () => {} });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.deleteFolderOnly('folder-no-inst');
+    });
+
+    expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-no-inst' })
+    );
   });
 
   it('transferFolderOwnership updates owner and writes previous-owner shortcut', async () => {

@@ -1,3 +1,17 @@
+## [2026-03-08] Topic Deletion Cascade Expanded
+### Context
+- Topic deletion coverage required cleanup of topic-linked artifacts before deleting the topic.
+
+### Change
+- `handleDeleteTopic` now performs best-effort cascade cleanup for:
+	- `documents`
+	- `resumen`
+	- `quizzes`
+- Cleanup failures are logged and tolerated so final topic deletion and navigation still proceed.
+
+### Validation
+- Focused unit suite passed: `npm run test -- tests/unit/hooks/useTopicLogic.test.js`.
+
 # useTopicLogic.js
 
 ## Overview

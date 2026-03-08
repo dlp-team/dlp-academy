@@ -188,3 +188,71 @@
 ### Additional Completed Coverage
 - `useFolders.deleteFolder` idempotent no-op when folder is already missing.
 - `useFolders.deleteFolderOnly` idempotent no-op when folder is already missing.
+
+## Additional Progress Update (2026-03-08 - Topic Delete Cascade and Resilience)
+
+### Additional Files Updated
+- `src/pages/Topic/hooks/useTopicLogic.js`
+- `tests/unit/hooks/useTopicLogic.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+
+### Additional Verification
+- Focused run passed:
+  - `npm run test -- tests/unit/hooks/useTopicLogic.test.js`
+  - Result: 1 file passed, 8 tests passed.
+- Consolidated run passed:
+  - `npm run test -- tests/unit/hooks/useTopicLogic.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useShortcuts.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - Result: 4 files passed, 40 tests passed.
+
+### Additional Completed Coverage
+- `useTopicLogic.handleDeleteTopic` now performs best-effort cleanup for topic-linked:
+  - `documents`,
+  - `resumen`,
+  - `quizzes`,
+  before deleting the topic and navigating back to subject.
+- Query and per-item deletion failures are tolerated and logged without blocking final topic deletion.
+
+## Additional Progress Update (2026-03-08 - Missing InstitutionId Deletion Variants)
+
+### Additional Files Updated
+- `tests/unit/hooks/useSubjects.test.js`
+- `tests/unit/hooks/useFolders.test.js`
+- `tests/unit/hooks/useShortcuts.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+
+### Additional Verification
+- Focused combined run passed:
+  - `npm run test -- tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useShortcuts.test.js`
+  - Result: 3 files passed, 37 tests passed.
+
+### Additional Completed Coverage
+- `useSubjects.permanentlyDeleteSubject`: deletes subject successfully when institution metadata is missing.
+- `useFolders.deleteFolder` / `deleteFolderOnly`: deletion flows still execute when folder institution metadata is missing.
+- `useShortcuts.deleteOrphanedShortcuts`: orphan cleanup still deletes shortcuts with missing institution metadata.
+- Checklist sync also marks subject-delete-triggered topic cascade coverage based on existing `useSubjects` cascade tests.
+
+## Additional Progress Update (2026-03-08 - Folder Deletion Failure Resilience)
+
+### Additional Files Updated
+- `src/hooks/useFolders.js`
+- `tests/unit/hooks/useFolders.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+
+### Additional Verification
+- Focused run passed:
+  - `npm run test -- tests/unit/hooks/useFolders.test.js`
+  - Result: 1 file passed, 18 tests passed.
+- Consolidated run passed:
+  - `npm run test -- tests/unit/hooks/useFolders.test.js tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useShortcuts.test.js tests/unit/hooks/useTopicLogic.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - Result: 5 files passed, 62 tests passed.
+
+### Additional Completed Coverage
+- `useFolders.deleteFolder` now includes best-effort shortcut cleanup and commit-failure fallback root folder deletion.
+- `useFolders.deleteFolderOnly` now includes best-effort shortcut cleanup and continues deleting the folder if the pre-delete move batch commit fails.
+- Added failure-path tests for:
+  - batch commit failure fallback,
+  - shortcut cleanup failure tolerance,
+  - existing query-failure tolerance with new shortcut cleanup paths.

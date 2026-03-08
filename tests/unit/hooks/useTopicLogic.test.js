@@ -20,6 +20,7 @@ const mocks = vi.hoisted(() => ({
   deleteDoc: vi.fn(),
   addDoc: vi.fn(),
   serverTimestamp: vi.fn(() => 'server-ts'),
+  getDocs: vi.fn(),
 }));
 
 vi.mock('react-router-dom', async () => {
@@ -57,6 +58,7 @@ vi.mock('firebase/firestore', async () => {
     deleteDoc: (...args) => mocks.deleteDoc(...args),
     addDoc: (...args) => mocks.addDoc(...args),
     serverTimestamp: (...args) => mocks.serverTimestamp(...args),
+    getDocs: (...args) => mocks.getDocs(...args),
   };
 });
 
@@ -66,6 +68,8 @@ const setupDefaultFirestore = () => {
     id: 'subject-1',
     data: () => ({ id: 'subject-1', name: 'Math', ownerId: 'owner-1', color: 'from-blue-400 to-blue-600' }),
   });
+
+  mocks.getDocs.mockResolvedValue({ docs: [] });
 
   mocks.onSnapshot.mockImplementation((ref, callback) => {
     const isTopicDoc = ref?.__kind === 'doc' && ref?.name === 'topics';
@@ -96,6 +100,7 @@ describe('useTopicLogic', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setupDefaultFirestore();
+    mocks.deleteDoc.mockResolvedValue(undefined);
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
     vi.stubGlobal('alert', vi.fn());
     vi.stubGlobal('confirm', vi.fn(() => true));
@@ -161,7 +166,100 @@ describe('useTopicLogic', () => {
       await result.current.handleDeleteTopic();
     });
 
-    expect(mocks.deleteDoc).toHaveBeenCalled();
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'topics', id: 'topic-1' })
+    );
+    expect(mocks.navigate).toHaveBeenCalledWith('/home/subject/subject-1');
+  });
+
+  it('cascades documents, resources, and quizzes before deleting topic', async () => {
+    const user = { uid: 'teacher-1', role: 'teacher' };
+
+    mocks.getDocs.mockImplementation(async (queryRef) => {
+      const collectionName = queryRef?.base?.name;
+      if (collectionName === 'documents') {
+        return { docs: [{ id: 'doc-1' }, { id: 'doc-2' }] };
+      }
+      if (collectionName === 'resumen') {
+        return { docs: [{ id: 'res-1' }] };
+      }
+      if (collectionName === 'quizzes') {
+        return { docs: [{ id: 'quiz-1' }] };
+      }
+      return { docs: [] };
+    });
+
+    const { result } = renderHook(() => useTopicLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.handleDeleteTopic();
+    });
+
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'documents', id: 'doc-1' })
+    );
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'documents', id: 'doc-2' })
+    );
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'resumen', id: 'res-1' })
+    );
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'quizzes', id: 'quiz-1' })
+    );
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'topics', id: 'topic-1' })
+    );
+    expect(mocks.navigate).toHaveBeenCalledWith('/home/subject/subject-1');
+  });
+
+  it('still deletes topic when resource queries or item deletions fail', async () => {
+    const user = { uid: 'teacher-1', role: 'teacher' };
+
+    mocks.getDocs.mockImplementation(async (queryRef) => {
+      const collectionName = queryRef?.base?.name;
+      if (collectionName === 'documents') {
+        return { docs: [{ id: 'doc-1' }] };
+      }
+      if (collectionName === 'resumen') {
+        throw new Error('resumen query failed');
+      }
+      if (collectionName === 'quizzes') {
+        return { docs: [{ id: 'quiz-1' }] };
+      }
+      return { docs: [] };
+    });
+
+    mocks.deleteDoc.mockImplementation(async (docRef) => {
+      if (docRef?.name === 'documents' && docRef?.id === 'doc-1') {
+        throw new Error('document delete failed');
+      }
+      return undefined;
+    });
+
+    const { result } = renderHook(() => useTopicLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.handleDeleteTopic();
+    });
+
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'documents', id: 'doc-1' })
+    );
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'quizzes', id: 'quiz-1' })
+    );
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'topics', id: 'topic-1' })
+    );
     expect(mocks.navigate).toHaveBeenCalledWith('/home/subject/subject-1');
   });
 

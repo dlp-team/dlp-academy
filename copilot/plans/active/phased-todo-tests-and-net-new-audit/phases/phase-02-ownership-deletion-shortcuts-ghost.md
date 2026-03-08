@@ -28,7 +28,7 @@
 - [ ] Subject deletion with multiple owners/editors
 - [ ] Subject deletion with orphaned shortcuts
 - [ ] Subject deletion in ghost mode
-- [ ] Subject deletion with missing institutionId
+- [x] Subject deletion with missing institutionId
 - [x] Subject deletion with failed topic/document/shortcut deletion (error handling)
 
 ## Folder deletion coverage
@@ -38,25 +38,25 @@
 - [ ] Folder deletion with shared subjects
 - [ ] Folder deletion with ghost mode
 - [ ] Folder deletion with orphaned shortcuts
-- [ ] Folder deletion with missing institutionId
-- [ ] Folder deletion with failed subject/shortcut deletion (error handling)
+- [x] Folder deletion with missing institutionId
+- [x] Folder deletion with failed subject/shortcut deletion (error handling)
 
 ## Topic deletion coverage
-- [ ] Deletes topic itself
-- [ ] Deletes quizzes/resources inside topic
-- [ ] Deletes documents inside topic
-- [ ] Topic deletion when subject is deleted (cascade)
+- [x] Deletes topic itself
+- [x] Deletes quizzes/resources inside topic
+- [x] Deletes documents inside topic
+- [x] Topic deletion when subject is deleted (cascade)
 - [ ] Topic deletion with orphaned resources/quizzes/documents
 - [ ] Topic deletion in ghost mode
 - [ ] Topic deletion with missing institutionId
-- [ ] Topic deletion with failed resource/document deletion (error handling)
+- [x] Topic deletion with failed resource/document deletion (error handling)
 
 ## Shortcut behavior coverage
 - [x] Delete shortcut to subject/folder/topic
 - [x] Shortcut owned by another user (permission denied)
 - [ ] Shortcut deletion in ghost mode
-- [ ] Shortcut deletion with missing institutionId
-- [ ] Shortcut deletion with failed deletion (error handling)
+- [x] Shortcut deletion with missing institutionId
+- [x] Shortcut deletion with failed deletion (error handling)
 
 ## Ghost mode coverage
 - [ ] Deleting subjects, folders, topics, shortcuts as ghost

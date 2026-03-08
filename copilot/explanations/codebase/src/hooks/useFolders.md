@@ -1,3 +1,19 @@
+## [2026-03-08] Folder Deletion Resilience Hardening
+### Context
+- Folder deletion paths needed stronger tolerance for partial cleanup failures (subjects/shortcuts) and batch commit failures.
+
+### Change
+- `deleteFolder` now:
+  - performs best-effort shortcut cleanup for folder and child-subject shortcuts owned by the current user,
+  - tolerates shortcut query/delete failures,
+  - falls back to direct root folder deletion if batch commit fails.
+- `deleteFolderOnly` now:
+  - tolerates pre-delete move batch commit failures,
+  - performs best-effort shortcut cleanup before final folder deletion.
+
+### Validation
+- Focused suite passed: `npm run test -- tests/unit/hooks/useFolders.test.js`.
+
 ## [2026-03-07] Home Data Readiness No Longer Requires Country
 ### Context & Architecture
 Folder loading is gated by `canReadHomeData` to avoid premature reads before profile bootstrap.

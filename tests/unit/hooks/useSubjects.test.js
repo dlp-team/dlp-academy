@@ -663,4 +663,21 @@ describe('useSubjects permanentlyDeleteSubject', () => {
       expect.objectContaining({ name: 'subjects', id: 'subject-2' })
     );
   });
+
+  it('permanently deletes subject even when institutionId metadata is missing', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ ownerId: ownerUser.uid }),
+    });
+
+    firestoreMocks.mockGetDocs.mockResolvedValue({ docs: [] });
+
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(result.current.permanentlyDeleteSubject('subject-no-inst')).resolves.toBeUndefined();
+
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-no-inst' })
+    );
+  });
 });

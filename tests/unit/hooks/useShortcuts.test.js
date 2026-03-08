@@ -215,6 +215,40 @@ describe('useShortcuts', () => {
     );
   });
 
+  it('deleteOrphanedShortcuts deletes orphan shortcut even when institutionId is missing', async () => {
+    const shortcuts = [
+      {
+        id: 'shortcut-orphan-no-inst',
+        ownerId: user.uid,
+        targetId: 'subject-missing-no-inst',
+        targetType: 'subject',
+        parentId: null,
+      },
+    ];
+
+    firestoreMocks.mockOnSnapshot.mockImplementation((refOrQuery, callback) => {
+      if (refOrQuery?.parts) {
+        callback({ docs: shortcuts.map((shortcut) => createDoc(shortcut.id, shortcut)) });
+        return vi.fn();
+      }
+
+      callback({ id: refOrQuery?.id, exists: () => false, data: () => ({}) });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useShortcuts(user));
+
+    await waitFor(() => {
+      expect(result.current.resolvedShortcuts).toHaveLength(1);
+    });
+
+    const deletedCount = await result.current.deleteOrphanedShortcuts();
+    expect(deletedCount).toBe(1);
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'shortcuts', id: 'shortcut-orphan-no-inst' })
+    );
+  });
+
   it('createShortcut deduplicates existing shortcuts and updates the primary one', async () => {
     const shortcuts = [
       {

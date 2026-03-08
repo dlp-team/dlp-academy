@@ -131,3 +131,58 @@
   - `tests/unit/hooks/useShortcuts.test.js`
   - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
   - Aggregate: 32 tests passing.
+
+## Additional progress (2026-03-08 - Topic Delete Cascade and Resilience)
+- Extended `useTopicLogic.handleDeleteTopic` to cascade cleanup of topic-linked:
+  - `documents`
+  - `resumen`
+  - `quizzes`
+  before deleting the topic itself.
+- Added topic deletion tests for:
+  - cascade cleanup success path
+  - partial-failure resilience (query/delete failures do not block final topic deletion)
+- Updated Phase 02 checklist and roadmap to reflect completed topic deletion scope.
+
+### Validation
+- Passed focused run:
+  - `tests/unit/hooks/useTopicLogic.test.js`
+  - Aggregate: 8 tests passing.
+- Passed consolidated run:
+  - `tests/unit/hooks/useTopicLogic.test.js`
+  - `tests/unit/hooks/useFolders.test.js`
+  - `tests/unit/hooks/useShortcuts.test.js`
+  - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - Aggregate: 40 tests passing.
+
+## Additional progress (2026-03-08 - Missing InstitutionId Deletion Variants)
+- Added deletion edge-case tests for missing metadata:
+  - `useSubjects.permanentlyDeleteSubject` with missing `institutionId`
+  - `useFolders.deleteFolder` and `useFolders.deleteFolderOnly` with missing `institutionId`
+  - `useShortcuts.deleteOrphanedShortcuts` with missing `institutionId`
+- Synced checklist to mark completed missing-institutionId deletion coverage and subject-delete-triggered topic cascade item.
+
+### Validation
+- Passed focused combined run:
+  - `tests/unit/hooks/useSubjects.test.js`
+  - `tests/unit/hooks/useFolders.test.js`
+  - `tests/unit/hooks/useShortcuts.test.js`
+  - Aggregate: 37 tests passing.
+
+## Additional progress (2026-03-08 - Folder Deletion Failure Resilience)
+- Hardened `useFolders` deletion flows:
+  - `deleteFolder` now performs best-effort shortcut cleanup and falls back to direct root folder delete when batch commit fails.
+  - `deleteFolderOnly` now performs best-effort shortcut cleanup and still deletes the folder when pre-delete move batch commit fails.
+- Added targeted tests for commit-failure and shortcut-delete failure paths.
+- Synced checklist item for "Folder deletion with failed subject/shortcut deletion (error handling)" to complete.
+
+### Validation
+- Passed focused run:
+  - `tests/unit/hooks/useFolders.test.js`
+  - Aggregate: 18 tests passing.
+- Passed consolidated run:
+  - `tests/unit/hooks/useFolders.test.js`
+  - `tests/unit/hooks/useSubjects.test.js`
+  - `tests/unit/hooks/useShortcuts.test.js`
+  - `tests/unit/hooks/useTopicLogic.test.js`
+  - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - Aggregate: 62 tests passing.
