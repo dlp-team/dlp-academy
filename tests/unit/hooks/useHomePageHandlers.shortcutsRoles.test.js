@@ -550,4 +550,80 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
     expect(config.logic.moveShortcut).not.toHaveBeenCalled();
   });
+
+  it('blocks viewer inside shared folder from upward-drop mutation handlers', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        currentFolder: {
+          id: 'shared-source',
+          parentId: 'parent-1',
+          isShared: true,
+          ownerId: 'owner-1',
+          editorUids: [],
+          sharedWithUids: ['viewer-1'],
+        },
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const dragEvent = {
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+      dataTransfer: {
+        getData: vi.fn((key) => {
+          if (key === 'subjectId') return 'subject-1';
+          return '';
+        }),
+      },
+    };
+
+    await handlers.handleUpwardDrop(dragEvent);
+
+    expect(dragEvent.preventDefault).not.toHaveBeenCalled();
+    expect(dragEvent.stopPropagation).not.toHaveBeenCalled();
+    expect(config.moveSubjectToParent).not.toHaveBeenCalled();
+    expect(config.moveFolderToParent).not.toHaveBeenCalled();
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+  });
+
+  it('blocks viewer inside shared folder from promoting folders and tree subject moves', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        currentFolder: {
+          id: 'shared-source',
+          parentId: 'parent-1',
+          isShared: true,
+          ownerId: 'owner-1',
+          editorUids: [],
+          sharedWithUids: ['viewer-1'],
+        },
+        folders: [
+          {
+            id: 'folder-1',
+            parentId: 'shared-source',
+            isShared: false,
+            ownerId: 'owner-1',
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'owner-1',
+            folderId: 'shared-source',
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+
+    await handlers.handlePromoteFolderWrapper('folder-1', null);
+    await handlers.handleTreeMoveSubject('subject-1', 'target-folder', 'shared-source');
+
+    expect(config.moveFolderToParent).not.toHaveBeenCalled();
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+  });
 });

@@ -57,3 +57,9 @@ function ExampleComponent() {
 ## Maintenance Notes
 - Keep this explanation updated when adding, renaming, or deleting functions in the source file.
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
+
+## Changelog
+- 2026-03-08: Added dedicated unit coverage in `tests/unit/hooks/useGhostDrag.test.js` validating:
+  - ghost creation/removal lifecycle from `onDragStart` and `onDragEnd`
+  - live position updates in `handleDrag` and no-op behavior for zeroed pointer events
+  - callback continuity when the source node ref is missing (defensive branch)

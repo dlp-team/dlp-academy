@@ -197,3 +197,31 @@
 - Passed focused run:
   - `tests/unit/hooks/useTopicLogic.test.js`
   - Aggregate: 10 tests passing.
+
+## Additional progress (2026-03-08 - Ghost Drag Hook Integrity)
+- Added a dedicated unit suite for `useGhostDrag` with coverage for:
+  - drag-ghost creation metadata (`data-original-scale` and `data-scale`) and teardown on drag end
+  - pointer-driven ghost position updates with zero-pointer event guard behavior
+  - missing source card fallback where callbacks still execute without ghost creation
+- Synced Phase 02 ghost checklist by marking `Ghost drag UI/state integrity` as complete.
+
+### Validation
+- Passed focused run:
+  - `tests/unit/hooks/useGhostDrag.test.js`
+  - Aggregate: 3 tests passing.
+- Passed adjacent drag regression run:
+  - `tests/unit/hooks/useTopicGridDnD.test.js`
+  - Aggregate: 4 tests passing.
+
+## Additional progress (2026-03-08 - Read-Only Shared-Context Mutation Guards)
+- Expanded `useHomePageHandlers` role-gate coverage for viewer-in-shared-folder guard branches:
+  - `handleUpwardDrop` returns before event/mutation execution.
+  - `handlePromoteFolderWrapper` blocks promote mutation path.
+  - `handleTreeMoveSubject` blocks tree move mutation path.
+- Scope remained test-only; production handler logic was unchanged.
+
+### Validation
+- Passed focused run:
+  - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - `tests/unit/hooks/useGhostDrag.test.js`
+  - Aggregate: 18 tests passing.

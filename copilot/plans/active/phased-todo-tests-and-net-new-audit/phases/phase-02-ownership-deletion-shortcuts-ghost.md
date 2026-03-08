@@ -62,7 +62,7 @@
 - [ ] Deleting subjects, folders, topics, shortcuts as ghost
 - [ ] UI disables/enables actions correctly in ghost mode
 - [ ] Data integrity after ghost actions
-- [ ] Ghost drag UI/state integrity
+- [x] Ghost drag UI/state integrity
 - [ ] Ghost drag edge cases (orphan/shared/deleted)
 
 ## Permissions and edge cases

@@ -1,0 +1,63 @@
+<!-- copilot/explanations/temporal/lossless-reports/2026-03-08/phase-02-ghost-drag-hook-integrity.md -->
+# Lossless Change Report - Phase 02 Ghost Drag Hook Integrity
+
+## Requested Scope
+- Continue Phase 02 without stopping and prioritize ghost-mode variants.
+- Add ghost-drag focused coverage and keep adjacent drag behavior validated.
+- Sync checklist/roadmap and explanations after implementation.
+
+## Preserved Behaviors
+- Production code in `src/hooks/useGhostDrag.js` and drag handlers was not modified.
+- Existing drag/drop tests and previously completed Phase 02 deletion/shortcut coverage were preserved.
+- No permission or deletion business logic was altered.
+
+## Touched Files
+- `tests/unit/hooks/useGhostDrag.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+- `copilot/explanations/temporal/phase-01-closure-and-phase-02-test-progress-2026-03-07.md`
+- `copilot/explanations/codebase/src/hooks/useGhostDrag.md`
+
+## File-by-File Verification
+- `tests/unit/hooks/useGhostDrag.test.js`
+  - Added lifecycle test covering custom ghost creation, scale metadata, and cleanup on drag end.
+  - Added drag movement test verifying pointer-based position updates and zero-pointer no-op guard.
+  - Added missing-ref defensive test confirming callbacks still fire without ghost creation.
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+  - Marked `Ghost drag UI/state integrity` as complete based on new hook coverage.
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+  - Updated immediate next actions to focus on pending ghost deletion variants and ghost edge-case handler flows.
+- `copilot/explanations/temporal/phase-01-closure-and-phase-02-test-progress-2026-03-07.md`
+  - Appended dated progress entry and validation results for this ghost-drag increment.
+- `copilot/explanations/codebase/src/hooks/useGhostDrag.md`
+  - Added changelog entry describing validated branches and new test suite.
+
+## Validation Summary
+- Focused suite passed:
+  - `npm run test -- tests/unit/hooks/useGhostDrag.test.js`
+  - Result: 1 file passed, 3 tests passed.
+- Adjacent drag suite passed:
+  - `npm run test -- tests/unit/hooks/useTopicGridDnD.test.js`
+  - Result: 1 file passed, 4 tests passed.
+
+## Lossless Outcome
+- Added targeted ghost-drag coverage and documentation updates only.
+- No regressions observed in adjacent drag tests.
+- Scope remained constrained to Phase 02 ghost-drag integrity progress.
+
+## Additional Progress Update (2026-03-08 - Read-Only Shared-Context Guards)
+
+### Additional Files Updated
+- `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+- `copilot/explanations/temporal/phase-01-closure-and-phase-02-test-progress-2026-03-07.md`
+
+### Additional Verification
+- Focused run passed:
+  - `npm run test -- tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js tests/unit/hooks/useGhostDrag.test.js`
+  - Result: 2 files passed, 18 tests passed.
+
+### Additional Completed Coverage
+- `useHomePageHandlers` viewer-in-shared-folder gate now has explicit tests for:
+  - `handleUpwardDrop` early return without invoking event or mutation side effects,
+  - `handlePromoteFolderWrapper` mutation blocking,
+  - `handleTreeMoveSubject` mutation blocking.
