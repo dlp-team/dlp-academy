@@ -10,6 +10,7 @@ import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import Profile from './pages/Profile/Profile';
 import OnboardingWizard from './pages/Onboarding/components/OnboardingWizard';
+import AdminPasswordWizard from './pages/Auth/components/AdminPasswordWizard';
 import Settings from './pages/Settings/Settings';
 
 // Main app pages
@@ -112,7 +113,8 @@ function App() {
     <BrowserRouter>
 
       {user && <OnboardingWizard user={user} />}
-      
+      {user && <AdminPasswordWizard user={user} />}
+
       <Routes>
         {/* Public Routes */}
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" />} />
