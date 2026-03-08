@@ -225,3 +225,16 @@
   - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
   - `tests/unit/hooks/useGhostDrag.test.js`
   - Aggregate: 18 tests passing.
+
+## Additional progress (2026-03-08 - Shortcut Deletion in Ghost Context)
+- Expanded `useHomeHandlers` deletion coverage for shared-tree shortcut contexts:
+  - `shortcut-subject` direct delete action still deletes the shortcut while nested in shared tree.
+  - `shortcut-folder` direct delete action still deletes the shortcut while nested in shared tree.
+- Preserved existing behavior where `unshare` remains blocked inside shared tree.
+- Synced Phase 02 checklist item `Shortcut deletion in ghost mode` to complete.
+
+### Validation
+- Passed focused run:
+  - `tests/unit/hooks/useHomeHandlers.shortcuts.test.js`
+  - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - Aggregate: 26 tests passing.

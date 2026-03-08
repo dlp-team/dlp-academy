@@ -18,6 +18,7 @@ import EditProfileModal from './modals/EditProfileModal';
 const Profile = ({ user }) => {
   const { userProfile, subjects, loading, updateUserProfile, logout } = useProfile(user);
   const [isEditing, setIsEditing] = useState(false);
+  const [headerUser, setHeaderUser] = useState(user);
 
   const { stats, loading: statsLoading, getChartData } = useUserStatistics(subjects, user?.uid);
 
@@ -34,7 +35,7 @@ const Profile = ({ user }) => {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-12 transition-colors">
-      <Header user={user} />
+      <Header user={headerUser} />
 
       <main className="max-w-5xl mx-auto px-6 pt-24 space-y-8">
 
@@ -77,9 +78,13 @@ const Profile = ({ user }) => {
         onClose={() => setIsEditing(false)}
         initialData={{
           ...userProfile,
-          displayName: userProfile?.displayName || user?.displayName
+          displayName: userProfile?.displayName || user?.displayName,
+          uid: user?.uid
         }}
-        onSave={updateUserProfile}
+        onSave={async (newData) => {
+          await updateUserProfile(newData);
+          setHeaderUser(prev => ({ ...prev, photoURL: newData.photoURL }));
+        }}
       />
     </div>
   );

@@ -1,3 +1,4 @@
+// tests/unit/hooks/useHomeHandlers.shortcuts.test.js
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useHomeHandlers } from '../../../src/pages/Home/hooks/useHomeHandlers';
 
@@ -267,5 +268,59 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
     await deleteHandlers.handleDelete();
 
     expect(deleteConfig.deleteShortcut).toHaveBeenCalledWith('shortcut-sub-10');
+  });
+
+  it('allows shortcut-subject direct deletion in shared-tree ghost context', async () => {
+    const config = createBaseConfig({
+      folders: [
+        { id: 'root-shared', isShared: true, parentId: null },
+        { id: 'child-folder', isShared: false, parentId: 'root-shared' },
+      ],
+      deleteConfig: {
+        isOpen: true,
+        type: 'shortcut-subject',
+        action: 'delete',
+        item: {
+          id: 'subject-ghost-1',
+          targetId: 'subject-ghost-1',
+          shortcutParentId: 'child-folder',
+          shortcutId: 'shortcut-sub-ghost-1',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.deleteShortcut).toHaveBeenCalledWith('shortcut-sub-ghost-1');
+    expect(config.unshareSubject).not.toHaveBeenCalled();
+    expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
+  });
+
+  it('allows shortcut-folder direct deletion in shared-tree ghost context', async () => {
+    const config = createBaseConfig({
+      folders: [
+        { id: 'root-shared', isShared: true, parentId: null },
+        { id: 'child-folder', isShared: false, parentId: 'root-shared' },
+      ],
+      deleteConfig: {
+        isOpen: true,
+        type: 'shortcut-folder',
+        action: 'delete',
+        item: {
+          id: 'folder-ghost-1',
+          targetId: 'folder-ghost-1',
+          shortcutParentId: 'child-folder',
+          shortcutId: 'shortcut-folder-ghost-1',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.deleteShortcut).toHaveBeenCalledWith('shortcut-folder-ghost-1');
+    expect(config.unshareFolder).not.toHaveBeenCalled();
+    expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
   });
 });

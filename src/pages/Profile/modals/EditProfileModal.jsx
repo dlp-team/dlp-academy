@@ -94,15 +94,11 @@ const EditProfileModal = ({ isOpen, onClose, initialData, onSave }) => {
                                 <Camera size={32} />
                                 <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
                             </label>
+                            {/* Removed edit pencil icon */}
                         </div>
                         {uploadError && (
                             <p className="text-xs text-red-600 mt-2">{uploadError}</p>
                         )}
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Click para cambiar foto</p>
-                            <div className="absolute bottom-0 right-0 bg-indigo-600 p-2 rounded-full text-white border-4 border-white dark:border-gray-800">
-                                <Edit2 size={14} />
-                            </div>
-                        </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Click para cambiar foto</p>
                     </div>
 

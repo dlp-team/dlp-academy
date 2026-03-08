@@ -54,7 +54,7 @@
 ## Shortcut behavior coverage
 - [x] Delete shortcut to subject/folder/topic
 - [x] Shortcut owned by another user (permission denied)
-- [ ] Shortcut deletion in ghost mode
+- [x] Shortcut deletion in ghost mode
 - [x] Shortcut deletion with missing institutionId
 - [x] Shortcut deletion with failed deletion (error handling)
 

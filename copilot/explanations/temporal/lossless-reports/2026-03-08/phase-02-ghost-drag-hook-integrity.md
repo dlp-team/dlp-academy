@@ -61,3 +61,24 @@
   - `handleUpwardDrop` early return without invoking event or mutation side effects,
   - `handlePromoteFolderWrapper` mutation blocking,
   - `handleTreeMoveSubject` mutation blocking.
+
+## Additional Progress Update (2026-03-08 - Shortcut Deletion in Ghost Context)
+
+### Additional Files Updated
+- `tests/unit/hooks/useHomeHandlers.shortcuts.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+- `copilot/explanations/temporal/phase-01-closure-and-phase-02-test-progress-2026-03-07.md`
+- `copilot/explanations/codebase/src/pages/Home/hooks/useHomeHandlers.md`
+
+### Additional Verification
+- Focused run passed:
+  - `npm run test -- tests/unit/hooks/useHomeHandlers.shortcuts.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - Result: 2 files passed, 26 tests passed.
+
+### Additional Completed Coverage
+- `useHomeHandlers.handleDelete` ghost-context shortcut deletion behavior is now explicitly verified for:
+  - `shortcut-subject` with `action: delete` in shared-tree parent context,
+  - `shortcut-folder` with `action: delete` in shared-tree parent context.
+- Existing guard behavior remains unchanged:
+  - `action: unshare` is still blocked when shortcut parent is inside shared tree.
