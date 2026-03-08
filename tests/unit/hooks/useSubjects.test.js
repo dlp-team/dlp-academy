@@ -680,4 +680,57 @@ describe('useSubjects permanentlyDeleteSubject', () => {
       expect.objectContaining({ name: 'subjects', id: 'subject-no-inst' })
     );
   });
+
+  it('permanent deletion only targets owner shortcuts, preserving other-user ghost shortcuts', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ ownerId: ownerUser.uid }),
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filters = queryObj.parts.filter((part) => part?.field);
+      const fieldMap = new Map(filters.map((f) => [f.field, f.value]));
+
+      if (fieldMap.get('subjectId') === 'subject-shared-1') {
+        return { docs: [] };
+      }
+
+      if (
+        fieldMap.get('targetId') === 'subject-shared-1' &&
+        fieldMap.get('targetType') === 'subject' &&
+        fieldMap.get('ownerId') === ownerUser.uid
+      ) {
+        return {
+          docs: [{ id: 'shortcut-owner-1', data: () => ({ ownerId: ownerUser.uid }) }],
+        };
+      }
+
+      return { docs: [] };
+    });
+
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(result.current.permanentlyDeleteSubject('subject-shared-1')).resolves.toBeUndefined();
+
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'shortcuts', id: 'shortcut-owner-1' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'shortcuts', id: 'shortcut-recipient-1' })
+    );
+
+    const shortcutQueryCall = firestoreMocks.mockQuery.mock.calls.find((call) => {
+      const clauses = call.filter((entry) => entry?.field);
+      const clauseMap = new Map(clauses.map((c) => [c.field, c.value]));
+      return clauseMap.get('targetId') === 'subject-shared-1' && clauseMap.get('targetType') === 'subject';
+    });
+
+    expect(shortcutQueryCall).toBeTruthy();
+    const ownerFilter = shortcutQueryCall.find((entry) => entry?.field === 'ownerId');
+    expect(ownerFilter?.value).toBe(ownerUser.uid);
+
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-shared-1' })
+    );
+  });
 });

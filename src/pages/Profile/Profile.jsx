@@ -83,7 +83,7 @@ const Profile = ({ user }) => {
         }}
         onSave={async (newData) => {
           await updateUserProfile(newData);
-          setHeaderUser(prev => ({ ...prev, photoURL: newData.photoURL }));
+          setHeaderUser(prev => ({ ...prev, ...newData }));
         }}
       />
     </div>

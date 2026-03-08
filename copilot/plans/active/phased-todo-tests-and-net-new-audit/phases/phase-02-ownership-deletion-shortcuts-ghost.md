@@ -26,7 +26,7 @@
 - [x] Deletes all documents inside topics (cascade)
 - [ ] Subject deletion in shared folder (permission checks)
 - [ ] Subject deletion with multiple owners/editors
-- [ ] Subject deletion with orphaned shortcuts
+- [x] Subject deletion with orphaned shortcuts
 - [ ] Subject deletion in ghost mode
 - [x] Subject deletion with missing institutionId
 - [x] Subject deletion with failed topic/document/shortcut deletion (error handling)

@@ -82,3 +82,22 @@
   - `shortcut-folder` with `action: delete` in shared-tree parent context.
 - Existing guard behavior remains unchanged:
   - `action: unshare` is still blocked when shortcut parent is inside shared tree.
+
+## Additional Progress Update (2026-03-08 - Subject Orphan/Ghost Shortcut Deletion Scope)
+
+### Additional Files Updated
+- `tests/unit/hooks/useSubjects.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/explanations/temporal/phase-01-closure-and-phase-02-test-progress-2026-03-07.md`
+- `copilot/explanations/codebase/src/hooks/useSubjects.md`
+
+### Additional Verification
+- Focused run passed:
+  - `npm run test -- tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useTopicLogic.test.js`
+  - Result: 3 files passed, 44 tests passed.
+
+### Additional Completed Coverage
+- `useSubjects.permanentlyDeleteSubject` owner-cleanup path now has explicit test verification for owner-scoped shortcut deletion:
+  - shortcut query includes `ownerId` filter bound to current owner,
+  - owner shortcut entry is deleted,
+  - non-owner shortcuts are not targeted by this cleanup flow (preserved as ghost/orphan entries for recipients).

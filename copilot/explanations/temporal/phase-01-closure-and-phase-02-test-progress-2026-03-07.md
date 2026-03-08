@@ -238,3 +238,17 @@
   - `tests/unit/hooks/useHomeHandlers.shortcuts.test.js`
   - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
   - Aggregate: 26 tests passing.
+
+## Additional progress (2026-03-08 - Subject Deletion Orphan/Ghost Shortcut Scope)
+- Added `useSubjects.permanentlyDeleteSubject` coverage that validates owner-scoped shortcut cleanup:
+  - deletion query includes `ownerId === currentUser.uid`
+  - owner shortcut is deleted
+  - non-owner recipient ghost/orphan shortcuts are not targeted by the owner cleanup path
+- Synced Phase 02 checklist item `Subject deletion with orphaned shortcuts` to complete.
+
+### Validation
+- Passed focused run:
+  - `tests/unit/hooks/useSubjects.test.js`
+  - `tests/unit/hooks/useFolders.test.js`
+  - `tests/unit/hooks/useTopicLogic.test.js`
+  - Aggregate: 44 tests passing.

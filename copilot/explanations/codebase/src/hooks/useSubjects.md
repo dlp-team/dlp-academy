@@ -12,6 +12,19 @@
 ### Validation
 - Focused unit suite passed: `npm run test -- tests/unit/hooks/useSubjects.test.js`.
 
+## [2026-03-08] Test Hardening: Owner-Scoped Shortcut Cleanup on Subject Delete
+### Context
+- Permanent subject deletion intentionally cleans owner-managed shortcuts while avoiding deletion of recipient-owned shortcut entries.
+
+### Validation Additions
+- Added targeted unit coverage in `tests/unit/hooks/useSubjects.test.js` validating:
+  - shortcut cleanup query is owner-scoped (`ownerId === currentUser.uid`),
+  - owner shortcut is deleted,
+  - non-owner ghost/orphan shortcuts are not targeted by the owner cleanup flow.
+
+### Validation
+- Focused suite passed: `npm run test -- tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useTopicLogic.test.js`.
+
 ## [2026-03-07] Home Data Readiness No Longer Requires Country
 ### Context
 - Country was removed from required registration profile fields.
