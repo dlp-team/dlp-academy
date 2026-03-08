@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useDarkMode } from '../../hooks/useDarkMode';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
     ChevronLeft, BookOpen, Calculator, Share2, 
@@ -479,18 +480,7 @@ const StudyGuide = () => {
     const [isMouseAtTop, setIsMouseAtTop] = useState(true);
     const [keepHeaderVisible, setKeepHeaderVisible] = useState(false);
     const [isGridMode, setIsGridMode] = useState(false);
-    const [isDark, setIsDark] = useState(() => {
-        if (typeof document !== 'undefined') {
-            return document.documentElement.classList.contains('dark');
-        }
-        return false;
-    });
-
-    const toggleDarkMode = () => {
-        const newDark = !isDark;
-        applyThemeToDom(newDark ? 'dark' : 'light', { animate: true, persist: true });
-        setIsDark(newDark);
-    };
+    const { isDark, toggleDarkMode } = useDarkMode();
 
     useEffect(() => {
         const handleScroll = () => {

@@ -294,34 +294,39 @@ const TopicContent = ({
         const levelConfig = {
             basico: {
                 title: 'Básico',
-                headerBg: 'bg-emerald-600',
-                accentBg: 'bg-emerald-500/20',
-                accentText: 'text-emerald-600 dark:text-emerald-400',
+                headerBg: 'bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-600 dark:to-emerald-700 backdrop-blur-xl border border-emerald-200/50 dark:border-emerald-400/30',
+                accentBg: 'bg-emerald-100 dark:bg-emerald-500/20',
+                accentText: 'text-emerald-700 dark:text-emerald-400',
                 buttonBg: 'bg-emerald-600 hover:bg-emerald-500',
-                buttonSubtle: 'bg-emerald-500/15 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300',
+                buttonSubtle: 'bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-500/15 dark:hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300',
                 icon: FlaskConical
             },
             intermedio: {
                 title: 'Intermedio',
-                headerBg: 'bg-blue-600',
-                accentBg: 'bg-blue-500/20',
-                accentText: 'text-blue-600 dark:text-blue-400',
+                headerBg: 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-600 dark:to-blue-700 backdrop-blur-xl border border-blue-200/50 dark:border-blue-400/30',
+                accentBg: 'bg-blue-100 dark:bg-blue-500/20',
+                accentText: 'text-blue-700 dark:text-blue-400',
                 buttonBg: 'bg-blue-600 hover:bg-blue-500',
-                buttonSubtle: 'bg-blue-500/15 hover:bg-blue-500/20 text-blue-700 dark:text-blue-300',
+                buttonSubtle: 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-500/15 dark:hover:bg-blue-500/20 text-blue-700 dark:text-blue-300',
                 icon: BookMarked
             },
             avanzado: {
                 title: 'Avanzado',
-                headerBg: 'bg-fuchsia-600',
-                accentBg: 'bg-fuchsia-500/20',
-                accentText: 'text-fuchsia-600 dark:text-fuchsia-400',
+                headerBg: 'bg-gradient-to-br from-fuchsia-50 to-fuchsia-100 dark:from-fuchsia-600 dark:to-fuchsia-700 backdrop-blur-xl border border-fuchsia-200/50 dark:border-fuchsia-400/30',
+                accentBg: 'bg-fuchsia-100 dark:bg-fuchsia-500/20',
+                accentText: 'text-fuchsia-700 dark:text-fuchsia-400',
                 buttonBg: 'bg-fuchsia-600 hover:bg-fuchsia-500',
-                buttonSubtle: 'bg-fuchsia-500/15 hover:bg-fuchsia-500/20 text-fuchsia-700 dark:text-fuchsia-300',
+                buttonSubtle: 'bg-fuchsia-100 hover:bg-fuchsia-200 dark:bg-fuchsia-500/15 dark:hover:bg-fuchsia-500/20 text-fuchsia-700 dark:text-fuchsia-300',
                 icon: GraduationCap
             }
         };
 
         const renderLevelSection = (levelKey) => {
+            // No renderizar si no hay tests en este nivel
+            if (quizzesByLevel[levelKey].length === 0) {
+                return null;
+            }
+
             const config = levelConfig[levelKey];
             const title = config.title;
             const total = completionByLevel[levelKey].total;
@@ -332,29 +337,29 @@ const TopicContent = ({
 
             return (
                 <div key={levelKey} className="space-y-5">
-                    <div className={`${config.headerBg} rounded-[2rem] p-8 shadow-lg shadow-slate-200/50 dark:shadow-black/40`}>
+                    <div className={`${config.headerBg} rounded-[2rem] p-8 shadow-lg shadow-slate-200/50 dark:shadow-black/40 text-slate-900 dark:text-white`}>
                         <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-4">
                                 <div className="w-14 h-14 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center shadow-inner">
-                                    <HeaderIcon className="w-7 h-7 text-white" />
+                                    <HeaderIcon className={`w-7 h-7 ${config.accentText}`} />
                                 </div>
                                 <div>
-                                    <h3 className="text-3xl font-black text-white tracking-tight">{title}</h3>
-                                    <p className="text-white/80 text-sm font-medium mt-0.5">
+                                    <h3 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{title}</h3>
+                                    <p className="text-slate-600 dark:text-white/80 text-sm font-medium mt-0.5">
                                         {completed}/{quizzesByLevel[levelKey].length} {quizzesByLevel[levelKey].length === 1 ? 'test' : 'tests'} completado{completed !== 1 ? 's' : ''}
                                     </p>
                                 </div>
                             </div>
                             {completed > 0 && averageScore > 0 && (
-                                <div className="text-right bg-white/10 backdrop-blur-sm rounded-2xl px-5 py-3">
-                                    <div className="text-white/70 text-[10px] font-bold uppercase tracking-widest">Nota media</div>
-                                    <div className="text-3xl font-black text-white leading-tight">{averageScore}%</div>
+                                <div className="text-right bg-slate-200/30 dark:bg-white/10 backdrop-blur-sm rounded-2xl px-5 py-3">
+                                    <div className="text-slate-700 dark:text-white/70 text-[10px] font-bold uppercase tracking-widest">Nota media</div>
+                                    <div className="text-3xl font-black text-slate-900 dark:text-white leading-tight">{averageScore}%</div>
                                 </div>
                             )}
                         </div>
-                        <div className="h-2 bg-white/20 rounded-full overflow-hidden mt-5">
+                        <div className="h-2 bg-slate-300/50 dark:bg-white/20 rounded-full overflow-hidden mt-5">
                             <div
-                                className="h-full bg-white/90 rounded-full transition-all duration-700 ease-out"
+                                className="h-full bg-slate-400 dark:bg-white/90 rounded-full transition-all duration-700 ease-out"
                                 style={{ width: `${percentage}%` }}
                             />
                         </div>
@@ -382,26 +387,53 @@ const TopicContent = ({
                             {quizzesByLevel[levelKey].map((quiz) => (
                                 <div
                                     key={quiz.id}
-                                    className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-900 dark:bg-slate-900 p-6 shadow-md"
+                                    className={`relative rounded-3xl border-2 transition-all duration-300 bg-white dark:bg-slate-900 p-6 shadow-md overflow-hidden ${
+                                        quiz.score !== undefined && quiz.score !== null
+                                            ? quiz.score >= 50
+                                                ? 'border-emerald-400 dark:border-emerald-500 bg-emerald-50 dark:bg-slate-900'
+                                                : 'border-red-400 dark:border-red-500 bg-red-50 dark:bg-slate-900'
+                                            : 'border-slate-200 dark:border-slate-800'
+                                    }`}
                                 >
+                                    {quiz.score !== undefined && quiz.score !== null && (
+                                        <div className={`absolute inset-x-0 top-0 h-1.5 ${
+                                            quiz.score >= 50
+                                                ? 'bg-gradient-to-r from-emerald-400 to-emerald-500'
+                                                : 'bg-gradient-to-r from-red-400 to-red-500'
+                                        }`}></div>
+                                    )}
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-2">
                                             <span className={`px-3 py-1 rounded-full text-xs font-bold ${config.accentBg} ${config.accentText}`}>
                                                 {title}
                                             </span>
                                             {quiz.score !== undefined && quiz.score !== null && (
-                                                <span className={`px-3 py-1 rounded-full text-xs font-bold ${quiz.score >= 50 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'}`}>
-                                                    {quiz.score >= 50 ? 'Aprobado' : 'No aprobado'}
+                                                <span className={`px-4 py-2 rounded-full text-xs font-black transition-all ${
+                                                    quiz.score >= 50 
+                                                        ? 'bg-emerald-300 dark:bg-emerald-500/40 text-emerald-900 dark:text-emerald-100 shadow-lg' 
+                                                        : 'bg-red-300 dark:bg-red-500/40 text-red-900 dark:text-red-100 shadow-lg'
+                                                }`}>
+                                                    {quiz.score >= 50 ? '✓ Aprobado' : '✗ Suspenso'}
                                                 </span>
                                             )}
                                         </div>
                                     </div>
 
-                                    <h4 className="text-lg font-medium text-white leading-tight mb-3 line-clamp-2">
+                                    <h4 className="text-lg font-medium text-slate-900 dark:text-white leading-tight mb-3 line-clamp-2">
                                         {quiz.name || 'Test Práctico'}
                                     </h4>
 
-                                    <div className="flex items-center gap-2 text-slate-400 text-sm mb-5">
+                                    {quiz.score !== undefined && quiz.score !== null && (
+                                        <div className={`mb-4 p-3 rounded-2xl text-center font-bold transition-all ${
+                                            quiz.score >= 50
+                                                ? 'bg-gradient-to-br from-emerald-300 to-emerald-400 dark:from-emerald-600 dark:to-emerald-500 text-white shadow-lg'
+                                                : 'bg-gradient-to-br from-red-300 to-red-400 dark:from-red-600 dark:to-red-500 text-white shadow-lg'
+                                        }`}>
+                                            <p className="text-3xl font-black">{Math.round(quiz.score)}%</p>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm mb-5">
                                         <Timer className="w-4 h-4" />
                                         <span className="opacity-80">15 min aprox</span>
                                     </div>

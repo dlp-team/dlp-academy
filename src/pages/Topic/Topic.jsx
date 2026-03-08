@@ -1,5 +1,6 @@
 // src/pages/Topic/Topic.jsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useDarkMode } from '../../hooks/useDarkMode';
 import { Loader2 } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import { useTopicLogic } from './hooks/useTopicLogic';
@@ -22,6 +23,7 @@ const N8N_WEBHOOK_URL = 'TU_URL_DE_N8N_AQUI';
 const Topic = ({ user }) => {
     // 1. Lógica base
     const logic = useTopicLogic(user);
+    const { isDark, toggleDarkMode } = useDarkMode();
 
     // 2. ESTADOS LOCALES
     const [userScores, setUserScores] = useState({});
