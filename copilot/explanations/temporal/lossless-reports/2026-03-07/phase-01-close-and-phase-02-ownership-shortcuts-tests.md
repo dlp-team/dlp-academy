@@ -148,3 +148,43 @@
   - topic deletion,
   - owner shortcut deletion,
   - final subject deletion.
+
+## Additional Progress Update (2026-03-08 - Shortcut Idempotency and Permission Denial)
+
+### Additional Files Updated
+- `tests/unit/hooks/useShortcuts.test.js`
+- `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+
+### Additional Verification
+- Focused run passed:
+  - `npm run test -- tests/unit/hooks/useShortcuts.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - Result: 2 files passed, 20 tests passed.
+
+### Additional Completed Coverage
+- `useShortcuts.deleteOrphanedShortcuts` idempotency:
+  - first cleanup removes orphan shortcuts,
+  - rerun returns zero deletions and performs no extra deletes.
+- `useShortcuts.deleteShortcut` failure path:
+  - Firestore permission-denied errors bubble to caller for owner-mismatch/authorization scenarios.
+- `useHomePageHandlers` owner-mismatch guard:
+  - non-editor cannot move a subject out of a shared source folder.
+  - repeated drop into the same folder remains a no-op (idempotent behavior).
+
+## Additional Progress Update (2026-03-08 - Folder Delete Rerun No-Op)
+
+### Additional Files Updated
+- `tests/unit/hooks/useFolders.test.js`
+
+### Additional Verification
+- Focused run passed:
+  - `npm run test -- tests/unit/hooks/useFolders.test.js`
+  - Result: 1 file passed, 12 tests passed.
+- Consolidated run passed:
+  - `npm run test -- tests/unit/hooks/useFolders.test.js tests/unit/hooks/useShortcuts.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - Result: 3 files passed, 32 tests passed.
+
+### Additional Completed Coverage
+- `useFolders.deleteFolder` idempotent no-op when folder is already missing.
+- `useFolders.deleteFolderOnly` idempotent no-op when folder is already missing.

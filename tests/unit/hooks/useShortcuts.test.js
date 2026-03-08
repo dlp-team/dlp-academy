@@ -161,6 +161,60 @@ describe('useShortcuts', () => {
     await expect(result.current.deleteShortcut('')).rejects.toThrow('Shortcut ID required');
   });
 
+  it('deleteOrphanedShortcuts is idempotent when rerun', async () => {
+    const orphan = {
+      id: 'shortcut-orphan',
+      ownerId: user.uid,
+      targetId: 'subject-missing',
+      targetType: 'subject',
+      institutionId: user.institutionId,
+      parentId: null,
+    };
+
+    firestoreMocks.mockOnSnapshot.mockImplementation((refOrQuery, callback) => {
+      if (refOrQuery?.parts) {
+        callback({ docs: [createDoc(orphan.id, orphan)] });
+        return vi.fn();
+      }
+
+      callback({ id: refOrQuery?.id, exists: () => false, data: () => ({}) });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useShortcuts(user));
+
+    await waitFor(() => {
+      expect(result.current.resolvedShortcuts).toHaveLength(1);
+    });
+
+    const firstRun = await result.current.deleteOrphanedShortcuts();
+    expect(firstRun).toBe(1);
+
+    await act(async () => {
+      firestoreMocks.mockOnSnapshot.mock.calls[0][1]({ docs: [] });
+    });
+
+    await waitFor(() => {
+      expect(result.current.resolvedShortcuts).toHaveLength(0);
+    });
+
+    const secondRun = await result.current.deleteOrphanedShortcuts();
+    expect(secondRun).toBe(0);
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledTimes(1);
+  });
+
+  it('deleteShortcut surfaces firestore permission-denied errors', async () => {
+    const permissionError = new Error('Missing or insufficient permissions.');
+    permissionError.code = 'permission-denied';
+    firestoreMocks.mockDeleteDoc.mockRejectedValueOnce(permissionError);
+
+    const { result } = renderHook(() => useShortcuts(user));
+
+    await expect(result.current.deleteShortcut('shortcut-foreign-owner')).rejects.toThrow(
+      'Missing or insufficient permissions.'
+    );
+  });
+
   it('createShortcut deduplicates existing shortcuts and updates the primary one', async () => {
     const shortcuts = [
       {

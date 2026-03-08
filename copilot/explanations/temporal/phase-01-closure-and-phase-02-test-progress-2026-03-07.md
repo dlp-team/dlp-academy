@@ -101,3 +101,33 @@
 - Passed focused run:
   - `tests/unit/hooks/useSubjects.test.js`
   - Aggregate: 14 tests passing.
+
+## Additional progress (2026-03-08 - Shortcut Idempotency and Permission Denial)
+- Added `useShortcuts` coverage for:
+  - idempotent rerun behavior in `deleteOrphanedShortcuts`
+  - permission-denied propagation in `deleteShortcut`
+- Added `useHomePageHandlers` coverage for:
+  - non-editor owner-mismatch guard when moving subjects from shared source folders
+  - repeated same-folder drop no-op behavior
+- Updated Phase 02 checklist and roadmap for completed idempotency and shortcut permission-denied scope.
+
+### Validation
+- Passed focused run:
+  - `tests/unit/hooks/useShortcuts.test.js`
+  - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - Aggregate: 20 tests passing.
+
+## Additional progress (2026-03-08 - Folder Delete Rerun No-Op)
+- Added `useFolders` idempotent rerun coverage:
+  - `deleteFolder` no-op when folder is already missing
+  - `deleteFolderOnly` no-op when folder is already missing
+
+### Validation
+- Passed focused run:
+  - `tests/unit/hooks/useFolders.test.js`
+  - Aggregate: 12 tests passing.
+- Passed consolidated run:
+  - `tests/unit/hooks/useFolders.test.js`
+  - `tests/unit/hooks/useShortcuts.test.js`
+  - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - Aggregate: 32 tests passing.

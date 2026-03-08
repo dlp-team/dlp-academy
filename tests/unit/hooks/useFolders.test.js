@@ -360,6 +360,40 @@ describe('useFolders', () => {
     );
   });
 
+  it('deleteFolder is idempotent no-op when folder is already missing', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((_queryObj, callback) => {
+      callback({ docs: [] });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.deleteFolder('folder-missing');
+      await result.current.deleteFolder('folder-missing');
+    });
+
+    expect(firestoreMocks.mockBatchCommit).not.toHaveBeenCalled();
+    expect(firestoreMocks.mockDeleteDoc).not.toHaveBeenCalled();
+  });
+
+  it('deleteFolderOnly is idempotent no-op when folder is already missing', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((_queryObj, callback) => {
+      callback({ docs: [] });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.deleteFolderOnly('folder-missing');
+      await result.current.deleteFolderOnly('folder-missing');
+    });
+
+    expect(firestoreMocks.mockBatchCommit).not.toHaveBeenCalled();
+    expect(firestoreMocks.mockDeleteDoc).not.toHaveBeenCalled();
+  });
+
   it('transferFolderOwnership updates owner and writes previous-owner shortcut', async () => {
     firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
       const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');

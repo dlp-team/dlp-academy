@@ -15,7 +15,7 @@
 - [ ] Cross-view parity across grid/list/tree/manual/shared
 - [ ] Real-time sync for deletion/shortcut/ghost actions
 - [ ] Breadcrumb behavior for shared and non-shared moves
-- [ ] Idempotency for rerun deletion/shortcut actions
+- [x] Idempotency for rerun deletion/shortcut actions
 - [ ] Lecture mode disables mutation for read-only roles
 - [ ] Multi-step deletion with nested shared subjects/topics/resources
 
@@ -53,7 +53,7 @@
 
 ## Shortcut behavior coverage
 - [x] Delete shortcut to subject/folder/topic
-- [ ] Shortcut owned by another user (permission denied)
+- [x] Shortcut owned by another user (permission denied)
 - [ ] Shortcut deletion in ghost mode
 - [ ] Shortcut deletion with missing institutionId
 - [ ] Shortcut deletion with failed deletion (error handling)

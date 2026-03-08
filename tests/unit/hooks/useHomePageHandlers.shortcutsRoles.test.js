@@ -484,4 +484,70 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
     expect(config.moveSubjectToParent).not.toHaveBeenCalled();
   });
+
+  it('blocks non-editor from moving subject out of shared source folder (owner mismatch)', () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        folders: [
+          {
+            id: 'source-shared',
+            isShared: true,
+            ownerId: 'owner-1',
+            parentId: null,
+            editorUids: [],
+            sharedWithUids: ['viewer-1'],
+          },
+          {
+            id: 'target-private',
+            isShared: false,
+            ownerId: 'owner-1',
+            parentId: null,
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'owner-1',
+            folderId: 'source-shared',
+            sharedWithUids: ['viewer-1'],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleDropOnFolderWrapper(
+      'target-private',
+      'subject-1',
+      'subject',
+      'source-shared',
+      null
+    );
+
+    expect(result).toBe(true);
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+  });
+
+  it('is idempotent no-op when dropping subject into same folder repeatedly', () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        folders: [
+          { id: 'folder-1', isShared: false, ownerId: 'owner-1', parentId: null },
+        ],
+        subjects: [
+          { id: 'subject-1', ownerId: 'owner-1', folderId: 'folder-1', sharedWithUids: [] },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    handlers.handleDropOnFolderWrapper('folder-1', 'subject-1', 'subject', 'folder-1', null);
+    handlers.handleDropOnFolderWrapper('folder-1', 'subject-1', 'subject', 'folder-1', null);
+
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+  });
 });
