@@ -428,4 +428,60 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
       { preserveSharing: true }
     );
   });
+
+  it('blocks viewer inside shared folder from promoting a subject shortcut upward', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        currentFolder: {
+          id: 'shared-source',
+          parentId: 'private-parent',
+          isShared: true,
+          ownerId: 'owner-1',
+          editorUids: [],
+          sharedWithUids: ['viewer-1'],
+        },
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    await handlers.handlePromoteSubjectWrapper('subject-1', 'shortcut-subject-1');
+
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+    expect(config.moveSubjectToParent).not.toHaveBeenCalled();
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+  });
+
+  it('moves shortcut only and does not mutate source subject when shortcut drag is used', () => {
+    const config = createBaseConfig({
+      logic: {
+        folders: [
+          { id: 'target-private', isShared: false, parentId: null, ownerId: 'owner-1' },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'owner-2',
+            folderId: 'source-folder',
+            sharedWithUids: ['viewer-1'],
+          },
+        ],
+      },
+      currentUserId: 'viewer-1',
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleDropOnFolderWrapper(
+      'target-private',
+      'subject-1',
+      'subject',
+      'source-folder',
+      'shortcut-subject-1'
+    );
+
+    expect(result).toBe(true);
+    expect(config.logic.moveShortcut).toHaveBeenCalledWith('shortcut-subject-1', 'target-private');
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+    expect(config.moveSubjectToParent).not.toHaveBeenCalled();
+  });
 });

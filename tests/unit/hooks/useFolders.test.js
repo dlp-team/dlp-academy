@@ -207,6 +207,159 @@ describe('useFolders', () => {
     );
   });
 
+  it('deleteFolder recursively deletes child subjects and child folders', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
+      const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
+
+      if (isOwnedQuery) {
+        callback({
+          docs: [
+            createDoc('folder-1', {
+              name: 'Folder 1',
+              ownerId: user.uid,
+              institutionId: user.institutionId,
+              parentId: null,
+            }),
+            createDoc('folder-child', {
+              name: 'Folder Child',
+              ownerId: user.uid,
+              institutionId: user.institutionId,
+              parentId: 'folder-1',
+            }),
+          ],
+        });
+      } else {
+        callback({ docs: [] });
+      }
+
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filter = queryObj.parts.find((entry) => entry?.field);
+
+      if (filter?.field === 'folderId' && filter?.value === 'folder-1') {
+        return {
+          docs: [createDoc('subject-root', { folderId: 'folder-1' })],
+          forEach: (fn) => [createDoc('subject-root', { folderId: 'folder-1' })].forEach(fn),
+        };
+      }
+
+      if (filter?.field === 'folderId' && filter?.value === 'folder-child') {
+        return {
+          docs: [createDoc('subject-child', { folderId: 'folder-child' })],
+          forEach: (fn) => [createDoc('subject-child', { folderId: 'folder-child' })].forEach(fn),
+        };
+      }
+
+      if (filter?.field === 'parentId' && filter?.value === 'folder-1') {
+        return {
+          docs: [createDoc('folder-child', { parentId: 'folder-1' })],
+          forEach: (fn) => [createDoc('folder-child', { parentId: 'folder-1' })].forEach(fn),
+        };
+      }
+
+      if (filter?.field === 'parentId' && filter?.value === 'folder-child') {
+        return { docs: [], forEach: () => {} };
+      }
+
+      return { docs: [], forEach: () => {} };
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.deleteFolder('folder-1');
+    });
+
+    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-root' })
+    );
+    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-child' })
+    );
+    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-child' })
+    );
+    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-1' })
+    );
+    expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it('deleteFolder still deletes folder when child queries fail', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
+      const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
+
+      if (isOwnedQuery) {
+        callback({
+          docs: [
+            createDoc('folder-1', {
+              name: 'Folder 1',
+              ownerId: user.uid,
+              institutionId: user.institutionId,
+              parentId: null,
+            }),
+          ],
+        });
+      } else {
+        callback({ docs: [] });
+      }
+
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDocs.mockRejectedValue(new Error('query failed'));
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.deleteFolder('folder-1');
+    });
+
+    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-1' })
+    );
+    expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it('deleteFolderOnly still deletes folder when move queries fail', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
+      const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
+
+      if (isOwnedQuery) {
+        callback({
+          docs: [
+            createDoc('folder-1', {
+              name: 'Folder 1',
+              ownerId: user.uid,
+              institutionId: user.institutionId,
+              parentId: 'parent-1',
+            }),
+          ],
+        });
+      } else {
+        callback({ docs: [] });
+      }
+
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDocs.mockRejectedValue(new Error('query failed'));
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.deleteFolderOnly('folder-1');
+    });
+
+    expect(firestoreMocks.mockBatchUpdate).not.toHaveBeenCalled();
+    expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-1' })
+    );
+  });
+
   it('transferFolderOwnership updates owner and writes previous-owner shortcut', async () => {
     firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
       const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
@@ -292,5 +445,48 @@ describe('useFolders', () => {
 
     expect(firestoreMocks.mockGetDoc).not.toHaveBeenCalled();
     expect(firestoreMocks.mockUpdateDoc).not.toHaveBeenCalled();
+  });
+
+  it('transferFolderOwnership rejects transfer when current user is not owner', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        ownerId: 'another-owner',
+        sharedWithUids: [user.uid, 'user-2'],
+        sharedWith: [
+          { uid: user.uid, email: user.email },
+          { uid: 'user-2', email: 'newowner@test.com' },
+        ],
+      }),
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await expect(
+      result.current.transferFolderOwnership('folder-1', 'newowner@test.com')
+    ).rejects.toThrow('Solo el propietario actual puede transferir la propiedad.');
+
+    expect(firestoreMocks.mockUpdateDoc).not.toHaveBeenCalled();
+    expect(firestoreMocks.mockSetDoc).not.toHaveBeenCalled();
+  });
+
+  it('transferFolderOwnership rejects transfer to non-shared recipient', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        ownerId: user.uid,
+        sharedWithUids: [user.uid],
+        sharedWith: [{ uid: user.uid, email: user.email }],
+      }),
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await expect(
+      result.current.transferFolderOwnership('folder-1', 'outsider@test.com')
+    ).rejects.toThrow('Solo puedes transferir la propiedad a un usuario que ya tenga acceso compartido.');
+
+    expect(firestoreMocks.mockUpdateDoc).not.toHaveBeenCalled();
+    expect(firestoreMocks.mockSetDoc).not.toHaveBeenCalled();
   });
 });

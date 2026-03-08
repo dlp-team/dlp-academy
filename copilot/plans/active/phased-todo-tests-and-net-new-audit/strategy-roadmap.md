@@ -12,7 +12,7 @@ Transform test backlog planning into a phased, implementation-ready sequence tha
 - Phase 05 - Firestore Rules Expansion: **PLANNED**
 
 ## Immediate Next Actions
-1. Expand ownership transfer negative-path coverage for subject/folder permissions and self-recipient branches.
-2. Add shortcut deduplication and non-owner mutation denial tests.
-3. Add delete-folder-cascade and subject-delete-cascade tests with failure handling assertions.
+1. Add idempotency assertions for rerun deletion/shortcut actions.
+2. Extend folder deletion error handling coverage to shortcut-linked and cross-view scenarios.
+3. Add shortcut permission-denied coverage for owner mismatch and failure paths.
 4. Re-run targeted phase suites and update phase checklists with completed items.

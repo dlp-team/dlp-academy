@@ -48,3 +48,103 @@
 ## Lossless Outcome
 - Requested behaviors were added as tests and plan status updates without modifying production hook/app logic.
 - No unrelated features, components, or workflows were changed.
+
+## Additional Progress Update (2026-03-08)
+
+### Additional Requested Scope Progressed
+- Continue Phase 02 by covering remaining ownership transfer error branches and shortcut deduplication behavior.
+
+### Additional Files Updated
+- `tests/unit/hooks/useSubjects.test.js`
+- `tests/unit/hooks/useFolders.test.js`
+- `tests/unit/hooks/useShortcuts.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+
+### Additional Verification
+- Targeted test run passed:
+  - `npm run test -- tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useShortcuts.test.js`
+  - Result: 3 files passed, 23 tests passed.
+
+### Additional Completed Coverage
+- `useSubjects.transferSubjectOwnership`: self-recipient, missing-subject, and non-owner rejection branches.
+- `useFolders.transferFolderOwnership`: non-owner and non-shared-recipient rejection branches.
+- `useShortcuts.createShortcut`: dedup branch updates primary shortcut and deletes duplicates without creating new shortcut.
+
+## Additional Progress Update (2026-03-08 - Cascade Deletion)
+
+### Additional Files Updated
+- `tests/unit/hooks/useSubjects.test.js`
+- `tests/unit/hooks/useFolders.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+
+### Additional Verification
+- Targeted run passed:
+  - `npm run test -- tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js`
+  - Result: 2 files passed, 21 tests passed.
+- Consolidated run passed:
+  - `npm run test -- tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useShortcuts.test.js`
+  - Result: 3 files passed, 26 tests passed.
+
+### Additional Completed Coverage
+- `useFolders.deleteFolder`: recursive cascade deletion covers nested folders and nested subjects.
+- `useSubjects.permanentlyDeleteSubject`: cascades topic, topic-document, owner shortcut, and subject deletion.
+
+## Additional Progress Update (2026-03-08 - Shortcut Permission and Partial Failure)
+
+### Additional Files Updated
+- `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+- `tests/unit/hooks/useSubjects.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+
+### Additional Verification
+- Targeted run passed:
+  - `npm run test -- tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js tests/unit/hooks/useSubjects.test.js`
+  - Result: 2 files passed, 25 tests passed.
+
+### Additional Completed Coverage
+- `useHomePageHandlers` shortcut context:
+  - viewer inside shared folder cannot promote subject shortcut upward (no mutation path executed)
+  - shortcut drag move updates shortcut only and does not mutate source subject
+- `useSubjects.permanentlyDeleteSubject` partial failure handling:
+  - continues and completes subject deletion when topic documents query fails for one topic
+  - continues when document and shortcut deletion operations fail for individual items
+
+## Additional Progress Update (2026-03-08 - Folder Partial Failure Resilience)
+
+### Additional Files Updated
+- `tests/unit/hooks/useFolders.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+
+### Additional Verification
+- Focused run passed:
+  - `npm run test -- tests/unit/hooks/useFolders.test.js`
+  - Result: 1 file passed, 10 tests passed.
+
+### Additional Completed Coverage
+- `useFolders.deleteFolder`: still deletes target folder and commits batch when child subject/folder queries fail.
+- `useFolders.deleteFolderOnly`: still deletes target folder and commits batch when move queries fail.
+
+## Additional Progress Update (2026-03-08 - Subject Resource/Quiz Cascade)
+
+### Additional Files Updated
+- `src/hooks/useSubjects.js`
+- `tests/unit/hooks/useSubjects.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+
+### Additional Verification
+- Focused run passed:
+  - `npm run test -- tests/unit/hooks/useSubjects.test.js`
+  - Result: 1 file passed, 14 tests passed.
+
+### Additional Completed Coverage
+- `useSubjects.permanentlyDeleteSubject` now attempts and tolerates partial failures for:
+  - `documents` per topic,
+  - `resumen` resources per topic,
+  - `quizzes` per topic,
+  - topic deletion,
+  - owner shortcut deletion,
+  - final subject deletion.

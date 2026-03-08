@@ -17,6 +17,9 @@ const OnboardingWizard = ({ user }) => {
     const [validating, setValidating] = useState(false);
     const [codeError, setCodeError] = useState("");
 
+    const [attempts, setAttempts] = useState(0);
+    const [lockoutTime, setLockoutTime] = useState(0);
+
     useEffect(() => {
         if (!user) return;
         
@@ -79,28 +82,47 @@ const OnboardingWizard = ({ user }) => {
         }
     };
 
+    // Temporizador para el bloqueo
+    useEffect(() => {
+        if (lockoutTime > 0) {
+            const timer = setTimeout(() => setLockoutTime(prev => prev - 1), 1000);
+            return () => clearTimeout(timer);
+        }
+    }, [lockoutTime]);
+
     const handleCodeValidation = async (e) => {
         e.preventDefault();
+        if (lockoutTime > 0) return;
+
         const code = new FormData(e.target).get('code').toUpperCase();
-        
         setValidating(true);
         setCodeError("");
 
         try {
             const validateFn = httpsCallable(functions, 'validateInstitutionalAccessCode');
             const result = await validateFn({ 
-                code: code, 
-                userType: tempData.role // Pasamos el rol elegido
+                verificationCode: code, 
+                userType: tempData.role,
+                email: user.email // Enviamos el email para validar el dominio en el backend
             });
 
             if (result.data && result.data.institutionId) {
+                // ÉXITO
                 handleAnswer('institutionId', result.data.institutionId);
             } else {
-                setCodeError("El código no es válido o ha expirado.");
+                throw new Error("Invalid");
             }
         } catch (error) {
-            console.error("Error al validar:", error);
-            setCodeError("Error de conexión o código incorrecto.");
+            // LÓGICA DE BLOQUEO
+            const newAttempts = attempts + 1;
+            setAttempts(newAttempts);
+            
+            if (newAttempts >= 3) {
+                setLockoutTime(30 * (newAttempts - 2)); // 30s, 60s, 90s...
+                setCodeError(`Demasiados intentos. Espera ${30 * (newAttempts - 2)} segundos.`);
+            } else {
+                setCodeError("Código no válido. Revisa que sea el correcto para tu rol.");
+            }
         } finally {
             setValidating(false);
         }
@@ -111,7 +133,6 @@ const OnboardingWizard = ({ user }) => {
     const currentField = missingFields[stepIndex];
 
     return (
-        // CAMBIO: z-50 a z-[9999] para cubrir cualquier Header
         <div className="fixed inset-0 z-[9999] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4">
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-8 max-w-md w-full relative overflow-hidden border border-transparent dark:border-slate-800">
                 
@@ -123,7 +144,7 @@ const OnboardingWizard = ({ user }) => {
                     />
                 </div>
 
-                {/* CAMBIO: Botón de ir atrás */}
+                {/* Botón de ir atrás */}
                 {stepIndex > 0 && !saving && (
                     <button 
                         onClick={handleBack}
@@ -158,7 +179,7 @@ const OnboardingWizard = ({ user }) => {
                                 <div className="flex justify-center mb-4"><Key size={48} className="text-emerald-600 dark:text-emerald-400"/></div>
                                 <h3 className="text-2xl font-bold text-center mb-2 text-gray-900 dark:text-white">Código de acceso</h3>
                                 <p className="text-center text-gray-500 dark:text-gray-400 mb-6 text-sm">
-                                    Introduce el código de 6 caracteres que te ha proporcionado tu centro educativo.
+                                    Introduce el código que te ha proporcionado tu institución.
                                 </p>
                                 
                                 {codeError && (
@@ -171,20 +192,18 @@ const OnboardingWizard = ({ user }) => {
                                 <form onSubmit={handleCodeValidation} className="space-y-4">
                                     <input 
                                         name="code" 
-                                        placeholder="Ej: A3F122" 
-                                        className="w-full p-4 text-center text-2xl tracking-[0.25em] font-mono border dark:border-slate-700 rounded-lg bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 uppercase" 
+                                        placeholder="Introduce tu código" 
+                                        className="w-full p-4 text-center text-2xl tracking-widest font-mono border dark:border-slate-700 rounded-lg bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 uppercase" 
                                         required 
-                                        maxLength={6}
-                                        minLength={6}
+                                        disabled={validating || lockoutTime > 0}
                                         autoComplete="off"
-                                        disabled={validating}
                                     />
                                     <button 
                                         type="submit" 
-                                        disabled={validating}
-                                        className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white py-3 rounded-lg font-bold transition-colors flex justify-center items-center gap-2"
+                                        disabled={validating || lockoutTime > 0}
+                                        className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-500 text-white py-3 rounded-lg font-bold transition-colors flex justify-center items-center gap-2"
                                     >
-                                        {validating ? <Loader2 className="w-5 h-5 animate-spin" /> : "Validar Código"}
+                                        {validating ? <Loader2 className="w-5 h-5 animate-spin" /> : (lockoutTime > 0 ? `Bloqueado (${lockoutTime}s)` : "Validar")}
                                     </button>
                                 </form>
                             </div>

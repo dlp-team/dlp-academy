@@ -318,6 +318,7 @@ describe('useSubjects transferSubjectOwnership', () => {
     vi.clearAllMocks();
     firestoreMocks.state.resetAutoId();
     firestoreMocks.mockOnSnapshot.mockReturnValue(vi.fn());
+    firestoreMocks.mockDeleteDoc.mockResolvedValue(undefined);
   });
 
   it('transfers ownership to a shared user and creates shortcut for previous owner', async () => {
@@ -398,5 +399,268 @@ describe('useSubjects transferSubjectOwnership', () => {
 
     expect(firestoreMocks.mockUpdateDoc).not.toHaveBeenCalled();
     expect(firestoreMocks.mockSetDoc).not.toHaveBeenCalled();
+  });
+
+  it('throws when transferring to the same user email', async () => {
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(
+      result.current.transferSubjectOwnership('subject-1', ownerUser.email)
+    ).rejects.toThrow('No puedes transferir la propiedad a tu propio usuario.');
+
+    expect(firestoreMocks.mockGetDoc).not.toHaveBeenCalled();
+  });
+
+  it('throws when subject does not exist', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => false,
+      data: () => ({}),
+    });
+
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(
+      result.current.transferSubjectOwnership('subject-missing', 'newowner@test.com')
+    ).rejects.toThrow('No se encontró la asignatura.');
+
+    expect(firestoreMocks.mockUpdateDoc).not.toHaveBeenCalled();
+    expect(firestoreMocks.mockSetDoc).not.toHaveBeenCalled();
+  });
+
+  it('throws when current user is not the owner', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        ownerId: 'another-owner',
+        sharedWithUids: ['owner-1', 'user-2'],
+        sharedWith: [
+          { uid: 'owner-1', email: 'owner@test.com' },
+          { uid: 'user-2', email: 'newowner@test.com' },
+        ],
+      }),
+    });
+
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(
+      result.current.transferSubjectOwnership('subject-1', 'newowner@test.com')
+    ).rejects.toThrow('Solo el propietario actual puede transferir la propiedad.');
+
+    expect(firestoreMocks.mockUpdateDoc).not.toHaveBeenCalled();
+    expect(firestoreMocks.mockSetDoc).not.toHaveBeenCalled();
+  });
+});
+
+describe('useSubjects permanentlyDeleteSubject', () => {
+  const ownerUser = {
+    uid: 'owner-1',
+    email: 'owner@test.com',
+    role: 'teacher',
+    displayName: 'Owner User',
+    institutionId: 'inst-1',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    firestoreMocks.state.resetAutoId();
+    firestoreMocks.mockOnSnapshot.mockReturnValue(vi.fn());
+  });
+
+  it('cascades topic, document, resource, quiz, shortcut, and subject deletions for owner', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ ownerId: ownerUser.uid }),
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filters = queryObj.parts.filter((part) => part?.field);
+      const fieldMap = new Map(filters.map((f) => [f.field, f.value]));
+
+      if (fieldMap.get('subjectId') === 'subject-1') {
+        return {
+          docs: [
+            { id: 'topic-1', data: () => ({}) },
+            { id: 'topic-2', data: () => ({}) },
+          ],
+        };
+      }
+
+      if (fieldMap.get('topicId') === 'topic-1') {
+        return {
+          docs:
+            queryObj.parts[0]?.name === 'documents'
+              ? [{ id: 'doc-1', data: () => ({}) }]
+              : queryObj.parts[0]?.name === 'resumen'
+                ? [{ id: 'res-1', data: () => ({}) }]
+                : [{ id: 'quiz-1', data: () => ({}) }],
+        };
+      }
+
+      if (fieldMap.get('topicId') === 'topic-2') {
+        return {
+          docs:
+            queryObj.parts[0]?.name === 'documents'
+              ? [{ id: 'doc-2', data: () => ({}) }]
+              : queryObj.parts[0]?.name === 'resumen'
+                ? [{ id: 'res-2', data: () => ({}) }]
+                : [{ id: 'quiz-2', data: () => ({}) }],
+        };
+      }
+
+      if (
+        fieldMap.get('targetId') === 'subject-1' &&
+        fieldMap.get('targetType') === 'subject' &&
+        fieldMap.get('ownerId') === ownerUser.uid
+      ) {
+        return {
+          docs: [{ id: 'shortcut-1', data: () => ({}) }],
+        };
+      }
+
+      return { docs: [] };
+    });
+
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(result.current.permanentlyDeleteSubject('subject-1')).resolves.toBeUndefined();
+
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'documents', id: 'doc-1' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'documents', id: 'doc-2' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'resumen', id: 'res-1' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'resumen', id: 'res-2' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'quizzes', id: 'quiz-1' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'quizzes', id: 'quiz-2' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'topics', id: 'topic-1' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'topics', id: 'topic-2' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'shortcuts', id: 'shortcut-1' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-1' })
+    );
+  });
+
+  it('rejects permanent deletion when current user is not owner', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ ownerId: 'another-owner' }),
+    });
+
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(result.current.permanentlyDeleteSubject('subject-1')).rejects.toThrow(
+      'Only the owner can permanently delete this subject'
+    );
+
+    expect(firestoreMocks.mockDeleteDoc).not.toHaveBeenCalled();
+  });
+
+  it('continues permanent deletion when topic/document/resource/quiz/shortcut cleanup partially fails', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ ownerId: ownerUser.uid }),
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filters = queryObj.parts.filter((part) => part?.field);
+      const fieldMap = new Map(filters.map((f) => [f.field, f.value]));
+
+      if (fieldMap.get('subjectId') === 'subject-2') {
+        return {
+          docs: [
+            { id: 'topic-a', data: () => ({}) },
+            { id: 'topic-b', data: () => ({}) },
+          ],
+        };
+      }
+
+      if (fieldMap.get('topicId') === 'topic-a') {
+        return {
+          docs:
+            queryObj.parts[0]?.name === 'documents'
+              ? [{ id: 'doc-a', data: () => ({}) }]
+              : queryObj.parts[0]?.name === 'resumen'
+                ? [{ id: 'res-a', data: () => ({}) }]
+                : [{ id: 'quiz-a', data: () => ({}) }],
+        };
+      }
+
+      if (fieldMap.get('topicId') === 'topic-b') {
+        if (queryObj.parts[0]?.name === 'documents') {
+          throw new Error('topic documents query failed');
+        }
+        if (queryObj.parts[0]?.name === 'resumen') {
+          throw new Error('topic resources query failed');
+        }
+        if (queryObj.parts[0]?.name === 'quizzes') {
+          throw new Error('topic quizzes query failed');
+        }
+      }
+
+      if (
+        fieldMap.get('targetId') === 'subject-2' &&
+        fieldMap.get('targetType') === 'subject' &&
+        fieldMap.get('ownerId') === ownerUser.uid
+      ) {
+        return {
+          docs: [{ id: 'shortcut-a', data: () => ({}) }],
+        };
+      }
+
+      return { docs: [] };
+    });
+
+    firestoreMocks.mockDeleteDoc.mockImplementation(async (ref) => {
+      if (ref?.name === 'documents' && ref?.id === 'doc-a') {
+        throw new Error('document delete failed');
+      }
+      if (ref?.name === 'resumen' && ref?.id === 'res-a') {
+        throw new Error('resource delete failed');
+      }
+      if (ref?.name === 'quizzes' && ref?.id === 'quiz-a') {
+        throw new Error('quiz delete failed');
+      }
+      if (ref?.name === 'shortcuts' && ref?.id === 'shortcut-a') {
+        throw new Error('shortcut delete failed');
+      }
+      return undefined;
+    });
+
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(result.current.permanentlyDeleteSubject('subject-2')).resolves.toBeUndefined();
+
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'resumen', id: 'res-a' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'quizzes', id: 'quiz-a' })
+    );
+
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'topics', id: 'topic-a' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'topics', id: 'topic-b' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-2' })
+    );
   });
 });

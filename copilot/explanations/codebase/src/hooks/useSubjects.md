@@ -1,3 +1,17 @@
+## [2026-03-08] Permanent Delete Cascade Expanded to Quizzes and Resources
+### Context
+- Subject permanent deletion coverage required full topic dependency cleanup, including generated resources and quizzes.
+
+### Change
+- Updated `permanentlyDeleteSubject` in `src/hooks/useSubjects.js` to cascade delete, per topic:
+  - `documents`
+  - `resumen` resources
+  - `quizzes`
+- Preserved existing best-effort behavior: query/deletion failures are logged and do not block final topic/subject cleanup.
+
+### Validation
+- Focused unit suite passed: `npm run test -- tests/unit/hooks/useSubjects.test.js`.
+
 ## [2026-03-07] Home Data Readiness No Longer Requires Country
 ### Context
 - Country was removed from required registration profile fields.

@@ -27,3 +27,77 @@
 - `phase-01-core-routing-session-theme-utilities.md`: all items checked.
 - `phase-02-ownership-deletion-shortcuts-ghost.md`: checked completed ownership/shortcut/folder-delete items covered by this implementation.
 - `README.md` and `strategy-roadmap.md` in the active plan updated to reflect current phase and next actions.
+
+## Additional progress (2026-03-08)
+- Added missing ownership transfer error-path tests in subject and folder hooks:
+  - self recipient rejection
+  - missing/not-found source rejection (subject)
+  - non-owner permission rejection
+  - non-shared recipient rejection (folder)
+- Added shortcut deduplication coverage for `createShortcut` existing-shortcut path:
+  - updates primary shortcut location
+  - deletes duplicate shortcuts
+  - avoids new shortcut creation
+
+### Validation
+- Passed focused suites after additions:
+  - `tests/unit/hooks/useSubjects.test.js`
+  - `tests/unit/hooks/useFolders.test.js`
+  - `tests/unit/hooks/useShortcuts.test.js`
+  - Aggregate: 23 tests passing.
+
+## Additional progress (2026-03-08 - Cascade Deletion)
+- Added `useFolders.deleteFolder` recursive cascade coverage:
+  - deletes nested child folders
+  - deletes subjects from root and nested folders
+  - commits a single batch with all deletions
+- Added `useSubjects.permanentlyDeleteSubject` cascade coverage:
+  - deletes topic documents
+  - deletes topics
+  - deletes owner shortcuts targeting the subject
+  - deletes subject document after dependency cleanup
+  - verifies non-owner rejection path remains protected
+
+### Validation
+- Focused and consolidated runs passing after this increment:
+  - `tests/unit/hooks/useSubjects.test.js`
+  - `tests/unit/hooks/useFolders.test.js`
+  - `tests/unit/hooks/useShortcuts.test.js`
+  - Aggregate: 26 tests passing.
+
+## Additional progress (2026-03-08 - Shortcut Permission and Partial Failure)
+- Added non-owner shortcut-context denial coverage in `useHomePageHandlers`:
+  - viewer inside shared folder cannot promote subject shortcut upward
+  - shortcut-based drag move does not mutate source subject
+- Added partial-failure handling coverage for `useSubjects.permanentlyDeleteSubject`:
+  - continues after topic documents query failure
+  - continues after document and shortcut delete failures
+  - still deletes the subject at the end
+
+### Validation
+- Passed focused run after this increment:
+  - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - `tests/unit/hooks/useSubjects.test.js`
+  - Aggregate: 25 tests passing.
+
+## Additional progress (2026-03-08 - Folder Partial Failure Resilience)
+- Added folder deletion resilience coverage in `useFolders`:
+  - `deleteFolder` still commits and deletes target folder when child queries fail
+  - `deleteFolderOnly` still commits and deletes target folder when move queries fail
+
+### Validation
+- Passed focused run:
+  - `tests/unit/hooks/useFolders.test.js`
+  - Aggregate: 10 tests passing.
+
+## Additional progress (2026-03-08 - Subject Quiz/Resource Cascade)
+- Extended `useSubjects.permanentlyDeleteSubject` to include per-topic cleanup for:
+  - `resumen` resources
+  - `quizzes`
+- Extended unit coverage to verify successful cascade and partial-failure resilience for both collections.
+- Updated Phase 02 checklist and roadmap to reflect completed cascade scope.
+
+### Validation
+- Passed focused run:
+  - `tests/unit/hooks/useSubjects.test.js`
+  - Aggregate: 14 tests passing.

@@ -3,14 +3,14 @@
 
 ## Ownership transfer
 - [x] Transfer subject ownership: owner can transfer to valid shared user
-- [ ] Transfer subject ownership: error on invalid user/self/permission
+- [x] Transfer subject ownership: error on invalid user/self/permission
 - [x] Transfer folder ownership: owner can transfer to valid shared user
-- [ ] Transfer folder ownership: error on invalid user/self/permission
+- [x] Transfer folder ownership: error on invalid user/self/permission
 
 ## Advanced shortcuts and deletion behavior
-- [ ] Shortcut deduplication: re-sharing same subject/folder does not create duplicate shortcuts
+- [x] Shortcut deduplication: re-sharing same subject/folder does not create duplicate shortcuts
 - [x] Shortcut move: moving shortcut between folders updates only shortcut, not source item
-- [ ] Non-owner mutation denial via shortcut context
+- [x] Non-owner mutation denial via shortcut context
 - [x] Orphan shortcut deletion when source is deleted/unshared
 - [ ] Cross-view parity across grid/list/tree/manual/shared
 - [ ] Real-time sync for deletion/shortcut/ghost actions
@@ -20,20 +20,20 @@
 - [ ] Multi-step deletion with nested shared subjects/topics/resources
 
 ## Subject deletion coverage
-- [ ] Deletes all topics inside subject (cascade)
-- [ ] Deletes all quizzes/resources inside topics
-- [ ] Deletes all shortcuts pointing to subject
-- [ ] Deletes all documents inside topics (cascade)
+- [x] Deletes all topics inside subject (cascade)
+- [x] Deletes all quizzes/resources inside topics
+- [x] Deletes all shortcuts pointing to subject
+- [x] Deletes all documents inside topics (cascade)
 - [ ] Subject deletion in shared folder (permission checks)
 - [ ] Subject deletion with multiple owners/editors
 - [ ] Subject deletion with orphaned shortcuts
 - [ ] Subject deletion in ghost mode
 - [ ] Subject deletion with missing institutionId
-- [ ] Subject deletion with failed topic/document/shortcut deletion (error handling)
+- [x] Subject deletion with failed topic/document/shortcut deletion (error handling)
 
 ## Folder deletion coverage
 - [x] Delete folder only (subjects moved, no deletion)
-- [ ] Delete folder and all contents (cascade)
+- [x] Delete folder and all contents (cascade)
 - [ ] Unshare folder (shortcuts hidden/deleted)
 - [ ] Folder deletion with shared subjects
 - [ ] Folder deletion with ghost mode
@@ -68,7 +68,7 @@
 ## Permissions and edge cases
 - [ ] Shared vs non-shared folders/subjects/topics
 - [ ] Manual order updates after deletion
-- [ ] Cascade deletion (subject -> topics -> quizzes/resources -> documents)
+- [x] Cascade deletion (subject -> topics -> quizzes/resources -> documents)
 - [ ] Error handling for partial failures
 - [ ] UI feedback validation (Spanish text, icons, no alerts)
 - [ ] Deleting items with no children
