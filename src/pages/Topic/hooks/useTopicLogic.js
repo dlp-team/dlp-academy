@@ -166,11 +166,11 @@ export const useTopicLogic = (user) => {
 
         fetchTopicDetails();
 
-        // Listener independiente para exams (usa "topicid" en minúsculas)
+        // Listener independiente para exams (relación canónica por topicId)
         if (user && topicId) {
-            const examsQ = query(collection(db, "exams"), where("topicid", "==", topicId));
+            const examsQ = query(collection(db, "exams"), where("topicId", "==", topicId));
             unsubscribeExams = onSnapshot(examsQ, (snap) => {
-                console.log("[EXAMS] query topicid ==", topicId, "=> docs:", snap.size);
+                console.log("[EXAMS] query topicId ==", topicId, "=> docs:", snap.size);
                 const examsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 console.log("[EXAMS] data:", examsData);
                 setTopic(prev => ({

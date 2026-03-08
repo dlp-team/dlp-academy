@@ -27,9 +27,24 @@ This plan standardizes all topic-linked content to the same relational model use
 
 ## Current Status Summary
 
-- Plan state: **TODO**
-- Current phase: **Phase 00 - System audit and canonical contract definition (PLANNED)**
+- Plan state: **ACTIVE**
+- Current phase: **Phase 02 - Data migration and backfill (READY FOR EXECUTION)**
 - Audit artifact: `working/audit-topic-linked-content-2026-03-08.md`
+- Started: 2026-03-08
+- Phase 01 completed: 2026-03-08
+- Phase 02 started: 2026-03-08
+
+### Phase 02 Status: Ready to Execute
+
+Migration assets have been created and documented. User action required:
+
+1. **Create Firestore backup** (REQUIRED)
+2. **Run dry-run migration**: `DRY_RUN=true node scripts/migrate-exams-topicid.cjs`
+3. **Review output** carefully
+4. **Execute live migration**: `DRY_RUN=false node scripts/migrate-exams-topicid.cjs`
+5. **Verify** exams appear in topic page
+
+See `working/phase-02-summary.md` for complete instructions.
 
 ## Key Decisions
 

@@ -15,9 +15,9 @@ Make all topic-related entities relational and deterministic by enforcing `topic
 
 ## Phase Status
 
-- Phase 00 - System audit and canonical contract definition: **PLANNED**
-- Phase 01 - App contract normalization (`topicId` reads/writes): **PLANNED**
-- Phase 02 - Data migration and backfill (legacy to canonical): **PLANNED**
+- Phase 00 - System audit and canonical contract definition: **COMPLETED**
+- Phase 01 - App contract normalization (`topicId` reads/writes): **COMPLETED**
+- Phase 02 - Data migration and backfill (legacy to canonical): **IN_PROGRESS**
 - Phase 03 - Firestore rules and index hardening: **PLANNED**
 - Phase 04 - Compatibility removal and duplicate cleanup: **PLANNED**
 - Phase 05 - Review gate and release closure: **PLANNED**

@@ -763,8 +763,46 @@ service cloud.firestore {
     // NUEVAS REGLAS PARA EXÁMENES (EXAMS)
     // -----------------------------------------
     match /exams/{examId} {
-      allow read: if isSignedIn();
-      allow write: if isSignedIn();
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasTopicRef(request.resource.data)
+            && topicInstitutionMatches(topicRef(request.resource.data))
+            && request.resource.data.institutionId == currentUserInstitutionId()
+          )
+          || request.resource.data.ownerId == request.auth.uid
+        );
+
+      allow read: if isSignedIn()
+        && (
+          canReadResource(resource.data)
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+          || resource.data.ownerId == request.auth.uid
+        );
+
+      allow update: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+          || resource.data.ownerId == request.auth.uid
+        );
+
+      allow delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || resource.data.ownerId == request.auth.uid
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+        );
     }
   }
 }

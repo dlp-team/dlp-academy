@@ -286,6 +286,7 @@ src/
 
 ### Firebase Patterns
 - **Collections**: camelCase (e.g., `institutionUsers`, `studyTopics`)
+- **Naming Language**: All Firestore collection names, document field names, and schema identifiers must be in English for consistency and professionalism (e.g., `quizzes`, `documents`, `exams`, not `cuestionarios`, `documentos`, `exámenes`)
 - **Query structure**: Use `where()` clauses for `institutionId` scoping
 - **Optimistic UI**: Update local state before Firestore write
 - **Error handling**: Always use try-catch with user-friendly messages
