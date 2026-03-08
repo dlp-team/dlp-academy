@@ -1,11 +1,5 @@
-<<<<<<< HEAD
 import React, { useEffect, useState, useMemo } from 'react';
 import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Loader2, Wand2, Upload, FileText, Trash2, ChevronDown } from 'lucide-react';
-=======
-// src/components/modals/QuizModal.jsx
-import React, { useEffect, useState } from 'react';
-import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Loader2, Wand2, Upload, FileText, Trash2 } from 'lucide-react';
->>>>>>> 633d164fe15b2630f5fba7fc245a6ea5a1e2f040
 
 const QuizModal = ({ 
     isOpen, 

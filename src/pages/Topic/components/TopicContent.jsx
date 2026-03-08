@@ -3,6 +3,7 @@ import React, { useMemo } from 'react';
 import { Loader2, FileText, Upload, BookOpen, Calculator, ClipboardList, Clock } from 'lucide-react';
 import FileCard from '../FileCard/FileCard';
 import QuizCard from '../../../components/modules/QuizCard/QuizCard';
+import ExamCard from '../ExamCard/ExamCard';
 
 const TopicContent = ({ 
     activeTab, 
@@ -165,38 +166,15 @@ const TopicContent = ({
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {topic.exams.map(exam => (
-                                <button
+                                <ExamCard
                                     key={exam.id}
-                                    onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/exam/${exam.id}`)}
-                                    className="group relative overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-all duration-500 hover:scale-[1.02] text-left"
-                                >
-                                    <div className={`absolute inset-0 bg-gradient-to-br ${subjectColor} opacity-85 group-hover:opacity-100 transition-opacity`} />
-                                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                                        <ClipboardList className="w-28 h-28 text-white absolute -bottom-4 -right-4 opacity-10 rotate-6" />
-                                    </div>
-                                    <div className="relative z-10 p-6 flex items-center gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
-                                            <ClipboardList className="w-6 h-6 text-white" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h4 className="text-lg font-black text-white truncate">
-                                                {exam.examen_titulo || 'Examen'}
-                                            </h4>
-                                            <div className="flex items-center gap-3 mt-1">
-                                                <span className="text-white/70 text-xs font-bold">
-                                                    {exam.preguntas?.length || 0} preguntas
-                                                </span>
-                                                <span className="text-white/40">·</span>
-                                                <span className="text-white/70 text-xs font-bold flex items-center gap-1">
-                                                    <Clock className="w-3 h-3" /> 1 hora
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <span className="text-white/60 text-xs font-bold group-hover:text-white/90 transition-colors shrink-0">
-                                            Empezar →
-                                        </span>
-                                    </div>
-                                </button>
+                                    exam={exam}
+                                    subject={subject}
+                                    navigate={navigate}
+                                    subjectId={subjectId}
+                                    topicId={topicId}
+                                    permissions={permissions}
+                                />
                             ))}
                         </div>
                     </div>

@@ -4,19 +4,11 @@ import {
     ChevronLeft, Plus, Trash2, Save, Eye,
     ChevronDown, BookOpen, Calculator, AlertCircle,
     CheckCircle2, Loader2, PenLine, X, Copy, MoveUp, MoveDown,
-<<<<<<< HEAD
     LayoutList
 } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from "../../firebase/config";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-=======
-    LayoutList, Sparkles, ShieldAlert
-} from 'lucide-react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { canEdit } from '../../utils/permissionUtils';
->>>>>>> 633d164fe15b2630f5fba7fc245a6ea5a1e2f040
 
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
@@ -229,9 +221,7 @@ const StudyGuideEditor = ({ user }) => {
         const load = async () => {
             if (!activeDocId) return;
             try {
-<<<<<<< HEAD
-                // 1. Cargar color de la SUBJECT
-=======
+
                 // 1. Check permissions first
                 const topicSnap = await getDoc(doc(db, 'topics', topicId));
                 if (!topicSnap.exists()) {
@@ -250,7 +240,6 @@ const StudyGuideEditor = ({ user }) => {
                 }
                 
                 // 2. Load subject color (Priority)
->>>>>>> 633d164fe15b2630f5fba7fc245a6ea5a1e2f040
                 const subjectSnap = await getDoc(doc(db, 'subjects', subjectId));
                 if (subjectSnap.exists() && subjectSnap.data().color) {
                     setTopicGradient(subjectSnap.data().color);

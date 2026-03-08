@@ -37,6 +37,7 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         deleteShortcut,
         moveShortcut,
         updateShortcutAppearance,
+        setShortcutHiddenInManual,
         deleteOrphanedShortcuts
     } = useShortcuts(user);
 

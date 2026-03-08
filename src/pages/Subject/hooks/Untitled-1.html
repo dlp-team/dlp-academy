@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Academia Online</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08090e;--bg2:#0e0f17;--bg3:#141620;
+  --surface:rgba(255,255,255,0.035);
+  --border:rgba(255,255,255,0.07);--border-hi:rgba(255,255,255,0.13);
+  --accent:#e8c547;--accent-dim:rgba(232,197,71,0.15);--accent-glow:rgba(232,197,71,0.2);
+  --text:#eeedf5;--text2:rgba(238,237,245,0.55);--text3:rgba(238,237,245,0.28);
+  --green:#4ade80;--green-dim:rgba(74,222,128,0.12);
+  --red:#f87171;--r:8px;--nav:62px;--sidebar:295px;
+  --ff:'Syne',sans-serif;--fb:'Instrument Sans',system-ui,sans-serif;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--fb);font-size:15px;overflow:hidden}
+button{font-family:var(--fb);cursor:pointer}
+input{font-family:var(--fb)}
+::selection{background:var(--accent-dim);color:var(--accent)}
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:-400px 0}100%{background-position:400px 0}}
+
+/* LOADING */
+#loading{
+  position:fixed;inset:0;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;
+  z-index:9999;transition:opacity .4s;
+}
+#loading.hide{opacity:0;pointer-events:none}
+.spin-ring{width:38px;height:38px;border-radius:50%;border:2px solid rgba(232,197,71,0.12);border-top-color:var(--accent);animation:spin .7s linear infinite}
+.load-lbl{color:var(--text3);font-size:11px;letter-spacing:.15em;text-transform:uppercase}
+
+/* CONFIG BANNER */
+#cfg-banner{
+  display:none;position:fixed;top:0;left:0;right:0;z-index:8000;
+  background:linear-gradient(90deg,#e8c547,#f5d87a);
+  color:#000;font-size:13px;font-weight:700;padding:10px 20px;text-align:center;
+}
+
+/* AUTH */
+#auth-page{display:none;position:fixed;inset:0;background:var(--bg);align-items:center;justify-content:center;overflow:auto;padding:20px}
+#auth-page.show{display:flex}
+.auth-deco{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.deco-glow{position:absolute;border-radius:50%;filter:blur(90px)}
+.deco-g1{width:700px;height:700px;top:-200px;right:-150px;background:radial-gradient(circle,rgba(232,197,71,0.07),transparent 70%)}
+.deco-g2{width:500px;height:500px;bottom:-150px;left:-150px;background:radial-gradient(circle,rgba(74,222,128,0.04),transparent 70%)}
+.deco-grid{position:absolute;inset:0;opacity:.025;background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,var(--accent) 59px,var(--accent) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,var(--accent) 59px,var(--accent) 60px)}
+
+.auth-card{
+  width:100%;max-width:400px;position:relative;z-index:2;
+  background:rgba(14,15,23,0.96);
+  border:1px solid var(--border-hi);border-radius:14px;
+  padding:44px 40px;
+  box-shadow:0 40px 80px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.03);
+  animation:fadeUp .45s ease;
+}
+.auth-brand{text-align:center;margin-bottom:34px}
+.brand-lk{display:inline-flex;align-items:center;gap:11px;margin-bottom:8px}
+.brand-icon{width:40px;height:40px;border-radius:10px;background:var(--accent);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px var(--accent-glow)}
+.brand-name{font-family:var(--ff);font-size:23px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.brand-name em{color:var(--accent);font-style:normal}
+.auth-sub{color:var(--text3);font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+
+.auth-tabs{display:flex;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:var(--r);padding:3px;margin-bottom:26px;gap:3px}
+.auth-tab{flex:1;padding:9px;border:none;border-radius:6px;background:transparent;color:var(--text3);font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;transition:all .2s}
+.auth-tab.on{background:var(--bg3);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.4)}
+
+.fields{display:flex;flex-direction:column;gap:11px}
+.inp{width:100%;padding:13px 16px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-size:14px;outline:none;transition:border-color .2s,background .2s}
+.inp:focus{border-color:rgba(232,197,71,.4);background:rgba(255,255,255,.06)}
+.inp::placeholder{color:var(--text3)}
+.auth-err{display:none;margin-top:12px;padding:10px 14px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:var(--r);color:var(--red);font-size:13px}
+.auth-err.show{display:block}
+
+.btn-primary{width:100%;margin-top:18px;padding:14px;background:var(--accent);border:none;border-radius:var(--r);color:#000;font-weight:700;font-size:14px;letter-spacing:.06em;transition:all .2s;box-shadow:0 4px 20px var(--accent-glow)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 28px var(--accent-glow)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+.or-line{display:flex;align-items:center;gap:12px;margin:18px 0;color:var(--text3);font-size:12px}
+.or-line::before,.or-line::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.btn-google{width:100%;padding:13px;background:rgba(255,255,255,.05);border:1px solid var(--border-hi);border-radius:var(--r);color:var(--text2);font-size:14px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s}
+.btn-google:hover{background:rgba(255,255,255,.09);color:var(--text);border-color:rgba(255,255,255,.2)}
+
+/* DASHBOARD */
+#dashboard{display:none;height:100vh;flex-direction:column}
+#dashboard.show{display:flex}
+
+nav.topbar{
+  height:var(--nav);flex-shrink:0;
+  display:flex;align-items:center;gap:14px;padding:0 18px;
+  background:rgba(8,9,14,.92);border-bottom:1px solid var(--border);
+  backdrop-filter:blur(12px);position:relative;z-index:100;
+}
+.nav-toggle{width:34px;height:34px;border-radius:8px;background:none;border:none;color:var(--text3);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.nav-toggle:hover{background:var(--surface);color:var(--text)}
+.nav-brand{display:flex;align-items:center;gap:9px}
+.nb-icon{width:30px;height:30px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nb-name{font-family:var(--ff);font-size:17px;font-weight:800;color:var(--text)}
+.nb-name em{color:var(--accent);font-style:normal}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.prog-chip{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:var(--accent-dim);border:1px solid rgba(232,197,71,.2);color:var(--accent);font-size:12px;font-weight:700}
+.user-pill{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border-radius:20px;background:var(--surface);border:1px solid var(--border)}
+.user-ava{width:28px;height:28px;border-radius:50%;overflow:hidden;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-family:var(--ff);font-size:12px;font-weight:700;color:var(--accent);flex-shrink:0}
+.user-ava img{width:100%;height:100%;object-fit:cover}
+.user-name{color:var(--text2);font-size:13px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn-logout{width:32px;height:32px;border-radius:8px;background:none;border:none;color:var(--text3);display:flex;align-items:center;justify-content:center;transition:all .15s}
+.btn-logout:hover{background:rgba(248,113,113,.1);color:var(--red)}
+
+.db-body{display:flex;flex:1;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);height:100%;
+  overflow-y:auto;overflow-x:hidden;
+  background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;flex-shrink:0;
+  transition:width .3s ease,min-width .3s ease;
+}
+.sidebar.closed{width:0;min-width:0}
+.sb-head{padding:18px 18px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
+.sb-head-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.sb-lbl{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text3)}
+.sb-cnt{font-size:11px;color:var(--text3);background:var(--surface);border:1px solid var(--border);padding:2px 8px;border-radius:10px}
+.sb-pb{height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin-bottom:7px}
+.sb-pf{height:100%;background:linear-gradient(90deg,var(--accent),#f5d87a);border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.sb-note{color:var(--text3);font-size:11px}
+.sb-list{flex:1;padding:8px 0 20px}
+.sb-sec{padding:14px 18px 6px;font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--text3)}
+
+.skeleton{height:52px;margin:3px 12px;border-radius:6px;background:linear-gradient(90deg,var(--bg3) 25%,var(--surface) 50%,var(--bg3) 75%);background-size:400px 100%;animation:shimmer 1.4s infinite}
+
+.li{display:flex;align-items:center;gap:10px;padding:9px 18px 9px 14px;background:none;border:none;border-left:2px solid transparent;width:100%;text-align:left;cursor:pointer;transition:all .15s}
+.li:hover{background:rgba(255,255,255,.03)}
+.li.active{background:rgba(232,197,71,.07);border-left-color:var(--accent)}
+.li.done .li-t{color:var(--text3)}
+.li-n{width:24px;height:24px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);font-size:10px;font-weight:700;color:var(--text3);transition:all .2s}
+.li.done .li-n{background:var(--green-dim);border-color:rgba(74,222,128,.25);color:var(--green)}
+.li.active .li-n{background:var(--accent-dim);border-color:rgba(232,197,71,.3);color:var(--accent)}
+.li-i{flex:1;min-width:0}
+.li-t{font-size:13px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:400;transition:color .15s}
+.li.active .li-t{color:var(--text);font-weight:600}
+.li-m{font-size:11px;color:var(--text3);margin-top:1px}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;overflow-x:hidden;background:var(--bg);padding:32px 36px}
+
+.welcome{min-height:calc(100vh - var(--nav) - 64px);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;animation:fadeUp .45s ease}
+.welcome-ring{width:88px;height:88px;border-radius:50%;margin-bottom:28px;border:1px solid rgba(232,197,71,.2);background:radial-gradient(circle,var(--accent-dim),transparent 70%);display:flex;align-items:center;justify-content:center}
+.welcome-title{font-family:var(--ff);font-size:32px;font-weight:800;color:var(--text);margin-bottom:10px;letter-spacing:-.5px}
+.welcome-sub{color:var(--text2);font-size:16px;margin-bottom:36px;max-width:420px;line-height:1.6}
+.btn-start{padding:15px 40px;background:var(--accent);border:none;border-radius:var(--r);color:#000;font-weight:700;font-size:14px;letter-spacing:.07em;transition:all .2s;box-shadow:0 4px 24px var(--accent-glow);font-family:var(--fb)}
+.btn-start:hover{transform:translateY(-2px);box-shadow:0 10px 32px var(--accent-glow)}
+
+.player-wrap{animation:fadeUp .3s ease}
+.video-box{position:relative;padding-bottom:56.25%;background:#000;border-radius:var(--r) var(--r) 0 0;overflow:hidden;border:1px solid var(--border)}
+.video-box iframe{position:absolute;inset:0;width:100%;height:100%;border:none}
+.vlo{position:absolute;inset:0;background:var(--bg2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .5s}
+.vlo.hidden{opacity:0;pointer-events:none}
+.player-bar{padding:20px 24px;background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.p-title{font-family:var(--ff);font-size:19px;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:-.2px}
+.p-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.p-mi{display:flex;align-items:center;gap:4px;color:var(--text3);font-size:12px}
+.badge-done{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:4px;background:var(--green-dim);border:1px solid rgba(74,222,128,.2);color:var(--green);font-size:12px;font-weight:600}
+.btn-mark{display:flex;align-items:center;gap:7px;padding:11px 22px;background:var(--accent);border:none;border-radius:var(--r);color:#000;font-weight:700;font-size:13px;letter-spacing:.05em;transition:all .2s;box-shadow:0 2px 16px var(--accent-glow);white-space:nowrap;font-family:var(--fb)}
+.btn-mark:hover{transform:translateY(-1px);box-shadow:0 6px 24px var(--accent-glow)}
+.btn-mark:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+.drive-err{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:14px;text-align:center;padding:40px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);animation:fadeUp .3s ease}
+.drive-err-icon{font-size:42px;opacity:.4}
+.drive-err h3{font-family:var(--ff);font-size:18px;color:var(--text2)}
+.drive-err p{color:var(--text3);font-size:13px;max-width:420px;line-height:1.65}
+.drive-err code{background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:8px 14px;font-size:12px;color:var(--accent);word-break:break-all;display:block;margin-top:4px}
+
+.toast{position:fixed;bottom:26px;right:26px;z-index:9000;padding:12px 18px;border-radius:var(--r);background:var(--bg3);border:1px solid var(--border-hi);color:var(--text);font-size:13px;font-weight:500;display:flex;align-items:center;gap:9px;opacity:0;transform:translateY(12px);transition:all .3s;pointer-events:none;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+.toast.show{opacity:1;transform:none}
+
+@media(max-width:760px){
+  .main{padding:18px 14px}
+  .sidebar{position:fixed;top:var(--nav);left:0;bottom:0;z-index:80;transition:transform .3s ease}
+  .sidebar.closed{width:var(--sidebar);min-width:var(--sidebar);transform:translateX(-100%)}
+  .user-name,.prog-chip{display:none}
+  :root{--sidebar:280px}
+}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spin-ring"></div>
+  <span class="load-lbl">Cargando academia…</span>
+</div>
+
+<div id="cfg-banner">
+  ⚠️ Debes configurar FIREBASE_CONFIG, DRIVE_FOLDER_ID y GOOGLE_API_KEY en el código para que funcione.
+</div>
+
+<!-- ══════════════ AUTH ══════════════ -->
+<div id="auth-page">
+  <div class="auth-deco">
+    <div class="deco-grid"></div>
+    <div class="deco-glow deco-g1"></div>
+    <div class="deco-glow deco-g2"></div>
+  </div>
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="brand-lk">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"><polygon points="5,3 19,12 5,21"/></svg>
+        </div>
+        <span class="brand-name">Acad<em>emia</em></span>
+      </div>
+      <p class="auth-sub" id="auth-sub">Accede a tu cuenta</p>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab on" id="tab-in"  onclick="setMode('login')">Entrar</button>
+      <button class="auth-tab"    id="tab-up"  onclick="setMode('register')">Registro</button>
+    </div>
+
+    <div class="fields">
+      <div id="f-name" style="display:none">
+        <input class="inp" id="i-name" type="text" placeholder="Nombre completo" autocomplete="name"/>
+      </div>
+      <input class="inp" id="i-email" type="email"    placeholder="Correo electrónico" autocomplete="email"/>
+      <input class="inp" id="i-pass"  type="password" placeholder="Contraseña (mín. 6 caracteres)"
+             onkeydown="if(event.key==='Enter')doEmailAuth()"/>
+    </div>
+    <div class="auth-err" id="auth-err"></div>
+    <button class="btn-primary" id="btn-auth" onclick="doEmailAuth()">ENTRAR</button>
+    <div class="or-line"><span>o</span></div>
+    <button class="btn-google" onclick="doGoogleAuth()">
+      <svg width="18" height="18" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Continuar con Google
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════ DASHBOARD ══════════════ -->
+<div id="dashboard">
+  <nav class="topbar">
+    <button class="nav-toggle" onclick="toggleSidebar()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+    <div class="nav-brand">
+      <div class="nb-icon">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"><polygon points="5,3 19,12 5,21"/></svg>
+      </div>
+      <span class="nb-name">Acad<em>emia</em></span>
+    </div>
+    <div class="nav-right">
+      <div class="prog-chip">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"/></svg>
+        <span id="nav-pct">0%</span>
+      </div>
+      <div class="user-pill">
+        <div class="user-ava" id="nav-ava">?</div>
+        <span class="user-name" id="nav-uname">–</span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()" title="Cerrar sesión">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16,17 21,12 16,7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </nav>
+
+  <div class="db-body">
+    <aside class="sidebar" id="sidebar">
+      <div class="sb-head">
+        <div class="sb-head-top">
+          <span class="sb-lbl">Temario</span>
+          <span class="sb-cnt" id="sb-cnt">–</span>
+        </div>
+        <div class="sb-pb"><div class="sb-pf" id="sb-pf" style="width:0%"></div></div>
+        <span class="sb-note" id="sb-note">Cargando…</span>
+      </div>
+      <div class="sb-list" id="sb-list">
+        <div class="skeleton" style="margin-top:12px"></div>
+        <div class="skeleton" style="opacity:.7"></div>
+        <div class="skeleton" style="opacity:.5"></div>
+        <div class="skeleton" style="opacity:.3"></div>
+      </div>
+    </aside>
+
+    <main class="main" id="main"></main>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>
+  <span id="toast-msg">Listo</span>
+</div>
+
+<script>
+// ╔══════════════════════════════════════════════════════╗
+// ║  🔧  EDITA ESTOS 3 VALORES CON TUS CREDENCIALES     ║
+// ╚══════════════════════════════════════════════════════╝
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyD4qrrDpXNMttkA3sP7YAfhCxQT1f5MYEg",
+  authDomain: "academia-ingenier.firebaseapp.com",
+  projectId: "academia-ingenier",
+  storageBucket: "academia-ingenier.firebasestorage.app",
+  messagingSenderId: "357347959532",
+  appId: "1:357347959532:web:9bb050db11a5ab4be1fbc9",
+  measurementId: "G-9N9DYFXJ68"
+};
+
+// ID de la carpeta de Google Drive
+// URL de ejemplo: drive.google.com/drive/folders/1ABC123XYZ
+//                                                ^^^^^^^^^^^^ esto es el ID
+const DRIVE_FOLDER_ID = "https://drive.google.com/drive/folders/1BJbXqjoqzvATNiixry-SUnPj5e3F2Gsr?usp=drive_link";
+
+// API Key de Google Cloud Console (con Drive API habilitada)
+const GOOGLE_API_KEY = "TU_GOOGLE_API_KEY_AQUI";
+
+// ══════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ══════════════════════════════════════════════════════
+const DEMO = (
+  FIREBASE_CONFIG.apiKey === "TU_FIREBASE_API_KEY" ||
+  DRIVE_FOLDER_ID        === "TU_FOLDER_ID_AQUI"   ||
+  GOOGLE_API_KEY         === "TU_GOOGLE_API_KEY_AQUI"
+);
+
+let fbAuth, fbDB;
+let currentUser  = null;
+let videos       = [];      // [{id, title, driveId, index, duration}]
+let progress     = {};      // {driveFileId: true}
+let currentVideo = null;
+let sidebarOpen  = true;
+let authMode     = 'login';
+let toastTimer   = null;
+
+// ══════════════════════════════════════════════════════
+// ARRANQUE
+// ══════════════════════════════════════════════════════
+(async function boot() {
+  if (DEMO) {
+    document.getElementById('cfg-banner').style.display = 'block';
+    hideLoad();
+    showAuth();
+    return;
+  }
+
+  try {
+    firebase.initializeApp(FIREBASE_CONFIG);
+    fbAuth = firebase.auth();
+    fbDB   = firebase.firestore();
+
+    fbAuth.onAuthStateChanged(async user => {
+      if (user) {
+        currentUser = user;
+        progress    = await loadProgress(user.uid);
+        await fetchDriveVideos();
+        showDashboard();
+      } else {
+        currentUser = null;
+        showAuth();
+      }
+      hideLoad();
+    });
+  } catch(e) {
+    console.error(e);
+    hideLoad();
+    showAuth();
+  }
+})();
+
+// ══════════════════════════════════════════════════════
+// GOOGLE DRIVE API
+// Lee todos los archivos de video de la carpeta pública.
+// Requiere: carpeta compartida como "cualquiera con el enlace"
+//           + API Key con Drive API activada en Google Cloud
+// ══════════════════════════════════════════════════════
+async function fetchDriveVideos() {
+  try {
+    // query: archivos de video dentro de la carpeta, no eliminados
+    const q = encodeURIComponent(
+      `'${DRIVE_FOLDER_ID}' in parents and mimeType contains 'video/' and trashed = false`
+    );
+    const fields = encodeURIComponent('files(id,name,videoMediaMetadata,createdTime)');
+
+    const url = `https://www.googleapis.com/drive/v3/files`
+      + `?q=${q}`
+      + `&fields=${fields}`
+      + `&orderBy=name`         // ordena alfabéticamente (01-, 02- funciona perfecto)
+      + `&pageSize=200`
+      + `&key=${GOOGLE_API_KEY}`;
+
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.error) {
+      renderDriveError(data.error.message, data.error.code);
+      return;
+    }
+
+    videos = (data.files || []).map((f, i) => ({
+      id:       f.id,
+      driveId:  f.id,
+      title:    cleanFilename(f.name),
+      index:    i + 1,
+      duration: msToDuration(f.videoMediaMetadata?.durationMillis),
+    }));
+
+    renderSidebar();
+    updateProgressUI();
+
+  } catch(e) {
+    renderDriveError(e.message);
+  }
+}
+
+// Elimina extensión y prefijos numéricos del nombre de archivo
+// "01. Introducción al curso.mp4" → "Introducción al curso"
+function cleanFilename(name) {
+  return name
+    .replace(/\.[a-zA-Z0-9]{2,4}$/, '')   // quita extensión
+    .replace(/^\d+[\.\-_\s]+/, '')          // quita "01. " "02- " etc.
+    .trim();
+}
+
+function msToDuration(ms) {
+  if (!ms) return null;
+  const s   = Math.floor(ms / 1000);
+  const m   = Math.floor(s / 60);
+  const sec = s % 60;
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+// ══════════════════════════════════════════════════════
+// FIRESTORE — progreso del alumno
+//
+// Estructura en Firestore:
+//   colección "progress"
+//     documento: {userId}
+//       campo "videos": { "DRIVE_FILE_ID": true, ... }
+//
+// Reglas de seguridad recomendadas:
+//   match /progress/{uid} {
+//     allow read, write: if request.auth.uid == uid;
+//   }
+// ══════════════════════════════════════════════════════
+async function loadProgress(uid) {
+  if (!fbDB) return {};
+  try {
+    const doc = await fbDB.collection('progress').doc(uid).get();
+    return doc.exists ? (doc.data().videos || {}) : {};
+  } catch { return {}; }
+}
+
+async function saveVideoProgress(uid, driveFileId) {
+  if (!fbDB) return;
+  await fbDB.collection('progress').doc(uid).set(
+    { videos: { [driveFileId]: true } },
+    { merge: true }   // merge para no sobreescribir otros videos
+  );
+}
+
+// ══════════════════════════════════════════════════════
+// AUTH — Email/contraseña
+// ══════════════════════════════════════════════════════
+function setMode(m) {
+  authMode = m;
+  document.getElementById('tab-in').classList.toggle('on', m === 'login');
+  document.getElementById('tab-up').classList.toggle('on', m === 'register');
+  document.getElementById('f-name').style.display   = m === 'register' ? 'block' : 'none';
+  document.getElementById('btn-auth').textContent   = m === 'login' ? 'ENTRAR' : 'CREAR CUENTA';
+  document.getElementById('auth-sub').textContent   = m === 'login' ? 'Accede a tu cuenta' : 'Crea tu cuenta';
+  hideAuthErr();
+}
+
+async function doEmailAuth() {
+  const email = document.getElementById('i-email').value.trim();
+  const pass  = document.getElementById('i-pass').value;
+  const name  = document.getElementById('i-name').value.trim();
+  const btn   = document.getElementById('btn-auth');
+  if (!email || !pass) { showAuthErr('Completa todos los campos'); return; }
+  if (!fbAuth) { showAuthErr('Firebase no configurado'); return; }
+  btn.disabled = true; btn.textContent = 'Cargando…';
+  hideAuthErr();
+  try {
+    if (authMode === 'login') {
+      await fbAuth.signInWithEmailAndPassword(email, pass);
+    } else {
+      const c = await fbAuth.createUserWithEmailAndPassword(email, pass);
+      if (name) await c.user.updateProfile({ displayName: name });
+    }
+  } catch(e) {
+    showAuthErr(fbErrMsg(e.code));
+    btn.disabled = false;
+    btn.textContent = authMode === 'login' ? 'ENTRAR' : 'CREAR CUENTA';
+  }
+}
+
+// AUTH — Google Sign-In (popup)
+async function doGoogleAuth() {
+  if (!fbAuth) { showAuthErr('Firebase no configurado'); return; }
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await fbAuth.signInWithPopup(provider);
+  } catch(e) {
+    if (e.code !== 'auth/popup-closed-by-user') showAuthErr(fbErrMsg(e.code));
+  }
+}
+
+async function doLogout() {
+  if (fbAuth) await fbAuth.signOut();
+  videos = []; progress = {}; currentVideo = null;
+}
+
+function fbErrMsg(code) {
+  return ({
+    'auth/user-not-found':        'Usuario no encontrado',
+    'auth/wrong-password':        'Contraseña incorrecta',
+    'auth/invalid-credential':    'Email o contraseña incorrectos',
+    'auth/email-already-in-use':  'Este email ya está registrado',
+    'auth/weak-password':         'La contraseña debe tener al menos 6 caracteres',
+    'auth/invalid-email':         'Email no válido',
+    'auth/too-many-requests':     'Demasiados intentos. Espera un momento',
+    'auth/network-request-failed':'Error de red. Comprueba tu conexión',
+  })[code] || 'Error desconocido. Inténtalo de nuevo';
+}
+
+// ══════════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════════
+function showDashboard() {
+  document.getElementById('auth-page').classList.remove('show');
+  document.getElementById('dashboard').classList.add('show');
+  renderNavUser();
+  renderSidebar();
+  updateProgressUI();
+  renderWelcome();
+}
+function showAuth() {
+  document.getElementById('dashboard').classList.remove('show');
+  document.getElementById('auth-page').classList.add('show');
+}
+
+function renderNavUser() {
+  const u = currentUser; if (!u) return;
+  const ava = document.getElementById('nav-ava');
+  if (u.photoURL) {
+    ava.innerHTML = `<img src="${u.photoURL}" alt="av" referrerpolicy="no-referrer"/>`;
+  } else {
+    ava.textContent = (u.displayName || u.email || '?')[0].toUpperCase();
+  }
+  document.getElementById('nav-uname').textContent = u.displayName || u.email || 'Alumno';
+}
+
+function renderSidebar() {
+  const list  = document.getElementById('sb-list');
+  const total = videos.length;
+  document.getElementById('sb-cnt').textContent = total ? `${total} lección${total !== 1 ? 'es' : ''}` : '–';
+
+  if (total === 0) {
+    list.innerHTML = `<div style="padding:24px 18px;color:var(--text3);font-size:13px;text-align:center;line-height:1.6">
+      ${DEMO ? 'Configura DRIVE_FOLDER_ID para cargar tus videos.' : 'No se encontraron videos en la carpeta Drive.'}
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = `<div class="sb-sec">Todas las lecciones</div>`;
+  videos.forEach((v, i) => {
+    const done   = !!progress[v.driveId];
+    const active = currentVideo?.driveId === v.driveId;
+    const btn    = document.createElement('button');
+    btn.className = `li ${done ? 'done' : ''} ${active ? 'active' : ''}`;
+    btn.id        = `li-${v.driveId}`;
+    btn.onclick   = () => playVideo(v);
+    btn.innerHTML = `
+      <div class="li-n">
+        ${done
+          ? `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20,6 9,17 4,12"/></svg>`
+          : i + 1}
+      </div>
+      <div class="li-i">
+        <div class="li-t">${esc(v.title)}</div>
+        <div class="li-m">${v.duration ? `⏱ ${v.duration}` : 'Video'}</div>
+      </div>`;
+    list.appendChild(btn);
+  });
+}
+
+function updateProgressUI() {
+  const done = videos.filter(v => progress[v.driveId]).length;
+  const pct  = videos.length ? Math.round((done / videos.length) * 100) : 0;
+  document.getElementById('sb-pf').style.width   = pct + '%';
+  document.getElementById('sb-note').textContent = `${done} de ${videos.length} completadas`;
+  document.getElementById('nav-pct').textContent  = pct + '%';
+}
+
+function renderWelcome() {
+  const done = videos.filter(v => progress[v.driveId]).length;
+  const name = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'alumno';
+  document.getElementById('main').innerHTML = `
+    <div class="welcome">
+      <div class="welcome-ring">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"><polygon points="5,3 19,12 5,21"/></svg>
+      </div>
+      <h1 class="welcome-title">Hola, ${esc(name)} 👋</h1>
+      <p class="welcome-sub">
+        ${videos.length === 0
+          ? 'No se encontraron videos en tu carpeta de Drive.'
+          : done === 0
+            ? `Tienes <strong style="color:var(--text)">${videos.length} lecciones</strong> esperándote.`
+            : `Llevas <strong style="color:var(--accent)">${done} de ${videos.length}</strong> lecciones completadas.`}
+      </p>
+      ${videos.length > 0
+        ? `<button class="btn-start" onclick="startCourse()">▶ ${done === 0 ? 'EMPEZAR CURSO' : 'CONTINUAR'}</button>`
+        : ''}
+    </div>`;
+  currentVideo = null;
+}
+
+function playVideo(v) {
+  currentVideo = v;
+  // sidebar active state
+  document.querySelectorAll('.li').forEach(el => el.classList.remove('active'));
+  const liEl = document.getElementById(`li-${v.driveId}`);
+  if (liEl) liEl.classList.add('active');
+
+  const done     = !!progress[v.driveId];
+  const embedUrl = `https://drive.google.com/file/d/${v.driveId}/preview`;
+
+  document.getElementById('main').innerHTML = `
+    <div class="player-wrap">
+      <div class="video-box">
+        <div class="vlo" id="vlo">
+          <div class="spin-ring"></div>
+          <span style="color:var(--text3);font-size:13px">Cargando video…</span>
+        </div>
+        <iframe
+          src="${embedUrl}"
+          allow="autoplay"
+          allowfullscreen
+          title="${esc(v.title)}"
+          onload="document.getElementById('vlo').classList.add('hidden')"
+        ></iframe>
+      </div>
+      <div class="player-bar">
+        <div>
+          <div class="p-title">${esc(v.title)}</div>
+          <div class="p-meta">
+            ${v.duration ? `<span class="p-mi"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>${v.duration}</span>` : ''}
+            <span class="p-mi" style="color:var(--text3);font-size:11px">Lección ${v.index} de ${videos.length}</span>
+            ${done ? `<span class="badge-done"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>Completada</span>` : ''}
+          </div>
+        </div>
+        ${!done ? `
+          <button class="btn-mark" id="btn-mark" onclick="markDone('${v.driveId}')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20,6 9,17 4,12"/></svg>
+            MARCAR COMO VISTO
+          </button>` : ''}
+      </div>
+    </div>`;
+
+  if (window.innerWidth <= 760) {
+    sidebarOpen = false;
+    document.getElementById('sidebar').classList.add('closed');
+  }
+}
+
+async function markDone(driveId) {
+  if (progress[driveId]) return;
+  const btn = document.getElementById('btn-mark');
+  if (btn) { btn.disabled = true; btn.innerHTML = 'Guardando…'; }
+  progress[driveId] = true;
+  if (currentUser) await saveVideoProgress(currentUser.uid, driveId);
+  if (currentVideo?.driveId === driveId) playVideo(currentVideo);
+  renderSidebar();
+  updateProgressUI();
+  toast('¡Lección completada! 🎉');
+  const idx  = videos.findIndex(v => v.driveId === driveId);
+  const next = videos[idx + 1];
+  if (next) setTimeout(() => toast(`Siguiente → ${next.title}`, 3500), 1400);
+}
+
+function startCourse() {
+  const next = videos.find(v => !progress[v.driveId]) || videos[0];
+  if (next) playVideo(next);
+}
+
+function renderDriveError(msg, code) {
+  document.getElementById('sb-list').innerHTML = `
+    <div style="padding:16px 18px;color:var(--red);font-size:12px;line-height:1.7">
+      Error Drive API<br><span style="color:var(--text3)">${esc(msg || '')}</span>
+    </div>`;
+  document.getElementById('main').innerHTML = `
+    <div class="drive-err">
+      <div class="drive-err-icon">🔌</div>
+      <h3>No se pudo conectar con Google Drive</h3>
+      <p>Comprueba que la <strong>API Key</strong> sea válida, que la <strong>Drive API esté habilitada</strong> en Google Cloud Console y que la carpeta esté compartida como <strong>"Cualquiera con el enlace"</strong>.</p>
+      <code>Error ${code || ''}: ${esc(msg || 'desconocido')}</code>
+      <p style="font-size:12px;color:var(--text3);margin-top:8px">Folder ID usado: <strong style="color:var(--accent)">${esc(DRIVE_FOLDER_ID)}</strong></p>
+    </div>`;
+}
+
+// ══════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════
+function toggleSidebar() {
+  sidebarOpen = !sidebarOpen;
+  document.getElementById('sidebar').classList.toggle('closed', !sidebarOpen);
+}
+function hideLoad() {
+  const el = document.getElementById('loading');
+  el.classList.add('hide');
+  setTimeout(() => el.style.display = 'none', 450);
+}
+function showAuthErr(msg) {
+  const el = document.getElementById('auth-err');
+  el.textContent = msg; el.classList.add('show');
+}
+function hideAuthErr() {
+  document.getElementById('auth-err').classList.remove('show');
+}
+function toast(msg, dur = 3200) {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  el.classList.add('show');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), dur);
+}
+function esc(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
