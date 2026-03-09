@@ -4,7 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { 
     FileText, Award, Sigma, BookOpen, NotebookPen, Pencil, Target, Trophy 
 } from 'lucide-react';
-import { collection, doc, getDoc, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { canEdit, canView, canDelete, shouldShowEditUI, shouldShowDeleteUI } from '../../../utils/permissionUtils';
 import { canUserAccessSubject } from '../../../utils/subjectAccessUtils';
@@ -264,8 +264,32 @@ export const useTopicLogic = (user) => {
     };
 
     const handleDeleteTopic = async () => {
+        if (!canDelete(topic, user)) return;
         if (!window.confirm("¿Eliminar tema completo?")) return;
         try {
+            const cleanupCollections = ['documents', 'resumen', 'quizzes'];
+            const cleanupPromises = [];
+
+            for (const collectionName of cleanupCollections) {
+                try {
+                    const itemsQuery = query(
+                        collection(db, collectionName),
+                        where('topicId', '==', topicId)
+                    );
+                    const itemsSnapshot = await getDocs(itemsQuery);
+                    itemsSnapshot.docs.forEach((itemDoc) => {
+                        cleanupPromises.push(
+                            deleteDoc(doc(db, collectionName, itemDoc.id)).catch((err) => {
+                                console.warn(`Error deleting ${collectionName} item ${itemDoc.id}:`, err);
+                            })
+                        );
+                    });
+                } catch (queryError) {
+                    console.warn(`Error querying ${collectionName} for topic cleanup:`, queryError);
+                }
+            }
+
+            await Promise.allSettled(cleanupPromises);
             await deleteDoc(doc(db, "topics", topicId));
             navigate(`/home/subject/${subjectId}`);
         } catch (error) { console.error(error); }

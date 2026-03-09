@@ -1,6 +1,6 @@
 // src/pages/Subject/modals/SubjectFormModal.jsx
 import React, { useState, useEffect } from 'react';
-import { X, Save, Users, Trash2, Share2, Loader2, CheckCircle, AlertCircle, RotateCcw } from 'lucide-react';
+import { X, Save, Users, Trash2, Share2, Loader2, CheckCircle, AlertCircle, RotateCcw, Copy } from 'lucide-react';
 import { MODERN_FILL_COLORS, EDUCATION_LEVELS } from '../../../utils/subjectConstants';
 import { addDoc, collection, getDocs, query, where, getDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
@@ -42,6 +42,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [classesActionLoading, setClassesActionLoading] = useState(false);
     const [classesActionError, setClassesActionError] = useState('');
     const [classesActionSuccess, setClassesActionSuccess] = useState('');
+    const [inviteCodeCopyStatus, setInviteCodeCopyStatus] = useState('');
+    const [validationErrors, setValidationErrors] = useState({});
+    const subjectNameInputRef = React.useRef(null);
+    const subjectLevelSelectRef = React.useRef(null);
+    const subjectGradeSelectRef = React.useRef(null);
 
     const isShortcutEditing = isEditing && formData?.isShortcut === true;
     const isTagOnlyShortcutEdit = studentShortcutTagOnlyMode && isShortcutEditing;
@@ -111,6 +116,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setShareEmail('');
             setShareError('');
             setShareSuccess('');
+            setValidationErrors({});
             setShareRole('viewer');
             setShareQueue([]);
             setShareSearch('');
@@ -132,6 +138,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 setFormData({
                     id: initialData.id,
                     ownerId: initialData.ownerId,
+                    inviteCode: initialData.inviteCode || '',
                     shortcutId: initialData.shortcutId || null,
                     isShortcut: initialData.isShortcut === true,
                     shortcutPermissionLevel: initialData.isShortcut
@@ -160,6 +167,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 const validGrade = validLevel && prefilledGrade && EDUCATION_LEVELS[validLevel].includes(prefilledGrade) ? prefilledGrade : '';
                 
                 setFormData({ 
+                    inviteCode: '',
                     shortcutId: null,
                     isShortcut: false,
                     shortcutPermissionLevel: 'owner',
@@ -179,6 +187,23 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             }
         }
     }, [isOpen, isEditing, initialData, initialTab, user?.uid]);
+
+    const handleCopyInviteCode = async () => {
+        const code = String(formData?.inviteCode || initialData?.inviteCode || '').trim();
+        if (!code) {
+            setInviteCodeCopyStatus('No hay código disponible.');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(code);
+            setInviteCodeCopyStatus('Código copiado.');
+        } catch (error) {
+            setInviteCodeCopyStatus('No se pudo copiar el código.');
+        }
+
+        setTimeout(() => setInviteCodeCopyStatus(''), 2000);
+    };
 
     useEffect(() => {
         let active = true;
@@ -367,6 +392,43 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (activeTab !== 'general') return;
+
+        if (!isTagOnlyShortcutEdit && canEditOriginalFields) {
+            const nextErrors = {};
+            const hasName = String(formData?.name || '').trim().length > 0;
+            const hasLevel = String(formData?.level || '').trim().length > 0;
+            const hasGrade = String(formData?.grade || '').trim().length > 0;
+            const hasCourse = String(formData?.course || '').trim().length > 0;
+
+            if (!hasName) {
+                nextErrors.name = 'Campo obligatorio.';
+            }
+
+            if (!hasCourse || !hasLevel || !hasGrade) {
+                nextErrors.course = 'Campo obligatorio.';
+            }
+
+            if (Object.keys(nextErrors).length > 0) {
+                setValidationErrors(nextErrors);
+                setActiveTab('general');
+
+                if (nextErrors.name && subjectNameInputRef.current) {
+                    subjectNameInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    subjectNameInputRef.current.focus();
+                } else if (subjectLevelSelectRef.current) {
+                    subjectLevelSelectRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    subjectLevelSelectRef.current.focus();
+                } else if (subjectGradeSelectRef.current) {
+                    subjectGradeSelectRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    subjectGradeSelectRef.current.focus();
+                }
+
+                return;
+            }
+        }
+
         onSave(formData);
     };
 
@@ -821,7 +883,15 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                 ) : (
                                     <>
                                         {canEditOriginalFields && (
-                                            <BasicInfoFields formData={formData} setFormData={setFormData} />
+                                            <BasicInfoFields
+                                                formData={formData}
+                                                setFormData={setFormData}
+                                                validationErrors={validationErrors}
+                                                setValidationErrors={setValidationErrors}
+                                                nameInputRef={subjectNameInputRef}
+                                                levelSelectRef={subjectLevelSelectRef}
+                                                gradeSelectRef={subjectGradeSelectRef}
+                                            />
                                         )}
                                         <TagManager formData={formData} setFormData={setFormData} />
                                         <AppearanceSection
@@ -1107,6 +1177,28 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
                         {activeTab === 'classes' && canManageClassesTab && (
                             <div className="space-y-4">
+                                <div className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-900/20 p-4">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <h4 className="text-sm font-semibold text-indigo-900 dark:text-indigo-200">Código de invitación de asignatura</h4>
+                                            <p className="mt-1 text-xs text-indigo-700 dark:text-indigo-300">Úsalo para inscribir estudiantes que no estén asociados a una clase.</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={handleCopyInviteCode}
+                                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+                                        >
+                                            <Copy className="w-4 h-4" /> Copiar
+                                        </button>
+                                    </div>
+                                    <div className="mt-3 font-mono tracking-[0.2em] text-base text-indigo-900 dark:text-indigo-100 bg-white/80 dark:bg-slate-900/70 border border-indigo-200 dark:border-indigo-800 rounded-lg px-3 py-2">
+                                        {String(formData?.inviteCode || initialData?.inviteCode || 'NO-DISPONIBLE').toUpperCase()}
+                                    </div>
+                                    {inviteCodeCopyStatus && (
+                                        <p className="mt-2 text-xs text-indigo-700 dark:text-indigo-300">{inviteCodeCopyStatus}</p>
+                                    )}
+                                </div>
+
                                 <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 p-4">
                                     <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Gestión por clases</h4>
                                     <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">

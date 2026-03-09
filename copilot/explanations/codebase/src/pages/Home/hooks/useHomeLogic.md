@@ -1,5 +1,10 @@
 # useHomeLogic.js
 
+## Changelog
+### 2026-03-09: Exposed bin restore helpers for keyboard undo
+- Added `getTrashedSubjects` and `restoreSubject` passthroughs from `useSubjects`.
+- Preserves existing Home logic contracts while enabling Ctrl+Z restore fallback in keyboard flows.
+
 ## Overview
 - **Source file:** `src/pages/Home/hooks/useHomeLogic.js`
 - **Last documented:** 2026-02-24

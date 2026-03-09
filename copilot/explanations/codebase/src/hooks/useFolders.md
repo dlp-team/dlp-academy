@@ -1,3 +1,41 @@
+## [2026-03-08] Folder Deletion Resilience Hardening
+### Context
+- Folder deletion paths needed stronger tolerance for partial cleanup failures (subjects/shortcuts) and batch commit failures.
+
+### Change
+- `deleteFolder` now:
+  - performs best-effort shortcut cleanup for folder and child-subject shortcuts owned by the current user,
+  - tolerates shortcut query/delete failures,
+  - falls back to direct root folder deletion if batch commit fails.
+- `deleteFolderOnly` now:
+  - tolerates pre-delete move batch commit failures,
+  - performs best-effort shortcut cleanup before final folder deletion.
+
+### Validation
+- Focused suite passed: `npm run test -- tests/unit/hooks/useFolders.test.js`.
+
+## [2026-03-09] Test Hardening: Shared-Subject Cascade and Owner-Scoped Shortcut Cleanup
+### Context
+- Folder deletion backlog required explicit coverage for shared-subject content and orphan-shortcut preservation behavior.
+
+### Validation Additions
+- Expanded `tests/unit/hooks/useFolders.test.js` with verification that:
+  - deleting a shared folder still cascades deletion of shared subjects in that folder,
+  - folder shortcut cleanup query is owner-scoped (`ownerId === current user`) and does not target recipient orphan shortcuts.
+
+### Validation
+- Consolidated suite passed: `npm run test -- tests/unit/hooks/useHomeHandlers.shortcuts.test.js tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useTopicLogic.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`.
+
+## [2026-03-07] Home Data Readiness No Longer Requires Country
+### Context & Architecture
+Folder loading is gated by `canReadHomeData` to avoid premature reads before profile bootstrap.
+
+### Change
+- Updated readiness gate in `src/hooks/useFolders.js` from `role + country + displayName` to `role + displayName`.
+
+### Validation
+- Frontend unit tests pass with the updated gate (`npm run test`).
+
 ## [2026-02-26] Feature Update: Share Validation Errors as Exceptions (No UI Alerts)
 ### Context & Architecture
 `useFolders.shareFolder` is consumed by modal UI that renders error messages in-card. Backend-style validations must therefore throw errors, not call browser alerts.

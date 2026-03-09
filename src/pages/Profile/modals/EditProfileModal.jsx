@@ -2,12 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { X, Camera, Edit2, Loader2, Save } from 'lucide-react';
 import Avatar from '../../../components/ui/Avatar';
+import { storage } from '../../../firebase/config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const EditProfileModal = ({ isOpen, onClose, initialData, onSave }) => {
     const [formData, setFormData] = useState({ displayName: '' });
     const [photoFile, setPhotoFile] = useState(null);
     const [photoPreview, setPhotoPreview] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
+    const [uploadError, setUploadError] = useState("");
 
     useEffect(() => {
         if (isOpen && initialData) {
@@ -20,32 +23,46 @@ const EditProfileModal = ({ isOpen, onClose, initialData, onSave }) => {
     }, [isOpen, initialData]);
 
     const handlePhotoChange = (e) => {
-        if (e.target.files[0]) {
-            setPhotoFile(e.target.files[0]);
-            setPhotoPreview(URL.createObjectURL(e.target.files[0]));
+        setUploadError("");
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                setUploadError("La imagen debe ser menor a 2MB.");
+                setPhotoFile(null);
+                setPhotoPreview(null);
+                return;
+            }
+            setPhotoFile(file);
+            setPhotoPreview(URL.createObjectURL(file));
         }
     };
 
-    const convertToBase64 = (file) => {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = (error) => reject(error);
-        });
+    // Upload image to Firebase Storage and return download URL
+    const uploadProfileImage = async (file, userId) => {
+        const storageRef = ref(storage, `profile-pictures/${userId}`);
+        await uploadBytes(storageRef, file);
+        return await getDownloadURL(storageRef);
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSaving(true);
+        setUploadError("");
         try {
-            let finalPhoto = initialData.photoURL; 
+            let finalPhoto = initialData.photoURL;
             if (photoFile) {
-                finalPhoto = await convertToBase64(photoFile);
+                if (photoFile.size > 2 * 1024 * 1024) {
+                    setUploadError("La imagen debe ser menor a 2MB.");
+                    setIsSaving(false);
+                    return;
+                }
+                // Assume initialData has userId
+                finalPhoto = await uploadProfileImage(photoFile, initialData.uid);
             }
             await onSave({ ...formData, photoURL: finalPhoto });
             onClose();
         } catch (error) {
+            setUploadError("Error al subir la imagen. Intenta nuevamente.");
             console.error(error);
         } finally {
             setIsSaving(false);
@@ -63,7 +80,6 @@ const EditProfileModal = ({ isOpen, onClose, initialData, onSave }) => {
                         <X size={20} />
                     </button>
                 </div>
-                
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     {/* Image Upload */}
                     <div className="flex flex-col items-center mb-6">
@@ -78,10 +94,11 @@ const EditProfileModal = ({ isOpen, onClose, initialData, onSave }) => {
                                 <Camera size={32} />
                                 <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
                             </label>
-                            <div className="absolute bottom-0 right-0 bg-indigo-600 p-2 rounded-full text-white border-4 border-white dark:border-gray-800">
-                                <Edit2 size={14} />
-                            </div>
+                            {/* Removed edit pencil icon */}
                         </div>
+                        {uploadError && (
+                            <p className="text-xs text-red-600 mt-2">{uploadError}</p>
+                        )}
                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">Click para cambiar foto</p>
                     </div>
 

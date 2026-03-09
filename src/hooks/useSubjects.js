@@ -10,7 +10,7 @@ export const useSubjects = (user) => {
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
-    const canReadHomeData = Boolean(user?.role && user?.country && user?.displayName);
+    const canReadHomeData = Boolean(user?.role && user?.displayName);
     const debugShare = (stage, payload = {}) => {
         console.info('[SHARE_DEBUG][subject]', {
             ts: new Date().toISOString(),
@@ -137,7 +137,7 @@ export const useSubjects = (user) => {
             throw new Error('No se pudo resolver la institucion para crear la asignatura.');
         }
 
-        let inviteCode = normalizedPayload.inviteCode;
+        let inviteCode = generateSubjectInviteCode();
         let createdSubjectId = null;
 
         for (let attempt = 0; attempt < 10; attempt += 1) {
@@ -820,8 +820,10 @@ export const useSubjects = (user) => {
             );
             const topicsSnapshot = await getDocs(topicsQuery);
             
-            // 2. For each topic, try to delete documents
+            // 2. For each topic, try to delete documents, generated resources, and quizzes
             const documentDeletionPromises = [];
+            const resumenDeletionPromises = [];
+            const quizDeletionPromises = [];
             for (const topicDoc of topicsSnapshot.docs) {
                 const topicId = topicDoc.id;
                 
@@ -843,10 +845,48 @@ export const useSubjects = (user) => {
                 } catch (err) {
                     console.warn(`Failed to query documents for topic ${topicId}:`, err);
                 }
+
+                const resumenQuery = query(
+                    collection(db, "resumen"),
+                    where("topicId", "==", topicId)
+                );
+
+                try {
+                    const resumenSnapshot = await getDocs(resumenQuery);
+                    resumenSnapshot.docs.forEach(resumenDoc => {
+                        resumenDeletionPromises.push(
+                            deleteDoc(doc(db, "resumen", resumenDoc.id)).catch(err => {
+                                console.warn(`Failed to delete resource ${resumenDoc.id}:`, err);
+                            })
+                        );
+                    });
+                } catch (err) {
+                    console.warn(`Failed to query resources for topic ${topicId}:`, err);
+                }
+
+                const quizzesQuery = query(
+                    collection(db, "quizzes"),
+                    where("topicId", "==", topicId)
+                );
+
+                try {
+                    const quizzesSnapshot = await getDocs(quizzesQuery);
+                    quizzesSnapshot.docs.forEach(quizDoc => {
+                        quizDeletionPromises.push(
+                            deleteDoc(doc(db, "quizzes", quizDoc.id)).catch(err => {
+                                console.warn(`Failed to delete quiz ${quizDoc.id}:`, err);
+                            })
+                        );
+                    });
+                } catch (err) {
+                    console.warn(`Failed to query quizzes for topic ${topicId}:`, err);
+                }
             }
             
             // Wait for all document deletions (with error handling)
             await Promise.allSettled(documentDeletionPromises);
+            await Promise.allSettled(resumenDeletionPromises);
+            await Promise.allSettled(quizDeletionPromises);
             
             // 3. Delete all topics
             const topicDeletionPromises = topicsSnapshot.docs.map(topicDoc =>

@@ -1,3 +1,17 @@
+## [2026-03-09] Feature Update: Required-Field Validation Feedback in General Tab
+### Context & Architecture
+`SubjectFormModal` now performs explicit required checks for subject name and academic course before saving from the `General` tab.
+
+### Previous State
+- Save could fail by required constraints without a consistent inline visual cue on each missing field.
+
+### New State & Logic
+- Added `validationErrors` state and propagated it into `BasicInfoFields`.
+- Added ref-based focus/scroll to the first invalid required field.
+- Clears field-level errors as users correct input.
+
+---
+
 ## [2026-02-26] Feature Update: Institution Email Autocomplete Suggestions
 ### Context & Architecture
 `SubjectFormModal` sharing input now preloads institution user emails and suggests candidates while typing.
@@ -74,6 +88,19 @@
 - Kept edit/general section behavior intact while integrating the new sharing controls.
 
 ---
+
+# [2026-03-07] Clase Tab: Subject Invite Code Visibility
+
+## Context
+- Teachers needed to retrieve the subject invite code from the existing three-dots edit flow without leaving the subject modal.
+
+## Change
+- Added an invite-code panel in the `Clases` tab of `SubjectFormModal`.
+- The panel displays the current subject invite code and includes a copy action.
+- Messaging clarifies this code is for enrolling students not tied to a class.
+
+## Validation
+- Manual UI path validated in code: `activeTab === 'classes'` block now renders invite-code panel using `formData.inviteCode || initialData.inviteCode`.
 
 # SubjectFormModal.jsx
 

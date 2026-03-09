@@ -10,11 +10,11 @@ import { useHomeLogic } from './hooks/useHomeLogic';
 import { useFolders } from '../../hooks/useFolders'; 
 import { useHomePageState } from './hooks/useHomePageState';
 import { useHomePageHandlers } from './hooks/useHomePageHandlers';
+import { useHomeKeyboardShortcuts } from './hooks/useHomeKeyboardShortcuts';
 
 
 // Layout & Global Components
 import Header from '../../components/layout/Header';
-import OnboardingWizard from '../Onboarding/components/OnboardingWizard';
 import BreadcrumbNav from './components/BreadcrumbNav';
 import SharedView from './components/SharedView';
 
@@ -207,6 +207,11 @@ const Home = ({ user }) => {
         rememberOrganization
     });
 
+    const { handleCardFocus, shortcutFeedback, getCardVisualState } = useHomeKeyboardShortcuts({
+        user,
+        logic
+    });
+
     const treeFolders = useMemo(() => {
         const baseFolders = Array.isArray(logic.folders) ? logic.folders : [];
         const shortcutFolders = Array.isArray(logic.resolvedShortcuts)
@@ -303,7 +308,6 @@ const Home = ({ user }) => {
             style={homeThemeTokens.cssVariables}
         >
             <Header user={user} />
-            <OnboardingWizard user={user} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
                 {/* Drag Up Zone (Omitted for brevity, logic same) */}
@@ -357,8 +361,14 @@ const Home = ({ user }) => {
                         searchQuery={searchQuery}
                         setSearchQuery={setSearchQuery}
                     />
-                    
+
                 </div>
+
+                {shortcutFeedback ? (
+                    <p className={`${homeThemeTokens.mutedTextClass} mt-4 rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/60`}>
+                        {shortcutFeedback}
+                    </p>
+                ) : null}
 
                 {logic.viewMode === 'bin' ? (
                     <BinView user={user} cardScale={logic.cardScale} layoutMode={logic.layoutMode} />
@@ -515,6 +525,8 @@ const Home = ({ user }) => {
                                         handleOpenFolder={(folder) => {
                                             handleSetCurrentFolder(folder);
                                         }}
+                                        onCardFocus={handleCardFocus}
+                                        getCardVisualState={getCardVisualState}
                                         handleShareFolder={logic.handleShareFolder}
                                         handlePromoteSubject={handlePromoteSubjectWrapper}
                                         handlePromoteFolder={handlePromoteFolderWrapper}

@@ -80,7 +80,6 @@ test.describe('Profile and settings coverage', () => {
     await page.waitForURL(/\/profile/);
 
     await expect(page.getByRole('button', { name: /cerrar sesión/i })).toBeVisible();
-    await expect(page.getByText(/plan gratuito/i)).toBeVisible();
 
     await page.goto('/settings');
     await page.waitForURL(/\/settings/);
@@ -119,9 +118,6 @@ test.describe('Profile and settings coverage', () => {
     const updatedName = `${originalName || 'Usuario'} E2E`;
     await nameInput.fill(updatedName);
 
-    const countrySelect = page.locator('label:has-text("País") + select');
-    const selectedCountryBefore = await countrySelect.inputValue();
-    await countrySelect.selectOption({ index: 1 });
 
     const canMutateSafely = Boolean(rollbackUserUid && rollbackProfile);
     const modalHeading = page.getByRole('heading', { name: /editar perfil/i });
@@ -148,11 +144,6 @@ test.describe('Profile and settings coverage', () => {
 
     await expect(modalHeading).not.toBeVisible();
 
-    if (canMutateSafely && selectedCountryBefore) {
-      await page.goto('/profile');
-      await page.waitForURL(/\/profile/);
-      await expect(page.getByText(/plan gratuito/i)).toBeVisible();
-    }
 
     await page.goto('/settings');
     await page.waitForURL(/\/settings/);

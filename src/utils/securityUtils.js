@@ -5,15 +5,15 @@
  * @param {string} institutionId - The unique ID of the school
  * @param {string} role - 'teacher' or 'student'
  * @param {number} intervalHours - How often the code should change (e.g., 1 or 24)
+ * @param {number} [currentTimeMs=Date.now()] - Optional timestamp override for deterministic verification/tests
  * @returns {string} - A 6-character uppercase hex code (e.g., "A8F9B2")
  */
-export const generateDynamicCode = (institutionId, role, intervalHours) => {
+export const generateDynamicCode = (institutionId, role, intervalHours, currentTimeMs = Date.now()) => {
   if (!institutionId || !intervalHours) return '------';
   
   // 1. Calculate the current time window
-  const now = Date.now();
   const windowMs = intervalHours * 60 * 60 * 1000;
-  const currentWindow = Math.floor(now / windowMs);
+  const currentWindow = Math.floor(currentTimeMs / windowMs);
 
   // 2. Create the seed string (Adding a hidden salt makes it unguessable)
   const seed = `${institutionId}-${role}-${currentWindow}-DLP_SECRET_SALT_2026`;

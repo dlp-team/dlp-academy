@@ -30,7 +30,9 @@ const ListViewItem = ({
     onDragEnd,
     onDropAction,
     draggable = true,
-    path = []
+    path = [],
+    onFocusItem = () => {},
+    getCardVisualState = () => ({ isAnimating: false, isCutPending: false })
 }) => {
 
     // Always call hooks at the top level
@@ -89,6 +91,13 @@ const ListViewItem = ({
         onDragEnd
     });
 
+    const visualState = getCardVisualState(item?.id, type);
+    const visualClasses = [
+        'transition-all duration-150',
+        visualState?.isAnimating ? 'scale-95' : 'scale-100',
+        visualState?.isCutPending ? 'opacity-60' : 'opacity-100'
+    ].join(' ');
+
     if (path.includes(item.id)) {
         console.warn(`Cycle detected in List View for item: ${item.name}`);
         return null;
@@ -96,30 +105,36 @@ const ListViewItem = ({
     // Delegate to FolderListItem component if the item is a folder
     if (type === 'folder') {
         return (
-            <FolderListItem
-                user={user}
-                item={item}
-                index={index}
-                parentId={parentId}
-                depth={depth}
-                allFolders={allFolders}
-                allSubjects={allSubjects}
-                onNavigate={onNavigate}
-                onNavigateSubject={onNavigateSubject}
-                onEdit={onEdit}
-                onShare={onShare}
-                onDelete={onDelete}
-                onGoToFolder={onGoToFolder}
-                disableAllActions={disableAllActions}
-                disableDeleteActions={disableDeleteActions}
-                disableUnshareActions={disableUnshareForItem}
-                cardScale={cardScale}
-                onDragStart={onDragStart}
-                onDragEnd={onDragEnd}
-                onDropAction={onDropAction}
-                draggable={draggable}
-                path={currentPath}
-            />
+            <div
+                onMouseDown={() => onFocusItem(item, 'folder')}
+                onMouseEnter={() => onFocusItem(item, 'folder')}
+                className={visualClasses}
+            >
+                <FolderListItem
+                    user={user}
+                    item={item}
+                    index={index}
+                    parentId={parentId}
+                    depth={depth}
+                    allFolders={allFolders}
+                    allSubjects={allSubjects}
+                    onNavigate={onNavigate}
+                    onNavigateSubject={onNavigateSubject}
+                    onEdit={onEdit}
+                    onShare={onShare}
+                    onDelete={onDelete}
+                    onGoToFolder={onGoToFolder}
+                    disableAllActions={disableAllActions}
+                    disableDeleteActions={disableDeleteActions}
+                    disableUnshareActions={disableUnshareForItem}
+                    cardScale={cardScale}
+                    onDragStart={onDragStart}
+                    onDragEnd={onDragEnd}
+                    onDropAction={onDropAction}
+                    draggable={draggable}
+                    path={currentPath}
+                />
+            </div>
         );
     }
 
@@ -153,7 +168,7 @@ const ListViewItem = ({
     };
 
     return (
-        <div className="select-none animate-in fade-in duration-200">
+        <div className={`select-none animate-in fade-in duration-200 ${visualClasses}`}>
             {/* ROW CONTAINER - Apply indentation here via margin */}
             <div 
                 ref={itemRef}
@@ -165,6 +180,8 @@ const ListViewItem = ({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onMouseEnter={() => setIsHovered(true)}
+                onMouseEnterCapture={() => onFocusItem(item, 'subject')}
+                onMouseDown={() => onFocusItem(item, 'subject')}
                 onMouseLeave={() => setIsHovered(false)}
                 className={`relative group rounded-xl transition-all duration-200 border border-transparent z-10 ${
                     isDragOver 

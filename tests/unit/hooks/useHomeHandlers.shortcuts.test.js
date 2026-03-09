@@ -1,3 +1,4 @@
+// tests/unit/hooks/useHomeHandlers.shortcuts.test.js
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useHomeHandlers } from '../../../src/pages/Home/hooks/useHomeHandlers';
 
@@ -267,5 +268,189 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
     await deleteHandlers.handleDelete();
 
     expect(deleteConfig.deleteShortcut).toHaveBeenCalledWith('shortcut-sub-10');
+  });
+
+  it('allows shortcut-subject direct deletion in shared-tree ghost context', async () => {
+    const config = createBaseConfig({
+      folders: [
+        { id: 'root-shared', isShared: true, parentId: null },
+        { id: 'child-folder', isShared: false, parentId: 'root-shared' },
+      ],
+      deleteConfig: {
+        isOpen: true,
+        type: 'shortcut-subject',
+        action: 'delete',
+        item: {
+          id: 'subject-ghost-1',
+          targetId: 'subject-ghost-1',
+          shortcutParentId: 'child-folder',
+          shortcutId: 'shortcut-sub-ghost-1',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.deleteShortcut).toHaveBeenCalledWith('shortcut-sub-ghost-1');
+    expect(config.unshareSubject).not.toHaveBeenCalled();
+    expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
+  });
+
+  it('allows shortcut-folder direct deletion in shared-tree ghost context', async () => {
+    const config = createBaseConfig({
+      folders: [
+        { id: 'root-shared', isShared: true, parentId: null },
+        { id: 'child-folder', isShared: false, parentId: 'root-shared' },
+      ],
+      deleteConfig: {
+        isOpen: true,
+        type: 'shortcut-folder',
+        action: 'delete',
+        item: {
+          id: 'folder-ghost-1',
+          targetId: 'folder-ghost-1',
+          shortcutParentId: 'child-folder',
+          shortcutId: 'shortcut-folder-ghost-1',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.deleteShortcut).toHaveBeenCalledWith('shortcut-folder-ghost-1');
+    expect(config.unshareFolder).not.toHaveBeenCalled();
+    expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
+  });
+
+  it('deletes subject and updates manual order list', async () => {
+    const config = createBaseConfig({
+      deleteConfig: {
+        isOpen: true,
+        type: 'subject',
+        item: {
+          id: 'subject-delete-1',
+          ownerId: 'user-1',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.deleteSubject).toHaveBeenCalledWith('subject-delete-1');
+    expect(config.setManualOrder).toHaveBeenCalledTimes(1);
+
+    const updater = config.setManualOrder.mock.calls[0][0];
+    const nextState = updater({ subjects: ['subject-delete-1', 'subject-2'], folders: ['folder-1'] });
+    expect(nextState.subjects).toEqual(['subject-2']);
+  });
+
+  it('deletes owned folder and updates manual order list', async () => {
+    const config = createBaseConfig({
+      deleteConfig: {
+        isOpen: true,
+        type: 'folder',
+        item: {
+          id: 'folder-delete-1',
+          ownerId: 'user-1',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.deleteFolder).toHaveBeenCalledWith('folder-delete-1');
+    expect(config.setManualOrder).toHaveBeenCalledTimes(1);
+
+    const updater = config.setManualOrder.mock.calls[0][0];
+    const nextState = updater({ subjects: ['subject-1'], folders: ['folder-delete-1', 'folder-2'] });
+    expect(nextState.folders).toEqual(['folder-2']);
+  });
+
+  it('handleDeleteFolderAll deletes owned folder and updates manual order', async () => {
+    const config = createBaseConfig({
+      deleteConfig: {
+        isOpen: true,
+        item: {
+          id: 'folder-all-1',
+          ownerId: 'user-1',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDeleteFolderAll();
+
+    expect(config.deleteFolder).toHaveBeenCalledWith('folder-all-1');
+    expect(config.setManualOrder).toHaveBeenCalledTimes(1);
+
+    const updater = config.setManualOrder.mock.calls[0][0];
+    const nextState = updater({ subjects: ['subject-1'], folders: ['folder-all-1', 'folder-2'] });
+    expect(nextState.folders).toEqual(['folder-2']);
+    expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, item: null });
+  });
+
+  it('handleDeleteFolderAll blocks non-owner folder deletion', async () => {
+    const config = createBaseConfig({
+      deleteConfig: {
+        isOpen: true,
+        item: {
+          id: 'folder-all-2',
+          ownerId: 'owner-2',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDeleteFolderAll();
+
+    expect(config.deleteFolder).not.toHaveBeenCalled();
+    expect(config.setManualOrder).not.toHaveBeenCalled();
+    expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, item: null });
+  });
+
+  it('handleDeleteFolderOnly deletes owned folder and updates manual order', async () => {
+    const config = createBaseConfig({
+      deleteConfig: {
+        isOpen: true,
+        item: {
+          id: 'folder-only-1',
+          ownerId: 'user-1',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDeleteFolderOnly();
+
+    expect(config.deleteFolderOnly).toHaveBeenCalledWith('folder-only-1');
+    expect(config.setManualOrder).toHaveBeenCalledTimes(1);
+
+    const updater = config.setManualOrder.mock.calls[0][0];
+    const nextState = updater({ subjects: ['subject-1'], folders: ['folder-only-1', 'folder-2'] });
+    expect(nextState.folders).toEqual(['folder-2']);
+    expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, item: null });
+  });
+
+  it('handleDeleteFolderOnly blocks non-owner folder deletion', async () => {
+    const config = createBaseConfig({
+      deleteConfig: {
+        isOpen: true,
+        item: {
+          id: 'folder-only-2',
+          ownerId: 'owner-2',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDeleteFolderOnly();
+
+    expect(config.deleteFolderOnly).not.toHaveBeenCalled();
+    expect(config.setManualOrder).not.toHaveBeenCalled();
+    expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, item: null });
   });
 });

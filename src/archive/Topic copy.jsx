@@ -505,7 +505,7 @@ const Topic = ({ user }) => {
                                     <div role="button" onClick={(e) => { e.stopPropagation(); tab === 'materials' ? handleCreateCustomPDF() : handleCreateCustomQuiz(); }} className="ml-2 w-5 h-5 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 transition-all z-10"><Plus className="w-3 h-3" /></div>
                                 )}
                                 <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === tab ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>
-                                    {tab === 'materials' ? topic.pdfs?.length || 0 : tab === 'uploads' ? topic.uploads?.length || 0 : topic.quizzes?.length || 0}
+                                    {tab === 'materials' ? `${topic.pdfs?.length || 0} ${topic.pdfs?.length === 1 ? 'PDF' : 'PDFs'}` : tab === 'uploads' ? `${topic.uploads?.length || 0} ${topic.uploads?.length === 1 ? 'archivo' : 'archivos'}` : `${topic.quizzes?.length || 0} ${topic.quizzes?.length === 1 ? 'test' : 'tests'}`}
                                 </span>
                             </button>
                         ))}

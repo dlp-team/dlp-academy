@@ -8,6 +8,14 @@
 	- promote-folder unshare confirmation cascade,
 	- tree move subject shortcut fallback and editable direct move path.
 
+## [2026-03-08] Test Hardening: Read-Only Shared-Context Guard Branches
+### Context & Validation Additions
+- Extended `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js` to assert viewer-in-shared-folder guard behavior across additional mutation entry points:
+	- `handleUpwardDrop` early-exit branch,
+	- `handlePromoteFolderWrapper` early-exit branch,
+	- `handleTreeMoveSubject` early-exit branch.
+- Confirms read-only users cannot trigger movement mutations through upward drop, promote-folder, or tree-move pathways.
+
 ## [2026-02-26] Feature Update: Direct Move Without Unshare Prompt from Root Shared Subject Context
 ### Context & Architecture
 `handleDropOnFolderWrapper` orchestrates subject move decisions including confirmation flows for sharing transitions.

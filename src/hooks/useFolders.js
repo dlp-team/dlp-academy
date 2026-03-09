@@ -11,7 +11,7 @@ export const useFolders = (user) => {
     const [folders, setFolders] = useState([]);
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
-    const canReadHomeData = Boolean(user?.role && user?.country && user?.displayName);
+    const canReadHomeData = Boolean(user?.role && user?.displayName);
 
     const debugShare = (stage, payload = {}) => {
         console.info('[SHARE_DEBUG][folder]', {
@@ -196,6 +196,32 @@ export const useFolders = (user) => {
         if (!folder) return;
 
         const batch = writeBatch(db);
+        const shortcutDeletionPromises = [];
+
+        const queueShortcutCleanup = async (targetId, targetType) => {
+            if (!targetId || !targetType || !user?.uid) return;
+
+            try {
+                const shortcutsSnap = await getDocs(
+                    query(
+                        collection(db, 'shortcuts'),
+                        where('targetId', '==', targetId),
+                        where('targetType', '==', targetType),
+                        where('ownerId', '==', user.uid)
+                    )
+                );
+
+                shortcutsSnap.docs.forEach(shortcutDoc => {
+                    shortcutDeletionPromises.push(
+                        deleteDoc(doc(db, 'shortcuts', shortcutDoc.id)).catch((err) => {
+                            console.warn(`Error deleting shortcut ${shortcutDoc.id}:`, err);
+                        })
+                    );
+                });
+            } catch (e) {
+                console.error(`Error querying ${targetType} shortcuts for cleanup:`, e);
+            }
+        };
 
         // Helper to recursively delete folders and their contents
         const deleteFolderRecursive = async (folderId) => {
@@ -207,10 +233,11 @@ export const useFolders = (user) => {
                 const subjectsSnap = await getDocs(
                     query(collection(db, "subjects"), where("folderId", "==", folderId))
                 );
-                subjectsSnap.forEach(docSnap => {
+                for (const docSnap of subjectsSnap.docs) {
                     const subjectRef = doc(db, "subjects", docSnap.id);
                     batch.delete(subjectRef);
-                });
+                    await queueShortcutCleanup(docSnap.id, 'subject');
+                }
             } catch (e) {
                 console.error("Error fetching subjects for deletion:", e);
             }
@@ -228,6 +255,7 @@ export const useFolders = (user) => {
             }
 
             // 3. Delete the folder itself
+            await queueShortcutCleanup(folderId, 'folder');
             const folderRef = doc(db, "folders", folderId);
             batch.delete(folderRef);
         };
@@ -235,8 +263,19 @@ export const useFolders = (user) => {
         // Start recursive deletion
         await deleteFolderRecursive(id);
 
+        await Promise.allSettled(shortcutDeletionPromises);
+
         // Commit all deletions in one batch
-        await batch.commit();
+        try {
+            await batch.commit();
+        } catch (commitError) {
+            console.error('Error committing folder cascade deletion batch:', commitError);
+            try {
+                await deleteDoc(doc(db, 'folders', id));
+            } catch (fallbackError) {
+                console.error('Error deleting root folder after batch failure:', fallbackError);
+            }
+        }
     };
 
     const deleteFolderOnly = async (id) => {
@@ -245,6 +284,7 @@ export const useFolders = (user) => {
 
         const batch = writeBatch(db);
         const parentId = folder.parentId || null;
+        const shortcutDeletionPromises = [];
 
         // 1. Move all child subjects to parent (query by folderId)
         try {
@@ -279,9 +319,36 @@ export const useFolders = (user) => {
         }
 
         // 4. Commit all changes
-        await batch.commit();
+        try {
+            await batch.commit();
+        } catch (commitError) {
+            console.error('Error committing folder move-before-delete batch:', commitError);
+        }
 
-        // 5. Delete the folder itself
+        // 5. Best effort delete owner shortcuts pointing to the folder
+        try {
+            const shortcutSnap = await getDocs(
+                query(
+                    collection(db, 'shortcuts'),
+                    where('targetId', '==', id),
+                    where('targetType', '==', 'folder'),
+                    where('ownerId', '==', user.uid)
+                )
+            );
+            shortcutSnap.docs.forEach(shortcutDoc => {
+                shortcutDeletionPromises.push(
+                    deleteDoc(doc(db, 'shortcuts', shortcutDoc.id)).catch((err) => {
+                        console.warn(`Error deleting shortcut ${shortcutDoc.id}:`, err);
+                    })
+                );
+            });
+        } catch (shortcutError) {
+            console.error('Error querying folder shortcuts for deletion:', shortcutError);
+        }
+
+        await Promise.allSettled(shortcutDeletionPromises);
+
+        // 6. Delete the folder itself
         await deleteDoc(doc(db, "folders", id));
     };
 

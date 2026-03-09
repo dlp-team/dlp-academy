@@ -8,6 +8,10 @@ const E2E_TOPIC_ID = process.env.E2E_TOPIC_ID;
 const E2E_QUIZ_ID = process.env.E2E_QUIZ_ID;
 const E2E_INSTITUTION_ID = process.env.E2E_INSTITUTION_ID;
 
+const buildE2eSubjectId = (ownerId) => `e2e-subject-${ownerId}`;
+const buildE2eTopicId = (ownerId, subjectId) => `e2e-topic-${ownerId}-${subjectId}`;
+const buildE2eQuizId = (ownerId, topicId) => `e2e-quiz-${ownerId}-${topicId}`;
+
 const ensureAdmin = () => {
   const serviceAccountRaw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
   if (!serviceAccountRaw) return null;
@@ -36,9 +40,9 @@ const canAccessSubject = (subjectData, ownerId) => {
 };
 
 const createSubjectSeed = async (db, ownerId, institutionId) => {
-  const now = Date.now();
-  const subjectRef = await db.collection('subjects').add({
-    name: `E2E Quiz Subject ${now}`,
+  const subjectId = buildE2eSubjectId(ownerId);
+  await db.collection('subjects').doc(subjectId).set({
+    name: 'E2E Quiz Subject',
     color: 'from-blue-400 to-blue-600',
     ownerId,
     ...(institutionId ? { institutionId } : {}),
@@ -46,15 +50,15 @@ const createSubjectSeed = async (db, ownerId, institutionId) => {
     e2eSeed: true,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
+  }, { merge: true });
 
-  return subjectRef.id;
+  return subjectId;
 };
 
 const createTopicSeed = async (db, subjectId, ownerId, institutionId) => {
-  const now = Date.now();
-  const topicRef = await db.collection('topics').add({
-    name: `E2E Quiz Topic ${now}`,
+  const topicId = buildE2eTopicId(ownerId, subjectId);
+  await db.collection('topics').doc(topicId).set({
+    name: 'E2E Quiz Topic',
     prompt: 'Deterministic E2E quiz seed topic',
     status: 'completed',
     color: 'from-blue-400 to-blue-600',
@@ -65,7 +69,7 @@ const createTopicSeed = async (db, subjectId, ownerId, institutionId) => {
     ...(institutionId ? { institutionId } : {}),
     e2eSeed: true,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
+  }, { merge: true });
 
   await db.collection('subjects').doc(subjectId).set(
     {
@@ -75,14 +79,14 @@ const createTopicSeed = async (db, subjectId, ownerId, institutionId) => {
     { merge: true }
   );
 
-  return topicRef.id;
+  return topicId;
 };
 
 const createQuizSeed = async (db, subjectId, topicId, ownerId, institutionId) => {
-  const now = Date.now();
-  const quizRef = await db.collection('quizzes').add({
-    name: `E2E Quiz ${now}`,
-    title: `E2E Quiz ${now}`,
+  const quizId = buildE2eQuizId(ownerId, topicId);
+  await db.collection('quizzes').doc(quizId).set({
+    name: 'E2E Quiz',
+    title: 'E2E Quiz',
     level: 'Básico',
     type: 'basic',
     subjectId,
@@ -104,9 +108,9 @@ const createQuizSeed = async (db, subjectId, topicId, ownerId, institutionId) =>
     formulas: [],
     e2eSeed: true,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
-  });
+  }, { merge: true });
 
-  return quizRef.id;
+  return quizId;
 };
 
 const resolveSeeds = async () => {

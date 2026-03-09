@@ -1,3 +1,64 @@
+## [2026-03-08] Permanent Delete Cascade Expanded to Quizzes and Resources
+### Context
+- Subject permanent deletion coverage required full topic dependency cleanup, including generated resources and quizzes.
+
+### Change
+- Updated `permanentlyDeleteSubject` in `src/hooks/useSubjects.js` to cascade delete, per topic:
+  - `documents`
+  - `resumen` resources
+  - `quizzes`
+- Preserved existing best-effort behavior: query/deletion failures are logged and do not block final topic/subject cleanup.
+
+### Validation
+- Focused unit suite passed: `npm run test -- tests/unit/hooks/useSubjects.test.js`.
+
+## [2026-03-08] Test Hardening: Owner-Scoped Shortcut Cleanup on Subject Delete
+### Context
+- Permanent subject deletion intentionally cleans owner-managed shortcuts while avoiding deletion of recipient-owned shortcut entries.
+
+### Validation Additions
+- Added targeted unit coverage in `tests/unit/hooks/useSubjects.test.js` validating:
+  - shortcut cleanup query is owner-scoped (`ownerId === currentUser.uid`),
+  - owner shortcut is deleted,
+  - non-owner ghost/orphan shortcuts are not targeted by the owner cleanup flow.
+
+### Validation
+- Focused suite passed: `npm run test -- tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useTopicLogic.test.js`.
+
+## [2026-03-09] Test Hardening: Shared-Folder Permission and Multi-Editor Delete Paths
+### Context
+- Permanent subject deletion needed explicit shared-context permission coverage beyond base owner/non-owner checks.
+
+### Validation Additions
+- Added unit tests in `tests/unit/hooks/useSubjects.test.js` to verify:
+  - shared collaborator/editor cannot permanently delete a subject when not owner,
+  - owner can still permanently delete subjects shared with multiple editors/viewers.
+
+### Validation
+- Consolidated suite passed: `npm run test -- tests/unit/hooks/useHomeHandlers.shortcuts.test.js tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useTopicLogic.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`.
+
+## [2026-03-07] Home Data Readiness No Longer Requires Country
+### Context
+- Country was removed from required registration profile fields.
+
+### Change
+- `canReadHomeData` now requires `role` + `displayName` only in `src/hooks/useSubjects.js`.
+
+### Validation
+- Unit suite remained green (`npm run test`).
+
+## [2026-03-07] Subject Code Generation Ownership Update
+### Context
+- Subject invite codes must be system-generated; teachers should not manually define invite codes during creation.
+- Enrollment lists should not be required as an input constraint at creation time.
+
+### Change
+- Updated `addSubject` in `src/hooks/useSubjects.js` to always initialize `inviteCode` using `generateSubjectInviteCode()`.
+- This ignores any incoming `payload.inviteCode` at creation and guarantees platform-generated code ownership.
+
+### Validation
+- Updated and passed unit tests in `tests/unit/hooks/useSubjects.test.js` to reflect the additional initial code-generation call.
+
 ## [2026-03-06] Feature Addition: Join Subject by Invite Code
 ### Context & Behavior
 - Added `joinSubjectByInviteCode(inviteCodeInput)` to support runtime join-by-code from the client hook.

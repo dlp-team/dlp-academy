@@ -13,6 +13,9 @@
 6. **Validate all changes** - Always run `get_errors` after edits and verify adjacent functionality
 7. **Document comprehensively** - Update explanation files per protocol requirements
 8. **Maximize code organization & efficiency** - Create new files when needed, split oversized files, centralize logic for maintainability
+9. **Use premium requests at 200% efficiency** - Premium requests are limited and cost money; every request must deliver maximum completed value (implementation + validation + documentation), never just partial progress
+10. **Do not stop momentum for minor uncertainty** - Ask concise in-task clarifying questions with `vscode_askQuestions`, then continue immediately with the safest lossless path in the same request
+11. **Do not pause due to broad modified-file noise** - If the user has said to continue, proceed on current scope and avoid blocking prompts about unrelated local changes unless there is a direct conflict in touched files
 
 ---
 
@@ -140,6 +143,11 @@ await vscode_askQuestions({
 ```
 
 **After receiving answers, continue immediately with the task.**
+
+### Premium Continuation Rule (Critical)
+- Questions must be **in-task**, not blockers.
+- Never consume a premium request only to ask whether to continue when a safe continuation path exists.
+- Prefer: ask 1 focused question, document assumptions, continue implementation, validate, and ship completed increments.
 
 ---
 

@@ -15,7 +15,19 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
     const studentShortcutTagOnlyMode = isReadOnlyRole(user);
     
     // Data Logic
-    const { subjects, loading, addSubject, updateSubject, deleteSubject, touchSubject, shareSubject, unshareSubject, transferSubjectOwnership } = useSubjects(user);
+    const {
+        subjects,
+        loading,
+        addSubject,
+        updateSubject,
+        deleteSubject,
+        touchSubject,
+        shareSubject,
+        unshareSubject,
+        transferSubjectOwnership,
+        getTrashedSubjects,
+        restoreSubject
+    } = useSubjects(user);
     const { 
         folders, 
         loading: loadingFolders, 
@@ -147,6 +159,8 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         addFolder,
         deleteSubject,
         deleteFolder,
+        getTrashedSubjects,
+        restoreSubject,
         deleteFolderOnly,
         updatePreference,
         navigate,
@@ -232,6 +246,14 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         shareSubject,
         unshareSubject,
         transferSubjectOwnership,
+
+        // Direct CRUD (for keyboard workflows)
+        addSubject,
+        addFolder,
+        updateSubject,
+        updateFolder,
+        deleteSubject,
+        deleteFolder,
         
         // Shortcut Functions
         createShortcut,

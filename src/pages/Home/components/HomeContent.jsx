@@ -61,6 +61,8 @@ const HomeContent = ({
     resolvedShortcuts = [],
     
     navigate,
+    onCardFocus = () => {},
+    getCardVisualState = () => ({ isAnimating: false, isCutPending: false }),
     activeFilter,
     selectedTags = [],
     sharedScopeSelected = true,
@@ -124,6 +126,15 @@ const HomeContent = ({
         if (!subjectEntry) return null;
         if (isShortcutItem(subjectEntry)) return subjectEntry.shortcutParentId ?? subjectEntry.folderId ?? subjectEntry.parentId ?? null;
         return subjectEntry.folderId ?? null;
+    };
+
+    const getShortcutVisualClasses = (itemId, type) => {
+        const visualState = getCardVisualState(itemId, type);
+        return [
+            'transition-all duration-150',
+            visualState?.isAnimating ? 'scale-95' : 'scale-100',
+            visualState?.isCutPending ? 'opacity-60' : 'opacity-100'
+        ].join(' ');
     };
 
     const matchesTagFilter = (item) => {
@@ -394,7 +405,12 @@ const HomeContent = ({
                                             {/* Folders in Grid */}
                                             {!studentMode && viewMode === 'grid' && activeFilter !== 'subjects' && filteredFolders.map((folder, index) => {
                                                 return (
-                                                <div key={`folder-${folder.id}`}>
+                                                <div
+                                                    key={`folder-${folder.id}`}
+                                                    onMouseDown={() => onCardFocus(folder, 'folder')}
+                                                    onMouseEnter={() => onCardFocus(folder, 'folder')}
+                                                    className={`${getShortcutVisualClasses(folder.id, 'folder')} cursor-pointer`}
+                                                >
                                                     <FolderCard
                                                         folder={folder}
                                                         user={user}
@@ -454,7 +470,12 @@ const HomeContent = ({
                                             {/* Subjects in Grid */}
                                             {activeFilter !== 'folders' && displayedGroupSubjects.map((subject, index) => {
                                                 return (
-                                                <div key={`${groupName}-${subject.id}`}>
+                                                <div
+                                                    key={`${groupName}-${subject.id}`}
+                                                    onMouseDown={() => onCardFocus(subject, 'subject')}
+                                                    onMouseEnter={() => onCardFocus(subject, 'subject')}
+                                                    className={`${getShortcutVisualClasses(subject.id, 'subject')} cursor-pointer`}
+                                                >
                                                     <SubjectCard
                                                         subject={subject}
                                                         user={user}
@@ -626,6 +647,8 @@ const HomeContent = ({
                                                 disableAllActions={disableAllActionsInShared}
                                                 disableDeleteActions={disableFolderDeleteActionsInShared}
                                                 draggable={dndEnabledInContext}
+                                                onFocusItem={onCardFocus}
+                                                getCardVisualState={getCardVisualState}
                                             />
                                         ))}
 
@@ -676,6 +699,8 @@ const HomeContent = ({
                                                     disableAllActions={disableAllActionsInShared}
                                                     disableDeleteActions={disableSubjectDeleteActionsInShared}
                                                     draggable={dndEnabledInContext}
+                                                    onFocusItem={onCardFocus}
+                                                    getCardVisualState={getCardVisualState}
                                                     hideSharedIndicator={studentMode}
                                                 />
                                             );

@@ -78,6 +78,22 @@ describe('Firestore rules: subjects + subjectInviteCodes', () => {
     );
   });
 
+  it('allows subject creation without enrolledStudentUids', async () => {
+    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+    await assertSucceeds(
+      setDoc(doc(teacherDb, 'subjects', 'subject-allow-1b'), {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        name: 'Fisica',
+        course: '2A',
+        inviteCode: 'JOINA112',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    );
+  });
+
   it('rejects subject creation missing required fields', async () => {
     const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
 
@@ -132,6 +148,18 @@ describe('Firestore rules: subjects + subjectInviteCodes', () => {
     const teacher2Db = testEnv.authenticatedContext('teacher-2').firestore();
 
     await assertFails(getDoc(doc(teacher2Db, 'subjectInviteCodes', 'inst-1_JOINE111')));
+  });
+
+  it('allows reading missing invite code key in same institution (existence check)', async () => {
+    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+    await assertSucceeds(getDoc(doc(teacherDb, 'subjectInviteCodes', 'inst-1_MISSING001')));
+  });
+
+  it('denies reading missing invite code key from other institution', async () => {
+    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+    await assertFails(getDoc(doc(teacherDb, 'subjectInviteCodes', 'inst-2_MISSING002')));
   });
 
   it('allows admin reading invite code across institutions', async () => {

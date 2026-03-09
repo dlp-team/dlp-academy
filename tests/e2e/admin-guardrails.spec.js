@@ -144,7 +144,18 @@ test.describe('Admin guardrails', () => {
     await expect(savePoliciesButton).toBeVisible();
 
     await savePoliciesButton.click();
-    await expect(page.getByText(/políticas de acceso actualizadas correctamente/i)).toBeVisible();
+
+    const sudoHeading = page.getByRole('heading', { name: /confirmación de seguridad/i });
+    await expect(sudoHeading).toBeVisible({ timeout: 7000 });
+
+    await page.getByLabel(/contraseña/i).fill(E2E_INSTITUTION_ADMIN_PASSWORD || '');
+    await page.getByRole('button', { name: /confirmar/i }).click();
+
+    await expect(sudoHeading).not.toBeVisible({ timeout: 7000 });
+
+    // Wait for the success message to appear inside the policies footer
+    const successMsg = page.locator('p', { hasText: /políticas de acceso actualizadas correctamente/i });
+    await expect(successMsg).toBeVisible({ timeout: 10000 });
   });
 
   test('global admin can access admin dashboard tabs', async ({ page }) => {

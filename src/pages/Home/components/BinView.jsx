@@ -15,6 +15,17 @@ import { DeleteConfirmModal, EmptyBinConfirmModal } from './bin/BinConfirmModals
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
+    // Restrict access for students
+    if (user?.role === 'student') {
+        return (
+            <div className="w-full flex flex-col items-center justify-center py-16">
+                <XCircle size={48} className="text-red-500 mb-4" />
+                <h2 className="text-2xl font-bold text-red-600 mb-2">Acceso denegado</h2>
+                <p className="text-gray-700 dark:text-gray-300 text-lg">La papelera no está disponible para alumnos.</p>
+            </div>
+        );
+    }
+
     const [trashedSubjects,   setTrashedSubjects]   = useState([]);
     const [loading,           setLoading]           = useState(true);
     const [actionLoading,     setActionLoading]     = useState(null);

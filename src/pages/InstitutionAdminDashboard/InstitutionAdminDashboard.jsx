@@ -32,6 +32,7 @@ import UsersTabContent from './components/UsersTabContent';
 import AddTeacherModal from './components/AddTeacherModal';
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { hasRequiredRoleAccess } from '../../utils/permissionUtils';
+import { getInstitutionalAccessCodePreview } from '../../services/accessCodeService';
 import {
   GLOBAL_BRAND_DEFAULTS,
   HOME_THEME_DEFAULT_COLORS,
@@ -88,6 +89,9 @@ const InstitutionAdminDashboard = ({ user }) => {
 
   const [institutionalCode, setInstitutionalCode] = useState('');
   const [isUpdatingCode, setIsUpdatingCode] = useState(false);
+  const [liveAccessCode, setLiveAccessCode] = useState('');
+  const [liveCodeLoading, setLiveCodeLoading] = useState(false);
+  const [liveCodeError, setLiveCodeError] = useState('');
 
   const [accessPolicies, setAccessPolicies] = useState({
     teachers: { requireDomain: false, allowedDomains: '', requireCode: true, rotationIntervalHours: 24 },
@@ -145,6 +149,58 @@ const InstitutionAdminDashboard = ({ user }) => {
   useEffect(() => {
     fetchData();
   }, [user, userType]);
+
+  useEffect(() => {
+    let cancelled = false;
+    let intervalId = null;
+
+    const refreshLiveCode = async () => {
+      if (!user?.institutionId) return;
+
+      const policy = accessPolicies?.[userType] || { requireCode: true, rotationIntervalHours: 24 };
+      if (policy.requireCode === false) {
+        if (!cancelled) {
+          setLiveAccessCode('');
+          setLiveCodeError('');
+        }
+        return;
+      }
+
+      setLiveCodeLoading(true);
+      setLiveCodeError('');
+      try {
+        const preview = await getInstitutionalAccessCodePreview({
+          institutionId: user.institutionId,
+          userType: userType === 'students' ? 'student' : 'teacher',
+          intervalHours: Number(policy.rotationIntervalHours || 24),
+        });
+
+        if (!cancelled) {
+          setLiveAccessCode(preview?.code || '------');
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Error getting live access code preview:', error);
+          setLiveAccessCode('------');
+          setLiveCodeError('No se pudo obtener el código en este momento.');
+        }
+      } finally {
+        if (!cancelled) {
+          setLiveCodeLoading(false);
+        }
+      }
+    };
+
+    refreshLiveCode();
+    intervalId = setInterval(refreshLiveCode, 30000);
+
+    return () => {
+      cancelled = true;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [user?.institutionId, userType, accessPolicies]);
 
   useEffect(() => {
     let active = true;
@@ -487,6 +543,9 @@ const InstitutionAdminDashboard = ({ user }) => {
             isUpdatingCode={isUpdatingCode}
             codeUpdateSuccess={codeUpdateSuccess}
             codeUpdateError={codeUpdateError}
+            liveAccessCode={liveAccessCode}
+            liveCodeLoading={liveCodeLoading}
+            liveCodeError={liveCodeError}
           />
         )}
 

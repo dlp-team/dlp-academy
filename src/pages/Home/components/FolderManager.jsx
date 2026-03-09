@@ -34,6 +34,7 @@ const FolderManager = ({
     const [pendingShareAction, setPendingShareAction] = useState(null);
     const [showSelfUnshareConfirm, setShowSelfUnshareConfirm] = useState(false);
     const [showDiscardPendingConfirm, setShowDiscardPendingConfirm] = useState(false);
+    const [validationErrors, setValidationErrors] = useState({});
     const [pendingPermissionChanges, setPendingPermissionChanges] = useState({});
     const [pendingUnshares, setPendingUnshares] = useState([]);
     const [shareLoading, setShareLoading] = useState(false);
@@ -41,6 +42,7 @@ const FolderManager = ({
     const [shareSuccess, setShareSuccess] = useState('');
 
     const [showModernFillOptions, setShowModernFillOptions] = useState(false);
+    const folderNameInputRef = React.useRef(null);
 
     const isShortcutEditing = isEditing && formData?.isShortcut === true;
     const shortcutPermissionLevel = formData?.shortcutPermissionLevel || 'viewer';
@@ -93,6 +95,7 @@ const FolderManager = ({
         setPendingShareAction(null);
         setShowSelfUnshareConfirm(false);
         setShowDiscardPendingConfirm(false);
+        setValidationErrors({});
         setPendingPermissionChanges({});
         setPendingUnshares([]);
         setShareError('');
@@ -205,6 +208,19 @@ const FolderManager = ({
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (activeTab === 'general' && canEditOriginalFields) {
+            const hasName = String(formData?.name || '').trim().length > 0;
+            if (!hasName) {
+                setValidationErrors({ name: 'Campo obligatorio.' });
+                if (folderNameInputRef.current) {
+                    folderNameInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    folderNameInputRef.current.focus();
+                }
+                return;
+            }
+        }
+
         onSave(formData);
     };
 
@@ -667,12 +683,25 @@ const FolderManager = ({
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre</label>
                                             <input
+                                                ref={folderNameInputRef}
                                                 type="text"
                                                 value={formData.name}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                                                className="w-full px-4 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white"
+                                                onChange={(e) => {
+                                                    setFormData(prev => ({ ...prev, name: e.target.value }));
+                                                    if (validationErrors?.name) {
+                                                        setValidationErrors(prev => ({ ...prev, name: '' }));
+                                                    }
+                                                }}
+                                                className={`w-full px-4 py-2 border rounded-xl dark:bg-slate-800 dark:text-white ${
+                                                    validationErrors?.name
+                                                        ? 'border-red-500 dark:border-red-500'
+                                                        : 'dark:border-slate-700'
+                                                }`}
                                                 required
                                             />
+                                            {validationErrors?.name ? (
+                                                <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">{validationErrors.name}</p>
+                                            ) : null}
                                         </div>
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>

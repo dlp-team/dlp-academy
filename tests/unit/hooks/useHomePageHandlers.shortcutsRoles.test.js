@@ -1,5 +1,15 @@
+// tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useHomePageHandlers } from '../../../src/pages/Home/hooks/useHomePageHandlers';
+
+const folderUtilsMocks = vi.hoisted(() => ({
+  isInvalidFolderMove: vi.fn(() => false),
+}));
+
+const persistenceMocks = vi.hoisted(() => ({
+  saveLastHomeFolderId: vi.fn(),
+  clearLastHomeFolderId: vi.fn(),
+}));
 
 vi.mock('../../../src/firebase/config', () => ({
   db: { __db: 'mock-db' },
@@ -13,6 +23,15 @@ vi.mock('firebase/firestore', async () => {
     doc: vi.fn(() => ({ __doc: true })),
   };
 });
+
+vi.mock('../../../src/utils/folderUtils', () => ({
+  isInvalidFolderMove: (...args) => folderUtilsMocks.isInvalidFolderMove(...args),
+}));
+
+vi.mock('../../../src/pages/Home/utils/homePersistence', () => ({
+  saveLastHomeFolderId: (...args) => persistenceMocks.saveLastHomeFolderId(...args),
+  clearLastHomeFolderId: (...args) => persistenceMocks.clearLastHomeFolderId(...args),
+}));
 
 const createBaseConfig = (overrides = {}) => {
   const base = {
@@ -50,6 +69,7 @@ const createBaseConfig = (overrides = {}) => {
 describe('useHomePageHandlers shortcut sharing + role gates', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    folderUtilsMocks.isInvalidFolderMove.mockReturnValue(false);
   });
 
   it('requests owner approval when moving a shortcut into a shared target folder', () => {
@@ -427,5 +447,496 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
       'private-parent',
       { preserveSharing: true }
     );
+  });
+
+  it('blocks viewer inside shared folder from promoting a subject shortcut upward', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        currentFolder: {
+          id: 'shared-source',
+          parentId: 'private-parent',
+          isShared: true,
+          ownerId: 'owner-1',
+          editorUids: [],
+          sharedWithUids: ['viewer-1'],
+        },
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    await handlers.handlePromoteSubjectWrapper('subject-1', 'shortcut-subject-1');
+
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+    expect(config.moveSubjectToParent).not.toHaveBeenCalled();
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+  });
+
+  it('blocks drop when user cannot write into shared target folder', () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        folders: [
+          {
+            id: 'shared-target',
+            isShared: true,
+            ownerId: 'owner-1',
+            editorUids: [],
+            sharedWithUids: ['viewer-1'],
+            parentId: null,
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'viewer-1',
+            folderId: null,
+            sharedWithUids: [],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleDropOnFolderWrapper('shared-target', 'subject-1', 'subject', null, null);
+
+    expect(result).toBe(true);
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+  });
+
+  it('blocks drop when user cannot write from shared source folder', () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        folders: [
+          {
+            id: 'source-shared',
+            isShared: true,
+            ownerId: 'owner-1',
+            editorUids: [],
+            sharedWithUids: ['viewer-1'],
+            parentId: null,
+          },
+          {
+            id: 'target-private',
+            isShared: false,
+            ownerId: 'owner-1',
+            parentId: null,
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'viewer-1',
+            folderId: 'source-shared',
+            sharedWithUids: ['viewer-1'],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleDropOnFolderWrapper('target-private', 'subject-1', 'subject', 'source-shared', null);
+
+    expect(result).toBe(true);
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+  });
+
+  it('blocks editor from moving subject out of root shared boundary', () => {
+    const config = createBaseConfig({
+      currentUserId: 'editor-1',
+      logic: {
+        folders: [
+          {
+            id: 'root-shared',
+            isShared: true,
+            ownerId: 'owner-1',
+            editorUids: ['editor-1'],
+            sharedWithUids: ['editor-1'],
+            parentId: null,
+          },
+          {
+            id: 'child-source',
+            isShared: false,
+            ownerId: 'owner-1',
+            parentId: 'root-shared',
+          },
+          {
+            id: 'outside-target',
+            isShared: false,
+            ownerId: 'owner-1',
+            parentId: null,
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'owner-1',
+            folderId: 'child-source',
+            sharedWithUids: ['editor-1'],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleDropOnFolderWrapper('outside-target', 'subject-1', 'subject', 'child-source', null);
+
+    expect(result).toBe(true);
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+  });
+
+  it('blocks breadcrumb folder move when folder move is invalid/circular', () => {
+    folderUtilsMocks.isInvalidFolderMove.mockReturnValue(true);
+
+    const config = createBaseConfig({
+      logic: {
+        currentFolder: { id: 'source-parent', parentId: null, isShared: false, ownerId: 'owner-1' },
+        folders: [
+          { id: 'source-parent', parentId: null, isShared: false, ownerId: 'owner-1' },
+          { id: 'folder-source', parentId: 'source-parent', isShared: false, ownerId: 'owner-1' },
+          { id: 'target-folder', parentId: null, isShared: false, ownerId: 'owner-1' },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleBreadcrumbDrop('target-folder', null, 'folder-source', null, null);
+
+    expect(result).toBe(true);
+    expect(config.moveFolderToParent).not.toHaveBeenCalled();
+  });
+
+  it('handleNestFolder no-ops when nesting folder into itself', async () => {
+    const config = createBaseConfig({
+      logic: {
+        currentFolder: { id: 'root', parentId: null, isShared: false, ownerId: 'owner-1' },
+        folders: [
+          { id: 'folder-1', parentId: 'root', isShared: false, ownerId: 'owner-1' },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    await handlers.handleNestFolder('folder-1', 'folder-1', null);
+
+    expect(config.moveFolderToParent).not.toHaveBeenCalled();
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+  });
+
+  it('handleNestFolder blocks non-owner from nesting source folder', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        currentFolder: { id: 'root', parentId: null, isShared: false, ownerId: 'owner-1' },
+        folders: [
+          { id: 'folder-1', parentId: 'root', isShared: false, ownerId: 'owner-1', editorUids: [] },
+          { id: 'target', parentId: null, isShared: false, ownerId: 'owner-1' },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    await handlers.handleNestFolder('target', 'folder-1', null);
+
+    expect(config.moveFolderToParent).not.toHaveBeenCalled();
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+  });
+
+  it('handlePromoteFolderWrapper blocks non-owner/non-editor source folder', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        currentFolder: { id: 'parent-folder', parentId: null, isShared: false, ownerId: 'owner-1' },
+        folders: [
+          { id: 'folder-1', parentId: 'parent-folder', isShared: false, ownerId: 'owner-1', editorUids: [] },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    await handlers.handlePromoteFolderWrapper('folder-1', null);
+
+    expect(config.moveFolderToParent).not.toHaveBeenCalled();
+  });
+
+  it('handleTreeMoveSubject falls back to moving shortcut when source edit is denied', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        currentFolder: null,
+        folders: [
+          {
+            id: 'source-regular',
+            isShared: false,
+            ownerId: 'owner-1',
+            editorUids: [],
+            sharedWithUids: ['viewer-1'],
+            parentId: null,
+          },
+          {
+            id: 'target-private',
+            isShared: false,
+            ownerId: 'owner-1',
+            parentId: null,
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'owner-1',
+            folderId: 'source-regular',
+            sharedWithUids: ['viewer-1'],
+          },
+        ],
+        shortcuts: [
+          {
+            id: 'shortcut-subject-1',
+            targetId: 'subject-1',
+            targetType: 'subject',
+            parentId: 'source-regular',
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    await handlers.handleTreeMoveSubject('subject-1', 'target-private', 'source-regular');
+
+    expect(config.logic.moveShortcut).toHaveBeenCalledWith('shortcut-subject-1', 'target-private');
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+  });
+
+  it('handleTreeMoveSubject blocks mutation when source edit denied and no shortcut exists', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        currentFolder: null,
+        folders: [
+          {
+            id: 'source-shared',
+            isShared: true,
+            ownerId: 'owner-1',
+            editorUids: [],
+            sharedWithUids: ['viewer-1'],
+            parentId: null,
+          },
+          {
+            id: 'target-private',
+            isShared: false,
+            ownerId: 'owner-1',
+            parentId: null,
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'owner-1',
+            folderId: 'source-shared',
+            sharedWithUids: ['viewer-1'],
+          },
+        ],
+        shortcuts: [],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    await handlers.handleTreeMoveSubject('subject-1', 'target-private', 'source-shared');
+
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+  });
+
+  it('handleNavigateFromTree persists folder selection and clears it on root navigation', () => {
+    const config = createBaseConfig({
+      rememberOrganization: true,
+    });
+
+    const handlers = useHomePageHandlers(config);
+
+    handlers.handleNavigateFromTree({ id: 'folder-a', name: 'Folder A' });
+    handlers.handleNavigateFromTree(null);
+
+    expect(config.logic.setCurrentFolder).toHaveBeenCalledWith(expect.objectContaining({ id: 'folder-a' }));
+    expect(persistenceMocks.saveLastHomeFolderId).toHaveBeenCalledWith('folder-a');
+    expect(config.logic.setCurrentFolder).toHaveBeenCalledWith(null);
+    expect(persistenceMocks.clearLastHomeFolderId).toHaveBeenCalled();
+  });
+
+  it('moves shortcut only and does not mutate source subject when shortcut drag is used', () => {
+    const config = createBaseConfig({
+      logic: {
+        folders: [
+          { id: 'target-private', isShared: false, parentId: null, ownerId: 'owner-1' },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'owner-2',
+            folderId: 'source-folder',
+            sharedWithUids: ['viewer-1'],
+          },
+        ],
+      },
+      currentUserId: 'viewer-1',
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleDropOnFolderWrapper(
+      'target-private',
+      'subject-1',
+      'subject',
+      'source-folder',
+      'shortcut-subject-1'
+    );
+
+    expect(result).toBe(true);
+    expect(config.logic.moveShortcut).toHaveBeenCalledWith('shortcut-subject-1', 'target-private');
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+    expect(config.moveSubjectToParent).not.toHaveBeenCalled();
+  });
+
+  it('blocks non-editor from moving subject out of shared source folder (owner mismatch)', () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        folders: [
+          {
+            id: 'source-shared',
+            isShared: true,
+            ownerId: 'owner-1',
+            parentId: null,
+            editorUids: [],
+            sharedWithUids: ['viewer-1'],
+          },
+          {
+            id: 'target-private',
+            isShared: false,
+            ownerId: 'owner-1',
+            parentId: null,
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'owner-1',
+            folderId: 'source-shared',
+            sharedWithUids: ['viewer-1'],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleDropOnFolderWrapper(
+      'target-private',
+      'subject-1',
+      'subject',
+      'source-shared',
+      null
+    );
+
+    expect(result).toBe(true);
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+  });
+
+  it('is idempotent no-op when dropping subject into same folder repeatedly', () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        folders: [
+          { id: 'folder-1', isShared: false, ownerId: 'owner-1', parentId: null },
+        ],
+        subjects: [
+          { id: 'subject-1', ownerId: 'owner-1', folderId: 'folder-1', sharedWithUids: [] },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    handlers.handleDropOnFolderWrapper('folder-1', 'subject-1', 'subject', 'folder-1', null);
+    handlers.handleDropOnFolderWrapper('folder-1', 'subject-1', 'subject', 'folder-1', null);
+
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+  });
+
+  it('blocks viewer inside shared folder from upward-drop mutation handlers', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        currentFolder: {
+          id: 'shared-source',
+          parentId: 'parent-1',
+          isShared: true,
+          ownerId: 'owner-1',
+          editorUids: [],
+          sharedWithUids: ['viewer-1'],
+        },
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const dragEvent = {
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+      dataTransfer: {
+        getData: vi.fn((key) => {
+          if (key === 'subjectId') return 'subject-1';
+          return '';
+        }),
+      },
+    };
+
+    await handlers.handleUpwardDrop(dragEvent);
+
+    expect(dragEvent.preventDefault).not.toHaveBeenCalled();
+    expect(dragEvent.stopPropagation).not.toHaveBeenCalled();
+    expect(config.moveSubjectToParent).not.toHaveBeenCalled();
+    expect(config.moveFolderToParent).not.toHaveBeenCalled();
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+  });
+
+  it('blocks viewer inside shared folder from promoting folders and tree subject moves', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        currentFolder: {
+          id: 'shared-source',
+          parentId: 'parent-1',
+          isShared: true,
+          ownerId: 'owner-1',
+          editorUids: [],
+          sharedWithUids: ['viewer-1'],
+        },
+        folders: [
+          {
+            id: 'folder-1',
+            parentId: 'shared-source',
+            isShared: false,
+            ownerId: 'owner-1',
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'owner-1',
+            folderId: 'shared-source',
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+
+    await handlers.handlePromoteFolderWrapper('folder-1', null);
+    await handlers.handleTreeMoveSubject('subject-1', 'target-folder', 'shared-source');
+
+    expect(config.moveFolderToParent).not.toHaveBeenCalled();
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+    expect(config.logic.moveShortcut).not.toHaveBeenCalled();
   });
 });
