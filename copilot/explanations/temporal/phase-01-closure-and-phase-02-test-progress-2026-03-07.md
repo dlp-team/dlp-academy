@@ -288,3 +288,23 @@
   - `tests/unit/hooks/useFolders.test.js`
   - `tests/unit/hooks/useTopicLogic.test.js`
   - Aggregate: 81 tests passing.
+
+## Additional progress (2026-03-09 - Ghost Drag Edge-Case Batch)
+- Expanded `useGhostDrag` with 10 additional tests targeting edge behavior and branch hardening:
+  - transparent native drag-preview suppression via `setDragImage`
+  - transform-origin offset correctness
+  - interference-class stripping on cloned ghost nodes
+  - fixed visual style assertions for ghost rendering
+  - pointer-axis zero guards (`clientX = 0` and `clientY = 0`) as explicit no-op paths
+  - callback optionality and event payload integrity for start/end handlers
+- Synced Phase 02 checklist by marking `Ghost drag edge cases (orphan/shared/deleted)` as complete.
+
+### Validation
+- Passed consolidated run:
+  - `tests/unit/hooks/useGhostDrag.test.js`
+  - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - `tests/unit/hooks/useHomeHandlers.shortcuts.test.js`
+  - `tests/unit/hooks/useSubjects.test.js`
+  - `tests/unit/hooks/useFolders.test.js`
+  - `tests/unit/hooks/useTopicLogic.test.js`
+  - Aggregate: 104 tests passing.

@@ -150,3 +150,27 @@
 - `useFolders.deleteFolder`:
   - shared-subject cascade behavior verified,
   - owner-scoped shortcut cleanup query and recipient-orphan preservation verified.
+
+## Additional Progress Update (2026-03-09 - Ghost Drag Edge-Case Batch)
+
+### Additional Files Updated
+- `tests/unit/hooks/useGhostDrag.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+- `copilot/explanations/temporal/phase-01-closure-and-phase-02-test-progress-2026-03-07.md`
+- `copilot/explanations/codebase/src/hooks/useGhostDrag.md`
+
+### Additional Verification
+- Consolidated run passed:
+  - `npm run test:unit tests/unit/hooks/useGhostDrag.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js tests/unit/hooks/useHomeHandlers.shortcuts.test.js tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useTopicLogic.test.js`
+  - Result: 6 files passed, 104 tests passed.
+
+### Additional Completed Coverage
+- `useGhostDrag` edge-case branches now explicitly covered for:
+  - transparent native drag-image setup via `setDragImage`,
+  - offset/transform-origin correctness and stable ghost style invariants,
+  - cloned-node class cleanup to avoid visual drag interference,
+  - axis-specific zero-pointer no-op behavior in `handleDrag`,
+  - callback optionality and event payload integrity in start/end handlers.
+- Phase 02 checklist status synced:
+  - `Ghost drag edge cases (orphan/shared/deleted)` marked complete.

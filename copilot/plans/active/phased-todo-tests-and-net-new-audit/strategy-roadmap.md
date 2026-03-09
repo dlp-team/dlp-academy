@@ -13,6 +13,6 @@ Transform test backlog planning into a phased, implementation-ready sequence tha
 
 ## Immediate Next Actions
 1. Add remaining ghost-mode deletion variants for folder and subject actions.
-2. Expand ghost drag edge-case coverage for shared/orphan/deleted source contexts in handler flows.
-3. Extend cross-view parity coverage (grid/list/tree/manual/shared) for deletion and shortcut behavior.
-4. Add lecture-mode/read-only mutation-block tests in remaining handler entry points.
+2. Extend cross-view parity coverage (grid/list/tree/manual/shared) for deletion and shortcut behavior.
+3. Add lecture-mode/read-only mutation-block tests in remaining handler entry points.
+4. Add focused folder unshare ghost-mode tests in shared-tree drag and promote flows.

@@ -63,3 +63,9 @@ function ExampleComponent() {
   - ghost creation/removal lifecycle from `onDragStart` and `onDragEnd`
   - live position updates in `handleDrag` and no-op behavior for zeroed pointer events
   - callback continuity when the source node ref is missing (defensive branch)
+- 2026-03-09: Expanded ghost drag edge-case coverage with 10 additional assertions validating:
+  - hidden native drag image setup (`setDragImage` placeholder)
+  - offset-derived `transformOrigin` and fixed ghost styling invariants
+  - class cleanup on cloned nodes to avoid drag visual interference
+  - independent horizontal/vertical zero-pointer guard paths
+  - callback optionality and event payload integrity for start/end handlers

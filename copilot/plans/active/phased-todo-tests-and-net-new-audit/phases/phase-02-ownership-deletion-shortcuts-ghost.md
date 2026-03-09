@@ -63,7 +63,7 @@
 - [ ] UI disables/enables actions correctly in ghost mode
 - [ ] Data integrity after ghost actions
 - [x] Ghost drag UI/state integrity
-- [ ] Ghost drag edge cases (orphan/shared/deleted)
+- [x] Ghost drag edge cases (orphan/shared/deleted)
 
 ## Permissions and edge cases
 - [ ] Shared vs non-shared folders/subjects/topics
