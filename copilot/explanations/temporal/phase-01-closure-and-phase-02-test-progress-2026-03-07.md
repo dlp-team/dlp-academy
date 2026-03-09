@@ -364,3 +364,21 @@
   - `tests/unit/hooks/useGhostDrag.test.js`
   - `tests/unit/hooks/useShortcuts.test.js`
   - Aggregate: 143 tests passing.
+
+## Additional progress (2026-03-09 - Phase 03 Completion Batch)
+- Completed all Phase 03 checklist items with new unit and E2E coverage:
+  - settings reload continuity coverage in `tests/e2e/profile-settings.spec.js`,
+  - study-guide content-route/editor lifecycle and invalid-resource fallback in `tests/e2e/subject-topic-content.spec.js`,
+  - profile modal save/cancel/image-preview flow in `tests/unit/pages/profile/EditProfileModal.test.jsx`,
+  - study-guide missing/partial payload fallbacks in `tests/unit/pages/content/StudyGuide.fallback.test.jsx`.
+- Updated planning status:
+  - `phase-03-user-and-content-experience.md` fully checked,
+  - `strategy-roadmap.md` set Phase 03 to **COMPLETED** and advanced next actions to Phase 04/05.
+
+### Validation
+- Unit:
+  - `npm run test:unit tests/unit/pages/profile/EditProfileModal.test.jsx tests/unit/pages/content/StudyGuide.fallback.test.jsx`
+  - Result: 2 files passed, 5 tests passed.
+- E2E:
+  - `npm run test:e2e tests/e2e/profile-settings.spec.js tests/e2e/subject-topic-content.spec.js`
+  - Result: 7 passed.

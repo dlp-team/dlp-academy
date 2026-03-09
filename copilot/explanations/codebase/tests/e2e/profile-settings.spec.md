@@ -1,0 +1,16 @@
+// copilot/explanations/codebase/tests/e2e/profile-settings.spec.md
+
+## Changelog
+### 2026-03-09: Phase 03 settings persistence expansion
+- Added coverage for post-reload settings continuity in `/settings`.
+- Validates persistence-oriented behavior for:
+  - language selector continuity,
+  - notification toggle state continuity,
+  - theme controls remaining available after reload.
+
+## Overview
+This E2E suite validates authenticated profile/settings user flows, including profile modal interactions and settings behavior under real route transitions.
+
+## Notes
+- Uses role-account login via `E2E_EMAIL` and `E2E_PASSWORD`.
+- Includes conservative assertions to remain stable across environment-level Firestore permission differences.

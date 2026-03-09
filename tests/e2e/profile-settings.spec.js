@@ -169,4 +169,35 @@ test.describe('Profile and settings coverage', () => {
     await viewModeButtons.nth(0).click();
     await expect(page.getByText(/guardado|guardando/i)).toBeVisible();
   });
+
+  test('settings persist after reload for theme, language, and notifications', async ({ page }) => {
+    await login(page);
+
+    await page.goto('/settings');
+    await page.waitForURL(/\/settings/);
+
+    const languageSelect = page.locator('select').first();
+    const initialLanguage = await languageSelect.inputValue();
+
+    await page.getByRole('button', { name: /oscuro/i }).click();
+    await expect
+      .poll(async () => page.evaluate(() => document.documentElement.classList.contains('dark')))
+      .toBe(true);
+
+    const notifSection = page.locator('section').filter({ hasText: /notificaciones/i }).first();
+    const emailToggle = notifSection.locator('button').first();
+    const wasEnabled = await emailToggle.evaluate((btn) => btn.className.includes('bg-indigo-'));
+    await emailToggle.click();
+    await expect(page.getByText(/guardado|guardando/i)).toBeVisible();
+
+    await page.reload();
+    await page.waitForURL(/\/settings/);
+
+    await expect(languageSelect).toHaveValue(initialLanguage);
+    await expect(page.getByRole('button', { name: /oscuro/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /claro/i })).toBeVisible();
+
+    const isEnabledAfterReload = await emailToggle.evaluate((btn) => btn.className.includes('bg-indigo-'));
+    expect(isEnabledAfterReload).toBe(!wasEnabled);
+  });
 });

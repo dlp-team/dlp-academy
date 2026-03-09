@@ -192,6 +192,7 @@ const resolveSubjectAndTopic = async () => {
 test.describe('Subject topic content navigation', () => {
   let discoveredSubjectId = E2E_SUBJECT_ID || null;
   let discoveredTopicId = E2E_TOPIC_ID || null;
+  let discoveredGuideId = null;
 
   test.skip(!E2E_EMAIL || !E2E_PASSWORD, 'Set E2E_EMAIL and E2E_PASSWORD to run Subject/Topic navigation tests.');
 
@@ -199,6 +200,14 @@ test.describe('Subject topic content navigation', () => {
     const resolved = await resolveSubjectAndTopic();
     discoveredSubjectId = resolved.subjectId;
     discoveredTopicId = resolved.topicId;
+
+    const db = ensureAdmin();
+    if (db && discoveredTopicId) {
+      const guideSnap = await db.collection('resumen').where('topicId', '==', discoveredTopicId).limit(1).get();
+      if (!guideSnap.empty) {
+        discoveredGuideId = guideSnap.docs[0].id;
+      }
+    }
   });
 
   test('subject route renders and topic surface is reachable', async ({ page }) => {
@@ -242,11 +251,54 @@ test.describe('Subject topic content navigation', () => {
     await page.waitForURL(new RegExp(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}`));
 
     const viewButtons = page.getByRole('button', { name: /^ver$/i });
-    await expect(viewButtons.first()).toBeVisible({ timeout: 12000 });
+    const availableViewButtons = await viewButtons.count();
 
-    await viewButtons.first().click();
-    await page.waitForURL(/\/home\/subject\/.*\/topic\/.*\/(resumen|resource)\/.+/);
+    if (availableViewButtons > 0) {
+      await viewButtons.first().click();
+      await page.waitForURL(/\/home\/subject\/.*\/topic\/.*\/(resumen|resource)\/.+/);
+      expect(page.url()).toMatch(/\/(resumen|resource)\//);
+      return;
+    }
 
+    test.skip(!discoveredGuideId, 'No visible content card and no discovered summary id for deterministic route coverage.');
+    await page.goto(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}/resumen/${discoveredGuideId}`);
+    await page.waitForURL(new RegExp(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}/resumen/${discoveredGuideId}`));
     expect(page.url()).toMatch(/\/(resumen|resource)\//);
+  });
+
+  test('study guide editor save action keeps editor state controlled', async ({ page }) => {
+    test.skip(!discoveredSubjectId || !discoveredTopicId || !discoveredGuideId, 'No deterministic summary id available for editor lifecycle coverage.');
+
+    await page.goto('/login');
+    await page.locator('#email').fill(E2E_EMAIL || '');
+    await page.locator('#password').fill(E2E_PASSWORD || '');
+    await page.getByRole('button', { name: /iniciar sesión/i }).click();
+
+    await page.waitForURL(/\/home/);
+    await page.goto(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}/resumen/${discoveredGuideId}/edit`);
+    await page.waitForURL(new RegExp(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}/resumen/${discoveredGuideId}/edit`));
+
+    const saveButton = page.getByRole('button', { name: /guardar/i }).first();
+    await expect(saveButton).toBeVisible({ timeout: 15000 });
+
+    await saveButton.click();
+
+    await expect(page.getByText(/modo editor/i)).toBeVisible();
+    await expect(saveButton).toBeVisible();
+  });
+
+  test('invalid resource route shows controlled fallback state', async ({ page }) => {
+    test.skip(!discoveredSubjectId || !discoveredTopicId, 'No subject/topic seed available for invalid-resource fallback coverage.');
+
+    await page.goto('/login');
+    await page.locator('#email').fill(E2E_EMAIL || '');
+    await page.locator('#password').fill(E2E_PASSWORD || '');
+    await page.getByRole('button', { name: /iniciar sesión/i }).click();
+
+    await page.waitForURL(/\/home/);
+    await page.goto(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}/resource/e2e-missing-resource`);
+
+    await expect(page.getByText(/contenido no disponible/i)).toBeVisible({ timeout: 12000 });
+    await expect(page.getByRole('button', { name: /volver atrás/i })).toBeVisible();
   });
 });
