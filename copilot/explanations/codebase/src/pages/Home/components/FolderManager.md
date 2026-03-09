@@ -1,3 +1,17 @@
+## [2026-03-09] Feature Update: Required Name Validation in Folder General Tab
+### Context & Architecture
+`FolderManager` now applies explicit required validation before persisting folder changes from the `General` tab.
+
+### Previous State
+- Name field relied on native required behavior without consistent in-form visual feedback.
+
+### New State & Logic
+- Added `validationErrors` state for folder name.
+- Added input ref and first-error focus/scroll guidance on submit.
+- Shows red border and `Campo obligatorio.` text when folder name is missing.
+
+---
+
 ## [2026-02-26] Feature Update: Institution Email Autocomplete Suggestions
 ### Context & Architecture
 `FolderManager` sharing input now fetches institution users and offers email suggestions inline.

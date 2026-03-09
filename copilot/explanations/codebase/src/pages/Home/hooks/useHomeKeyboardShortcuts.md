@@ -1,6 +1,10 @@
 // copilot/explanations/codebase/src/pages/Home/hooks/useHomeKeyboardShortcuts.md
 
 ## Changelog
+### 2026-03-09: Ctrl+Z fallback restore from bin
+- Extended `onUndo` to restore the latest trashed subject when the in-memory undo stack is empty.
+- Uses `logic.getTrashedSubjects()` + `logic.restoreSubject()` and keeps existing undo-stack behavior unchanged.
+
 ### 2026-03-09: Initial extraction and wire-up
 - Added `useHomeKeyboardShortcuts` to centralize Home keyboard actions outside `Home.jsx`.
 - Implements Ctrl+C/X/V/Z for focused subject/folder cards.

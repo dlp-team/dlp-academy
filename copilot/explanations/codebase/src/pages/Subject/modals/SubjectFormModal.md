@@ -1,3 +1,17 @@
+## [2026-03-09] Feature Update: Required-Field Validation Feedback in General Tab
+### Context & Architecture
+`SubjectFormModal` now performs explicit required checks for subject name and academic course before saving from the `General` tab.
+
+### Previous State
+- Save could fail by required constraints without a consistent inline visual cue on each missing field.
+
+### New State & Logic
+- Added `validationErrors` state and propagated it into `BasicInfoFields`.
+- Added ref-based focus/scroll to the first invalid required field.
+- Clears field-level errors as users correct input.
+
+---
+
 ## [2026-02-26] Feature Update: Institution Email Autocomplete Suggestions
 ### Context & Architecture
 `SubjectFormModal` sharing input now preloads institution user emails and suggests candidates while typing.

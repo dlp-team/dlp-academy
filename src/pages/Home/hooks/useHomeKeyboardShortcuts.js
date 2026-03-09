@@ -95,7 +95,7 @@ export const useHomeKeyboardShortcuts = ({
             label: focusedItem.name || (selectedCard.type === 'subject' ? 'Asignatura' : 'Carpeta')
         });
 
-        showFeedback(`${selectedCard.type === 'subject' ? 'Asignatura' : 'Carpeta'} copiada para pegar.`);
+        showFeedback(`${selectedCard.type === 'subject' ? 'Asignatura' : 'Carpeta'} copiada.`);
         return true;
     }, [focusedItem, requireValidSelection, selectedCard?.type, showFeedback]);
 
@@ -217,6 +217,32 @@ export const useHomeKeyboardShortcuts = ({
         if (isTypingTarget(event)) return false;
 
         if (!undoStack.length) {
+            try {
+                const trashedItems = typeof logic?.getTrashedSubjects === 'function'
+                    ? await logic.getTrashedSubjects()
+                    : [];
+
+                const toMillis = (value) => {
+                    if (!value) return 0;
+                    if (value instanceof Date) return value.getTime();
+                    if (typeof value?.toDate === 'function') return value.toDate().getTime();
+                    const parsed = new Date(value);
+                    return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+                };
+
+                const latestTrashedSubject = Array.isArray(trashedItems)
+                    ? [...trashedItems].sort((a, b) => toMillis(b?.trashedAt) - toMillis(a?.trashedAt))[0]
+                    : null;
+
+                if (latestTrashedSubject?.id && typeof logic?.restoreSubject === 'function') {
+                    await logic.restoreSubject(latestTrashedSubject.id);
+                    showFeedback(`Se restauró ${latestTrashedSubject.name || 'la asignatura'} desde la papelera.`);
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error restoring latest trashed subject with Ctrl+Z:', error);
+            }
+
             showFeedback('No hay acciones para deshacer.');
             return true;
         }

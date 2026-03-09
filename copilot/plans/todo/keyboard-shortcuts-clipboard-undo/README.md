@@ -12,4 +12,4 @@ Implement global and context-aware keyboard shortcuts for copy, cut, paste, and 
 - Lossless change protocol
 
 ## Status
-Drafted, pending activation
+Implemented and validated (including wire-up, hover targeting, bin-restore undo fallback, and required-field UX feedback)

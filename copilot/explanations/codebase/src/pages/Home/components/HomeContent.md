@@ -1,5 +1,11 @@
 # HomeContent.jsx
 
+## Changelog
+### 2026-03-09: Hover-based focus for keyboard shortcuts
+- Added `onMouseEnter` focus propagation for folder and subject grid wrappers.
+- Preserved existing `onMouseDown` focus behavior for click interactions.
+- Enables Ctrl+C/X targeting based on hovered card, not only last clicked card.
+
 ## Overview
 - **Source file:** `src/pages/Home/components/HomeContent.jsx`
 - **Last documented:** 2026-02-24

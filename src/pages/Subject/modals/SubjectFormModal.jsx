@@ -43,6 +43,10 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [classesActionError, setClassesActionError] = useState('');
     const [classesActionSuccess, setClassesActionSuccess] = useState('');
     const [inviteCodeCopyStatus, setInviteCodeCopyStatus] = useState('');
+    const [validationErrors, setValidationErrors] = useState({});
+    const subjectNameInputRef = React.useRef(null);
+    const subjectLevelSelectRef = React.useRef(null);
+    const subjectGradeSelectRef = React.useRef(null);
 
     const isShortcutEditing = isEditing && formData?.isShortcut === true;
     const isTagOnlyShortcutEdit = studentShortcutTagOnlyMode && isShortcutEditing;
@@ -112,6 +116,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setShareEmail('');
             setShareError('');
             setShareSuccess('');
+            setValidationErrors({});
             setShareRole('viewer');
             setShareQueue([]);
             setShareSearch('');
@@ -387,6 +392,43 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
     const handleSubmit = (e) => {
         e.preventDefault();
+
+        if (activeTab !== 'general') return;
+
+        if (!isTagOnlyShortcutEdit && canEditOriginalFields) {
+            const nextErrors = {};
+            const hasName = String(formData?.name || '').trim().length > 0;
+            const hasLevel = String(formData?.level || '').trim().length > 0;
+            const hasGrade = String(formData?.grade || '').trim().length > 0;
+            const hasCourse = String(formData?.course || '').trim().length > 0;
+
+            if (!hasName) {
+                nextErrors.name = 'Campo obligatorio.';
+            }
+
+            if (!hasCourse || !hasLevel || !hasGrade) {
+                nextErrors.course = 'Campo obligatorio.';
+            }
+
+            if (Object.keys(nextErrors).length > 0) {
+                setValidationErrors(nextErrors);
+                setActiveTab('general');
+
+                if (nextErrors.name && subjectNameInputRef.current) {
+                    subjectNameInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    subjectNameInputRef.current.focus();
+                } else if (subjectLevelSelectRef.current) {
+                    subjectLevelSelectRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    subjectLevelSelectRef.current.focus();
+                } else if (subjectGradeSelectRef.current) {
+                    subjectGradeSelectRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    subjectGradeSelectRef.current.focus();
+                }
+
+                return;
+            }
+        }
+
         onSave(formData);
     };
 
@@ -841,7 +883,15 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                 ) : (
                                     <>
                                         {canEditOriginalFields && (
-                                            <BasicInfoFields formData={formData} setFormData={setFormData} />
+                                            <BasicInfoFields
+                                                formData={formData}
+                                                setFormData={setFormData}
+                                                validationErrors={validationErrors}
+                                                setValidationErrors={setValidationErrors}
+                                                nameInputRef={subjectNameInputRef}
+                                                levelSelectRef={subjectLevelSelectRef}
+                                                gradeSelectRef={subjectGradeSelectRef}
+                                            />
                                         )}
                                         <TagManager formData={formData} setFormData={setFormData} />
                                         <AppearanceSection

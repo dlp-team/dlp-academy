@@ -395,7 +395,11 @@ const HomeContent = ({
                                             {/* Folders in Grid */}
                                             {!studentMode && viewMode === 'grid' && activeFilter !== 'subjects' && filteredFolders.map((folder, index) => {
                                                 return (
-                                                <div key={`folder-${folder.id}`} onMouseDown={() => onCardFocus(folder, 'folder')}>
+                                                <div
+                                                    key={`folder-${folder.id}`}
+                                                    onMouseDown={() => onCardFocus(folder, 'folder')}
+                                                    onMouseEnter={() => onCardFocus(folder, 'folder')}
+                                                >
                                                     <FolderCard
                                                         folder={folder}
                                                         user={user}
@@ -455,7 +459,11 @@ const HomeContent = ({
                                             {/* Subjects in Grid */}
                                             {activeFilter !== 'folders' && displayedGroupSubjects.map((subject, index) => {
                                                 return (
-                                                <div key={`${groupName}-${subject.id}`} onMouseDown={() => onCardFocus(subject, 'subject')}>
+                                                <div
+                                                    key={`${groupName}-${subject.id}`}
+                                                    onMouseDown={() => onCardFocus(subject, 'subject')}
+                                                    onMouseEnter={() => onCardFocus(subject, 'subject')}
+                                                >
                                                     <SubjectCard
                                                         subject={subject}
                                                         user={user}
