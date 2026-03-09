@@ -571,6 +571,53 @@ describe('useSubjects permanentlyDeleteSubject', () => {
     expect(firestoreMocks.mockDeleteDoc).not.toHaveBeenCalled();
   });
 
+  it('rejects subject deletion in shared-folder context when user is shared collaborator but not owner', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        ownerId: 'owner-2',
+        folderId: 'shared-folder-1',
+        sharedWithUids: [ownerUser.uid, 'owner-2'],
+        sharedWith: [
+          { uid: ownerUser.uid, email: ownerUser.email, role: 'editor' },
+          { uid: 'owner-2', email: 'owner2@test.com', role: 'owner' },
+        ],
+      }),
+    });
+
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(result.current.permanentlyDeleteSubject('subject-shared-collab')).rejects.toThrow(
+      'Only the owner can permanently delete this subject'
+    );
+
+    expect(firestoreMocks.mockDeleteDoc).not.toHaveBeenCalled();
+  });
+
+  it('allows owner deletion for subject shared with multiple editors/viewers', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        ownerId: ownerUser.uid,
+        sharedWithUids: ['editor-1', 'viewer-1'],
+        sharedWith: [
+          { uid: 'editor-1', email: 'editor1@test.com', role: 'editor' },
+          { uid: 'viewer-1', email: 'viewer1@test.com', role: 'viewer' },
+        ],
+      }),
+    });
+
+    firestoreMocks.mockGetDocs.mockResolvedValue({ docs: [] });
+
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(result.current.permanentlyDeleteSubject('subject-shared-multi')).resolves.toBeUndefined();
+
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-shared-multi' })
+    );
+  });
+
   it('continues permanent deletion when topic/document/resource/quiz/shortcut cleanup partially fails', async () => {
     firestoreMocks.mockGetDoc.mockResolvedValue({
       exists: () => true,
