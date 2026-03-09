@@ -28,6 +28,15 @@
 	- `handleDeleteFolderOnly` owner and non-owner paths.
 - Confirms destructive folder actions remain owner-gated while list ordering updates stay consistent after successful deletion actions.
 
+## [2026-03-09] Guard Hardening: Subject Deletion Owner Gate in Ghost/Shared Contexts
+### Context & Validation Additions
+- Updated `useHomeHandlers.handleDelete` to enforce owner-only subject deletion (matching folder destructive guard behavior).
+- Expanded `tests/unit/hooks/useHomeHandlers.shortcuts.test.js` with ghost/shared-focused assertions:
+	- non-owner subject delete is blocked and exits cleanly,
+	- owner subject delete still performs mutation + manual-order update,
+	- shared-tree `shortcut-folder` unshare remains blocked without shortcut mutation,
+	- non-shared `shortcut-folder` unshare path remains allowed and lossless.
+
 ---
 
 # useHomeHandlers.js

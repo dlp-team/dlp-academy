@@ -5,8 +5,9 @@ import {
     Users, Search, CheckCircle2, BookOpen,
     GraduationCap, Loader2, ChevronRight,
     LayoutGrid, TrendingUp, Calendar, Clock,
-    BarChart3, FolderOpen
+    BarChart3, FolderOpen, Brain
 } from 'lucide-react';
+import ExamCorrectionTool from './components/ExamCorrectionTool';
 import {
     collection, query, where, getDocs, doc, getDoc
 } from 'firebase/firestore';
@@ -314,9 +315,10 @@ const TeacherDashboard = ({ user }) => {
     }, [user]);
 
     const TABS = [
-        { key: 'overview', label: 'Resumen',      icon: BarChart3    },
-        { key: 'classes',  label: 'Mis Clases',   icon: LayoutGrid   },
-        { key: 'students', label: 'Mis Alumnos',  icon: GraduationCap},
+        { key: 'overview',    label: 'Resumen',          icon: BarChart3    },
+        { key: 'classes',     label: 'Mis Clases',       icon: LayoutGrid   },
+        { key: 'students',    label: 'Mis Alumnos',      icon: GraduationCap},
+        { key: 'correction',  label: 'Corrección IA',    icon: Brain        },
     ];
 
     return (
@@ -352,9 +354,10 @@ const TeacherDashboard = ({ user }) => {
                     ))}
                 </div>
 
-                {activeTab === 'overview' && <OverviewTab classes={myClasses} students={allStudents} loading={loading} />}
-                {activeTab === 'classes'  && <MyClassesTab classes={myClasses} allStudents={allStudents} loading={loading} />}
-                {activeTab === 'students' && <MyStudentsTab allStudents={allStudents} loading={loading} />}
+                {activeTab === 'overview'   && <OverviewTab classes={myClasses} students={allStudents} loading={loading} />}
+                {activeTab === 'classes'    && <MyClassesTab classes={myClasses} allStudents={allStudents} loading={loading} />}
+                {activeTab === 'students'   && <MyStudentsTab allStudents={allStudents} loading={loading} />}
+                {activeTab === 'correction' && <ExamCorrectionTool user={user} />}
             </main>
         </div>
     );

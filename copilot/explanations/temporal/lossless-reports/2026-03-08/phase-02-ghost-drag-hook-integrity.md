@@ -174,3 +174,26 @@
   - callback optionality and event payload integrity in start/end handlers.
 - Phase 02 checklist status synced:
   - `Ghost drag edge cases (orphan/shared/deleted)` marked complete.
+
+## Additional Progress Update (2026-03-09 - Ten-Task Phase 02 Checklist Completion)
+
+### Additional Files Updated
+- `src/pages/Home/hooks/useHomeHandlers.js`
+- `tests/unit/hooks/useHomeHandlers.shortcuts.test.js`
+- `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+- `copilot/explanations/temporal/phase-01-closure-and-phase-02-test-progress-2026-03-07.md`
+- `copilot/explanations/codebase/src/pages/Home/hooks/useHomeHandlers.md`
+- `copilot/explanations/codebase/src/pages/Home/hooks/useHomePageHandlers.md`
+
+### Additional Verification
+- Consolidated run passed:
+  - `npm run test:unit tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js tests/unit/hooks/useHomeHandlers.shortcuts.test.js tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useTopicLogic.test.js tests/unit/hooks/useGhostDrag.test.js`
+  - Result: 6 files passed, 113 tests passed.
+
+### Additional Completed Coverage
+- Added owner-only subject deletion guard in `useHomeHandlers.handleDelete` to block non-owner ghost/read-only deletion attempts.
+- Added shared/non-shared breadcrumb and nested-folder transition tests for unshare confirmation callbacks.
+- Added shortcut-folder unshare integrity tests in ghost shared-tree vs non-shared contexts.
+- Synced exactly 10 Phase 02 checklist items from pending to complete.

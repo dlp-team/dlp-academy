@@ -308,3 +308,34 @@
   - `tests/unit/hooks/useFolders.test.js`
   - `tests/unit/hooks/useTopicLogic.test.js`
   - Aggregate: 104 tests passing.
+
+## Additional progress (2026-03-09 - Phase 02 Ten-Task Ghost/Shared Completion Batch)
+- Hardened `useHomeHandlers.handleDelete` with explicit subject-owner gating so non-owner/ghost read-only flows cannot trigger subject deletion.
+- Expanded `useHomeHandlers` shortcut deletion coverage for ghost-mode integrity:
+  - non-owner subject deletion blocked,
+  - owner subject deletion still updates manual order,
+  - shortcut-folder unshare blocked in shared-tree ghost context,
+  - shortcut-folder unshare outside shared tree keeps shortcut-link mutation behavior lossless.
+- Expanded `useHomePageHandlers` drag/drop and breadcrumb parity coverage:
+  - breadcrumb non-shared move direct path,
+  - breadcrumb shared->private unshare callback path,
+  - nest-folder shared->private unshare callback path,
+  - promote-folder shared->private unshare callback path,
+  - direct subject move in non-shared source/target path without share prompts.
+- Synced exactly 10 Phase 02 checklist items to complete, including:
+  - breadcrumb shared/non-shared behavior,
+  - subject/folder ghost deletion coverage,
+  - folder unshare shortcut ghost mode,
+  - ghost-mode deletion matrix/data integrity/UI gating,
+  - shared vs non-shared parity,
+  - partial-failure handling and ghost-enabled deletion item.
+
+### Validation
+- Passed consolidated run:
+  - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - `tests/unit/hooks/useHomeHandlers.shortcuts.test.js`
+  - `tests/unit/hooks/useSubjects.test.js`
+  - `tests/unit/hooks/useFolders.test.js`
+  - `tests/unit/hooks/useTopicLogic.test.js`
+  - `tests/unit/hooks/useGhostDrag.test.js`
+  - Aggregate: 113 tests passing.

@@ -765,6 +765,224 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     expect(persistenceMocks.clearLastHomeFolderId).toHaveBeenCalled();
   });
 
+  it('moves breadcrumb folder directly in non-shared source/target path', () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        currentFolder: { id: 'source-parent', parentId: null, isShared: false, ownerId: 'owner-1' },
+        folders: [
+          { id: 'source-parent', parentId: null, isShared: false, ownerId: 'owner-1' },
+          { id: 'folder-source', parentId: 'source-parent', isShared: false, ownerId: 'owner-1' },
+          { id: 'target-private', parentId: null, isShared: false, ownerId: 'owner-1' },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleBreadcrumbDrop('target-private', null, 'folder-source', null, null);
+
+    expect(result).toBe(true);
+    expect(config.moveFolderToParent).toHaveBeenCalledWith('folder-source', 'source-parent', 'target-private');
+    expect(config.setShareConfirm).not.toHaveBeenCalled();
+    expect(config.setUnshareConfirm).not.toHaveBeenCalled();
+  });
+
+  it('unshares breadcrumb folder when moving from shared parent tree to private target', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        currentFolder: { id: 'source-parent', parentId: null, isShared: false, ownerId: 'owner-1' },
+        folders: [
+          { id: 'source-parent', parentId: null, isShared: false, ownerId: 'owner-1' },
+          {
+            id: 'shared-parent',
+            parentId: null,
+            isShared: true,
+            ownerId: 'owner-1',
+            sharedWithUids: ['viewer-1'],
+          },
+          {
+            id: 'folder-source',
+            parentId: 'shared-parent',
+            isShared: true,
+            ownerId: 'owner-1',
+            sharedWithUids: ['viewer-1'],
+          },
+          { id: 'target-private', parentId: null, isShared: false, ownerId: 'owner-1' },
+        ],
+        subjects: [
+          {
+            id: 'subject-inside-folder',
+            folderId: 'folder-source',
+            sharedWith: [{ uid: 'viewer-1', email: 'viewer1@test.com' }],
+            sharedWithUids: ['viewer-1'],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleBreadcrumbDrop('target-private', null, 'folder-source', null, null);
+
+    expect(result).toBe(true);
+    expect(config.setUnshareConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        open: true,
+        subjectId: null,
+        folder: expect.objectContaining({ id: 'folder-source' }),
+      })
+    );
+
+    const unsharePayload = config.setUnshareConfirm.mock.calls[0][0];
+    await unsharePayload.onConfirm();
+
+    expect(config.updateFolder).toHaveBeenCalledWith(
+      'folder-source',
+      expect.objectContaining({
+        sharedWith: [],
+        sharedWithUids: [],
+        isShared: false,
+      })
+    );
+    expect(config.moveFolderToParent).toHaveBeenCalledWith('folder-source', 'shared-parent', 'target-private');
+  });
+
+  it('unshares nested folder when handleNestFolder moves shared child into private target', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        currentFolder: { id: 'source-parent', parentId: null, isShared: false, ownerId: 'owner-1' },
+        folders: [
+          {
+            id: 'shared-parent',
+            parentId: null,
+            isShared: true,
+            ownerId: 'owner-1',
+            sharedWithUids: ['viewer-1'],
+          },
+          {
+            id: 'folder-source',
+            parentId: 'shared-parent',
+            isShared: true,
+            ownerId: 'owner-1',
+            editorUids: ['owner-1'],
+            sharedWithUids: ['viewer-1'],
+          },
+          { id: 'target-private', parentId: null, isShared: false, ownerId: 'owner-1' },
+        ],
+        subjects: [
+          {
+            id: 'subject-inside-folder',
+            folderId: 'folder-source',
+            sharedWith: [{ uid: 'viewer-1', email: 'viewer1@test.com' }],
+            sharedWithUids: ['viewer-1'],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    await handlers.handleNestFolder('target-private', 'folder-source', null);
+
+    expect(config.setUnshareConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({ open: true, folder: expect.objectContaining({ id: 'folder-source' }) })
+    );
+
+    const unsharePayload = config.setUnshareConfirm.mock.calls[0][0];
+    await unsharePayload.onConfirm();
+
+    expect(config.updateFolder).toHaveBeenCalledWith(
+      'folder-source',
+      expect.objectContaining({ sharedWithUids: [], isShared: false })
+    );
+    expect(config.moveFolderToParent).toHaveBeenCalledWith('folder-source', 'shared-parent', 'target-private');
+  });
+
+  it('unshares folder when promote wrapper exits shared tree into private parent', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        currentFolder: {
+          id: 'shared-current',
+          parentId: 'private-parent',
+          isShared: true,
+          ownerId: 'owner-1',
+          sharedWithUids: ['viewer-1'],
+        },
+        folders: [
+          {
+            id: 'shared-current',
+            parentId: 'private-parent',
+            isShared: true,
+            ownerId: 'owner-1',
+            sharedWithUids: ['viewer-1'],
+          },
+          {
+            id: 'folder-to-promote',
+            parentId: 'shared-current',
+            isShared: false,
+            ownerId: 'owner-1',
+            editorUids: ['owner-1'],
+          },
+          { id: 'private-parent', parentId: null, isShared: false, ownerId: 'owner-1' },
+        ],
+        subjects: [
+          {
+            id: 'subject-in-promoted-folder',
+            folderId: 'folder-to-promote',
+            sharedWith: [{ uid: 'viewer-1', email: 'viewer1@test.com' }],
+            sharedWithUids: ['viewer-1'],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    await handlers.handlePromoteFolderWrapper('folder-to-promote', null);
+
+    expect(config.setUnshareConfirm).toHaveBeenCalledWith(
+      expect.objectContaining({ open: true, folder: expect.objectContaining({ id: 'shared-current' }) })
+    );
+
+    const unsharePayload = config.setUnshareConfirm.mock.calls[0][0];
+    await unsharePayload.onConfirm();
+
+    expect(config.updateFolder).toHaveBeenCalledWith(
+      'folder-to-promote',
+      expect.objectContaining({ sharedWithUids: [], isShared: false })
+    );
+    expect(config.moveFolderToParent).toHaveBeenCalledWith('folder-to-promote', 'shared-current', 'private-parent');
+  });
+
+  it('moves subject directly between non-shared folders without share prompts', () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        folders: [
+          { id: 'source-private', isShared: false, ownerId: 'owner-1', parentId: null },
+          { id: 'target-private', isShared: false, ownerId: 'owner-1', parentId: null },
+        ],
+        subjects: [
+          {
+            id: 'subject-private-1',
+            ownerId: 'owner-1',
+            folderId: 'source-private',
+            sharedWithUids: [],
+            sharedWith: [],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleDropOnFolderWrapper('target-private', 'subject-private-1', 'subject', 'source-private', null);
+
+    expect(result).toBe(true);
+    expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith('subject-private-1', 'source-private', 'target-private');
+    expect(config.setShareConfirm).not.toHaveBeenCalled();
+    expect(config.setUnshareConfirm).not.toHaveBeenCalled();
+  });
+
   it('moves shortcut only and does not mutate source subject when shortcut drag is used', () => {
     const config = createBaseConfig({
       logic: {

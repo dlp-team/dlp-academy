@@ -347,6 +347,103 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
     expect(nextState.subjects).toEqual(['subject-2']);
   });
 
+  it('blocks subject deletion when current user is not owner (ghost/read-only context)', async () => {
+    const config = createBaseConfig({
+      deleteConfig: {
+        isOpen: true,
+        type: 'subject',
+        item: {
+          id: 'subject-ghost-nonowner',
+          ownerId: 'owner-2',
+          folderId: 'shared-folder-1',
+          isShared: true,
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.deleteSubject).not.toHaveBeenCalled();
+    expect(config.setManualOrder).not.toHaveBeenCalled();
+    expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
+  });
+
+  it('allows owner subject deletion in shared context and preserves manual-order integrity', async () => {
+    const config = createBaseConfig({
+      deleteConfig: {
+        isOpen: true,
+        type: 'subject',
+        item: {
+          id: 'subject-shared-owner',
+          ownerId: 'user-1',
+          folderId: 'shared-folder-1',
+          isShared: true,
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.deleteSubject).toHaveBeenCalledWith('subject-shared-owner');
+    const updater = config.setManualOrder.mock.calls[0][0];
+    const nextState = updater({ subjects: ['subject-shared-owner', 'subject-other'], folders: [] });
+    expect(nextState.subjects).toEqual(['subject-other']);
+  });
+
+  it('blocks shortcut-folder unshare in shared-tree ghost context and leaves shortcut data untouched', async () => {
+    const config = createBaseConfig({
+      folders: [
+        { id: 'root-shared', isShared: true, parentId: null },
+        { id: 'nested-folder', isShared: false, parentId: 'root-shared' },
+      ],
+      deleteConfig: {
+        isOpen: true,
+        type: 'shortcut-folder',
+        action: 'unshare',
+        item: {
+          id: 'folder-ghost-2',
+          targetId: 'folder-ghost-2',
+          shortcutParentId: 'nested-folder',
+          shortcutId: 'shortcut-folder-ghost-2',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.unshareFolder).not.toHaveBeenCalled();
+    expect(config.deleteShortcut).not.toHaveBeenCalled();
+    expect(config.setShortcutHiddenInManual).not.toHaveBeenCalled();
+    expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
+  });
+
+  it('unshares shortcut-folder outside shared tree without deleting shortcut link directly', async () => {
+    const config = createBaseConfig({
+      folders: [{ id: 'private-parent', isShared: false, parentId: null }],
+      deleteConfig: {
+        isOpen: true,
+        type: 'shortcut-folder',
+        action: 'unshare',
+        item: {
+          id: 'folder-private-1',
+          targetId: 'folder-private-1',
+          shortcutParentId: 'private-parent',
+          shortcutId: 'shortcut-folder-private-1',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.unshareFolder).toHaveBeenCalledWith('folder-private-1', 'user1@test.com');
+    expect(config.deleteShortcut).not.toHaveBeenCalled();
+    expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
+  });
+
   it('deletes owned folder and updates manual order list', async () => {
     const config = createBaseConfig({
       deleteConfig: {

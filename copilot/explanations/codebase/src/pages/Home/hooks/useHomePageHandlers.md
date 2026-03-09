@@ -56,6 +56,16 @@
 - Enforced source write permission in `handleDropOnFolderWrapper` and `handleTreeMoveSubject`.
 - Result: a user who is editor of an item but not editor/owner of the source shared folder can edit/delete item data but cannot move it across folders.
 
+## [2026-03-09] Test Hardening: Breadcrumb and Shared-to-Private Unshare Paths
+### Context & Validation Additions
+- Expanded `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js` to close additional drag/drop coverage around shared boundary transitions:
+	- breadcrumb direct move in non-shared source/target path,
+	- breadcrumb shared->private unshare confirmation callback,
+	- nest-folder shared->private unshare confirmation callback,
+	- promote-folder shared->private unshare confirmation callback,
+	- direct non-shared subject drop path without share/unshare prompts.
+- Confirms shared-boundary unshare logic remains deterministic while preserving non-shared move fast-path behavior.
+
 ---
 
 # useHomePageHandlers.js

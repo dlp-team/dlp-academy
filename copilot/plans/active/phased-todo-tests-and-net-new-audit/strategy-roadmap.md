@@ -12,7 +12,7 @@ Transform test backlog planning into a phased, implementation-ready sequence tha
 - Phase 05 - Firestore Rules Expansion: **PLANNED**
 
 ## Immediate Next Actions
-1. Add remaining ghost-mode deletion variants for folder and subject actions.
-2. Extend cross-view parity coverage (grid/list/tree/manual/shared) for deletion and shortcut behavior.
-3. Add lecture-mode/read-only mutation-block tests in remaining handler entry points.
-4. Add focused folder unshare ghost-mode tests in shared-tree drag and promote flows.
+1. Extend remaining cross-view parity coverage (grid/list/tree/manual/shared) for deletion and shortcut behavior.
+2. Add lecture-mode/read-only mutation-block tests in remaining handler entry points.
+3. Add multi-step deletion scenarios with nested shared subjects/topics/resources.
+4. Add real-time sync and multi-institution boundary assertions for deletion/shortcut/ghost actions.

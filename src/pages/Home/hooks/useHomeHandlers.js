@@ -196,6 +196,11 @@ export const useHomeHandlers = ({
 
     const handleDelete = async () => {
         if (deleteConfig.type === 'subject' && deleteConfig.item) {
+            const isSubjectOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
+            if (!isSubjectOwner) {
+                setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
+                return;
+            }
             await deleteSubject(deleteConfig.item.id);
             setManualOrder(prev => ({
                 ...prev,
