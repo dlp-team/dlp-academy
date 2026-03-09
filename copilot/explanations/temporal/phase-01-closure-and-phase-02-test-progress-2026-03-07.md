@@ -252,3 +252,19 @@
   - `tests/unit/hooks/useFolders.test.js`
   - `tests/unit/hooks/useTopicLogic.test.js`
   - Aggregate: 44 tests passing.
+
+## Additional progress (2026-03-09 - Topic Ghost/Read-Only Deletion Guard)
+- Hardened `useTopicLogic.handleDeleteTopic` with a permission gate:
+  - returns early when `canDelete(topic, user)` is false,
+  - prevents deletion mutation execution from ghost/read-only contexts.
+- Expanded topic tests to cover both sides of the gate:
+  - delete-enabled flows explicitly set `canDelete = true`,
+  - new read-only/ghost-mode test asserts no confirm prompt, no topic delete, and no navigation.
+- Synced Phase 02 checklist item `Topic deletion in ghost mode` to complete.
+
+### Validation
+- Passed focused run:
+  - `tests/unit/hooks/useTopicLogic.test.js`
+  - `tests/unit/hooks/useSubjects.test.js`
+  - `tests/unit/hooks/useFolders.test.js`
+  - Aggregate: 45 tests passing.

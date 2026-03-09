@@ -34,7 +34,7 @@
 ## Folder deletion coverage
 - [x] Delete folder only (subjects moved, no deletion)
 - [x] Delete folder and all contents (cascade)
-- [ ] Unshare folder (shortcuts hidden/deleted)
+- [ ] Unshare folder (shortcuts ghost mode)
 - [ ] Folder deletion with shared subjects
 - [ ] Folder deletion with ghost mode
 - [ ] Folder deletion with orphaned shortcuts
@@ -47,7 +47,7 @@
 - [x] Deletes documents inside topic
 - [x] Topic deletion when subject is deleted (cascade)
 - [x] Topic deletion with orphaned resources/quizzes/documents
-- [ ] Topic deletion in ghost mode
+- [x] Topic deletion in ghost mode
 - [x] Topic deletion with missing institutionId
 - [x] Topic deletion with failed resource/document deletion (error handling)
 

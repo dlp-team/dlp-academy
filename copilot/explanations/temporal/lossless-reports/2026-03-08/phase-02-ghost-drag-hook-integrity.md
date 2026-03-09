@@ -101,3 +101,24 @@
   - shortcut query includes `ownerId` filter bound to current owner,
   - owner shortcut entry is deleted,
   - non-owner shortcuts are not targeted by this cleanup flow (preserved as ghost/orphan entries for recipients).
+
+## Additional Progress Update (2026-03-09 - Topic Ghost/Read-Only Deletion Guard)
+
+### Additional Files Updated
+- `src/pages/Topic/hooks/useTopicLogic.js`
+- `tests/unit/hooks/useTopicLogic.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/strategy-roadmap.md`
+- `copilot/explanations/temporal/phase-01-closure-and-phase-02-test-progress-2026-03-07.md`
+- `copilot/explanations/codebase/src/pages/Topic/hooks/useTopicLogic.md`
+
+### Additional Verification
+- Focused run passed:
+  - `npm run test -- tests/unit/hooks/useTopicLogic.test.js tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js`
+  - Result: 3 files passed, 45 tests passed.
+
+### Additional Completed Coverage
+- `useTopicLogic.handleDeleteTopic` now enforces mutation guard for ghost/read-only users:
+  - early return when `canDelete(topic, user)` is false,
+  - no confirm prompt and no delete/navigation side effects in denied mode.
+- Existing delete-enabled cascade behavior remains covered and unchanged when permission is granted.

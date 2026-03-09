@@ -244,6 +244,7 @@ export const useTopicLogic = (user) => {
     };
 
     const handleDeleteTopic = async () => {
+        if (!canDelete(topic, user)) return;
         if (!window.confirm("¿Eliminar tema completo?")) return;
         try {
             const cleanupCollections = ['documents', 'resumen', 'quizzes'];
