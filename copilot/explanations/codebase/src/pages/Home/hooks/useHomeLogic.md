@@ -1,6 +1,10 @@
 # useHomeLogic.js
 
 ## Changelog
+### 2026-03-09: Restored resolved shortcut contract
+- Re-exposed `resolvedShortcuts` from `useHomeState` in `useHomeLogic` return payload.
+- Fixes composed-hook contract used by `tests/unit/hooks/useHomeLogic.test.js` while preserving existing `shortcuts` passthrough.
+
 ### 2026-03-09: Exposed bin restore helpers for keyboard undo
 - Added `getTrashedSubjects` and `restoreSubject` passthroughs from `useSubjects`.
 - Preserves existing Home logic contracts while enabling Ctrl+Z restore fallback in keyboard flows.

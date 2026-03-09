@@ -98,6 +98,7 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         searchSubjects,
         sharedFolders,
         sharedSubjects,
+        shortcuts: resolvedShortcuts,
         isDragAndDropEnabled
     } = useHomeState({
         user,
@@ -180,6 +181,7 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         subjects,
         folders,
         shortcuts,
+        resolvedShortcuts,
         searchFolders,
         searchSubjects,
         loading,

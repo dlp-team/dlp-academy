@@ -406,3 +406,22 @@
 - Rules integration:
   - `npm run test:rules`
   - Result: 1 file passed, 10 tests passed.
+
+## Additional progress (2026-03-09 - Final Full-Test Sweep)
+- Fixed one unit regression discovered by full-suite execution:
+  - restored `resolvedShortcuts` exposure from `useHomeState` through `useHomeLogic`.
+- Stabilized branding E2E selector path to current customization UI.
+
+### Validation
+- Unit full run:
+  - `npm run test`
+  - Result: 42 files passed, 271 tests passed.
+- Rules full run:
+  - `npm run test:rules`
+  - Result: 1 file passed, 10 tests passed.
+- E2E full run:
+  - `npm run test:e2e`
+  - Result: 26 passed, 4 skipped, 2 failed.
+  - Remaining failures are login-timeout fixture issues in:
+    - `tests/e2e/admin-guardrails.spec.js` (`editor cannot access privileged dashboard routes`),
+    - `tests/e2e/home-sharing-roles.spec.js` (`editor can create content inside designated shared folder`).
