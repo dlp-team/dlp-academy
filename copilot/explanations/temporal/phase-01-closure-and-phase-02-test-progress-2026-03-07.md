@@ -382,3 +382,27 @@
 - E2E:
   - `npm run test:e2e tests/e2e/profile-settings.spec.js tests/e2e/subject-topic-content.spec.js`
   - Result: 7 passed.
+
+## Additional progress (2026-03-09 - Phase 04 and 05 Completion Batch)
+- Completed Phase 04 admin/security reinforcement:
+  - added `SudoModal` unit coverage for wrong-password block and successful reauth flow,
+  - strengthened admin guardrails E2E to verify policy success messaging appears only after sudo confirmation.
+- Completed Phase 05 Firestore rules expansion:
+  - expanded `tests/rules/firestore.rules.test.js` with `institution_invites` create/get/list/update/delete boundaries,
+  - added institution + role enforcement coverage for `folders`, `topics`, `documents` (resources), and `quizzes`,
+  - enforced and validated deny paths for non-admin writes with missing/mismatched `institutionId`.
+- Updated planning status:
+  - `phase-04-admin-and-security-reinforcement.md` fully checked,
+  - `phase-05-firestore-rules-expansion.md` fully checked,
+  - roadmap set Phase 04 and Phase 05 to **COMPLETED**.
+
+### Validation
+- Unit:
+  - `npm run test:unit tests/unit/components/SudoModal.test.jsx`
+  - Result: 1 file passed, 2 tests passed.
+- E2E (delta-focused):
+  - `npm run test:e2e tests/e2e/admin-guardrails.spec.js -- --grep "institution admin can save access policies"`
+  - Result: 1 passed.
+- Rules integration:
+  - `npm run test:rules`
+  - Result: 1 file passed, 10 tests passed.

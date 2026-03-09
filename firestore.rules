@@ -334,9 +334,9 @@ service cloud.firestore {
           isGlobalAdmin()
           || (
             currentUserInstitutionId() != null
+            && request.resource.data.keys().hasAny(['institutionId'])
             && request.resource.data.institutionId == currentUserInstitutionId()
           )
-          || request.resource.data.ownerId == request.auth.uid
         );
       allow read: if isSignedIn()
         && !isStudentRole()
@@ -353,12 +353,20 @@ service cloud.firestore {
       allow update: if isSignedIn()
         && !isStudentRole()
         && (
-          canWriteResource(resource.data)
-          || resource.data.ownerId == request.auth.uid
-          || resource.data.uid == request.auth.uid
+          isGlobalAdmin()
           || (
-            resource.data.keys().hasAny(['parentId'])
-            && canManageFolderById(resource.data.parentId)
+            currentUserInstitutionId() != null
+            && request.resource.data.keys().hasAny(['institutionId'])
+            && request.resource.data.institutionId == currentUserInstitutionId()
+            && (
+              canWriteResource(resource.data)
+              || resource.data.ownerId == request.auth.uid
+              || resource.data.uid == request.auth.uid
+              || (
+                resource.data.keys().hasAny(['parentId'])
+                && canManageFolderById(resource.data.parentId)
+              )
+            )
           )
         );
       allow delete: if isSignedIn()
@@ -376,11 +384,13 @@ service cloud.firestore {
         && (
           isGlobalAdmin()
           || (
+            request.resource.data.keys().hasAny(['institutionId'])
+            && currentUserInstitutionId() != null
+            && request.resource.data.institutionId == currentUserInstitutionId()
+            &&
             hasSubjectRef(request.resource.data)
             && subjectInstitutionMatches(subjectRef(request.resource.data))
-            && request.resource.data.institutionId == currentUserInstitutionId()
           )
-          || request.resource.data.ownerId == request.auth.uid
         );
 
       allow read: if isSignedIn()
@@ -397,10 +407,13 @@ service cloud.firestore {
         && (
           isGlobalAdmin()
           || (
+            request.resource.data.keys().hasAny(['institutionId'])
+            && currentUserInstitutionId() != null
+            && request.resource.data.institutionId == currentUserInstitutionId()
+            &&
             hasSubjectRef(resource.data)
             && subjectInstitutionMatches(subjectRef(resource.data))
           )
-          || resource.data.ownerId == request.auth.uid
         );
 
       allow delete: if isSignedIn()
@@ -420,11 +433,13 @@ service cloud.firestore {
         && (
           isGlobalAdmin()
           || (
+            request.resource.data.keys().hasAny(['institutionId'])
+            && currentUserInstitutionId() != null
+            && request.resource.data.institutionId == currentUserInstitutionId()
+            &&
             hasTopicRef(request.resource.data)
             && topicInstitutionMatches(topicRef(request.resource.data))
-            && request.resource.data.institutionId == currentUserInstitutionId()
           )
-          || request.resource.data.ownerId == request.auth.uid
         );
 
       allow read: if isSignedIn()
@@ -441,10 +456,13 @@ service cloud.firestore {
         && (
           isGlobalAdmin()
           || (
+            request.resource.data.keys().hasAny(['institutionId'])
+            && currentUserInstitutionId() != null
+            && request.resource.data.institutionId == currentUserInstitutionId()
+            &&
             hasTopicRef(resource.data)
             && topicInstitutionMatches(topicRef(resource.data))
           )
-          || resource.data.ownerId == request.auth.uid
         );
 
       allow delete: if isSignedIn()
@@ -508,11 +526,13 @@ service cloud.firestore {
         && (
           isGlobalAdmin()
           || (
+            request.resource.data.keys().hasAny(['institutionId'])
+            && currentUserInstitutionId() != null
+            && request.resource.data.institutionId == currentUserInstitutionId()
+            &&
             hasTopicRef(request.resource.data)
             && topicInstitutionMatches(topicRef(request.resource.data))
-            && request.resource.data.institutionId == currentUserInstitutionId()
           )
-          || request.resource.data.ownerId == request.auth.uid
         );
 
       allow read: if isSignedIn()
@@ -529,10 +549,13 @@ service cloud.firestore {
         && (
           isGlobalAdmin()
           || (
+            request.resource.data.keys().hasAny(['institutionId'])
+            && currentUserInstitutionId() != null
+            && request.resource.data.institutionId == currentUserInstitutionId()
+            &&
             hasTopicRef(resource.data)
             && topicInstitutionMatches(topicRef(resource.data))
           )
-          || resource.data.ownerId == request.auth.uid
         );
 
       allow delete: if isSignedIn()
@@ -736,6 +759,7 @@ service cloud.firestore {
       // LIST: Global Admins can see all. Institution Admins can only see invites for their own school.
       allow list: if isGlobalAdmin() || 
                   (request.auth != null && 
+                   get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'institutionadmin' &&
                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.institutionId == resource.data.institutionId);
       
       // CREATE: Global Admins can create anything. 
@@ -755,6 +779,7 @@ service cloud.firestore {
       allow delete: if isGlobalAdmin() || 
                    (request.auth != null && request.auth.token.email == resource.data.email) ||
                    (request.auth != null && 
+                    get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'institutionadmin' &&
                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.institutionId == resource.data.institutionId);
     }
 

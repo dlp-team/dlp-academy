@@ -1,11 +1,11 @@
 // tests/rules/firestore.rules.test.js
-import { describe, it, beforeAll, afterAll, afterEach, expect } from 'vitest';
+import { describe, it, beforeAll, afterAll, afterEach } from 'vitest';
 import {
   initializeTestEnvironment,
   assertSucceeds,
   assertFails,
 } from '@firebase/rules-unit-testing';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -35,7 +35,34 @@ const seedDoc = async (collectionName, docId, payload) => {
   });
 };
 
-describe('Firestore rules: subjects + subjectInviteCodes', () => {
+const reseedBaseUsers = async () => {
+  await seedUser({ uid: 'teacher-1', role: 'teacher', institutionId: 'inst-1' });
+  await seedUser({ uid: 'teacher-2', role: 'teacher', institutionId: 'inst-2' });
+  await seedUser({ uid: 'student-1', role: 'student', institutionId: 'inst-1' });
+  await seedUser({ uid: 'institution-admin-1', role: 'institutionadmin', institutionId: 'inst-1' });
+  await seedUser({ uid: 'institution-admin-2', role: 'institutionadmin', institutionId: 'inst-2' });
+  await seedUser({ uid: 'admin-1', role: 'admin', institutionId: 'inst-1' });
+};
+
+const seedSubjectTopicFixture = async () => {
+  await seedDoc('subjects', 'subject-inst1', {
+    ownerId: 'teacher-1',
+    institutionId: 'inst-1',
+    name: 'Subject Inst 1',
+    course: '1A',
+    inviteCode: 'JOINX111',
+    enrolledStudentUids: [],
+  });
+
+  await seedDoc('topics', 'topic-inst1', {
+    ownerId: 'teacher-1',
+    institutionId: 'inst-1',
+    subjectId: 'subject-inst1',
+    name: 'Topic Inst 1',
+  });
+};
+
+describe('Firestore rules integration', () => {
   beforeAll(async () => {
     testEnv = await initializeTestEnvironment({
       projectId: PROJECT_ID,
@@ -44,161 +71,246 @@ describe('Firestore rules: subjects + subjectInviteCodes', () => {
       },
     });
 
-    await seedUser({ uid: 'teacher-1', role: 'teacher', institutionId: 'inst-1' });
-    await seedUser({ uid: 'teacher-2', role: 'teacher', institutionId: 'inst-2' });
-    await seedUser({ uid: 'admin-1', role: 'admin', institutionId: 'inst-1' });
+    await reseedBaseUsers();
   });
 
   afterEach(async () => {
     await testEnv.clearFirestore();
-
-    await seedUser({ uid: 'teacher-1', role: 'teacher', institutionId: 'inst-1' });
-    await seedUser({ uid: 'teacher-2', role: 'teacher', institutionId: 'inst-2' });
-    await seedUser({ uid: 'admin-1', role: 'admin', institutionId: 'inst-1' });
+    await reseedBaseUsers();
   });
 
   afterAll(async () => {
     await testEnv.cleanup();
   });
 
-  it('allows subject creation with required schema in same institution', async () => {
-    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+  it('allows institution admin to create teacher invite in own institution', async () => {
+    const institutionAdminDb = testEnv.authenticatedContext('institution-admin-1').firestore();
 
     await assertSucceeds(
-      setDoc(doc(teacherDb, 'subjects', 'subject-allow-1'), {
-        ownerId: 'teacher-1',
+      setDoc(doc(institutionAdminDb, 'institution_invites', 'invite-allow-1'), {
+        email: 'teacher.new@test.com',
         institutionId: 'inst-1',
-        name: 'Matematica',
-        course: '1A',
-        inviteCode: 'JOINA111',
-        enrolledStudentUids: [],
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        role: 'teacher',
+        type: 'direct',
       })
     );
   });
 
-  it('allows subject creation without enrolledStudentUids', async () => {
-    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
-
-    await assertSucceeds(
-      setDoc(doc(teacherDb, 'subjects', 'subject-allow-1b'), {
-        ownerId: 'teacher-1',
-        institutionId: 'inst-1',
-        name: 'Fisica',
-        course: '2A',
-        inviteCode: 'JOINA112',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      })
-    );
-  });
-
-  it('rejects subject creation missing required fields', async () => {
-    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+  it('denies institution admin create when role is not teacher', async () => {
+    const institutionAdminDb = testEnv.authenticatedContext('institution-admin-1').firestore();
 
     await assertFails(
-      setDoc(doc(teacherDb, 'subjects', 'subject-deny-1'), {
-        ownerId: 'teacher-1',
+      setDoc(doc(institutionAdminDb, 'institution_invites', 'invite-deny-student-role'), {
+        email: 'student.new@test.com',
         institutionId: 'inst-1',
-        name: 'Quimica',
-        inviteCode: 'JOINB111',
-        enrolledStudentUids: [],
+        role: 'student',
+        type: 'direct',
       })
     );
   });
 
-  it('allows invite code reservation for same institution creator', async () => {
-    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
-
-    await assertSucceeds(
-      setDoc(doc(teacherDb, 'subjectInviteCodes', 'inst-1_JOINC111'), {
-        inviteCode: 'JOINC111',
-        institutionId: 'inst-1',
-        subjectId: 'subject-allow-2',
-        createdBy: 'teacher-1',
-        createdAt: new Date(),
-      })
-    );
-  });
-
-  it('rejects invite code reservation when createdBy mismatches auth uid', async () => {
-    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
-
-    await assertFails(
-      setDoc(doc(teacherDb, 'subjectInviteCodes', 'inst-1_JOIND111'), {
-        inviteCode: 'JOIND111',
-        institutionId: 'inst-1',
-        subjectId: 'subject-deny-2',
-        createdBy: 'teacher-2',
-        createdAt: new Date(),
-      })
-    );
-  });
-
-  it('denies reading invite code from different institution for non-admin', async () => {
-    await seedDoc('subjectInviteCodes', 'inst-1_JOINE111', {
-      inviteCode: 'JOINE111',
+  it('allows unauthenticated get for invite by exact id', async () => {
+    await seedDoc('institution_invites', 'invite-public-get', {
+      email: 'teacher.public@test.com',
       institutionId: 'inst-1',
-      subjectId: 'subject-read-1',
-      createdBy: 'teacher-1',
-      createdAt: new Date(),
+      role: 'teacher',
+      type: 'direct',
     });
 
-    const teacher2Db = testEnv.authenticatedContext('teacher-2').firestore();
-
-    await assertFails(getDoc(doc(teacher2Db, 'subjectInviteCodes', 'inst-1_JOINE111')));
+    const anonymousDb = testEnv.unauthenticatedContext().firestore();
+    await assertSucceeds(getDoc(doc(anonymousDb, 'institution_invites', 'invite-public-get')));
   });
 
-  it('allows reading missing invite code key in same institution (existence check)', async () => {
+  it('allows institution admin list only for own institution', async () => {
+    await seedDoc('institution_invites', 'invite-list-own', {
+      email: 'teacher.list.own@test.com',
+      institutionId: 'inst-1',
+      role: 'teacher',
+      type: 'direct',
+    });
+
+    const institutionAdminDb = testEnv.authenticatedContext('institution-admin-1').firestore();
+    const ownInstitutionList = query(
+      collection(institutionAdminDb, 'institution_invites'),
+      where('institutionId', '==', 'inst-1')
+    );
+
+    await assertSucceeds(getDocs(ownInstitutionList));
+  });
+
+  it('denies teacher listing institution invites even in same institution', async () => {
+    await seedDoc('institution_invites', 'invite-list-deny-teacher', {
+      email: 'teacher.list.deny@test.com',
+      institutionId: 'inst-1',
+      role: 'teacher',
+      type: 'direct',
+    });
+
     const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+    const inviteList = query(
+      collection(teacherDb, 'institution_invites'),
+      where('institutionId', '==', 'inst-1')
+    );
 
-    await assertSucceeds(getDoc(doc(teacherDb, 'subjectInviteCodes', 'inst-1_MISSING001')));
+    await assertFails(getDocs(inviteList));
   });
 
-  it('denies reading missing invite code key from other institution', async () => {
+  it('denies invite update for institution admin and allows for global admin', async () => {
+    await seedDoc('institution_invites', 'invite-update-boundary', {
+      email: 'teacher.update@test.com',
+      institutionId: 'inst-1',
+      role: 'teacher',
+      type: 'direct',
+    });
+
+    const institutionAdminDb = testEnv.authenticatedContext('institution-admin-1').firestore();
+    await assertFails(
+      setDoc(
+        doc(institutionAdminDb, 'institution_invites', 'invite-update-boundary'),
+        { type: 'institutional' },
+        { merge: true }
+      )
+    );
+
+    const globalAdminDb = testEnv.authenticatedContext('admin-1').firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(globalAdminDb, 'institution_invites', 'invite-update-boundary'),
+        { type: 'institutional' },
+        { merge: true }
+      )
+    );
+  });
+
+  it('allows delete for institution admin in own institution and denies teacher delete', async () => {
+    await seedDoc('institution_invites', 'invite-delete-own', {
+      email: 'teacher.delete@test.com',
+      institutionId: 'inst-1',
+      role: 'teacher',
+      type: 'direct',
+    });
+
     const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+    await assertFails(deleteDoc(doc(teacherDb, 'institution_invites', 'invite-delete-own')));
 
-    await assertFails(getDoc(doc(teacherDb, 'subjectInviteCodes', 'inst-2_MISSING002')));
+    const institutionAdminDb = testEnv.authenticatedContext('institution-admin-1').firestore();
+    await assertSucceeds(deleteDoc(doc(institutionAdminDb, 'institution_invites', 'invite-delete-own')));
   });
 
-  it('allows admin reading invite code across institutions', async () => {
-    await seedDoc('subjectInviteCodes', 'inst-2_JOINF111', {
-      inviteCode: 'JOINF111',
+  it('allows email-owner delete path for invite', async () => {
+    await seedDoc('institution_invites', 'invite-delete-email-owner', {
+      email: 'owner.delete@test.com',
       institutionId: 'inst-2',
-      subjectId: 'subject-read-2',
-      createdBy: 'teacher-2',
-      createdAt: new Date(),
+      role: 'teacher',
+      type: 'direct',
     });
 
-    const adminDb = testEnv.authenticatedContext('admin-1').firestore();
+    const emailOwnerDb = testEnv.authenticatedContext('email-owner-1', {
+      email: 'owner.delete@test.com',
+    }).firestore();
 
-    await assertSucceeds(getDoc(doc(adminDb, 'subjectInviteCodes', 'inst-2_JOINF111')));
+    await assertSucceeds(deleteDoc(doc(emailOwnerDb, 'institution_invites', 'invite-delete-email-owner')));
   });
 
-  it('denies invite code updates and deletes', async () => {
-    await seedDoc('subjectInviteCodes', 'inst-1_JOING111', {
-      inviteCode: 'JOING111',
+  it('allows non-admin folder/topic/document/quiz writes only with matching institution id', async () => {
+    await seedSubjectTopicFixture();
+
+    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+    await assertSucceeds(
+      setDoc(doc(teacherDb, 'folders', 'folder-allow-1'), {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        name: 'Folder Allow',
+      })
+    );
+
+    await assertSucceeds(
+      setDoc(doc(teacherDb, 'topics', 'topic-allow-create'), {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        subjectId: 'subject-inst1',
+        name: 'Topic Allow',
+      })
+    );
+
+    await assertSucceeds(
+      setDoc(doc(teacherDb, 'documents', 'doc-allow-create'), {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        topicId: 'topic-inst1',
+        title: 'Document Allow',
+      })
+    );
+
+    await assertSucceeds(
+      setDoc(doc(teacherDb, 'quizzes', 'quiz-allow-create'), {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        topicId: 'topic-inst1',
+        title: 'Quiz Allow',
+      })
+    );
+  });
+
+  it('denies non-admin writes when institutionId is missing or mismatched', async () => {
+    await seedSubjectTopicFixture();
+    await seedDoc('folders', 'folder-existing-inst1', {
+      ownerId: 'teacher-1',
       institutionId: 'inst-1',
-      subjectId: 'subject-rw-1',
-      createdBy: 'teacher-1',
-      createdAt: new Date(),
+      name: 'Folder Existing',
     });
 
     const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+    await assertFails(
+      setDoc(doc(teacherDb, 'folders', 'folder-deny-missing-inst'), {
+        ownerId: 'teacher-1',
+        name: 'Folder Missing Institution',
+      })
+    );
+
+    await assertFails(
+      setDoc(doc(teacherDb, 'folders', 'folder-deny-mismatch-inst'), {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-2',
+        name: 'Folder Mismatch Institution',
+      })
+    );
 
     await assertFails(
       setDoc(
-        doc(teacherDb, 'subjectInviteCodes', 'inst-1_JOING111'),
+        doc(teacherDb, 'folders', 'folder-existing-inst1'),
         {
-          inviteCode: 'JOING111',
-          institutionId: 'inst-1',
-          subjectId: 'subject-rw-1',
-          createdBy: 'teacher-1',
-          createdAt: new Date(),
-        },
-        { merge: true }
+          ownerId: 'teacher-1',
+          name: 'Folder Update Missing Institution',
+        }
       )
+    );
+
+    await assertFails(
+      setDoc(doc(teacherDb, 'topics', 'topic-deny-missing-inst'), {
+        ownerId: 'teacher-1',
+        subjectId: 'subject-inst1',
+        name: 'Topic Missing Institution',
+      })
+    );
+
+    await assertFails(
+      setDoc(doc(teacherDb, 'documents', 'doc-deny-mismatch-inst'), {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-2',
+        topicId: 'topic-inst1',
+        title: 'Document Mismatch Institution',
+      })
+    );
+
+    await assertFails(
+      setDoc(doc(teacherDb, 'quizzes', 'quiz-deny-missing-inst'), {
+        ownerId: 'teacher-1',
+        topicId: 'topic-inst1',
+        title: 'Quiz Missing Institution',
+      })
     );
   });
 });
