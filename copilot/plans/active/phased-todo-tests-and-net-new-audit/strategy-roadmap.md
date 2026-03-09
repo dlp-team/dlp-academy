@@ -6,13 +6,13 @@ Transform test backlog planning into a phased, implementation-ready sequence tha
 
 ## Phase Status
 - Phase 01 - Core Routing, Session, Theme, and Utility Foundations: **COMPLETED**
-- Phase 02 - Ownership, Deletion, Shortcuts, and Ghost Backlog: **IN_PROGRESS**
+- Phase 02 - Ownership, Deletion, Shortcuts, and Ghost Backlog: **COMPLETED**
 - Phase 03 - User and Content Experience: **PLANNED**
 - Phase 04 - Admin and Security Reinforcement: **PLANNED**
 - Phase 05 - Firestore Rules Expansion: **PLANNED**
 
 ## Immediate Next Actions
-1. Extend remaining cross-view parity coverage (grid/list/tree/manual/shared) for deletion and shortcut behavior.
-2. Add lecture-mode/read-only mutation-block tests in remaining handler entry points.
-3. Add multi-step deletion scenarios with nested shared subjects/topics/resources.
-4. Add real-time sync and multi-institution boundary assertions for deletion/shortcut/ghost actions.
+1. Start Phase 03 implementation batch for user and content experience gaps.
+2. Expand E2E parity coverage for Home/Subject/Topic journeys in shared and institution-scoped contexts.
+3. Prepare Phase 04 admin/security reinforcement test matrix and fixtures.
+4. Keep consolidated hook regression suite as a pre-merge validation gate.

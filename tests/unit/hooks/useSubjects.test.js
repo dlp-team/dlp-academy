@@ -780,4 +780,84 @@ describe('useSubjects permanentlyDeleteSubject', () => {
       expect.objectContaining({ name: 'subjects', id: 'subject-shared-1' })
     );
   });
+
+  it('deletes subject with no child topics/resources/quizzes (no-children edge case)', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ ownerId: ownerUser.uid }),
+    });
+
+    firestoreMocks.mockGetDocs.mockResolvedValue({ docs: [] });
+
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(result.current.permanentlyDeleteSubject('subject-no-children')).resolves.toBeUndefined();
+
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-no-children' })
+    );
+  });
+
+  it('handles maximum child deletion fan-out for nested shared topics/resources/quizzes', async () => {
+    const topicIds = Array.from({ length: 20 }, (_, idx) => `topic-max-${idx + 1}`);
+
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        ownerId: ownerUser.uid,
+        isShared: true,
+        sharedWithUids: ['editor-1', 'viewer-1'],
+      }),
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filters = queryObj.parts.filter((part) => part?.field);
+      const fieldMap = new Map(filters.map((f) => [f.field, f.value]));
+
+      if (fieldMap.get('subjectId') === 'subject-max-children') {
+        return {
+          docs: topicIds.map((id) => ({ id, data: () => ({}) })),
+        };
+      }
+
+      if (fieldMap.get('topicId')?.startsWith('topic-max-')) {
+        if (queryObj.parts[0]?.name === 'documents') {
+          return { docs: [{ id: `doc-${fieldMap.get('topicId')}`, data: () => ({}) }] };
+        }
+        if (queryObj.parts[0]?.name === 'resumen') {
+          return { docs: [{ id: `res-${fieldMap.get('topicId')}`, data: () => ({}) }] };
+        }
+        if (queryObj.parts[0]?.name === 'quizzes') {
+          return { docs: [{ id: `quiz-${fieldMap.get('topicId')}`, data: () => ({}) }] };
+        }
+      }
+
+      if (
+        fieldMap.get('targetId') === 'subject-max-children' &&
+        fieldMap.get('targetType') === 'subject' &&
+        fieldMap.get('ownerId') === ownerUser.uid
+      ) {
+        return { docs: [{ id: 'shortcut-max-children', data: () => ({}) }] };
+      }
+
+      return { docs: [] };
+    });
+
+    const { result } = renderHook(() => useSubjects(ownerUser));
+
+    await expect(result.current.permanentlyDeleteSubject('subject-max-children')).resolves.toBeUndefined();
+
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'shortcuts', id: 'shortcut-max-children' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-max-children' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'topics', id: 'topic-max-1' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'topics', id: 'topic-max-20' })
+    );
+  });
 });

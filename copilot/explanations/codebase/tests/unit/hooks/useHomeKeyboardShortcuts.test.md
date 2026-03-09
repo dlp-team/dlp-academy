@@ -1,6 +1,11 @@
 // copilot/explanations/codebase/tests/unit/hooks/useHomeKeyboardShortcuts.test.md
 
 ## Changelog
+### 2026-03-09: Phase 02 closure additions
+- Added assertions for read-only/lecture-mode mutation blocking in keyboard action paths.
+- Added UI feedback checks to ensure message-driven behavior remains intact (no browser alerts).
+- Reinforces lossless behavior for shortcut actions where permissions allow copy context but block destructive mutation.
+
 ### 2026-03-09: New dedicated keyboard-shortcuts edge-case tests
 - Added a standalone unit suite for `useHomeKeyboardShortcuts`.
 - Validates critical keyboard paths for Ctrl+C/X/V/Z with mocked `useKeyShortcuts` handler bridging.

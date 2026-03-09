@@ -983,6 +983,115 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     expect(config.setUnshareConfirm).not.toHaveBeenCalled();
   });
 
+  it('handles orphan source folder id by moving subject without shared-guard prompts', () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        folders: [
+          { id: 'target-private', isShared: false, ownerId: 'owner-1', parentId: null },
+        ],
+        subjects: [
+          {
+            id: 'subject-orphan-source',
+            ownerId: 'owner-1',
+            folderId: 'missing-source-folder',
+            sharedWithUids: [],
+            sharedWith: [],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleDropOnFolderWrapper(
+      'target-private',
+      'subject-orphan-source',
+      'subject',
+      'missing-source-folder',
+      null
+    );
+
+    expect(result).toBe(true);
+    expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith(
+      'subject-orphan-source',
+      'missing-source-folder',
+      'target-private'
+    );
+    expect(config.setShareConfirm).not.toHaveBeenCalled();
+    expect(config.setUnshareConfirm).not.toHaveBeenCalled();
+  });
+
+  it('tree move uses shortcut path to root when source subject is non-editable in shared context', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'viewer-1',
+      logic: {
+        currentFolder: null,
+        folders: [
+          {
+            id: 'source-folder',
+            isShared: false,
+            ownerId: 'owner-1',
+            parentId: null,
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-shortcut-root',
+            ownerId: 'owner-1',
+            folderId: 'source-folder',
+            sharedWithUids: ['viewer-1'],
+            editorUids: [],
+          },
+        ],
+        shortcuts: [
+          {
+            id: 'shortcut-subject-root',
+            targetId: 'subject-shortcut-root',
+            targetType: 'subject',
+            parentId: 'source-folder',
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    await handlers.handleTreeMoveSubject('subject-shortcut-root', null, 'source-folder');
+
+    expect(config.logic.moveShortcut).toHaveBeenCalledWith('shortcut-subject-root', null);
+    expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
+  });
+
+  it('breadcrumb subject drop to root preserves source context parity', () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        currentFolder: { id: 'source-folder', parentId: null, isShared: false, ownerId: 'owner-1' },
+        folders: [
+          { id: 'source-folder', parentId: null, isShared: false, ownerId: 'owner-1' },
+        ],
+        subjects: [
+          {
+            id: 'subject-breadcrumb-root',
+            ownerId: 'owner-1',
+            folderId: 'source-folder',
+            sharedWithUids: [],
+            sharedWith: [],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const result = handlers.handleBreadcrumbDrop(null, 'subject-breadcrumb-root', null, null, null);
+
+    expect(result).toBe(true);
+    expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith(
+      'subject-breadcrumb-root',
+      'source-folder',
+      null
+    );
+  });
+
   it('moves shortcut only and does not mutate source subject when shortcut drag is used', () => {
     const config = createBaseConfig({
       logic: {

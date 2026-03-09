@@ -339,3 +339,28 @@
   - `tests/unit/hooks/useTopicLogic.test.js`
   - `tests/unit/hooks/useGhostDrag.test.js`
   - Aggregate: 113 tests passing.
+
+## Additional progress (2026-03-09 - Phase 02 Full Closure Batch)
+- Closed all remaining unchecked items in the Phase 02 checklist with targeted validation additions:
+  - cross-view parity and drag/drop orphan/shortcut/shared edge branches,
+  - read-only/lecture-mode mutation blocking via keyboard shortcut paths,
+  - no-alert Spanish feedback validation,
+  - no-children and max-children deletion fan-out coverage,
+  - realtime sync + tenant-boundary shortcut resolution behavior.
+- Added test scenarios in:
+  - `tests/unit/hooks/useHomeKeyboardShortcuts.test.js`
+  - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - `tests/unit/hooks/useSubjects.test.js`
+  - `tests/unit/hooks/useShortcuts.test.js`
+
+### Validation
+- Passed consolidated run:
+  - `tests/unit/hooks/useHomeKeyboardShortcuts.test.js`
+  - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - `tests/unit/hooks/useHomeHandlers.shortcuts.test.js`
+  - `tests/unit/hooks/useSubjects.test.js`
+  - `tests/unit/hooks/useFolders.test.js`
+  - `tests/unit/hooks/useTopicLogic.test.js`
+  - `tests/unit/hooks/useGhostDrag.test.js`
+  - `tests/unit/hooks/useShortcuts.test.js`
+  - Aggregate: 143 tests passing.

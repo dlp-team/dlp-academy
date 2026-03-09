@@ -347,4 +347,58 @@ describe('useHomeKeyboardShortcuts edge cases', () => {
     expect(consumed).toBe(true);
     expect(result.current.shortcutFeedback).toContain('No hay acciones para deshacer');
   });
+
+  it('blocks copy/cut mutation when selected card is read-only and keeps Spanish feedback', async () => {
+    const readOnlySubject = {
+      id: 'subject-readonly-1',
+      name: 'Lectura',
+      ownerId: 'teacher-2',
+      editorUids: [],
+      viewerUids: ['user-1'],
+      folderId: null,
+    };
+
+    const logic = createLogic({ subjects: [readOnlySubject] });
+    const { result } = renderHook(() => useHomeKeyboardShortcuts({ user, logic }));
+
+    await act(async () => {
+      result.current.handleCardFocus(readOnlySubject, 'subject');
+    });
+
+    let consumedCopy = false;
+    let consumedCut = false;
+    await act(async () => {
+      consumedCopy = await getHandlers().onCopy({});
+      consumedCut = await getHandlers().onCut({});
+    });
+
+    expect(consumedCopy).toBe(true);
+    expect(consumedCut).toBe(true);
+    expect(result.current.shortcutFeedback).toContain('Necesitas permisos de edicion');
+
+    await act(async () => {
+      await getHandlers().onPaste({});
+    });
+
+    expect(logic.updateSubject).not.toHaveBeenCalled();
+    expect(logic.updateFolder).not.toHaveBeenCalled();
+  });
+
+  it('never uses browser alert for shortcut UX feedback', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+    try {
+      const logic = createLogic();
+      const { result } = renderHook(() => useHomeKeyboardShortcuts({ user, logic }));
+
+      await act(async () => {
+        await getHandlers().onPaste({});
+      });
+
+      expect(result.current.shortcutFeedback).toContain('No hay elementos en el portapapeles');
+      expect(alertSpy).not.toHaveBeenCalled();
+    } finally {
+      alertSpy.mockRestore();
+    }
+  });
 });

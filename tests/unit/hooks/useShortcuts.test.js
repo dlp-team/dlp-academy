@@ -323,4 +323,151 @@ describe('useShortcuts', () => {
     );
     expect(firestoreMocks.mockAddDoc).not.toHaveBeenCalled();
   });
+
+  it('realtime sync removes resolved shortcuts when owner shortcut is deleted remotely', async () => {
+    let shortcutsSnapshotCallback;
+    const targetSnapshotCallbacks = new Map();
+
+    firestoreMocks.mockOnSnapshot.mockImplementation((refOrQuery, callback) => {
+      if (refOrQuery?.parts) {
+        shortcutsSnapshotCallback = callback;
+        callback({
+          docs: [
+            createDoc('shortcut-live-1', {
+              ownerId: user.uid,
+              targetId: 'subject-live-1',
+              targetType: 'subject',
+              institutionId: user.institutionId,
+              parentId: null,
+            }),
+          ],
+        });
+        return vi.fn();
+      }
+
+      targetSnapshotCallbacks.set(refOrQuery?.id, callback);
+      callback({
+        id: refOrQuery?.id,
+        exists: () => true,
+        data: () => ({
+          ownerId: 'teacher-2',
+          institutionId: user.institutionId,
+          name: 'Subject Live',
+        }),
+      });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useShortcuts(user));
+
+    await waitFor(() => {
+      expect(result.current.resolvedShortcuts).toHaveLength(1);
+    });
+
+    await act(async () => {
+      shortcutsSnapshotCallback({ docs: [] });
+    });
+
+    await waitFor(() => {
+      expect(result.current.shortcuts).toHaveLength(0);
+      expect(result.current.resolvedShortcuts).toHaveLength(0);
+    });
+    expect(targetSnapshotCallbacks.has('subject-live-1')).toBe(true);
+  });
+
+  it('marks shortcut as orphan in realtime when target is removed (ghost action)', async () => {
+    let targetSnapshotCallback;
+
+    firestoreMocks.mockOnSnapshot.mockImplementation((refOrQuery, callback) => {
+      if (refOrQuery?.parts) {
+        callback({
+          docs: [
+            createDoc('shortcut-ghost-1', {
+              ownerId: user.uid,
+              targetId: 'subject-ghost-1',
+              targetType: 'subject',
+              institutionId: user.institutionId,
+              parentId: 'folder-a',
+              shortcutName: 'Ghost Subject',
+            }),
+          ],
+        });
+        return vi.fn();
+      }
+
+      targetSnapshotCallback = callback;
+      callback({
+        id: refOrQuery?.id,
+        exists: () => true,
+        data: () => ({
+          ownerId: 'teacher-2',
+          institutionId: user.institutionId,
+          name: 'Ghost Subject',
+        }),
+      });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useShortcuts(user));
+
+    await waitFor(() => {
+      expect(result.current.resolvedShortcuts).toHaveLength(1);
+      expect(result.current.resolvedShortcuts[0].isOrphan).toBe(false);
+    });
+
+    await act(async () => {
+      targetSnapshotCallback({
+        id: 'subject-ghost-1',
+        exists: () => false,
+        data: () => ({}),
+      });
+    });
+
+    await waitFor(() => {
+      expect(result.current.resolvedShortcuts[0].isOrphan).toBe(true);
+      expect(result.current.resolvedShortcuts[0]._reason).toBe('target-missing');
+    });
+  });
+
+  it('enforces multi-institution boundary by resolving cross-tenant targets as tenant-mismatch orphans', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((refOrQuery, callback) => {
+      if (refOrQuery?.parts) {
+        callback({
+          docs: [
+            createDoc('shortcut-cross-tenant-1', {
+              ownerId: user.uid,
+              targetId: 'subject-cross-tenant',
+              targetType: 'subject',
+              institutionId: user.institutionId,
+              parentId: null,
+              shortcutName: 'Cross Tenant Subject',
+            }),
+          ],
+        });
+        return vi.fn();
+      }
+
+      callback({
+        id: refOrQuery?.id,
+        exists: () => true,
+        data: () => ({
+          ownerId: 'teacher-2',
+          institutionId: 'inst-foreign',
+          name: 'Foreign Subject',
+        }),
+      });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useShortcuts(user));
+
+    await waitFor(() => {
+      expect(result.current.resolvedShortcuts).toHaveLength(1);
+    });
+
+    const resolved = result.current.resolvedShortcuts[0];
+    expect(resolved.isOrphan).toBe(true);
+    expect(resolved._reason).toBe('tenant-mismatch');
+    expect(resolved.targetData).toBeNull();
+  });
 });

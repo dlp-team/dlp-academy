@@ -12,12 +12,12 @@
 - [x] Shortcut move: moving shortcut between folders updates only shortcut, not source item
 - [x] Non-owner mutation denial via shortcut context
 - [x] Orphan shortcut deletion when source is deleted/unshared
-- [ ] Cross-view parity across grid/list/tree/manual/shared
-- [ ] Real-time sync for deletion/shortcut/ghost actions
+- [x] Cross-view parity across grid/list/tree/manual/shared
+- [x] Real-time sync for deletion/shortcut/ghost actions
 - [x] Breadcrumb behavior for shared and non-shared moves
 - [x] Idempotency for rerun deletion/shortcut actions
-- [ ] Lecture mode disables mutation for read-only roles
-- [ ] Multi-step deletion with nested shared subjects/topics/resources
+- [x] Lecture mode disables mutation for read-only roles
+- [x] Multi-step deletion with nested shared subjects/topics/resources
 
 ## Subject deletion coverage
 - [x] Deletes all topics inside subject (cascade)
@@ -70,11 +70,11 @@
 - [x] Manual order updates after deletion
 - [x] Cascade deletion (subject -> topics -> quizzes/resources -> documents)
 - [x] Error handling for partial failures
-- [ ] UI feedback validation (Spanish text, icons, no alerts)
-- [ ] Deleting items with no children
-- [ ] Deleting items with maximum children
+- [x] UI feedback validation (Spanish text, icons, no alerts)
+- [x] Deleting items with no children
+- [x] Deleting items with maximum children
 - [x] Deleting items with shortcuts only
 - [x] Deleting items with ghost mode enabled
-- [ ] Drag-and-drop edge cases (ghost/shortcut/shared/orphan)
-- [ ] Multi-institution boundary checks (deletion/shortcut/ghost)
-- [ ] Real-time sync reflected across all clients
+- [x] Drag-and-drop edge cases (ghost/shortcut/shared/orphan)
+- [x] Multi-institution boundary checks (deletion/shortcut/ghost)
+- [x] Real-time sync reflected across all clients
