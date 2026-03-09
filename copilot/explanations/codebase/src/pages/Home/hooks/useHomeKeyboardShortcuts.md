@@ -1,6 +1,15 @@
 // copilot/explanations/codebase/src/pages/Home/hooks/useHomeKeyboardShortcuts.md
 
 ## Changelog
+### 2026-03-09: Dedicated edge-case unit coverage
+- Added a dedicated unit suite for this hook in `tests/unit/hooks/useHomeKeyboardShortcuts.test.js`.
+- Coverage focuses on cut/copy/paste/undo reliability edges:
+	- Subject move writes `folderId`; folder move writes `parentId`.
+	- Circular folder move blocks (self and descendant targets).
+	- Undo restores moved entities and restores latest trashed subject fallback.
+	- Visual state transitions (`isAnimating`, `isCutPending`) lifecycle verified.
+	- Typing-target ignore path and shortcut-card copy/cut blocking verified.
+
 ### 2026-03-09: Visual feedback + deterministic cut move fixes
 - Added card visual state output (`getCardVisualState`) to support Ctrl+C/X feedback: scale pulse on action and reduced opacity while cut is pending.
 - Updated cut-paste move behavior to write the correct hierarchy fields directly:
