@@ -1,6 +1,13 @@
 // copilot/explanations/codebase/src/pages/Home/hooks/useHomeKeyboardShortcuts.md
 
 ## Changelog
+### 2026-03-09: Visual feedback + deterministic cut move fixes
+- Added card visual state output (`getCardVisualState`) to support Ctrl+C/X feedback: scale pulse on action and reduced opacity while cut is pending.
+- Updated cut-paste move behavior to write the correct hierarchy fields directly:
+	- Subjects update `folderId`.
+	- Folders update `parentId` (with circular-move guard).
+- Hardened Ctrl+Z bin fallback by iterating ordered trashed candidates and restoring the first valid one.
+
 ### 2026-03-09: Ctrl+Z fallback restore from bin
 - Extended `onUndo` to restore the latest trashed subject when the in-memory undo stack is empty.
 - Uses `logic.getTrashedSubjects()` + `logic.restoreSubject()` and keeps existing undo-stack behavior unchanged.
@@ -18,9 +25,8 @@
 ## Inputs
 - `user`
 - `logic` (Home logic object)
-- `handleDropOnFolderWrapper`
-- `handleNestFolder`
 
 ## Outputs
 - `handleCardFocus(item, type)`
 - `shortcutFeedback`
+- `getCardVisualState(id, type)`

@@ -1,19 +1,21 @@
 // src/pages/Home/hooks/useHomeKeyboardShortcuts.js
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useKeyShortcuts } from '../../../hooks/useKeyShortcuts';
 import { canEdit, isShortcutItem } from '../../../utils/permissionUtils';
+import { isInvalidFolderMove } from '../../../utils/folderUtils';
 import { buildFolderClonePayload, buildSubjectClonePayload } from '../utils/homeKeyboardClipboardUtils';
 
 export const useHomeKeyboardShortcuts = ({
     user,
-    logic,
-    handleDropOnFolderWrapper,
-    handleNestFolder
+    logic
 }) => {
     const [selectedCard, setSelectedCard] = useState(null);
     const [clipboard, setClipboard] = useState(null);
     const [undoStack, setUndoStack] = useState([]);
     const [shortcutFeedback, setShortcutFeedback] = useState('');
+    const [animatedCard, setAnimatedCard] = useState(null);
+    const [cutPendingCard, setCutPendingCard] = useState(null);
+    const animationTimeoutRef = useRef(null);
 
     const isTypingTarget = useCallback((event) => {
         const target = event?.target;
@@ -34,6 +36,41 @@ export const useHomeKeyboardShortcuts = ({
         const timeoutId = window.setTimeout(() => setShortcutFeedback(''), 3200);
         return () => window.clearTimeout(timeoutId);
     }, [shortcutFeedback]);
+
+    useEffect(() => {
+        return () => {
+            if (animationTimeoutRef.current) {
+                window.clearTimeout(animationTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (clipboard?.mode !== 'cut') {
+            setCutPendingCard(null);
+        }
+    }, [clipboard]);
+
+    const triggerCardAnimation = useCallback((id, type) => {
+        if (!id || !type) return;
+        setAnimatedCard({ id, type });
+
+        if (animationTimeoutRef.current) {
+            window.clearTimeout(animationTimeoutRef.current);
+        }
+
+        animationTimeoutRef.current = window.setTimeout(() => {
+            setAnimatedCard(current => (current?.id === id && current?.type === type ? null : current));
+        }, 160);
+    }, []);
+
+    const getCardVisualState = useCallback((id, type) => {
+        if (!id || !type) return { isAnimating: false, isCutPending: false };
+        return {
+            isAnimating: Boolean(animatedCard && animatedCard.id === id && animatedCard.type === type),
+            isCutPending: Boolean(cutPendingCard && cutPendingCard.id === id && cutPendingCard.type === type)
+        };
+    }, [animatedCard, cutPendingCard]);
 
     const focusedItem = useMemo(() => {
         if (!selectedCard?.id || !selectedCard?.type) return null;
@@ -95,9 +132,12 @@ export const useHomeKeyboardShortcuts = ({
             label: focusedItem.name || (selectedCard.type === 'subject' ? 'Asignatura' : 'Carpeta')
         });
 
+        triggerCardAnimation(focusedItem.id, selectedCard.type);
+        setCutPendingCard(null);
+
         showFeedback(`${selectedCard.type === 'subject' ? 'Asignatura' : 'Carpeta'} copiada.`);
         return true;
-    }, [focusedItem, requireValidSelection, selectedCard?.type, showFeedback]);
+    }, [focusedItem, requireValidSelection, selectedCard?.type, showFeedback, triggerCardAnimation]);
 
     const onCut = useCallback((event) => {
         const check = requireValidSelection(event);
@@ -115,9 +155,12 @@ export const useHomeKeyboardShortcuts = ({
             label: focusedItem.name || (selectedCard.type === 'subject' ? 'Asignatura' : 'Carpeta')
         });
 
+        triggerCardAnimation(focusedItem.id, selectedCard.type);
+        setCutPendingCard({ id: focusedItem.id, type: selectedCard.type });
+
         showFeedback(`${selectedCard.type === 'subject' ? 'Asignatura' : 'Carpeta'} lista para mover.`);
         return true;
-    }, [focusedItem, requireValidSelection, selectedCard?.type, showFeedback]);
+    }, [focusedItem, requireValidSelection, selectedCard?.type, showFeedback, triggerCardAnimation]);
 
     const onPaste = useCallback(async (event) => {
         if (isTypingTarget(event)) return false;
@@ -176,7 +219,7 @@ export const useHomeKeyboardShortcuts = ({
             }
 
             if (clipboard.type === 'subject') {
-                await handleDropOnFolderWrapper(targetFolderId, clipboard.id, 'subject', clipboard.parentId || null, null);
+                await logic.updateSubject(clipboard.id, { folderId: targetFolderId || null });
                 setUndoStack(prev => [
                     ...prev.slice(-19),
                     {
@@ -188,11 +231,22 @@ export const useHomeKeyboardShortcuts = ({
                     }
                 ]);
                 setClipboard(null);
+                setCutPendingCard(null);
                 showFeedback(`Asignatura movida: ${clipboard.label || 'Asignatura'}.`);
                 return true;
             }
 
-            await handleNestFolder(targetFolderId, clipboard.id, null);
+            if (clipboard.id === targetFolderId) {
+                showFeedback('No puedes mover una carpeta dentro de si misma.');
+                return true;
+            }
+
+            if (isInvalidFolderMove(clipboard.id, targetFolderId || null, logic?.folders || [])) {
+                showFeedback('No puedes mover una carpeta dentro de una subcarpeta propia.');
+                return true;
+            }
+
+            await logic.updateFolder(clipboard.id, { parentId: targetFolderId || null });
             setUndoStack(prev => [
                 ...prev.slice(-19),
                 {
@@ -204,6 +258,7 @@ export const useHomeKeyboardShortcuts = ({
                 }
             ]);
             setClipboard(null);
+            setCutPendingCard(null);
             showFeedback(`Carpeta movida: ${clipboard.label || 'Carpeta'}.`);
             return true;
         } catch (error) {
@@ -211,7 +266,7 @@ export const useHomeKeyboardShortcuts = ({
             showFeedback('No se pudo completar el pegado.');
             return true;
         }
-    }, [clipboard, handleDropOnFolderWrapper, handleNestFolder, isTypingTarget, logic, showFeedback, user]);
+    }, [clipboard, isTypingTarget, logic, showFeedback, user]);
 
     const onUndo = useCallback(async (event) => {
         if (isTypingTarget(event)) return false;
@@ -230,14 +285,27 @@ export const useHomeKeyboardShortcuts = ({
                     return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
                 };
 
-                const latestTrashedSubject = Array.isArray(trashedItems)
-                    ? [...trashedItems].sort((a, b) => toMillis(b?.trashedAt) - toMillis(a?.trashedAt))[0]
-                    : null;
+                const orderedTrashedSubjects = Array.isArray(trashedItems)
+                    ? [...trashedItems].sort((a, b) => toMillis(b?.trashedAt) - toMillis(a?.trashedAt))
+                    : [];
 
-                if (latestTrashedSubject?.id && typeof logic?.restoreSubject === 'function') {
-                    await logic.restoreSubject(latestTrashedSubject.id);
-                    showFeedback(`Se restauró ${latestTrashedSubject.name || 'la asignatura'} desde la papelera.`);
-                    return true;
+                for (const candidate of orderedTrashedSubjects) {
+                    if (!candidate?.id) continue;
+
+                    try {
+                        if (typeof logic?.restoreSubject === 'function') {
+                            await logic.restoreSubject(candidate.id);
+                        } else if (typeof logic?.updateSubject === 'function') {
+                            await logic.updateSubject(candidate.id, { status: 'active', trashedAt: null });
+                        } else {
+                            continue;
+                        }
+
+                        showFeedback(`Se restauró ${candidate.name || 'la asignatura'} desde la papelera.`);
+                        return true;
+                    } catch (restoreError) {
+                        console.error('Error restoring trashed subject candidate with Ctrl+Z:', restoreError);
+                    }
                 }
             } catch (error) {
                 console.error('Error restoring latest trashed subject with Ctrl+Z:', error);
@@ -274,6 +342,7 @@ export const useHomeKeyboardShortcuts = ({
 
     return {
         handleCardFocus,
-        shortcutFeedback
+        shortcutFeedback,
+        getCardVisualState
     };
 };

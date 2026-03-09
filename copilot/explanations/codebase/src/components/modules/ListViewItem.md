@@ -1,5 +1,10 @@
 # ListViewItem.jsx
 
+## Changelog
+### 2026-03-09: Keyboard copy/cut visual feedback support
+- Added optional `getCardVisualState(id, type)` integration.
+- Applies scale pulse and cut-pending opacity classes to both folder and subject list rows.
+
 ## Purpose
 - **Source file:** `src/components/modules/ListViewItem.jsx`
 - **Last documented:** 2026-02-24

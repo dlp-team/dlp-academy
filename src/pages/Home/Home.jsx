@@ -207,11 +207,9 @@ const Home = ({ user }) => {
         rememberOrganization
     });
 
-    const { handleCardFocus, shortcutFeedback } = useHomeKeyboardShortcuts({
+    const { handleCardFocus, shortcutFeedback, getCardVisualState } = useHomeKeyboardShortcuts({
         user,
-        logic,
-        handleDropOnFolderWrapper,
-        handleNestFolder
+        logic
     });
 
     const treeFolders = useMemo(() => {
@@ -528,6 +526,7 @@ const Home = ({ user }) => {
                                             handleSetCurrentFolder(folder);
                                         }}
                                         onCardFocus={handleCardFocus}
+                                        getCardVisualState={getCardVisualState}
                                         handleShareFolder={logic.handleShareFolder}
                                         handlePromoteSubject={handlePromoteSubjectWrapper}
                                         handlePromoteFolder={handlePromoteFolderWrapper}

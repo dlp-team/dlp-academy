@@ -62,6 +62,7 @@ const HomeContent = ({
     
     navigate,
     onCardFocus = () => {},
+    getCardVisualState = () => ({ isAnimating: false, isCutPending: false }),
     activeFilter,
     selectedTags = [],
     sharedScopeSelected = true,
@@ -125,6 +126,15 @@ const HomeContent = ({
         if (!subjectEntry) return null;
         if (isShortcutItem(subjectEntry)) return subjectEntry.shortcutParentId ?? subjectEntry.folderId ?? subjectEntry.parentId ?? null;
         return subjectEntry.folderId ?? null;
+    };
+
+    const getShortcutVisualClasses = (itemId, type) => {
+        const visualState = getCardVisualState(itemId, type);
+        return [
+            'transition-all duration-150',
+            visualState?.isAnimating ? 'scale-95' : 'scale-100',
+            visualState?.isCutPending ? 'opacity-60' : 'opacity-100'
+        ].join(' ');
     };
 
     const matchesTagFilter = (item) => {
@@ -399,6 +409,7 @@ const HomeContent = ({
                                                     key={`folder-${folder.id}`}
                                                     onMouseDown={() => onCardFocus(folder, 'folder')}
                                                     onMouseEnter={() => onCardFocus(folder, 'folder')}
+                                                    className={`${getShortcutVisualClasses(folder.id, 'folder')} cursor-pointer`}
                                                 >
                                                     <FolderCard
                                                         folder={folder}
@@ -463,6 +474,7 @@ const HomeContent = ({
                                                     key={`${groupName}-${subject.id}`}
                                                     onMouseDown={() => onCardFocus(subject, 'subject')}
                                                     onMouseEnter={() => onCardFocus(subject, 'subject')}
+                                                    className={`${getShortcutVisualClasses(subject.id, 'subject')} cursor-pointer`}
                                                 >
                                                     <SubjectCard
                                                         subject={subject}
@@ -636,6 +648,7 @@ const HomeContent = ({
                                                 disableDeleteActions={disableFolderDeleteActionsInShared}
                                                 draggable={dndEnabledInContext}
                                                 onFocusItem={onCardFocus}
+                                                getCardVisualState={getCardVisualState}
                                             />
                                         ))}
 
@@ -687,6 +700,7 @@ const HomeContent = ({
                                                     disableDeleteActions={disableSubjectDeleteActionsInShared}
                                                     draggable={dndEnabledInContext}
                                                     onFocusItem={onCardFocus}
+                                                    getCardVisualState={getCardVisualState}
                                                     hideSharedIndicator={studentMode}
                                                 />
                                             );

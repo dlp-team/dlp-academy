@@ -28,6 +28,7 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- **2026-03-09:** Extended Home keyboard orchestration to consume and pass `getCardVisualState` into `HomeContent`, enabling copy/cut visual feedback without moving behavior logic back into `Home.jsx`.
 - **2026-03-09:** Refactored keyboard shortcut logic out of `Home.jsx` into `useHomeKeyboardShortcuts`, keeping `Home` orchestration-only and fixing the prior initialization-order runtime error.
 - **2026-03-09:** Wired Ctrl+C/X/V/Z into `Home` using `useKeyShortcuts` for folder clipboard flows: copy creates shortcut references on paste, cut moves folders on paste, and undo reverts the latest keyboard-applied action. Added inline Spanish status text and guardrails for permissions/typing fields.
 - **2026-03-07:** Removed `OnboardingWizard` mount from `Home` render path to stop onboarding prompts for authenticated users in the current registration/login model.

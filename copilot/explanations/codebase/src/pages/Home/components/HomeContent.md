@@ -1,6 +1,11 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-03-09: Copy/Cut visual state integration
+- Added `getCardVisualState` prop consumption and wrapper class composition for folder/subject cards.
+- Grid cards now animate scale pulse on Ctrl+C/X and show reduced opacity while Ctrl+X clipboard is pending.
+- Forwarded visual-state callback to list items for parity across grid and list modes.
+
 ### 2026-03-09: Hover-based focus for keyboard shortcuts
 - Added `onMouseEnter` focus propagation for folder and subject grid wrappers.
 - Preserved existing `onMouseDown` focus behavior for click interactions.
