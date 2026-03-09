@@ -19,6 +19,15 @@
 	- `action: delete` still deletes `shortcut-subject` and `shortcut-folder` entries in that same context.
 - Confirms ghost-context shortcut cleanup is allowed without relaxing unshare protections.
 
+## [2026-03-09] Test Hardening: Deletion Manual-Order and Owner Gates
+### Context & Validation Additions
+- Expanded `tests/unit/hooks/useHomeHandlers.shortcuts.test.js` to cover additional delete-handler branches:
+	- subject delete updates `manualOrder.subjects`,
+	- owned folder delete updates `manualOrder.folders`,
+	- `handleDeleteFolderAll` owner and non-owner paths,
+	- `handleDeleteFolderOnly` owner and non-owner paths.
+- Confirms destructive folder actions remain owner-gated while list ordering updates stay consistent after successful deletion actions.
+
 ---
 
 # useHomeHandlers.js

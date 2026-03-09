@@ -268,3 +268,23 @@
   - `tests/unit/hooks/useSubjects.test.js`
   - `tests/unit/hooks/useFolders.test.js`
   - Aggregate: 45 tests passing.
+
+## Additional progress (2026-03-09 - Bulk Phase 02 Deletion/Manual-Order Batch)
+- Added a multi-scenario coverage batch across Home/Folders/Subjects to reduce premium-request fragmentation:
+  - `useHomeHandlers`: subject/folder deletion manual-order updates, folder-all/folder-only owner and non-owner paths.
+  - `useSubjects`: shared-folder collaborator rejection for permanent delete, owner delete allowed for multi-editor/viewer shared subjects.
+  - `useFolders`: shared-subject cascade deletion and owner-scoped shortcut cleanup preserving recipient orphan entries.
+- Synced Phase 02 checklist updates:
+  - subject deletion permission + multi-editor cases,
+  - folder deletion with shared subjects + orphaned shortcuts,
+  - manual order deletion updates,
+  - deleting items with shortcuts-only behavior.
+
+### Validation
+- Passed consolidated run:
+  - `tests/unit/hooks/useHomeHandlers.shortcuts.test.js`
+  - `tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - `tests/unit/hooks/useSubjects.test.js`
+  - `tests/unit/hooks/useFolders.test.js`
+  - `tests/unit/hooks/useTopicLogic.test.js`
+  - Aggregate: 81 tests passing.

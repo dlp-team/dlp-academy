@@ -122,3 +122,31 @@
   - early return when `canDelete(topic, user)` is false,
   - no confirm prompt and no delete/navigation side effects in denied mode.
 - Existing delete-enabled cascade behavior remains covered and unchanged when permission is granted.
+
+## Additional Progress Update (2026-03-09 - Bulk Phase 02 Coverage Batch)
+
+### Additional Files Updated
+- `tests/unit/hooks/useHomeHandlers.shortcuts.test.js`
+- `tests/unit/hooks/useSubjects.test.js`
+- `tests/unit/hooks/useFolders.test.js`
+- `copilot/plans/active/phased-todo-tests-and-net-new-audit/phases/phase-02-ownership-deletion-shortcuts-ghost.md`
+- `copilot/explanations/temporal/phase-01-closure-and-phase-02-test-progress-2026-03-07.md`
+- `copilot/explanations/codebase/src/pages/Home/hooks/useHomeHandlers.md`
+- `copilot/explanations/codebase/src/hooks/useSubjects.md`
+- `copilot/explanations/codebase/src/hooks/useFolders.md`
+
+### Additional Verification
+- Consolidated run passed:
+  - `npm run test -- tests/unit/hooks/useHomeHandlers.shortcuts.test.js tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useTopicLogic.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`
+  - Result: 5 files passed, 81 tests passed.
+
+### Additional Completed Coverage
+- `useHomeHandlers`:
+  - subject/folder delete paths update manual-order state correctly,
+  - `handleDeleteFolderAll` and `handleDeleteFolderOnly` owner/non-owner behavior verified.
+- `useSubjects.permanentlyDeleteSubject`:
+  - shared collaborator (non-owner) deletion denied,
+  - owner deletion still succeeds for multi-editor/viewer shared subjects.
+- `useFolders.deleteFolder`:
+  - shared-subject cascade behavior verified,
+  - owner-scoped shortcut cleanup query and recipient-orphan preservation verified.

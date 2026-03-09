@@ -14,6 +14,18 @@
 ### Validation
 - Focused suite passed: `npm run test -- tests/unit/hooks/useFolders.test.js`.
 
+## [2026-03-09] Test Hardening: Shared-Subject Cascade and Owner-Scoped Shortcut Cleanup
+### Context
+- Folder deletion backlog required explicit coverage for shared-subject content and orphan-shortcut preservation behavior.
+
+### Validation Additions
+- Expanded `tests/unit/hooks/useFolders.test.js` with verification that:
+  - deleting a shared folder still cascades deletion of shared subjects in that folder,
+  - folder shortcut cleanup query is owner-scoped (`ownerId === current user`) and does not target recipient orphan shortcuts.
+
+### Validation
+- Consolidated suite passed: `npm run test -- tests/unit/hooks/useHomeHandlers.shortcuts.test.js tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useTopicLogic.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`.
+
 ## [2026-03-07] Home Data Readiness No Longer Requires Country
 ### Context & Architecture
 Folder loading is gated by `canReadHomeData` to avoid premature reads before profile bootstrap.

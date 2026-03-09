@@ -24,8 +24,8 @@
 - [x] Deletes all quizzes/resources inside topics
 - [x] Deletes all shortcuts pointing to subject
 - [x] Deletes all documents inside topics (cascade)
-- [ ] Subject deletion in shared folder (permission checks)
-- [ ] Subject deletion with multiple owners/editors
+- [x] Subject deletion in shared folder (permission checks)
+- [x] Subject deletion with multiple owners/editors
 - [x] Subject deletion with orphaned shortcuts
 - [ ] Subject deletion in ghost mode
 - [x] Subject deletion with missing institutionId
@@ -35,9 +35,9 @@
 - [x] Delete folder only (subjects moved, no deletion)
 - [x] Delete folder and all contents (cascade)
 - [ ] Unshare folder (shortcuts ghost mode)
-- [ ] Folder deletion with shared subjects
+- [x] Folder deletion with shared subjects
 - [ ] Folder deletion with ghost mode
-- [ ] Folder deletion with orphaned shortcuts
+- [x] Folder deletion with orphaned shortcuts
 - [x] Folder deletion with missing institutionId
 - [x] Folder deletion with failed subject/shortcut deletion (error handling)
 
@@ -67,13 +67,13 @@
 
 ## Permissions and edge cases
 - [ ] Shared vs non-shared folders/subjects/topics
-- [ ] Manual order updates after deletion
+- [x] Manual order updates after deletion
 - [x] Cascade deletion (subject -> topics -> quizzes/resources -> documents)
 - [ ] Error handling for partial failures
 - [ ] UI feedback validation (Spanish text, icons, no alerts)
 - [ ] Deleting items with no children
 - [ ] Deleting items with maximum children
-- [ ] Deleting items with shortcuts only
+- [x] Deleting items with shortcuts only
 - [ ] Deleting items with ghost mode enabled
 - [ ] Drag-and-drop edge cases (ghost/shortcut/shared/orphan)
 - [ ] Multi-institution boundary checks (deletion/shortcut/ghost)

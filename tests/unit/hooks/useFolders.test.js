@@ -415,6 +415,137 @@ describe('useFolders', () => {
     );
   });
 
+  it('deleteFolder cascades shared subjects inside folder', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
+      const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
+
+      if (isOwnedQuery) {
+        callback({
+          docs: [
+            createDoc('folder-shared', {
+              name: 'Folder Shared',
+              ownerId: user.uid,
+              institutionId: user.institutionId,
+              parentId: null,
+              isShared: true,
+              sharedWithUids: ['editor-1', 'viewer-1'],
+            }),
+          ],
+        });
+      } else {
+        callback({ docs: [] });
+      }
+
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filter = queryObj.parts.find((entry) => entry?.field);
+
+      if (filter?.field === 'folderId' && filter?.value === 'folder-shared') {
+        return {
+          docs: [
+            createDoc('subject-shared-1', {
+              folderId: 'folder-shared',
+              isShared: true,
+              sharedWithUids: ['editor-1', 'viewer-1'],
+            }),
+          ],
+          forEach: (fn) => [
+            createDoc('subject-shared-1', {
+              folderId: 'folder-shared',
+              isShared: true,
+              sharedWithUids: ['editor-1', 'viewer-1'],
+            }),
+          ].forEach(fn),
+        };
+      }
+
+      if (filter?.field === 'parentId' && filter?.value === 'folder-shared') {
+        return { docs: [], forEach: () => {} };
+      }
+
+      return { docs: [], forEach: () => {} };
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.deleteFolder('folder-shared');
+    });
+
+    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-shared-1' })
+    );
+    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-shared' })
+    );
+  });
+
+  it('deleteFolder shortcut cleanup targets owner shortcuts only, preserving recipient orphan entries', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
+      const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
+
+      if (isOwnedQuery) {
+        callback({
+          docs: [
+            createDoc('folder-ghost-owner', {
+              name: 'Folder Ghost Owner',
+              ownerId: user.uid,
+              institutionId: user.institutionId,
+              parentId: null,
+            }),
+          ],
+        });
+      } else {
+        callback({ docs: [] });
+      }
+
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filters = queryObj.parts.filter((entry) => entry?.field);
+      const fieldMap = new Map(filters.map((f) => [f.field, f.value]));
+
+      if (
+        fieldMap.get('targetId') === 'folder-ghost-owner' &&
+        fieldMap.get('targetType') === 'folder' &&
+        fieldMap.get('ownerId') === user.uid
+      ) {
+        return {
+          docs: [createDoc('shortcut-owner-folder-1', { targetId: 'folder-ghost-owner', targetType: 'folder' })],
+          forEach: (fn) => [createDoc('shortcut-owner-folder-1', { targetId: 'folder-ghost-owner', targetType: 'folder' })].forEach(fn),
+        };
+      }
+
+      return { docs: [], forEach: () => {} };
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.deleteFolder('folder-ghost-owner');
+    });
+
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'shortcuts', id: 'shortcut-owner-folder-1' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'shortcuts', id: 'shortcut-recipient-folder-1' })
+    );
+
+    const shortcutQueryCall = firestoreMocks.mockQuery.mock.calls.find((call) => {
+      const clauses = call.filter((entry) => entry?.field);
+      const clauseMap = new Map(clauses.map((c) => [c.field, c.value]));
+      return clauseMap.get('targetId') === 'folder-ghost-owner' && clauseMap.get('targetType') === 'folder';
+    });
+
+    expect(shortcutQueryCall).toBeTruthy();
+    const ownerFilter = shortcutQueryCall.find((entry) => entry?.field === 'ownerId');
+    expect(ownerFilter?.value).toBe(user.uid);
+  });
+
   it('deleteFolderOnly still deletes folder when move queries fail', async () => {
     firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
       const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');

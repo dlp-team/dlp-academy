@@ -25,6 +25,18 @@
 ### Validation
 - Focused suite passed: `npm run test -- tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useTopicLogic.test.js`.
 
+## [2026-03-09] Test Hardening: Shared-Folder Permission and Multi-Editor Delete Paths
+### Context
+- Permanent subject deletion needed explicit shared-context permission coverage beyond base owner/non-owner checks.
+
+### Validation Additions
+- Added unit tests in `tests/unit/hooks/useSubjects.test.js` to verify:
+  - shared collaborator/editor cannot permanently delete a subject when not owner,
+  - owner can still permanently delete subjects shared with multiple editors/viewers.
+
+### Validation
+- Consolidated suite passed: `npm run test -- tests/unit/hooks/useHomeHandlers.shortcuts.test.js tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useFolders.test.js tests/unit/hooks/useTopicLogic.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js`.
+
 ## [2026-03-07] Home Data Readiness No Longer Requires Country
 ### Context
 - Country was removed from required registration profile fields.
