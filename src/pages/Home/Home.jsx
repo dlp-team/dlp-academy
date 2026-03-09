@@ -10,6 +10,7 @@ import { useHomeLogic } from './hooks/useHomeLogic';
 import { useFolders } from '../../hooks/useFolders'; 
 import { useHomePageState } from './hooks/useHomePageState';
 import { useHomePageHandlers } from './hooks/useHomePageHandlers';
+import { useKeyShortcuts } from '../../hooks/useKeyShortcuts';
 
 
 // Layout & Global Components
@@ -28,6 +29,7 @@ import BinView from './components/BinView';
 import FolderTreeModal from '../../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../Subject/modals/SubjectTopicModal';
 import {
+    canEdit,
     canCreateFolderByRole,
     canCreateSubjectByRole,
     getPermissionLevel,
@@ -49,6 +51,9 @@ const Home = ({ user }) => {
     }, []);
 
     const [searchQuery, setSearchQuery] = useState('');
+    const [shortcutClipboard, setShortcutClipboard] = useState(null);
+    const [shortcutUndoStack, setShortcutUndoStack] = useState([]);
+    const [shortcutFeedback, setShortcutFeedback] = useState('');
     const [sharedScopeSelected, setSharedScopeSelected] = useState(true);
     const [hasInitialDataLoaded, setHasInitialDataLoaded] = useState(false);
     const [searchParams, setSearchParams] = useSearchParams();
@@ -112,6 +117,186 @@ const Home = ({ user }) => {
     const handleOpenSubjectSharing = React.useCallback((subject) => {
         logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: subject, initialTab: 'sharing' });
     }, [logic]);
+
+    const showShortcutFeedback = React.useCallback((message) => {
+        setShortcutFeedback(message || '');
+    }, []);
+
+    React.useEffect(() => {
+        if (!shortcutFeedback) return;
+        const timeoutId = window.setTimeout(() => setShortcutFeedback(''), 2800);
+        return () => window.clearTimeout(timeoutId);
+    }, [shortcutFeedback]);
+
+    const isTypingTarget = React.useCallback((event) => {
+        const target = event?.target;
+        if (!target) return false;
+        const tagName = typeof target.tagName === 'string' ? target.tagName.toLowerCase() : '';
+        if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') return true;
+        if (target.isContentEditable) return true;
+        if (typeof target.closest === 'function' && target.closest('[contenteditable="true"]')) return true;
+        return false;
+    }, []);
+
+    const handleShortcutCopy = React.useCallback((event) => {
+        if (isTypingTarget(event)) return false;
+
+        const sourceFolder = logic.currentFolder;
+        if (!sourceFolder?.id) {
+            showShortcutFeedback('Selecciona una carpeta abierta para copiar su referencia.');
+            return true;
+        }
+
+        setShortcutClipboard({
+            mode: 'copy',
+            type: 'folder',
+            folderId: sourceFolder.id,
+            folderName: sourceFolder.name || 'Carpeta',
+            sourceParentId: sourceFolder.parentId || null
+        });
+        showShortcutFeedback(`Referencia copiada: ${sourceFolder.name || 'Carpeta'}.`);
+        return true;
+    }, [isTypingTarget, logic.currentFolder, showShortcutFeedback]);
+
+    const handleShortcutCut = React.useCallback((event) => {
+        if (isTypingTarget(event)) return false;
+
+        const sourceFolder = logic.currentFolder;
+        if (!sourceFolder?.id) {
+            showShortcutFeedback('Selecciona una carpeta abierta para moverla.');
+            return true;
+        }
+
+        if (!canEdit(sourceFolder, user?.uid)) {
+            showShortcutFeedback('No tienes permisos para mover esta carpeta.');
+            return true;
+        }
+
+        setShortcutClipboard({
+            mode: 'cut',
+            type: 'folder',
+            folderId: sourceFolder.id,
+            folderName: sourceFolder.name || 'Carpeta',
+            sourceParentId: sourceFolder.parentId || null
+        });
+        showShortcutFeedback(`Carpeta lista para mover: ${sourceFolder.name || 'Carpeta'}.`);
+        return true;
+    }, [isTypingTarget, logic.currentFolder, showShortcutFeedback, user?.uid]);
+
+    const handleShortcutPaste = React.useCallback(async (event) => {
+        if (isTypingTarget(event)) return false;
+
+        if (!shortcutClipboard || shortcutClipboard.type !== 'folder') {
+            showShortcutFeedback('No hay una carpeta copiada o cortada para pegar.');
+            return true;
+        }
+
+        const targetParentId = logic.currentFolder?.id || null;
+        const sourceFolderId = shortcutClipboard.folderId;
+
+        if (sourceFolderId === targetParentId) {
+            showShortcutFeedback('La carpeta ya se encuentra en esta ubicacion.');
+            return true;
+        }
+
+        try {
+            if (shortcutClipboard.mode === 'copy') {
+                const existingShortcut = (logic.shortcuts || []).find(
+                    (shortcut) => shortcut?.targetType === 'folder' && shortcut?.targetId === sourceFolderId
+                );
+                const previousParentId = existingShortcut?.parentId || null;
+                const existedBefore = Boolean(existingShortcut?.id);
+                const shortcutId = await logic.createShortcut(sourceFolderId, 'folder', targetParentId);
+
+                setShortcutUndoStack((prev) => [
+                    ...prev.slice(-19),
+                    {
+                        action: 'paste-copy-folder-shortcut',
+                        shortcutId,
+                        existedBefore,
+                        previousParentId,
+                        targetParentId,
+                        folderName: shortcutClipboard.folderName || 'Carpeta'
+                    }
+                ]);
+
+                showShortcutFeedback(`Se pego un acceso directo de ${shortcutClipboard.folderName || 'Carpeta'}.`);
+                return true;
+            }
+
+            await handleNestFolder(sourceFolderId, targetParentId, null);
+            setShortcutUndoStack((prev) => [
+                ...prev.slice(-19),
+                {
+                    action: 'move-folder',
+                    folderId: sourceFolderId,
+                    fromParentId: shortcutClipboard.sourceParentId || null,
+                    toParentId: targetParentId,
+                    folderName: shortcutClipboard.folderName || 'Carpeta'
+                }
+            ]);
+            setShortcutClipboard(null);
+            showShortcutFeedback(`Se movio ${shortcutClipboard.folderName || 'Carpeta'} a la ubicacion actual.`);
+            return true;
+        } catch (error) {
+            console.error('Error applying keyboard shortcut paste:', error);
+            showShortcutFeedback('No se pudo completar el pegado.');
+            return true;
+        }
+    }, [
+        handleNestFolder,
+        isTypingTarget,
+        logic.createShortcut,
+        logic.currentFolder?.id,
+        logic.shortcuts,
+        shortcutClipboard,
+        showShortcutFeedback
+    ]);
+
+    const handleShortcutUndo = React.useCallback(async (event) => {
+        if (isTypingTarget(event)) return false;
+
+        if (!shortcutUndoStack.length) {
+            showShortcutFeedback('No hay acciones recientes para deshacer.');
+            return true;
+        }
+
+        const lastEntry = shortcutUndoStack[shortcutUndoStack.length - 1];
+
+        try {
+            if (lastEntry.action === 'move-folder') {
+                await handleNestFolder(lastEntry.folderId, lastEntry.fromParentId || null, null);
+                setShortcutUndoStack((prev) => prev.slice(0, -1));
+                showShortcutFeedback(`Se deshizo el movimiento de ${lastEntry.folderName || 'la carpeta'}.`);
+                return true;
+            }
+
+            if (lastEntry.action === 'paste-copy-folder-shortcut') {
+                if (lastEntry.existedBefore) {
+                    await logic.moveShortcut(lastEntry.shortcutId, lastEntry.previousParentId || null);
+                } else {
+                    await logic.deleteShortcut(lastEntry.shortcutId);
+                }
+
+                setShortcutUndoStack((prev) => prev.slice(0, -1));
+                showShortcutFeedback(`Se deshizo el pegado de ${lastEntry.folderName || 'la carpeta'}.`);
+                return true;
+            }
+        } catch (error) {
+            console.error('Error applying keyboard shortcut undo:', error);
+            showShortcutFeedback('No se pudo deshacer la ultima accion.');
+            return true;
+        }
+
+        return true;
+    }, [handleNestFolder, isTypingTarget, logic.deleteShortcut, logic.moveShortcut, shortcutUndoStack, showShortcutFeedback]);
+
+    useKeyShortcuts({
+        onCopy: handleShortcutCopy,
+        onCut: handleShortcutCut,
+        onPaste: handleShortcutPaste,
+        onUndo: handleShortcutUndo
+    });
 
     React.useEffect(() => {
         if (!user) {
@@ -355,8 +540,14 @@ const Home = ({ user }) => {
                         searchQuery={searchQuery}
                         setSearchQuery={setSearchQuery}
                     />
-                    
+
                 </div>
+
+                {shortcutFeedback ? (
+                    <p className={`${homeThemeTokens.mutedTextClass} mt-4 rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/60`}>
+                        {shortcutFeedback}
+                    </p>
+                ) : null}
 
                 {logic.viewMode === 'bin' ? (
                     <BinView user={user} cardScale={logic.cardScale} layoutMode={logic.layoutMode} />

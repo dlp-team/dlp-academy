@@ -2,6 +2,9 @@
 
 # Phase 05: Wire Up Shortcuts to Features
 
+## Status
+Completed on 2026-03-09 (Home folder keyboard wire-up + tests + docs).
+
 ## Objectives
 - Integrate `useKeyShortcuts` into relevant components (e.g., resource panels, folder lists, editors).
 - Define and implement custom handlers for Ctrl+C/X/V/Z based on app context:
@@ -19,3 +22,8 @@
 3. Implement handler logic for each action
 4. Test in-app for all shortcut scenarios
 5. Update documentation and lossless report
+
+## Outcome
+- Integrated in `src/pages/Home/Home.jsx` for folder workflows.
+- Added typing-field safety guards and Spanish inline status messaging.
+- Added unit tests for `src/utils/keyShortcutsHandler.js` default-prevention contract.

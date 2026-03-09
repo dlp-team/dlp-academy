@@ -6,10 +6,12 @@
  * @param {function} customHandler - Optional custom handler.
  */
 export function handleKeyShortcut(action, e, customHandler) {
-  // Prevent default only if custom handler is provided
   if (customHandler) {
-    e.preventDefault();
-    customHandler(e);
+    // Custom handlers can return false to preserve native browser behavior.
+    const shouldPreventDefault = customHandler(e);
+    if (shouldPreventDefault !== false) {
+      e.preventDefault();
+    }
     return;
   }
   switch (action) {
