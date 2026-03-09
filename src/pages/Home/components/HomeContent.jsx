@@ -61,6 +61,7 @@ const HomeContent = ({
     resolvedShortcuts = [],
     
     navigate,
+    onCardFocus = () => {},
     activeFilter,
     selectedTags = [],
     sharedScopeSelected = true,
@@ -394,7 +395,7 @@ const HomeContent = ({
                                             {/* Folders in Grid */}
                                             {!studentMode && viewMode === 'grid' && activeFilter !== 'subjects' && filteredFolders.map((folder, index) => {
                                                 return (
-                                                <div key={`folder-${folder.id}`}>
+                                                <div key={`folder-${folder.id}`} onMouseDown={() => onCardFocus(folder, 'folder')}>
                                                     <FolderCard
                                                         folder={folder}
                                                         user={user}
@@ -454,7 +455,7 @@ const HomeContent = ({
                                             {/* Subjects in Grid */}
                                             {activeFilter !== 'folders' && displayedGroupSubjects.map((subject, index) => {
                                                 return (
-                                                <div key={`${groupName}-${subject.id}`}>
+                                                <div key={`${groupName}-${subject.id}`} onMouseDown={() => onCardFocus(subject, 'subject')}>
                                                     <SubjectCard
                                                         subject={subject}
                                                         user={user}
@@ -626,6 +627,7 @@ const HomeContent = ({
                                                 disableAllActions={disableAllActionsInShared}
                                                 disableDeleteActions={disableFolderDeleteActionsInShared}
                                                 draggable={dndEnabledInContext}
+                                                onFocusItem={onCardFocus}
                                             />
                                         ))}
 
@@ -676,6 +678,7 @@ const HomeContent = ({
                                                     disableAllActions={disableAllActionsInShared}
                                                     disableDeleteActions={disableSubjectDeleteActionsInShared}
                                                     draggable={dndEnabledInContext}
+                                                    onFocusItem={onCardFocus}
                                                     hideSharedIndicator={studentMode}
                                                 />
                                             );

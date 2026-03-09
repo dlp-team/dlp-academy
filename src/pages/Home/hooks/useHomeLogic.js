@@ -240,6 +240,14 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         shareSubject,
         unshareSubject,
         transferSubjectOwnership,
+
+        // Direct CRUD (for keyboard workflows)
+        addSubject,
+        addFolder,
+        updateSubject,
+        updateFolder,
+        deleteSubject,
+        deleteFolder,
         
         // Shortcut Functions
         createShortcut,

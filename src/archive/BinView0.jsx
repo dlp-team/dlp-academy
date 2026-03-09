@@ -547,7 +547,7 @@ const BinView = ({ user, cardScale = 100 }) => {
                                                     <div className="flex-1 text-left">
                                                         <p className="font-semibold text-gray-900 dark:text-white">{topic.name}</p>
                                                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                                            {topic.documents?.length || 0} documentos, {topic.quizzes?.length || 0} cuestionarios
+                                                            {topic.documents?.length || 0} {topic.documents?.length === 1 ? 'documento' : 'documentos'}, {topic.quizzes?.length || 0} {topic.quizzes?.length === 1 ? 'cuestionario' : 'cuestionarios'}
                                                         </p>
                                                     </div>
                                                     {hasContent && (

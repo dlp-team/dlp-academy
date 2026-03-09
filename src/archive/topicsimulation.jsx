@@ -355,15 +355,15 @@ const Topic = ({ user }) => {
                     <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
                         <button onClick={() => setActiveTab('materials')} className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border whitespace-nowrap ${activeTab === 'materials' ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}>
                             <FileText className="w-4 h-4" /> Generados por IA
-                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'materials' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>{topic.pdfs?.length || 0}</span>
+                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'materials' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>{topic.pdfs?.length || 0} {topic.pdfs?.length === 1 ? 'PDF' : 'PDFs'}</span>
                         </button>
                         <button onClick={() => setActiveTab('uploads')} className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border whitespace-nowrap ${activeTab === 'uploads' ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}>
                             <Upload className="w-4 h-4" /> Mis Archivos
-                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'uploads' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>{topic.uploads?.length || 0}</span>
+                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'uploads' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>{topic.uploads?.length || 0} {topic.uploads?.length === 1 ? 'archivo' : 'archivos'}</span>
                         </button>
                         <button onClick={() => setActiveTab('quizzes')} className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border whitespace-nowrap ${activeTab === 'quizzes' ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-900/20' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'}`}>
                             <CheckCircle2 className="w-4 h-4" /> Tests Prácticos
-                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'quizzes' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>{topic.quizzes?.length || 0}</span>
+                            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === 'quizzes' ? 'bg-white/20' : 'bg-slate-100 text-slate-600'}`}>{topic.quizzes?.length || 0} {topic.quizzes?.length === 1 ? 'test' : 'tests'}</span>
                         </button>
                     </div>
 

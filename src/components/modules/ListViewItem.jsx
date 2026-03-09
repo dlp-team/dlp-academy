@@ -30,7 +30,8 @@ const ListViewItem = ({
     onDragEnd,
     onDropAction,
     draggable = true,
-    path = []
+    path = [],
+    onFocusItem = () => {}
 }) => {
 
     // Always call hooks at the top level
@@ -96,30 +97,32 @@ const ListViewItem = ({
     // Delegate to FolderListItem component if the item is a folder
     if (type === 'folder') {
         return (
-            <FolderListItem
-                user={user}
-                item={item}
-                index={index}
-                parentId={parentId}
-                depth={depth}
-                allFolders={allFolders}
-                allSubjects={allSubjects}
-                onNavigate={onNavigate}
-                onNavigateSubject={onNavigateSubject}
-                onEdit={onEdit}
-                onShare={onShare}
-                onDelete={onDelete}
-                onGoToFolder={onGoToFolder}
-                disableAllActions={disableAllActions}
-                disableDeleteActions={disableDeleteActions}
-                disableUnshareActions={disableUnshareForItem}
-                cardScale={cardScale}
-                onDragStart={onDragStart}
-                onDragEnd={onDragEnd}
-                onDropAction={onDropAction}
-                draggable={draggable}
-                path={currentPath}
-            />
+            <div onMouseDown={() => onFocusItem(item, 'folder')} onMouseEnter={() => onFocusItem(item, 'folder')}>
+                <FolderListItem
+                    user={user}
+                    item={item}
+                    index={index}
+                    parentId={parentId}
+                    depth={depth}
+                    allFolders={allFolders}
+                    allSubjects={allSubjects}
+                    onNavigate={onNavigate}
+                    onNavigateSubject={onNavigateSubject}
+                    onEdit={onEdit}
+                    onShare={onShare}
+                    onDelete={onDelete}
+                    onGoToFolder={onGoToFolder}
+                    disableAllActions={disableAllActions}
+                    disableDeleteActions={disableDeleteActions}
+                    disableUnshareActions={disableUnshareForItem}
+                    cardScale={cardScale}
+                    onDragStart={onDragStart}
+                    onDragEnd={onDragEnd}
+                    onDropAction={onDropAction}
+                    draggable={draggable}
+                    path={currentPath}
+                />
+            </div>
         );
     }
 
@@ -165,6 +168,8 @@ const ListViewItem = ({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onMouseEnter={() => setIsHovered(true)}
+                onMouseEnterCapture={() => onFocusItem(item, 'subject')}
+                onMouseDown={() => onFocusItem(item, 'subject')}
                 onMouseLeave={() => setIsHovered(false)}
                 className={`relative group rounded-xl transition-all duration-200 border border-transparent z-10 ${
                     isDragOver 
