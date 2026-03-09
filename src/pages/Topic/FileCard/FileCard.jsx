@@ -78,7 +78,7 @@ const FileCard = ({
     };
 
     return (
-        <div className="group relative h-64 rounded-3xl shadow-lg shadow-slate-200/50 dark:shadow-slate-900/50 overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-xl cursor-default bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800">
+        <div className="group relative h-64 rounded-2xl shadow-sm hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-slate-900/40 overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-default bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700">
 
             {isGenerated && (
                 <div className={`absolute inset-0 bg-gradient-to-br ${cardColor} opacity-90 transition-opacity group-hover:opacity-100`}></div>
@@ -86,21 +86,21 @@ const FileCard = ({
 
             <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
                 {isGenerated ? (
-                    <Icon className="w-32 h-32 text-white absolute -top-6 -left-6 opacity-20 rotate-12 group-hover:rotate-0 transition-transform duration-500" />
+                    <Icon className="w-32 h-32 text-white absolute -top-6 -left-6 opacity-15 rotate-12 group-hover:rotate-0 transition-transform duration-500" strokeWidth={1.2} />
                 ) : (
-                    <FileText style={{ color: `var(--tw-color-${colorName}-500)` }} className="w-32 h-32 absolute -bottom-4 -right-4 rotate-12 opacity-[0.05]" />
+                    <FileText style={{ color: `var(--tw-color-${colorName}-500)` }} className="w-32 h-32 absolute -bottom-4 -right-4 rotate-12 opacity-[0.05]" strokeWidth={1.2} />
                 )}
             </div>
 
-            <div className="absolute top-6 left-6 z-20">
-                <div className={`p-2.5 rounded-xl border shadow-sm backdrop-blur-md ${
+            <div className="absolute top-5 left-5 z-20">
+                <div className={`p-2.5 rounded-xl border shadow-sm backdrop-blur-md transition-all ${
                     isGenerated
                         ? 'bg-white/20 border-white/20'
                         : `bg-${colorName}-50 dark:bg-${colorName}-950 border-${colorName}-100 dark:border-${colorName}-800`
                 }`}>
                     {isGenerated
-                        ? <Icon className="w-6 h-6 text-white" />
-                        : <Icon className={`w-6 h-6 text-${colorName}-600 dark:text-${colorName}-400`} />
+                        ? <Icon className="w-5 h-5 text-white" strokeWidth={1.5} />
+                        : <Icon className={`w-5 h-5 text-${colorName}-600 dark:text-${colorName}-400`} strokeWidth={1.5} />
                     }
                 </div>
             </div>
@@ -145,7 +145,7 @@ const FileCard = ({
                 </div>
             )}
 
-            <div className="relative h-full p-8 flex flex-col justify-end z-10">
+            <div className="relative h-full p-6 flex flex-col justify-end z-10">
                 <div className="mt-auto">
                     {isRenaming ? (
                         <div
@@ -165,7 +165,7 @@ const FileCard = ({
                                         setRenamingId(null);
                                     }
                                 }}
-                                className="w-full bg-white/90 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm font-bold outline-none border border-transparent focus:border-indigo-500 transition-all"
+                                className="w-full bg-white/90 dark:bg-slate-800/90 text-slate-900 dark:text-slate-100 rounded-lg px-3 py-2 text-sm font-medium outline-none border border-transparent focus:border-indigo-500 transition-all"
                                 autoFocus
                                 placeholder="Escribe un nombre..."
                             />
@@ -177,7 +177,7 @@ const FileCard = ({
                                     }}
                                     className="flex-1 bg-green-500 hover:bg-green-600 rounded-lg py-1 flex justify-center text-white transition-colors"
                                 >
-                                    <Check className="w-4 h-4" />
+                                    <Check className="w-4 h-4" strokeWidth={2} />
                                 </button>
                                 <button
                                     onClick={(e) => {
@@ -186,11 +186,13 @@ const FileCard = ({
                                     }}
                                     className="flex-1 bg-red-500 hover:bg-red-600 rounded-lg py-1 flex justify-center text-white transition-colors"
                                 >
-                                    <X className="w-4 h-4" />
+                                    <X className="w-4 h-4" strokeWidth={2} />
                                 </button>
                             </div>
                         </div>) : (
-                        <h3 className={`text-2xl font-black leading-tight mb-6 uppercase tracking-tight line-clamp-2 ${isGenerated ? 'text-white' : 'text-slate-800 dark:text-slate-100'}`}>
+                        <h3 className={`text-xl font-bold leading-snug mb-4 uppercase tracking-tight line-clamp-2 ${
+                            isGenerated ? 'text-white' : 'text-slate-800 dark:text-slate-100'
+                        }`}>
                             {file.name || label}
                         </h3>
                     )}
@@ -198,25 +200,25 @@ const FileCard = ({
                     <div className="flex gap-3">
                         <button
                             onClick={handleViewClick}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
                                 isGenerated
                                     ? 'bg-white/20 hover:bg-white/30 text-white border border-white/10'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                                    : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                             }`}
                         >
-                            <Maximize2 className="w-4 h-4" /> Ver
+                            <Maximize2 className="w-3.5 h-3.5" strokeWidth={1.5} /> Ver
                         </button>
 
                         <a
                             href={file.url}
                             download={file.name}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all shadow-lg ${
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
                                 isGenerated
-                                    ? 'bg-white text-slate-900'
+                                    ? 'bg-white text-slate-900 hover:bg-slate-100'
                                     : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200'
                             }`}
                         >
-                            <Download className="w-4 h-4" /> Bajar
+                            <Download className="w-3.5 h-3.5" strokeWidth={1.5} /> Bajar
                         </a>
                     </div>
                 </div>

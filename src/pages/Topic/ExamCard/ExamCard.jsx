@@ -1,6 +1,6 @@
 // src/pages/Topic/ExamCard/ExamCard.jsx
 import React, { useMemo } from 'react';
-import { ClipboardList, Clock, Play, ChevronRight } from 'lucide-react';
+import { ClipboardList, Clock, Play } from 'lucide-react';
 
 const ExamCard = ({ 
     exam, 
@@ -19,40 +19,40 @@ const ExamCard = ({
     };
 
     return (
-        <article className="group relative rounded-3xl border border-slate-200 dark:border-slate-800 bg-slate-900 dark:bg-slate-900 p-6 shadow-md transition-all duration-300 hover:shadow-lg">
-            <div className="absolute inset-0 overflow-hidden pointer-events-none rounded-3xl">
-                <div className={`absolute top-0 right-0 w-36 h-36 bg-gradient-to-br ${subjectColor} opacity-20 blur-2xl -translate-y-1/3 translate-x-1/3`} />
-            </div>
-
-            <div className="relative z-10">
-                <div className="flex items-start gap-4 mb-4">
-                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${subjectColor} flex items-center justify-center shrink-0 shadow-lg`}>
-                        <ClipboardList className="w-6 h-6 text-white" />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                        <h4 className="text-lg font-medium text-white leading-tight line-clamp-2 mb-2">
-                            {exam.title || 'Examen'}
-                        </h4>
-                        <div className="flex items-center gap-3 text-slate-400 text-sm">
-                            <span className="opacity-85 font-medium">{exam.questions?.length || 0} preguntas</span>
-                            <span className="opacity-40">·</span>
-                            <span className="opacity-80 flex items-center gap-1.5">
-                                <Clock className="w-3.5 h-3.5" /> 1 hora
-                            </span>
-                        </div>
-                    </div>
+        <article 
+            onClick={handleClick}
+            className="group cursor-pointer relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 shadow-sm hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-slate-900/40 transition-all duration-300 hover:border-slate-300 dark:hover:border-slate-600"
+        >
+            <div className="flex items-start gap-3 mb-3">
+                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${subjectColor} flex items-center justify-center shrink-0`}>
+                    <ClipboardList className="w-5 h-5 text-white" strokeWidth={1.5} />
                 </div>
 
-                <button
-                    onClick={handleClick}
-                    className={`w-full flex items-center justify-center gap-2 py-3 rounded-2xl text-sm font-bold text-white bg-gradient-to-r ${subjectColor} transition-all hover:brightness-110 active:scale-[0.99]`}
-                >
-                    <Play className="w-4 h-4" />
-                    Comenzar Examen
-                    <ChevronRight className="w-4 h-4" />
-                </button>
+                <div className="flex-1 min-w-0">
+                    <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-2 group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">
+                        {exam.title || 'Examen'}
+                    </h4>
+                </div>
             </div>
+
+            <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400 mb-3">
+                <span className="flex items-center gap-1">
+                    <ClipboardList className="w-3 h-3" strokeWidth={1.5} />
+                    {exam.questions?.length || 0} preguntas
+                </span>
+                <span className="flex items-center gap-1">
+                    <Clock className="w-3 h-3" strokeWidth={1.5} />
+                    1 hora
+                </span>
+            </div>
+
+            <button
+                onClick={handleClick}
+                className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold text-white bg-gradient-to-r ${subjectColor} transition-all hover:shadow-md active:scale-[0.98]`}
+            >
+                <Play className="w-3.5 h-3.5" strokeWidth={1.5} />
+                Examen
+            </button>
         </article>
     );
 };

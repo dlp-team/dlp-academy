@@ -79,13 +79,17 @@ const Topic = ({ user }) => {
     }, [enrichedTopic]);
 
     if (!user || logic.loading || !logic.topic || !logic.subject) {
-        return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950"><Loader2 className="w-10 h-10 animate-spin text-indigo-600"/></div>;
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" strokeWidth={2} />
+            </div>
+        );
     }
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
             <Header user={user} />
-            <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+            <main className="pt-20 pb-16 px-6 max-w-7xl mx-auto">
                 <TopicHeader 
                     {...logic}
                     topic={enrichedTopic} 
@@ -94,18 +98,22 @@ const Topic = ({ user }) => {
                     handleGenerateQuizSubmit={logic.handleGenerateQuizSubmit}
                     permissions={logic.permissions}
                 />
-                <TopicTabs 
-                    {...logic}
-                    topic={enrichedTopic} 
-                />
-                <TopicContent 
-                    {...logic}
-                    topic={enrichedTopic}
-                    subject={logic.subject}
-                    handleManualUpload={logic.handleManualUpload}
-                    uploading={logic.uploading}
-                    permissions={logic.permissions}
-                />
+                <div className="mt-8">
+                    <TopicTabs 
+                        {...logic}
+                        topic={enrichedTopic} 
+                    />
+                </div>
+                <div className="mt-8">
+                    <TopicContent 
+                        {...logic}
+                        topic={enrichedTopic}
+                        subject={logic.subject}
+                        handleManualUpload={logic.handleManualUpload}
+                        uploading={logic.uploading}
+                        permissions={logic.permissions}
+                    />
+                </div>
             </main>
             <TopicModals 
                 {...logic}
