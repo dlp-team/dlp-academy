@@ -31,7 +31,9 @@ const FolderListItem = ({
     onDragEnd,
     onDropAction,
     draggable = true,
-    path
+    path,
+    onFocusItem = () => {},
+    getCardVisualState = () => ({ isAnimating: false, isCutPending: false })
 }) => {
     const HEADER_SAFE_TOP = 112;
     const MENU_MARGIN = 8;
@@ -261,7 +263,8 @@ const FolderListItem = ({
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onMouseEnter={() => setIsHovered(true)}
+                onMouseEnter={() => { setIsHovered(true); onFocusItem(item, 'folder'); }}
+                onMouseDown={() => onFocusItem(item, 'folder')}
                 onMouseLeave={() => setIsHovered(false)}
                 className={`relative group rounded-xl transition-all duration-200 border border-transparent z-10 ${
                     isDragOver 
@@ -545,6 +548,8 @@ const FolderListItem = ({
                                         onDropAction={onDropAction}
                                         draggable={draggable}
                                         path={path}
+                                        onFocusItem={onFocusItem}
+                                        getCardVisualState={getCardVisualState}
                                     />
                                 ))}
                                 {childSubjects.map((subject, childIndex) => (
@@ -572,6 +577,8 @@ const FolderListItem = ({
                                         onDropAction={onDropAction}
                                         draggable={draggable}
                                         path={path}
+                                        onFocusItem={onFocusItem}
+                                        getCardVisualState={getCardVisualState}
                                     />
                                 ))}
                             </>

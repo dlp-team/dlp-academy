@@ -103,13 +103,12 @@ const ListViewItem = ({
         return null;
     }
     // Delegate to FolderListItem component if the item is a folder
+    // Focus registration is handled inside FolderListItem on the row div itself,
+    // NOT on this outer wrapper — otherwise the event fires for the entire subtree
+    // (including expanded children), making nested cards unfocusable.
     if (type === 'folder') {
         return (
-            <div
-                onMouseDown={() => onFocusItem(item, 'folder')}
-                onMouseEnter={() => onFocusItem(item, 'folder')}
-                className={visualClasses}
-            >
+            <div className={visualClasses}>
                 <FolderListItem
                     user={user}
                     item={item}
@@ -133,6 +132,8 @@ const ListViewItem = ({
                     onDropAction={onDropAction}
                     draggable={draggable}
                     path={currentPath}
+                    onFocusItem={onFocusItem}
+                    getCardVisualState={getCardVisualState}
                 />
             </div>
         );
