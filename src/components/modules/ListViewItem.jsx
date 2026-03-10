@@ -210,6 +210,8 @@ const ListViewItem = ({
                             hideSharedIndicator={hideSharedIndicator}
                             cardScale={cardScale} 
                             className="pl-8" 
+                            onFocusItem={onFocusItem}
+                            getCardVisualState={getCardVisualState}
                         />
                     </div>
                 </div>

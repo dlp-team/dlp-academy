@@ -20,7 +20,9 @@ const SubjectListItem = ({
     hideSharedIndicator = false,
     compact = false, 
     cardScale = 100,
-    className = ""
+    className = "",
+    onFocusItem = () => {},
+    getCardVisualState = () => ({ isAnimating: false, isCutPending: false })
 }) => {
     const HEADER_SAFE_TOP = 112;
     const MENU_MARGIN = 8;
@@ -100,6 +102,8 @@ const SubjectListItem = ({
                 if (isOrphan && isShortcut) return;
                 onSelect(subject.id);
             }}
+            onMouseEnter={() => onFocusItem(subject, 'subject')}
+            onMouseDown={() => onFocusItem(subject, 'subject')}
         >
             <div className="flex items-center gap-4">
                 {/* ICON */}
