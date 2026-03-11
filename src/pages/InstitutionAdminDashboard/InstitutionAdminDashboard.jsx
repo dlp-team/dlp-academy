@@ -724,6 +724,93 @@ const InstitutionAdminDashboard = ({ user }) => {
                       {iconUploadError && <p className="text-red-600 dark:text-red-300">{iconUploadError}</p>}
                     </div>
                   </div>
+
+                  <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div className="flex h-16 w-32 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-950 overflow-hidden">
+                      {customizationForm.logoUrl ? (
+                        <img
+                          src={customizationForm.logoUrl}
+                          alt="Vista previa del logo institucional"
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-xs text-slate-400 dark:text-slate-500">Sin logo</span>
+                      )}
+                    </div>
+                    <div className="space-y-1 text-sm text-slate-500 dark:text-slate-400">
+                      <p>Logo actual: {customizationForm.logoUrl ? 'Configurado y listo para el encabezado.' : 'Todavía no configurado.'}</p>
+                      <form
+                        onSubmit={async (e) => {
+                          e.preventDefault();
+                          if (!user?.institutionId) return;
+                          const url = e.target.logoUrlInput.value.trim();
+                          if (!url) return;
+                          try {
+                            await updateDoc(doc(db, 'institutions', user.institutionId), {
+                              'customization.logoUrl': url,
+                              updatedAt: serverTimestamp(),
+                            });
+                            setCustomizationForm({ ...customizationForm, logoUrl: url });
+                          } catch (error) {
+                            setCustomizationError('No se pudo guardar el logo por URL. Inténtalo de nuevo.');
+                          }
+                        }}
+                        className="flex items-center gap-2 mt-2"
+                      >
+                        <input
+                          name="logoUrlInput"
+                          type="text"
+                          placeholder="URL del logotipo"
+                          defaultValue={customizationForm.logoUrl}
+                          className="rounded-lg border border-slate-300 px-2 py-1 text-sm w-64"
+                        />
+                        <button
+                          type="submit"
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg text-sm font-medium"
+                        >Guardar URL</button>
+                      </form>
+                      <label className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white cursor-pointer mt-2">
+                        {iconUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                        {iconUploading ? 'Subiendo logotipo...' : 'Subir logotipo'}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/svg+xml,image/x-icon,image/webp"
+                          className="hidden"
+                          onChange={async (event) => {
+                            const file = event.target.files?.[0];
+                            event.target.value = '';
+                            if (!file || !user?.institutionId) return;
+                            if (!file.type.startsWith('image/')) {
+                              setIconUploadError('Selecciona una imagen válida para el logotipo.');
+                              return;
+                            }
+                            setIconUploading(true);
+                            setIconUploadError('');
+                            setCustomizationError('');
+                            setCustomizationSuccess('');
+                            try {
+                              const fileExtension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : 'png';
+                              const storageRef = ref(getStorage(db.app), `institutions/${user.institutionId}/branding/logo.${fileExtension || 'png'}`);
+                              await uploadBytes(storageRef, file, { contentType: file.type });
+                              const logoUrl = await getDownloadURL(storageRef);
+                              await updateDoc(doc(db, 'institutions', user.institutionId), {
+                                'customization.logoUrl': logoUrl,
+                                updatedAt: serverTimestamp(),
+                              });
+                              setCustomizationForm({ ...customizationForm, logoUrl });
+                              setCustomizationSuccess('Logotipo guardado correctamente.');
+                            } catch (error) {
+                              setIconUploadError('No se pudo subir el logotipo. Inténtalo de nuevo.');
+                            } finally {
+                              setIconUploading(false);
+                            }
+                          }}
+                          disabled={iconUploading}
+                        />
+                      </label>
+                      {iconUploadError && <p className="text-red-600 dark:text-red-300 mt-2">{iconUploadError}</p>}
+                    </div>
+                  </div>
                 </section>
 
                 <div className="h-[calc(100vh-13rem)] min-h-[720px]">
