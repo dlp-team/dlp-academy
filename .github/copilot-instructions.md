@@ -226,12 +226,14 @@ Workflow documentation and task-specific guides (e.g., `shortcut-move-request-wo
 
 ## Mandatory Workflow for ALL Code Changes
 
-### 1. Context Gathering (Parallel, Comprehensive)
+
+### 1. Context Gathering & Pre-Execution Clarification (Parallel, Comprehensive)
 ```
 ✅ Read relevant files in copilot/explanations/codebase/
 ✅ Check copilot/plans/active/ for related work
 ✅ Search for similar patterns in the codebase
 ✅ Read protocol files if unfamiliar
+✅ Before making any changes, ensure the task is fully understood. If there is any ambiguity, missing detail, or uncertainty about requirements, use `vscode_askQuestions` to clarify with the user before proceeding. Do not proceed until the scope, constraints, and expected outcomes are clear.
 ```
 
 ### 2. Pre-Change Checklist
@@ -386,6 +388,7 @@ Before multiple grep searches, try one broad semantic search to understand the l
 
 ---
 
+
 ## Premium Request Value Checklist
 
 Before completing ANY interaction, verify:
@@ -396,6 +399,7 @@ Before completing ANY interaction, verify:
 - [ ] No errors remain (`get_errors` clean)
 - [ ] Lossless report created (if code changed)
 - [ ] User can immediately continue their work without asking follow-ups
+- [ ] **Pre-execution clarification performed:** If there was any ambiguity or missing information, the agent asked the user for clarification and only proceeded once the task was fully understood.
 
 **Remember: Every interaction uses a limited premium request. Make each one count.**
 

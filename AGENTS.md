@@ -9,16 +9,18 @@ When operating in Bypass Approvals or Autopilot mode, you have terminal access. 
    - **BANNED**: `firebase deploy`, `npm run deploy`, or any command that pushes code to production or staging.
 3. **NO DESTRUCTIVE COMMANDS**: Do not run `rm -rf` on root directories, do not drop databases, and do not reset git branches hard (`git reset --hard`) without explicit user permission.
 
+
 ## 🔄 Autopilot Execution Loop
 When operating in Autopilot mode, follow this exact loop until the task is complete:
 
-1. **Context & Plan**: Read `copilot-instructions.md` and relevant files in `copilot/explanations/`.
-2. **Execute**: Make surgical code changes (following the Lossless Change Protocol).
-3. **Test Generation**: If you created a new component, utility, or feature, you MUST create a corresponding test file.
-4. **Validate & Test**: Run local validation (`npm run test`) via the `terminal` tool. **(Local execution only. See BANNED ACTIONS).**
-5. **Analyze**: If tests fail, automatically read the errors, devise a fix, and repeat steps 2-4. Do NOT halt to ask the user to fix test failures.
-6. **Document**: Generate the required lossless report in `copilot/explanations/temporal/lossless-reports/`.
-7. **Terminate**: Only call the `task_complete` tool when ALL above steps are 100% finished and passing.
+1. **Pre-Execution Clarification**: Before any code or documentation changes, ensure the task is fully understood. If there is any ambiguity, missing detail, or uncertainty about requirements, use `vscode_askQuestions` to clarify with the user before proceeding. Do not proceed until the scope, constraints, and expected outcomes are clear.
+2. **Context & Plan**: Read `copilot-instructions.md` and relevant files in `copilot/explanations/`.
+3. **Execute**: Make surgical code changes (following the Lossless Change Protocol).
+4. **Test Generation**: If you created a new component, utility, or feature, you MUST create a corresponding test file.
+5. **Validate & Test**: Run local validation (`npm run test`) via the `terminal` tool. **(Local execution only. See BANNED ACTIONS).**
+6. **Analyze**: If tests fail, automatically read the errors, devise a fix, and repeat steps 3-5. Do NOT halt to ask the user to fix test failures.
+7. **Document**: Generate the required lossless report in `copilot/explanations/temporal/lossless-reports/`.
+8. **Terminate**: Only call the `task_complete` tool when ALL above steps are 100% finished and passing.
 
 
 ## 🛠️ Environment & Validation Commands

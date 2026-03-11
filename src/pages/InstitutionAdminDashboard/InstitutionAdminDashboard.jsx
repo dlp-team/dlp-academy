@@ -1,7 +1,9 @@
+// src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.jsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   CheckCircle2,
+  ImagePlus,
   LayoutGrid,
   Loader2,
   Palette,
@@ -23,6 +25,7 @@ import {
   setDoc,
   writeBatch
 } from 'firebase/firestore';
+import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
 import SudoModal from '../../components/modals/SudoModal';
@@ -44,6 +47,7 @@ import {
 
 const DEFAULT_CUSTOMIZATION_FORM = {
   institutionDisplayName: '',
+  iconUrl: '',
   logoUrl: '',
   primaryBrandColor: GLOBAL_BRAND_DEFAULTS.primaryColor,
   secondaryBrandColor: GLOBAL_BRAND_DEFAULTS.secondaryColor,
@@ -57,6 +61,7 @@ const TABS = [
   { key: 'customization', label: 'Personalización', icon: Palette },
 ];
 
+// Move handleIconUpload definition above the component
 const InstitutionAdminDashboard = ({ user }) => {
   const navigate = useNavigate();
   useIdleTimeout(15);
@@ -86,6 +91,8 @@ const InstitutionAdminDashboard = ({ user }) => {
   const [customizationSaving, setCustomizationSaving] = useState(false);
   const [customizationError, setCustomizationError] = useState('');
   const [customizationSuccess, setCustomizationSuccess] = useState('');
+  const [iconUploading, setIconUploading] = useState(false);
+  const [iconUploadError, setIconUploadError] = useState('');
 
   const [institutionalCode, setInstitutionalCode] = useState('');
   const [isUpdatingCode, setIsUpdatingCode] = useState(false);
@@ -224,6 +231,7 @@ const InstitutionAdminDashboard = ({ user }) => {
         setInstitutionName(institutionData.name || '');
         setCustomizationForm({
           institutionDisplayName: branding.institutionDisplayName || institutionData.name || '',
+          iconUrl: customizationData.iconUrl || '',
           logoUrl: branding.logoUrl || '',
           primaryBrandColor: branding.primaryColor || GLOBAL_BRAND_DEFAULTS.primaryColor,
           secondaryBrandColor: branding.secondaryColor || GLOBAL_BRAND_DEFAULTS.secondaryColor,
@@ -246,6 +254,20 @@ const InstitutionAdminDashboard = ({ user }) => {
       active = false;
     };
   }, [user?.institutionId]);
+
+  useEffect(() => {
+    const iconUrl = customizationForm.iconUrl?.trim();
+    if (!iconUrl) return;
+
+    let faviconLink = document.querySelector('link[rel="icon"]');
+    if (!faviconLink) {
+      faviconLink = document.createElement('link');
+      faviconLink.setAttribute('rel', 'icon');
+      document.head.appendChild(faviconLink);
+    }
+
+    faviconLink.setAttribute('href', iconUrl);
+  }, [customizationForm.iconUrl]);
 
   useEffect(() => {
     if (!user?.institutionId) return;
@@ -408,12 +430,56 @@ const InstitutionAdminDashboard = ({ user }) => {
     }
   };
 
+  // ...existing code...
+  const handleIconUpload = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file || !user?.institutionId) return;
+
+    if (!file.type.startsWith('image/')) {
+      setIconUploadError('Selecciona una imagen válida para el icono.');
+      return;
+    }
+
+    setIconUploading(true);
+    setIconUploadError('');
+    setCustomizationError('');
+    setCustomizationSuccess('');
+
+    try {
+      const fileExtension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : 'png';
+      const storageRef = ref(getStorage(db.app), `institutions/${user.institutionId}/branding/icon.${fileExtension || 'png'}`);
+      await uploadBytes(storageRef, file, { contentType: file.type });
+      const iconUrl = await getDownloadURL(storageRef);
+
+      const nextCustomizationForm = {
+        ...customizationForm,
+        iconUrl,
+      };
+
+      await updateDoc(doc(db, 'institutions', user.institutionId), {
+        'customization.iconUrl': iconUrl,
+        updatedAt: serverTimestamp(),
+      });
+
+      setCustomizationForm(nextCustomizationForm);
+      setCustomizationSuccess('Icono guardado correctamente.');
+    } catch (error) {
+      console.error('Error uploading institution icon:', error);
+      setIconUploadError('No se pudo subir el icono. Inténtalo de nuevo.');
+    } finally {
+      setIconUploading(false);
+    }
+  };
+  // ...existing code...
   const handleSaveCustomization = async (incomingFormValues = null) => {
     if (!user?.institutionId) return;
 
     const nextCustomizationForm = incomingFormValues
       ? {
         institutionDisplayName: incomingFormValues.institutionName || '',
+        iconUrl: customizationForm.iconUrl || '',
         logoUrl: incomingFormValues.logoUrl || '',
         primaryBrandColor: incomingFormValues.primary || GLOBAL_BRAND_DEFAULTS.primaryColor,
         secondaryBrandColor: incomingFormValues.secondary || GLOBAL_BRAND_DEFAULTS.secondaryColor,
@@ -442,6 +508,7 @@ const InstitutionAdminDashboard = ({ user }) => {
 
       await updateDoc(institutionRef, {
         'customization.institutionDisplayName': nextCustomizationForm.institutionDisplayName.trim() || institutionName || '',
+        'customization.iconUrl': nextCustomizationForm.iconUrl.trim(),
         'customization.logoUrl': nextCustomizationForm.logoUrl.trim(),
         'customization.primaryBrandColor': normalizedPrimaryBrandColor,
         'customization.secondaryBrandColor': normalizedSecondaryBrandColor,
@@ -456,9 +523,55 @@ const InstitutionAdminDashboard = ({ user }) => {
         updatedAt: serverTimestamp(),
       });
 
+
+    const handleIconUpload = async (event) => {
+      const file = event.target.files?.[0];
+      event.target.value = '';
+
+      if (!file || !user?.institutionId) return;
+
+      if (!file.type.startsWith('image/')) {
+        setIconUploadError('Selecciona una imagen válida para el icono.');
+        return;
+      }
+
+      setIconUploading(true);
+      setIconUploadError('');
+      setCustomizationError('');
+      setCustomizationSuccess('');
+
+      try {
+        const fileExtension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : 'png';
+        const storageRef = ref(getStorage(db.app), `institutions/${user.institutionId}/branding/icon.${fileExtension || 'png'}`);
+        await uploadBytes(storageRef, file, { contentType: file.type });
+        const iconUrl = await getDownloadURL(storageRef);
+
+        const nextCustomizationForm = {
+          ...customizationForm,
+          iconUrl,
+        };
+
+        await updateDoc(doc(db, 'institutions', user.institutionId), {
+          'customization.iconUrl': iconUrl,
+          updatedAt: serverTimestamp(),
+        });
+
+        setCustomizationForm({
+          ...customizationForm,
+          iconUrl,
+        });
+        setCustomizationSuccess('Icono guardado correctamente.');
+      } catch (error) {
+        console.error('Error uploading institution icon:', error);
+        setIconUploadError('No se pudo subir el icono. Inténtalo de nuevo.');
+      } finally {
+        setIconUploading(false);
+      }
+    };
       setCustomizationForm(nextCustomizationForm);
       setCustomizationSuccess('Personalización guardada correctamente.');
     } catch (error) {
+      iconUrl: customizationForm.iconUrl || '',
       console.error('Error saving customization:', error);
       setCustomizationError('No se pudieron guardar los cambios. Inténtalo de nuevo.');
       throw error;
@@ -569,6 +682,49 @@ const InstitutionAdminDashboard = ({ user }) => {
                     <CheckCircle2 className="w-4 h-4" /> {customizationSuccess}
                   </div>
                 )}
+
+                <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="space-y-1">
+                      <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Icono del navegador</h2>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        Este icono se guarda por separado del logo del encabezado y se usa junto al nombre de la pestaña.
+                      </p>
+                    </div>
+
+                    <label className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white cursor-pointer">
+                      {iconUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
+                      {iconUploading ? 'Subiendo icono...' : 'Subir icono'}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/svg+xml,image/x-icon,image/webp"
+                        className="hidden"
+                        onChange={handleIconUpload}
+                        disabled={iconUploading}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-950 overflow-hidden">
+                      {customizationForm.iconUrl ? (
+                        <img
+                          src={customizationForm.iconUrl}
+                          alt="Vista previa del icono institucional"
+                          className="h-full w-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-xs text-slate-400 dark:text-slate-500">Sin icono</span>
+                      )}
+                    </div>
+
+                    <div className="space-y-1 text-sm text-slate-500 dark:text-slate-400">
+                      <p>Logo del encabezado actual: se mantiene en el campo de logo existente.</p>
+                      <p>Icono actual: {customizationForm.iconUrl ? 'Configurado y listo para la pestaña del navegador.' : 'Todavía no configurado.'}</p>
+                      {iconUploadError && <p className="text-red-600 dark:text-red-300">{iconUploadError}</p>}
+                    </div>
+                  </div>
+                </section>
 
                 <div className="h-[calc(100vh-13rem)] min-h-[720px]">
                   <InstitutionCustomizationView
