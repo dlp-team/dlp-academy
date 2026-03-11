@@ -683,16 +683,16 @@ const InstitutionAdminDashboard = ({ user }) => {
                   </div>
                 )}
 
-                <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="space-y-1">
-                      <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Icono del navegador</h2>
+                <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-8 shadow-lg flex flex-col gap-8">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+                    <div className="space-y-2">
+                      <h2 className="text-xl font-bold text-slate-900 dark:text-white">Icono del navegador</h2>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Este icono se guarda por separado del logo del encabezado y se usa junto al nombre de la pestaña.
+                        Este icono se muestra en la pestaña del navegador y se guarda por separado del logotipo del encabezado.
                       </p>
                     </div>
 
-                    <label className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white cursor-pointer">
+                    <label className="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700 dark:bg-indigo-400 dark:text-slate-900 dark:hover:bg-indigo-500 cursor-pointer shadow-md">
                       {iconUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
                       {iconUploading ? 'Subiendo icono...' : 'Subir icono'}
                       <input
@@ -705,8 +705,8 @@ const InstitutionAdminDashboard = ({ user }) => {
                     </label>
                   </div>
 
-                  <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-950 overflow-hidden">
+                  <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-6">
+                    <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-slate-200 bg-gradient-to-br from-indigo-100 to-slate-50 dark:from-indigo-900 dark:to-slate-950 shadow-md overflow-hidden">
                       {customizationForm.iconUrl ? (
                         <img
                           src={customizationForm.iconUrl}
@@ -725,19 +725,39 @@ const InstitutionAdminDashboard = ({ user }) => {
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
-                    <div className="flex h-16 w-32 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-950 overflow-hidden">
+                  <div className="mt-8 flex flex-col sm:flex-row sm:items-center gap-6">
+                    <div
+                      className="flex items-center justify-center rounded-2xl border border-slate-200 bg-gradient-to-br from-emerald-100 to-slate-50 dark:from-emerald-900 dark:to-slate-950 shadow-md overflow-hidden"
+                      style={{
+                        minHeight: '80px',
+                        minWidth: '160px',
+                        padding: customizationForm.logoUrl ? '16px' : '0',
+                        margin: customizationForm.logoUrl ? '8px' : '0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
                       {customizationForm.logoUrl ? (
                         <img
                           src={customizationForm.logoUrl}
                           alt="Vista previa del logo institucional"
-                          className="h-full w-full object-contain"
+                          style={{
+                            maxWidth: '100%',
+                            maxHeight: '120px',
+                            width: 'auto',
+                            height: 'auto',
+                            objectFit: 'contain',
+                            background: 'transparent',
+                          }}
                         />
                       ) : (
                         <span className="text-xs text-slate-400 dark:text-slate-500">Sin logo</span>
                       )}
                     </div>
-                    <div className="space-y-1 text-sm text-slate-500 dark:text-slate-400">
+                    <div className="space-y-2 text-sm text-slate-500 dark:text-slate-400">
+                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Logotipo del encabezado</h3>
+                      <p>Este logotipo se muestra en el encabezado de la aplicación.</p>
                       <p>Logo actual: {customizationForm.logoUrl ? 'Configurado y listo para el encabezado.' : 'Todavía no configurado.'}</p>
                       <form
                         onSubmit={async (e) => {
