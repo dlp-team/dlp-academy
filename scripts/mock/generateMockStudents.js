@@ -1,20 +1,11 @@
 // scripts/mock/generateMockStudents.js
-// scripts/mock/generateMockStudents.js
-const admin = require('firebase-admin');
-const path = require('path');
-const fs = require('fs');
-
-// Script para generar datos de estudiantes ficticios en Firestore para una institución.
-// Uso: node generateMockStudents.js <institutionId> <numStudents>
-// Requiere credenciales de Firebase Admin SDK:
-// - FIREBASE_SERVICE_ACCOUNT como variable de entorno (JSON string)
-// - o serviceAccountKey.json en scripts/mock/
-
-// scripts/mock/generateMockStudents.js
 import admin from 'firebase-admin';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import 'dotenv/config';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Script para generar datos de estudiantes ficticios en Firestore para una institución.
 // Uso: node scripts/mock/generateMockStudents.js <institutionId> <numStudents>
@@ -34,12 +25,8 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
     process.exit(1);
   }
 } else {
-  const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
-  if (!fs.existsSync(serviceAccountPath)) {
-    console.error('Falta el archivo serviceAccountKey.json en scripts/mock/ y no se ha definido FIREBASE_SERVICE_ACCOUNT.');
-    process.exit(1);
-  }
-  serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+  console.error('Falta la variable de entorno FIREBASE_SERVICE_ACCOUNT_JSON.');
+  process.exit(1);
 }
 
 admin.initializeApp({
