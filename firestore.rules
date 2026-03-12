@@ -220,6 +220,7 @@ service cloud.firestore {
     // Reglas principales de Asignaturas
     match /subjects/{subjectId} {
       allow create: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -256,6 +257,7 @@ service cloud.firestore {
           || (resource.data.keys().hasAny(['sharedWithUids']) && request.auth.uid in resource.data.sharedWithUids)
         );
       allow update: if isSignedIn()
+        && !isStudentRole()
         && (
           canWriteResource(resource.data)
           || resource.data.ownerId == request.auth.uid
@@ -285,32 +287,50 @@ service cloud.firestore {
 
       // Reglas para la subcolección "topics"
       match /topics/{topicId} {
-        allow read, write: if isSignedIn()
+        allow read: if isSignedIn()
+          && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+        allow write: if isSignedIn()
+          && !isStudentRole()
           && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
 
         // 1. Pestaña "Generados por IA" (FALTABA ESTO)
         match /resumen/{docId} {
-          allow read, write: if isSignedIn()
+          allow read: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+          allow write: if isSignedIn()
+            && !isStudentRole()
             && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
 
         // 2. Pestaña "Mis Archivos" (FALTABA ESTO)
         match /materials/{docId} {
-          allow read, write: if isSignedIn()
+          allow read: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+          allow write: if isSignedIn()
+            && !isStudentRole()
             && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
 
         // 3. Tests y Resultados (Ya los tenías)
         match /quizzes/{quizId} {
-          allow read, write: if isSignedIn()
+          allow read: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+          allow write: if isSignedIn()
+            && !isStudentRole()
             && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
         match /quiz_results/{resultId} {
-          allow read, write: if isSignedIn()
+          allow read: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+          allow write: if isSignedIn()
+            && !isStudentRole()
             && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
         match /documents/{docId} {
-          allow read, write: if isSignedIn()
+          allow read: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+          allow write: if isSignedIn()
+            && !isStudentRole()
             && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
       }
@@ -330,6 +350,11 @@ service cloud.firestore {
           || (
             currentUserInstitutionId() != null
             && request.resource.data.institutionId == currentUserInstitutionId()
+            && exists(/databases/$(database)/documents/subjects/$(request.resource.data.subjectId))
+            && (
+              get(/databases/$(database)/documents/subjects/$(request.resource.data.subjectId)).data.ownerId == request.auth.uid
+              || (isTeacherRole() && sameInstitution(get(/databases/$(database)/documents/subjects/$(request.resource.data.subjectId)).data))
+            )
           )
         );
       allow read: if isSignedIn()
@@ -398,6 +423,7 @@ service cloud.firestore {
     // Reglas para Temas (Topics) en colección raíz
     match /topics/{topicId} {
       allow create: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -421,6 +447,7 @@ service cloud.firestore {
         );
 
       allow update: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -447,6 +474,7 @@ service cloud.firestore {
     // Reglas para Documentos (Documents) en colección raíz
     match /documents/{documentId} {
       allow create: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -470,6 +498,7 @@ service cloud.firestore {
         );
 
       allow update: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -540,6 +569,7 @@ service cloud.firestore {
     // Reglas para Quizzes en colección raíz
     match /quizzes/{quizId} {
       allow create: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -563,6 +593,7 @@ service cloud.firestore {
         );
 
       allow update: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -601,16 +632,8 @@ service cloud.firestore {
           || (
             request.resource.data.ownerId != request.auth.uid
             && isTargetOwnerForCreate()
-            // Allow if recipient is already in sharedWithUids (normal),
-            // OR if the owner is performing the share and intends to add recipient
-            && (
-              targetSharedWithShortcutOwner()
-              || (
-                // Owner is performing the share and will add recipient to sharedWithUids atomically
-                // This enables shortcut-first atomic sharing
-                true
-              )
-            )
+            // Enforce: recipient must already be shared with target (no || true bypass)
+            && targetSharedWithShortcutOwner()
           )
         );
       // Shortcut owner can always read their own shortcut.
@@ -806,6 +829,7 @@ service cloud.firestore {
     // -----------------------------------------
     match /exams/{examId} {
       allow create: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -827,6 +851,7 @@ service cloud.firestore {
         );
 
       allow update: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
