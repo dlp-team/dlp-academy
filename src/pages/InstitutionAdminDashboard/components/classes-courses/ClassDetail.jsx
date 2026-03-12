@@ -1,12 +1,13 @@
 // src/pages/InstitutionAdminDashboard/components/classes-courses/ClassDetail.jsx
 // ─────────────────────────────────────────────────────────────────────────────
 // Detailed view for a single class.
-// Every field (name identifier, course, teacher, students) is editable
-// individually via the pencil → inline form → save/cancel pattern.
-// Teacher and student fields include search bars.
+// • Every field editable individually via pencil → inline form → save/cancel.
+// • Teacher AND students use the identical PersonPicker component:
+//     search bar + scrollable checklist (radio for teacher, checkbox for students).
+// • academicYear field added (cohort / academic-year versioning pattern).
 
 import React, { useMemo, useState } from 'react';
-import { BookOpen, User, Users } from 'lucide-react';
+import { BookOpen, CalendarDays, User, Users } from 'lucide-react';
 import {
   DetailHeader,
   InlineEditField,
@@ -16,7 +17,78 @@ import {
   StatCard,
 } from './Shared.jsx';
 
-// ─── Student roster (read) ────────────────────────────────────────────────────
+// ─── PersonPicker ─────────────────────────────────────────────────────────────
+// One component for both teacher (singleSelect=true) and students (singleSelect=false).
+// selectedIds is always an array; caller decides the max cardinality.
+const PersonPicker = ({
+  people,
+  selectedIds,
+  onToggle,
+  singleSelect = false,
+  placeholder  = 'Buscar…',
+  emptyLabel   = 'No hay personas registradas.',
+}) => {
+  const [q, setQ] = useState('');
+
+  const filtered = useMemo(
+    () => people.filter(p =>
+      (p.displayName || p.email || '').toLowerCase().includes(q.toLowerCase())
+    ),
+    [people, q]
+  );
+
+  return (
+    <div className="space-y-2">
+      <SearchInput value={q} onChange={setQ} placeholder={placeholder} />
+
+      <div className="max-h-52 overflow-y-auto border border-gray-200 dark:border-slate-700 rounded-xl divide-y divide-gray-100 dark:divide-slate-700">
+        {singleSelect && (
+          <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
+            <input
+              type="radio"
+              checked={selectedIds.length === 0}
+              onChange={() => onToggle(null)}
+              className="accent-indigo-600"
+            />
+            <span className="text-sm text-slate-500 dark:text-slate-400 italic">Sin asignar</span>
+          </label>
+        )}
+
+        {filtered.length === 0 ? (
+          <p className="text-xs text-slate-400 text-center py-4">
+            {people.length === 0 ? emptyLabel : 'Sin resultados.'}
+          </p>
+        ) : filtered.map(p => (
+          <label
+            key={p.id}
+            className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
+          >
+            <input
+              type={singleSelect ? 'radio' : 'checkbox'}
+              checked={selectedIds.includes(p.id)}
+              onChange={() => onToggle(p.id)}
+              className="accent-indigo-600"
+            />
+            <div className="min-w-0">
+              <p className="text-sm text-slate-700 dark:text-slate-300 truncate">
+                {p.displayName || p.email}
+              </p>
+              {p.displayName && (
+                <p className="text-xs text-slate-400 truncate">{p.email}</p>
+              )}
+            </div>
+          </label>
+        ))}
+      </div>
+
+      {!singleSelect && (
+        <p className="text-xs text-slate-400">{selectedIds.length} alumno(s) seleccionado(s)</p>
+      )}
+    </div>
+  );
+};
+
+// ─── Read-only student roster ─────────────────────────────────────────────────
 const StudentRoster = ({ studentIds, allStudents, color }) => {
   const enrolled = allStudents.filter(s => (studentIds || []).includes(s.id));
   if (enrolled.length === 0) {
@@ -48,75 +120,6 @@ const StudentRoster = ({ studentIds, allStudents, color }) => {
   );
 };
 
-// ─── Inline teacher picker ────────────────────────────────────────────────────
-const TeacherPicker = ({ value, onChange, allTeachers }) => {
-  const [q, setQ] = useState('');
-  const filtered = useMemo(
-    () => allTeachers.filter(t =>
-      (t.displayName || t.email || '').toLowerCase().includes(q.toLowerCase())
-    ),
-    [allTeachers, q]
-  );
-  return (
-    <div className="space-y-2">
-      <SearchInput value={q} onChange={setQ} placeholder="Buscar profesor…" />
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className={inputCls}
-        size={Math.min(filtered.length + 1, 5)}
-      >
-        <option value="">Sin asignar</option>
-        {filtered.map(t => (
-          <option key={t.id} value={t.id}>{t.displayName || t.email}</option>
-        ))}
-      </select>
-    </div>
-  );
-};
-
-// ─── Inline student checklist ─────────────────────────────────────────────────
-const StudentPicker = ({ value, onChange, allStudents }) => {
-  const [q, setQ] = useState('');
-  const filtered = useMemo(
-    () => allStudents.filter(s =>
-      (s.displayName || s.email || '').toLowerCase().includes(q.toLowerCase())
-    ),
-    [allStudents, q]
-  );
-  const toggle = (id) =>
-    onChange(value.includes(id) ? value.filter(s => s !== id) : [...value, id]);
-
-  return (
-    <div className="space-y-2">
-      <SearchInput value={q} onChange={setQ} placeholder="Buscar alumno…" />
-      <div className="max-h-52 overflow-y-auto border border-gray-200 dark:border-slate-700 rounded-xl divide-y divide-gray-100 dark:divide-slate-700">
-        {filtered.length === 0 ? (
-          <p className="text-xs text-slate-400 text-center py-4">
-            {allStudents.length === 0 ? 'No hay alumnos registrados.' : 'Sin resultados.'}
-          </p>
-        ) : filtered.map(s => (
-          <label
-            key={s.id}
-            className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
-          >
-            <input
-              type="checkbox"
-              checked={value.includes(s.id)}
-              onChange={() => toggle(s.id)}
-              className="rounded accent-indigo-600"
-            />
-            <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
-              {s.displayName || s.email}
-            </span>
-          </label>
-        ))}
-      </div>
-      <p className="text-xs text-slate-400">{value.length} alumno(s) seleccionado(s)</p>
-    </div>
-  );
-};
-
 // ─── Main component ───────────────────────────────────────────────────────────
 const ClassDetail = ({
   cls,
@@ -136,8 +139,6 @@ const ClassDetail = ({
   const teacher = allTeachers.find(t => t.id === cls.teacherId);
   const color   = course?.color || '#6366f1';
 
-  // The identifier is the part after the course name
-  // e.g. cls.name = "1º ESO A", course.name = "1º ESO" → identifier = "A"
   const getIdentifier = () => {
     if (!course) return cls.name;
     const prefix = course.name + ' ';
@@ -149,37 +150,34 @@ const ClassDetail = ({
     if (key === 'identifier') {
       setDraft({ courseId: cls.courseId, identifier: getIdentifier() });
     } else if (key === 'teacher') {
-      setDraft({ teacherId: cls.teacherId || '' });
+      setDraft({ teacherIds: cls.teacherId ? [cls.teacherId] : [] });
     } else if (key === 'students') {
       setDraft({ studentIds: cls.studentIds ? [...cls.studentIds] : [] });
+    } else if (key === 'academicYear') {
+      setDraft({ academicYear: cls.academicYear || '' });
     }
     setEditingKey(key);
   };
 
-  const cancelEdit = () => {
-    setEditingKey(null);
-    setDraft({});
-    setSaveError('');
-  };
+  const cancelEdit = () => { setEditingKey(null); setDraft({}); setSaveError(''); };
 
   const saveField = async (key) => {
     setSaving(true);
     setSaveError('');
     try {
       let patch = {};
-
       if (key === 'identifier') {
-        const selectedCourse = courses.find(c => c.id === draft.courseId);
-        if (!draft.courseId) { setSaveError('Debes seleccionar un curso.'); setSaving(false); return; }
+        const sel = courses.find(c => c.id === draft.courseId);
+        if (!draft.courseId)                        { setSaveError('Debes seleccionar un curso.'); setSaving(false); return; }
         if (!String(draft.identifier || '').trim()) { setSaveError('El identificador no puede estar vacío.'); setSaving(false); return; }
-        const newName = `${selectedCourse.name} ${draft.identifier.trim()}`;
-        patch = { name: newName, courseId: draft.courseId };
+        patch = { name: `${sel.name} ${draft.identifier.trim()}`, courseId: draft.courseId };
       } else if (key === 'teacher') {
-        patch = { teacherId: draft.teacherId };
+        patch = { teacherId: draft.teacherIds?.[0] ?? '' };
       } else if (key === 'students') {
         patch = { studentIds: draft.studentIds };
+      } else if (key === 'academicYear') {
+        patch = { academicYear: draft.academicYear };
       }
-
       await onUpdateField(cls.id, patch);
       setEditingKey(null);
       setDraft({});
@@ -190,21 +188,40 @@ const ClassDetail = ({
     }
   };
 
+  // Radio toggle for teacher: clicking the already-selected one deselects it
+  const handleTeacherToggle = (id) => {
+    if (id === null || draft.teacherIds?.[0] === id) {
+      setDraft(p => ({ ...p, teacherIds: [] }));
+    } else {
+      setDraft(p => ({ ...p, teacherIds: [id] }));
+    }
+  };
+
+  const handleStudentToggle = (id) => {
+    setDraft(p => ({
+      ...p,
+      studentIds: (p.studentIds || []).includes(id)
+        ? p.studentIds.filter(s => s !== id)
+        : [...(p.studentIds || []), id],
+    }));
+  };
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-5">
       <DetailHeader
         onBack={onBack}
         color={color}
         title={cls.name}
-        badge={`Clase · ${course ? course.name : 'Sin curso asignado'}`}
+        badge={`Clase · ${course ? course.name : 'Sin curso asignado'}${cls.academicYear ? ` · ${cls.academicYear}` : ''}`}
         onEdit={() => startEdit('identifier')}
         onDelete={onDelete}
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4">
-        <StatCard icon={Users}   label="Alumnos inscritos" value={(cls.studentIds || []).length} color={color} />
-        <StatCard icon={BookOpen} label="Curso"            value={course?.name || '—'}            color={color} />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <StatCard icon={Users}        label="Alumnos inscritos" value={(cls.studentIds || []).length} color={color} />
+        <StatCard icon={BookOpen}     label="Curso"             value={course?.name || '—'}           color={color} />
+        <StatCard icon={CalendarDays} label="Año académico"     value={cls.academicYear || '—'}       color={color} />
       </div>
 
       {saveError && (
@@ -213,10 +230,10 @@ const ClassDetail = ({
         </p>
       )}
 
-      {/* Per-field panel */}
+      {/* ── Per-field edit panel ── */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 px-5 py-1">
 
-        {/* Name / identifier */}
+        {/* Nombre de la clase */}
         <InlineEditField
           label="Nombre de la clase"
           displayValue={cls.name}
@@ -228,7 +245,6 @@ const ClassDetail = ({
           saving={saving}
         >
           <div className="space-y-3">
-            {/* Course selector */}
             <div>
               <p className="text-xs font-medium text-slate-500 mb-1">Curso <span className="text-red-400">*</span></p>
               <select
@@ -238,12 +254,9 @@ const ClassDetail = ({
                 required
               >
                 <option value="">— Selecciona un curso —</option>
-                {courses.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
+                {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
-            {/* Identifier */}
             <div>
               <p className="text-xs font-medium text-slate-500 mb-1">Identificador <span className="text-red-400">*</span></p>
               <input
@@ -254,7 +267,6 @@ const ClassDetail = ({
                 className={inputCls}
               />
             </div>
-            {/* Live preview */}
             {(draft.courseId || draft.identifier) && (
               <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                 <p className="text-xs text-slate-400">Vista previa</p>
@@ -267,7 +279,44 @@ const ClassDetail = ({
           </div>
         </InlineEditField>
 
-        {/* Teacher */}
+        {/* Año académico */}
+        <InlineEditField
+          label="Año académico"
+          displayValue={
+            cls.academicYear
+              ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <CalendarDays className="w-3.5 h-3.5 text-slate-400" />
+                  {cls.academicYear}
+                  {cls.status === 'archived' && (
+                    <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-400 rounded font-medium">
+                      Archivada
+                    </span>
+                  )}
+                </span>
+              )
+              : null
+          }
+          editingKey={editingKey}
+          fieldKey="academicYear"
+          onStartEdit={startEdit}
+          onCancelEdit={cancelEdit}
+          onSave={saveField}
+          saving={saving}
+        >
+          <input
+            type="text"
+            value={draft.academicYear ?? ''}
+            onChange={e => setDraft(p => ({ ...p, academicYear: e.target.value }))}
+            placeholder="2024-2025"
+            className={inputCls}
+          />
+          <p className="text-xs text-slate-400 mt-1.5">
+            Clases de distintos años coexisten sin conflicto. Al archivar un año los alumnos mantienen acceso histórico a sus asignaturas.
+          </p>
+        </InlineEditField>
+
+        {/* Profesor — single-select PersonPicker */}
         <InlineEditField
           label="Profesor responsable"
           displayValue={teacher ? (teacher.displayName || teacher.email) : null}
@@ -278,19 +327,22 @@ const ClassDetail = ({
           onSave={saveField}
           saving={saving}
         >
-          <TeacherPicker
-            value={draft.teacherId ?? ''}
-            onChange={v => setDraft(p => ({ ...p, teacherId: v }))}
-            allTeachers={allTeachers}
+          <PersonPicker
+            people={allTeachers}
+            selectedIds={draft.teacherIds ?? []}
+            onToggle={handleTeacherToggle}
+            singleSelect
+            placeholder="Buscar profesor…"
+            emptyLabel="No hay profesores registrados."
           />
         </InlineEditField>
 
-        {/* Students */}
+        {/* Alumnos — multi-select PersonPicker (same look as above) */}
         <InlineEditField
           label={`Alumnos (${(cls.studentIds || []).length})`}
           displayValue={
             (cls.studentIds || []).length > 0
-              ? `${(cls.studentIds || []).length} alumno(s) inscritos`
+              ? `${cls.studentIds.length} alumno(s) inscritos`
               : null
           }
           editingKey={editingKey}
@@ -300,28 +352,21 @@ const ClassDetail = ({
           onSave={saveField}
           saving={saving}
         >
-          <StudentPicker
-            value={draft.studentIds ?? []}
-            onChange={v => setDraft(p => ({ ...p, studentIds: v }))}
-            allStudents={allStudents}
+          <PersonPicker
+            people={allStudents}
+            selectedIds={draft.studentIds ?? []}
+            onToggle={handleStudentToggle}
+            placeholder="Buscar alumno…"
+            emptyLabel="No hay alumnos registrados."
           />
         </InlineEditField>
       </div>
 
-      {/* Student roster card */}
-      <SectionCard
-        title={`Alumnos (${(cls.studentIds || []).length})`}
-        icon={Users}
-        color={color}
-      >
-        <StudentRoster
-          studentIds={cls.studentIds || []}
-          allStudents={allStudents}
-          color={color}
-        />
+      {/* Read-only summary cards */}
+      <SectionCard title={`Alumnos (${(cls.studentIds || []).length})`} icon={Users} color={color}>
+        <StudentRoster studentIds={cls.studentIds || []} allStudents={allStudents} color={color} />
       </SectionCard>
 
-      {/* Teacher card */}
       <SectionCard title="Profesor responsable" icon={User} color={color}>
         {teacher ? (
           <div className="flex items-center gap-3">

@@ -1,15 +1,15 @@
 // src/pages/InstitutionAdminDashboard/modals/CreateClassModal.jsx
 // ─────────────────────────────────────────────────────────────────────────────
-// Modal for creating a new class.
+// Creates a new class.
 //
-// Class name is a *composition*: "{CourseName} {identifier}"
-//   e.g. course = "1º ESO", identifier = "A"  →  full name = "1º ESO A"
-//
-// • Course is required and must be chosen from the existing list.
-// • Teacher and students are optional, both have search bars.
+// • Class name = "{CourseName} {identifier}" — e.g. "1º ESO A".
+// • Course is required (must be created first).
+// • academicYear is required (cohort / versioning pattern).
+// • Teacher (single-select) and students (multi-select) use the same
+//   PersonPicker component: search bar + scrollable checklist.
 
 import React, { useMemo, useState } from 'react';
-import { Loader2, Save, XCircle } from 'lucide-react';
+import { CalendarDays, Loader2, Save, XCircle } from 'lucide-react';
 import {
   ghostBtnCls,
   InputField,
@@ -19,43 +19,83 @@ import {
   SearchInput,
 } from '../components/classes-courses/Shared.jsx';
 
-// ─── SearchableStudentList ────────────────────────────────────────────────────
-const SearchableStudentList = ({ allStudents, selectedIds, onToggle }) => {
+// ─── Shared PersonPicker ──────────────────────────────────────────────────────
+// Identical component to the one in ClassDetail, extracted here so both files
+// stay self-contained without a shared import.
+const PersonPicker = ({
+  people,
+  selectedIds,
+  onToggle,
+  singleSelect = false,
+  placeholder  = 'Buscar…',
+  emptyLabel   = 'No hay personas registradas.',
+}) => {
   const [q, setQ] = useState('');
+
   const filtered = useMemo(
-    () => allStudents.filter(s =>
-      (s.displayName || s.email || '').toLowerCase().includes(q.toLowerCase())
+    () => people.filter(p =>
+      (p.displayName || p.email || '').toLowerCase().includes(q.toLowerCase())
     ),
-    [allStudents, q]
+    [people, q]
   );
 
   return (
     <div className="space-y-2">
-      <SearchInput value={q} onChange={setQ} placeholder="Buscar alumno…" />
+      <SearchInput value={q} onChange={setQ} placeholder={placeholder} />
+
       <div className="max-h-44 overflow-y-auto border border-gray-200 dark:border-slate-700 rounded-xl divide-y divide-gray-100 dark:divide-slate-700">
+        {singleSelect && (
+          <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer">
+            <input
+              type="radio"
+              checked={selectedIds.length === 0}
+              onChange={() => onToggle(null)}
+              className="accent-indigo-600"
+            />
+            <span className="text-sm text-slate-500 dark:text-slate-400 italic">Sin asignar</span>
+          </label>
+        )}
+
         {filtered.length === 0 ? (
           <p className="text-xs text-slate-400 text-center py-4">
-            {allStudents.length === 0 ? 'No hay alumnos registrados.' : 'Sin resultados.'}
+            {people.length === 0 ? emptyLabel : 'Sin resultados.'}
           </p>
-        ) : filtered.map(s => (
+        ) : filtered.map(p => (
           <label
-            key={s.id}
+            key={p.id}
             className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
           >
             <input
-              type="checkbox"
-              checked={selectedIds.includes(s.id)}
-              onChange={() => onToggle(s.id)}
-              className="rounded text-indigo-600 accent-indigo-600"
+              type={singleSelect ? 'radio' : 'checkbox'}
+              checked={selectedIds.includes(p.id)}
+              onChange={() => onToggle(p.id)}
+              className="accent-indigo-600"
             />
-            <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
-              {s.displayName || s.email}
-            </span>
+            <div className="min-w-0">
+              <p className="text-sm text-slate-700 dark:text-slate-300 truncate">
+                {p.displayName || p.email}
+              </p>
+              {p.displayName && (
+                <p className="text-xs text-slate-400 truncate">{p.email}</p>
+              )}
+            </div>
           </label>
         ))}
       </div>
+
+      {!singleSelect && (
+        <p className="text-xs text-slate-400">{selectedIds.length} alumno(s) seleccionado(s)</p>
+      )}
     </div>
   );
+};
+
+// ─── Academic year helper ─────────────────────────────────────────────────────
+const currentAcademicYear = () => {
+  const now   = new Date();
+  const year  = now.getFullYear();
+  const month = now.getMonth() + 1; // 1-indexed; academic year starts in September
+  return month >= 9 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
 };
 
 // ─── Main modal ───────────────────────────────────────────────────────────────
@@ -68,40 +108,51 @@ const CreateClassModal = ({
   allTeachers,
   allStudents,
 }) => {
-  const [courseId,    setCourseId]    = useState('');
-  const [identifier,  setIdentifier]  = useState('');
-  const [teacherId,   setTeacherId]   = useState('');
-  const [studentIds,  setStudentIds]  = useState([]);
-  const [teacherQ,    setTeacherQ]    = useState('');
+  const [courseId,     setCourseId]     = useState('');
+  const [identifier,   setIdentifier]   = useState('');
+  const [academicYear, setAcademicYear] = useState(currentAcademicYear());
+  const [teacherIds,   setTeacherIds]   = useState([]);   // 0 or 1 element
+  const [studentIds,   setStudentIds]   = useState([]);
 
   const selectedCourse = courses.find(c => c.id === courseId);
-
-  // The full class name shown as a live preview
   const fullName = selectedCourse
     ? `${selectedCourse.name}${identifier.trim() ? ' ' + identifier.trim() : ''}`
-    : identifier.trim() || '';
+    : identifier.trim();
 
-  const toggleStudent = (id) =>
-    setStudentIds(p => p.includes(id) ? p.filter(s => s !== id) : [...p, id]);
+  const handleTeacherToggle = (id) => {
+    if (id === null || teacherIds[0] === id) {
+      setTeacherIds([]);
+    } else {
+      setTeacherIds([id]);
+    }
+  };
 
-  const filteredTeachers = useMemo(
-    () => allTeachers.filter(t =>
-      (t.displayName || t.email || '').toLowerCase().includes(teacherQ.toLowerCase())
-    ),
-    [allTeachers, teacherQ]
-  );
+  const handleStudentToggle = (id) => {
+    setStudentIds(p =>
+      p.includes(id) ? p.filter(s => s !== id) : [...p, id]
+    );
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit({ name: fullName, courseId, teacherId, studentIds });
+    onSubmit({
+      name:         fullName,
+      courseId,
+      teacherId:    teacherIds[0] ?? '',
+      studentIds,
+      academicYear,
+      status:       'active',
+    });
   };
+
+  const isValid = !!courseId && identifier.trim().length > 0 && academicYear.trim().length > 0;
 
   return (
     <Modal title="Nueva Clase" onClose={onClose} wide>
       <form onSubmit={handleSubmit} className="space-y-5">
 
-        {/* ── Course selector (required) ── */}
-        <InputField label="Curso" required hint="(debe crearse antes)">
+        {/* ── Course (required) ── */}
+        <InputField label="Curso" required hint="(debe existir previamente)">
           <select
             value={courseId}
             onChange={e => setCourseId(e.target.value)}
@@ -114,61 +165,82 @@ const CreateClassModal = ({
             ))}
           </select>
           {courses.length === 0 && (
-            <p className="text-xs text-amber-500 mt-1">
-              No hay cursos disponibles. Crea un curso primero.
+            <p className="text-xs text-amber-500 mt-1.5">
+              ⚠ No hay cursos disponibles. Crea un curso primero.
             </p>
           )}
         </InputField>
 
-        {/* ── Identifier / group ── */}
-        <InputField label="Identificador del grupo" required hint="Ej: A, B, Tarde…">
+        {/* ── Identifier (required) ── */}
+        <InputField label="Identificador del grupo" required hint="Ej: A, B, Mañana…">
           <input
             type="text"
             placeholder="A"
             value={identifier}
             onChange={e => setIdentifier(e.target.value)}
             className={inputCls}
-            required
           />
         </InputField>
 
+        {/* ── Academic year (required) ── */}
+        <InputField label="Año académico" required>
+          <div className="relative">
+            <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              placeholder="2024-2025"
+              value={academicYear}
+              onChange={e => setAcademicYear(e.target.value)}
+              className={`${inputCls} pl-8`}
+            />
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            Clases de distintos años coexisten. Los alumnos conservan acceso histórico a sus asignaturas al archivar el año.
+          </p>
+        </InputField>
+
         {/* ── Name preview ── */}
-        {(selectedCourse || identifier.trim()) && (
+        {fullName ? (
           <div className="px-4 py-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
             <p className="text-xs text-slate-400 mb-0.5">Nombre completo de la clase</p>
             <p className="text-base font-bold text-slate-800 dark:text-white">
-              {fullName || <span className="text-slate-400 font-normal italic">—</span>}
+              {fullName}
+              {academicYear.trim() && (
+                <span className="ml-2 text-xs font-normal text-slate-400">({academicYear})</span>
+              )}
+            </p>
+          </div>
+        ) : (
+          <div className="px-4 py-3 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+            <p className="text-xs text-slate-400 italic text-center">
+              Selecciona curso e identificador para ver el nombre completo
             </p>
           </div>
         )}
 
-        {/* ── Teacher ── */}
-        <InputField label="Profesor responsable">
-          <div className="space-y-2">
-            <SearchInput value={teacherQ} onChange={setTeacherQ} placeholder="Buscar profesor…" />
-            <select
-              value={teacherId}
-              onChange={e => setTeacherId(e.target.value)}
-              className={inputCls}
-              size={Math.min(filteredTeachers.length + 1, 5)}
-            >
-              <option value="">Sin asignar</option>
-              {filteredTeachers.map(t => (
-                <option key={t.id} value={t.id}>{t.displayName || t.email}</option>
-              ))}
-            </select>
-          </div>
+        {/* ── Teacher — single-select PersonPicker ── */}
+        <InputField label="Profesor responsable" hint="(opcional)">
+          <PersonPicker
+            people={allTeachers}
+            selectedIds={teacherIds}
+            onToggle={handleTeacherToggle}
+            singleSelect
+            placeholder="Buscar profesor…"
+            emptyLabel="No hay profesores registrados."
+          />
         </InputField>
 
-        {/* ── Students ── */}
+        {/* ── Students — multi-select PersonPicker (same visual style) ── */}
         <InputField
           label="Alumnos"
-          hint={studentIds.length > 0 ? `${studentIds.length} seleccionado(s)` : undefined}
+          hint={studentIds.length > 0 ? `${studentIds.length} seleccionado(s)` : '(opcional)'}
         >
-          <SearchableStudentList
-            allStudents={allStudents}
+          <PersonPicker
+            people={allStudents}
             selectedIds={studentIds}
-            onToggle={toggleStudent}
+            onToggle={handleStudentToggle}
+            placeholder="Buscar alumno…"
+            emptyLabel="No hay alumnos registrados."
           />
         </InputField>
 
@@ -179,13 +251,13 @@ const CreateClassModal = ({
         )}
 
         <div className="flex gap-3 pt-1">
-          <button type="button" onClick={onClose} className={ghostBtnCls}>Cancelar</button>
-          <button
-            type="submit"
-            disabled={submitting || !courseId || !identifier.trim()}
-            className={primaryBtnCls}
-          >
-            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> Crear clase</>}
+          <button type="button" onClick={onClose} className={ghostBtnCls}>
+            Cancelar
+          </button>
+          <button type="submit" disabled={submitting || !isValid} className={primaryBtnCls}>
+            {submitting
+              ? <Loader2 className="w-4 h-4 animate-spin" />
+              : <><Save className="w-4 h-4" /> Crear clase</>}
           </button>
         </div>
       </form>
