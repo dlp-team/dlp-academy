@@ -27,6 +27,7 @@ When operating in Autopilot mode, follow this exact loop until the task is compl
 2. **Substantial completion threshold**: A turn is incomplete if it only changes wording/format while core requested artifacts remain missing.
 3. **Plan completeness rule**: Plan requests require full package creation in one request (README, strategy roadmap, detailed phases, validation checklist, test strategy, rollout/rollback gates).
 4. **Continue until done**: If any requested artifact is still missing, keep executing without asking “continue?” unless blocked by true ambiguity.
+5. **Mandatory end-of-task leverage step**: Before finalizing a completed task, ALWAYS call `vscode_askQuestions` asking if the user wants anything else in the same premium request. Only skip if the tool is unavailable, and document that failure explicitly.
 
 
 ## 🛠️ Environment & Validation Commands

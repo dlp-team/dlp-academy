@@ -1,6 +1,9 @@
 <!-- copilot/plans/todo/backend-zero-trust-security-hardening/phases/phase-07-full-regression-validation.md -->
 # Phase 07 — Full Regression Validation
 
+## Status
+- Partially completed (2026-03-12)
+
 ## Objective
 Ensure hardening changes did not break existing authorized behavior and that all protected paths still function correctly.
 
@@ -26,3 +29,13 @@ Ensure hardening changes did not break existing authorized behavior and that all
 - No broken authorized flow in regression tests.
 - Signed verification record attached to release checklist.
 - Regression evidence recorded in `reviewing/test-execution-matrix.md`.
+
+## Executed in this phase
+- Re-ran full rules suite after phase-06 expansion: pass (13/13).
+- Re-ran full unit suite including new functions guard tests: pass (45/45, 283/283).
+- Re-ran lint after fixing `usePersistentState`: remaining failures are outside the hardening changes made in this request.
+- Re-ran type gate: blocked because `typescript` is not installed in the workspace.
+
+## Current blockers to full closure
+- `npm run lint` still fails due existing repository backlog in unrelated files.
+- `npx tsc --noEmit` cannot run until `typescript` is added to the workspace dev dependencies.

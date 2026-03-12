@@ -8,6 +8,12 @@
 - [ ] Rollback owner assigned.
 - [ ] On-call owner assigned.
 
+## Current status snapshot
+- Security gate: pass
+- Unit regression gate: pass
+- Lint gate: blocked by existing repo backlog
+- Type gate: blocked by missing `typescript` package
+
 ## Rollout window
 - [ ] Deployment window approved.
 - [ ] Change communication sent to stakeholders.

@@ -23,3 +23,8 @@
 - Inventory covers all active collections/paths.
 - Threat scenarios mapped per role and boundary.
 - Initial deny-tests created and passing.
+## Status
+ - Completed (2026-03-12)
+## Completed artifacts
+ - `working/phase-01-resource-inventory.md`
+ - `working/phase-01-threat-model.md`

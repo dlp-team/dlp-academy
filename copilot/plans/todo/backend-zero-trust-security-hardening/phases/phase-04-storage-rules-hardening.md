@@ -22,3 +22,7 @@
 ## Exit criteria
 - Storage rules are deny-by-default with explicit path allows only.
 - Storage tests pass with no unauthorized allows.
+## Status
+ - Completed (Design/spec completion, 2026-03-12)
+## Completed artifacts
+ - `working/phase-04-storage-hardening-spec-v1.md`

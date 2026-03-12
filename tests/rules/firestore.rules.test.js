@@ -313,4 +313,56 @@ describe('Firestore rules integration', () => {
       })
     );
   });
+
+  it('denies self role escalation and institution reassignment on users profile update', async () => {
+    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+    await assertFails(
+      setDoc(
+        doc(teacherDb, 'users', 'teacher-1'),
+        {
+          role: 'admin',
+        },
+        { merge: true }
+      )
+    );
+
+    await assertFails(
+      setDoc(
+        doc(teacherDb, 'users', 'teacher-1'),
+        {
+          institutionId: 'inst-2',
+        },
+        { merge: true }
+      )
+    );
+  });
+
+  it('denies institution admin promoting users to global admin role', async () => {
+    const institutionAdminDb = testEnv.authenticatedContext('institution-admin-1').firestore();
+
+    await assertFails(
+      setDoc(
+        doc(institutionAdminDb, 'users', 'teacher-1'),
+        {
+          role: 'admin',
+        },
+        { merge: true }
+      )
+    );
+  });
+
+  it('allows global admin to promote user role', async () => {
+    const globalAdminDb = testEnv.authenticatedContext('admin-1').firestore();
+
+    await assertSucceeds(
+      setDoc(
+        doc(globalAdminDb, 'users', 'teacher-1'),
+        {
+          role: 'institutionadmin',
+        },
+        { merge: true }
+      )
+    );
+  });
 });

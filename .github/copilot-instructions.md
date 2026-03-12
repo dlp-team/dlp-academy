@@ -19,7 +19,7 @@
 12. **No low-value premium turns** - Never return with only minor wording tweaks or tiny partial edits when the user asked for a full deliverable; bundle substantial, end-to-end output in the same request.
 13. **Minimum completion payload** - For plan requests, you MUST deliver a fully executable plan package (scope, phased steps, validation gates, rollback, and testing strategy), not just brief bullet additions.
 14. **No artificial stopping** - Do not stop after a small change if additional requested work remains; continue autonomously until all requested outcomes are completed.
-15. **Full exploitation** - If you have suppossedly finish with the assigned task, always make a vscode/askQuestion to the user asking if it needs anything else before finishing the premium request, that way it is much more optmized and leveraged. Always do this.
+15. **Full exploitation (MANDATORY, NO EXCEPTIONS)** - When the requested work appears complete, you MUST call `vscode_askQuestions` with a final prompt asking whether the user wants any additional work in the same premium request. Do this BEFORE ending your response. Skipping this step is considered an incomplete delivery unless tool failure makes it impossible.
 
 ---
 
@@ -406,6 +406,7 @@ Before completing ANY interaction, verify:
 - [ ] **Pre-execution clarification performed:** If there was any ambiguity or missing information, the agent asked the user for clarification and only proceeded once the task was fully understood.
 - [ ] **No low-value handoff:** The response includes substantial completed output proportional to user scope (not minor edits only).
 - [ ] **Plan requests fully packaged:** If the user asked for a plan, all required plan artifacts were produced in this same request.
+- [ ] **Final leverage question executed:** A `vscode_askQuestions` follow-up was sent before closing the request (unless the tool failed, in which case failure was explicitly documented).
 
 **Remember: Every interaction uses a limited premium request. Make each one count.**
 

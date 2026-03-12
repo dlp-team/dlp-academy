@@ -189,15 +189,32 @@ service cloud.firestore {
     // Reglas para usuarios
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn()
+
+      // Self bootstrap/create profile
+      allow create: if isSignedIn() && request.auth.uid == userId;
+
+      // Update rules:
+      // - Global admin: full control
+      // - Institution admin: manage users in own institution (never promote to global admin)
+      // - Self: profile updates only, cannot mutate role/institutionId
+      allow update: if isSignedIn()
         && (
-          request.auth.uid == userId
-          || isGlobalAdmin()
+          isGlobalAdmin()
           || (
             isInstitutionAdmin()
+            && resource.data.institutionId == currentUserInstitutionId()
             && request.resource.data.institutionId == currentUserInstitutionId()
+            && request.resource.data.role != 'admin'
+          )
+          || (
+            request.auth.uid == userId
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.institutionId == resource.data.institutionId
           )
         );
+
+      // User self-delete or global admin delete
+      allow delete: if isSignedIn() && (request.auth.uid == userId || isGlobalAdmin());
     }
 
     // Reglas principales de Asignaturas

@@ -1,6 +1,9 @@
 <!-- copilot/plans/todo/backend-zero-trust-security-hardening/phases/phase-06-security-test-suite.md -->
 # Phase 06 — Security Test Suite
 
+## Status
+- Completed (initial expansion, 2026-03-12)
+
 ## Tasks
 - Build allow/deny tests per collection action for each role.
 - Add tenant-escape negative tests.
@@ -29,3 +32,14 @@
 - 100% planned security tests created.
 - 100% planned security tests executed.
 - 0 failing tests in this phase.
+
+## Completed artifacts
+- Added adversarial tests in `tests/rules/firestore.rules.test.js` for:
+	- self role escalation denial
+	- self institution reassignment denial
+	- institution admin global-admin promotion denial
+	- global admin promotion allow path
+
+## Execution evidence
+- `npm run test:rules` → pass (13/13)
+- `npm run test` → pass (44/44, 279/279)

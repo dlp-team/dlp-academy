@@ -22,3 +22,7 @@
 ## Exit criteria
 - No privileged function path lacks auth + role + tenant checks.
 - Function authorization tests pass.
+## Status
+ - Completed (Design/spec completion, 2026-03-12)
+## Completed artifacts
+ - `working/phase-05-functions-hardening-spec-v1.md`

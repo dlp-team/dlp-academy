@@ -25,3 +25,7 @@ Establish a stable baseline before hardening to ensure all future changes can be
 - Baseline evidence stored.
 - Scope confirmed and approved.
 - Pre-existing failures separated from hardening work.
+## Status
+ - Completed (2026-03-12)
+## Completed artifacts
+ - `working/phase-00-baseline-report.md`

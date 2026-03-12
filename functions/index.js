@@ -3,6 +3,12 @@ import { initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
+import {
+  assertNonEmptyString,
+  assertPositiveNumber,
+  requireAuthUid,
+  requirePreviewPermission,
+} from './security/guards.js';
 
 initializeApp();
 
@@ -52,16 +58,9 @@ export const validateInstitutionalAccessCode = onCall(
     invoker: 'public',
   },
   async (request) => {
-    const verificationCode = String(request.data?.verificationCode || '').trim().toUpperCase();
-    const normalizedEmail = String(request.data?.email || '').trim().toLowerCase();
+    const verificationCode = assertNonEmptyString(request.data?.verificationCode, 'verificationCode').toUpperCase();
+    const normalizedEmail = assertNonEmptyString(request.data?.email, 'email').toLowerCase();
     const userType = String(request.data?.userType || 'teacher').trim().toLowerCase();
-
-    if (!verificationCode) {
-      throw new HttpsError('invalid-argument', 'verificationCode is required.');
-    }
-    if (!normalizedEmail) {
-      throw new HttpsError('invalid-argument', 'email is required.');
-    }
 
     const role = userType === 'student' ? 'student' : 'teacher';
     const now = Date.now();
@@ -125,33 +124,19 @@ export const getInstitutionalAccessCodePreview = onCall(
     invoker: 'public',
   },
   async (request) => {
-    if (!request.auth?.uid) {
-      throw new HttpsError('unauthenticated', 'Authentication is required.');
-    }
+    const uid = requireAuthUid(request);
 
-    const institutionId = String(request.data?.institutionId || '').trim();
+    const institutionId = assertNonEmptyString(request.data?.institutionId, 'institutionId');
     const role = String(request.data?.userType || 'teacher').trim().toLowerCase();
-    const intervalHours = Number(request.data?.intervalHours || 24);
+    const intervalHours = assertPositiveNumber(request.data?.intervalHours || 24, 'intervalHours');
 
-    if (!institutionId) {
-      throw new HttpsError('invalid-argument', 'institutionId is required.');
-    }
-    if (!Number.isFinite(intervalHours) || intervalHours <= 0) {
-      throw new HttpsError('invalid-argument', 'intervalHours must be a positive number.');
-    }
-
-    const userSnap = await db.collection('users').doc(request.auth.uid).get();
+    const userSnap = await db.collection('users').doc(uid).get();
     if (!userSnap.exists) {
       throw new HttpsError('permission-denied', 'No user profile found.');
     }
 
     const userData = userSnap.data() || {};
-    const isGlobalAdmin = userData.role === 'admin';
-    const isInstitutionAdmin = userData.role === 'institutionadmin' && userData.institutionId === institutionId;
-
-    if (!isGlobalAdmin && !isInstitutionAdmin) {
-      throw new HttpsError('permission-denied', 'Not allowed to preview this code.');
-    }
+    requirePreviewPermission({ userData, institutionId });
 
     const salt = INSTITUTION_CODE_SALT.value() || 'DLP_DEFAULT_SERVER_SALT';
     const now = Date.now();

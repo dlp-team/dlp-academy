@@ -22,3 +22,7 @@
 ## Exit criteria
 - No broad allow clauses remain for protected collections.
 - All changed collection tests pass.
+## Status
+ - Completed (Design/spec completion, 2026-03-12)
+## Completed artifacts
+ - `working/phase-03-firestore-hardening-spec-v1.md`

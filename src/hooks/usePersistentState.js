@@ -1,7 +1,9 @@
 // src/hooks/usePersistentState.js
-import { useCallback, useRef, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 const PERSISTENCE_EVENT = 'dlp:persistent-state-change';
+const NULL_STORAGE_VALUE = '__DLP_NULL_STORAGE_VALUE__';
+const snapshotCache = new Map();
 
 const safeParse = (value, fallbackValue) => {
     if (value == null) return fallbackValue;
@@ -18,33 +20,7 @@ const createResolvedInitialValue = (initialValue) => (
 );
 
 export const usePersistentState = (storageKey, initialValue) => {
-    const initialValueRef = useRef({
-        key: storageKey,
-        value: createResolvedInitialValue(initialValue)
-    });
-
-    if (initialValueRef.current.key !== storageKey) {
-        initialValueRef.current = {
-            key: storageKey,
-            value: createResolvedInitialValue(initialValue)
-        };
-    }
-
-    const resolvedInitialValue = initialValueRef.current.value;
-
-    const snapshotCacheRef = useRef({
-        key: storageKey,
-        raw: '__INITIAL__',
-        parsed: resolvedInitialValue
-    });
-
-    if (snapshotCacheRef.current.key !== storageKey) {
-        snapshotCacheRef.current = {
-            key: storageKey,
-            raw: '__INITIAL__',
-            parsed: resolvedInitialValue
-        };
-    }
+    const resolvedInitialValue = createResolvedInitialValue(initialValue);
 
     const subscribe = useCallback((onStoreChange) => {
         const handleStorage = (event) => {
@@ -78,19 +54,29 @@ export const usePersistentState = (storageKey, initialValue) => {
             return resolvedInitialValue;
         }
 
-        const normalizedRaw = rawValue ?? '__NULL__';
-        const cache = snapshotCacheRef.current;
+        const normalizedRaw = rawValue ?? NULL_STORAGE_VALUE;
+        const cache = snapshotCache.get(storageKey);
 
-        if (cache.raw === normalizedRaw) {
+        if (cache?.raw === normalizedRaw) {
+            if (normalizedRaw === NULL_STORAGE_VALUE && cache.fallback !== resolvedInitialValue) {
+                const nextCacheEntry = {
+                    raw: normalizedRaw,
+                    parsed: resolvedInitialValue,
+                    fallback: resolvedInitialValue,
+                };
+                snapshotCache.set(storageKey, nextCacheEntry);
+                return nextCacheEntry.parsed;
+            }
+
             return cache.parsed;
         }
 
         const parsed = safeParse(rawValue, resolvedInitialValue);
-        snapshotCacheRef.current = {
-            key: storageKey,
+        snapshotCache.set(storageKey, {
             raw: normalizedRaw,
-            parsed
-        };
+            parsed,
+            fallback: resolvedInitialValue,
+        });
 
         return parsed;
     }, [storageKey, resolvedInitialValue]);
