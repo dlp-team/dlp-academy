@@ -6,7 +6,19 @@
 - Apply deny-by-default and explicit allow per collection.
 - Enforce immutable identity/tenant fields on update.
 - Disallow client-side writes to server-controlled fields.
+- Add collection-specific guards for subjects/folders/topics/resources/quizzes/invites/shortcuts.
+- Ensure `institutionId` parity between request actor and target doc on create/update.
+- Add explicit read constraints for shared documents by membership lists.
+- Add strict validation for user/admin collections to prevent role tampering.
 
 ## Outputs
 - Hardened `firestore.rules` aligned with matrix.
 - Collection-by-collection security comments and rationale.
+
+## Mandatory tests
+- Create/update `tests/rules/` cases for each changed collection path.
+- Execute `npm run test:rules` after each rules segment update.
+
+## Exit criteria
+- No broad allow clauses remain for protected collections.
+- All changed collection tests pass.

@@ -16,6 +16,10 @@
 9. **Use premium requests at 200% efficiency** - Premium requests are limited and cost money; every request must deliver maximum completed value (implementation + validation + documentation), never just partial progress
 10. **Do not stop momentum for minor uncertainty** - Ask concise in-task clarifying questions with `vscode_askQuestions`, then continue immediately with the safest lossless path in the same request
 11. **Do not pause due to broad modified-file noise** - If the user has said to continue, proceed on current scope and avoid blocking prompts about unrelated local changes unless there is a direct conflict in touched files
+12. **No low-value premium turns** - Never return with only minor wording tweaks or tiny partial edits when the user asked for a full deliverable; bundle substantial, end-to-end output in the same request.
+13. **Minimum completion payload** - For plan requests, you MUST deliver a fully executable plan package (scope, phased steps, validation gates, rollback, and testing strategy), not just brief bullet additions.
+14. **No artificial stopping** - Do not stop after a small change if additional requested work remains; continue autonomously until all requested outcomes are completed.
+15. **Full exploitation** - If you have suppossedly finish with the assigned task, always make a vscode/askQuestion to the user asking if it needs anything else before finishing the premium request, that way it is much more optmized and leveraged. Always do this.
 
 ---
 
@@ -400,6 +404,8 @@ Before completing ANY interaction, verify:
 - [ ] Lossless report created (if code changed)
 - [ ] User can immediately continue their work without asking follow-ups
 - [ ] **Pre-execution clarification performed:** If there was any ambiguity or missing information, the agent asked the user for clarification and only proceeded once the task was fully understood.
+- [ ] **No low-value handoff:** The response includes substantial completed output proportional to user scope (not minor edits only).
+- [ ] **Plan requests fully packaged:** If the user asked for a plan, all required plan artifacts were produced in this same request.
 
 **Remember: Every interaction uses a limited premium request. Make each one count.**
 

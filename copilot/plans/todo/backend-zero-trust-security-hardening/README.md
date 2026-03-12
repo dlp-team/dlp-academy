@@ -36,8 +36,30 @@ Raise backend security posture to a maximum practical level by enforcing least-p
 - Security review checklist and regression gates.
 - Migration/runbook and rollback strategy.
 
+## Definition of complete plan execution
+- All phases completed in order with evidence artifacts per phase.
+- All required tests created and executed (security + regression).
+- No known unauthorized-allow path remains in rules or privileged backend logic.
+- Rollout dry-run, staged release checklist, and rollback drill evidence produced.
+
+## Success metrics
+- 100% collection/path coverage in authorization matrix.
+- 100% critical CRUD actions covered by allow/deny tests per role.
+- 0 critical/high unresolved findings from security validation.
+- 0 regressions in authorized workflows after hardening.
+
+## Required evidence package
+- Authorization matrix file and change log.
+- Security test results (commands + pass/fail + timestamps).
+- Regression test results (commands + pass/fail + timestamps).
+- Release gate checklist signed with owner/date.
+- Rollback drill result summary.
+
 ## Mandatory test policy
 - Every change to rules or privileged backend code must include new/updated tests in the same phase.
 - Tests are not optional: they must be executed locally and pass before phase completion.
 - Security tests + regression tests must both pass before rollout.
 - Any failing test blocks progression to the next phase until resolved.
+
+## Execution rule
+- This plan is executed as a single continuity workflow: no phase is considered done without artifacts + tests + verification updated in `reviewing/`.

@@ -22,6 +22,12 @@ When operating in Autopilot mode, follow this exact loop until the task is compl
 7. **Document**: Generate the required lossless report in `copilot/explanations/temporal/lossless-reports/`.
 8. **Terminate**: Only call the `task_complete` tool when ALL above steps are 100% finished and passing.
 
+### Premium Anti-Waste Enforcement (MANDATORY)
+1. **No micro-delivery responses**: If the user requested a complete plan or full implementation, do not stop after tiny edits.
+2. **Substantial completion threshold**: A turn is incomplete if it only changes wording/format while core requested artifacts remain missing.
+3. **Plan completeness rule**: Plan requests require full package creation in one request (README, strategy roadmap, detailed phases, validation checklist, test strategy, rollout/rollback gates).
+4. **Continue until done**: If any requested artifact is still missing, keep executing without asking “continue?” unless blocked by true ambiguity.
+
 
 ## 🛠️ Environment & Validation Commands
 Use these commands in the terminal to validate your work autonomously:

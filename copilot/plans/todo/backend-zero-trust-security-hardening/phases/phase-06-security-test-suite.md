@@ -9,14 +9,23 @@
 - Add tests for privileged Cloud Functions authorization boundaries.
 - Add regression tests for previously working, authorized CRUD flows.
 - Execute all created tests and fail phase if any test fails.
+- Add edge-case tests for missing fields, tampered payloads, and invalid transitions.
+- Add high-volume scenario tests for mass-read/mass-write abuse attempts.
 
 ## Mandatory execution commands
 - `npm run test:rules`
 - `npm run test`
 - `npm run test -- tests/unit/**`
 - Any feature-specific security/regression commands added in this phase
+- `npm run lint`
+- `npx tsc --noEmit`
 
 ## Outputs
 - Expanded `tests/rules/` coverage with explicit adversarial cases.
 - CI-ready security gate command set.
 - Evidence log of executed test runs and pass/fail outcomes.
+
+## Exit criteria
+- 100% planned security tests created.
+- 100% planned security tests executed.
+- 0 failing tests in this phase.
