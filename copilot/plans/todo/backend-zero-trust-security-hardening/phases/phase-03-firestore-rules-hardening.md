@@ -23,6 +23,19 @@
 - No broad allow clauses remain for protected collections.
 - All changed collection tests pass.
 ## Status
- - Completed (Design/spec completion, 2026-03-12)
+ - Partially completed (implementation + validation subset, reviewed 2026-03-12)
+
 ## Completed artifacts
  - `working/phase-03-firestore-hardening-spec-v1.md`
+ - `firestore.rules` hardening on `users` anti-escalation constraints.
+ - `tests/rules/firestore.rules.test.js` expanded to 13/13 passing scenarios.
+
+## Evidence-based review result (2026-03-12)
+- ✅ User role/institution tampering guards are implemented and tested.
+- ✅ Rules test gate passes (`npm run test:rules`).
+- ⚠️ Exit criterion "No broad allow clauses remain for protected collections" is **not yet fully met** (multiple collection blocks still include broad role/owner allows and mixed legacy semantics).
+- ⚠️ Collection-by-collection comments/rationale are incomplete for all protected paths.
+
+## Required continuation scope
+- Perform collection-by-collection tightening aligned to matrix for all protected paths, not only users/invites.
+- Add targeted allow/deny tests per changed collection segment and re-run `npm run test:rules` after each segment.

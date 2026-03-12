@@ -11,8 +11,10 @@
 ## Current status snapshot
 - Security gate: pass
 - Unit regression gate: pass
-- Lint gate: blocked by existing repo backlog
+- Lint gate: blocked by existing repo backlog (267 issues in latest audit run)
 - Type gate: blocked by missing `typescript` package
+- Storage security test gate: implemented but currently failing (`tests/rules/storage.rules.test.js`, 3 failing allow-path tests)
+- Functions privileged integration test gate: pass (`tests/unit/functions/preview-handler.test.js`, 6/6)
 
 ## Rollout window
 - [ ] Deployment window approved.

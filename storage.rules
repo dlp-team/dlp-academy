@@ -5,20 +5,48 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    function authUid() {
+      return !isSignedIn()
+        ? null
+        : (
+          request.auth.uid != null
+            ? request.auth.uid
+            : (
+              request.auth.token.uid != null
+                ? request.auth.token.uid
+                : request.auth.token.sub
+            )
+        );
+    }
+
     function currentUserPath() {
       return /databases/(default)/documents/users/$(request.auth.uid);
     }
 
+    function currentUserLegacyPath() {
+      return /databases/database/documents/users/$(request.auth.uid);
+    }
+
     function hasCurrentUserDoc() {
-      return isSignedIn() && exists(currentUserPath());
+      return isSignedIn() && (exists(currentUserPath()) || exists(currentUserLegacyPath()));
+    }
+
+    function currentUserData() {
+      return exists(currentUserPath())
+        ? get(currentUserPath()).data
+        : (exists(currentUserLegacyPath()) ? get(currentUserLegacyPath()).data : null);
     }
 
     function currentUserRole() {
-      return hasCurrentUserDoc() ? get(currentUserPath()).data.role : null;
+      return hasCurrentUserDoc()
+        ? currentUserData().role
+        : (isSignedIn() ? request.auth.token.role : null);
     }
 
     function currentUserInstitutionId() {
-      return hasCurrentUserDoc() ? get(currentUserPath()).data.institutionId : null;
+      return hasCurrentUserDoc()
+        ? currentUserData().institutionId
+        : (isSignedIn() ? request.auth.token.institutionId : null);
     }
 
     function isGlobalAdmin() {
@@ -31,7 +59,7 @@ service firebase.storage {
     }
 
     function isOwnerUser(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+      return isSignedIn() && authUid() == userId;
     }
 
     match /profile-pictures/{userId} {

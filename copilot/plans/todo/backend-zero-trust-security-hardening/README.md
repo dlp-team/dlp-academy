@@ -1,6 +1,17 @@
 <!-- copilot/plans/todo/backend-zero-trust-security-hardening/README.md -->
 # Backend Zero-Trust Security Hardening
 
+## Current execution status (2026-03-12 audit)
+- Overall: In progress.
+- Phases 00–02: Completed.
+- Phases 03–07: Partially completed (see `reviewing/phases-03-07-audit-report.md`).
+- Phase 08 rollout: Not eligible until pending gates are resolved.
+
+## Immediate continuation queue
+1. Resolve current Storage allow-path test failures in `tests/rules/storage.rules.test.js` (3 failing cases).
+2. Re-run security + regression gates and update evidence matrix.
+3. Decide lint/type gate handling path (global backlog remediation or formal gate waiver policy for unrelated debt).
+
 ## Objective
 Raise backend security posture to a maximum practical level by enforcing least-privilege access at every layer (Firestore Rules, Storage Rules, Auth claims/roles, server-side flows), while preserving multi-tenant isolation and operational continuity.
 

@@ -2,7 +2,7 @@
 # Phase 06 — Security Test Suite
 
 ## Status
-- Completed (initial expansion, 2026-03-12)
+- Partially completed (initial expansion done; full mandatory scope not met, reviewed 2026-03-12)
 
 ## Tasks
 - Build allow/deny tests per collection action for each role.
@@ -39,7 +39,14 @@
 	- self institution reassignment denial
 	- institution admin global-admin promotion denial
 	- global admin promotion allow path
+- Added Storage rules test suite in `tests/rules/storage.rules.test.js` (path coverage implemented, currently 5/8 pass).
+- Added privileged callable boundary test suite in `tests/unit/functions/preview-handler.test.js` (6/6 pass).
+
+## Missing mandatory scope (reviewed 2026-03-12)
+- Storage allow/deny test suite by path class was added but currently failing in allow-path execution under emulator (`tests/rules/storage.rules.test.js`).
+- Mandatory quality gates are not fully green (`npm run lint` fails due repo backlog; `npx tsc --noEmit` blocked by missing `typescript`).
 
 ## Execution evidence
 - `npm run test:rules` → pass (13/13)
-- `npm run test` → pass (44/44, 279/279)
+- `npm run test` → pass (45/45, 283/283)
+- `npm run test -- tests/unit/functions/guards.test.js` → pass (1/1 file, 4/4)

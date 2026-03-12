@@ -23,6 +23,18 @@
 - Storage rules are deny-by-default with explicit path allows only.
 - Storage tests pass with no unauthorized allows.
 ## Status
- - Completed (Design/spec completion, 2026-03-12)
+ - Partially completed (rules implemented, test evidence incomplete; reviewed 2026-03-12)
+
 ## Completed artifacts
  - `working/phase-04-storage-hardening-spec-v1.md`
+ - Hardened `storage.rules` with explicit path allows and global deny fallback.
+
+## Evidence-based review result (2026-03-12)
+- ✅ Deny-by-default fallback exists.
+- ✅ Profile and institution-branding path guards are implemented.
+- ⚠️ Mandatory storage allow/deny tests for every active path class are **not present** in `tests/rules/`.
+- ⚠️ Cross-tenant/impersonation negative tests for Storage are **missing**.
+
+## Required continuation scope
+- Add dedicated Storage rule tests (owner, same-tenant institution admin, cross-tenant deny, non-owner deny, global-admin allow).
+- Record execution evidence in `reviewing/test-execution-matrix.md`.

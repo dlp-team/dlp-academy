@@ -6,9 +6,8 @@ import { defineSecret } from 'firebase-functions/params';
 import {
   assertNonEmptyString,
   assertPositiveNumber,
-  requireAuthUid,
-  requirePreviewPermission,
 } from './security/guards.js';
+import { createGetInstitutionalAccessCodePreviewHandler } from './security/previewHandler.js';
 
 initializeApp();
 
@@ -117,36 +116,17 @@ export const validateInstitutionalAccessCode = onCall(
   }
 );
 
+const getInstitutionalAccessCodePreviewHandler = createGetInstitutionalAccessCodePreviewHandler({
+  dbInstance: db,
+  secretProvider: () => INSTITUTION_CODE_SALT.value(),
+  codeGenerator: generateDynamicCodeServer,
+});
+
 export const getInstitutionalAccessCodePreview = onCall(
   {
     region: 'europe-west1',
     secrets: [INSTITUTION_CODE_SALT],
     invoker: 'public',
   },
-  async (request) => {
-    const uid = requireAuthUid(request);
-
-    const institutionId = assertNonEmptyString(request.data?.institutionId, 'institutionId');
-    const role = String(request.data?.userType || 'teacher').trim().toLowerCase();
-    const intervalHours = assertPositiveNumber(request.data?.intervalHours || 24, 'intervalHours');
-
-    const userSnap = await db.collection('users').doc(uid).get();
-    if (!userSnap.exists) {
-      throw new HttpsError('permission-denied', 'No user profile found.');
-    }
-
-    const userData = userSnap.data() || {};
-    requirePreviewPermission({ userData, institutionId });
-
-    const salt = INSTITUTION_CODE_SALT.value() || 'DLP_DEFAULT_SERVER_SALT';
-    const now = Date.now();
-    const code = generateDynamicCodeServer({ institutionId, role, intervalHours, currentTimeMs: now, salt });
-    const windowMs = intervalHours * 60 * 60 * 1000;
-    const validUntilMs = (Math.floor(now / windowMs) + 1) * windowMs;
-
-    return {
-      code,
-      validUntilMs,
-    };
-  }
+  getInstitutionalAccessCodePreviewHandler
 );
