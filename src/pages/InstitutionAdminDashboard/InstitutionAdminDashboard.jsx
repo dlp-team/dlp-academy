@@ -8,7 +8,7 @@
 //  • InstitutionCustomizationView updated to accept `previewPaletteApply` prop
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LayoutGrid, Palette, UserPlus, Users } from 'lucide-react';
 
 import Header from '../../components/layout/Header';
@@ -22,6 +22,8 @@ import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { hasRequiredRoleAccess } from '../../utils/permissionUtils';
 import { useUsers } from './hooks/useUsers';
 import { useCustomization } from './hooks/useCustomization';
+import { usePersistentState } from '../../hooks/usePersistentState';
+import { buildInstitutionScopedPersistenceKey } from '../../utils/pagePersistence';
 
 const TABS = [
   { key: 'users',         label: 'Usuarios',         icon: Users },
@@ -31,9 +33,16 @@ const TABS = [
 
 const InstitutionAdminDashboard = ({ user }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   useIdleTimeout(15);
 
-  const [activeTab, setActiveTab] = useState('users');
+  const institutionIdFromQuery = searchParams.get('institutionId');
+  const effectiveInstitutionId = user?.role === 'admin' && institutionIdFromQuery
+    ? institutionIdFromQuery
+    : user?.institutionId || null;
+  const activeTabKey = buildInstitutionScopedPersistenceKey('institution-admin-dashboard', effectiveInstitutionId, 'active-tab');
+
+  const [activeTab, setActiveTab] = usePersistentState(activeTabKey, 'users');
 
   // ── Guard ──
   useEffect(() => {
@@ -44,8 +53,8 @@ const InstitutionAdminDashboard = ({ user }) => {
   }, [user, navigate]);
 
   // ── Domain logic hooks ──
-  const users = useUsers(user);
-  const customization = useCustomization(user);
+  const users = useUsers(user, effectiveInstitutionId);
+  const customization = useCustomization(user, effectiveInstitutionId);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
@@ -58,6 +67,7 @@ const InstitutionAdminDashboard = ({ user }) => {
             <h1 className="text-3xl font-black text-slate-900 dark:text-white">Panel de Administración</h1>
             <p className="text-slate-500 dark:text-slate-400 mt-1">
               {user?.institutionId ? `Institución ID: ${user.institutionId}` : 'Configuración de Institución'}
+              {effectiveInstitutionId ? `Institución ID: ${effectiveInstitutionId}` : 'Configuración de Institución'}
             </p>
           </div>
           {activeTab === 'users' && users.userType === 'teachers' && (
@@ -94,7 +104,7 @@ const InstitutionAdminDashboard = ({ user }) => {
           <UsersTabContent
             userType={users.userType}
             setUserType={users.setUserType}
-            institutionId={user.institutionId}
+            institutionId={effectiveInstitutionId}
             accessPolicies={users.accessPolicies}
             onSavePolicies={users.handleSavePolicies}
             isUpdatingPolicies={users.isUpdatingPolicies}
@@ -123,6 +133,7 @@ const InstitutionAdminDashboard = ({ user }) => {
         {activeTab === 'organization' && (
           <ClassesCoursesSection
             user={user}
+            institutionId={effectiveInstitutionId}
             allStudents={users.allStudents}
             allTeachers={users.allTeachers}
           />

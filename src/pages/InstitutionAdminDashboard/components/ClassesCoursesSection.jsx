@@ -3,7 +3,7 @@
 // Orchestrator: owns navigation state (which tab / which item / which modal)
 // and delegates all data ops to useClassesCourses, all rendering to sub-components.
 
-import React, { useState } from 'react';
+import React from 'react';
 import { FolderOpen, LayoutGrid, Loader2, Plus } from 'lucide-react';
 
 import { useClassesCourses } from '../hooks/useClassesCourses.js';
@@ -13,32 +13,35 @@ import ClassList             from './classes-courses/ClassList.jsx';
 import ClassDetail           from './classes-courses/ClassDetail.jsx';
 import CreateCourseModal     from '../modals/CreateCourseModal.jsx';
 import CreateClassModal      from '../modals/CreateClassModal.jsx';
+import { usePersistentState } from '../../../hooks/usePersistentState.js';
+import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence.js';
 
 const TAB_COURSES = 'courses';
 const TAB_CLASSES = 'classes';
 
-const ClassesCoursesSection = ({ user, allStudents, allTeachers }) => {
+const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }) => {
+  const tabKey = buildInstitutionScopedPersistenceKey('institution-admin-organization', institutionId, 'tab');
   // ── Navigation ─────────────────────────────────────────────────────────────
-  const [tab,            setTab]            = useState(TAB_COURSES);
-  const [selectedCourse, setSelectedCourse] = useState(null);
-  const [selectedClass,  setSelectedClass]  = useState(null);
-  const [jumpToEdit,     setJumpToEdit]     = useState(false);
+  const [tab,            setTab]            = usePersistentState(tabKey, TAB_COURSES);
+  const [selectedCourse, setSelectedCourse] = React.useState(null);
+  const [selectedClass,  setSelectedClass]  = React.useState(null);
+  const [jumpToEdit,     setJumpToEdit]     = React.useState(false);
 
   // ── Modals ──────────────────────────────────────────────────────────────────
-  const [showCourseModal,  setShowCourseModal]  = useState(false);
-  const [courseModalErr,   setCourseModalErr]   = useState('');
-  const [courseSubmitting, setCourseSubmitting] = useState(false);
+  const [showCourseModal,  setShowCourseModal]  = React.useState(false);
+  const [courseModalErr,   setCourseModalErr]   = React.useState('');
+  const [courseSubmitting, setCourseSubmitting] = React.useState(false);
 
-  const [showClassModal,   setShowClassModal]   = useState(false);
-  const [classModalErr,    setClassModalErr]    = useState('');
-  const [classSubmitting,  setClassSubmitting]  = useState(false);
+  const [showClassModal,   setShowClassModal]   = React.useState(false);
+  const [classModalErr,    setClassModalErr]    = React.useState('');
+  const [classSubmitting,  setClassSubmitting]  = React.useState(false);
 
   // ── Data ────────────────────────────────────────────────────────────────────
   const {
     courses, classes, loading,
     createCourse, updateCourse, deleteCourse,
     createClass,  updateClass,  deleteClass,
-  } = useClassesCourses(user);
+  } = useClassesCourses(user, institutionId);
 
   // ── Tab switch ──────────────────────────────────────────────────────────────
   const switchTab = (next) => {

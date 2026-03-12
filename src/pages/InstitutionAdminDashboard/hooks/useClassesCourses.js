@@ -17,19 +17,20 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 
-export const useClassesCourses = (user) => {
+export const useClassesCourses = (user, institutionIdOverride = null) => {
+  const effectiveInstitutionId = institutionIdOverride || user?.institutionId || null;
   const [courses, setCourses] = useState([]);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
   const fetchAll = async () => {
-    if (!user?.institutionId) return;
+    if (!effectiveInstitutionId) return;
     setLoading(true);
     try {
       const [cSnap, clSnap] = await Promise.all([
-        getDocs(query(collection(db, 'courses'), where('institutionId', '==', user.institutionId))),
-        getDocs(query(collection(db, 'classes'), where('institutionId', '==', user.institutionId))),
+        getDocs(query(collection(db, 'courses'), where('institutionId', '==', effectiveInstitutionId))),
+        getDocs(query(collection(db, 'classes'), where('institutionId', '==', effectiveInstitutionId))),
       ]);
       setCourses(cSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       setClasses(clSnap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -40,13 +41,13 @@ export const useClassesCourses = (user) => {
     }
   };
 
-  useEffect(() => { fetchAll(); }, [user?.institutionId]);
+  useEffect(() => { fetchAll(); }, [effectiveInstitutionId]);
 
   // ── Course CRUD ───────────────────────────────────────────────────────────
   const createCourse = async (form) => {
     await addDoc(collection(db, 'courses'), {
       ...form,
-      institutionId: user.institutionId,
+      institutionId: effectiveInstitutionId,
       createdBy: user.uid,
       createdAt: serverTimestamp(),
     });
@@ -67,7 +68,7 @@ export const useClassesCourses = (user) => {
   const createClass = async (form) => {
     await addDoc(collection(db, 'classes'), {
       ...form,
-      institutionId: user.institutionId,
+      institutionId: effectiveInstitutionId,
       createdBy: user.uid,
       createdAt: serverTimestamp(),
     });

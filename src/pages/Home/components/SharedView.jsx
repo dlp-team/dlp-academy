@@ -10,6 +10,8 @@ import ListViewItem from '../../../components/modules/ListViewItem';
 import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
 import { mergeSourceAndShortcutItems } from '../../../utils/mergeUtils';
 import { isShortcutItem } from '../../../utils/permissionUtils';
+import { usePersistentState } from '../../../hooks/usePersistentState';
+import { buildUserScopedPersistenceKey } from '../../../utils/pagePersistence';
 
 const SharedView = ({ 
     user,
@@ -139,7 +141,8 @@ const SharedView = ({
     };
 
     // --- COLLAPSE STATE ---
-    const [collapsed, setCollapsed] = React.useState({
+    const collapsedKey = buildUserScopedPersistenceKey('home-shared-view', user, 'collapsed-sections');
+    const [collapsed, setCollapsed] = usePersistentState(collapsedKey, {
         folders: false,
         subjects: false
     });

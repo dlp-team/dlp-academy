@@ -82,6 +82,11 @@ const HomeDeleteConfirmModal = ({
                 <p className={`${homeThemeTokens.mutedTextClass} mb-6`}>
                     {description}
                 </p>
+                {deleteConfig.errorMessage && (
+                    <p className="mb-4 text-sm font-medium text-red-600 dark:text-red-400">
+                        {deleteConfig.errorMessage}
+                    </p>
+                )}
                 <div className="flex gap-3 justify-center">
                     <button
                         onClick={onClose}

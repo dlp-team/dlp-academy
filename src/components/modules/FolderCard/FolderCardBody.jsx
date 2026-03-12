@@ -2,7 +2,8 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree, RotateCcw } from 'lucide-react';
-import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
+import SubjectIcon from '../../ui/SubjectIcon';
+import { getIconColor } from '../../../utils/subjectColorUtils';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
 import { SHORTCUT_CARD_MENU_WIDTH } from '../shared/shortcutMenuConfig';
 

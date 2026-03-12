@@ -14,6 +14,8 @@ import {
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
+import { usePersistentState } from '../../hooks/usePersistentState';
+import { buildUserScopedPersistenceKey } from '../../utils/pagePersistence';
 
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
@@ -249,7 +251,8 @@ const MyStudentsTab = ({ allStudents, loading }) => {
 const TeacherDashboard = ({ user }) => {
     const navigate = useNavigate();
     useIdleTimeout(15);
-    const [activeTab, setActiveTab] = useState('overview');
+    const activeTabKey = buildUserScopedPersistenceKey('teacher-dashboard', user, 'active-tab');
+    const [activeTab, setActiveTab] = usePersistentState(activeTabKey, 'overview');
 
     const [myClasses, setMyClasses] = useState([]);
     const [allStudents, setAllStudents] = useState([]); // students across all my classes

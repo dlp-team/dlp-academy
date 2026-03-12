@@ -9,12 +9,5 @@ const SubjectIcon = ({ iconName, className = "w-6 h-6", ...props }) => {
 };
 
 
-export const getIconColor = (gradientString) => {
-    if (!gradientString) return 'text-gray-900';
-    // Finds 'to-blue-600' and converts it to 'text-blue-600'
-    const toColor = gradientString.split(' ').find(c => c.startsWith('to-'));
-    // Fallback to 'from-' if 'to-' is missing, or default color
-    return toColor ? toColor.replace('to-', 'text-') : 'text-gray-900';
-};
 
 export default SubjectIcon;

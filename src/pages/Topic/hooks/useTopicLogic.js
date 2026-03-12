@@ -8,6 +8,8 @@ import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, deleteDoc, add
 import { db } from '../../../firebase/config';
 import { canEdit, canView, canDelete, shouldShowEditUI, shouldShowDeleteUI } from '../../../utils/permissionUtils';
 import { canUserAccessSubject } from '../../../utils/subjectAccessUtils';
+import { usePersistentState } from '../../../hooks/usePersistentState';
+import { buildUserScopedPersistenceKey } from '../../../utils/pagePersistence';
 
 export const useTopicLogic = (user) => {
     const navigate = useNavigate();
@@ -24,7 +26,8 @@ export const useTopicLogic = (user) => {
     
     // Estados de UI
     const [uploading, setUploading] = useState(false);
-    const [activeTab, setActiveTab] = useState('materials');
+    const activeTabKey = buildUserScopedPersistenceKey('topic-page', user, `${subjectId || 'no-subject'}:${topicId || 'no-topic'}:active-tab`);
+    const [activeTab, setActiveTab] = usePersistentState(activeTabKey, 'materials');
     
     // Notificaciones
     const [toast, setToast] = useState({ show: false, message: '' });

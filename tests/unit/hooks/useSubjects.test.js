@@ -861,3 +861,83 @@ describe('useSubjects permanentlyDeleteSubject', () => {
     );
   });
 });
+
+describe('useSubjects teacher deletion policy', () => {
+  const teacherUser = {
+    uid: 'teacher-1',
+    email: 'teacher@example.com',
+    displayName: 'Teacher',
+    institutionId: 'inst-1',
+    role: 'teacher',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    firestoreMocks.state.resetAutoId();
+    firestoreMocks.mockOnSnapshot.mockImplementation(() => vi.fn());
+    firestoreMocks.mockGetDocs.mockResolvedValue({ docs: [] });
+  });
+
+  it('blocks soft delete when the teacher policy forbids deleting assigned subjects', async () => {
+    firestoreMocks.mockGetDoc
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({
+          ownerId: 'teacher-1',
+          institutionId: 'inst-1',
+          classIds: ['class-1'],
+          enrolledStudentUids: [],
+          sharedWithUids: []
+        })
+      })
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({
+          accessPolicies: {
+            teachers: {
+              canDeleteSubjectsWithStudents: false
+            }
+          }
+        })
+      });
+
+    const { result } = renderHook(() => useSubjects(teacherUser));
+
+    await expect(result.current.deleteSubject('subject-locked')).rejects.toThrow(
+      'No puedes eliminar una asignatura con estudiantes asociados sin autorización del administrador de la institución.'
+    );
+
+    expect(firestoreMocks.mockUpdateDoc).not.toHaveBeenCalled();
+  });
+
+  it('allows soft delete when the teacher policy explicitly permits it', async () => {
+    firestoreMocks.mockGetDoc
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({
+          ownerId: 'teacher-1',
+          institutionId: 'inst-1',
+          classIds: ['class-1'],
+          enrolledStudentUids: [],
+          sharedWithUids: []
+        })
+      })
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({
+          accessPolicies: {
+            teachers: {
+              canDeleteSubjectsWithStudents: true
+            }
+          }
+        })
+      });
+
+    const { result } = renderHook(() => useSubjects(teacherUser));
+
+    await act(async () => {
+      await expect(result.current.deleteSubject('subject-open')).resolves.toBeUndefined();
+    });
+    expect(firestoreMocks.mockUpdateDoc).toHaveBeenCalled();
+  });
+});

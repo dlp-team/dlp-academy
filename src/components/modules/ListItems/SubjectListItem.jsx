@@ -2,7 +2,8 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, Edit2, Trash2, MoreVertical, Users , Share2, School } from 'lucide-react';
-import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
+import SubjectIcon from '../../ui/SubjectIcon';
+import { getIconColor } from '../../../utils/subjectColorUtils';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem, getNormalizedRole } from '../../../utils/permissionUtils';
 import { SHORTCUT_LIST_MENU_WIDTH } from '../shared/shortcutMenuConfig';
 import { withDarkGradientVariant } from '../../../utils/subjectConstants';
@@ -59,6 +60,7 @@ const SubjectListItem = ({
     const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
     const canShowShortcutVisibility = !disableAllActions && isShortcut;
     const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || (!isSourceOwner && !disableUnshareActions));
+    const isPassedShortcut = isShortcut && isHiddenFromManual && getNormalizedRole(user) === 'student';
 
     // Minimum scale for the menu is 1 (100%)
     const menuScale = Math.max(scale, 1);
@@ -99,7 +101,9 @@ const SubjectListItem = ({
     return (
         <div 
             className={`group relative rounded-xl transition-all hover:shadow-md cursor-pointer ${
-                isModern ? `${getIconColor(subjectGradientClass)} border border-gradient-to-br ${subjectGradientClass} hover:border-gradient-to-br ${subjectGradientClass} ` : ` bg-gradient-to-br ${subjectGradientClass} hover:border-indigo-300 `
+                isModern
+                    ? `${isPassedShortcut ? 'border border-emerald-300 dark:border-emerald-400/40 bg-gradient-to-br from-emerald-50 via-cyan-50 to-teal-100 dark:from-emerald-950/60 dark:via-cyan-950/50 dark:to-teal-950/60' : `${getIconColor(subjectGradientClass)} border border-gradient-to-br ${subjectGradientClass} hover:border-gradient-to-br ${subjectGradientClass}`}`
+                    : ` bg-gradient-to-br ${subjectGradientClass} hover:border-indigo-300 `
             } ${isOrphan ? 'saturate-[0.22] grayscale-[0.38] brightness-95' : ''} ${className}`} // Apply external className
             style={{ padding: `${paddingPx}px` }}
             onClick={() => {
@@ -139,6 +143,11 @@ const SubjectListItem = ({
                         >
                             {subject.name}
                         </h3>
+                        {isPassedShortcut && (
+                            <span className="inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-400/20 px-2 py-0.5 text-[11px] font-semibold">
+                                Aprobada
+                            </span>
+                        )}
                         {/* Shared icon for subjects, right of title */}
                         {!hideSharedIndicator && (
                             subject.isShared === true ||
@@ -173,6 +182,11 @@ const SubjectListItem = ({
                             >
                                 {topicCount} temas
                             </span>
+                            {isPassedShortcut && (
+                                <span className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+                                    Visible en cursos y uso
+                                </span>
+                            )}
                         </div>
                     )}
                 </div>

@@ -2,7 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Home, Pencil, Trash2, Search, X, Users, Crown, Shield, GraduationCap, Maximize2, Minimize2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import SubjectIcon, { getIconColor } from '../../../components/ui/SubjectIcon';
+import SubjectIcon from '../../../components/ui/SubjectIcon';
+import { getIconColor } from '../../../utils/subjectColorUtils';
 
 const ROLE_CONFIG = {
     creator: {

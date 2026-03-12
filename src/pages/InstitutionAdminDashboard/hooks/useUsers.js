@@ -16,9 +16,14 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { getInstitutionalAccessCodePreview } from '../../../services/accessCodeService';
+import { DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils/institutionPolicyUtils';
+import { usePersistentState } from '../../../hooks/usePersistentState';
+import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence';
 
-export const useUsers = (user) => {
-  const [userType, setUserType] = useState('teachers');
+export const useUsers = (user, institutionIdOverride = null) => {
+  const effectiveInstitutionId = institutionIdOverride || user?.institutionId || null;
+  const userTypeKey = buildInstitutionScopedPersistenceKey('institution-admin-users', effectiveInstitutionId, 'user-type');
+  const [userType, setUserType] = usePersistentState(userTypeKey, 'teachers');
   const [teachers, setTeachers] = useState([]);
   const [students, setStudents] = useState([]);
   const [allowedTeachers, setAllowedTeachers] = useState([]);
@@ -41,23 +46,20 @@ export const useUsers = (user) => {
   const [codeUpdateSuccess, setCodeUpdateSuccess] = useState('');
   const [codeUpdateError, setCodeUpdateError] = useState('');
 
-  const [accessPolicies, setAccessPolicies] = useState({
-    teachers: { requireDomain: false, allowedDomains: '', requireCode: true, rotationIntervalHours: 24 },
-    students: { requireDomain: false, allowedDomains: '', requireCode: true, rotationIntervalHours: 1 },
-  });
+  const [accessPolicies, setAccessPolicies] = useState(DEFAULT_ACCESS_POLICIES);
   const [isUpdatingPolicies, setIsUpdatingPolicies] = useState(false);
   const [policyMessage, setPolicyMessage] = useState({ type: '', text: '' });
   const [showSudoModal, setShowSudoModal] = useState(false);
   const [pendingPolicies, setPendingPolicies] = useState(null);
 
   const fetchData = async () => {
-    if (!user?.institutionId) return;
+    if (!effectiveInstitutionId) return;
     setLoading(true);
     try {
       if (userType === 'teachers') {
         const [teachersSnap, allowedSnap] = await Promise.all([
-          getDocs(query(collection(db, 'users'), where('institutionId', '==', user.institutionId), where('role', '==', 'teacher'))),
-          getDocs(query(collection(db, 'institution_invites'), where('institutionId', '==', user.institutionId))),
+          getDocs(query(collection(db, 'users'), where('institutionId', '==', effectiveInstitutionId), where('role', '==', 'teacher'))),
+          getDocs(query(collection(db, 'institution_invites'), where('institutionId', '==', effectiveInstitutionId))),
         ]);
         setTeachers(teachersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         setAllowedTeachers(allowedSnap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -65,14 +67,16 @@ export const useUsers = (user) => {
         setInstitutionalCode(generalInvite ? generalInvite.id : '');
         setStudents([]);
       } else {
-        const studentsSnap = await getDocs(query(collection(db, 'users'), where('institutionId', '==', user.institutionId), where('role', '==', 'student')));
+        const studentsSnap = await getDocs(query(collection(db, 'users'), where('institutionId', '==', effectiveInstitutionId), where('role', '==', 'student')));
         setStudents(studentsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         setTeachers([]);
         setAllowedTeachers([]);
       }
-      const instDoc = await getDoc(doc(db, 'institutions', user.institutionId));
-      if (instDoc.exists() && instDoc.data().accessPolicies) {
-        setAccessPolicies(prev => ({ ...prev, ...instDoc.data().accessPolicies }));
+      const instDoc = await getDoc(doc(db, 'institutions', effectiveInstitutionId));
+      if (instDoc.exists()) {
+        setAccessPolicies(normalizeAccessPolicies(instDoc.data().accessPolicies));
+      } else {
+        setAccessPolicies(DEFAULT_ACCESS_POLICIES);
       }
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -81,7 +85,7 @@ export const useUsers = (user) => {
     }
   };
 
-  useEffect(() => { fetchData(); }, [user, userType]);
+  useEffect(() => { fetchData(); }, [user, userType, effectiveInstitutionId]);
 
   // Live access code polling
   useEffect(() => {
@@ -89,7 +93,7 @@ export const useUsers = (user) => {
     let intervalId = null;
 
     const refreshLiveCode = async () => {
-      if (!user?.institutionId) return;
+      if (!effectiveInstitutionId) return;
       const policy = accessPolicies?.[userType] || { requireCode: true, rotationIntervalHours: 24 };
       if (policy.requireCode === false) {
         if (!cancelled) { setLiveAccessCode(''); setLiveCodeError(''); }
@@ -100,6 +104,7 @@ export const useUsers = (user) => {
       try {
         const preview = await getInstitutionalAccessCodePreview({
           institutionId: user.institutionId,
+          institutionId: effectiveInstitutionId,
           userType: userType === 'students' ? 'student' : 'teacher',
           intervalHours: Number(policy.rotationIntervalHours || 24),
         });
@@ -114,19 +119,19 @@ export const useUsers = (user) => {
     refreshLiveCode();
     intervalId = setInterval(refreshLiveCode, 30000);
     return () => { cancelled = true; if (intervalId) clearInterval(intervalId); };
-  }, [user?.institutionId, userType, accessPolicies]);
+  }, [effectiveInstitutionId, userType, accessPolicies]);
 
   // Fetch all teachers/students for org view
   useEffect(() => {
-    if (!user?.institutionId) return;
+    if (!effectiveInstitutionId) return;
     Promise.all([
-      getDocs(query(collection(db, 'users'), where('institutionId', '==', user.institutionId), where('role', '==', 'teacher'))),
-      getDocs(query(collection(db, 'users'), where('institutionId', '==', user.institutionId), where('role', '==', 'student'))),
+      getDocs(query(collection(db, 'users'), where('institutionId', '==', effectiveInstitutionId), where('role', '==', 'teacher'))),
+      getDocs(query(collection(db, 'users'), where('institutionId', '==', effectiveInstitutionId), where('role', '==', 'student'))),
     ]).then(([teachersSnap, studentsSnap]) => {
       setAllTeachers(teachersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       setAllStudents(studentsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
-  }, [user]);
+  }, [user, effectiveInstitutionId]);
 
   const handleAddUser = async (e) => {
     e.preventDefault();
@@ -136,13 +141,13 @@ export const useUsers = (user) => {
     setAddError('');
     setAddSuccess('');
     try {
-      const qUser = query(collection(db, 'users'), where('email', '==', normalizedEmail), where('institutionId', '==', user.institutionId));
+      const qUser = query(collection(db, 'users'), where('email', '==', normalizedEmail), where('institutionId', '==', effectiveInstitutionId));
       const existingUserSnap = await getDocs(qUser);
       if (!existingUserSnap.empty) {
         setAddError('Este profesor ya está registrado y activo en tu institución.');
         return;
       }
-      const qInvite = query(collection(db, 'institution_invites'), where('email', '==', normalizedEmail), where('institutionId', '==', user.institutionId));
+      const qInvite = query(collection(db, 'institution_invites'), where('email', '==', normalizedEmail), where('institutionId', '==', effectiveInstitutionId));
       const existingInviteSnap = await getDocs(qInvite);
       if (!existingInviteSnap.empty) {
         setAddError('Este profesor ya tiene una invitación pendiente.');
@@ -150,7 +155,7 @@ export const useUsers = (user) => {
       }
       await addDoc(collection(db, 'institution_invites'), {
         email: normalizedEmail,
-        institutionId: user.institutionId,
+        institutionId: effectiveInstitutionId,
         role: 'teacher',
         type: 'direct',
         createdAt: serverTimestamp(),
@@ -174,13 +179,14 @@ export const useUsers = (user) => {
     setCodeUpdateSuccess('');
     setCodeUpdateError('');
     try {
-      const q = query(collection(db, 'institution_invites'), where('institutionId', '==', user.institutionId), where('type', '==', 'institutional'));
+      const q = query(collection(db, 'institution_invites'), where('institutionId', '==', effectiveInstitutionId), where('type', '==', 'institutional'));
       const snap = await getDocs(q);
       const batch = writeBatch(db);
       snap.forEach(d => batch.delete(d.ref));
       await batch.commit();
       await setDoc(doc(db, 'institution_invites', finalCode), {
         institutionId: user.institutionId,
+        institutionId: effectiveInstitutionId,
         role: 'teacher',
         type: 'institutional',
         createdAt: serverTimestamp(),
@@ -209,8 +215,9 @@ export const useUsers = (user) => {
     setIsUpdatingPolicies(true);
     setPolicyMessage({ type: '', text: '' });
     try {
-      await updateDoc(doc(db, 'institutions', user.institutionId), { accessPolicies: pendingPolicies });
-      setAccessPolicies(pendingPolicies);
+      const normalizedPolicies = normalizeAccessPolicies(pendingPolicies);
+      await updateDoc(doc(db, 'institutions', effectiveInstitutionId), { accessPolicies: normalizedPolicies });
+      setAccessPolicies(normalizedPolicies);
       setPendingPolicies(null);
       setPolicyMessage({ type: 'success', text: 'Políticas de acceso actualizadas correctamente.' });
       setTimeout(() => setPolicyMessage({ type: '', text: '' }), 4000);
@@ -234,6 +241,7 @@ export const useUsers = (user) => {
 
   return {
     userType, setUserType,
+    effectiveInstitutionId,
     teachers, students, allowedTeachers, allTeachers, allStudents,
     loading, searchTerm, setSearchTerm,
     showAddUserModal, setShowAddUserModal,

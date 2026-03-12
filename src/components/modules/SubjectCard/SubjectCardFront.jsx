@@ -2,7 +2,8 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, MoreVertical, Edit2, Trash2, Share2, School } from 'lucide-react';
-import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon'; // Adjust path if necessary
+import SubjectIcon from '../../ui/SubjectIcon'; // Adjust path if necessary
+import { getIconColor } from '../../../utils/subjectColorUtils';
 import { Users } from 'lucide-react';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem, getNormalizedRole } from '../../../utils/permissionUtils';
 import { SHORTCUT_CARD_MENU_WIDTH } from '../shared/shortcutMenuConfig';
@@ -29,7 +30,8 @@ const SubjectCardFront = ({
     disableAllActions = false,
     disableDeleteActions = false,
     disableUnshareActions = false,
-    hideSharedIndicator = false
+    hideSharedIndicator = false,
+    isPassedShortcut = false
 }) => {
     const HEADER_SAFE_TOP = 112;
     const MENU_MARGIN = 8;
@@ -115,7 +117,7 @@ const SubjectCardFront = ({
 
             {/* Modern Background: Fill color */}
             {isModern && fillColor && (
-                <div className={`absolute inset-0 ${fillColor}`}></div>
+                <div className={`absolute inset-0 ${isPassedShortcut ? 'bg-gradient-to-br from-emerald-50 via-cyan-50 to-teal-100 dark:from-emerald-950/70 dark:via-cyan-950/60 dark:to-teal-950/70' : fillColor}`}></div>
             )}
 
             {/* Modern Hover Effect */}
@@ -302,6 +304,18 @@ const SubjectCardFront = ({
                             />
                         </div>
                     )}
+
+                    {isPassedShortcut && (
+                        <span
+                            className="inline-flex items-center rounded-full bg-emerald-100/90 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200 dark:border-emerald-400/20"
+                            style={{
+                                fontSize: `${11 * scaleMultiplier}px`,
+                                padding: `${4 * scaleMultiplier}px ${10 * scaleMultiplier}px`
+                            }}
+                        >
+                            Aprobada
+                        </span>
+                    )}
                 </div>
                 
                 <div>
@@ -309,7 +323,7 @@ const SubjectCardFront = ({
                         <p 
                             className={`font-medium tracking-wide ${
                                 isModern 
-                                    ? 'text-gray-500 dark:text-gray-400' 
+                                    ? (isPassedShortcut ? 'text-emerald-700 dark:text-emerald-300' : 'text-gray-500 dark:text-gray-400') 
                                     : 'text-white opacity-90'
                             }`}
                             style={{ fontSize: `${14 * scaleMultiplier}px` }}
@@ -323,7 +337,7 @@ const SubjectCardFront = ({
                         <h3 
                             className={`font-bold tracking-tight truncate ${
                                 isModern 
-                                    ? `bg-gradient-to-br ${subjectGradientClass} bg-clip-text text-transparent` 
+                                    ? `bg-gradient-to-br ${isPassedShortcut ? 'from-emerald-500 via-cyan-500 to-teal-600 dark:from-emerald-300 dark:via-cyan-300 dark:to-teal-400' : subjectGradientClass} bg-clip-text text-transparent` 
                                     : 'text-white'
                             }`}
                             style={{ fontSize: `${24 * scaleMultiplier}px` }}
@@ -355,6 +369,15 @@ const SubjectCardFront = ({
                             </div>
                         )}
                     </div>
+
+                    {isPassedShortcut && (
+                        <p
+                            className="mt-2 text-emerald-700 dark:text-emerald-300 font-medium"
+                            style={{ fontSize: `${12 * scaleMultiplier}px` }}
+                        >
+                            Disponible en cursos y uso reciente.
+                        </p>
+                    )}
 
                     {subject.tags && subject.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mt-1">

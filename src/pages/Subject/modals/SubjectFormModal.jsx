@@ -12,6 +12,7 @@ import TagManager from './subject-form/TagManager';
 import AppearanceSection from './subject-form/AppearanceSection';
 import StyleSelector from './subject-form/StyleSelector';
 import { getNormalizedRole, getPermissionLevel } from '../../../utils/permissionUtils';
+import { canTeacherAssignClassesAndStudents, DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils/institutionPolicyUtils';
 
 const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onTransferOwnership, onDeleteShortcut, user, allFolders = [], initialTab = 'general', studentShortcutTagOnlyMode = false }) => {
     const [formData, setFormData] = useState({ 
@@ -37,6 +38,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [shareError, setShareError] = useState('');
     const [shareSuccess, setShareSuccess] = useState('');
     const [availableClasses, setAvailableClasses] = useState([]);
+    const [institutionAccessPolicies, setInstitutionAccessPolicies] = useState(DEFAULT_ACCESS_POLICIES);
     const [classesLoading, setClassesLoading] = useState(false);
     const [selectedClassIds, setSelectedClassIds] = useState([]);
     const [classesActionLoading, setClassesActionLoading] = useState(false);
@@ -53,7 +55,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const isTagOnlyShortcutEdit = studentShortcutTagOnlyMode && isShortcutEditing;
     const currentRole = getNormalizedRole(user);
     const canManageClassesTab = isEditing && (currentRole === 'teacher' || currentRole === 'institutionadmin' || currentRole === 'admin');
-    const canDirectAssignClasses = currentRole === 'institutionadmin' || currentRole === 'admin';
+    const canDirectAssignClasses = currentRole === 'institutionadmin'
+        || currentRole === 'admin'
+        || (currentRole === 'teacher' && canTeacherAssignClassesAndStudents(institutionAccessPolicies));
     const shortcutPermissionLevel = formData?.shortcutPermissionLevel || 'viewer';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canManageSharing = !isTagOnlyShortcutEdit && (!isShortcutEditing || isShortcutEditor);
@@ -169,6 +173,29 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
     useEffect(() => {
         let active = true;
+
+        const loadInstitutionPolicies = async () => {
+            const institutionId = user?.institutionId || initialData?.institutionId || '';
+            if (!institutionId) {
+                if (active) setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
+                return;
+            }
+
+            try {
+                const institutionSnapshot = await getDoc(doc(db, 'institutions', institutionId));
+                if (!active) return;
+                if (!institutionSnapshot.exists()) {
+                    setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
+                    return;
+                }
+
+                setInstitutionAccessPolicies(normalizeAccessPolicies(institutionSnapshot.data()?.accessPolicies));
+            } catch {
+                if (active) setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
+            }
+        };
+
+        loadInstitutionPolicies();
 
         const loadCourses = async () => {
             const institutionId = user?.institutionId || initialData?.institutionId || '';

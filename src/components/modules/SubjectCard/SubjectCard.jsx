@@ -5,6 +5,7 @@ import SubjectCardFront from './SubjectCardFront';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
 import { buildDragPayload, writeDragPayloadToDataTransfer } from '../../../utils/dragPayloadUtils';
 import { withDarkGradientVariant } from '../../../utils/subjectConstants';
+import { getNormalizedRole } from '../../../utils/permissionUtils';
 
 const SubjectCard = (props) => {
 
@@ -35,6 +36,10 @@ const SubjectCard = (props) => {
     } = props;
 
     const gradientClass = withDarkGradientVariant(subject?.color || 'from-slate-500 to-slate-700');
+    const isPassedShortcut = subject?.hiddenInManual === true && subject?.targetType === 'subject' && getNormalizedRole(user) === 'student';
+    const modernShellClass = isPassedShortcut
+        ? 'bg-gradient-to-br from-emerald-400 via-cyan-400 to-teal-500 dark:from-emerald-300 dark:via-cyan-300 dark:to-teal-400'
+        : `bg-gradient-to-br ${gradientClass}`;
 
     const handleLocalDragStart = (e) => {
         if (draggable) {
@@ -72,7 +77,7 @@ const SubjectCard = (props) => {
                 (isDragging || isGhostDragging) ? 'opacity-0 scale-95' : (!filterOverlayOpen ? 'hover:scale-105' : '')
             } ${
                 isModern 
-                    ? `bg-gradient-to-br ${gradientClass} p-[4px]` 
+                    ? `${modernShellClass} p-[4px]` 
                     : ''
             }`}
             style={{ aspectRatio: '16 / 10' }}
@@ -108,6 +113,7 @@ const SubjectCard = (props) => {
                     disableDeleteActions={disableDeleteActions}
                     disableUnshareActions={disableUnshareActions}
                     hideSharedIndicator={props.hideSharedIndicator}
+                    isPassedShortcut={isPassedShortcut}
                 />
             </div>
         </div>

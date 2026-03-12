@@ -22,7 +22,8 @@ export const DEFAULT_CUSTOMIZATION_FORM = {
   homeThemeColors: { ...HOME_THEME_DEFAULT_COLORS },
 };
 
-export const useCustomization = (user) => {
+export const useCustomization = (user, institutionIdOverride = null) => {
+  const effectiveInstitutionId = institutionIdOverride || user?.institutionId || null;
   const [institutionName, setInstitutionName] = useState('');
   const [customizationForm, setCustomizationForm] = useState(DEFAULT_CUSTOMIZATION_FORM);
   const [customizationLoading, setCustomizationLoading] = useState(false);
@@ -49,10 +50,10 @@ export const useCustomization = (user) => {
   useEffect(() => {
     let active = true;
     const fetchInstitutionCustomization = async () => {
-      if (!user?.institutionId) return;
+      if (!effectiveInstitutionId) return;
       setCustomizationLoading(true);
       try {
-        const institutionRef = doc(db, 'institutions', user.institutionId);
+        const institutionRef = doc(db, 'institutions', effectiveInstitutionId);
         const institutionSnap = await getDoc(institutionRef);
         if (!active || !institutionSnap.exists()) return;
 
@@ -82,12 +83,12 @@ export const useCustomization = (user) => {
     };
     fetchInstitutionCustomization();
     return () => { active = false; };
-  }, [user?.institutionId]);
+  }, [effectiveInstitutionId]);
 
   const handleIconUpload = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
-    if (!file || !user?.institutionId) return;
+    if (!file || !effectiveInstitutionId) return;
     if (!file.type.startsWith('image/')) {
       setIconUploadError('Selecciona una imagen válida para el icono.');
       return;
@@ -98,10 +99,10 @@ export const useCustomization = (user) => {
     setCustomizationSuccess('');
     try {
       const fileExtension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : 'png';
-      const storageRef = ref(getStorage(db.app), `institutions/${user.institutionId}/branding/icon.${fileExtension || 'png'}`);
+      const storageRef = ref(getStorage(db.app), `institutions/${effectiveInstitutionId}/branding/icon.${fileExtension || 'png'}`);
       await uploadBytes(storageRef, file, { contentType: file.type });
       const iconUrl = await getDownloadURL(storageRef);
-      await updateDoc(doc(db, 'institutions', user.institutionId), {
+      await updateDoc(doc(db, 'institutions', effectiveInstitutionId), {
         'customization.iconUrl': iconUrl,
         updatedAt: serverTimestamp(),
       });
@@ -118,7 +119,7 @@ export const useCustomization = (user) => {
   const handleLogoUpload = async (event) => {
     const file = event.target.files?.[0];
     event.target.value = '';
-    if (!file || !user?.institutionId) return;
+    if (!file || !effectiveInstitutionId) return;
     if (!file.type.startsWith('image/')) {
       setIconUploadError('Selecciona una imagen válida para el logotipo.');
       return;
@@ -129,10 +130,10 @@ export const useCustomization = (user) => {
     setCustomizationSuccess('');
     try {
       const fileExtension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : 'png';
-      const storageRef = ref(getStorage(db.app), `institutions/${user.institutionId}/branding/logo.${fileExtension || 'png'}`);
+      const storageRef = ref(getStorage(db.app), `institutions/${effectiveInstitutionId}/branding/logo.${fileExtension || 'png'}`);
       await uploadBytes(storageRef, file, { contentType: file.type });
       const logoUrl = await getDownloadURL(storageRef);
-      await updateDoc(doc(db, 'institutions', user.institutionId), {
+      await updateDoc(doc(db, 'institutions', effectiveInstitutionId), {
         'customization.logoUrl': logoUrl,
         updatedAt: serverTimestamp(),
       });
@@ -146,9 +147,9 @@ export const useCustomization = (user) => {
   };
 
   const handleLogoUrlSave = async (url) => {
-    if (!url || !user?.institutionId) return;
+    if (!url || !effectiveInstitutionId) return;
     try {
-      await updateDoc(doc(db, 'institutions', user.institutionId), {
+      await updateDoc(doc(db, 'institutions', effectiveInstitutionId), {
         'customization.logoUrl': url,
         updatedAt: serverTimestamp(),
       });
@@ -159,7 +160,7 @@ export const useCustomization = (user) => {
   };
 
   const handleSaveCustomization = async (incomingFormValues = null) => {
-    if (!user?.institutionId) return;
+    if (!effectiveInstitutionId) return;
 
     const nextCustomizationForm = incomingFormValues
       ? {
@@ -185,7 +186,7 @@ export const useCustomization = (user) => {
     setCustomizationSaving(true);
 
     try {
-      const institutionRef = doc(db, 'institutions', user.institutionId);
+      const institutionRef = doc(db, 'institutions', effectiveInstitutionId);
       const resolvedColors = getEffectiveHomeThemeColors(nextCustomizationForm.homeThemeColors);
       const normalizedPrimaryBrandColor = normalizeHexColor(nextCustomizationForm.primaryBrandColor) || GLOBAL_BRAND_DEFAULTS.primaryColor;
       const normalizedSecondaryBrandColor = normalizeHexColor(nextCustomizationForm.secondaryBrandColor) || GLOBAL_BRAND_DEFAULTS.secondaryColor;

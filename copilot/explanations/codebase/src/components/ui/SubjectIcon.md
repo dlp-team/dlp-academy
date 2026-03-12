@@ -17,11 +17,11 @@
 - **What it does:** Encapsulates a focused part of this file's behavior and contributes to the module output.
 - **Internal relation:** Not explicitly re-invoked by name internally (likely entry/export function).
 
-### getIconColor
-- **Type:** const arrow
-- **Parameters:** `gradientString`
-- **What it does:** Encapsulates a focused part of this file's behavior and contributes to the module output.
-- **Internal relation:** Not explicitly re-invoked by name internally (likely entry/export function).
+### Changelog
+#### 2024-04-16
+- Removed getIconColor export; now imported from subjectColorUtils
+- Updated all consumers to use subjectColorUtils
+- No functional changes to SubjectIcon itself
 
 ## Function Relations
 - No direct callable imported relations detected (imports may be constants/components/styles).
