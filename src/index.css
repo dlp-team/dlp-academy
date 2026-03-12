@@ -160,6 +160,11 @@ html.theme-switching *::after {
   background-color: color-mix(in srgb, var(--home-card-background) 16%, #0f172a 84%);
 }
 
+.dark .home-page .home-token-dashed-create-card {
+  border-color: var(--home-card-border);
+  background-color: #000000;
+}
+
 .dark .home-page .home-token-dashed-create-card:hover,
 .dark .home-page .home-token-dashed-primary-card:hover {
   border-color: var(--home-primary);
@@ -184,4 +189,15 @@ html.theme-switching *::after {
 .home-page select:disabled,
 .home-page [role='button'][aria-disabled='true'] {
   cursor: not-allowed;
+}
+
+.clean-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.clean-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }

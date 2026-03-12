@@ -511,6 +511,11 @@ const HomeContent = ({
                                                             setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
                                                             setActiveMenu(null);
                                                         }}
+                                                        onOpenClasses={(s) => {
+                                                            if (studentMode) return;
+                                                            setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'classes' });
+                                                            setActiveMenu(null);
+                                                        }}
                                                         cardScale={cardScale}
                                                         isDragging={draggedItem?.id === subject.id}
                                                         onDragStart={handleDragStartSubject}
@@ -689,6 +694,11 @@ const HomeContent = ({
                                                     onShare={(s) => {
                                                         if (disableAllActionsInShared || studentMode) return;
                                                         setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'sharing' });
+                                                        setActiveMenu(null);
+                                                    }}
+                                                    onOpenClasses={(s) => {
+                                                        if (studentMode) return;
+                                                        setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'classes' });
                                                         setActiveMenu(null);
                                                     }}
                                                     onGoToFolder={handleGoToFolderFromGhost}

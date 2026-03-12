@@ -1,5 +1,8 @@
 # TagFilter.jsx
 
+## Changelog
+- **2026-03-12:** Filter panel now uses a clean hidden-scrollbar style for a cleaner overlay presentation while preserving scroll behavior.
+
 ## Purpose
 - **Source file:** `src/components/ui/TagFilter.jsx`
 - **Last documented:** 2026-02-24

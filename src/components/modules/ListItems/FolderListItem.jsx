@@ -8,6 +8,7 @@ import { useGhostDrag } from '../../../hooks/useGhostDrag';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
 import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../../utils/dragPayloadUtils';
 import { SHORTCUT_LIST_MENU_WIDTH } from '../shared/shortcutMenuConfig';
+import { withDarkGradientVariant } from '../../../utils/subjectConstants';
 
 const FolderListItem = ({ 
     user,
@@ -91,6 +92,7 @@ const FolderListItem = ({
     const type = 'folder';
     // Minimum scale for the menu is 1 (100%)
     const menuScale = Math.max(scale, 1);
+    const folderGradientClass = withDarkGradientVariant(item?.color || 'from-indigo-500 to-purple-500');
 
     React.useEffect(() => {
         if (showMenu && menuBtnRef.current) {
@@ -288,7 +290,7 @@ const FolderListItem = ({
                             <ChevronRight size={20} />
                         </div>
                     </div>
-                    <div className={`relative flex items-center justify-center rounded-lg bg-gradient-to-br ${item.color || 'from-indigo-500 to-purple-500'} ${isOrphan ? 'saturate-[0.45] grayscale-[0.32] brightness-[1.05]' : ''}`} style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px`, flexShrink: 0 }}>
+                    <div className={`relative flex items-center justify-center rounded-lg bg-gradient-to-br ${folderGradientClass} ${isOrphan ? 'saturate-[0.45] grayscale-[0.32] brightness-[1.05]' : ''}`} style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px`, flexShrink: 0 }}>
                         {/* Main folder or subject icon */}
                         {!isOrphan && item.icon ? (
                             <SubjectIcon iconName={item.icon} className="text-white" style={{ width: `${iconSize}px`, height: `${iconSize}px` }} />

@@ -1,11 +1,12 @@
 // src/components/modules/SubjectCard/SubjectCardFront.jsx
 import React, { useState, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight, MoreVertical, Edit2, Trash2, Share2 } from 'lucide-react';
+import { ChevronRight, MoreVertical, Edit2, Trash2, Share2, School } from 'lucide-react';
 import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon'; // Adjust path if necessary
 import { Users } from 'lucide-react';
-import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem, getNormalizedRole } from '../../../utils/permissionUtils';
 import { SHORTCUT_CARD_MENU_WIDTH } from '../shared/shortcutMenuConfig';
+import { withDarkGradientVariant } from '../../../utils/subjectConstants';
 
 const SubjectCardFront = ({
     subject,
@@ -21,6 +22,7 @@ const SubjectCardFront = ({
     scaleMultiplier,
     topicCount,
     onOpenTopics,
+    onOpenClasses,
     onGoToFolder,
     filterOverlayOpen = false,
     onCloseFilterOverlay,
@@ -49,6 +51,8 @@ const SubjectCardFront = ({
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
+    const canOpenClassesFromMenu = typeof onOpenClasses === 'function' && getNormalizedRole(user) !== 'student' && !disableAllActions;
+    const subjectGradientClass = withDarkGradientVariant(subject?.color || 'from-slate-500 to-slate-700');
     const isSourceOwner = user && subject?.ownerId === user.uid;
     const effectiveShowEditUI = !disableAllActions && showEditUI;
     const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
@@ -106,7 +110,7 @@ const SubjectCardFront = ({
             
             {/* Classic Background: Full Gradient */}
             {!isModern && (
-                <div className={`absolute inset-0 bg-gradient-to-br ${subject.color} opacity-90`}></div>
+                <div className={`absolute inset-0 bg-gradient-to-br ${subjectGradientClass} opacity-90`}></div>
             )}
 
             {/* Modern Background: Fill color */}
@@ -205,7 +209,7 @@ const SubjectCardFront = ({
                                 transformOrigin: 'top left'
                             }}
                         >
-                            {(effectiveShowEditUI || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete || effectiveCanShareFromMenu) ? (
+                                    {(effectiveShowEditUI || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete || effectiveCanShareFromMenu || canOpenClassesFromMenu) ? (
                                 <>
                                     {effectiveShowEditUI && (
                                         <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
@@ -217,7 +221,12 @@ const SubjectCardFront = ({
                                             <Share2 size={14 * menuScale} /> Compartir
                                         </button>
                                     )}
-                                    {(effectiveShowEditUI || effectiveCanShareFromMenu) && (effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete) && (
+                                    {canOpenClassesFromMenu && (
+                                        <button onClick={(e) => { e.stopPropagation(); onOpenClasses(subject); }} className="w-full flex items-center gap-2 p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
+                                            <School size={14 * menuScale} /> Clases
+                                        </button>
+                                    )}
+                                            {(effectiveShowEditUI || canOpenClassesFromMenu || effectiveCanShareFromMenu) && (effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete) && (
                                         <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
                                     )}
                                     {canShowShortcutVisibility && (
@@ -314,7 +323,7 @@ const SubjectCardFront = ({
                         <h3 
                             className={`font-bold tracking-tight truncate ${
                                 isModern 
-                                    ? `bg-gradient-to-br ${subject.color} bg-clip-text text-transparent` 
+                                    ? `bg-gradient-to-br ${subjectGradientClass} bg-clip-text text-transparent` 
                                     : 'text-white'
                             }`}
                             style={{ fontSize: `${24 * scaleMultiplier}px` }}

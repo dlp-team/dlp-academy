@@ -20,6 +20,7 @@ const ListViewItem = ({
     onEdit,
     onDelete,
     onShare,
+    onOpenClasses,
     onGoToFolder,
     disableAllActions = false,
     disableDeleteActions = false,
@@ -203,6 +204,7 @@ const ListViewItem = ({
                             onEdit={onEdit} 
                             onDelete={onDelete} 
                             onShare={onShare}
+                            onOpenClasses={onOpenClasses}
                             onGoToFolder={onGoToFolder}
                             disableAllActions={disableAllActions}
                             disableDeleteActions={disableDeleteActions}

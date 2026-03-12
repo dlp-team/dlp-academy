@@ -370,19 +370,6 @@ const FolderCardBody = ({
                             {folder.name}
                         </h3>
 
-                        {folder.description && (
-                            <p 
-                                className={`line-clamp-1 font-medium ${
-                                    isModern 
-                                        ? 'text-gray-400 dark:text-gray-500' 
-                                        : 'text-white/70'
-                                }`}
-                                style={{ fontSize: `${14 * scaleMultiplier}px` }}
-                            >
-                                {folder.description}
-                            </p>
-                        )}
-
                         {/* Folder tags */}
                         {folder.tags && folder.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">

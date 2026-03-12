@@ -35,7 +35,8 @@ const SharedView = ({
     onShareFolder = () => {},
     onEditSubject = () => {},
     onDeleteSubject = () => {},
-    onShareSubject = () => {}
+    onShareSubject = () => {},
+    onOpenSubjectClasses = () => {}
 }) => {
     const navigate = useNavigate();
 
@@ -270,6 +271,7 @@ const SharedView = ({
                                                 onDeleteSubject(e, s, action);
                                             }}
                                             onShare={(s) => onShareSubject(s)}
+                                            onOpenClasses={(s) => onOpenSubjectClasses(s)}
                                             cardScale={cardScale}
                                             isShared={true}
                                             disableUnshareActions={isInsideSharedFolderForItem(subject, 'subject')}
@@ -293,6 +295,7 @@ const SharedView = ({
                                             onDeleteSubject({ stopPropagation: () => {} }, s, action);
                                         }}
                                         onShare={(s) => onShareSubject(s)}
+                                        onOpenClasses={(s) => onOpenSubjectClasses(s)}
                                         draggable={false}
                                         onDropAction={() => {}}
                                         allFolders={allFolders}

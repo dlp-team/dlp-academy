@@ -1,3 +1,14 @@
+## [2026-03-12] Feature Update: Folder Description Field Removed
+### Context & Architecture
+`FolderManager` now treats folders as name-first entities without free-text description input.
+
+### Previous State
+- General tab exposed a `Descripción` field and carried it in modal state.
+
+### New State & Logic
+- Removed description from folder modal state initialization and edit hydration.
+- Removed description input from the general tab UI.
+
 ## [2026-03-09] Feature Update: Required Name Validation in Folder General Tab
 ### Context & Architecture
 `FolderManager` now applies explicit required validation before persisting folder changes from the `General` tab.

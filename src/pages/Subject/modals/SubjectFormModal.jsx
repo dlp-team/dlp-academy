@@ -881,7 +881,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         </div>
                     )}
                     
-                    <form onSubmit={handleSubmit} className="p-6 pb-20 space-y-5 max-h-[calc(100vh-15rem)] overflow-y-auto custom-scrollbar">
+                    <form onSubmit={handleSubmit} className="p-6 pb-20 space-y-5 max-h-[calc(100vh-15rem)] overflow-y-auto clean-scrollbar">
                         
                         {/* General Tab */}
                         {activeTab === 'general' && (

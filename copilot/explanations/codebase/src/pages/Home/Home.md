@@ -1,5 +1,8 @@
 # Home.jsx
 
+## Changelog
+- **2026-03-12:** Shared-scope filter is now forced to enabled in `shared` tab context and the shared-scope toggle is hidden there, preventing accidental exclusion of “shared with me” items from the shared page.
+
 ## Overview
 - **Source file:** `src/pages/Home/Home.jsx`
 - **Last documented:** 2026-02-24

@@ -240,21 +240,29 @@ const Home = ({ user }) => {
         return isSharedForCurrentUserUtil(item, user);
     }, [user]);
 
+    const effectiveSharedScopeSelected = logic.viewMode === 'shared' ? true : sharedScopeSelected;
+
+    React.useEffect(() => {
+        if (logic.viewMode === 'shared' && sharedScopeSelected !== true) {
+            setSharedScopeSelected(true);
+        }
+    }, [logic.viewMode, sharedScopeSelected]);
+
     const availableControlTags = useMemo(() => {
         const sourceFolders = logic.viewMode === 'shared' ? (sharedFolders || []) : (logic.filteredFolders || logic.folders || []);
         const sourceSubjects = logic.viewMode === 'shared' ? (sharedSubjects || []) : (logic.filteredSubjects || logic.subjects || []);
 
         const roleScopedFolders = isStudentRole ? [] : sourceFolders;
 
-        const effectiveFolders = sharedScopeSelected ? roleScopedFolders : roleScopedFolders.filter(item => !isSharedForCurrentUser(item));
-        const effectiveSubjects = sharedScopeSelected ? sourceSubjects : sourceSubjects.filter(item => !isSharedForCurrentUser(item));
+        const effectiveFolders = effectiveSharedScopeSelected ? roleScopedFolders : roleScopedFolders.filter(item => !isSharedForCurrentUser(item));
+        const effectiveSubjects = effectiveSharedScopeSelected ? sourceSubjects : sourceSubjects.filter(item => !isSharedForCurrentUser(item));
 
         const tagSet = new Set();
         effectiveFolders.forEach(folder => (Array.isArray(folder?.tags) ? folder.tags : []).forEach(tag => tagSet.add(tag)));
         effectiveSubjects.forEach(subject => (Array.isArray(subject?.tags) ? subject.tags : []).forEach(tag => tagSet.add(tag)));
 
         return Array.from(tagSet).filter(Boolean).sort();
-    }, [logic.viewMode, sharedFolders, sharedSubjects, logic.filteredFolders, logic.folders, logic.filteredSubjects, logic.subjects, sharedScopeSelected, isSharedForCurrentUser, isStudentRole]);
+    }, [logic.viewMode, sharedFolders, sharedSubjects, logic.filteredFolders, logic.folders, logic.filteredSubjects, logic.subjects, effectiveSharedScopeSelected, isSharedForCurrentUser, isStudentRole]);
 
     const canCreateInManualContext = useMemo(() => {
         if (!canCreateSubjectByRole(user)) return false;
@@ -350,11 +358,11 @@ const Home = ({ user }) => {
                         handleFilterChange={logic.handleFilterChange}
                         onFilterOverlayChange={setIsFilterOpen}
                         onScaleOverlayChange={setIsScaleOverlayOpen}
-                        sharedScopeSelected={sharedScopeSelected}
+                        sharedScopeSelected={effectiveSharedScopeSelected}
                         onSharedScopeChange={setSharedScopeSelected}
                         canCreateFolder={canCreateFolderInManualContext}
                         showSharedTab={!isStudentRole}
-                        hideSharedScopeToggle={isStudentRole}
+                        hideSharedScopeToggle={isStudentRole || logic.viewMode === 'shared'}
                         studentMode={isStudentRole}
 
                         // SEARCH
@@ -462,6 +470,10 @@ const Home = ({ user }) => {
                                 handleOpenSubjectSharing(s);
                                 logic.setActiveMenu(null);
                             }}
+                            onOpenSubjectClasses={(s) => {
+                                logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'classes' });
+                                logic.setActiveMenu(null);
+                            }}
 
                             // Search
                             searchTerm={searchQuery}
@@ -553,7 +565,7 @@ const Home = ({ user }) => {
                                         
                                         activeFilter={logic.activeFilter}
                                         selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
-                                        sharedScopeSelected={sharedScopeSelected}
+                                        sharedScopeSelected={effectiveSharedScopeSelected}
                                         studentMode={isStudentRole}
                                         
                                         navigate={logic.navigate}

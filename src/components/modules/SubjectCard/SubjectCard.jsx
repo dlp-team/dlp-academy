@@ -4,6 +4,7 @@ import { useSubjectCardLogic } from './useSubjectCardLogic';
 import SubjectCardFront from './SubjectCardFront';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
 import { buildDragPayload, writeDragPayloadToDataTransfer } from '../../../utils/dragPayloadUtils';
+import { withDarkGradientVariant } from '../../../utils/subjectConstants';
 
 const SubjectCard = (props) => {
 
@@ -32,6 +33,8 @@ const SubjectCard = (props) => {
         disableDeleteActions = false,
         disableUnshareActions = false
     } = props;
+
+    const gradientClass = withDarkGradientVariant(subject?.color || 'from-slate-500 to-slate-700');
 
     const handleLocalDragStart = (e) => {
         if (draggable) {
@@ -69,7 +72,7 @@ const SubjectCard = (props) => {
                 (isDragging || isGhostDragging) ? 'opacity-0 scale-95' : (!filterOverlayOpen ? 'hover:scale-105' : '')
             } ${
                 isModern 
-                    ? `bg-gradient-to-br ${subject.color} p-[4px]` 
+                    ? `bg-gradient-to-br ${gradientClass} p-[4px]` 
                     : ''
             }`}
             style={{ aspectRatio: '16 / 10' }}
@@ -98,6 +101,7 @@ const SubjectCard = (props) => {
                     scaleMultiplier={scaleMultiplier}
                     topicCount={topicCount}
                     onOpenTopics={onOpenTopics}
+                    onOpenClasses={props.onOpenClasses}
                     onGoToFolder={props.onGoToFolder}
                     filterOverlayOpen={filterOverlayOpen}
                     disableAllActions={disableAllActions}

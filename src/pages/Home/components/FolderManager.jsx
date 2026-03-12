@@ -13,7 +13,6 @@ const FolderManager = ({
 }) => {
     const [formData, setFormData] = useState({
         name: '',
-        description: '',
         color: 'from-amber-400 to-amber-600',
         tags: [],
         cardStyle: 'default',
@@ -112,7 +111,6 @@ const FolderManager = ({
                     ? getPermissionLevel(initialData, user?.uid)
                     : 'owner',
                 name: initialData.name || '',
-                description: initialData.description || '',
                 color: initialData.color || 'from-amber-400 to-amber-600',
                 tags: initialData.tags || [],
                 cardStyle: initialData.cardStyle || 'default',
@@ -128,7 +126,6 @@ const FolderManager = ({
             isShortcut: false,
             shortcutPermissionLevel: 'owner',
             name: '',
-            description: '',
             color: 'from-amber-400 to-amber-600',
             tags: [],
             cardStyle: 'default',
@@ -675,7 +672,7 @@ const FolderManager = ({
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="p-6 pb-20 space-y-5 max-h-[calc(100vh-15rem)] overflow-y-auto custom-scrollbar">
+                    <form onSubmit={handleSubmit} className="p-6 pb-20 space-y-5 max-h-[calc(100vh-15rem)] overflow-y-auto clean-scrollbar">
                         {activeTab === 'general' && (
                             <>
                                 {canEditOriginalFields && (
@@ -702,15 +699,6 @@ const FolderManager = ({
                                             {validationErrors?.name ? (
                                                 <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">{validationErrors.name}</p>
                                             ) : null}
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
-                                            <input
-                                                type="text"
-                                                value={formData.description}
-                                                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                                                className="w-full px-4 py-2 border rounded-xl dark:bg-slate-800 dark:border-slate-700 dark:text-white"
-                                            />
                                         </div>
                                     </>
                                 )}

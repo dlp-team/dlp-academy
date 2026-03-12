@@ -106,7 +106,7 @@ const TagFilter = ({
                     
                     {/* Filter Panel */}
                     <div
-                        className="fixed bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-[60] w-80 max-h-96 overflow-y-auto custom-scrollbar"
+                        className="fixed bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-[60] w-80 max-h-96 overflow-y-auto clean-scrollbar"
                         style={{ top: panelPos.top, left: panelPos.left }}
                     >
                         <div className="flex items-center justify-between mb-3 relative">

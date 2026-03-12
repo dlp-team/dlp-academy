@@ -1,5 +1,8 @@
 # HomeControls.jsx
 
+## Changelog
+- **2026-03-12:** Added explicit support for hiding the shared-scope toggle in contexts where it should not appear (notably the shared tab).
+
 ## Overview
 - **Source file:** `src/pages/Home/components/HomeControls.jsx`
 - **Last documented:** 2026-02-24
