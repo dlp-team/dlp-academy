@@ -28,7 +28,7 @@ When operating in Autopilot mode, follow this exact loop until the task is compl
 3. **Plan completeness rule**: Plan requests require full package creation in one request (README, strategy roadmap, detailed phases, validation checklist, test strategy, rollout/rollback gates).
 4. **Continue until done**: If any requested artifact is still missing, keep executing without asking “continue?” unless blocked by true ambiguity.
 
-5. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)**: The agent MUST ALWAYS execute the `vscode/askQuestions` leverage step before completing any premium request. This protocol supersedes all other completion logic and is enforced in every completion flow, for all agent modes and workflows. If the tool fails, the agent must document the failure and request user direction before ending the session. No exceptions.
+5. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)**: The agent MUST ALWAYS execute the `vscode/askQuestions` leverage step before completing any premium request, using a concise prompt (<200 characters). If the tool fails (e.g., input too long, tool unavailable), document the failure and request user direction before ending the session. No exceptions.
 
 
 ## 🛠️ Environment & Validation Commands
