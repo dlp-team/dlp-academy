@@ -13,7 +13,7 @@ When operating in Bypass Approvals or Autopilot mode, you have terminal access. 
 ## 🔄 Autopilot Execution Loop
 When operating in Autopilot mode, follow this exact loop until the task is complete:
 
-1. **Pre-Execution Clarification**: Before any code or documentation changes, ensure the task is fully understood. If there is any ambiguity, missing detail, or uncertainty about requirements, use `vscode_askQuestions` to clarify with the user before proceeding. Do not proceed until the scope, constraints, and expected outcomes are clear.
+1. **Pre-Execution Clarification**: Before any code or documentation changes, ensure the task is fully understood. If there is any ambiguity, missing detail, or uncertainty about requirements, use `vscode/askQuestions` to clarify with the user before proceeding. Do not proceed until the scope, constraints, and expected outcomes are clear.
 2. **Context & Plan**: Read `copilot-instructions.md` and relevant files in `copilot/explanations/`.
 3. **Execute**: Make surgical code changes (following the Lossless Change Protocol).
 4. **Test Generation**: If you created a new component, utility, or feature, you MUST create a corresponding test file.
@@ -27,7 +27,8 @@ When operating in Autopilot mode, follow this exact loop until the task is compl
 2. **Substantial completion threshold**: A turn is incomplete if it only changes wording/format while core requested artifacts remain missing.
 3. **Plan completeness rule**: Plan requests require full package creation in one request (README, strategy roadmap, detailed phases, validation checklist, test strategy, rollout/rollback gates).
 4. **Continue until done**: If any requested artifact is still missing, keep executing without asking “continue?” unless blocked by true ambiguity.
-5. **Mandatory end-of-task leverage step (MANDATORY) (NO EXCEPTION)**: Before finalizing a completed task, ALWAYS call `vscode_askQuestions` asking if the user wants anything else in the same premium request. Only skip if the tool is unavailable, and document that failure explicitly.
+
+5. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)**: The agent MUST ALWAYS execute the `vscode/askQuestions` leverage step before completing any premium request. This protocol supersedes all other completion logic and is enforced in every completion flow, for all agent modes and workflows. If the tool fails, the agent must document the failure and request user direction before ending the session. No exceptions.
 
 
 ## 🛠️ Environment & Validation Commands
@@ -40,7 +41,7 @@ Use these commands in the terminal to validate your work autonomously:
 ## 🛑 Autopilot Guardrails & Abort Conditions
 1. **Infinite Loops**: If you try to fix the same test failure 3 times without success, STOP. Document the failure state and ask the user for direction.
 2. **Destructive Firebase Changes**: STOP and ask if modifying `firestore.rules` revokes access.
-3. **Missing Dependencies**: Propose via `vscode_askQuestions` first.
+3. **Missing Dependencies**: Propose via `vscode/askQuestions` first.
 
 ## ✅ Definition of Done (DoD)
 Before calling `task_complete`, you must internally verify:
@@ -50,4 +51,4 @@ Before calling `task_complete`, you must internally verify:
 - [ ] All new text elements are in Spanish.
 - [ ] No emojis were used in the UI (icons only).
 - [ ] File paths are commented at the top of all touched files.
-- [ ] Ask the user using vscode_askQuestions if it should end the request or there is anything left(mandatory, no exception).
+   - [ ] Ask the user using vscode/askQuestions if it should end the request or there is anything left (MANDATORY, NO EXCEPTIONS). This leverage step is a hard-coded protocol and must be executed before completing any premium request. If the tool fails, document the failure and request user direction before ending the session.

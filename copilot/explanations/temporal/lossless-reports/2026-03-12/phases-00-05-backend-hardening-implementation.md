@@ -8,7 +8,7 @@
 
 ## Implemented code changes
 - `.github/copilot-instructions.md`
-  - Strengthened mandatory `vscode_askQuestions` requirement before closure.
+  - Strengthened mandatory `vscode/askQuestions` requirement before closure.
 - `AGENTS.md`
   - Added mandatory end-of-task leverage step.
 - `firestore.rules`
