@@ -20,6 +20,7 @@
 13. **Minimum completion payload** - For plan requests, you MUST deliver a fully executable plan package (scope, phased steps, validation gates, rollback, and testing strategy), not just brief bullet additions.
 14. **No artificial stopping** - Do not stop after a small change if additional requested work remains; continue autonomously until all requested outcomes are completed.
 15. **Full exploitation (MANDATORY, NO EXCEPTIONS)** - When the requested work appears complete, you MUST call `vscode_askQuestions` with a final prompt asking whether the user wants any additional work in the same premium request. Do this BEFORE ending your response. Skipping this step is considered an incomplete delivery unless tool failure makes it impossible.
+16. **Full exploitation (MANDATORY, NO EXCEPTIONS)** - When the requested work appears complete, you MUST call `vscode_askQuestions` with a final prompt asking whether the user wants any additional work in the same premium request. Do this BEFORE ending your response. Skipping this step is considered an incomplete delivery unless tool failure makes it impossible. This is one if not the most important standard.
 
 ---
 

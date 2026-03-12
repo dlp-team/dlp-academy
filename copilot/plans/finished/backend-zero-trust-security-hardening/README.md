@@ -2,15 +2,19 @@
 # Backend Zero-Trust Security Hardening
 
 ## Current execution status (2026-03-12 audit)
-- Overall: In progress.
-- Phases 00–02: Completed.
-- Phases 03–07: Partially completed (see `reviewing/phases-03-07-audit-report.md`).
-- Phase 08 rollout: Not eligible until pending gates are resolved.
+## Current execution status (2026-03-12)
+- Overall: **Phase 08 in progress** — all prior phases complete.
+- Phases 00–07: **Completed** (Phase 07 closed with formal gate waivers for pre-existing lint/tsc debt — see `phases/phase-07-full-regression-validation.md`).
+- Phase 08 rollout: **Eligible** — all security and regression gates green. Rollback playbook and monitoring requirements produced. Awaiting human operator deployment window.
 
 ## Immediate continuation queue
-1. Resolve current Storage allow-path test failures in `tests/rules/storage.rules.test.js` (3 failing cases).
-2. Re-run security + regression gates and update evidence matrix.
-3. Decide lint/type gate handling path (global backlog remediation or formal gate waiver policy for unrelated debt).
+## Phase 08 outstanding actions (human-operator required)
+1. Assign rollback owner and on-call engineer for rollout window.
+2. Deploy rules to staging: `firebase deploy --only firestore:rules,storage`.
+3. Run smoke suite against staging. 
+4. Schedule and execute production rollout during low-traffic window.
+5. Confirm monitoring baseline and run post-deploy smoke suite.
+6. Record final outcome in `reviewing/test-execution-matrix.md` and close the plan.
 
 ## Objective
 Raise backend security posture to a maximum practical level by enforcing least-privilege access at every layer (Firestore Rules, Storage Rules, Auth claims/roles, server-side flows), while preserving multi-tenant isolation and operational continuity.

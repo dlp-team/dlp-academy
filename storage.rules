@@ -1,52 +1,21 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // Storage rules rely exclusively on JWT token claims (request.auth.token.*)
+    // because cross-service Firestore lookups (exists/get) are not supported
+    // by the Storage Rules engine. Custom claims (role, institutionId) must be
+    // set on the user's token via Cloud Functions / Auth triggers.
+
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function authUid() {
-      return !isSignedIn()
-        ? null
-        : (
-          request.auth.uid != null
-            ? request.auth.uid
-            : (
-              request.auth.token.uid != null
-                ? request.auth.token.uid
-                : request.auth.token.sub
-            )
-        );
-    }
-
-    function currentUserPath() {
-      return /databases/(default)/documents/users/$(request.auth.uid);
-    }
-
-    function currentUserLegacyPath() {
-      return /databases/database/documents/users/$(request.auth.uid);
-    }
-
-    function hasCurrentUserDoc() {
-      return isSignedIn() && (exists(currentUserPath()) || exists(currentUserLegacyPath()));
-    }
-
-    function currentUserData() {
-      return exists(currentUserPath())
-        ? get(currentUserPath()).data
-        : (exists(currentUserLegacyPath()) ? get(currentUserLegacyPath()).data : null);
-    }
-
     function currentUserRole() {
-      return hasCurrentUserDoc()
-        ? currentUserData().role
-        : (isSignedIn() ? request.auth.token.role : null);
+      return isSignedIn() ? request.auth.token.role : null;
     }
 
     function currentUserInstitutionId() {
-      return hasCurrentUserDoc()
-        ? currentUserData().institutionId
-        : (isSignedIn() ? request.auth.token.institutionId : null);
+      return isSignedIn() ? request.auth.token.institutionId : null;
     }
 
     function isGlobalAdmin() {
@@ -59,7 +28,7 @@ service firebase.storage {
     }
 
     function isOwnerUser(userId) {
-      return isSignedIn() && authUid() == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
     match /profile-pictures/{userId} {

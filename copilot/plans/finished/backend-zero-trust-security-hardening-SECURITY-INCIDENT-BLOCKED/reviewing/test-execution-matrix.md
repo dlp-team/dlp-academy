@@ -45,3 +45,5 @@ Record every mandatory execution run by phase. A phase cannot close without this
 | 07 | 2026-03-12 | `npx tsc --noEmit` | Audit re-run type gate | Fail | 1 | `tsc` unavailable: TypeScript package not installed |
 | 06 | 2026-03-12 | `npm run test -- tests/unit/functions/preview-handler.test.js` | Privileged callable boundary tests | Pass | 0 | 1/1 file, 6/6 tests |
 | 06 | 2026-03-12 | `npm run test:rules` | Storage + Firestore rules suite after storage test implementation | Fail | 3 | Storage suite has 3 failing allow-path tests while Firestore suite remains passing |
+| 04 | 2026-03-12 | `npm run test:rules` | Storage rules fix: removed illegal exists()/get() cross-service calls | Pass | 0 | 21/21 (8 storage + 13 firestore); Storage rules engine has no exists()/get() — switched to token claim resolution |
+| 07 | 2026-03-12 | `npm run test` | Post-storage-fix full regression gate | Pass | 0 | 46/46 files, 289/289 tests |
