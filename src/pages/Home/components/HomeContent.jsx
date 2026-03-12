@@ -574,7 +574,7 @@ const HomeContent = ({
                                                             : homeThemeTokens.dashedCardAmberIdleClass
                                                         : isRootZoneHovered
                                                             ? 'border-indigo-400 dark:border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 scale-105'
-                                                            : homeThemeTokens.dashedCardIndigoIdleClass
+                                                            : 'home-token-dashed-create-card'
                                                     }
                                                 `}
                                                 style={{

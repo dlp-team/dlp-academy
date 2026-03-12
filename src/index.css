@@ -162,7 +162,7 @@ html.theme-switching *::after {
 
 .dark .home-page .home-token-dashed-create-card {
   border-color: var(--home-card-border);
-  background-color: #000000;
+  background-color: #0b1220;
 }
 
 .dark .home-page .home-token-dashed-create-card:hover,
