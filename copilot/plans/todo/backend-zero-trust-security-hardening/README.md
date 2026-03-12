@@ -10,6 +10,8 @@ Raise backend security posture to a maximum practical level by enforcing least-p
 - Storage path authorization consistency with Firestore permissions.
 - Server-side privileged operations (Functions/admin SDK) with strict input authorization.
 - Auditability, test coverage, staged rollout, and rollback safety.
+- Mandatory creation and execution of tests for every hardened rule/path.
+- Mandatory no-regression validation to ensure nothing breaks after hardening.
 
 ## Explicit security model
 - Deny-by-default everywhere.
@@ -33,3 +35,9 @@ Raise backend security posture to a maximum practical level by enforcing least-p
 - Rule tests for allowed/denied scenarios by role.
 - Security review checklist and regression gates.
 - Migration/runbook and rollback strategy.
+
+## Mandatory test policy
+- Every change to rules or privileged backend code must include new/updated tests in the same phase.
+- Tests are not optional: they must be executed locally and pass before phase completion.
+- Security tests + regression tests must both pass before rollout.
+- Any failing test blocks progression to the next phase until resolved.

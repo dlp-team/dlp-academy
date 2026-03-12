@@ -8,7 +8,14 @@
 4. Storage rules hardening and parity checks
 5. Cloud Functions/admin path hardening
 6. Comprehensive rule/unit tests + adversarial scenarios
-7. Staged rollout, monitoring, rollback gates
+7. Full regression execution + breakage validation
+8. Staged rollout, monitoring, rollback gates
+
+## Test execution gates (mandatory)
+- After each phase: run targeted tests for touched resources and rules.
+- Before moving to rollout: run full security test suite and full regression suite.
+- Required outcomes: zero failing security tests, zero failing regression tests, and no unauthorized allows.
+- If tests reveal breakage, rollback/fix before continuing.
 
 ## Core decision principles
 - Break-glass admin operations are explicit, logged, and minimal.
@@ -21,3 +28,5 @@
 - Every collection and storage path is covered by allow+deny tests.
 - Multi-tenant leakage tests fail closed.
 - CI security tests become required check for merges.
+- Regression suite proves existing authorized flows still work.
+- Post-hardening run confirms no functional breakage in protected read/create/update/delete paths.
