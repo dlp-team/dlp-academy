@@ -1,9 +1,13 @@
 // src/pages/Quizzes/QuizEdit.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-    ChevronLeft, Save, Plus, Trash2, CheckCircle2, 
-    Circle, Loader2, GripVertical, X, Pencil, Eye, ShieldAlert
+import {
+    ChevronLeft, Save, Plus, Trash2, CheckCircle2,
+    Circle, Loader2, X, Pencil, Eye, ShieldAlert,
+    ClipboardCheck,
+    CalendarDays,
+    Percent,
+    AlertCircle
 } from 'lucide-react';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -89,11 +93,63 @@ const QuizEdit = ({ user }) => {
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState('');
     const [hasEditPermission, setHasEditPermission] = useState(false);
     const [quizData, setQuizData] = useState({
         title: '',
-        questions: []
+        questions: [],
+        isAssignment: false,
+        countsForGrade: false,
+        assignmentStartAt: '',
+        assignmentDueAt: '',
+        assignmentWeight: ''
     });
+
+    const toDateTimeInputValue = (value) => {
+        if (!value) return '';
+        const date = value?.toDate ? value.toDate() : new Date(value);
+        if (Number.isNaN(date.getTime())) return '';
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    };
+
+    const parseDateTimeInput = (value) => {
+        if (!value) return null;
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const normalizeQuestions = (questions) => {
+        return (questions || []).map((question) => ({
+            ...question,
+            question: String(question?.question || '').trim(),
+            options: (question?.options || []).map((option) => String(option ?? '').trim()),
+            correctIndex: Number.isInteger(question?.correctIndex) ? question.correctIndex : 0
+        }));
+    };
+
+    const validateQuestions = (questions) => {
+        for (let index = 0; index < questions.length; index += 1) {
+            const current = questions[index];
+            if (!current.question) {
+                return `La pregunta ${index + 1} no tiene enunciado.`;
+            }
+
+            if (!Array.isArray(current.options) || current.options.length < 2) {
+                return `La pregunta ${index + 1} debe tener al menos 2 opciones.`;
+            }
+
+            if (current.options.some((option) => !option)) {
+                return `La pregunta ${index + 1} tiene opciones vacias.`;
+            }
+
+            if (current.correctIndex < 0 || current.correctIndex >= current.options.length) {
+                return `La respuesta correcta de la pregunta ${index + 1} es invalida.`;
+            }
+        }
+
+        return '';
+    };
 
     useEffect(() => {
         const fetchQuiz = async () => {
@@ -121,9 +177,26 @@ const QuizEdit = ({ user }) => {
                 // Fetch quiz data if user has permission
                 const quizRef = doc(db, "quizzes", quizId);
                 const snap = await getDoc(quizRef);
-                if (snap.exists()) setQuizData(snap.data());
-                else { alert("Test no encontrado"); navigate(-1); }
-            } catch (error) { console.error(error); } 
+                if (snap.exists()) {
+                    const data = snap.data();
+                    setQuizData({
+                        ...data,
+                        title: data.title || data.name || '',
+                        questions: data.questions || [],
+                        isAssignment: Boolean(data.isAssignment),
+                        countsForGrade: Boolean(data.isAssignment),
+                        assignmentStartAt: toDateTimeInputValue(data.assignmentStartAt),
+                        assignmentDueAt: toDateTimeInputValue(data.assignmentDueAt),
+                        assignmentWeight: data.assignmentWeight === undefined || data.assignmentWeight === null ? '1' : String(data.assignmentWeight)
+                    });
+                }
+                else {
+                    setSaveError('No se encontro el test solicitado.');
+                }
+            } catch (error) {
+                console.error(error);
+                setSaveError('Error al cargar el test. Intentalo de nuevo.');
+            }
             finally { setLoading(false); }
         };
         fetchQuiz();
@@ -173,12 +246,69 @@ const QuizEdit = ({ user }) => {
 
     const handleSave = async () => {
         setSaving(true);
+        setSaveError('');
+
         try {
+            const normalizedQuestions = normalizeQuestions(quizData.questions);
+
+            if (!quizData.title?.trim()) {
+                setSaveError('El test necesita un titulo para guardarse.');
+                setSaving(false);
+                return;
+            }
+
+            if (normalizedQuestions.length === 0) {
+                setSaveError('Debes incluir al menos una pregunta.');
+                setSaving(false);
+                return;
+            }
+
+            const questionValidationError = validateQuestions(normalizedQuestions);
+            if (questionValidationError) {
+                setSaveError(questionValidationError);
+                setSaving(false);
+                return;
+            }
+
+            const startDate = parseDateTimeInput(quizData.assignmentStartAt);
+            const dueDate = parseDateTimeInput(quizData.assignmentDueAt);
+
+            if (quizData.isAssignment && startDate && dueDate && dueDate < startDate) {
+                setSaveError('La fecha de cierre no puede ser anterior al inicio.');
+                setSaving(false);
+                return;
+            }
+
+            const parsedWeight = Number(quizData.assignmentWeight ?? 0);
+            const normalizedWeight = !Number.isNaN(parsedWeight) ? Math.max(0, Math.min(parsedWeight, 100)) : 1;
+
+            const payload = {
+                title: quizData.title.trim(),
+                name: quizData.title.trim(),
+                questions: normalizedQuestions,
+                isAssignment: Boolean(quizData.isAssignment),
+                countsForGrade: Boolean(quizData.isAssignment && quizData.countsForGrade),
+                assignmentStartAt: quizData.isAssignment ? startDate : null,
+                assignmentDueAt: quizData.isAssignment ? dueDate : null,
+                assignmentWeight: quizData.isAssignment ? normalizedWeight : 0,
+                updatedAt: serverTimestamp()
+            };
+
+            const optionalFields = ['level', 'type', 'formulas', 'prompt', 'subjectId', 'topicId', 'institutionId', 'ownerId', 'createdBy'];
+            optionalFields.forEach((field) => {
+                if (quizData[field] !== undefined) payload[field] = quizData[field];
+            });
+
             await updateDoc(doc(db, "quizzes", quizId), {
-                ...quizData, updatedAt: serverTimestamp()
+                ...payload
             });
             navigate(-1);
-        } catch (e) { alert("Error al guardar"); } finally { setSaving(false); }
+        } catch (e) {
+            console.error(e);
+            setSaveError('No se pudo guardar el test. Revisa los campos y vuelve a intentarlo.');
+        } finally {
+            setSaving(false);
+        }
     };
 
     if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950"><Loader2 className="animate-spin w-8 h-8 text-indigo-600 dark:text-indigo-400"/></div>;
@@ -228,10 +358,18 @@ const QuizEdit = ({ user }) => {
                         <p className="text-xs text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">{quizData.questions.length} Preguntas</p>
                     </div>
                 </div>
-                <button onClick={handleSave} disabled={saving} className="flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg disabled:opacity-50">
+                <button onClick={handleSave} disabled={saving} className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-2.5 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg disabled:opacity-50">
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} {saving ? '...' : 'Guardar'}
                 </button>
             </div>
+
+            {saveError && (
+                <div className="max-w-4xl mx-auto px-6 pt-4">
+                    <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm font-semibold text-red-700 dark:text-red-300">
+                        {saveError}
+                    </div>
+                </div>
+            )}
 
             <main className="max-w-4xl mx-auto px-6 py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
@@ -243,6 +381,99 @@ const QuizEdit = ({ user }) => {
                         className="w-full text-4xl font-black text-slate-800 dark:text-slate-100 bg-transparent border-b-2 border-transparent focus:border-indigo-100 dark:focus:border-indigo-900 focus:outline-none py-2 placeholder:text-slate-300 dark:placeholder:text-slate-600"
                         placeholder="Nombre del test..."
                     />
+
+                    <div className="mt-8 border-t border-slate-100 dark:border-slate-800 pt-6 space-y-4">
+                        <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 px-5 py-4">
+                            <div>
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                    <ClipboardCheck className="w-4 h-4 text-indigo-500" /> Marcar como tarea
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Las tareas pueden tener ventana de disponibilidad y ponderación propia en notas.</p>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const nextValue = !quizData.isAssignment;
+                                    setQuizData((prev) => ({
+                                        ...prev,
+                                        isAssignment: nextValue,
+                                        countsForGrade: nextValue ? prev.countsForGrade : false,
+                                        assignmentStartAt: nextValue ? prev.assignmentStartAt : '',
+                                        assignmentDueAt: nextValue ? prev.assignmentDueAt : '',
+                                        assignmentWeight: nextValue ? (prev.assignmentWeight || '1') : '0',
+                                    }));
+                                }}
+                                className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${quizData.isAssignment ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'}`}
+                            >
+                                <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${quizData.isAssignment ? 'translate-x-6' : 'translate-x-1'}`} />
+                            </button>
+                        </div>
+                        {quizData.isAssignment && (
+                            <>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <label className="block">
+                                        <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mb-2">
+                                            <CalendarDays className="w-3.5 h-3.5" /> Inicio
+                                        </span>
+                                        <input
+                                            type="datetime-local"
+                                            value={quizData.assignmentStartAt || ''}
+                                            onChange={(e) => updateField('assignmentStartAt', e.target.value)}
+                                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                                        />
+                                    </label>
+                                    <label className="block">
+                                        <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mb-2">
+                                            <CalendarDays className="w-3.5 h-3.5" /> Cierre
+                                        </span>
+                                        <input
+                                            type="datetime-local"
+                                            value={quizData.assignmentDueAt || ''}
+                                            onChange={(e) => updateField('assignmentDueAt', e.target.value)}
+                                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                                        />
+                                    </label>
+                                    <label className="block">
+                                        <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mb-2">
+                                            <Percent className="w-3.5 h-3.5" /> Peso interno de tarea
+                                        </span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            step="0.1"
+                                            value={quizData.assignmentWeight ?? '1'}
+                                            onChange={(e) => updateField('assignmentWeight', e.target.value)}
+                                            disabled={!quizData.countsForGrade}
+                                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm disabled:opacity-60"
+                                        />
+                                    </label>
+                                </div>
+
+                                <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 px-4 py-4">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Contabilizar en notas</p>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Si lo desactivas, la tarea no suma en la ponderacion de entregables.</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setQuizData((prev) => ({ ...prev, countsForGrade: !prev.countsForGrade }))}
+                                            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${quizData.countsForGrade ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'}`}
+                                        >
+                                            <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${quizData.countsForGrade ? 'translate-x-6' : 'translate-x-1'}`} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+                        {quizData.isAssignment && (
+                            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 px-4 py-4">
+                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Esta tarea se anade automaticamente a la ponderacion</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Toda tarea guardada se incluye en el bloque de tareas entregables del panel de notas.</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* PREGUNTAS */}

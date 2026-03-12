@@ -46,3 +46,11 @@
 **Related Documentation**:
 - Lossless Report: `copilot/explanations/temporal/lossless-reports/2026-03-08/exam-card-refactor.md`
 - Plan: `copilot/plans/todo/exam-card-refactor/`
+
+### 2026-03-12 - Topic Assignments Data Flow
+
+**Change**: Added realtime assignment subscription (`topicAssignments`) in `Topic.jsx` and merged assignments into `enrichedTopic`.
+
+**Reason**: Support the new `Tareas` section with live counts and role-aware visibility in the Topic view.
+
+**Impact**: Topic tabs/content now receive `topic.assignments` alongside existing materials/uploads/quizzes/exams without altering prior behaviors.

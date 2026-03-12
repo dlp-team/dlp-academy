@@ -28,6 +28,7 @@ const Topic = ({ user }) => {
     // 2. ESTADOS LOCALES
     const [userScores, setUserScores] = useState({});
     const [scoresLoading, setScoresLoading] = useState(true);
+    const [topicAssignments, setTopicAssignments] = useState([]);
     // 3. EFECTO: Escuchar puntuaciones (Quizzes)
     useEffect(() => {
         if (!user || !logic.subjectId || !logic.topicId) {
@@ -54,6 +55,40 @@ const Topic = ({ user }) => {
         return () => unsubscribe();
     }, [user, logic.subjectId, logic.topicId]);
 
+    useEffect(() => {
+        if (!logic.subjectId || !logic.topicId) {
+            setTopicAssignments([]);
+            return undefined;
+        }
+
+        const assignmentsRef = query(
+            collection(db, 'topicAssignments'),
+            where('topicId', '==', logic.topicId)
+        );
+
+        const unsubscribe = onSnapshot(assignmentsRef, (snapshot) => {
+            const allAssignments = snapshot.docs
+                .map((assignmentDoc) => ({ id: assignmentDoc.id, ...assignmentDoc.data() }))
+                .sort((a, b) => {
+                    const aDate = a?.dueAt?.toDate ? a.dueAt.toDate() : a?.dueAt ? new Date(a.dueAt) : null;
+                    const bDate = b?.dueAt?.toDate ? b.dueAt.toDate() : b?.dueAt ? new Date(b.dueAt) : null;
+                    if (!aDate && !bDate) return 0;
+                    if (!aDate) return 1;
+                    if (!bDate) return -1;
+                    return aDate - bDate;
+                });
+
+            if (user?.role === 'student') {
+                setTopicAssignments(allAssignments.filter((assignment) => assignment.visibleToStudents !== false));
+                return;
+            }
+
+            setTopicAssignments(allAssignments);
+        });
+
+        return () => unsubscribe();
+    }, [logic.subjectId, logic.topicId, user?.role]);
+
     // 4. MERGE DE DATOS
     const enrichedTopic = useMemo(() => {
         if (!logic.topic) return null;
@@ -66,9 +101,10 @@ const Topic = ({ user }) => {
                 ...q,
                 score: userScores[q.id] ?? null
             })) || [],
-            exams: logic.topic.exams || []
+            exams: logic.topic.exams || [],
+            assignments: topicAssignments
         };
-    }, [logic.topic, userScores]);
+    }, [logic.topic, userScores, topicAssignments]);
 
     // 5. PROGRESO
     const globalProgress = useMemo(() => {

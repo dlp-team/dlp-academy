@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-    ChevronLeft, Target, Clock, Sparkles, ArrowRight 
+    ChevronLeft, Target, Clock, Sparkles, ArrowRight, Lock, CalendarDays
 } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config'; 
@@ -87,7 +87,10 @@ const useQuizData = (user, subjectId, topicId, quizId, navigate) => {
                         title: data.name || data.title || "Test Generado",
                         subtitle: data.level || "Repaso",
                         formulas: data.formulas || [],
-                        questions: data.questions || []
+                        questions: data.questions || [],
+                        isAssignment: Boolean(data.isAssignment),
+                        assignmentStartAt: data.assignmentStartAt || null,
+                        assignmentDueAt: data.assignmentDueAt || null
                     });
                 } else {
                     setQuizData(DEFAULT_QUIZ);
@@ -110,7 +113,7 @@ const useQuizData = (user, subjectId, topicId, quizId, navigate) => {
 // Estos organizan los subcomponentes importados
 
 const ReviewView = React.memo(({ 
-    quizData, subjectIconKey, topicGradient, accentColor, onStart, onGoBack 
+    quizData, subjectIconKey, topicGradient, accentColor, onStart, onGoBack, canStart, assignmentStatusText
 }) => (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 pb-20">
         {/* Header */}
@@ -202,13 +205,28 @@ const ReviewView = React.memo(({
             )}
 
             {/* Start Button */}
+            {!canStart && (
+                <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 flex items-center gap-2">
+                    <Lock className="w-4 h-4" />
+                    <span>{assignmentStatusText}</span>
+                </div>
+            )}
+
+            {quizData.isAssignment && (
+                <div className="mb-4 rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-sm px-4 py-3 text-xs text-slate-600 flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-slate-500" />
+                    <span>{assignmentStatusText}</span>
+                </div>
+            )}
+
             <button
-                onClick={onStart}
-                className={`group relative w-full text-white py-5 rounded-2xl font-black text-xl shadow-2xl hover:shadow-3xl transition-all duration-300 flex items-center justify-center gap-3 bg-gradient-to-r ${topicGradient} overflow-hidden hover:-translate-y-1`}
+                onClick={canStart ? onStart : undefined}
+                disabled={!canStart}
+                className={`group relative w-full text-white py-5 rounded-2xl font-black text-xl shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden ${canStart ? `hover:shadow-3xl bg-gradient-to-r ${topicGradient} hover:-translate-y-1` : 'bg-slate-300 cursor-not-allowed'}`}
             >
                 <div className="absolute inset-0 bg-white/20 transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-700" />
                 <span className="relative z-10 flex items-center gap-3">
-                    Comenzar Test
+                    {canStart ? 'Comenzar Test' : 'No disponible'}
                     <ArrowRight className="w-6 h-6 transform group-hover:translate-x-1 transition-transform" />
                 </span>
             </button>
@@ -386,6 +404,24 @@ const Quizzes = ({ user }) => {
     if (loading) return <LoadingSpinner />;
     if (!quizData) return null;
 
+    const toDate = (value) => {
+        if (!value) return null;
+        if (value?.toDate) return value.toDate();
+        const parsed = new Date(value);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const isStudent = user?.role === 'student';
+    const now = new Date();
+    const assignmentStart = toDate(quizData.assignmentStartAt);
+    const assignmentDue = toDate(quizData.assignmentDueAt);
+    const startsInFuture = quizData.isAssignment && assignmentStart && now < assignmentStart;
+    const isExpired = quizData.isAssignment && assignmentDue && now > assignmentDue;
+    const canStart = !quizData.isAssignment || !isStudent || (!startsInFuture && !isExpired);
+    const assignmentStatusText = quizData.isAssignment
+        ? `${assignmentStart ? `Inicio: ${assignmentStart.toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 'Sin fecha de inicio'}${assignmentDue ? ` · Limite: ${assignmentDue.toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}` : ''}${startsInFuture ? ' · Aun no disponible' : ''}${isExpired ? ' · Plazo cerrado' : ''}`
+        : '';
+
     const currentQuestion = quizData.questions[currentStep];
     const totalQuestions = quizData.questions.length;
 
@@ -397,6 +433,8 @@ const Quizzes = ({ user }) => {
                     subjectIconKey={subjectIconKey}
                     topicGradient={topicGradient}
                     accentColor={accentColor}
+                    canStart={canStart}
+                    assignmentStatusText={assignmentStatusText}
                     onStart={() => setViewState(VIEW_STATES.QUIZ)}
                     onGoBack={handleGoBack}
                 />

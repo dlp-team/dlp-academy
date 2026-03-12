@@ -17,3 +17,6 @@
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+- 2026-03-12: Added `Tareas` tab (`assignments`) with dedicated icon and item counter, preserving plus-action behavior only for IA materials/tests creation tabs.

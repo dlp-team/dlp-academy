@@ -14,10 +14,16 @@ import {
     Play,
     RotateCcw,
     ChevronRight,
-    Clock
+    Clock,
+    MoreVertical,
+    Pencil,
+    CalendarDays,
+    Lock,
+    AlertTriangle
 } from 'lucide-react';
 import FileCard from '../FileCard/FileCard';
 import ExamCard from '../ExamCard/ExamCard';
+import TopicAssignmentsSection from './TopicAssignmentsSection';
 
 const TopicContent = ({ 
     activeTab, 
@@ -74,21 +80,21 @@ const TopicContent = ({
                 completed: stats.basico.completed,
                 total: stats.basico.total,
                 averageScore: stats.basico.scores.length > 0 
-                    ? Math.round(stats.basico.scores.reduce((a, b) => a + b, 0) / stats.basico.scores.length) 
+                    ? Number(((stats.basico.scores.reduce((a, b) => a + b, 0) / stats.basico.scores.length) / 10).toFixed(1))
                     : 0
             },
             intermedio: {
                 completed: stats.intermedio.completed,
                 total: stats.intermedio.total,
                 averageScore: stats.intermedio.scores.length > 0 
-                    ? Math.round(stats.intermedio.scores.reduce((a, b) => a + b, 0) / stats.intermedio.scores.length) 
+                    ? Number(((stats.intermedio.scores.reduce((a, b) => a + b, 0) / stats.intermedio.scores.length) / 10).toFixed(1))
                     : 0
             },
             avanzado: {
                 completed: stats.avanzado.completed,
                 total: stats.avanzado.total,
                 averageScore: stats.avanzado.scores.length > 0 
-                    ? Math.round(stats.avanzado.scores.reduce((a, b) => a + b, 0) / stats.avanzado.scores.length) 
+                    ? Number(((stats.avanzado.scores.reduce((a, b) => a + b, 0) / stats.avanzado.scores.length) / 10).toFixed(1))
                     : 0
             }
         };
@@ -415,8 +421,8 @@ const TopicContent = ({
                                 </div>
                                 {completed > 0 && averageScore > 0 && (
                                     <div className="text-right shrink-0 pl-2">
-                                        <div className={`${config.headerSubtext} text-xs font-semibold uppercase tracking-widest mb-1`}>Desempeño</div>
-                                        <div className={`text-2xl md:text-3xl font-black ${config.headerAccent}`}>{averageScore}%</div>
+                                        <div className={`${config.headerSubtext} text-xs font-semibold uppercase tracking-widest mb-1`}>Nota media</div>
+                                        <div className={`text-2xl md:text-3xl font-black ${config.headerAccent}`}>{averageScore.toFixed(1)}</div>
                                     </div>
                                 )}
                             </div>
@@ -454,6 +460,37 @@ const TopicContent = ({
                             {quizzesByLevel[levelKey].map((quiz) => {
                                 const isCompleted = quiz.score !== undefined && quiz.score !== null;
                                 const isPassed = isCompleted && quiz.score >= 50;
+                                const isStudent = user?.role === 'student';
+                                const canManageQuiz = !isStudent;
+                                const isAssignment = Boolean(quiz.isAssignment);
+                                const isAdmin = user?.role === 'admin';
+                                const isCreatorTeacher = !isStudent && (
+                                    quiz?.createdBy === user?.uid ||
+                                    quiz?.ownerId === user?.uid ||
+                                    topic?.ownerId === user?.uid
+                                );
+                                const shouldEditPrimary = Boolean(isAdmin || isCreatorTeacher);
+
+                                const parseDate = (value) => {
+                                    if (!value) return null;
+                                    if (value?.toDate) return value.toDate();
+                                    const parsed = new Date(value);
+                                    return Number.isNaN(parsed.getTime()) ? null : parsed;
+                                };
+
+                                const assignmentStart = parseDate(quiz.assignmentStartAt);
+                                const assignmentDue = parseDate(quiz.assignmentDueAt);
+                                const now = new Date();
+                                const startsInFuture = isAssignment && assignmentStart && now < assignmentStart;
+                                const isExpired = isAssignment && assignmentDue && now > assignmentDue;
+                                const canStartAssignment = !isAssignment || !isStudent || (!startsInFuture && !isExpired);
+
+                                const assignmentWindowText = isAssignment
+                                    ? `${assignmentStart ? `Inicio: ${assignmentStart.toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 'Sin inicio'}${assignmentDue ? ` · Limite: ${assignmentDue.toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}` : ''}`
+                                    : '';
+
+                                const quizMenuId = `quiz-card-menu-${quiz.id}`;
+                                const isMenuOpen = activeMenuId === quizMenuId;
                                 
                                 return (
                                     <div
@@ -472,6 +509,54 @@ const TopicContent = ({
                                             }`} />
                                         )}
 
+                                        {canManageQuiz && (
+                                            <div className="absolute top-3 right-3 z-20">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (handleMenuClick) {
+                                                            handleMenuClick(e, quizMenuId);
+                                                        } else {
+                                                            setActiveMenuId(isMenuOpen ? null : quizMenuId);
+                                                        }
+                                                    }}
+                                                    className="p-1.5 rounded-full bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                                                    title="Acciones del test"
+                                                >
+                                                    <MoreVertical className="w-4 h-4" strokeWidth={2} />
+                                                </button>
+
+                                                {isMenuOpen && (
+                                                    <>
+                                                        <div className="fixed inset-0 z-10" onClick={() => setActiveMenuId(null)} />
+                                                        <div className="absolute right-0 mt-2 w-44 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-1 z-20">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setActiveMenuId(null);
+                                                                    navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}/edit`);
+                                                                }}
+                                                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 font-semibold text-indigo-600 dark:text-indigo-400"
+                                                            >
+                                                                <Pencil className="w-4 h-4" /> Editar
+                                                            </button>
+                                                            <div className="h-px bg-slate-100 dark:bg-slate-700 my-1" />
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setActiveMenuId(null);
+                                                                    if (deleteQuiz) deleteQuiz(quiz.id);
+                                                                }}
+                                                                className="w-full px-4 py-2.5 text-left text-sm hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2 font-semibold text-red-600 dark:text-red-400"
+                                                            >
+                                                                <AlertTriangle className="w-4 h-4" /> Eliminar
+                                                            </button>
+                                                        </div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
+
                                         <div className="relative z-10 h-full flex flex-col p-5 md:p-6">
                                             {/* Header */}
                                             <div className="flex items-start justify-between gap-3 mb-4">
@@ -487,6 +572,12 @@ const TopicContent = ({
                                                             <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${config.difficultyBadge}`}>
                                                                 {config.difficultyLabel}
                                                             </span>
+                                                            {isAssignment && (
+                                                                <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/20 dark:text-indigo-200 dark:border-indigo-400/40">
+                                                                    <ClipboardCheck className="w-3 h-3" strokeWidth={2} />
+                                                                    Tarea
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -503,9 +594,17 @@ const TopicContent = ({
 
                                             {/* Middle row */}
                                             <div className="mb-5 flex items-end justify-between gap-3">
-                                                <div className="inline-flex items-center gap-2 rounded-lg bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
-                                                    <ClipboardCheck className="w-3.5 h-3.5" strokeWidth={1.7} />
-                                                    <span>{quiz.questions?.length || 0} preguntas</span>
+                                                <div className="flex flex-col gap-2">
+                                                    <div className="inline-flex items-center gap-2 rounded-lg bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                                        <ClipboardCheck className="w-3.5 h-3.5" strokeWidth={1.7} />
+                                                        <span>{quiz.questions?.length || 0} preguntas</span>
+                                                    </div>
+                                                    {isAssignment && (
+                                                        <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                                            <CalendarDays className="w-3.5 h-3.5" strokeWidth={1.7} />
+                                                            <span>{assignmentWindowText}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 {isCompleted && (
                                                     <div className={`text-2xl font-black leading-none ${
@@ -520,14 +619,36 @@ const TopicContent = ({
 
                                             {/* CTA Button */}
                                             <button
-                                                onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`)}
+                                                onClick={() => {
+                                                    if (shouldEditPrimary) {
+                                                        navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}/edit`);
+                                                        return;
+                                                    }
+                                                    if (!canStartAssignment) return;
+                                                    navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`);
+                                                }}
+                                                disabled={!shouldEditPrimary && !canStartAssignment}
                                                 className={`mt-auto w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                                                    isCompleted
+                                                    !shouldEditPrimary && !canStartAssignment
+                                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 cursor-not-allowed'
+                                                        : shouldEditPrimary
+                                                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md active:scale-95'
+                                                        : isCompleted
                                                         ? `${config.buttonSubtle} hover:shadow-md active:scale-95`
                                                         : `${config.buttonBg} active:scale-95`
                                                 }`}
                                             >
-                                                {isCompleted ? (
+                                                {shouldEditPrimary ? (
+                                                    <>
+                                                        <Pencil className="w-3.5 h-3.5" strokeWidth={2} />
+                                                        Editar test
+                                                    </>
+                                                ) : !canStartAssignment ? (
+                                                    <>
+                                                        <Lock className="w-3.5 h-3.5" strokeWidth={2} />
+                                                        {startsInFuture ? 'Aun no disponible' : 'Plazo cerrado'}
+                                                    </>
+                                                ) : isCompleted ? (
                                                     <>
                                                         <RotateCcw className="w-3.5 h-3.5" strokeWidth={2} />
                                                         Reintentar test
@@ -555,6 +676,18 @@ const TopicContent = ({
                 {renderLevelSection('intermedio')}
                 {renderLevelSection('avanzado')}
             </div>
+        );
+    }
+
+    if (activeTab === 'assignments') {
+        return (
+            <TopicAssignmentsSection
+                assignments={topic.assignments || []}
+                topicId={topicId}
+                subjectId={subjectId}
+                user={user}
+                permissions={permissions}
+            />
         );
     }
     

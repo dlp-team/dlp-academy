@@ -26,3 +26,7 @@
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+- 2026-03-12: Added assignment configuration controls in edit mode: task toggle (`isAssignment`), start/end date window fields, and assignment-specific grading weight persistence.
+- 2026-03-12: Hardened test save flow with explicit payload normalization/validation, inline save errors, and new `Para la nota` toggle so assignment weighting is only editable when grade contribution is enabled.

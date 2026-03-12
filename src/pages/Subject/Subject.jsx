@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader2, AlertTriangle } from 'lucide-react';
+import { Loader2, AlertTriangle, LayoutGrid, ClipboardList } from 'lucide-react';
 
 // Hooks
 import { useSubjectManager } from './hooks/useSubjectManager';
@@ -11,6 +11,7 @@ import { useClassMembers } from './hooks/useClassMembers';
 import Header from '../../components/layout/Header';
 import SubjectHeader from './components/SubjectHeader';
 import TopicGrid from './components/TopicGrid';
+import SubjectGradesPanel from './components/SubjectGradesPanel';
 
 // Modals
 import EditSubjectModal from '../Home/modals/EditSubjectModal';
@@ -55,6 +56,7 @@ const Subject = ({ user }) => {
     } = useSubjectPageState(topics);
 
     const isTeacherUser = user?.role !== 'student';
+    const [activeSection, setActiveSection] = useState('topics');
 
     // Class members
     const { members: classMembers, loading: membersLoading } = useClassMembers(subject);
@@ -134,18 +136,54 @@ const Subject = ({ user }) => {
                     topicCount={isTeacherUser ? topics.length : topics.filter(t => t.isVisible !== false).length}
                 />
 
-                <TopicGrid
-                    topics={isTeacherUser ? filteredTopics : filteredTopics.filter(t => t.isVisible !== false)}
-                    subjectColor={subject.color}
-                    isReordering={isTeacherUser ? isReordering : false}
-                    onOpenCreateModal={isTeacherUser ? () => { setRetryTopicData(null); setShowTopicModal(true); } : null}
-                    onSelectTopic={(t) => navigate(`/home/subject/${subjectId}/topic/${t.id}`)}
-                    onDeleteTopic={isTeacherUser ? onDeleteTopicConfirm : null}
-                    onRetryTopic={isTeacherUser ? onRetryTopic : null}
-                    onReorderTopics={isTeacherUser ? handleReorderTopics : null}
-                    onEditTopic={isTeacherUser ? handleEditTopicClick : null}
-                    onToggleVisibility={isTeacherUser ? handleToggleVisibility : null}
-                />
+                <div className="mb-8 inline-flex items-center gap-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-1.5 shadow-sm">
+                    <button
+                        onClick={() => setActiveSection('topics')}
+                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                            activeSection === 'topics'
+                                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+                                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        }`}
+                    >
+                        <LayoutGrid className="w-4 h-4" />
+                        Temas
+                    </button>
+                    <button
+                        onClick={() => setActiveSection('grades')}
+                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                            activeSection === 'grades'
+                                ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm'
+                                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        }`}
+                    >
+                        <ClipboardList className="w-4 h-4" />
+                        Notas
+                    </button>
+                </div>
+
+                {activeSection === 'topics' && (
+                    <TopicGrid
+                        topics={isTeacherUser ? filteredTopics : filteredTopics.filter(t => t.isVisible !== false)}
+                        subjectColor={subject.color}
+                        isReordering={isTeacherUser ? isReordering : false}
+                        onOpenCreateModal={isTeacherUser ? () => { setRetryTopicData(null); setShowTopicModal(true); } : null}
+                        onSelectTopic={(t) => navigate(`/home/subject/${subjectId}/topic/${t.id}`)}
+                        onDeleteTopic={isTeacherUser ? onDeleteTopicConfirm : null}
+                        onRetryTopic={isTeacherUser ? onRetryTopic : null}
+                        onReorderTopics={isTeacherUser ? handleReorderTopics : null}
+                        onEditTopic={isTeacherUser ? handleEditTopicClick : null}
+                        onToggleVisibility={isTeacherUser ? handleToggleVisibility : null}
+                    />
+                )}
+
+                {activeSection === 'grades' && (
+                    <SubjectGradesPanel
+                        user={user}
+                        subject={subject}
+                        topics={topics}
+                        classMembers={classMembers}
+                    />
+                )}
             </main>
 
             {/* --- MODALS (Teacher only) --- */}
