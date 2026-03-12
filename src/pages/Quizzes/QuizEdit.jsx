@@ -5,9 +5,7 @@ import {
     ChevronLeft, Save, Plus, Trash2, CheckCircle2,
     Circle, Loader2, X, Pencil, Eye, ShieldAlert,
     ClipboardCheck,
-    CalendarDays,
-    Percent,
-    AlertCircle
+    CalendarDays
 } from 'lucide-react';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -99,10 +97,8 @@ const QuizEdit = ({ user }) => {
         title: '',
         questions: [],
         isAssignment: false,
-        countsForGrade: false,
         assignmentStartAt: '',
-        assignmentDueAt: '',
-        assignmentWeight: ''
+        assignmentDueAt: ''
     });
 
     const toDateTimeInputValue = (value) => {
@@ -184,10 +180,8 @@ const QuizEdit = ({ user }) => {
                         title: data.title || data.name || '',
                         questions: data.questions || [],
                         isAssignment: Boolean(data.isAssignment),
-                        countsForGrade: Boolean(data.isAssignment),
                         assignmentStartAt: toDateTimeInputValue(data.assignmentStartAt),
-                        assignmentDueAt: toDateTimeInputValue(data.assignmentDueAt),
-                        assignmentWeight: data.assignmentWeight === undefined || data.assignmentWeight === null ? '1' : String(data.assignmentWeight)
+                        assignmentDueAt: toDateTimeInputValue(data.assignmentDueAt)
                     });
                 }
                 else {
@@ -279,18 +273,13 @@ const QuizEdit = ({ user }) => {
                 return;
             }
 
-            const parsedWeight = Number(quizData.assignmentWeight ?? 0);
-            const normalizedWeight = !Number.isNaN(parsedWeight) ? Math.max(0, Math.min(parsedWeight, 100)) : 1;
-
             const payload = {
                 title: quizData.title.trim(),
                 name: quizData.title.trim(),
                 questions: normalizedQuestions,
                 isAssignment: Boolean(quizData.isAssignment),
-                countsForGrade: Boolean(quizData.isAssignment && quizData.countsForGrade),
                 assignmentStartAt: quizData.isAssignment ? startDate : null,
                 assignmentDueAt: quizData.isAssignment ? dueDate : null,
-                assignmentWeight: quizData.isAssignment ? normalizedWeight : 0,
                 updatedAt: serverTimestamp()
             };
 
@@ -397,10 +386,8 @@ const QuizEdit = ({ user }) => {
                                     setQuizData((prev) => ({
                                         ...prev,
                                         isAssignment: nextValue,
-                                        countsForGrade: nextValue ? prev.countsForGrade : false,
                                         assignmentStartAt: nextValue ? prev.assignmentStartAt : '',
                                         assignmentDueAt: nextValue ? prev.assignmentDueAt : '',
-                                        assignmentWeight: nextValue ? (prev.assignmentWeight || '1') : '0',
                                     }));
                                 }}
                                 className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${quizData.isAssignment ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'}`}
@@ -409,68 +396,29 @@ const QuizEdit = ({ user }) => {
                             </button>
                         </div>
                         {quizData.isAssignment && (
-                            <>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <label className="block">
-                                        <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mb-2">
-                                            <CalendarDays className="w-3.5 h-3.5" /> Inicio
-                                        </span>
-                                        <input
-                                            type="datetime-local"
-                                            value={quizData.assignmentStartAt || ''}
-                                            onChange={(e) => updateField('assignmentStartAt', e.target.value)}
-                                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
-                                        />
-                                    </label>
-                                    <label className="block">
-                                        <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mb-2">
-                                            <CalendarDays className="w-3.5 h-3.5" /> Cierre
-                                        </span>
-                                        <input
-                                            type="datetime-local"
-                                            value={quizData.assignmentDueAt || ''}
-                                            onChange={(e) => updateField('assignmentDueAt', e.target.value)}
-                                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
-                                        />
-                                    </label>
-                                    <label className="block">
-                                        <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mb-2">
-                                            <Percent className="w-3.5 h-3.5" /> Peso interno de tarea
-                                        </span>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            max="100"
-                                            step="0.1"
-                                            value={quizData.assignmentWeight ?? '1'}
-                                            onChange={(e) => updateField('assignmentWeight', e.target.value)}
-                                            disabled={!quizData.countsForGrade}
-                                            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm disabled:opacity-60"
-                                        />
-                                    </label>
-                                </div>
-
-                                <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 px-4 py-4">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div>
-                                            <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Contabilizar en notas</p>
-                                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Si lo desactivas, la tarea no suma en la ponderacion de entregables.</p>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => setQuizData((prev) => ({ ...prev, countsForGrade: !prev.countsForGrade }))}
-                                            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${quizData.countsForGrade ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'}`}
-                                        >
-                                            <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${quizData.countsForGrade ? 'translate-x-6' : 'translate-x-1'}`} />
-                                        </button>
-                                    </div>
-                                </div>
-                            </>
-                        )}
-                        {quizData.isAssignment && (
-                            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 px-4 py-4">
-                                <p className="text-sm font-bold text-slate-700 dark:text-slate-200">Esta tarea se anade automaticamente a la ponderacion</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Toda tarea guardada se incluye en el bloque de tareas entregables del panel de notas.</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <label className="block">
+                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mb-2">
+                                        <CalendarDays className="w-3.5 h-3.5" /> Inicio
+                                    </span>
+                                    <input
+                                        type="datetime-local"
+                                        value={quizData.assignmentStartAt || ''}
+                                        onChange={(e) => updateField('assignmentStartAt', e.target.value)}
+                                        className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                                    />
+                                </label>
+                                <label className="block">
+                                    <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex items-center gap-1.5 mb-2">
+                                        <CalendarDays className="w-3.5 h-3.5" /> Cierre
+                                    </span>
+                                    <input
+                                        type="datetime-local"
+                                        value={quizData.assignmentDueAt || ''}
+                                        onChange={(e) => updateField('assignmentDueAt', e.target.value)}
+                                        className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                                    />
+                                </label>
                             </div>
                         )}
                     </div>

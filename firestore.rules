@@ -569,6 +569,153 @@ service cloud.firestore {
         );
     }
 
+    // Reglas para items de evaluación extra (grades panel)
+    match /subjectEvaluationItems/{itemId} {
+      allow read: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || canReadResource(resource.data)
+          || (
+            resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(resource.data.subjectId)
+          )
+        );
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            request.resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(request.resource.data.subjectId)
+          )
+        );
+      allow update: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(resource.data.subjectId)
+          )
+        );
+      allow delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(resource.data.subjectId)
+          )
+        );
+    }
+
+    // Reglas para notas de evaluación extra
+    match /subjectEvaluationGrades/{gradeId} {
+      allow read: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || canReadResource(resource.data)
+          || (
+            resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(resource.data.subjectId)
+          )
+        );
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            request.resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(request.resource.data.subjectId)
+          )
+        );
+      allow update: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(resource.data.subjectId)
+          )
+        );
+      allow delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(resource.data.subjectId)
+          )
+        );
+    }
+
+    // Reglas para revisiones de tareas entregables
+    match /subjectAssignmentGradeReviews/{reviewId} {
+      allow read: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || canReadResource(resource.data)
+          || (
+            resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(resource.data.subjectId)
+          )
+        );
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            request.resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(request.resource.data.subjectId)
+          )
+        );
+      allow update: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(resource.data.subjectId)
+          )
+        );
+      allow delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(resource.data.subjectId)
+          )
+        );
+    }
+
+    // Reglas para revisiones de exámenes
+    match /subjectExamGradeReviews/{reviewId} {
+      allow read: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || canReadResource(resource.data)
+          || (
+            resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(resource.data.subjectId)
+          )
+        );
+      allow create: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            request.resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(request.resource.data.subjectId)
+          )
+        );
+      allow update: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(resource.data.subjectId)
+          )
+        );
+      allow delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || (
+            resource.data.keys().hasAny(['subjectId'])
+            && subjectInstitutionMatches(resource.data.subjectId)
+          )
+        );
+    }
 
     // Reglas para Shortcuts (en la raíz)
     match /shortcuts/{shortcutId} {

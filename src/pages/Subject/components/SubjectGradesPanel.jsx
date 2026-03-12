@@ -6,10 +6,12 @@ import {
     CalendarDays,
     CheckCircle2,
     ClipboardCheck,
+    Lock,
     Percent,
     Plus,
     Save,
     Trash2,
+    Unlock,
     User
 } from 'lucide-react';
 import {
@@ -38,12 +40,15 @@ const getDiffToTarget = (total, target = 100) => Number((target - Number(total |
 const getEqualSplitWeight = (count) => (count > 0 ? Number((100 / count).toFixed(2)) : 0);
 
 const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) => {
+    const [exams, setExams] = useState([]);
     const [evaluationItems, setEvaluationItems] = useState([]);
     const [evaluationGrades, setEvaluationGrades] = useState([]);
     const [mandatoryQuizzes, setMandatoryQuizzes] = useState([]);
     const [assignmentQuizzes, setAssignmentQuizzes] = useState([]);
     const [assignmentReviews, setAssignmentReviews] = useState([]);
+    const [examReviews, setExamReviews] = useState([]);
     const [quizScoreByQuizUser, setQuizScoreByQuizUser] = useState({});
+    const [examReviewDrafts, setExamReviewDrafts] = useState({});
     const [reviewDrafts, setReviewDrafts] = useState({});
     const [saving, setSaving] = useState(false);
     const [blockFeedback, setBlockFeedback] = useState({ type: '', message: '' });
@@ -117,6 +122,7 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
 
     const mandatoryCustomWeightsEnabled = Boolean(subject?.gradingConfig?.mandatoryCustomWeightsEnabled);
     const assignmentCustomWeightsEnabled = Boolean(subject?.gradingConfig?.assignmentCustomWeightsEnabled);
+    const extrasCustomWeightsEnabled = Boolean(subject?.gradingConfig?.extrasCustomWeightsEnabled);
 
     const mandatoryEqualWeight = useMemo(
         () => getEqualSplitWeight(mandatoryQuizzes.length),
@@ -130,12 +136,34 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
 
     const getMandatoryWeightForQuiz = (quiz) => {
         if (!mandatoryCustomWeightsEnabled) return mandatoryEqualWeight;
-        return clamp(Number(quiz?.mandatoryWeight ?? mandatoryEqualWeight), 0, 100);
+        if (quiz.mandatoryWeightLocked) return clamp(Number(quiz.mandatoryWeight ?? 0), 0, 100);
+        const lockedTotal = mandatoryQuizzes
+            .filter((q) => q.mandatoryWeightLocked)
+            .reduce((sum, q) => sum + clamp(Number(q.mandatoryWeight ?? 0), 0, 100), 0);
+        const unlockedCount = mandatoryQuizzes.filter((q) => !q.mandatoryWeightLocked).length;
+        const remaining = Math.max(0, 100 - lockedTotal);
+        return unlockedCount > 0 ? Number((remaining / unlockedCount).toFixed(2)) : 0;
     };
 
     const getAssignmentWeightForQuiz = (quiz) => {
         if (!assignmentCustomWeightsEnabled) return assignmentsEqualWeight;
-        return clamp(Number(quiz?.assignmentWeight ?? assignmentsEqualWeight), 0, 100);
+        if (quiz.assignmentWeightLocked) return clamp(Number(quiz.assignmentWeight ?? 0), 0, 100);
+        const lockedTotal = assignmentQuizzes
+            .filter((q) => q.assignmentWeightLocked)
+            .reduce((sum, q) => sum + clamp(Number(q.assignmentWeight ?? 0), 0, 100), 0);
+        const unlockedCount = assignmentQuizzes.filter((q) => !q.assignmentWeightLocked).length;
+        const remaining = Math.max(0, 100 - lockedTotal);
+        return unlockedCount > 0 ? Number((remaining / unlockedCount).toFixed(2)) : 0;
+    };
+
+    const extrasEqualWeight = useMemo(
+        () => getEqualSplitWeight(evaluationItems.length),
+        [evaluationItems.length]
+    );
+
+    const getExtrasWeightForItem = (item) => {
+        if (!extrasCustomWeightsEnabled) return extrasEqualWeight;
+        return clamp(Number(item.weight || 0), 0, 100);
     };
 
     const hasStrict100 = Math.abs(blockWeightTotal - 100) < 0.001;
@@ -146,14 +174,25 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         const quizzesQuery = query(collection(db, 'quizzes'), where('subjectId', '==', subject.id));
         const unsubscribe = onSnapshot(quizzesQuery, (snapshot) => {
             const allQuizzes = snapshot.docs.map((quizDoc) => ({ id: quizDoc.id, ...quizDoc.data() }));
-            setMandatoryQuizzes(
-                allQuizzes
-                    .filter((quiz) => !quiz.isAssignment)
-                    .sort((a, b) => String(a.title || a.name || '').localeCompare(String(b.title || b.name || '')))
-            );
+            // Tests and tareas are now managed in the same internal block.
+            setMandatoryQuizzes([]);
             setAssignmentQuizzes(
                 allQuizzes
-                    .filter((quiz) => Boolean(quiz.isAssignment))
+                    .sort((a, b) => String(a.title || a.name || '').localeCompare(String(b.title || b.name || '')))
+            );
+        });
+
+        return () => unsubscribe();
+    }, [subject?.id]);
+
+    useEffect(() => {
+        if (!subject?.id) return undefined;
+
+        const examsQuery = query(collection(db, 'exams'), where('subjectId', '==', subject.id));
+        const unsubscribe = onSnapshot(examsQuery, (snapshot) => {
+            const allExams = snapshot.docs.map((examDoc) => ({ id: examDoc.id, ...examDoc.data() }));
+            setExams(
+                allExams
                     .sort((a, b) => String(a.title || a.name || '').localeCompare(String(b.title || b.name || '')))
             );
         });
@@ -171,6 +210,21 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
 
         const unsubscribe = onSnapshot(reviewsQuery, (snapshot) => {
             setAssignmentReviews(snapshot.docs.map((reviewDoc) => ({ id: reviewDoc.id, ...reviewDoc.data() })));
+        });
+
+        return () => unsubscribe();
+    }, [subject?.id]);
+
+    useEffect(() => {
+        if (!subject?.id) return undefined;
+
+        const examReviewsQuery = query(
+            collection(db, 'subjectExamGradeReviews'),
+            where('subjectId', '==', subject.id)
+        );
+
+        const unsubscribe = onSnapshot(examReviewsQuery, (snapshot) => {
+            setExamReviews(snapshot.docs.map((reviewDoc) => ({ id: reviewDoc.id, ...reviewDoc.data() })));
         });
 
         return () => unsubscribe();
@@ -268,6 +322,14 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         return map;
     }, [assignmentReviews]);
 
+    const examReviewByKey = useMemo(() => {
+        const map = {};
+        examReviews.forEach((review) => {
+            map[`${review.examId}:${review.userId}`] = review;
+        });
+        return map;
+    }, [examReviews]);
+
     const getQuizDecimal = (quizId, userId) => {
         const value = quizScoreByQuizUser[`${quizId}:${userId}`];
         if (value === undefined || value === null) return null;
@@ -280,6 +342,12 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
             return Number(review.overrideDecimal);
         }
         return getQuizDecimal(quizId, userId);
+    };
+
+    const getExamDecimal = (examId, userId) => {
+        const review = examReviewByKey[`${examId}:${userId}`];
+        if (review?.overrideDecimal === undefined || review?.overrideDecimal === null) return null;
+        return Number(review.overrideDecimal);
     };
 
     const getGradeDecimal = (item, userId) => {
@@ -310,50 +378,44 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
 
     const mandatoryInternalWeightTotal = useMemo(
         () => {
-            if (!mandatoryCustomWeightsEnabled) return mandatoryQuizzes.length > 0 ? 100 : 0;
-            return Number(mandatoryQuizzes.reduce((sum, quiz) => sum + clamp(Number(quiz.mandatoryWeight ?? 0), 0, 100), 0).toFixed(2));
+            if (mandatoryQuizzes.length === 0) return 0;
+            return Number(mandatoryQuizzes.reduce((sum, quiz) => sum + getMandatoryWeightForQuiz(quiz), 0).toFixed(2));
         },
-        [mandatoryCustomWeightsEnabled, mandatoryQuizzes]
+        [mandatoryCustomWeightsEnabled, mandatoryQuizzes, mandatoryEqualWeight]
     );
 
-    const mandatoryInternalDiff = useMemo(
-        () => getDiffToTarget(mandatoryInternalWeightTotal, 100),
-        [mandatoryInternalWeightTotal]
+    const mandatoryLockedTotal = useMemo(
+        () => mandatoryQuizzes.filter((q) => q.mandatoryWeightLocked).reduce((sum, q) => sum + clamp(Number(q.mandatoryWeight ?? 0), 0, 100), 0),
+        [mandatoryQuizzes]
     );
 
     const assignmentsInternalWeightTotal = useMemo(
         () => {
-            if (!assignmentCustomWeightsEnabled) return assignmentQuizzes.length > 0 ? 100 : 0;
-            return Number(assignmentQuizzes.reduce((sum, quiz) => sum + clamp(Number(quiz.assignmentWeight ?? 0), 0, 100), 0).toFixed(2));
+            if (assignmentQuizzes.length === 0) return 0;
+            return Number(assignmentQuizzes.reduce((sum, quiz) => sum + getAssignmentWeightForQuiz(quiz), 0).toFixed(2));
         },
-        [assignmentCustomWeightsEnabled, assignmentQuizzes]
+        [assignmentCustomWeightsEnabled, assignmentQuizzes, assignmentsEqualWeight]
     );
 
-    const assignmentsInternalDiff = useMemo(
-        () => getDiffToTarget(assignmentsInternalWeightTotal, 100),
-        [assignmentsInternalWeightTotal]
+    const assignmentsLockedTotal = useMemo(
+        () => assignmentQuizzes.filter((q) => q.assignmentWeightLocked).reduce((sum, q) => sum + clamp(Number(q.assignmentWeight ?? 0), 0, 100), 0),
+        [assignmentQuizzes]
     );
 
     const extrasInternalWeightTotal = useMemo(
-        () => Number(evaluationItems.reduce((sum, item) => sum + clamp(Number(item.weight || 0), 0, 100), 0).toFixed(2)),
-        [evaluationItems]
+        () => {
+            if (evaluationItems.length === 0) return 0;
+            return Number(evaluationItems.reduce((sum, item) => sum + getExtrasWeightForItem(item), 0).toFixed(2));
+        },
+        [extrasCustomWeightsEnabled, evaluationItems, extrasEqualWeight]
     );
 
-    const extrasInternalDiff = useMemo(
-        () => getDiffToTarget(extrasInternalWeightTotal, 100),
-        [extrasInternalWeightTotal]
-    );
-
-    const hasMandatoryInternal100 = !mandatoryCustomWeightsEnabled || Math.abs(mandatoryInternalWeightTotal - 100) < 0.001;
-    const hasAssignmentsInternal100 = !assignmentCustomWeightsEnabled || Math.abs(assignmentsInternalWeightTotal - 100) < 0.001;
-    const hasExtrasInternal100 = Math.abs(extrasInternalWeightTotal - 100) < 0.001;
-
-    const getMandatorySectionDecimal = (userId) =>
+    const getExamsSectionDecimal = (userId) =>
         calculateSectionDecimal(
-            mandatoryQuizzes,
+            exams,
             userId,
-            (quiz, uid) => getQuizDecimal(quiz.id, uid),
-            (quiz) => getMandatoryWeightForQuiz(quiz)
+            (exam, uid) => getExamDecimal(exam.id, uid),
+            () => 1
         );
 
     const getAssignmentsSectionDecimal = (userId) =>
@@ -369,7 +431,7 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
             evaluationItems,
             userId,
             (item, uid) => getGradeDecimal(item, uid),
-            (item) => Number(item.weight || 0)
+            (item) => getExtrasWeightForItem(item)
         );
 
     const getFinalForUser = (userId) => {
@@ -377,21 +439,21 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
             return {
                 final: null,
                 coveredWeight: 0,
-                mandatoryDecimal: getMandatorySectionDecimal(userId),
+                examsDecimal: getExamsSectionDecimal(userId),
                 assignmentsDecimal: getAssignmentsSectionDecimal(userId),
                 extrasDecimal: getExtrasSectionDecimal(userId)
             };
         }
 
-        const mandatoryDecimal = getMandatorySectionDecimal(userId);
+        const examsDecimal = getExamsSectionDecimal(userId);
         const assignmentsDecimal = getAssignmentsSectionDecimal(userId);
         const extrasDecimal = getExtrasSectionDecimal(userId);
 
         let weightedSum = 0;
         let coveredWeight = 0;
 
-        if (mandatoryDecimal !== null) {
-            weightedSum += mandatoryDecimal * (blockWeights.mandatoryTestsWeight / 100);
+        if (examsDecimal !== null) {
+            weightedSum += examsDecimal * (blockWeights.mandatoryTestsWeight / 100);
             coveredWeight += blockWeights.mandatoryTestsWeight;
         }
 
@@ -406,31 +468,33 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         }
 
         if (coveredWeight === 0) {
-            return { final: null, coveredWeight: 0, mandatoryDecimal, assignmentsDecimal, extrasDecimal };
+            return { final: null, coveredWeight: 0, examsDecimal, assignmentsDecimal, extrasDecimal };
         }
 
         const normalizedFinal = weightedSum * (100 / coveredWeight);
         return {
             final: Number(normalizedFinal.toFixed(2)),
             coveredWeight,
-            mandatoryDecimal,
+            examsDecimal,
             assignmentsDecimal,
             extrasDecimal
         };
     };
 
     const studentFinalData = useMemo(() => {
-        if (!user?.uid) return { final: null, coveredWeight: 0, mandatoryDecimal: null, assignmentsDecimal: null, extrasDecimal: null };
+        if (!user?.uid) return { final: null, coveredWeight: 0, examsDecimal: null, assignmentsDecimal: null, extrasDecimal: null };
         return getFinalForUser(user.uid);
     }, [
         user?.uid,
         hasStrict100,
         blockWeights,
+        exams,
         mandatoryQuizzes,
         assignmentQuizzes,
         evaluationItems,
         gradeDocByKey,
         assignmentReviewByKey,
+        examReviewByKey,
         quizScoreByQuizUser
     ]);
 
@@ -468,7 +532,7 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         if (Math.abs(draftBlockWeightTotal - 100) > 0.001) {
             setBlockFeedback({
                 type: 'error',
-                message: `La suma de Tests obligatorios + Tareas entregables + Extras debe ser exactamente 100%. Sugerencia: deja Extras en ${recommendedBlockExtras.toFixed(2)}%.`
+                message: `La suma de Examenes + Tareas y tests + Extras debe ser exactamente 100%. Sugerencia: deja Extras en ${recommendedBlockExtras.toFixed(2)}%.`
             });
             return;
         }
@@ -487,31 +551,6 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         setBlockFeedback({ type: 'success', message: 'Ponderaciones de bloques guardadas.' });
     };
 
-    const autoAssignMissingQuizWeights = async (quizzes, field) => {
-        if (!subject?.id || quizzes.length === 0) return;
-
-        const missingQuizzes = quizzes.filter((quiz) => quiz?.[field] === undefined || quiz?.[field] === null);
-        if (missingQuizzes.length === 0) return;
-
-        const fixedTotal = quizzes
-            .filter((quiz) => !(quiz?.[field] === undefined || quiz?.[field] === null))
-            .reduce((sum, quiz) => sum + clamp(Number(quiz[field] || 0), 0, 100), 0);
-
-        const remaining = Number((100 - fixedTotal).toFixed(2));
-        const distributed = remaining > 0 ? remaining / missingQuizzes.length : 0;
-        const nextWeight = clamp(Number(distributed.toFixed(2)), 0, 100);
-
-        await Promise.all(
-            missingQuizzes.map((quiz) =>
-                updateDoc(doc(db, 'quizzes', quiz.id), {
-                    [field]: nextWeight,
-                    ...(field === 'assignmentWeight' ? { countsForGrade: true } : {}),
-                    updatedAt: serverTimestamp()
-                })
-            )
-        );
-    };
-
     const updateCustomMode = async (key, enabled) => {
         setBlockFeedback({ type: '', message: '' });
         await updateDoc(doc(db, 'subjects', subject.id), {
@@ -524,66 +563,29 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         });
     };
 
-    useEffect(() => {
-        if (!canManage || !mandatoryCustomWeightsEnabled) return;
-        autoAssignMissingQuizWeights(mandatoryQuizzes, 'mandatoryWeight');
-    }, [canManage, mandatoryCustomWeightsEnabled, mandatoryQuizzes]);
-
-    useEffect(() => {
-        if (!canManage || !assignmentCustomWeightsEnabled) return;
-        autoAssignMissingQuizWeights(assignmentQuizzes, 'assignmentWeight');
-    }, [canManage, assignmentCustomWeightsEnabled, assignmentQuizzes]);
-
     const updateQuizInternalWeight = async (quizId, patch, section) => {
-        const nextValue = clamp(Number(patch?.mandatoryWeight ?? patch?.assignmentWeight ?? 0), 0, 100);
-        let nextTotal = 0;
+        if (section === 'mandatory' && !mandatoryCustomWeightsEnabled) return;
+        if (section === 'assignments' && !assignmentCustomWeightsEnabled) return;
 
-        if (section === 'mandatory') {
-            if (!mandatoryCustomWeightsEnabled) return;
-            const targetQuiz = mandatoryQuizzes.find((quiz) => quiz.id === quizId);
-            if (!targetQuiz) return;
-            nextTotal = mandatoryInternalWeightTotal - clamp(Number(targetQuiz.mandatoryWeight ?? 0), 0, 100) + nextValue;
-            if (Math.abs(nextTotal - 100) > 0.001) {
-                setBlockFeedback({
-                    type: 'error',
-                    message: 'No se puede guardar: la suma interna de Tests obligatorios debe ser exactamente 100%.'
-                });
-                return;
-            }
-        }
-
-        if (section === 'assignments') {
-            if (!assignmentCustomWeightsEnabled) return;
-            const targetQuiz = assignmentQuizzes.find((quiz) => quiz.id === quizId);
-            if (!targetQuiz) return;
-            nextTotal = assignmentsInternalWeightTotal - clamp(Number(targetQuiz.assignmentWeight ?? 0), 0, 100) + nextValue;
-            if (Math.abs(nextTotal - 100) > 0.001) {
-                setBlockFeedback({
-                    type: 'error',
-                    message: 'No se puede guardar: la suma interna de Tareas entregables debe ser exactamente 100%.'
-                });
-                return;
-            }
-        }
-
+        const lockField = section === 'mandatory' ? 'mandatoryWeightLocked' : 'assignmentWeightLocked';
         setBlockFeedback({ type: '', message: '' });
         await updateDoc(doc(db, 'quizzes', quizId), {
             ...patch,
+            [lockField]: true,
+            updatedAt: serverTimestamp()
+        });
+    };
+
+    const unlockQuizWeight = async (quizId, section) => {
+        const lockField = section === 'mandatory' ? 'mandatoryWeightLocked' : 'assignmentWeightLocked';
+        await updateDoc(doc(db, 'quizzes', quizId), {
+            [lockField]: false,
             updatedAt: serverTimestamp()
         });
     };
 
     const createEvaluationItem = async () => {
         if (!newItem.title.trim() || !subject?.id) return;
-
-        const nextTotal = extrasInternalWeightTotal + clamp(Number(newItem.weight || 0), 0, 100);
-        if (Math.abs(nextTotal - 100) > 0.001) {
-            setBlockFeedback({
-                type: 'error',
-                message: 'No se puede guardar: al crear un extra, la suma interna de Extras debe quedar en 100% exacto.'
-            });
-            return;
-        }
 
         setSaving(true);
         try {
@@ -612,21 +614,6 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
     };
 
     const updateEvaluationItem = async (itemId, patch) => {
-        if (patch?.weight !== undefined) {
-            const targetItem = evaluationItems.find((item) => item.id === itemId);
-            if (!targetItem) return;
-            const oldWeight = clamp(Number(targetItem.weight || 0), 0, 100);
-            const newWeight = clamp(Number(patch.weight || 0), 0, 100);
-            const nextTotal = extrasInternalWeightTotal - oldWeight + newWeight;
-            if (Math.abs(nextTotal - 100) > 0.001) {
-                setBlockFeedback({
-                    type: 'error',
-                    message: 'No se puede guardar: la suma interna de Extras debe ser exactamente 100%.'
-                });
-                return;
-            }
-        }
-
         setBlockFeedback({ type: '', message: '' });
         await updateDoc(doc(db, 'subjectEvaluationItems', itemId), {
             ...patch,
@@ -727,6 +714,42 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         });
     };
 
+    const saveExamReview = async (exam, studentUid, rawValue) => {
+        const key = `${exam.id}:${studentUid}`;
+        const existingDoc = examReviewByKey[key];
+        const trimmed = String(rawValue ?? '').trim();
+
+        if (!trimmed) {
+            if (existingDoc?.id) {
+                await deleteDoc(doc(db, 'subjectExamGradeReviews', existingDoc.id));
+            }
+            return;
+        }
+
+        const parsed = Number(trimmed);
+        if (Number.isNaN(parsed)) return;
+
+        const bounded = clamp(parsed, 0, 10);
+        const payload = {
+            subjectId: subject.id,
+            examId: exam.id,
+            userId: studentUid,
+            overrideDecimal: bounded,
+            reviewedBy: user?.uid || null,
+            updatedAt: serverTimestamp()
+        };
+
+        if (existingDoc?.id) {
+            await updateDoc(doc(db, 'subjectExamGradeReviews', existingDoc.id), payload);
+            return;
+        }
+
+        await addDoc(collection(db, 'subjectExamGradeReviews'), {
+            ...payload,
+            createdAt: serverTimestamp()
+        });
+    };
+
     const studentView = (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
@@ -734,7 +757,7 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                     <div>
                         <p className="text-xs uppercase tracking-[0.2em] font-bold text-slate-400 dark:text-slate-500 mb-2">Notas</p>
                         <h3 className="text-2xl font-black text-slate-900 dark:text-white">Resumen por bloques</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Tests obligatorios, tareas entregables y actividades extra.</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Examenes, tareas con tests y actividades extra.</p>
                     </div>
                     <div className="rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-3 text-right min-w-[10rem]">
                         <p className="text-[11px] uppercase tracking-[0.16em] font-bold text-slate-400 dark:text-slate-500">Nota actual</p>
@@ -762,15 +785,15 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                         </thead>
                         <tbody>
                             <tr className="border-b border-slate-50 dark:border-slate-800/70">
-                                <td className="py-3 pr-3 font-semibold text-slate-800 dark:text-slate-200">Tests obligatorios</td>
+                                <td className="py-3 pr-3 font-semibold text-slate-800 dark:text-slate-200">Examenes</td>
                                 <td className="py-3 pr-3 text-slate-600 dark:text-slate-300">{blockWeights.mandatoryTestsWeight}%</td>
-                                <td className="py-3 pr-3 text-slate-800 dark:text-slate-200 font-bold">{studentFinalData.mandatoryDecimal !== null ? studentFinalData.mandatoryDecimal.toFixed(2) : '--'}</td>
+                                <td className="py-3 pr-3 text-slate-800 dark:text-slate-200 font-bold">{studentFinalData.examsDecimal !== null ? studentFinalData.examsDecimal.toFixed(2) : '--'}</td>
                                 <td className="py-3 text-slate-700 dark:text-slate-300 font-semibold">
-                                    {studentFinalData.mandatoryDecimal !== null ? ((studentFinalData.mandatoryDecimal * blockWeights.mandatoryTestsWeight) / 100).toFixed(2) : '--'}
+                                    {studentFinalData.examsDecimal !== null ? ((studentFinalData.examsDecimal * blockWeights.mandatoryTestsWeight) / 100).toFixed(2) : '--'}
                                 </td>
                             </tr>
                             <tr className="border-b border-slate-50 dark:border-slate-800/70">
-                                <td className="py-3 pr-3 font-semibold text-slate-800 dark:text-slate-200">Tareas entregables</td>
+                                <td className="py-3 pr-3 font-semibold text-slate-800 dark:text-slate-200">Tareas y tests</td>
                                 <td className="py-3 pr-3 text-slate-600 dark:text-slate-300">{blockWeights.assignmentsWeight}%</td>
                                 <td className="py-3 pr-3 text-slate-800 dark:text-slate-200 font-bold">{studentFinalData.assignmentsDecimal !== null ? studentFinalData.assignmentsDecimal.toFixed(2) : '--'}</td>
                                 <td className="py-3 text-slate-700 dark:text-slate-300 font-semibold">
@@ -806,7 +829,7 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                     <div>
                         <p className="text-xs uppercase tracking-[0.2em] font-bold text-slate-400 dark:text-slate-500 mb-2">Configuracion</p>
                         <h3 className="text-2xl font-black text-slate-900 dark:text-white">Bloques de nota (100% obligatorio)</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Divide la nota en tests obligatorios, tareas entregables y extras.</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Divide la nota en examenes, tareas con tests y extras.</p>
                     </div>
                     <div className={`rounded-2xl px-4 py-3 border ${
                         Math.abs(draftBlockWeightTotal - 100) > 0.001
@@ -820,7 +843,7 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <label className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3 block">
-                        <span className="text-[11px] uppercase tracking-[0.16em] font-bold text-slate-400 dark:text-slate-500">Tests obligatorios</span>
+                        <span className="text-[11px] uppercase tracking-[0.16em] font-bold text-slate-400 dark:text-slate-500">Examenes</span>
                         <input
                             type="number"
                             min="0"
@@ -831,7 +854,7 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                         />
                     </label>
                     <label className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3 block">
-                        <span className="text-[11px] uppercase tracking-[0.16em] font-bold text-slate-400 dark:text-slate-500">Tareas entregables</span>
+                        <span className="text-[11px] uppercase tracking-[0.16em] font-bold text-slate-400 dark:text-slate-500">Tareas + tests</span>
                         <input
                             type="number"
                             min="0"
@@ -881,118 +904,102 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
             </div>
 
             <div className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
-                <h4 className="text-lg font-black text-slate-900 dark:text-white mb-4">Ponderacion interna de tests obligatorios (referencia 100%)</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Aqui decides cuanto pesa cada test dentro del bloque de tests obligatorios.</p>
-                <div className="mb-4 flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5">
-                    <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                        Personalizar pesos de tests obligatorios
-                    </p>
-                    <label className="inline-flex items-center gap-2 cursor-pointer">
-                        <span className={`text-xs font-bold ${mandatoryCustomWeightsEnabled ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-500 dark:text-slate-400'}`}>
-                            {mandatoryCustomWeightsEnabled ? 'Activado' : 'Iguales'}
-                        </span>
-                        <input
-                            type="checkbox"
-                            checked={mandatoryCustomWeightsEnabled}
-                            onChange={(event) => updateCustomMode('mandatoryCustomWeightsEnabled', event.target.checked)}
-                            className="h-4 w-4"
-                        />
-                    </label>
-                </div>
-                <div className={`text-sm font-semibold mb-3 ${hasMandatoryInternal100 ? 'text-slate-600 dark:text-slate-300' : 'text-red-600 dark:text-red-300'}`}>
-                    Total interno: {mandatoryInternalWeightTotal.toFixed(0)}%
-                </div>
-                {mandatoryCustomWeightsEnabled && Math.abs(mandatoryInternalWeightTotal - 100) > 0.001 && (
-                    <div className="mb-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs text-red-700 dark:text-red-300">
-                        {mandatoryInternalDiff > 0
-                            ? `Faltan ${mandatoryInternalDiff.toFixed(2)}% en Tests obligatorios para poder guardar.`
-                            : `Te pasas por ${Math.abs(mandatoryInternalDiff).toFixed(2)}% en Tests obligatorios. Ajusta hasta 100%.`}
-                    </div>
-                )}
+                <h4 className="text-lg font-black text-slate-900 dark:text-white mb-4">Examenes</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Los examenes se califican de forma manual (0-10) en la tabla por estudiante.</p>
                 <div className="space-y-3">
-                    {mandatoryQuizzes.length === 0 && (
-                        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-4 text-sm text-slate-500 dark:text-slate-400">No hay tests obligatorios.</div>
+                    {exams.length === 0 && (
+                        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-4 text-sm text-slate-500 dark:text-slate-400">No hay examenes creados.</div>
                     )}
-                    {mandatoryQuizzes.map((quiz) => (
-                        <div key={quiz.id} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-center">
-                            <p className="font-semibold text-slate-800 dark:text-slate-200">{quiz.title || quiz.name || 'Test'}</p>
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    key={`mandatory-${quiz.id}-${mandatoryCustomWeightsEnabled ? 'custom' : 'equal'}`}
-                                    defaultValue={getMandatoryWeightForQuiz(quiz)}
-                                    onBlur={(event) => updateQuizInternalWeight(quiz.id, { mandatoryWeight: clamp(Number(event.target.value || 0), 0, 100) }, 'mandatory')}
-                                    readOnly={!mandatoryCustomWeightsEnabled}
-                                    disabled={!mandatoryCustomWeightsEnabled}
-                                    className="w-28 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold disabled:opacity-70"
-                                />
-                                <Percent className="w-4 h-4 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2" />
-                            </div>
+                    {exams.map((exam) => (
+                        <div key={exam.id} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 flex items-center justify-between gap-3">
+                            <p className="font-semibold text-slate-800 dark:text-slate-200">{exam.title || exam.name || 'Examen'}</p>
+                            <span className="text-xs text-slate-500 dark:text-slate-400">{Array.isArray(exam.questions) ? exam.questions.length : 0} preguntas</span>
                         </div>
                     ))}
                 </div>
             </div>
 
             <div className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
-                <h4 className="text-lg font-black text-slate-900 dark:text-white mb-4">Ponderacion interna de tareas entregables (referencia 100%)</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Asigna mas valor a ciertas tareas si lo necesitas.</p>
+                <h4 className="text-lg font-black text-slate-900 dark:text-white mb-4">Ponderacion interna de tareas entregables y tests (referencia 100%)</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">Aqui decides cuanto pesa cada tarea o test dentro del mismo bloque.</p>
                 <div className="mb-4 flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5">
                     <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
-                        Personalizar pesos de tareas entregables
+                        Pesos de tareas y tests
                     </p>
-                    <label className="inline-flex items-center gap-2 cursor-pointer">
-                        <span className={`text-xs font-bold ${assignmentCustomWeightsEnabled ? 'text-indigo-600 dark:text-indigo-300' : 'text-slate-500 dark:text-slate-400'}`}>
-                            {assignmentCustomWeightsEnabled ? 'Activado' : 'Iguales'}
-                        </span>
-                        <input
-                            type="checkbox"
-                            checked={assignmentCustomWeightsEnabled}
-                            onChange={(event) => updateCustomMode('assignmentCustomWeightsEnabled', event.target.checked)}
-                            className="h-4 w-4"
-                        />
-                    </label>
+                    <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold ${!assignmentCustomWeightsEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>Automatico</span>
+                        <button
+                            type="button"
+                            onClick={() => updateCustomMode('assignmentCustomWeightsEnabled', !assignmentCustomWeightsEnabled)}
+                            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${assignmentCustomWeightsEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'}`}
+                        >
+                            <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${assignmentCustomWeightsEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                        <span className={`text-xs font-bold ${assignmentCustomWeightsEnabled ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`}>Manual</span>
+                    </div>
                 </div>
-                <div className={`text-sm font-semibold mb-3 ${hasAssignmentsInternal100 ? 'text-slate-600 dark:text-slate-300' : 'text-red-600 dark:text-red-300'}`}>
+                <div className="text-sm font-semibold mb-3 text-slate-600 dark:text-slate-300">
                     Total interno: {assignmentsInternalWeightTotal.toFixed(0)}%
                 </div>
-                {assignmentCustomWeightsEnabled && Math.abs(assignmentsInternalWeightTotal - 100) > 0.001 && (
+                {assignmentCustomWeightsEnabled && assignmentsLockedTotal > 100 && (
                     <div className="mb-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs text-red-700 dark:text-red-300">
-                        {assignmentsInternalDiff > 0
-                            ? `Faltan ${assignmentsInternalDiff.toFixed(2)}% en Tareas entregables para poder guardar.`
-                            : `Te pasas por ${Math.abs(assignmentsInternalDiff).toFixed(2)}% en Tareas entregables. Ajusta hasta 100%.`}
+                        Los pesos bloqueados suman {assignmentsLockedTotal.toFixed(0)}% (superan el 100%). Desbloquea o reduce algun peso.
                     </div>
                 )}
                 <div className="space-y-3">
                     {assignmentQuizzes.length === 0 && (
-                        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-4 text-sm text-slate-500 dark:text-slate-400">No hay tareas entregables.</div>
+                        <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-4 text-sm text-slate-500 dark:text-slate-400">No hay tareas ni tests.</div>
                     )}
-                    {assignmentQuizzes.map((quiz) => (
-                        <div key={quiz.id} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-center">
-                            <p className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2"><ClipboardCheck className="w-4 h-4 text-indigo-500" /> {quiz.title || quiz.name || 'Tarea'}</p>
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    key={`assignment-${quiz.id}-${assignmentCustomWeightsEnabled ? 'custom' : 'equal'}`}
-                                    defaultValue={getAssignmentWeightForQuiz(quiz)}
-                                    onBlur={(event) => updateQuizInternalWeight(quiz.id, { assignmentWeight: clamp(Number(event.target.value || 0), 0, 100), countsForGrade: true }, 'assignments')}
-                                    readOnly={!assignmentCustomWeightsEnabled}
-                                    disabled={!assignmentCustomWeightsEnabled}
-                                    className="w-28 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold disabled:opacity-70"
-                                />
-                                <Percent className="w-4 h-4 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2" />
+                    {assignmentQuizzes.map((quiz) => {
+                        const isLocked = assignmentCustomWeightsEnabled && quiz.assignmentWeightLocked;
+                        const effectiveWeight = getAssignmentWeightForQuiz(quiz);
+                        return (
+                            <div key={quiz.id} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-3 items-center">
+                                <p className="font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2"><ClipboardCheck className="w-4 h-4 text-indigo-500" /> {quiz.title || quiz.name || 'Tarea'}</p>
+                                {assignmentCustomWeightsEnabled && (
+                                    <button
+                                        onClick={() => isLocked ? unlockQuizWeight(quiz.id, 'assignments') : null}
+                                        className={`p-2 rounded-lg transition-colors ${isLocked ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30' : 'text-slate-400 dark:text-slate-500'}`}
+                                        title={isLocked ? 'Desbloquear (volver a distribucion automatica)' : 'Automatico'}
+                                    >
+                                        {isLocked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                                    </button>
+                                )}
+                                <div className="relative">
+                                    {assignmentCustomWeightsEnabled && !isLocked ? (
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            key={`assignment-${quiz.id}-auto`}
+                                            defaultValue={effectiveWeight.toFixed(1)}
+                                            onBlur={(event) => updateQuizInternalWeight(quiz.id, { assignmentWeight: clamp(Number(event.target.value || 0), 0, 100) }, 'assignments')}
+                                            className="w-28 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold"
+                                        />
+                                    ) : (
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            key={`assignment-${quiz.id}-${isLocked ? 'locked' : 'equal'}`}
+                                            defaultValue={isLocked ? clamp(Number(quiz.assignmentWeight ?? 0), 0, 100) : effectiveWeight.toFixed(1)}
+                                            onBlur={isLocked ? (event) => updateQuizInternalWeight(quiz.id, { assignmentWeight: clamp(Number(event.target.value || 0), 0, 100) }, 'assignments') : undefined}
+                                            readOnly={!isLocked}
+                                            disabled={!assignmentCustomWeightsEnabled}
+                                            className="w-28 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-semibold disabled:opacity-70"
+                                        />
+                                    )}
+                                    <Percent className="w-4 h-4 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2" />
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 
             <div className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
                 <h4 className="text-lg font-black text-slate-900 dark:text-white mb-4">Anadir actividad extra</h4>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <div className={`grid grid-cols-1 ${extrasCustomWeightsEnabled ? 'md:grid-cols-5' : 'md:grid-cols-4'} gap-3`}>
                     <input
                         type="text"
                         value={newItem.title}
@@ -1007,15 +1014,17 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                         placeholder="Categoria"
                         className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold"
                     />
-                    <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={newItem.weight}
-                        onChange={(event) => setNewItem((prev) => ({ ...prev, weight: event.target.value }))}
-                        placeholder="Peso interno %"
-                        className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold"
-                    />
+                    {extrasCustomWeightsEnabled && (
+                        <input
+                            type="number"
+                            min="0"
+                            max="100"
+                            value={newItem.weight}
+                            onChange={(event) => setNewItem((prev) => ({ ...prev, weight: event.target.value }))}
+                            placeholder="Peso interno %"
+                            className="px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl font-semibold"
+                        />
+                    )}
                     <input
                         type="number"
                         min="1"
@@ -1038,51 +1047,69 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
 
             <div className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
                 <h4 className="text-lg font-black text-slate-900 dark:text-white mb-4">Extras activos</h4>
-                <div className={`text-sm font-semibold mb-3 ${hasExtrasInternal100 ? 'text-slate-600 dark:text-slate-300' : 'text-red-600 dark:text-red-300'}`}>
+                <div className="mb-4 flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5">
+                    <p className="text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        Pesos de actividades extra
+                    </p>
+                    <div className="flex items-center gap-2">
+                        <span className={`text-xs font-bold ${!extrasCustomWeightsEnabled ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'}`}>Automatico</span>
+                        <button
+                            type="button"
+                            onClick={() => updateCustomMode('extrasCustomWeightsEnabled', !extrasCustomWeightsEnabled)}
+                            className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${extrasCustomWeightsEnabled ? 'bg-indigo-600' : 'bg-slate-300 dark:bg-slate-600'}`}
+                        >
+                            <span className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${extrasCustomWeightsEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                        <span className={`text-xs font-bold ${extrasCustomWeightsEnabled ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-400 dark:text-slate-500'}`}>Manual</span>
+                    </div>
+                </div>
+                <div className="text-sm font-semibold mb-3 text-slate-600 dark:text-slate-300">
                     Total interno: {extrasInternalWeightTotal.toFixed(0)}%
                 </div>
-                {Math.abs(extrasInternalWeightTotal - 100) > 0.001 && (
-                    <div className="mb-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs text-red-700 dark:text-red-300">
-                        {extrasInternalDiff > 0
-                            ? `Faltan ${extrasInternalDiff.toFixed(2)}% en Extras para poder guardar.`
-                            : `Te pasas por ${Math.abs(extrasInternalDiff).toFixed(2)}% en Extras. Ajusta hasta 100%.`}
-                    </div>
-                )}
                 <div className="space-y-3">
                     {evaluationItems.length === 0 && (
                         <div className="rounded-2xl border border-dashed border-slate-200 dark:border-slate-700 p-4 text-sm text-slate-500 dark:text-slate-400">Aun no has creado actividades extra.</div>
                     )}
-                    {evaluationItems.map((item) => (
-                        <div key={item.id} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3 items-center">
-                            <div>
-                                <p className="font-bold text-slate-900 dark:text-white">{item.title}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">{item.category}</p>
+                    {evaluationItems.map((item) => {
+                        const effectiveWeight = getExtrasWeightForItem(item);
+                        return (
+                            <div key={item.id} className="rounded-2xl border border-slate-200 dark:border-slate-700 p-4 grid grid-cols-1 md:grid-cols-[1fr_auto_auto_auto] gap-3 items-center">
+                                <div>
+                                    <p className="font-bold text-slate-900 dark:text-white">{item.title}</p>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">{item.category}</p>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        key={`extra-${item.id}-${extrasCustomWeightsEnabled ? 'manual' : 'auto'}`}
+                                        defaultValue={extrasCustomWeightsEnabled ? item.weight : effectiveWeight.toFixed(1)}
+                                        onBlur={extrasCustomWeightsEnabled ? (event) => updateEvaluationItem(item.id, { weight: clamp(Number(event.target.value || 0), 0, 100) }) : undefined}
+                                        readOnly={!extrasCustomWeightsEnabled}
+                                        disabled={!extrasCustomWeightsEnabled}
+                                        className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-semibold w-full md:w-28 disabled:opacity-70"
+                                        title="Peso interno %"
+                                    />
+                                    <Percent className="w-4 h-4 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2" />
+                                </div>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    defaultValue={item.maxScore || 10}
+                                    onBlur={(event) => updateEvaluationItem(item.id, { maxScore: Math.max(1, Number(event.target.value || 10)) })}
+                                    className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-semibold w-full md:w-28"
+                                    title="Nota maxima"
+                                />
+                                <button
+                                    onClick={() => deleteEvaluationItem(item.id)}
+                                    className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 text-sm font-semibold"
+                                >
+                                    <Trash2 className="w-4 h-4" /> Eliminar
+                                </button>
                             </div>
-                            <input
-                                type="number"
-                                min="0"
-                                max="100"
-                                defaultValue={item.weight}
-                                onBlur={(event) => updateEvaluationItem(item.id, { weight: clamp(Number(event.target.value || 0), 0, 100) })}
-                                className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-semibold w-full md:w-28"
-                                title="Peso interno %"
-                            />
-                            <input
-                                type="number"
-                                min="1"
-                                defaultValue={item.maxScore || 10}
-                                onBlur={(event) => updateEvaluationItem(item.id, { maxScore: Math.max(1, Number(event.target.value || 10)) })}
-                                className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-semibold w-full md:w-28"
-                                title="Nota maxima"
-                            />
-                            <button
-                                onClick={() => deleteEvaluationItem(item.id)}
-                                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 text-sm font-semibold"
-                            >
-                                <Trash2 className="w-4 h-4" /> Eliminar
-                            </button>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
 
@@ -1099,8 +1126,8 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                             <thead>
                                 <tr className="border-b border-slate-100 dark:border-slate-800">
                                     <th className="py-3 pr-3 text-left font-bold text-slate-500 dark:text-slate-400">Alumno</th>
-                                    <th className="py-3 pr-3 text-left font-bold text-slate-500 dark:text-slate-400">Tests obligatorios</th>
-                                    <th className="py-3 pr-3 text-left font-bold text-slate-500 dark:text-slate-400">Tareas entregables</th>
+                                    <th className="py-3 pr-3 text-left font-bold text-slate-500 dark:text-slate-400">Examenes</th>
+                                    <th className="py-3 pr-3 text-left font-bold text-slate-500 dark:text-slate-400">Tareas y tests</th>
                                     <th className="py-3 pr-3 text-left font-bold text-slate-500 dark:text-slate-400">Extras</th>
                                     <th className="py-3 text-left font-bold text-slate-500 dark:text-slate-400">Final</th>
                                 </tr>
@@ -1116,8 +1143,39 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                                                     <span className="font-semibold text-slate-800 dark:text-slate-200">{student.name}</span>
                                                 </div>
                                             </td>
-                                            <td className="py-3 pr-3 font-bold text-slate-700 dark:text-slate-200">
-                                                {finalData.mandatoryDecimal !== null ? finalData.mandatoryDecimal.toFixed(2) : '--'}
+                                            <td className="py-3 pr-3">
+                                                <div className="text-xs font-bold text-slate-700 dark:text-slate-200 mb-2">
+                                                    {finalData.examsDecimal !== null ? finalData.examsDecimal.toFixed(2) : '--'}
+                                                </div>
+                                                <div className="space-y-1">
+                                                    {exams.map((exam) => {
+                                                        const key = `${exam.id}:${student.uid}`;
+                                                        const reviewDoc = examReviewByKey[key];
+                                                        const draftValue = examReviewDrafts[key] ?? (reviewDoc?.overrideDecimal ?? '');
+                                                        return (
+                                                            <div key={key} className="flex items-center gap-1">
+                                                                <span className="text-[10px] text-slate-500 dark:text-slate-400 w-24 truncate">{exam.title || exam.name || 'Examen'}</span>
+                                                                <input
+                                                                    type="number"
+                                                                    min="0"
+                                                                    max="10"
+                                                                    step="0.1"
+                                                                    value={draftValue}
+                                                                    onChange={(event) => setExamReviewDrafts((prev) => ({ ...prev, [key]: event.target.value }))}
+                                                                    className="w-16 px-2 py-1 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-semibold"
+                                                                    title="Revision manual examen"
+                                                                />
+                                                                <button
+                                                                    onClick={() => saveExamReview(exam, student.uid, draftValue)}
+                                                                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-900/25 text-indigo-700 dark:text-indigo-300 text-xs font-semibold"
+                                                                    title="Guardar revision examen"
+                                                                >
+                                                                    <Save className="w-3 h-3" />
+                                                                </button>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
                                             </td>
                                             <td className="py-3 pr-3">
                                                 <div className="text-xs font-bold text-slate-700 dark:text-slate-200 mb-2">
