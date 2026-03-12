@@ -1,6 +1,12 @@
 # BasicInfoFields.jsx
 
 ## Changelog
+### 2026-03-12: Curso desde Firestore (institución)
+- Replaced the `level` + `grade` selector pair with a single `course` selector.
+- Added support for `availableCourses`, `coursesLoading`, and `courseSelectRef` props.
+- Selector now lists real courses created in Firestore for the current institution.
+- Added empty-state helper text when there are no available institution courses.
+
 ### 2026-03-09: Inline required validation visuals
 - Added support for `validationErrors` and `setValidationErrors` props.
 - Added refs for name/level/grade controls to support focused error recovery from parent modal.

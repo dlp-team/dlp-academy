@@ -1,7 +1,7 @@
 // src/pages/Subject/modals/SubjectFormModal.jsx
 import React, { useState, useEffect } from 'react';
 import { X, Save, Users, Trash2, Share2, Loader2, CheckCircle, AlertCircle, RotateCcw, Copy } from 'lucide-react';
-import { MODERN_FILL_COLORS, EDUCATION_LEVELS } from '../../../utils/subjectConstants';
+import { MODERN_FILL_COLORS } from '../../../utils/subjectConstants';
 import { addDoc, collection, getDocs, query, where, getDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
@@ -44,9 +44,10 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [classesActionSuccess, setClassesActionSuccess] = useState('');
     const [inviteCodeCopyStatus, setInviteCodeCopyStatus] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
+    const [availableCourses, setAvailableCourses] = useState([]);
+    const [coursesLoading, setCoursesLoading] = useState(false);
     const subjectNameInputRef = React.useRef(null);
-    const subjectLevelSelectRef = React.useRef(null);
-    const subjectGradeSelectRef = React.useRef(null);
+    const subjectCourseSelectRef = React.useRef(null);
 
     const isShortcutEditing = isEditing && formData?.isShortcut === true;
     const isTagOnlyShortcutEdit = studentShortcutTagOnlyMode && isShortcutEditing;
@@ -89,26 +90,6 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         !isShortcutEditing
     );
 
-    const resolveCourseSelectors = (courseValue = '', fallbackLevel = '', fallbackGrade = '') => {
-        if (fallbackLevel && fallbackGrade && Array.isArray(EDUCATION_LEVELS[fallbackLevel]) && EDUCATION_LEVELS[fallbackLevel].includes(fallbackGrade)) {
-            return { level: fallbackLevel, grade: fallbackGrade };
-        }
-
-        const normalizedCourse = String(courseValue || '').trim();
-        if (!normalizedCourse) return { level: '', grade: '' };
-
-        for (const level of Object.keys(EDUCATION_LEVELS)) {
-            const grades = Array.isArray(EDUCATION_LEVELS[level]) ? EDUCATION_LEVELS[level] : [];
-            for (const grade of grades) {
-                if (normalizedCourse === `${grade} ${level}` || normalizedCourse === `${level} ${grade}`) {
-                    return { level, grade };
-                }
-            }
-        }
-
-        return { level: '', grade: '' };
-    };
-
     // 1. Initialize Logic
     useEffect(() => {
         if (isOpen) {
@@ -130,11 +111,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setClassesActionError('');
             setClassesActionSuccess('');
             if (isEditing && initialData) {
-                const resolvedSelectors = resolveCourseSelectors(
-                    initialData.course || '',
-                    initialData.level || '',
-                    initialData.grade || ''
-                );
+                const fallbackCourse = (initialData.level && initialData.grade)
+                    ? `${initialData.grade} ${initialData.level}`
+                    : '';
                 setFormData({
                     id: initialData.id,
                     ownerId: initialData.ownerId,
@@ -145,9 +124,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         ? getPermissionLevel(initialData, user?.uid)
                         : 'owner',
                     name: initialData.name || '',
-                    course: initialData.course || '',
-                    level: resolvedSelectors.level,
-                    grade: resolvedSelectors.grade,
+                    course: initialData.course || fallbackCourse,
+                    level: initialData.level || '',
+                    grade: initialData.grade || '',
                     color: initialData.color || 'from-blue-400 to-blue-600',
                     icon: initialData.icon || 'book',
                     tags: initialData.tags || [],
@@ -160,11 +139,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 setSharedList(initialData.sharedWith || []);
             } else {
                 // When creating new subject, pre-fill course, level, and grade if provided
-                // Validate that level exists in EDUCATION_LEVELS
                 const prefilledLevel = initialData?.level || '';
                 const prefilledGrade = initialData?.grade || '';
-                const validLevel = prefilledLevel && EDUCATION_LEVELS[prefilledLevel] ? prefilledLevel : '';
-                const validGrade = validLevel && prefilledGrade && EDUCATION_LEVELS[validLevel].includes(prefilledGrade) ? prefilledGrade : '';
+                const fallbackCourse = (prefilledLevel && prefilledGrade)
+                    ? `${prefilledGrade} ${prefilledLevel}`
+                    : '';
                 
                 setFormData({ 
                     inviteCode: '',
@@ -172,9 +151,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     isShortcut: false,
                     shortcutPermissionLevel: 'owner',
                     name: '',
-                    level: validLevel,
-                    grade: validGrade,
-                    course: initialData?.course || '',
+                    level: prefilledLevel,
+                    grade: prefilledGrade,
+                    course: initialData?.course || fallbackCourse,
                     color: 'from-blue-400 to-blue-600',
                     icon: 'book',
                     tags: [],
@@ -187,6 +166,53 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             }
         }
     }, [isOpen, isEditing, initialData, initialTab, user?.uid]);
+
+    useEffect(() => {
+        let active = true;
+
+        const loadCourses = async () => {
+            const institutionId = user?.institutionId || initialData?.institutionId || '';
+            if (!isOpen || !institutionId) {
+                if (active) {
+                    setAvailableCourses([]);
+                    setCoursesLoading(false);
+                }
+                return;
+            }
+
+            setCoursesLoading(true);
+            try {
+                const coursesRef = collection(db, 'courses');
+                const coursesQuery = query(coursesRef, where('institutionId', '==', institutionId));
+                const coursesSnapshot = await getDocs(coursesQuery);
+
+                if (!active) return;
+
+                const loadedCourses = coursesSnapshot.docs
+                    .map((courseDoc) => ({
+                        id: courseDoc.id,
+                        ...courseDoc.data()
+                    }))
+                    .filter((course) => String(course?.name || '').trim().length > 0)
+                    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }));
+
+                setAvailableCourses(loadedCourses);
+            } catch (error) {
+                if (active) {
+                    setAvailableCourses([]);
+                }
+            } finally {
+                if (active) {
+                    setCoursesLoading(false);
+                }
+            }
+        };
+
+        loadCourses();
+        return () => {
+            active = false;
+        };
+    }, [isOpen, user?.institutionId, initialData?.institutionId]);
 
     const handleCopyInviteCode = async () => {
         const code = String(formData?.inviteCode || initialData?.inviteCode || '').trim();
@@ -272,19 +298,6 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         loadInstitutionEmails();
         return () => { active = false; };
     }, [isOpen, user?.institutionId]);
-
-    // 2. Auto-generate Course Name (only if course is not pre-filled from outside)
-    useEffect(() => {
-        if (formData.level && formData.grade && !isEditing) {
-            // Only auto-generate if we don't already have a manually set course
-            // or if the course doesn't match the expected format
-            const expectedCourse = `${formData.grade} ${formData.level}`;
-            const reversedCourse = `${formData.level} ${formData.grade}`;
-            if (formData.course !== expectedCourse && formData.course !== reversedCourse) {
-                setFormData(prev => ({ ...prev, course: expectedCourse }));
-            }
-        }
-    }, [formData.level, formData.grade, isEditing]);
 
     useEffect(() => {
         if (isTagOnlyShortcutEdit && activeTab === 'sharing') {
@@ -398,15 +411,13 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         if (!isTagOnlyShortcutEdit && canEditOriginalFields) {
             const nextErrors = {};
             const hasName = String(formData?.name || '').trim().length > 0;
-            const hasLevel = String(formData?.level || '').trim().length > 0;
-            const hasGrade = String(formData?.grade || '').trim().length > 0;
             const hasCourse = String(formData?.course || '').trim().length > 0;
 
             if (!hasName) {
                 nextErrors.name = 'Campo obligatorio.';
             }
 
-            if (!hasCourse || !hasLevel || !hasGrade) {
+            if (!hasCourse) {
                 nextErrors.course = 'Campo obligatorio.';
             }
 
@@ -417,12 +428,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 if (nextErrors.name && subjectNameInputRef.current) {
                     subjectNameInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     subjectNameInputRef.current.focus();
-                } else if (subjectLevelSelectRef.current) {
-                    subjectLevelSelectRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    subjectLevelSelectRef.current.focus();
-                } else if (subjectGradeSelectRef.current) {
-                    subjectGradeSelectRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    subjectGradeSelectRef.current.focus();
+                } else if (subjectCourseSelectRef.current) {
+                    subjectCourseSelectRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    subjectCourseSelectRef.current.focus();
                 }
 
                 return;
@@ -889,8 +897,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                 validationErrors={validationErrors}
                                                 setValidationErrors={setValidationErrors}
                                                 nameInputRef={subjectNameInputRef}
-                                                levelSelectRef={subjectLevelSelectRef}
-                                                gradeSelectRef={subjectGradeSelectRef}
+                                                courseSelectRef={subjectCourseSelectRef}
+                                                availableCourses={availableCourses}
+                                                coursesLoading={coursesLoading}
                                             />
                                         )}
                                         <TagManager formData={formData} setFormData={setFormData} />

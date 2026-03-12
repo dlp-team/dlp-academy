@@ -1,3 +1,17 @@
+## [2026-03-12] Feature Update: Subject Course Selector Uses Firestore Courses
+### Context & Architecture
+`SubjectFormModal` now loads available courses from Firestore (`courses` collection filtered by `institutionId`) and passes them to `BasicInfoFields` for selection.
+
+### Previous State
+- Course selection in the general tab depended on static `EDUCATION_LEVELS` (`level` + `grade`) and auto-generated `course` labels.
+- New courses created from institution administration were not automatically reflected in the subject form selector.
+
+### New State & Logic
+- Added modal-level course loading state: `availableCourses` + `coursesLoading`.
+- Added `loadCourses` effect scoped to modal open and institution context.
+- Removed strict validation dependency on `level`/`grade`; save now requires `name` and `course`.
+- Preserved backward compatibility by keeping legacy `level`/`grade` values when present and deriving fallback course label from them when needed.
+
 ## [2026-03-09] Feature Update: Required-Field Validation Feedback in General Tab
 ### Context & Architecture
 `SubjectFormModal` now performs explicit required checks for subject name and academic course before saving from the `General` tab.
