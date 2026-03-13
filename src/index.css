@@ -201,3 +201,79 @@ html.theme-switching *::after {
   height: 0;
   display: none;
 }
+
+/* Custom elegant scrollbar for Home page */
+.home-page, .home-page * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99,102,241,0.18) rgba(0,0,0,0.03);
+}
+.home-page::-webkit-scrollbar, .home-page *::-webkit-scrollbar {
+  width: 10px;
+  background: transparent;
+}
+.home-page::-webkit-scrollbar-track, .home-page *::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.03);
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+.home-page::-webkit-scrollbar-thumb, .home-page *::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(99,102,241,0.18) 0%, rgba(139,92,246,0.18) 100%);
+  border-radius: 8px;
+  opacity: 0.7;
+  transition: background 0.3s, opacity 0.3s;
+}
+.home-page::-webkit-scrollbar-thumb:hover, .home-page *::-webkit-scrollbar-thumb:hover,
+.home-page::-webkit-scrollbar-thumb:active, .home-page *::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, rgba(99,102,241,0.38) 0%, rgba(139,92,246,0.38) 100%);
+  opacity: 1;
+}
+.dark .home-page::-webkit-scrollbar-track, .dark .home-page *::-webkit-scrollbar-track {
+  background: rgba(30,41,59,0.18);
+}
+.dark .home-page::-webkit-scrollbar-thumb, .dark .home-page *::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(139,92,246,0.22) 0%, rgba(99,102,241,0.22) 100%);
+  opacity: 0.6;
+}
+.dark .home-page::-webkit-scrollbar-thumb:hover, .dark .home-page *::-webkit-scrollbar-thumb:hover,
+.dark .home-page::-webkit-scrollbar-thumb:active, .dark .home-page *::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, rgba(139,92,246,0.38) 0%, rgba(99,102,241,0.38) 100%);
+  opacity: 1;
+}
+
+/* Force custom scrollbar on html/body when Home page is active */
+html.home-scrollbar-active, body.home-scrollbar-active {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99,102,241,0.18) rgba(0,0,0,0.03);
+}
+html.home-scrollbar-active::-webkit-scrollbar, body.home-scrollbar-active::-webkit-scrollbar {
+  width: 10px;
+  background: transparent;
+}
+html.home-scrollbar-active::-webkit-scrollbar-track, body.home-scrollbar-active::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.03);
+  border-radius: 8px;
+  transition: background 0.3s;
+}
+html.home-scrollbar-active::-webkit-scrollbar-thumb, body.home-scrollbar-active::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(99,102,241,0.18) 0%, rgba(139,92,246,0.18) 100%);
+  border-radius: 8px;
+  opacity: 0.7;
+  transition: background 0.3s, opacity 0.3s;
+}
+html.home-scrollbar-active::-webkit-scrollbar-thumb:hover, body.home-scrollbar-active::-webkit-scrollbar-thumb:hover,
+html.home-scrollbar-active::-webkit-scrollbar-thumb:active, body.home-scrollbar-active::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, rgba(99,102,241,0.38) 0%, rgba(139,92,246,0.38) 100%);
+  opacity: 1;
+}
+.dark html.home-scrollbar-active::-webkit-scrollbar-track, .dark body.home-scrollbar-active::-webkit-scrollbar-track {
+  background: rgba(30,41,59,0.18);
+}
+.dark html.home-scrollbar-active::-webkit-scrollbar-thumb, .dark body.home-scrollbar-active::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(139,92,246,0.22) 0%, rgba(99,102,241,0.22) 100%);
+  opacity: 0.6;
+}
+.dark html.home-scrollbar-active::-webkit-scrollbar-thumb:hover, .dark body.home-scrollbar-active::-webkit-scrollbar-thumb:hover,
+.dark html.home-scrollbar-active::-webkit-scrollbar-thumb:active, .dark body.home-scrollbar-active::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, rgba(139,92,246,0.38) 0%, rgba(99,102,241,0.38) 100%);
+  opacity: 1;
+}

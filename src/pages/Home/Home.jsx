@@ -45,8 +45,16 @@ import {
 } from './utils/homePersistence';
 
 
+
 const Home = ({ user }) => {
+    // Add .home-scrollbar-active to html/body on mount, remove on unmount
     React.useEffect(() => {
+        document.documentElement.classList.add('home-scrollbar-active');
+        document.body.classList.add('home-scrollbar-active');
+        return () => {
+            document.documentElement.classList.remove('home-scrollbar-active');
+            document.body.classList.remove('home-scrollbar-active');
+        };
     }, []);
 
     const [searchQuery, setSearchQuery] = useState('');
