@@ -69,6 +69,9 @@ const HomeContent = ({
     filterOverlayOpen = false,
     onCloseFilterOverlay = () => {},
     studentMode = false,
+    selectMode = false,
+    selectedItemKeys = new Set(),
+    onToggleSelectItem = () => {},
 }) => {
     const contentRef = useRef(null);
     const sharedFolderPermission = currentFolder?.isShared && user?.uid
@@ -79,7 +82,7 @@ const HomeContent = ({
     const disableAllActionsInShared = isViewerInSharedFolder;
     const disableFolderDeleteActionsInShared = isViewerInSharedFolder || isEditorInSharedFolder || studentMode;
     const disableSubjectDeleteActionsInShared = isViewerInSharedFolder || studentMode;
-    const dndEnabledInContext = isDragAndDropEnabled && !disableAllActionsInShared;
+    const dndEnabledInContext = isDragAndDropEnabled && !disableAllActionsInShared && !selectMode;
     const canCreateInCurrentContext = !disableAllActionsInShared && !studentMode;
 
     // Auto-scroll is always enabled for both grid and list modes
@@ -136,6 +139,8 @@ const HomeContent = ({
             visualState?.isCutPending ? 'opacity-60' : 'opacity-100'
         ].join(' ');
     };
+
+    const getSelectionKey = (item, type) => `${type}:${item?.shortcutId || item?.id}`;
 
     const matchesTagFilter = (item) => {
         if (!Array.isArray(selectedTags) || selectedTags.length === 0) return true;
@@ -404,6 +409,8 @@ const HomeContent = ({
 
                                             {/* Folders in Grid */}
                                             {!studentMode && viewMode === 'grid' && activeFilter !== 'subjects' && filteredFolders.map((folder, index) => {
+                                                const selectionKey = getSelectionKey(folder, 'folder');
+                                                const isSelected = selectMode && selectedItemKeys.has(selectionKey);
                                                 return (
                                                 <div
                                                     key={`folder-${folder.id}`}
@@ -414,9 +421,16 @@ const HomeContent = ({
                                                     <FolderCard
                                                         folder={folder}
                                                         user={user}
+                                                        isSelected={isSelected}
                                                         allFolders={allFoldersForTree}
                                                         allSubjects={allSubjectsForTree}
-                                                        onOpen={handleOpenFolder}
+                                                        onOpen={(targetFolder) => {
+                                                            if (selectMode) {
+                                                                onToggleSelectItem(targetFolder, 'folder');
+                                                                return;
+                                                            }
+                                                            handleOpenFolder(targetFolder);
+                                                        }}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
                                                         onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
@@ -469,6 +483,8 @@ const HomeContent = ({
 
                                             {/* Subjects in Grid */}
                                             {activeFilter !== 'folders' && displayedGroupSubjects.map((subject, index) => {
+                                                const selectionKey = getSelectionKey(subject, 'subject');
+                                                const isSelected = selectMode && selectedItemKeys.has(selectionKey);
                                                 return (
                                                 <div
                                                     key={`${groupName}-${subject.id}`}
@@ -479,9 +495,16 @@ const HomeContent = ({
                                                     <SubjectCard
                                                         subject={subject}
                                                         user={user}
+                                                        isSelected={isSelected}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
-                                                        onSelect={handleSelectSubject}
+                                                        onSelect={(subjectId) => {
+                                                            if (selectMode) {
+                                                                onToggleSelectItem(subject, 'subject');
+                                                                return;
+                                                            }
+                                                            handleSelectSubject(subjectId);
+                                                        }}
                                                         onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
                                                         onEdit={(e, s) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
                                                         onDelete={(e, s, action = 'delete') => {
@@ -607,7 +630,10 @@ const HomeContent = ({
                                         )}
                                         
                                         {/* Render Folders */}
-                                        {!studentMode && viewMode === 'grid' && filteredFolders.map((folder, index) => (
+                                        {!studentMode && viewMode === 'grid' && filteredFolders.map((folder, index) => {
+                                            const selectionKey = getSelectionKey(folder, 'folder');
+                                            const isSelected = selectMode && selectedItemKeys.has(selectionKey);
+                                            return (
                                             <ListViewItem 
                                                 key={folder.id}
                                                 user={user}
@@ -617,7 +643,13 @@ const HomeContent = ({
                                                 parentId={currentFolder ? currentFolder.id : null}
                                                 allFolders={allFoldersForTree}
                                                 allSubjects={allSubjectsForTree}
-                                                onNavigate={handleOpenFolder}
+                                                onNavigate={(targetFolder) => {
+                                                    if (selectMode) {
+                                                        onToggleSelectItem(targetFolder, 'folder');
+                                                        return;
+                                                    }
+                                                    handleOpenFolder(targetFolder);
+                                                }}
                                                 onNavigateSubject={handleSelectSubject}
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                 onDelete={(f, action = 'delete') => {
@@ -652,13 +684,17 @@ const HomeContent = ({
                                                 disableAllActions={disableAllActionsInShared}
                                                 disableDeleteActions={disableFolderDeleteActionsInShared}
                                                 draggable={dndEnabledInContext}
+                                                isSelected={isSelected}
                                                 onFocusItem={onCardFocus}
                                                 getCardVisualState={getCardVisualState}
                                             />
-                                        ))}
+                                            );
+                                        })}
 
                                         {/* Render Subjects */}
                                         {groupSubjects && displayedGroupSubjects.map((subject, index) => {
+                                            const selectionKey = getSelectionKey(subject, 'subject');
+                                            const isSelected = selectMode && selectedItemKeys.has(selectionKey);
                                             return (
                                                 <ListViewItem
                                                     key={subject.id}
@@ -669,7 +705,13 @@ const HomeContent = ({
                                                     parentId={currentFolder ? currentFolder.id : null}
                                                     allFolders={allFoldersForTree}
                                                     allSubjects={allSubjectsForTree}
-                                                    onNavigateSubject={handleSelectSubject}
+                                                    onNavigateSubject={(subjectId) => {
+                                                        if (selectMode) {
+                                                            onToggleSelectItem(subject, 'subject');
+                                                            return;
+                                                        }
+                                                        handleSelectSubject(subjectId);
+                                                    }}
                                                     onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                     onDelete={(s, action = 'delete') => {
                                                         if (disableAllActionsInShared || disableSubjectDeleteActionsInShared) return;
@@ -709,6 +751,7 @@ const HomeContent = ({
                                                     disableAllActions={disableAllActionsInShared}
                                                     disableDeleteActions={disableSubjectDeleteActionsInShared}
                                                     draggable={dndEnabledInContext}
+                                                    isSelected={isSelected}
                                                     onFocusItem={onCardFocus}
                                                     getCardVisualState={getCardVisualState}
                                                     hideSharedIndicator={studentMode}

@@ -30,6 +30,7 @@ const SubjectCard = (props) => {
         cardScale = 100,
         onOpenTopics,
         filterOverlayOpen = false,
+        isSelected = false,
         disableAllActions = false,
         disableDeleteActions = false,
         disableUnshareActions = false
@@ -79,6 +80,8 @@ const SubjectCard = (props) => {
                 isModern 
                     ? `${modernShellClass} p-[4px]` 
                     : ''
+            } ${
+                isSelected ? 'ring-4 ring-indigo-500 dark:ring-indigo-300 ring-offset-2 ring-offset-white dark:ring-offset-slate-950' : ''
             }`}
             style={{ aspectRatio: '16 / 10' }}
             draggable={draggable}

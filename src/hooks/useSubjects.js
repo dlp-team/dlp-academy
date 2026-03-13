@@ -1,7 +1,7 @@
 // src/hooks/useSubjects.js
 import { useState, useEffect } from 'react';
 import { 
-    collection, query, where, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy, serverTimestamp, runTransaction
+    collection, query, where, getDocs, getDoc, setDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, orderBy, serverTimestamp, runTransaction
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { generateSubjectInviteCode, normalizeSubjectAccessPayload } from '../utils/subjectAccessUtils';
@@ -91,6 +91,20 @@ export const useSubjects = (user) => {
                 return subject.institutionId === currentInstitutionId;
             });
 
+            setSubjects((prevSubjects) => tempSubjects.map((subject) => {
+                const previousMatch = Array.isArray(prevSubjects)
+                    ? prevSubjects.find(prevSubject => prevSubject?.id === subject?.id)
+                    : null;
+
+                if (Array.isArray(previousMatch?.topics)) {
+                    return { ...subject, topics: previousMatch.topics };
+                }
+
+                return { ...subject, topics: [] };
+            }));
+
+            setLoading(false);
+
             // Load topics for all subjects
             const subjectsWithTopics = await Promise.all(tempSubjects.map(async (subject) => {
                 try {
@@ -109,7 +123,6 @@ export const useSubjects = (user) => {
             }));
 
             setSubjects(subjectsWithTopics);
-            setLoading(false);
         };
 
         // Real-time listener for owned subjects

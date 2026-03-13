@@ -30,6 +30,7 @@ const FolderCard = (props) => {
         canDrop,
         draggable,
         cardScale = 100,
+        isSelected = false,
         disableAllActions = false,
         disableDeleteActions = false,
         disableUnshareActions = false,
@@ -56,6 +57,8 @@ const FolderCard = (props) => {
                 (isDragging || isGhostDragging) ? 'opacity-0 scale-95' : (!filterOverlayOpen ? 'hover:scale-105' : '')
             } ${
                 state.isOver && canDrop ? 'ring-4 ring-indigo-400 rounded-2xl dark:ring-indigo-500' : ''
+            } ${
+                isSelected ? 'ring-4 ring-indigo-500 dark:ring-indigo-300 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 rounded-2xl' : ''
             }`}
             style={{ aspectRatio: '16 / 10' }}
             onClick={() => {

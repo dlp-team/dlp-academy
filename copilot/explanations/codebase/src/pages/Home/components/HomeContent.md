@@ -1,6 +1,12 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-03-13: Select mode behavior for cards
+- Added selection-mode props (`selectMode`, `selectedItemKeys`, `onToggleSelectItem`) to support bulk workflows.
+- In selection mode, card interactions toggle selection instead of navigating/opening.
+- Added visual ring highlight for selected grid cards.
+- Disabled drag-and-drop while selection mode is active to prevent accidental move conflicts.
+
 ### 2026-03-09: Copy/Cut visual state integration
 - Added `getCardVisualState` prop consumption and wrapper class composition for folder/subject cards.
 - Grid cards now animate scale pulse on Ctrl+C/X and show reduced opacity while Ctrl+X clipboard is pending.

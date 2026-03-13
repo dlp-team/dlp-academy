@@ -1,3 +1,15 @@
+## [2026-03-13] Shared Shortcut Visibility: Immediate Subject Render Before Topic Hydration
+### Context
+- Shared shortcuts could appear delayed after refresh/theme toggle because subject list rendering waited for topic hydration (`Promise.all`) to complete.
+
+### Change
+- `updateSubjectsState` now performs a two-step update:
+  1) immediately sets subject list with cached/empty `topics`,
+  2) asynchronously hydrates topics and updates state again.
+
+### Validation
+- `get_errors` reports no issues in `src/hooks/useSubjects.js`.
+
 ## [2026-03-08] Permanent Delete Cascade Expanded to Quizzes and Resources
 ### Context
 - Subject permanent deletion coverage required full topic dependency cleanup, including generated resources and quizzes.

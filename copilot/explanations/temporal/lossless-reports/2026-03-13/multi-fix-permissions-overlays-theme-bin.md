@@ -60,6 +60,21 @@
 - `src/pages/Profile/components/UserCard.jsx`
   - Added role mapping and badge rendering for `admin`, `institutionadmin`, `teacher`, and `student`.
 
+### 10) Card multi-select workflow for bulk actions
+- `src/pages/Home/Home.jsx`
+- `src/pages/Home/components/HomeContent.jsx`
+  - Added `Modo selección` UI in Home manual view with bulk actions:
+    - delete selected,
+    - move selection to existing folder or root,
+    - create new folder and move selected elements inside.
+  - In select mode, card/list clicks toggle selection instead of opening navigation.
+  - Disabled drag and drop while selection mode is active.
+
+### 11) Shared shortcut delayed visibility
+- `src/hooks/useSubjects.js`
+  - Changed subject state update strategy to render list immediately with cached/empty topics, then hydrate topics asynchronously.
+  - This removes topic-fetch blocking from initial subject visibility, improving shared shortcut first paint.
+
 ## Preserved Behaviors
 - Existing share/unshare flows and owner guards remain intact.
 - Invite code visibility in classes tab remains available.
@@ -77,9 +92,7 @@
   - `copilot/explanations/codebase/src/components/ui/Toggle.md`
   - `copilot/explanations/codebase/src/pages/Profile/components/UserCard.md`
   - `copilot/explanations/codebase/src/pages/Home/components/BinView.md`
-
-## Out-of-Scope / Pending from Original Request
-- Not implemented in this pass:
-  - Card multi-select mode with bulk delete/move/new-folder actions.
-  - Shared shortcut delayed initial visibility after owner moves original into folder.
-- These require larger workflow/state changes and should be delivered as a dedicated follow-up slice.
+  - `copilot/explanations/codebase/src/pages/Home/Home.md`
+  - `copilot/explanations/codebase/src/pages/Home/components/HomeContent.md`
+  - `copilot/explanations/codebase/src/pages/Home/components/HomeSelectionToolbar.md`
+  - `copilot/explanations/codebase/src/hooks/useSubjects.md`

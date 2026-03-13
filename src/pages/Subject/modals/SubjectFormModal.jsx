@@ -225,7 +225,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }));
 
                 setAvailableCourses(loadedCourses);
-            } catch (error) {
+            } catch {
                 if (active) {
                     setAvailableCourses([]);
                 }
@@ -252,7 +252,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         try {
             await navigator.clipboard.writeText(code);
             setInviteCodeCopyStatus('Código copiado.');
-        } catch (error) {
+        } catch {
             setInviteCodeCopyStatus('No se pudo copiar el código.');
         }
 
@@ -286,7 +286,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 const ownerSnapshot = await getDocs(ownerQuery);
                 const ownerEmailFromQuery = ownerSnapshot.docs[0]?.data()?.email || '';
                 if (active) setOwnerEmailResolved(ownerEmailFromQuery);
-            } catch (error) {
+            } catch {
                 if (active) setOwnerEmailResolved('');
             }
         };
@@ -318,7 +318,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 ));
 
                 setInstitutionEmails(uniqueEmails);
-            } catch (error) {
+            } catch {
                 if (active) setInstitutionEmails([]);
             }
         };
@@ -358,7 +358,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 if (!active) return;
                 const loaded = classesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
                 setAvailableClasses(loaded);
-            } catch (error) {
+            } catch {
                 if (active) {
                     setAvailableClasses([]);
                 }
@@ -466,48 +466,6 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         }
 
         onSave(formData);
-    };
-
-    const executeShareAction = async (emailToShare, roleToShare) => {
-        const normalizedEmail = emailToShare.toLowerCase();
-        const ownerEmail = (initialData?.ownerEmail || (formData?.ownerId === user?.uid ? user?.email : '') || '').toLowerCase();
-        if (ownerEmail && normalizedEmail === ownerEmail) {
-            setShareError('No puedes compartir con el propietario.');
-            return;
-        }
-        setShareLoading(true);
-        setShareError('');
-        setShareSuccess('');
-        try {
-            const result = await onShare(formData.id, normalizedEmail, roleToShare);
-            const updatedEntry = {
-                email: normalizedEmail,
-                uid: result?.uid,
-                role: roleToShare,
-                canEdit: roleToShare === 'editor',
-                sharedAt: result?.sharedAt || new Date()
-            };
-            setSharedList(prev => {
-                const existingIndex = prev.findIndex(u => u.email?.toLowerCase() === normalizedEmail);
-                if (existingIndex >= 0) {
-                    const next = [...prev];
-                    next[existingIndex] = { ...next[existingIndex], ...updatedEntry };
-                    return next;
-                }
-                return [...prev, updatedEntry];
-            });
-            setShareEmail('');
-            setShareRole('viewer');
-            setShareSuccess(result?.roleUpdated
-                ? `Permisos actualizados para ${normalizedEmail}.`
-                : `Asignatura compartida con ${normalizedEmail}.`
-            );
-            setTimeout(() => setShareSuccess(''), 4000);
-        } catch (error) {
-            setShareError(error?.message || 'Error al compartir. Inténtalo de nuevo.');
-        } finally {
-            setShareLoading(false);
-        }
     };
 
     const validateShareCandidate = (email) => {
@@ -738,7 +696,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 } else {
                     localSharedList.push(updatedEntry);
                 }
-            } catch (error) {
+            } catch {
                 failures.push(`No se pudo compartir con ${entry.email}`);
             }
         }
@@ -751,7 +709,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         ? { ...entry, role: nextRole, canEdit: nextRole === 'editor' }
                         : entry
                 );
-            } catch (error) {
+            } catch {
                 failures.push(`No se pudo actualizar permiso de ${email}`);
             }
         }
@@ -760,7 +718,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             try {
                 await onUnshare(formData.id, email);
                 localSharedList = localSharedList.filter(entry => (entry.email || '').toLowerCase() !== (email || '').toLowerCase());
-            } catch (error) {
+            } catch {
                 failures.push(`No se pudo quitar acceso a ${email}`);
             }
         }

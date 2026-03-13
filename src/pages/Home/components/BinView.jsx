@@ -64,6 +64,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
     // ── Data loading ───────────────────────────────────────────────────────────
     useEffect(() => {
         loadTrashedItems();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.uid, isStudent]);
 
     // ── Action handlers ────────────────────────────────────────────────────────

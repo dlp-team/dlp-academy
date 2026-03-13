@@ -21,6 +21,7 @@ import SharedView from './components/SharedView';
 
 // Sub-Components
 import HomeControls from './components/HomeControls';
+import HomeSelectionToolbar from './components/HomeSelectionToolbar';
 import HomeContent from './components/HomeContent';
 import HomeEmptyState from './components/HomeEmptyState';
 import HomeModals from './components/HomeModals';
@@ -51,6 +52,10 @@ const Home = ({ user }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [sharedScopeSelected, setSharedScopeSelected] = useState(true);
     const [hasInitialDataLoaded, setHasInitialDataLoaded] = useState(false);
+    const [selectMode, setSelectMode] = useState(false);
+    const [selectedItemsByKey, setSelectedItemsByKey] = useState({});
+    const [bulkMoveTargetFolderId, setBulkMoveTargetFolderId] = useState('');
+    const [bulkActionMessage, setBulkActionMessage] = useState('');
     const [searchParams, setSearchParams] = useSearchParams();
     const homeThemeTokens = useInstitutionHomeThemeTokens(user);
     const isStudentRole = useMemo(() => getNormalizedRole(user) === 'student', [user]);
@@ -284,6 +289,127 @@ const Home = ({ user }) => {
         return Object.values(logic.groupedContent || {}).some((bucket) => Array.isArray(bucket) && bucket.length > 0);
     }, [isStudentRole, hasContent, logic.groupedContent]);
 
+    const selectedItems = useMemo(() => Object.values(selectedItemsByKey), [selectedItemsByKey]);
+    const selectedItemKeys = useMemo(() => new Set(Object.keys(selectedItemsByKey)), [selectedItemsByKey]);
+
+    const buildSelectionKey = React.useCallback((item, type) => `${type}:${item?.shortcutId || item?.id}`, []);
+
+    const clearSelection = React.useCallback(() => {
+        setSelectedItemsByKey({});
+        setBulkMoveTargetFolderId('');
+    }, []);
+
+    const toggleSelectItem = React.useCallback((item, type) => {
+        if (!item?.id || !type) return;
+        const key = buildSelectionKey(item, type);
+        setSelectedItemsByKey((prev) => {
+            if (prev[key]) {
+                const next = { ...prev };
+                delete next[key];
+                return next;
+            }
+            return {
+                ...prev,
+                [key]: { key, type, item }
+            };
+        });
+    }, [buildSelectionKey]);
+
+    const runBulkMoveToFolder = React.useCallback(async (targetFolderId) => {
+        const destination = targetFolderId || null;
+        const itemsToMove = Object.values(selectedItemsByKey);
+        if (itemsToMove.length === 0) return;
+
+        let moved = 0;
+        for (const entry of itemsToMove) {
+            const item = entry?.item;
+            const type = entry?.type;
+            if (!item?.id || !type) continue;
+
+            if (type === 'subject') {
+                if (isShortcutItem(item) && item?.shortcutId) {
+                    await logic.moveShortcut(item.shortcutId, destination);
+                    moved += 1;
+                    continue;
+                }
+                await logic.updateSubject(item.id, { folderId: destination });
+                moved += 1;
+                continue;
+            }
+
+            if (type === 'folder') {
+                if (destination && item.id === destination) continue;
+                if (isShortcutItem(item) && item?.shortcutId) {
+                    await logic.moveShortcut(item.shortcutId, destination);
+                    moved += 1;
+                    continue;
+                }
+                await logic.updateFolder(item.id, { parentId: destination });
+                moved += 1;
+            }
+        }
+
+        setBulkActionMessage(`Se movieron ${moved} elemento(s).`);
+        clearSelection();
+    }, [selectedItemsByKey, logic, clearSelection]);
+
+    const handleBulkDelete = React.useCallback(async () => {
+        const itemsToDelete = Object.values(selectedItemsByKey);
+        if (itemsToDelete.length === 0) return;
+
+        let deleted = 0;
+        for (const entry of itemsToDelete) {
+            const item = entry?.item;
+            const type = entry?.type;
+            if (!item?.id || !type) continue;
+
+            if (isShortcutItem(item) && item?.shortcutId) {
+                await logic.deleteShortcut(item.shortcutId);
+                deleted += 1;
+                continue;
+            }
+
+            if (type === 'subject') {
+                await logic.deleteSubject(item.id);
+                deleted += 1;
+                continue;
+            }
+
+            await logic.deleteFolder(item.id);
+            deleted += 1;
+        }
+
+        setBulkActionMessage(`Se eliminaron ${deleted} elemento(s).`);
+        clearSelection();
+    }, [selectedItemsByKey, logic, clearSelection]);
+
+    const handleCreateFolderFromSelection = React.useCallback(async () => {
+        const itemsToOrganize = Object.values(selectedItemsByKey);
+        if (itemsToOrganize.length === 0) return;
+
+        const createdFolder = await logic.addFolder({
+            name: 'Nueva carpeta seleccionada',
+            parentId: logic.currentFolder?.id || null,
+            color: 'from-amber-400 to-amber-600'
+        });
+
+        await runBulkMoveToFolder(createdFolder?.id || null);
+        setBulkActionMessage('Se creó una carpeta nueva y se movieron los elementos seleccionados.');
+    }, [selectedItemsByKey, logic, runBulkMoveToFolder]);
+
+    React.useEffect(() => {
+        if (logic.viewMode === 'shared' || logic.viewMode === 'bin' || isStudentRole) {
+            setSelectMode(false);
+            clearSelection();
+        }
+    }, [logic.viewMode, isStudentRole, clearSelection]);
+
+    React.useEffect(() => {
+        if (!bulkActionMessage) return;
+        const timer = window.setTimeout(() => setBulkActionMessage(''), 3000);
+        return () => window.clearTimeout(timer);
+    }, [bulkActionMessage]);
+
     React.useEffect(() => {
         const availableTagSet = new Set(availableControlTags);
         if (logic.viewMode === 'shared') {
@@ -374,6 +500,30 @@ const Home = ({ user }) => {
                 {shortcutFeedback ? (
                     <p className={`${homeThemeTokens.mutedTextClass} mt-4 rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/60`}>
                         {shortcutFeedback}
+                    </p>
+                ) : null}
+
+                <HomeSelectionToolbar
+                    visible={logic.viewMode !== 'shared' && logic.viewMode !== 'bin' && !isStudentRole}
+                    selectMode={selectMode}
+                    selectedCount={selectedItems.length}
+                    bulkMoveTargetFolderId={bulkMoveTargetFolderId}
+                    folders={logic.folders || []}
+                    onToggleSelectMode={() => {
+                        setSelectMode((prev) => !prev);
+                        setBulkActionMessage('');
+                        if (selectMode) clearSelection();
+                    }}
+                    onDeleteSelected={handleBulkDelete}
+                    onCreateFolderFromSelection={handleCreateFolderFromSelection}
+                    onMoveTargetChange={setBulkMoveTargetFolderId}
+                    onMoveSelection={() => runBulkMoveToFolder(bulkMoveTargetFolderId || null)}
+                    onClearSelection={clearSelection}
+                />
+
+                {bulkActionMessage ? (
+                    <p className="mt-3 text-sm text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg px-3 py-2">
+                        {bulkActionMessage}
                     </p>
                 ) : null}
 
@@ -566,6 +716,9 @@ const Home = ({ user }) => {
                                         selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
                                         sharedScopeSelected={effectiveSharedScopeSelected}
                                         studentMode={isStudentRole}
+                                        selectMode={selectMode}
+                                        selectedItemKeys={selectedItemKeys}
+                                        onToggleSelectItem={toggleSelectItem}
                                         
                                         navigate={logic.navigate}
                                     />
