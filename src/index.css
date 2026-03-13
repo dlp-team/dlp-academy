@@ -241,39 +241,40 @@ html.theme-switching *::after {
 }
 
 /* Force custom scrollbar on html/body when Home page is active */
-html.home-scrollbar-active, body.home-scrollbar-active {
+
+html.custom-scrollbar-active, body.custom-scrollbar-active {
   scrollbar-width: thin;
   scrollbar-color: rgba(99,102,241,0.18) rgba(0,0,0,0.03);
 }
-html.home-scrollbar-active::-webkit-scrollbar, body.home-scrollbar-active::-webkit-scrollbar {
+html.custom-scrollbar-active::-webkit-scrollbar, body.custom-scrollbar-active::-webkit-scrollbar {
   width: 10px;
   background: transparent;
 }
-html.home-scrollbar-active::-webkit-scrollbar-track, body.home-scrollbar-active::-webkit-scrollbar-track {
+html.custom-scrollbar-active::-webkit-scrollbar-track, body.custom-scrollbar-active::-webkit-scrollbar-track {
   background: rgba(0,0,0,0.03);
   border-radius: 8px;
   transition: background 0.3s;
 }
-html.home-scrollbar-active::-webkit-scrollbar-thumb, body.home-scrollbar-active::-webkit-scrollbar-thumb {
+html.custom-scrollbar-active::-webkit-scrollbar-thumb, body.custom-scrollbar-active::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, rgba(99,102,241,0.18) 0%, rgba(139,92,246,0.18) 100%);
   border-radius: 8px;
   opacity: 0.7;
   transition: background 0.3s, opacity 0.3s;
 }
-html.home-scrollbar-active::-webkit-scrollbar-thumb:hover, body.home-scrollbar-active::-webkit-scrollbar-thumb:hover,
-html.home-scrollbar-active::-webkit-scrollbar-thumb:active, body.home-scrollbar-active::-webkit-scrollbar-thumb:active {
+html.custom-scrollbar-active::-webkit-scrollbar-thumb:hover, body.custom-scrollbar-active::-webkit-scrollbar-thumb:hover,
+html.custom-scrollbar-active::-webkit-scrollbar-thumb:active, body.custom-scrollbar-active::-webkit-scrollbar-thumb:active {
   background: linear-gradient(180deg, rgba(99,102,241,0.38) 0%, rgba(139,92,246,0.38) 100%);
   opacity: 1;
 }
-.dark html.home-scrollbar-active::-webkit-scrollbar-track, .dark body.home-scrollbar-active::-webkit-scrollbar-track {
+.dark html.custom-scrollbar-active::-webkit-scrollbar-track, .dark body.custom-scrollbar-active::-webkit-scrollbar-track {
   background: rgba(30,41,59,0.18);
 }
-.dark html.home-scrollbar-active::-webkit-scrollbar-thumb, .dark body.home-scrollbar-active::-webkit-scrollbar-thumb {
+.dark html.custom-scrollbar-active::-webkit-scrollbar-thumb, .dark body.custom-scrollbar-active::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, rgba(139,92,246,0.22) 0%, rgba(99,102,241,0.22) 100%);
   opacity: 0.6;
 }
-.dark html.home-scrollbar-active::-webkit-scrollbar-thumb:hover, .dark body.home-scrollbar-active::-webkit-scrollbar-thumb:hover,
-.dark html.home-scrollbar-active::-webkit-scrollbar-thumb:active, .dark body.home-scrollbar-active::-webkit-scrollbar-thumb:active {
+.dark html.custom-scrollbar-active::-webkit-scrollbar-thumb:hover, .dark body.custom-scrollbar-active::-webkit-scrollbar-thumb:hover,
+.dark html.custom-scrollbar-active::-webkit-scrollbar-thumb:active, .dark body.custom-scrollbar-active::-webkit-scrollbar-thumb:active {
   background: linear-gradient(180deg, rgba(139,92,246,0.38) 0%, rgba(99,102,241,0.38) 100%);
   opacity: 1;
 }
