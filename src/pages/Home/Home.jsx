@@ -351,6 +351,7 @@ const Home = ({ user }) => {
 
         setBulkActionMessage(`Se movieron ${moved} elemento(s).`);
         clearSelection();
+        setSelectMode(false);
     }, [selectedItemsByKey, logic, clearSelection]);
 
     const handleBulkDelete = React.useCallback(async () => {
@@ -381,6 +382,7 @@ const Home = ({ user }) => {
 
         setBulkActionMessage(`Se eliminaron ${deleted} elemento(s).`);
         clearSelection();
+        setSelectMode(false);
     }, [selectedItemsByKey, logic, clearSelection]);
 
     const handleCreateFolderFromSelection = React.useCallback(async () => {
@@ -395,6 +397,7 @@ const Home = ({ user }) => {
 
         await runBulkMoveToFolder(createdFolder?.id || null);
         setBulkActionMessage('Se creó una carpeta nueva y se movieron los elementos seleccionados.');
+        setSelectMode(false);
     }, [selectedItemsByKey, logic, runBulkMoveToFolder]);
 
     React.useEffect(() => {

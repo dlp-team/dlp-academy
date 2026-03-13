@@ -18,7 +18,7 @@ const HomeSelectionToolbar = ({
     if (!visible) return null;
 
     return (
-        <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 p-3 flex flex-wrap items-center gap-2">
+        <div className="mt-4 mb-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 p-3 flex flex-wrap items-center gap-2">
             <button
                 type="button"
                 onClick={onToggleSelectMode}
