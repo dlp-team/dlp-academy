@@ -42,7 +42,7 @@ export const useSubjectCardLogic = ({
         }
     };
 
-    const handleDragEnd = (e) => {
+    const handleDragEnd = () => {
         if (draggable && onDragEnd) {
             onDragEnd();
         }

@@ -17,6 +17,7 @@ const TagFilter = ({
     const triggerRef = useRef(null);
     const [panelPos, setPanelPos] = useState({ top: 0, left: 0 });
     const PANEL_WIDTH = 320;
+    const PANEL_HEIGHT = 420;
     const VIEWPORT_MARGIN = 8;
 
 
@@ -43,11 +44,9 @@ const TagFilter = ({
     const filterCount = selectedTags.length + (sharedScopeFilterActive ? 1 : 0);
     const hasActiveFilters = filterCount > 0 || activeFilter !== 'all';
 
-    useLayoutEffect(() => {
-        if (!showFilter || !triggerRef.current) return;
-
+    const getPanelPos = () => {
+        if (!triggerRef.current) return { top: VIEWPORT_MARGIN, left: VIEWPORT_MARGIN };
         const rect = triggerRef.current.getBoundingClientRect();
-        const panelHeight = 420;
 
         const defaultLeft = rect.left;
         const oppositeLeft = rect.right - PANEL_WIDTH;
@@ -62,18 +61,26 @@ const TagFilter = ({
         );
 
         const defaultTop = rect.bottom + 8;
-        const oppositeTop = rect.top - panelHeight - 8;
+        const oppositeTop = rect.top - PANEL_HEIGHT - 8;
 
         let top = defaultTop;
-        if (top + panelHeight > window.innerHeight - VIEWPORT_MARGIN) {
+        if (top + PANEL_HEIGHT > window.innerHeight - VIEWPORT_MARGIN) {
             top = oppositeTop;
         }
         top = Math.min(
             Math.max(top, VIEWPORT_MARGIN),
-            Math.max(VIEWPORT_MARGIN, window.innerHeight - panelHeight - VIEWPORT_MARGIN)
+            Math.max(VIEWPORT_MARGIN, window.innerHeight - PANEL_HEIGHT - VIEWPORT_MARGIN)
         );
 
-        setPanelPos({ top, left });
+        return { top, left };
+    };
+
+    useLayoutEffect(() => {
+        if (!showFilter) return;
+        const frame = window.requestAnimationFrame(() => {
+            setPanelPos(getPanelPos());
+        });
+        return () => window.cancelAnimationFrame(frame);
     }, [showFilter]);
 
     return (

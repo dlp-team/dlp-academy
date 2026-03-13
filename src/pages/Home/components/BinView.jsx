@@ -15,16 +15,7 @@ import { DeleteConfirmModal, EmptyBinConfirmModal } from './bin/BinConfirmModals
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
-    // Restrict access for students
-    if (user?.role === 'student') {
-        return (
-            <div className="w-full flex flex-col items-center justify-center py-16">
-                <XCircle size={48} className="text-red-500 mb-4" />
-                <h2 className="text-2xl font-bold text-red-600 mb-2">Acceso denegado</h2>
-                <p className="text-gray-700 dark:text-gray-300 text-lg">La papelera no está disponible para alumnos.</p>
-            </div>
-        );
-    }
+    const isStudent = user?.role === 'student';
 
     const [trashedSubjects,   setTrashedSubjects]   = useState([]);
     const [loading,           setLoading]           = useState(true);
@@ -39,17 +30,19 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
 
     const selectedCardRef = useRef(null);
 
-    const { getTrashedSubjects, restoreSubject, permanentlyDeleteSubject } = useSubjects(user);
+    const { getTrashedSubjects, restoreSubject, permanentlyDeleteSubject } = useSubjects(isStudent ? null : user);
 
     const selectedSubject = useMemo(
         () => trashedSubjects.find(s => s.id === selectedSubjectId) ?? null,
         [trashedSubjects, selectedSubjectId]
     );
 
-    // ── Data loading ───────────────────────────────────────────────────────────
-    useEffect(() => { loadTrashedItems(); }, []);
-
-    const loadTrashedItems = async () => {
+    const loadTrashedItems = React.useCallback(async () => {
+        if (isStudent) {
+            setTrashedSubjects([]);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
             const items = await getTrashedSubjects();
@@ -77,7 +70,12 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [getTrashedSubjects, permanentlyDeleteSubject, selectedSubjectId, isStudent]);
+
+    // ── Data loading ───────────────────────────────────────────────────────────
+    useEffect(() => {
+        loadTrashedItems();
+    }, [loadTrashedItems]);
 
     // ── Action handlers ────────────────────────────────────────────────────────
     const handleRestore = async (subjectId) => {
@@ -177,6 +175,17 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
 
     const handleSelectSubject = (id) =>
         setSelectedSubjectId(prev => (prev === id ? null : id));
+
+    // Restrict access for students
+    if (isStudent) {
+        return (
+            <div className="w-full flex flex-col items-center justify-center py-16">
+                <XCircle size={48} className="text-red-500 mb-4" />
+                <h2 className="text-2xl font-bold text-red-600 mb-2">Acceso denegado</h2>
+                <p className="text-gray-700 dark:text-gray-300 text-lg">La papelera no está disponible para alumnos.</p>
+            </div>
+        );
+    }
 
     // ── Early returns ──────────────────────────────────────────────────────────
     if (loading) {

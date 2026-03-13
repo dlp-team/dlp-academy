@@ -1,7 +1,7 @@
 // src/pages/Home/components/bin/BinSelectionPanel.jsx
 import React from 'react';
 import { Info, RotateCcw, Trash2, Loader2, PanelRightClose } from 'lucide-react';
-import { getDaysRemaining, getDaysRemainingTextClass } from '../../utils/binViewUtils';
+import { getDaysRemaining } from '../../utils/binViewUtils';
 
 const BinSelectionPanel = ({
     subject,

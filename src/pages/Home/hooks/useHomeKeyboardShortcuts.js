@@ -45,12 +45,6 @@ export const useHomeKeyboardShortcuts = ({
         };
     }, []);
 
-    useEffect(() => {
-        if (clipboard?.mode !== 'cut') {
-            setCutPendingCard(null);
-        }
-    }, [clipboard]);
-
     const triggerCardAnimation = useCallback((id, type) => {
         if (!id || !type) return;
         setAnimatedCard({ id, type });
@@ -68,9 +62,14 @@ export const useHomeKeyboardShortcuts = ({
         if (!id || !type) return { isAnimating: false, isCutPending: false };
         return {
             isAnimating: Boolean(animatedCard && animatedCard.id === id && animatedCard.type === type),
-            isCutPending: Boolean(cutPendingCard && cutPendingCard.id === id && cutPendingCard.type === type)
+            isCutPending: Boolean(
+                clipboard?.mode === 'cut'
+                && cutPendingCard
+                && cutPendingCard.id === id
+                && cutPendingCard.type === type
+            )
         };
-    }, [animatedCard, cutPendingCard]);
+    }, [animatedCard, clipboard?.mode, cutPendingCard]);
 
     const focusedItem = useMemo(() => {
         if (!selectedCard?.id || !selectedCard?.type) return null;
@@ -120,47 +119,53 @@ export const useHomeKeyboardShortcuts = ({
         const check = requireValidSelection(event);
         if (!check.valid) return check.consumed;
 
-        const parentId = selectedCard.type === 'subject'
+        const selectedType = selectedCard?.type;
+        if (!selectedType) return true;
+
+        const parentId = selectedType === 'subject'
             ? (focusedItem.folderId || null)
             : (focusedItem.parentId || null);
 
         setClipboard({
             mode: 'copy',
-            type: selectedCard.type,
+            type: selectedType,
             id: focusedItem.id,
             parentId,
-            label: focusedItem.name || (selectedCard.type === 'subject' ? 'Asignatura' : 'Carpeta')
+            label: focusedItem.name || (selectedType === 'subject' ? 'Asignatura' : 'Carpeta')
         });
 
-        triggerCardAnimation(focusedItem.id, selectedCard.type);
+        triggerCardAnimation(focusedItem.id, selectedType);
         setCutPendingCard(null);
 
-        showFeedback(`${selectedCard.type === 'subject' ? 'Asignatura' : 'Carpeta'} copiada.`);
+        showFeedback(`${selectedType === 'subject' ? 'Asignatura' : 'Carpeta'} copiada.`);
         return true;
-    }, [focusedItem, requireValidSelection, selectedCard?.type, showFeedback, triggerCardAnimation]);
+    }, [focusedItem, requireValidSelection, selectedCard, showFeedback, triggerCardAnimation]);
 
     const onCut = useCallback((event) => {
         const check = requireValidSelection(event);
         if (!check.valid) return check.consumed;
 
-        const parentId = selectedCard.type === 'subject'
+        const selectedType = selectedCard?.type;
+        if (!selectedType) return true;
+
+        const parentId = selectedType === 'subject'
             ? (focusedItem.folderId || null)
             : (focusedItem.parentId || null);
 
         setClipboard({
             mode: 'cut',
-            type: selectedCard.type,
+            type: selectedType,
             id: focusedItem.id,
             parentId,
-            label: focusedItem.name || (selectedCard.type === 'subject' ? 'Asignatura' : 'Carpeta')
+            label: focusedItem.name || (selectedType === 'subject' ? 'Asignatura' : 'Carpeta')
         });
 
-        triggerCardAnimation(focusedItem.id, selectedCard.type);
-        setCutPendingCard({ id: focusedItem.id, type: selectedCard.type });
+        triggerCardAnimation(focusedItem.id, selectedType);
+        setCutPendingCard({ id: focusedItem.id, type: selectedType });
 
-        showFeedback(`${selectedCard.type === 'subject' ? 'Asignatura' : 'Carpeta'} lista para mover.`);
+        showFeedback(`${selectedType === 'subject' ? 'Asignatura' : 'Carpeta'} lista para mover.`);
         return true;
-    }, [focusedItem, requireValidSelection, selectedCard?.type, showFeedback, triggerCardAnimation]);
+    }, [focusedItem, requireValidSelection, selectedCard, showFeedback, triggerCardAnimation]);
 
     const onPaste = useCallback(async (event) => {
         if (isTypingTarget(event)) return false;
