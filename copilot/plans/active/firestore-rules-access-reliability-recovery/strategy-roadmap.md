@@ -9,7 +9,7 @@
 ## Ordered Phases
 
 ### Phase 01 - Failure Discovery and Reproduction Matrix
-- Status: PLANNED
+- Status: COMPLETED
 - Goal: establish deterministic reproduction for each reported authorization failure.
 - Outputs:
   - operation matrix (action x role x resource x expected/actual),
@@ -17,7 +17,7 @@
   - trace links to rule sections.
 
 ### Phase 02 - Rule Intent Mapping and Gap Analysis
-- Status: PLANNED
+- Status: IN_PROGRESS
 - Goal: map current rule predicates to intended domain permissions and find mismatches.
 - Outputs:
   - permission intent table,
@@ -25,7 +25,7 @@
   - prioritized remediation queue.
 
 ### Phase 03 - Surgical Rule Remediation
-- Status: PLANNED
+- Status: IN_PROGRESS
 - Goal: apply minimal, test-first fixes in `firestore.rules`.
 - Outputs:
   - patch set grouped by failure class,
@@ -49,9 +49,9 @@
   - final lossless closure notes.
 
 ## Immediate Next Actions
-1. Execute Phase 01 discovery against current failing user reports.
-2. Capture exact denied operations and associated Firestore paths.
-3. Correlate failures with current rule blocks before editing.
+1. Expand e2e coverage to explicitly assert drag/drop and delete behavior by role in shared-folder workflows.
+2. Complete Phase 02 intent matrix with operation-by-operation predicate mapping for subjects/folders/shortcuts.
+3. Continue Phase 03 with any additional minimal predicate fixes revealed by new e2e evidence.
 
 ## Rollback Strategy (High Level)
 - Keep all rule changes atomic and grouped by behavior.

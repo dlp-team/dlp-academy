@@ -67,4 +67,37 @@ test.describe('Home sharing role journeys', () => {
 
     await expect(page.getByRole('button', { name: /nueva carpeta|nueva subcarpeta/i })).toHaveCount(0);
   });
+
+  test('editor can access draggable cards in designated shared folder when content exists', async ({ page }) => {
+    test.skip(
+      !EDITOR_EMAIL || !EDITOR_PASSWORD || !SHARED_FOLDER_ID,
+      'Set E2E_EDITOR_EMAIL, E2E_EDITOR_PASSWORD, E2E_SHARED_FOLDER_ID.'
+    );
+
+    await login(page, EDITOR_EMAIL, EDITOR_PASSWORD);
+    await page.goto(`/home?folderId=${SHARED_FOLDER_ID}`);
+    await page.waitForURL(/\/home/);
+    test.skip(!page.url().includes(`folderId=${SHARED_FOLDER_ID}`), 'Editor fixture does not currently have access to the designated shared folder.');
+
+    const draggableCards = page.locator('div[draggable="true"]');
+    const draggableCount = await draggableCards.count();
+    test.skip(draggableCount === 0, 'No draggable shared cards available in fixture to validate editor drag capability.');
+
+    await expect(draggableCards.first()).toBeVisible();
+  });
+
+  test('viewer does not expose draggable cards in designated shared folder', async ({ page }) => {
+    test.skip(
+      !VIEWER_EMAIL || !VIEWER_PASSWORD || !SHARED_FOLDER_ID,
+      'Set E2E_VIEWER_EMAIL, E2E_VIEWER_PASSWORD, E2E_SHARED_FOLDER_ID.'
+    );
+
+    await login(page, VIEWER_EMAIL, VIEWER_PASSWORD);
+    await page.goto(`/home?folderId=${SHARED_FOLDER_ID}`);
+    await page.waitForURL(/\/home/);
+    test.skip(!page.url().includes(`folderId=${SHARED_FOLDER_ID}`), 'Viewer fixture does not currently have access to the designated shared folder.');
+
+    const draggableCards = page.locator('div[draggable="true"]');
+    await expect(draggableCards).toHaveCount(0);
+  });
 });

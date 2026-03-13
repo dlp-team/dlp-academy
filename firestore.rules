@@ -824,7 +824,12 @@ service cloud.firestore {
       
       // DELETE: Global Admins, the user who owns the email, OR the Institution Admin of that school
       allow delete: if isGlobalAdmin() || 
-                   (request.auth != null && request.auth.token.email == resource.data.email) ||
+                   (
+                     request.auth != null
+                     && request.auth.token.keys().hasAny(['email'])
+                     && resource.data.keys().hasAny(['email'])
+                     && request.auth.token.email == resource.data.email
+                   ) ||
                    (request.auth != null && 
                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'institutionadmin' &&
                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.institutionId == resource.data.institutionId);

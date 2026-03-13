@@ -212,6 +212,20 @@ describe('Firestore rules integration', () => {
     await assertSucceeds(deleteDoc(doc(emailOwnerDb, 'institution_invites', 'invite-delete-email-owner')));
   });
 
+  it('allows institution admin delete when invite email is missing and still denies teacher', async () => {
+    await seedDoc('institution_invites', 'invite-delete-no-email', {
+      institutionId: 'inst-1',
+      role: 'teacher',
+      type: 'direct',
+    });
+
+    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+    await assertFails(deleteDoc(doc(teacherDb, 'institution_invites', 'invite-delete-no-email')));
+
+    const institutionAdminDb = testEnv.authenticatedContext('institution-admin-1').firestore();
+    await assertSucceeds(deleteDoc(doc(institutionAdminDb, 'institution_invites', 'invite-delete-no-email')));
+  });
+
   it('allows non-admin folder/topic/document/quiz writes only with matching institution id', async () => {
     await seedSubjectTopicFixture();
 

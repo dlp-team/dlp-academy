@@ -20,8 +20,8 @@ Recover stable, least-privilege behavior for Home and related flows by identifyi
 - Deploying rules from agent environment.
 
 ## Status
-- Lifecycle: `todo`
-- Current phase: PLANNED (Phase 01)
+- Lifecycle: `active`
+- Current phase: IN_PROGRESS (Phase 02 - Rule Intent Mapping and Gap Analysis)
 
 ## Assumptions
 - Failures are primarily rule-evaluation mismatches, not frontend business logic regressions.
@@ -35,6 +35,12 @@ Recover stable, least-privilege behavior for Home and related flows by identifyi
    - rules/unit-style authorization checks,
    - e2e flows that reproduce and verify fixes.
 4. Lossless report with before/after behavior and residual risks.
+
+## Progress Update (2026-03-13)
+- Phase 01 reproduction unblocked after correcting editor credentials in `.env`.
+- Previously failing e2e suites now pass for editor-role login and route guard journeys.
+- Added rules hardening for `institution_invites` delete email-field safety checks.
+- Added rules regression test for invite delete when `email` field is missing.
 
 ## Exit Criteria
 - Reproduced failures are eliminated.
