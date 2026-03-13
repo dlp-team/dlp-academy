@@ -54,13 +54,14 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const isShortcutEditing = isEditing && formData?.isShortcut === true;
     const isTagOnlyShortcutEdit = studentShortcutTagOnlyMode && isShortcutEditing;
     const currentRole = getNormalizedRole(user);
-    const canManageClassesTab = isEditing && (currentRole === 'teacher' || currentRole === 'institutionadmin' || currentRole === 'admin');
+    const canAccessClassesTab = isEditing && (currentRole === 'teacher' || currentRole === 'institutionadmin' || currentRole === 'admin');
     const canDirectAssignClasses = currentRole === 'institutionadmin'
         || currentRole === 'admin'
         || (currentRole === 'teacher' && canTeacherAssignClassesAndStudents(institutionAccessPolicies));
     const shortcutPermissionLevel = formData?.shortcutPermissionLevel || 'viewer';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canManageSharing = !isTagOnlyShortcutEdit && (!isShortcutEditing || isShortcutEditor);
+    const canModifyClassAssignments = canAccessClassesTab && canManageSharing;
     const canEditOriginalFields = !isShortcutEditing || isShortcutEditor;
     const isOwnerManager = isShortcutEditing
         ? shortcutPermissionLevel === 'owner'
@@ -336,7 +337,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         let active = true;
 
         const loadClasses = async () => {
-            if (!isOpen || !canManageClassesTab || !user?.institutionId) {
+            if (!isOpen || !canAccessClassesTab || !user?.institutionId) {
                 if (active) {
                     setAvailableClasses([]);
                     setClassesLoading(false);
@@ -372,7 +373,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         return () => {
             active = false;
         };
-    }, [isOpen, canManageClassesTab, user?.institutionId, user?.uid, currentRole]);
+    }, [isOpen, canAccessClassesTab, user?.institutionId, user?.uid, currentRole]);
 
     const toggleClassSelection = (classId) => {
         setSelectedClassIds((prev) => (
@@ -383,7 +384,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     };
 
     const handleSaveClassAssignments = () => {
-        if (!canDirectAssignClasses) return;
+        if (!canModifyClassAssignments || !canDirectAssignClasses) return;
         onSave({
             ...formData,
             classIds: selectedClassIds
@@ -393,7 +394,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     };
 
     const handleRequestClassAssignments = async () => {
-        if (canDirectAssignClasses || !isEditing || !formData?.id || !user?.institutionId || !user?.uid) return;
+        if (!canModifyClassAssignments || canDirectAssignClasses || !isEditing || !formData?.id || !user?.institutionId || !user?.uid) return;
 
         setClassesActionLoading(true);
         setClassesActionError('');
@@ -789,7 +790,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     };
 
     const getAvatarUrl = (entry) => {
-        return entry?.photoURL || entry?.photoUrl || entry?.avatarUrl || entry?.avatar || '';
+        return entry?.photoURL
+            || '';
     };
 
     const getDisplayName = (entry) => {
@@ -893,7 +895,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     <Share2 size={16} /> Compartir
                                 </button>
                             )}
-                            {canManageClassesTab && (
+                            {canAccessClassesTab && (
                                 <button
                                     onClick={() => setActiveTab('classes')}
                                     className={`px-4 py-2 rounded-t-xl font-medium transition-colors ${
@@ -1211,7 +1213,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                             </div>
                         )}
 
-                        {activeTab === 'classes' && canManageClassesTab && (
+                        {activeTab === 'classes' && canAccessClassesTab && (
                             <div className="space-y-4">
                                 <div className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-900/20 p-4">
                                     <div className="flex items-center justify-between gap-3">
@@ -1235,12 +1237,20 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     )}
                                 </div>
 
+                                {!canModifyClassAssignments && (
+                                    <div className="rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 text-sm text-amber-800 dark:text-amber-200">
+                                        Tienes permiso de lector en esta asignatura. Puedes ver y copiar el código de invitación, pero no modificar la asignación de clases.
+                                    </div>
+                                )}
+
                                 <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 p-4">
                                     <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Gestión por clases</h4>
                                     <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                                        {canDirectAssignClasses
+                                        {canModifyClassAssignments && canDirectAssignClasses
                                             ? 'Selecciona las clases que tendrán acceso a esta asignatura.'
-                                            : 'Selecciona tus clases y envía una solicitud para que administración la apruebe.'}
+                                            : canModifyClassAssignments
+                                                ? 'Selecciona tus clases y envía una solicitud para que administración la apruebe.'
+                                                : 'Vista de solo lectura para permisos de lector.'}
                                     </p>
                                 </div>
 
@@ -1270,6 +1280,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                     type="checkbox"
                                                     checked={selectedClassIds.includes(cl.id)}
                                                     onChange={() => toggleClassSelection(cl.id)}
+                                                    disabled={!canModifyClassAssignments}
                                                     className="w-4 h-4 text-indigo-600 rounded border-slate-300"
                                                 />
                                                 <div>
@@ -1302,7 +1313,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     Aplicar cambios
                                 </button>
                             )}
-                            {activeTab === 'classes' && canManageClassesTab && canDirectAssignClasses && (
+                            {activeTab === 'classes' && canAccessClassesTab && canModifyClassAssignments && canDirectAssignClasses && (
                                 <button
                                     type="button"
                                     onClick={handleSaveClassAssignments}
@@ -1311,7 +1322,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     <Save className="w-4 h-4" /> Guardar clases
                                 </button>
                             )}
-                            {activeTab === 'classes' && canManageClassesTab && !canDirectAssignClasses && (
+                            {activeTab === 'classes' && canAccessClassesTab && canModifyClassAssignments && !canDirectAssignClasses && (
                                 <button
                                     type="button"
                                     onClick={handleRequestClassAssignments}

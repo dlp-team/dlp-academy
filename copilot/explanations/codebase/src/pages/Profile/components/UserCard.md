@@ -1,3 +1,15 @@
+# [2026-03-13] Role Badge Coverage Expanded
+
+## Context
+Profile role badge previously only differentiated `teacher` vs `student`.
+
+## Change
+- Added explicit role mapping for `admin`, `institutionadmin`, `teacher`, and `student`.
+- Added icon and style variants per role to keep semantic distinction in profile header card.
+
+## Validation
+- `get_errors` reports no issues in `src/pages/Profile/components/UserCard.jsx`.
+
 # UserCard.jsx
 
 ## Overview

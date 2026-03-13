@@ -1,11 +1,26 @@
 // src/pages/Profile/components/UserCard.jsx
 import React from 'react';
-import { Edit2, LogOut, BookOpen, GraduationCap } from 'lucide-react';
+import { Edit2, LogOut, BookOpen, GraduationCap, Shield, Crown } from 'lucide-react';
 import Avatar from '../../../components/ui/Avatar'; 
 
 const UserCard = ({ user, userProfile, onEdit, onLogout }) => {
     const displayName = userProfile?.displayName || user?.displayName || "Usuario";
     const photoURL = userProfile?.photoURL || user?.photoURL;
+    const normalizedRole = String(userProfile?.role || user?.role || '').toLowerCase();
+
+    const roleBadgeConfig = (() => {
+        if (normalizedRole === 'admin') {
+            return { icon: Crown, label: 'Administrador', classes: 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' };
+        }
+        if (normalizedRole === 'institutionadmin') {
+            return { icon: Shield, label: 'Administrador de institución', classes: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300' };
+        }
+        if (normalizedRole === 'teacher') {
+            return { icon: BookOpen, label: 'Docente', classes: 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' };
+        }
+        return { icon: GraduationCap, label: 'Estudiante', classes: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' };
+    })();
+    const RoleIcon = roleBadgeConfig.icon;
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 mb-8 relative overflow-hidden transition-colors">
@@ -28,12 +43,9 @@ const UserCard = ({ user, userProfile, onEdit, onLogout }) => {
                         </div>
 
                         <div className="flex gap-2 justify-center md:justify-start">
-                            <div className="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 rounded-full text-xs font-bold uppercase tracking-wide">
-                                {userProfile?.role === 'teacher' ? (
-                                    <><BookOpen className="w-4 h-4" /> Docente</>
-                                ) : (
-                                    <><GraduationCap className="w-4 h-4" /> Estudiante</>
-                                )}
+                            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${roleBadgeConfig.classes}`}>
+                                <RoleIcon className="w-4 h-4" />
+                                {roleBadgeConfig.label}
                             </div>
                         </div>
                     </div>

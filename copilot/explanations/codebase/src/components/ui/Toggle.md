@@ -1,3 +1,6 @@
+## Changelog
+- **2026-03-13:** Added explicit transform animation timing (`duration-300`, `ease-in-out`, `will-change-transform`) for the knob so header theme toggle movement transitions smoothly.
+
 # Toggle.jsx
 
 ## Purpose

@@ -283,6 +283,7 @@ service cloud.firestore {
           isGlobalAdmin()
           || resource.data.ownerId == request.auth.uid
           || resource.data.uid == request.auth.uid
+          || (isInstitutionAdmin() && sameInstitution(resource.data))
         );
 
       // Reglas para la subcolección "topics"
@@ -362,7 +363,13 @@ service cloud.firestore {
           isGlobalAdmin()
           || (
             currentUserInstitutionId() != null
-            && resource.data.institutionId == currentUserInstitutionId()
+            && (
+              
+                resource != null
+                && resource.data.institutionId == currentUserInstitutionId()
+            )
+              
+            
           )
         );
       allow update, delete: if false;

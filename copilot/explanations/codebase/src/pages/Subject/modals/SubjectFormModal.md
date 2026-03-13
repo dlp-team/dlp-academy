@@ -1,3 +1,16 @@
+## [2026-03-13] Permission Hardening: Viewer Class Tab is Read-Only
+### Context & Architecture
+Teachers with `viewer` shortcut permissions were still able to interact with class assignment controls in the `Clases` tab.
+
+### Change
+- Split class-tab access from class-assignment mutation: `canAccessClassesTab` vs `canModifyClassAssignments`.
+- Preserved invite-code visibility/copy for viewer-level access.
+- Disabled class checkbox edits and hid class mutation actions for read-only viewers.
+- Expanded avatar URL normalization for shared-user rows and owner row fallback fields.
+
+### Validation
+- `get_errors` reports no issues in `src/pages/Subject/modals/SubjectFormModal.jsx`.
+
 ## [2026-03-12] Feature Update: Subject Course Selector Uses Firestore Courses
 ### Context & Architecture
 `SubjectFormModal` now loads available courses from Firestore (`courses` collection filtered by `institutionId`) and passes them to `BasicInfoFields` for selection.

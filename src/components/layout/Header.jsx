@@ -157,12 +157,22 @@ const Header = ({ user }) => {
       isFirstLoadRef.current = false;
       return;
     }
+
+    let toastTimer = null;
     if (notifications.length > prevCountRef.current) {
       const newest = notifications[0];
-      setToast({ show: true, message: newest?.message || '¡Un tema tiene contenido listo!' });
+      toastTimer = window.setTimeout(() => {
+        setToast({ show: true, message: newest?.message || '¡Un tema tiene contenido listo!' });
+      }, 0);
     }
+
     prevCountRef.current = notifications.length;
-  }, [notifications.length]);
+    return () => {
+      if (toastTimer) {
+        window.clearTimeout(toastTimer);
+      }
+    };
+  }, [notifications]);
 
   return (
     <>

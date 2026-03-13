@@ -1,6 +1,7 @@
 // src/pages/Subject/modals/TopicFormModal.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Sparkles, FileText, Upload, MessageSquare, Type, Trash2, CloudUpload } from 'lucide-react';
+import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 
 const TopicFormModal = ({ isOpen, onClose, onSubmit, initialData, subjectColor }) => {
     const [formData, setFormData] = useState({ name: '', prompt: '' });
@@ -49,7 +50,7 @@ const TopicFormModal = ({ isOpen, onClose, onSubmit, initialData, subjectColor }
     const headerGradient = subjectColor || 'from-indigo-400 to-indigo-600';
 
     return (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto" style={OVERLAY_TOP_OFFSET_STYLE}>
             <style>{`
                 @keyframes app-open-backdrop {
                     0% { opacity: 0; }

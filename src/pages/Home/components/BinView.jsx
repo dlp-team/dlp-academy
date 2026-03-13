@@ -37,7 +37,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
         [trashedSubjects, selectedSubjectId]
     );
 
-    const loadTrashedItems = React.useCallback(async () => {
+    const loadTrashedItems = async () => {
         if (isStudent) {
             setTrashedSubjects([]);
             setLoading(false);
@@ -47,18 +47,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
         try {
             const items = await getTrashedSubjects();
             const now   = new Date();
-            const valid   = [];
-            const expired = [];
-
-            items.forEach(item =>
-                (getRemainingMs(item, now) > 0 ? valid : expired).push(item)
-            );
-
-            if (expired.length > 0) {
-                await Promise.allSettled(expired.map(item => permanentlyDeleteSubject(item.id)));
-            }
-
-            const sorted = [...valid].sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
+            const sorted = [...items].sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
             setTrashedSubjects(sorted);
 
             if (selectedSubjectId && !sorted.some(s => s.id === selectedSubjectId)) {
@@ -70,12 +59,12 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
         } finally {
             setLoading(false);
         }
-    }, [getTrashedSubjects, permanentlyDeleteSubject, selectedSubjectId, isStudent]);
+    };
 
     // ── Data loading ───────────────────────────────────────────────────────────
     useEffect(() => {
         loadTrashedItems();
-    }, [loadTrashedItems]);
+    }, [user?.uid, isStudent]);
 
     // ── Action handlers ────────────────────────────────────────────────────────
     const handleRestore = async (subjectId) => {

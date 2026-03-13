@@ -1,6 +1,7 @@
 // src/components/modals/SubjectModal.jsx
 import React from 'react';
 import { X, Check } from 'lucide-react';
+import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 
 const SubjectModal = ({ 
     isOpen, 
@@ -15,11 +16,10 @@ const SubjectModal = ({
     if (!isOpen) return null;
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn"
-            onClick={onClose}
-        >
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto" style={OVERLAY_TOP_OFFSET_STYLE}>
+            <div className="flex min-h-full items-center justify-center p-4" onClick={onClose}>
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-fadeIn" />
+                <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
                 
                 {/* Header */}
                 <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
@@ -110,6 +110,7 @@ const SubjectModal = ({
                     >
                         {isEditing ? 'Guardar Cambios' : 'Crear Asignatura'}
                     </button>
+                </div>
                 </div>
             </div>
         </div>

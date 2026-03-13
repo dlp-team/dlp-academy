@@ -569,7 +569,21 @@ const FolderManager = ({
     };
 
     const getAvatarUrl = (entry) => {
-        return entry?.photoURL || entry?.photoUrl || entry?.avatarUrl || entry?.avatar || '';
+        return entry?.photoURL
+            || entry?.photoUrl
+            || entry?.profilePicture
+            || entry?.profilePictureUrl
+            || entry?.profilePictureURL
+            || entry?.avatarUrl
+            || entry?.avatarURL
+            || entry?.avatar
+            || entry?.imageUrl
+            || entry?.imageURL
+            || entry?.photo
+            || entry?.user?.photoURL
+            || entry?.user?.photoUrl
+            || entry?.user?.profilePicture
+            || '';
     };
 
     const getDisplayName = (entry) => {
@@ -587,7 +601,12 @@ const FolderManager = ({
     };
 
     const ownerEmailRaw = initialData?.ownerEmail || ownerEmailResolved || (formData?.ownerId === user?.uid ? user?.email : '') || '';
-    const ownerAvatar = initialData?.ownerPhotoURL || initialData?.ownerPhotoUrl || initialData?.ownerAvatar || (formData?.ownerId === user?.uid ? (user?.photoURL || user?.avatarUrl || '') : '');
+    const ownerAvatar = initialData?.ownerPhotoURL
+        || initialData?.ownerPhotoUrl
+        || initialData?.ownerProfilePicture
+        || initialData?.ownerProfilePictureUrl
+        || initialData?.ownerAvatar
+        || (formData?.ownerId === user?.uid ? (user?.photoURL || user?.photoUrl || user?.profilePicture || user?.avatarUrl || '') : '');
     const ownerDisplayName = initialData?.ownerName || initialData?.ownerDisplayName || (formData?.ownerId === user?.uid ? (user?.displayName || user?.name || '') : '');
     const ownerEmailNormalized = ownerEmailRaw.toLowerCase();
     const ownerEntry = ownerEmailRaw
