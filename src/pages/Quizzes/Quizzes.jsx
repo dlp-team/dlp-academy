@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { 
     ChevronLeft, Target, Clock, Sparkles, ArrowRight, Lock, CalendarDays
 } from 'lucide-react';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { addDoc, collection, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config'; 
 import { canUserAccessSubject } from '../../utils/subjectAccessUtils';
 
@@ -301,6 +301,7 @@ const Quizzes = ({ user }) => {
     const [answerStatus, setAnswerStatus] = useState(ANSWER_STATUS.IDLE);
     const [correctCount, setCorrectCount] = useState(0);
     const [finalScore, setFinalScore] = useState(0);
+    const [answersDetail, setAnswersDetail] = useState([]);
     const { confettiTrigger, triggerConfetti } = useConfetti();
 
     const handleGoBack = useCallback(() => {
@@ -315,7 +316,21 @@ const Quizzes = ({ user }) => {
     const handleCheckAnswer = useCallback(() => {
         if (answerStatus !== ANSWER_STATUS.IDLE || selectedAnswer === null || !quizData) return;
         
-        const isCorrect = selectedAnswer === quizData.questions[currentStep].correctIndex;
+        const currentQuestion = quizData.questions[currentStep];
+        const isCorrect = selectedAnswer === currentQuestion.correctIndex;
+
+        setAnswersDetail((prev) => ([
+            ...prev,
+            {
+                questionIndex: currentStep,
+                questionText: currentQuestion.question || '',
+                formula: currentQuestion.formula || null,
+                options: Array.isArray(currentQuestion.options) ? currentQuestion.options : [],
+                correctIndex: currentQuestion.correctIndex,
+                userAnswerIndex: selectedAnswer,
+                isCorrect
+            }
+        ]));
         
         if (isCorrect) {
             setAnswerStatus(ANSWER_STATUS.CORRECT);
@@ -329,7 +344,7 @@ const Quizzes = ({ user }) => {
         }
     }, [answerStatus, selectedAnswer, quizData, currentStep, triggerConfetti]);
 
-    const saveQuizResult = useCallback(async (score, correct, total) => {
+    const saveQuizResult = useCallback(async (score, correct, total, detail) => {
         if (!user?.uid) return;
 
         try {
@@ -355,6 +370,21 @@ const Quizzes = ({ user }) => {
                 passed: isPassed(score)
             }, { merge: true });
 
+            await addDoc(collection(db, 'quizAttempts'), {
+                userId: user.uid,
+                userEmail: user.email || 'anon',
+                quizId,
+                subjectId,
+                topicId,
+                quizTitle: quizData?.title || 'Quiz',
+                score,
+                correctAnswers: correct,
+                totalQuestions: total,
+                completedAt: serverTimestamp(),
+                passed: isPassed(score),
+                answersDetail: Array.isArray(detail) ? detail : []
+            });
+
             console.log("✅ Puntuación guardada con éxito");
         } catch (error) {
             console.error("❌ Error al guardar puntuación:", error);
@@ -379,9 +409,9 @@ const Quizzes = ({ user }) => {
                 setTimeout(() => triggerConfetti(), 300);
             }
             
-            await saveQuizResult(score, correctCount, total);
+            await saveQuizResult(score, correctCount, total, answersDetail);
         }
-    }, [quizData, currentStep, correctCount, triggerConfetti, saveQuizResult]);
+    }, [quizData, currentStep, correctCount, triggerConfetti, saveQuizResult, answersDetail]);
 
     const handleRetry = useCallback(() => {
         setViewState(VIEW_STATES.REVIEW);
@@ -390,6 +420,7 @@ const Quizzes = ({ user }) => {
         setFinalScore(0);
         setSelectedAnswer(null);
         setAnswerStatus(ANSWER_STATUS.IDLE);
+        setAnswersDetail([]);
     }, []);
 
     const shouldUseGrid = useMemo(() => {
@@ -463,6 +494,7 @@ const Quizzes = ({ user }) => {
                     finalScore={finalScore}
                     correctCount={correctCount}
                     totalQuestions={totalQuestions}
+                    answersDetail={answersDetail}
                     topicGradient={topicGradient}
                     confettiTrigger={confettiTrigger}
                     accentColor={accentColor}

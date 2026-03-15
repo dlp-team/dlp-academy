@@ -4,6 +4,7 @@ import { useDarkMode } from '../../hooks/useDarkMode';
 import { Loader2 } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import { useTopicLogic } from './hooks/useTopicLogic';
+import { useTopicFailedQuestions } from './hooks/useTopicFailedQuestions';
 
 // Firebase imports
 import {
@@ -29,6 +30,7 @@ const Topic = ({ user }) => {
     const [userScores, setUserScores] = useState({});
     const [scoresLoading, setScoresLoading] = useState(true);
     const [topicAssignments, setTopicAssignments] = useState([]);
+    const { failedQuestions } = useTopicFailedQuestions(user, logic.topicId);
     // 3. EFECTO: Escuchar puntuaciones (Quizzes)
     useEffect(() => {
         if (!user || !logic.subjectId || !logic.topicId) {
@@ -145,6 +147,7 @@ const Topic = ({ user }) => {
                         {...logic}
                         topic={enrichedTopic}
                         subject={logic.subject}
+                        failedQuestions={failedQuestions}
                         handleManualUpload={logic.handleManualUpload}
                         uploading={logic.uploading}
                         permissions={logic.permissions}

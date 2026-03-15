@@ -1,19 +1,21 @@
 // src/components/modules/QuizEngine/QuizResults.jsx
-import React from 'react';
+import React, { useState } from 'react';
 import { Trophy, Target, Award } from 'lucide-react';
 import ConfettiEffect from './QuizFeedback';
 import { isPassed } from './QuizCommon';
+import QuizReviewDetail from './QuizReviewDetail';
 
 const ResultsView = React.memo(({ 
-    finalScore, correctCount, totalQuestions, topicGradient, confettiTrigger, accentColor, onRetry, onGoBack 
+    finalScore, correctCount, totalQuestions, answersDetail, topicGradient, confettiTrigger, accentColor, onRetry, onGoBack 
 }) => {
     const passed = isPassed(finalScore);
+    const [showReview, setShowReview] = useState(false);
     
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-6">
             <ConfettiEffect triggerKey={confettiTrigger} accentColor={accentColor} />
             
-            <div className="max-w-lg w-full relative">
+            <div className="max-w-3xl w-full relative">
                 {/* Glow effect */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-[3rem] blur-3xl opacity-20`} />
                 
@@ -80,6 +82,20 @@ const ResultsView = React.memo(({
                                 <span className="relative z-10">Volver al Tema</span>
                             </button>
                         </div>
+
+                        {Array.isArray(answersDetail) && answersDetail.length > 0 && (
+                            <div className="mt-8 text-left">
+                                <button
+                                    onClick={() => setShowReview((prev) => !prev)}
+                                    className="w-full py-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold transition-colors"
+                                >
+                                    {showReview ? 'Ocultar revision detallada' : 'Ver revision detallada'}
+                                </button>
+                                {showReview && (
+                                    <QuizReviewDetail answersDetail={answersDetail} topicGradient={topicGradient} />
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

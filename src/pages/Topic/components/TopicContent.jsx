@@ -13,13 +13,14 @@ import {
     Timer,
     Play,
     RotateCcw,
-    ChevronRight,
     Clock,
+    Eye,
     MoreVertical,
     Pencil,
     CalendarDays,
     Lock,
-    AlertTriangle
+    AlertTriangle,
+    XCircle
 } from 'lucide-react';
 import FileCard from '../FileCard/FileCard';
 import ExamCard from '../ExamCard/ExamCard';
@@ -35,6 +36,7 @@ const TopicContent = ({
     activeMenuId, setActiveMenuId, renamingId, setRenamingId, tempName, setTempName,
     handleMenuClick, startRenaming, saveRename, deleteFile, handleViewFile, getFileVisuals,
     deleteQuiz, getQuizVisuals, navigate, subjectId, topicId, user,
+    failedQuestions = [],
     permissions // *** NEW: Permission flags ***
 }) => {
     
@@ -305,25 +307,9 @@ const TopicContent = ({
             quizzesByLevel[levelKey].push(quiz);
         });
 
-        const formulasGuide = topic.pdfs?.find(f =>
-            ['summary', 'resumen'].includes((f.type || '').toLowerCase())
-        ) || topic.pdfs?.[0];
-
-        let hasFormulas = false;
-        if (formulasGuide?.studyGuide) {
-            try {
-                const sections = typeof formulasGuide.studyGuide === 'string'
-                    ? JSON.parse(formulasGuide.studyGuide)
-                    : formulasGuide.studyGuide;
-                hasFormulas = Array.isArray(sections) && sections.some(s => s.formulas?.length > 0);
-            } catch {
-                hasFormulas = false;
-            }
-        }
-
         const subjectColor = subject?.color || 'from-indigo-500 to-purple-600';
         const themeGradient = `bg-gradient-to-br ${subjectColor}`;
-        const subtleButtonClass = 'bg-slate-100/95 hover:bg-slate-200 dark:bg-slate-700/80 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-100 border border-slate-200 dark:border-slate-600 shadow-sm';
+        const subtleButtonClass = 'bg-white/90 hover:bg-white dark:bg-slate-800/90 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-100 border border-slate-200/80 dark:border-slate-700 shadow-sm';
         
         const levelConfig = {
             basico: {
@@ -437,24 +423,6 @@ const TopicContent = ({
                         </div>
                     </div>
 
-                    {hasFormulas && formulasGuide?.id && (
-                        <button
-                            onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/formulas/${formulasGuide.id}`)}
-                            className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 md:p-5 w-full text-left transition-all duration-300 hover:shadow-md hover:border-slate-300 dark:hover:border-slate-600"
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center shrink-0">
-                                    <Calculator className="w-5 h-5 text-slate-700 dark:text-slate-300" strokeWidth={1.5} />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Fórmulas</p>
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Consulta antes de resolver</p>
-                                </div>
-                                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 dark:text-slate-600 dark:group-hover:text-slate-400 transition-colors shrink-0" strokeWidth={2} />
-                            </div>
-                        </button>
-                    )}
-
                     {quizzesByLevel[levelKey].length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             {quizzesByLevel[levelKey].map((quiz) => {
@@ -488,6 +456,8 @@ const TopicContent = ({
                                 const assignmentWindowText = isAssignment
                                     ? `${assignmentStart ? `Inicio: ${assignmentStart.toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}` : 'Sin inicio'}${assignmentDue ? ` · Limite: ${assignmentDue.toLocaleString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}` : ''}`
                                     : '';
+                                const quizTitle = quiz.title || quiz.name || 'Test Práctico';
+                                const modeLabel = isAssignment ? 'Actividad evaluable' : 'Práctica autocorregible';
 
                                 const quizMenuId = `quiz-card-menu-${quiz.id}`;
                                 const isMenuOpen = activeMenuId === quizMenuId;
@@ -495,9 +465,9 @@ const TopicContent = ({
                                 return (
                                     <div
                                         key={quiz.id}
-                                        className={`relative h-full flex flex-col overflow-hidden rounded-[1.4rem] border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 group hover:-translate-y-1 hover:border-slate-300 dark:hover:border-slate-600 ${config.cardAccent}`}
+                                        className={`relative h-full flex flex-col overflow-hidden rounded-[1.8rem] border border-slate-200/80 dark:border-slate-700/80 bg-gradient-to-b from-white to-slate-50/80 dark:from-slate-900 dark:to-slate-900 shadow-[0_16px_35px_-24px_rgba(15,23,42,0.4)] hover:shadow-[0_24px_48px_-26px_rgba(15,23,42,0.5)] transition-all duration-300 group hover:-translate-y-1 hover:border-slate-300 dark:hover:border-slate-600 ${config.cardAccent}`}
                                     >
-                                        {/* Premium color layers inspired by TopicCard/StudyGuide */}
+                                        <div className={`absolute inset-x-0 top-0 h-24 ${themeGradient} opacity-[0.08] dark:opacity-[0.16] pointer-events-none`} />
                                         <div className={`absolute inset-x-0 top-0 h-1.5 ${themeGradient}`} />
                                         <div className={`absolute -top-14 -right-12 w-36 h-36 ${themeGradient} opacity-[0.10] dark:opacity-[0.16] blur-2xl rounded-full pointer-events-none`} />
                                         <div className={`absolute -bottom-12 -left-10 w-28 h-28 ${themeGradient} opacity-[0.07] dark:opacity-[0.12] blur-2xl rounded-full pointer-events-none`} />
@@ -558,15 +528,17 @@ const TopicContent = ({
                                         )}
 
                                         <div className="relative z-10 h-full flex flex-col p-5 md:p-6">
-                                            {/* Header */}
                                             <div className="flex items-start justify-between gap-3 mb-4">
                                                 <div className="flex items-start gap-3 min-w-0 flex-1">
-                                                    <div className={`w-10 h-10 rounded-xl ${themeGradient} shadow-md flex items-center justify-center shrink-0`}>
+                                                    <div className={`w-11 h-11 rounded-2xl ${themeGradient} shadow-md ring-1 ring-white/60 dark:ring-white/10 flex items-center justify-center shrink-0`}>
                                                         <HeaderIcon className="w-5 h-5 text-white" strokeWidth={1.8} />
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <h4 className="text-base font-bold text-slate-900 dark:text-white line-clamp-2 leading-tight tracking-tight">
-                                                            {quiz.name || 'Test Práctico'}
+                                                        <p className="text-[11px] uppercase tracking-[0.18em] font-bold text-slate-400 dark:text-slate-500 mb-1">
+                                                            {modeLabel}
+                                                        </p>
+                                                        <h4 className="text-lg font-black text-slate-900 dark:text-white line-clamp-2 leading-tight tracking-tight">
+                                                            {quizTitle}
                                                         </h4>
                                                         <div className="mt-2 inline-flex items-center gap-1.5">
                                                             <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full ${config.difficultyBadge}`}>
@@ -592,74 +564,91 @@ const TopicContent = ({
                                                 )}
                                             </div>
 
-                                            {/* Middle row */}
-                                            <div className="mb-5 flex items-end justify-between gap-3">
+                                            <div className="mb-5 flex items-start justify-between gap-3">
                                                 <div className="flex flex-col gap-2">
-                                                    <div className="inline-flex items-center gap-2 rounded-lg bg-slate-50 dark:bg-slate-700/60 border border-slate-200 dark:border-slate-600 px-2.5 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                                                    <div className="inline-flex items-center gap-2 rounded-xl bg-white/80 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 shadow-sm">
                                                         <ClipboardCheck className="w-3.5 h-3.5" strokeWidth={1.7} />
                                                         <span>{quiz.questions?.length || 0} preguntas</span>
                                                     </div>
                                                     {isAssignment && (
-                                                        <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                                        <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 max-w-[15rem]">
                                                             <CalendarDays className="w-3.5 h-3.5" strokeWidth={1.7} />
-                                                            <span>{assignmentWindowText}</span>
+                                                            <span className="line-clamp-2">{assignmentWindowText}</span>
                                                         </div>
                                                     )}
                                                 </div>
                                                 {isCompleted && (
-                                                    <div className={`text-2xl font-black leading-none ${
+                                                    <div className={`shrink-0 rounded-2xl px-3 py-2 text-right border ${
+                                                        isPassed
+                                                            ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800'
+                                                            : 'bg-red-50 border-red-200 dark:bg-red-900/20 dark:border-red-800'
+                                                    }`}>
+                                                        <div className="text-[10px] uppercase tracking-[0.16em] font-bold text-slate-400 dark:text-slate-500 mb-1">Resultado</div>
+                                                        <div className={`text-2xl font-black leading-none ${
                                                         isPassed
                                                             ? 'text-emerald-600 dark:text-emerald-400'
                                                             : 'text-red-600 dark:text-red-400'
                                                     }`}>
-                                                        {Math.round(quiz.score)}%
+                                                            {Math.round(quiz.score)}%
+                                                        </div>
                                                     </div>
                                                 )}
                                             </div>
 
-                                            {/* CTA Button */}
-                                            <button
-                                                onClick={() => {
-                                                    if (shouldEditPrimary) {
-                                                        navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}/edit`);
-                                                        return;
-                                                    }
-                                                    if (!canStartAssignment) return;
-                                                    navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`);
-                                                }}
-                                                disabled={!shouldEditPrimary && !canStartAssignment}
-                                                className={`mt-auto w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                                                    !shouldEditPrimary && !canStartAssignment
-                                                        ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 cursor-not-allowed'
-                                                        : shouldEditPrimary
-                                                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md active:scale-95'
-                                                        : isCompleted
-                                                        ? `${config.buttonSubtle} hover:shadow-md active:scale-95`
-                                                        : `${config.buttonBg} active:scale-95`
-                                                }`}
-                                            >
-                                                {shouldEditPrimary ? (
-                                                    <>
-                                                        <Pencil className="w-3.5 h-3.5" strokeWidth={2} />
-                                                        Editar test
-                                                    </>
-                                                ) : !canStartAssignment ? (
-                                                    <>
-                                                        <Lock className="w-3.5 h-3.5" strokeWidth={2} />
-                                                        {startsInFuture ? 'Aun no disponible' : 'Plazo cerrado'}
-                                                    </>
-                                                ) : isCompleted ? (
-                                                    <>
-                                                        <RotateCcw className="w-3.5 h-3.5" strokeWidth={2} />
-                                                        Reintentar test
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Play className="w-3.5 h-3.5" strokeWidth={2} />
-                                                        Comenzar test
-                                                    </>
+                                            <div className="mt-auto space-y-2">
+                                                <button
+                                                    onClick={() => {
+                                                        if (shouldEditPrimary) {
+                                                            navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}/edit`);
+                                                            return;
+                                                        }
+                                                        if (!canStartAssignment) return;
+                                                        navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`);
+                                                    }}
+                                                    disabled={!shouldEditPrimary && !canStartAssignment}
+                                                    className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                                                        !shouldEditPrimary && !canStartAssignment
+                                                            ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 cursor-not-allowed'
+                                                            : shouldEditPrimary
+                                                            ? `${themeGradient} text-white shadow-md hover:shadow-lg active:scale-95`
+                                                            : isCompleted
+                                                            ? `${config.buttonSubtle} hover:shadow-md active:scale-95`
+                                                            : `${config.buttonBg} active:scale-95`
+                                                    }`}
+                                                >
+                                                    {shouldEditPrimary ? (
+                                                        <>
+                                                            <Pencil className="w-3.5 h-3.5" strokeWidth={2} />
+                                                            Editar test
+                                                        </>
+                                                    ) : !canStartAssignment ? (
+                                                        <>
+                                                            <Lock className="w-3.5 h-3.5" strokeWidth={2} />
+                                                            {startsInFuture ? 'Aun no disponible' : 'Plazo cerrado'}
+                                                        </>
+                                                    ) : isCompleted ? (
+                                                        <>
+                                                            <RotateCcw className="w-3.5 h-3.5" strokeWidth={2} />
+                                                            Reintentar test
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Play className="w-3.5 h-3.5" strokeWidth={2} />
+                                                            Comenzar test
+                                                        </>
+                                                    )}
+                                                </button>
+
+                                                {isCompleted && (
+                                                    <button
+                                                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}/review`)}
+                                                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 transition-colors"
+                                                    >
+                                                        <Eye className="w-3.5 h-3.5" strokeWidth={2} />
+                                                        Ver revision
+                                                    </button>
                                                 )}
-                                            </button>
+                                            </div>
                                         </div>
                                     </div>
                                 );
@@ -675,6 +664,42 @@ const TopicContent = ({
                 {renderLevelSection('basico')}
                 {renderLevelSection('intermedio')}
                 {renderLevelSection('avanzado')}
+
+                {failedQuestions.length > 0 && (
+                    <section className="space-y-4 pt-2">
+                        <div>
+                            <p className="text-xs uppercase tracking-[0.2em] font-bold text-slate-400 dark:text-slate-500 mb-1">Repaso de errores</p>
+                            <h3 className="text-xl font-black text-slate-900 dark:text-white">Preguntas pendientes de dominar</h3>
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                sessionStorage.setItem('repasoQuestions', JSON.stringify(failedQuestions));
+                                navigate(`/home/subject/${subjectId}/topic/${topicId}/quizzes/repaso`);
+                            }}
+                            className="w-full group relative overflow-hidden rounded-[1.8rem] border border-red-200/80 dark:border-red-800/50 bg-gradient-to-br from-red-50 to-rose-50 dark:from-red-950/20 dark:to-rose-900/20 p-6 text-left hover:shadow-xl transition-all duration-300"
+                        >
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
+                                <div className="flex items-center gap-4 min-w-0">
+                                    <div className="w-12 h-12 rounded-2xl bg-red-500 text-white flex items-center justify-center shadow-lg shrink-0">
+                                        <XCircle className="w-6 h-6" strokeWidth={2} />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-lg font-black text-slate-900 dark:text-white leading-tight">
+                                            {failedQuestions.length} pregunta{failedQuestions.length !== 1 ? 's' : ''} para repasar
+                                        </p>
+                                        <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">
+                                            Incluye fallos de todos tus tests de este tema.
+                                        </p>
+                                    </div>
+                                </div>
+                                <span className="inline-flex items-center justify-center rounded-xl px-4 py-2 text-xs font-bold uppercase tracking-wider bg-red-600 text-white group-hover:bg-red-700 transition-colors">
+                                    Repasar ahora
+                                </span>
+                            </div>
+                        </button>
+                    </section>
+                )}
             </div>
         );
     }

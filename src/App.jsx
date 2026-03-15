@@ -19,6 +19,8 @@ import Subject from './pages/Subject/Subject';
 import Topic from './pages/Topic/Topic';
 import Quizzes from './pages/Quizzes/Quizzes';
 import EditQuiz from './pages/Quizzes/QuizEdit';
+import QuizReviewPage from './pages/Quizzes/QuizReviewPage';
+import QuizRepaso from './pages/Quizzes/QuizRepaso';
 import StudyGuide from './pages/Content/StudyGuide';
 import StudyGuideEditor from './pages/Content/StudyGuideEditor';
 import Formula from './pages/Content/Formula';
@@ -177,6 +179,24 @@ function App() {
              </ProtectedRoute>
           } 
         />
+
+          <Route
+           path="/home/subject/:subjectId/topic/:topicId/quiz/:quizId/review"
+           element={
+             <ProtectedRoute user={user} loading={loading}>
+               <QuizReviewPage user={user} />
+             </ProtectedRoute>
+           }
+          />
+
+          <Route
+           path="/home/subject/:subjectId/topic/:topicId/quizzes/repaso"
+           element={
+             <ProtectedRoute user={user} loading={loading}>
+               <QuizRepaso user={user} />
+             </ProtectedRoute>
+           }
+          />
 
         {/* User Profile & Settings */}
         <Route 

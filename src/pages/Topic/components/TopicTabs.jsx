@@ -10,6 +10,12 @@ const TopicTabs = ({
     handleCreateCustomQuiz,
     permissions
 }) => {
+    const handleAssignmentsCreate = (event) => {
+        event.stopPropagation();
+        setActiveTab('assignments');
+        window.dispatchEvent(new CustomEvent('topic-assignments-create-requested'));
+    };
+
     return (
         <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
             {['materials', 'uploads', 'quizzes', 'assignments'].map(tab => (
@@ -18,8 +24,27 @@ const TopicTabs = ({
                     {tab === 'uploads' && <><Upload className="w-4 h-4" /> Mis Archivos</>}
                     {tab === 'quizzes' && <><CheckCircle2 className="w-4 h-4" /> Tests Prácticos</>}
                     {tab === 'assignments' && <><ClipboardList className="w-4 h-4" /> Tareas</>}
-                    {tab !== 'uploads' && tab !== 'assignments' && activeTab === tab && permissions?.canEdit && (
-                        <div role="button" onClick={(e) => { e.stopPropagation(); tab === 'materials' ? handleCreateCustomPDF() : handleCreateCustomQuiz(); }} className="ml-2 w-5 h-5 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 transition-all z-10"><Plus className="w-3 h-3" /></div>
+                    {activeTab === tab && permissions?.canEdit && (tab === 'materials' || tab === 'quizzes' || tab === 'assignments') && (
+                        <div
+                            role="button"
+                            onClick={(e) => {
+                                if (tab === 'materials') {
+                                    e.stopPropagation();
+                                    handleCreateCustomPDF();
+                                    return;
+                                }
+                                if (tab === 'quizzes') {
+                                    e.stopPropagation();
+                                    handleCreateCustomQuiz();
+                                    return;
+                                }
+                                handleAssignmentsCreate(e);
+                            }}
+                            className="ml-2 w-5 h-5 flex items-center justify-center rounded-full bg-white/20 hover:bg-white/40 transition-all z-10"
+                            title={tab === 'assignments' ? 'Crear tarea' : 'Crear'}
+                        >
+                            <Plus className="w-3 h-3" />
+                        </div>
                     )}
                     <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === tab ? 'bg-white/20 dark:bg-slate-900/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
                         {tab === 'materials' ? topic.pdfs?.length || 0 : tab === 'uploads' ? topic.uploads?.length || 0 : tab === 'quizzes' ? topic.quizzes?.length || 0 : topic.assignments?.length || 0}

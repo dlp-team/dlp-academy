@@ -1,6 +1,6 @@
 // src/components/modules/QuizCard/QuizCard.jsx
-import React, { useRef } from 'react';
-import { Timer, Play, RotateCcw, Trophy, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import React from 'react';
+import { Timer, Play, RotateCcw, Pencil, Trash2 } from 'lucide-react';
 import { RenderLatex } from '../QuizEngine/QuizCommon';
 import 'katex/dist/katex.min.css';
 
@@ -10,15 +10,10 @@ const QuizCard = ({
     subjectId,
     topicId,
     permissions,
-    activeMenuId,
-    setActiveMenuId,
-    handleMenuClick,
     deleteQuiz
 }) => {
-    const menuId = useRef(`quiz-menu-${quiz.id || Math.random().toString(36).substr(2, 9)}`).current;
     const hasScore = quiz.score !== undefined && quiz.score !== null;
     const isPassed = hasScore && quiz.score >= 50;
-    const isMenuOpen = activeMenuId === menuId;
 
     const colorSchemes = {
         emerald: {
@@ -95,35 +90,23 @@ const QuizCard = ({
                             </span>
                         </div>
 
-                        {/* Menu button */}
+                        {/* Edit + Delete buttons */}
                         {permissions?.canEdit && (
-                            <div className="relative">
+                            <div className="flex items-center gap-0.5">
                                 <button
-                                    onClick={(e) => { e.stopPropagation(); handleMenuClick ? handleMenuClick(e, menuId) : setActiveMenuId(isMenuOpen ? null : menuId); }}
-                                    className="p-1 rounded-lg text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                    onClick={(e) => { e.stopPropagation(); navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}/edit`); }}
+                                    className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                    title="Editar test"
                                 >
-                                    <MoreHorizontal className="w-4 h-4" />
+                                    <Pencil className="w-3.5 h-3.5" />
                                 </button>
-                                {isMenuOpen && (
-                                    <>
-                                        <div className="fixed inset-0 z-20" onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); }} />
-                                        <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-40 text-sm text-slate-700 dark:text-slate-200 animate-in fade-in zoom-in-95">
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}/edit`); }}
-                                                className="w-full px-3 py-1.5 text-left hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2 font-semibold text-indigo-600 dark:text-indigo-400 transition-colors"
-                                            >
-                                                <Pencil className="w-3.5 h-3.5" /> Editar
-                                            </button>
-                                            <div className="border-t border-slate-100 dark:border-slate-700 my-0.5" />
-                                            <button
-                                                onClick={(e) => { e.stopPropagation(); setActiveMenuId(null); if (deleteQuiz) deleteQuiz(quiz.id); }}
-                                                className="w-full px-3 py-1.5 text-left hover:bg-red-50 dark:hover:bg-red-950 text-red-600 dark:text-red-400 flex items-center gap-2 font-semibold transition-colors"
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" /> Eliminar
-                                            </button>
-                                        </div>
-                                    </>
-                                )}
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); if (deleteQuiz) deleteQuiz(quiz.id); }}
+                                    className="p-1.5 rounded-lg text-slate-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                                    title="Eliminar test"
+                                >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                             </div>
                         )}
                     </div>
@@ -184,9 +167,6 @@ const QuizCard = ({
             </div>
         </div>
     );
-};
-
-export default QuizCard;
 };
 
 export default QuizCard;

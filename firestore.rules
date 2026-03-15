@@ -569,6 +569,46 @@ service cloud.firestore {
         );
     }
 
+    // Historial de intentos por test (inmutable por intento)
+    match /quizAttempts/{attemptId} {
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasAll(['userId', 'quizId', 'subjectId', 'topicId', 'completedAt'])
+        && request.resource.data.userId == request.auth.uid
+        && hasTopicRef(request.resource.data)
+        && topicInstitutionMatches(topicRef(request.resource.data));
+
+      allow read: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || resource.data.userId == request.auth.uid
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+        );
+
+      allow update, delete: if false;
+    }
+
+    // Preguntas dominadas en repaso por alumno y tema
+    match /repasoMastered/{repasoId} {
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasAll(['userId', 'topicId'])
+        && request.resource.data.userId == request.auth.uid
+        && hasTopicRef(request.resource.data)
+        && topicInstitutionMatches(topicRef(request.resource.data));
+
+      allow read: if isSignedIn()
+        && repasoId.matches('^' + request.auth.uid + '__.*$');
+
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && hasTopicRef(resource.data)
+        && topicInstitutionMatches(topicRef(resource.data));
+
+      allow delete: if false;
+    }
+
     // Reglas para items de evaluación extra (grades panel)
     match /subjectEvaluationItems/{itemId} {
       allow read: if isSignedIn()

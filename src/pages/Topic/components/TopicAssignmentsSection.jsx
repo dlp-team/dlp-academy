@@ -1,5 +1,5 @@
 // src/pages/Topic/components/TopicAssignmentsSection.jsx
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import {
     CalendarDays,
     Eye,
@@ -36,6 +36,8 @@ const TopicAssignmentsSection = ({
     const [feedback, setFeedback] = useState({ type: '', message: '' });
     const [submissionsByAssignment, setSubmissionsByAssignment] = useState({});
     const [submissionCountByAssignment, setSubmissionCountByAssignment] = useState({});
+    const createPanelRef = useRef(null);
+    const titleInputRef = useRef(null);
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -101,6 +103,18 @@ const TopicAssignmentsSection = ({
 
         return () => unsubscribe();
     }, [topicId, user?.uid, canManage]);
+
+    useEffect(() => {
+        if (!canManage) return undefined;
+
+        const handleCreateRequested = () => {
+            createPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            window.setTimeout(() => titleInputRef.current?.focus(), 180);
+        };
+
+        window.addEventListener('topic-assignments-create-requested', handleCreateRequested);
+        return () => window.removeEventListener('topic-assignments-create-requested', handleCreateRequested);
+    }, [canManage]);
 
     const toDateObject = (value) => {
         if (!value) return null;
@@ -234,7 +248,7 @@ const TopicAssignmentsSection = ({
     return (
         <div className="space-y-6">
             {canManage && (
-                <div className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
+                <div ref={createPanelRef} className="rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-6 shadow-sm">
                     <div className="flex items-center justify-between gap-4 mb-5">
                         <div>
                             <p className="text-xs uppercase tracking-[0.2em] font-bold text-slate-400 dark:text-slate-500 mb-1">Gestion de tareas</p>
@@ -244,6 +258,7 @@ const TopicAssignmentsSection = ({
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <input
+                            ref={titleInputRef}
                             type="text"
                             value={formData.title}
                             onChange={(event) => setFormData((prev) => ({ ...prev, title: event.target.value }))}
