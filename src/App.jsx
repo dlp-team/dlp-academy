@@ -1,7 +1,8 @@
+// src/App.jsx
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, onSnapshot } from 'firebase/firestore'; // Import Firestore functions
+import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'; // Import Firestore functions
 import { auth, db } from './firebase/config'; // Import db
 
 
@@ -74,34 +75,65 @@ function App() {
       }
 
       if (firebaseUser) {
-        // Listen to user doc in real-time so role updates (e.g. from OnboardingWizard) are reflected immediately
+        const baseUser = {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          photoURL: firebaseUser.photoURL,
+          displayName: firebaseUser.displayName || ''
+        };
+
         const userDocRef = doc(db, 'users', firebaseUser.uid);
-        unsubscribeUserDoc = onSnapshot(userDocRef, (userDoc) => {
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            setUser({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              photoURL: firebaseUser.photoURL,
-              ...userData
-            });
-          } else {
-            setUser({
-              uid: firebaseUser.uid,
-              email: firebaseUser.email,
-              photoURL: firebaseUser.photoURL
-            });
+
+        (async () => {
+          try {
+            const initialSnap = await getDoc(userDocRef);
+
+            if (!initialSnap.exists()) {
+              // Bootstrap missing users/{uid} so next reads and onboarding are deterministic.
+              await setDoc(userDocRef, {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email,
+                photoURL: firebaseUser.photoURL || '',
+                displayName: firebaseUser.displayName || (firebaseUser.email || '').split('@')[0] || '',
+                role: 'student',
+                institutionId: null,
+                createdAt: serverTimestamp(),
+                lastLogin: serverTimestamp(),
+                settings: {
+                  theme: 'system',
+                  language: 'es',
+                  viewMode: 'grid'
+                }
+              }, { merge: true });
+            }
+          } catch (error) {
+            // If profile read is denied, avoid opening a realtime listener that will spam uncaught watch errors.
+            if (error?.code === 'permission-denied') {
+              console.error('Permission denied reading users doc on auth bootstrap:', error);
+              setUser(baseUser);
+              setLoading(false);
+              return;
+            }
           }
-          setLoading(false);
-        }, (error) => {
-          console.error("Error listening to user data:", error);
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            photoURL: firebaseUser.photoURL
+
+          // Listen to user doc in real-time so role updates (e.g. from OnboardingWizard) are reflected immediately
+          unsubscribeUserDoc = onSnapshot(userDocRef, (userDoc) => {
+            if (userDoc.exists()) {
+              const userData = userDoc.data();
+              setUser({
+                ...baseUser,
+                ...userData
+              });
+            } else {
+              setUser(baseUser);
+            }
+            setLoading(false);
+          }, (error) => {
+            console.error("Error listening to user data:", error);
+            setUser(baseUser);
+            setLoading(false);
           });
-          setLoading(false);
-        });
+        })();
       } else {
         setUser(null);
         setLoading(false);

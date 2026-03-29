@@ -1,3 +1,17 @@
+## [2026-03-29] Student Shortcut Query Rule-Compatibility Fix
+
+### Context
+- Student accounts hit permission-denied errors when listening to `shortcuts` with query `ownerId == uid`.
+- Firestore rules intentionally deny folder shortcuts for student role, so an unfiltered owner query can be rejected.
+
+### Change
+- Updated `src/hooks/useShortcuts.js` to add `where('targetType', '==', 'subject')` when current user role is `student`.
+- Kept existing behavior unchanged for non-student roles.
+
+### Validation
+- `get_errors` clean for `src/hooks/useShortcuts.js`.
+- Focused tests passed: `tests/unit/hooks/useShortcuts.test.js`.
+
 ## [2026-03-07] Home Data Readiness No Longer Requires Country
 
 ### Context
