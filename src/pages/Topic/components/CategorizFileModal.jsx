@@ -1,6 +1,6 @@
 // src/pages/Topic/components/CategorizFileModal.jsx
 import React, { useState } from 'react';
-import { X, BookMarked, FlaskConical } from 'lucide-react';
+import { X, BookMarked, Dumbbell, FlaskConical } from 'lucide-react';
 
 const CategorizFileModal = ({
     isOpen,
@@ -9,12 +9,12 @@ const CategorizFileModal = ({
     fileName = '',
     isLoading = false
 }) => {
-    const [category, setCategory] = useState('resumen');
+    const [category, setCategory] = useState('material-teorico');
 
     const handleSubmit = () => {
         if (!category) return;
         onSubmit(category);
-        setCategory('resumen');
+        setCategory('material-teorico');
     };
 
     if (!isOpen) return null;
@@ -43,11 +43,11 @@ const CategorizFileModal = ({
 
                     {/* Category Options */}
                     <div className="space-y-3 mb-8">
-                        {/* Resumen Option */}
+                        {/* Material teórico */}
                         <button
-                            onClick={() => setCategory('resumen')}
+                            onClick={() => setCategory('material-teorico')}
                             className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${
-                                category === 'resumen'
+                                category === 'material-teorico'
                                     ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30'
                                     : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                             }`}
@@ -57,23 +57,49 @@ const CategorizFileModal = ({
                             </div>
                             <div className="text-left">
                                 <p className={`font-semibold ${
-                                    category === 'resumen'
+                                    category === 'material-teorico'
                                         ? 'text-indigo-900 dark:text-indigo-200'
                                         : 'text-slate-900 dark:text-white'
                                 }`}>
-                                    Resumen
+                                    Material teórico
                                 </p>
                                 <p className="text-xs text-slate-600 dark:text-slate-400">
-                                    Apuntes y referencias
+                                    Contenido base y explicaciones
                                 </p>
                             </div>
                         </button>
 
-                        {/* Examen Option */}
+                        {/* Ejercicios */}
                         <button
-                            onClick={() => setCategory('examen')}
+                            onClick={() => setCategory('ejercicios')}
                             className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${
-                                category === 'examen'
+                                category === 'ejercicios'
+                                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
+                                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+                            }`}
+                        >
+                            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-100 dark:bg-emerald-900">
+                                <Dumbbell className="w-5 h-5 text-emerald-600 dark:text-emerald-400" strokeWidth={2} />
+                            </div>
+                            <div className="text-left">
+                                <p className={`font-semibold ${
+                                    category === 'ejercicios'
+                                        ? 'text-emerald-900 dark:text-emerald-200'
+                                        : 'text-slate-900 dark:text-white'
+                                }`}>
+                                    Ejercicios
+                                </p>
+                                <p className="text-xs text-slate-600 dark:text-slate-400">
+                                    Práctica y actividades
+                                </p>
+                            </div>
+                        </button>
+
+                        {/* Exámenes */}
+                        <button
+                            onClick={() => setCategory('examenes')}
+                            className={`w-full p-4 rounded-2xl border-2 transition-all flex items-center gap-3 ${
+                                category === 'examenes'
                                     ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/30'
                                     : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                             }`}
@@ -83,11 +109,11 @@ const CategorizFileModal = ({
                             </div>
                             <div className="text-left">
                                 <p className={`font-semibold ${
-                                    category === 'examen'
+                                    category === 'examenes'
                                         ? 'text-amber-900 dark:text-amber-200'
                                         : 'text-slate-900 dark:text-white'
                                 }`}>
-                                    Examen
+                                    Exámenes
                                 </p>
                                 <p className="text-xs text-slate-600 dark:text-slate-400">
                                     Evaluaciones y pruebas

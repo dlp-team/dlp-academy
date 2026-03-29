@@ -4,13 +4,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { 
     FileText, MoreHorizontal, FileEdit, Trash2, 
     Check, X, Maximize2, Download, 
-    BookOpen, Calculator, FileQuestion, Pencil // Añadido Pencil para el icono de editar
+    BookOpen, Calculator, FileQuestion, Pencil, Tag // Añadido Pencil para el icono de editar
 } from 'lucide-react';
 
 const FileCard = ({ 
     file, 
     topic,
     subject,
+    onView,
+    badgeLabel,
     activeMenuId, 
     setActiveMenuId, 
     renamingId, 
@@ -21,6 +23,7 @@ const FileCard = ({
     startRenaming, 
     saveRename, 
     deleteFile, 
+    onChangeFileCategory,
     getFileVisuals,
     permissions // *** NEW: Permission flags ***
 }) => {
@@ -55,15 +58,28 @@ const FileCard = ({
     const isRenaming = renamingId === menuId;
     const isMenuOpen = activeMenuId === menuId;
     const isGenerated = file.origin === 'AI' || ['summary', 'resumen', 'formulas', 'formulario', 'exam', 'quiz', 'examen'].includes(type);
+    const canChangeCategory = Boolean(permissions?.canEdit && onChangeFileCategory && !isGenerated);
+
+    const categoryOptions = [
+        { value: 'material-teorico', label: 'Material teórico' },
+        { value: 'ejercicios', label: 'Ejercicios' },
+        { value: 'examenes', label: 'Exámenes' }
+    ];
+    const currentFileCategory = (file?.fileCategory || '').toLowerCase();
 
     // Override startRenaming para usar menuId único en vez de file.id (evita que dos cards se renombren a la vez)
     const handleStartRenaming = () => {
         setRenamingId(menuId);
-        setTempName(file.name);
+        setTempName(file.name || file.title || '');
         setActiveMenuId(null);
     };
 
     const handleViewClick = () => {
+        if (typeof onView === 'function') {
+            onView(file, { navigate, subjectId, topicId });
+            return;
+        }
+
         const path = isGenerated ? 'resumen' : 'resource';
         navigate(`/home/subject/${subjectId}/topic/${topicId}/${path}/${file.id}`, {
             state: { file }
@@ -105,6 +121,12 @@ const FileCard = ({
                 </div>
             </div>
 
+            {badgeLabel && (
+                <div className={`absolute top-5 ${permissions?.canEdit ? 'right-14' : 'right-5'} z-20 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide bg-white/90 text-slate-700 border border-slate-200 shadow-sm dark:bg-slate-800/90 dark:text-slate-200 dark:border-slate-600`}>
+                    {badgeLabel}
+                </div>
+            )}
+
             {/* MENÚ ACTUALIZADO */}
             {/* *** CONDITIONAL: Only show menu if user can edit *** */}
             {permissions?.canEdit && (
@@ -115,7 +137,7 @@ const FileCard = ({
                     {isMenuOpen && (
                         <>
                             <div className="fixed inset-0 z-20" onClick={() => setActiveMenuId(null)} />
-                            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-1 z-40 text-slate-700 dark:text-slate-200 animate-in fade-in zoom-in-95">
+                            <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 py-1 z-40 text-slate-700 dark:text-slate-200 animate-in fade-in zoom-in-95">
 
                                 {/* OPCIÓN: EDITAR CONTENIDO (Solo si es generado por IA) */}
                                 {isGenerated && (
@@ -133,6 +155,34 @@ const FileCard = ({
                                 <button onClick={handleStartRenaming} className="w-full px-4 py-2.5 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center gap-2">
                                     <FileEdit className={`w-4 h-4 text-${colorName}-600 dark:text-${colorName}-400`} /> Renombrar
                                 </button>
+
+                                {canChangeCategory && (
+                                    <>
+                                        <div className="border-t border-slate-100 dark:border-slate-700 my-1"></div>
+                                        <div className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                                            <Tag className="w-3.5 h-3.5" /> Tipo de archivo
+                                        </div>
+                                        {categoryOptions.map((option) => {
+                                            const isActive = currentFileCategory === option.value
+                                                || (option.value === 'material-teorico' && (currentFileCategory === '' || currentFileCategory === 'resumen'))
+                                                || (option.value === 'examenes' && currentFileCategory === 'examen');
+
+                                            return (
+                                                <button
+                                                    key={option.value}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onChangeFileCategory(file, option.value);
+                                                    }}
+                                                    className={`w-full px-4 py-2 text-left text-sm flex items-center justify-between hover:bg-slate-50 dark:hover:bg-slate-700 ${isActive ? 'font-semibold text-indigo-600 dark:text-indigo-400' : ''}`}
+                                                >
+                                                    <span>{option.label}</span>
+                                                    {isActive && <Check className="w-4 h-4" />}
+                                                </button>
+                                            );
+                                        })}
+                                    </>
+                                )}
 
                                 <div className="border-t border-slate-100 dark:border-slate-700 my-1"></div>
 

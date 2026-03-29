@@ -65,3 +65,9 @@
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+- 2026-03-29: Exam/examns fallback reads now suppress expected `permission-denied` noise and degrade to empty exam arrays without treating it as a fatal load failure.
+- 2026-03-29: Added `handleChangeFileCategory` to update uploaded file categories from the `Mis Archivos` menu with realtime persistence and toast feedback.
+- 2026-03-29: Upload flow now always requires category selection and supports batch categorization using `pendingFiles` with categories `material-teorico`, `ejercicios`, and `examenes` (legacy categories still supported downstream).
+- 2026-03-29: Rename prefill robustness improved by defaulting to `file.name || file.title || ''`.

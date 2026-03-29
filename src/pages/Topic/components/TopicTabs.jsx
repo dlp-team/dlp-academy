@@ -60,8 +60,14 @@ const TopicTabs = ({
                             ? topic.pdfs?.length || 0
                             : tab === 'materiales'
                                 ? (topic.pdfs?.filter(f => f.type === 'summary' || f.type === 'resumen')?.length || 0)
-                                    + (topic.uploads?.filter(u => u.fileCategory === 'resumen')?.length || 0)
-                                    + (topic.uploads?.filter(u => u.fileCategory === 'examen')?.length || 0)
+                                    + (topic.uploads?.filter(u => {
+                                        const category = (u?.fileCategory || '').toLowerCase();
+                                        return !category || category === 'resumen' || category === 'material-teorico' || category === 'ejercicios';
+                                    })?.length || 0)
+                                    + (topic.uploads?.filter(u => {
+                                        const category = (u?.fileCategory || '').toLowerCase();
+                                        return category === 'examen' || category === 'examenes';
+                                    })?.length || 0)
                                     + (topic.exams?.length || 0)
                                 : tab === 'uploads'
                                     ? topic.uploads?.length || 0

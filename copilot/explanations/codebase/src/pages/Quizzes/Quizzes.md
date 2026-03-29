@@ -29,4 +29,5 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-03-29: Fixed runtime crash in quiz execution/review flow by restoring local state for `answersDetail` and `previewAsStudent`, and by importing the missing icon symbols used in assignment/simulation banners.
 - 2026-03-12: Runtime review screen now reads assignment metadata and enforces student availability windows before starting attempts, with explicit status messaging and disabled CTA when out of window.

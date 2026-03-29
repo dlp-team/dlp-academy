@@ -5,10 +5,11 @@ import { Eye, GraduationCap, Loader2 } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import { useTopicLogic } from './hooks/useTopicLogic';
 import { useTopicFailedQuestions } from './hooks/useTopicFailedQuestions';
+import { useClassMembers } from '../Subject/hooks/useClassMembers';
 
 // Firebase imports
 import {
-    collection, query, where, onSnapshot
+    collection, query, where, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 
@@ -28,13 +29,15 @@ const Topic = ({ user }) => {
     const { isDark, toggleDarkMode } = useDarkMode();
 
     // 2. ESTADOS LOCALES
-    const [userScores, setUserScores] = useState({});
+    const [quizResults, setQuizResults] = useState([]);
+    const [quizScoreReviews, setQuizScoreReviews] = useState([]);
     const [scoresLoading, setScoresLoading] = useState(true);
     const [topicAssignments, setTopicAssignments] = useState([]);
     const [previewAsStudent, setPreviewAsStudent] = useState(false);
     const canUsePreview = user?.role !== 'student';
     const isStudentView = user?.role === 'student' || previewAsStudent;
     const { failedQuestions } = useTopicFailedQuestions(user, logic.topicId);
+    const { members: classMembers = [] } = useClassMembers(logic.subject);
 
     useEffect(() => {
         if (!canUsePreview) {
@@ -70,26 +73,52 @@ const Topic = ({ user }) => {
         setScoresLoading(true);
 
         const resultsRef = collection(db, "subjects", logic.subjectId, "topics", logic.topicId, "quiz_results");
-        const q = query(resultsRef, where("userId", "==", user.uid));
+        const source = isStudentView
+            ? query(resultsRef, where("userId", "==", user.uid))
+            : resultsRef;
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const scoresMap = {};
-            snapshot.forEach(docSnap => {
-                const data = docSnap.data();
-                if (data.quizId && data.score !== undefined) {
-                    scoresMap[data.quizId] = data.score;
-                }
-            });
-            setUserScores(scoresMap);
+        const unsubscribe = onSnapshot(source, (snapshot) => {
+            setQuizResults(snapshot.docs.map((resultDoc) => ({ id: resultDoc.id, ...resultDoc.data() })));
             setScoresLoading(false);
         }, (error) => {
+            if (error?.code === 'permission-denied') {
+                setQuizResults([]);
+                setScoresLoading(false);
+                return;
+            }
             console.error('[QUIZ_RESULTS] Firestore error:', error);
-            setUserScores({});
+            setQuizResults([]);
             setScoresLoading(false);
         });
 
         return () => unsubscribe();
-    }, [user, logic.subjectId, logic.topicId]);
+    }, [user, logic.subjectId, logic.topicId, isStudentView]);
+
+    useEffect(() => {
+        if (!user || !logic.subjectId || !logic.topicId || isStudentView) {
+            setQuizScoreReviews([]);
+            return;
+        }
+
+        const reviewsRef = query(
+            collection(db, 'topicQuizGradeReviews'),
+            where('subjectId', '==', logic.subjectId),
+            where('topicId', '==', logic.topicId)
+        );
+
+        const unsubscribe = onSnapshot(reviewsRef, (snapshot) => {
+            setQuizScoreReviews(snapshot.docs.map((reviewDoc) => ({ id: reviewDoc.id, ...reviewDoc.data() })));
+        }, (error) => {
+            if (error?.code === 'permission-denied') {
+                setQuizScoreReviews([]);
+                return;
+            }
+            console.error('[TOPIC_QUIZ_REVIEWS] Firestore error:', error);
+            setQuizScoreReviews([]);
+        });
+
+        return () => unsubscribe();
+    }, [user, logic.subjectId, logic.topicId, isStudentView]);
 
     useEffect(() => {
         if (!logic.subjectId || !logic.topicId) {
@@ -121,6 +150,10 @@ const Topic = ({ user }) => {
 
             setTopicAssignments(allAssignments);
         }, (error) => {
+            if (error?.code === 'permission-denied') {
+                setTopicAssignments([]);
+                return;
+            }
             console.error('[TOPIC_ASSIGNMENTS] Firestore error:', error);
             setTopicAssignments([]);
         });
@@ -128,9 +161,160 @@ const Topic = ({ user }) => {
         return () => unsubscribe();
     }, [logic.subjectId, logic.topicId, user?.role]);
 
+    const quizAnalyticsByQuiz = useMemo(() => {
+        const byQuiz = {};
+        const scoreReviewMap = {};
+
+        const excludedTeacherIds = new Set();
+        if (!isStudentView) {
+            if (user?.uid) excludedTeacherIds.add(user.uid);
+            if (logic.subject?.ownerId) excludedTeacherIds.add(logic.subject.ownerId);
+            if (Array.isArray(logic.subject?.editorUids)) {
+                logic.subject.editorUids.forEach((uid) => excludedTeacherIds.add(uid));
+            }
+        }
+
+        quizScoreReviews.forEach((review) => {
+            if (!review?.quizId || !review?.userId) return;
+            scoreReviewMap[`${review.quizId}:${review.userId}`] = Number(review.overrideScore);
+        });
+
+        const studentMembers = classMembers.filter((member) => member.role === 'viewer');
+        const studentMemberMap = new Map(studentMembers.map((member) => [member.uid, member]));
+        const allowedStudentIds = new Set(studentMembers.map((member) => member.uid));
+
+        const groupedByQuizUser = {};
+        quizResults.forEach((result) => {
+            if (!result?.quizId || !result?.userId) return;
+            if (!isStudentView && excludedTeacherIds.has(result.userId)) return;
+            if (allowedStudentIds.size > 0 && !allowedStudentIds.has(result.userId)) return;
+
+            const key = `${result.quizId}:${result.userId}`;
+            const overrideScore = scoreReviewMap[key];
+            const effectiveScore = overrideScore === undefined || overrideScore === null
+                ? Number(result.score)
+                : Number(overrideScore);
+
+            groupedByQuizUser[key] = {
+                ...result,
+                overrideScore: overrideScore === undefined || overrideScore === null ? null : Number(overrideScore),
+                effectiveScore: Number.isNaN(effectiveScore) ? null : effectiveScore
+            };
+        });
+
+        const quizIds = new Set([
+            ...(logic.topic?.quizzes || []).map((quiz) => quiz.id),
+            ...quizResults.map((result) => result.quizId).filter(Boolean)
+        ]);
+
+        quizIds.forEach((quizId) => {
+            const rowsFromMembers = studentMembers.map((member) => {
+                const result = groupedByQuizUser[`${quizId}:${member.uid}`] || null;
+                return {
+                    userId: member.uid,
+                    userName: member.name || member.email || 'Alumno',
+                    userEmail: member.email || '',
+                    photoURL: member.photoURL || null,
+                    score: result?.effectiveScore ?? null,
+                    rawScore: result?.score ?? null,
+                    overrideScore: result?.overrideScore ?? null,
+                    completedAt: result?.completedAt || null,
+                    hasResult: Boolean(result)
+                };
+            });
+
+            const extraRows = [];
+            Object.values(groupedByQuizUser).forEach((result) => {
+                if (result.quizId !== quizId) return;
+                if (studentMemberMap.has(result.userId)) return;
+
+                extraRows.push({
+                    userId: result.userId,
+                    userName: result.userName || result.userEmail || 'Alumno',
+                    userEmail: result.userEmail || '',
+                    photoURL: null,
+                    score: result.effectiveScore,
+                    rawScore: result.score ?? null,
+                    overrideScore: result.overrideScore ?? null,
+                    completedAt: result.completedAt || null,
+                    hasResult: true
+                });
+            });
+
+            const rows = [...rowsFromMembers, ...extraRows].sort((a, b) => {
+                if (a.hasResult && !b.hasResult) return -1;
+                if (!a.hasResult && b.hasResult) return 1;
+                return String(a.userName || '').localeCompare(String(b.userName || ''), 'es');
+            });
+
+            const scoredRows = rows.filter((row) => row.score !== null && row.score !== undefined);
+            const averageScore = scoredRows.length > 0
+                ? Number((scoredRows.reduce((sum, row) => sum + Number(row.score), 0) / scoredRows.length).toFixed(1))
+                : null;
+
+            byQuiz[quizId] = {
+                averageScore,
+                participants: scoredRows.length,
+                students: rows
+            };
+        });
+
+        return byQuiz;
+    }, [logic.topic?.quizzes, quizResults, quizScoreReviews, classMembers, isStudentView, user?.uid, logic.subject]);
+
+    const handleSaveQuizScoreOverride = async ({ quizId, userId, overrideScore }) => {
+        if (!logic.subjectId || !logic.topicId || !quizId || !userId || !user?.uid) return;
+
+        const reviewId = `${logic.topicId}_${quizId}_${userId}`;
+        const reviewRef = doc(db, 'topicQuizGradeReviews', reviewId);
+
+        if (overrideScore === null || overrideScore === undefined || String(overrideScore).trim() === '') {
+            await deleteDoc(reviewRef);
+            return;
+        }
+
+        const numericScore = Number(overrideScore);
+        if (Number.isNaN(numericScore)) return;
+        const boundedScore = Math.max(0, Math.min(100, numericScore));
+
+        const quizResultRef = doc(
+            db,
+            'subjects', logic.subjectId,
+            'topics', logic.topicId,
+            'quiz_results',
+            `${quizId}_${userId}`
+        );
+
+        await setDoc(quizResultRef, {
+            quizId,
+            subjectId: logic.subjectId,
+            topicId: logic.topicId,
+            userId,
+            score: boundedScore,
+            reviewedBy: user.uid,
+            reviewedAt: serverTimestamp()
+        }, { merge: true });
+
+        await setDoc(reviewRef, {
+            subjectId: logic.subjectId,
+            topicId: logic.topicId,
+            quizId,
+            userId,
+            overrideScore: boundedScore,
+            reviewedBy: user.uid,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+    };
+
     // 4. MERGE DE DATOS
     const enrichedTopic = useMemo(() => {
         if (!logic.topic) return null;
+
+        const studentScoreByQuiz = {};
+        quizResults.forEach((result) => {
+            if (!result?.quizId || result?.score === undefined || result?.score === null) return;
+            studentScoreByQuiz[result.quizId] = Number(result.score);
+        });
 
         return {
             ...logic.topic,
@@ -138,12 +322,14 @@ const Topic = ({ user }) => {
             uploads: logic.topic.uploads || [],
             quizzes: logic.topic.quizzes?.map(q => ({
                 ...q,
-                score: userScores[q.id] ?? null
+                score: isStudentView
+                    ? (studentScoreByQuiz[q.id] ?? null)
+                    : (quizAnalyticsByQuiz[q.id]?.averageScore ?? null)
             })) || [],
             exams: logic.topic.exams || [],
             assignments: topicAssignments
         };
-    }, [logic.topic, userScores, topicAssignments]);
+    }, [logic.topic, quizResults, topicAssignments, isStudentView, quizAnalyticsByQuiz]);
 
     // 5. PROGRESO
     const globalProgress = useMemo(() => {
@@ -220,6 +406,8 @@ const Topic = ({ user }) => {
                         failedQuestions={failedQuestions}
                         handleManualUpload={logic.handleManualUpload}
                         uploading={logic.uploading}
+                        quizAnalyticsByQuiz={quizAnalyticsByQuiz}
+                        onSaveQuizScoreOverride={handleSaveQuizScoreOverride}
                         permissions={effectivePermissions}
                     />
                 </div>
@@ -230,10 +418,12 @@ const Topic = ({ user }) => {
                     isOpen={logic.showCategorizationModal}
                     onClose={() => {
                         logic.setShowCategorizationModal(false);
-                        logic.setPendingFile(null);
+                        logic.setPendingFiles([]);
                     }}
                     onSubmit={logic.handleFileCategorized}
-                    fileName={logic.pendingFile?.name || ''}
+                    fileName={logic.pendingFiles?.length === 1
+                        ? (logic.pendingFiles[0]?.name || '')
+                        : `${logic.pendingFiles?.length || 0} archivos seleccionados`}
                     isLoading={logic.categorizingFile}
                 />
             )}

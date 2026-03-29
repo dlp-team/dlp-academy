@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-    ChevronLeft, Target, Clock, Sparkles, ArrowRight 
+    ChevronLeft, Target, Clock, Sparkles, ArrowRight, Lock, CalendarDays, GraduationCap
 } from 'lucide-react';
 import { addDoc, collection, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config'; 
@@ -301,6 +301,8 @@ const Quizzes = ({ user }) => {
     const [answerStatus, setAnswerStatus] = useState(ANSWER_STATUS.IDLE);
     const [correctCount, setCorrectCount] = useState(0);
     const [finalScore, setFinalScore] = useState(0);
+    const [answersDetail, setAnswersDetail] = useState([]);
+    const [previewAsStudent, setPreviewAsStudent] = useState(() => sessionStorage.getItem('dlpPreviewAsStudent') === '1');
     const { confettiTrigger, triggerConfetti } = useConfetti();
 
     const handleDisablePreview = useCallback(() => {
@@ -446,7 +448,7 @@ const Quizzes = ({ user }) => {
         return Number.isNaN(parsed.getTime()) ? null : parsed;
     };
 
-    const isStudent = user?.role === 'student';
+    const isStudent = user?.role === 'student' || previewAsStudent;
     const now = new Date();
     const assignmentStart = toDate(quizData.assignmentStartAt);
     const assignmentDue = toDate(quizData.assignmentDueAt);
