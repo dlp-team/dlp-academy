@@ -2,6 +2,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import StudyGuide from '../../../../src/pages/Content/StudyGuide';
 
 const routeMocks = vi.hoisted(() => ({
@@ -63,7 +64,11 @@ describe('StudyGuide fallback and partial states', () => {
       return { exists: () => false, data: () => ({}) };
     });
 
-    render(<StudyGuide />);
+    render(
+      <MemoryRouter>
+        <StudyGuide />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/contenido no disponible/i)).toBeTruthy();
@@ -90,7 +95,11 @@ describe('StudyGuide fallback and partial states', () => {
       return { exists: () => false, data: () => ({}) };
     });
 
-    render(<StudyGuide />);
+    render(
+      <MemoryRouter>
+        <StudyGuide />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/guía de estudio premium/i)).toBeTruthy();

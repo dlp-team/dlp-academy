@@ -180,6 +180,10 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                 allQuizzes
                     .sort((a, b) => String(a.title || a.name || '').localeCompare(String(b.title || b.name || '')))
             );
+        }, (error) => {
+            console.error('Error listening to quizzes:', error);
+            setMandatoryQuizzes([]);
+            setAssignmentQuizzes([]);
         });
 
         return () => unsubscribe();
@@ -195,6 +199,9 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                 allExams
                     .sort((a, b) => String(a.title || a.name || '').localeCompare(String(b.title || b.name || '')))
             );
+        }, (error) => {
+            console.error('Error listening to exams:', error);
+            setExams([]);
         });
 
         return () => unsubscribe();
@@ -210,6 +217,9 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
 
         const unsubscribe = onSnapshot(reviewsQuery, (snapshot) => {
             setAssignmentReviews(snapshot.docs.map((reviewDoc) => ({ id: reviewDoc.id, ...reviewDoc.data() })));
+        }, (error) => {
+            console.error('Error listening to assignment grade reviews:', error);
+            setAssignmentReviews([]);
         });
 
         return () => unsubscribe();
@@ -225,6 +235,9 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
 
         const unsubscribe = onSnapshot(examReviewsQuery, (snapshot) => {
             setExamReviews(snapshot.docs.map((reviewDoc) => ({ id: reviewDoc.id, ...reviewDoc.data() })));
+        }, (error) => {
+            console.error('Error listening to exam grade reviews:', error);
+            setExamReviews([]);
         });
 
         return () => unsubscribe();
@@ -249,6 +262,9 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                 });
 
             setEvaluationItems(items);
+        }, (error) => {
+            console.error('Error listening to evaluation items:', error);
+            setEvaluationItems([]);
         });
 
         return () => unsubscribe();
@@ -264,6 +280,9 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
 
         const unsubscribe = onSnapshot(gradesQuery, (snapshot) => {
             setEvaluationGrades(snapshot.docs.map((gradeDoc) => ({ id: gradeDoc.id, ...gradeDoc.data() })));
+        }, (error) => {
+            console.error('Error listening to evaluation grades:', error);
+            setEvaluationGrades([]);
         });
 
         return () => unsubscribe();
@@ -297,6 +316,10 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
 
             return onSnapshot(source, (snapshot) => {
                 resultsByTopic[topic.id] = snapshot.docs.map((resultDoc) => resultDoc.data());
+                recompute();
+            }, (error) => {
+                console.error('Error listening to quiz results for topic:', topic.id, error);
+                resultsByTopic[topic.id] = [];
                 recompute();
             });
         });

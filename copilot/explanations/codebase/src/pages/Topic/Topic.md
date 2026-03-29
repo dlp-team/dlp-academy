@@ -54,3 +54,11 @@
 **Reason**: Support the new `Tareas` section with live counts and role-aware visibility in the Topic view.
 
 **Impact**: Topic tabs/content now receive `topic.assignments` alongside existing materials/uploads/quizzes/exams without altering prior behaviors.
+
+### 2026-03-29 - Listener Error Hardening
+
+**Change**: Added explicit Firestore `onSnapshot` error callbacks in `Topic.jsx` for quiz-results and topic-assignments listeners.
+
+**Reason**: Prevent uncaught runtime watch failures from cascading into blank/unstable topic rendering under restricted Firestore permissions.
+
+**Impact**: Topic page now degrades more safely when listener queries are denied while preserving existing data-enrichment flow.

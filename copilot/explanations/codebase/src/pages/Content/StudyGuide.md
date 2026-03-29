@@ -25,3 +25,6 @@
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+- 2026-03-29: StudyGuide flow now supports location-state prefetch consumption in runtime; fallback tests were aligned to router context expectations to preserve controlled "contenido no disponible" behavior.

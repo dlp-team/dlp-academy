@@ -225,25 +225,32 @@ export const useTopicLogic = (user) => {
 
         fetchTopicDetails();
 
-        // Listener independiente para exams (relación canónica por topicId)
-        if (user && topicId) {
-            const examsQ = query(collection(db, "exams"), where("topicId", "==", topicId));
-            unsubscribeExams = onSnapshot(examsQ, (snap) => {
-                console.log("[EXAMS] query topicId ==", topicId, "=> docs:", snap.size);
-                examsFromExams = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                syncMergedExams();
-            }, (error) => {
-                console.error("[EXAMS] Firestore error:", error);
-            });
+        // Carga de exams/examns por lectura puntual para evitar ruido de watch
+        // cuando las reglas bloquean listeners en algunos roles.
+        if (user && topicId && user?.role !== 'student') {
+            const loadExams = async () => {
+                try {
+                    const examsQ = query(collection(db, "exams"), where("topicId", "==", topicId));
+                    const examsSnap = await getDocs(examsQ);
+                    examsFromExams = examsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                } catch (error) {
+                    console.error("[EXAMS] Firestore error:", error);
+                    examsFromExams = [];
+                }
 
-            const examnsQ = query(collection(db, "examns"), where("topicId", "==", topicId));
-            unsubscribeExamns = onSnapshot(examnsQ, (snap) => {
-                console.log("[EXAMNS] query topicId ==", topicId, "=> docs:", snap.size);
-                examsFromExamns = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                try {
+                    const examnsQ = query(collection(db, "examns"), where("topicId", "==", topicId));
+                    const examnsSnap = await getDocs(examnsQ);
+                    examsFromExamns = examnsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                } catch (error) {
+                    console.error("[EXAMNS] Firestore error:", error);
+                    examsFromExamns = [];
+                }
+
                 syncMergedExams();
-            }, (error) => {
-                console.error("[EXAMNS] Firestore error:", error);
-            });
+            };
+
+            loadExams();
         }
 
         return () => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDarkMode } from '../../hooks/useDarkMode';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
     ChevronLeft, BookOpen, Calculator, Share2, 
     MoreVertical, ArrowUp, Sparkles, BookMarked,
@@ -469,6 +469,7 @@ const StudyGuide = () => {
     const { subjectId, topicId, guideId, fileId } = useParams(); 
     const activeDocId = fileId || guideId;
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [loading, setLoading] = useState(true);
     const [guideData, setGuideData] = useState(null);
@@ -579,34 +580,82 @@ const StudyGuide = () => {
                     // El estado topicGradient mantendrá su valor inicial si esto falla
                 }
 
-                // 2. OBTENER LOS DATOS DE LA GUÍA (RESUMEN)
-                const guideRef = doc(db, "resumen", activeDocId);
-                const guideSnap = await getDoc(guideRef);
-
-                if (guideSnap.exists()) {
-                    const rawData = guideSnap.data();
+                const parseStudyGuide = (rawData) => {
                     let parsedStudyGuide = [];
-                    
                     try {
-                        // Manejo de datos si vienen como String (JSON) o como Array directamente
-                        if (typeof rawData.studyGuide === 'string') {
+                        if (typeof rawData?.studyGuide === 'string') {
                             parsedStudyGuide = JSON.parse(rawData.studyGuide);
-                        } else if (Array.isArray(rawData.studyGuide)) {
+                        } else if (Array.isArray(rawData?.studyGuide)) {
                             parsedStudyGuide = rawData.studyGuide;
                         }
                     } catch (e) {
                         console.error("Error al parsear el contenido de la guía:", e);
                     }
+                    return parsedStudyGuide;
+                };
 
+                // 2. OBTENER LOS DATOS DE LA GUÍA
+                // Preferimos datos pre-cargados desde la navegación para evitar fallos por permisos puntuales.
+                const prefetchedGuide = location?.state?.prefetchedGuide;
+                const prefetchedMatches = prefetchedGuide && prefetchedGuide.id === activeDocId;
+                if (prefetchedMatches) {
+                    const prefetchedParsed = parseStudyGuide(prefetchedGuide);
+                    if (prefetchedParsed.length > 0) {
+                        setGuideData({
+                            ...prefetchedGuide,
+                            studyGuide: prefetchedParsed
+                        });
+                        setExpandedSections({ 0: true });
+                        return;
+                    }
+
+                    if (prefetchedGuide?.url) {
+                        // If we already have a linked file but no parsed guide sections,
+                        // avoid forcing blocked reads and render graceful fallback UI.
+                        setGuideData({
+                            ...prefetchedGuide,
+                            studyGuide: []
+                        });
+                        setExpandedSections({});
+                        return;
+                    }
+                }
+
+                let rawData = null;
+                try {
+                    const guideRef = doc(db, "resumen", activeDocId);
+                    const guideSnap = await getDoc(guideRef);
+                    if (guideSnap.exists()) {
+                        rawData = guideSnap.data();
+                    }
+                } catch (resumenError) {
+                    if (resumenError?.code !== 'permission-denied') {
+                        console.warn("No se pudo leer desde 'resumen', intentando fallback en 'documents':", resumenError);
+                    }
+                }
+
+                if (!rawData) {
+                    try {
+                        const docGuideRef = doc(db, "documents", activeDocId);
+                        const docGuideSnap = await getDoc(docGuideRef);
+                        if (docGuideSnap.exists()) {
+                            rawData = docGuideSnap.data();
+                        }
+                    } catch (documentsError) {
+                        if (documentsError?.code !== 'permission-denied') {
+                            console.warn("No se pudo leer fallback desde 'documents':", documentsError);
+                        }
+                    }
+                }
+
+                if (rawData) {
                     setGuideData({
                         ...rawData,
-                        studyGuide: parsedStudyGuide
+                        studyGuide: parseStudyGuide(rawData)
                     });
-
-                    // Abrir la primera sección por defecto
                     setExpandedSections({ 0: true });
                 } else {
-                    console.error("El documento de la guía no existe en la ruta especificada.");
+                    console.error("La guía no existe o no es accesible para este usuario.");
                 }
 
             } catch (error) {
@@ -619,7 +668,7 @@ const StudyGuide = () => {
         if (subjectId && topicId && activeDocId) {
             loadData();
         }
-    }, [subjectId, topicId, activeDocId]);
+    }, [subjectId, topicId, activeDocId, location?.state]);
 
     const handleGoBack = () => navigate(-1);
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1247,7 +1296,7 @@ const StudyGuide = () => {
                 </div>
             </main>
 
-            <style jsx>{`
+            <style>{`
                 .no-scrollbar {
                     -ms-overflow-style: none;
                     scrollbar-width: none;

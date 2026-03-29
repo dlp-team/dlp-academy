@@ -82,6 +82,10 @@ const Topic = ({ user }) => {
             });
             setUserScores(scoresMap);
             setScoresLoading(false);
+        }, (error) => {
+            console.error('[QUIZ_RESULTS] Firestore error:', error);
+            setUserScores({});
+            setScoresLoading(false);
         });
 
         return () => unsubscribe();
@@ -116,6 +120,9 @@ const Topic = ({ user }) => {
             }
 
             setTopicAssignments(allAssignments);
+        }, (error) => {
+            console.error('[TOPIC_ASSIGNMENTS] Firestore error:', error);
+            setTopicAssignments([]);
         });
 
         return () => unsubscribe();

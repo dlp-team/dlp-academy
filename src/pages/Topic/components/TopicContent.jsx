@@ -137,7 +137,9 @@ const TopicContent = ({
                     <div className="flex gap-6 items-stretch">
                     {/* LEFT: Guía Completa */}
                     <button
-                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/resumen/${mainGuide.id}`)}
+                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/resumen/${mainGuide.id}`, {
+                            state: { prefetchedGuide: mainGuide }
+                        })}
                         className="flex-1 group relative overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.01] text-left"
                     >
                         <div className={`absolute inset-0 bg-gradient-to-br ${subjectColor} opacity-90 group-hover:opacity-100 transition-opacity`} />
@@ -235,15 +237,27 @@ const TopicContent = ({
     // --- MATERIALES TAB (Students Only) ---
     if (activeTab === 'materiales') {
         const subjectColor = subject?.color || 'from-indigo-500 to-purple-600';
-        const aiSummaryFiles = topic.pdfs?.filter(f => ['summary', 'resumen'].includes((f.type || '').toLowerCase())) || [];
-        const mainGuide = aiSummaryFiles[0] || null;
-        const extraAiSummaryFiles = aiSummaryFiles.filter((f) => f.id !== mainGuide?.id);
-        const uploadResumenFiles = topic.uploads?.filter(u => u.fileCategory === 'resumen') || [];
+        const allAiFiles = topic.pdfs || [];
+        const aiSummaryCandidates = allAiFiles.filter(f => ['summary', 'resumen'].includes((f.type || '').toLowerCase()));
+        const isStudyGuideRecord = (file) => Boolean(file?.studyGuide) || file?._collection === 'resumen';
+        // Only use records compatible with StudyGuide page routing.
+        const mainGuide = aiSummaryCandidates.find(isStudyGuideRecord)
+            || allAiFiles.find(isStudyGuideRecord)
+            || aiSummaryCandidates[0]
+            || allAiFiles[0]
+            || null;
+        const aiExamFiles = allAiFiles.filter((f) => {
+            const type = (f?.type || '').toLowerCase();
+            return type.includes('exam') || type.includes('evaluación') || type.includes('evaluation');
+        });
+        const extraAiSummaryFiles = allAiFiles.filter((f) => f.id !== mainGuide?.id && !aiExamFiles.some((examFile) => examFile.id === f.id));
+        // Legacy uploads without category are treated as resúmenes to avoid hiding existing files.
+        const uploadResumenFiles = topic.uploads?.filter(u => !u.fileCategory || u.fileCategory === 'resumen') || [];
         const resumenCards = [...extraAiSummaryFiles, ...uploadResumenFiles];
 
         const uploadExamFiles = topic.uploads?.filter(u => u.fileCategory === 'examen') || [];
         const generatedExams = topic.exams || [];
-        const hasAnyExam = uploadExamFiles.length > 0 || generatedExams.length > 0;
+        const hasAnyExam = uploadExamFiles.length > 0 || aiExamFiles.length > 0 || generatedExams.length > 0;
 
         let hasFormulas = false;
         if (mainGuide?.studyGuide) {
@@ -275,7 +289,17 @@ const TopicContent = ({
                             {mainGuide && (
                                 <div className="flex gap-6 items-stretch">
                                     <button
-                                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/resumen/${mainGuide.id}`)}
+                                        onClick={() => {
+                                            if (isStudyGuideRecord(mainGuide)) {
+                                                navigate(`/home/subject/${subjectId}/topic/${topicId}/resumen/${mainGuide.id}`, {
+                                                    state: { prefetchedGuide: mainGuide }
+                                                });
+                                                return;
+                                            }
+                                            if (mainGuide?.url) {
+                                                handleViewFile(mainGuide);
+                                            }
+                                        }}
                                         className="flex-1 group relative overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.01] text-left"
                                     >
                                         <div className={`absolute inset-0 bg-gradient-to-br ${subjectColor} opacity-90 group-hover:opacity-100 transition-opacity`} />
@@ -295,25 +319,26 @@ const TopicContent = ({
                                                 </p>
                                             </div>
                                             <span className="text-white/60 text-xs font-bold mt-4 group-hover:text-white/90 transition-colors">
-                                                Ver guía →
+                                                {isStudyGuideRecord(mainGuide) ? 'Ver guía →' : 'Ver archivo →'}
                                             </span>
                                         </div>
                                     </button>
 
-                                    {hasFormulas && (
-                                        <button
-                                            onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/formulas/${mainGuide.id}`)}
-                                            className="group relative w-40 shrink-0 overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.03]"
-                                        >
-                                            <div className={`absolute inset-0 bg-gradient-to-br ${subjectColor} opacity-90 group-hover:opacity-100 transition-opacity`} />
-                                            <div className="relative z-10 h-full flex flex-col items-center justify-center gap-3 p-6">
-                                                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                                                    <Calculator className="w-8 h-8 text-white" strokeWidth={1.5} />
-                                                </div>
-                                                <span className="text-white font-bold text-sm text-center">Fórmulas</span>
+                                    <button
+                                        onClick={() => {
+                                            if (!hasFormulas) return;
+                                            navigate(`/home/subject/${subjectId}/topic/${topicId}/formulas/${mainGuide.id}`);
+                                        }}
+                                        className={`group relative w-40 shrink-0 overflow-hidden rounded-3xl shadow-sm transition-all duration-500 ${hasFormulas ? 'hover:shadow-md hover:scale-[1.03]' : 'opacity-70 cursor-not-allowed'}`}
+                                    >
+                                        <div className={`absolute inset-0 bg-gradient-to-br ${subjectColor} opacity-90 ${hasFormulas ? 'group-hover:opacity-100' : ''} transition-opacity`} />
+                                        <div className="relative z-10 h-full flex flex-col items-center justify-center gap-3 p-6">
+                                            <div className={`w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center ${hasFormulas ? 'group-hover:scale-110 transition-transform duration-300' : ''}`}>
+                                                <Calculator className="w-8 h-8 text-white" strokeWidth={1.5} />
                                             </div>
-                                        </button>
-                                    )}
+                                            <span className="text-white font-bold text-sm text-center">{hasFormulas ? 'Fórmulas' : 'Sin fórmulas'}</span>
+                                        </div>
+                                    </button>
                                 </div>
                             )}
 
@@ -325,15 +350,17 @@ const TopicContent = ({
                                             <div
                                                 key={file.id || `resumen-${idx}`}
                                                 onClick={() => {
-                                                    if (file.studyGuide) {
-                                                        navigate(`/home/subject/${subjectId}/topic/${topicId}/resumen/${file.id}`);
+                                                    if (isStudyGuideRecord(file)) {
+                                                        navigate(`/home/subject/${subjectId}/topic/${topicId}/resumen/${file.id}`, {
+                                                            state: { prefetchedGuide: file }
+                                                        });
                                                         return;
                                                     }
                                                     if (file.url) {
                                                         handleViewFile(file);
                                                     }
                                                 }}
-                                                className="group cursor-pointer relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-300 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-slate-900/30"
+                                                className="group relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 transition-all duration-300 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-slate-900/30"
                                             >
                                                 <div className={`absolute top-0 inset-x-0 h-1 ${subjectGradient}`} />
                                                 <div className="p-4">
@@ -348,7 +375,7 @@ const TopicContent = ({
                                                         </div>
                                                     </div>
                                                     <button className={`w-full py-2 rounded-lg text-xs font-semibold text-white transition-all ${subjectGradient} hover:shadow-md active:scale-95`}>
-                                                        Ver
+                                                        {isStudyGuideRecord(file) ? 'Ver guía' : 'Ver'}
                                                     </button>
                                                 </div>
                                             </div>
@@ -379,6 +406,38 @@ const TopicContent = ({
                                 return (
                                     <div
                                         key={file.id || `upload-exam-${idx}`}
+                                        onClick={() => {
+                                            if (file.url) {
+                                                handleViewFile(file);
+                                            }
+                                        }}
+                                        className="group cursor-pointer relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-300 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-slate-900/30"
+                                    >
+                                        <div className={`absolute top-0 inset-x-0 h-1 ${subjectGradient}`} />
+                                        <div className="p-4">
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <div className={`${subjectGradient} w-10 h-10 rounded-xl flex items-center justify-center shrink-0`}>
+                                                    <FileText className="w-5 h-5 text-white" strokeWidth={1.5} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">
+                                                        {file.title || file.name || 'Examen'}
+                                                    </h4>
+                                                </div>
+                                            </div>
+                                            <button className={`w-full py-2 rounded-lg text-xs font-semibold text-white transition-all ${subjectGradient} hover:shadow-md active:scale-95`}>
+                                                Ver
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {aiExamFiles.map((file, idx) => {
+                                const subjectGradient = `bg-gradient-to-br ${subjectColor}`;
+                                return (
+                                    <div
+                                        key={file.id || `ai-exam-${idx}`}
                                         onClick={() => {
                                             if (file.url) {
                                                 handleViewFile(file);
@@ -443,6 +502,7 @@ const TopicContent = ({
                                     </div>
                                 );
                             })}
+
                         </div>
                     )}
                 </div>

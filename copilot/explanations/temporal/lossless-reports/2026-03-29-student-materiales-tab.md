@@ -133,3 +133,33 @@
 - File categorization is optional for bulk uploads (defaults to 'resumen')
 - Only single file uploads trigger modal
 - Category can be changed after upload via future edit functionality
+
+---
+
+## 2026-03-29 Recovery Pass (Stability + Visibility)
+
+### Additional Requested Outcome
+- Restore student Materiales visibility after regressions and eliminate synthetic/demo content that caused confusion.
+
+### Additional Files Modified
+1. **`src/pages/Topic/components/TopicContent.jsx`**
+  - Removed synthetic demo cards for Resúmenes and Exámenes in student mode.
+  - Relaxed guide detection fallback so valid resumen records and first available summaries can render/open again.
+  - Preserved 3-column responsive layout and existing teacher sections.
+
+2. **`src/pages/Topic/Topic.jsx`**
+  - Added explicit Firestore listener error callbacks for quiz-results and topic-assignments subscriptions to avoid uncaught runtime watch failures.
+  - Preserved existing topic enrichment flow and tab behavior.
+
+3. **`tests/unit/pages/content/StudyGuide.fallback.test.jsx`**
+  - Wrapped `StudyGuide` test renders with `MemoryRouter` to satisfy `useLocation` router context requirements.
+  - Preserved all fallback assertions and expected UX behavior.
+
+### Recovery Validation
+- ✅ VS Code Problems check clean for touched files (`TopicContent.jsx`, `Topic.jsx`, `StudyGuide.fallback.test.jsx`).
+- ✅ `npm run test` passed fully: **46/46 test files**, **289/289 tests**.
+
+### Preserved Behaviors Re-verified
+- ✅ Teacher tab/content structure remains unchanged.
+- ✅ Student Materiales keeps real data rendering only (no placeholders).
+- ✅ StudyGuide fallback tests now reflect router-backed runtime behavior.
