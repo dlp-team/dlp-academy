@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
@@ -56,6 +56,7 @@ const Subject = ({ user }) => {
     } = useSubjectPageState(topics);
 
     const isTeacherUser = user?.role !== 'student';
+    const effectiveIsTeacher = isTeacherUser;
 
     // Class members
     const { members: classMembers, loading: membersLoading } = useClassMembers(subject);
@@ -118,25 +119,6 @@ const Subject = ({ user }) => {
             <Header user={user} />
 
             <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
-                {canUsePreview && (
-                    <div className="mb-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/80 backdrop-blur-sm p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            {previewAsStudent ? (
-                                <GraduationCap className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                            ) : (
-                                <Eye className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                            )}
-                            <span>{previewAsStudent ? 'Vista alumno activa (temporal)' : 'Vista profesor activa'}</span>
-                        </div>
-                        <button
-                            onClick={() => setPreviewAsStudent((prev) => !prev)}
-                            className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${previewAsStudent ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900'}`}
-                        >
-                            {previewAsStudent ? 'Salir modo alumno' : 'Activar modo alumno'}
-                        </button>
-                    </div>
-                )}
-
                 <SubjectHeader
                     subject={subject}
                     hasTopics={topics.length > 1}

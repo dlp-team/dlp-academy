@@ -137,7 +137,7 @@ export const useSubjects = (user) => {
 
         const sharedQuery = query(
             collection(db, "subjects"),
-            where("isShared", "==", true)
+            where("sharedWithUids", "array-contains", user.uid)
         );
 
         const unsubscribeShared = onSnapshot(sharedQuery, (snapshot) => {

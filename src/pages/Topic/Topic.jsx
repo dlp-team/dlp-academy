@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { Eye, GraduationCap, Loader2 } from 'lucide-react';
-import { Eye, GraduationCap, Loader2 } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import { useTopicLogic } from './hooks/useTopicLogic';
 import { useTopicFailedQuestions } from './hooks/useTopicFailedQuestions';
@@ -159,18 +158,6 @@ const Topic = ({ user }) => {
         };
     }, [logic.permissions, previewAsStudent]);
 
-    const effectivePermissions = useMemo(() => {
-        if (!previewAsStudent) return logic.permissions;
-        return {
-            ...logic.permissions,
-            canEdit: false,
-            canDelete: false,
-            showEditUI: false,
-            showDeleteUI: false,
-            isViewer: true
-        };
-    }, [logic.permissions, previewAsStudent]);
-
     if (!user || logic.loading || !logic.topic || !logic.subject) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -202,32 +189,12 @@ const Topic = ({ user }) => {
                     </div>
                 )}
 
-                {canUsePreview && (
-                    <div className="mb-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/80 backdrop-blur-sm p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
-                            {previewAsStudent ? (
-                                <GraduationCap className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                            ) : (
-                                <Eye className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                            )}
-                            <span>{previewAsStudent ? 'Modo Alumno activo (solo lectura temporal)' : 'Modo Profesor activo'}</span>
-                        </div>
-                        <button
-                            onClick={() => setPreviewAsStudent((prev) => !prev)}
-                            className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${previewAsStudent ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900'}`}
-                        >
-                            {previewAsStudent ? 'Salir modo alumno' : 'Activar modo alumno'}
-                        </button>
-                    </div>
-                )}
-
                 <TopicHeader 
                     {...logic}
                     topic={enrichedTopic} 
                     subject={logic.subject}
                     globalProgress={globalProgress}
                     handleGenerateQuizSubmit={logic.handleGenerateQuizSubmit}
-                    permissions={effectivePermissions}
                     permissions={effectivePermissions}
                 />
                 <div className="mt-8">
@@ -246,7 +213,6 @@ const Topic = ({ user }) => {
                         failedQuestions={failedQuestions}
                         handleManualUpload={logic.handleManualUpload}
                         uploading={logic.uploading}
-                        permissions={effectivePermissions}
                         permissions={effectivePermissions}
                     />
                 </div>

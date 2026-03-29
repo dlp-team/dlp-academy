@@ -35,6 +35,7 @@ const TopicModals = ({
             <QuizModal
                 isOpen={showQuizModal}
                 onClose={() => setShowQuizModal(false)}
+                onSubmit={handleGenerateQuizSubmit}
                 formData={quizFormData}
                 setFormData={setQuizFormData}
                 themeColor={subject?.color}

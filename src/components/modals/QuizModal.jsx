@@ -5,6 +5,7 @@ import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Wand2, U
 const QuizModal = ({
     isOpen,
     onClose,
+    onSubmit,
     formData,
     setFormData,
     themeColor,
@@ -33,6 +34,12 @@ const QuizModal = ({
     const handleInternalSubmit = async (e) => {
         e.preventDefault();
 
+        // Prefer centralized Topic handler to keep one consistent save flow.
+        if (typeof onSubmit === 'function') {
+            await onSubmit(e);
+            return;
+        }
+
         if (!subjectId || !topicId) {
             if (onToast) onToast({ show: true, message: 'Error: No se identificó la Asignatura o el Tema.' });
             return;
@@ -42,10 +49,13 @@ const QuizModal = ({
         dataToSend.append('title', formData.title);
         dataToSend.append('level', formData.level);
         dataToSend.append('numQuestions', formData.numQuestions);
-        dataToSend.append('prompt', formData.prompt);
+        dataToSend.append('prompt', formData.prompt || '');
         dataToSend.append('subjectId', subjectId);
         dataToSend.append('topicId', topicId);
-        if (formData.file) dataToSend.append('file', formData.file);
+        if (formData.file) {
+            dataToSend.append('file', formData.file);
+            dataToSend.append('files', formData.file);
+        }
 
         // Cerrar modal inmediatamente
         handleClose();
@@ -61,7 +71,14 @@ const QuizModal = ({
 
             if (!response.ok) throw new Error(`Error del servidor: ${response.status}`);
 
-            const result = await response.json();
+            // Some webhook responses are empty/non-JSON despite successful processing.
+            let result = null;
+            try {
+                const text = await response.text();
+                result = text ? JSON.parse(text) : null;
+            } catch {
+                result = null;
+            }
             console.log("✅ Respuesta de n8n:", result);
             if (onToast) onToast({ show: true, message: '¡Test generado correctamente! Recarga para verlo.' });
         } catch (error) {

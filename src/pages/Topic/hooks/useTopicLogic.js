@@ -18,6 +18,8 @@ export const useTopicLogic = (user) => {
     const toastTimerRef = useRef(null);
     const docsFromDocumentsRef = useRef([]);
     const docsFromResumenRef = useRef([]);
+    const pendingQuizSyncRef = useRef(false);
+    const previousQuizCountRef = useRef(0);
     
     // Estados de Datos
     const [subject, setSubject] = useState(null);
@@ -83,6 +85,22 @@ export const useTopicLogic = (user) => {
         let unsubscribeQuizzes = () => {};
         let unsubscribeResumen = () => {};
         let unsubscribeExams = () => {};
+        let unsubscribeExamns = () => {};
+        let examsFromExams = [];
+        let examsFromExamns = [];
+
+        const syncMergedExams = () => {
+            const mergedById = new Map();
+            [...examsFromExams, ...examsFromExamns].forEach((exam) => {
+                if (!exam?.id) return;
+                mergedById.set(exam.id, exam);
+            });
+
+            setTopic(prev => ({
+                ...prev,
+                exams: Array.from(mergedById.values())
+            }));
+        };
 
         const fetchTopicDetails = async () => {
             if (!user || !subjectId || !topicId) return;
@@ -133,6 +151,14 @@ export const useTopicLogic = (user) => {
                                 pdfs: [...docsFromDocumentsRef.current, ...docsFromResumenRef.current],
                                 uploads: manualUploads
                             }));
+                        }, (error) => {
+                            console.error("[DOCUMENTS] Firestore error:", error);
+                            docsFromDocumentsRef.current = [];
+                            setTopic(prev => ({
+                                ...prev,
+                                pdfs: [...docsFromResumenRef.current],
+                                uploads: []
+                            }));
                         });
 
                         const resumenRef = query(collection(db, 'resumen'), where('topicId', '==', topicId));
@@ -149,14 +175,35 @@ export const useTopicLogic = (user) => {
                                 ...prev,
                                 pdfs: [...docsFromDocumentsRef.current, ...docsFromResumenRef.current],
                             }));
+                        }, (error) => {
+                            console.error("[RESUMEN] Firestore error:", error);
+                            docsFromResumenRef.current = [];
+                            setTopic(prev => ({
+                                ...prev,
+                                pdfs: [...docsFromDocumentsRef.current],
+                            }));
                         });
 
                         const quizzesRef = query(collection(db, "quizzes"), where("topicId", "==", topicId));
                         unsubscribeQuizzes = onSnapshot(quizzesRef, (quizzesSnap) => {
                             const realQuizzes = quizzesSnap.docs.map(q => ({ id: q.id, ...q.data() }));
+
+                            if (pendingQuizSyncRef.current && realQuizzes.length > previousQuizCountRef.current) {
+                                pendingQuizSyncRef.current = false;
+                                showNotification("✅ Test guardado y sincronizado correctamente.");
+                            }
+
                             setTopic(prev => ({
                                 ...prev,
                                 quizzes: realQuizzes
+                            }));
+                            setLoading(false);
+                        }, (error) => {
+                            console.error("[QUIZZES] Firestore error:", error);
+                            pendingQuizSyncRef.current = false;
+                            setTopic(prev => ({
+                                ...prev,
+                                quizzes: []
                             }));
                             setLoading(false);
                         });
@@ -165,6 +212,10 @@ export const useTopicLogic = (user) => {
                         setLoading(false);
                         navigate('/home');
                     }
+                }, (error) => {
+                    console.error("[TOPIC] Firestore error:", error);
+                    setLoading(false);
+                    navigate('/home');
                 });
             } catch (error) {
                 console.error("Error general:", error);
@@ -179,14 +230,19 @@ export const useTopicLogic = (user) => {
             const examsQ = query(collection(db, "exams"), where("topicId", "==", topicId));
             unsubscribeExams = onSnapshot(examsQ, (snap) => {
                 console.log("[EXAMS] query topicId ==", topicId, "=> docs:", snap.size);
-                const examsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                console.log("[EXAMS] data:", examsData);
-                setTopic(prev => ({
-                    ...prev,
-                    exams: examsData
-                }));
+                examsFromExams = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                syncMergedExams();
             }, (error) => {
                 console.error("[EXAMS] Firestore error:", error);
+            });
+
+            const examnsQ = query(collection(db, "examns"), where("topicId", "==", topicId));
+            unsubscribeExamns = onSnapshot(examnsQ, (snap) => {
+                console.log("[EXAMNS] query topicId ==", topicId, "=> docs:", snap.size);
+                examsFromExamns = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                syncMergedExams();
+            }, (error) => {
+                console.error("[EXAMNS] Firestore error:", error);
             });
         }
 
@@ -196,6 +252,7 @@ export const useTopicLogic = (user) => {
             if (unsubscribeQuizzes) unsubscribeQuizzes();
             if (unsubscribeResumen) unsubscribeResumen();
             if (unsubscribeExams) unsubscribeExams();
+            if (unsubscribeExamns) unsubscribeExamns();
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         };
     }, [user, subjectId, topicId, navigate]);
@@ -384,6 +441,8 @@ export const useTopicLogic = (user) => {
     // --- IA GENERATION: QUIZZES ---
     const handleGenerateQuizSubmit = async (e) => {
         e.preventDefault();
+        previousQuizCountRef.current = topic?.quizzes?.length || 0;
+        pendingQuizSyncRef.current = true;
         setShowQuizModal(false);
         setIsGeneratingQuiz(false); 
         showNotification("⏳ La IA está diseñando tu test...", 6000);
@@ -410,6 +469,7 @@ export const useTopicLogic = (user) => {
 
         } catch (error) { 
             console.error(error); 
+            pendingQuizSyncRef.current = false;
             showNotification("❌ Error de conexión con la IA"); 
         }
     };

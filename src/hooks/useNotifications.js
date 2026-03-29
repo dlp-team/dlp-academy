@@ -18,6 +18,33 @@ export const useNotifications = (uid) => {
             orderBy('createdAt', 'desc')
         );
 
+        let unsubscribeFallback = null;
+
+        const attachFallbackListener = () => {
+            const fallbackQ = query(
+                collection(db, 'notifications'),
+                where('userId', '==', uid)
+            );
+
+            unsubscribeFallback = onSnapshot(
+                fallbackQ,
+                (snapshot) => {
+                    const data = snapshot.docs
+                        .map(d => ({ id: d.id, ...d.data() }))
+                        .sort((a, b) => {
+                            const aMs = a?.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+                            const bMs = b?.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+                            return bMs - aMs;
+                        });
+                    setNotifications(data);
+                },
+                (fallbackError) => {
+                    console.error('Error listening to notifications (fallback):', fallbackError);
+                    setNotifications([]);
+                }
+            );
+        };
+
         const unsubscribe = onSnapshot(
             q,
             (snapshot) => {
@@ -26,11 +53,22 @@ export const useNotifications = (uid) => {
             },
             (error) => {
                 console.error('Error listening to notifications:', error);
+
+                if (error?.code === 'failed-precondition') {
+                    attachFallbackListener();
+                    return;
+                }
+
                 setNotifications([]);
             }
         );
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribe();
+            if (typeof unsubscribeFallback === 'function') {
+                unsubscribeFallback();
+            }
+        };
     }, [uid]);
 
     const unreadCount = notifications.filter(n => !n.read).length;
