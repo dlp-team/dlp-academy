@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { Eye, GraduationCap, Loader2 } from 'lucide-react';
-import { Eye, GraduationCap, Loader2 } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import { useTopicLogic } from './hooks/useTopicLogic';
 import { useTopicFailedQuestions } from './hooks/useTopicFailedQuestions';
@@ -159,18 +158,6 @@ const Topic = ({ user }) => {
         };
     }, [logic.permissions, previewAsStudent]);
 
-    const effectivePermissions = useMemo(() => {
-        if (!previewAsStudent) return logic.permissions;
-        return {
-            ...logic.permissions,
-            canEdit: false,
-            canDelete: false,
-            showEditUI: false,
-            showDeleteUI: false,
-            isViewer: true
-        };
-    }, [logic.permissions, previewAsStudent]);
-
     if (!user || logic.loading || !logic.topic || !logic.subject) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -228,7 +215,6 @@ const Topic = ({ user }) => {
                     globalProgress={globalProgress}
                     handleGenerateQuizSubmit={logic.handleGenerateQuizSubmit}
                     permissions={effectivePermissions}
-                    permissions={effectivePermissions}
                 />
                 <div className="mt-8">
                     <TopicTabs 
@@ -246,7 +232,6 @@ const Topic = ({ user }) => {
                         failedQuestions={failedQuestions}
                         handleManualUpload={logic.handleManualUpload}
                         uploading={logic.uploading}
-                        permissions={effectivePermissions}
                         permissions={effectivePermissions}
                     />
                 </div>
