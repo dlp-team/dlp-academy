@@ -9,7 +9,9 @@ export const buildSubjectClonePayload = (subject, targetFolderId, user) => {
         color: subject.color || 'from-slate-500 to-slate-700',
         icon: subject.icon || 'book',
         tags: Array.isArray(subject.tags) ? subject.tags : [],
-        classIds: Array.isArray(subject.classIds) ? subject.classIds : [],
+        classId: null,
+        classIds: [],
+        enrolledStudentUids: [],
         cardStyle: subject.cardStyle || 'default',
         modernFillColor: subject.modernFillColor || null,
         folderId: targetFolderId || null,
@@ -30,7 +32,6 @@ export const buildFolderClonePayload = (folder, targetParentId) => {
 
     return {
         name: folder.name || 'Carpeta',
-        description: folder.description || '',
         color: folder.color || 'from-amber-400 to-amber-600',
         tags: Array.isArray(folder.tags) ? folder.tags : [],
         cardStyle: folder.cardStyle || 'default',

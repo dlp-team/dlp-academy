@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { ICON_MAP, ICON_KEYS, COLORS } from '../../../utils/subjectConstants';
+import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 
 const EditSubjectModal = ({ isOpen, onClose, initialData, onSave }) => {
     const [formData, setFormData] = useState(initialData);
@@ -14,7 +15,7 @@ const EditSubjectModal = ({ isOpen, onClose, initialData, onSave }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto" style={OVERLAY_TOP_OFFSET_STYLE}>
             <div className="flex min-h-full items-center justify-center p-4">
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={onClose} />
                 <div className="relative bg-white rounded-2xl w-full max-w-md shadow-xl animate-in fade-in zoom-in duration-200">

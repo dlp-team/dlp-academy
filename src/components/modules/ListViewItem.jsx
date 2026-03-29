@@ -20,6 +20,7 @@ const ListViewItem = ({
     onEdit,
     onDelete,
     onShare,
+    onOpenClasses,
     onGoToFolder,
     disableAllActions = false,
     disableDeleteActions = false,
@@ -31,6 +32,7 @@ const ListViewItem = ({
     onDropAction,
     draggable = true,
     path = [],
+    isSelected = false,
     onFocusItem = () => {},
     getCardVisualState = () => ({ isAnimating: false, isCutPending: false })
 }) => {
@@ -103,13 +105,12 @@ const ListViewItem = ({
         return null;
     }
     // Delegate to FolderListItem component if the item is a folder
+    // Focus registration is handled inside FolderListItem on the row div itself,
+    // NOT on this outer wrapper — otherwise the event fires for the entire subtree
+    // (including expanded children), making nested cards unfocusable.
     if (type === 'folder') {
         return (
-            <div
-                onMouseDown={() => onFocusItem(item, 'folder')}
-                onMouseEnter={() => onFocusItem(item, 'folder')}
-                className={visualClasses}
-            >
+            <div className={`${visualClasses} ${isSelected ? 'ring-4 ring-indigo-500 dark:ring-indigo-300 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 rounded-xl' : ''}`}>
                 <FolderListItem
                     user={user}
                     item={item}
@@ -133,6 +134,8 @@ const ListViewItem = ({
                     onDropAction={onDropAction}
                     draggable={draggable}
                     path={currentPath}
+                    onFocusItem={onFocusItem}
+                    getCardVisualState={getCardVisualState}
                 />
             </div>
         );
@@ -168,7 +171,7 @@ const ListViewItem = ({
     };
 
     return (
-        <div className={`select-none animate-in fade-in duration-200 ${visualClasses}`}>
+        <div className={`select-none animate-in fade-in duration-200 ${visualClasses} ${isSelected ? 'ring-4 ring-indigo-500 dark:ring-indigo-300 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 rounded-xl' : ''}`}>
             {/* ROW CONTAINER - Apply indentation here via margin */}
             <div 
                 ref={itemRef}
@@ -202,6 +205,7 @@ const ListViewItem = ({
                             onEdit={onEdit} 
                             onDelete={onDelete} 
                             onShare={onShare}
+                            onOpenClasses={onOpenClasses}
                             onGoToFolder={onGoToFolder}
                             disableAllActions={disableAllActions}
                             disableDeleteActions={disableDeleteActions}
@@ -209,6 +213,8 @@ const ListViewItem = ({
                             hideSharedIndicator={hideSharedIndicator}
                             cardScale={cardScale} 
                             className="pl-8" 
+                            onFocusItem={onFocusItem}
+                            getCardVisualState={getCardVisualState}
                         />
                     </div>
                 </div>

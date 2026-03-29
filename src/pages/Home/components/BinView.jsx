@@ -15,16 +15,7 @@ import { DeleteConfirmModal, EmptyBinConfirmModal } from './bin/BinConfirmModals
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
-    // Restrict access for students
-    if (user?.role === 'student') {
-        return (
-            <div className="w-full flex flex-col items-center justify-center py-16">
-                <XCircle size={48} className="text-red-500 mb-4" />
-                <h2 className="text-2xl font-bold text-red-600 mb-2">Acceso denegado</h2>
-                <p className="text-gray-700 dark:text-gray-300 text-lg">La papelera no está disponible para alumnos.</p>
-            </div>
-        );
-    }
+    const isStudent = user?.role === 'student';
 
     const [trashedSubjects,   setTrashedSubjects]   = useState([]);
     const [loading,           setLoading]           = useState(true);
@@ -39,33 +30,24 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
 
     const selectedCardRef = useRef(null);
 
-    const { getTrashedSubjects, restoreSubject, permanentlyDeleteSubject } = useSubjects(user);
+    const { getTrashedSubjects, restoreSubject, permanentlyDeleteSubject } = useSubjects(isStudent ? null : user);
 
     const selectedSubject = useMemo(
         () => trashedSubjects.find(s => s.id === selectedSubjectId) ?? null,
         [trashedSubjects, selectedSubjectId]
     );
 
-    // ── Data loading ───────────────────────────────────────────────────────────
-    useEffect(() => { loadTrashedItems(); }, []);
-
     const loadTrashedItems = async () => {
+        if (isStudent) {
+            setTrashedSubjects([]);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
             const items = await getTrashedSubjects();
             const now   = new Date();
-            const valid   = [];
-            const expired = [];
-
-            items.forEach(item =>
-                (getRemainingMs(item, now) > 0 ? valid : expired).push(item)
-            );
-
-            if (expired.length > 0) {
-                await Promise.allSettled(expired.map(item => permanentlyDeleteSubject(item.id)));
-            }
-
-            const sorted = [...valid].sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
+            const sorted = [...items].sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
             setTrashedSubjects(sorted);
 
             if (selectedSubjectId && !sorted.some(s => s.id === selectedSubjectId)) {
@@ -78,6 +60,12 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
             setLoading(false);
         }
     };
+
+    // ── Data loading ───────────────────────────────────────────────────────────
+    useEffect(() => {
+        loadTrashedItems();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.uid, isStudent]);
 
     // ── Action handlers ────────────────────────────────────────────────────────
     const handleRestore = async (subjectId) => {
@@ -177,6 +165,17 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }) => {
 
     const handleSelectSubject = (id) =>
         setSelectedSubjectId(prev => (prev === id ? null : id));
+
+    // Restrict access for students
+    if (isStudent) {
+        return (
+            <div className="w-full flex flex-col items-center justify-center py-16">
+                <XCircle size={48} className="text-red-500 mb-4" />
+                <h2 className="text-2xl font-bold text-red-600 mb-2">Acceso denegado</h2>
+                <p className="text-gray-700 dark:text-gray-300 text-lg">La papelera no está disponible para alumnos.</p>
+            </div>
+        );
+    }
 
     // ── Early returns ──────────────────────────────────────────────────────────
     if (loading) {

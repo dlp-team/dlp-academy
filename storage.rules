@@ -1,0 +1,50 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Storage rules rely exclusively on JWT token claims (request.auth.token.*)
+    // because cross-service Firestore lookups (exists/get) are not supported
+    // by the Storage Rules engine. Custom claims (role, institutionId) must be
+    // set on the user's token via Cloud Functions / Auth triggers.
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function currentUserRole() {
+      return isSignedIn() ? request.auth.token.role : null;
+    }
+
+    function currentUserInstitutionId() {
+      return isSignedIn() ? request.auth.token.institutionId : null;
+    }
+
+    function isGlobalAdmin() {
+      return currentUserRole() == 'admin';
+    }
+
+    function isInstitutionAdminOf(institutionId) {
+      return currentUserRole() == 'institutionadmin'
+        && currentUserInstitutionId() == institutionId;
+    }
+
+    function isOwnerUser(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /profile-pictures/{userId} {
+      allow read: if isOwnerUser(userId) || isGlobalAdmin();
+      allow write: if isOwnerUser(userId) || isGlobalAdmin();
+    }
+
+    match /institutions/{institutionId}/branding/{fileName} {
+      allow read: if isSignedIn()
+        && (isGlobalAdmin() || currentUserInstitutionId() == institutionId);
+      allow write: if isSignedIn()
+        && (isGlobalAdmin() || isInstitutionAdminOf(institutionId));
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

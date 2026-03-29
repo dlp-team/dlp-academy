@@ -1,5 +1,19 @@
 # OnboardingWizard.jsx
 
+## [2026-03-29] Removed Redundant Firestore Listener To Prevent Unhandled Permission Crashes
+
+### Context
+- The wizard opened a second `onSnapshot` against `users/{uid}` without an error callback.
+- On permission-denied responses, Firestore emitted uncaught listener errors and cascaded into internal assertion logs.
+
+### Change
+- Removed internal wizard `onSnapshot` subscription.
+- Wizard now derives missing required fields (`role`, `institutionId`, `displayName`) directly from the `user` prop, which is already driven by the top-level app listener.
+- Preserved existing wizard progression and save behavior.
+
+### Validation
+- Confirmed no diagnostics after changes in `src/pages/Onboarding/components/OnboardingWizard.jsx`.
+
 ## Overview
 - **Source file:** `src/pages/Onboarding/components/OnboardingWizard.jsx`
 - **Last documented:** 2026-02-24

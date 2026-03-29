@@ -201,7 +201,15 @@ export const useHomeHandlers = ({
                 setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
                 return;
             }
-            await deleteSubject(deleteConfig.item.id);
+            try {
+                await deleteSubject(deleteConfig.item.id);
+            } catch (error) {
+                setDeleteConfig(prev => ({
+                    ...prev,
+                    errorMessage: error?.message || 'No se pudo mover la asignatura a la papelera.'
+                }));
+                return;
+            }
             setManualOrder(prev => ({
                 ...prev,
                 subjects: prev.subjects.filter(id => id !== deleteConfig.item.id)

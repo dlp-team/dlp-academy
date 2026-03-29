@@ -8,6 +8,7 @@ import { useGhostDrag } from '../../../hooks/useGhostDrag';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
 import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../../utils/dragPayloadUtils';
 import { SHORTCUT_LIST_MENU_WIDTH } from '../shared/shortcutMenuConfig';
+import { withDarkGradientVariant } from '../../../utils/subjectConstants';
 
 const FolderListItem = ({ 
     user,
@@ -31,7 +32,9 @@ const FolderListItem = ({
     onDragEnd,
     onDropAction,
     draggable = true,
-    path
+    path,
+    onFocusItem = () => {},
+    getCardVisualState = () => ({ isAnimating: false, isCutPending: false })
 }) => {
     const HEADER_SAFE_TOP = 112;
     const MENU_MARGIN = 8;
@@ -89,6 +92,7 @@ const FolderListItem = ({
     const type = 'folder';
     // Minimum scale for the menu is 1 (100%)
     const menuScale = Math.max(scale, 1);
+    const folderGradientClass = withDarkGradientVariant(item?.color || 'from-indigo-500 to-purple-500');
 
     React.useEffect(() => {
         if (showMenu && menuBtnRef.current) {
@@ -261,7 +265,8 @@ const FolderListItem = ({
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                onMouseEnter={() => setIsHovered(true)}
+                onMouseEnter={() => { setIsHovered(true); onFocusItem(item, 'folder'); }}
+                onMouseDown={() => onFocusItem(item, 'folder')}
                 onMouseLeave={() => setIsHovered(false)}
                 className={`relative group rounded-xl transition-all duration-200 border border-transparent z-10 ${
                     isDragOver 
@@ -285,7 +290,7 @@ const FolderListItem = ({
                             <ChevronRight size={20} />
                         </div>
                     </div>
-                    <div className={`relative flex items-center justify-center rounded-lg bg-gradient-to-br ${item.color || 'from-indigo-500 to-purple-500'} ${isOrphan ? 'saturate-[0.45] grayscale-[0.32] brightness-[1.05]' : ''}`} style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px`, flexShrink: 0 }}>
+                    <div className={`relative flex items-center justify-center rounded-lg bg-gradient-to-br ${folderGradientClass} ${isOrphan ? 'saturate-[0.45] grayscale-[0.32] brightness-[1.05]' : ''}`} style={{ width: `${iconBoxSize}px`, height: `${iconBoxSize}px`, flexShrink: 0 }}>
                         {/* Main folder or subject icon */}
                         {!isOrphan && item.icon ? (
                             <SubjectIcon iconName={item.icon} className="text-white" style={{ width: `${iconSize}px`, height: `${iconSize}px` }} />
@@ -545,6 +550,8 @@ const FolderListItem = ({
                                         onDropAction={onDropAction}
                                         draggable={draggable}
                                         path={path}
+                                        onFocusItem={onFocusItem}
+                                        getCardVisualState={getCardVisualState}
                                     />
                                 ))}
                                 {childSubjects.map((subject, childIndex) => (
@@ -572,6 +579,8 @@ const FolderListItem = ({
                                         onDropAction={onDropAction}
                                         draggable={draggable}
                                         path={path}
+                                        onFocusItem={onFocusItem}
+                                        getCardVisualState={getCardVisualState}
                                     />
                                 ))}
                             </>

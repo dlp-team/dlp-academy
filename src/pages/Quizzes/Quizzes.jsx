@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-    ChevronLeft, Target, Clock, Sparkles, ArrowRight, Lock, CalendarDays
+    ChevronLeft, Target, Clock, Sparkles, ArrowRight 
 } from 'lucide-react';
 import { addDoc, collection, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config'; 
@@ -301,8 +301,12 @@ const Quizzes = ({ user }) => {
     const [answerStatus, setAnswerStatus] = useState(ANSWER_STATUS.IDLE);
     const [correctCount, setCorrectCount] = useState(0);
     const [finalScore, setFinalScore] = useState(0);
-    const [answersDetail, setAnswersDetail] = useState([]);
     const { confettiTrigger, triggerConfetti } = useConfetti();
+
+    const handleDisablePreview = useCallback(() => {
+        sessionStorage.removeItem('dlpPreviewAsStudent');
+        setPreviewAsStudent(false);
+    }, []);
 
     const handleGoBack = useCallback(() => {
         navigate(`/home/subject/${subjectId}/topic/${topicId}`);
@@ -458,6 +462,21 @@ const Quizzes = ({ user }) => {
 
     return (
         <div className="min-h-screen bg-slate-100 font-sans text-slate-900">
+            {previewAsStudent && (
+                <div className="fixed top-3 right-3 z-[60] rounded-xl border border-amber-200 bg-amber-50/95 px-3 py-2 shadow-lg backdrop-blur-sm">
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-amber-700">
+                        <GraduationCap className="w-3.5 h-3.5" />
+                        Vista alumno temporal
+                        <button
+                            onClick={handleDisablePreview}
+                            className="ml-2 rounded-md bg-amber-500 px-2 py-1 text-[10px] uppercase tracking-wider text-white hover:bg-amber-600 transition-colors"
+                        >
+                            Salir
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {viewState === VIEW_STATES.REVIEW && (
                 <ReviewView
                     quizData={quizData}

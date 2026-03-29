@@ -189,20 +189,38 @@ service cloud.firestore {
     // Reglas para usuarios
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn()
+
+      // Self bootstrap/create profile
+      allow create: if isSignedIn() && request.auth.uid == userId;
+
+      // Update rules:
+      // - Global admin: full control
+      // - Institution admin: manage users in own institution (never promote to global admin)
+      // - Self: profile updates only, cannot mutate role/institutionId
+      allow update: if isSignedIn()
         && (
-          request.auth.uid == userId
-          || isGlobalAdmin()
+          isGlobalAdmin()
           || (
             isInstitutionAdmin()
+            && resource.data.institutionId == currentUserInstitutionId()
             && request.resource.data.institutionId == currentUserInstitutionId()
+            && request.resource.data.role != 'admin'
+          )
+          || (
+            request.auth.uid == userId
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.institutionId == resource.data.institutionId
           )
         );
+
+      // User self-delete or global admin delete
+      allow delete: if isSignedIn() && (request.auth.uid == userId || isGlobalAdmin());
     }
 
     // Reglas principales de Asignaturas
     match /subjects/{subjectId} {
       allow create: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -239,6 +257,7 @@ service cloud.firestore {
           || (resource.data.keys().hasAny(['sharedWithUids']) && request.auth.uid in resource.data.sharedWithUids)
         );
       allow update: if isSignedIn()
+        && !isStudentRole()
         && (
           canWriteResource(resource.data)
           || resource.data.ownerId == request.auth.uid
@@ -248,12 +267,11 @@ service cloud.firestore {
             && canManageFolderById(resource.data.folderId)
           )
         )
-        && request.resource.data.keys().hasAll(['course', 'inviteCode', 'enrolledStudentUids'])
+        && request.resource.data.keys().hasAll(['course', 'inviteCode'])
         && request.resource.data.course is string
         && request.resource.data.course.size() > 0
         && request.resource.data.inviteCode is string
         && request.resource.data.inviteCode.size() > 0
-        && request.resource.data.enrolledStudentUids is list
         && (
           !request.resource.data.keys().hasAny(['classId'])
           || request.resource.data.classId == null
@@ -264,36 +282,55 @@ service cloud.firestore {
           isGlobalAdmin()
           || resource.data.ownerId == request.auth.uid
           || resource.data.uid == request.auth.uid
+          || (isInstitutionAdmin() && sameInstitution(resource.data))
         );
 
       // Reglas para la subcolección "topics"
       match /topics/{topicId} {
-        allow read, write: if isSignedIn()
+        allow read: if isSignedIn()
+          && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+        allow write: if isSignedIn()
+          && !isStudentRole()
           && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
 
         // 1. Pestaña "Generados por IA" (FALTABA ESTO)
         match /resumen/{docId} {
-          allow read, write: if isSignedIn()
+          allow read: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+          allow write: if isSignedIn()
+            && !isStudentRole()
             && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
 
         // 2. Pestaña "Mis Archivos" (FALTABA ESTO)
         match /materials/{docId} {
-          allow read, write: if isSignedIn()
+          allow read: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+          allow write: if isSignedIn()
+            && !isStudentRole()
             && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
 
         // 3. Tests y Resultados (Ya los tenías)
         match /quizzes/{quizId} {
-          allow read, write: if isSignedIn()
+          allow read: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+          allow write: if isSignedIn()
+            && !isStudentRole()
             && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
         match /quiz_results/{resultId} {
-          allow read, write: if isSignedIn()
+          allow read: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+          allow write: if isSignedIn()
+            && !isStudentRole()
             && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
         match /documents/{docId} {
-          allow read, write: if isSignedIn()
+          allow read: if isSignedIn()
+            && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
+          allow write: if isSignedIn()
+            && !isStudentRole()
             && (isGlobalAdmin() || subjectInstitutionMatches(subjectId));
         }
       }
@@ -313,6 +350,11 @@ service cloud.firestore {
           || (
             currentUserInstitutionId() != null
             && request.resource.data.institutionId == currentUserInstitutionId()
+            && exists(/databases/$(database)/documents/subjects/$(request.resource.data.subjectId))
+            && (
+              get(/databases/$(database)/documents/subjects/$(request.resource.data.subjectId)).data.ownerId == request.auth.uid
+              || (isTeacherRole() && sameInstitution(get(/databases/$(database)/documents/subjects/$(request.resource.data.subjectId)).data))
+            )
           )
         );
       allow read: if isSignedIn()
@@ -320,7 +362,13 @@ service cloud.firestore {
           isGlobalAdmin()
           || (
             currentUserInstitutionId() != null
-            && resource.data.institutionId == currentUserInstitutionId()
+            && (
+              
+                resource != null
+                && resource.data.institutionId == currentUserInstitutionId()
+            )
+              
+            
           )
         );
       allow update, delete: if false;
@@ -381,6 +429,7 @@ service cloud.firestore {
     // Reglas para Temas (Topics) en colección raíz
     match /topics/{topicId} {
       allow create: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -404,6 +453,7 @@ service cloud.firestore {
         );
 
       allow update: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -430,6 +480,7 @@ service cloud.firestore {
     // Reglas para Documentos (Documents) en colección raíz
     match /documents/{documentId} {
       allow create: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -453,6 +504,7 @@ service cloud.firestore {
         );
 
       allow update: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -523,6 +575,7 @@ service cloud.firestore {
     // Reglas para Quizzes en colección raíz
     match /quizzes/{quizId} {
       allow create: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -546,6 +599,7 @@ service cloud.firestore {
         );
 
       allow update: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -771,16 +825,8 @@ service cloud.firestore {
           || (
             request.resource.data.ownerId != request.auth.uid
             && isTargetOwnerForCreate()
-            // Allow if recipient is already in sharedWithUids (normal),
-            // OR if the owner is performing the share and intends to add recipient
-            && (
-              targetSharedWithShortcutOwner()
-              || (
-                // Owner is performing the share and will add recipient to sharedWithUids atomically
-                // This enables shortcut-first atomic sharing
-                true
-              )
-            )
+            // Enforce: recipient must already be shared with target (no || true bypass)
+            && targetSharedWithShortcutOwner()
           )
         );
       // Shortcut owner can always read their own shortcut.
@@ -964,11 +1010,65 @@ service cloud.firestore {
       
       // DELETE: Global Admins, the user who owns the email, OR the Institution Admin of that school
       allow delete: if isGlobalAdmin() || 
-                   (request.auth != null && request.auth.token.email == resource.data.email) ||
+                   (
+                     request.auth != null
+                     && request.auth.token.keys().hasAny(['email'])
+                     && resource.data.keys().hasAny(['email'])
+                     && request.auth.token.email == resource.data.email
+                   ) ||
                    (request.auth != null && 
                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'institutionadmin' &&
                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.institutionId == resource.data.institutionId);
     }
+
+      // -----------------------------------------
+      // NOTIFICATIONS
+      // -----------------------------------------
+      match /notifications/{notificationId} {
+        allow read: if isSignedIn()
+          && (
+            isGlobalAdmin()
+            || resource.data.userId == request.auth.uid
+            || (
+              isInstitutionAdmin()
+              && resource.data.keys().hasAny(['institutionId'])
+              && resource.data.institutionId == currentUserInstitutionId()
+            )
+          );
+
+        allow create: if isSignedIn()
+          && (
+            isGlobalAdmin()
+            || request.resource.data.userId == request.auth.uid
+            || (
+              isInstitutionAdmin()
+              && request.resource.data.keys().hasAny(['institutionId'])
+              && request.resource.data.institutionId == currentUserInstitutionId()
+            )
+          );
+
+        allow update: if isSignedIn()
+          && (
+            isGlobalAdmin()
+            || resource.data.userId == request.auth.uid
+            || (
+              isInstitutionAdmin()
+              && resource.data.keys().hasAny(['institutionId'])
+              && resource.data.institutionId == currentUserInstitutionId()
+            )
+          );
+
+        allow delete: if isSignedIn()
+          && (
+            isGlobalAdmin()
+            || resource.data.userId == request.auth.uid
+            || (
+              isInstitutionAdmin()
+              && resource.data.keys().hasAny(['institutionId'])
+              && resource.data.institutionId == currentUserInstitutionId()
+            )
+          );
+      }
 
 
     // -----------------------------------------
@@ -976,6 +1076,7 @@ service cloud.firestore {
     // -----------------------------------------
     match /exams/{examId} {
       allow create: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (
@@ -997,6 +1098,7 @@ service cloud.firestore {
         );
 
       allow update: if isSignedIn()
+        && !isStudentRole()
         && (
           isGlobalAdmin()
           || (

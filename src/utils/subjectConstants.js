@@ -61,19 +61,45 @@ export const ICON_MAP = {
 export const ICON_KEYS = Object.keys(ICON_MAP);
 
 export const COLORS = [
-    'from-blue-400 to-blue-600',
-    'from-indigo-400 to-indigo-600',
-    'from-purple-400 to-purple-600',
-    'from-pink-400 to-pink-600',
-    'from-red-400 to-red-600',
-    'from-orange-400 to-orange-600',
-    'from-emerald-400 to-emerald-600',
-    'from-cyan-400 to-cyan-600',
-    'from-teal-400 to-teal-600',
-    'from-violet-400 to-violet-600',
-    'from-rose-400 to-rose-600',
-    'from-amber-400 to-amber-600',
+    'from-blue-400 to-blue-600 dark:from-blue-300 dark:to-blue-500',
+    'from-indigo-400 to-indigo-600 dark:from-indigo-300 dark:to-indigo-500',
+    'from-purple-400 to-purple-600 dark:from-fuchsia-300 dark:to-violet-400',
+    'from-pink-400 to-pink-600 dark:from-pink-300 dark:to-rose-400',
+    'from-red-400 to-red-600 dark:from-red-300 dark:to-rose-500',
+    'from-orange-400 to-orange-600 dark:from-orange-300 dark:to-amber-500',
+    'from-emerald-400 to-emerald-600 dark:from-emerald-300 dark:to-teal-500',
+    'from-cyan-400 to-cyan-600 dark:from-cyan-300 dark:to-sky-500',
+    'from-teal-400 to-teal-600 dark:from-teal-300 dark:to-cyan-500',
+    'from-violet-400 to-violet-600 dark:from-violet-300 dark:to-fuchsia-500',
+    'from-rose-400 to-rose-600 dark:from-rose-300 dark:to-pink-500',
+    'from-amber-400 to-amber-600 dark:from-amber-300 dark:to-orange-500',
 ];
+
+const LEGACY_GRADIENT_DARK_VARIANTS = {
+    'from-blue-400 to-blue-600': 'dark:from-blue-300 dark:to-blue-500',
+    'from-indigo-400 to-indigo-600': 'dark:from-indigo-300 dark:to-indigo-500',
+    'from-purple-400 to-purple-600': 'dark:from-fuchsia-300 dark:to-violet-400',
+    'from-pink-400 to-pink-600': 'dark:from-pink-300 dark:to-rose-400',
+    'from-red-400 to-red-600': 'dark:from-red-300 dark:to-rose-500',
+    'from-orange-400 to-orange-600': 'dark:from-orange-300 dark:to-amber-500',
+    'from-emerald-400 to-emerald-600': 'dark:from-emerald-300 dark:to-teal-500',
+    'from-cyan-400 to-cyan-600': 'dark:from-cyan-300 dark:to-sky-500',
+    'from-teal-400 to-teal-600': 'dark:from-teal-300 dark:to-cyan-500',
+    'from-violet-400 to-violet-600': 'dark:from-violet-300 dark:to-fuchsia-500',
+    'from-rose-400 to-rose-600': 'dark:from-rose-300 dark:to-pink-500',
+    'from-amber-400 to-amber-600': 'dark:from-amber-300 dark:to-orange-500'
+};
+
+export const withDarkGradientVariant = (gradientValue = '') => {
+    const normalized = String(gradientValue || '').trim().replace(/\s+/g, ' ');
+    if (!normalized) return 'from-slate-500 to-slate-700 dark:from-slate-300 dark:to-slate-500';
+    if (normalized.includes('dark:')) return normalized;
+
+    const darkVariant = LEGACY_GRADIENT_DARK_VARIANTS[normalized];
+    if (!darkVariant) return normalized;
+
+    return `${normalized} ${darkVariant}`;
+};
 
 // --- EDUCATION LEVELS CONSTANTS ---
 export const EDUCATION_LEVELS = {

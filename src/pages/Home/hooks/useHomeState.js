@@ -6,6 +6,8 @@ import { useShortcuts } from '../../../hooks/useShortcuts';
 import { getNormalizedRole, isShortcutItem, isOwnedByCurrentUser, isSharedWithCurrentUser } from '../../../utils/permissionUtils';
 import { clearLastHomeFolderId, loadLastHomeFolderId } from '../utils/homePersistence';
 import { EDUCATION_LEVELS } from '../../../utils/subjectConstants';
+import { usePersistentState } from '../../../hooks/usePersistentState';
+import { buildUserScopedPersistenceKey } from '../../../utils/pagePersistence';
 
 const EMPTY_MANUAL_ORDER = { subjects: [], folders: [] };
 
@@ -34,6 +36,7 @@ const areManualOrdersEqual = (left, right) => {
 };
 
 export const useHomeState = ({ user, searchQuery = '', subjects, folders, preferences, loadingPreferences, updatePreference, rememberOrganization = true }) => {
+    const collapsedGroupsKey = buildUserScopedPersistenceKey('home', user, 'collapsed-groups');
     // Fetch user's shortcuts
     const { resolvedShortcuts, loading: loadingShortcuts } = useShortcuts(user);
     const [viewMode, setViewMode] = useState(preferences?.viewMode || 'grid');
@@ -42,7 +45,7 @@ export const useHomeState = ({ user, searchQuery = '', subjects, folders, prefer
     const [selectedTags, setSelectedTags] = useState(preferences?.selectedTags || []);
     const [flippedSubjectId, setFlippedSubjectId] = useState(null);
     const [activeMenu, setActiveMenu] = useState(null);
-    const [collapsedGroups, setCollapsedGroups] = useState({});
+    const [collapsedGroups, setCollapsedGroups] = usePersistentState(collapsedGroupsKey, {});
     const [currentFolder, setCurrentFolder] = useState(null);
     const [activeFilter, setActiveFilter] = useState('all');
 

@@ -1,8 +1,8 @@
 // src/components/home/ViewLayoutSelector.jsx
 import React from 'react';
-import { LayoutGrid, List, Folder } from 'lucide-react';
+import { LayoutGrid, List } from 'lucide-react';
 
-const ViewLayoutSelector = ({ layoutMode, setLayoutMode, viewMode }) => {
+const ViewLayoutSelector = ({ layoutMode, setLayoutMode }) => {
     // All modes can use folders layout
     const layouts = [
         { id: 'grid', icon: LayoutGrid, label: 'Cuadrícula' },

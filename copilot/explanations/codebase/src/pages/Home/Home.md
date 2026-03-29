@@ -1,5 +1,11 @@
 # Home.jsx
 
+## Changelog
+- **2026-03-13:** Bulk selection actions now auto-exit selection mode after execution (delete, move, and create-folder-from-selection).
+- **2026-03-13:** Extracted selection toolbar UI into `HomeSelectionToolbar` component to keep `Home.jsx` orchestration-focused while preserving existing bulk-selection behavior.
+- **2026-03-13:** Added `Modo selección` workflow in Home manual views with bulk actions for selected cards: delete selected, move selection to existing folder/root, and create new folder with selected elements.
+- **2026-03-12:** Shared-scope filter is now forced to enabled in `shared` tab context and the shared-scope toggle is hidden there, preventing accidental exclusion of “shared with me” items from the shared page.
+
 ## Overview
 - **Source file:** `src/pages/Home/Home.jsx`
 - **Last documented:** 2026-02-24

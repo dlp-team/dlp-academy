@@ -15,6 +15,7 @@ import {
   Save,
   XCircle
 } from 'lucide-react';
+import { DEFAULT_ACCESS_POLICIES } from '../../../utils/institutionPolicyUtils';
 
 const UsersTabContent = ({
   userType,
@@ -49,7 +50,9 @@ const UsersTabContent = ({
   const [copied, setCopied] = useState(false);
 
   // 1. Safe policy handling and local state
-  const defaultPolicy = { requireDomain: false, allowedDomains: '', requireCode: true, rotationIntervalHours: 24 };
+  const defaultPolicy = userType === 'teachers'
+    ? DEFAULT_ACCESS_POLICIES.teachers
+    : DEFAULT_ACCESS_POLICIES.students;
   const currentPolicy = accessPolicies?.[userType] || defaultPolicy;
   
   const [editPolicy, setEditPolicy] = React.useState(currentPolicy);
@@ -202,6 +205,40 @@ const UsersTabContent = ({
                   )}
                 </div>
               </div>
+
+              {userType === 'teachers' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  <div className="space-y-3 p-4 bg-white/50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                    <label className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={editPolicy.canAssignClassesAndStudents !== false}
+                        onChange={(e) => setEditPolicy({ ...editPolicy, canAssignClassesAndStudents: e.target.checked })}
+                        className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                      />
+                      Los profesores pueden asignar clases y estudiantes sin permiso del administrador
+                    </label>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Activado por defecto. Cuando está desactivado, las asignaciones directas pasan a solicitud para revisión.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 p-4 bg-white/50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                    <label className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={editPolicy.canDeleteSubjectsWithStudents === true}
+                        onChange={(e) => setEditPolicy({ ...editPolicy, canDeleteSubjectsWithStudents: e.target.checked })}
+                        className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                      />
+                      Los profesores pueden eliminar asignaturas con estudiantes asociados sin permiso del administrador
+                    </label>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Desactivado por defecto. Si sigue desactivado, el profesor no podrá enviar a la papelera asignaturas con clases o alumnos vinculados.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <div className="mt-6 flex items-center justify-end gap-4 border-t border-slate-200 dark:border-slate-700 pt-4">
                 {policyMessage?.text && (

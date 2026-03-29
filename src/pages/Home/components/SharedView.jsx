@@ -10,6 +10,8 @@ import ListViewItem from '../../../components/modules/ListViewItem';
 import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
 import { mergeSourceAndShortcutItems } from '../../../utils/mergeUtils';
 import { isShortcutItem } from '../../../utils/permissionUtils';
+import { usePersistentState } from '../../../hooks/usePersistentState';
+import { buildUserScopedPersistenceKey } from '../../../utils/pagePersistence';
 
 const SharedView = ({ 
     user,
@@ -35,7 +37,8 @@ const SharedView = ({
     onShareFolder = () => {},
     onEditSubject = () => {},
     onDeleteSubject = () => {},
-    onShareSubject = () => {}
+    onShareSubject = () => {},
+    onOpenSubjectClasses = () => {}
 }) => {
     const navigate = useNavigate();
 
@@ -138,7 +141,8 @@ const SharedView = ({
     };
 
     // --- COLLAPSE STATE ---
-    const [collapsed, setCollapsed] = React.useState({
+    const collapsedKey = buildUserScopedPersistenceKey('home-shared-view', user, 'collapsed-sections');
+    const [collapsed, setCollapsed] = usePersistentState(collapsedKey, {
         folders: false,
         subjects: false
     });
@@ -270,6 +274,7 @@ const SharedView = ({
                                                 onDeleteSubject(e, s, action);
                                             }}
                                             onShare={(s) => onShareSubject(s)}
+                                            onOpenClasses={(s) => onOpenSubjectClasses(s)}
                                             cardScale={cardScale}
                                             isShared={true}
                                             disableUnshareActions={isInsideSharedFolderForItem(subject, 'subject')}
@@ -293,6 +298,7 @@ const SharedView = ({
                                             onDeleteSubject({ stopPropagation: () => {} }, s, action);
                                         }}
                                         onShare={(s) => onShareSubject(s)}
+                                        onOpenClasses={(s) => onOpenSubjectClasses(s)}
                                         draggable={false}
                                         onDropAction={() => {}}
                                         allFolders={allFolders}

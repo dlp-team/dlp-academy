@@ -1,10 +1,12 @@
 // src/hooks/useSubjects.js
 import { useState, useEffect } from 'react';
 import { 
-    collection, query, where, getDocs, getDoc, setDoc, addDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy, serverTimestamp, runTransaction
+    collection, query, where, getDocs, getDoc, setDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, orderBy, serverTimestamp, runTransaction
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { generateSubjectInviteCode, normalizeSubjectAccessPayload } from '../utils/subjectAccessUtils';
+import { getNormalizedRole } from '../utils/permissionUtils';
+import { canTeacherDeleteSubjectsWithStudents, DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../utils/institutionPolicyUtils';
 
 export const useSubjects = (user) => {
     const [subjects, setSubjects] = useState([]);
@@ -20,6 +22,33 @@ export const useSubjects = (user) => {
             actorInstitutionId: currentInstitutionId,
             ...payload
         });
+    };
+
+    const getInstitutionAccessPolicies = async (institutionId) => {
+        if (!institutionId) return DEFAULT_ACCESS_POLICIES;
+
+        try {
+            const institutionSnapshot = await getDoc(doc(db, 'institutions', institutionId));
+            if (!institutionSnapshot.exists()) return DEFAULT_ACCESS_POLICIES;
+            return normalizeAccessPolicies(institutionSnapshot.data()?.accessPolicies);
+        } catch {
+            return DEFAULT_ACCESS_POLICIES;
+        }
+    };
+
+    const ensureTeacherCanDeleteSubject = async (subjectData) => {
+        if (getNormalizedRole(user) !== 'teacher') return;
+
+        const enrolledStudentUids = Array.isArray(subjectData?.enrolledStudentUids) ? subjectData.enrolledStudentUids : [];
+        const classIds = Array.isArray(subjectData?.classIds) ? subjectData.classIds : [];
+        const hasAssociatedStudents = enrolledStudentUids.length > 0 || classIds.length > 0;
+
+        if (!hasAssociatedStudents) return;
+
+        const policies = await getInstitutionAccessPolicies(subjectData?.institutionId || currentInstitutionId);
+        if (canTeacherDeleteSubjectsWithStudents(policies)) return;
+
+        throw new Error('No puedes eliminar una asignatura con estudiantes asociados sin autorización del administrador de la institución.');
     };
 
 
@@ -62,6 +91,20 @@ export const useSubjects = (user) => {
                 return subject.institutionId === currentInstitutionId;
             });
 
+            setSubjects((prevSubjects) => tempSubjects.map((subject) => {
+                const previousMatch = Array.isArray(prevSubjects)
+                    ? prevSubjects.find(prevSubject => prevSubject?.id === subject?.id)
+                    : null;
+
+                if (Array.isArray(previousMatch?.topics)) {
+                    return { ...subject, topics: previousMatch.topics };
+                }
+
+                return { ...subject, topics: [] };
+            }));
+
+            setLoading(false);
+
             // Load topics for all subjects
             const subjectsWithTopics = await Promise.all(tempSubjects.map(async (subject) => {
                 try {
@@ -80,7 +123,6 @@ export const useSubjects = (user) => {
             }));
 
             setSubjects(subjectsWithTopics);
-            setLoading(false);
         };
 
         // Real-time listener for owned subjects
@@ -351,6 +393,7 @@ export const useSubjects = (user) => {
         }
 
         const subjectData = subjectSnap.data() || {};
+        await ensureTeacherCanDeleteSubject(subjectData);
         const sharedWithUids = Array.isArray(subjectData.sharedWithUids)
             ? subjectData.sharedWithUids.filter(uid => uid && uid !== user?.uid)
             : [];
@@ -812,6 +855,8 @@ export const useSubjects = (user) => {
             if (!isOwner) {
                 throw new Error('Only the owner can permanently delete this subject');
             }
+
+            await ensureTeacherCanDeleteSubject(subjectData);
             
             // 1. Get all topics for this subject
             const topicsQuery = query(

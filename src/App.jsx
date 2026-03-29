@@ -15,6 +15,7 @@ import Settings from './pages/Settings/Settings';
 
 // Main app pages
 import Home from './pages/Home/Home';
+import CustomScrollbar from './components/ui/CustomScrollbar';
 import Subject from './pages/Subject/Subject';
 import Topic from './pages/Topic/Topic';
 import Quizzes from './pages/Quizzes/Quizzes';
@@ -114,12 +115,14 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
+    <>
+      <CustomScrollbar />
+      <BrowserRouter>
 
-      {user && <OnboardingWizard user={user} />}
-      {user && <AdminPasswordWizard user={user} />}
+        {user && <OnboardingWizard user={user} />}
+        {user && <AdminPasswordWizard user={user} />}
 
-      <Routes>
+        <Routes>
         {/* Public Routes */}
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" />} />
         <Route path="/register" element={!user ? <Register /> : <Navigate to="/home" />} />
@@ -334,8 +337,9 @@ function App() {
 
         {/* Catch-all: Si no coincide ninguna, vuelve a Home */}
         <Route path="*" element={<Navigate to="/home" />} />
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </>
   );
 }
 

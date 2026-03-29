@@ -1,5 +1,9 @@
 # SubjectCardFront.jsx
 
+## Changelog
+- **2026-03-12:** Added subject-menu action `Ir a Clases` (hidden for students) to open the subject modal directly on the classes tab.
+- **2026-03-12:** Subject gradient rendering now normalizes legacy gradients with dark-mode variants.
+
 ## Purpose
 - **Source file:** `src/components/modules/SubjectCard/SubjectCardFront.jsx`
 - **Last documented:** 2026-02-24

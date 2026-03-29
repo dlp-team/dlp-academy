@@ -15,6 +15,8 @@ import {
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
+import { usePersistentState } from '../../hooks/usePersistentState';
+import { buildUserScopedPersistenceKey } from '../../utils/pagePersistence';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -75,6 +77,7 @@ const OverviewTab = ({ stats, loading }) => {
 // ─── Institutions Tab ──────────────────────────────────────────────────────────────
 
 const InstitutionsTab = () => {
+    const navigate = useNavigate();
     const [Institutions, setInstitutions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -462,6 +465,13 @@ const InstitutionsTab = () => {
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-1">
                                                 <button
+                                                    onClick={() => navigate(`/institution-admin-dashboard?institutionId=${encodeURIComponent(school.id)}`)}
+                                                    title="Abrir panel de institución"
+                                                    className="text-slate-400 hover:text-violet-500 p-2 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors"
+                                                >
+                                                    <ChevronRight className="w-4 h-4" />
+                                                </button>
+                                                <button
                                                     onClick={() => {
                                                         setError('');
                                                         setSuccess('');
@@ -695,7 +705,8 @@ const UsersTab = () => {
 const AdminDashboard = ({ user }) => {
     const navigate = useNavigate();
     useIdleTimeout(15);
-    const [activeTab, setActiveTab] = useState('overview');
+    const activeTabKey = buildUserScopedPersistenceKey('admin-dashboard', user, 'active-tab');
+    const [activeTab, setActiveTab] = usePersistentState(activeTabKey, 'overview');
     const [stats, setStats] = useState({ Institutions: null, teachers: null, students: null, total: null });
     const [statsLoading, setStatsLoading] = useState(true);
 

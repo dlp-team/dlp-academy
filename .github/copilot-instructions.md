@@ -14,8 +14,14 @@
 7. **Document comprehensively** - Update explanation files per protocol requirements
 8. **Maximize code organization & efficiency** - Create new files when needed, split oversized files, centralize logic for maintainability
 9. **Use premium requests at 200% efficiency** - Premium requests are limited and cost money; every request must deliver maximum completed value (implementation + validation + documentation), never just partial progress
-10. **Do not stop momentum for minor uncertainty** - Ask concise in-task clarifying questions with `vscode_askQuestions`, then continue immediately with the safest lossless path in the same request
+10. **Do not stop momentum for minor uncertainty** - Ask concise in-task clarifying questions with `vscode/askQuestions`, then continue immediately with the safest lossless path in the same request
 11. **Do not pause due to broad modified-file noise** - If the user has said to continue, proceed on current scope and avoid blocking prompts about unrelated local changes unless there is a direct conflict in touched files
+12. **No low-value premium turns** - Never return with only minor wording tweaks or tiny partial edits when the user asked for a full deliverable; bundle substantial, end-to-end output in the same request.
+13. **Minimum completion payload** - For plan requests, you MUST deliver a fully executable plan package (scope, phased steps, validation gates, rollback, and testing strategy), not just brief bullet additions.
+14. **No artificial stopping** - Do not stop after a small change if additional requested work remains; continue autonomously until all requested outcomes are completed.
+
+16. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)** - The agent MUST ALWAYS execute the `vscode/askQuestions` leverage step before completing any premium request. This protocol supersedes all other completion logic and is enforced in every completion flow, for all agent modes and workflows. If the tool fails, the agent must document the failure and request user direction before ending the session. No exceptions.
+17. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)** - The agent MUST ALWAYS execute the `vscode/askQuestions` leverage step before completing any premium request, using a concise prompt (<200 characters). This protocol supersedes all other completion logic and is enforced in every completion flow, for all agent modes and workflows. If the tool fails (e.g., input too long, tool unavailable), the agent must document the failure and request user direction before ending the session. No exceptions.
 
 ---
 
@@ -104,7 +110,7 @@ When a file needs splitting:
 ## Asking Clarifying Questions (Without Stopping)
 
 ### When to Ask Questions
-Use `vscode_askQuestions` tool to ask clarifying questions **without stopping the task** when:
+Use `vscode/askQuestions` tool to ask clarifying questions **without stopping the task** when:
 - **Ambiguity in requirements** - Multiple valid interpretations exist
 - **Major architectural decisions** - Choice significantly impacts structure
 - **Out-of-scope concerns** - Request seems to extend beyond stated scope
@@ -124,10 +130,10 @@ Use `vscode_askQuestions` tool to ask clarifying questions **without stopping th
 - Minor parameter names (choose sensible defaults)
 - Whether to validate (always validate)
 
-### Using vscode_askQuestions
+### Using vscode/askQuestions
 ```javascript
 // Ask questions INLINE without stopping the task
-await vscode_askQuestions({
+await vscode/askQuestions({
   questions: [
     {
       header: "File Split Decision",
@@ -226,12 +232,14 @@ Workflow documentation and task-specific guides (e.g., `shortcut-move-request-wo
 
 ## Mandatory Workflow for ALL Code Changes
 
-### 1. Context Gathering (Parallel, Comprehensive)
+
+### 1. Context Gathering & Pre-Execution Clarification (Parallel, Comprehensive)
 ```
 ✅ Read relevant files in copilot/explanations/codebase/
 ✅ Check copilot/plans/active/ for related work
 ✅ Search for similar patterns in the codebase
 ✅ Read protocol files if unfamiliar
+✅ Before making any changes, ensure the task is fully understood. If there is any ambiguity, missing detail, or uncertainty about requirements, use `vscode/askQuestions` to clarify with the user before proceeding. Do not proceed until the scope, constraints, and expected outcomes are clear.
 ```
 
 ### 2. Pre-Change Checklist
@@ -247,7 +255,7 @@ Workflow documentation and task-specific guides (e.g., `shortcut-move-request-wo
 - [ ] Maintain backward compatibility
 - [ ] No scope drift or "while we're here" changes
 - [ ] Apply code organization standards (extract utils, centralize logic)
-- [ ] Use `vscode_askQuestions` if major decisions needed (don't wait)
+- [ ] Use `vscode/askQuestions` if major decisions needed (don't wait)
 
 ### 4. Validation (REQUIRED)
 - [ ] Run `get_errors` on all touched files
@@ -372,19 +380,20 @@ Before multiple grep searches, try one broad semantic search to understand the l
 5. **Re-validate fully** - Ensure fix doesn't introduce new issues
 
 ### If Scope is Unclear
-1. **Use `vscode_askQuestions`** - Ask specific questions inline without stopping
+1. **Use `vscode/askQuestions`** - Ask specific questions inline without stopping
 2. **State your interpretation** - "I understand you want X, which means Y changes"
 3. **List assumptions** - "I'm assuming A, B, C remain unchanged"
 4. **Proceed with safest path** - Choose the most lossless approach
 5. **Document assumptions** - In lossless report
 
 ### If Multiple Approaches Exist
-1. **Ask via `vscode_askQuestions` if significant** - Major architectural impacts warrant quick clarification
+1. **Ask via `vscode/askQuestions` if significant** - Major architectural impacts warrant quick clarification
 2. **Choose the most lossless** - Least disruption wins if minor
 3. **Explain trade-offs briefly** - "Using approach X because it preserves Y"
 4. **Implement fully** - Don't stop to deliberate; ask and proceed
 
 ---
+
 
 ## Premium Request Value Checklist
 
@@ -396,6 +405,10 @@ Before completing ANY interaction, verify:
 - [ ] No errors remain (`get_errors` clean)
 - [ ] Lossless report created (if code changed)
 - [ ] User can immediately continue their work without asking follow-ups
+- [ ] **Pre-execution clarification performed:** If there was any ambiguity or missing information, the agent asked the user for clarification and only proceeded once the task was fully understood.
+- [ ] **No low-value handoff:** The response includes substantial completed output proportional to user scope (not minor edits only).
+- [ ] **Plan requests fully packaged:** If the user asked for a plan, all required plan artifacts were produced in this same request.
+- [ ] **Final leverage question executed:** A `vscode/askQuestions` follow-up was sent before closing the request (unless the tool failed, in which case failure was explicitly documented).
 
 **Remember: Every interaction uses a limited premium request. Make each one count.**
 

@@ -1,5 +1,18 @@
 # useLogin.js
 
+## [2026-03-29] Invite Lookup Permission Fallback
+
+### Context
+- The invite-email lookup in login could throw permission-denied for non-admin users due `institution_invites` list rules.
+- This interrupted first-login profile bootstrap.
+
+### Change
+- Wrapped invite-email query in a guarded `try/catch` and continued with domain-based institution resolution.
+- Preserved existing login flow and data model behavior.
+
+### Validation
+- Confirmed no diagnostics after changes in `src/pages/Auth/hooks/useLogin.js`.
+
 ## Overview
 - **Source file:** `src/pages/Auth/hooks/useLogin.js`
 - **Last documented:** 2026-02-24

@@ -2,6 +2,7 @@
 import { useState, useMemo } from 'react';
 import { isShortcutItem } from '../../../utils/permissionUtils';
 import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../../utils/dragPayloadUtils';
+import { withDarkGradientVariant } from '../../../utils/subjectConstants';
 
 export const useFolderCardLogic = ({
     folder,
@@ -86,7 +87,7 @@ export const useFolderCardLogic = ({
     const isModern = folder.cardStyle === 'modern';
     const fillColor = folder.modernFillColor || folder.fillColor;
     const scaleMultiplier = cardScale / 100;
-    const gradientClass = folder.color || 'from-amber-400 to-amber-600';
+    const gradientClass = withDarkGradientVariant(folder.color || 'from-amber-400 to-amber-600');
 
     // --- DRAG AND DROP HANDLERS ---
     const handleDragOver = (e) => {

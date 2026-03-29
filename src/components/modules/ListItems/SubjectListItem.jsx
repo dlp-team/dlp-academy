@@ -1,10 +1,12 @@
 // src/components/modules/ListItems/SubjectListItem.jsx
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight, Edit2, Trash2, MoreVertical, Users , Share2 } from 'lucide-react';
-import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
-import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
+import { ChevronRight, Edit2, Trash2, MoreVertical, Users , Share2, School } from 'lucide-react';
+import SubjectIcon from '../../ui/SubjectIcon';
+import { getIconColor } from '../../../utils/subjectColorUtils';
+import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem, getNormalizedRole } from '../../../utils/permissionUtils';
 import { SHORTCUT_LIST_MENU_WIDTH } from '../shared/shortcutMenuConfig';
+import { withDarkGradientVariant } from '../../../utils/subjectConstants';
 
 const SubjectListItem = ({ 
     user,
@@ -13,6 +15,7 @@ const SubjectListItem = ({
     onEdit, 
     onDelete, 
     onShare, 
+    onOpenClasses,
     onGoToFolder,
     disableAllActions = false,
     disableDeleteActions = false,
@@ -20,7 +23,9 @@ const SubjectListItem = ({
     hideSharedIndicator = false,
     compact = false, 
     cardScale = 100,
-    className = ""
+    className = "",
+    onFocusItem = () => {},
+    getCardVisualState = () => ({ isAnimating: false, isCutPending: false })
 }) => {
     const HEADER_SAFE_TOP = 112;
     const MENU_MARGIN = 8;
@@ -48,15 +53,18 @@ const SubjectListItem = ({
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
+    const canOpenClassesFromMenu = typeof onOpenClasses === 'function' && getNormalizedRole(user) !== 'student' && !disableAllActions;
     const isSourceOwner = user && subject?.ownerId === user.uid;
     const effectiveShowEditUI = !disableAllActions && showEditUI;
     const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
     const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
     const canShowShortcutVisibility = !disableAllActions && isShortcut;
     const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || (!isSourceOwner && !disableUnshareActions));
+    const isPassedShortcut = isShortcut && isHiddenFromManual && getNormalizedRole(user) === 'student';
 
     // Minimum scale for the menu is 1 (100%)
     const menuScale = Math.max(scale, 1);
+    const subjectGradientClass = withDarkGradientVariant(subject?.color || 'from-slate-500 to-slate-700');
     React.useEffect(() => {
         if (showMenu && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
@@ -93,13 +101,17 @@ const SubjectListItem = ({
     return (
         <div 
             className={`group relative rounded-xl transition-all hover:shadow-md cursor-pointer ${
-                isModern ? `${getIconColor(subject.color)} border border-gradient-to-br ${subject.color} hover:border-gradient-to-br ${subject.color} ` : ` bg-gradient-to-br ${subject.color} hover:border-indigo-300 `
+                isModern
+                    ? `${isPassedShortcut ? 'border border-emerald-300 dark:border-emerald-400/40 bg-gradient-to-br from-emerald-50 via-cyan-50 to-teal-100 dark:from-emerald-950/60 dark:via-cyan-950/50 dark:to-teal-950/60' : `${getIconColor(subjectGradientClass)} border border-gradient-to-br ${subjectGradientClass} hover:border-gradient-to-br ${subjectGradientClass}`}`
+                    : ` bg-gradient-to-br ${subjectGradientClass} hover:border-indigo-300 `
             } ${isOrphan ? 'saturate-[0.22] grayscale-[0.38] brightness-95' : ''} ${className}`} // Apply external className
             style={{ padding: `${paddingPx}px` }}
             onClick={() => {
                 if (isOrphan && isShortcut) return;
                 onSelect(subject.id);
             }}
+            onMouseEnter={() => onFocusItem(subject, 'subject')}
+            onMouseDown={() => onFocusItem(subject, 'subject')}
         >
             <div className="flex items-center gap-4">
                 {/* ICON */}
@@ -131,6 +143,11 @@ const SubjectListItem = ({
                         >
                             {subject.name}
                         </h3>
+                        {isPassedShortcut && (
+                            <span className="inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-400/20 px-2 py-0.5 text-[11px] font-semibold">
+                                Aprobada
+                            </span>
+                        )}
                         {/* Shared icon for subjects, right of title */}
                         {!hideSharedIndicator && (
                             subject.isShared === true ||
@@ -165,6 +182,11 @@ const SubjectListItem = ({
                             >
                                 {topicCount} temas
                             </span>
+                            {isPassedShortcut && (
+                                <span className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+                                    Visible en cursos y uso
+                                </span>
+                            )}
                         </div>
                     )}
                 </div>
@@ -230,6 +252,14 @@ const SubjectListItem = ({
                                     >
                                         <Share2 size={14 * menuScale} /> Compartir
                                     </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); onOpenClasses && onOpenClasses(subject); setShowMenu(false); }}
+                                        disabled={!canOpenClassesFromMenu}
+                                        style={{ fontSize: `${14 * menuScale}px`, display: canOpenClassesFromMenu ? 'flex' : 'none' }}
+                                        className="w-full flex items-center gap-2 p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors cursor-pointer"
+                                    >
+                                        <School size={14 * menuScale} /> Clases
+                                    </button>
                                     {canShowShortcutVisibility && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); onDelete(subject, isHiddenFromManual ? 'showInManual' : 'removeShortcut'); setShowMenu(false); }}
@@ -256,7 +286,7 @@ const SubjectListItem = ({
                                     >
                                         <Trash2 size={14 * menuScale} /> Eliminar
                                     </button>
-                                    {!effectiveShowEditUI && !effectiveCanShareFromMenu && !effectiveShowDeleteUI && !canShowShortcutVisibility && !canShowShortcutDelete && (
+                                    {!effectiveShowEditUI && !effectiveCanShareFromMenu && !canOpenClassesFromMenu && !effectiveShowDeleteUI && !canShowShortcutVisibility && !canShowShortcutDelete && (
                                         <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
                                     )}
                                 </div>

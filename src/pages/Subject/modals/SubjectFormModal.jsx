@@ -1,7 +1,7 @@
 // src/pages/Subject/modals/SubjectFormModal.jsx
 import React, { useState, useEffect } from 'react';
 import { X, Save, Users, Trash2, Share2, Loader2, CheckCircle, AlertCircle, RotateCcw, Copy } from 'lucide-react';
-import { MODERN_FILL_COLORS, EDUCATION_LEVELS } from '../../../utils/subjectConstants';
+import { MODERN_FILL_COLORS } from '../../../utils/subjectConstants';
 import { addDoc, collection, getDocs, query, where, getDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
@@ -12,6 +12,7 @@ import TagManager from './subject-form/TagManager';
 import AppearanceSection from './subject-form/AppearanceSection';
 import StyleSelector from './subject-form/StyleSelector';
 import { getNormalizedRole, getPermissionLevel } from '../../../utils/permissionUtils';
+import { canTeacherAssignClassesAndStudents, DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils/institutionPolicyUtils';
 
 const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onTransferOwnership, onDeleteShortcut, user, allFolders = [], initialTab = 'general', studentShortcutTagOnlyMode = false }) => {
     const [formData, setFormData] = useState({ 
@@ -37,6 +38,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [shareError, setShareError] = useState('');
     const [shareSuccess, setShareSuccess] = useState('');
     const [availableClasses, setAvailableClasses] = useState([]);
+    const [institutionAccessPolicies, setInstitutionAccessPolicies] = useState(DEFAULT_ACCESS_POLICIES);
     const [classesLoading, setClassesLoading] = useState(false);
     const [selectedClassIds, setSelectedClassIds] = useState([]);
     const [classesActionLoading, setClassesActionLoading] = useState(false);
@@ -44,18 +46,22 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [classesActionSuccess, setClassesActionSuccess] = useState('');
     const [inviteCodeCopyStatus, setInviteCodeCopyStatus] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
+    const [availableCourses, setAvailableCourses] = useState([]);
+    const [coursesLoading, setCoursesLoading] = useState(false);
     const subjectNameInputRef = React.useRef(null);
-    const subjectLevelSelectRef = React.useRef(null);
-    const subjectGradeSelectRef = React.useRef(null);
+    const subjectCourseSelectRef = React.useRef(null);
 
     const isShortcutEditing = isEditing && formData?.isShortcut === true;
     const isTagOnlyShortcutEdit = studentShortcutTagOnlyMode && isShortcutEditing;
     const currentRole = getNormalizedRole(user);
-    const canManageClassesTab = isEditing && (currentRole === 'teacher' || currentRole === 'institutionadmin' || currentRole === 'admin');
-    const canDirectAssignClasses = currentRole === 'institutionadmin' || currentRole === 'admin';
+    const canAccessClassesTab = isEditing && (currentRole === 'teacher' || currentRole === 'institutionadmin' || currentRole === 'admin');
+    const canDirectAssignClasses = currentRole === 'institutionadmin'
+        || currentRole === 'admin'
+        || (currentRole === 'teacher' && canTeacherAssignClassesAndStudents(institutionAccessPolicies));
     const shortcutPermissionLevel = formData?.shortcutPermissionLevel || 'viewer';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canManageSharing = !isTagOnlyShortcutEdit && (!isShortcutEditing || isShortcutEditor);
+    const canModifyClassAssignments = canAccessClassesTab && canManageSharing;
     const canEditOriginalFields = !isShortcutEditing || isShortcutEditor;
     const isOwnerManager = isShortcutEditing
         ? shortcutPermissionLevel === 'owner'
@@ -89,26 +95,6 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         !isShortcutEditing
     );
 
-    const resolveCourseSelectors = (courseValue = '', fallbackLevel = '', fallbackGrade = '') => {
-        if (fallbackLevel && fallbackGrade && Array.isArray(EDUCATION_LEVELS[fallbackLevel]) && EDUCATION_LEVELS[fallbackLevel].includes(fallbackGrade)) {
-            return { level: fallbackLevel, grade: fallbackGrade };
-        }
-
-        const normalizedCourse = String(courseValue || '').trim();
-        if (!normalizedCourse) return { level: '', grade: '' };
-
-        for (const level of Object.keys(EDUCATION_LEVELS)) {
-            const grades = Array.isArray(EDUCATION_LEVELS[level]) ? EDUCATION_LEVELS[level] : [];
-            for (const grade of grades) {
-                if (normalizedCourse === `${grade} ${level}` || normalizedCourse === `${level} ${grade}`) {
-                    return { level, grade };
-                }
-            }
-        }
-
-        return { level: '', grade: '' };
-    };
-
     // 1. Initialize Logic
     useEffect(() => {
         if (isOpen) {
@@ -130,11 +116,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setClassesActionError('');
             setClassesActionSuccess('');
             if (isEditing && initialData) {
-                const resolvedSelectors = resolveCourseSelectors(
-                    initialData.course || '',
-                    initialData.level || '',
-                    initialData.grade || ''
-                );
+                const fallbackCourse = (initialData.level && initialData.grade)
+                    ? `${initialData.grade} ${initialData.level}`
+                    : '';
                 setFormData({
                     id: initialData.id,
                     ownerId: initialData.ownerId,
@@ -145,9 +129,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         ? getPermissionLevel(initialData, user?.uid)
                         : 'owner',
                     name: initialData.name || '',
-                    course: initialData.course || '',
-                    level: resolvedSelectors.level,
-                    grade: resolvedSelectors.grade,
+                    course: initialData.course || fallbackCourse,
+                    level: initialData.level || '',
+                    grade: initialData.grade || '',
                     color: initialData.color || 'from-blue-400 to-blue-600',
                     icon: initialData.icon || 'book',
                     tags: initialData.tags || [],
@@ -160,11 +144,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 setSharedList(initialData.sharedWith || []);
             } else {
                 // When creating new subject, pre-fill course, level, and grade if provided
-                // Validate that level exists in EDUCATION_LEVELS
                 const prefilledLevel = initialData?.level || '';
                 const prefilledGrade = initialData?.grade || '';
-                const validLevel = prefilledLevel && EDUCATION_LEVELS[prefilledLevel] ? prefilledLevel : '';
-                const validGrade = validLevel && prefilledGrade && EDUCATION_LEVELS[validLevel].includes(prefilledGrade) ? prefilledGrade : '';
+                const fallbackCourse = (prefilledLevel && prefilledGrade)
+                    ? `${prefilledGrade} ${prefilledLevel}`
+                    : '';
                 
                 setFormData({ 
                     inviteCode: '',
@@ -172,9 +156,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     isShortcut: false,
                     shortcutPermissionLevel: 'owner',
                     name: '',
-                    level: validLevel,
-                    grade: validGrade,
-                    course: initialData?.course || '',
+                    level: prefilledLevel,
+                    grade: prefilledGrade,
+                    course: initialData?.course || fallbackCourse,
                     color: 'from-blue-400 to-blue-600',
                     icon: 'book',
                     tags: [],
@@ -188,6 +172,76 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         }
     }, [isOpen, isEditing, initialData, initialTab, user?.uid]);
 
+    useEffect(() => {
+        let active = true;
+
+        const loadInstitutionPolicies = async () => {
+            const institutionId = user?.institutionId || initialData?.institutionId || '';
+            if (!institutionId) {
+                if (active) setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
+                return;
+            }
+
+            try {
+                const institutionSnapshot = await getDoc(doc(db, 'institutions', institutionId));
+                if (!active) return;
+                if (!institutionSnapshot.exists()) {
+                    setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
+                    return;
+                }
+
+                setInstitutionAccessPolicies(normalizeAccessPolicies(institutionSnapshot.data()?.accessPolicies));
+            } catch {
+                if (active) setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
+            }
+        };
+
+        loadInstitutionPolicies();
+
+        const loadCourses = async () => {
+            const institutionId = user?.institutionId || initialData?.institutionId || '';
+            if (!isOpen || !institutionId) {
+                if (active) {
+                    setAvailableCourses([]);
+                    setCoursesLoading(false);
+                }
+                return;
+            }
+
+            setCoursesLoading(true);
+            try {
+                const coursesRef = collection(db, 'courses');
+                const coursesQuery = query(coursesRef, where('institutionId', '==', institutionId));
+                const coursesSnapshot = await getDocs(coursesQuery);
+
+                if (!active) return;
+
+                const loadedCourses = coursesSnapshot.docs
+                    .map((courseDoc) => ({
+                        id: courseDoc.id,
+                        ...courseDoc.data()
+                    }))
+                    .filter((course) => String(course?.name || '').trim().length > 0)
+                    .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }));
+
+                setAvailableCourses(loadedCourses);
+            } catch {
+                if (active) {
+                    setAvailableCourses([]);
+                }
+            } finally {
+                if (active) {
+                    setCoursesLoading(false);
+                }
+            }
+        };
+
+        loadCourses();
+        return () => {
+            active = false;
+        };
+    }, [isOpen, user?.institutionId, initialData?.institutionId]);
+
     const handleCopyInviteCode = async () => {
         const code = String(formData?.inviteCode || initialData?.inviteCode || '').trim();
         if (!code) {
@@ -198,7 +252,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         try {
             await navigator.clipboard.writeText(code);
             setInviteCodeCopyStatus('Código copiado.');
-        } catch (error) {
+        } catch {
             setInviteCodeCopyStatus('No se pudo copiar el código.');
         }
 
@@ -232,7 +286,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 const ownerSnapshot = await getDocs(ownerQuery);
                 const ownerEmailFromQuery = ownerSnapshot.docs[0]?.data()?.email || '';
                 if (active) setOwnerEmailResolved(ownerEmailFromQuery);
-            } catch (error) {
+            } catch {
                 if (active) setOwnerEmailResolved('');
             }
         };
@@ -264,7 +318,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 ));
 
                 setInstitutionEmails(uniqueEmails);
-            } catch (error) {
+            } catch {
                 if (active) setInstitutionEmails([]);
             }
         };
@@ -272,19 +326,6 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         loadInstitutionEmails();
         return () => { active = false; };
     }, [isOpen, user?.institutionId]);
-
-    // 2. Auto-generate Course Name (only if course is not pre-filled from outside)
-    useEffect(() => {
-        if (formData.level && formData.grade && !isEditing) {
-            // Only auto-generate if we don't already have a manually set course
-            // or if the course doesn't match the expected format
-            const expectedCourse = `${formData.grade} ${formData.level}`;
-            const reversedCourse = `${formData.level} ${formData.grade}`;
-            if (formData.course !== expectedCourse && formData.course !== reversedCourse) {
-                setFormData(prev => ({ ...prev, course: expectedCourse }));
-            }
-        }
-    }, [formData.level, formData.grade, isEditing]);
 
     useEffect(() => {
         if (isTagOnlyShortcutEdit && activeTab === 'sharing') {
@@ -296,7 +337,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         let active = true;
 
         const loadClasses = async () => {
-            if (!isOpen || !canManageClassesTab || !user?.institutionId) {
+            if (!isOpen || !canAccessClassesTab || !user?.institutionId) {
                 if (active) {
                     setAvailableClasses([]);
                     setClassesLoading(false);
@@ -317,7 +358,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 if (!active) return;
                 const loaded = classesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
                 setAvailableClasses(loaded);
-            } catch (error) {
+            } catch {
                 if (active) {
                     setAvailableClasses([]);
                 }
@@ -332,7 +373,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         return () => {
             active = false;
         };
-    }, [isOpen, canManageClassesTab, user?.institutionId, user?.uid, currentRole]);
+    }, [isOpen, canAccessClassesTab, user?.institutionId, user?.uid, currentRole]);
 
     const toggleClassSelection = (classId) => {
         setSelectedClassIds((prev) => (
@@ -343,7 +384,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     };
 
     const handleSaveClassAssignments = () => {
-        if (!canDirectAssignClasses) return;
+        if (!canModifyClassAssignments || !canDirectAssignClasses) return;
         onSave({
             ...formData,
             classIds: selectedClassIds
@@ -353,7 +394,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     };
 
     const handleRequestClassAssignments = async () => {
-        if (canDirectAssignClasses || !isEditing || !formData?.id || !user?.institutionId || !user?.uid) return;
+        if (!canModifyClassAssignments || canDirectAssignClasses || !isEditing || !formData?.id || !user?.institutionId || !user?.uid) return;
 
         setClassesActionLoading(true);
         setClassesActionError('');
@@ -398,15 +439,13 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         if (!isTagOnlyShortcutEdit && canEditOriginalFields) {
             const nextErrors = {};
             const hasName = String(formData?.name || '').trim().length > 0;
-            const hasLevel = String(formData?.level || '').trim().length > 0;
-            const hasGrade = String(formData?.grade || '').trim().length > 0;
             const hasCourse = String(formData?.course || '').trim().length > 0;
 
             if (!hasName) {
                 nextErrors.name = 'Campo obligatorio.';
             }
 
-            if (!hasCourse || !hasLevel || !hasGrade) {
+            if (!hasCourse) {
                 nextErrors.course = 'Campo obligatorio.';
             }
 
@@ -417,12 +456,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 if (nextErrors.name && subjectNameInputRef.current) {
                     subjectNameInputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     subjectNameInputRef.current.focus();
-                } else if (subjectLevelSelectRef.current) {
-                    subjectLevelSelectRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    subjectLevelSelectRef.current.focus();
-                } else if (subjectGradeSelectRef.current) {
-                    subjectGradeSelectRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    subjectGradeSelectRef.current.focus();
+                } else if (subjectCourseSelectRef.current) {
+                    subjectCourseSelectRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    subjectCourseSelectRef.current.focus();
                 }
 
                 return;
@@ -430,48 +466,6 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         }
 
         onSave(formData);
-    };
-
-    const executeShareAction = async (emailToShare, roleToShare) => {
-        const normalizedEmail = emailToShare.toLowerCase();
-        const ownerEmail = (initialData?.ownerEmail || (formData?.ownerId === user?.uid ? user?.email : '') || '').toLowerCase();
-        if (ownerEmail && normalizedEmail === ownerEmail) {
-            setShareError('No puedes compartir con el propietario.');
-            return;
-        }
-        setShareLoading(true);
-        setShareError('');
-        setShareSuccess('');
-        try {
-            const result = await onShare(formData.id, normalizedEmail, roleToShare);
-            const updatedEntry = {
-                email: normalizedEmail,
-                uid: result?.uid,
-                role: roleToShare,
-                canEdit: roleToShare === 'editor',
-                sharedAt: result?.sharedAt || new Date()
-            };
-            setSharedList(prev => {
-                const existingIndex = prev.findIndex(u => u.email?.toLowerCase() === normalizedEmail);
-                if (existingIndex >= 0) {
-                    const next = [...prev];
-                    next[existingIndex] = { ...next[existingIndex], ...updatedEntry };
-                    return next;
-                }
-                return [...prev, updatedEntry];
-            });
-            setShareEmail('');
-            setShareRole('viewer');
-            setShareSuccess(result?.roleUpdated
-                ? `Permisos actualizados para ${normalizedEmail}.`
-                : `Asignatura compartida con ${normalizedEmail}.`
-            );
-            setTimeout(() => setShareSuccess(''), 4000);
-        } catch (error) {
-            setShareError(error?.message || 'Error al compartir. Inténtalo de nuevo.');
-        } finally {
-            setShareLoading(false);
-        }
     };
 
     const validateShareCandidate = (email) => {
@@ -702,7 +696,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 } else {
                     localSharedList.push(updatedEntry);
                 }
-            } catch (error) {
+            } catch {
                 failures.push(`No se pudo compartir con ${entry.email}`);
             }
         }
@@ -715,7 +709,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         ? { ...entry, role: nextRole, canEdit: nextRole === 'editor' }
                         : entry
                 );
-            } catch (error) {
+            } catch {
                 failures.push(`No se pudo actualizar permiso de ${email}`);
             }
         }
@@ -724,7 +718,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             try {
                 await onUnshare(formData.id, email);
                 localSharedList = localSharedList.filter(entry => (entry.email || '').toLowerCase() !== (email || '').toLowerCase());
-            } catch (error) {
+            } catch {
                 failures.push(`No se pudo quitar acceso a ${email}`);
             }
         }
@@ -754,7 +748,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     };
 
     const getAvatarUrl = (entry) => {
-        return entry?.photoURL || entry?.photoUrl || entry?.avatarUrl || entry?.avatar || '';
+        return entry?.photoURL
+            || '';
     };
 
     const getDisplayName = (entry) => {
@@ -858,7 +853,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     <Share2 size={16} /> Compartir
                                 </button>
                             )}
-                            {canManageClassesTab && (
+                            {canAccessClassesTab && (
                                 <button
                                     onClick={() => setActiveTab('classes')}
                                     className={`px-4 py-2 rounded-t-xl font-medium transition-colors ${
@@ -873,7 +868,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         </div>
                     )}
                     
-                    <form onSubmit={handleSubmit} className="p-6 pb-20 space-y-5 max-h-[calc(100vh-15rem)] overflow-y-auto custom-scrollbar">
+                    <form onSubmit={handleSubmit} className="p-6 pb-20 space-y-5 max-h-[calc(100vh-15rem)] overflow-y-auto clean-scrollbar">
                         
                         {/* General Tab */}
                         {activeTab === 'general' && (
@@ -889,8 +884,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                 validationErrors={validationErrors}
                                                 setValidationErrors={setValidationErrors}
                                                 nameInputRef={subjectNameInputRef}
-                                                levelSelectRef={subjectLevelSelectRef}
-                                                gradeSelectRef={subjectGradeSelectRef}
+                                                courseSelectRef={subjectCourseSelectRef}
+                                                availableCourses={availableCourses}
+                                                coursesLoading={coursesLoading}
                                             />
                                         )}
                                         <TagManager formData={formData} setFormData={setFormData} />
@@ -1175,7 +1171,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                             </div>
                         )}
 
-                        {activeTab === 'classes' && canManageClassesTab && (
+                        {activeTab === 'classes' && canAccessClassesTab && (
                             <div className="space-y-4">
                                 <div className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-900/20 p-4">
                                     <div className="flex items-center justify-between gap-3">
@@ -1199,12 +1195,20 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     )}
                                 </div>
 
+                                {!canModifyClassAssignments && (
+                                    <div className="rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 text-sm text-amber-800 dark:text-amber-200">
+                                        Tienes permiso de lector en esta asignatura. Puedes ver y copiar el código de invitación, pero no modificar la asignación de clases.
+                                    </div>
+                                )}
+
                                 <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 p-4">
                                     <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">Gestión por clases</h4>
                                     <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-                                        {canDirectAssignClasses
+                                        {canModifyClassAssignments && canDirectAssignClasses
                                             ? 'Selecciona las clases que tendrán acceso a esta asignatura.'
-                                            : 'Selecciona tus clases y envía una solicitud para que administración la apruebe.'}
+                                            : canModifyClassAssignments
+                                                ? 'Selecciona tus clases y envía una solicitud para que administración la apruebe.'
+                                                : 'Vista de solo lectura para permisos de lector.'}
                                     </p>
                                 </div>
 
@@ -1234,6 +1238,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                     type="checkbox"
                                                     checked={selectedClassIds.includes(cl.id)}
                                                     onChange={() => toggleClassSelection(cl.id)}
+                                                    disabled={!canModifyClassAssignments}
                                                     className="w-4 h-4 text-indigo-600 rounded border-slate-300"
                                                 />
                                                 <div>
@@ -1266,7 +1271,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     Aplicar cambios
                                 </button>
                             )}
-                            {activeTab === 'classes' && canManageClassesTab && canDirectAssignClasses && (
+                            {activeTab === 'classes' && canAccessClassesTab && canModifyClassAssignments && canDirectAssignClasses && (
                                 <button
                                     type="button"
                                     onClick={handleSaveClassAssignments}
@@ -1275,7 +1280,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     <Save className="w-4 h-4" /> Guardar clases
                                 </button>
                             )}
-                            {activeTab === 'classes' && canManageClassesTab && !canDirectAssignClasses && (
+                            {activeTab === 'classes' && canAccessClassesTab && canModifyClassAssignments && !canDirectAssignClasses && (
                                 <button
                                     type="button"
                                     onClick={handleRequestClassAssignments}

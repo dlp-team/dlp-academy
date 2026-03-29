@@ -1,3 +1,25 @@
+## [2026-03-13] Shared User Avatar Source Normalization
+### Context & Architecture
+Folder sharing rows could render initials fallback even when user profile image fields existed under alternate key names.
+
+### Change
+- Expanded `getAvatarUrl` field resolution to include `profilePicture*`, `avatarURL`, `imageUrl/imageURL`, `photo`, and nested `user.*` variants.
+- Expanded owner avatar fallback keys to include owner profile-picture variants.
+
+### Validation
+- `get_errors` reports no issues in `src/pages/Home/components/FolderManager.jsx`.
+
+## [2026-03-12] Feature Update: Folder Description Field Removed
+### Context & Architecture
+`FolderManager` now treats folders as name-first entities without free-text description input.
+
+### Previous State
+- General tab exposed a `Descripción` field and carried it in modal state.
+
+### New State & Logic
+- Removed description from folder modal state initialization and edit hydration.
+- Removed description input from the general tab UI.
+
 ## [2026-03-09] Feature Update: Required Name Validation in Folder General Tab
 ### Context & Architecture
 `FolderManager` now applies explicit required validation before persisting folder changes from the `General` tab.

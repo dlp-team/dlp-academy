@@ -25,7 +25,8 @@ export const GLOBAL_BRAND_DEFAULTS = {
     secondaryColor: '#8b5cf6',
     tertiaryColor: '#a855f7',
     institutionDisplayName: 'DLP Academy',
-    logoUrl: ''
+    logoUrl: '',
+    iconUrl: ''
 };
 
 const HOME_THEME_TOKEN_KEYS = Object.keys(HOME_THEME_TOKENS);
@@ -235,6 +236,9 @@ export const resolveInstitutionBranding = (institutionData) => {
             (typeof customization.institutionDisplayName === 'string' && customization.institutionDisplayName.trim()) ||
             (typeof institutionData.name === 'string' && institutionData.name.trim()) ||
             GLOBAL_BRAND_DEFAULTS.institutionDisplayName,
+        iconUrl:
+            (typeof customization.iconUrl === 'string' && customization.iconUrl.trim()) ||
+            GLOBAL_BRAND_DEFAULTS.iconUrl,
         logoUrl:
             (typeof customization.logoUrl === 'string' && customization.logoUrl.trim()) ||
             GLOBAL_BRAND_DEFAULTS.logoUrl

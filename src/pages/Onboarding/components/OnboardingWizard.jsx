@@ -1,7 +1,7 @@
-// src/components/onboarding/OnboardingWizard.jsx
+// src/pages/Onboarding/components/OnboardingWizard.jsx
 import React, { useState, useEffect } from 'react';
 import { Loader2, GraduationCap, Key, User, AlertCircle, ArrowLeft } from 'lucide-react';
-import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../../firebase/config'; 
 import UserTypeSelector from '../../Auth/components/UserTypeSelector'; 
@@ -16,37 +16,22 @@ const OnboardingWizard = ({ user }) => {
     // Estados para la validación del código
     const [validating, setValidating] = useState(false);
     const [codeError, setCodeError] = useState("");
+    const [accessCode, setAccessCode] = useState('');
 
     const [attempts, setAttempts] = useState(0);
     const [lockoutTime, setLockoutTime] = useState(0);
+    const currentField = missingFields[stepIndex];
 
     useEffect(() => {
         if (!user) return;
-        
-        const userRef = doc(db, "users", user.uid);
-        
-        const unsubscribe = onSnapshot(userRef, (snap) => {
-            const required = ['role', 'institutionId', 'displayName'];
-
-            if (snap.exists()) {
-                const data = snap.data();
-                const missing = required.filter(k => !data[k] || data[k] === "");
-                
-                if (missing.length > 0) {
-                    setMissingFields(missing);
-                    setShow(true);
-                } else {
-                    setMissingFields([]);
-                    setShow(false); 
-                    unsubscribe(); 
-                }
-            } else {
-                setMissingFields(required);
-                setShow(true);
-            }
+        const required = ['role', 'institutionId', 'displayName'];
+        const missing = required.filter((key) => !user[key] || user[key] === '');
+        setMissingFields(missing);
+        setShow(missing.length > 0);
+        setStepIndex((prev) => {
+            if (missing.length === 0) return 0;
+            return Math.min(prev, missing.length - 1);
         });
-
-        return () => unsubscribe();
     }, [user]);
 
     const handleAnswer = async (key, value) => {
@@ -90,11 +75,23 @@ const OnboardingWizard = ({ user }) => {
         }
     }, [lockoutTime]);
 
+    useEffect(() => {
+        if (currentField !== 'institutionId') {
+            setAccessCode('');
+            return;
+        }
+        setAccessCode(prev => String(prev || '').toUpperCase());
+    }, [currentField]);
+
     const handleCodeValidation = async (e) => {
         e.preventDefault();
         if (lockoutTime > 0) return;
 
-        const code = new FormData(e.target).get('code').toUpperCase();
+        const code = String(accessCode || '').trim().toUpperCase();
+        if (!code) {
+            setCodeError("Introduce un código válido.");
+            return;
+        }
         setValidating(true);
         setCodeError("");
 
@@ -129,8 +126,6 @@ const OnboardingWizard = ({ user }) => {
     };
 
     if (!show) return null;
-
-    const currentField = missingFields[stepIndex];
 
     return (
         <div className="fixed inset-0 z-[9999] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4">
@@ -193,6 +188,18 @@ const OnboardingWizard = ({ user }) => {
                                     <input 
                                         name="code" 
                                         placeholder="Introduce tu código" 
+                                        value={accessCode}
+                                        onChange={(event) => {
+                                            setAccessCode(String(event.target.value || '').toUpperCase());
+                                            if (codeError) setCodeError('');
+                                        }}
+                                        onPaste={(event) => {
+                                            const clipboardText = event.clipboardData?.getData('text') || '';
+                                            if (!clipboardText) return;
+                                            event.preventDefault();
+                                            setAccessCode(String(clipboardText).trim().toUpperCase());
+                                            if (codeError) setCodeError('');
+                                        }}
                                         className="w-full p-4 text-center text-2xl tracking-widest font-mono border dark:border-slate-700 rounded-lg bg-gray-50 dark:bg-slate-800 text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500 uppercase" 
                                         required 
                                         disabled={validating || lockoutTime > 0}

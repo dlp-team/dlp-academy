@@ -45,6 +45,20 @@ const useInstitutionBranding = (user) => {
         });
     }, [branding]);
 
+    React.useEffect(() => {
+        const iconUrl = typeof branding?.iconUrl === 'string' ? branding.iconUrl.trim() : '';
+        if (!iconUrl) return;
+
+        let faviconLink = document.querySelector('link[rel="icon"]');
+        if (!faviconLink) {
+            faviconLink = document.createElement('link');
+            faviconLink.setAttribute('rel', 'icon');
+            document.head.appendChild(faviconLink);
+        }
+
+        faviconLink.setAttribute('href', iconUrl);
+    }, [branding?.iconUrl]);
+
     return branding;
 };
 

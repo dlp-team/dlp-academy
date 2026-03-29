@@ -4,6 +4,7 @@ import { X, FileText, GripVertical, Loader2 } from 'lucide-react';
 import { collection, query, where, orderBy, onSnapshot, writeBatch, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import SubjectIcon from '../../../components/ui/SubjectIcon';
+import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 
 const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
     const [topics, setTopics] = useState([]);
@@ -91,11 +92,11 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
     if (!isOpen) return null;
 
     return (
-        <div 
-            // 1. Add onClick to close when clicking the backdrop
-            onClick={onClose}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
-        >
+        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto" style={OVERLAY_TOP_OFFSET_STYLE}>
+            <div
+                onClick={onClose}
+                className="flex min-h-full items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+            >
             <div 
                 // 2. Add stopPropagation so clicking INSIDE the modal doesn't close it
                 onClick={(e) => e.stopPropagation()}
@@ -217,6 +218,7 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
                         <GripVertical size={12} /> Arrastra los elementos para organizar el orden
                     </p>
                 </div>
+            </div>
             </div>
         </div>
     );

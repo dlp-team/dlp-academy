@@ -1,8 +1,14 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import path from 'node:path';
 
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      'firebase-functions/v2/https': path.resolve(process.cwd(), 'tests/mocks/firebase-functions-v2-https.js'),
+    },
+  },
   test: {
     include: [
       'tests/unit/**/*.{test,spec}.{js,jsx,ts,tsx}'

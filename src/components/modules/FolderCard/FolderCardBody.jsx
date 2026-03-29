@@ -2,7 +2,8 @@
 import React, { useRef, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree, RotateCcw } from 'lucide-react';
-import SubjectIcon, { getIconColor } from '../../ui/SubjectIcon';
+import SubjectIcon from '../../ui/SubjectIcon';
+import { getIconColor } from '../../../utils/subjectColorUtils';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
 import { SHORTCUT_CARD_MENU_WIDTH } from '../shared/shortcutMenuConfig';
 
@@ -369,19 +370,6 @@ const FolderCardBody = ({
                         >
                             {folder.name}
                         </h3>
-
-                        {folder.description && (
-                            <p 
-                                className={`line-clamp-1 font-medium ${
-                                    isModern 
-                                        ? 'text-gray-400 dark:text-gray-500' 
-                                        : 'text-white/70'
-                                }`}
-                                style={{ fontSize: `${14 * scaleMultiplier}px` }}
-                            >
-                                {folder.description}
-                            </p>
-                        )}
 
                         {/* Folder tags */}
                         {folder.tags && folder.tags.length > 0 && (

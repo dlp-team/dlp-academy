@@ -1,7 +1,8 @@
 // src/components/modals/FolderTreeModal.jsx
 import React, { useRef, useState } from 'react';
 import { X, Folder, ChevronRight, FileText, CornerDownRight, GripVertical, ArrowUpCircle, Users } from 'lucide-react';
-import SubjectIcon, { getIconColor } from '../ui/SubjectIcon';
+import SubjectIcon from '../ui/SubjectIcon';
+import { getIconColor } from '../../utils/subjectColorUtils';
 import { isInvalidFolderMove } from '../../utils/folderUtils';
 import useAutoScrollOnDrag from '../../hooks/useAutoScrollOnDrag';
 import { useGhostDrag } from '../../hooks/useGhostDrag';

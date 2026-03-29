@@ -7,6 +7,7 @@ const CardScaleSlider = ({ cardScale, setCardScale, onOverlayToggle }) => {
     const triggerRef = useRef(null);
     const [panelPos, setPanelPos] = useState({ top: 0, left: 0 });
     const PANEL_WIDTH = 288;
+    const PANEL_HEIGHT = 300;
     const VIEWPORT_MARGIN = 8;
 
     
@@ -24,11 +25,9 @@ const CardScaleSlider = ({ cardScale, setCardScale, onOverlayToggle }) => {
         if (onOverlayToggle) onOverlayToggle(newState);
     };
 
-    useLayoutEffect(() => {
-        if (!isOpen || !triggerRef.current) return;
-
+    const getPanelPos = () => {
+        if (!triggerRef.current) return { top: VIEWPORT_MARGIN, left: VIEWPORT_MARGIN };
         const rect = triggerRef.current.getBoundingClientRect();
-        const panelHeight = 300;
 
         const defaultLeft = rect.right - PANEL_WIDTH;
         const oppositeLeft = rect.left;
@@ -43,18 +42,26 @@ const CardScaleSlider = ({ cardScale, setCardScale, onOverlayToggle }) => {
         );
 
         const defaultTop = rect.bottom + 8;
-        const oppositeTop = rect.top - panelHeight - 8;
+        const oppositeTop = rect.top - PANEL_HEIGHT - 8;
 
         let top = defaultTop;
-        if (top + panelHeight > window.innerHeight - VIEWPORT_MARGIN) {
+        if (top + PANEL_HEIGHT > window.innerHeight - VIEWPORT_MARGIN) {
             top = oppositeTop;
         }
         top = Math.min(
             Math.max(top, VIEWPORT_MARGIN),
-            Math.max(VIEWPORT_MARGIN, window.innerHeight - panelHeight - VIEWPORT_MARGIN)
+            Math.max(VIEWPORT_MARGIN, window.innerHeight - PANEL_HEIGHT - VIEWPORT_MARGIN)
         );
 
-        setPanelPos({ top, left });
+        return { top, left };
+    };
+
+    useLayoutEffect(() => {
+        if (!isOpen) return;
+        const frame = window.requestAnimationFrame(() => {
+            setPanelPos(getPanelPos());
+        });
+        return () => window.cancelAnimationFrame(frame);
     }, [isOpen]);
 
     return (

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     ChevronLeft, ChevronRight, Clock, Eye, EyeOff, ClipboardList,
     Trophy, CheckCircle2, ArrowLeft, Sparkles, RotateCcw,
-    Lightbulb, Zap, Target, Hash, BookOpen, BarChart3
+    GraduationCap, Lightbulb, Zap, Target, Hash, BookOpen, BarChart3
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -316,6 +316,9 @@ const Exam = () => {
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMouseAtTop, setIsMouseAtTop] = useState(true);
+    const [previewAsStudent, setPreviewAsStudent] = useState(
+        () => sessionStorage.getItem('dlpPreviewAsStudent') === '1'
+    );
 
     // Load data
     useEffect(() => {
@@ -422,6 +425,11 @@ const Exam = () => {
         setShowCompletion(false);
     };
 
+    const handleDisablePreview = () => {
+        sessionStorage.removeItem('dlpPreviewAsStudent');
+        setPreviewAsStudent(false);
+    };
+
     const answeredCount = useMemo(() =>
         Object.keys(revealedAnswers).filter(k => revealedAnswers[k]).length,
         [revealedAnswers]
@@ -484,6 +492,21 @@ const Exam = () => {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 selection:bg-indigo-200 dark:selection:bg-indigo-800 relative overflow-hidden">
+
+            {previewAsStudent && (
+                <div className="fixed top-3 right-3 z-[70] rounded-xl border border-amber-200 bg-amber-50/95 px-3 py-2 shadow-lg backdrop-blur-sm">
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-amber-700">
+                        <GraduationCap className="w-3.5 h-3.5" />
+                        Vista alumno temporal
+                        <button
+                            onClick={handleDisablePreview}
+                            className="ml-2 rounded-md bg-amber-500 px-2 py-1 text-[10px] uppercase tracking-wider text-white hover:bg-amber-600 transition-colors"
+                        >
+                            Salir
+                        </button>
+                    </div>
+                </div>
+            )}
 
             {/* Animated background orbs */}
             <div className="fixed inset-0 overflow-hidden pointer-events-none">
