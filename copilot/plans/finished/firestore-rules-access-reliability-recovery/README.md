@@ -20,8 +20,8 @@ Recover stable, least-privilege behavior for Home and related flows by identifyi
 - Deploying rules from agent environment.
 
 ## Status
-- Lifecycle: `active`
-- Current phase: IN_PROGRESS (Phase 02 - Rule Intent Mapping and Gap Analysis)
+- Lifecycle: `inReview`
+- Current phase: COMPLETED (Phase 05 - Review Gate, Rollback, and Closure)
 
 ## Assumptions
 - Failures are primarily rule-evaluation mismatches, not frontend business logic regressions.

@@ -1,5 +1,18 @@
 # [2026-03-07] Country Persistence Removed From Registration
 
+# [2026-03-29] Guaranteed User Profile Creation Before Invite Cleanup
+
+## Context
+- In direct-invite registration flow, invite deletion occurred before writing `users/{uid}`.
+- If invite deletion failed, the auth account could exist without user profile document.
+
+## Change
+- Reordered registration persistence so `users/{uid}` is written first.
+- Direct-invite deletion is now best-effort and non-blocking (`try/catch`) after successful user doc creation.
+
+## Validation
+- Confirmed no diagnostics after changes in `src/pages/Auth/hooks/useRegister.js`.
+
 ## Context
 - User profile bootstrap no longer depends on `country` for post-login data access.
 

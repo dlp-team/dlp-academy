@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { collection, doc, getDoc, getDocs, query, setDoc, serverTimestamp, where, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../../firebase/config';
 import { validateInstitutionalAccessCode } from '../../../services/accessCodeService';
 
@@ -144,13 +144,7 @@ export const useRegister = () => {
             // 4. Update Display Name
             await updateProfile(user, { displayName });
 
-            // 5. Borramos la invitación directa porque ya estamos logueados
-            if (shouldDeleteInvite) {
-                const inviteRef = doc(db, 'institution_invites', directInviteCodeToDelete || (formData.verificationCode || '').trim());
-                await deleteDoc(inviteRef);
-            }
-
-            // 6. Create Firestore Document en 'users'
+            // 5. Create Firestore Document en 'users'
             await setDoc(doc(db, "users", user.uid), {
                 uid: user.uid,
                 firstName: formData.firstName,
@@ -166,6 +160,16 @@ export const useRegister = () => {
                     viewMode: 'grid'
                 }
             });
+
+            // 6. Borramos la invitación directa de forma no bloqueante para no romper el alta del usuario
+            if (shouldDeleteInvite) {
+                try {
+                    const inviteRef = doc(db, 'institution_invites', directInviteCodeToDelete || (formData.verificationCode || '').trim());
+                    await deleteDoc(inviteRef);
+                } catch (cleanupError) {
+                    console.warn('Invite cleanup failed after successful user creation:', cleanupError?.code || cleanupError?.message || cleanupError);
+                }
+            }
 
             // 7. Redirect
             navigate('/home');

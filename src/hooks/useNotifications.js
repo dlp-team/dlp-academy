@@ -1,3 +1,4 @@
+// src/hooks/useNotifications.js
 import { useState, useEffect } from 'react';
 import {
     collection, query, where, orderBy, onSnapshot,
@@ -17,10 +18,17 @@ export const useNotifications = (uid) => {
             orderBy('createdAt', 'desc')
         );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-            setNotifications(data);
-        });
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const data = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                setNotifications(data);
+            },
+            (error) => {
+                console.error('Error listening to notifications:', error);
+                setNotifications([]);
+            }
+        );
 
         return () => unsubscribe();
     }, [uid]);

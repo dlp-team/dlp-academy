@@ -41,7 +41,7 @@
   - pass report for targeted + broad suites.
 
 ### Phase 05 - Review Gate, Rollback Readiness, Closure
-- Status: IN_PROGRESS
+- Status: COMPLETED
 - Goal: ensure safe closure with rollback and monitoring guidance.
 - Outputs:
   - verification checklist completion,
@@ -49,9 +49,8 @@
   - final lossless closure notes.
 
 ## Immediate Next Actions
-1. Execute Phase 05 verification checklist and attach concrete evidence for each check item.
-2. Produce review log for any residual skips and classify whether fixture-related or regression-related.
-3. Prepare inReview transition package (lossless report + checklist completion + risk summary).
+1. Move plan package to `finished` and keep review artifacts attached.
+2. Track optional follow-up to de-skip unrelated e2e suites outside this plan scope.
 
 ## Rollback Strategy (High Level)
 - Keep all rule changes atomic and grouped by behavior.

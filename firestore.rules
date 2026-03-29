@@ -267,12 +267,11 @@ service cloud.firestore {
             && canManageFolderById(resource.data.folderId)
           )
         )
-        && request.resource.data.keys().hasAll(['course', 'inviteCode', 'enrolledStudentUids'])
+        && request.resource.data.keys().hasAll(['course', 'inviteCode'])
         && request.resource.data.course is string
         && request.resource.data.course.size() > 0
         && request.resource.data.inviteCode is string
         && request.resource.data.inviteCode.size() > 0
-        && request.resource.data.enrolledStudentUids is list
         && (
           !request.resource.data.keys().hasAny(['classId'])
           || request.resource.data.classId == null
@@ -834,6 +833,55 @@ service cloud.firestore {
                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'institutionadmin' &&
                     get(/databases/$(database)/documents/users/$(request.auth.uid)).data.institutionId == resource.data.institutionId);
     }
+
+      // -----------------------------------------
+      // NOTIFICATIONS
+      // -----------------------------------------
+      match /notifications/{notificationId} {
+        allow read: if isSignedIn()
+          && (
+            isGlobalAdmin()
+            || resource.data.userId == request.auth.uid
+            || (
+              isInstitutionAdmin()
+              && resource.data.keys().hasAny(['institutionId'])
+              && resource.data.institutionId == currentUserInstitutionId()
+            )
+          );
+
+        allow create: if isSignedIn()
+          && (
+            isGlobalAdmin()
+            || request.resource.data.userId == request.auth.uid
+            || (
+              isInstitutionAdmin()
+              && request.resource.data.keys().hasAny(['institutionId'])
+              && request.resource.data.institutionId == currentUserInstitutionId()
+            )
+          );
+
+        allow update: if isSignedIn()
+          && (
+            isGlobalAdmin()
+            || resource.data.userId == request.auth.uid
+            || (
+              isInstitutionAdmin()
+              && resource.data.keys().hasAny(['institutionId'])
+              && resource.data.institutionId == currentUserInstitutionId()
+            )
+          );
+
+        allow delete: if isSignedIn()
+          && (
+            isGlobalAdmin()
+            || resource.data.userId == request.auth.uid
+            || (
+              isInstitutionAdmin()
+              && resource.data.keys().hasAny(['institutionId'])
+              && resource.data.institutionId == currentUserInstitutionId()
+            )
+          );
+      }
 
 
     // -----------------------------------------

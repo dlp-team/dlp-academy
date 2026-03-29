@@ -328,6 +328,30 @@ describe('Firestore rules integration', () => {
     );
   });
 
+  it('allows subject move/update for legacy subject docs missing course/inviteCode/enrolledStudentUids', async () => {
+    await seedDoc('subjects', 'subject-legacy-move', {
+      ownerId: 'teacher-1',
+      institutionId: 'inst-1',
+      name: 'Legacy Subject Without Required Creation Fields',
+      folderId: null,
+      isShared: false,
+    });
+
+    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+    await assertSucceeds(
+      setDoc(
+        doc(teacherDb, 'subjects', 'subject-legacy-move'),
+        {
+          folderId: 'folder-target-legacy-move',
+          isShared: true,
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      )
+    );
+  });
+
   it('denies self role escalation and institution reassignment on users profile update', async () => {
     const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
 

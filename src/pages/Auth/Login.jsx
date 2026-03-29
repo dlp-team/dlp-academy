@@ -63,11 +63,16 @@ const Login = () => {
         const domain = normalizedEmail.split('@')[1];
         if (!domain) return null;
 
-        const allowedSnap = await getDocs(
-            query(collection(db, 'institution_invites'), where('email', '==', normalizedEmail))
-        );
-        if (!allowedSnap.empty) {
-            return allowedSnap.docs[0].data()?.institutionId || null;
+        try {
+            const allowedSnap = await getDocs(
+                query(collection(db, 'institution_invites'), where('email', '==', normalizedEmail))
+            );
+            if (!allowedSnap.empty) {
+                return allowedSnap.docs[0].data()?.institutionId || null;
+            }
+        } catch (error) {
+            // Normal users may not have list access for invites; continue with domain-based resolution.
+            console.warn('Skipping invite-based institution resolution:', error?.code || error?.message || error);
         }
 
         const domainSnap = await getDocs(
@@ -87,11 +92,24 @@ const Login = () => {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
         const resolvedInstitutionId = await resolveInstitutionId(user.email);
-        const updates = { email: user.email, lastLogin: serverTimestamp() };
 
         if (!userSnap.exists()) {
-            updates.institutionId = resolvedInstitutionId;
-        } else if (!userSnap.data()?.institutionId && resolvedInstitutionId) {
+            await setDoc(userRef, {
+                uid: user.uid,
+                displayName: user.displayName || '',
+                email: user.email,
+                photoURL: user.photoURL || '',
+                role: 'student',
+                institutionId: resolvedInstitutionId,
+                createdAt: serverTimestamp(),
+                lastLogin: serverTimestamp(),
+                settings: { theme: 'system', language: 'es', viewMode: 'grid' }
+            });
+            return;
+        }
+
+        const updates = { email: user.email, lastLogin: serverTimestamp() };
+        if (!userSnap.data()?.institutionId && resolvedInstitutionId) {
             updates.institutionId = resolvedInstitutionId;
         }
 

@@ -1,7 +1,7 @@
-// src/components/onboarding/OnboardingWizard.jsx
+// src/pages/Onboarding/components/OnboardingWizard.jsx
 import React, { useState, useEffect } from 'react';
 import { Loader2, GraduationCap, Key, User, AlertCircle, ArrowLeft } from 'lucide-react';
-import { doc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
 import { db, functions } from '../../../firebase/config'; 
 import UserTypeSelector from '../../Auth/components/UserTypeSelector'; 
@@ -24,31 +24,14 @@ const OnboardingWizard = ({ user }) => {
 
     useEffect(() => {
         if (!user) return;
-        
-        const userRef = doc(db, "users", user.uid);
-        
-        const unsubscribe = onSnapshot(userRef, (snap) => {
-            const required = ['role', 'institutionId', 'displayName'];
-
-            if (snap.exists()) {
-                const data = snap.data();
-                const missing = required.filter(k => !data[k] || data[k] === "");
-                
-                if (missing.length > 0) {
-                    setMissingFields(missing);
-                    setShow(true);
-                } else {
-                    setMissingFields([]);
-                    setShow(false); 
-                    unsubscribe(); 
-                }
-            } else {
-                setMissingFields(required);
-                setShow(true);
-            }
+        const required = ['role', 'institutionId', 'displayName'];
+        const missing = required.filter((key) => !user[key] || user[key] === '');
+        setMissingFields(missing);
+        setShow(missing.length > 0);
+        setStepIndex((prev) => {
+            if (missing.length === 0) return 0;
+            return Math.min(prev, missing.length - 1);
         });
-
-        return () => unsubscribe();
     }, [user]);
 
     const handleAnswer = async (key, value) => {

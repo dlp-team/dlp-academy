@@ -1,5 +1,19 @@
 # Login.jsx
 
+## [2026-03-29] Robust User Bootstrap on Login
+
+### Context
+- New accounts could end up without a complete `users/{uid}` document during first login.
+- Missing `role` caused onboarding role prompts, and invite-email lookup could fail due Firestore list restrictions.
+
+### Change
+- Hardened institution resolution to tolerate `institution_invites` list permission denials and continue with domain-based lookup.
+- When `users/{uid}` does not exist, login now writes a full bootstrap profile payload (`uid`, `displayName`, `email`, `photoURL`, `role`, timestamps, and default `settings`) instead of merge-writing only login metadata.
+- Existing-user behavior remains merge-based for `lastLogin` and optional `institutionId` backfill.
+
+### Validation
+- Confirmed no diagnostics after changes in `src/pages/Auth/Login.jsx`.
+
 ## Overview
 - **Source file:** `src/pages/Auth/Login.jsx`
 - **Last documented:** 2026-02-24

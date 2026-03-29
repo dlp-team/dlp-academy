@@ -30,11 +30,16 @@ export const useLogin = () => {
         const domain = normalizedEmail.split('@')[1];
         if (!domain) return null;
 
-        const allowedSnap = await getDocs(
-            query(collection(db, 'institution_invites'), where('email', '==', normalizedEmail))
-        );
-        if (!allowedSnap.empty) {
-            return allowedSnap.docs[0].data()?.institutionId || null;
+        try {
+            const allowedSnap = await getDocs(
+                query(collection(db, 'institution_invites'), where('email', '==', normalizedEmail))
+            );
+            if (!allowedSnap.empty) {
+                return allowedSnap.docs[0].data()?.institutionId || null;
+            }
+        } catch (error) {
+            // Expected for non-admin roles due list restrictions on institution_invites.
+            console.warn('Skipping invite-based institution resolution:', error?.code || error?.message || error);
         }
 
         const domainSnap = await getDocs(
@@ -138,7 +143,7 @@ export const useLogin = () => {
             await sendPasswordResetEmail(auth, formData.email);
             setResetSent(true);
             setTimeout(() => setResetSent(false), 5000);
-        } catch (err) {
+        } catch {
             setError('No se pudo enviar el correo de recuperación.');
         }
     };
