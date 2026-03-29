@@ -8,7 +8,8 @@ const TopicTabs = ({
     topic,
     handleCreateCustomPDF,
     handleCreateCustomQuiz,
-    permissions
+    permissions,
+    user
 }) => {
     const handleAssignmentsCreate = (event) => {
         event.stopPropagation();
@@ -16,11 +17,19 @@ const TopicTabs = ({
         window.dispatchEvent(new CustomEvent('topic-assignments-create-requested'));
     };
 
+    // Estudiantes reales o en preview ven: Materiales, Quizzes, Tareas
+    // Profesores ven: Generados por IA, Mis Archivos, Tests Prácticos, Tareas
+    const isStudent = user?.role === 'student' || permissions?.isViewer;
+    const tabs = isStudent 
+        ? ['materiales', 'quizzes', 'assignments']
+        : ['materials', 'uploads', 'quizzes', 'assignments'];
+
     return (
         <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2">
-            {['materials', 'uploads', 'quizzes', 'assignments'].map(tab => (
+            {tabs.map(tab => (
                 <button key={tab} onClick={() => setActiveTab(tab)} className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-200 flex items-center gap-2 border whitespace-nowrap ${activeTab === tab ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-lg' : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
                     {tab === 'materials' && <><FileText className="w-4 h-4" /> Generados por IA</>}
+                    {tab === 'materiales' && <><FileText className="w-4 h-4" /> Materiales</>}
                     {tab === 'uploads' && <><Upload className="w-4 h-4" /> Mis Archivos</>}
                     {tab === 'quizzes' && <><CheckCircle2 className="w-4 h-4" /> Tests Prácticos</>}
                     {tab === 'assignments' && <><ClipboardList className="w-4 h-4" /> Tareas</>}
@@ -47,7 +56,18 @@ const TopicTabs = ({
                         </div>
                     )}
                     <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${activeTab === tab ? 'bg-white/20 dark:bg-slate-900/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
-                        {tab === 'materials' ? topic.pdfs?.length || 0 : tab === 'uploads' ? topic.uploads?.length || 0 : tab === 'quizzes' ? topic.quizzes?.length || 0 : topic.assignments?.length || 0}
+                        {tab === 'materials'
+                            ? topic.pdfs?.length || 0
+                            : tab === 'materiales'
+                                ? (topic.pdfs?.filter(f => f.type === 'summary' || f.type === 'resumen')?.length || 0)
+                                    + (topic.uploads?.filter(u => u.fileCategory === 'resumen')?.length || 0)
+                                    + (topic.uploads?.filter(u => u.fileCategory === 'examen')?.length || 0)
+                                    + (topic.exams?.length || 0)
+                                : tab === 'uploads'
+                                    ? topic.uploads?.length || 0
+                                    : tab === 'quizzes'
+                                        ? topic.quizzes?.length || 0
+                                        : topic.assignments?.length || 0}
                     </span>
                 </button>
             ))}

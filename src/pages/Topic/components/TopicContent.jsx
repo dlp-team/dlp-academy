@@ -232,6 +232,224 @@ const TopicContent = ({
         );
     }
 
+    // --- MATERIALES TAB (Students Only) ---
+    if (activeTab === 'materiales') {
+        const subjectColor = subject?.color || 'from-indigo-500 to-purple-600';
+        const aiSummaryFiles = topic.pdfs?.filter(f => ['summary', 'resumen'].includes((f.type || '').toLowerCase())) || [];
+        const mainGuide = aiSummaryFiles[0] || null;
+        const extraAiSummaryFiles = aiSummaryFiles.filter((f) => f.id !== mainGuide?.id);
+        const uploadResumenFiles = topic.uploads?.filter(u => u.fileCategory === 'resumen') || [];
+        const resumenCards = [...extraAiSummaryFiles, ...uploadResumenFiles];
+
+        const uploadExamFiles = topic.uploads?.filter(u => u.fileCategory === 'examen') || [];
+        const generatedExams = topic.exams || [];
+        const hasAnyExam = uploadExamFiles.length > 0 || generatedExams.length > 0;
+
+        let hasFormulas = false;
+        if (mainGuide?.studyGuide) {
+            try {
+                const sections = typeof mainGuide.studyGuide === 'string'
+                    ? JSON.parse(mainGuide.studyGuide)
+                    : mainGuide.studyGuide;
+                hasFormulas = Array.isArray(sections) && sections.some(s => s.formulas?.length > 0);
+            } catch {
+                hasFormulas = false;
+            }
+        }
+
+        return (
+            <div className="space-y-10">
+                {/* RESÚMENES SECTION */}
+                <div className="space-y-4">
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1 tracking-tight">Resúmenes</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Apuntes y referencias de estudio</p>
+                    </div>
+                    {!mainGuide && resumenCards.length === 0 ? (
+                        <div className="py-12 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
+                            <BookOpen className="w-12 h-12 mb-3 opacity-20" />
+                            <p className="font-medium">Sin resúmenes</p>
+                        </div>
+                    ) : (
+                        <>
+                            {mainGuide && (
+                                <div className="flex gap-6 items-stretch">
+                                    <button
+                                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/resumen/${mainGuide.id}`)}
+                                        className="flex-1 group relative overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.01] text-left"
+                                    >
+                                        <div className={`absolute inset-0 bg-gradient-to-br ${subjectColor} opacity-90 group-hover:opacity-100 transition-opacity`} />
+                                        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                            <BookOpen className="w-40 h-40 text-white absolute -bottom-8 -right-8 opacity-10 rotate-12" strokeWidth={1.2} />
+                                        </div>
+                                        <div className="relative z-10 p-8 flex flex-col justify-between h-full min-h-[12rem]">
+                                            <div>
+                                                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
+                                                    <BookOpen className="w-6 h-6 text-white" strokeWidth={1.5} />
+                                                </div>
+                                                <h3 className="text-2xl font-black text-white mb-2 leading-tight">
+                                                    Guía Completa
+                                                </h3>
+                                                <p className="text-white/80 text-sm font-medium line-clamp-2">
+                                                    {mainGuide.title || mainGuide.name || 'Guía de estudio'}
+                                                </p>
+                                            </div>
+                                            <span className="text-white/60 text-xs font-bold mt-4 group-hover:text-white/90 transition-colors">
+                                                Ver guía →
+                                            </span>
+                                        </div>
+                                    </button>
+
+                                    {hasFormulas && (
+                                        <button
+                                            onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/formulas/${mainGuide.id}`)}
+                                            className="group relative w-40 shrink-0 overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.03]"
+                                        >
+                                            <div className={`absolute inset-0 bg-gradient-to-br ${subjectColor} opacity-90 group-hover:opacity-100 transition-opacity`} />
+                                            <div className="relative z-10 h-full flex flex-col items-center justify-center gap-3 p-6">
+                                                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                                    <Calculator className="w-8 h-8 text-white" strokeWidth={1.5} />
+                                                </div>
+                                                <span className="text-white font-bold text-sm text-center">Fórmulas</span>
+                                            </div>
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+
+                            {resumenCards.length > 0 && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {resumenCards.map((file, idx) => {
+                                        const subjectGradient = `bg-gradient-to-br ${subjectColor}`;
+                                        return (
+                                            <div
+                                                key={file.id || `resumen-${idx}`}
+                                                onClick={() => {
+                                                    if (file.studyGuide) {
+                                                        navigate(`/home/subject/${subjectId}/topic/${topicId}/resumen/${file.id}`);
+                                                        return;
+                                                    }
+                                                    if (file.url) {
+                                                        handleViewFile(file);
+                                                    }
+                                                }}
+                                                className="group cursor-pointer relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-300 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-slate-900/30"
+                                            >
+                                                <div className={`absolute top-0 inset-x-0 h-1 ${subjectGradient}`} />
+                                                <div className="p-4">
+                                                    <div className="flex items-start gap-3 mb-3">
+                                                        <div className={`${subjectGradient} w-10 h-10 rounded-xl flex items-center justify-center shrink-0`}>
+                                                            <BookOpen className="w-5 h-5 text-white" strokeWidth={1.5} />
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">
+                                                                {file.title || file.name || 'Resumen'}
+                                                            </h4>
+                                                        </div>
+                                                    </div>
+                                                    <button className={`w-full py-2 rounded-lg text-xs font-semibold text-white transition-all ${subjectGradient} hover:shadow-md active:scale-95`}>
+                                                        Ver
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </>
+                    )}
+                </div>
+
+                {/* EXÁMENES SECTION */}
+                <div className="space-y-4">
+                    <div>
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1 tracking-tight">Exámenes</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Evaluaciones y pruebas</p>
+                    </div>
+
+                    {!hasAnyExam ? (
+                        <div className="py-12 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
+                            <FileText className="w-12 h-12 mb-3 opacity-20" />
+                            <p className="font-medium">Sin exámenes</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                            {uploadExamFiles.map((file, idx) => {
+                                const subjectGradient = `bg-gradient-to-br ${subjectColor}`;
+                                return (
+                                    <div
+                                        key={file.id || `upload-exam-${idx}`}
+                                        onClick={() => {
+                                            if (file.url) {
+                                                handleViewFile(file);
+                                            }
+                                        }}
+                                        className="group cursor-pointer relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-300 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-slate-900/30"
+                                    >
+                                        <div className={`absolute top-0 inset-x-0 h-1 ${subjectGradient}`} />
+                                        <div className="p-4">
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <div className={`${subjectGradient} w-10 h-10 rounded-xl flex items-center justify-center shrink-0`}>
+                                                    <FileText className="w-5 h-5 text-white" strokeWidth={1.5} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">
+                                                        {file.title || file.name || 'Examen'}
+                                                    </h4>
+                                                </div>
+                                            </div>
+                                            <button className={`w-full py-2 rounded-lg text-xs font-semibold text-white transition-all ${subjectGradient} hover:shadow-md active:scale-95`}>
+                                                Ver
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {generatedExams.map((exam, idx) => {
+                                const subjectGradient = `bg-gradient-to-br ${subjectColor}`;
+                                return (
+                                    <div
+                                        key={exam.id || `generated-exam-${idx}`}
+                                        onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/exam/${exam.id}`)}
+                                        className="group cursor-pointer relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-300 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-slate-900/30"
+                                    >
+                                        <div className={`absolute top-0 inset-x-0 h-1 ${subjectGradient}`} />
+                                        <div className="p-4">
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <div className={`${subjectGradient} w-10 h-10 rounded-xl flex items-center justify-center shrink-0`}>
+                                                    <FileText className="w-5 h-5 text-white" strokeWidth={1.5} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">
+                                                        {exam.title || 'Examen'}
+                                                    </h4>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-3">
+                                                <span className="flex items-center gap-1">
+                                                    <FileText className="w-3 h-3" strokeWidth={1.5} />
+                                                    {exam.questions?.length || 0} preguntas
+                                                </span>
+                                                <span className="flex items-center gap-1">
+                                                    <Timer className="w-3 h-3" strokeWidth={1.5} />
+                                                    1h
+                                                </span>
+                                            </div>
+                                            <button className={`w-full py-2 rounded-lg text-xs font-semibold text-white transition-all ${subjectGradient} hover:shadow-md active:scale-95`}>
+                                                Comenzar
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    }
+
     // --- UPLOADS TAB ---
     if (activeTab === 'uploads') {
         return (
@@ -428,11 +646,11 @@ const TopicContent = ({
                             {quizzesByLevel[levelKey].map((quiz) => {
                                 const isCompleted = quiz.score !== undefined && quiz.score !== null;
                                 const isPassed = isCompleted && quiz.score >= 50;
-                                const isStudent = user?.role === 'student';
-                                const canManageQuiz = !isStudent;
+                                const isStudent = user?.role === 'student' || permissions?.isViewer;
+                                const canManageQuiz = Boolean(permissions?.canEdit) && !isStudent;
                                 const isAssignment = Boolean(quiz.isAssignment);
                                 const isAdmin = user?.role === 'admin';
-                                const isCreatorTeacher = !isStudent && (
+                                const isCreatorTeacher = !isStudent && Boolean(permissions?.canEdit) && (
                                     quiz?.createdBy === user?.uid ||
                                     quiz?.ownerId === user?.uid ||
                                     topic?.ownerId === user?.uid

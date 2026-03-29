@@ -43,7 +43,7 @@ const AnswerOption = React.memo(({
             <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-black text-base transition-all duration-300 shrink-0 ${circleClass}`}>
                 {String.fromCharCode(65 + index)}
             </div>
-            <div className="flex-1 text-base font-bold leading-snug">
+            <div className="flex-1 min-w-0 text-base font-bold leading-snug overflow-x-auto pr-1 [&_.katex-display]:my-0 [&_.katex-display]:overflow-x-auto [&_.katex-display]:overflow-y-hidden [&_.katex]:text-[1.02em]">
                 <RenderLatex text={option} />
             </div>
             {showCorrectIcon && (

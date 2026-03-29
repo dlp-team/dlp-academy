@@ -59,6 +59,11 @@ export const useTopicLogic = (user) => {
         prompt: '' 
     });
 
+    // --- ESTADOS PARA EL MODAL DE CATEGORIZACIÓN DE ARCHIVOS ---
+    const [showCategorizationModal, setShowCategorizationModal] = useState(false);
+    const [pendingFile, setPendingFile] = useState(null);
+    const [categorizingFile, setCategorizingFile] = useState(false);
+
     // Función auxiliar para notificaciones
     const showNotification = (msg, duration = 5000) => {
         if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -309,23 +314,68 @@ export const useTopicLogic = (user) => {
         const validFiles = files.filter(file => file.size < 1048576); 
         if (validFiles.length === 0) return;
 
-        setUploading(true);
+        if (validFiles.length === 1) {
+            // Single file: show categorization modal
+            setPendingFile(validFiles[0]);
+            setShowCategorizationModal(true);
+        } else {
+            // Multiple files: upload without categorization (for bulk uploads)
+            setUploading(true);
+            try {
+                const convert = (f) => new Promise((r) => { const fr = new FileReader(); fr.readAsDataURL(f); fr.onload = () => r(fr.result); });
+                await Promise.all(validFiles.map(async (file) => {
+                    const base64Url = await convert(file);
+                    return addDoc(collection(db, "documents"), {
+                        name: file.name, type: file.type.includes('pdf') ? 'pdf' : 'doc', size: file.size, 
+                        source: 'manual', uploadedAt: serverTimestamp(), url: base64Url, status: 'ready',
+                        topicId: topicId,
+                        subjectId: subjectId,
+                        ownerId: topic?.ownerId || subject?.ownerId || user?.uid,
+                        institutionId: topic?.institutionId || subject?.institutionId || user?.institutionId || null,
+                        fileCategory: 'resumen' // default for bulk uploads
+                    });
+                }));
+                if (fileInputRef.current) fileInputRef.current.value = '';
+                setActiveTab('uploads'); 
+            } catch (error) { alert("Error al subir."); } finally { setUploading(false); }
+        }
+    };
+
+    // Handle file categorization from modal
+    const handleFileCategorized = async (category) => {
+        if (!pendingFile) return;
+
+        setCategorizingFile(true);
         try {
             const convert = (f) => new Promise((r) => { const fr = new FileReader(); fr.readAsDataURL(f); fr.onload = () => r(fr.result); });
-            await Promise.all(validFiles.map(async (file) => {
-                const base64Url = await convert(file);
-                return addDoc(collection(db, "documents"), {
-                    name: file.name, type: file.type.includes('pdf') ? 'pdf' : 'doc', size: file.size, 
-                    source: 'manual', uploadedAt: serverTimestamp(), url: base64Url, status: 'ready',
-                    topicId: topicId,
-                    subjectId: subjectId,
-                    ownerId: topic?.ownerId || subject?.ownerId || user?.uid,
-                    institutionId: topic?.institutionId || subject?.institutionId || user?.institutionId || null
-                });
-            }));
+            const base64Url = await convert(pendingFile);
+            
+            await addDoc(collection(db, "documents"), {
+                name: pendingFile.name, 
+                type: pendingFile.type.includes('pdf') ? 'pdf' : 'doc', 
+                size: pendingFile.size, 
+                source: 'manual', 
+                uploadedAt: serverTimestamp(), 
+                url: base64Url, 
+                status: 'ready',
+                topicId: topicId,
+                subjectId: subjectId,
+                ownerId: topic?.ownerId || subject?.ownerId || user?.uid,
+                institutionId: topic?.institutionId || subject?.institutionId || user?.institutionId || null,
+                fileCategory: category
+            });
+
             if (fileInputRef.current) fileInputRef.current.value = '';
-            setActiveTab('uploads'); 
-        } catch (error) { alert("Error al subir."); } finally { setUploading(false); }
+            setShowCategorizationModal(false);
+            setPendingFile(null);
+            showNotification(`✅ Archivo "${pendingFile.name}" guardado como ${category}`);
+            setActiveTab('uploads');
+        } catch (error) { 
+            console.error(error); 
+            alert("Error al categorizar archivo."); 
+        } finally { 
+            setCategorizingFile(false); 
+        }
     };
 
     // --- IA GENERATION: QUIZZES ---
@@ -499,6 +549,11 @@ export const useTopicLogic = (user) => {
         isGeneratingContent, setIsGeneratingContent,
         contentFormData, setContentFormData,
         
+        // Categorization Modal State
+        showCategorizationModal, setShowCategorizationModal,
+        pendingFile, setPendingFile,
+        categorizingFile,
+        
         // Refs
         fileInputRef,
         
@@ -521,6 +576,7 @@ export const useTopicLogic = (user) => {
         handleGenerateContentSubmit,
         handleCreateCustomPDF,
         handleCreateCustomQuiz,
+        handleFileCategorized,
         subjectId,
         topicId
     };

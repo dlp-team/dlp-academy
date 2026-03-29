@@ -1,7 +1,7 @@
 // src/pages/Topic/Topic.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDarkMode } from '../../hooks/useDarkMode';
-import { Loader2 } from 'lucide-react';
+import { Eye, GraduationCap, Loader2 } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import { useTopicLogic } from './hooks/useTopicLogic';
 import { useTopicFailedQuestions } from './hooks/useTopicFailedQuestions';
@@ -17,6 +17,7 @@ import TopicHeader from './components/TopicHeader';
 import TopicTabs from './components/TopicTabs';
 import TopicContent from './components/TopicContent';
 import TopicModals from './components/TopicModals';
+import CategorizFileModal from './components/CategorizFileModal';
 
 // CONFIGURACIÓN N8N
 const N8N_WEBHOOK_URL = 'TU_URL_DE_N8N_AQUI'; 
@@ -30,7 +31,36 @@ const Topic = ({ user }) => {
     const [userScores, setUserScores] = useState({});
     const [scoresLoading, setScoresLoading] = useState(true);
     const [topicAssignments, setTopicAssignments] = useState([]);
+    const [previewAsStudent, setPreviewAsStudent] = useState(false);
+    const canUsePreview = user?.role !== 'student';
+    const isStudentView = user?.role === 'student' || previewAsStudent;
     const { failedQuestions } = useTopicFailedQuestions(user, logic.topicId);
+
+    useEffect(() => {
+        if (!canUsePreview) {
+            sessionStorage.removeItem('dlpPreviewAsStudent');
+            return;
+        }
+
+        if (previewAsStudent) {
+            sessionStorage.setItem('dlpPreviewAsStudent', '1');
+            return;
+        }
+
+        sessionStorage.removeItem('dlpPreviewAsStudent');
+    }, [previewAsStudent, canUsePreview]);
+
+    useEffect(() => {
+        if (isStudentView && logic.activeTab === 'materials') {
+            logic.setActiveTab('materiales');
+            return;
+        }
+
+        if (!isStudentView && logic.activeTab === 'materiales') {
+            logic.setActiveTab('materials');
+        }
+    }, [isStudentView, logic.activeTab, logic.setActiveTab]);
+
     // 3. EFECTO: Escuchar puntuaciones (Quizzes)
     useEffect(() => {
         if (!user || !logic.subjectId || !logic.topicId) {
@@ -116,6 +146,18 @@ const Topic = ({ user }) => {
         return { completed, total, percentage: (completed / total) * 100 };
     }, [enrichedTopic]);
 
+    const effectivePermissions = useMemo(() => {
+        if (!previewAsStudent) return logic.permissions;
+        return {
+            ...logic.permissions,
+            canEdit: false,
+            canDelete: false,
+            showEditUI: false,
+            showDeleteUI: false,
+            isViewer: true
+        };
+    }, [logic.permissions, previewAsStudent]);
+
     if (!user || logic.loading || !logic.topic || !logic.subject) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -128,18 +170,39 @@ const Topic = ({ user }) => {
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
             <Header user={user} />
             <main className="pt-20 pb-16 px-6 max-w-7xl mx-auto">
+                {canUsePreview && (
+                    <div className="mb-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/80 backdrop-blur-sm p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                            {previewAsStudent ? (
+                                <GraduationCap className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                            ) : (
+                                <Eye className="w-4 h-4 text-slate-500 dark:text-slate-400" />
+                            )}
+                            <span>{previewAsStudent ? 'Modo Alumno activo (solo lectura temporal)' : 'Modo Profesor activo'}</span>
+                        </div>
+                        <button
+                            onClick={() => setPreviewAsStudent((prev) => !prev)}
+                            className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors ${previewAsStudent ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-white text-white dark:text-slate-900'}`}
+                        >
+                            {previewAsStudent ? 'Salir modo alumno' : 'Activar modo alumno'}
+                        </button>
+                    </div>
+                )}
+
                 <TopicHeader 
                     {...logic}
                     topic={enrichedTopic} 
                     subject={logic.subject}
                     globalProgress={globalProgress}
                     handleGenerateQuizSubmit={logic.handleGenerateQuizSubmit}
-                    permissions={logic.permissions}
+                    permissions={effectivePermissions}
                 />
                 <div className="mt-8">
                     <TopicTabs 
                         {...logic}
-                        topic={enrichedTopic} 
+                        permissions={effectivePermissions}
+                        topic={enrichedTopic}
+                        user={user}
                     />
                 </div>
                 <div className="mt-8">
@@ -150,16 +213,29 @@ const Topic = ({ user }) => {
                         failedQuestions={failedQuestions}
                         handleManualUpload={logic.handleManualUpload}
                         uploading={logic.uploading}
-                        permissions={logic.permissions}
+                        permissions={effectivePermissions}
                     />
                 </div>
             </main>
+
+            {!previewAsStudent && (
+                <CategorizFileModal
+                    isOpen={logic.showCategorizationModal}
+                    onClose={() => {
+                        logic.setShowCategorizationModal(false);
+                        logic.setPendingFile(null);
+                    }}
+                    onSubmit={logic.handleFileCategorized}
+                    fileName={logic.pendingFile?.name || ''}
+                    isLoading={logic.categorizingFile}
+                />
+            )}
+
             <TopicModals 
                 {...logic}
                 topic={enrichedTopic}
                 subject={logic.subject}
                 handleGenerateQuizSubmit={logic.handleGenerateQuizSubmit}
-                viewingFile={null} 
             />
         </div>
     );
