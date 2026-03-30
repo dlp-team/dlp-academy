@@ -567,31 +567,35 @@ const TopicContent = ({
                                     <div
                                         key={exam.id || `generated-exam-${idx}`}
                                         onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/exam/${exam.id}`)}
-                                        className="group cursor-pointer relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-300 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-slate-900/30"
+                                        className="group cursor-pointer relative overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.01]"
                                     >
-                                        <div className={`absolute top-0 inset-x-0 h-1 ${subjectGradient}`} />
-                                        <div className="p-4">
+                                        <div className={`absolute inset-0 ${subjectGradient} opacity-90 group-hover:opacity-100 transition-opacity`} />
+                                        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                            <FileText className="w-28 h-28 text-white absolute -bottom-5 -right-5 rotate-12 opacity-[0.12]" strokeWidth={1.2} />
+                                        </div>
+                                        <div className="relative z-10 p-4">
                                             <div className="flex items-start gap-3 mb-3">
-                                                <div className={`${subjectGradient} w-10 h-10 rounded-xl flex items-center justify-center shrink-0`}>
+                                                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
                                                     <FileText className="w-5 h-5 text-white" strokeWidth={1.5} />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">
+                                                    <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-white/70 mb-1">Evaluación del tema</p>
+                                                    <h4 className="text-sm font-semibold text-white line-clamp-1">
                                                         {exam.title || 'Examen'}
                                                     </h4>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-3">
-                                                <span className="flex items-center gap-1">
+                                            <div className="flex items-center gap-3 text-xs text-white/80 mb-3">
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/20 border border-white/25 font-semibold">
                                                     <FileText className="w-3 h-3" strokeWidth={1.5} />
                                                     {exam.questions?.length || 0} preguntas
                                                 </span>
-                                                <span className="flex items-center gap-1">
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/20 border border-white/25 font-semibold">
                                                     <Timer className="w-3 h-3" strokeWidth={1.5} />
                                                     1h
                                                 </span>
                                             </div>
-                                            <button className={`w-full py-2 rounded-lg text-xs font-semibold text-white transition-all ${subjectGradient} hover:shadow-md active:scale-95`}>
+                                            <button className="w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide text-white bg-white/20 border border-white/30 backdrop-blur-sm transition-all hover:bg-white/25 active:scale-95">
                                                 Comenzar
                                             </button>
                                         </div>

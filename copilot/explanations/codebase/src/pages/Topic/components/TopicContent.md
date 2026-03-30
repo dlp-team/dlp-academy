@@ -21,6 +21,12 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+### 2026-03-30: Student exams cards aligned to StudyGuide gradient style
+- Applied the same StudyGuide-inspired full-gradient visual language to student-view generated exam cards in `materiales` (white typography, translucent chips, and glass CTA) for consistent cross-role presentation.
+
+### 2026-03-30: Exams cards aligned to StudyGuide gradient style
+- Updated teacher `materials` exams cards to use the same full-gradient visual language as StudyGuide (high-contrast white typography, glass chips, watermark icon, and translucent CTA surface).
+
 ### 2026-03-30: Premium visual refresh for teacher exams cards
 - Redesigned teacher `materials` exams cards (AI files + generated exams) to align with StudyGuide/FileCard language: gradient accents, watermark icon layer, improved metadata hierarchy, and stronger uppercase CTA styling.
 

@@ -21,6 +21,8 @@
 - In teacher `materials` view, added AI exam cards from `topic.pdfs` (exam/evaluation types) under the StudyGuide/Fórmulas block so generated exam content appears for teachers in the AI-generated content area.
 - Removed the `mainGuide` hard gate early return so exams are still rendered for teachers even when StudyGuide data is missing.
 - Applied final visual refinement to match StudyGuide/FileCard style language for teacher exam cards (accent bar, subtle gradient backdrop, watermark icon, stronger CTA hierarchy).
+- Further aligned cards directly to StudyGuide hero style: full-gradient background treatment, white typography, translucent chips, and glass CTA for consistent premium look.
+- Replicated the same visual treatment in student `materiales` generated exam cards so both teacher and student views share the same StudyGuide-grade graphical style.
 
 ## Preserved Behaviors
 - No write/delete expansions were introduced.
