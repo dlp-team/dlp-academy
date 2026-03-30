@@ -1,120 +1,25 @@
 // src/pages/Auth/Login.jsx
-import React, { useState } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 // 1. Remove the CSS module import and replace with Lucide icons
 import { Mail, Lock, GraduationCap, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
-import { auth, provider } from '../../firebase/config'; 
-import { collection, doc, getDoc, getDocs, query, setDoc, serverTimestamp, where } from 'firebase/firestore'; 
-import { db } from '../../firebase/config';
 import { FcGoogle } from 'react-icons/fc';
-import { 
-    signInWithEmailAndPassword, 
-    signInWithPopup, 
-    setPersistence, 
-    browserLocalPersistence, 
-    browserSessionPersistence 
-} from 'firebase/auth';
+
+import { useLogin } from './hooks/useLogin';
 
 
 const Login = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [rememberMe, setRememberMe] = useState(false);
+    const {
+        email, setEmail,
+        password, setPassword,
+        error, setError,
+        loading, setLoading,
+        rememberMe, setRememberMe,
+        handleLogin,
+        handleGoogleLogin
+    } = useLogin();
 
 
-    // Iniciar sesión con Email
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
-
-        try {
-            const persistence = rememberMe ? browserLocalPersistence : browserSessionPersistence;
-            
-            await setPersistence(auth, persistence);
-            const result = await signInWithEmailAndPassword(auth, email, password); // Capture 'result'
-        
-            await saveUserToFirestore(result.user); 
-        } catch (err) {
-            console.error(err);
-            if(err.code === 'auth/invalid-credential') setError("Credenciales incorrectas.");
-            else setError("Error al iniciar sesión.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Iniciar sesión con Google
-    const handleGoogleLogin = async () => {
-        setError('');
-        try {
-            const result = await signInWithPopup(auth, provider); 
-            await saveUserToFirestore(result.user);
-        } catch (err) {
-            console.error(err);
-            setError("No se pudo iniciar sesión con Google.");
-        }
-    };
-
-    const resolveInstitutionId = async (email) => {
-        const normalizedEmail = (email || '').toLowerCase();
-        const domain = normalizedEmail.split('@')[1];
-        if (!domain) return null;
-
-        try {
-            const allowedSnap = await getDocs(
-                query(collection(db, 'institution_invites'), where('email', '==', normalizedEmail))
-            );
-            if (!allowedSnap.empty) {
-                return allowedSnap.docs[0].data()?.institutionId || null;
-            }
-        } catch (error) {
-            // Normal users may not have list access for invites; continue with domain-based resolution.
-            console.warn('Skipping invite-based institution resolution:', error?.code || error?.message || error);
-        }
-
-        const domainSnap = await getDocs(
-            query(collection(db, 'institutions'), where('domains', 'array-contains', domain))
-        );
-        if (!domainSnap.empty) return domainSnap.docs[0].id;
-
-        const singleSnap = await getDocs(
-            query(collection(db, 'institutions'), where('domain', '==', domain))
-        );
-        if (!singleSnap.empty) return singleSnap.docs[0].id;
-
-        return null;
-    };
-
-    const saveUserToFirestore = async (user) => {
-        const userRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userRef);
-        const resolvedInstitutionId = await resolveInstitutionId(user.email);
-
-        if (!userSnap.exists()) {
-            await setDoc(userRef, {
-                uid: user.uid,
-                displayName: user.displayName || '',
-                email: user.email,
-                photoURL: user.photoURL || '',
-                role: 'student',
-                institutionId: resolvedInstitutionId,
-                createdAt: serverTimestamp(),
-                lastLogin: serverTimestamp(),
-                settings: { theme: 'system', language: 'es', viewMode: 'grid' }
-            });
-            return;
-        }
-
-        const updates = { email: user.email, lastLogin: serverTimestamp() };
-        if (!userSnap.data()?.institutionId && resolvedInstitutionId) {
-            updates.institutionId = resolvedInstitutionId;
-        }
-
-        await setDoc(userRef, updates, { merge: true });
-    };
 
     return (
         <div className="min-h-screen flex bg-slate-50 dark:bg-slate-950 font-sans transition-colors">

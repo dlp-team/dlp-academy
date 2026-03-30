@@ -93,10 +93,18 @@ export const useShortcuts = (user) => {
         }
 
         // Query shortcuts owned by current user
-        const shortcutsQuery = query(
-            collection(db, "shortcuts"),
-            where("ownerId", "==", user.uid)
-        );
+        const normalizedRole = String(user?.role || '').trim().toLowerCase();
+        const isStudent = normalizedRole === 'student';
+        const shortcutsQuery = isStudent
+            ? query(
+                collection(db, "shortcuts"),
+                where("ownerId", "==", user.uid),
+                where("targetType", "==", "subject")
+            )
+            : query(
+                collection(db, "shortcuts"),
+                where("ownerId", "==", user.uid)
+            );
 
         const unsubscribe = onSnapshot(
             shortcutsQuery,

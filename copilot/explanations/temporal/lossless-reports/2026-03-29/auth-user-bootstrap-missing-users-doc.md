@@ -12,6 +12,8 @@
 - In both login paths (`Login.jsx` and `useLogin.js`), `resolveInstitutionId` queried `institution_invites` with `getDocs(...where('email'...))`. Firestore rules restrict list access for normal users, causing permission errors before user bootstrap write, leaving no `users/{uid}` doc in some first-login paths.
 - In `useRegister.js`, direct-invite deletion happened before creating `users/{uid}`. If invite deletion failed, registration could complete in Auth but skip Firestore profile creation.
 - `src/hooks/useNotifications.js` subscribed to `notifications` with `onSnapshot` without an error callback, while `firestore.rules` had no `notifications` match block (implicit deny). This caused uncaught `permission-denied` snapshot errors and downstream Firestore internal assertion logs.
+- `src/App.jsx` still opened realtime `users/{uid}` listeners in conditions where backend denied profile reads, producing repeated snapshot permission-denied logs.
+- `src/hooks/useShortcuts.js` queried owner shortcuts without student-role target filtering. Because rules deny student folder shortcuts, the owner query could be rejected for student sessions.
 
 ## Files Touched
 - `src/pages/Auth/Login.jsx`
@@ -20,12 +22,16 @@
 - `src/pages/Onboarding/components/OnboardingWizard.jsx`
 - `src/hooks/useNotifications.js`
 - `firestore.rules`
+- `src/App.jsx`
+- `src/hooks/useShortcuts.js`
 - `copilot/explanations/codebase/src/pages/Auth/Login.md`
 - `copilot/explanations/codebase/src/pages/Auth/hooks/useLogin.md`
 - `copilot/explanations/codebase/src/pages/Auth/hooks/useRegister.md`
 - `copilot/explanations/codebase/src/pages/Onboarding/components/OnboardingWizard.md`
 - `copilot/explanations/codebase/src/hooks/useNotifications.md`
 - `copilot/explanations/codebase/firestore.rules.md`
+- `copilot/explanations/codebase/src/App.md`
+- `copilot/explanations/codebase/src/hooks/useShortcuts.md`
 
 ## Lossless Preservation Checklist
 - Preserved existing route structure and visual UI behavior for login/register pages.
@@ -55,6 +61,12 @@
 - `firestore.rules`
   - Added explicit rules for `notifications/{notificationId}`.
   - Users can manage only own notifications; global admin retains full access; institution admin can manage same-institution docs.
+- `src/App.jsx`
+  - Added auth-bootstrap guard using `getDoc` before opening realtime listener.
+  - If profile read returns `permission-denied`, app now falls back to auth-only user state and skips opening a listener that would spam uncaught watch errors.
+  - If profile doc is missing, app bootstraps `users/{uid}` with deterministic defaults before listening.
+- `src/hooks/useShortcuts.js`
+  - Added student-safe query variant (`ownerId == uid` + `targetType == 'subject'`) so listener remains compatible with student folder-shortcut restrictions in Firestore rules.
 
 ## Validation Summary
 - `get_errors` on touched files: clean.
@@ -64,6 +76,11 @@
   - `src/pages/Onboarding/components/OnboardingWizard.jsx`: no errors.
   - `src/hooks/useNotifications.js`: no errors.
   - `firestore.rules`: no errors.
+  - `src/App.jsx`: no errors.
+  - `src/hooks/useShortcuts.js`: no errors.
+- Focused regression tests:
+  - `tests/unit/hooks/useShortcuts.test.js`: passed (11/11).
+  - `tests/unit/App.authListener.test.jsx`: passed (1/1).
 
 ## Expected Outcome After Fix
 - First login no longer leaves missing `users/{uid}` due invite-list permission failures.
@@ -72,3 +89,5 @@
 - Onboarding wizard only appears for genuinely missing required fields (e.g., missing institution/display name), not because of silent bootstrap write failures.
 - Realtime notifications listener no longer crashes the app on permission denials.
 - `notifications` collection now has explicit access policy in repository rules (must be deployed to take effect in project backend).
+- App-level user-profile listener no longer repeatedly emits uncaught watch permission errors in denied-profile scenarios.
+- Student sessions no longer trigger shortcut-listener permission denial due disallowed folder shortcut rows in query result space.

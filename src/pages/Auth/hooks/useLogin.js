@@ -116,7 +116,7 @@ export const useLogin = () => {
             } else if (err.code === 'auth/too-many-requests') {
                 setError('Demasiados intentos fallidos. Inténtalo más tarde.');
             } else {
-                setError('Error al iniciar sesión. Inténtalo de nuevo.');
+                setError('Error al iniciar sesión. Inténtalo de nuevo o más tarde.');
             }
         } finally {
             setLoading(false);
@@ -148,8 +148,11 @@ export const useLogin = () => {
         }
     };
 
+
+
+
     return { 
         formData, loading, error, resetSent,
-        handleChange, handleLogin, handleGoogleLogin, handleForgotPassword 
+        handleChange, handleLogin, handleGoogleLogin, handleForgotPassword
     };
 };
