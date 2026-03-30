@@ -185,6 +185,23 @@ service cloud.firestore {
           || get(/databases/$(database)/documents/folders/$(folderId)).data.uid == request.auth.uid
         );
     }
+
+    function subjectReadableByRef(subjectId) {
+      return exists(/databases/$(database)/documents/subjects/$(subjectId))
+        && (
+          canReadResource(get(/databases/$(database)/documents/subjects/$(subjectId)).data)
+          || get(/databases/$(database)/documents/subjects/$(subjectId)).data.ownerId == request.auth.uid
+          || get(/databases/$(database)/documents/subjects/$(subjectId)).data.uid == request.auth.uid
+          || (
+            get(/databases/$(database)/documents/subjects/$(subjectId)).data.keys().hasAny(['folderId'])
+            && canManageFolderById(get(/databases/$(database)/documents/subjects/$(subjectId)).data.folderId)
+          )
+          || (
+            get(/databases/$(database)/documents/subjects/$(subjectId)).data.keys().hasAny(['sharedWithUids'])
+            && request.auth.uid in get(/databases/$(database)/documents/subjects/$(subjectId)).data.sharedWithUids
+          )
+        );
+    }
     
     // Reglas para usuarios
     match /users/{userId} {
@@ -229,12 +246,20 @@ service cloud.firestore {
           )
           || request.resource.data.ownerId == request.auth.uid
         )
-        && request.resource.data.keys().hasAll(['course', 'inviteCode', 'enrolledStudentUids'])
+          && request.resource.data.keys().hasAll(['course'])
         && request.resource.data.course is string
         && request.resource.data.course.size() > 0
-        && request.resource.data.inviteCode is string
-        && request.resource.data.inviteCode.size() > 0
-        && request.resource.data.enrolledStudentUids is list
+          && (
+            !request.resource.data.keys().hasAny(['inviteCode'])
+            || (
+              request.resource.data.inviteCode is string
+              && request.resource.data.inviteCode.size() > 0
+            )
+          )
+          && (
+            !request.resource.data.keys().hasAny(['enrolledStudentUids'])
+            || request.resource.data.enrolledStudentUids is list
+          )
         && (
           !request.resource.data.keys().hasAny(['classId'])
           || request.resource.data.classId == null
@@ -251,7 +276,24 @@ service cloud.firestore {
           || resource.data.ownerId == request.auth.uid
           || resource.data.uid == request.auth.uid
           || (
-            resource.data.keys().hasAny(['folderId'])
+          && (
+            !request.writeFields.hasAny(['course'])
+            || (
+              request.resource.data.course is string
+              && request.resource.data.course.size() > 0
+            )
+          )
+          && (
+            !request.writeFields.hasAny(['inviteCode'])
+            || (
+              request.resource.data.inviteCode is string
+              && request.resource.data.inviteCode.size() > 0
+            )
+          )
+          && (
+            !request.writeFields.hasAny(['enrolledStudentUids'])
+            || request.resource.data.enrolledStudentUids is list
+          )
             && canManageFolderById(resource.data.folderId)
           )
           || (resource.data.keys().hasAny(['sharedWithUids']) && request.auth.uid in resource.data.sharedWithUids)
@@ -267,13 +309,19 @@ service cloud.firestore {
             && canManageFolderById(resource.data.folderId)
           )
         )
-        && request.resource.data.keys().hasAll(['course', 'inviteCode'])
-        && request.resource.data.course is string
-        && request.resource.data.course.size() > 0
-        && request.resource.data.inviteCode is string
-        && request.resource.data.inviteCode.size() > 0
         && (
-          !request.resource.data.keys().hasAny(['classId'])
+          !request.writeFields.hasAny(['inviteCode'])
+          || (
+            request.resource.data.inviteCode is string
+            && request.resource.data.inviteCode.size() > 0
+          )
+        )
+        && (
+          !request.writeFields.hasAny(['enrolledStudentUids'])
+          || request.resource.data.enrolledStudentUids is list
+        )
+        && (
+          !request.writeFields.hasAny(['classId'])
           || request.resource.data.classId == null
           || request.resource.data.classId is string
         );
@@ -447,7 +495,7 @@ service cloud.firestore {
           canReadResource(resource.data)
           || (
             hasSubjectRef(resource.data)
-            && subjectInstitutionMatches(subjectRef(resource.data))
+            && subjectReadableByRef(subjectRef(resource.data))
           )
           || resource.data.ownerId == request.auth.uid
         );
@@ -499,6 +547,10 @@ service cloud.firestore {
           || (
             hasTopicRef(resource.data)
             && topicInstitutionMatches(topicRef(resource.data))
+          )
+          || (
+            hasSubjectRef(resource.data)
+            && subjectInstitutionMatches(subjectRef(resource.data))
           )
           || resource.data.ownerId == request.auth.uid
         );
@@ -621,6 +673,112 @@ service cloud.firestore {
             && topicInstitutionMatches(topicRef(resource.data))
           )
         );
+    }
+
+    // Reglas para tareas por tema
+    match /topicAssignments/{assignmentId} {
+      allow create: if isSignedIn()
+        && !isStudentRole()
+        && (
+          isGlobalAdmin()
+          || (
+            request.resource.data.keys().hasAny(['institutionId'])
+            && currentUserInstitutionId() != null
+            && request.resource.data.institutionId == currentUserInstitutionId()
+            && hasTopicRef(request.resource.data)
+            && topicInstitutionMatches(topicRef(request.resource.data))
+          )
+          || (
+            hasTopicRef(request.resource.data)
+            && exists(/databases/$(database)/documents/topics/$(topicRef(request.resource.data)))
+            && request.resource.data.createdBy == request.auth.uid
+          )
+        );
+
+      allow read: if isSignedIn()
+        && (
+          canReadResource(resource.data)
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+          || resource.data.createdBy == request.auth.uid
+        );
+
+      allow update: if isSignedIn()
+        && !isStudentRole()
+        && (
+          isGlobalAdmin()
+          || (
+            resource.data.keys().hasAny(['institutionId'])
+            && currentUserInstitutionId() != null
+            && resource.data.institutionId == currentUserInstitutionId()
+            && hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+          || (
+            resource.data.createdBy == request.auth.uid
+            && hasTopicRef(resource.data)
+            && exists(/databases/$(database)/documents/topics/$(topicRef(resource.data)))
+          )
+        );
+
+      allow delete: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || resource.data.createdBy == request.auth.uid
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+        );
+    }
+
+    // Entregas de tareas por alumno
+    match /topicAssignmentSubmissions/{submissionId} {
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasAll(['assignmentId', 'topicId', 'userId'])
+        && request.resource.data.userId == request.auth.uid
+        && hasTopicRef(request.resource.data)
+        && exists(/databases/$(database)/documents/topicAssignments/$(request.resource.data.assignmentId))
+        && get(/databases/$(database)/documents/topicAssignments/$(request.resource.data.assignmentId)).data.topicId == request.resource.data.topicId
+        && (
+          topicInstitutionMatches(topicRef(request.resource.data))
+          || (
+            get(/databases/$(database)/documents/topicAssignments/$(request.resource.data.assignmentId)).data.keys().hasAny(['institutionId'])
+            && currentUserInstitutionId() != null
+            && get(/databases/$(database)/documents/topicAssignments/$(request.resource.data.assignmentId)).data.institutionId == currentUserInstitutionId()
+          )
+        );
+
+      allow read: if isSignedIn()
+        && (
+          isGlobalAdmin()
+          || resource.data.userId == request.auth.uid
+          || (
+            hasTopicRef(resource.data)
+            && topicInstitutionMatches(topicRef(resource.data))
+          )
+          || (
+            resource.data.keys().hasAny(['institutionId'])
+            && currentUserInstitutionId() != null
+            && resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+
+      allow update: if isSignedIn()
+        && resource.data.userId == request.auth.uid
+        && hasTopicRef(resource.data)
+        && (
+          topicInstitutionMatches(topicRef(resource.data))
+          || (
+            resource.data.keys().hasAny(['institutionId'])
+            && currentUserInstitutionId() != null
+            && resource.data.institutionId == currentUserInstitutionId()
+          )
+        );
+
+      allow delete: if false;
     }
 
     // Historial de intentos por test (inmutable por intento)
