@@ -8,20 +8,28 @@ import {
     Trash2,
     Clock3,
     CheckCircle2,
-    AlertCircle
+    AlertCircle,
+    Paperclip,
+    Upload,
+    X,
+    FileText
 } from 'lucide-react';
 import {
-    addDoc,
     collection,
     deleteDoc,
     doc,
+    getDoc,
     onSnapshot,
     query,
     serverTimestamp,
     setDoc,
     where
 } from 'firebase/firestore';
-import { db } from '../../../firebase/config';
+import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
+import { db, storage } from '../../../firebase/config';
+
+const MAX_ATTACHMENT_COUNT = 5;
+const MAX_ATTACHMENT_SIZE_BYTES = 20 * 1024 * 1024;
 
 const TopicAssignmentsSection = ({
     assignments = [],
@@ -34,6 +42,10 @@ const TopicAssignmentsSection = ({
     const canManage = Boolean(permissions?.canEdit) && !isStudent;
     const [saving, setSaving] = useState(false);
     const [feedback, setFeedback] = useState({ type: '', message: '' });
+    const [resolvedInstitutionId, setResolvedInstitutionId] = useState(user?.institutionId || null);
+    const [instructionFiles, setInstructionFiles] = useState([]);
+    const [submissionDraftByAssignment, setSubmissionDraftByAssignment] = useState({});
+    const [uploadingAssignmentId, setUploadingAssignmentId] = useState(null);
     const [submissionsByAssignment, setSubmissionsByAssignment] = useState({});
     const [submissionCountByAssignment, setSubmissionCountByAssignment] = useState({});
     const createPanelRef = useRef(null);
@@ -62,6 +74,51 @@ const TopicAssignmentsSection = ({
         if (canManage) return sortedAssignments;
         return sortedAssignments.filter((assignment) => assignment.visibleToStudents !== false);
     }, [sortedAssignments, canManage]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const resolveInstitutionId = async () => {
+            if (user?.institutionId) {
+                setResolvedInstitutionId(user.institutionId);
+                return;
+            }
+
+            try {
+                if (subjectId) {
+                    const subjectSnap = await getDoc(doc(db, 'subjects', subjectId));
+                    const subjectInstitutionId = subjectSnap.exists() ? (subjectSnap.data()?.institutionId || null) : null;
+                    if (!cancelled && subjectInstitutionId) {
+                        setResolvedInstitutionId(subjectInstitutionId);
+                        return;
+                    }
+                }
+
+                if (topicId) {
+                    const topicSnap = await getDoc(doc(db, 'topics', topicId));
+                    const topicInstitutionId = topicSnap.exists() ? (topicSnap.data()?.institutionId || null) : null;
+                    if (!cancelled) {
+                        setResolvedInstitutionId(topicInstitutionId || null);
+                    }
+                    return;
+                }
+
+                if (!cancelled) {
+                    setResolvedInstitutionId(null);
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    setResolvedInstitutionId(null);
+                }
+            }
+        };
+
+        resolveInstitutionId();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [user?.institutionId, subjectId, topicId]);
 
     useEffect(() => {
         if (!topicId || !user?.uid) return undefined;
@@ -154,25 +211,146 @@ const TopicAssignmentsSection = ({
 
     const resetFeedback = () => setFeedback({ type: '', message: '' });
 
+    const formatBytes = (bytes) => {
+        if (!Number.isFinite(bytes) || bytes <= 0) return '0 KB';
+        if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+        return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    };
+
+    const normalizeFileName = (name) => String(name || 'archivo').replace(/[^a-zA-Z0-9._-]/g, '_');
+
+    const mergeFilesWithLimit = (current, incoming) => {
+        const accepted = [];
+        let rejectedBySize = 0;
+
+        incoming.forEach((file) => {
+            if (!file) return;
+            if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
+                rejectedBySize += 1;
+                return;
+            }
+            accepted.push(file);
+        });
+
+        const merged = [...current, ...accepted].slice(0, MAX_ATTACHMENT_COUNT);
+        const rejectedByCount = Math.max(0, current.length + accepted.length - MAX_ATTACHMENT_COUNT);
+
+        return { merged, rejectedBySize, rejectedByCount };
+    };
+
+    const uploadFilesToStorage = async ({ files, basePath }) => {
+        const uploads = files.map(async (file) => {
+            const uniqueName = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}_${normalizeFileName(file.name)}`;
+            const path = `${basePath}/${uniqueName}`;
+            const fileRef = storageRef(storage, path);
+            await uploadBytes(fileRef, file, { contentType: file.type || 'application/octet-stream' });
+            const url = await getDownloadURL(fileRef);
+            return {
+                name: file.name,
+                url,
+                path,
+                size: file.size || 0,
+                contentType: file.type || 'application/octet-stream'
+            };
+        });
+
+        return Promise.all(uploads);
+    };
+
+    const notifyRejectedFiles = (rejectedBySize, rejectedByCount) => {
+        if (rejectedBySize <= 0 && rejectedByCount <= 0) return;
+        const parts = [];
+        if (rejectedBySize > 0) parts.push(`${rejectedBySize} archivo(s) superan 20MB`);
+        if (rejectedByCount > 0) parts.push(`solo se permiten ${MAX_ATTACHMENT_COUNT} archivos`);
+        setFeedback({ type: 'error', message: parts.join(' y ') });
+    };
+
+    const handleInstructionFilesSelected = (event) => {
+        const files = Array.from(event.target.files || []);
+        if (!files.length) return;
+
+        const { merged, rejectedBySize, rejectedByCount } = mergeFilesWithLimit(instructionFiles, files);
+        setInstructionFiles(merged);
+        notifyRejectedFiles(rejectedBySize, rejectedByCount);
+        event.target.value = '';
+    };
+
+    const removeInstructionFile = (indexToRemove) => {
+        setInstructionFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
+    };
+
+    const handleSubmissionNoteChange = (assignmentId, value) => {
+        setSubmissionDraftByAssignment((prev) => ({
+            ...prev,
+            [assignmentId]: {
+                ...(prev[assignmentId] || {}),
+                note: value
+            }
+        }));
+    };
+
+    const handleSubmissionFilesSelected = (assignmentId, event) => {
+        const files = Array.from(event.target.files || []);
+        if (!files.length) return;
+
+        const currentFiles = submissionDraftByAssignment[assignmentId]?.files || [];
+        const { merged, rejectedBySize, rejectedByCount } = mergeFilesWithLimit(currentFiles, files);
+
+        setSubmissionDraftByAssignment((prev) => ({
+            ...prev,
+            [assignmentId]: {
+                ...(prev[assignmentId] || {}),
+                files: merged
+            }
+        }));
+
+        notifyRejectedFiles(rejectedBySize, rejectedByCount);
+        event.target.value = '';
+    };
+
+    const removeSubmissionFile = (assignmentId, indexToRemove) => {
+        setSubmissionDraftByAssignment((prev) => ({
+            ...prev,
+            [assignmentId]: {
+                ...(prev[assignmentId] || {}),
+                files: (prev[assignmentId]?.files || []).filter((_, index) => index !== indexToRemove)
+            }
+        }));
+    };
+
     const createAssignment = async () => {
         if (!canManage) return;
         if (!formData.title.trim()) {
             setFeedback({ type: 'error', message: 'Escribe un titulo para la tarea.' });
             return;
         }
+        if (!resolvedInstitutionId) {
+            setFeedback({ type: 'error', message: 'No se pudo resolver la institucion de la tarea. Recarga e intentalo de nuevo.' });
+            return;
+        }
 
         setSaving(true);
         resetFeedback();
         try {
-            await addDoc(collection(db, 'topicAssignments'), {
+            const assignmentRef = doc(collection(db, 'topicAssignments'));
+            const uploadedInstructionFiles = instructionFiles.length
+                ? await uploadFilesToStorage({
+                    files: instructionFiles,
+                    basePath: `topic-assignments/instructions/${topicId}/${assignmentRef.id}`
+                })
+                : [];
+
+            await setDoc(assignmentRef, {
                 title: formData.title.trim(),
                 description: formData.description.trim(),
                 dueAt: toDateObject(formData.dueAt),
                 visibleToStudents: Boolean(formData.visibleToStudents),
                 allowLateDelivery: Boolean(formData.allowLateDelivery),
+                instructionFiles: uploadedInstructionFiles,
                 topicId,
                 subjectId,
-                institutionId: user?.institutionId || null,
+                institutionId: resolvedInstitutionId,
+                ownerId: user?.uid || null,
                 createdBy: user?.uid || null,
                 createdAt: serverTimestamp(),
                 updatedAt: serverTimestamp()
@@ -185,6 +363,7 @@ const TopicAssignmentsSection = ({
                 visibleToStudents: true,
                 allowLateDelivery: false
             });
+            setInstructionFiles([]);
             setFeedback({ type: 'success', message: 'Tarea creada correctamente.' });
         } catch (error) {
             console.error(error);
@@ -227,21 +406,42 @@ const TopicAssignmentsSection = ({
 
         const key = `${assignment.id}_${user.uid}`;
         const existing = submissionsByAssignment[assignment.id];
+        const draft = submissionDraftByAssignment[assignment.id] || {};
+        const selectedFiles = draft.files || [];
+        const note = (draft.note || '').trim();
         const nextDelivered = !existing?.delivered;
 
         try {
+            setUploadingAssignmentId(assignment.id);
+            const uploadedSubmissionFiles = nextDelivered && selectedFiles.length
+                ? await uploadFilesToStorage({
+                    files: selectedFiles,
+                    basePath: `topic-assignments/submissions/${topicId}/${assignment.id}/${user.uid}`
+                })
+                : (nextDelivered ? (existing?.submissionFiles || []) : []);
+
             await setDoc(doc(db, 'topicAssignmentSubmissions', key), {
                 assignmentId: assignment.id,
                 topicId,
                 subjectId,
+                institutionId: resolvedInstitutionId || null,
                 userId: user.uid,
                 delivered: nextDelivered,
                 deliveredAt: nextDelivered ? serverTimestamp() : null,
+                note: nextDelivered ? note : '',
+                submissionFiles: nextDelivered ? uploadedSubmissionFiles : [],
                 updatedAt: serverTimestamp()
             }, { merge: true });
+
+            setSubmissionDraftByAssignment((prev) => ({
+                ...prev,
+                [assignment.id]: { note: '', files: [] }
+            }));
         } catch (error) {
             console.error(error);
             setFeedback({ type: 'error', message: 'No se pudo actualizar tu estado de entrega.' });
+        } finally {
+            setUploadingAssignmentId(null);
         }
     };
 
@@ -280,6 +480,39 @@ const TopicAssignmentsSection = ({
                         rows={3}
                         className="mt-3 w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-medium text-slate-700 dark:text-slate-200"
                     />
+
+                    <div className="mt-3 space-y-2">
+                        <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-semibold text-slate-700 dark:text-slate-200 cursor-pointer">
+                            <Paperclip className="w-4 h-4" />
+                            Adjuntar archivos de instrucciones
+                            <input
+                                type="file"
+                                multiple
+                                onChange={handleInstructionFilesSelected}
+                                className="hidden"
+                            />
+                        </label>
+                        {instructionFiles.length > 0 && (
+                            <div className="flex flex-wrap gap-2">
+                                {instructionFiles.map((file, index) => (
+                                    <div key={`${file.name}-${index}`} className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                        <FileText className="w-3.5 h-3.5" />
+                                        <span className="max-w-[14rem] truncate">{file.name}</span>
+                                        <span className="text-slate-400">{formatBytes(file.size)}</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeInstructionFile(index)}
+                                            className="text-slate-500 hover:text-red-500"
+                                            aria-label="Quitar archivo"
+                                        >
+                                            <X className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        <p className="text-[11px] font-medium text-slate-400 dark:text-slate-500">Maximo {MAX_ATTACHMENT_COUNT} archivos de 20MB por tarea.</p>
+                    </div>
 
                     <div className="mt-4 flex flex-wrap items-center gap-3">
                         <button
@@ -347,6 +580,27 @@ const TopicAssignmentsSection = ({
                                     {assignment.description || 'Sin descripcion.'}
                                 </p>
 
+                                {(assignment.instructionFiles || []).length > 0 && (
+                                    <div className="mb-4 space-y-2">
+                                        <p className="text-xs font-bold uppercase tracking-wide text-slate-400 dark:text-slate-500">Archivos de instrucciones</p>
+                                        <div className="space-y-1.5">
+                                            {assignment.instructionFiles.map((file, index) => (
+                                                <a
+                                                    key={`${assignment.id}-instruction-file-${index}`}
+                                                    href={file?.url}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 hover:underline"
+                                                >
+                                                    <Paperclip className="w-3.5 h-3.5" />
+                                                    <span className="max-w-[14rem] truncate">{file?.name || `Archivo ${index + 1}`}</span>
+                                                    {Number.isFinite(file?.size) && <span className="text-blue-500/80">{formatBytes(file.size)}</span>}
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4">
                                     <CalendarDays className="w-4 h-4" />
                                     <span>Entrega: {formatDueDate(assignment.dueAt)}</span>
@@ -381,13 +635,75 @@ const TopicAssignmentsSection = ({
                                         </div>
                                     </div>
                                 ) : (
-                                    <button
-                                        onClick={() => toggleStudentDelivery(assignment)}
-                                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${delivered ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/25 dark:text-emerald-300' : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}
-                                    >
-                                        <CheckCircle2 className="w-4 h-4" />
-                                        {delivered ? 'Marcada como entregada' : 'Marcar como entregada'}
-                                    </button>
+                                    <div className="space-y-3">
+                                        <textarea
+                                            value={submissionDraftByAssignment[assignment.id]?.note || ''}
+                                            onChange={(event) => handleSubmissionNoteChange(assignment.id, event.target.value)}
+                                            placeholder="Comentario de entrega (opcional)"
+                                            rows={2}
+                                            className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200"
+                                        />
+
+                                        <label className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer">
+                                            <Upload className="w-3.5 h-3.5" />
+                                            Adjuntar archivos de entrega
+                                            <input
+                                                type="file"
+                                                multiple
+                                                onChange={(event) => handleSubmissionFilesSelected(assignment.id, event)}
+                                                className="hidden"
+                                            />
+                                        </label>
+
+                                        {(submissionDraftByAssignment[assignment.id]?.files || []).length > 0 && (
+                                            <div className="space-y-1.5">
+                                                {(submissionDraftByAssignment[assignment.id]?.files || []).map((file, index) => (
+                                                    <div key={`${assignment.id}-draft-file-${index}`} className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 mr-2 mb-1">
+                                                        <FileText className="w-3.5 h-3.5" />
+                                                        <span className="max-w-[12rem] truncate">{file.name}</span>
+                                                        <span className="text-slate-400">{formatBytes(file.size)}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeSubmissionFile(assignment.id, index)}
+                                                            className="text-slate-500 hover:text-red-500"
+                                                            aria-label="Quitar archivo"
+                                                        >
+                                                            <X className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        {(mine?.submissionFiles || []).length > 0 && (
+                                            <div className="space-y-1.5">
+                                                <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Tus archivos entregados</p>
+                                                {(mine?.submissionFiles || []).map((file, index) => (
+                                                    <a
+                                                        key={`${assignment.id}-submitted-file-${index}`}
+                                                        href={file?.url}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                        className="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 hover:underline mr-2 mb-1"
+                                                    >
+                                                        <Paperclip className="w-3.5 h-3.5" />
+                                                        <span className="max-w-[12rem] truncate">{file?.name || `Archivo ${index + 1}`}</span>
+                                                    </a>
+                                                ))}
+                                            </div>
+                                        )}
+
+                                        <div className="flex flex-wrap gap-2">
+                                            <button
+                                                onClick={() => toggleStudentDelivery(assignment)}
+                                                disabled={uploadingAssignmentId === assignment.id}
+                                                className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${delivered ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/25 dark:text-amber-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/25 dark:text-emerald-300'} disabled:opacity-70`}
+                                            >
+                                                <CheckCircle2 className="w-4 h-4" />
+                                                {uploadingAssignmentId === assignment.id ? 'Subiendo archivos...' : delivered ? 'Retirar entrega' : 'Entregar tarea'}
+                                            </button>
+                                        </div>
+                                    </div>
                                 )}
                             </article>
                         );

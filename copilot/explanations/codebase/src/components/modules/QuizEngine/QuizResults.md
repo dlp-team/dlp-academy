@@ -35,3 +35,6 @@ function ExampleScreen() {
 ## Maintenance Notes
 - Keep this explanation updated when adding, renaming, or deleting functions in the source file.
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
+
+## Changelog
+- 2026-03-29: Added dark-mode support for quiz results screen, including score cards, action buttons, and detailed-review toggle surfaces.

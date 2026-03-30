@@ -66,7 +66,7 @@ export const useTopicLogic = (user) => {
 
     // --- ESTADOS PARA EL MODAL DE CATEGORIZACIÓN DE ARCHIVOS ---
     const [showCategorizationModal, setShowCategorizationModal] = useState(false);
-    const [pendingFile, setPendingFile] = useState(null);
+    const [pendingFiles, setPendingFiles] = useState([]);
     const [categorizingFile, setCategorizingFile] = useState(false);
 
     // Función auxiliar para notificaciones
@@ -225,25 +225,36 @@ export const useTopicLogic = (user) => {
 
         fetchTopicDetails();
 
-        // Listener independiente para exams (relación canónica por topicId)
-        if (user && topicId) {
-            const examsQ = query(collection(db, "exams"), where("topicId", "==", topicId));
-            unsubscribeExams = onSnapshot(examsQ, (snap) => {
-                console.log("[EXAMS] query topicId ==", topicId, "=> docs:", snap.size);
-                examsFromExams = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                syncMergedExams();
-            }, (error) => {
-                console.error("[EXAMS] Firestore error:", error);
-            });
+        // Carga de exams/examns por lectura puntual para evitar ruido de watch
+        // cuando las reglas bloquean listeners en algunos roles.
+        if (user && topicId && user?.role !== 'student') {
+            const loadExams = async () => {
+                try {
+                    const examsQ = query(collection(db, "exams"), where("topicId", "==", topicId));
+                    const examsSnap = await getDocs(examsQ);
+                    examsFromExams = examsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                } catch (error) {
+                    if (error?.code !== 'permission-denied') {
+                        console.error("[EXAMS] Firestore error:", error);
+                    }
+                    examsFromExams = [];
+                }
 
-            const examnsQ = query(collection(db, "examns"), where("topicId", "==", topicId));
-            unsubscribeExamns = onSnapshot(examnsQ, (snap) => {
-                console.log("[EXAMNS] query topicId ==", topicId, "=> docs:", snap.size);
-                examsFromExamns = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                try {
+                    const examnsQ = query(collection(db, "examns"), where("topicId", "==", topicId));
+                    const examnsSnap = await getDocs(examnsQ);
+                    examsFromExamns = examnsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                } catch (error) {
+                    if (error?.code !== 'permission-denied') {
+                        console.error("[EXAMNS] Firestore error:", error);
+                    }
+                    examsFromExamns = [];
+                }
+
                 syncMergedExams();
-            }, (error) => {
-                console.error("[EXAMNS] Firestore error:", error);
-            });
+            };
+
+            loadExams();
         }
 
         return () => {
@@ -282,7 +293,7 @@ export const useTopicLogic = (user) => {
     
     const startRenaming = (file) => {
         setRenamingId(file.id);
-        setTempName(file.name);
+        setTempName(file.name || file.title || '');
         setActiveMenuId(null);
     };
 
@@ -313,6 +324,27 @@ export const useTopicLogic = (user) => {
             await deleteDoc(doc(db, collectionName, file.id));
             setActiveMenuId(null);
         } catch (error) { console.error(error); alert("Error al eliminar."); }
+    };
+
+    const handleChangeFileCategory = async (file, category) => {
+        if (!file?.id || !category) return;
+
+        try {
+            const collectionName = file._collection || 'documents';
+            await updateDoc(doc(db, collectionName, file.id), { fileCategory: category });
+
+            const categoryLabel = category === 'material-teorico'
+                ? 'Material teórico'
+                : category === 'ejercicios'
+                    ? 'Ejercicios'
+                    : 'Exámenes';
+
+            showNotification(`✅ Tipo actualizado a ${categoryLabel}`);
+            setActiveMenuId(null);
+        } catch (error) {
+            console.error(error);
+            alert('Error al actualizar el tipo de archivo.');
+        }
     };
 
     const deleteQuiz = async (quizId) => {
@@ -374,61 +406,49 @@ export const useTopicLogic = (user) => {
         const validFiles = files.filter(file => file.size < 1048576); 
         if (validFiles.length === 0) return;
 
-        if (validFiles.length === 1) {
-            // Single file: show categorization modal
-            setPendingFile(validFiles[0]);
-            setShowCategorizationModal(true);
-        } else {
-            // Multiple files: upload without categorization (for bulk uploads)
-            setUploading(true);
-            try {
-                const convert = (f) => new Promise((r) => { const fr = new FileReader(); fr.readAsDataURL(f); fr.onload = () => r(fr.result); });
-                await Promise.all(validFiles.map(async (file) => {
-                    const base64Url = await convert(file);
-                    return addDoc(collection(db, "documents"), {
-                        name: file.name, type: file.type.includes('pdf') ? 'pdf' : 'doc', size: file.size, 
-                        source: 'manual', uploadedAt: serverTimestamp(), url: base64Url, status: 'ready',
-                        topicId: topicId,
-                        subjectId: subjectId,
-                        ownerId: topic?.ownerId || subject?.ownerId || user?.uid,
-                        institutionId: topic?.institutionId || subject?.institutionId || user?.institutionId || null,
-                        fileCategory: 'resumen' // default for bulk uploads
-                    });
-                }));
-                if (fileInputRef.current) fileInputRef.current.value = '';
-                setActiveTab('uploads'); 
-            } catch (error) { alert("Error al subir."); } finally { setUploading(false); }
-        }
+        // Always ask the category before persisting uploads.
+        setPendingFiles(validFiles);
+        setShowCategorizationModal(true);
     };
 
     // Handle file categorization from modal
     const handleFileCategorized = async (category) => {
-        if (!pendingFile) return;
+        if (!pendingFiles.length) return;
 
         setCategorizingFile(true);
         try {
             const convert = (f) => new Promise((r) => { const fr = new FileReader(); fr.readAsDataURL(f); fr.onload = () => r(fr.result); });
-            const base64Url = await convert(pendingFile);
-            
-            await addDoc(collection(db, "documents"), {
-                name: pendingFile.name, 
-                type: pendingFile.type.includes('pdf') ? 'pdf' : 'doc', 
-                size: pendingFile.size, 
-                source: 'manual', 
-                uploadedAt: serverTimestamp(), 
-                url: base64Url, 
-                status: 'ready',
-                topicId: topicId,
-                subjectId: subjectId,
-                ownerId: topic?.ownerId || subject?.ownerId || user?.uid,
-                institutionId: topic?.institutionId || subject?.institutionId || user?.institutionId || null,
-                fileCategory: category
-            });
+            await Promise.all(pendingFiles.map(async (pendingFile) => {
+                const base64Url = await convert(pendingFile);
+
+                await addDoc(collection(db, "documents"), {
+                    name: pendingFile.name,
+                    type: pendingFile.type.includes('pdf') ? 'pdf' : 'doc',
+                    size: pendingFile.size,
+                    source: 'manual',
+                    uploadedAt: serverTimestamp(),
+                    url: base64Url,
+                    status: 'ready',
+                    topicId: topicId,
+                    subjectId: subjectId,
+                    ownerId: topic?.ownerId || subject?.ownerId || user?.uid,
+                    institutionId: topic?.institutionId || subject?.institutionId || user?.institutionId || null,
+                    fileCategory: category
+                });
+            }));
 
             if (fileInputRef.current) fileInputRef.current.value = '';
             setShowCategorizationModal(false);
-            setPendingFile(null);
-            showNotification(`✅ Archivo "${pendingFile.name}" guardado como ${category}`);
+            const uploadedCount = pendingFiles.length;
+            setPendingFiles([]);
+
+            const categoryLabel = category === 'material-teorico'
+                ? 'Material teórico'
+                : category === 'ejercicios'
+                    ? 'Ejercicios'
+                    : 'Exámenes';
+
+            showNotification(`✅ ${uploadedCount} archivo${uploadedCount === 1 ? '' : 's'} guardado${uploadedCount === 1 ? '' : 's'} como ${categoryLabel}`);
             setActiveTab('uploads');
         } catch (error) { 
             console.error(error); 
@@ -614,7 +634,7 @@ export const useTopicLogic = (user) => {
         
         // Categorization Modal State
         showCategorizationModal, setShowCategorizationModal,
-        pendingFile, setPendingFile,
+        pendingFiles, setPendingFiles,
         categorizingFile,
         
         // Refs
@@ -630,6 +650,7 @@ export const useTopicLogic = (user) => {
         startRenaming,
         saveRename,
         deleteFile,
+        handleChangeFileCategory,
         deleteQuiz,
         handleViewFile,
         handleDeleteTopic,

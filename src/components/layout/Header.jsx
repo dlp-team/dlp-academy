@@ -145,7 +145,7 @@ const Header = ({ user }) => {
   const dashboardLabel = getDashboardLabel();
 
   // --- 4. NOTIFICATIONS ---
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(user?.uid);
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(userData);
   const [showPanel, setShowPanel] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '' });
   const prevCountRef = useRef(null);

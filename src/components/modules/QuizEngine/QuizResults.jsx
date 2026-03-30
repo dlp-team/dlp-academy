@@ -12,14 +12,14 @@ const ResultsView = React.memo(({
     const [showReview, setShowReview] = useState(false);
     
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-6">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center p-6">
             <ConfettiEffect triggerKey={confettiTrigger} accentColor={accentColor} />
             
             <div className="max-w-3xl w-full relative">
                 {/* Glow effect */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-[3rem] blur-3xl opacity-20`} />
                 
-                <div className="relative bg-white/90 backdrop-blur-2xl rounded-[3rem] shadow-2xl p-10 text-center border border-white/50 overflow-hidden">
+                <div className="relative bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl rounded-[3rem] shadow-2xl p-10 text-center border border-white/50 dark:border-slate-700/70 overflow-hidden">
                     {/* Decorative elements */}
                     <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${topicGradient} rounded-full blur-3xl opacity-10 -translate-y-1/2 translate-x-1/2`} />
                     
@@ -43,26 +43,26 @@ const ResultsView = React.memo(({
                             } bg-clip-text text-transparent`}>
                                 {finalScore}%
                             </h2>
-                            <p className="text-lg font-bold text-slate-600">
+                            <p className="text-lg font-bold text-slate-600 dark:text-slate-300">
                                 {passed ? '¡Excelente trabajo! 🎉' : 'Sigue practicando 💪'}
                             </p>
                         </div>
 
                         {/* Stats */}
                         <div className="grid grid-cols-2 gap-4 my-10">
-                            <div className="bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-sm p-6 rounded-3xl border border-white/50 shadow-lg">
+                            <div className="bg-gradient-to-br from-white/80 to-white/40 dark:from-slate-800/90 dark:to-slate-900/80 backdrop-blur-sm p-6 rounded-3xl border border-white/50 dark:border-slate-700/70 shadow-lg">
                                 <div className="flex items-center justify-center gap-2 mb-2">
                                     <Award className={`w-5 h-5 ${passed ? 'text-green-600' : 'text-slate-400'}`} />
                                 </div>
-                                <div className="text-4xl font-black text-slate-900">{correctCount}</div>
-                                <div className="text-[11px] text-slate-500 uppercase font-bold tracking-wider mt-1">Aciertos</div>
+                                <div className="text-4xl font-black text-slate-900 dark:text-white">{correctCount}</div>
+                                <div className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mt-1">Aciertos</div>
                             </div>
-                            <div className="bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-sm p-6 rounded-3xl border border-white/50 shadow-lg">
+                            <div className="bg-gradient-to-br from-white/80 to-white/40 dark:from-slate-800/90 dark:to-slate-900/80 backdrop-blur-sm p-6 rounded-3xl border border-white/50 dark:border-slate-700/70 shadow-lg">
                                 <div className="flex items-center justify-center gap-2 mb-2">
-                                    <Target className="w-5 h-5 text-slate-400" />
+                                    <Target className="w-5 h-5 text-slate-400 dark:text-slate-300" />
                                 </div>
-                                <div className="text-4xl font-black text-slate-900">{totalQuestions}</div>
-                                <div className="text-[11px] text-slate-500 uppercase font-bold tracking-wider mt-1">Total</div>
+                                <div className="text-4xl font-black text-slate-900 dark:text-white">{totalQuestions}</div>
+                                <div className="text-[11px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider mt-1">Total</div>
                             </div>
                         </div>
 
@@ -70,7 +70,7 @@ const ResultsView = React.memo(({
                         <div className="space-y-3">
                             <button 
                                 onClick={onRetry} 
-                                className="w-full py-4 bg-white border-2 border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300 rounded-2xl font-bold text-base transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"
+                                className="w-full py-4 bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 rounded-2xl font-bold text-base transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5"
                             >
                                 Intentar de nuevo
                             </button>
@@ -87,7 +87,7 @@ const ResultsView = React.memo(({
                             <div className="mt-8 text-left">
                                 <button
                                     onClick={() => setShowReview((prev) => !prev)}
-                                    className="w-full py-3 rounded-2xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold transition-colors"
+                                    className="w-full py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-100 font-semibold transition-colors"
                                 >
                                     {showReview ? 'Ocultar revision detallada' : 'Ver revision detallada'}
                                 </button>
