@@ -88,33 +88,33 @@ const QuizReviewPage = ({ user }) => {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
+                <Loader2 className="w-8 h-8 animate-spin text-indigo-600 dark:text-indigo-400" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100">
             <main className="max-w-4xl mx-auto px-4 py-8">
                 <button
                     onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}`)}
-                    className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors"
+                    className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
                     <ChevronLeft className="w-4 h-4" />
                     Volver al tema
                 </button>
 
-                <div className="mt-6 rounded-3xl border border-white/50 bg-white/80 backdrop-blur-xl p-6 shadow-xl">
+                <div className="mt-6 rounded-3xl border border-white/50 dark:border-slate-700/70 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 shadow-xl">
                     <div className="flex flex-wrap items-center justify-between gap-4">
                         <div>
-                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500 font-bold">Revision del test</p>
+                            <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-bold">Revision del test</p>
                             <h1 className="text-3xl font-black mt-1">{quizTitle}</h1>
                         </div>
                         {latestAttempt && (
                             <div className="text-right">
-                                <p className="text-xs uppercase tracking-widest text-slate-400 font-bold">Ultimo resultado</p>
-                                <p className="text-3xl font-black text-slate-900">{scoreLabel}</p>
+                                <p className="text-xs uppercase tracking-widest text-slate-400 dark:text-slate-500 font-bold">Ultimo resultado</p>
+                                <p className="text-3xl font-black text-slate-900 dark:text-white">{scoreLabel}</p>
                             </div>
                         )}
                     </div>
@@ -122,15 +122,15 @@ const QuizReviewPage = ({ user }) => {
                     {latestAttempt ? (
                         <>
                             <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                                    <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                                <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+                                    <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                         <Trophy className="w-4 h-4" />
                                         Aciertos
                                     </div>
                                     <p className="text-2xl font-black mt-1">{latestAttempt.correctAnswers || 0}</p>
                                 </div>
-                                <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                                    <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                                <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4">
+                                    <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                         <Target className="w-4 h-4" />
                                         Total preguntas
                                     </div>
@@ -140,7 +140,7 @@ const QuizReviewPage = ({ user }) => {
                             <QuizReviewDetail answersDetail={latestAttempt.answersDetail || []} topicGradient={topicGradient} />
                         </>
                     ) : (
-                        <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 text-sm font-semibold text-slate-500">
+                        <div className="mt-6 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 px-5 py-6 text-sm font-semibold text-slate-500 dark:text-slate-400">
                             Aun no has completado este test. Hazlo una vez para ver la revision detallada.
                         </div>
                     )}

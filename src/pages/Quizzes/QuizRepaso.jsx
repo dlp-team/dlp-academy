@@ -166,12 +166,12 @@ const QuizRepaso = ({ user }) => {
 
     if (!quizData.questions.length) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-                <div className="max-w-xl w-full rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-lg">
-                    <Target className="w-10 h-10 text-slate-300 mx-auto mb-3" />
-                    <h1 className="text-2xl font-black text-slate-900 mb-2">No hay preguntas para repasar</h1>
-                    <p className="text-sm text-slate-500 mb-5">Cuando falles preguntas en los tests del tema apareceran aqui para practicar.</p>
-                    <button onClick={handleGoBack} className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-semibold">Volver al tema</button>
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center px-4">
+                <div className="max-w-xl w-full rounded-3xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 text-center shadow-lg">
+                    <Target className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                    <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2">No hay preguntas para repasar</h1>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Cuando falles preguntas en los tests del tema apareceran aqui para practicar.</p>
+                    <button onClick={handleGoBack} className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold">Volver al tema</button>
                 </div>
             </div>
         );
@@ -179,22 +179,22 @@ const QuizRepaso = ({ user }) => {
 
     if (saving) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-red-600" />
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-red-600 dark:text-red-400" />
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-100 font-sans text-slate-900">
+        <div className="min-h-screen bg-slate-100 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
             {viewState === VIEW_STATES.REVIEW && (
-                <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-red-50 pb-20">
-                    <div className="bg-white/70 backdrop-blur-2xl border-b border-white/50 sticky top-0 z-40 shadow-sm">
+                <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-red-50 dark:from-slate-950 dark:via-slate-900 dark:to-rose-950/40 pb-20">
+                    <div className="bg-white/70 dark:bg-slate-900/80 backdrop-blur-2xl border-b border-white/50 dark:border-slate-700/70 sticky top-0 z-40 shadow-sm">
                         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-                            <button onClick={handleGoBack} className="p-2.5 hover:bg-white/80 rounded-2xl transition-all duration-300 text-slate-600 hover:text-slate-900 hover:shadow-lg group">
+                            <button onClick={handleGoBack} className="p-2.5 hover:bg-white/80 dark:hover:bg-slate-800 rounded-2xl transition-all duration-300 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:shadow-lg group">
                                 <ChevronLeft className="w-5 h-5 transform group-hover:-translate-x-0.5 transition-transform" />
                             </button>
-                            <span className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] px-4 py-1.5 rounded-full bg-slate-100/50">
+                            <span className="text-xs font-black text-slate-500 dark:text-slate-300 uppercase tracking-[0.2em] px-4 py-1.5 rounded-full bg-slate-100/50 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/70">
                                 Repaso
                             </span>
                             <div className="w-11" />
@@ -204,19 +204,19 @@ const QuizRepaso = ({ user }) => {
                     <div className="max-w-2xl mx-auto px-4 py-10">
                         <div className="relative mb-10">
                             <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-[2rem] blur-3xl opacity-20`} />
-                            <div className="relative bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/50 p-10 text-center overflow-hidden">
+                            <div className="relative bg-white/80 dark:bg-slate-900/85 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/50 dark:border-slate-700/70 p-10 text-center overflow-hidden">
                                 <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${topicGradient} rounded-full blur-3xl opacity-10 -translate-y-1/2 translate-x-1/2`} />
                                 <div className="relative z-10">
                                     <div className="mb-6 flex justify-center">
                                         <SubjectIcon iconKey={subjectIconKey} topicGradient={topicGradient} />
                                     </div>
-                                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-3 tracking-tight leading-tight">
+                                    <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-3 tracking-tight leading-tight">
                                         <RenderLatex text={quizData.title} />
                                     </h1>
                                     <p className={`text-lg font-bold bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent`}>
                                         <RenderLatex text={quizData.subtitle} />
                                     </p>
-                                    <p className="mt-4 text-sm text-slate-500 font-medium">{quizData.questions.length} preguntas pendientes</p>
+                                    <p className="mt-4 text-sm text-slate-500 dark:text-slate-400 font-medium">{quizData.questions.length} preguntas pendientes</p>
                                 </div>
                             </div>
                         </div>
@@ -236,7 +236,7 @@ const QuizRepaso = ({ user }) => {
             )}
 
             {viewState === VIEW_STATES.QUIZ && (
-                <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-red-50 pb-40">
+                <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-red-50 dark:from-slate-950 dark:via-slate-900 dark:to-rose-950/40 pb-40">
                     <ConfettiEffect triggerKey={confettiTrigger} accentColor={accentColor} />
                     <ProgressBar current={currentStep + 1} total={totalQuestions} gradient={topicGradient} />
                     <QuizHeader current={currentStep + 1} total={totalQuestions} onClose={() => setViewState(VIEW_STATES.REVIEW)} />

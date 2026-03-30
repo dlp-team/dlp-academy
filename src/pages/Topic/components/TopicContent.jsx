@@ -127,16 +127,12 @@ const TopicContent = ({
 
         const subjectColor = subject?.color || 'from-indigo-500 to-purple-600';
 
-        if (!mainGuide) {
-            return (
-                <div className="py-16 flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-3xl bg-slate-50/50 dark:bg-slate-800/50">
-                    <FileText className="w-12 h-12 mb-3 opacity-20" />
-                    <p className="font-medium">Sin materiales</p>
-                </div>
-            );
-        }
-
-        const hasExams = topic.exams?.length > 0;
+        const aiExamFiles = (topic.pdfs || []).filter((file) => {
+            const type = (file?.type || '').toLowerCase();
+            return type.includes('exam') || type.includes('evaluación') || type.includes('evaluation');
+        });
+        const generatedExams = topic.exams || [];
+        const hasExams = aiExamFiles.length > 0 || generatedExams.length > 0;
 
         return (
             <div className="space-y-10">
@@ -197,37 +193,83 @@ const TopicContent = ({
                             <p className="text-sm text-slate-500 dark:text-slate-400">Evaluaciones completas para cada nivel</p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            {topic.exams.map(exam => {
+                            {aiExamFiles.map((file, idx) => {
+                                const subjectGradient = `bg-gradient-to-br ${subjectColor}`;
+                                return (
+                                    <div
+                                        key={file.id || `ai-exam-materials-${idx}`}
+                                        onClick={() => {
+                                            if (file.url) {
+                                                handleViewFile(file);
+                                            }
+                                        }}
+                                        className="group cursor-pointer relative overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.01]"
+                                    >
+                                        <div className={`absolute inset-0 ${subjectGradient} opacity-90 group-hover:opacity-100 transition-opacity`} />
+                                        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                            <FileText className="w-28 h-28 text-white absolute -bottom-5 -right-5 rotate-12 opacity-[0.12]" strokeWidth={1.2} />
+                                        </div>
+                                        <div className="relative z-10 p-4">
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
+                                                    <FileText className="w-5 h-5 text-white" strokeWidth={1.5} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-white/70 mb-1">Generado por IA</p>
+                                                    <h4 className="text-sm font-semibold text-white line-clamp-1">
+                                                        {file.title || file.name || 'Examen generado'}
+                                                    </h4>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 text-xs text-white/80 mb-3">
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/20 border border-white/25 font-semibold">
+                                                    <FileText className="w-3 h-3" strokeWidth={1.5} />
+                                                    PDF IA
+                                                </span>
+                                            </div>
+                                            <button className="w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide text-white bg-white/20 border border-white/30 backdrop-blur-sm transition-all hover:bg-white/25 active:scale-95">
+                                                Ver examen
+                                            </button>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {generatedExams.map(exam => {
                                 const subjectGradient = `bg-gradient-to-br ${subjectColor}`;
                                 return (
                                     <div
                                         key={exam.id}
                                         onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/exam/${exam.id}`)}
-                                        className="group cursor-pointer relative overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all duration-300 hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-slate-900/30"
+                                        className="group cursor-pointer relative overflow-hidden rounded-3xl shadow-sm hover:shadow-md transition-all duration-500 hover:scale-[1.01]"
                                     >
-                                        <div className={`absolute top-0 inset-x-0 h-1 ${subjectGradient}`} />
-                                        <div className="p-4">
+                                        <div className={`absolute inset-0 ${subjectGradient} opacity-90 group-hover:opacity-100 transition-opacity`} />
+                                        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                                            <FileText className="w-28 h-28 text-white absolute -bottom-5 -right-5 rotate-12 opacity-[0.12]" strokeWidth={1.2} />
+                                        </div>
+                                        <div className="relative z-10 p-4">
                                             <div className="flex items-start gap-3 mb-3">
-                                                <div className={`${subjectGradient} w-10 h-10 rounded-xl flex items-center justify-center shrink-0`}>
+                                                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
                                                     <FileText className="w-5 h-5 text-white" strokeWidth={1.5} />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <h4 className="text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">
+                                                    <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-white/70 mb-1">Evaluación del tema</p>
+                                                    <h4 className="text-sm font-semibold text-white line-clamp-1">
                                                         {exam.title || 'Examen'}
                                                     </h4>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mb-3">
-                                                <span className="flex items-center gap-1">
+                                            <div className="flex items-center gap-3 text-xs text-white/80 mb-3">
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/20 border border-white/25 font-semibold">
                                                     <FileText className="w-3 h-3" strokeWidth={1.5} />
                                                     {exam.questions?.length || 0} preguntas
                                                 </span>
-                                                <span className="flex items-center gap-1">
+                                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-white/20 border border-white/25 font-semibold">
                                                     <Timer className="w-3 h-3" strokeWidth={1.5} />
                                                     1h
                                                 </span>
                                             </div>
-                                            <button className={`w-full py-2 rounded-lg text-xs font-semibold text-white transition-all ${subjectGradient} hover:shadow-md active:scale-95`}>
+                                            <button className="w-full py-2.5 rounded-lg text-xs font-bold uppercase tracking-wide text-white bg-white/20 border border-white/30 backdrop-blur-sm transition-all hover:bg-white/25 active:scale-95">
                                                 Comenzar
                                             </button>
                                         </div>
@@ -662,8 +704,8 @@ const TopicContent = ({
                 headerSubtext: 'text-white/70',
                 accentBg: 'bg-white/15 backdrop-blur-sm',
                 accentText: 'text-white/90',
-                difficultyBadge: 'bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-500/15 dark:text-orange-300 dark:border-orange-500/30',
-                cardAccent: 'border-l-2 border-l-orange-300 dark:border-l-orange-500/50',
+                difficultyBadge: `${themeGradient} text-white border border-white/30`,
+                cardAccent: '',
                 stripeWhenCompleted: 'h-0.5',
                 progressBg: 'bg-white/20',
                 progressFill: 'bg-white/80',
@@ -681,8 +723,8 @@ const TopicContent = ({
                 headerSubtext: 'text-white/70',
                 accentBg: 'bg-white/15 backdrop-blur-sm',
                 accentText: 'text-white/90',
-                difficultyBadge: 'bg-orange-100 text-orange-800 border border-orange-300 dark:bg-orange-500/20 dark:text-orange-200 dark:border-orange-400/40',
-                cardAccent: 'border-l-[3px] border-l-orange-400 dark:border-l-orange-400/70',
+                difficultyBadge: `${themeGradient} text-white border border-white/30`,
+                cardAccent: '',
                 stripeWhenCompleted: 'h-1',
                 progressBg: 'bg-white/20',
                 progressFill: 'bg-white/80',
@@ -700,8 +742,8 @@ const TopicContent = ({
                 headerSubtext: 'text-white/70',
                 accentBg: 'bg-white/15 backdrop-blur-sm',
                 accentText: 'text-white/90',
-                difficultyBadge: 'bg-orange-200 text-orange-900 border border-orange-300 dark:bg-orange-500/25 dark:text-orange-100 dark:border-orange-300/50',
-                cardAccent: 'border-l-4 border-l-orange-500 dark:border-l-orange-300/80',
+                difficultyBadge: `${themeGradient} text-white border border-white/30`,
+                cardAccent: '',
                 stripeWhenCompleted: 'h-1.5',
                 progressBg: 'bg-white/20',
                 progressFill: 'bg-white/80',
@@ -847,13 +889,7 @@ const TopicContent = ({
                                 const canManageQuiz = Boolean(permissions?.canEdit) && !isStudent;
                                 const classAnalytics = quizAnalyticsByQuiz?.[quiz.id] || null;
                                 const isAssignment = Boolean(quiz.isAssignment);
-                                const isAdmin = user?.role === 'admin';
-                                const isCreatorTeacher = !isStudent && Boolean(permissions?.canEdit) && (
-                                    quiz?.createdBy === user?.uid ||
-                                    quiz?.ownerId === user?.uid ||
-                                    topic?.ownerId === user?.uid
-                                );
-                                const shouldEditPrimary = Boolean(isAdmin || isCreatorTeacher);
+                                const shouldEditPrimary = canManageQuiz;
 
                                 const parseDate = (value) => {
                                     if (!value) return null;
@@ -874,7 +910,13 @@ const TopicContent = ({
                                     : '';
                                 const quizTitle = quiz.title || quiz.name || 'Test Práctico';
                                 const modeLabel = isAssignment ? 'Actividad evaluable' : 'Práctica autocorregible';
-                                const quizCardHeightClass = canManageQuiz ? 'min-h-[21rem] md:min-h-[22rem]' : 'h-64';
+                                const canOpenFromCard = !shouldEditPrimary && !isCompleted && canStartAssignment;
+                                const openQuizSession = () => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`);
+                                const quizCardHeightClass = canManageQuiz
+                                    ? 'min-h-[22rem] md:min-h-[23rem]'
+                                    : isCompleted
+                                    ? 'min-h-[20rem] md:min-h-[21rem]'
+                                    : 'min-h-[18.5rem] md:min-h-[19rem]';
 
                                 const quizMenuId = `quiz-card-menu-${quiz.id}`;
                                 const isMenuOpen = activeMenuId === quizMenuId;
@@ -882,8 +924,28 @@ const TopicContent = ({
                                 return (
                                     <div
                                         key={quiz.id}
-                                        className={`group relative ${quizCardHeightClass} flex flex-col overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-slate-900/40 transition-all duration-300 hover:scale-[1.02] ${config.cardAccent}`}
+                                        role={canOpenFromCard ? 'button' : undefined}
+                                        tabIndex={canOpenFromCard ? 0 : undefined}
+                                        onClick={(event) => {
+                                            if (!canOpenFromCard) return;
+                                            const clickedControl = event.target instanceof Element
+                                                ? event.target.closest('button, a, input, textarea, select')
+                                                : null;
+                                            if (clickedControl) return;
+                                            openQuizSession();
+                                        }}
+                                        onKeyDown={(event) => {
+                                            if (!canOpenFromCard) return;
+                                            if (event.key === 'Enter' || event.key === ' ') {
+                                                event.preventDefault();
+                                                openQuizSession();
+                                            }
+                                        }}
+                                        className={`group relative ${quizCardHeightClass} flex flex-col overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm hover:shadow-md dark:hover:shadow-lg dark:hover:shadow-slate-900/40 transition-all duration-300 hover:scale-[1.02] ${canOpenFromCard ? 'cursor-pointer' : ''} ${config.cardAccent}`}
                                     >
+                                        <div className={`absolute inset-0 ${themeGradient} opacity-[0.06] dark:opacity-[0.12] pointer-events-none`} />
+                                        <div className={`absolute -top-16 -right-12 w-40 h-40 ${themeGradient} opacity-[0.14] dark:opacity-[0.2] blur-2xl rounded-full pointer-events-none`} />
+                                        <div className={`absolute -bottom-16 -left-12 w-32 h-32 ${themeGradient} opacity-[0.1] dark:opacity-[0.16] blur-2xl rounded-full pointer-events-none`} />
                                         <div className={`absolute inset-x-0 top-0 h-1 ${themeGradient}`} />
                                         <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
                                             <HeaderIcon className="w-32 h-32 text-slate-300 dark:text-slate-600 absolute -bottom-4 -right-4 rotate-12 opacity-[0.07]" strokeWidth={1.2} />
@@ -947,8 +1009,8 @@ const TopicContent = ({
                                         <div className="relative z-10 h-full flex flex-col p-5 md:p-6">
                                             <div className="flex items-start justify-between gap-3 mb-4">
                                                 <div className="flex items-start gap-3 min-w-0 flex-1">
-                                                    <div className="p-2.5 rounded-xl border shadow-sm backdrop-blur-md bg-indigo-50 dark:bg-indigo-950 border-indigo-100 dark:border-indigo-800 transition-all">
-                                                        <HeaderIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" strokeWidth={1.6} />
+                                                    <div className={`p-2.5 rounded-xl border border-white/40 shadow-md ring-1 ring-white/30 backdrop-blur-md ${themeGradient} transition-all`}>
+                                                        <HeaderIcon className="w-5 h-5 text-white" strokeWidth={1.6} />
                                                     </div>
                                                     <div className="min-w-0">
                                                         <p className="text-[11px] uppercase tracking-[0.18em] font-bold text-slate-400 dark:text-slate-500 mb-1">
@@ -962,7 +1024,7 @@ const TopicContent = ({
                                                                 {config.difficultyLabel}
                                                             </span>
                                                             {isAssignment && (
-                                                                <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200 dark:bg-indigo-500/20 dark:text-indigo-200 dark:border-indigo-400/40">
+                                                                <span className={`inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full text-white border border-white/30 ${themeGradient}`}>
                                                                     <ClipboardCheck className="w-3 h-3" strokeWidth={2} />
                                                                     Tarea
                                                                 </span>
@@ -983,12 +1045,12 @@ const TopicContent = ({
 
                                             <div className="mb-4 flex items-start justify-between gap-3">
                                                 <div className="flex flex-col gap-2">
-                                                    <div className="inline-flex items-center gap-2 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 text-xs font-bold uppercase tracking-wide">
+                                                    <div className="inline-flex items-center gap-2 rounded-xl bg-white/85 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-3 py-2 text-xs font-bold uppercase tracking-wide shadow-sm">
                                                         <ClipboardCheck className="w-3.5 h-3.5" strokeWidth={1.7} />
                                                         <span>{quiz.questions?.length || 0} preguntas</span>
                                                     </div>
                                                     {isAssignment && (
-                                                        <div className="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500 dark:text-slate-400 max-w-[15rem]">
+                                                        <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 dark:text-slate-400 max-w-[15rem]">
                                                             <CalendarDays className="w-3.5 h-3.5" strokeWidth={1.7} />
                                                             <span className="line-clamp-2">{assignmentWindowText}</span>
                                                         </div>
@@ -1013,7 +1075,7 @@ const TopicContent = ({
                                             </div>
 
                                             {canManageQuiz && (
-                                                <div className="mb-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-900/40 px-3 py-2 flex items-center justify-between gap-3">
+                                                <div className="mb-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/75 dark:bg-slate-900/55 backdrop-blur-sm px-3 py-2 flex items-center justify-between gap-3 shadow-sm">
                                                     <div>
                                                         <p className="text-[10px] uppercase tracking-[0.16em] font-bold text-slate-400 dark:text-slate-500">Analitica de clase</p>
                                                         <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">
@@ -1024,7 +1086,7 @@ const TopicContent = ({
                                                     </div>
                                                     <button
                                                         onClick={() => setSelectedQuizForClassAnalytics(quiz)}
-                                                        className="px-3 py-1.5 rounded-lg text-[11px] font-bold border border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-900/40"
+                                                        className={`px-3 py-1.5 rounded-lg text-[11px] font-bold text-white border border-white/30 shadow-sm ${themeGradient} hover:opacity-95`}
                                                     >
                                                         Ver clase
                                                     </button>
@@ -1039,17 +1101,26 @@ const TopicContent = ({
                                                             return;
                                                         }
                                                         if (!canStartAssignment) return;
-                                                        navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}`);
+                                                        openQuizSession();
                                                     }}
-                                                    disabled={!shouldEditPrimary && !canStartAssignment}
-                                                    className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wide transition-all duration-200 ${
-                                                        !shouldEditPrimary && !canStartAssignment
-                                                            ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 cursor-not-allowed'
-                                                            : shouldEditPrimary
-                                                            ? `${themeGradient} text-white shadow-md hover:shadow-lg active:scale-95`
+                                                    aria-label={
+                                                        shouldEditPrimary
+                                                            ? 'Editar test'
+                                                            : !canStartAssignment
+                                                            ? (startsInFuture ? 'Aun no disponible' : 'Plazo cerrado')
                                                             : isCompleted
-                                                            ? 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600'
-                                                            : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-200'
+                                                            ? 'Reintentar test'
+                                                            : 'Comenzar test'
+                                                    }
+                                                    disabled={!shouldEditPrimary && !canStartAssignment}
+                                                    className={`w-full flex items-center justify-center gap-2 rounded-xl font-bold uppercase tracking-wide transition-all duration-200 ${
+                                                        !shouldEditPrimary && !canStartAssignment
+                                                            ? 'py-2.5 text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-200 dark:border-slate-700 cursor-not-allowed'
+                                                            : shouldEditPrimary
+                                                            ? `py-2.5 text-[11px] ${themeGradient} text-white shadow-md hover:shadow-lg active:scale-95`
+                                                            : isCompleted
+                                                            ? 'py-3.5 text-sm bg-white/85 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-600 hover:bg-white dark:hover:bg-slate-600 shadow-sm hover:shadow-md'
+                                                            : 'h-[6.75rem] text-sm bg-white/85 dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-slate-600 hover:bg-white dark:hover:bg-slate-600 shadow-sm hover:shadow-md'
                                                     }`}
                                                 >
                                                     {shouldEditPrimary ? (
@@ -1068,19 +1139,16 @@ const TopicContent = ({
                                                             Reintentar test
                                                         </>
                                                     ) : (
-                                                        <>
-                                                            <Play className="w-3.5 h-3.5" strokeWidth={2} />
-                                                            Comenzar test
-                                                        </>
+                                                        <Play className="w-6 h-6" strokeWidth={2.2} />
                                                     )}
                                                 </button>
 
                                                 {isCompleted && (
                                                     <button
                                                         onClick={() => navigate(`/home/subject/${subjectId}/topic/${topicId}/quiz/${quiz.id}/review`)}
-                                                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wide bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                                                        className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold uppercase tracking-wide bg-white/85 dark:bg-slate-700 border border-slate-200/80 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-600 shadow-sm hover:shadow-md transition-colors"
                                                     >
-                                                        <Eye className="w-3.5 h-3.5" strokeWidth={2} />
+                                                        <Eye className="w-4 h-4" strokeWidth={2} />
                                                         Ver revision
                                                     </button>
                                                 )}

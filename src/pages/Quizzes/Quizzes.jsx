@@ -115,17 +115,17 @@ const useQuizData = (user, subjectId, topicId, quizId, navigate) => {
 const ReviewView = React.memo(({ 
     quizData, subjectIconKey, topicGradient, accentColor, onStart, onGoBack, canStart, assignmentStatusText
 }) => (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 pb-20">
         {/* Header */}
-        <div className="bg-white/70 backdrop-blur-2xl border-b border-white/50 sticky top-0 z-40 shadow-sm">
+        <div className="bg-white/70 dark:bg-slate-900/80 backdrop-blur-2xl border-b border-white/50 dark:border-slate-700/70 sticky top-0 z-40 shadow-sm">
             <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
                 <button 
                     onClick={onGoBack} 
-                    className="p-2.5 hover:bg-white/80 rounded-2xl transition-all duration-300 text-slate-600 hover:text-slate-900 hover:shadow-lg group"
+                    className="p-2.5 hover:bg-white/80 dark:hover:bg-slate-800 rounded-2xl transition-all duration-300 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:shadow-lg group"
                 >
                     <ChevronLeft className="w-5 h-5 transform group-hover:-translate-x-0.5 transition-transform" />
                 </button>
-                <span className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] px-4 py-1.5 rounded-full bg-slate-100/50">
+                <span className="text-xs font-black text-slate-500 dark:text-slate-300 uppercase tracking-[0.2em] px-4 py-1.5 rounded-full bg-slate-100/50 dark:bg-slate-800/70 border border-slate-200/60 dark:border-slate-700/70">
                     Resumen
                 </span>
                 <div className="w-11" />
@@ -136,7 +136,7 @@ const ReviewView = React.memo(({
             {/* Hero Card */}
             <div className="relative mb-10">
                 <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-[2rem] blur-3xl opacity-20`} />
-                <div className="relative bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/50 p-10 text-center overflow-hidden">
+                <div className="relative bg-white/80 dark:bg-slate-900/85 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/50 dark:border-slate-700/70 p-10 text-center overflow-hidden">
                     <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${topicGradient} rounded-full blur-3xl opacity-10 -translate-y-1/2 translate-x-1/2`} />
                     <div className={`absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr ${topicGradient} rounded-full blur-3xl opacity-10 translate-y-1/2 -translate-x-1/2`} />
                     
@@ -145,7 +145,7 @@ const ReviewView = React.memo(({
                             <SubjectIcon iconKey={subjectIconKey} topicGradient={topicGradient} />
                         </div>
                         
-                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-3 tracking-tight leading-tight">
+                        <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-3 tracking-tight leading-tight">
                             <RenderLatex text={quizData.title} />
                         </h1>
                         <p className={`text-lg font-bold bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent`}>
@@ -153,23 +153,23 @@ const ReviewView = React.memo(({
                         </p>
                         
                         <div className="flex items-center justify-center gap-6 mt-8">
-                            <div className="flex items-center gap-2.5 px-5 py-3 bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-sm rounded-2xl border border-white/50 shadow-lg">
+                            <div className="flex items-center gap-2.5 px-5 py-3 bg-gradient-to-br from-white/80 to-white/40 dark:from-slate-800/90 dark:to-slate-900/70 backdrop-blur-sm rounded-2xl border border-white/50 dark:border-slate-700/70 shadow-lg">
                                 <div className={`p-2 rounded-xl bg-gradient-to-br ${topicGradient}`}>
                                     <Target className="w-4 h-4 text-white" />
                                 </div>
                                 <div className="text-left">
-                                    <div className="text-2xl font-black text-slate-900">{quizData.questions.length}</div>
-                                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Preguntas</div>
+                                    <div className="text-2xl font-black text-slate-900 dark:text-white">{quizData.questions.length}</div>
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Preguntas</div>
                                 </div>
                             </div>
                             
-                            <div className="flex items-center gap-2.5 px-5 py-3 bg-gradient-to-br from-white/80 to-white/40 backdrop-blur-sm rounded-2xl border border-white/50 shadow-lg">
+                            <div className="flex items-center gap-2.5 px-5 py-3 bg-gradient-to-br from-white/80 to-white/40 dark:from-slate-800/90 dark:to-slate-900/70 backdrop-blur-sm rounded-2xl border border-white/50 dark:border-slate-700/70 shadow-lg">
                                 <div className={`p-2 rounded-xl bg-gradient-to-br ${topicGradient}`}>
                                     <Clock className="w-4 h-4 text-white" />
                                 </div>
                                 <div className="text-left">
-                                    <div className="text-2xl font-black text-slate-900">~{Math.ceil(quizData.questions.length * 1.5)}</div>
-                                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">Minutos</div>
+                                    <div className="text-2xl font-black text-slate-900 dark:text-white">~{Math.ceil(quizData.questions.length * 1.5)}</div>
+                                    <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Minutos</div>
                                 </div>
                             </div>
                         </div>
@@ -182,7 +182,7 @@ const ReviewView = React.memo(({
                 <div className="mb-10 space-y-4">
                     <div className="flex items-center gap-3 ml-2">
                         <Sparkles className={`w-5 h-5 bg-gradient-to-r ${topicGradient} bg-clip-text text-transparent`} style={{ color: accentColor }} />
-                        <h3 className="text-sm font-black text-slate-700 uppercase tracking-[0.15em]">
+                        <h3 className="text-sm font-black text-slate-700 dark:text-slate-200 uppercase tracking-[0.15em]">
                             Fórmulas de referencia
                         </h3>
                     </div>
@@ -190,7 +190,7 @@ const ReviewView = React.memo(({
                         {quizData.formulas.map((formula, idx) => (
                             <div key={idx} className="group relative">
                                 <div className={`absolute inset-0 bg-gradient-to-r ${topicGradient} rounded-2xl blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300`} />
-                                <div className="relative flex items-center gap-4 bg-white/80 backdrop-blur-xl rounded-2xl p-5 border border-white/50 shadow-lg hover:shadow-xl transition-all duration-300">
+                                <div className="relative flex items-center gap-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-5 border border-white/50 dark:border-slate-700/70 shadow-lg hover:shadow-xl transition-all duration-300">
                                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-black shrink-0 bg-gradient-to-br ${topicGradient} shadow-lg`}>
                                         {idx + 1}
                                     </div>
@@ -206,15 +206,15 @@ const ReviewView = React.memo(({
 
             {/* Start Button */}
             {!canStart && (
-                <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800 flex items-center gap-2">
+                <div className="mb-4 rounded-2xl border border-amber-200 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/25 px-4 py-3 text-sm font-medium text-amber-800 dark:text-amber-200 flex items-center gap-2">
                     <Lock className="w-4 h-4" />
                     <span>{assignmentStatusText}</span>
                 </div>
             )}
 
             {quizData.isAssignment && (
-                <div className="mb-4 rounded-2xl border border-slate-200 bg-white/80 backdrop-blur-sm px-4 py-3 text-xs text-slate-600 flex items-center gap-2">
-                    <CalendarDays className="w-4 h-4 text-slate-500" />
+                <div className="mb-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm px-4 py-3 text-xs text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                    <CalendarDays className="w-4 h-4 text-slate-500 dark:text-slate-400" />
                     <span>{assignmentStatusText}</span>
                 </div>
             )}
@@ -222,7 +222,7 @@ const ReviewView = React.memo(({
             <button
                 onClick={canStart ? onStart : undefined}
                 disabled={!canStart}
-                className={`group relative w-full text-white py-5 rounded-2xl font-black text-xl shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden ${canStart ? `hover:shadow-3xl bg-gradient-to-r ${topicGradient} hover:-translate-y-1` : 'bg-slate-300 cursor-not-allowed'}`}
+                className={`group relative w-full text-white py-5 rounded-2xl font-black text-xl shadow-2xl transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden ${canStart ? `hover:shadow-3xl bg-gradient-to-r ${topicGradient} hover:-translate-y-1` : 'bg-slate-300 dark:bg-slate-700 dark:text-slate-300 cursor-not-allowed'}`}
             >
                 <div className="absolute inset-0 bg-white/20 transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-700" />
                 <span className="relative z-10 flex items-center gap-3">
@@ -240,7 +240,7 @@ const QuizView = React.memo(({
     shouldUseGrid, topicGradient, confettiTrigger, accentColor, 
     onAnswerSelect, onCheckAnswer, onNextQuestion, onGoBack
 }) => (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 pb-40">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 pb-40">
         <ConfettiEffect triggerKey={confettiTrigger} accentColor={accentColor} />
         
         <ProgressBar 
@@ -463,15 +463,15 @@ const Quizzes = ({ user }) => {
     const totalQuestions = quizData.questions.length;
 
     return (
-        <div className="min-h-screen bg-slate-100 font-sans text-slate-900">
+        <div className="min-h-screen bg-slate-100 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
             {previewAsStudent && (
-                <div className="fixed top-3 right-3 z-[60] rounded-xl border border-amber-200 bg-amber-50/95 px-3 py-2 shadow-lg backdrop-blur-sm">
-                    <div className="flex items-center gap-2 text-[11px] font-bold text-amber-700">
+                <div className="fixed top-3 right-3 z-[60] rounded-xl border border-amber-200 dark:border-amber-700/60 bg-amber-50/95 dark:bg-amber-900/40 px-3 py-2 shadow-lg backdrop-blur-sm">
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-amber-700 dark:text-amber-200">
                         <GraduationCap className="w-3.5 h-3.5" />
                         Vista alumno temporal
                         <button
                             onClick={handleDisablePreview}
-                            className="ml-2 rounded-md bg-amber-500 px-2 py-1 text-[10px] uppercase tracking-wider text-white hover:bg-amber-600 transition-colors"
+                            className="ml-2 rounded-md bg-amber-500 dark:bg-amber-600 px-2 py-1 text-[10px] uppercase tracking-wider text-white hover:bg-amber-600 dark:hover:bg-amber-500 transition-colors"
                         >
                             Salir
                         </button>

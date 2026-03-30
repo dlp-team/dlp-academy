@@ -57,3 +57,6 @@ function ExampleScreen() {
 ## Maintenance Notes
 - Keep this explanation updated when adding, renaming, or deleting functions in the source file.
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
+
+## Changelog
+- 2026-03-29: Added dark-mode visual support to shared quiz primitives (`LoadingSpinner`, `ProgressBar`, `QuizFooter`, and `FormulaDisplay`) so runtime quiz pages render correctly in dark theme.

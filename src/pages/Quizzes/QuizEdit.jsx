@@ -93,12 +93,23 @@ const QuizEdit = ({ user }) => {
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
     const [hasEditPermission, setHasEditPermission] = useState(false);
+    const [ruleContext, setRuleContext] = useState({
+        topicInstitutionId: null,
+        topicOwnerId: null,
+        subjectInstitutionId: null,
+        subjectOwnerId: null
+    });
     const [quizData, setQuizData] = useState({
         title: '',
         questions: [],
         isAssignment: false,
         assignmentStartAt: '',
-        assignmentDueAt: ''
+        assignmentDueAt: '',
+        subjectId,
+        topicId,
+        institutionId: null,
+        ownerId: null,
+        createdBy: null
     });
 
     const toDateTimeInputValue = (value) => {
@@ -163,6 +174,24 @@ const QuizEdit = ({ user }) => {
                 const topicData = { id: topicSnap.id, ...topicSnap.data() };
                 const hasPermission = canEdit(topicData, user?.uid);
                 setHasEditPermission(hasPermission);
+
+                let subjectData = null;
+                try {
+                    const subjectRef = doc(db, 'subjects', subjectId);
+                    const subjectSnap = await getDoc(subjectRef);
+                    if (subjectSnap.exists()) {
+                        subjectData = { id: subjectSnap.id, ...subjectSnap.data() };
+                    }
+                } catch (subjectError) {
+                    console.error('[QUIZ_EDIT] Error loading subject context:', subjectError);
+                }
+
+                setRuleContext({
+                    topicInstitutionId: topicData?.institutionId || null,
+                    topicOwnerId: topicData?.ownerId || null,
+                    subjectInstitutionId: subjectData?.institutionId || null,
+                    subjectOwnerId: subjectData?.ownerId || null
+                });
                 
                 if (!hasPermission) {
                     // Redirect viewers to read-only quiz view
@@ -181,7 +210,12 @@ const QuizEdit = ({ user }) => {
                         questions: data.questions || [],
                         isAssignment: Boolean(data.isAssignment),
                         assignmentStartAt: toDateTimeInputValue(data.assignmentStartAt),
-                        assignmentDueAt: toDateTimeInputValue(data.assignmentDueAt)
+                        assignmentDueAt: toDateTimeInputValue(data.assignmentDueAt),
+                        subjectId: data.subjectId || subjectId,
+                        topicId: data.topicId || topicId,
+                        institutionId: data.institutionId || topicData?.institutionId || subjectData?.institutionId || null,
+                        ownerId: data.ownerId || topicData?.ownerId || subjectData?.ownerId || user?.uid || null,
+                        createdBy: data.createdBy || data.ownerId || topicData?.ownerId || user?.uid || null
                     });
                 }
                 else {
@@ -280,10 +314,21 @@ const QuizEdit = ({ user }) => {
                 isAssignment: Boolean(quizData.isAssignment),
                 assignmentStartAt: quizData.isAssignment ? startDate : null,
                 assignmentDueAt: quizData.isAssignment ? dueDate : null,
+                subjectId: quizData.subjectId || subjectId,
+                topicId: quizData.topicId || topicId,
+                institutionId: quizData.institutionId || ruleContext.topicInstitutionId || ruleContext.subjectInstitutionId || null,
+                ownerId: quizData.ownerId || ruleContext.topicOwnerId || ruleContext.subjectOwnerId || user?.uid || null,
+                createdBy: quizData.createdBy || quizData.ownerId || ruleContext.topicOwnerId || user?.uid || null,
                 updatedAt: serverTimestamp()
             };
 
-            const optionalFields = ['level', 'type', 'formulas', 'prompt', 'subjectId', 'topicId', 'institutionId', 'ownerId', 'createdBy'];
+            if (!payload.institutionId) {
+                setSaveError('No se pudo resolver institutionId para guardar. Abre el tema desde la asignatura y vuelve a intentar.');
+                setSaving(false);
+                return;
+            }
+
+            const optionalFields = ['level', 'type', 'formulas', 'prompt'];
             optionalFields.forEach((field) => {
                 if (quizData[field] !== undefined) payload[field] = quizData[field];
             });
@@ -294,7 +339,11 @@ const QuizEdit = ({ user }) => {
             navigate(-1);
         } catch (e) {
             console.error(e);
-            setSaveError('No se pudo guardar el test. Revisa los campos y vuelve a intentarlo.');
+            if (e?.code === 'permission-denied') {
+                setSaveError('Permisos insuficientes para guardar este test. Verifica institutionId y que seas editor/propietario en esta asignatura.');
+            } else {
+                setSaveError('No se pudo guardar el test. Revisa los campos y vuelve a intentarlo.');
+            }
         } finally {
             setSaving(false);
         }

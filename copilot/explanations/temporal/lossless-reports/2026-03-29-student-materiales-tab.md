@@ -329,6 +329,51 @@
 - ✅ VS Code Problems check clean for all touched files.
 - ✅ `npm run test` passed fully after this pass: **46/46 test files**, **289/289 tests**.
 
+### Follow-up Dark Detail Pass
+- Extended dark-mode support to detailed answer review rows in `QuizReviewDetail` (card surface, formula block, answer chips, icons, and footer helper text).
+- Revalidated after follow-up:
+  - ✅ VS Code Problems check clean.
+  - ✅ `npm run test` passed fully: **46/46 test files**, **289/289 tests**.
+
+### Follow-up Teacher CTA Fix
+- Fixed quiz-card primary action regression where some teacher/editor users saw `Comenzar test` instead of `Editar test`.
+- Primary edit action now follows topic-level edit permission consistently.
+- Revalidated after fix:
+  - ✅ VS Code Problems check clean.
+  - ✅ `npm run test` passed fully: **46/46 test files**, **289/289 tests**.
+
+### Follow-up Quiz Card Color Unification
+- Updated quiz cards to use the same subject-gradient color language as uploaded file cards:
+  - gradient-tinted card surface,
+  - gradient icon chip,
+  - gradient difficulty/assignment badges,
+  - gradient analytics action button.
+- Revalidated after color pass:
+  - ✅ VS Code Problems check clean.
+  - ✅ `npm run test` passed fully: **46/46 test files**, **289/289 tests**.
+
+### Follow-up Gradient and Internal Style Refinement
+- Improved internal gradient composition and depth inside quiz cards:
+  - dual gradient glow blobs,
+  - stronger icon chip depth/ring treatment,
+  - glass-style analytics strip,
+  - refined secondary action surfaces.
+- Revalidated after refinement:
+  - ✅ VS Code Problems check clean.
+  - ✅ `npm run test` passed fully: **46/46 test files**, **289/289 tests**.
+
+### Follow-up Review Dark-Mode Completion
+- Completed dark-mode styling in standalone quiz review page (`QuizReviewPage`) so header card, score stats, empty state, and navigation controls match dark palette.
+- Revalidated after completion:
+  - ✅ VS Code Problems check clean.
+  - ✅ `npm run test` passed fully: **46/46 test files**, **289/289 tests**.
+
+### Follow-up Repaso Dark-Mode Completion
+- Added missing dark-mode variants in `QuizRepaso` (empty/saving states, review hero/header shell, and quiz runtime shell).
+- Revalidated after completion:
+  - ✅ VS Code Problems check clean.
+  - ✅ `npm run test` passed fully: **46/46 test files**, **289/289 tests**.
+
 ---
 
 ## 2026-03-29 Mis Archivos Type Edit + Badge Pass
@@ -352,6 +397,62 @@
 
 ### Validation
 - ✅ VS Code Problems check clean for touched files.
+- ✅ `npm run test` passed fully after this pass: **46/46 test files**, **289/289 tests**.
+
+---
+
+## 2026-03-29 QuizEdit Permission-Denied Save Fix
+
+### Additional Requested Outcome
+- Resolve `FirebaseError: Missing or insufficient permissions` when saving edited quizzes.
+
+### Additional File Modified
+1. **`src/pages/Quizzes/QuizEdit.jsx`**
+  - Added save-time metadata hydration to satisfy current Firestore root `quizzes` update rules.
+  - Persisted required fields on update payload (`institutionId`, `subjectId`, `topicId`, `ownerId`, `createdBy`) using quiz + topic + subject context fallback.
+  - Added explicit guard when `institutionId` cannot be resolved.
+  - Improved permission-denied error message clarity for faster runtime diagnosis.
+
+### Validation
+- ✅ VS Code Problems check clean for `QuizEdit.jsx`.
+- ✅ `npm run test` passed fully after permission fix: **46/46 test files**, **289/289 tests**.
+
+---
+
+## 2026-03-29 Quiz Dark Mode + Card Sizing Stability Pass
+
+### Additional Requested Outcome
+- Add dark mode styling inside quiz runtime pages.
+- Ensure quiz cards keep balanced sizing in all states, including when `Reintentar test` and review actions are visible.
+
+### Additional Files Modified
+1. **`src/pages/Quizzes/Quizzes.jsx`**
+  - Added dark-theme styles for review shell, top header, hero/stat blocks, assignment notices, quiz runtime shell, and simulation banner.
+
+2. **`src/components/modules/QuizEngine/QuizCommon.jsx`**
+  - Added dark variants for shared runtime primitives (`LoadingSpinner`, `ProgressBar`, `QuizFooter`, `FormulaDisplay`).
+
+3. **`src/components/modules/QuizEngine/QuizHeader.jsx`**
+  - Added dark-theme badge and close-button hover/contrast states.
+
+4. **`src/components/modules/QuizEngine/QuizQuestion.jsx`**
+  - Added dark-theme styling for question container and formula panel.
+
+5. **`src/components/modules/QuizEngine/QuizOptions.jsx`**
+  - Added dark variants for answer option states (idle/selected/correct/incorrect) and icon contrast.
+
+6. **`src/components/modules/QuizEngine/QuizResults.jsx`**
+  - Added dark-theme support for results shell, stat cards, CTA buttons, and detail-toggle panel.
+
+7. **`src/pages/Topic/components/TopicContent.jsx`**
+  - Updated quiz-card sizing logic to adaptive minimum heights by state:
+    - teacher management cards,
+    - completed student cards,
+    - pending student cards.
+  - Prevents cramped/cut visual balance when retry/review actions are present.
+
+### Validation
+- ✅ VS Code Problems check clean for all touched files.
 - ✅ `npm run test` passed fully after this pass: **46/46 test files**, **289/289 tests**.
 
 ---
