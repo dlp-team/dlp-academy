@@ -1,3 +1,4 @@
+// src/pages/Auth/components/AdminPasswordWizard.jsx
 import React, { useState, useEffect } from 'react';
 import { Loader2, Lock, AlertCircle, LogOut } from 'lucide-react';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -31,7 +32,13 @@ const AdminPasswordWizard = ({ user }) => {
                 } else {
                     setShow(false);
                 }
+                return;
             }
+
+            setShow(false);
+        }, (error) => {
+            console.error('Error listening to admin password wizard user:', error);
+            setShow(false);
         });
 
         return () => unsubscribe();

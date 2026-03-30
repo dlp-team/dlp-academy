@@ -8,11 +8,8 @@ import {
   Search,
   Trash2,
   UserPlus,
-  Eye,
-  EyeOff,
   Copy,
   ShieldAlert,
-  Save,
   XCircle
 } from 'lucide-react';
 import { DEFAULT_ACCESS_POLICIES } from '../../../utils/institutionPolicyUtils';
@@ -20,7 +17,6 @@ import { DEFAULT_ACCESS_POLICIES } from '../../../utils/institutionPolicyUtils';
 const UsersTabContent = ({
   userType,
   setUserType,
-  institutionId,
   accessPolicies,
   onSavePolicies,
   isUpdatingPolicies,
@@ -34,11 +30,6 @@ const UsersTabContent = ({
   onNavigateTeacher,
   onNavigateStudent,
   onRemoveAccess,
-  institutionalCode,
-  onUpdateInstitutionalCode,
-  isUpdatingCode,
-  codeUpdateSuccess,
-  codeUpdateError,
   liveAccessCode,
   liveCodeLoading,
   liveCodeError
@@ -46,8 +37,13 @@ const UsersTabContent = ({
   // 1. Filter out the general code so it doesn't appear in the specific invites table
   const specificInvites = allowedTeachers.filter(t => t.type !== 'institutional');
 
-  const [showCode, setShowCode] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [accessDeleteConfirm, setAccessDeleteConfirm] = useState({
+    isOpen: false,
+    inviteId: null,
+    inviteLabel: ''
+  });
+  const [isRemovingAccess, setIsRemovingAccess] = useState(false);
 
   // 1. Safe policy handling and local state
   const defaultPolicy = userType === 'teachers'
@@ -74,6 +70,42 @@ const UsersTabContent = ({
     navigator.clipboard.writeText(liveCode);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const requestRemoveAccess = (invite) => {
+    if (!invite?.id || isRemovingAccess) return;
+
+    setAccessDeleteConfirm({
+      isOpen: true,
+      inviteId: invite.id,
+      inviteLabel: invite.email || invite.id
+    });
+  };
+
+  const closeAccessDeleteConfirm = () => {
+    if (isRemovingAccess) return;
+
+    setAccessDeleteConfirm({
+      isOpen: false,
+      inviteId: null,
+      inviteLabel: ''
+    });
+  };
+
+  const confirmRemoveAccess = async () => {
+    if (!accessDeleteConfirm.inviteId || isRemovingAccess) return;
+
+    setIsRemovingAccess(true);
+    try {
+      await onRemoveAccess(accessDeleteConfirm.inviteId);
+    } finally {
+      setIsRemovingAccess(false);
+      setAccessDeleteConfirm({
+        isOpen: false,
+        inviteId: null,
+        inviteLabel: ''
+      });
+    }
   };
 
   return (
@@ -252,7 +284,6 @@ const UsersTabContent = ({
                   disabled={isUpdatingPolicies}
                   className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-md transition-all flex items-center gap-2 disabled:opacity-70"
                 >
-                  {/* Note: Ensure you imported Save and ShieldAlert from lucide-react */}
                   Guardar Políticas
                 </button>
               </div>
@@ -335,7 +366,7 @@ const UsersTabContent = ({
                             </div>
                           </td>
                           <td className="px-6 py-4 w-32 text-right">
-                            <button onClick={() => onRemoveAccess(t.id)} className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar invitación">
+                            <button onClick={() => requestRemoveAccess(t)} className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors" title="Eliminar invitación">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           </td>
@@ -385,6 +416,45 @@ const UsersTabContent = ({
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {accessDeleteConfirm.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-slate-950/60" onClick={closeAccessDeleteConfirm} />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="invite-delete-confirm-title"
+            className="relative w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl"
+          >
+            <div className="p-6">
+              <h3 id="invite-delete-confirm-title" className="text-lg font-black text-slate-900 dark:text-white">
+                Eliminar acceso de profesor
+              </h3>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                Se eliminará la invitación de "{accessDeleteConfirm.inviteLabel || 'este profesor'}". Esta acción no se puede deshacer.
+              </p>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={closeAccessDeleteConfirm}
+                  disabled={isRemovingAccess}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmRemoveAccess}
+                  disabled={isRemovingAccess}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60"
+                >
+                  {isRemovingAccess ? 'Eliminando...' : 'Eliminar acceso'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

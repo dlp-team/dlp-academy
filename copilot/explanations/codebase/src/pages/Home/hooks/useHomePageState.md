@@ -1,3 +1,4 @@
+<!-- copilot/explanations/codebase/src/pages/Home/hooks/useHomePageState.md -->
 # useHomePageState.js
 
 ## Overview
@@ -23,4 +24,5 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- **2026-03-30:** Removed browser alert from folder auto-cleaner side effect and switched to optional `onHomeFeedback` callback so the page can display inline success/error text.
 - **2026-03-06:** Added `bin` to allowed persisted view modes during restore, fixing reload fallback that forced users out of the paper bin tab.

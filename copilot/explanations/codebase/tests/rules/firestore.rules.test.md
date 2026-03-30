@@ -1,6 +1,12 @@
 // copilot/explanations/codebase/tests/rules/firestore.rules.test.md
 
 ## Changelog
+### 2026-03-30: Teacher recognition updates coverage
+- Added dedicated user-rule tests validating teacher-scoped recognition updates:
+  - allow teacher updating `badges`, `badgesByCourse`, `behaviorScore`, `updatedAt` for same-institution student,
+  - deny teacher updates for non-recognition fields,
+  - deny teacher recognition writes to student profiles in other institutions.
+
 ### 2026-03-09: Phase 05 rules expansion
 - Reworked rules integration suite to cover:
   - `institution_invites` create/read/list/update/delete boundary behaviors,

@@ -1,8 +1,9 @@
+<!-- copilot/explanations/codebase/src/pages/Subject/hooks/useSubjectManager.md -->
 # useSubjectManager.js
 
 ## Overview
 - **Source file:** `src/pages/Subject/hooks/useSubjectManager.js`
-- **Last documented:** 2026-02-24
+- **Last documented:** 2026-03-30
 - **Role:** Custom hook with stateful/business logic for this page area.
 
 ## Responsibilities
@@ -20,6 +21,14 @@
 - `react-router-dom`
 - `../../../firebase/config`
 - `../../../utils/permissionUtils`
+- `../../../utils/topicDeletionUtils`
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+### 2026-03-30
+- Topic deletion in subject view now uses shared `cascadeDeleteTopicResources` before deleting the topic doc and decrementing `topicCount`.
+- Cascade scope now includes exam-related collections (`exams` and `examns`) in addition to documents/resources/quizzes.
+- Added explicit snapshot error fallback handling for subject topics listener: logs error, clears topics state, and releases loading.
+- Added explicit error logging for resumen listener failures used in auto-completion updates.

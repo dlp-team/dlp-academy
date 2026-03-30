@@ -1,5 +1,6 @@
+// tests/unit/hooks/useSubjectManager.test.js
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useSubjectManager } from '../../../src/pages/Subject/hooks/useSubjectManager';
 
 const mockNavigate = vi.fn();
@@ -20,6 +21,10 @@ const firestoreMocks = vi.hoisted(() => ({
   mockIncrement: vi.fn((value) => ({ __increment: value })),
 }));
 
+const utilityMocks = vi.hoisted(() => ({
+  cascadeDeleteTopicResources: vi.fn(),
+}));
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -34,6 +39,11 @@ vi.mock('../../../src/firebase/config', () => ({
 
 vi.mock('../../../src/utils/permissionUtils', () => ({
   canView: vi.fn(() => true),
+}));
+
+vi.mock('../../../src/utils/topicDeletionUtils', () => ({
+  DEFAULT_TOPIC_CASCADE_COLLECTIONS: ['documents', 'resumen', 'quizzes', 'exams', 'examns'],
+  cascadeDeleteTopicResources: (...args) => utilityMocks.cascadeDeleteTopicResources(...args),
 }));
 
 vi.mock('firebase/firestore', async () => {
@@ -62,6 +72,8 @@ const createDoc = (id, data) => ({
 });
 
 describe('useSubjectManager', () => {
+  let consoleErrorSpy;
+
   const user = {
     uid: 'user-1',
     institutionId: 'inst-1',
@@ -69,10 +81,21 @@ describe('useSubjectManager', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    utilityMocks.cascadeDeleteTopicResources.mockResolvedValue({
+      collections: ['documents', 'resumen', 'quizzes', 'exams', 'examns'],
+      attemptedDeletes: 0,
+      queryFailures: [],
+      deleteFailures: [],
+    });
     firestoreMocks.mockOnSnapshot.mockImplementation((_q, callback) => {
       callback({ docs: [] });
       return vi.fn();
     });
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   it('navigates back home when subject does not exist', async () => {
@@ -86,6 +109,43 @@ describe('useSubjectManager', () => {
       expect(result.current.loading).toBe(false);
       expect(mockNavigate).toHaveBeenCalledWith('/home');
     });
+  });
+
+  it('exits loading state and clears topics when topics listener fails', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      id: 'subject-1',
+      data: () => ({
+        name: 'Math',
+        color: 'from-blue-500 to-indigo-600',
+        ownerId: 'owner-1',
+        institutionId: 'inst-1',
+      }),
+    });
+
+    firestoreMocks.mockOnSnapshot.mockImplementation((q, onNext, onError) => {
+      const isTopicsQuery = Array.isArray(q?.parts) && q.parts.some((part) => part?.field === 'subjectId');
+
+      if (isTopicsQuery) {
+        onError(new Error('permission-denied'));
+        return vi.fn();
+      }
+
+      onNext({ docs: [] });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useSubjectManager(user, 'subject-1'));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.topics).toEqual([]);
+    expect(consoleErrorSpy).toHaveBeenCalledWith(
+      'Error listening to subject topics:',
+      expect.any(Error)
+    );
   });
 
   it('creates a new topic and increments subject topicCount', async () => {
@@ -179,5 +239,45 @@ describe('useSubjectManager', () => {
 
     expect(batchUpdate).toHaveBeenCalledTimes(2);
     expect(batchCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it('cascades topic-linked resources before deleting a topic', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      id: 'subject-1',
+      data: () => ({
+        name: 'Math',
+        color: 'from-blue-500 to-indigo-600',
+        ownerId: 'owner-1',
+        institutionId: 'inst-1',
+      }),
+    });
+
+    const { result } = renderHook(() => useSubjectManager(user, 'subject-1'));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.deleteTopic('topic-delete-1');
+    });
+
+    expect(utilityMocks.cascadeDeleteTopicResources).toHaveBeenCalledWith(
+      expect.objectContaining({
+        topicId: 'topic-delete-1',
+        db: expect.any(Object),
+        collections: ['documents', 'resumen', 'quizzes', 'exams', 'examns'],
+      })
+    );
+
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'topics', id: 'topic-delete-1' })
+    );
+
+    expect(firestoreMocks.mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-1' }),
+      expect.objectContaining({ topicCount: { __increment: -1 } })
+    );
   });
 });

@@ -41,6 +41,7 @@ const createBaseConfig = (overrides = {}) => {
     isDescendant: vi.fn(() => false),
     updateShortcutAppearance: vi.fn(),
     setShortcutHiddenInManual: vi.fn(),
+    onHomeFeedback: vi.fn(),
   };
 
   return { ...base, ...overrides };
@@ -549,5 +550,121 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
     expect(config.deleteFolderOnly).not.toHaveBeenCalled();
     expect(config.setManualOrder).not.toHaveBeenCalled();
     expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, item: null });
+  });
+
+  it('reports in-page error feedback when subject drop move fails', async () => {
+    const config = createBaseConfig({
+      subjects: [
+        {
+          id: 'subject-error-1',
+          ownerId: 'user-1',
+          folderId: 'folder-a',
+        },
+      ],
+      updateSubject: vi.fn().mockRejectedValue(new Error('update failed')),
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDropOnFolder('subject-error-1', 'folder-b', 'subject', 'folder-a');
+
+    expect(config.onHomeFeedback).toHaveBeenCalledWith(
+      'No se pudo completar el movimiento. Revisa permisos e intentalo nuevamente.',
+      'error'
+    );
+  });
+
+  it('reports in-page error feedback when nesting folder fails', async () => {
+    const config = createBaseConfig({
+      folders: [
+        { id: 'folder-target', ownerId: 'user-1', parentId: null },
+        { id: 'folder-child', ownerId: 'user-1', parentId: null },
+      ],
+      updateFolder: vi.fn().mockRejectedValue(new Error('nest failed')),
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleNestFolder('folder-target', 'folder-child');
+
+    expect(config.onHomeFeedback).toHaveBeenCalledWith(
+      'No se pudo anidar la carpeta seleccionada. Revisa permisos e intentalo nuevamente.',
+      'error'
+    );
+  });
+
+  it('reports in-page error feedback when saving an edited subject fails', async () => {
+    const config = createBaseConfig({
+      subjectModalConfig: {
+        isOpen: true,
+        isEditing: true,
+        data: { id: 'subject-save-1' },
+      },
+      updateSubject: vi.fn().mockRejectedValue(new Error('save subject failed')),
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleSaveSubject({
+      id: 'subject-save-1',
+      name: 'Algebra',
+      course: '1A',
+      color: 'from-indigo-500 to-purple-600',
+      tags: [],
+    });
+
+    expect(config.onHomeFeedback).toHaveBeenCalledWith(
+      'No se pudo guardar la asignatura. Revisa los datos e intentalo nuevamente.',
+      'error'
+    );
+  });
+
+  it('reports in-page error feedback when saving an edited folder fails', async () => {
+    const config = createBaseConfig({
+      folderModalConfig: {
+        isOpen: true,
+        isEditing: true,
+        data: { id: 'folder-save-1' },
+      },
+      updateFolder: vi.fn().mockRejectedValue(new Error('save folder failed')),
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleSaveFolder({
+      id: 'folder-save-1',
+      name: 'Carpeta Algebra',
+      description: 'Descripcion',
+      color: 'from-amber-400 to-amber-600',
+      tags: [],
+    });
+
+    expect(config.onHomeFeedback).toHaveBeenCalledWith(
+      'No se pudo guardar la carpeta. Revisa los datos e intentalo nuevamente.',
+      'error'
+    );
+  });
+
+  it('reports in-page error feedback when folder unshare action fails', async () => {
+    const config = createBaseConfig({
+      folders: [{ id: 'regular-folder', isShared: false, parentId: null }],
+      unshareFolder: vi.fn().mockRejectedValue(new Error('unshare failed')),
+      deleteConfig: {
+        isOpen: true,
+        type: 'shortcut-folder',
+        action: 'unshare',
+        item: {
+          id: 'folder-err-1',
+          targetId: 'folder-err-1',
+          shortcutParentId: 'regular-folder',
+          shortcutId: 'shortcut-folder-err-1',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.onHomeFeedback).toHaveBeenCalledWith(
+      'No se pudo quitar el acceso compartido de la carpeta. Intentalo de nuevo.',
+      'error'
+    );
+    expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
   });
 });

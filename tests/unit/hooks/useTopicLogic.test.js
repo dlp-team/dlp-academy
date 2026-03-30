@@ -1,6 +1,6 @@
 // tests/unit/hooks/useTopicLogic.test.js
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { useTopicLogic } from '../../../src/pages/Topic/hooks/useTopicLogic';
 
 const mocks = vi.hoisted(() => ({
@@ -103,8 +103,12 @@ describe('useTopicLogic', () => {
     setupDefaultFirestore();
     mocks.deleteDoc.mockResolvedValue(undefined);
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true }));
-    vi.stubGlobal('alert', vi.fn());
-    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   const allowTopicDeletion = () => {
@@ -159,7 +163,7 @@ describe('useTopicLogic', () => {
     );
   });
 
-  it('deletes topic and navigates back to subject route', async () => {
+  it('deletes topic and navigates back to subject route after in-app confirmation', async () => {
     const user = { uid: 'teacher-1', role: 'teacher' };
     allowTopicDeletion();
 
@@ -170,7 +174,19 @@ describe('useTopicLogic', () => {
     });
 
     await act(async () => {
-      await result.current.handleDeleteTopic();
+      result.current.handleDeleteTopic();
+    });
+
+    expect(result.current.confirmDialog).toEqual(
+      expect.objectContaining({
+        isOpen: true,
+        type: 'topic',
+        itemId: 'topic-1',
+      })
+    );
+
+    await act(async () => {
+      await result.current.confirmDeleteAction();
     });
 
     expect(mocks.deleteDoc).toHaveBeenCalledWith(
@@ -179,7 +195,7 @@ describe('useTopicLogic', () => {
     expect(mocks.navigate).toHaveBeenCalledWith('/home/subject/subject-1');
   });
 
-  it('cascades documents, resources, and quizzes before deleting topic', async () => {
+  it('cascades documents, resources, quizzes, and exams before deleting topic', async () => {
     const user = { uid: 'teacher-1', role: 'teacher' };
     allowTopicDeletion();
 
@@ -194,6 +210,12 @@ describe('useTopicLogic', () => {
       if (collectionName === 'quizzes') {
         return { docs: [{ id: 'quiz-1' }] };
       }
+      if (collectionName === 'exams') {
+        return { docs: [{ id: 'exam-1', data: () => ({ title: 'Examen parcial' }) }] };
+      }
+      if (collectionName === 'examns') {
+        return { docs: [{ id: 'examn-1', data: () => ({ title: 'Examen legacy' }) }] };
+      }
       return { docs: [] };
     });
 
@@ -204,7 +226,18 @@ describe('useTopicLogic', () => {
     });
 
     await act(async () => {
-      await result.current.handleDeleteTopic();
+      result.current.handleDeleteTopic();
+    });
+
+    expect(result.current.confirmDialog).toEqual(
+      expect.objectContaining({
+        isOpen: true,
+        type: 'topic',
+      })
+    );
+
+    await act(async () => {
+      await result.current.confirmDeleteAction();
     });
 
     expect(mocks.deleteDoc).toHaveBeenCalledWith(
@@ -218,6 +251,12 @@ describe('useTopicLogic', () => {
     );
     expect(mocks.deleteDoc).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'quizzes', id: 'quiz-1' })
+    );
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'exams', id: 'exam-1' })
+    );
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'examns', id: 'examn-1' })
     );
     expect(mocks.deleteDoc).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'topics', id: 'topic-1' })
@@ -257,7 +296,18 @@ describe('useTopicLogic', () => {
     });
 
     await act(async () => {
-      await result.current.handleDeleteTopic();
+      result.current.handleDeleteTopic();
+    });
+
+    expect(result.current.confirmDialog).toEqual(
+      expect.objectContaining({
+        isOpen: true,
+        type: 'topic',
+      })
+    );
+
+    await act(async () => {
+      await result.current.confirmDeleteAction();
     });
 
     expect(mocks.deleteDoc).toHaveBeenCalledWith(
@@ -306,7 +356,18 @@ describe('useTopicLogic', () => {
     });
 
     await act(async () => {
-      await result.current.handleDeleteTopic();
+      result.current.handleDeleteTopic();
+    });
+
+    expect(result.current.confirmDialog).toEqual(
+      expect.objectContaining({
+        isOpen: true,
+        type: 'topic',
+      })
+    );
+
+    await act(async () => {
+      await result.current.confirmDeleteAction();
     });
 
     expect(mocks.deleteDoc).toHaveBeenCalledWith(
@@ -341,7 +402,18 @@ describe('useTopicLogic', () => {
     });
 
     await act(async () => {
-      await result.current.handleDeleteTopic();
+      result.current.handleDeleteTopic();
+    });
+
+    expect(result.current.confirmDialog).toEqual(
+      expect.objectContaining({
+        isOpen: true,
+        type: 'topic',
+      })
+    );
+
+    await act(async () => {
+      await result.current.confirmDeleteAction();
     });
 
     expect(mocks.deleteDoc).toHaveBeenCalledWith(
@@ -362,14 +434,83 @@ describe('useTopicLogic', () => {
     });
 
     await act(async () => {
-      await result.current.handleDeleteTopic();
+      result.current.handleDeleteTopic();
     });
 
-    expect(global.confirm).not.toHaveBeenCalled();
+    expect(result.current.confirmDialog.isOpen).toBe(false);
     expect(mocks.deleteDoc).not.toHaveBeenCalledWith(
       expect.objectContaining({ name: 'topics', id: 'topic-1' })
     );
     expect(mocks.navigate).not.toHaveBeenCalledWith('/home/subject/subject-1');
+  });
+
+  it('opens confirmation before deleting a file and executes delete only after confirm', async () => {
+    const user = { uid: 'teacher-1', role: 'teacher' };
+
+    const { result } = renderHook(() => useTopicLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      result.current.deleteFile({ id: 'doc-1', name: 'Apuntes', _collection: 'documents' });
+    });
+
+    expect(result.current.confirmDialog).toEqual(
+      expect.objectContaining({
+        isOpen: true,
+        type: 'file',
+        itemId: 'doc-1',
+        itemCollection: 'documents',
+      })
+    );
+
+    expect(mocks.deleteDoc).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'documents', id: 'doc-1' })
+    );
+
+    await act(async () => {
+      await result.current.confirmDeleteAction();
+    });
+
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'documents', id: 'doc-1' })
+    );
+  });
+
+  it('opens confirmation before deleting a quiz and executes delete only after confirm', async () => {
+    const user = { uid: 'teacher-1', role: 'teacher' };
+
+    const { result } = renderHook(() => useTopicLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      result.current.deleteQuiz('quiz-1');
+    });
+
+    expect(result.current.confirmDialog).toEqual(
+      expect.objectContaining({
+        isOpen: true,
+        type: 'quiz',
+        itemId: 'quiz-1',
+      })
+    );
+
+    expect(mocks.deleteDoc).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'quizzes', id: 'quiz-1' })
+    );
+
+    await act(async () => {
+      await result.current.confirmDeleteAction();
+    });
+
+    expect(mocks.deleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'quizzes', id: 'quiz-1' })
+    );
   });
 
   it('renames resumen files with both name and title fields', async () => {
@@ -397,7 +538,7 @@ describe('useTopicLogic', () => {
 
   it('shows error toast when AI content generation fails', async () => {
     const user = { uid: 'teacher-1', role: 'teacher' };
-    global.fetch.mockResolvedValueOnce({ ok: false });
+    globalThis.fetch.mockResolvedValueOnce({ ok: false });
 
     const { result } = renderHook(() => useTopicLogic(user));
 
@@ -419,7 +560,7 @@ describe('useTopicLogic', () => {
       });
     });
 
-    expect(global.fetch).toHaveBeenCalled();
+    expect(globalThis.fetch).toHaveBeenCalled();
     expect(result.current.toast).toEqual(
       expect.objectContaining({
         show: true,
@@ -453,5 +594,141 @@ describe('useTopicLogic', () => {
 
     expect(mocks.addDoc).not.toHaveBeenCalled();
     expect(result.current.uploading).toBe(false);
+  });
+
+  it('shows toast feedback when rename fails', async () => {
+    const user = { uid: 'teacher-1', role: 'teacher' };
+    mocks.updateDoc.mockRejectedValueOnce(new Error('rename failed'));
+
+    const { result } = renderHook(() => useTopicLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      result.current.setTempName('Nuevo nombre');
+    });
+
+    await act(async () => {
+      await result.current.saveRename({ id: 'doc-1', _collection: 'documents', name: 'Anterior' });
+    });
+
+    expect(result.current.toast).toEqual(
+      expect.objectContaining({
+        show: true,
+        message: 'No se pudo renombrar el archivo.',
+      })
+    );
+  });
+
+  it('shows toast feedback when trying to view an empty file', async () => {
+    const user = { uid: 'teacher-1', role: 'teacher' };
+
+    const { result } = renderHook(() => useTopicLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      result.current.handleViewFile({ id: 'file-empty', name: 'Vacio', url: '' });
+    });
+
+    expect(result.current.toast).toEqual(
+      expect.objectContaining({
+        show: true,
+        message: 'El archivo no tiene contenido disponible.',
+      })
+    );
+  });
+
+  it('shows toast feedback when file categorization fails', async () => {
+    const user = { uid: 'teacher-1', role: 'teacher' };
+    mocks.addDoc.mockRejectedValueOnce(new Error('categorize failed'));
+
+    const mockReader = {
+      readAsDataURL: vi.fn(function () {
+        setTimeout(() => {
+          if (typeof this.onload === 'function') {
+            this.onload();
+          }
+        }, 0);
+      }),
+      result: 'data:application/pdf;base64,FAKE',
+      onload: null,
+    };
+    vi.stubGlobal('FileReader', function FileReaderMock() {
+      return mockReader;
+    });
+
+    const { result } = renderHook(() => useTopicLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    const file = { name: 'doc.pdf', size: 1000, type: 'application/pdf' };
+
+    await act(async () => {
+      await result.current.handleManualUpload({ target: { files: [file] } });
+    });
+
+    await act(async () => {
+      await result.current.handleFileCategorized('material-teorico');
+    });
+
+    expect(result.current.toast).toEqual(
+      expect.objectContaining({
+        show: true,
+        message: 'No se pudo categorizar el archivo.',
+      })
+    );
+  });
+
+  it('shows toast feedback when quizzes snapshot listener fails', async () => {
+    const user = { uid: 'teacher-1', role: 'teacher' };
+
+    mocks.onSnapshot.mockImplementation((ref, onNext, onError) => {
+      const isTopicDoc = ref?.__kind === 'doc' && ref?.name === 'topics';
+      const isDocumentsQuery = ref?.__kind === 'query' && ref?.base?.name === 'documents';
+      const isResumenQuery = ref?.__kind === 'query' && ref?.base?.name === 'resumen';
+      const isQuizzesQuery = ref?.__kind === 'query' && ref?.base?.name === 'quizzes';
+
+      if (isTopicDoc) {
+        onNext({
+          exists: () => true,
+          id: 'topic-1',
+          data: () => ({ id: 'topic-1', name: 'Algebra', status: 'completed', ownerId: 'owner-1' }),
+        });
+        return vi.fn();
+      }
+
+      if (isDocumentsQuery || isResumenQuery) {
+        onNext({ docs: [] });
+        return vi.fn();
+      }
+
+      if (isQuizzesQuery) {
+        onError(new Error('network-failure'));
+        return vi.fn();
+      }
+
+      onNext({ docs: [] });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useTopicLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.toast).toEqual(
+      expect.objectContaining({
+        show: true,
+        message: 'No se pudieron sincronizar los tests del tema.',
+      })
+    );
   });
 });

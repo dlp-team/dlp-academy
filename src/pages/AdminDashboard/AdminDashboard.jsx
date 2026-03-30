@@ -1,5 +1,5 @@
 // src/pages/AdminDashboard/AdminDashboard.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Building2, Users, Search, CheckCircle2, XCircle,
@@ -38,6 +38,50 @@ const parseCsvEmails = (value = '') => {
         .filter(Boolean);
 };
 
+const AdminConfirmModal = ({
+    isOpen,
+    title,
+    description,
+    confirmLabel = 'Confirmar',
+    isConfirming = false,
+    onCancel,
+    onConfirm
+}) => {
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/55" onClick={onCancel} aria-hidden="true" />
+            <div
+                role="dialog"
+                aria-modal="true"
+                className="relative w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl p-6"
+            >
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-3">{title}</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">{description}</p>
+                <div className="flex justify-end gap-3">
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        disabled={isConfirming}
+                        className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        type="button"
+                        onClick={onConfirm}
+                        disabled={isConfirming}
+                        className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-60"
+                    >
+                        {isConfirming ? 'Procesando...' : confirmLabel}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
 const OverviewTab = ({ stats, loading }) => {
@@ -51,10 +95,10 @@ const OverviewTab = ({ stats, loading }) => {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                {cards.map(({ label, value, icon: Icon, color, bg }) => (
+                {cards.map(({ label, value, icon, color, bg }) => (
                     <div key={label} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
                         <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-4`}>
-                            <Icon className={`w-5 h-5 ${color}`} />
+                            {React.createElement(icon, { className: `w-5 h-5 ${color}` })}
                         </div>
                         <div className="text-3xl font-black text-slate-900 dark:text-white mb-0.5">
                             {loading ? <Loader2 className="w-6 h-6 animate-spin text-slate-300" /> : (value ?? '—')}
@@ -100,6 +144,12 @@ const InstitutionsTab = () => {
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    const [institutionConfirm, setInstitutionConfirm] = useState({
+        isOpen: false,
+        action: '',
+        institution: null,
+    });
+    const [isConfirmingInstitutionAction, setIsConfirmingInstitutionAction] = useState(false);
 
     const fetchInstitutions = async () => {
         setLoading(true);
@@ -269,16 +319,45 @@ const InstitutionsTab = () => {
         finally { setSubmitting(false); }
     };
 
-    const handleToggle = async (school) => {
-        if (!window.confirm(`¿${school.enabled !== false ? 'Deshabilitar' : 'Habilitar'} "${school.name}"?`)) return;
-        await updateDoc(doc(db, 'institutions', school.id), { enabled: !school.enabled });
-        fetchInstitutions();
+    const queueInstitutionConfirm = (action, institution) => {
+        setInstitutionConfirm({ isOpen: true, action, institution });
     };
 
-    const handleDelete = async (school) => {
-        if (!window.confirm(`¿Eliminar "${school.name}"? Esta acción no elimina los usuarios asociados.`)) return;
-        await deleteDoc(doc(db, 'institutions', school.id));
-        fetchInstitutions();
+    const closeInstitutionConfirm = () => {
+        if (isConfirmingInstitutionAction) return;
+        setInstitutionConfirm({ isOpen: false, action: '', institution: null });
+    };
+
+    const confirmInstitutionAction = async () => {
+        if (!institutionConfirm.institution) return;
+
+        setIsConfirmingInstitutionAction(true);
+        try {
+            if (institutionConfirm.action === 'toggle') {
+                await updateDoc(doc(db, 'institutions', institutionConfirm.institution.id), {
+                    enabled: !(institutionConfirm.institution.enabled !== false)
+                });
+            }
+
+            if (institutionConfirm.action === 'delete') {
+                await deleteDoc(doc(db, 'institutions', institutionConfirm.institution.id));
+            }
+
+            await fetchInstitutions();
+            setInstitutionConfirm({ isOpen: false, action: '', institution: null });
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsConfirmingInstitutionAction(false);
+        }
+    };
+
+    const handleToggle = (school) => {
+        queueInstitutionConfirm('toggle', school);
+    };
+
+    const handleDelete = (school) => {
+        queueInstitutionConfirm('delete', school);
     };
 
     const filtered = Institutions.filter(s => {
@@ -294,6 +373,18 @@ const InstitutionsTab = () => {
 
         return matchSearch && matchStatus && matchType;
     });
+
+    const institutionConfirmTitle = institutionConfirm.action === 'toggle'
+        ? `${institutionConfirm.institution?.enabled !== false ? 'Deshabilitar' : 'Habilitar'} institución`
+        : 'Eliminar institución';
+
+    const institutionConfirmDescription = institutionConfirm.action === 'toggle'
+        ? `Se ${institutionConfirm.institution?.enabled !== false ? 'deshabilitará' : 'habilitará'} "${institutionConfirm.institution?.name || ''}".`
+        : `Se eliminará "${institutionConfirm.institution?.name || ''}". Esta acción no elimina los usuarios asociados.`;
+
+    const institutionConfirmLabel = institutionConfirm.action === 'toggle'
+        ? `${institutionConfirm.institution?.enabled !== false ? 'Deshabilitar' : 'Habilitar'} institución`
+        : 'Eliminar institución';
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -513,6 +604,16 @@ const InstitutionsTab = () => {
                 </div>
             )}
 
+            <AdminConfirmModal
+                isOpen={institutionConfirm.isOpen}
+                title={institutionConfirmTitle}
+                description={institutionConfirmDescription}
+                confirmLabel={institutionConfirmLabel}
+                isConfirming={isConfirmingInstitutionAction}
+                onCancel={closeInstitutionConfirm}
+                onConfirm={confirmInstitutionAction}
+            />
+
         </div>
     );
 };
@@ -520,7 +621,6 @@ const InstitutionsTab = () => {
 // ─── Users Tab ────────────────────────────────────────────────────────────────
 
 const UsersTab = () => {
-    const navigate = useNavigate();
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -532,16 +632,30 @@ const UsersTab = () => {
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const PAGE_SIZE = 50;
+    const [userConfirm, setUserConfirm] = useState({
+        isOpen: false,
+        action: '',
+        user: null,
+        newRole: '',
+    });
+    const [isConfirmingUserAction, setIsConfirmingUserAction] = useState(false);
 
-    const fetchUsers = async (isNextPage = false) => {
+    const ROLE_LABELS = {
+        admin: 'Admin Global',
+        institutionadmin: 'Admin Institución',
+        teacher: 'Profesor',
+        student: 'Alumno',
+    };
+
+    const fetchUsers = useCallback(async (isNextPage = false, cursor = null) => {
         if (isNextPage) setLoadingMore(true);
         else setLoading(true);
 
         try {
             let q = query(collection(db, 'users'), limit(PAGE_SIZE));
             
-            if (isNextPage && lastVisible) {
-                q = query(collection(db, 'users'), startAfter(lastVisible), limit(PAGE_SIZE));
+            if (isNextPage && cursor) {
+                q = query(collection(db, 'users'), startAfter(cursor), limit(PAGE_SIZE));
             }
 
             const snap = await getDocs(q);
@@ -562,20 +676,52 @@ const UsersTab = () => {
             setLoading(false);
             setLoadingMore(false);
         }
+    }, []);
+
+    useEffect(() => { fetchUsers(); }, [fetchUsers]);
+
+    const queueUserConfirm = (payload) => {
+        setUserConfirm({ isOpen: true, ...payload });
     };
 
-    useEffect(() => { fetchUsers(); }, []);
-
-    const handleToggle = async (u) => {
-        if (!window.confirm(`¿${u.enabled !== false ? 'Deshabilitar' : 'Habilitar'} a ${u.email}?`)) return;
-        await updateDoc(doc(db, 'users', u.id), { enabled: !(u.enabled !== false) });
-        fetchUsers();
+    const closeUserConfirm = () => {
+        if (isConfirmingUserAction) return;
+        setUserConfirm({ isOpen: false, action: '', user: null, newRole: '' });
     };
 
-    const handleRoleChange = async (u, newRole) => {
-        if (!window.confirm(`¿Cambiar rol de ${u.email} a "${newRole}"?`)) return;
-        await updateDoc(doc(db, 'users', u.id), { role: newRole });
-        fetchUsers();
+    const confirmUserAction = async () => {
+        if (!userConfirm.user) return;
+
+        setIsConfirmingUserAction(true);
+        try {
+            if (userConfirm.action === 'toggle') {
+                await updateDoc(doc(db, 'users', userConfirm.user.id), {
+                    enabled: !(userConfirm.user.enabled !== false)
+                });
+            }
+
+            if (userConfirm.action === 'role') {
+                await updateDoc(doc(db, 'users', userConfirm.user.id), {
+                    role: userConfirm.newRole
+                });
+            }
+
+            await fetchUsers();
+            setUserConfirm({ isOpen: false, action: '', user: null, newRole: '' });
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setIsConfirmingUserAction(false);
+        }
+    };
+
+    const handleToggle = (u) => {
+        queueUserConfirm({ action: 'toggle', user: u, newRole: '' });
+    };
+
+    const handleRoleChange = (u, newRole) => {
+        if (!newRole || newRole === u.role) return;
+        queueUserConfirm({ action: 'role', user: u, newRole });
     };
 
     const ROLES = ['all', 'admin', 'institutionadmin', 'teacher', 'student'];
@@ -591,6 +737,17 @@ const UsersTab = () => {
 
         return matchSearch && matchRole && matchStatus;
     });
+
+    const targetUserLabel = userConfirm.user?.email || userConfirm.user?.displayName || 'este usuario';
+    const userConfirmTitle = userConfirm.action === 'role'
+        ? 'Cambiar rol de usuario'
+        : `${userConfirm.user?.enabled !== false ? 'Deshabilitar' : 'Habilitar'} usuario`;
+    const userConfirmDescription = userConfirm.action === 'role'
+        ? `Se cambiará el rol de "${targetUserLabel}" a "${ROLE_LABELS[userConfirm.newRole] || userConfirm.newRole}".`
+        : `Se ${userConfirm.user?.enabled !== false ? 'deshabilitará' : 'habilitará'} "${targetUserLabel}".`;
+    const userConfirmLabel = userConfirm.action === 'role'
+        ? 'Cambiar rol'
+        : `${userConfirm.user?.enabled !== false ? 'Deshabilitar' : 'Habilitar'} usuario`;
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -684,7 +841,7 @@ const UsersTab = () => {
                     {hasMore && (
                         <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex justify-center">
                             <button 
-                                onClick={() => fetchUsers(true)}
+                                onClick={() => fetchUsers(true, lastVisible)}
                                 disabled={loadingMore}
                                 className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2"
                             >
@@ -696,6 +853,16 @@ const UsersTab = () => {
 
                 </div>
             )}
+
+            <AdminConfirmModal
+                isOpen={userConfirm.isOpen}
+                title={userConfirmTitle}
+                description={userConfirmDescription}
+                confirmLabel={userConfirmLabel}
+                isConfirming={isConfirmingUserAction}
+                onCancel={closeUserConfirm}
+                onConfirm={confirmUserAction}
+            />
         </div>
     );
 };
@@ -765,14 +932,14 @@ const AdminDashboard = ({ user }) => {
 
                 {/* Underline tabs */}
                 <div className="flex items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800">
-                    {TABS.map(({ key, label, icon: Icon }) => (
+                    {TABS.map(({ key, label, icon }) => (
                         <button key={key} onClick={() => setActiveTab(key)}
                             className={`px-4 py-2 font-medium text-sm flex items-center gap-2 border-b-2 -mb-px transition-colors ${
                                 activeTab === key
                                     ? 'border-purple-600 text-purple-600 dark:text-purple-400'
                                     : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
                             }`}>
-                            <Icon className="w-4 h-4" /> {label}
+                            {React.createElement(icon, { className: 'w-4 h-4' })} {label}
                         </button>
                     ))}
                 </div>

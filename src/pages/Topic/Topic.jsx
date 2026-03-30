@@ -1,7 +1,7 @@
 // src/pages/Topic/Topic.jsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDarkMode } from '../../hooks/useDarkMode';
-import { Eye, GraduationCap, Loader2 } from 'lucide-react';
+import { Eye, GraduationCap, Loader2, AlertCircle } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import { useTopicLogic } from './hooks/useTopicLogic';
 import { useTopicFailedQuestions } from './hooks/useTopicFailedQuestions';
@@ -26,18 +26,22 @@ const N8N_WEBHOOK_URL = 'TU_URL_DE_N8N_AQUI';
 const Topic = ({ user }) => {
     // 1. Lógica base
     const logic = useTopicLogic(user);
-    const { isDark, toggleDarkMode } = useDarkMode();
+    useDarkMode();
+    const { activeTab, setActiveTab } = logic;
 
     // 2. ESTADOS LOCALES
     const [quizResults, setQuizResults] = useState([]);
     const [quizScoreReviews, setQuizScoreReviews] = useState([]);
-    const [scoresLoading, setScoresLoading] = useState(true);
     const [topicAssignments, setTopicAssignments] = useState([]);
+    const [scoresFeedback, setScoresFeedback] = useState('');
+    const [reviewsFeedback, setReviewsFeedback] = useState('');
+    const [assignmentsFeedback, setAssignmentsFeedback] = useState('');
     const [previewAsStudent, setPreviewAsStudent] = useState(false);
     const canUsePreview = user?.role !== 'student';
     const isStudentView = user?.role === 'student' || previewAsStudent;
     const { failedQuestions } = useTopicFailedQuestions(user, logic.topicId);
     const { members: classMembers = [] } = useClassMembers(logic.subject);
+    const topicRealtimeFeedback = assignmentsFeedback || reviewsFeedback || scoresFeedback;
 
     useEffect(() => {
         if (!canUsePreview) {
@@ -54,23 +58,29 @@ const Topic = ({ user }) => {
     }, [previewAsStudent, canUsePreview]);
 
     useEffect(() => {
-        if (isStudentView && logic.activeTab === 'materials') {
-            logic.setActiveTab('materiales');
+        if (isStudentView && activeTab === 'materials') {
+            setActiveTab('materiales');
             return;
         }
 
-        if (!isStudentView && logic.activeTab === 'materiales') {
-            logic.setActiveTab('materials');
+        if (!isStudentView && activeTab === 'materiales') {
+            setActiveTab('materials');
         }
-    }, [isStudentView, logic.activeTab, logic.setActiveTab]);
+    }, [isStudentView, activeTab, setActiveTab]);
 
     // 3. EFECTO: Escuchar puntuaciones (Quizzes)
     useEffect(() => {
         if (!user || !logic.subjectId || !logic.topicId) {
-            setScoresLoading(false);
+            queueMicrotask(() => {
+                setQuizResults([]);
+                setScoresFeedback('');
+            });
             return;
         }
-        setScoresLoading(true);
+
+        queueMicrotask(() => {
+            setScoresFeedback('');
+        });
 
         const resultsRef = collection(db, "subjects", logic.subjectId, "topics", logic.topicId, "quiz_results");
         const source = isStudentView
@@ -79,16 +89,16 @@ const Topic = ({ user }) => {
 
         const unsubscribe = onSnapshot(source, (snapshot) => {
             setQuizResults(snapshot.docs.map((resultDoc) => ({ id: resultDoc.id, ...resultDoc.data() })));
-            setScoresLoading(false);
+            setScoresFeedback('');
         }, (error) => {
             if (error?.code === 'permission-denied') {
                 setQuizResults([]);
-                setScoresLoading(false);
+                setScoresFeedback('');
                 return;
             }
             console.error('[QUIZ_RESULTS] Firestore error:', error);
             setQuizResults([]);
-            setScoresLoading(false);
+            setScoresFeedback('No se pudieron sincronizar las puntuaciones de tests.');
         });
 
         return () => unsubscribe();
@@ -96,9 +106,16 @@ const Topic = ({ user }) => {
 
     useEffect(() => {
         if (!user || !logic.subjectId || !logic.topicId || isStudentView) {
-            setQuizScoreReviews([]);
+            queueMicrotask(() => {
+                setQuizScoreReviews([]);
+                setReviewsFeedback('');
+            });
             return;
         }
+
+        queueMicrotask(() => {
+            setReviewsFeedback('');
+        });
 
         const reviewsRef = query(
             collection(db, 'topicQuizGradeReviews'),
@@ -108,13 +125,16 @@ const Topic = ({ user }) => {
 
         const unsubscribe = onSnapshot(reviewsRef, (snapshot) => {
             setQuizScoreReviews(snapshot.docs.map((reviewDoc) => ({ id: reviewDoc.id, ...reviewDoc.data() })));
+            setReviewsFeedback('');
         }, (error) => {
             if (error?.code === 'permission-denied') {
                 setQuizScoreReviews([]);
+                setReviewsFeedback('');
                 return;
             }
             console.error('[TOPIC_QUIZ_REVIEWS] Firestore error:', error);
             setQuizScoreReviews([]);
+            setReviewsFeedback('No se pudieron sincronizar las revisiones de tests.');
         });
 
         return () => unsubscribe();
@@ -122,9 +142,16 @@ const Topic = ({ user }) => {
 
     useEffect(() => {
         if (!logic.subjectId || !logic.topicId) {
-            setTopicAssignments([]);
+            queueMicrotask(() => {
+                setTopicAssignments([]);
+                setAssignmentsFeedback('');
+            });
             return undefined;
         }
+
+        queueMicrotask(() => {
+            setAssignmentsFeedback('');
+        });
 
         const assignmentsRef = query(
             collection(db, 'topicAssignments'),
@@ -145,17 +172,21 @@ const Topic = ({ user }) => {
 
             if (user?.role === 'student') {
                 setTopicAssignments(allAssignments.filter((assignment) => assignment.visibleToStudents !== false));
+                setAssignmentsFeedback('');
                 return;
             }
 
             setTopicAssignments(allAssignments);
+            setAssignmentsFeedback('');
         }, (error) => {
             if (error?.code === 'permission-denied') {
                 setTopicAssignments([]);
+                setAssignmentsFeedback('');
                 return;
             }
             console.error('[TOPIC_ASSIGNMENTS] Firestore error:', error);
             setTopicAssignments([]);
+            setAssignmentsFeedback('No se pudieron sincronizar las tareas del tema.');
         });
 
         return () => unsubscribe();
@@ -260,7 +291,7 @@ const Topic = ({ user }) => {
         });
 
         return byQuiz;
-    }, [logic.topic?.quizzes, quizResults, quizScoreReviews, classMembers, isStudentView, user?.uid, logic.subject]);
+    }, [logic.topic?.quizzes, quizResults, quizScoreReviews, classMembers, isStudentView, user, logic.subject]);
 
     const handleSaveQuizScoreOverride = async ({ quizId, userId, overrideScore }) => {
         if (!logic.subjectId || !logic.topicId || !quizId || !userId || !user?.uid) return;
@@ -379,6 +410,13 @@ const Topic = ({ user }) => {
                         >
                             {previewAsStudent ? 'Salir modo alumno' : 'Activar modo alumno'}
                         </button>
+                    </div>
+                )}
+
+                {topicRealtimeFeedback && (
+                    <div className="mb-4 rounded-2xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm font-semibold text-red-700 dark:text-red-300 flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4" />
+                        <span>{topicRealtimeFeedback}</span>
                     </div>
                 )}
 

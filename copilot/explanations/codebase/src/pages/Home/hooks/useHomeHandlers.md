@@ -1,3 +1,34 @@
+<!-- copilot/explanations/codebase/src/pages/Home/hooks/useHomeHandlers.md -->
+## [2026-03-30] Replaced Alert-Based DnD Errors with In-Page Feedback
+### Context & Architecture
+- Home drag-and-drop failure handlers were still using browser alerts, which interrupted workflow and violated in-page feedback UX requirements.
+
+### Change
+- Added optional `onHomeFeedback(message, tone)` callback input in `useHomeHandlers`.
+- Replaced alert fallback in:
+	- `handleDropOnFolder`
+	- `handleNestFolder`
+- Failures now publish non-blocking error feedback using Home page inline messaging.
+
+### Validation
+- Focused suite passed: `npm run test -- tests/unit/hooks/useHomeHandlers.shortcuts.test.js tests/unit/hooks/useHomeLogic.test.js tests/unit/pages/home/HomeControls.sharedScopeToggle.test.jsx`.
+
+## [2026-03-30] Save/Delete Failure Feedback Hardening
+### Context & Architecture
+- Several Home handler branches still failed silently (console-only) or without consistent in-page error feedback for save/delete operations.
+
+### Change
+- Added callback-driven feedback for additional failure paths in `useHomeHandlers`:
+	- `handleSaveSubject` (standard and student shortcut-tag mode),
+	- `handleSaveFolder`,
+	- `handleDelete` unshare errors and generic delete exceptions,
+	- `handleDeleteFolderAll`,
+	- `handleDeleteFolderOnly`.
+- Preserved all existing owner/permission gates and close-modal behavior on successful operations.
+
+### Validation
+- Focused suite passed: `npm run test -- tests/unit/hooks/useHomeHandlers.shortcuts.test.js tests/unit/hooks/useHomeLogic.test.js`.
+
 ## [2026-02-26] Feature Update: Preserve Sharing on Subject Edit
 ### Context & Architecture
 `useHomeHandlers.handleSaveSubject` is the Home modal save entrypoint for subject edits/creates and controls what fields are written to Firestore through `updateSubject` / `addSubject`.

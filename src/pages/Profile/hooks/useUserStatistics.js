@@ -1,9 +1,40 @@
 // src/pages/Profile/hooks/useUserStatistics.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { db } from '../../../firebase/config';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 
-const useUserStatistics = (subjects, userId) => {
+const EMPTY_STATS = {
+    totalQuizzes: 0,
+    averageScore: 0,
+    passRate: 0,
+    totalQuestions: 0,
+    recentActivity: [],
+    subjectPerformance: []
+};
+
+const useUserStatistics = (subjects, userId, options = {}) => {
+    const forceAggregateMode = options?.aggregateMode === true;
+
+    const aggregateUserIds = useMemo(
+        () => (
+            Array.isArray(options?.aggregateUserIds)
+                ? Array.from(new Set(options.aggregateUserIds.filter(Boolean).map((value) => String(value))))
+                : []
+        ),
+        [options?.aggregateUserIds]
+    );
+
+    const aggregateUsersById = useMemo(
+        () => (
+            options?.aggregateUsersById && typeof options.aggregateUsersById === 'object'
+                ? options.aggregateUsersById
+                : {}
+        ),
+        [options?.aggregateUsersById]
+    );
+
+    const aggregateUserIdsKey = aggregateUserIds.join('|');
+
     const [stats, setStats] = useState({
         totalQuizzes: 0,
         averageScore: 0,
@@ -17,7 +48,16 @@ const useUserStatistics = (subjects, userId) => {
 
     useEffect(() => {
         const fetchDeepStats = async () => {
-            if (!subjects || subjects.length === 0 || !userId) {
+            const aggregateMode = forceAggregateMode || aggregateUserIds.length > 0;
+
+            if (
+                !subjects
+                || subjects.length === 0
+                || (!userId && !aggregateMode)
+                || (aggregateMode && aggregateUserIds.length === 0)
+            ) {
+                setRawResults([]);
+                setStats(EMPTY_STATS);
                 setLoading(false);
                 return;
             }
@@ -25,6 +65,7 @@ const useUserStatistics = (subjects, userId) => {
             try {
                 let allResults = [];
                 let subjectStatsMap = {};
+                const aggregateUserIdSet = new Set(aggregateUserIds);
 
                 subjects.forEach(sub => {
                     subjectStatsMap[sub.id] = {
@@ -47,13 +88,21 @@ const useUserStatistics = (subjects, userId) => {
 
                         resultsSnapshot.forEach(doc => {
                             const data = doc.data();
-                            if (data.userId === userId) {
+                            const resultUserId = String(data.userId || '');
+                            const includeInStats = aggregateMode
+                                ? aggregateUserIdSet.has(resultUserId)
+                                : resultUserId === String(userId || '');
+
+                            if (includeInStats) {
                                 const resultEntry = {
                                     id: doc.id,
                                     ...data,
                                     subjectId: subject.id,
                                     subjectName: subject.name,
                                     subjectColor: subject.color,
+                                    studentName: aggregateMode
+                                        ? (aggregateUsersById[resultUserId] || data?.displayName || 'Alumno')
+                                        : null,
                                     date: data.completedAt?.toDate ? data.completedAt.toDate() : new Date(data.completedAt)
                                 };
 
@@ -107,7 +156,7 @@ const useUserStatistics = (subjects, userId) => {
         };
 
         fetchDeepStats();
-    }, [subjects, userId]);
+    }, [subjects, userId, forceAggregateMode, aggregateUserIds, aggregateUserIdsKey, aggregateUsersById]);
 
     // Chart Data Preparation
     const getChartData = (filterSubject) => {

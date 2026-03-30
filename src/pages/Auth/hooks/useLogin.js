@@ -55,10 +55,11 @@ export const useLogin = () => {
         return null;
     };
 
-    const saveUserToFirestore = async (user) => {
+    const saveUserToFirestore = async (user, rememberMe = null) => {
         const userRef = doc(db, "users", user.uid);
         const userSnap = await getDoc(userRef);
         const resolvedInstitutionId = await resolveInstitutionId(user.email);
+        const normalizedRememberMe = typeof rememberMe === 'boolean' ? rememberMe : null;
 
         if (!userSnap.exists()) {
             // New Google User
@@ -69,6 +70,7 @@ export const useLogin = () => {
                 photoURL: user.photoURL,
                 role: 'student',
                 institutionId: resolvedInstitutionId,
+                rememberMe: normalizedRememberMe === null ? false : normalizedRememberMe,
                 createdAt: serverTimestamp(),
                 lastLogin: serverTimestamp(),
                 settings: { theme: 'system', language: 'es', viewMode: 'grid' }
@@ -78,6 +80,9 @@ export const useLogin = () => {
             const updates = { lastLogin: serverTimestamp() };
             if (!userSnap.data()?.institutionId && resolvedInstitutionId) {
                 updates.institutionId = resolvedInstitutionId;
+            }
+            if (normalizedRememberMe !== null) {
+                updates.rememberMe = normalizedRememberMe;
             }
             await setDoc(userRef, updates, { merge: true });
         }
@@ -106,7 +111,7 @@ export const useLogin = () => {
             const result = await signInWithEmailAndPassword(auth, formData.email, formData.password);
             
             // 3. Update Firestore
-            await saveUserToFirestore(result.user);
+            await saveUserToFirestore(result.user, formData.rememberMe);
 
             navigate('/home');
         } catch (err) {

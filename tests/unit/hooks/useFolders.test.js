@@ -1,3 +1,4 @@
+// tests/unit/hooks/useFolders.test.js
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useFolders } from '../../../src/hooks/useFolders';
@@ -142,6 +143,55 @@ describe('useFolders', () => {
     expect(payload.ownerEmail).toBe(user.email);
     expect(payload.institutionId).toBe(user.institutionId);
     expect(payload.name).toBe('Planning');
+  });
+
+  it('moveFolderBetweenParents blocks circular moves without alert dialog or writes', async () => {
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+
+    firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
+      const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
+
+      if (isOwnedQuery) {
+        callback({
+          docs: [
+            createDoc('folder-1', {
+              name: 'Folder Root',
+              ownerId: user.uid,
+              institutionId: user.institutionId,
+              parentId: null,
+            }),
+            createDoc('child-folder-1', {
+              name: 'Folder Child',
+              ownerId: user.uid,
+              institutionId: user.institutionId,
+              parentId: 'folder-1',
+            }),
+          ],
+        });
+      } else {
+        callback({ docs: [] });
+      }
+
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    let moveResult;
+    await act(async () => {
+      moveResult = await result.current.moveFolderBetweenParents('folder-1', null, 'child-folder-1');
+    });
+
+    expect(moveResult).toEqual({ moved: false, reason: 'circular-dependency' });
+    expect(alertSpy).not.toHaveBeenCalled();
+    expect(firestoreMocks.mockBatchUpdate).not.toHaveBeenCalled();
+    expect(firestoreMocks.mockBatchCommit).not.toHaveBeenCalled();
+
+    alertSpy.mockRestore();
   });
 
   it('deleteFolderOnly re-parents children and deletes only selected folder', async () => {

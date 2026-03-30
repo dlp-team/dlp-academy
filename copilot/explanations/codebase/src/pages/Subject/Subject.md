@@ -1,8 +1,9 @@
+<!-- copilot/explanations/codebase/src/pages/Subject/Subject.md -->
 # Subject.jsx
 
 ## Overview
 - **Source file:** `src/pages/Subject/Subject.jsx`
-- **Last documented:** 2026-02-24
+- **Last documented:** 2026-03-30
 - **Role:** Page-level or feature-level module that orchestrates UI and logic.
 
 ## Responsibilities
@@ -24,3 +25,8 @@
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+### 2026-03-30
+- Replaced topic deletion browser confirm dialog with an in-page confirmation modal in `Subject.jsx`.
+- Topic delete flow now requires explicit modal confirmation and includes safe cancel behavior without side effects.

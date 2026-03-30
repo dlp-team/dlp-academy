@@ -20,6 +20,14 @@
 - `./components/UserCard`
 - `./components/ProfileSubjects`
 - `./components/StatsSidebar`
+- `./components/BadgesSection`
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+### 2026-03-30
+- Added teacher aggregate statistics mode by passing `statsOptions` into `useUserStatistics` and `UserStatistics`.
+- Wired teacher profile to assigned-students context (`assignedStudents`) instead of teacher-self metrics.
+- Added teacher badge management surface via `BadgesSection` and `awardBadgeToStudent` hook action.
+- Hid student badge sidebar card for teacher role using `showBadges={false}`.

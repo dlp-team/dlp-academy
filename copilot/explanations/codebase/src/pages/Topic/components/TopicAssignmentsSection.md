@@ -21,3 +21,4 @@
 - 2026-03-29: Added institution resolution fallback (user -> subject -> topic) before assignment creation to avoid permission-denied writes when `user.institutionId` is missing.
 - 2026-03-29: Assignment create payload now includes stable metadata (`institutionId`, `ownerId`, `createdBy`) aligned with root-collection Firestore rules.
 - 2026-03-29: Submission payload now includes `institutionId` for consistent downstream reads/analytics.
+- 2026-03-30: Added explicit snapshot error callbacks for teacher/student submissions listeners, with fallback state reset and inline feedback (`No se pudieron cargar las entregas de las tareas.` / `No se pudo cargar tu estado de entregas.`).

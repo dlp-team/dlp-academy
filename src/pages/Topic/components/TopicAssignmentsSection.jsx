@@ -106,7 +106,7 @@ const TopicAssignmentsSection = ({
                 if (!cancelled) {
                     setResolvedInstitutionId(null);
                 }
-            } catch (error) {
+            } catch {
                 if (!cancelled) {
                     setResolvedInstitutionId(null);
                 }
@@ -137,6 +137,10 @@ const TopicAssignmentsSection = ({
                     counts[data.assignmentId] = (counts[data.assignmentId] || 0) + 1;
                 });
                 setSubmissionCountByAssignment(counts);
+            }, (error) => {
+                console.error('[TOPIC_ASSIGNMENTS] Error loading submission counts:', error);
+                setSubmissionCountByAssignment({});
+                setFeedback({ type: 'error', message: 'No se pudieron cargar las entregas de las tareas.' });
             });
 
             return () => unsubscribe();
@@ -156,6 +160,10 @@ const TopicAssignmentsSection = ({
                 map[data.assignmentId] = { id: submissionDoc.id, ...data };
             });
             setSubmissionsByAssignment(map);
+        }, (error) => {
+            console.error('[TOPIC_ASSIGNMENTS] Error loading student submissions:', error);
+            setSubmissionsByAssignment({});
+            setFeedback({ type: 'error', message: 'No se pudo cargar tu estado de entregas.' });
         });
 
         return () => unsubscribe();

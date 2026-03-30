@@ -1,3 +1,22 @@
+<!-- copilot/explanations/codebase/src/hooks/useSubjects.md -->
+## [2026-03-30] Subject Permanent Delete Now Uses Shared Topic Cascade Utility
+### Context
+- Subject permanent deletion still had inline duplicate cleanup logic for topic-linked artifacts.
+- Phase 05 required consistent cleanup coverage for exam artifacts as well.
+
+### Change
+- `permanentlyDeleteSubject` now delegates per-topic cleanup to `cascadeDeleteTopicResources` from `src/utils/topicDeletionUtils.js`.
+- Cleanup scope now uses `DEFAULT_TOPIC_CASCADE_COLLECTIONS`, which includes:
+  - `documents`
+  - `resumen`
+  - `quizzes`
+  - `exams`
+  - `examns`
+- Preserved best-effort behavior: cleanup/query failures are logged and do not block final topic/subject deletion.
+
+### Validation
+- Focused suite passed: `npm run test -- tests/unit/hooks/useSubjects.test.js tests/unit/utils/topicDeletionUtils.test.js tests/unit/hooks/useSubjectManager.test.js tests/unit/hooks/useTopicLogic.test.js`.
+
 ## [2026-03-13] Shared Shortcut Visibility: Immediate Subject Render Before Topic Hydration
 ### Context
 - Shared shortcuts could appear delayed after refresh/theme toggle because subject list rendering waited for topic hydration (`Promise.all`) to complete.

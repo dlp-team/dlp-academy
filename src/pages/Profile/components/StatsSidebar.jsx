@@ -4,7 +4,7 @@ import { Award, Star, Zap, Target, Flame, BookOpen, Trophy, Users, Lock, X } fro
 import MiniStatsChart from './MiniStatsChart';
 
 // ─── Badge Catalog ─────────────────────────────────────────────────────────────
-export const BADGE_CATALOG = [
+const BADGE_CATALOG = [
     { key: 'first_quiz',    label: 'Primer Test',   description: 'Completaste tu primer test',                 icon: Star,     color: 'from-amber-400 to-yellow-300',  glow: 'shadow-amber-400/40',   textColor: 'text-amber-600 dark:text-amber-400',   auto: true  },
     { key: 'perfect_score', label: 'Perfecto',       description: 'Obtuviste 100% en un test',                 icon: Zap,      color: 'from-emerald-400 to-green-300', glow: 'shadow-emerald-400/40', textColor: 'text-emerald-600 dark:text-emerald-400',auto: true  },
     { key: 'streak_5',      label: 'Racha x5',       description: '5 tests aprobados seguidos',                icon: Flame,    color: 'from-orange-500 to-red-400',    glow: 'shadow-orange-400/40',  textColor: 'text-orange-600 dark:text-orange-400',  auto: true  },
@@ -137,7 +137,7 @@ const BadgesCard = ({ badges = [], onClick }) => {
 };
 
 // ─── Main StatsSidebar ─────────────────────────────────────────────────────────
-const StatsSidebar = ({ chartData = [], role = 'student', loading = false, badges = [] }) => {
+const StatsSidebar = ({ chartData = [], role = 'student', loading = false, badges = [], showBadges = true }) => {
     const [showBadgesOverlay, setShowBadgesOverlay] = useState(false);
 
     return (
@@ -152,10 +152,12 @@ const StatsSidebar = ({ chartData = [], role = 'student', loading = false, badge
                     />
                 )}
 
-                <BadgesCard badges={badges} onClick={() => setShowBadgesOverlay(true)} />
+                {showBadges && (
+                    <BadgesCard badges={badges} onClick={() => setShowBadgesOverlay(true)} />
+                )}
             </div>
 
-            {showBadgesOverlay && (
+            {showBadges && showBadgesOverlay && (
                 <BadgesOverlay badges={badges} onClose={() => setShowBadgesOverlay(false)} />
             )}
         </>

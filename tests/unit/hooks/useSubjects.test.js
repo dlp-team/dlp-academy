@@ -1,4 +1,5 @@
 // tests/unit/hooks/useSubjects.test.js
+// tests/unit/hooks/useSubjects.test.js
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useSubjects } from '../../../src/hooks/useSubjects';
@@ -466,7 +467,7 @@ describe('useSubjects permanentlyDeleteSubject', () => {
     firestoreMocks.mockOnSnapshot.mockReturnValue(vi.fn());
   });
 
-  it('cascades topic, document, resource, quiz, shortcut, and subject deletions for owner', async () => {
+  it('cascades topic, document, resource, quiz, exam, shortcut, and subject deletions for owner', async () => {
     firestoreMocks.mockGetDoc.mockResolvedValue({
       exists: () => true,
       data: () => ({ ownerId: ownerUser.uid }),
@@ -486,25 +487,39 @@ describe('useSubjects permanentlyDeleteSubject', () => {
       }
 
       if (fieldMap.get('topicId') === 'topic-1') {
-        return {
-          docs:
-            queryObj.parts[0]?.name === 'documents'
-              ? [{ id: 'doc-1', data: () => ({}) }]
-              : queryObj.parts[0]?.name === 'resumen'
-                ? [{ id: 'res-1', data: () => ({}) }]
-                : [{ id: 'quiz-1', data: () => ({}) }],
-        };
+        if (queryObj.parts[0]?.name === 'documents') {
+          return { docs: [{ id: 'doc-1', data: () => ({}) }] };
+        }
+        if (queryObj.parts[0]?.name === 'resumen') {
+          return { docs: [{ id: 'res-1', data: () => ({}) }] };
+        }
+        if (queryObj.parts[0]?.name === 'quizzes') {
+          return { docs: [{ id: 'quiz-1', data: () => ({}) }] };
+        }
+        if (queryObj.parts[0]?.name === 'exams') {
+          return { docs: [{ id: 'exam-1', data: () => ({}) }] };
+        }
+        if (queryObj.parts[0]?.name === 'examns') {
+          return { docs: [{ id: 'examn-1', data: () => ({}) }] };
+        }
       }
 
       if (fieldMap.get('topicId') === 'topic-2') {
-        return {
-          docs:
-            queryObj.parts[0]?.name === 'documents'
-              ? [{ id: 'doc-2', data: () => ({}) }]
-              : queryObj.parts[0]?.name === 'resumen'
-                ? [{ id: 'res-2', data: () => ({}) }]
-                : [{ id: 'quiz-2', data: () => ({}) }],
-        };
+        if (queryObj.parts[0]?.name === 'documents') {
+          return { docs: [{ id: 'doc-2', data: () => ({}) }] };
+        }
+        if (queryObj.parts[0]?.name === 'resumen') {
+          return { docs: [{ id: 'res-2', data: () => ({}) }] };
+        }
+        if (queryObj.parts[0]?.name === 'quizzes') {
+          return { docs: [{ id: 'quiz-2', data: () => ({}) }] };
+        }
+        if (queryObj.parts[0]?.name === 'exams') {
+          return { docs: [{ id: 'exam-2', data: () => ({}) }] };
+        }
+        if (queryObj.parts[0]?.name === 'examns') {
+          return { docs: [{ id: 'examn-2', data: () => ({}) }] };
+        }
       }
 
       if (
@@ -541,6 +556,18 @@ describe('useSubjects permanentlyDeleteSubject', () => {
     );
     expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'quizzes', id: 'quiz-2' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'exams', id: 'exam-1' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'exams', id: 'exam-2' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'examns', id: 'examn-1' })
+    );
+    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'examns', id: 'examn-2' })
     );
     expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
       expect.objectContaining({ name: 'topics', id: 'topic-1' })

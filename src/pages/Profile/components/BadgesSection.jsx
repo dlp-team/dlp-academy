@@ -127,7 +127,6 @@ const BadgeChip = ({ badge, earned, earnedAt, compact = false }) => {
 const BadgesSection = ({ badges = [], role = 'student', students = [], onAwardBadge }) => {
     const [expanded, setExpanded] = useState(false);
     const [awardingStudent, setAwardingStudent] = useState(null);
-    const [awardingBadge, setAwardingBadge] = useState(null);
     const [awarding, setAwarding] = useState(false);
 
     const earnedKeys = new Set(badges.map(b => b.key));
@@ -141,7 +140,6 @@ const BadgesSection = ({ badges = [], role = 'student', students = [], onAwardBa
         } finally {
             setAwarding(false);
             setAwardingStudent(null);
-            setAwardingBadge(null);
         }
     };
 
@@ -219,13 +217,15 @@ const BadgesSection = ({ badges = [], role = 'student', students = [], onAwardBa
                                 <p className="text-sm text-gray-400 text-center py-4">No hay alumnos disponibles.</p>
                             ) : (
                                 students.map(student => {
+                                    const studentUid = String(student.uid || student.id || '');
+                                    if (!studentUid) return null;
                                     const studentEarned = new Set((student.badges || []).map(b => b.key));
-                                    const isOpen = awardingStudent === student.uid;
+                                    const isOpen = awardingStudent === studentUid;
                                     return (
-                                        <div key={student.uid} className="border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden">
+                                        <div key={studentUid} className="border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden">
                                             <button
                                                 className="w-full flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/40 transition-colors"
-                                                onClick={() => setAwardingStudent(isOpen ? null : student.uid)}
+                                                onClick={() => setAwardingStudent(isOpen ? null : studentUid)}
                                             >
                                                 <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">{student.displayName}</span>
                                                 <div className="flex items-center gap-2">
@@ -254,7 +254,7 @@ const BadgesSection = ({ badges = [], role = 'student', students = [], onAwardBa
                                                                 <button
                                                                     key={badge.key}
                                                                     disabled={earned || badge.auto || awarding}
-                                                                    onClick={() => handleAward(student.uid, badge.key)}
+                                                                    onClick={() => handleAward(studentUid, badge.key)}
                                                                     className={`flex flex-col items-center gap-1 group transition-all ${earned ? 'opacity-100' : badge.auto ? 'opacity-30 cursor-default' : 'opacity-50 hover:opacity-100 cursor-pointer'}`}
                                                                     title={badge.auto ? 'Automática' : earned ? 'Ya obtenida' : `Otorgar: ${badge.label}`}
                                                                 >

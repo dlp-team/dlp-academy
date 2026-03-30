@@ -20,3 +20,9 @@
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+### 2026-03-30
+- Added aggregate statistics mode for teacher profile views (`aggregateMode`, `aggregateUserIds`, `aggregateUsersById`).
+- Added explicit empty-state handling when aggregate mode is requested but no assigned students are available.
+- Preserved single-user statistics behavior for student views.

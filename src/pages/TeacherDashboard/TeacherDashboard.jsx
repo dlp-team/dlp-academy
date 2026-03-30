@@ -5,17 +5,18 @@ import {
     Users, Search, CheckCircle2, BookOpen,
     GraduationCap, Loader2, ChevronRight,
     LayoutGrid, TrendingUp, Calendar, Clock,
-    BarChart3, FolderOpen, Brain
+    BarChart3, FolderOpen, Brain, Award, Target
 } from 'lucide-react';
 import ExamCorrectionTool from './components/ExamCorrectionTool';
 import {
-    collection, query, where, getDocs, doc, getDoc
+    collection, query, where, getDocs, doc, getDoc, updateDoc
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { buildUserScopedPersistenceKey } from '../../utils/pagePersistence';
+import { buildManualBadge, getActiveCourseBadges, normalizeCourseKey, upsertCourseBadge } from '../../utils/badgeUtils';
 
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
@@ -30,15 +31,15 @@ const OverviewTab = ({ classes, students, loading }) => {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                {cards.map(({ label, value, icon: Icon, bg, color }) => (
-                    <div key={label} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
-                        <div className={`w-10 h-10 rounded-xl ${bg} flex items-center justify-center mb-4`}>
-                            <Icon className={`w-5 h-5 ${color}`} />
+                {cards.map((card) => (
+                    <div key={card.label} className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6">
+                        <div className={`w-10 h-10 rounded-xl ${card.bg} flex items-center justify-center mb-4`}>
+                            <card.icon className={`w-5 h-5 ${card.color}`} />
                         </div>
                         <div className="text-3xl font-black text-slate-900 dark:text-white mb-0.5">
-                            {loading ? <Loader2 className="w-6 h-6 animate-spin text-slate-300" /> : value}
+                            {loading ? <Loader2 className="w-6 h-6 animate-spin text-slate-300" /> : card.value}
                         </div>
-                        <div className="text-sm text-slate-500 dark:text-slate-400">{label}</div>
+                        <div className="text-sm text-slate-500 dark:text-slate-400">{card.label}</div>
                     </div>
                 ))}
             </div>
@@ -179,9 +180,17 @@ const MyClassesTab = ({ classes, allStudents, loading }) => {
 
 // ─── My Students Tab ──────────────────────────────────────────────────────────
 
-const MyStudentsTab = ({ allStudents, loading }) => {
+const MyStudentsTab = ({
+    allStudents,
+    loading,
+    actionMessage,
+    isActionPending,
+    onSetBehaviorScore,
+    onAwardBadge
+}) => {
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
+    const behaviorOptions = Array.from({ length: 11 }, (_, index) => index);
 
     const filtered = allStudents.filter(s =>
         s.displayName?.toLowerCase().includes(search.toLowerCase()) ||
@@ -198,7 +207,12 @@ const MyStudentsTab = ({ allStudents, loading }) => {
                         onChange={e => setSearch(e.target.value)}
                         className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500" />
                 </div>
-                <span className="text-sm text-slate-400 self-center">{filtered.length} alumno(s)</span>
+                <div className="flex flex-col items-end justify-center">
+                    <span className="text-sm text-slate-400">{filtered.length} alumno(s)</span>
+                    {actionMessage && (
+                        <span className="text-xs text-indigo-500 mt-1">{actionMessage}</span>
+                    )}
+                </div>
             </div>
 
             {loading ? (
@@ -212,13 +226,15 @@ const MyStudentsTab = ({ allStudents, loading }) => {
                                     <th className="px-6 py-4">Alumno</th>
                                     <th className="px-6 py-4">Email</th>
                                     <th className="px-6 py-4">Estado</th>
+                                    <th className="px-6 py-4">Conducta</th>
+                                    <th className="px-6 py-4">Reconocimientos</th>
                                     <th className="px-6 py-4">Último acceso</th>
                                     <th className="px-6 py-4 w-10"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {filtered.length === 0 ? (
-                                    <tr><td colSpan="5" className="px-6 py-10 text-center text-slate-400">No se encontraron alumnos.</td></tr>
+                                    <tr><td colSpan="7" className="px-6 py-10 text-center text-slate-400">No se encontraron alumnos.</td></tr>
                                 ) : filtered.map(s => (
                                     <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
                                         onClick={() => navigate(`/teacher-dashboard/student/${s.id}`)}>
@@ -229,6 +245,41 @@ const MyStudentsTab = ({ allStudents, loading }) => {
                                                 {s.enabled !== false ? 'Activo' : 'Inactivo'}
                                             </span>
                                         </td>
+
+                                        <td className="px-6 py-4" onClick={(event) => event.stopPropagation()}>
+                                            <select
+                                                value={Number.isFinite(Number(s.behaviorScore)) ? Number(s.behaviorScore) : 5}
+                                                disabled={isActionPending(`behavior:${s.id}`)}
+                                                onChange={(event) => onSetBehaviorScore(s.id, Number(event.target.value))}
+                                                className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+                                            >
+                                                {behaviorOptions.map((value) => (
+                                                    <option key={value} value={value}>{value}/10</option>
+                                                ))}
+                                            </select>
+                                        </td>
+
+                                        <td className="px-6 py-4" onClick={(event) => event.stopPropagation()}>
+                                            <div className="flex flex-wrap gap-2">
+                                                <button
+                                                    type="button"
+                                                    disabled={isActionPending(`badge:${s.id}:participacion`)}
+                                                    onClick={() => onAwardBadge(s.id, 'participacion')}
+                                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-sky-50 text-sky-700 dark:bg-sky-900/20 dark:text-sky-300 hover:bg-sky-100 disabled:opacity-60"
+                                                >
+                                                    <Award className="w-3.5 h-3.5" /> Participación
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    disabled={isActionPending(`badge:${s.id}:esfuerzo`)}
+                                                    onClick={() => onAwardBadge(s.id, 'esfuerzo')}
+                                                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300 hover:bg-rose-100 disabled:opacity-60"
+                                                >
+                                                    <Target className="w-3.5 h-3.5" /> Esfuerzo
+                                                </button>
+                                            </div>
+                                        </td>
+
                                         <td className="px-6 py-4 text-xs">
                                             {s.lastLogin ? new Date(s.lastLogin.toDate()).toLocaleDateString() : '—'}
                                         </td>
@@ -246,6 +297,65 @@ const MyStudentsTab = ({ allStudents, loading }) => {
     );
 };
 
+const SubjectsTab = ({ subjects = [], loading }) => {
+    const totalStudents = subjects.reduce((acc, subject) => acc + (subject.studentCount || 0), 0);
+    const totalTopics = subjects.reduce((acc, subject) => acc + (subject.topicCount || 0), 0);
+
+    return (
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Asignaturas</p>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{loading ? '...' : subjects.length}</p>
+                </div>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Alumnos vinculados</p>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{loading ? '...' : totalStudents}</p>
+                </div>
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">Temas registrados</p>
+                    <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{loading ? '...' : totalTopics}</p>
+                </div>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-emerald-500" />
+                    <h3 className="font-semibold text-slate-900 dark:text-white">Resumen por asignatura</h3>
+                </div>
+                {loading ? (
+                    <div className="flex justify-center py-12"><Loader2 className="w-7 h-7 animate-spin text-indigo-500" /></div>
+                ) : subjects.length === 0 ? (
+                    <div className="px-6 py-10 text-center text-slate-400">No hay asignaturas vinculadas a tu cuenta.</div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                            <thead className="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase font-semibold text-slate-500">
+                                <tr>
+                                    <th className="px-6 py-4">Asignatura</th>
+                                    <th className="px-6 py-4">Curso</th>
+                                    <th className="px-6 py-4">Alumnos</th>
+                                    <th className="px-6 py-4">Temas</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                {subjects.map((subject) => (
+                                    <tr key={subject.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                        <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{subject.name || 'Sin nombre'}</td>
+                                        <td className="px-6 py-4">{subject.course || 'Sin curso'}</td>
+                                        <td className="px-6 py-4">{subject.studentCount || 0}</td>
+                                        <td className="px-6 py-4">{subject.topicCount || 0}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+};
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const TeacherDashboard = ({ user }) => {
@@ -256,6 +366,9 @@ const TeacherDashboard = ({ user }) => {
 
     const [myClasses, setMyClasses] = useState([]);
     const [allStudents, setAllStudents] = useState([]); // students across all my classes
+    const [subjectsSummary, setSubjectsSummary] = useState([]);
+    const [studentActionMessage, setStudentActionMessage] = useState('');
+    const [pendingStudentActions, setPendingStudentActions] = useState({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -264,6 +377,123 @@ const TeacherDashboard = ({ user }) => {
             navigate('/home');
         }
     }, [user, navigate]);
+
+    useEffect(() => {
+        if (!studentActionMessage) return undefined;
+        const timer = window.setTimeout(() => setStudentActionMessage(''), 3000);
+        return () => window.clearTimeout(timer);
+    }, [studentActionMessage]);
+
+    const isActionPending = (actionKey) => Boolean(pendingStudentActions[actionKey]);
+
+    const runStudentAction = async ({ actionKey, action, onSuccessMessage, onFailureMessage }) => {
+        if (!actionKey || isActionPending(actionKey)) return;
+
+        setPendingStudentActions((previous) => ({ ...previous, [actionKey]: true }));
+        try {
+            await action();
+            if (onSuccessMessage) setStudentActionMessage(onSuccessMessage);
+        } catch (error) {
+            console.error('Teacher student action failed:', error);
+            if (onFailureMessage) setStudentActionMessage(onFailureMessage);
+        } finally {
+            setPendingStudentActions((previous) => {
+                const nextState = { ...previous };
+                delete nextState[actionKey];
+                return nextState;
+            });
+        }
+    };
+
+    const resolveStudentCourseId = (studentId) => {
+        const classMatch = myClasses.find((classEntry) =>
+            (classEntry.studentIds || []).includes(studentId) && classEntry.courseId
+        );
+        if (classMatch?.courseId) return classMatch.courseId;
+
+        const student = allStudents.find((entry) => entry.id === studentId);
+        return student?.activeCourseId || 'general';
+    };
+
+    const handleSetBehaviorScore = async (studentId, scoreValue) => {
+        const normalizedScore = Math.max(0, Math.min(10, Number(scoreValue)));
+        if (!Number.isFinite(normalizedScore) || !studentId) return;
+
+        await runStudentAction({
+            actionKey: `behavior:${studentId}`,
+            action: async () => {
+                await updateDoc(doc(db, 'users', studentId), {
+                    behaviorScore: normalizedScore,
+                    updatedAt: new Date()
+                });
+
+                setAllStudents((previousStudents) =>
+                    previousStudents.map((student) => (
+                        student.id === studentId
+                            ? { ...student, behaviorScore: normalizedScore }
+                            : student
+                    ))
+                );
+            },
+            onSuccessMessage: 'Conducta actualizada correctamente.',
+            onFailureMessage: 'No se pudo actualizar la conducta del alumno.'
+        });
+    };
+
+    const handleAwardBadge = async (studentId, badgeKey) => {
+        if (!studentId || !badgeKey) return;
+
+        const student = allStudents.find((entry) => entry.id === studentId);
+        if (!student) return;
+
+        const alreadyAwarded = Array.isArray(student.badges)
+            && student.badges.some((badge) => badge?.key === badgeKey);
+        if (alreadyAwarded) {
+            setStudentActionMessage('La insignia ya estaba otorgada a este alumno.');
+            return;
+        }
+
+        await runStudentAction({
+            actionKey: `badge:${studentId}:${badgeKey}`,
+            action: async () => {
+                const courseId = normalizeCourseKey(resolveStudentCourseId(studentId));
+                const manualBadge = buildManualBadge({
+                    badgeKey,
+                    awardedBy: user?.uid || 'teacher'
+                });
+
+                const { changed, badgesByCourse } = upsertCourseBadge({
+                    badgesByCourse: student.badgesByCourse,
+                    courseId,
+                    badge: manualBadge
+                });
+
+                if (!changed) {
+                    setStudentActionMessage('La insignia ya estaba otorgada a este alumno.');
+                    return;
+                }
+
+                const activeCourseId = student.activeCourseId || courseId;
+                const nextActiveBadges = getActiveCourseBadges(badgesByCourse, activeCourseId);
+
+                await updateDoc(doc(db, 'users', studentId), {
+                    badgesByCourse,
+                    badges: nextActiveBadges,
+                    updatedAt: new Date()
+                });
+
+                setAllStudents((previousStudents) =>
+                    previousStudents.map((entry) => (
+                        entry.id === studentId
+                            ? { ...entry, badgesByCourse, badges: nextActiveBadges }
+                            : entry
+                    ))
+                );
+            },
+            onSuccessMessage: 'Insignia otorgada correctamente.',
+            onFailureMessage: 'No se pudo otorgar la insignia al alumno.'
+        });
+    };
 
     useEffect(() => {
         const fetchData = async () => {
@@ -306,8 +536,47 @@ const TeacherDashboard = ({ user }) => {
                         .filter(s => studentIdSet.has(s.id));
                 }
 
+                const subjectsSnap = await getDocs(
+                    query(collection(db, 'subjects'), where('ownerId', '==', user.uid))
+                );
+                const teacherSubjects = subjectsSnap.docs
+                    .map((documentSnapshot) => ({ id: documentSnapshot.id, ...documentSnapshot.data() }))
+                    .filter((subject) => !subject.institutionId || subject.institutionId === user.institutionId);
+
+                const topicCountBySubjectId = {};
+                await Promise.all(
+                    teacherSubjects.map(async (subject) => {
+                        const topicsSnapshot = await getDocs(
+                            query(collection(db, 'topics'), where('subjectId', '==', subject.id))
+                        );
+                        topicCountBySubjectId[subject.id] = topicsSnapshot.size;
+                    })
+                );
+
+                const subjectSummaries = teacherSubjects.map((subject) => {
+                    const classIds = Array.isArray(subject.classIds)
+                        ? subject.classIds
+                        : (subject.classId ? [subject.classId] : []);
+                    const studentsFromClassLinks = classIds.reduce((acc, classId) => {
+                        const classEntry = enrichedClasses.find((entry) => entry.id === classId);
+                        return acc + ((classEntry?.studentIds || []).length);
+                    }, 0);
+                    const studentsFromDirectEnrollments = Array.isArray(subject.enrolledStudentUids)
+                        ? subject.enrolledStudentUids.length
+                        : 0;
+
+                    return {
+                        id: subject.id,
+                        name: subject.name || subject.title || 'Asignatura',
+                        course: subject.course || subject.courseName || '',
+                        studentCount: Math.max(studentsFromClassLinks, studentsFromDirectEnrollments),
+                        topicCount: topicCountBySubjectId[subject.id] || 0
+                    };
+                });
+
                 setMyClasses(enrichedClasses);
                 setAllStudents(students);
+                setSubjectsSummary(subjectSummaries);
             } catch (e) {
                 console.error('Error fetching teacher data:', e);
             } finally {
@@ -319,6 +588,7 @@ const TeacherDashboard = ({ user }) => {
 
     const TABS = [
         { key: 'overview',    label: 'Resumen',          icon: BarChart3    },
+        { key: 'subjects',    label: 'Asignaturas',      icon: BookOpen     },
         { key: 'classes',     label: 'Mis Clases',       icon: LayoutGrid   },
         { key: 'students',    label: 'Mis Alumnos',      icon: GraduationCap},
         { key: 'correction',  label: 'Corrección IA',    icon: Brain        },
@@ -345,21 +615,31 @@ const TeacherDashboard = ({ user }) => {
 
                 {/* Underline tabs */}
                 <div className="flex items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800">
-                    {TABS.map(({ key, label, icon: Icon }) => (
-                        <button key={key} onClick={() => setActiveTab(key)}
+                    {TABS.map((tab) => (
+                        <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                             className={`px-4 py-2 font-medium text-sm flex items-center gap-2 border-b-2 -mb-px transition-colors ${
-                                activeTab === key
+                                activeTab === tab.key
                                     ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
                                     : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
                             }`}>
-                            <Icon className="w-4 h-4" /> {label}
+                            <tab.icon className="w-4 h-4" /> {tab.label}
                         </button>
                     ))}
                 </div>
 
                 {activeTab === 'overview'   && <OverviewTab classes={myClasses} students={allStudents} loading={loading} />}
+                {activeTab === 'subjects'   && <SubjectsTab subjects={subjectsSummary} loading={loading} />}
                 {activeTab === 'classes'    && <MyClassesTab classes={myClasses} allStudents={allStudents} loading={loading} />}
-                {activeTab === 'students'   && <MyStudentsTab allStudents={allStudents} loading={loading} />}
+                {activeTab === 'students'   && (
+                    <MyStudentsTab
+                        allStudents={allStudents}
+                        loading={loading}
+                        actionMessage={studentActionMessage}
+                        isActionPending={isActionPending}
+                        onSetBehaviorScore={handleSetBehaviorScore}
+                        onAwardBadge={handleAwardBadge}
+                    />
+                )}
                 {activeTab === 'correction' && <ExamCorrectionTool user={user} />}
             </main>
         </div>

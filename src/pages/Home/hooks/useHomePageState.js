@@ -11,7 +11,14 @@ import {
     saveLastHomeViewMode
 } from '../utils/homePersistence';
 
-export const useHomePageState = ({ logic, searchQuery, rememberOrganization = true, defaultViewMode = 'grid', showSharedTab = true }) => {
+export const useHomePageState = ({
+    logic,
+    searchQuery,
+    rememberOrganization = true,
+    defaultViewMode = 'grid',
+    showSharedTab = true,
+    onHomeFeedback = null
+}) => {
     const [isFilterOpen, setIsFilterOpen] = useState(false);
     const [isScaleOverlayOpen, setIsScaleOverlayOpen] = useState(false);
 
@@ -49,10 +56,10 @@ export const useHomePageState = ({ logic, searchQuery, rememberOrganization = tr
             }
         });
 
-        if (fixedCount > 0) {
-            alert(`✅ Auto-Cleaner Fixed ${fixedCount} corrupted folders! You can now remove the cleaner code.`);
+        if (fixedCount > 0 && typeof onHomeFeedback === 'function') {
+            onHomeFeedback(`Se corrigieron ${fixedCount} carpetas con referencias circulares.`, 'success');
         }
-    }, [logic.folders]);
+    }, [logic.folders, onHomeFeedback]);
 
     React.useEffect(() => {
         if (didRestoreRef.current) return;

@@ -1,6 +1,11 @@
+<!-- copilot/explanations/codebase/src/pages/Home/hooks/useHomeLogic.md -->
 # useHomeLogic.js
 
 ## Changelog
+### 2026-03-30: Home feedback callback threading
+- Added optional `onHomeFeedback` argument passthrough from `useHomeLogic` to `useHomeHandlers`.
+- Enables page-level inline feedback for drag/drop and nesting failures without browser alerts.
+
 ### 2026-03-09: Restored resolved shortcut contract
 - Re-exposed `resolvedShortcuts` from `useHomeState` in `useHomeLogic` return payload.
 - Fixes composed-hook contract used by `tests/unit/hooks/useHomeLogic.test.js` while preserving existing `shortcuts` passthrough.

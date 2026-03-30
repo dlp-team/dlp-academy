@@ -12,8 +12,8 @@ import {
     Loader2
 } from 'lucide-react';
 
-const UserStatistics = ({ subjects, userId }) => {
-    const { stats, loading, getChartData, getBarGradient } = useUserStatistics(subjects, userId);
+const UserStatistics = ({ subjects, userId, statsOptions = {}, role = 'student' }) => {
+    const { stats, loading, getChartData, getBarGradient } = useUserStatistics(subjects, userId, statsOptions);
     const [filterSubject, setFilterSubject] = useState('all');
 
     // Tooltip State
@@ -59,19 +59,19 @@ const UserStatistics = ({ subjects, userId }) => {
             {/* KPI Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard 
-                    title="Tests Completados" 
+                    title={role === 'teacher' ? 'Intentos registrados' : 'Tests completados'} 
                     value={stats.totalQuizzes} 
                     icon={<CheckCircle2 className="w-5 h-5 text-blue-500" />}
-                    subtext={`${stats.totalQuestions} preguntas respondidas`}
+                    subtext={role === 'teacher' ? `${stats.totalQuestions} respuestas de alumnos` : `${stats.totalQuestions} preguntas respondidas`}
                 />
                 <StatCard 
-                    title="Promedio General" 
+                    title={role === 'teacher' ? 'Promedio de alumnos' : 'Promedio general'} 
                     value={`${stats.averageScore}%`} 
                     icon={<Trophy className="w-5 h-5 text-yellow-500" />}
                     subtext="Puntuación media"
                 />
                 <StatCard 
-                    title="Tasa de Aprobado" 
+                    title={role === 'teacher' ? 'Tasa de aprobado (alumnos)' : 'Tasa de aprobado'} 
                     value={`${stats.passRate}%`} 
                     icon={<ArrowUpRight className="w-5 h-5 text-emerald-500" />}
                     subtext="Tests aprobados"
@@ -126,6 +126,11 @@ const UserStatistics = ({ subjects, userId }) => {
                                     <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate pr-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                                         {activity.quizTitle}
                                     </p>
+                                    {role === 'teacher' && activity.studentName && (
+                                        <p className="text-xs text-indigo-500 dark:text-indigo-400 mt-0.5">
+                                            {activity.studentName}
+                                        </p>
+                                    )}
                                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                                         {activity.subjectName}
                                     </p>

@@ -52,6 +52,13 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
     const [reviewDrafts, setReviewDrafts] = useState({});
     const [saving, setSaving] = useState(false);
     const [blockFeedback, setBlockFeedback] = useState({ type: '', message: '' });
+    const [realtimeErrors, setRealtimeErrors] = useState({});
+    const [evaluationDeleteConfirm, setEvaluationDeleteConfirm] = useState({
+        isOpen: false,
+        itemId: null,
+        itemTitle: ''
+    });
+    const [isDeletingEvaluation, setIsDeletingEvaluation] = useState(false);
 
     const [blockWeightsDraft, setBlockWeightsDraft] = useState(DEFAULT_BLOCK_WEIGHTS);
 
@@ -94,6 +101,10 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         });
     }, [subject?.gradingConfig]);
 
+    useEffect(() => {
+        setRealtimeErrors({});
+    }, [subject?.id]);
+
     const blockWeights = useMemo(() => ({
         mandatoryTestsWeight: clamp(Number(subject?.gradingConfig?.mandatoryTestsWeight ?? DEFAULT_BLOCK_WEIGHTS.mandatoryTestsWeight), 0, 100),
         assignmentsWeight: clamp(Number(subject?.gradingConfig?.assignmentsWeight ?? DEFAULT_BLOCK_WEIGHTS.assignmentsWeight), 0, 100),
@@ -124,26 +135,10 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
     const assignmentCustomWeightsEnabled = Boolean(subject?.gradingConfig?.assignmentCustomWeightsEnabled);
     const extrasCustomWeightsEnabled = Boolean(subject?.gradingConfig?.extrasCustomWeightsEnabled);
 
-    const mandatoryEqualWeight = useMemo(
-        () => getEqualSplitWeight(mandatoryQuizzes.length),
-        [mandatoryQuizzes.length]
-    );
-
     const assignmentsEqualWeight = useMemo(
         () => getEqualSplitWeight(assignmentQuizzes.length),
         [assignmentQuizzes.length]
     );
-
-    const getMandatoryWeightForQuiz = (quiz) => {
-        if (!mandatoryCustomWeightsEnabled) return mandatoryEqualWeight;
-        if (quiz.mandatoryWeightLocked) return clamp(Number(quiz.mandatoryWeight ?? 0), 0, 100);
-        const lockedTotal = mandatoryQuizzes
-            .filter((q) => q.mandatoryWeightLocked)
-            .reduce((sum, q) => sum + clamp(Number(q.mandatoryWeight ?? 0), 0, 100), 0);
-        const unlockedCount = mandatoryQuizzes.filter((q) => !q.mandatoryWeightLocked).length;
-        const remaining = Math.max(0, 100 - lockedTotal);
-        return unlockedCount > 0 ? Number((remaining / unlockedCount).toFixed(2)) : 0;
-    };
 
     const getAssignmentWeightForQuiz = (quiz) => {
         if (!assignmentCustomWeightsEnabled) return assignmentsEqualWeight;
@@ -167,12 +162,19 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
     };
 
     const hasStrict100 = Math.abs(blockWeightTotal - 100) < 0.001;
+    const realtimeFeedback = useMemo(() => Object.values(realtimeErrors)[0] || '', [realtimeErrors]);
 
     useEffect(() => {
         if (!subject?.id) return undefined;
 
         const quizzesQuery = query(collection(db, 'quizzes'), where('subjectId', '==', subject.id));
         const unsubscribe = onSnapshot(quizzesQuery, (snapshot) => {
+            setRealtimeErrors((prev) => {
+                if (!prev.quizzes) return prev;
+                const next = { ...prev };
+                delete next.quizzes;
+                return next;
+            });
             const allQuizzes = snapshot.docs.map((quizDoc) => ({ id: quizDoc.id, ...quizDoc.data() }));
             // Tests and tareas are now managed in the same internal block.
             setMandatoryQuizzes([]);
@@ -182,6 +184,10 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
             );
         }, (error) => {
             console.error('Error listening to quizzes:', error);
+            setRealtimeErrors((prev) => ({
+                ...prev,
+                quizzes: 'No se pudieron sincronizar las tareas y tests del panel de notas.'
+            }));
             setMandatoryQuizzes([]);
             setAssignmentQuizzes([]);
         });
@@ -194,6 +200,12 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
 
         const examsQuery = query(collection(db, 'exams'), where('subjectId', '==', subject.id));
         const unsubscribe = onSnapshot(examsQuery, (snapshot) => {
+            setRealtimeErrors((prev) => {
+                if (!prev.exams) return prev;
+                const next = { ...prev };
+                delete next.exams;
+                return next;
+            });
             const allExams = snapshot.docs.map((examDoc) => ({ id: examDoc.id, ...examDoc.data() }));
             setExams(
                 allExams
@@ -201,6 +213,10 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
             );
         }, (error) => {
             console.error('Error listening to exams:', error);
+            setRealtimeErrors((prev) => ({
+                ...prev,
+                exams: 'No se pudieron sincronizar los examenes del panel de notas.'
+            }));
             setExams([]);
         });
 
@@ -216,9 +232,19 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         );
 
         const unsubscribe = onSnapshot(reviewsQuery, (snapshot) => {
+            setRealtimeErrors((prev) => {
+                if (!prev.assignmentReviews) return prev;
+                const next = { ...prev };
+                delete next.assignmentReviews;
+                return next;
+            });
             setAssignmentReviews(snapshot.docs.map((reviewDoc) => ({ id: reviewDoc.id, ...reviewDoc.data() })));
         }, (error) => {
             console.error('Error listening to assignment grade reviews:', error);
+            setRealtimeErrors((prev) => ({
+                ...prev,
+                assignmentReviews: 'No se pudieron sincronizar las revisiones de tareas del panel de notas.'
+            }));
             setAssignmentReviews([]);
         });
 
@@ -234,9 +260,19 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         );
 
         const unsubscribe = onSnapshot(examReviewsQuery, (snapshot) => {
+            setRealtimeErrors((prev) => {
+                if (!prev.examReviews) return prev;
+                const next = { ...prev };
+                delete next.examReviews;
+                return next;
+            });
             setExamReviews(snapshot.docs.map((reviewDoc) => ({ id: reviewDoc.id, ...reviewDoc.data() })));
         }, (error) => {
             console.error('Error listening to exam grade reviews:', error);
+            setRealtimeErrors((prev) => ({
+                ...prev,
+                examReviews: 'No se pudieron sincronizar las revisiones de examenes del panel de notas.'
+            }));
             setExamReviews([]);
         });
 
@@ -252,6 +288,12 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         );
 
         const unsubscribe = onSnapshot(itemsQuery, (snapshot) => {
+            setRealtimeErrors((prev) => {
+                if (!prev.evaluationItems) return prev;
+                const next = { ...prev };
+                delete next.evaluationItems;
+                return next;
+            });
             const items = snapshot.docs
                 .map((itemDoc) => ({ id: itemDoc.id, ...itemDoc.data() }))
                 .sort((a, b) => {
@@ -264,6 +306,10 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
             setEvaluationItems(items);
         }, (error) => {
             console.error('Error listening to evaluation items:', error);
+            setRealtimeErrors((prev) => ({
+                ...prev,
+                evaluationItems: 'No se pudieron sincronizar las actividades extra del panel de notas.'
+            }));
             setEvaluationItems([]);
         });
 
@@ -279,9 +325,19 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         );
 
         const unsubscribe = onSnapshot(gradesQuery, (snapshot) => {
+            setRealtimeErrors((prev) => {
+                if (!prev.evaluationGrades) return prev;
+                const next = { ...prev };
+                delete next.evaluationGrades;
+                return next;
+            });
             setEvaluationGrades(snapshot.docs.map((gradeDoc) => ({ id: gradeDoc.id, ...gradeDoc.data() })));
         }, (error) => {
             console.error('Error listening to evaluation grades:', error);
+            setRealtimeErrors((prev) => ({
+                ...prev,
+                evaluationGrades: 'No se pudieron sincronizar las notas de actividades extra.'
+            }));
             setEvaluationGrades([]);
         });
 
@@ -292,6 +348,12 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         const currentTopics = topicsRef.current;
         if (!subject?.id || currentTopics.length === 0) {
             setQuizScoreByQuizUser({});
+            setRealtimeErrors((prev) => {
+                if (!prev.quizResults) return prev;
+                const next = { ...prev };
+                delete next.quizResults;
+                return next;
+            });
             return undefined;
         }
 
@@ -315,10 +377,20 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                 : resultsRef;
 
             return onSnapshot(source, (snapshot) => {
+                setRealtimeErrors((prev) => {
+                    if (!prev.quizResults) return prev;
+                    const next = { ...prev };
+                    delete next.quizResults;
+                    return next;
+                });
                 resultsByTopic[topic.id] = snapshot.docs.map((resultDoc) => resultDoc.data());
                 recompute();
             }, (error) => {
                 console.error('Error listening to quiz results for topic:', topic.id, error);
+                setRealtimeErrors((prev) => ({
+                    ...prev,
+                    quizResults: 'No se pudieron sincronizar los resultados de tests del panel de notas.'
+                }));
                 resultsByTopic[topic.id] = [];
                 recompute();
             });
@@ -326,7 +398,6 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
 
         return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
     // topicsKey is the stable dep — only re-subscribes when topic IDs actually change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [subject?.id, topicsKey, canManage, user?.uid]);
 
     const gradeDocByKey = useMemo(() => {
@@ -398,19 +469,6 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         if (relativeWeightSum === 0) return null;
         return Number((weightedScore / relativeWeightSum).toFixed(2));
     };
-
-    const mandatoryInternalWeightTotal = useMemo(
-        () => {
-            if (mandatoryQuizzes.length === 0) return 0;
-            return Number(mandatoryQuizzes.reduce((sum, quiz) => sum + getMandatoryWeightForQuiz(quiz), 0).toFixed(2));
-        },
-        [mandatoryCustomWeightsEnabled, mandatoryQuizzes, mandatoryEqualWeight]
-    );
-
-    const mandatoryLockedTotal = useMemo(
-        () => mandatoryQuizzes.filter((q) => q.mandatoryWeightLocked).reduce((sum, q) => sum + clamp(Number(q.mandatoryWeight ?? 0), 0, 100), 0),
-        [mandatoryQuizzes]
-    );
 
     const assignmentsInternalWeightTotal = useMemo(
         () => {
@@ -644,29 +702,58 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         });
     };
 
-    const deleteEvaluationItem = async (itemId) => {
-        const confirmed = window.confirm('Se eliminara esta evaluacion y sus notas asociadas. Quieres continuar?');
-        if (!confirmed) return;
+    const requestDeleteEvaluationItem = (item) => {
+        if (!item?.id) return;
+
+        setEvaluationDeleteConfirm({
+            isOpen: true,
+            itemId: item.id,
+            itemTitle: item.title || 'Actividad extra'
+        });
+    };
+
+    const closeEvaluationDeleteConfirm = () => {
+        if (isDeletingEvaluation) return;
+
+        setEvaluationDeleteConfirm({
+            isOpen: false,
+            itemId: null,
+            itemTitle: ''
+        });
+    };
+
+    const confirmDeleteEvaluationItem = async () => {
+        if (!subject?.id || !evaluationDeleteConfirm.itemId || isDeletingEvaluation) return;
+
+        setIsDeletingEvaluation(true);
 
         const relatedGradesQuery = query(
             collection(db, 'subjectEvaluationGrades'),
             where('subjectId', '==', subject.id),
-            where('itemId', '==', itemId)
+            where('itemId', '==', evaluationDeleteConfirm.itemId)
         );
 
-        const relatedGradesSnapshot = await getDocs(relatedGradesQuery);
-        const batch = writeBatch(db);
+        try {
+            const relatedGradesSnapshot = await getDocs(relatedGradesQuery);
+            const batch = writeBatch(db);
 
-        relatedGradesSnapshot.docs.forEach((gradeDoc) => {
-            batch.delete(doc(db, 'subjectEvaluationGrades', gradeDoc.id));
-        });
+            relatedGradesSnapshot.docs.forEach((gradeDoc) => {
+                batch.delete(doc(db, 'subjectEvaluationGrades', gradeDoc.id));
+            });
 
-        batch.delete(doc(db, 'subjectEvaluationItems', itemId));
-        await batch.commit();
+            batch.delete(doc(db, 'subjectEvaluationItems', evaluationDeleteConfirm.itemId));
+            await batch.commit();
+        } finally {
+            setIsDeletingEvaluation(false);
+            setEvaluationDeleteConfirm({
+                isOpen: false,
+                itemId: null,
+                itemTitle: ''
+            });
+        }
     };
 
     const saveStudentGrade = async (item, studentUid, rawValue) => {
-        const key = `${item.id}:${studentUid}`;
         const existingDoc = evaluationGrades.find((grade) => grade.itemId === item.id && grade.userId === studentUid);
 
         const trimmed = String(rawValue ?? '').trim();
@@ -1125,7 +1212,7 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                                     title="Nota maxima"
                                 />
                                 <button
-                                    onClick={() => deleteEvaluationItem(item.id)}
+                                    onClick={() => requestDeleteEvaluationItem(item)}
                                     className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 text-sm font-semibold"
                                 >
                                     <Trash2 className="w-4 h-4" /> Eliminar
@@ -1283,10 +1370,51 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                     </div>
                 )}
             </div>
+
+            {evaluationDeleteConfirm.isOpen && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/55"
+                        onClick={closeEvaluationDeleteConfirm}
+                    />
+                    <div className="relative w-full max-w-md rounded-2xl border border-red-200 dark:border-red-700 bg-white dark:bg-slate-900 shadow-xl p-5">
+                        <h3 className="text-lg font-black text-slate-900 dark:text-white">Eliminar actividad extra</h3>
+                        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                            Se eliminara "{evaluationDeleteConfirm.itemTitle || 'esta actividad'}" y sus notas asociadas. Esta accion no se puede deshacer.
+                        </p>
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button
+                                onClick={closeEvaluationDeleteConfirm}
+                                disabled={isDeletingEvaluation}
+                                className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 font-semibold disabled:opacity-60"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmDeleteEvaluationItem}
+                                disabled={isDeletingEvaluation}
+                                className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold disabled:opacity-60"
+                            >
+                                {isDeletingEvaluation ? 'Eliminando...' : 'Eliminar actividad'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 
-    return <section>{canManage ? managerView : studentView}</section>;
+    return (
+        <section className="space-y-4">
+            {realtimeFeedback && (
+                <div className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+                    <AlertCircle className="h-4 w-4" />
+                    {realtimeFeedback}
+                </div>
+            )}
+            {canManage ? managerView : studentView}
+        </section>
+    );
 };
 
 export default SubjectGradesPanel;

@@ -1,5 +1,5 @@
 // src/pages/Profile/Profile.jsx
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import Header from '../../components/layout/Header';
 
@@ -13,17 +13,49 @@ import ProfileSubjects from './components/ProfileSubjects';
 import StatsSidebar from './components/StatsSidebar';
 import UserStatistics from './components/UserStatistics';
 import Notas from './components/Notas';
+import BadgesSection from './components/BadgesSection';
 import EditProfileModal from './modals/EditProfileModal';
 
 const Profile = ({ user }) => {
-  const { userProfile, subjects, loading, updateUserProfile, logout } = useProfile(user);
+  const {
+    userProfile,
+    subjects,
+    assignedStudents,
+    loading,
+    updateUserProfile,
+    logout,
+    awardBadgeToStudent
+  } = useProfile(user);
   const [isEditing, setIsEditing] = useState(false);
   const [headerUser, setHeaderUser] = useState(user);
 
-  const { stats, loading: statsLoading, getChartData } = useUserStatistics(subjects, user?.uid);
-
   const role = userProfile?.role === 'teacher' ? 'teacher' : 'student';
   const badges = userProfile?.badges || [];
+
+  const assignedUserIds = useMemo(
+    () => assignedStudents.map((student) => String(student.id || '')).filter(Boolean),
+    [assignedStudents]
+  );
+
+  const assignedUsersById = useMemo(
+    () => assignedStudents.reduce((acc, student) => {
+      if (!student?.id) return acc;
+      acc[String(student.id)] = student.displayName || student.email || 'Alumno';
+      return acc;
+    }, {}),
+    [assignedStudents]
+  );
+
+  const statsOptions = useMemo(() => {
+    if (role !== 'teacher') return {};
+    return {
+      aggregateMode: true,
+      aggregateUserIds: assignedUserIds,
+      aggregateUsersById: assignedUsersById
+    };
+  }, [role, assignedUserIds, assignedUsersById]);
+
+  const { stats, loading: statsLoading, getChartData } = useUserStatistics(subjects, user?.uid, statsOptions);
 
   if (loading) {
     return (
@@ -55,6 +87,7 @@ const Profile = ({ user }) => {
             role={role}
             loading={statsLoading}
             badges={badges}
+            showBadges={role !== 'teacher'}
           />
         </div>
 
@@ -68,8 +101,25 @@ const Profile = ({ user }) => {
           />
         )}
 
+        {role === 'teacher' && (
+          <BadgesSection
+            role="teacher"
+            students={assignedStudents}
+            onAwardBadge={async (studentUid, badgeKey) => {
+              await awardBadgeToStudent(studentUid, badgeKey, {
+                awardedBy: user?.uid || 'teacher'
+              });
+            }}
+          />
+        )}
+
         {/* Full Detailed Statistics */}
-        <UserStatistics subjects={subjects} userId={user.uid} />
+        <UserStatistics
+          subjects={subjects}
+          userId={user.uid}
+          statsOptions={statsOptions}
+          role={role}
+        />
 
       </main>
 

@@ -1,6 +1,15 @@
 // copilot/explanations/codebase/firestore.rules.md
 
 ## Changelog
+### 2026-03-30: Teacher recognition-field constrained writes
+- Added constrained teacher update path in `match /users/{userId}` for same-institution student documents.
+- Allowed fields are restricted to recognition and teacher feedback surfaces only:
+  - `badges`
+  - `badgesByCourse`
+  - `behaviorScore`
+  - `updatedAt`
+- Enforced immutability of student `role` and `institutionId` during teacher updates.
+
 ### 2026-03-30: Exams topic+subject readable helpers
 - Added `topicReadableByRef(topicId)` and paired it with `subjectReadableByRef(subjectId)` in `exams` read logic.
 - `exams` listeners now accept legacy/shared-access cases where strict `topicInstitutionMatches` alone would deny reads for valid teacher contexts.

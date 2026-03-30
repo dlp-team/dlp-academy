@@ -8,6 +8,10 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { canUserAccessSubject } from '../../../utils/subjectAccessUtils';
+import {
+    DEFAULT_TOPIC_CASCADE_COLLECTIONS,
+    cascadeDeleteTopicResources,
+} from '../../../utils/topicDeletionUtils';
 
 const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39';
 
@@ -71,6 +75,10 @@ export const useSubjectManager = (user, subjectId) => {
                     }).catch(err => console.error("Error auto-updating status:", err));
                 }
             });
+        }, (error) => {
+            console.error('Error listening to subject topics:', error);
+            setTopics([]);
+            setLoading(false);
         });
 
         return () => unsubscribe();
@@ -100,6 +108,8 @@ export const useSubjectManager = (user, subjectId) => {
                     status: 'completed'
                 }).catch(err => console.error("Auto-update resumen error:", err));
             });
+        }, (error) => {
+            console.error('Error listening to resumen updates:', error);
         });
 
         return () => unsubscribe();
@@ -224,6 +234,11 @@ export const useSubjectManager = (user, subjectId) => {
     const deleteTopic = async (topicId) => {
         // Confirmation is handled in UI now, but safety check remains
         try {
+            await cascadeDeleteTopicResources({
+                db,
+                topicId,
+                collections: DEFAULT_TOPIC_CASCADE_COLLECTIONS,
+            });
             await deleteDoc(doc(db, "topics", topicId));
             await updateDoc(doc(db, "subjects", subjectId), { topicCount: increment(-1) });
         } catch (error) {

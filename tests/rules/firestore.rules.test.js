@@ -8,9 +8,11 @@ import {
 import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const PROJECT_ID = 'dlp-academy-rules-tests';
-const FIRESTORE_RULES_PATH = path.resolve(process.cwd(), 'firestore.rules');
+const TEST_FILE_DIR = path.dirname(fileURLToPath(import.meta.url));
+const FIRESTORE_RULES_PATH = path.resolve(TEST_FILE_DIR, '../../firestore.rules');
 
 let testEnv;
 
@@ -398,6 +400,56 @@ describe('Firestore rules integration', () => {
         doc(globalAdminDb, 'users', 'teacher-1'),
         {
           role: 'institutionadmin',
+        },
+        { merge: true }
+      )
+    );
+  });
+
+  it('allows teacher updating only recognition fields on students in same institution', async () => {
+    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+    await assertSucceeds(
+      setDoc(
+        doc(teacherDb, 'users', 'student-1'),
+        {
+          behaviorScore: 8,
+          badges: [{ key: 'participacion', awardedBy: 'teacher-1', earnedAt: new Date() }],
+          badgesByCourse: {
+            general: [{ key: 'participacion', awardedBy: 'teacher-1', earnedAt: new Date() }],
+          },
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      )
+    );
+  });
+
+  it('denies teacher updating non-recognition fields in student profile', async () => {
+    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+    await assertFails(
+      setDoc(
+        doc(teacherDb, 'users', 'student-1'),
+        {
+          enabled: false,
+        },
+        { merge: true }
+      )
+    );
+  });
+
+  it('denies teacher updating recognition fields for student in another institution', async () => {
+    await seedUser({ uid: 'student-2', role: 'student', institutionId: 'inst-2' });
+
+    const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+    await assertFails(
+      setDoc(
+        doc(teacherDb, 'users', 'student-2'),
+        {
+          behaviorScore: 6,
+          updatedAt: new Date(),
         },
         { merge: true }
       )

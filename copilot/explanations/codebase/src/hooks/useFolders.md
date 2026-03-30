@@ -1,3 +1,19 @@
+<!-- copilot/explanations/codebase/src/hooks/useFolders.md -->
+## [2026-03-30] Circular Folder Move Guard Uses Non-Blocking Feedback
+### Context
+- `moveFolderBetweenParents` still used a browser alert for circular move attempts, which conflicted with non-blocking feedback standards in active workflows.
+
+### Change
+- Removed `alert(...)` from circular-dependency guard.
+- Circular/self/no-op branches now return deterministic status metadata:
+  - `{ moved: false, reason: 'self-target' }`,
+  - `{ moved: false, reason: 'same-parent' }`,
+  - `{ moved: false, reason: 'circular-dependency' }`.
+- Successful moves now return `{ moved: true }`.
+
+### Validation
+- Focused lint and tests passed for touched files, including `tests/unit/hooks/useFolders.test.js`.
+
 ## [2026-03-08] Folder Deletion Resilience Hardening
 ### Context
 - Folder deletion paths needed stronger tolerance for partial cleanup failures (subjects/shortcuts) and batch commit failures.

@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { 
     collection, query, where, addDoc, updateDoc, deleteDoc, doc, 
-    getDoc, setDoc, arrayUnion, arrayRemove, onSnapshot, writeBatch, getDocs
+    getDoc, setDoc, onSnapshot, writeBatch, getDocs
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { isInvalidFolderMove } from '../utils/folderUtils';
@@ -11,6 +11,8 @@ export const useFolders = (user) => {
     const [folders, setFolders] = useState([]);
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
+    const normalizedRole = String(user?.role || '').trim().toLowerCase();
+    const isStudentRole = normalizedRole === 'student';
     const canReadHomeData = Boolean(user?.role && user?.displayName);
 
     const debugShare = (stage, payload = {}) => {
@@ -25,7 +27,8 @@ export const useFolders = (user) => {
     };
 
     useEffect(() => {
-        if (!user || !canReadHomeData) {
+        // Students should not subscribe to folders because rules intentionally deny folder reads.
+        if (!user || !canReadHomeData || isStudentRole) {
             setFolders([]);
             setLoading(false);
             return;
@@ -45,36 +48,52 @@ export const useFolders = (user) => {
             setLoading(false);
         };
 
-        const unsubscribeOwned = onSnapshot(ownedQuery, (snapshot) => {
-            ownedFolders = snapshot.docs
-                .map(d => ({ id: d.id, ...d.data(), parentId: d.data().parentId || null, isOwner: true }))
-                .filter(folder => {
-                    // Owner always sees their own folders
-                    if (folder?.ownerId === user?.uid) return true;
-                    if (!currentInstitutionId || !folder?.institutionId) return true;
-                    return folder.institutionId === currentInstitutionId;
-                });
-            updateState();
-        });
+        const unsubscribeOwned = onSnapshot(
+            ownedQuery,
+            (snapshot) => {
+                ownedFolders = snapshot.docs
+                    .map(d => ({ id: d.id, ...d.data(), parentId: d.data().parentId || null, isOwner: true }))
+                    .filter(folder => {
+                        // Owner always sees their own folders
+                        if (folder?.ownerId === user?.uid) return true;
+                        if (!currentInstitutionId || !folder?.institutionId) return true;
+                        return folder.institutionId === currentInstitutionId;
+                    });
+                updateState();
+            },
+            (error) => {
+                console.warn('Error listening to owned folders:', error);
+                ownedFolders = [];
+                updateState();
+            }
+        );
 
-        const unsubscribeShared = onSnapshot(sharedQuery, (snapshot) => {
-            sharedFolders = snapshot.docs.filter(d => {
-                const data = d.data();
-                const userEmail = user.email?.toLowerCase() || '';
-                if (currentInstitutionId && data?.institutionId && data.institutionId !== currentInstitutionId) {
-                    return false;
-                }
-                return data.sharedWith?.some(share => 
-                    share.email?.toLowerCase() === userEmail || share.uid === user.uid
-                );
-            }).map(d => ({ 
-                id: d.id, ...d.data(), parentId: d.data().parentId || null, isOwner: false 
-            }));
-            updateState();
-        });
+        const unsubscribeShared = onSnapshot(
+            sharedQuery,
+            (snapshot) => {
+                sharedFolders = snapshot.docs.filter(d => {
+                    const data = d.data();
+                    const userEmail = user.email?.toLowerCase() || '';
+                    if (currentInstitutionId && data?.institutionId && data.institutionId !== currentInstitutionId) {
+                        return false;
+                    }
+                    return data.sharedWith?.some(share => 
+                        share.email?.toLowerCase() === userEmail || share.uid === user.uid
+                    );
+                }).map(d => ({ 
+                    id: d.id, ...d.data(), parentId: d.data().parentId || null, isOwner: false 
+                }));
+                updateState();
+            },
+            (error) => {
+                console.warn('Error listening to shared folders:', error);
+                sharedFolders = [];
+                updateState();
+            }
+        );
 
         return () => { unsubscribeOwned(); unsubscribeShared(); };
-    }, [user, currentInstitutionId, canReadHomeData]);
+    }, [user, currentInstitutionId, canReadHomeData, isStudentRole]);
 
     // --- ATOMIC HELPERS ---
 
@@ -421,7 +440,6 @@ export const useFolders = (user) => {
                 throw new Error("No puedes compartir con el propietario.");
             }
             const originalFolderSharedWith = Array.isArray(folderData.sharedWith) ? folderData.sharedWith : [];
-            const originalFolderSharedWithUids = Array.isArray(folderData.sharedWithUids) ? folderData.sharedWithUids : [];
             const existingShare = originalFolderSharedWith.find(s => s.uid === targetUid);
             const foldersRollbackState = [];
             const subjectsRollbackState = [];
@@ -802,11 +820,7 @@ export const useFolders = (user) => {
                 }
             };
 
-            try {
-                await updateFolderUnshare(folderId);
-            } catch (rootUnshareError) {
-                throw rootUnshareError;
-            }
+            await updateFolderUnshare(folderId);
 
             try {
                 await updateSubjectsInFolderUnshare(folderId);
@@ -1074,13 +1088,17 @@ export const useFolders = (user) => {
     // --- NEW: ROBUST MOVE FOLDER BETWEEN PARENTS (Added this) ---
     // This is the clean function you need for the list view drag & drop
     const moveFolderBetweenParents = async (folderId, fromParentId, toParentId) => {
-        if (folderId === toParentId) return; // Cannot move into self
-        if (fromParentId === toParentId) return; // No change
+        if (folderId === toParentId) {
+            return { moved: false, reason: 'self-target' }; // Cannot move into self
+        }
+        if (fromParentId === toParentId) {
+            return { moved: false, reason: 'same-parent' }; // No change
+        }
 
         // Check for Circular Dependency
         if (isInvalidFolderMove(folderId, toParentId, folders)) {
-            alert("No puedes mover una carpeta dentro de sí misma.");
-            return;
+            console.warn('🚫 BLOCKED: Cannot move a folder into its own subfolder.');
+            return { moved: false, reason: 'circular-dependency' };
         }
 
         const batch = writeBatch(db);
@@ -1090,6 +1108,7 @@ export const useFolders = (user) => {
         batch.update(folderRef, { parentId: toParentId || null, updatedAt: new Date() });
 
         await batch.commit();
+        return { moved: true };
     };
 
     const transferFolderOwnership = async (folderId, nextOwnerEmail) => {

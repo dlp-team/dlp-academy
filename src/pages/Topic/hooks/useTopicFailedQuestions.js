@@ -7,12 +7,10 @@ export const useTopicFailedQuestions = (user, topicId) => {
     const [attempts, setAttempts] = useState([]);
     const [masteredQuestions, setMasteredQuestions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const hasContext = Boolean(user?.uid && topicId);
 
     useEffect(() => {
-        if (!user?.uid || !topicId) {
-            setAttempts([]);
-            setMasteredQuestions([]);
-            setLoading(false);
+        if (!hasContext) {
             return undefined;
         }
 
@@ -26,7 +24,12 @@ export const useTopicFailedQuestions = (user, topicId) => {
             const nextAttempts = snapshot.docs.map((attemptDoc) => ({ id: attemptDoc.id, ...attemptDoc.data() }));
             setAttempts(nextAttempts);
             setLoading(false);
-        }, () => setLoading(false));
+        }, (error) => {
+            console.error('[TOPIC_FAILED_QUESTIONS] Error loading attempts:', error);
+            setAttempts([]);
+            setMasteredQuestions([]);
+            setLoading(false);
+        });
 
         const masteredDocRef = doc(db, 'repasoMastered', `${user.uid}__${topicId}`);
         const unsubscribeMastered = onSnapshot(masteredDocRef, (snapshot) => {
@@ -36,16 +39,19 @@ export const useTopicFailedQuestions = (user, topicId) => {
             }
             const mastered = snapshot.data()?.masteredQuestions;
             setMasteredQuestions(Array.isArray(mastered) ? mastered : []);
+        }, (error) => {
+            console.error('[TOPIC_FAILED_QUESTIONS] Error loading mastered questions:', error);
+            setMasteredQuestions([]);
         });
 
         return () => {
             unsubscribeAttempts();
             unsubscribeMastered();
         };
-    }, [user?.uid, topicId]);
+    }, [hasContext, topicId, user?.uid]);
 
     const failedQuestions = useMemo(() => {
-        if (!attempts.length) return [];
+        if (!hasContext || !attempts.length) return [];
 
         const latestByQuiz = {};
         attempts.forEach((attempt) => {
@@ -79,9 +85,9 @@ export const useTopicFailedQuestions = (user, topicId) => {
         });
 
         return output;
-    }, [attempts, masteredQuestions]);
+    }, [hasContext, attempts, masteredQuestions]);
 
-    return { failedQuestions, loading };
+    return { failedQuestions, loading: hasContext ? loading : false };
 };
 
 export default useTopicFailedQuestions;

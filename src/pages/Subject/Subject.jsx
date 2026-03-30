@@ -1,3 +1,4 @@
+// src/pages/Subject/Subject.jsx
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Loader2, AlertTriangle } from 'lucide-react';
@@ -57,6 +58,12 @@ const Subject = ({ user }) => {
 
     const isTeacherUser = user?.role !== 'student';
     const effectiveIsTeacher = isTeacherUser;
+    const [topicDeleteConfirm, setTopicDeleteConfirm] = useState({
+        isOpen: false,
+        topicId: null,
+        topicName: ''
+    });
+    const [isDeletingTopic, setIsDeletingTopic] = useState(false);
 
     // Class members
     const { members: classMembers, loading: membersLoading } = useClassMembers(subject);
@@ -74,8 +81,30 @@ const Subject = ({ user }) => {
     };
     
     const onDeleteTopicConfirm = (topicId) => {
-        if(window.confirm("¿Seguro que quieres eliminar este tema?")) {
-            deleteTopic(topicId);
+        if (!topicId) return;
+
+        const targetTopic = topics.find((topic) => topic.id === topicId);
+        setTopicDeleteConfirm({
+            isOpen: true,
+            topicId,
+            topicName: targetTopic?.name || targetTopic?.title || 'este tema'
+        });
+    };
+
+    const closeTopicDeleteConfirm = () => {
+        if (isDeletingTopic) return;
+        setTopicDeleteConfirm({ isOpen: false, topicId: null, topicName: '' });
+    };
+
+    const handleConfirmTopicDelete = async () => {
+        if (!topicDeleteConfirm.topicId) return;
+
+        setIsDeletingTopic(true);
+        try {
+            await deleteTopic(topicDeleteConfirm.topicId);
+        } finally {
+            setIsDeletingTopic(false);
+            setTopicDeleteConfirm({ isOpen: false, topicId: null, topicName: '' });
         }
     };
 
@@ -194,6 +223,42 @@ const Subject = ({ user }) => {
                                 <div className="flex gap-3 justify-center">
                                     <button onClick={() => setShowDeleteModal(false)} className="px-6 py-2 bg-gray-100 dark:bg-slate-800 rounded-xl font-medium">Cancelar</button>
                                     <button onClick={handleDeleteSubject} disabled={isDeleting} className="px-6 py-2 bg-red-600 text-white rounded-xl font-medium">Mover a Papelera</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {topicDeleteConfirm.isOpen && (
+                        <div
+                            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                            onClick={closeTopicDeleteConfirm}
+                        >
+                            <div
+                                className="bg-white dark:bg-slate-900 rounded-2xl w-full max-w-md shadow-xl p-6 text-center animate-in fade-in zoom-in duration-200"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <AlertTriangle className="w-8 h-8 text-red-600 dark:text-red-400" />
+                                </div>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">¿Eliminar tema?</h3>
+                                <p className="text-gray-500 dark:text-gray-400 mb-6">
+                                    <strong>{topicDeleteConfirm.topicName}</strong> se eliminará junto con sus materiales y evaluaciones asociadas. Esta acción no se puede deshacer.
+                                </p>
+                                <div className="flex gap-3 justify-center">
+                                    <button
+                                        onClick={closeTopicDeleteConfirm}
+                                        disabled={isDeletingTopic}
+                                        className="px-6 py-2 bg-gray-100 dark:bg-slate-800 rounded-xl font-medium disabled:opacity-60"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={handleConfirmTopicDelete}
+                                        disabled={isDeletingTopic}
+                                        className="px-6 py-2 bg-red-600 text-white rounded-xl font-medium disabled:opacity-70"
+                                    >
+                                        {isDeletingTopic ? 'Eliminando...' : 'Eliminar tema'}
+                                    </button>
                                 </div>
                             </div>
                         </div>

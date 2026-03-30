@@ -103,13 +103,12 @@ export const useUsers = (user, institutionIdOverride = null) => {
       setLiveCodeError('');
       try {
         const preview = await getInstitutionalAccessCodePreview({
-          institutionId: user.institutionId,
           institutionId: effectiveInstitutionId,
           userType: userType === 'students' ? 'student' : 'teacher',
           intervalHours: Number(policy.rotationIntervalHours || 24),
         });
         if (!cancelled) setLiveAccessCode(preview?.code || '------');
-      } catch (error) {
+      } catch {
         if (!cancelled) { setLiveAccessCode('------'); setLiveCodeError('No se pudo obtener el código en este momento.'); }
       } finally {
         if (!cancelled) setLiveCodeLoading(false);
@@ -185,7 +184,6 @@ export const useUsers = (user, institutionIdOverride = null) => {
       snap.forEach(d => batch.delete(d.ref));
       await batch.commit();
       await setDoc(doc(db, 'institution_invites', finalCode), {
-        institutionId: user.institutionId,
         institutionId: effectiveInstitutionId,
         role: 'teacher',
         type: 'institutional',
@@ -230,7 +228,8 @@ export const useUsers = (user, institutionIdOverride = null) => {
   };
 
   const handleRemoveAccess = async (docId) => {
-    if (!window.confirm('¿Seguro que quieres eliminar el acceso a este profesor?')) return;
+    if (!docId) return;
+
     try {
       await deleteDoc(doc(db, 'institution_invites', docId));
       fetchData();

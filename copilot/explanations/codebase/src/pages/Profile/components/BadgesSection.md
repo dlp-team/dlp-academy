@@ -18,3 +18,8 @@
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+### 2026-03-30
+- Added teacher-management compatibility for student records shaped with either `id` or `uid`.
+- Keeps teacher badge assignment flow stable when student payloads come from mixed query sources.

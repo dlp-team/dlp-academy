@@ -23,3 +23,9 @@
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+### 2026-03-30
+- Added `subjects` tab with per-subject summary (course, student count, topic count).
+- Added teacher student-table actions to set `behaviorScore` and award manual badges (`participacion`, `esfuerzo`).
+- Added optimistic local-state sync and action feedback for student recognition updates.

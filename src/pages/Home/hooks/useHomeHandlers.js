@@ -41,8 +41,15 @@ export const useHomeHandlers = ({
     updateShortcutAppearance,
     setShortcutHiddenInManual,
     studentShortcutTagOnlyMode = false,
-    rememberOrganization = true
+    rememberOrganization = true,
+    onHomeFeedback = null
 }) => {
+    const reportHomeError = (message) => {
+        if (typeof onHomeFeedback === 'function') {
+            onHomeFeedback(message, 'error');
+        }
+    };
+
     const getFolderById = (folderId) => {
         if (!folderId) return null;
         return (folders || []).find(folder => folder?.id === folderId) || null;
@@ -81,6 +88,7 @@ export const useHomeHandlers = ({
                 setSubjectModalConfig({ isOpen: false, isEditing: false, data: null });
             } catch (error) {
                 console.error('Error saving shortcut tags:', error);
+                reportHomeError('No se pudieron guardar las etiquetas del acceso directo. Intentalo de nuevo.');
             }
             return;
         }
@@ -152,6 +160,7 @@ export const useHomeHandlers = ({
             setSubjectModalConfig({ isOpen: false, isEditing: false, data: null });
         } catch (error) {
             console.error('Error saving subject:', error);
+            reportHomeError('No se pudo guardar la asignatura. Revisa los datos e intentalo nuevamente.');
         }
     };
 
@@ -169,148 +178,171 @@ export const useHomeHandlers = ({
             ...(formData?.parentId !== undefined ? { parentId: formData.parentId } : {})
         };
 
-        if (folderModalConfig.isEditing) {
-            if (isShortcutEdit && updateShortcutAppearance) {
-                if (isShortcutEditor) {
-                    await updateFolder(formData.id, {
-                        name: formData.name,
-                        description: formData.description || '',
-                        updatedAt: new Date()
-                    });
-                }
+        try {
+            if (folderModalConfig.isEditing) {
+                if (isShortcutEdit && updateShortcutAppearance) {
+                    if (isShortcutEditor) {
+                        await updateFolder(formData.id, {
+                            name: formData.name,
+                            description: formData.description || '',
+                            updatedAt: new Date()
+                        });
+                    }
 
-                await updateShortcutAppearance(formData.shortcutId, {
-                    tags: formData.tags,
-                    color: formData.color,
-                    cardStyle: formData.cardStyle || 'default',
-                    modernFillColor: formData.modernFillColor || null
-                });
+                    await updateShortcutAppearance(formData.shortcutId, {
+                        tags: formData.tags,
+                        color: formData.color,
+                        cardStyle: formData.cardStyle || 'default',
+                        modernFillColor: formData.modernFillColor || null
+                    });
+                } else {
+                    await updateFolder(formData.id, folderPayload);
+                }
             } else {
-                await updateFolder(formData.id, folderPayload);
+                await addFolder(folderPayload);
             }
-        } else {
-            await addFolder(folderPayload);
+            setFolderModalConfig({ isOpen: false, isEditing: false, data: null });
+        } catch (error) {
+            console.error('Error saving folder:', error);
+            reportHomeError('No se pudo guardar la carpeta. Revisa los datos e intentalo nuevamente.');
         }
-        setFolderModalConfig({ isOpen: false, isEditing: false, data: null });
     };
 
     const handleDelete = async () => {
-        if (deleteConfig.type === 'subject' && deleteConfig.item) {
-            const isSubjectOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
-            if (!isSubjectOwner) {
-                setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
-                return;
-            }
-            try {
-                await deleteSubject(deleteConfig.item.id);
-            } catch (error) {
-                setDeleteConfig(prev => ({
+        try {
+            if (deleteConfig.type === 'subject' && deleteConfig.item) {
+                const isSubjectOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
+                if (!isSubjectOwner) {
+                    setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
+                    return;
+                }
+                try {
+                    await deleteSubject(deleteConfig.item.id);
+                } catch (error) {
+                    setDeleteConfig(prev => ({
+                        ...prev,
+                        errorMessage: error?.message || 'No se pudo mover la asignatura a la papelera.'
+                    }));
+                    return;
+                }
+                setManualOrder(prev => ({
                     ...prev,
-                    errorMessage: error?.message || 'No se pudo mover la asignatura a la papelera.'
+                    subjects: prev.subjects.filter(id => id !== deleteConfig.item.id)
                 }));
-                return;
-            }
-            setManualOrder(prev => ({
-                ...prev,
-                subjects: prev.subjects.filter(id => id !== deleteConfig.item.id)
-            }));
-        } else if (deleteConfig.type === 'folder' && deleteConfig.item) {
-            const isFolderOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
-            if (!isFolderOwner) {
-                setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
-                return;
-            }
-            await deleteFolder(deleteConfig.item.id);
-            setManualOrder(prev => ({
-                ...prev,
-                folders: prev.folders.filter(id => id !== deleteConfig.item.id)
-            }));
-        } else if (deleteConfig.type === 'shortcut-subject' && deleteConfig.item) {
-            const shortcutId = deleteConfig.item.shortcutId;
-            const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
-            const parentFolderId = deleteConfig.item.shortcutParentId ?? deleteConfig.item.folderId ?? deleteConfig.item.parentId ?? null;
-            const unshareBlocked = isInsideSharedFolderTree(parentFolderId);
+            } else if (deleteConfig.type === 'folder' && deleteConfig.item) {
+                const isFolderOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
+                if (!isFolderOwner) {
+                    setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
+                    return;
+                }
+                await deleteFolder(deleteConfig.item.id);
+                setManualOrder(prev => ({
+                    ...prev,
+                    folders: prev.folders.filter(id => id !== deleteConfig.item.id)
+                }));
+            } else if (deleteConfig.type === 'shortcut-subject' && deleteConfig.item) {
+                const shortcutId = deleteConfig.item.shortcutId;
+                const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
+                const parentFolderId = deleteConfig.item.shortcutParentId ?? deleteConfig.item.folderId ?? deleteConfig.item.parentId ?? null;
+                const unshareBlocked = isInsideSharedFolderTree(parentFolderId);
 
-            if (deleteConfig.action === 'unshare' && unshareBlocked) {
-                setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
-                return;
-            }
+                if (deleteConfig.action === 'unshare' && unshareBlocked) {
+                    setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
+                    return;
+                }
 
-            if (deleteConfig.action === 'unshare' && unshareSubject && user?.email) {
-                try {
-                    await unshareSubject(targetId, user.email);
-                } catch (error) {
-                    console.error('Error unsharing shortcut subject access:', error);
+                if (deleteConfig.action === 'unshare' && unshareSubject && user?.email) {
+                    try {
+                        await unshareSubject(targetId, user.email);
+                    } catch (error) {
+                        console.error('Error unsharing shortcut subject access:', error);
+                        reportHomeError('No se pudo quitar el acceso compartido de la asignatura. Intentalo de nuevo.');
+                    }
+                }
+
+                if (deleteConfig.action === 'hide' && shortcutId && setShortcutHiddenInManual) {
+                    await setShortcutHiddenInManual(shortcutId, true);
+                } else if (deleteConfig.action === 'unhide' && shortcutId && setShortcutHiddenInManual) {
+                    await setShortcutHiddenInManual(shortcutId, false);
+                } else if (deleteConfig.action !== 'unshare' && shortcutId && deleteShortcut) {
+                    await deleteShortcut(shortcutId);
+                }
+            } else if (deleteConfig.type === 'shortcut-folder' && deleteConfig.item) {
+                const shortcutId = deleteConfig.item.shortcutId;
+                const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
+                const parentFolderId = deleteConfig.item.shortcutParentId ?? deleteConfig.item.parentId ?? null;
+                const unshareBlocked = isInsideSharedFolderTree(parentFolderId);
+
+                if (deleteConfig.action === 'unshare' && unshareBlocked) {
+                    setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
+                    return;
+                }
+
+                if (deleteConfig.action === 'unshare' && unshareFolder && user?.email) {
+                    try {
+                        await unshareFolder(targetId, user.email);
+                    } catch (error) {
+                        console.error('Error unsharing shortcut folder access:', error);
+                        reportHomeError('No se pudo quitar el acceso compartido de la carpeta. Intentalo de nuevo.');
+                    }
+                }
+
+                if (deleteConfig.action === 'hide' && shortcutId && setShortcutHiddenInManual) {
+                    await setShortcutHiddenInManual(shortcutId, true);
+                } else if (deleteConfig.action === 'unhide' && shortcutId && setShortcutHiddenInManual) {
+                    await setShortcutHiddenInManual(shortcutId, false);
+                } else if (deleteConfig.action !== 'unshare' && shortcutId && deleteShortcut) {
+                    await deleteShortcut(shortcutId);
                 }
             }
-
-            if (deleteConfig.action === 'hide' && shortcutId && setShortcutHiddenInManual) {
-                await setShortcutHiddenInManual(shortcutId, true);
-            } else if (deleteConfig.action === 'unhide' && shortcutId && setShortcutHiddenInManual) {
-                await setShortcutHiddenInManual(shortcutId, false);
-            } else if (deleteConfig.action !== 'unshare' && shortcutId && deleteShortcut) {
-                await deleteShortcut(shortcutId);
-            }
-        } else if (deleteConfig.type === 'shortcut-folder' && deleteConfig.item) {
-            const shortcutId = deleteConfig.item.shortcutId;
-            const targetId = deleteConfig.item.targetId || deleteConfig.item.id;
-            const parentFolderId = deleteConfig.item.shortcutParentId ?? deleteConfig.item.parentId ?? null;
-            const unshareBlocked = isInsideSharedFolderTree(parentFolderId);
-
-            if (deleteConfig.action === 'unshare' && unshareBlocked) {
-                setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
-                return;
-            }
-
-            if (deleteConfig.action === 'unshare' && unshareFolder && user?.email) {
-                try {
-                    await unshareFolder(targetId, user.email);
-                } catch (error) {
-                    console.error('Error unsharing shortcut folder access:', error);
-                }
-            }
-
-            if (deleteConfig.action === 'hide' && shortcutId && setShortcutHiddenInManual) {
-                await setShortcutHiddenInManual(shortcutId, true);
-            } else if (deleteConfig.action === 'unhide' && shortcutId && setShortcutHiddenInManual) {
-                await setShortcutHiddenInManual(shortcutId, false);
-            } else if (deleteConfig.action !== 'unshare' && shortcutId && deleteShortcut) {
-                await deleteShortcut(shortcutId);
-            }
+            setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
+        } catch (error) {
+            console.error('Error deleting home item:', error);
+            reportHomeError('No se pudo completar la accion solicitada. Intentalo nuevamente.');
+            return;
         }
-        setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
     };
 
     const handleDeleteFolderAll = async () => {
-        if (deleteConfig.item) {
-            const isFolderOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
-            if (!isFolderOwner) {
-                setDeleteConfig({ isOpen: false, type: null, item: null });
-                return;
+        try {
+            if (deleteConfig.item) {
+                const isFolderOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
+                if (!isFolderOwner) {
+                    setDeleteConfig({ isOpen: false, type: null, item: null });
+                    return;
+                }
+                await deleteFolder(deleteConfig.item.id);
+                setManualOrder(prev => ({
+                    ...prev,
+                    folders: prev.folders.filter(id => id !== deleteConfig.item.id)
+                }));
             }
-            await deleteFolder(deleteConfig.item.id);
-            setManualOrder(prev => ({
-                ...prev,
-                folders: prev.folders.filter(id => id !== deleteConfig.item.id)
-            }));
+            setDeleteConfig({ isOpen: false, type: null, item: null });
+        } catch (error) {
+            console.error('Error deleting folder and children:', error);
+            reportHomeError('No se pudo eliminar la carpeta con su contenido. Intentalo nuevamente.');
         }
-        setDeleteConfig({ isOpen: false, type: null, item: null });
     };
 
     const handleDeleteFolderOnly = async () => {
-        if (deleteConfig.item) {
-            const isFolderOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
-            if (!isFolderOwner) {
-                setDeleteConfig({ isOpen: false, type: null, item: null });
-                return;
+        try {
+            if (deleteConfig.item) {
+                const isFolderOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
+                if (!isFolderOwner) {
+                    setDeleteConfig({ isOpen: false, type: null, item: null });
+                    return;
+                }
+                await deleteFolderOnly(deleteConfig.item.id);
+                setManualOrder(prev => ({
+                    ...prev,
+                    folders: prev.folders.filter(id => id !== deleteConfig.item.id)
+                }));
             }
-            await deleteFolderOnly(deleteConfig.item.id);
-            setManualOrder(prev => ({
-                ...prev,
-                folders: prev.folders.filter(id => id !== deleteConfig.item.id)
-            }));
+            setDeleteConfig({ isOpen: false, type: null, item: null });
+        } catch (error) {
+            console.error('Error deleting folder only:', error);
+            reportHomeError('No se pudo eliminar solo la carpeta. Intentalo nuevamente.');
         }
-        setDeleteConfig({ isOpen: false, type: null, item: null });
     };
 
     const handleSelectSubject = id => {
@@ -470,7 +502,7 @@ export const useHomeHandlers = ({
             }
         } catch (error) {
             console.error('❌ Error handling drop:', error);
-            alert('Error processing action. Check console for details.');
+            reportHomeError('No se pudo completar el movimiento. Revisa permisos e intentalo nuevamente.');
         }
     };
 
@@ -487,7 +519,7 @@ export const useHomeHandlers = ({
             await updateFolder(folderToNestId, { parentId: targetFolderId });
         } catch (error) {
             console.error('❌ Error nesting folder:', error);
-            alert('Error nesting folder. Check console for details.');
+            reportHomeError('No se pudo anidar la carpeta seleccionada. Revisa permisos e intentalo nuevamente.');
         }
     };
 

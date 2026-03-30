@@ -8,8 +8,23 @@ import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, deleteDoc, add
 import { db } from '../../../firebase/config';
 import { canEdit, canView, canDelete, shouldShowEditUI, shouldShowDeleteUI } from '../../../utils/permissionUtils';
 import { canUserAccessSubject } from '../../../utils/subjectAccessUtils';
+import {
+    DEFAULT_TOPIC_CASCADE_COLLECTIONS,
+    cascadeDeleteTopicResources,
+} from '../../../utils/topicDeletionUtils';
 import { usePersistentState } from '../../../hooks/usePersistentState';
 import { buildUserScopedPersistenceKey } from '../../../utils/pagePersistence';
+
+const EMPTY_CONFIRM_DIALOG = {
+    isOpen: false,
+    type: null,
+    itemId: null,
+    itemCollection: null,
+    itemName: '',
+    title: '',
+    description: '',
+    confirmLabel: 'Eliminar'
+};
 
 export const useTopicLogic = (user) => {
     const navigate = useNavigate();
@@ -27,7 +42,7 @@ export const useTopicLogic = (user) => {
     const [loading, setLoading] = useState(true);
     
     // Estados de UI
-    const [uploading, setUploading] = useState(false);
+    const [uploading] = useState(false);
     const activeTabKey = buildUserScopedPersistenceKey('topic-page', user, `${subjectId || 'no-subject'}:${topicId || 'no-topic'}:active-tab`);
     const [activeTab, setActiveTab] = usePersistentState(activeTabKey, 'materials');
     
@@ -69,6 +84,10 @@ export const useTopicLogic = (user) => {
     const [pendingFiles, setPendingFiles] = useState([]);
     const [categorizingFile, setCategorizingFile] = useState(false);
 
+    // --- ESTADOS PARA CONFIRMACIONES DE BORRADO ---
+    const [confirmDialog, setConfirmDialog] = useState(EMPTY_CONFIRM_DIALOG);
+    const [isConfirmingAction, setIsConfirmingAction] = useState(false);
+
     // Función auxiliar para notificaciones
     const showNotification = (msg, duration = 5000) => {
         if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -76,6 +95,32 @@ export const useTopicLogic = (user) => {
         toastTimerRef.current = setTimeout(() => {
             setToast({ show: false, message: '' });
         }, duration);
+    };
+
+    const closeConfirmDialog = () => {
+        if (isConfirmingAction) return;
+        setConfirmDialog(EMPTY_CONFIRM_DIALOG);
+    };
+
+    const openConfirmDialog = ({
+        type,
+        itemId,
+        itemCollection = null,
+        itemName = '',
+        title = '',
+        description = '',
+        confirmLabel = 'Eliminar'
+    }) => {
+        setConfirmDialog({
+            isOpen: true,
+            type,
+            itemId,
+            itemCollection,
+            itemName,
+            title,
+            description,
+            confirmLabel
+        });
     };
 
     // --- CARGA DE DATOS ---
@@ -153,6 +198,9 @@ export const useTopicLogic = (user) => {
                             }));
                         }, (error) => {
                             console.error("[DOCUMENTS] Firestore error:", error);
+                            if (error?.code !== 'permission-denied') {
+                                showNotification('No se pudieron sincronizar los materiales del tema.');
+                            }
                             docsFromDocumentsRef.current = [];
                             setTopic(prev => ({
                                 ...prev,
@@ -177,6 +225,9 @@ export const useTopicLogic = (user) => {
                             }));
                         }, (error) => {
                             console.error("[RESUMEN] Firestore error:", error);
+                            if (error?.code !== 'permission-denied') {
+                                showNotification('No se pudieron sincronizar los resumenes del tema.');
+                            }
                             docsFromResumenRef.current = [];
                             setTopic(prev => ({
                                 ...prev,
@@ -200,6 +251,9 @@ export const useTopicLogic = (user) => {
                             setLoading(false);
                         }, (error) => {
                             console.error("[QUIZZES] Firestore error:", error);
+                            if (error?.code !== 'permission-denied') {
+                                showNotification('No se pudieron sincronizar los tests del tema.');
+                            }
                             pendingQuizSyncRef.current = false;
                             setTopic(prev => ({
                                 ...prev,
@@ -314,16 +368,36 @@ export const useTopicLogic = (user) => {
                 : { name: tempName };
             await updateDoc(docRef, updateData);
             setRenamingId(null);
-        } catch (error) { console.error(error); alert("Error al renombrar."); }
+        } catch (error) {
+            console.error(error);
+            showNotification('No se pudo renombrar el archivo.');
+        }
     };
 
-    const deleteFile = async (file) => {
-        if (!window.confirm(`¿Eliminar "${file.name}"?`)) return;
+    const performDeleteFile = async (fileId, collectionName = 'documents') => {
         try {
-            const collectionName = file._collection || 'documents';
-            await deleteDoc(doc(db, collectionName, file.id));
+            await deleteDoc(doc(db, collectionName, fileId));
             setActiveMenuId(null);
-        } catch (error) { console.error(error); alert("Error al eliminar."); }
+        } catch (error) {
+            console.error(error);
+            showNotification('No se pudo eliminar el archivo.');
+        }
+    };
+
+    const deleteFile = (file) => {
+        if (!file?.id) return;
+        const resolvedName = file.name || file.title || 'este archivo';
+
+        setActiveMenuId(null);
+        openConfirmDialog({
+            type: 'file',
+            itemId: file.id,
+            itemCollection: file._collection || 'documents',
+            itemName: resolvedName,
+            title: 'Eliminar archivo',
+            description: `Se eliminará "${resolvedName}". Esta acción no se puede deshacer.`,
+            confirmLabel: 'Eliminar archivo'
+        });
     };
 
     const handleChangeFileCategory = async (file, category) => {
@@ -343,53 +417,95 @@ export const useTopicLogic = (user) => {
             setActiveMenuId(null);
         } catch (error) {
             console.error(error);
-            alert('Error al actualizar el tipo de archivo.');
+            showNotification('No se pudo actualizar el tipo de archivo.');
         }
     };
 
-    const deleteQuiz = async (quizId) => {
-        if (!window.confirm("¿Eliminar este test permanentemente?")) return;
+    const performDeleteQuiz = async (quizId) => {
         try {
             await deleteDoc(doc(db, "quizzes", quizId));
             setActiveMenuId(null);
-        } catch (error) { console.error(error); alert("Error al eliminar test"); }
+        } catch (error) {
+            console.error(error);
+            showNotification('No se pudo eliminar el test.');
+        }
+    };
+
+    const deleteQuiz = (quizId) => {
+        if (!quizId) return;
+
+        setActiveMenuId(null);
+        openConfirmDialog({
+            type: 'quiz',
+            itemId: quizId,
+            itemName: 'este test',
+            title: 'Eliminar test',
+            description: 'Se eliminará este test permanentemente. Esta acción no se puede deshacer.',
+            confirmLabel: 'Eliminar test'
+        });
     };
 
     const handleViewFile = (file) => {
-        if (!file.url) { alert("Archivo vacío."); return; }
+        if (!file.url) {
+            showNotification('El archivo no tiene contenido disponible.');
+            return;
+        }
         setViewingFile(file);
     };
 
-    const handleDeleteTopic = async () => {
+    const performDeleteTopic = async () => {
         if (!canDelete(topic, user)) return;
-        if (!window.confirm("¿Eliminar tema completo?")) return;
+
         try {
-            const cleanupCollections = ['documents', 'resumen', 'quizzes'];
-            const cleanupPromises = [];
-
-            for (const collectionName of cleanupCollections) {
-                try {
-                    const itemsQuery = query(
-                        collection(db, collectionName),
-                        where('topicId', '==', topicId)
-                    );
-                    const itemsSnapshot = await getDocs(itemsQuery);
-                    itemsSnapshot.docs.forEach((itemDoc) => {
-                        cleanupPromises.push(
-                            deleteDoc(doc(db, collectionName, itemDoc.id)).catch((err) => {
-                                console.warn(`Error deleting ${collectionName} item ${itemDoc.id}:`, err);
-                            })
-                        );
-                    });
-                } catch (queryError) {
-                    console.warn(`Error querying ${collectionName} for topic cleanup:`, queryError);
-                }
-            }
-
-            await Promise.allSettled(cleanupPromises);
+            await cascadeDeleteTopicResources({
+                db,
+                topicId,
+                collections: DEFAULT_TOPIC_CASCADE_COLLECTIONS,
+            });
             await deleteDoc(doc(db, "topics", topicId));
             navigate(`/home/subject/${subjectId}`);
-        } catch (error) { console.error(error); }
+        } catch (error) {
+            console.error(error);
+            showNotification('No se pudo eliminar el tema.');
+        }
+    };
+
+    const handleDeleteTopic = () => {
+        if (!canDelete(topic, user)) return;
+
+        setShowMenu(false);
+        openConfirmDialog({
+            type: 'topic',
+            itemId: topicId,
+            itemName: topic?.name || topic?.title || 'este tema',
+            title: 'Eliminar tema',
+            description: 'Se eliminará el tema junto con sus materiales, tests y exámenes asociados. Esta acción no se puede deshacer.',
+            confirmLabel: 'Eliminar tema'
+        });
+    };
+
+    const confirmDeleteAction = async () => {
+        if (!confirmDialog?.isOpen || !confirmDialog?.type) return;
+
+        setIsConfirmingAction(true);
+        try {
+            if (confirmDialog.type === 'file') {
+                await performDeleteFile(confirmDialog.itemId, confirmDialog.itemCollection || 'documents');
+                return;
+            }
+
+            if (confirmDialog.type === 'quiz') {
+                await performDeleteQuiz(confirmDialog.itemId);
+                return;
+            }
+
+            if (confirmDialog.type === 'topic') {
+                await performDeleteTopic();
+            }
+        } finally {
+            setIsConfirmingAction(false);
+            setConfirmDialog(EMPTY_CONFIRM_DIALOG);
+        }
     };
 
     const handleSaveTopicTitle = async () => {
@@ -452,7 +568,7 @@ export const useTopicLogic = (user) => {
             setActiveTab('uploads');
         } catch (error) { 
             console.error(error); 
-            alert("Error al categorizar archivo."); 
+            showNotification('No se pudo categorizar el archivo.'); 
         } finally { 
             setCategorizingFile(false); 
         }
@@ -636,6 +752,12 @@ export const useTopicLogic = (user) => {
         showCategorizationModal, setShowCategorizationModal,
         pendingFiles, setPendingFiles,
         categorizingFile,
+
+        // Delete Confirm State
+        confirmDialog,
+        isConfirmingAction,
+        closeConfirmDialog,
+        confirmDeleteAction,
         
         // Refs
         fileInputRef,

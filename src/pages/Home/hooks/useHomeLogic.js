@@ -1,4 +1,5 @@
 // src/pages/Home/hooks/useHomeLogic.js
+// src/pages/Home/hooks/useHomeLogic.js
 import { useNavigate } from 'react-router-dom';
 import { useSubjects } from '../../../hooks/useSubjects';
 import { useFolders } from '../../../hooks/useFolders';
@@ -10,7 +11,7 @@ import { useHomeHandlers } from './useHomeHandlers';
 import { isReadOnlyRole } from '../../../utils/permissionUtils';
 
 
-export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true) => {
+export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true, onHomeFeedback = null) => {
     const navigate = useNavigate();
     const studentShortcutTagOnlyMode = isReadOnlyRole(user);
     
@@ -170,7 +171,8 @@ export const useHomeLogic = (user, searchQuery = '', rememberOrganization = true
         updateShortcutAppearance,
         setShortcutHiddenInManual,
         studentShortcutTagOnlyMode,
-        rememberOrganization
+        rememberOrganization,
+        onHomeFeedback
     });
 
 

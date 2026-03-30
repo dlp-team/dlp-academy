@@ -1,3 +1,4 @@
+<!-- copilot/explanations/codebase/src/pages/Topic/components/TopicModals.md -->
 # TopicModals.jsx
 
 ## Overview
@@ -6,7 +7,9 @@
 - **Role:** Reusable UI component consumed by the parent page/module.
 
 ## Responsibilities
-- Handles user events and triggers updates/actions.
+- Renders topic-level transient UI surfaces (toast, creation modals, file viewer modal).
+- Centralizes modal orchestration so `Topic.jsx` stays focused on page composition.
+- Hosts destructive-action confirmation UX through `TopicConfirmDeleteModal`.
 
 ## Exports
 - `default TopicModals`
@@ -17,6 +20,11 @@
 - `../../../components/ui/AppToast`
 - `../../../components/modals/QuizModal`
 - `../../../components/modals/CreateContentModal`
+- `./TopicConfirmDeleteModal`
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+### 2026-03-30
+- Added `TopicConfirmDeleteModal` integration so Topic file/quiz/topic destructive actions are confirmed in-page instead of using browser dialogs.

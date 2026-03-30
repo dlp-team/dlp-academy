@@ -1,8 +1,9 @@
+<!-- copilot/explanations/codebase/src/pages/Topic/Topic.md -->
 # Topic.jsx
 
 ## Overview
 - **Source file:** `src/pages/Topic/Topic.jsx`
-- **Last documented:** 2026-02-24
+- **Last documented:** 2026-03-30
 - **Role:** Page-level or feature-level module that orchestrates UI and logic.
 
 ## Responsibilities
@@ -94,3 +95,11 @@
 **Reason**: Prevent simulation and restricted-role contexts from surfacing noisy fatal logs or unstable transitions when Firestore denies optional data streams.
 
 **Impact**: Topic view now remains stable with clean fallback state under restricted permissions.
+
+### 2026-03-30 - Realtime Listener Feedback Banner
+
+**Change**: Added stream-specific realtime error feedback state in `Topic.jsx` and rendered an inline page banner when non-fatal listener failures occur.
+
+**Reason**: Prevent silent degradation when optional realtime streams fail, while keeping page rendering stable.
+
+**Impact**: Topic page now surfaces explicit inline feedback for realtime sync issues (e.g., assignments stream failures) without blocking the rest of the topic workflow.

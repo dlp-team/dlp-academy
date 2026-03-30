@@ -58,12 +58,18 @@ const Home = ({ user }) => {
     const [selectedItemsByKey, setSelectedItemsByKey] = useState({});
     const [bulkMoveTargetFolderId, setBulkMoveTargetFolderId] = useState('');
     const [bulkActionMessage, setBulkActionMessage] = useState('');
+    const [bulkActionTone, setBulkActionTone] = useState('success');
     const [searchParams, setSearchParams] = useSearchParams();
     const homeThemeTokens = useInstitutionHomeThemeTokens(user);
     const isStudentRole = useMemo(() => getNormalizedRole(user) === 'student', [user]);
     const rememberOrganization = user?.rememberSort !== false;
     const defaultViewMode = user?.viewMode || 'grid';
-    const logic = useHomeLogic(user, searchQuery, rememberOrganization);
+    const publishHomeFeedback = React.useCallback((message, tone = 'success') => {
+        setBulkActionTone(tone);
+        setBulkActionMessage(message || '');
+    }, []);
+
+    const logic = useHomeLogic(user, searchQuery, rememberOrganization, publishHomeFeedback);
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
     const {
         isFilterOpen,
@@ -91,7 +97,8 @@ const Home = ({ user }) => {
         searchQuery,
         rememberOrganization,
         defaultViewMode,
-        showSharedTab: !isStudentRole
+        showSharedTab: !isStudentRole,
+        onHomeFeedback: publishHomeFeedback
     });
 
     const folderIdFromUrl = searchParams.get('folderId');
@@ -301,6 +308,18 @@ const Home = ({ user }) => {
         setBulkMoveTargetFolderId('');
     }, []);
 
+    const setSelectionFromEntries = React.useCallback((entries = []) => {
+        const nextSelection = {};
+        entries.forEach((entry) => {
+            if (!entry?.key) return;
+            nextSelection[entry.key] = entry;
+        });
+        setSelectedItemsByKey(nextSelection);
+        if (entries.length === 0) {
+            setBulkMoveTargetFolderId('');
+        }
+    }, []);
+
     const toggleSelectItem = React.useCallback((item, type) => {
         if (!item?.id || !type) return;
         const key = buildSelectionKey(item, type);
@@ -322,85 +341,161 @@ const Home = ({ user }) => {
         const itemsToMove = Object.values(selectedItemsByKey);
         if (itemsToMove.length === 0) return;
 
+        const settledResults = await Promise.allSettled(
+            itemsToMove.map(async (entry) => {
+                const item = entry?.item;
+                const type = entry?.type;
+                if (!item?.id || !type) {
+                    return { moved: false, skipped: true, entry };
+                }
+
+                try {
+                    if (type === 'subject') {
+                        if (isShortcutItem(item) && item?.shortcutId) {
+                            await logic.moveShortcut(item.shortcutId, destination);
+                            return { moved: true, entry };
+                        }
+
+                        await logic.updateSubject(item.id, { folderId: destination });
+                        return { moved: true, entry };
+                    }
+
+                    if (type === 'folder') {
+                        if (destination && item.id === destination) {
+                            return { moved: false, skipped: true, entry };
+                        }
+
+                        if (isShortcutItem(item) && item?.shortcutId) {
+                            await logic.moveShortcut(item.shortcutId, destination);
+                            return { moved: true, entry };
+                        }
+
+                        await logic.updateFolder(item.id, { parentId: destination });
+                        return { moved: true, entry };
+                    }
+
+                    return { moved: false, skipped: true, entry };
+                } catch (error) {
+                    const wrappedError = new Error(error?.message || 'No se pudo mover el elemento.');
+                    wrappedError.entry = entry;
+                    throw wrappedError;
+                }
+            })
+        );
+
         let moved = 0;
-        for (const entry of itemsToMove) {
-            const item = entry?.item;
-            const type = entry?.type;
-            if (!item?.id || !type) continue;
+        const failedEntries = [];
 
-            if (type === 'subject') {
-                if (isShortcutItem(item) && item?.shortcutId) {
-                    await logic.moveShortcut(item.shortcutId, destination);
-                    moved += 1;
-                    continue;
-                }
-                await logic.updateSubject(item.id, { folderId: destination });
-                moved += 1;
-                continue;
+        settledResults.forEach((result) => {
+            if (result.status === 'fulfilled') {
+                if (result.value?.moved) moved += 1;
+                return;
             }
 
-            if (type === 'folder') {
-                if (destination && item.id === destination) continue;
-                if (isShortcutItem(item) && item?.shortcutId) {
-                    await logic.moveShortcut(item.shortcutId, destination);
-                    moved += 1;
-                    continue;
-                }
-                await logic.updateFolder(item.id, { parentId: destination });
-                moved += 1;
+            if (result.reason?.entry) {
+                failedEntries.push(result.reason.entry);
             }
+        });
+
+        if (failedEntries.length > 0) {
+            setSelectionFromEntries(failedEntries);
+            setSelectMode(true);
+        } else {
+            clearSelection();
+            setSelectMode(false);
         }
 
-        setBulkActionMessage(`Se movieron ${moved} elemento(s).`);
-        clearSelection();
-        setSelectMode(false);
-    }, [selectedItemsByKey, logic, clearSelection]);
+        if (failedEntries.length === 0) {
+            publishHomeFeedback(`Se movieron ${moved} elemento(s).`, 'success');
+        } else if (moved === 0) {
+            publishHomeFeedback('No se pudieron mover los elementos seleccionados por permisos o conflictos.', 'error');
+        } else {
+            publishHomeFeedback(`Se movieron ${moved} elemento(s) y ${failedEntries.length} no se pudieron mover.`, 'warning');
+        }
+    }, [selectedItemsByKey, logic, clearSelection, setSelectionFromEntries, publishHomeFeedback]);
 
     const handleBulkDelete = React.useCallback(async () => {
         const itemsToDelete = Object.values(selectedItemsByKey);
         if (itemsToDelete.length === 0) return;
 
+        const settledResults = await Promise.allSettled(
+            itemsToDelete.map(async (entry) => {
+                const item = entry?.item;
+                const type = entry?.type;
+                if (!item?.id || !type) {
+                    return { deleted: false, skipped: true, entry };
+                }
+
+                try {
+                    if (isShortcutItem(item) && item?.shortcutId) {
+                        await logic.deleteShortcut(item.shortcutId);
+                        return { deleted: true, entry };
+                    }
+
+                    if (type === 'subject') {
+                        await logic.deleteSubject(item.id);
+                        return { deleted: true, entry };
+                    }
+
+                    await logic.deleteFolder(item.id);
+                    return { deleted: true, entry };
+                } catch (error) {
+                    const wrappedError = new Error(error?.message || 'No se pudo eliminar el elemento.');
+                    wrappedError.entry = entry;
+                    throw wrappedError;
+                }
+            })
+        );
+
         let deleted = 0;
-        for (const entry of itemsToDelete) {
-            const item = entry?.item;
-            const type = entry?.type;
-            if (!item?.id || !type) continue;
+        const failedEntries = [];
 
-            if (isShortcutItem(item) && item?.shortcutId) {
-                await logic.deleteShortcut(item.shortcutId);
-                deleted += 1;
-                continue;
+        settledResults.forEach((result) => {
+            if (result.status === 'fulfilled') {
+                if (result.value?.deleted) deleted += 1;
+                return;
             }
 
-            if (type === 'subject') {
-                await logic.deleteSubject(item.id);
-                deleted += 1;
-                continue;
+            if (result.reason?.entry) {
+                failedEntries.push(result.reason.entry);
             }
+        });
 
-            await logic.deleteFolder(item.id);
-            deleted += 1;
+        if (failedEntries.length > 0) {
+            setSelectionFromEntries(failedEntries);
+            setSelectMode(true);
+        } else {
+            clearSelection();
+            setSelectMode(false);
         }
 
-        setBulkActionMessage(`Se eliminaron ${deleted} elemento(s).`);
-        clearSelection();
-        setSelectMode(false);
-    }, [selectedItemsByKey, logic, clearSelection]);
+        if (failedEntries.length === 0) {
+            publishHomeFeedback(`Se eliminaron ${deleted} elemento(s).`, 'success');
+        } else if (deleted === 0) {
+            publishHomeFeedback('No se pudieron eliminar los elementos seleccionados por permisos o dependencias.', 'error');
+        } else {
+            publishHomeFeedback(`Se eliminaron ${deleted} elemento(s) y ${failedEntries.length} no se pudieron eliminar.`, 'warning');
+        }
+    }, [selectedItemsByKey, logic, clearSelection, setSelectionFromEntries, publishHomeFeedback]);
 
     const handleCreateFolderFromSelection = React.useCallback(async () => {
         const itemsToOrganize = Object.values(selectedItemsByKey);
         if (itemsToOrganize.length === 0) return;
 
-        const createdFolder = await logic.addFolder({
-            name: 'Nueva carpeta seleccionada',
-            parentId: logic.currentFolder?.id || null,
-            color: 'from-amber-400 to-amber-600'
-        });
+        try {
+            const createdFolder = await logic.addFolder({
+                name: 'Nueva carpeta seleccionada',
+                parentId: logic.currentFolder?.id || null,
+                color: 'from-amber-400 to-amber-600'
+            });
 
-        await runBulkMoveToFolder(createdFolder?.id || null);
-        setBulkActionMessage('Se creó una carpeta nueva y se movieron los elementos seleccionados.');
-        setSelectMode(false);
-    }, [selectedItemsByKey, logic, runBulkMoveToFolder]);
+            await runBulkMoveToFolder(createdFolder?.id || null);
+            publishHomeFeedback('Se creó una carpeta nueva y se procesó la selección.', 'success');
+            setSelectMode(false);
+        } catch {
+            publishHomeFeedback('No se pudo crear la carpeta para organizar la selección.', 'error');
+        }
+    }, [selectedItemsByKey, logic, runBulkMoveToFolder, publishHomeFeedback]);
 
     React.useEffect(() => {
         if (logic.viewMode === 'shared' || logic.viewMode === 'bin' || isStudentRole) {
@@ -411,7 +506,10 @@ const Home = ({ user }) => {
 
     React.useEffect(() => {
         if (!bulkActionMessage) return;
-        const timer = window.setTimeout(() => setBulkActionMessage(''), 3000);
+        const timer = window.setTimeout(() => {
+            setBulkActionMessage('');
+            setBulkActionTone('success');
+        }, 3000);
         return () => window.clearTimeout(timer);
     }, [bulkActionMessage]);
 
@@ -517,6 +615,7 @@ const Home = ({ user }) => {
                     onToggleSelectMode={() => {
                         setSelectMode((prev) => !prev);
                         setBulkActionMessage('');
+                        setBulkActionTone('success');
                         if (selectMode) clearSelection();
                     }}
                     onDeleteSelected={handleBulkDelete}
@@ -527,7 +626,13 @@ const Home = ({ user }) => {
                 />
 
                 {bulkActionMessage ? (
-                    <p className="mt-3 text-sm text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg px-3 py-2">
+                    <p className={`mt-3 text-sm rounded-lg px-3 py-2 border ${
+                        bulkActionTone === 'error'
+                            ? 'text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                            : bulkActionTone === 'warning'
+                                ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+                                : 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+                    }`}>
                         {bulkActionMessage}
                     </p>
                 ) : null}

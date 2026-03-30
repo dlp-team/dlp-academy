@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import AppToast from '../../../components/ui/AppToast';
 import QuizModal from '../../../components/modals/QuizModal';           // Check relative path
 import CreateContentModal from '../../../components/modals/CreateContentModal'; // Check relative path
+import TopicConfirmDeleteModal from './TopicConfirmDeleteModal';
 
 const TopicModals = ({
     toast,
@@ -13,7 +14,6 @@ const TopicModals = ({
     handleGenerateQuizSubmit,
     quizFormData,
     setQuizFormData,
-    isGeneratingQuiz,
     topic,
     subject,
     showContentModal,
@@ -26,7 +26,11 @@ const TopicModals = ({
     setViewingFile,
     getFileVisuals,
     subjectId,
-    topicId
+    topicId,
+    confirmDialog,
+    isConfirmingAction,
+    closeConfirmDialog,
+    confirmDeleteAction,
 }) => {
     return (
         <>
@@ -54,6 +58,13 @@ const TopicModals = ({
                 themeColor={subject?.color}
                 subjectId={subjectId}
                 topicId={topicId}
+            />
+
+            <TopicConfirmDeleteModal
+                confirmDialog={confirmDialog}
+                isConfirmingAction={isConfirmingAction}
+                onClose={closeConfirmDialog}
+                onConfirm={confirmDeleteAction}
             />
 
             {viewingFile && (

@@ -45,10 +45,17 @@ const SubjectTestsPanel = ({ user, subject, topics = [] }) => {
             return undefined;
         }
 
+        setLoading(true);
+        setPanelError('');
+
         const quizzesQuery = query(collection(db, 'quizzes'), where('subjectId', '==', subject.id));
         const unsubscribe = onSnapshot(quizzesQuery, (snapshot) => {
             const allQuizzes = snapshot.docs.map((quizDoc) => ({ id: quizDoc.id, ...quizDoc.data() }));
             setQuizzes(allQuizzes);
+            setLoading(false);
+        }, (error) => {
+            console.error('Error listening to subject quizzes:', error);
+            setPanelError('No se pudieron cargar los tests. Intentalo de nuevo.');
             setLoading(false);
         });
 

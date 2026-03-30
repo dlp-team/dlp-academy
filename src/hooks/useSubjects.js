@@ -7,6 +7,7 @@ import { db } from '../firebase/config';
 import { generateSubjectInviteCode, normalizeSubjectAccessPayload } from '../utils/subjectAccessUtils';
 import { getNormalizedRole } from '../utils/permissionUtils';
 import { canTeacherDeleteSubjectsWithStudents, DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../utils/institutionPolicyUtils';
+import { DEFAULT_TOPIC_CASCADE_COLLECTIONS, cascadeDeleteTopicResources } from '../utils/topicDeletionUtils';
 
 export const useSubjects = (user) => {
     const [subjects, setSubjects] = useState([]);
@@ -865,73 +866,23 @@ export const useSubjects = (user) => {
             );
             const topicsSnapshot = await getDocs(topicsQuery);
             
-            // 2. For each topic, try to delete documents, generated resources, and quizzes
-            const documentDeletionPromises = [];
-            const resumenDeletionPromises = [];
-            const quizDeletionPromises = [];
+            // 2. For each topic, delete linked artifacts (documents/resources/quizzes/exams)
+            const topicCleanupPromises = [];
             for (const topicDoc of topicsSnapshot.docs) {
                 const topicId = topicDoc.id;
-                
-                // Get all documents for this topic
-                const documentsQuery = query(
-                    collection(db, "documents"),
-                    where("topicId", "==", topicId)
+
+                topicCleanupPromises.push(
+                    cascadeDeleteTopicResources({
+                        db,
+                        topicId,
+                        collections: DEFAULT_TOPIC_CASCADE_COLLECTIONS,
+                    }).catch((err) => {
+                        console.warn(`Failed to cascade-delete topic resources for ${topicId}:`, err);
+                    })
                 );
-                
-                try {
-                    const documentsSnapshot = await getDocs(documentsQuery);
-                    documentsSnapshot.docs.forEach(docSnapshot => {
-                        documentDeletionPromises.push(
-                            deleteDoc(doc(db, "documents", docSnapshot.id)).catch(err => {
-                                console.warn(`Failed to delete document ${docSnapshot.id}:`, err);
-                            })
-                        );
-                    });
-                } catch (err) {
-                    console.warn(`Failed to query documents for topic ${topicId}:`, err);
-                }
-
-                const resumenQuery = query(
-                    collection(db, "resumen"),
-                    where("topicId", "==", topicId)
-                );
-
-                try {
-                    const resumenSnapshot = await getDocs(resumenQuery);
-                    resumenSnapshot.docs.forEach(resumenDoc => {
-                        resumenDeletionPromises.push(
-                            deleteDoc(doc(db, "resumen", resumenDoc.id)).catch(err => {
-                                console.warn(`Failed to delete resource ${resumenDoc.id}:`, err);
-                            })
-                        );
-                    });
-                } catch (err) {
-                    console.warn(`Failed to query resources for topic ${topicId}:`, err);
-                }
-
-                const quizzesQuery = query(
-                    collection(db, "quizzes"),
-                    where("topicId", "==", topicId)
-                );
-
-                try {
-                    const quizzesSnapshot = await getDocs(quizzesQuery);
-                    quizzesSnapshot.docs.forEach(quizDoc => {
-                        quizDeletionPromises.push(
-                            deleteDoc(doc(db, "quizzes", quizDoc.id)).catch(err => {
-                                console.warn(`Failed to delete quiz ${quizDoc.id}:`, err);
-                            })
-                        );
-                    });
-                } catch (err) {
-                    console.warn(`Failed to query quizzes for topic ${topicId}:`, err);
-                }
             }
-            
-            // Wait for all document deletions (with error handling)
-            await Promise.allSettled(documentDeletionPromises);
-            await Promise.allSettled(resumenDeletionPromises);
-            await Promise.allSettled(quizDeletionPromises);
+
+            await Promise.allSettled(topicCleanupPromises);
             
             // 3. Delete all topics
             const topicDeletionPromises = topicsSnapshot.docs.map(topicDoc =>

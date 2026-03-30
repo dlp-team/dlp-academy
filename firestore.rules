@@ -1,3 +1,4 @@
+// firestore.rules
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -213,6 +214,7 @@ service cloud.firestore {
       // Update rules:
       // - Global admin: full control
       // - Institution admin: manage users in own institution (never promote to global admin)
+      // - Teacher: can only update student recognition fields in same institution
       // - Self: profile updates only, cannot mutate role/institutionId
       allow update: if isSignedIn()
         && (
@@ -222,6 +224,26 @@ service cloud.firestore {
             && resource.data.institutionId == currentUserInstitutionId()
             && request.resource.data.institutionId == currentUserInstitutionId()
             && request.resource.data.role != 'admin'
+          )
+          || (
+            isTeacherRole()
+            && resource.data.role == 'student'
+            && resource.data.institutionId == currentUserInstitutionId()
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.institutionId == resource.data.institutionId
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['badges', 'badgesByCourse', 'behaviorScore', 'updatedAt'])
+            && (
+              !request.resource.data.diff(resource.data).affectedKeys().hasAny(['badges'])
+              || request.resource.data.badges is list
+            )
+            && (
+              !request.resource.data.diff(resource.data).affectedKeys().hasAny(['badgesByCourse'])
+              || request.resource.data.badgesByCourse is map
+            )
+            && (
+              !request.resource.data.diff(resource.data).affectedKeys().hasAny(['behaviorScore'])
+              || request.resource.data.behaviorScore is number
+            )
           )
           || (
             request.auth.uid == userId
@@ -276,24 +298,7 @@ service cloud.firestore {
           || resource.data.ownerId == request.auth.uid
           || resource.data.uid == request.auth.uid
           || (
-          && (
-            !request.writeFields.hasAny(['course'])
-            || (
-              request.resource.data.course is string
-              && request.resource.data.course.size() > 0
-            )
-          )
-          && (
-            !request.writeFields.hasAny(['inviteCode'])
-            || (
-              request.resource.data.inviteCode is string
-              && request.resource.data.inviteCode.size() > 0
-            )
-          )
-          && (
-            !request.writeFields.hasAny(['enrolledStudentUids'])
-            || request.resource.data.enrolledStudentUids is list
-          )
+            resource.data.keys().hasAny(['folderId'])
             && canManageFolderById(resource.data.folderId)
           )
           || (resource.data.keys().hasAny(['sharedWithUids']) && request.auth.uid in resource.data.sharedWithUids)

@@ -1,5 +1,5 @@
 // src/pages/Subject/modals/SubjectTopicModal.jsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, FileText, GripVertical, Loader2 } from 'lucide-react';
 import { collection, query, where, orderBy, onSnapshot, writeBatch, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
@@ -9,16 +9,20 @@ import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
     const [topics, setTopics] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
     const [draggedTopicId, setDraggedTopicId] = useState(null);
 
     // --- 1. Fetch Topics ---
     useEffect(() => {
         if (!isOpen || !subject) {
-            setTopics([]);
             return;
         }
 
-        setLoading(true);
+        queueMicrotask(() => {
+            setLoading(true);
+            setLoadError('');
+        });
+
         const q = query(
             collection(db, "topics"),
             where("subjectId", "==", subject.id),
@@ -32,9 +36,12 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
                 ...doc.data()
             }));
             setTopics(fetchedTopics);
+            setLoadError('');
             setLoading(false);
         }, (error) => {
              console.error("Error fetching topics:", error);
+               setTopics([]);
+             setLoadError('No se pudieron cargar los temas. Intentalo de nuevo.');
              setLoading(false);
         });
 
@@ -130,6 +137,10 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
                     {loading ? (
                         <div className="flex h-full items-center justify-center py-12">
                             <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+                        </div>
+                    ) : loadError ? (
+                        <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm font-semibold text-red-700 dark:text-red-300">
+                            {loadError}
                         </div>
                     ) : topics.length === 0 ? (
                         <div className="text-center py-12 text-gray-400">

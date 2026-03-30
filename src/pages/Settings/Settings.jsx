@@ -2,11 +2,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Loader2 } from 'lucide-react';
-import { db } from '../../firebase/config';
+import { signOut } from 'firebase/auth';
+import { auth, db } from '../../firebase/config';
 import AppearanceSection from './components/AppearanceSection';
 import OrganizationSection from './components/OrganizationSection';
 import NotificationSection from './components/NotificationSection';
 import GeneralSection from './components/GeneralSection';
+import SecuritySection from './components/SecuritySection';
 import useSettingsPageState from './hooks/useSettingsPageState';
 
 const Settings = ({ user }) => {
@@ -18,6 +20,11 @@ const Settings = ({ user }) => {
     settings,
     updateSetting,
   } = useSettingsPageState({ user, db });
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate('/login');
+  };
 
   if (loading) {
     return (
@@ -65,6 +72,7 @@ const Settings = ({ user }) => {
           language={settings.language}
           onUpdate={updateSetting}
         />
+        <SecuritySection onLogout={handleLogout} />
       </main>
     </div>
   );

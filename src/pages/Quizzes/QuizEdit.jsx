@@ -92,6 +92,11 @@ const QuizEdit = ({ user }) => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saveError, setSaveError] = useState('');
+    const [topicNotFoundMessage, setTopicNotFoundMessage] = useState('');
+    const [questionDeleteConfirm, setQuestionDeleteConfirm] = useState({
+        isOpen: false,
+        questionIndex: null
+    });
     const [hasEditPermission, setHasEditPermission] = useState(false);
     const [ruleContext, setRuleContext] = useState({
         topicInstitutionId: null,
@@ -166,8 +171,9 @@ const QuizEdit = ({ user }) => {
                 const topicSnap = await getDoc(topicRef);
                 
                 if (!topicSnap.exists()) {
-                    alert("Tema no encontrado");
-                    navigate(-1);
+                    setTopicNotFoundMessage('No encontramos este tema. Vuelve y selecciona uno valido para continuar.');
+                    setHasEditPermission(false);
+                    setLoading(false);
                     return;
                 }
                 
@@ -248,9 +254,30 @@ const QuizEdit = ({ user }) => {
         setQuizData({ ...quizData, questions: newQ });
     };
 
-    const deleteQuestion = (idx) => {
-        if (!window.confirm("¿Borrar pregunta?")) return;
-        setQuizData({ ...quizData, questions: quizData.questions.filter((_, i) => i !== idx) });
+    const requestDeleteQuestion = (questionIndex) => {
+        if (questionIndex < 0 || questionIndex >= quizData.questions.length) return;
+        setQuestionDeleteConfirm({
+            isOpen: true,
+            questionIndex
+        });
+    };
+
+    const closeDeleteQuestionConfirm = () => {
+        setQuestionDeleteConfirm({
+            isOpen: false,
+            questionIndex: null
+        });
+    };
+
+    const confirmDeleteQuestion = () => {
+        if (!questionDeleteConfirm.isOpen || questionDeleteConfirm.questionIndex === null) return;
+
+        setQuizData((previous) => ({
+            ...previous,
+            questions: previous.questions.filter((_, index) => index !== questionDeleteConfirm.questionIndex)
+        }));
+
+        closeDeleteQuestionConfirm();
     };
 
     const addQuestion = () => {
@@ -350,6 +377,28 @@ const QuizEdit = ({ user }) => {
     };
 
     if (loading) return <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950"><Loader2 className="animate-spin w-8 h-8 text-indigo-600 dark:text-indigo-400"/></div>;
+
+    if (topicNotFoundMessage) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 px-6">
+                <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 p-12 text-center">
+                    <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <ShieldAlert className="w-10 h-10 text-red-600 dark:text-red-400" />
+                    </div>
+                    <h1 className="text-3xl font-black text-slate-800 dark:text-slate-100 mb-3">Tema no encontrado</h1>
+                    <p className="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                        {topicNotFoundMessage}
+                    </p>
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all"
+                    >
+                        <ChevronLeft className="w-5 h-5" /> Volver
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     // *** PERMISSION DENIED UI ***
     if (!hasEditPermission) {
@@ -495,7 +544,11 @@ const QuizEdit = ({ user }) => {
                                     />
 
                                 </div>
-                                <button onClick={() => deleteQuestion(qIndex)} className="p-2 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-xl transition-all">
+                                <button
+                                    onClick={() => requestDeleteQuestion(qIndex)}
+                                    aria-label={`Eliminar pregunta ${qIndex + 1}`}
+                                    className="p-2 text-slate-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 rounded-xl transition-all"
+                                >
                                     <Trash2 className="w-5 h-5" />
                                 </button>
                             </div>
@@ -538,6 +591,39 @@ const QuizEdit = ({ user }) => {
                         <Plus className="w-6 h-6" /> Añadir Nueva Pregunta
                     </button>
                 </div>
+
+                {questionDeleteConfirm.isOpen && (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+                        onClick={closeDeleteQuestionConfirm}
+                    >
+                        <div
+                            className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-6"
+                            onClick={(event) => event.stopPropagation()}
+                        >
+                            <h3 className="text-xl font-black text-slate-900 dark:text-slate-100">Eliminar pregunta</h3>
+                            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                                Se eliminará la pregunta {Number(questionDeleteConfirm.questionIndex) + 1}. Esta acción no se puede deshacer.
+                            </p>
+                            <div className="mt-6 flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={closeDeleteQuestionConfirm}
+                                    className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 font-semibold"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={confirmDeleteQuestion}
+                                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold"
+                                >
+                                    Eliminar pregunta
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main>
         </div>
     );

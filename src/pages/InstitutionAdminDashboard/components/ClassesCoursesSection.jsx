@@ -18,6 +18,12 @@ import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersist
 
 const TAB_COURSES = 'courses';
 const TAB_CLASSES = 'classes';
+const INITIAL_DELETE_CONFIRM_STATE = {
+  isOpen: false,
+  targetType: null,
+  targetId: null,
+  targetName: '',
+};
 
 const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }) => {
   const tabKey = buildInstitutionScopedPersistenceKey('institution-admin-organization', institutionId, 'tab');
@@ -35,6 +41,8 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
   const [showClassModal,   setShowClassModal]   = React.useState(false);
   const [classModalErr,    setClassModalErr]    = React.useState('');
   const [classSubmitting,  setClassSubmitting]  = React.useState(false);
+  const [deleteConfirm, setDeleteConfirm] = React.useState(INITIAL_DELETE_CONFIRM_STATE);
+  const [isDeletingItem, setIsDeletingItem] = React.useState(false);
 
   // ── Data ────────────────────────────────────────────────────────────────────
   const {
@@ -57,6 +65,45 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
     setJumpToEdit(false);
   };
 
+  const queueDeleteConfirm = (targetType, id) => {
+    if (!id || isDeletingItem) return;
+
+    const isCourseTarget = targetType === TAB_COURSES;
+    const sourceItems = isCourseTarget ? courses : classes;
+    const selectedItem = sourceItems.find((item) => item.id === id);
+
+    setDeleteConfirm({
+      isOpen: true,
+      targetType,
+      targetId: id,
+      targetName: selectedItem?.name || (isCourseTarget ? 'este curso' : 'esta clase'),
+    });
+  };
+
+  const closeDeleteConfirm = () => {
+    if (isDeletingItem) return;
+    setDeleteConfirm(INITIAL_DELETE_CONFIRM_STATE);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteConfirm.targetId || isDeletingItem) return;
+
+    setIsDeletingItem(true);
+
+    try {
+      if (deleteConfirm.targetType === TAB_COURSES) {
+        await deleteCourse(deleteConfirm.targetId);
+        if (selectedCourse?.id === deleteConfirm.targetId) setSelectedCourse(null);
+      } else {
+        await deleteClass(deleteConfirm.targetId);
+        if (selectedClass?.id === deleteConfirm.targetId) setSelectedClass(null);
+      }
+    } finally {
+      setIsDeletingItem(false);
+      setDeleteConfirm(INITIAL_DELETE_CONFIRM_STATE);
+    }
+  };
+
   // ── Course handlers ─────────────────────────────────────────────────────────
   const handleCreateCourse = async (form) => {
     setCourseModalErr('');
@@ -69,10 +116,8 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
     finally { setCourseSubmitting(false); }
   };
 
-  const handleDeleteCourse = async (id) => {
-    if (!window.confirm('¿Eliminar este curso? Las clases asociadas no se eliminarán.')) return;
-    await deleteCourse(id);
-    if (selectedCourse?.id === id) setSelectedCourse(null);
+  const handleDeleteCourse = (id) => {
+    queueDeleteConfirm(TAB_COURSES, id);
   };
 
   const handleUpdateCourseField = async (id, patch) => {
@@ -93,10 +138,8 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
     finally { setClassSubmitting(false); }
   };
 
-  const handleDeleteClass = async (id) => {
-    if (!window.confirm('¿Eliminar esta clase?')) return;
-    await deleteClass(id);
-    if (selectedClass?.id === id) setSelectedClass(null);
+  const handleDeleteClass = (id) => {
+    queueDeleteConfirm(TAB_CLASSES, id);
   };
 
   const handleUpdateClassField = async (id, patch) => {
@@ -108,6 +151,12 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
   const handleEditClass   = (cl) => { setSelectedClass(cl); setJumpToEdit(true);  };
 
   const showingDetail = selectedCourse || selectedClass;
+  const deletingCourse = deleteConfirm.targetType === TAB_COURSES;
+  const deleteDialogTitle = deletingCourse ? 'Eliminar curso' : 'Eliminar clase';
+  const deleteDialogActionLabel = deletingCourse ? 'Eliminar curso' : 'Eliminar clase';
+  const deleteDialogMessage = deletingCourse
+    ? `Se eliminará "${deleteConfirm.targetName || 'este curso'}". Las clases asociadas no se eliminarán. Esta acción no se puede deshacer.`
+    : `Se eliminará "${deleteConfirm.targetName || 'esta clase'}". Esta acción no se puede deshacer.`;
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -118,7 +167,7 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
           {[
             { key: TAB_COURSES, label: 'Cursos', icon: FolderOpen },
             { key: TAB_CLASSES, label: 'Clases', icon: LayoutGrid },
-          ].map(({ key, label, icon: Icon }) => (
+          ].map(({ key, label, icon }) => (
             <button
               key={key}
               onClick={() => switchTab(key)}
@@ -128,7 +177,7 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
                   : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
               }`}
             >
-              <Icon className="w-4 h-4" /> {label}
+              {React.createElement(icon, { className: 'w-4 h-4' })} {label}
             </button>
           ))}
         </div>
@@ -203,6 +252,48 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
       )}
 
       {/* ── Modals ── */}
+      {deleteConfirm.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div
+            className="absolute inset-0 bg-slate-950/60"
+            onClick={closeDeleteConfirm}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="classes-courses-delete-title"
+            className="relative w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl"
+          >
+            <div className="p-6">
+              <h3 id="classes-courses-delete-title" className="text-lg font-black text-slate-900 dark:text-white">
+                {deleteDialogTitle}
+              </h3>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                {deleteDialogMessage}
+              </p>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={closeDeleteConfirm}
+                  disabled={isDeletingItem}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  disabled={isDeletingItem}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60"
+                >
+                  {isDeletingItem ? 'Eliminando...' : deleteDialogActionLabel}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showCourseModal && (
         <CreateCourseModal
           onClose={() => { setShowCourseModal(false); setCourseModalErr(''); }}

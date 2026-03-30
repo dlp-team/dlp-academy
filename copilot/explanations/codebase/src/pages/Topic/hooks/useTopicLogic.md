@@ -1,3 +1,57 @@
+<!-- copilot/explanations/codebase/src/pages/Topic/hooks/useTopicLogic.md -->
+## [2026-03-30] Topic Destructive Actions Now Use In-Page Confirmation Modal
+### Context
+- Topic workflows still relied on browser `window.confirm(...)` dialogs for destructive actions.
+- This caused inconsistent UX compared to in-page modal and toast patterns used in the rest of the platform.
+
+### Change
+- Added confirmation state machine inside `useTopicLogic`:
+	- `confirmDialog`
+	- `isConfirmingAction`
+	- `closeConfirmDialog`
+	- `confirmDeleteAction`
+- Converted these handlers to queue confirmation first and execute only after modal accept:
+	- `deleteFile`
+	- `deleteQuiz`
+	- `handleDeleteTopic`
+- Topic deletion execution remains best-effort and still delegates cascade cleanup to `cascadeDeleteTopicResources`.
+
+### Validation
+- Updated `tests/unit/hooks/useTopicLogic.test.js` with confirmation-path assertions for file, quiz, and topic deletion.
+
+## [2026-03-30] Topic Alert Removal and Toast Feedback Hardening
+### Context
+- Topic workflow still relied on browser alerts for several failure/info branches, creating inconsistent UX compared to inline/toast feedback paths used elsewhere.
+
+### Change
+- Replaced alert dialogs with `showNotification(...)` toasts for:
+	- rename failure,
+	- file delete failure,
+	- file category update failure,
+	- quiz delete failure,
+	- empty-file view attempt,
+	- manual-upload categorization failure.
+- Preserved existing success-path behavior and permission guards.
+
+### Validation
+- Updated focused coverage in `tests/unit/hooks/useTopicLogic.test.js`.
+
+## [2026-03-30] Topic Delete Flow Centralized and Exam Cleanup Expanded
+### Context
+- Topic deletion logic was duplicated across hooks and did not consistently include exam collections when deleting from all entry points.
+
+### Change
+- `handleDeleteTopic` now delegates cascade cleanup to shared utility `cascadeDeleteTopicResources`.
+- Default cascade scope now includes:
+	- `documents`
+	- `resumen`
+	- `quizzes`
+	- `exams`
+	- `examns`
+
+### Validation
+- Updated focused unit coverage: `tests/unit/hooks/useTopicLogic.test.js`.
+
 ## [2026-03-08] Topic Deletion Cascade Expanded
 ### Context
 - Topic deletion coverage required cleanup of topic-linked artifacts before deleting the topic.
@@ -67,6 +121,8 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-03-30: Replaced `window.confirm(...)` destructive prompts with in-page modal-confirmed delete flow (`confirmDialog` + `confirmDeleteAction`) for file, quiz, and topic actions.
+- 2026-03-30: Removed remaining browser-alert error/info paths in Topic workflows and standardized these branches on toast notifications.
 - 2026-03-29: Exam/examns fallback reads now suppress expected `permission-denied` noise and degrade to empty exam arrays without treating it as a fatal load failure.
 - 2026-03-29: Added `handleChangeFileCategory` to update uploaded file categories from the `Mis Archivos` menu with realtime persistence and toast feedback.
 - 2026-03-29: Upload flow now always requires category selection and supports batch categorization using `pendingFiles` with categories `material-teorico`, `ejercicios`, and `examenes` (legacy categories still supported downstream).
