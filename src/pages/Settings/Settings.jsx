@@ -1,7 +1,7 @@
 // src/pages/Settings/Settings.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Check, Loader2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Check, Loader2 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../../firebase/config';
 import AppearanceSection from './components/AppearanceSection';
@@ -17,6 +17,7 @@ const Settings = ({ user }) => {
   const {
     loading,
     savingStatus,
+    listenerFeedback,
     settings,
     updateSetting,
   } = useSettingsPageState({ user, db });
@@ -55,6 +56,12 @@ const Settings = ({ user }) => {
       </div>
       {/* Main Content */}
       <main className="max-w-2xl mx-auto px-6 py-8 space-y-8">
+        {listenerFeedback && (
+          <div className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+            <AlertCircle size={14} />
+            <span>{listenerFeedback}</span>
+          </div>
+        )}
         <AppearanceSection 
           theme={settings.theme} 
           onUpdate={updateSetting} 

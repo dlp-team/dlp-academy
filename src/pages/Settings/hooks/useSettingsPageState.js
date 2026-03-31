@@ -13,6 +13,7 @@ import { applyThemeToDom } from '../../../utils/themeMode';
 export default function useSettingsPageState({ user, db }) {
   const [loading, setLoading] = useState(true);
   const [savingStatus, setSavingStatus] = useState('idle');
+  const [listenerFeedback, setListenerFeedback] = useState('');
 
   const [settings, setSettings] = useState({
     theme: 'system',
@@ -47,9 +48,11 @@ export default function useSettingsPageState({ user, db }) {
         }));
         applyThemeToDom(nextTheme);
       }
+      setListenerFeedback('');
       setLoading(false);
     }, (error) => {
       console.error("Error listening to settings:", error);
+      setListenerFeedback('No se pudieron sincronizar tus ajustes en tiempo real. Se muestran valores locales.');
       setLoading(false);
     });
     return () => unsubscribe();
@@ -89,6 +92,7 @@ export default function useSettingsPageState({ user, db }) {
   return {
     loading,
     savingStatus,
+    listenerFeedback,
     settings,
     updateSetting,
   };
