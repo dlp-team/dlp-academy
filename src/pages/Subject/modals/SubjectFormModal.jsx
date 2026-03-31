@@ -742,7 +742,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 onClose();
             } catch (error) {
                 setShareLoading(false);
-                setShareError(error?.message || 'No se pudo transferir la propiedad.');
+                if (error?.code === 'permission-denied') {
+                    setShareError('No tienes permiso para transferir la propiedad de esta asignatura.');
+                } else {
+                    setShareError(error?.message || 'No se pudo transferir la propiedad.');
+                }
             }
             return;
         }

@@ -85,6 +85,17 @@ Shortcut self-unshare mutations in `SubjectFormModal` previously relied on gener
 ### Validation
 - Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied self-unshare regression coverage.
 
+## [2026-03-31] Transfer Ownership Feedback Hardening
+### Context & Architecture
+Transfer-ownership mutations in `SubjectFormModal` previously relied on generic error messaging, making denied-write causes unclear.
+
+### Change
+- Added permission-specific feedback when transfer-ownership writes fail with `permission-denied`.
+- Preserved existing generic fallback for non-permission transfer failures.
+
+### Validation
+- Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied transfer-ownership regression coverage.
+
 ## [2026-03-13] Permission Hardening: Viewer Class Tab is Read-Only
 ### Context & Architecture
 Teachers with `viewer` shortcut permissions were still able to interact with class assignment controls in the `Clases` tab.

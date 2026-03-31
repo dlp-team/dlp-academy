@@ -323,4 +323,35 @@ describe('SubjectFormModal classes-load feedback', () => {
 
     expect(onDeleteShortcut).not.toHaveBeenCalled();
   });
+
+  it('shows sharing feedback when transfer ownership fails with denied permissions', async () => {
+    const deniedError = new Error('permission-denied');
+    deniedError.code = 'permission-denied';
+
+    firestoreMocks.getDoc.mockResolvedValue({ exists: () => false, data: () => ({}) });
+    firestoreMocks.getDocs.mockResolvedValue({ docs: [] });
+
+    const onTransferOwnership = vi.fn().mockRejectedValue(deniedError);
+
+    renderModal({
+      initialTab: 'sharing',
+      onTransferOwnership,
+      initialData: {
+        ...baseProps.initialData,
+        ownerId: 'teacher-1',
+        sharedWith: [{ uid: 'teacher-2', email: 'teacher2@test.com', role: 'viewer', canEdit: false }],
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Transferir')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText('Transferir'));
+    fireEvent.click(screen.getByText('Transferir propiedad'));
+
+    await waitFor(() => {
+      expect(screen.getByText('No tienes permiso para transferir la propiedad de esta asignatura.')).toBeTruthy();
+    });
+  });
 });

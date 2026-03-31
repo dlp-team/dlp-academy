@@ -16,6 +16,7 @@
 - Verifies institution-policy read permission failures render explicit classes-tab preload feedback.
 - Verifies class-request mutation permission failures render explicit classes-tab feedback.
 - Verifies shortcut self-unshare permission failures render explicit sharing feedback.
+- Verifies transfer-ownership permission failures render explicit sharing feedback.
 
 ## Changelog
 ### 2026-03-31
@@ -35,6 +36,9 @@
 
 ### 2026-03-31
 - Expanded suite with denied shortcut self-unshare regression coverage for sharing feedback.
+
+### 2026-03-31
+- Expanded suite with denied transfer-ownership regression coverage for sharing feedback.
 
 ### 2026-03-31
 - Added initial regression suite for `SubjectFormModal` classes-load success/error reliability behavior.
