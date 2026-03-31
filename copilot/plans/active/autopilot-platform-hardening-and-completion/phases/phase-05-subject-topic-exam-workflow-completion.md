@@ -336,6 +336,15 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
   - save failure branch still reaches results state,
   - persistence call path is exercised for mastered questions.
 
+## Progress Update - 2026-03-31 (Slice 36)
+- Hardened `Quizzes` save-result determinism in `src/pages/Quizzes/Quizzes.jsx` by replacing silent save failures with explicit in-page feedback in results state.
+- Added `saveError` state for quiz-result persistence failures with permission-specific and generic messaging.
+- Preserved existing quiz completion flow while clearing stale save feedback on retry.
+- Added focused page-level regression coverage in `tests/unit/pages/quizzes/Quizzes.test.jsx` verifying:
+  - permission-denied save failures surface explicit save-feedback messaging,
+  - results state still renders after save failure,
+  - save call path is exercised during final-question completion.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,

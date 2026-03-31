@@ -69,7 +69,9 @@ vi.mock('../../../../src/components/modules/QuizEngine/QuizQuestion', () => ({
 }));
 
 vi.mock('../../../../src/components/modules/QuizEngine/QuizOptions', () => ({
-  default: () => <div>Quiz Options</div>,
+  default: ({ onSelect }) => (
+    <button onClick={() => onSelect?.(1)}>Seleccionar opcion correcta</button>
+  ),
 }));
 
 vi.mock('../../../../src/components/modules/QuizEngine/QuizResults', () => ({
@@ -102,7 +104,12 @@ vi.mock('../../../../src/components/modules/QuizEngine/QuizCommon', () => ({
   SubjectIcon: () => <div>Icono</div>,
   FormulaDisplay: ({ formula }) => <div>{formula}</div>,
   ProgressBar: () => <div>Barra progreso</div>,
-  QuizFooter: () => <div>Pie quiz</div>,
+  QuizFooter: ({ onCheck, onNext }) => (
+    <div>
+      <button onClick={() => onCheck?.()}>Comprobar</button>
+      <button onClick={() => onNext?.()}>Siguiente</button>
+    </div>
+  ),
   RenderLatex: ({ text }) => <>{text}</>,
 }));
 
@@ -201,5 +208,52 @@ describe('Quizzes load fallback behavior', () => {
     });
 
     expect(screen.queryByText('No se pudo abrir el test')).toBeNull();
+  });
+
+  it('shows explicit save feedback when quiz result persistence is denied', async () => {
+    const deniedError = new Error('denied');
+    deniedError.code = 'permission-denied';
+    mocks.setDoc.mockRejectedValueOnce(deniedError);
+
+    mocks.getDoc
+      .mockResolvedValueOnce({
+        id: 'subject-1',
+        exists: () => true,
+        data: () => ({ name: 'Matematicas', icon: 'book' }),
+      })
+      .mockResolvedValueOnce({
+        id: 'topic-1',
+        exists: () => true,
+        data: () => ({ color: 'from-indigo-500 to-purple-600' }),
+      })
+      .mockResolvedValueOnce({
+        id: 'quiz-1',
+        exists: () => true,
+        data: () => ({
+          name: 'Quiz Algebra',
+          level: 'Repaso',
+          questions: [
+            { question: '2 + 2', options: ['3', '4'], correctIndex: 1 },
+          ],
+        }),
+      });
+
+    render(<Quizzes user={user} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Comenzar Test/i })).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Comenzar Test/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Seleccionar opcion correcta' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Comprobar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('No tienes permiso para guardar tu resultado del test.')).toBeTruthy();
+    });
+
+    expect(screen.getByText('Quiz Results')).toBeTruthy();
+    expect(mocks.setDoc).toHaveBeenCalled();
   });
 });
