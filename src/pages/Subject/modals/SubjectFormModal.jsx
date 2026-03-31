@@ -496,7 +496,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setClassesActionSuccess('Solicitud enviada a administración de institución.');
             setTimeout(() => setClassesActionSuccess(''), 3500);
         } catch (error) {
-            setClassesActionError(error?.message || 'No se pudo enviar la solicitud de clases.');
+            if (error?.code === 'permission-denied') {
+                setClassesActionError('No tienes permiso para solicitar la asignación de clases de esta asignatura.');
+            } else {
+                setClassesActionError(error?.message || 'No se pudo enviar la solicitud de clases.');
+            }
         } finally {
             setClassesActionLoading(false);
         }

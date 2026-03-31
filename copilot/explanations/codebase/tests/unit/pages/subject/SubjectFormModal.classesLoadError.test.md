@@ -14,6 +14,7 @@
 - Verifies sharing-tab institution users query permission failures render explicit preload feedback.
 - Verifies owner-email lookup permission failures render explicit sharing-tab feedback.
 - Verifies institution-policy read permission failures render explicit classes-tab preload feedback.
+- Verifies class-request mutation permission failures render explicit classes-tab feedback.
 
 ## Changelog
 ### 2026-03-31
@@ -27,6 +28,9 @@
 
 ### 2026-03-31
 - Expanded suite with denied institution policy read regression coverage for classes-tab preload feedback.
+
+### 2026-03-31
+- Expanded suite with denied class-request mutation regression coverage for classes-tab request feedback.
 
 ### 2026-03-31
 - Added initial regression suite for `SubjectFormModal` classes-load success/error reliability behavior.

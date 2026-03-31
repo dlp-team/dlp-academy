@@ -387,6 +387,12 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
 - Added permission-specific and generic classes-tab feedback messaging when policy preload fails.
 - Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied institution policy reads render explicit classes-tab feedback.
 
+## Progress Update - 2026-03-31 (Slice 43)
+- Hardened `SubjectFormModal` classes-tab request mutation feedback in `src/pages/Subject/modals/SubjectFormModal.jsx`.
+- Added permission-specific message for denied class-assignment request writes in `handleRequestClassAssignments`.
+- Preserved existing generic mutation failure fallback for non-permission errors.
+- Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied class-request writes render explicit classes-tab feedback.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,

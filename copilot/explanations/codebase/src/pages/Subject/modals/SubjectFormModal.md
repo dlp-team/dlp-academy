@@ -63,6 +63,17 @@ Institution policy preload in `SubjectFormModal` previously failed silently by r
 ### Validation
 - Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied institution policy load regression coverage.
 
+## [2026-03-31] Class Request Mutation Feedback Hardening
+### Context & Architecture
+Class-assignment request writes in `SubjectFormModal` previously relied on generic raw errors, making denied-write causes unclear in classes-tab request flows.
+
+### Change
+- Added permission-specific classes-tab feedback when class-assignment request writes fail with `permission-denied`.
+- Preserved existing generic fallback for non-permission request write errors.
+
+### Validation
+- Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied class-request mutation regression coverage.
+
 ## [2026-03-13] Permission Hardening: Viewer Class Tab is Read-Only
 ### Context & Architecture
 Teachers with `viewer` shortcut permissions were still able to interact with class assignment controls in the `Clases` tab.

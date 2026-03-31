@@ -1,7 +1,7 @@
 // tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import SubjectFormModal from '../../../../src/pages/Subject/modals/SubjectFormModal';
 
 const firestoreMocks = vi.hoisted(() => ({
@@ -232,6 +232,57 @@ describe('SubjectFormModal classes-load feedback', () => {
 
     await waitFor(() => {
       expect(screen.getByText('No tienes permiso para cargar las políticas de acceso de esta institución.')).toBeTruthy();
+    });
+  });
+
+  it('shows classes-tab mutation feedback when class request fails with denied permissions', async () => {
+    firestoreMocks.getDoc.mockImplementation(async (source) => {
+      if (source?.collectionName === 'institutions') {
+        return {
+          exists: () => true,
+          data: () => ({
+            accessPolicies: {
+              teachers: {
+                canAssignClassesAndStudents: false,
+              },
+            },
+          }),
+        };
+      }
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    firestoreMocks.getDocs.mockImplementation(async (source) => {
+      if (getCollectionName(source) === 'classes') {
+        return {
+          docs: [
+            {
+              id: 'class-1',
+              data: () => ({ name: 'Clase A', studentIds: [] }),
+            },
+          ],
+        };
+      }
+      return { docs: [] };
+    });
+
+    firestoreMocks.addDoc.mockImplementation(async () => {
+      const deniedError = new Error('permission-denied');
+      deniedError.code = 'permission-denied';
+      throw deniedError;
+    });
+
+    renderModal({ initialTab: 'classes' });
+
+    await waitFor(() => {
+      expect(screen.getByText('Clase A')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByRole('checkbox'));
+    fireEvent.click(screen.getByText('Solicitar asignación'));
+
+    await waitFor(() => {
+      expect(screen.getByText('No tienes permiso para solicitar la asignación de clases de esta asignatura.')).toBeTruthy();
     });
   });
 });
