@@ -796,8 +796,12 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         ? { ...entry, role: nextRole, canEdit: nextRole === 'editor' }
                         : entry
                 );
-            } catch {
-                failures.push(`No se pudo actualizar permiso de ${email}`);
+            } catch (error) {
+                if (error?.code === 'permission-denied') {
+                    failures.push(`No tienes permiso para actualizar permiso de ${email}`);
+                } else {
+                    failures.push(`No se pudo actualizar permiso de ${email}`);
+                }
             }
         }
 

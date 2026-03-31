@@ -18,6 +18,7 @@
 - Verifies shortcut self-unshare permission failures render explicit sharing feedback.
 - Verifies transfer-ownership permission failures render explicit sharing feedback.
 - Verifies apply-all share-add permission failures render explicit per-user feedback.
+- Verifies apply-all permission-update failures render explicit per-user feedback.
 
 ## Changelog
 ### 2026-03-31
@@ -43,6 +44,9 @@
 
 ### 2026-03-31
 - Expanded suite with denied apply-all share-add regression coverage for per-user feedback.
+
+### 2026-03-31
+- Expanded suite with denied apply-all permission-update regression coverage for per-user feedback.
 
 ### 2026-03-31
 - Added initial regression suite for `SubjectFormModal` classes-load success/error reliability behavior.
