@@ -10,6 +10,7 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
     const [topics, setTopics] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadError, setLoadError] = useState('');
+    const [reorderError, setReorderError] = useState('');
     const [draggedTopicId, setDraggedTopicId] = useState(null);
 
     // --- 1. Fetch Topics ---
@@ -21,6 +22,7 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
         queueMicrotask(() => {
             setLoading(true);
             setLoadError('');
+            setReorderError('');
         });
 
         const q = query(
@@ -73,12 +75,14 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
 
         if (sourceIndex === -1 || targetIndex === -1) return;
 
+        const previousTopics = [...topics];
         const newTopics = [...topics];
         const [movedTopic] = newTopics.splice(sourceIndex, 1);
         newTopics.splice(targetIndex, 0, movedTopic);
 
         setTopics(newTopics);
         setDraggedTopicId(null);
+        setReorderError('');
 
         // Batch Update to Firestore
         try {
@@ -91,8 +95,15 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
             });
             
             await batch.commit();
+            setReorderError('');
         } catch (error) {
             console.error("Error reordering topics:", error);
+            setTopics(previousTopics);
+            if (error?.code === 'permission-denied') {
+                setReorderError('No tienes permiso para reordenar los temas de esta asignatura.');
+            } else {
+                setReorderError('No se pudo guardar el nuevo orden de los temas. Intentalo de nuevo.');
+            }
         }
     };
 
@@ -225,6 +236,11 @@ const SubjectTopicsModal = ({ isOpen, onClose, subject }) => {
 
                 {/* Footer */}
                 <div className="p-3 border-t border-gray-100 dark:border-slate-800 text-center bg-white dark:bg-slate-900">
+                    {reorderError && (
+                        <div className="mb-3 rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-3 py-2 text-xs font-semibold text-red-700 dark:text-red-300">
+                            {reorderError}
+                        </div>
+                    )}
                     <p className="text-xs text-gray-400 flex items-center justify-center gap-2">
                         <GripVertical size={12} /> Arrastra los elementos para organizar el orden
                     </p>

@@ -26,6 +26,11 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+### 2026-03-31
+- Hardened drag-drop reorder persistence in `SubjectTopicModal` by adding explicit inline `reorderError` feedback when reorder writes fail.
+- Added permission-specific reorder failure messaging (`No tienes permiso para reordenar los temas de esta asignatura.`) and generic retry fallback for non-permission errors.
+- Added rollback behavior that restores the previous topic order when Firestore batch commit fails after optimistic reorder.
+
 ### 2026-03-30
 - Added inline snapshot error feedback state (`loadError`) for topic-list listener failures.
 - Snapshot failure path now clears stale topic rows and renders visible in-modal feedback (`No se pudieron cargar los temas. Intentalo de nuevo.`).

@@ -12,5 +12,9 @@
 - Confirms modal exits loading state in both success and error paths.
 
 ## Changelog
+### 2026-03-31
+- Expanded coverage with drag-drop reorder commit failure regression.
+- Added permission-denied `writeBatch.commit()` test asserting explicit inline reorder feedback and write-path execution.
+
 ### 2026-03-30
 - Added initial regression suite for SubjectTopicModal snapshot reliability and inline error feedback behavior.

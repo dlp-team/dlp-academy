@@ -345,6 +345,15 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
   - results state still renders after save failure,
   - save call path is exercised during final-question completion.
 
+## Progress Update - 2026-03-31 (Slice 37)
+- Hardened `SubjectTopicModal` reorder-commit determinism in `src/pages/Subject/modals/SubjectTopicModal.jsx` by replacing silent drag-drop save failures with explicit inline feedback.
+- Added `reorderError` state with permission-specific and generic fallback messaging for failed `writeBatch.commit()` reorder persistence.
+- Added rollback behavior that restores previous topic ordering when Firestore reorder commit fails after optimistic UI movement.
+- Added focused regression coverage in `tests/unit/pages/subject/SubjectTopicModal.snapshotError.test.jsx` verifying:
+  - permission-denied reorder commit failures surface explicit inline feedback,
+  - reorder write path is exercised (`batch.update` + `batch.commit`) during drag-drop,
+  - error logging path remains observable for diagnostics.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,
