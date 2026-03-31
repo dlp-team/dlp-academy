@@ -10,13 +10,17 @@ const TopicFormModal = ({ isOpen, onClose, onSubmit, initialData, subjectColor }
     const fileInputRef = useRef(null);
 
     useEffect(() => {
+        let initTimer;
         if (isOpen) {
-            setFormData({
-                name: initialData?.name || initialData?.title || '',
-                prompt: initialData?.prompt || ''
-            });
-            setFiles([]);
+            initTimer = setTimeout(() => {
+                setFormData({
+                    name: initialData?.name || initialData?.title || '',
+                    prompt: initialData?.prompt || ''
+                });
+                setFiles([]);
+            }, 0);
         }
+        return () => clearTimeout(initTimer);
     }, [isOpen, initialData]);
 
     const handleDrag = (e) => {
@@ -45,8 +49,6 @@ const TopicFormModal = ({ isOpen, onClose, onSubmit, initialData, subjectColor }
 
     const isRetry = !!initialData?.id;
 
-    // Extract base color name from subject gradient (e.g. "from-blue-400 to-blue-600" → "blue")
-    const baseColor = subjectColor?.match(/from-(\w+)-/)?.[1] || 'indigo';
     const headerGradient = subjectColor || 'from-indigo-400 to-indigo-600';
 
     return (

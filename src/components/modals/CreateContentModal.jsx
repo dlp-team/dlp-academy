@@ -47,63 +47,64 @@ const CONTENT_TYPES = [
 
 // ==================== TYPE-SPECIFIC OPTIONS ====================
 
-const TypeSpecificOptions = ({ type, formData, setFormData, baseColor, disabled }) => {
+const ToggleOptionCard = ({ field, label, Icon, description, value, disabled, onToggle }) => (
+    <button
+        type="button"
+        disabled={disabled}
+        onClick={() => onToggle(field)}
+        className={`flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all duration-300 text-left ${
+            value
+                ? 'bg-slate-900 dark:bg-white border-slate-900 dark:border-white shadow-lg'
+                : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
+        } disabled:opacity-50`}
+    >
+        <div className={`p-1.5 rounded-lg shrink-0 transition-colors ${
+            value
+                ? 'bg-white/20 dark:bg-slate-900/20'
+                : 'bg-slate-100 dark:bg-slate-700'
+        }`}>
+            <Icon className={`w-3.5 h-3.5 ${
+                value
+                    ? 'text-white dark:text-slate-900'
+                    : 'text-slate-500 dark:text-slate-400'
+            }`} />
+        </div>
+        <div className="flex-1 min-w-0">
+            <span className={`text-xs font-bold block ${
+                value
+                    ? 'text-white dark:text-slate-900'
+                    : 'text-slate-700 dark:text-slate-300'
+            }`}>{label}</span>
+            {description && (
+                <span className={`text-[10px] block mt-0.5 ${
+                    value
+                        ? 'text-white/70 dark:text-slate-900/70'
+                        : 'text-slate-400 dark:text-slate-500'
+                }`}>{description}</span>
+            )}
+        </div>
+        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+            value
+                ? 'border-white/50 dark:border-slate-900/50 bg-white/20 dark:bg-slate-900/20'
+                : 'border-slate-300 dark:border-slate-600'
+        }`}>
+            {value && <CheckCircle2 className="w-3.5 h-3.5 text-white dark:text-slate-900" />}
+        </div>
+    </button>
+);
+
+const TypeSpecificOptions = ({ type, formData, setFormData, disabled }) => {
     const updateField = (key, value) => {
         setFormData({ ...formData, [key]: value });
     };
-
-    const ToggleOption = ({ field, label, icon: Icon, description }) => (
-        <button
-            type="button"
-            disabled={disabled}
-            onClick={() => updateField(field, !formData[field])}
-            className={`flex items-center gap-3 p-3.5 rounded-2xl border-2 transition-all duration-300 text-left ${
-                formData[field]
-                    ? 'bg-slate-900 dark:bg-white border-slate-900 dark:border-white shadow-lg'
-                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-            } disabled:opacity-50`}
-        >
-            <div className={`p-1.5 rounded-lg shrink-0 transition-colors ${
-                formData[field]
-                    ? 'bg-white/20 dark:bg-slate-900/20'
-                    : 'bg-slate-100 dark:bg-slate-700'
-            }`}>
-                <Icon className={`w-3.5 h-3.5 ${
-                    formData[field]
-                        ? 'text-white dark:text-slate-900'
-                        : 'text-slate-500 dark:text-slate-400'
-                }`} />
-            </div>
-            <div className="flex-1 min-w-0">
-                <span className={`text-xs font-bold block ${
-                    formData[field]
-                        ? 'text-white dark:text-slate-900'
-                        : 'text-slate-700 dark:text-slate-300'
-                }`}>{label}</span>
-                {description && (
-                    <span className={`text-[10px] block mt-0.5 ${
-                        formData[field]
-                            ? 'text-white/70 dark:text-slate-900/70'
-                            : 'text-slate-400 dark:text-slate-500'
-                    }`}>{description}</span>
-                )}
-            </div>
-            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                formData[field]
-                    ? 'border-white/50 dark:border-slate-900/50 bg-white/20 dark:bg-slate-900/20'
-                    : 'border-slate-300 dark:border-slate-600'
-            }`}>
-                {formData[field] && <CheckCircle2 className={`w-3.5 h-3.5 ${formData[field] ? 'text-white dark:text-slate-900' : ''}`} />}
-            </div>
-        </button>
-    );
+    const handleToggleField = (field) => updateField(field, !formData[field]);
 
     if (type === 'summary') {
         return (
             <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-2">
-                    <ToggleOption field="includeExamples" label="Incluir ejemplos" icon={Lightbulb} description="Ejemplos prácticos" />
-                    <ToggleOption field="includeFormulas" label="Con fórmulas" icon={Calculator} description="Fórmulas clave" />
+                    <ToggleOptionCard field="includeExamples" label="Incluir ejemplos" Icon={Lightbulb} description="Ejemplos prácticos" value={Boolean(formData.includeExamples)} disabled={disabled} onToggle={handleToggleField} />
+                    <ToggleOptionCard field="includeFormulas" label="Con fórmulas" Icon={Calculator} description="Fórmulas clave" value={Boolean(formData.includeFormulas)} disabled={disabled} onToggle={handleToggleField} />
                 </div>
             </div>
         );
@@ -143,8 +144,8 @@ const TypeSpecificOptions = ({ type, formData, setFormData, baseColor, disabled 
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                    <ToggleOption field="includeDerivations" label="Derivaciones" icon={Layers} description="Paso a paso" />
-                    <ToggleOption field="includeExamples" label="Con ejemplos" icon={Lightbulb} description="Uso práctico" />
+                    <ToggleOptionCard field="includeDerivations" label="Derivaciones" Icon={Layers} description="Paso a paso" value={Boolean(formData.includeDerivations)} disabled={disabled} onToggle={handleToggleField} />
+                    <ToggleOptionCard field="includeExamples" label="Con ejemplos" Icon={Lightbulb} description="Uso práctico" value={Boolean(formData.includeExamples)} disabled={disabled} onToggle={handleToggleField} />
                 </div>
             </div>
         );
@@ -191,8 +192,8 @@ const TypeSpecificOptions = ({ type, formData, setFormData, baseColor, disabled 
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                    <ToggleOption field="includeSolutions" label="Con soluciones" icon={CheckCircle2} description="Paso a paso" />
-                    <ToggleOption field="includeExamples" label="Ejemplo resuelto" icon={Lightbulb} description="1 ejemplo guía" />
+                    <ToggleOptionCard field="includeSolutions" label="Con soluciones" Icon={CheckCircle2} description="Paso a paso" value={Boolean(formData.includeSolutions)} disabled={disabled} onToggle={handleToggleField} />
+                    <ToggleOptionCard field="includeExamples" label="Ejemplo resuelto" Icon={Lightbulb} description="1 ejemplo guía" value={Boolean(formData.includeExamples)} disabled={disabled} onToggle={handleToggleField} />
                 </div>
             </div>
         );
@@ -321,9 +322,9 @@ const TypeSpecificOptions = ({ type, formData, setFormData, baseColor, disabled 
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                    <ToggleOption field="includeAnswerKey" label="Clave respuestas" icon={CheckCircle2} description="Solucionario" />
+                    <ToggleOptionCard field="includeAnswerKey" label="Clave respuestas" Icon={CheckCircle2} description="Solucionario" value={Boolean(formData.includeAnswerKey)} disabled={disabled} onToggle={handleToggleField} />
                     {formData.examMode === 'practice' && (
-                        <ToggleOption field="showResultsToStudents" label="Mostrar resultados" icon={Eye} description="Alumnos ven sus notas" />
+                        <ToggleOptionCard field="showResultsToStudents" label="Mostrar resultados" Icon={Eye} description="Alumnos ven sus notas" value={Boolean(formData.showResultsToStudents)} disabled={disabled} onToggle={handleToggleField} />
                     )}
                 </div>
             </div>
@@ -343,27 +344,39 @@ const CreateContentModal = ({
     setFormData,
     isGenerating,
     themeColor,
-    subjectId,
-    topicId
+    subjectId: _subjectId,
+    topicId: _topicId
 }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [shouldRender, setShouldRender] = useState(false);
     const [step, setStep] = useState(1); // 1 = type selection, 2 = options
 
     useEffect(() => {
-        let timeoutId;
+        let showInitTimer;
+        let showVisibleTimer;
+        let hideInitTimer;
+        let hideFinalizeTimer;
+
         if (isOpen) {
-            setShouldRender(true);
-            setStep(1);
-            timeoutId = setTimeout(() => setIsVisible(true), 10);
+            showInitTimer = setTimeout(() => {
+                setShouldRender(true);
+                setStep(1);
+            }, 0);
+            showVisibleTimer = setTimeout(() => setIsVisible(true), 10);
         } else {
-            setIsVisible(false);
-            timeoutId = setTimeout(() => {
+            hideInitTimer = setTimeout(() => setIsVisible(false), 0);
+            hideFinalizeTimer = setTimeout(() => {
                 setShouldRender(false);
                 setStep(1);
             }, 500);
         }
-        return () => clearTimeout(timeoutId);
+
+        return () => {
+            clearTimeout(showInitTimer);
+            clearTimeout(showVisibleTimer);
+            clearTimeout(hideInitTimer);
+            clearTimeout(hideFinalizeTimer);
+        };
     }, [isOpen]);
 
     if (!shouldRender) return null;

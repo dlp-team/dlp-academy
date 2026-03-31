@@ -1,8 +1,5 @@
 // scripts/mock/generateMockStudents.js
 import admin from 'firebase-admin';
-import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
 import 'dotenv/config';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -13,14 +10,11 @@ dotenv.config();
 // - FIREBASE_SERVICE_ACCOUNT como variable de entorno (JSON string)
 // - o serviceAccountKey.json en scripts/mock/
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 let serviceAccount = null;
 if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
   try {
     serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
-  } catch (e) {
+  } catch {
     console.error('FIREBASE_SERVICE_ACCOUNT_JSON no es un JSON válido.');
     process.exit(1);
   }

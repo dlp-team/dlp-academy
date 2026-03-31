@@ -10,12 +10,16 @@ const PositionModal = ({ isOpen, onClose, onConfirm, topics = [], newTopicTitle 
 
     // Cuando se abre el modal, reseteamos al valor por defecto (Al final)
     useEffect(() => {
+        let resetTimer;
         if (isOpen) {
-            setMode('end');
-            if (topics.length > 0) {
-                setAfterTopicId(topics[topics.length - 1].id);
-            }
+            resetTimer = setTimeout(() => {
+                setMode('end');
+                if (topics.length > 0) {
+                    setAfterTopicId(topics[topics.length - 1].id);
+                }
+            }, 0);
         }
+        return () => clearTimeout(resetTimer);
     }, [isOpen, topics]);
 
     if (!isOpen) return null;

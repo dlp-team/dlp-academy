@@ -17,7 +17,8 @@ import {
     LoadingSpinner, SubjectIcon, FormulaDisplay, ProgressBar, QuizFooter, RenderLatex
 } from '../../components/modules/QuizEngine/QuizCommon';
 
-import ConfettiEffect, { useConfetti } from '../../components/modules/QuizEngine/QuizFeedback';
+import ConfettiEffect from '../../components/modules/QuizEngine/QuizFeedback';
+import { useConfetti } from '../../components/modules/QuizEngine/useConfetti';
 import QuizHeader from '../../components/modules/QuizEngine/QuizHeader';
 import QuestionCard from '../../components/modules/QuizEngine/QuizQuestion';
 import QuizOptions from '../../components/modules/QuizEngine/QuizOptions';

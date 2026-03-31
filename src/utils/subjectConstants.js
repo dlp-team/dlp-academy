@@ -4,7 +4,7 @@ import {
   Palette, Trophy, Briefcase, GraduationCap, Laptop, HeartPulse, 
   Scale, Leaf, Atom, Languages, Brain, Map, Microscope, 
   Gamepad2, Camera, Rocket, Theater, Construction, Landmark, 
-  Clapperboard, Star, Stethoscope, Lightbulb, Pi, Sigma, Variable, Infinity,
+    Clapperboard, Star, Stethoscope, Lightbulb, Pi, Sigma, Variable, Infinity as InfinityIcon,
   Divide, SquareFunction
 } from 'lucide-react';
 
@@ -25,7 +25,7 @@ export const ICON_MAP = {
     pi: Pi,
     statistics: Sigma,
     algebra: Variable,
-    calculus: Infinity,
+    calculus: InfinityIcon,
     functions: SquareFunction,
     arithmetic: Divide,
 

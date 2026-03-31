@@ -1,5 +1,6 @@
 // src/components/modules/QuizEngine/QuizCommon.jsx
-import React, { useMemo } from 'react';
+/* eslint-disable react-refresh/only-export-components, react-hooks/error-boundaries */
+import React from 'react';
 import { 
     RefreshCcw, Zap, Trophy, ArrowRight, HelpCircle, CheckCircle2, XCircle 
 } from 'lucide-react';

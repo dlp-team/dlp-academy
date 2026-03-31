@@ -20,7 +20,8 @@ import QuizHeader from '../../components/modules/QuizEngine/QuizHeader';
 import QuizOptions from '../../components/modules/QuizEngine/QuizOptions';
 import QuestionCard from '../../components/modules/QuizEngine/QuizQuestion';
 import ResultsView from '../../components/modules/QuizEngine/QuizResults';
-import ConfettiEffect, { useConfetti } from '../../components/modules/QuizEngine/QuizFeedback';
+import ConfettiEffect from '../../components/modules/QuizEngine/QuizFeedback';
+import { useConfetti } from '../../components/modules/QuizEngine/useConfetti';
 
 const QuizRepaso = ({ user }) => {
     const { subjectId, topicId } = useParams();

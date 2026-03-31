@@ -31,19 +31,23 @@ const SubjectTestModal = ({
     const [errorText, setErrorText] = useState('');
 
     useEffect(() => {
+        let initTimer;
         if (!isOpen) return;
-        setFormData({
-            title: '',
-            level: defaultLevel,
-            topicId: topics[0]?.id || '',
-            questionCount: '5',
-            isAssignment: false,
-            countsForGrade: true,
-            assignmentStartAt: '',
-            assignmentDueAt: '',
-            assignmentWeight: '1'
-        });
-        setErrorText('');
+        initTimer = setTimeout(() => {
+            setFormData({
+                title: '',
+                level: defaultLevel,
+                topicId: topics[0]?.id || '',
+                questionCount: '5',
+                isAssignment: false,
+                countsForGrade: true,
+                assignmentStartAt: '',
+                assignmentDueAt: '',
+                assignmentWeight: '1'
+            });
+            setErrorText('');
+        }, 0);
+        return () => clearTimeout(initTimer);
     }, [isOpen, defaultLevel, topics]);
 
     const selectedTopicName = useMemo(

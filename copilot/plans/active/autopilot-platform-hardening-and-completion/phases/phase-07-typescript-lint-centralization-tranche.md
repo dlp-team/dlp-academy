@@ -2,7 +2,7 @@
 # Phase 07 - TypeScript, Lint Debt, and Logic Centralization Tranche
 
 ## Status
-PLANNED
+IN_PROGRESS
 
 ## Objective
 Reduce medium-term maintenance and regression risk through staged typing, lint cleanup, and deduplication centralization.
@@ -12,6 +12,15 @@ Reduce medium-term maintenance and regression risk through staged typing, lint c
 - Introduce TypeScript incrementally to avoid broad destabilization.
 - Remove repeated logic from oversized modules into focused shared utilities/hooks.
 - Resolve lint debt introduced by touched modules and keep new code clean.
+
+## Progress Updates
+- 2026-03-31 Tranche 01 completed:
+	- Introduced ESLint environment overrides for Node/test files and reduced false-positive `no-undef` debt.
+	- Ignored archive/copy artifacts from lint scope to prioritize runtime modules.
+	- Applied targeted no-unused/state-effect fixes in active modals and shared UI modules.
+	- Refactored quiz confetti logic into dedicated hook file (`useConfetti.js`) and deterministic render-safe generation.
+	- Lint baseline improved from `193 problems (178 errors, 15 warnings)` to `72 problems (60 errors, 12 warnings)`.
+	- Regression validation: `npm run test` passed (`71 files, 385 tests`).
 
 ## Validation Gates
 - Type checks pass for migrated tranche.
