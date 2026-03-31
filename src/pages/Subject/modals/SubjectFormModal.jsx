@@ -809,8 +809,12 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             try {
                 await onUnshare(formData.id, email);
                 localSharedList = localSharedList.filter(entry => (entry.email || '').toLowerCase() !== (email || '').toLowerCase());
-            } catch {
-                failures.push(`No se pudo quitar acceso a ${email}`);
+            } catch (error) {
+                if (error?.code === 'permission-denied') {
+                    failures.push(`No tienes permiso para quitar acceso a ${email}`);
+                } else {
+                    failures.push(`No se pudo quitar acceso a ${email}`);
+                }
             }
         }
 

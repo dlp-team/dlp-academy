@@ -417,6 +417,12 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
 - Preserved existing generic permission-update failure detail for non-permission errors.
 - Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied permission-update writes render explicit apply-all feedback.
 
+## Progress Update - 2026-03-31 (Slice 48)
+- Hardened `SubjectFormModal` apply-all unshare mutation feedback in `src/pages/Subject/modals/SubjectFormModal.jsx`.
+- Added permission-specific failure detail for denied unshare writes inside `confirmPendingShareAction` batch-apply branch.
+- Preserved existing generic unshare failure detail for non-permission errors.
+- Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied unshare writes render explicit apply-all feedback.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,

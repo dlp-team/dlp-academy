@@ -426,4 +426,38 @@ describe('SubjectFormModal classes-load feedback', () => {
       expect(screen.getByText('No tienes permiso para actualizar permiso de teacher2@test.com.')).toBeTruthy();
     });
   });
+
+  it('shows apply-all feedback when unshare fails with denied permissions', async () => {
+    const deniedError = new Error('permission-denied');
+    deniedError.code = 'permission-denied';
+
+    firestoreMocks.getDoc.mockResolvedValue({ exists: () => false, data: () => ({}) });
+    firestoreMocks.getDocs.mockResolvedValue({ docs: [] });
+
+    const onUnshare = vi.fn().mockRejectedValue(deniedError);
+
+    renderModal({
+      initialTab: 'sharing',
+      onUnshare,
+      initialData: {
+        ...baseProps.initialData,
+        ownerId: 'teacher-1',
+        sharedWith: [{ uid: 'teacher-2', email: 'teacher2@test.com', role: 'viewer', canEdit: false }],
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('teacher2@test.com')).toBeTruthy();
+    });
+
+    const removeButtons = screen.getAllByTitle('Quitar acceso al aplicar cambios');
+    fireEvent.click(removeButtons[removeButtons.length - 1]);
+
+    fireEvent.click(screen.getByText('Aplicar cambios'));
+    fireEvent.click(screen.getByText('Confirmar'));
+
+    await waitFor(() => {
+      expect(screen.getByText('No tienes permiso para quitar acceso a teacher2@test.com.')).toBeTruthy();
+    });
+  });
 });

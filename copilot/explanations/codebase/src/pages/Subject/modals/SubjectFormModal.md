@@ -118,6 +118,17 @@ Batch apply-all permission updates in `SubjectFormModal` previously reported onl
 ### Validation
 - Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied apply-all permission-update regression coverage.
 
+## [2026-03-31] Apply-All Unshare Feedback Hardening
+### Context & Architecture
+Batch apply-all unshare operations in `SubjectFormModal` previously reported only generic failure details when removals were denied.
+
+### Change
+- Added permission-specific per-user failure detail for denied unshare writes during apply-all operations.
+- Preserved existing generic per-user detail for non-permission unshare failures.
+
+### Validation
+- Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied apply-all unshare regression coverage.
+
 ## [2026-03-13] Permission Hardening: Viewer Class Tab is Read-Only
 ### Context & Architecture
 Teachers with `viewer` shortcut permissions were still able to interact with class assignment controls in the `Clases` tab.
