@@ -12,7 +12,7 @@ import { handleKeyShortcut } from '../utils/keyShortcutsHandler';
  */
 export function useKeyShortcuts({ onCopy, onCut, onPaste, onUndo }: any = {}) {
   useEffect(() => {
-    function keydownListener(e) {
+    function keydownListener(e: any) {
       if (e.ctrlKey || e.metaKey) {
         const key = e.key.toLowerCase();
         switch (key) {

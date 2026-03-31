@@ -1,3 +1,4 @@
+// tests/unit/hooks/useHomeLogic.test.js
 import { renderHook } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useHomeLogic } from '../../../src/pages/Home/hooks/useHomeLogic';
@@ -37,11 +38,11 @@ vi.mock('../../../src/hooks/useUserPreferences', () => ({
   useUserPreferences: mocks.useUserPreferences,
 }));
 
-vi.mock('../../../src/pages/Home/hooks/useHomeState', () => ({
+vi.mock('../../../src/hooks/useHomeState', () => ({
   useHomeState: mocks.useHomeState,
 }));
 
-vi.mock('../../../src/pages/Home/hooks/useHomeHandlers', () => ({
+vi.mock('../../../src/hooks/useHomeHandlers', () => ({
   useHomeHandlers: mocks.useHomeHandlers,
 }));
 

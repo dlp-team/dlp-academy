@@ -5,7 +5,7 @@ const PERSISTENCE_EVENT = 'dlp:persistent-state-change';
 const NULL_STORAGE_VALUE = '__DLP_NULL_STORAGE_VALUE__';
 const snapshotCache = new Map();
 
-const safeParse = (value, fallbackValue) => {
+const safeParse = (value, fallbackValue: any) => {
     if (value == null) return fallbackValue;
 
     try {
@@ -15,21 +15,21 @@ const safeParse = (value, fallbackValue) => {
     }
 };
 
-const createResolvedInitialValue = (initialValue) => (
+const createResolvedInitialValue = (initialValue: any) => (
     typeof initialValue === 'function' ? initialValue() : initialValue
 );
 
-export const usePersistentState = (storageKey, initialValue) => {
+export const usePersistentState = (storageKey, initialValue: any) => {
     const resolvedInitialValue = createResolvedInitialValue(initialValue);
 
-    const subscribe = useCallback((onStoreChange) => {
-        const handleStorage = (event) => {
+    const subscribe = useCallback((onStoreChange: any) => {
+        const handleStorage = (event: any) => {
             if (!storageKey || event.key === storageKey) {
                 onStoreChange();
             }
         };
 
-        const handleCustom = (event) => {
+        const handleCustom = (event: any) => {
             if (!storageKey || event.detail?.key === storageKey) {
                 onStoreChange();
             }
@@ -83,7 +83,7 @@ export const usePersistentState = (storageKey, initialValue) => {
 
     const state = useSyncExternalStore(subscribe, getSnapshot, () => resolvedInitialValue);
 
-    const setState = useCallback((valueOrUpdater) => {
+    const setState = useCallback((valueOrUpdater: any) => {
         if (!storageKey) return;
 
         const currentValue = getSnapshot();

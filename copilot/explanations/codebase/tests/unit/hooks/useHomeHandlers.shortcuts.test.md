@@ -13,6 +13,10 @@
 - Drag/drop and folder nesting error reporting via `onHomeFeedback` callback.
 
 ## Changelog
+### 2026-04-01
+- Updated import path in `tests/unit/hooks/useHomeHandlers.shortcuts.test.js` to the current module location (`src/hooks/useHomeHandlers`) after hook relocation.
+- Keeps shortcut sharing/role-gate coverage executable under current source layout without changing behavioral assertions.
+
 ### 2026-03-30
 - Added error-flow assertions to verify `useHomeHandlers` reports inline Home feedback (error tone) for failed drop/nesting operations instead of browser alerts.
 

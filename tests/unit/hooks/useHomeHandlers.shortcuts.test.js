@@ -1,6 +1,6 @@
 // tests/unit/hooks/useHomeHandlers.shortcuts.test.js
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useHomeHandlers } from '../../../src/pages/Home/hooks/useHomeHandlers';
+import { useHomeHandlers } from '../../../src/hooks/useHomeHandlers';
 
 const createBaseConfig = (overrides = {}) => {
   const base = {

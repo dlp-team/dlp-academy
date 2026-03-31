@@ -195,7 +195,7 @@ export const isSharedWithCurrentUser = (
  * @param {Object} user - Current user object ({ uid, email })
  * @returns {boolean}
  */
-export const isSharedForCurrentUser = (item, user) => {
+export const isSharedForCurrentUser = (item, user: any) => {
     if (!item) return false;
 
     const currentUserId = user?.uid || null;
@@ -237,7 +237,7 @@ export const isSharedForCurrentUser = (item, user) => {
  * @param {string} userId - Current user's UID
  * @returns {'owner' | 'editor' | 'viewer' | 'none'}
  */
-export const getPermissionLevel = (item, userId) => {
+export const getPermissionLevel = (item, userId: any) => {
     if (!item || !userId) return 'none';
     
     if (isOwner(item, userId)) return 'owner';
@@ -276,7 +276,7 @@ export const getPermissionLevel = (item, userId) => {
  * @param {Object} shortcut - Resolved shortcut object
  * @returns {boolean}
  */
-export const isOrphanedShortcut = (shortcut) => {
+export const isOrphanedShortcut = (shortcut: any) => {
     return isShortcutItem(shortcut) && shortcut?.isOrphan === true;
 };
 
@@ -312,7 +312,7 @@ export const filterEditableItems = (items: any[], userId: any): any[] => {
  * @param {string} userId - Current user's UID
  * @returns {boolean}
  */
-export const shouldShowEditUI = (item, userId) => {
+export const shouldShowEditUI = (item, userId: any) => {
     // Don't show edit UI for orphaned shortcuts
     if (isOrphanedShortcut(item)) return false;
 
@@ -334,7 +334,7 @@ export const shouldShowEditUI = (item, userId) => {
  * @param {string} userId - Current user's UID
  * @returns {boolean}
  */
-export const shouldShowDeleteUI = (item, userId) => {
+export const shouldShowDeleteUI = (item, userId: any) => {
     // For shortcuts, user can always delete their own shortcut
     if (isShortcutItem(item)) {
         return item.ownerId === userId || item.shortcutOwnerId === userId;
@@ -358,7 +358,7 @@ const ROLE_RANK = {
  * @param {Object|string|null|undefined} userOrRole
  * @returns {'student'|'teacher'|'institutionadmin'|'admin'}
  */
-export const getNormalizedRole = (userOrRole) => {
+export const getNormalizedRole = (userOrRole: any) => {
     const rawRole = typeof userOrRole === 'string' ? userOrRole : userOrRole?.role;
     const normalized = typeof rawRole === 'string' ? rawRole.trim().toLowerCase() : 'student';
     return Object.prototype.hasOwnProperty.call(ROLE_RANK, normalized) ? normalized : 'student';

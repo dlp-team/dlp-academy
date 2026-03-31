@@ -1,0 +1,221 @@
+// src/pages/Home/hooks/useHomePageState.js
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useMemo, useRef, useState } from 'react';
+import { updateDoc, doc } from 'firebase/firestore';
+import { db } from '../../../firebase/config';
+import { normalizeText } from '../../../utils/stringUtils';
+import {
+    clearHomePersistence,
+    loadLastHomeFolderId,
+    loadLastHomeViewMode,
+    saveLastHomeViewMode
+} from '../utils/homePersistence';
+
+export const useHomePageState = ({
+    logic,
+    searchQuery,
+    rememberOrganization = true,
+    defaultViewMode = 'grid',
+    showSharedTab = true,
+    onHomeFeedback = null
+}: any): any => {
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [isScaleOverlayOpen, setIsScaleOverlayOpen] = useState(false);
+
+    const [sharedSelectedTags, setSharedSelectedTags] = useState<any[]>([]);
+    const [sharedActiveFilter, setSharedActiveFilter] = useState('all');
+
+    const [folderContentsModalConfig, setFolderContentsModalConfig] = useState<any>({ isOpen: false, folder: null });
+    const [shareConfirm, setShareConfirm] = useState<any>({ open: false, subjectId: null, folder: null, onConfirm: null });
+    const [unshareConfirm, setUnshareConfirm] = useState<any>({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
+    const [topicsModalConfig, setTopicsModalConfig] = useState<any>({
+        isOpen: false,
+        subject: null
+    });
+
+    const didRestoreRef = useRef(false);
+
+    React.useEffect(() => {
+        if (!logic.folders || logic.folders.length === 0) return;
+
+        const allFolders = logic.folders;
+        let fixedCount = 0;
+
+        allFolders.forEach(folder => {
+            let current = folder;
+            const path = new Set();
+
+            while (current && current.parentId) {
+                if (path.has(current.id)) {
+                    updateDoc(doc(db, 'folders', folder.id), { parentId: null });
+                    fixedCount++;
+                    break;
+                }
+                path.add(current.id);
+                current = allFolders.find(f => f.id === current.parentId);
+            }
+        });
+
+        if (fixedCount > 0 && typeof onHomeFeedback === 'function') {
+            onHomeFeedback(`Se corrigieron ${fixedCount} carpetas con referencias circulares.`, 'success');
+        }
+    }, [logic.folders, onHomeFeedback]);
+
+    React.useEffect(() => {
+        if (didRestoreRef.current) return;
+        if (!logic || !logic.folders) return;
+
+        const allowedModes = new Set(['grid', 'usage', 'courses', 'tags', 'shared', 'bin']);
+        let safeDefaultMode = allowedModes.has(defaultViewMode) ? defaultViewMode : 'grid';
+        if (!showSharedTab && safeDefaultMode === 'shared') {
+            safeDefaultMode = 'grid';
+        }
+
+        if (!rememberOrganization) {
+            if (logic.setViewMode && logic.viewMode !== safeDefaultMode) {
+                logic.setViewMode(safeDefaultMode);
+            }
+            if (logic.setCurrentFolder) {
+                logic.setCurrentFolder(null);
+            }
+            clearHomePersistence();
+            didRestoreRef.current = true;
+            return;
+        }
+
+        const lastTab = loadLastHomeViewMode();
+        const lastFolderId = loadLastHomeFolderId();
+
+        if (logic.setViewMode) {
+            let nextMode = lastTab || safeDefaultMode;
+            if (!allowedModes.has(nextMode)) {
+                nextMode = safeDefaultMode;
+            }
+            if (!showSharedTab && nextMode === 'shared') {
+                nextMode = 'grid';
+            }
+            logic.setViewMode(nextMode);
+        }
+
+        if (lastFolderId && logic.setCurrentFolder) {
+            const folder = logic.folders.find(f => f.id === lastFolderId);
+            if (folder) logic.setCurrentFolder(folder);
+        }
+        didRestoreRef.current = true;
+    }, [logic.folders, rememberOrganization, defaultViewMode, showSharedTab]);
+
+    const sharedAllTags = useMemo(() => {
+        const folderTags = (logic.sharedFolders || []).flatMap(f => (Array.isArray(f.tags) ? f.tags : []));
+        const subjectTags = (logic.sharedSubjects || []).flatMap(s => (Array.isArray(s.tags) ? s.tags : []));
+        return Array.from(new Set([...folderTags, ...subjectTags])).filter(Boolean);
+    }, [logic.sharedFolders, logic.sharedSubjects]);
+
+    const { filteredFolders, filteredSubjects, sharedFolders, sharedSubjects } = useMemo(() => {
+        const query = normalizeText(searchQuery);
+
+        const filterList = (list: any[] = []) => list.filter(item => normalizeText(item.name).includes(query));
+
+        const folders = logic.currentFolderContents?.folders || logic.folders || [];
+        const subjects = logic.currentFolderContents?.subjects || logic.subjects || [];
+
+        let sFolders = logic.sharedFolders || [];
+        let sSubjects = logic.sharedSubjects || [];
+        sFolders = filterList(sFolders);
+        sSubjects = filterList(sSubjects);
+
+        if (logic.viewMode === 'shared' && sharedSelectedTags.length > 0) {
+            sFolders = sFolders.filter(
+                f => Array.isArray(f.tags) && sharedSelectedTags.every(tag => f.tags.includes(tag))
+            );
+            sSubjects = sSubjects.filter(
+                s => Array.isArray(s.tags) && sharedSelectedTags.every(tag => s.tags.includes(tag))
+            );
+        }
+
+        return {
+            filteredFolders: filterList(folders),
+            filteredSubjects: filterList(subjects),
+            sharedFolders: sFolders,
+            sharedSubjects: sSubjects
+        };
+    }, [
+        searchQuery,
+        logic.folders,
+        logic.subjects,
+        logic.currentFolderContents,
+        logic.sharedFolders,
+        logic.sharedSubjects,
+        logic.viewMode,
+        sharedSelectedTags
+    ]);
+
+    const displayedFolders = useMemo(() => {
+        const hasTagFilter = Array.isArray(logic.selectedTags) && logic.selectedTags.length > 0;
+        const allFolders = hasTagFilter
+            ? (logic.folders || [])
+            : (logic.filteredFolders || logic.folders || []);
+
+        if (searchQuery && Array.isArray(logic.searchFolders)) {
+            return logic.searchFolders;
+        }
+
+        const currentId = logic.currentFolder ? logic.currentFolder.id : null;
+
+        // Show only direct children of current folder (not descendants)
+        let scopedFolders = currentId
+            ? allFolders.filter(f => f.parentId === currentId)
+            : allFolders.filter(f => !f.parentId);
+
+        return scopedFolders;
+    }, [logic.filteredFolders, logic.folders, logic.currentFolder, logic.searchFolders, searchQuery, logic.selectedTags]);
+
+    const activeModalFolder = useMemo(() => {
+        if (!folderContentsModalConfig.folder) return null;
+        const liveFolder = (logic.folders || []).find(f => f.id === folderContentsModalConfig.folder.id);
+        return liveFolder || folderContentsModalConfig.folder;
+    }, [logic.folders, folderContentsModalConfig.folder]);
+
+    React.useEffect(() => {
+        if (!rememberOrganization) return;
+        if (logic.viewMode) saveLastHomeViewMode(logic.viewMode);
+    }, [logic.viewMode, rememberOrganization]);
+
+    React.useEffect(() => {
+        if (rememberOrganization) return;
+        clearHomePersistence();
+    }, [rememberOrganization]);
+
+    const groupedSubjectsCount = Object.values(logic.groupedContent || {}).reduce((total: number, bucket: any) => {
+        if (!Array.isArray(bucket)) return total;
+        return total + bucket.length;
+    }, 0);
+
+    const hasContent = groupedSubjectsCount > 0 || displayedFolders.length > 0;
+
+    return {
+        isFilterOpen,
+        setIsFilterOpen,
+        isScaleOverlayOpen,
+        setIsScaleOverlayOpen,
+        sharedSelectedTags,
+        setSharedSelectedTags,
+        sharedActiveFilter,
+        setSharedActiveFilter,
+        sharedAllTags,
+        filteredFolders,
+        filteredSubjects,
+        sharedFolders,
+        sharedSubjects,
+        folderContentsModalConfig,
+        setFolderContentsModalConfig,
+        shareConfirm,
+        setShareConfirm,
+        unshareConfirm,
+        setUnshareConfirm,
+        topicsModalConfig,
+        setTopicsModalConfig,
+        displayedFolders,
+        activeModalFolder,
+        hasContent
+    };
+};
