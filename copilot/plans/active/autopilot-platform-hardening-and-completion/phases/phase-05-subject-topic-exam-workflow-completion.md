@@ -317,6 +317,16 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
   - permission-denied quiz reads surface explicit access feedback,
   - successful quiz loads keep the review-start flow available.
 
+## Progress Update - 2026-03-31 (Slice 34)
+- Hardened `QuizRepaso` session-state determinism in `src/pages/Quizzes/QuizRepaso.jsx` by replacing silent parse fallbacks with explicit in-page feedback when persisted repaso questions cannot be decoded.
+- Added explicit `failedQuestionsLoadError` messaging for corrupted/non-array `sessionStorage.repasoQuestions` payloads.
+- Added safe back-navigation fallback route (`/home`) when `subjectId`/`topicId` params are missing.
+- Preserved existing no-questions repaso state and quiz runtime behavior when persisted data is valid.
+- Added focused page-level regression coverage in `tests/unit/pages/quizzes/QuizRepaso.test.jsx` verifying:
+  - corrupted repaso payload surfaces explicit warning feedback,
+  - normal empty payload keeps no-warning empty state,
+  - missing route params use deterministic `/home` fallback navigation.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,

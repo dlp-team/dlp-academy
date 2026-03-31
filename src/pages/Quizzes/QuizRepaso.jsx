@@ -25,6 +25,9 @@ import ConfettiEffect, { useConfetti } from '../../components/modules/QuizEngine
 const QuizRepaso = ({ user }) => {
     const { subjectId, topicId } = useParams();
     const navigate = useNavigate();
+    const backToTopicRoute = subjectId && topicId
+        ? `/home/subject/${subjectId}/topic/${topicId}`
+        : '/home';
 
     const [viewState, setViewState] = useState(VIEW_STATES.REVIEW);
     const [currentStep, setCurrentStep] = useState(0);
@@ -37,13 +40,25 @@ const QuizRepaso = ({ user }) => {
     const [saving, setSaving] = useState(false);
     const { confettiTrigger, triggerConfetti } = useConfetti();
 
-    const failedQuestions = useMemo(() => {
+    const { failedQuestions, failedQuestionsLoadError } = useMemo(() => {
         try {
             const raw = sessionStorage.getItem('repasoQuestions');
             const parsed = raw ? JSON.parse(raw) : [];
-            return Array.isArray(parsed) ? parsed : [];
+            if (!Array.isArray(parsed)) {
+                return {
+                    failedQuestions: [],
+                    failedQuestionsLoadError: 'No se pudieron leer las preguntas guardadas de repaso.'
+                };
+            }
+            return {
+                failedQuestions: parsed,
+                failedQuestionsLoadError: ''
+            };
         } catch {
-            return [];
+            return {
+                failedQuestions: [],
+                failedQuestionsLoadError: 'No se pudieron leer las preguntas guardadas de repaso.'
+            };
         }
     }, []);
 
@@ -65,8 +80,8 @@ const QuizRepaso = ({ user }) => {
     const subjectIconKey = 'book';
 
     const handleGoBack = useCallback(() => {
-        navigate(`/home/subject/${subjectId}/topic/${topicId}`);
-    }, [navigate, subjectId, topicId]);
+        navigate(backToTopicRoute);
+    }, [navigate, backToTopicRoute]);
 
     const persistMastered = useCallback(async () => {
         if (!user?.uid || !masteredInSession.length) return;
@@ -171,6 +186,11 @@ const QuizRepaso = ({ user }) => {
                     <Target className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
                     <h1 className="text-2xl font-black text-slate-900 dark:text-white mb-2">No hay preguntas para repasar</h1>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">Cuando falles preguntas en los tests del tema apareceran aqui para practicar.</p>
+                    {failedQuestionsLoadError && (
+                        <p className="mb-4 rounded-xl border border-amber-200 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/30 px-3 py-2 text-xs font-semibold text-amber-800 dark:text-amber-200">
+                            {failedQuestionsLoadError}
+                        </p>
+                    )}
                     <button onClick={handleGoBack} className="px-5 py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold">Volver al tema</button>
                 </div>
             </div>
