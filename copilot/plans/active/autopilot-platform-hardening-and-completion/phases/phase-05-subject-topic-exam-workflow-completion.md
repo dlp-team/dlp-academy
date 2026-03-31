@@ -248,6 +248,18 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
 - Preserved existing behavior that promotes generating topics to `completed` when resumen docs arrive.
 - Added focused hook regression coverage in `tests/unit/hooks/useSubjectManager.test.js` verifying 12 generating topics produce two `where("topicId", "in", ...)` chunks (`10 + 2`) without dropping IDs.
 
+## Progress Update - 2026-03-31 (Slice 28)
+- Hardened exam-load determinism in `src/pages/Content/Exam.jsx` with explicit fallback states for:
+  - exam not found,
+  - exam read failures (including permission-denied),
+  - non-blocking subject-context fetch failures.
+- Replaced silent subject fetch failure path with visible warning feedback while preserving exam rendering when exam data is available.
+- Added a shared fallback state renderer (`ExamFallbackState`) to keep no-data/error/not-found states consistent and explicit.
+- Added focused page-level regression coverage in `tests/unit/pages/content/Exam.test.jsx` verifying:
+  - missing exam documents render `Examen no encontrado`,
+  - permission-denied exam reads render explicit access feedback,
+  - subject-context fetch failures surface warning feedback while exam remains usable.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,

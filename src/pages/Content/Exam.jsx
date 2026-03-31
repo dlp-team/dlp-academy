@@ -1,3 +1,4 @@
+// src/pages/Content/Exam.jsx
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -206,6 +207,43 @@ const ExamLoading = () => (
     </div>
 );
 
+const ExamFallbackState = ({
+    title,
+    description,
+    buttonLabel = 'Volver',
+    onBack,
+    gradient,
+    subjectWarning = '',
+}) => (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 gap-6 p-6 relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-red-400/20 to-orange-400/20 rounded-full blur-3xl animate-float" />
+            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-float-delayed" />
+        </div>
+        <div className="relative z-10 max-w-md text-center">
+            <div className="relative mb-8">
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-400 to-slate-600 rounded-3xl blur-2xl opacity-20" />
+                <div className="relative bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-3xl p-10 shadow-2xl border-2 border-white/80 dark:border-slate-700/50">
+                    <ClipboardList className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto" />
+                </div>
+            </div>
+            <p className="text-slate-800 dark:text-slate-200 font-black text-2xl mb-2">{title}</p>
+            <p className="text-slate-400 dark:text-slate-500 font-medium text-sm mb-4">{description}</p>
+            {subjectWarning && (
+                <div className="mb-6 rounded-2xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-left text-xs font-semibold text-amber-700 dark:border-amber-800/70 dark:bg-amber-900/30 dark:text-amber-300">
+                    {subjectWarning}
+                </div>
+            )}
+            <button onClick={onBack}
+                className={`group inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-sm bg-gradient-to-r ${gradient} text-white shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 relative overflow-hidden`}>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-700" />
+                <ArrowLeft className="w-4 h-4 relative z-10" />
+                <span className="relative z-10">{buttonLabel}</span>
+            </button>
+        </div>
+    </div>
+);
+
 // ─────────────────────────────────────────
 // COMPLETION SCREEN
 // ─────────────────────────────────────────
@@ -306,6 +344,9 @@ const Exam = () => {
 
     const [loading, setLoading] = useState(true);
     const [examData, setExamData] = useState(null);
+    const [examLoadError, setExamLoadError] = useState('');
+    const [subjectLoadWarning, setSubjectLoadWarning] = useState('');
+    const [examNotFound, setExamNotFound] = useState(false);
     const [topicGradient, setTopicGradient] = useState('from-indigo-500 to-purple-600');
     const [currentQ, setCurrentQ] = useState(0);
     const [revealedAnswers, setRevealedAnswers] = useState({});
@@ -323,22 +364,49 @@ const Exam = () => {
     // Load data
     useEffect(() => {
         const load = async () => {
-            if (!examId) return;
+            if (!examId) {
+                setExamLoadError('No se pudo identificar el examen.');
+                setExamData(null);
+                setLoading(false);
+                return;
+            }
+
             try {
                 setLoading(true);
-                const subSnap = await getDoc(doc(db, 'subjects', subjectId));
-                if (subSnap.exists() && subSnap.data().color) {
-                    setTopicGradient(subSnap.data().color);
+                setExamLoadError('');
+                setExamNotFound(false);
+                setSubjectLoadWarning('');
+                setExamData(null);
+
+                try {
+                    const subSnap = await getDoc(doc(db, 'subjects', subjectId));
+                    if (subSnap.exists() && subSnap.data().color) {
+                        setTopicGradient(subSnap.data().color);
+                    }
+                } catch (subjectError) {
+                    console.error('Error loading subject context for exam:', subjectError);
+                    setSubjectLoadWarning(
+                        'No se pudo cargar el contexto de la asignatura. El examen se mostrara con el tema por defecto.'
+                    );
                 }
+
                 const examSnap = await getDoc(doc(db, 'exams', examId));
-                if (examSnap.exists()) {
-                    const data = examSnap.data();
-                    // Questions should already be in order from migration, but sort just in case
-                    const questions = (data.questions || []);
-                    setExamData({ ...data, questions });
+                if (!examSnap.exists()) {
+                    setExamNotFound(true);
+                    return;
                 }
+
+                const data = examSnap.data();
+                // Questions should already be in order from migration, but sort just in case
+                const questions = (data.questions || []);
+                setExamData({ ...data, questions });
             } catch (err) {
                 console.error('Error loading exam:', err);
+                if (err?.code === 'permission-denied') {
+                    setExamLoadError('No tienes permiso para ver este examen.');
+                } else {
+                    setExamLoadError('No se pudo cargar el examen. Intentalo de nuevo.');
+                }
             } finally {
                 setLoading(false);
             }
@@ -438,31 +506,43 @@ const Exam = () => {
     // Loading
     if (loading) return <ExamLoading />;
 
+    if (examLoadError) {
+        return (
+            <ExamFallbackState
+                title="No se pudo abrir el examen"
+                description={examLoadError}
+                buttonLabel="Volver"
+                onBack={goBack}
+                gradient={topicGradient}
+                subjectWarning={subjectLoadWarning}
+            />
+        );
+    }
+
+    if (examNotFound) {
+        return (
+            <ExamFallbackState
+                title="Examen no encontrado"
+                description="Este examen no existe o ya no esta disponible."
+                buttonLabel="Volver"
+                onBack={goBack}
+                gradient={topicGradient}
+                subjectWarning={subjectLoadWarning}
+            />
+        );
+    }
+
     // No data
     if (!examData || !examData.questions?.length) {
         return (
-            <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/20 to-indigo-50/20 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 gap-6 p-6 relative overflow-hidden">
-                <div className="absolute inset-0 overflow-hidden">
-                    <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-red-400/20 to-orange-400/20 rounded-full blur-3xl animate-float" />
-                    <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-float-delayed" />
-                </div>
-                <div className="relative z-10 max-w-md text-center">
-                    <div className="relative mb-8">
-                        <div className="absolute inset-0 bg-gradient-to-br from-slate-400 to-slate-600 rounded-3xl blur-2xl opacity-20" />
-                        <div className="relative bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl rounded-3xl p-10 shadow-2xl border-2 border-white/80 dark:border-slate-700/50">
-                            <ClipboardList className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto" />
-                        </div>
-                    </div>
-                    <p className="text-slate-800 dark:text-slate-200 font-black text-2xl mb-2">Sin preguntas</p>
-                    <p className="text-slate-400 dark:text-slate-500 font-medium text-sm mb-8">Este examen no tiene preguntas disponibles</p>
-                    <button onClick={goBack}
-                        className={`group inline-flex items-center gap-2 px-8 py-4 rounded-2xl font-bold text-sm bg-gradient-to-r ${topicGradient} text-white shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all duration-300 relative overflow-hidden`}>
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-transform duration-700" />
-                        <ArrowLeft className="w-4 h-4 relative z-10" />
-                        <span className="relative z-10">Volver</span>
-                    </button>
-                </div>
-            </div>
+            <ExamFallbackState
+                title="Sin preguntas"
+                description="Este examen no tiene preguntas disponibles."
+                buttonLabel="Volver"
+                onBack={goBack}
+                gradient={topicGradient}
+                subjectWarning={subjectLoadWarning}
+            />
         );
     }
 
@@ -505,6 +585,12 @@ const Exam = () => {
                             Salir
                         </button>
                     </div>
+                </div>
+            )}
+
+            {subjectLoadWarning && (
+                <div className="fixed top-14 left-1/2 z-[65] w-[min(92vw,640px)] -translate-x-1/2 rounded-2xl border border-amber-200/80 bg-amber-50/95 px-4 py-3 text-xs font-bold text-amber-700 shadow-lg backdrop-blur-sm dark:border-amber-800/70 dark:bg-amber-900/45 dark:text-amber-200">
+                    {subjectLoadWarning}
                 </div>
             )}
 
