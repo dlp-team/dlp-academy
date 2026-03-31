@@ -260,6 +260,14 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
   - permission-denied exam reads render explicit access feedback,
   - subject-context fetch failures surface warning feedback while exam remains usable.
 
+## Progress Update - 2026-03-31 (Slice 29)
+- Hardened `QuizClassResultsModal` attempt-load feedback in `src/pages/Topic/components/QuizClassResultsModal.jsx`.
+- Replaced silent latest-attempt query failure fallback with explicit inline error state (`attemptsError`) so teachers can distinguish load failures from true no-attempt states.
+- Added permission-specific attempt feedback (`No tienes permiso para cargar las respuestas de este alumno.`) and generic retry feedback for non-permission errors.
+- Added focused component regression coverage in `tests/unit/pages/topic/QuizClassResultsModal.test.jsx` verifying:
+  - attempts query permission failures surface explicit inline feedback,
+  - successful empty attempts preserve existing no-detailed-answers fallback behavior.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,

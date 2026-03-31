@@ -25,3 +25,9 @@
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+### 2026-03-31
+- Added explicit attempts-load error state (`attemptsError`) to replace silent fallback behavior when `quizAttempts` query fails.
+- Permission-denied attempt failures now show a dedicated inline message so teachers can distinguish access issues from true no-attempt cases.
+- Preserved existing empty-state copy when attempt query succeeds but no detailed answers are available.

@@ -16,6 +16,7 @@ const QuizClassResultsModal = ({
     const [selectedStudentId, setSelectedStudentId] = useState('');
     const [attemptsLoading, setAttemptsLoading] = useState(false);
     const [latestAttempt, setLatestAttempt] = useState(null);
+    const [attemptsError, setAttemptsError] = useState('');
     const [overrideDraft, setOverrideDraft] = useState('');
     const [savingOverride, setSavingOverride] = useState(false);
     const [feedbackMessage, setFeedbackMessage] = useState('');
@@ -60,10 +61,12 @@ const QuizClassResultsModal = ({
         const loadLatestAttempt = async () => {
             if (!isOpen || !quiz?.id || !topicId || !selectedStudentId) {
                 setLatestAttempt(null);
+                setAttemptsError('');
                 return;
             }
 
             setAttemptsLoading(true);
+            setAttemptsError('');
             try {
                 const attemptsQuery = query(
                     collection(db, 'quizAttempts'),
@@ -82,9 +85,15 @@ const QuizClassResultsModal = ({
                     })[0] || null;
 
                 setLatestAttempt(latest);
+                setAttemptsError('');
             } catch (error) {
                 console.error('[QUIZ_CLASS_MODAL] Error loading attempts:', error);
                 setLatestAttempt(null);
+                if (error?.code === 'permission-denied') {
+                    setAttemptsError('No tienes permiso para cargar las respuestas de este alumno.');
+                } else {
+                    setAttemptsError('No se pudieron cargar las respuestas de este alumno. Intentalo de nuevo.');
+                }
             } finally {
                 setAttemptsLoading(false);
             }
@@ -335,6 +344,10 @@ const QuizClassResultsModal = ({
                                     {attemptsLoading ? (
                                         <div className="py-8 flex items-center justify-center text-slate-500 dark:text-slate-400">
                                             <Loader2 className="w-5 h-5 animate-spin mr-2" /> Cargando respuestas...
+                                        </div>
+                                    ) : attemptsError ? (
+                                        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-6 text-sm font-semibold text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300">
+                                            {attemptsError}
                                         </div>
                                     ) : latestAttempt?.answersDetail?.length ? (
                                         <QuizReviewDetail answersDetail={latestAttempt.answersDetail} topicGradient="from-indigo-500 to-purple-600" />
