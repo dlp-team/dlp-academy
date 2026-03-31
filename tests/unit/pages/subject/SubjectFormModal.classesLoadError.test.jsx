@@ -189,4 +189,30 @@ describe('SubjectFormModal classes-load feedback', () => {
       expect(screen.getByText('No tienes permiso para cargar sugerencias de usuarios de la institución.')).toBeTruthy();
     });
   });
+
+  it('shows sharing-tab feedback when owner email resolution fails with denied permissions', async () => {
+    firestoreMocks.getDoc.mockImplementation(async (source) => {
+      if (source?.collectionName === 'users') {
+        const deniedError = new Error('permission-denied');
+        deniedError.code = 'permission-denied';
+        throw deniedError;
+      }
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    firestoreMocks.getDocs.mockImplementation(async () => ({ docs: [] }));
+
+    renderModal({
+      initialTab: 'sharing',
+      initialData: {
+        ...baseProps.initialData,
+        ownerEmail: '',
+        ownerId: 'owner-2',
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('No tienes permiso para resolver el correo del propietario de esta asignatura.')).toBeTruthy();
+    });
+  });
 });

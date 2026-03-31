@@ -37,6 +37,19 @@ The classes-tab loader in `SubjectFormModal` silently fell back to an empty list
 ### Validation
 - Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied institution `users` query regression coverage.
 
+## [2026-03-31] Owner Email Resolve Feedback Hardening
+### Context & Architecture
+Owner email resolution in `SubjectFormModal` sharing flows previously failed silently by clearing owner metadata without explicit user feedback when user lookups errored.
+
+### Change
+- Added dedicated owner lookup feedback state: `ownerEmailResolveError`.
+- Added permission-specific feedback for denied owner-email lookup reads.
+- Added generic retry feedback for non-permission owner lookup failures.
+- Rendered explicit inline sharing-tab banner when owner email resolution fails.
+
+### Validation
+- Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied owner-email lookup regression coverage.
+
 ## [2026-03-13] Permission Hardening: Viewer Class Tab is Read-Only
 ### Context & Architecture
 Teachers with `viewer` shortcut permissions were still able to interact with class assignment controls in the `Clases` tab.

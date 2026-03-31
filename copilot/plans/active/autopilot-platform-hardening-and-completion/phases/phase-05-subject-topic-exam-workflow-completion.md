@@ -375,6 +375,12 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
 - Added permission-specific and generic sharing-tab feedback messaging so suggestion preload failures are visible.
 - Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied institution `users` query failures render explicit sharing-tab feedback.
 
+## Progress Update - 2026-03-31 (Slice 41)
+- Hardened `SubjectFormModal` sharing metadata determinism for owner-email resolution in `src/pages/Subject/modals/SubjectFormModal.jsx`.
+- Added explicit `ownerEmailResolveError` feedback state for failed owner-email lookup flows.
+- Added permission-specific and generic sharing-tab feedback messaging when resolving owner email fails.
+- Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied owner-email lookup renders explicit sharing-tab feedback.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,

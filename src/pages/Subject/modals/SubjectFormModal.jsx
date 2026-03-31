@@ -51,6 +51,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [coursesLoading, setCoursesLoading] = useState(false);
     const [coursesLoadError, setCoursesLoadError] = useState('');
     const [institutionEmailsLoadError, setInstitutionEmailsLoadError] = useState('');
+    const [ownerEmailResolveError, setOwnerEmailResolveError] = useState('');
     const subjectNameInputRef = React.useRef(null);
     const subjectCourseSelectRef = React.useRef(null);
 
@@ -121,6 +122,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setClassesLoadError('');
             setCoursesLoadError('');
             setInstitutionEmailsLoadError('');
+            setOwnerEmailResolveError('');
             if (isEditing && initialData) {
                 const fallbackCourse = (initialData.level && initialData.grade)
                     ? `${initialData.grade} ${initialData.level}`
@@ -278,20 +280,30 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
         const resolveOwnerEmail = async () => {
             if (!isOpen || !isEditing || !initialData?.ownerId) {
-                if (active) setOwnerEmailResolved('');
+                if (active) {
+                    setOwnerEmailResolved('');
+                    setOwnerEmailResolveError('');
+                }
                 return;
             }
 
             if (initialData?.ownerEmail) {
-                if (active) setOwnerEmailResolved(initialData.ownerEmail);
+                if (active) {
+                    setOwnerEmailResolved(initialData.ownerEmail);
+                    setOwnerEmailResolveError('');
+                }
                 return;
             }
 
             try {
+                setOwnerEmailResolveError('');
                 const ownerDoc = await getDoc(doc(db, 'users', initialData.ownerId));
                 const ownerEmailFromDoc = ownerDoc.exists() ? (ownerDoc.data()?.email || '') : '';
                 if (ownerEmailFromDoc) {
-                    if (active) setOwnerEmailResolved(ownerEmailFromDoc);
+                    if (active) {
+                        setOwnerEmailResolved(ownerEmailFromDoc);
+                        setOwnerEmailResolveError('');
+                    }
                     return;
                 }
 
@@ -299,9 +311,19 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 const ownerQuery = query(usersRef, where('uid', '==', initialData.ownerId));
                 const ownerSnapshot = await getDocs(ownerQuery);
                 const ownerEmailFromQuery = ownerSnapshot.docs[0]?.data()?.email || '';
-                if (active) setOwnerEmailResolved(ownerEmailFromQuery);
-            } catch {
-                if (active) setOwnerEmailResolved('');
+                if (active) {
+                    setOwnerEmailResolved(ownerEmailFromQuery);
+                    setOwnerEmailResolveError('');
+                }
+            } catch (error) {
+                if (active) {
+                    setOwnerEmailResolved('');
+                    if (error?.code === 'permission-denied') {
+                        setOwnerEmailResolveError('No tienes permiso para resolver el correo del propietario de esta asignatura.');
+                    } else {
+                        setOwnerEmailResolveError('No se pudo resolver el correo del propietario. Intentalo de nuevo.');
+                    }
+                }
             }
         };
 
@@ -943,6 +965,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         {/* Sharing Tab */}
                         {activeTab === 'sharing' && (
                             <div className="space-y-4">
+                                {ownerEmailResolveError && (
+                                    <div className="rounded-lg border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300">
+                                        {ownerEmailResolveError}
+                                    </div>
+                                )}
                                 {canManageSharing && (
                                     <div>
                                         {institutionEmailsLoadError && (
