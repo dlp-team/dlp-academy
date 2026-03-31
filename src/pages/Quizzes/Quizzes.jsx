@@ -28,6 +28,7 @@ import ResultsView from '../../components/modules/QuizEngine/QuizResults';
 const useQuizData = (user, subjectId, topicId, quizId, navigate) => {
     const [loading, setLoading] = useState(true);
     const [quizData, setQuizData] = useState(null);
+    const [loadError, setLoadError] = useState('');
     const [subjectIconKey, setSubjectIconKey] = useState(null);
     const [accentColor, setAccentColor] = useState('#4f46e5');
     const [topicGradient, setTopicGradient] = useState('from-indigo-500 to-purple-600');
@@ -35,11 +36,13 @@ const useQuizData = (user, subjectId, topicId, quizId, navigate) => {
     useEffect(() => {
         const loadData = async () => {
             if (!user || !subjectId || !topicId || !quizId) {
+                setLoadError('No se pudo identificar el test para abrir.');
                 setLoading(false);
                 return;
             }
 
             try {
+                setLoadError('');
                 const subjectRef = doc(db, "subjects", subjectId);
                 const subjectSnap = await getDoc(subjectRef);
                 
@@ -93,11 +96,17 @@ const useQuizData = (user, subjectId, topicId, quizId, navigate) => {
                         assignmentDueAt: data.assignmentDueAt || null
                     });
                 } else {
-                    setQuizData(DEFAULT_QUIZ);
+                    setQuizData(null);
+                    setLoadError('El test solicitado ya no esta disponible.');
                 }
             } catch (error) {
                 console.error("Error al cargar datos:", error);
-                setQuizData(DEFAULT_QUIZ);
+                setQuizData(null);
+                if (error?.code === 'permission-denied') {
+                    setLoadError('No tienes permiso para abrir este test.');
+                } else {
+                    setLoadError('No se pudo cargar el test. Intentalo de nuevo.');
+                }
             } finally {
                 setLoading(false);
             }
@@ -106,8 +115,28 @@ const useQuizData = (user, subjectId, topicId, quizId, navigate) => {
         loadData();
     }, [user, subjectId, topicId, quizId, navigate]);
 
-    return { loading, quizData, subjectIconKey, accentColor, topicGradient };
+    return { loading, quizData, loadError, subjectIconKey, accentColor, topicGradient };
 };
+
+const QuizFallbackState = React.memo(({ title, message, onGoBack }) => (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 text-slate-900 dark:text-slate-100">
+        <main className="max-w-3xl mx-auto px-4 py-12">
+            <div className="rounded-3xl border border-white/50 dark:border-slate-700/70 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-6 shadow-xl">
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400 font-bold">Test</p>
+                <h1 className="text-2xl font-black mt-2">{title}</h1>
+                <p className="mt-3 text-sm font-semibold text-slate-600 dark:text-slate-300">{message}</p>
+                <button
+                    onClick={onGoBack}
+                    className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white hover:bg-indigo-700"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                    Volver al tema
+                </button>
+            </div>
+        </main>
+    </div>
+));
+QuizFallbackState.displayName = 'QuizFallbackState';
 
 // ==================== COMPONENTES DE VISTA INTERNOS ====================
 // Estos organizan los subcomponentes importados
@@ -292,7 +321,7 @@ const Quizzes = ({ user }) => {
     const { subjectId, topicId, quizId } = useParams();
     const navigate = useNavigate();
 
-    const { loading, quizData, subjectIconKey, accentColor, topicGradient } = 
+    const { loading, quizData, loadError, subjectIconKey, accentColor, topicGradient } = 
         useQuizData(user, subjectId, topicId, quizId, navigate);
 
     const [viewState, setViewState] = useState(VIEW_STATES.REVIEW);
@@ -310,9 +339,13 @@ const Quizzes = ({ user }) => {
         setPreviewAsStudent(false);
     }, []);
 
+    const backToTopicRoute = subjectId && topicId
+        ? `/home/subject/${subjectId}/topic/${topicId}`
+        : '/home';
+
     const handleGoBack = useCallback(() => {
-        navigate(`/home/subject/${subjectId}/topic/${topicId}`);
-    }, [navigate, subjectId, topicId]);
+        navigate(backToTopicRoute);
+    }, [navigate, backToTopicRoute]);
 
     const handleAnswerSelect = useCallback((index) => {
         if (answerStatus !== ANSWER_STATUS.IDLE) return;
@@ -439,7 +472,24 @@ const Quizzes = ({ user }) => {
     }, [quizData, currentStep]);
 
     if (loading) return <LoadingSpinner />;
-    if (!quizData) return null;
+    if (loadError) {
+        return (
+            <QuizFallbackState
+                title="No se pudo abrir el test"
+                message={loadError}
+                onGoBack={handleGoBack}
+            />
+        );
+    }
+    if (!quizData) {
+        return (
+            <QuizFallbackState
+                title="Test no disponible"
+                message="No hay contenido disponible para este test."
+                onGoBack={handleGoBack}
+            />
+        );
+    }
 
     const toDate = (value) => {
         if (!value) return null;

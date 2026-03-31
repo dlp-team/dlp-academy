@@ -1,3 +1,4 @@
+<!-- copilot/explanations/codebase/src/pages/Quizzes/Quizzes.md -->
 # Quizzes.jsx
 
 ## Overview
@@ -29,6 +30,8 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-03-31: Replaced silent/default runtime fallback behavior with explicit load-fallback states in `useQuizData` (missing route context, quiz-not-found, permission-denied, and generic load failures).
+- 2026-03-31: Added shared in-page fallback renderer (`QuizFallbackState`) to keep recovery UX deterministic and preserve `Volver al tema` navigation from failed quiz loads.
 - 2026-03-29: Added full dark-mode support to `QuizRepaso` flow (empty/saving/review/quiz shells) for consistent dark appearance across all quiz variants.
 - 2026-03-29: Completed dark-mode consistency across review surfaces by aligning standalone review page and detailed answer blocks with the quiz runtime dark palette.
 - 2026-03-29: Added full dark-mode visual support for quiz review and attempt flows (review hero, assignment status blocks, quiz runtime shell, and preview banner) while preserving existing interactions and scoring behavior.

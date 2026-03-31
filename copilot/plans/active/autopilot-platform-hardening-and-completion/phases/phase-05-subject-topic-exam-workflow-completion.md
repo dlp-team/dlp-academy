@@ -303,6 +303,20 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
   - permission-denied attempts query path renders explicit access feedback,
   - successful empty attempts path still renders the original no-attempt informational state.
 
+## Progress Update - 2026-03-31 (Slice 33)
+- Hardened `Quizzes` runtime load determinism in `src/pages/Quizzes/Quizzes.jsx` by replacing silent/default fallback hydration with explicit load-fallback states.
+- Added explicit `loadError` handling in `useQuizData` for:
+  - missing route context,
+  - quiz-not-found,
+  - permission-denied quiz reads,
+  - generic quiz load failures.
+- Added shared `QuizFallbackState` UI to render deterministic in-page recovery feedback (`No se pudo abrir el test`) with preserved route action (`Volver al tema`).
+- Preserved successful runtime/review flow behavior when quiz data loads correctly.
+- Added focused page-level regression coverage in `tests/unit/pages/quizzes/Quizzes.test.jsx` verifying:
+  - missing quiz documents surface explicit fallback messaging,
+  - permission-denied quiz reads surface explicit access feedback,
+  - successful quiz loads keep the review-start flow available.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,
