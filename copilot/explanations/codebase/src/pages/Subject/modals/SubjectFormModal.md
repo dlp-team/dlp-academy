@@ -50,6 +50,19 @@ Owner email resolution in `SubjectFormModal` sharing flows previously failed sil
 ### Validation
 - Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied owner-email lookup regression coverage.
 
+## [2026-03-31] Institution Policy Load Feedback Hardening
+### Context & Architecture
+Institution policy preload in `SubjectFormModal` previously failed silently by reverting to defaults with no explicit classes-tab feedback when institution reads errored.
+
+### Change
+- Added dedicated policy preload feedback state: `institutionPolicyLoadError`.
+- Added permission-specific feedback for denied institution policy reads.
+- Added generic retry feedback for non-permission institution policy load failures.
+- Rendered explicit classes-tab banner for policy preload failures.
+
+### Validation
+- Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied institution policy load regression coverage.
+
 ## [2026-03-13] Permission Hardening: Viewer Class Tab is Read-Only
 ### Context & Architecture
 Teachers with `viewer` shortcut permissions were still able to interact with class assignment controls in the `Clases` tab.

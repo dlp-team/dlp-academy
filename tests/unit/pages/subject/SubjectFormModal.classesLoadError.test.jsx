@@ -215,4 +215,23 @@ describe('SubjectFormModal classes-load feedback', () => {
       expect(screen.getByText('No tienes permiso para resolver el correo del propietario de esta asignatura.')).toBeTruthy();
     });
   });
+
+  it('shows classes-tab feedback when institution policy load fails with denied permissions', async () => {
+    firestoreMocks.getDoc.mockImplementation(async (source) => {
+      if (source?.collectionName === 'institutions') {
+        const deniedError = new Error('permission-denied');
+        deniedError.code = 'permission-denied';
+        throw deniedError;
+      }
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    firestoreMocks.getDocs.mockImplementation(async () => ({ docs: [] }));
+
+    renderModal({ initialTab: 'classes' });
+
+    await waitFor(() => {
+      expect(screen.getByText('No tienes permiso para cargar las políticas de acceso de esta institución.')).toBeTruthy();
+    });
+  });
 });

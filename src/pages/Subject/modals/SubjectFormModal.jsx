@@ -52,6 +52,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [coursesLoadError, setCoursesLoadError] = useState('');
     const [institutionEmailsLoadError, setInstitutionEmailsLoadError] = useState('');
     const [ownerEmailResolveError, setOwnerEmailResolveError] = useState('');
+    const [institutionPolicyLoadError, setInstitutionPolicyLoadError] = useState('');
     const subjectNameInputRef = React.useRef(null);
     const subjectCourseSelectRef = React.useRef(null);
 
@@ -123,6 +124,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setCoursesLoadError('');
             setInstitutionEmailsLoadError('');
             setOwnerEmailResolveError('');
+            setInstitutionPolicyLoadError('');
             if (isEditing && initialData) {
                 const fallbackCourse = (initialData.level && initialData.grade)
                     ? `${initialData.grade} ${initialData.level}`
@@ -186,21 +188,34 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         const loadInstitutionPolicies = async () => {
             const institutionId = user?.institutionId || initialData?.institutionId || '';
             if (!institutionId) {
-                if (active) setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
+                if (active) {
+                    setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
+                    setInstitutionPolicyLoadError('');
+                }
                 return;
             }
 
             try {
+                setInstitutionPolicyLoadError('');
                 const institutionSnapshot = await getDoc(doc(db, 'institutions', institutionId));
                 if (!active) return;
                 if (!institutionSnapshot.exists()) {
                     setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
+                    setInstitutionPolicyLoadError('');
                     return;
                 }
 
                 setInstitutionAccessPolicies(normalizeAccessPolicies(institutionSnapshot.data()?.accessPolicies));
-            } catch {
-                if (active) setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
+                setInstitutionPolicyLoadError('');
+            } catch (error) {
+                if (active) {
+                    setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
+                    if (error?.code === 'permission-denied') {
+                        setInstitutionPolicyLoadError('No tienes permiso para cargar las políticas de acceso de esta institución.');
+                    } else {
+                        setInstitutionPolicyLoadError('No se pudieron cargar las políticas de acceso. Intentalo de nuevo.');
+                    }
+                }
             }
         };
 
@@ -1244,6 +1259,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
                         {activeTab === 'classes' && canAccessClassesTab && (
                             <div className="space-y-4">
+                                {institutionPolicyLoadError && (
+                                    <div className="rounded-lg border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300">
+                                        {institutionPolicyLoadError}
+                                    </div>
+                                )}
                                 <div className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/70 dark:bg-indigo-900/20 p-4">
                                     <div className="flex items-center justify-between gap-3">
                                         <div>

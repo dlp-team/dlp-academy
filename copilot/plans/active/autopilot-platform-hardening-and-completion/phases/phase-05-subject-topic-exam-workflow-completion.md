@@ -381,6 +381,12 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
 - Added permission-specific and generic sharing-tab feedback messaging when resolving owner email fails.
 - Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied owner-email lookup renders explicit sharing-tab feedback.
 
+## Progress Update - 2026-03-31 (Slice 42)
+- Hardened `SubjectFormModal` institution-policy preload determinism in `src/pages/Subject/modals/SubjectFormModal.jsx`.
+- Added explicit `institutionPolicyLoadError` state for failed institution policy reads.
+- Added permission-specific and generic classes-tab feedback messaging when policy preload fails.
+- Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied institution policy reads render explicit classes-tab feedback.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,
