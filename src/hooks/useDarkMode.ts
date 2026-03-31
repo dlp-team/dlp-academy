@@ -1,7 +1,7 @@
 // src/hooks/useDarkMode.js
 import { useState, useEffect } from 'react';
 
-export function useDarkMode() {
+export function useDarkMode(): { isDark: boolean; toggleDarkMode: () => void } {
   const [isDark, setIsDark] = useState(() => {
     if (typeof document !== 'undefined') {
       return document.documentElement.classList.contains('dark');
@@ -17,7 +17,7 @@ export function useDarkMode() {
     }
   }, [isDark]);
 
-  const toggleDarkMode = () => {
+  const toggleDarkMode = (): void => {
     setIsDark((prev) => !prev);
   };
 

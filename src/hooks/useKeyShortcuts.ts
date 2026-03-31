@@ -10,7 +10,7 @@ import { handleKeyShortcut } from '../utils/keyShortcutsHandler';
  * @param {function} options.onPaste - Custom paste handler.
  * @param {function} options.onUndo - Custom undo handler.
  */
-export function useKeyShortcuts({ onCopy, onCut, onPaste, onUndo } = {}) {
+export function useKeyShortcuts({ onCopy, onCut, onPaste, onUndo }: any = {}) {
   useEffect(() => {
     function keydownListener(e) {
       if (e.ctrlKey || e.metaKey) {

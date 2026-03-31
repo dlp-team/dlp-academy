@@ -10,7 +10,7 @@ import { auth } from '../firebase/config';
  */
 export const useIdleTimeout = (timeoutMinutes = 15) => {
   const navigate = useNavigate();
-  const timeoutRef = useRef(null);
+  const timeoutRef = useRef<any>(null);
 
   const logoutUser = useCallback(async () => {
     if (!auth.currentUser) return;
