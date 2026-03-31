@@ -279,6 +279,17 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
   - timeout-driven error state renders explicit fallback messaging,
   - retry action returns the viewer to loading state.
 
+## Progress Update - 2026-03-31 (Slice 31)
+- Hardened Topic file-preview modal determinism in `src/pages/Topic/components/TopicModals.jsx`.
+- Replaced bare embedded iframe with explicit viewer-state handling (`loading`, `error`, `ready`) inside a dedicated `TopicFileViewerModal`.
+- Added timeout-backed fallback and explicit recovery actions in error state:
+  - retry embedded viewer,
+  - direct download fallback.
+- Added focused regression coverage in `tests/unit/pages/topic/TopicModals.test.jsx` verifying:
+  - loading feedback while preview is unresolved,
+  - timeout-driven error fallback rendering,
+  - retry action returns viewer to loading state.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,

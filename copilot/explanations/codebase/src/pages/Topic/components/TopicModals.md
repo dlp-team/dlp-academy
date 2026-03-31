@@ -26,5 +26,10 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+### 2026-03-31
+- Added `TopicFileViewerModal` with deterministic viewer states (`loading`, `error`, `ready`) for embedded topic file previews.
+- Added timeout-backed error fallback with explicit recovery actions (retry viewer + direct download).
+- Replaced previous bare iframe rendering that could fail silently when embedded preview did not resolve.
+
 ### 2026-03-30
 - Added `TopicConfirmDeleteModal` integration so Topic file/quiz/topic destructive actions are confirmed in-page instead of using browser dialogs.
