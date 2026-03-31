@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -502,7 +502,7 @@ const StudyGuide = () => {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [guideData, activeSection, expandedSections]);
+    }, [guideData, activeSection, expandedSections, navigateToNextSection, navigateToPreviousSection]);
 
     useEffect(() => {
         if (!guideData?.studyGuide) return;
@@ -652,7 +652,7 @@ const StudyGuide = () => {
     const handleGoBack = () => navigate(-1);
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
     
-    const scrollToSection = (sectionIndex) => {
+    const scrollToSection = useCallback((sectionIndex) => {
         if (typeof sectionIndex === 'string') {
             const element = document.getElementById(sectionIndex);
             if (element) {
@@ -684,7 +684,7 @@ const StudyGuide = () => {
                 });
             }
         }
-    };
+    }, [isScrolled]);
     
     const scrollToFormulas = () => scrollToSection('formulas-section');
     
@@ -704,7 +704,7 @@ const StudyGuide = () => {
         }));
     };
 
-    const navigateToNextSection = () => {
+    const navigateToNextSection = useCallback(() => {
         if (!guideData?.studyGuide) return;
         
         const totalSections = guideData.studyGuide.length;
@@ -726,9 +726,9 @@ const StudyGuide = () => {
                 scrollToSection(nextSection);
             }, 100);
         }
-    };
+    }, [guideData?.studyGuide, activeSection, scrollToSection]);
 
-    const navigateToPreviousSection = () => {
+    const navigateToPreviousSection = useCallback(() => {
         if (!guideData?.studyGuide) return;
         
         const prevSection = activeSection - 1;
@@ -749,7 +749,7 @@ const StudyGuide = () => {
                 scrollToSection(prevSection);
             }, 100);
         }
-    };
+    }, [guideData?.studyGuide, activeSection, scrollToSection]);
 
     const totalFormulas = useMemo(() => {
         if (!guideData?.studyGuide) return 0;

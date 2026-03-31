@@ -465,7 +465,7 @@ const Exam = () => {
         };
         window.addEventListener('keydown', handler);
         return () => window.removeEventListener('keydown', handler);
-    }, [currentQ, examData]);
+    }, [currentQ, examData, navigateQuestion, toggleAnswer]);
 
     const toggleAnswer = useCallback((idx) => {
         setRevealedAnswers(prev => ({ ...prev, [idx]: !prev[idx] }));

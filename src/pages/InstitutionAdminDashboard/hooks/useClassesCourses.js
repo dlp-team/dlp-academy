@@ -3,7 +3,7 @@
 // All Firestore reads/writes for the Cursos & Clases section.
 // Components stay pure – they only call functions from this hook.
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   addDoc,
   collection,
@@ -24,7 +24,7 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
   const [loading, setLoading] = useState(true);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     if (!effectiveInstitutionId) return;
     setLoading(true);
     try {
@@ -39,9 +39,9 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [effectiveInstitutionId]);
 
-  useEffect(() => { fetchAll(); }, [effectiveInstitutionId]);
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   // ── Course CRUD ───────────────────────────────────────────────────────────
   const createCourse = async (form) => {

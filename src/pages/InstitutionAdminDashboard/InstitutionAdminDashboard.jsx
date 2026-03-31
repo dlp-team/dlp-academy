@@ -7,7 +7,7 @@
 //  • Full customization tab      → components/CustomizationTab.jsx
 //  • InstitutionCustomizationView updated to accept `previewPaletteApply` prop
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { LayoutGrid, Palette, UserPlus, Users } from 'lucide-react';
 
@@ -84,7 +84,7 @@ const InstitutionAdminDashboard = ({ user }) => {
 
         {/* Tab nav */}
         <div className="flex items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800 overflow-x-auto whitespace-nowrap pb-px no-scrollbar">
-            {TABS.map(({ key, label, icon: Icon }) => (
+            {TABS.map(({ key, label, icon }) => (
               <button
                 key={key}
                 onClick={() => setActiveTab(key)}
@@ -94,7 +94,7 @@ const InstitutionAdminDashboard = ({ user }) => {
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'
               }`}
             >
-              <Icon className="w-4 h-4" /> {label}
+              {React.createElement(icon, { className: 'w-4 h-4' })} {label}
             </button>
           ))}
         </div>

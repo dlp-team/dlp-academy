@@ -7,7 +7,6 @@ import useTopicGridDnD from '../hooks/useTopicGridDnD';
 const TopicGrid = ({
     topics,
     subjectColor,
-    isReordering,
     onOpenCreateModal,
     onSelectTopic,
     onDeleteTopic,

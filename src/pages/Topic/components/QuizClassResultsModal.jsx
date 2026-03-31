@@ -21,10 +21,9 @@ const QuizClassResultsModal = ({
     const [savingOverride, setSavingOverride] = useState(false);
     const [feedbackMessage, setFeedbackMessage] = useState('');
 
-    const students = analytics?.students || [];
     const completedStudents = useMemo(
-        () => students.filter((student) => student.hasResult),
-        [students]
+        () => (analytics?.students || []).filter((student) => student.hasResult),
+        [analytics?.students]
     );
 
     useEffect(() => {

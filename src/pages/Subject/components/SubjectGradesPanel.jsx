@@ -1,5 +1,5 @@
 ﻿// src/pages/Subject/components/SubjectGradesPanel.jsx
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     AlertCircle,
     BarChart3,
@@ -43,7 +43,6 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
     const [exams, setExams] = useState([]);
     const [evaluationItems, setEvaluationItems] = useState([]);
     const [evaluationGrades, setEvaluationGrades] = useState([]);
-    const [mandatoryQuizzes, setMandatoryQuizzes] = useState([]);
     const [assignmentQuizzes, setAssignmentQuizzes] = useState([]);
     const [assignmentReviews, setAssignmentReviews] = useState([]);
     const [examReviews, setExamReviews] = useState([]);
@@ -140,7 +139,7 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         [assignmentQuizzes.length]
     );
 
-    const getAssignmentWeightForQuiz = (quiz) => {
+    const getAssignmentWeightForQuiz = useCallback((quiz) => {
         if (!assignmentCustomWeightsEnabled) return assignmentsEqualWeight;
         if (quiz.assignmentWeightLocked) return clamp(Number(quiz.assignmentWeight ?? 0), 0, 100);
         const lockedTotal = assignmentQuizzes
@@ -149,17 +148,17 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         const unlockedCount = assignmentQuizzes.filter((q) => !q.assignmentWeightLocked).length;
         const remaining = Math.max(0, 100 - lockedTotal);
         return unlockedCount > 0 ? Number((remaining / unlockedCount).toFixed(2)) : 0;
-    };
+    }, [assignmentCustomWeightsEnabled, assignmentsEqualWeight, assignmentQuizzes]);
 
     const extrasEqualWeight = useMemo(
         () => getEqualSplitWeight(evaluationItems.length),
         [evaluationItems.length]
     );
 
-    const getExtrasWeightForItem = (item) => {
+    const getExtrasWeightForItem = useCallback((item) => {
         if (!extrasCustomWeightsEnabled) return extrasEqualWeight;
         return clamp(Number(item.weight || 0), 0, 100);
-    };
+    }, [extrasCustomWeightsEnabled, extrasEqualWeight]);
 
     const hasStrict100 = Math.abs(blockWeightTotal - 100) < 0.001;
     const realtimeFeedback = useMemo(() => Object.values(realtimeErrors)[0] || '', [realtimeErrors]);
@@ -177,7 +176,6 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
             });
             const allQuizzes = snapshot.docs.map((quizDoc) => ({ id: quizDoc.id, ...quizDoc.data() }));
             // Tests and tareas are now managed in the same internal block.
-            setMandatoryQuizzes([]);
             setAssignmentQuizzes(
                 allQuizzes
                     .sort((a, b) => String(a.title || a.name || '').localeCompare(String(b.title || b.name || '')))
@@ -188,7 +186,6 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
                 ...prev,
                 quizzes: 'No se pudieron sincronizar las tareas y tests del panel de notas.'
             }));
-            setMandatoryQuizzes([]);
             setAssignmentQuizzes([]);
         });
 
@@ -424,35 +421,35 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
         return map;
     }, [examReviews]);
 
-    const getQuizDecimal = (quizId, userId) => {
+    const getQuizDecimal = useCallback((quizId, userId) => {
         const value = quizScoreByQuizUser[`${quizId}:${userId}`];
         if (value === undefined || value === null) return null;
         return Number(value);
-    };
+    }, [quizScoreByQuizUser]);
 
-    const getAssignmentDecimal = (quizId, userId) => {
+    const getAssignmentDecimal = useCallback((quizId, userId) => {
         const review = assignmentReviewByKey[`${quizId}:${userId}`];
         if (review?.overrideDecimal !== undefined && review?.overrideDecimal !== null) {
             return Number(review.overrideDecimal);
         }
         return getQuizDecimal(quizId, userId);
-    };
+    }, [assignmentReviewByKey, getQuizDecimal]);
 
-    const getExamDecimal = (examId, userId) => {
+    const getExamDecimal = useCallback((examId, userId) => {
         const review = examReviewByKey[`${examId}:${userId}`];
         if (review?.overrideDecimal === undefined || review?.overrideDecimal === null) return null;
         return Number(review.overrideDecimal);
-    };
+    }, [examReviewByKey]);
 
-    const getGradeDecimal = (item, userId) => {
+    const getGradeDecimal = useCallback((item, userId) => {
         const gradeDoc = gradeDocByKey[`${item.id}:${userId}`];
         if (!gradeDoc || gradeDoc.score === null || gradeDoc.score === undefined) return null;
         const maxScore = Number(item.maxScore || 10);
         if (maxScore <= 0) return null;
         return Number((((Number(gradeDoc.score) / maxScore) * 10)).toFixed(1));
-    };
+    }, [gradeDocByKey]);
 
-    const calculateSectionDecimal = (items, userId, scoreResolver, weightResolver) => {
+    const calculateSectionDecimal = useCallback((items, userId, scoreResolver, weightResolver) => {
         let weightedScore = 0;
         let relativeWeightSum = 0;
 
@@ -468,14 +465,14 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
 
         if (relativeWeightSum === 0) return null;
         return Number((weightedScore / relativeWeightSum).toFixed(2));
-    };
+    }, []);
 
     const assignmentsInternalWeightTotal = useMemo(
         () => {
             if (assignmentQuizzes.length === 0) return 0;
             return Number(assignmentQuizzes.reduce((sum, quiz) => sum + getAssignmentWeightForQuiz(quiz), 0).toFixed(2));
         },
-        [assignmentCustomWeightsEnabled, assignmentQuizzes, assignmentsEqualWeight]
+        [assignmentQuizzes, getAssignmentWeightForQuiz]
     );
 
     const assignmentsLockedTotal = useMemo(
@@ -488,34 +485,34 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
             if (evaluationItems.length === 0) return 0;
             return Number(evaluationItems.reduce((sum, item) => sum + getExtrasWeightForItem(item), 0).toFixed(2));
         },
-        [extrasCustomWeightsEnabled, evaluationItems, extrasEqualWeight]
+        [evaluationItems, getExtrasWeightForItem]
     );
 
-    const getExamsSectionDecimal = (userId) =>
+    const getExamsSectionDecimal = useCallback((userId) =>
         calculateSectionDecimal(
             exams,
             userId,
             (exam, uid) => getExamDecimal(exam.id, uid),
             () => 1
-        );
+        ), [exams, calculateSectionDecimal, getExamDecimal]);
 
-    const getAssignmentsSectionDecimal = (userId) =>
+    const getAssignmentsSectionDecimal = useCallback((userId) =>
         calculateSectionDecimal(
             assignmentQuizzes,
             userId,
             (quiz, uid) => getAssignmentDecimal(quiz.id, uid),
             (quiz) => getAssignmentWeightForQuiz(quiz)
-        );
+        ), [assignmentQuizzes, calculateSectionDecimal, getAssignmentDecimal, getAssignmentWeightForQuiz]);
 
-    const getExtrasSectionDecimal = (userId) =>
+    const getExtrasSectionDecimal = useCallback((userId) =>
         calculateSectionDecimal(
             evaluationItems,
             userId,
             (item, uid) => getGradeDecimal(item, uid),
             (item) => getExtrasWeightForItem(item)
-        );
+        ), [evaluationItems, calculateSectionDecimal, getGradeDecimal, getExtrasWeightForItem]);
 
-    const getFinalForUser = (userId) => {
+    const getFinalForUser = useCallback((userId) => {
         if (!hasStrict100) {
             return {
                 final: null,
@@ -560,23 +557,14 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }) =
             assignmentsDecimal,
             extrasDecimal
         };
-    };
+    }, [hasStrict100, blockWeights, getExamsSectionDecimal, getAssignmentsSectionDecimal, getExtrasSectionDecimal]);
 
     const studentFinalData = useMemo(() => {
         if (!user?.uid) return { final: null, coveredWeight: 0, examsDecimal: null, assignmentsDecimal: null, extrasDecimal: null };
         return getFinalForUser(user.uid);
     }, [
         user?.uid,
-        hasStrict100,
-        blockWeights,
-        exams,
-        mandatoryQuizzes,
-        assignmentQuizzes,
-        evaluationItems,
-        gradeDocByKey,
-        assignmentReviewByKey,
-        examReviewByKey,
-        quizScoreByQuizUser
+        getFinalForUser
     ]);
 
     const studentFinalBadge = useMemo(() => {

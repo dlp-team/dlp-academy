@@ -1,5 +1,5 @@
 // src/components/modules/ListItems/FolderListItem.jsx
-import React, { useState, useMemo, useRef, useLayoutEffect } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { ChevronRight, Folder, GripVertical, Users, MoreVertical, Edit2, Trash2, Share2, RotateCcw } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import SubjectIcon from '../../ui/SubjectIcon';

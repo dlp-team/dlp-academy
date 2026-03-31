@@ -47,7 +47,7 @@ const CONTENT_TYPES = [
 
 // ==================== TYPE-SPECIFIC OPTIONS ====================
 
-const ToggleOptionCard = ({ field, label, Icon, description, value, disabled, onToggle }) => (
+const ToggleOptionCard = ({ field, label, icon, description, value, disabled, onToggle }) => (
     <button
         type="button"
         disabled={disabled}
@@ -63,11 +63,13 @@ const ToggleOptionCard = ({ field, label, Icon, description, value, disabled, on
                 ? 'bg-white/20 dark:bg-slate-900/20'
                 : 'bg-slate-100 dark:bg-slate-700'
         }`}>
-            <Icon className={`w-3.5 h-3.5 ${
-                value
-                    ? 'text-white dark:text-slate-900'
-                    : 'text-slate-500 dark:text-slate-400'
-            }`} />
+            {React.createElement(icon, {
+                className: `w-3.5 h-3.5 ${
+                    value
+                        ? 'text-white dark:text-slate-900'
+                        : 'text-slate-500 dark:text-slate-400'
+                }`
+            })}
         </div>
         <div className="flex-1 min-w-0">
             <span className={`text-xs font-bold block ${
@@ -103,8 +105,8 @@ const TypeSpecificOptions = ({ type, formData, setFormData, disabled }) => {
         return (
             <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-2">
-                    <ToggleOptionCard field="includeExamples" label="Incluir ejemplos" Icon={Lightbulb} description="Ejemplos prácticos" value={Boolean(formData.includeExamples)} disabled={disabled} onToggle={handleToggleField} />
-                    <ToggleOptionCard field="includeFormulas" label="Con fórmulas" Icon={Calculator} description="Fórmulas clave" value={Boolean(formData.includeFormulas)} disabled={disabled} onToggle={handleToggleField} />
+                    <ToggleOptionCard field="includeExamples" label="Incluir ejemplos" icon={Lightbulb} description="Ejemplos prácticos" value={Boolean(formData.includeExamples)} disabled={disabled} onToggle={handleToggleField} />
+                    <ToggleOptionCard field="includeFormulas" label="Con fórmulas" icon={Calculator} description="Fórmulas clave" value={Boolean(formData.includeFormulas)} disabled={disabled} onToggle={handleToggleField} />
                 </div>
             </div>
         );
@@ -144,8 +146,8 @@ const TypeSpecificOptions = ({ type, formData, setFormData, disabled }) => {
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                    <ToggleOptionCard field="includeDerivations" label="Derivaciones" Icon={Layers} description="Paso a paso" value={Boolean(formData.includeDerivations)} disabled={disabled} onToggle={handleToggleField} />
-                    <ToggleOptionCard field="includeExamples" label="Con ejemplos" Icon={Lightbulb} description="Uso práctico" value={Boolean(formData.includeExamples)} disabled={disabled} onToggle={handleToggleField} />
+                    <ToggleOptionCard field="includeDerivations" label="Derivaciones" icon={Layers} description="Paso a paso" value={Boolean(formData.includeDerivations)} disabled={disabled} onToggle={handleToggleField} />
+                    <ToggleOptionCard field="includeExamples" label="Con ejemplos" icon={Lightbulb} description="Uso práctico" value={Boolean(formData.includeExamples)} disabled={disabled} onToggle={handleToggleField} />
                 </div>
             </div>
         );
@@ -192,8 +194,8 @@ const TypeSpecificOptions = ({ type, formData, setFormData, disabled }) => {
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                    <ToggleOptionCard field="includeSolutions" label="Con soluciones" Icon={CheckCircle2} description="Paso a paso" value={Boolean(formData.includeSolutions)} disabled={disabled} onToggle={handleToggleField} />
-                    <ToggleOptionCard field="includeExamples" label="Ejemplo resuelto" Icon={Lightbulb} description="1 ejemplo guía" value={Boolean(formData.includeExamples)} disabled={disabled} onToggle={handleToggleField} />
+                    <ToggleOptionCard field="includeSolutions" label="Con soluciones" icon={CheckCircle2} description="Paso a paso" value={Boolean(formData.includeSolutions)} disabled={disabled} onToggle={handleToggleField} />
+                    <ToggleOptionCard field="includeExamples" label="Ejemplo resuelto" icon={Lightbulb} description="1 ejemplo guía" value={Boolean(formData.includeExamples)} disabled={disabled} onToggle={handleToggleField} />
                 </div>
             </div>
         );
@@ -322,9 +324,9 @@ const TypeSpecificOptions = ({ type, formData, setFormData, disabled }) => {
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                    <ToggleOptionCard field="includeAnswerKey" label="Clave respuestas" Icon={CheckCircle2} description="Solucionario" value={Boolean(formData.includeAnswerKey)} disabled={disabled} onToggle={handleToggleField} />
+                    <ToggleOptionCard field="includeAnswerKey" label="Clave respuestas" icon={CheckCircle2} description="Solucionario" value={Boolean(formData.includeAnswerKey)} disabled={disabled} onToggle={handleToggleField} />
                     {formData.examMode === 'practice' && (
-                        <ToggleOptionCard field="showResultsToStudents" label="Mostrar resultados" Icon={Eye} description="Alumnos ven sus notas" value={Boolean(formData.showResultsToStudents)} disabled={disabled} onToggle={handleToggleField} />
+                        <ToggleOptionCard field="showResultsToStudents" label="Mostrar resultados" icon={Eye} description="Alumnos ven sus notas" value={Boolean(formData.showResultsToStudents)} disabled={disabled} onToggle={handleToggleField} />
                     )}
                 </div>
             </div>
@@ -343,9 +345,7 @@ const CreateContentModal = ({
     formData,
     setFormData,
     isGenerating,
-    themeColor,
-    subjectId: _subjectId,
-    topicId: _topicId
+    themeColor
 }) => {
     const [isVisible, setIsVisible] = useState(false);
     const [shouldRender, setShouldRender] = useState(false);

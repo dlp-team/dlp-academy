@@ -267,7 +267,6 @@ const FolderTreeModal = ({
     onNavigateSubject,
     onMoveSubjectToFolder,
     onNestFolder,
-    onReorderSubject,
     onDropWithOverlay // <-- Add this prop for overlay logic
 }) => {
     // All hooks must be called unconditionally and in the same order

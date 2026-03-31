@@ -47,7 +47,7 @@ const Notas = ({
     teacherDashboardPath = '/dashboard/stats',
 }) => {
     const [showFinalGrades, setShowFinalGrades] = useState(false);
-    const navigate = useNavigate ? useNavigate() : null;
+    const navigate = useNavigate();
 
     const overallAvg = subjectPerformance.length > 0
         ? Math.round(subjectPerformance.reduce((a, b) => a + b.average, 0) / subjectPerformance.length)

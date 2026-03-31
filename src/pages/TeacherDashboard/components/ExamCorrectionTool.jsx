@@ -268,9 +268,9 @@ const UploadZone = ({ onFileSelect, isDragging, setIsDragging }) => {
       </p>
       <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Drag & drop or click to browse</p>
       <div className="flex items-center justify-center gap-3">
-        {[['image/*', Image, 'Images'], ['.pdf', FileText, 'PDF']].map(([, Icon, label]) => (
+        {[['image/*', Image, 'Images'], ['.pdf', FileText, 'PDF']].map(([, icon, label]) => (
           <span key={label} className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
-            <Icon size={11} /> {label}
+            {React.createElement(icon, { size: 11 })} {label}
           </span>
         ))}
       </div>
@@ -286,19 +286,6 @@ const ExamCorrectionTool = ({ user }) => {
   const [result, setResult] = useState(null);
   const [selectedAnnotation, setSelectedAnnotation] = useState(null);
   const [panelOpen, setPanelOpen] = useState(true);
-
-  // Access control
-  if (!hasRequiredRoleAccess(user, 'teacher')) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-6">
-        <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
-          <Eye size={24} className="text-red-500" />
-        </div>
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Access Restricted</h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400">This tool is only available to teachers.</p>
-      </div>
-    );
-  }
 
   const handleFileSelect = useCallback((file) => {
     setSelectedFile(file);
@@ -323,6 +310,19 @@ const ExamCorrectionTool = ({ user }) => {
     setSelectedAnnotation(prev => prev?.id === annotation.id ? null : annotation);
     setPanelOpen(true);
   };
+
+  // Access control
+  if (!hasRequiredRoleAccess(user, 'teacher')) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[40vh] text-center px-6">
+        <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center mb-4">
+          <Eye size={24} className="text-red-500" />
+        </div>
+        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">Access Restricted</h3>
+        <p className="text-sm text-slate-500 dark:text-slate-400">This tool is only available to teachers.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">

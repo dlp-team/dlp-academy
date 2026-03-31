@@ -62,7 +62,6 @@ const SubjectHeader = ({
     subject,
     onEdit,
     onDelete,
-    hasTopics,
     searchTerm,
     onSearch,
     isTeacher,

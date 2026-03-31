@@ -38,7 +38,7 @@ const TopicContent = ({
     activeMenuId, setActiveMenuId, renamingId, setRenamingId, tempName, setTempName,
     handleMenuClick, startRenaming, saveRename, deleteFile, handleViewFile, getFileVisuals,
     handleChangeFileCategory,
-    deleteQuiz, getQuizVisuals, navigate, subjectId, topicId, user,
+    deleteQuiz, navigate, subjectId, topicId, user,
     quizAnalyticsByQuiz = {},
     onSaveQuizScoreOverride,
     failedQuestions = [],

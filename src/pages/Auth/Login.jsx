@@ -12,8 +12,8 @@ const Login = () => {
     const {
         email, setEmail,
         password, setPassword,
-        error, setError,
-        loading, setLoading,
+        error,
+        loading,
         rememberMe, setRememberMe,
         handleLogin,
         handleGoogleLogin

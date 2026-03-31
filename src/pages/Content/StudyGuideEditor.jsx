@@ -215,7 +215,7 @@ const StudyGuideEditor = ({ user }) => {
                     const content = typeof raw.studyGuide === 'string' ? JSON.parse(raw.studyGuide) : (raw.studyGuide || []);
                     setSections(content);
                 }
-            } catch (err) {
+            } catch {
                 showToast('Error al cargar datos', 'error');
             } finally {
                 setLoading(false);
@@ -235,7 +235,7 @@ const StudyGuideEditor = ({ user }) => {
                 updatedAt: new Date().toISOString()
             }, { merge: true });
             showToast('¡Cambios guardados!', 'success');
-        } catch (err) {
+        } catch {
             showToast('Error al guardar', 'error');
         } finally {
             setSaving(false);

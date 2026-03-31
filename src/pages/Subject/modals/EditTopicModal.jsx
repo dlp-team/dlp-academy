@@ -1,27 +1,17 @@
 // src/pages/Subject/modals/EditTopicModal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Save, Eye, EyeOff, ListOrdered, Type } from 'lucide-react';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 
-const EditTopicModal = ({ isOpen, onClose, topic, onSave }) => {
-    const [formData, setFormData] = useState({
-        name: '',
-        order: '',
-        isVisible: true
-    });
+const getInitialFormData = (topic) => ({
+    name: topic?.name || topic?.title || '',
+    order: topic?.order || 0,
+    // Default to true if undefined
+    isVisible: topic?.isVisible !== undefined ? topic.isVisible : true
+});
 
-    useEffect(() => {
-        if (topic) {
-            setFormData({
-                name: topic.name || topic.title || '',
-                order: topic.order || 0,
-                // Default to true if undefined
-                isVisible: topic.isVisible !== undefined ? topic.isVisible : true
-            });
-        }
-    }, [topic, isOpen]);
-
-    if (!isOpen) return null;
+const EditTopicModalContent = ({ onClose, topic, onSave }) => {
+    const [formData, setFormData] = useState(() => getInitialFormData(topic));
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -130,6 +120,19 @@ const EditTopicModal = ({ isOpen, onClose, topic, onSave }) => {
                 </div>
             </div>
         </div>
+    );
+};
+
+const EditTopicModal = ({ isOpen, onClose, topic, onSave }) => {
+    if (!isOpen || !topic) return null;
+
+    return (
+        <EditTopicModalContent
+            key={`${topic.id || topic.title || 'topic'}-${topic.order || 0}`}
+            onClose={onClose}
+            topic={topic}
+            onSave={onSave}
+        />
     );
 };
 

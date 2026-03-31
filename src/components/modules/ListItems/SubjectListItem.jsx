@@ -24,8 +24,7 @@ const SubjectListItem = ({
     compact = false, 
     cardScale = 100,
     className = "",
-    onFocusItem = () => {},
-    getCardVisualState = () => ({ isAnimating: false, isCutPending: false })
+    onFocusItem = () => {}
 }) => {
     const HEADER_SAFE_TOP = 112;
     const MENU_MARGIN = 8;

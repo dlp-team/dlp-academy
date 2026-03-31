@@ -1,5 +1,5 @@
 // src/components/modules/TopicCard/TopicCard.jsx
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import {
     Trash2, Clock, CheckCircle2, MoreVertical,
     Edit, EyeOff, Eye
@@ -26,23 +26,22 @@ const TopicCard = ({
     // State
     const [isDragging, setIsDragging] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
-    const [isCompletedSeen, setIsCompletedSeen] = useState(false);
     const [visibilityPulse, setVisibilityPulse] = useState(false);
+
+    const completionStorageKey = useMemo(() => `seen_topic_completed_${topic.id}`, [topic.id]);
+    const hasCompletedBeenSeen = useMemo(() => {
+        if (typeof window === 'undefined') return false;
+        return localStorage.getItem(completionStorageKey) === 'true';
+    }, [completionStorageKey]);
 
     // --- 1. HANDLE "SEEN" LOGIC ---
     useEffect(() => {
-        // Check if we've already seen this topic as completed
-        const storageKey = `seen_topic_completed_${topic.id}`;
-        const hasSeen = localStorage.getItem(storageKey);
-
-        if (hasSeen) {
-            setIsCompletedSeen(true);
-        } else if (topic.status === 'completed') {
-            // If it is completed and we haven't marked it yet, 
-            // mark it as seen for the NEXT visit, but keep it visible now.
-            localStorage.setItem(storageKey, 'true');
+        if (typeof window === 'undefined') return;
+        if (topic.status === 'completed' && !hasCompletedBeenSeen) {
+            // Mark as seen for the next visit without mutating React state from this effect.
+            localStorage.setItem(completionStorageKey, 'true');
         }
-    }, [topic.id, topic.status]);
+    }, [topic.status, hasCompletedBeenSeen, completionStorageKey]);
 
     // Close menu when clicking outside
     useEffect(() => {
@@ -93,7 +92,7 @@ const TopicCard = ({
         }
     };
 
-    const handleDragEndInternal = (e) => {
+    const handleDragEndInternal = () => {
         if (dragGhostRef.current) {
             dragGhostRef.current.remove();
             dragGhostRef.current = null;
@@ -103,7 +102,7 @@ const TopicCard = ({
 
     // Helper: Should we show the checkmark/text?
     // Show if generating OR (completed AND not seen yet)
-    const showStatus = topic.status === 'generating' || (topic.status === 'completed' && !isCompletedSeen);
+    const showStatus = topic.status === 'generating' || (topic.status === 'completed' && !hasCompletedBeenSeen);
 
     return (
         <div 
@@ -120,7 +119,7 @@ const TopicCard = ({
             ${visibilityPulse ? 'scale-[1.04] shadow-2xl' : ''}`}
         >
             <div 
-                onClick={(e) => {
+                onClick={() => {
                     if (!dragGhostRef.current && !showMenu) onSelect(topic);
                 }} 
                 className="w-full h-full text-left relative"
@@ -234,7 +233,7 @@ const TopicCard = ({
                             )}
 
                             {/* Completed Check (Only visible first time) */}
-                            {topic.status === 'completed' && !isCompletedSeen && (
+                            {topic.status === 'completed' && !hasCompletedBeenSeen && (
                                 <CheckCircle2 className="w-6 h-6 text-emerald-300" />
                             )}
                         </div>
@@ -251,7 +250,7 @@ const TopicCard = ({
                             <p className="text-sm opacity-90 font-medium transition-all duration-300">
                                 {topic.status === 'generating' 
                                     ? 'Generando...' 
-                                    : (topic.status === 'completed' && !isCompletedSeen) 
+                                    : (topic.status === 'completed' && !hasCompletedBeenSeen) 
                                         ? 'Completado' 
                                         : ''}
                             </p>

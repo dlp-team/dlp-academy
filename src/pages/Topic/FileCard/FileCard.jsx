@@ -1,5 +1,5 @@
 // src/pages/Topic/FileCard/FileCard.jsx
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
     FileText, MoreHorizontal, FileEdit, Trash2, 
@@ -20,18 +20,16 @@ const FileCard = ({
     tempName, 
     setTempName, 
     handleMenuClick, 
-    startRenaming, 
     saveRename, 
     deleteFile, 
     onChangeFileCategory,
-    getFileVisuals,
     permissions // *** NEW: Permission flags ***
 }) => {
     const navigate = useNavigate();
     const { subjectId, topicId } = useParams();
 
-    // ID único por instancia de FileCard para evitar que se abran todos los menús a la vez
-    const menuId = useRef(`file-menu-${Math.random().toString(36).substr(2, 9)}`).current;
+    // ID estable por archivo para evitar colisiones de menú entre tarjetas.
+    const menuId = `file-menu-${String(file?.id || file?.name || file?.title || 'resource')}`;
 
     const cardColor = subject?.color || topic?.color || 'from-blue-500 to-indigo-600';
     

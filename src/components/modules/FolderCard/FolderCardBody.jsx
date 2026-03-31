@@ -1,5 +1,5 @@
 // src/components/modules/FolderCard/FolderCardBody.jsx
-import React, { useRef, useLayoutEffect, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree, RotateCcw } from 'lucide-react';
 import SubjectIcon from '../../ui/SubjectIcon';
@@ -62,36 +62,35 @@ const FolderCardBody = ({
     const menuBtnRef = useRef(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
 
-    useLayoutEffect(() => {
-        if (activeMenu === folder.id && menuBtnRef.current) {
-            const rect = menuBtnRef.current.getBoundingClientRect();
-            const menuWidth = SHORTCUT_CARD_MENU_WIDTH * menuScale;
-            const estimatedMenuHeight = 48 * 3 * menuScale;
+    const updateMenuPosition = () => {
+        if (!menuBtnRef.current || typeof window === 'undefined') return;
+        const rect = menuBtnRef.current.getBoundingClientRect();
+        const menuWidth = SHORTCUT_CARD_MENU_WIDTH * menuScale;
+        const estimatedMenuHeight = 48 * 3 * menuScale;
 
-            const defaultLeft = rect.left;
-            const oppositeLeft = rect.right - menuWidth;
-            let left = defaultLeft;
-            if (left + menuWidth > window.innerWidth - MENU_MARGIN) {
-                left = oppositeLeft;
-            }
-            left = Math.min(
-                Math.max(left, MENU_MARGIN),
-                Math.max(MENU_MARGIN, window.innerWidth - menuWidth - MENU_MARGIN)
-            );
-
-            const defaultTop = rect.bottom + 4;
-            const oppositeTop = rect.top - estimatedMenuHeight - 4;
-            let top = defaultTop;
-            if (top + estimatedMenuHeight > window.innerHeight - MENU_MARGIN) {
-                top = oppositeTop;
-            }
-            const maxTop = Math.max(HEADER_SAFE_TOP + MENU_MARGIN, window.innerHeight - estimatedMenuHeight - MENU_MARGIN);
-            setMenuPos({
-                top: Math.min(Math.max(top, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
-                left,
-            });
+        const defaultLeft = rect.left;
+        const oppositeLeft = rect.right - menuWidth;
+        let left = defaultLeft;
+        if (left + menuWidth > window.innerWidth - MENU_MARGIN) {
+            left = oppositeLeft;
         }
-    }, [activeMenu, folder.id, menuScale]);
+        left = Math.min(
+            Math.max(left, MENU_MARGIN),
+            Math.max(MENU_MARGIN, window.innerWidth - menuWidth - MENU_MARGIN)
+        );
+
+        const defaultTop = rect.bottom + 4;
+        const oppositeTop = rect.top - estimatedMenuHeight - 4;
+        let top = defaultTop;
+        if (top + estimatedMenuHeight > window.innerHeight - MENU_MARGIN) {
+            top = oppositeTop;
+        }
+        const maxTop = Math.max(HEADER_SAFE_TOP + MENU_MARGIN, window.innerHeight - estimatedMenuHeight - MENU_MARGIN);
+        setMenuPos({
+            top: Math.min(Math.max(top, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
+            left,
+        });
+    };
     
     return (
         <div className={`relative z-10 h-full w-full rounded-b-2xl rounded-tr-2xl rounded-tl-none shadow-lg overflow-hidden ${
@@ -188,7 +187,13 @@ const FolderCardBody = ({
                             {hasMenuActions && (
                                 <button
                                     ref={menuBtnRef}
-                                    onClick={(e) => { e.stopPropagation(); onToggleMenu(folder.id); }}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (activeMenu !== folder.id) {
+                                            updateMenuPosition();
+                                        }
+                                        onToggleMenu(folder.id);
+                                    }}
                                     className={`rounded-lg transition-all duration-200 hover:scale-110 cursor-pointer flex items-center justify-center ${
                                         isModern
                                             ? 'bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 hover:bg-white dark:hover:bg-slate-800'

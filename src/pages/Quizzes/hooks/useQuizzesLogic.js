@@ -26,7 +26,6 @@ export const useQuizzesLogic = (user) => {
     // Result State
     const [correctCount, setCorrectCount] = useState(0);
     const [wrongCount, setWrongCount] = useState(0);
-    const [startTime] = useState(new Date());
 
     // --- DATA FETCHING ---
     useEffect(() => {

@@ -58,7 +58,7 @@ const UsersTabContent = ({
     if (accessPolicies) {
       setEditPolicy(accessPolicies[userType] || defaultPolicy);
     }
-  }, [userType, accessPolicies]);
+  }, [userType, accessPolicies, defaultPolicy]);
 
   // 3. Generate the LIVE code based on the current tab
   const liveCode = editPolicy.requireCode

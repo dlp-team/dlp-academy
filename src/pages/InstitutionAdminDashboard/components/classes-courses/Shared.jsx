@@ -1,4 +1,5 @@
 // src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.jsx
+/* eslint-disable react-refresh/only-export-components */
 // ─────────────────────────────────────────────────────────────────────────────
 // Reusable primitives, constants and tiny components used across the
 // classes/courses feature. Nothing here touches Firestore.
@@ -118,13 +119,13 @@ export const AvatarChip = ({ label, color = '#6366f1' }) => (
 );
 
 // ─── StatCard ─────────────────────────────────────────────────────────────────
-export const StatCard = ({ icon: Icon, label, value, color = '#6366f1' }) => (
+export const StatCard = ({ icon, label, value, color = '#6366f1' }) => (
   <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5 flex items-center gap-4">
     <div
       className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
       style={{ backgroundColor: `${color}22` }}
     >
-      <Icon className="w-5 h-5" style={{ color }} />
+      {React.createElement(icon, { className: 'w-5 h-5', style: { color } })}
     </div>
     <div className="min-w-0">
       <p className="text-2xl font-bold text-slate-900 dark:text-white truncate">{value}</p>
@@ -134,11 +135,11 @@ export const StatCard = ({ icon: Icon, label, value, color = '#6366f1' }) => (
 );
 
 // ─── SectionCard ─────────────────────────────────────────────────────────────
-export const SectionCard = ({ title, icon: Icon, color, children, action }) => (
+export const SectionCard = ({ title, icon, color, children, action }) => (
   <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
     <div className="flex items-center justify-between gap-2 px-5 py-4 border-b border-slate-100 dark:border-slate-800">
       <div className="flex items-center gap-2">
-        <Icon className="w-4 h-4 shrink-0" style={{ color }} />
+        {React.createElement(icon, { className: 'w-4 h-4 shrink-0', style: { color } })}
         <h3 className="font-semibold text-slate-800 dark:text-white text-sm">{title}</h3>
       </div>
       {action}

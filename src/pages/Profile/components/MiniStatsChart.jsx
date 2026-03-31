@@ -197,7 +197,6 @@ const ChartOverlay = ({ data, role, onClose }) => {
 // ─── Mini Card (sidebar) ──────────────────────────────────────────────────────
 const MiniStatsChart = ({ data = [], title = 'Evolución de notas', subtitle, role = 'student' }) => {
     const [showOverlay, setShowOverlay] = useState(false);
-    const [hoveredIndex, setHoveredIndex] = useState(null);
 
     const scores = data.map(d => d.score);
     const overallAvg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;

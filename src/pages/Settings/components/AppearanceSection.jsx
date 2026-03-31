@@ -24,7 +24,7 @@ const AppearanceSection = ({ theme, onUpdate }) => {
         </div>
 
         <div className="grid grid-cols-3 gap-3">
-          {modes.map(({ id, label, icon: Icon }) => (
+          {modes.map(({ id, label, icon }) => (
             <button
               key={id}
               onClick={() => onUpdate('theme', id)}
@@ -34,7 +34,7 @@ const AppearanceSection = ({ theme, onUpdate }) => {
                   : 'border-gray-100 dark:border-slate-700 hover:border-gray-200 text-gray-600 dark:text-slate-400'
               }`}
             >
-              <Icon size={24} className="mb-2" />
+              {React.createElement(icon, { size: 24, className: 'mb-2' })}
               <span className="text-sm font-medium">{label}</span>
             </button>
           ))}

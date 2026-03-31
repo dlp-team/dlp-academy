@@ -1,5 +1,5 @@
 // src/pages/InstitutionAdminDashboard/hooks/useUsers.js
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   addDoc,
   collection,
@@ -52,7 +52,7 @@ export const useUsers = (user, institutionIdOverride = null) => {
   const [showSudoModal, setShowSudoModal] = useState(false);
   const [pendingPolicies, setPendingPolicies] = useState(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     if (!effectiveInstitutionId) return;
     setLoading(true);
     try {
@@ -83,9 +83,9 @@ export const useUsers = (user, institutionIdOverride = null) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [effectiveInstitutionId, userType]);
 
-  useEffect(() => { fetchData(); }, [user, userType, effectiveInstitutionId]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   // Live access code polling
   useEffect(() => {

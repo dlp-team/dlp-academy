@@ -1,5 +1,5 @@
 // src/hooks/useShortcuts.js
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
     collection, query, where, addDoc, deleteDoc, doc, 
     onSnapshot, updateDoc, getDoc
@@ -32,7 +32,7 @@ export const useShortcuts = (user) => {
     const promotingShortcutIdsRef = useRef(new Set());
     const canReadHomeData = Boolean(user?.role && user?.displayName);
 
-    const buildAppearanceFromTargetData = (targetType, targetData = {}) => {
+    const buildAppearanceFromTargetData = useCallback((targetType, targetData = {}) => {
         if (targetType === 'folder') {
             return {
                 shortcutName: targetData.name,
@@ -53,9 +53,9 @@ export const useShortcuts = (user) => {
             shortcutCardStyle: targetData.cardStyle,
             shortcutModernFillColor: targetData.modernFillColor
         };
-    };
+    }, []);
 
-    const buildMissingShortcutAppearanceUpdate = (shortcut, targetType, targetData = {}) => {
+    const buildMissingShortcutAppearanceUpdate = useCallback((shortcut, targetType, targetData = {}) => {
         const sourceAppearance = buildAppearanceFromTargetData(targetType, targetData);
         const updateData = {};
 
@@ -82,7 +82,7 @@ export const useShortcuts = (user) => {
         }
 
         return updateData;
-    };
+    }, [buildAppearanceFromTargetData]);
 
     useEffect(() => {
         if (!user || !canReadHomeData) {
@@ -421,7 +421,7 @@ export const useShortcuts = (user) => {
             isMounted = false;
             targetUnsubscribers.forEach(unsub => unsub());
         };
-    }, [shortcuts, user, currentInstitutionId, canReadHomeData]);
+    }, [shortcuts, user, currentInstitutionId, canReadHomeData, buildMissingShortcutAppearanceUpdate]);
 
     /**
      * Create a new shortcut to a shared item

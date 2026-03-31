@@ -139,7 +139,7 @@ export const useCustomization = (user, institutionIdOverride = null) => {
       });
       setCustomizationForm(prev => ({ ...prev, logoUrl }));
       setCustomizationSuccess('Logotipo guardado correctamente.');
-    } catch (error) {
+    } catch {
       setIconUploadError('No se pudo subir el logotipo. Inténtalo de nuevo.');
     } finally {
       setIconUploading(false);
@@ -154,7 +154,7 @@ export const useCustomization = (user, institutionIdOverride = null) => {
         updatedAt: serverTimestamp(),
       });
       setCustomizationForm(prev => ({ ...prev, logoUrl: url }));
-    } catch (error) {
+    } catch {
       setCustomizationError('No se pudo guardar el logo por URL. Inténtalo de nuevo.');
     }
   };

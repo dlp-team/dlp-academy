@@ -168,7 +168,7 @@ export const useFolderCardLogic = ({
         }
     };
 
-    const handleDragEnd = (e) => {
+    const handleDragEnd = () => {
         if (draggable && onDragEnd) {
             onDragEnd();
         }

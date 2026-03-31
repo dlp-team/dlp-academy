@@ -8,8 +8,6 @@ const MailboxIcon = ({ mailCount = 0, onClick, dark = false }) => {
   const s  = dark ? "#f5f5f5" : "#23232a"; // stroke
   const m  = dark ? "#bdbdbd" : "#757575"; // mid-tone
   const w  = dark ? "#23232a" : "#f5f5f5"; // box fill
-  const d  = dark ? "#18181b" : "#e0e0e0"; // depth
-  const hi = dark ? "#fff" : "#23232a";    // highlight
   const ef = "#fff"; // envelope always white
   const br = dark ? "#18181b" : "#fff";    // badge border
 

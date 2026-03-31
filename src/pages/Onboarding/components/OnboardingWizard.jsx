@@ -109,7 +109,7 @@ const OnboardingWizard = ({ user }) => {
             } else {
                 throw new Error("Invalid");
             }
-        } catch (error) {
+        } catch {
             // LÓGICA DE BLOQUEO
             const newAttempts = attempts + 1;
             setAttempts(newAttempts);

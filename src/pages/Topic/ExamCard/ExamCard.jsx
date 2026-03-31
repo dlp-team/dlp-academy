@@ -7,8 +7,7 @@ const ExamCard = ({
     subject, 
     navigate, 
     subjectId, 
-    topicId, 
-    permissions 
+    topicId 
 }) => {
     const subjectColor = useMemo(() => {
         return subject?.color || 'from-indigo-500 to-purple-600';

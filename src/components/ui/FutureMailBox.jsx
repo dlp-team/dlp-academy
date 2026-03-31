@@ -7,7 +7,6 @@ const MailboxIcon = ({ mailCount = 0, onClick, dark = false }) => {
   const s  = dark ? "rgba(255,255,255,0.88)"  : "rgba(0,0,0,0.82)";
   const m  = dark ? "rgba(255,255,255,0.42)"  : "rgba(0,0,0,0.26)";
   const w  = dark ? "rgba(255,255,255,0.08)"  : "rgba(0,0,0,0.04)";
-  const d  = dark ? "rgba(255,255,255,0.04)"  : "rgba(0,0,0,0.09)";
   const hi = dark ? "rgba(255,255,255,0.14)"  : "rgba(255,255,255,0.72)";
   const ef = dark ? "#3A3A3C"                 : "#FFFFFF";
   const br = dark ? "#1C1C1E"                 : "#FFFFFF";
