@@ -1,4 +1,17 @@
 <!-- copilot/explanations/codebase/src/pages/Topic/hooks/useTopicLogic.md -->
+## [2026-03-31] Topic Child Listener Re-subscribe Teardown Hardening
+### Context
+- `useTopicLogic` re-attached `documents`, `resumen`, and `quizzes` listeners every time the topic snapshot emitted.
+- Previous listener instances were overwritten without explicit teardown, creating duplicate listener risk on topic updates.
+
+### Change
+- Added `teardownTopicChildListeners` in the main loading effect.
+- Child listeners are now explicitly unsubscribed before re-subscribing on topic snapshot re-emits.
+- Topic not-found and topic listener error branches now also teardown child listeners and clear local listener caches before fallback navigation.
+
+### Validation
+- Extended `tests/unit/hooks/useTopicLogic.test.js` with a regression assertion that first-generation child listeners are unsubscribed before second-generation listeners are attached.
+
 ## [2026-03-30] Topic Destructive Actions Now Use In-Page Confirmation Modal
 ### Context
 - Topic workflows still relied on browser `window.confirm(...)` dialogs for destructive actions.
@@ -35,6 +48,20 @@
 
 ### Validation
 - Updated focused coverage in `tests/unit/hooks/useTopicLogic.test.js`.
+
+## [2026-03-30] Topic Snapshot Listener Toast Feedback Hardening
+### Context
+- Documents/resumen/quizzes snapshot failures in `useTopicLogic` reset local fallback state but did not always provide explicit user feedback for non-permission failures.
+
+### Change
+- Added non-blocking `showNotification(...)` feedback for non-`permission-denied` errors in:
+	- documents listener,
+	- resumen listener,
+	- quizzes listener.
+- Preserved existing fallback behavior and loading exits in each listener error callback.
+
+### Validation
+- Extended focused hook coverage in `tests/unit/hooks/useTopicLogic.test.js` to assert quizzes snapshot listener failures surface toast feedback.
 
 ## [2026-03-30] Topic Delete Flow Centralized and Exam Cleanup Expanded
 ### Context
@@ -121,6 +148,7 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-03-31: Added deterministic teardown for nested topic child listeners before re-subscribing on topic snapshot updates; not-found/error branches now clear child listeners to avoid duplicate subscriptions.
 - 2026-03-30: Replaced `window.confirm(...)` destructive prompts with in-page modal-confirmed delete flow (`confirmDialog` + `confirmDeleteAction`) for file, quiz, and topic actions.
 - 2026-03-30: Removed remaining browser-alert error/info paths in Topic workflows and standardized these branches on toast notifications.
 - 2026-03-29: Exam/examns fallback reads now suppress expected `permission-denied` noise and degrade to empty exam arrays without treating it as a fatal load failure.

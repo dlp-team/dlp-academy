@@ -148,6 +148,58 @@ describe('useSubjectManager', () => {
     );
   });
 
+  it('chunks resumen listeners to avoid Firestore in-query overflow with many generating topics', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      id: 'subject-1',
+      data: () => ({
+        name: 'Math',
+        color: 'from-blue-500 to-indigo-600',
+        ownerId: 'owner-1',
+        institutionId: 'inst-1',
+      }),
+    });
+
+    const generatingTopics = Array.from({ length: 12 }, (_, index) => (
+      createDoc(`topic-${index + 1}`, {
+        name: `Tema ${index + 1}`,
+        subjectId: 'subject-1',
+        order: index + 1,
+        status: 'generating',
+      })
+    ));
+
+    firestoreMocks.mockOnSnapshot.mockImplementation((q, onNext) => {
+      const isTopicsQuery = Array.isArray(q?.parts) && q.parts.some((part) => part?.field === 'subjectId');
+
+      if (isTopicsQuery) {
+        onNext({ docs: generatingTopics });
+        return vi.fn();
+      }
+
+      onNext({ docs: [] });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useSubjectManager(user, 'subject-1'));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.topics).toHaveLength(12);
+    });
+
+    const inWhereCalls = firestoreMocks.mockWhere.mock.calls.filter(
+      ([field, op]) => field === 'topicId' && op === 'in'
+    );
+
+    expect(inWhereCalls).toHaveLength(2);
+    expect(inWhereCalls[0][2]).toHaveLength(10);
+    expect(inWhereCalls[1][2]).toHaveLength(2);
+    expect(inWhereCalls.flatMap(([, , ids]) => ids)).toEqual(
+      generatingTopics.map((topic) => topic.id)
+    );
+  });
+
   it('creates a new topic and increments subject topicCount', async () => {
     firestoreMocks.mockGetDoc.mockResolvedValue({
       exists: () => true,

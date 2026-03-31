@@ -686,6 +686,90 @@ describe('useTopicLogic', () => {
     );
   });
 
+  it('tears down child listeners before re-subscribing on topic snapshot updates', async () => {
+    const user = { uid: 'teacher-1', role: 'teacher' };
+    const docsUnsubscribeFirst = vi.fn();
+    const docsUnsubscribeSecond = vi.fn();
+    const resumenUnsubscribeFirst = vi.fn();
+    const resumenUnsubscribeSecond = vi.fn();
+    const quizzesUnsubscribeFirst = vi.fn();
+    const quizzesUnsubscribeSecond = vi.fn();
+
+    const docsUnsubscribers = [docsUnsubscribeFirst, docsUnsubscribeSecond];
+    const resumenUnsubscribers = [resumenUnsubscribeFirst, resumenUnsubscribeSecond];
+    const quizzesUnsubscribers = [quizzesUnsubscribeFirst, quizzesUnsubscribeSecond];
+
+    let docsSubscriptionCount = 0;
+    let resumenSubscriptionCount = 0;
+    let quizzesSubscriptionCount = 0;
+    let topicOnNext;
+
+    const emitTopicSnapshot = (name) => ({
+      exists: () => true,
+      id: 'topic-1',
+      data: () => ({ id: 'topic-1', name, status: 'completed', ownerId: 'owner-1' }),
+    });
+
+    mocks.onSnapshot.mockImplementation((ref, onNext) => {
+      const isTopicDoc = ref?.__kind === 'doc' && ref?.name === 'topics';
+      const isDocumentsQuery = ref?.__kind === 'query' && ref?.base?.name === 'documents';
+      const isResumenQuery = ref?.__kind === 'query' && ref?.base?.name === 'resumen';
+      const isQuizzesQuery = ref?.__kind === 'query' && ref?.base?.name === 'quizzes';
+
+      if (isTopicDoc) {
+        topicOnNext = onNext;
+        onNext(emitTopicSnapshot('Algebra inicial'));
+        return vi.fn();
+      }
+
+      if (isDocumentsQuery) {
+        onNext({ docs: [] });
+        const unsubscribe = docsUnsubscribers[docsSubscriptionCount] ?? vi.fn();
+        docsSubscriptionCount += 1;
+        return unsubscribe;
+      }
+
+      if (isResumenQuery) {
+        onNext({ docs: [] });
+        const unsubscribe = resumenUnsubscribers[resumenSubscriptionCount] ?? vi.fn();
+        resumenSubscriptionCount += 1;
+        return unsubscribe;
+      }
+
+      if (isQuizzesQuery) {
+        onNext({ docs: [] });
+        const unsubscribe = quizzesUnsubscribers[quizzesSubscriptionCount] ?? vi.fn();
+        quizzesSubscriptionCount += 1;
+        return unsubscribe;
+      }
+
+      onNext({ docs: [] });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useTopicLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(typeof topicOnNext).toBe('function');
+    expect(docsSubscriptionCount).toBe(1);
+    expect(resumenSubscriptionCount).toBe(1);
+    expect(quizzesSubscriptionCount).toBe(1);
+
+    await act(async () => {
+      topicOnNext(emitTopicSnapshot('Algebra actualizada'));
+    });
+
+    expect(docsUnsubscribeFirst).toHaveBeenCalledTimes(1);
+    expect(resumenUnsubscribeFirst).toHaveBeenCalledTimes(1);
+    expect(quizzesUnsubscribeFirst).toHaveBeenCalledTimes(1);
+    expect(docsSubscriptionCount).toBe(2);
+    expect(resumenSubscriptionCount).toBe(2);
+    expect(quizzesSubscriptionCount).toBe(2);
+  });
+
   it('shows toast feedback when quizzes snapshot listener fails', async () => {
     const user = { uid: 'teacher-1', role: 'teacher' };
 

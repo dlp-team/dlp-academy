@@ -14,6 +14,7 @@ import {
 } from '../../../utils/topicDeletionUtils';
 
 const N8N_WEBHOOK_URL = 'https://podzolic-dorethea-rancorously.ngrok-free.dev/webhook-test/711e538b-9d63-42bb-8494-873301ffdf39';
+const MAX_IN_QUERY_VALUES = 10;
 
 export const useSubjectManager = (user, subjectId) => {
     const navigate = useNavigate();
@@ -96,23 +97,34 @@ export const useSubjectManager = (user, subjectId) => {
         const ids = generatingIds.split(',').filter(Boolean);
         if (ids.length === 0) return;
 
-        const resumenRef = query(
-            collection(db, "resumen"),
-            where("topicId", "in", ids)
-        );
+        const idChunks = [];
+        for (let idx = 0; idx < ids.length; idx += MAX_IN_QUERY_VALUES) {
+            idChunks.push(ids.slice(idx, idx + MAX_IN_QUERY_VALUES));
+        }
 
-        const unsubscribe = onSnapshot(resumenRef, (snapshot) => {
-            const completedTopicIds = new Set(snapshot.docs.map(d => d.data().topicId));
-            completedTopicIds.forEach(topicId => {
-                updateDoc(doc(db, "topics", topicId), {
-                    status: 'completed'
-                }).catch(err => console.error("Auto-update resumen error:", err));
+        const unsubscribers = idChunks.map((topicIdChunk) => {
+            const resumenRef = query(
+                collection(db, "resumen"),
+                where("topicId", "in", topicIdChunk)
+            );
+
+            return onSnapshot(resumenRef, (snapshot) => {
+                const completedTopicIds = new Set(snapshot.docs.map(d => d.data().topicId));
+                completedTopicIds.forEach(topicId => {
+                    updateDoc(doc(db, "topics", topicId), {
+                        status: 'completed'
+                    }).catch(err => console.error("Auto-update resumen error:", err));
+                });
+            }, (error) => {
+                console.error('Error listening to resumen updates:', error);
             });
-        }, (error) => {
-            console.error('Error listening to resumen updates:', error);
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribers.forEach((unsubscribe) => {
+                if (typeof unsubscribe === 'function') unsubscribe();
+            });
+        };
     }, [generatingIds, subjectId]);
 
     // 2. Actions for Subject

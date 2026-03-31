@@ -9,11 +9,15 @@
 ## Coverage
 - Missing-subject redirect to Home.
 - Topics-listener failure fallback releases loading and clears topics state.
+- Resumen auto-detect listener chunking when generating-topic volume exceeds Firestore `in` query limits.
 - Topic creation payload and `topicCount` increment behavior.
 - Topic reorder persistence via Firestore batch updates.
 - Topic deletion integration with shared cascade cleanup utility.
 
 ## Changelog
+### 2026-03-31
+- Added regression coverage asserting 12 generating topics are split into two `where("topicId", "in", ...)` listener chunks (`10 + 2`) without missing IDs.
+
 ### 2026-03-30
 - Added assertion that `deleteTopic` invokes shared `cascadeDeleteTopicResources` before deleting topic doc.
 - Added regression coverage for topics listener error fallback behavior (loading release + empty topics state).

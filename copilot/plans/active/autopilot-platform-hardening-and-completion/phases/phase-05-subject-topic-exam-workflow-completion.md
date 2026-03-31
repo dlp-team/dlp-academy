@@ -227,6 +227,27 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
   - no realtime error banner appears when listeners succeed,
   - evaluation-items listener failures surface inline fallback feedback (`No se pudieron sincronizar las actividades extra del panel de notas.`).
 
+## Progress Update - 2026-03-30 (Slice 25)
+- Hardened `useTopicLogic` snapshot error feedback in `src/pages/Topic/hooks/useTopicLogic.js`.
+- Added non-blocking toast feedback for non-permission snapshot failures in:
+  - documents stream,
+  - resumen stream,
+  - quizzes stream.
+- Preserved existing fallback resets (`pdfs`, `uploads`, `quizzes`) and loading transitions on listener failures.
+- Added focused hook regression coverage in `tests/unit/hooks/useTopicLogic.test.js` verifying quizzes snapshot failures now surface toast feedback (`No se pudieron sincronizar los tests del tema.`).
+
+## Progress Update - 2026-03-31 (Slice 26)
+- Hardened `useTopicLogic` nested listener lifecycle in `src/pages/Topic/hooks/useTopicLogic.js` to prevent duplicate child snapshot subscriptions when the topic document re-emits.
+- Added `teardownTopicChildListeners` and invoked it before each child listener re-subscription (`documents`, `resumen`, `quizzes`) and on topic not-found/error branches.
+- Preserved existing fallback reset and loading behavior while explicitly clearing stale child listener bindings during teardown.
+- Added focused hook regression coverage in `tests/unit/hooks/useTopicLogic.test.js` verifying first-generation child listeners are unsubscribed before second-generation listeners are attached.
+
+## Progress Update - 2026-03-31 (Slice 27)
+- Hardened `useSubjectManager` resumen auto-detect flow in `src/pages/Subject/hooks/useSubjectManager.js` to avoid Firestore `in` query overflow when many topics are simultaneously in `generating` state.
+- Added deterministic chunking (`MAX_IN_QUERY_VALUES = 10`) for `topicId` batches and now wires one listener per chunk.
+- Preserved existing behavior that promotes generating topics to `completed` when resumen docs arrive.
+- Added focused hook regression coverage in `tests/unit/hooks/useSubjectManager.test.js` verifying 12 generating topics produce two `where("topicId", "in", ...)` chunks (`10 + 2`) without dropping IDs.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,

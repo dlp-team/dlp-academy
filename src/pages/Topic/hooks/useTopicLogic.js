@@ -147,6 +147,15 @@ export const useTopicLogic = (user) => {
             }));
         };
 
+        const teardownTopicChildListeners = () => {
+            if (unsubscribeDocs) unsubscribeDocs();
+            if (unsubscribeResumen) unsubscribeResumen();
+            if (unsubscribeQuizzes) unsubscribeQuizzes();
+            unsubscribeDocs = () => {};
+            unsubscribeResumen = () => {};
+            unsubscribeQuizzes = () => {};
+        };
+
         const fetchTopicDetails = async () => {
             if (!user || !subjectId || !topicId) return;
 
@@ -171,6 +180,8 @@ export const useTopicLogic = (user) => {
                 const topicRef = doc(db, "topics", topicId);
                 unsubscribeTopic = onSnapshot(topicRef, (topicDoc) => {
                     if (topicDoc.exists()) {
+                        teardownTopicChildListeners();
+
                         const topicData = { id: topicDoc.id, ...topicDoc.data() };
                         setTopic(prev => ({
                             ...prev,
@@ -263,11 +274,19 @@ export const useTopicLogic = (user) => {
                         });
 
                     } else {
+                        teardownTopicChildListeners();
+                        docsFromDocumentsRef.current = [];
+                        docsFromResumenRef.current = [];
+                        pendingQuizSyncRef.current = false;
                         setLoading(false);
                         navigate('/home');
                     }
                 }, (error) => {
                     console.error("[TOPIC] Firestore error:", error);
+                    teardownTopicChildListeners();
+                    docsFromDocumentsRef.current = [];
+                    docsFromResumenRef.current = [];
+                    pendingQuizSyncRef.current = false;
                     setLoading(false);
                     navigate('/home');
                 });
@@ -313,9 +332,7 @@ export const useTopicLogic = (user) => {
 
         return () => {
             if (unsubscribeTopic) unsubscribeTopic();
-            if (unsubscribeDocs) unsubscribeDocs();
-            if (unsubscribeQuizzes) unsubscribeQuizzes();
-            if (unsubscribeResumen) unsubscribeResumen();
+            teardownTopicChildListeners();
             if (unsubscribeExams) unsubscribeExams();
             if (unsubscribeExamns) unsubscribeExamns();
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);

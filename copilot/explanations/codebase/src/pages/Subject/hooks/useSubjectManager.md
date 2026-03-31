@@ -27,6 +27,10 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+### 2026-03-31
+- Resumen auto-detect listener now chunks `topicId` `in` queries into deterministic groups of 10 (`MAX_IN_QUERY_VALUES`) to avoid Firestore in-query overflow when many topics are in `generating` state.
+- Hook now manages one snapshot listener per chunk and tears all listeners down in effect cleanup while preserving existing auto-completion behavior.
+
 ### 2026-03-30
 - Topic deletion in subject view now uses shared `cascadeDeleteTopicResources` before deleting the topic doc and decrementing `topicCount`.
 - Cascade scope now includes exam-related collections (`exams` and `examns`) in addition to documents/resources/quizzes.
