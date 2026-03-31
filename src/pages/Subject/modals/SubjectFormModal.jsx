@@ -49,6 +49,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [validationErrors, setValidationErrors] = useState({});
     const [availableCourses, setAvailableCourses] = useState([]);
     const [coursesLoading, setCoursesLoading] = useState(false);
+    const [coursesLoadError, setCoursesLoadError] = useState('');
     const subjectNameInputRef = React.useRef(null);
     const subjectCourseSelectRef = React.useRef(null);
 
@@ -117,6 +118,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setClassesActionError('');
             setClassesActionSuccess('');
             setClassesLoadError('');
+            setCoursesLoadError('');
             if (isEditing && initialData) {
                 const fallbackCourse = (initialData.level && initialData.grade)
                     ? `${initialData.grade} ${initialData.level}`
@@ -205,12 +207,14 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             if (!isOpen || !institutionId) {
                 if (active) {
                     setAvailableCourses([]);
+                    setCoursesLoadError('');
                     setCoursesLoading(false);
                 }
                 return;
             }
 
             setCoursesLoading(true);
+            setCoursesLoadError('');
             try {
                 const coursesRef = collection(db, 'courses');
                 const coursesQuery = query(coursesRef, where('institutionId', '==', institutionId));
@@ -227,9 +231,15 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     .sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'es', { sensitivity: 'base' }));
 
                 setAvailableCourses(loadedCourses);
-            } catch {
+                setCoursesLoadError('');
+            } catch (error) {
                 if (active) {
                     setAvailableCourses([]);
+                    if (error?.code === 'permission-denied') {
+                        setCoursesLoadError('No tienes permiso para cargar los cursos de esta institución.');
+                    } else {
+                        setCoursesLoadError('No se pudieron cargar los cursos disponibles. Intentalo de nuevo.');
+                    }
                 }
             } finally {
                 if (active) {
@@ -887,6 +897,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                     <TagManager formData={formData} setFormData={setFormData} />
                                 ) : (
                                     <>
+                                        {coursesLoadError && (
+                                            <div className="mb-3 rounded-lg border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300">
+                                                {coursesLoadError}
+                                            </div>
+                                        )}
                                         {canEditOriginalFields && (
                                             <BasicInfoFields
                                                 formData={formData}

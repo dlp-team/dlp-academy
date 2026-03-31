@@ -11,6 +11,19 @@ The classes-tab loader in `SubjectFormModal` silently fell back to an empty list
 ### Validation
 - Added focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` for success and permission-denied classes-load paths.
 
+## [2026-03-31] Courses Load Feedback Hardening
+### Context & Architecture
+`SubjectFormModal` course loading in the general tab previously failed silently by falling back to an empty list when the `courses` query errored.
+
+### Change
+- Added dedicated general-tab courses load feedback state: `coursesLoadError`.
+- Added permission-specific feedback for denied course reads.
+- Added generic retry feedback for non-permission `courses` query failures.
+- Rendered explicit inline banner in the general tab so load failures are not confused with no available courses.
+
+### Validation
+- Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied `courses` query regression coverage.
+
 ## [2026-03-13] Permission Hardening: Viewer Class Tab is Read-Only
 ### Context & Architecture
 Teachers with `viewer` shortcut permissions were still able to interact with class assignment controls in the `Clases` tab.

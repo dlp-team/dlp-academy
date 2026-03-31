@@ -155,4 +155,21 @@ describe('SubjectFormModal classes-load feedback', () => {
 
     expect(screen.getByText('No hay clases disponibles para asignar.')).toBeTruthy();
   });
+
+  it('shows inline general-tab feedback when courses query fails with denied permissions', async () => {
+    firestoreMocks.getDocs.mockImplementation(async (source) => {
+      if (getCollectionName(source) === 'courses') {
+        const deniedError = new Error('permission-denied');
+        deniedError.code = 'permission-denied';
+        throw deniedError;
+      }
+      return { docs: [] };
+    });
+
+    renderModal({ initialTab: 'general' });
+
+    await waitFor(() => {
+      expect(screen.getByText('No tienes permiso para cargar los cursos de esta institución.')).toBeTruthy();
+    });
+  });
 });

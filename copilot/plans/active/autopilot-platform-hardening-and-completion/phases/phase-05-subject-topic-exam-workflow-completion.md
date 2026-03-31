@@ -363,6 +363,12 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
   - permission-denied classes query failures surface explicit inline feedback,
   - classes empty-state rendering remains stable after load failure.
 
+## Progress Update - 2026-03-31 (Slice 39)
+- Hardened `SubjectFormModal` general-tab course loading determinism in `src/pages/Subject/modals/SubjectFormModal.jsx`.
+- Added explicit `coursesLoadError` feedback state for courses query failures, including permission-specific and generic fallback messaging.
+- Added inline general-tab feedback banner so course-load failures are distinguishable from truly empty course lists.
+- Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied `courses` query failures render explicit feedback.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,
