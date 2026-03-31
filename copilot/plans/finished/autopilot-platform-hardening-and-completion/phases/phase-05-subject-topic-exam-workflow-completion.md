@@ -2,7 +2,7 @@
 # Phase 05 - Subject, Topic, and Exam Workflow Completion
 
 ## Status
-IN_PROGRESS
+COMPLETED
 
 ## Objective
 Close the remaining functional gaps in academic workflows (subjects, topics, exams, and linked tasks) while preserving existing role-based behavior.
