@@ -129,6 +129,18 @@ Batch apply-all unshare operations in `SubjectFormModal` previously reported onl
 ### Validation
 - Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied apply-all unshare regression coverage.
 
+## [2026-03-31] Shortcut Cleanup Feedback Hardening
+### Context & Architecture
+Shortcut self-unshare flow in `SubjectFormModal` previously mapped denied errors from both unshare and shortcut cleanup writes to a single generic self-unshare message.
+
+### Change
+- Split self-unshare flow error handling into separate mutation stages.
+- Added shortcut-cleanup-specific permission feedback for denied `onDeleteShortcut` writes.
+- Preserved existing permission-specific and generic feedback for `onUnshare` failures.
+
+### Validation
+- Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied shortcut-cleanup regression coverage.
+
 ## [2026-03-13] Permission Hardening: Viewer Class Tab is Read-Only
 ### Context & Architecture
 Teachers with `viewer` shortcut permissions were still able to interact with class assignment controls in the `Clases` tab.

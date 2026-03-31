@@ -709,13 +709,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const confirmRemoveMyShortcutAccess = async () => {
         if (!formData?.shortcutId || !user?.email) return;
 
+        setShareLoading(true);
         try {
-            setShareLoading(true);
             await onUnshare(formData.id, user.email);
-            await onDeleteShortcut(formData.shortcutId);
-            setShowSelfUnshareConfirm(false);
-            setShareLoading(false);
-            onClose();
         } catch (error) {
             setShareLoading(false);
             if (error?.code === 'permission-denied') {
@@ -723,7 +719,24 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             } else {
                 setShareError(error?.message || 'No se pudo eliminar tu acceso.');
             }
+            return;
         }
+
+        try {
+            await onDeleteShortcut(formData.shortcutId);
+        } catch (error) {
+            setShareLoading(false);
+            if (error?.code === 'permission-denied') {
+                setShareError('No tienes permiso para eliminar tu acceso directo de esta asignatura.');
+            } else {
+                setShareError(error?.message || 'No se pudo eliminar tu acceso directo.');
+            }
+            return;
+        }
+
+        setShowSelfUnshareConfirm(false);
+        setShareLoading(false);
+        onClose();
     };
 
     const confirmPendingShareAction = async () => {

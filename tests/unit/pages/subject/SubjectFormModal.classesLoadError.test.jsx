@@ -324,6 +324,45 @@ describe('SubjectFormModal classes-load feedback', () => {
     expect(onDeleteShortcut).not.toHaveBeenCalled();
   });
 
+  it('shows sharing feedback when shortcut cleanup fails with denied permissions', async () => {
+    const deniedError = new Error('permission-denied');
+    deniedError.code = 'permission-denied';
+
+    firestoreMocks.getDoc.mockResolvedValue({ exists: () => false, data: () => ({}) });
+    firestoreMocks.getDocs.mockResolvedValue({ docs: [] });
+
+    const onUnshare = vi.fn().mockResolvedValue(undefined);
+    const onDeleteShortcut = vi.fn().mockRejectedValue(deniedError);
+
+    renderModal({
+      initialTab: 'sharing',
+      onUnshare,
+      onDeleteShortcut,
+      initialData: {
+        ...baseProps.initialData,
+        ownerId: 'owner-2',
+        ownerEmail: 'owner@test.com',
+        isShortcut: true,
+        shortcutId: 'shortcut-1',
+        sharedWith: [{ uid: 'teacher-1', email: 'teacher@test.com', role: 'editor', canEdit: true }],
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Eliminar acceso para mí')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByText('Eliminar acceso para mí'));
+    fireEvent.click(screen.getByText('Confirmar eliminación'));
+
+    await waitFor(() => {
+      expect(screen.getByText('No tienes permiso para eliminar tu acceso directo de esta asignatura.')).toBeTruthy();
+    });
+
+    expect(onUnshare).toHaveBeenCalledTimes(1);
+    expect(onDeleteShortcut).toHaveBeenCalledTimes(1);
+  });
+
   it('shows sharing feedback when transfer ownership fails with denied permissions', async () => {
     const deniedError = new Error('permission-denied');
     deniedError.code = 'permission-denied';

@@ -423,6 +423,12 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
 - Preserved existing generic unshare failure detail for non-permission errors.
 - Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied unshare writes render explicit apply-all feedback.
 
+## Progress Update - 2026-03-31 (Slice 49)
+- Hardened `SubjectFormModal` shortcut self-unshare cleanup mutation feedback in `src/pages/Subject/modals/SubjectFormModal.jsx`.
+- Split self-unshare flow error handling so denied `onDeleteShortcut` writes now render shortcut-specific permission feedback.
+- Preserved existing permission and generic feedback for denied/non-denied `onUnshare` failures.
+- Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied shortcut cleanup writes render explicit sharing feedback.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,
