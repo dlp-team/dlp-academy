@@ -393,6 +393,12 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
 - Preserved existing generic mutation failure fallback for non-permission errors.
 - Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied class-request writes render explicit classes-tab feedback.
 
+## Progress Update - 2026-03-31 (Slice 44)
+- Hardened `SubjectFormModal` shortcut self-unshare mutation feedback in `src/pages/Subject/modals/SubjectFormModal.jsx`.
+- Added permission-specific message for denied self-unshare writes in `confirmRemoveMyShortcutAccess`.
+- Preserved existing generic mutation failure fallback for non-permission self-unshare failures.
+- Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied self-unshare flow renders explicit sharing feedback.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,

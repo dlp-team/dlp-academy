@@ -718,7 +718,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             onClose();
         } catch (error) {
             setShareLoading(false);
-            setShareError(error?.message || 'No se pudo eliminar tu acceso.');
+            if (error?.code === 'permission-denied') {
+                setShareError('No tienes permiso para eliminar tu acceso a esta asignatura.');
+            } else {
+                setShareError(error?.message || 'No se pudo eliminar tu acceso.');
+            }
         }
     };
 
