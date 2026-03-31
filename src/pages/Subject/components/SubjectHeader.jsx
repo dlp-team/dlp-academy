@@ -194,7 +194,7 @@ const SubjectHeader = ({
                         border border-gray-200 dark:border-slate-700
                         rounded-xl shadow-sm
                         transition-all duration-300 ease-in-out
-                        ${searchTerm ? 'w-64' : 'w-12 hover:w-64 focus-within:w-64'}
+                        ${searchTerm ? 'w-48 sm:w-64' : 'w-12 hover:w-48 sm:hover:w-64 focus-within:w-48 sm:focus-within:w-64'}
                         overflow-hidden
                         mr-1
                     `}>

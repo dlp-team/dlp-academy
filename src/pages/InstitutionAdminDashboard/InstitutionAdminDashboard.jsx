@@ -83,12 +83,12 @@ const InstitutionAdminDashboard = ({ user }) => {
         </div>
 
         {/* Tab nav */}
-        <div className="flex items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800">
-          {TABS.map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={`px-4 py-2 font-medium text-sm flex items-center gap-2 border-b-2 -mb-px transition-colors ${
+        <div className="flex items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800 overflow-x-auto whitespace-nowrap pb-px no-scrollbar">
+            {TABS.map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={`px-4 py-2 font-medium text-sm flex items-center gap-2 border-b-2 -mb-[2px] transition-colors ${
                 activeTab === key
                   ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
                   : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400'

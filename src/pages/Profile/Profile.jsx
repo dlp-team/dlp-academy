@@ -69,7 +69,7 @@ const Profile = ({ user }) => {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-12 transition-colors">
       <Header user={headerUser} />
 
-      <main className="max-w-5xl mx-auto px-6 pt-24 space-y-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 space-y-8">
 
         {/* User Card */}
         <UserCard

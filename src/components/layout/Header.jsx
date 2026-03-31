@@ -167,8 +167,8 @@ const Header = ({ user }) => {
   return (
     <>
     <header className="fixed top-0 w-full h-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-slate-800 z-[9999] transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-between">
-        
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
+
         {/* --- LEFT: LOGO --- */}
         <div 
             className="flex items-center gap-3 cursor-pointer group" 
@@ -178,34 +178,34 @@ const Header = ({ user }) => {
             <img
               src={institutionBranding.logoUrl}
               alt={institutionBranding.institutionDisplayName || 'Institution logo'}
-              className="w-12 h-12 rounded-lg object-cover"
+              className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg object-cover"
             />
           ) : (
-            <div className="bg-indigo-50 dark:bg-indigo-900/20 p-2 rounded-lg group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors">
-              <GraduationCap className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+            <div className="bg-indigo-50 dark:bg-indigo-900/20 p-2 rounded-lg group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/40 transition-colors">   
+              <GraduationCap className="w-6 h-6 sm:w-8 sm:h-8 text-indigo-600 dark:text-indigo-400" />
             </div>
           )}
-          <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight transition-colors">
+          <h1 className="hidden sm:block text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight transition-colors truncate max-w-[150px] md:max-w-xs">
             {institutionBranding.institutionDisplayName}
           </h1>
         </div>
-        
+
         {/* --- RIGHT: ACTIONS & PROFILE --- */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
 
             {/* 1. THEME TOGGLE */}
-            <div className="flex items-center gap-2 px-2 border-r border-gray-200 dark:border-slate-700 mr-1">
-                <Sun size={16} className={`transition-colors ${!darkMode ? 'text-amber-500' : 'text-gray-400'}`} />
-                <Toggle 
-                    enabled={darkMode} 
-                    onChange={handleThemeToggle} 
+            <div className="hidden sm:flex items-center gap-1 sm:gap-2 px-1 sm:px-2 border-r border-gray-200 dark:border-slate-700 mr-1">
+                <Sun size={14} className={`hidden sm:block transition-colors ${!darkMode ? 'text-amber-500' : 'text-gray-400'}`} />
+                <Toggle
+                    enabled={darkMode}
+                    onChange={handleThemeToggle}
                 />
-                <Moon size={16} className={`transition-colors ${darkMode ? 'text-indigo-400' : 'text-gray-400'}`} />
+                <Moon size={14} className={`hidden sm:block transition-colors ${darkMode ? 'text-indigo-400' : 'text-gray-400'}`} />
             </div>
 
             {/* 2. DASHBOARD BUTTON (Role-based) */}
             {dashboardRoute && (
-                <button 
+                <button
                     onClick={() => navigate(dashboardRoute)}
                     className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-all duration-200 cursor-pointer"
                     title={dashboardLabel}

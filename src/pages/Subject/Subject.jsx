@@ -147,7 +147,7 @@ const Subject = ({ user }) => {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 font-sans transition-colors">
             <Header user={user} />
 
-            <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+            <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 <SubjectHeader
                     subject={subject}
                     hasTopics={topics.length > 1}

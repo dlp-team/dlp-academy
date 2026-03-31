@@ -938,7 +938,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
                     {/* Tabs */}
                     {isEditing && (
-                        <div className="px-6 pt-4 border-b border-gray-100 dark:border-slate-800 flex gap-2">
+                        <div className="px-6 pt-4 border-b border-gray-100 dark:border-slate-800 flex overflow-x-auto gap-2">
                             <button
                                 onClick={() => setActiveTab('general')}
                                 className={`px-4 py-2 rounded-t-xl font-medium transition-colors ${

@@ -598,7 +598,7 @@ const TeacherDashboard = ({ user }) => {
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
             <Header user={user} />
 
-            <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+            <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 {/* Page header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <div>
@@ -614,7 +614,7 @@ const TeacherDashboard = ({ user }) => {
                 </div>
 
                 {/* Underline tabs */}
-                <div className="flex items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800 overflow-x-auto whitespace-nowrap pb-px no-scrollbar">
                     {TABS.map((tab) => (
                         <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                             className={`px-4 py-2 font-medium text-sm flex items-center gap-2 border-b-2 -mb-px transition-colors ${

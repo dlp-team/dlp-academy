@@ -325,7 +325,7 @@ const HomeContent = ({
                                     <div className="mb-10">
                                         <div 
                                             className="grid gap-6"
-                                            style={{ gridTemplateColumns: `repeat(auto-fill, minmax(${(320 * cardScale) / 100}px, 1fr))` }}
+                                              style={{ gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${(320 * cardScale) / 100}px), 1fr))` }}
                                         >
                                             {/* Create Subject Button for courses/tags view */}
                                             {(viewMode === 'courses' || viewMode === 'tags') && canCreateInCurrentContext && (

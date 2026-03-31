@@ -51,7 +51,7 @@
   - high-risk flow test coverage additions.
 
 ### Phase 06 - Responsive and Mobile Optimization
-- Status: IN_PROGRESS
+- Status: COMPLETED
 - Goal: ensure reliable tablet/mobile behavior across priority routes.
 - Outputs:
   - responsive layout and interaction fixes,
@@ -59,7 +59,7 @@
   - no-regression checks for desktop behavior.
 
 ### Phase 07 - TypeScript, Lint Debt, and Logic Centralization Tranche
-- Status: PLANNED
+- Status: IN_PROGRESS
 - Goal: reduce maintenance risk by typing and centralizing duplicated logic.
 - Outputs:
   - scoped TypeScript migration tranche,
@@ -75,10 +75,9 @@
   - inReview transition package.
 
 ## Immediate Next Actions
-1. Start Phase 06 by defining the viewport matrix and route priority for mobile edits.
-2. Execute responsive CSS/component adjustments for high priority routes.
-3. Select low-risk TypeScript tranche candidates (utilities/hooks first) for Phase 07.
-4. Keep lossless reports synchronized after each phase output.
+1. Start Phase 07 by addressing lint debt and TypeScript checking.
+2. Select low-risk scope for type fixing across utility files.
+3. Keep lossless reports synchronized after each phase output.
 
 ## Validation Gates per Active/Planned Phase
 - Phase 05 gate:

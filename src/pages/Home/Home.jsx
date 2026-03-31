@@ -545,7 +545,7 @@ const Home = ({ user }) => {
         >
             <Header user={user} />
 
-            <main className="pt-24 pb-12 px-6 max-w-7xl mx-auto">
+            <main className="pt-24 pb-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 {/* Drag Up Zone (Omitted for brevity, logic same) */}
                 <div 
                     className="relative transition-all duration-300"

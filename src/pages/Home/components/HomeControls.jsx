@@ -141,7 +141,7 @@ const HomeControls = ({
                                 className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors cursor-pointer shadow-sm"
                             >
                                 <FolderPlus size={16} />
-                                <span>{currentFolder ? 'Nueva Subcarpeta' : 'Nueva Carpeta'}</span>
+                                <span className="hidden sm:inline">{currentFolder ? 'Nueva Subcarpeta' : 'Nueva Carpeta'}</span>
                             </button>
                         </div>
                     </>
@@ -168,7 +168,7 @@ const HomeControls = ({
                 
                 {/* 3. Search Bar */}
                 <div 
-                    className="relative flex justify-end flex-1 min-w-0 margin-0 padding ml-auto"
+                    className="relative flex justify-end flex-1 min-w-[200px] ml-auto w-full md:w-auto"
                     style={{ maxWidth: 380 }}
                 >
                     <SearchBar 
