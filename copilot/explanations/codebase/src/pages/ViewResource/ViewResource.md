@@ -19,3 +19,9 @@
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## Changelog
+### 2026-03-31
+- Added deterministic iframe viewer states (`loading`, `error`, `ready`) for resource previews.
+- Added timeout-backed fallback to surface explicit error feedback when embedded preview does not resolve.
+- Added inline recovery actions in error state: retry embedded viewer and direct download fallback.

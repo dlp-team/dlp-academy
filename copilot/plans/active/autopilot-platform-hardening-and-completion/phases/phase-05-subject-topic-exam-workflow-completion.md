@@ -268,6 +268,17 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
   - attempts query permission failures surface explicit inline feedback,
   - successful empty attempts preserve existing no-detailed-answers fallback behavior.
 
+## Progress Update - 2026-03-31 (Slice 30)
+- Hardened `ViewResource` iframe preview determinism in `src/pages/ViewResource/ViewResource.jsx`.
+- Added explicit viewer-state handling (`loading`, `error`, `ready`) with timeout-backed failure fallback for iframe previews that do not resolve.
+- Added explicit inline recovery actions for failed previews:
+  - retry embedded viewer,
+  - direct download fallback.
+- Added focused regression coverage in `tests/unit/pages/viewResource/ViewResource.errorHandling.test.jsx` verifying:
+  - loading feedback appears while iframe is unresolved,
+  - timeout-driven error state renders explicit fallback messaging,
+  - retry action returns the viewer to loading state.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,
