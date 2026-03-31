@@ -327,6 +327,15 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
   - normal empty payload keeps no-warning empty state,
   - missing route params use deterministic `/home` fallback navigation.
 
+## Progress Update - 2026-03-31 (Slice 35)
+- Hardened `QuizRepaso` progress-save determinism in `src/pages/Quizzes/QuizRepaso.jsx` by replacing silent `persistMastered` catch handling with explicit user feedback.
+- Added `saveError` feedback state for save failures in the results phase with permission-specific and generic messaging.
+- Preserved existing successful repaso completion flow and retry reset behavior while clearing stale save feedback on new attempts.
+- Added focused page-level regression coverage in `tests/unit/pages/quizzes/QuizRepaso.test.jsx` verifying:
+  - permission-denied save failures surface explicit progress-save feedback,
+  - save failure branch still reaches results state,
+  - persistence call path is exercised for mastered questions.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,

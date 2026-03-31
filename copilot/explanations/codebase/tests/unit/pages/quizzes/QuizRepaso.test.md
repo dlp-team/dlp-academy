@@ -10,9 +10,11 @@
 - Corrupted `sessionStorage.repasoQuestions` payloads render explicit warning feedback in no-questions state.
 - Empty/absent repaso payloads keep existing no-warning empty-state behavior.
 - Missing route params trigger deterministic `/home` fallback navigation on recovery action.
+- Permission-denied progress persistence failures render explicit save-feedback warning in results state.
 
 ## Changelog
 ### 2026-03-31
+- Added save-failure regression coverage for denied `repasoMastered` persistence.
 - Added initial page-level tests for corrupted-session fallback messaging.
 - Added no-warning guard for normal empty repaso payloads.
 - Added back-route fallback coverage for missing topic route params.

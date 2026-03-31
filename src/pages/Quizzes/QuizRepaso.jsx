@@ -38,6 +38,7 @@ const QuizRepaso = ({ user }) => {
     const [answersDetail, setAnswersDetail] = useState([]);
     const [masteredInSession, setMasteredInSession] = useState([]);
     const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState('');
     const { confettiTrigger, triggerConfetti } = useConfetti();
 
     const { failedQuestions, failedQuestionsLoadError } = useMemo(() => {
@@ -87,6 +88,7 @@ const QuizRepaso = ({ user }) => {
         if (!user?.uid || !masteredInSession.length) return;
 
         setSaving(true);
+        setSaveError('');
         try {
             const ref = doc(db, 'repasoMastered', `${user.uid}__${topicId}`);
             await setDoc(ref, {
@@ -97,6 +99,11 @@ const QuizRepaso = ({ user }) => {
             }, { merge: true });
         } catch (error) {
             console.error(error);
+            if (error?.code === 'permission-denied') {
+                setSaveError('No tienes permiso para guardar tu progreso de repaso.');
+            } else {
+                setSaveError('No se pudo guardar tu progreso de repaso. Intentalo de nuevo.');
+            }
         } finally {
             setSaving(false);
         }
@@ -167,6 +174,7 @@ const QuizRepaso = ({ user }) => {
         setAnswerStatus(ANSWER_STATUS.IDLE);
         setAnswersDetail([]);
         setMasteredInSession([]);
+        setSaveError('');
     }, []);
 
     const shouldUseGrid = useMemo(() => {
@@ -284,17 +292,26 @@ const QuizRepaso = ({ user }) => {
             )}
 
             {viewState === VIEW_STATES.RESULTS && (
-                <ResultsView
-                    finalScore={finalScore}
-                    correctCount={correctCount}
-                    totalQuestions={totalQuestions}
-                    answersDetail={answersDetail}
-                    topicGradient={topicGradient}
-                    confettiTrigger={confettiTrigger}
-                    accentColor={accentColor}
-                    onRetry={handleRetry}
-                    onGoBack={handleGoBack}
-                />
+                <>
+                    {saveError && (
+                        <div className="mx-auto max-w-4xl px-4 pt-4">
+                            <div className="rounded-2xl border border-amber-200 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/30 px-4 py-3 text-sm font-semibold text-amber-800 dark:text-amber-200">
+                                {saveError}
+                            </div>
+                        </div>
+                    )}
+                    <ResultsView
+                        finalScore={finalScore}
+                        correctCount={correctCount}
+                        totalQuestions={totalQuestions}
+                        answersDetail={answersDetail}
+                        topicGradient={topicGradient}
+                        confettiTrigger={confettiTrigger}
+                        accentColor={accentColor}
+                        onRetry={handleRetry}
+                        onGoBack={handleGoBack}
+                    />
+                </>
             )}
         </div>
     );

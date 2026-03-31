@@ -30,6 +30,9 @@
 
 ## Changelog
 ### 2026-03-31
+- Added explicit progress-save failure messaging (`saveError`) for `repasoMastered` persistence failures with permission-specific and generic feedback variants.
+- Added inline warning banner rendering in results state so save failures are visible without blocking quiz completion.
+- Cleared save feedback on retry to avoid stale warnings across attempts.
 - Added explicit session-load fallback messaging (`failedQuestionsLoadError`) when persisted repaso payloads are corrupted or non-array.
 - Added safe back-navigation fallback (`/home`) when topic route params are missing.
 - Preserved existing no-questions state and valid repaso runtime behavior.

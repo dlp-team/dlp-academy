@@ -1,7 +1,7 @@
 // tests/unit/pages/quizzes/QuizRepaso.test.jsx
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import QuizRepaso from '../../../../src/pages/Quizzes/QuizRepaso';
 
 const mocks = vi.hoisted(() => ({
@@ -54,7 +54,9 @@ vi.mock('../../../../src/components/modules/QuizEngine/QuizHeader', () => ({
 }));
 
 vi.mock('../../../../src/components/modules/QuizEngine/QuizOptions', () => ({
-  default: () => <div>Quiz Options</div>,
+  default: ({ onSelect }) => (
+    <button onClick={() => onSelect?.(1)}>Seleccionar opcion correcta</button>
+  ),
 }));
 
 vi.mock('../../../../src/components/modules/QuizEngine/QuizQuestion', () => ({
@@ -81,7 +83,12 @@ vi.mock('../../../../src/components/modules/QuizEngine/QuizCommon', () => ({
   calculateScore: (correct, total) => (total ? Math.round((correct / total) * 100) : 0),
   isPassed: (score) => score >= 60,
   ProgressBar: () => <div>Barra progreso</div>,
-  QuizFooter: () => <div>Pie quiz</div>,
+  QuizFooter: ({ onCheck, onNext }) => (
+    <div>
+      <button onClick={() => onCheck?.()}>Comprobar</button>
+      <button onClick={() => onNext?.()}>Siguiente</button>
+    </div>
+  ),
   RenderLatex: ({ text }) => <>{text}</>,
   SubjectIcon: () => <div>Icono</div>,
 }));
@@ -121,5 +128,34 @@ describe('QuizRepaso session fallback behavior', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Volver al tema' }));
     expect(mocks.navigate).toHaveBeenCalledWith('/home');
+  });
+
+  it('shows explicit save feedback when repaso progress persistence is denied', async () => {
+    const deniedError = new Error('denied');
+    deniedError.code = 'permission-denied';
+    mocks.setDoc.mockRejectedValueOnce(deniedError);
+
+    sessionStorage.setItem('repasoQuestions', JSON.stringify([
+      {
+        quizId: 'quiz-1',
+        questionIndex: 0,
+        questionText: '2 + 2',
+        options: ['3', '4'],
+        correctIndex: 1,
+      },
+    ]));
+
+    render(<QuizRepaso user={user} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Comenzar repaso' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Seleccionar opcion correcta' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Comprobar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Siguiente' }));
+
+    await waitFor(() => {
+      expect(screen.getByText('No tienes permiso para guardar tu progreso de repaso.')).toBeTruthy();
+    });
+
+    expect(mocks.setDoc).toHaveBeenCalled();
   });
 });
