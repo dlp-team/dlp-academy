@@ -354,6 +354,15 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
   - reorder write path is exercised (`batch.update` + `batch.commit`) during drag-drop,
   - error logging path remains observable for diagnostics.
 
+## Progress Update - 2026-03-31 (Slice 38)
+- Hardened `SubjectFormModal` classes-tab load determinism in `src/pages/Subject/modals/SubjectFormModal.jsx` by replacing silent classes-query fallback with explicit inline feedback.
+- Added `classesLoadError` state with permission-specific and generic fallback messaging for failed classes-list queries.
+- Preserved existing class-assignment action feedback (`classesActionError` / `classesActionSuccess`) while keeping class-list fallback reset behavior.
+- Added focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying:
+  - classes list renders normally when classes query succeeds,
+  - permission-denied classes query failures surface explicit inline feedback,
+  - classes empty-state rendering remains stable after load failure.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,

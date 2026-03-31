@@ -44,6 +44,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [classesActionLoading, setClassesActionLoading] = useState(false);
     const [classesActionError, setClassesActionError] = useState('');
     const [classesActionSuccess, setClassesActionSuccess] = useState('');
+    const [classesLoadError, setClassesLoadError] = useState('');
     const [inviteCodeCopyStatus, setInviteCodeCopyStatus] = useState('');
     const [validationErrors, setValidationErrors] = useState({});
     const [availableCourses, setAvailableCourses] = useState([]);
@@ -115,6 +116,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setPendingUnshares([]);
             setClassesActionError('');
             setClassesActionSuccess('');
+            setClassesLoadError('');
             if (isEditing && initialData) {
                 const fallbackCourse = (initialData.level && initialData.grade)
                     ? `${initialData.grade} ${initialData.level}`
@@ -340,12 +342,14 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             if (!isOpen || !canAccessClassesTab || !user?.institutionId) {
                 if (active) {
                     setAvailableClasses([]);
+                    setClassesLoadError('');
                     setClassesLoading(false);
                 }
                 return;
             }
 
             setClassesLoading(true);
+            setClassesLoadError('');
             try {
                 const classesRef = collection(db, 'classes');
                 const baseConstraints = [where('institutionId', '==', user.institutionId)];
@@ -358,9 +362,15 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 if (!active) return;
                 const loaded = classesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
                 setAvailableClasses(loaded);
-            } catch {
+                setClassesLoadError('');
+            } catch (error) {
                 if (active) {
                     setAvailableClasses([]);
+                    if (error?.code === 'permission-denied') {
+                        setClassesLoadError('No tienes permiso para cargar las clases disponibles de esta asignatura.');
+                    } else {
+                        setClassesLoadError('No se pudieron cargar las clases disponibles. Intentalo de nuevo.');
+                    }
                 }
             } finally {
                 if (active) {
@@ -1221,6 +1231,12 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                 {classesActionSuccess && (
                                     <div className="rounded-lg border border-emerald-200 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 p-3 text-sm text-emerald-700 dark:text-emerald-300">
                                         {classesActionSuccess}
+                                    </div>
+                                )}
+
+                                {classesLoadError && (
+                                    <div className="rounded-lg border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300">
+                                        {classesLoadError}
                                     </div>
                                 )}
 

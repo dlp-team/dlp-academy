@@ -1,3 +1,16 @@
+## [2026-03-31] Classes Tab Load Feedback Hardening
+### Context & Architecture
+The classes-tab loader in `SubjectFormModal` silently fell back to an empty list when the Firestore classes query failed, making load failures indistinguishable from true no-classes states.
+
+### Change
+- Added dedicated classes-list load feedback state: `classesLoadError`.
+- Added permission-specific classes-load feedback (`No tienes permiso para cargar las clases disponibles de esta asignatura.`).
+- Added generic classes-load retry feedback for non-permission failures.
+- Kept existing class-assignment action feedback (`classesActionError`/`classesActionSuccess`) independent from the load-error state.
+
+### Validation
+- Added focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` for success and permission-denied classes-load paths.
+
 ## [2026-03-13] Permission Hardening: Viewer Class Tab is Read-Only
 ### Context & Architecture
 Teachers with `viewer` shortcut permissions were still able to interact with class assignment controls in the `Clases` tab.
