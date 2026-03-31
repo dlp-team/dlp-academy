@@ -354,4 +354,40 @@ describe('SubjectFormModal classes-load feedback', () => {
       expect(screen.getByText('No tienes permiso para transferir la propiedad de esta asignatura.')).toBeTruthy();
     });
   });
+
+  it('shows apply-all feedback when share-add fails with denied permissions', async () => {
+    const deniedError = new Error('permission-denied');
+    deniedError.code = 'permission-denied';
+
+    firestoreMocks.getDoc.mockResolvedValue({ exists: () => false, data: () => ({}) });
+    firestoreMocks.getDocs.mockResolvedValue({ docs: [] });
+
+    const onShare = vi.fn().mockRejectedValue(deniedError);
+
+    renderModal({
+      initialTab: 'sharing',
+      onShare,
+      initialData: {
+        ...baseProps.initialData,
+        ownerId: 'teacher-1',
+        sharedWith: [],
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('usuario@ejemplo.com')).toBeTruthy();
+    });
+
+    fireEvent.change(screen.getByPlaceholderText('usuario@ejemplo.com'), {
+      target: { value: 'newuser@test.com' },
+    });
+    fireEvent.click(screen.getByText('Añadir'));
+
+    fireEvent.click(screen.getByText('Aplicar cambios'));
+    fireEvent.click(screen.getByText('Confirmar'));
+
+    await waitFor(() => {
+      expect(screen.getByText('No tienes permiso para compartir con newuser@test.com.')).toBeTruthy();
+    });
+  });
 });

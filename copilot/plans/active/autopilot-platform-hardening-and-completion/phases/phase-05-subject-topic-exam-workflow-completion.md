@@ -405,6 +405,12 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
 - Preserved existing generic mutation failure fallback for non-permission transfer failures.
 - Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied transfer-ownership flow renders explicit sharing feedback.
 
+## Progress Update - 2026-03-31 (Slice 46)
+- Hardened `SubjectFormModal` apply-all share-add mutation feedback in `src/pages/Subject/modals/SubjectFormModal.jsx`.
+- Added permission-specific failure detail for denied share-add writes inside `confirmPendingShareAction` batch-apply branch.
+- Preserved existing generic share-add failure detail for non-permission errors.
+- Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied share-add writes render explicit apply-all feedback.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,

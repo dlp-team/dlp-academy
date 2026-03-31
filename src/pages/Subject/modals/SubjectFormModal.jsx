@@ -779,8 +779,12 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 } else {
                     localSharedList.push(updatedEntry);
                 }
-            } catch {
-                failures.push(`No se pudo compartir con ${entry.email}`);
+            } catch (error) {
+                if (error?.code === 'permission-denied') {
+                    failures.push(`No tienes permiso para compartir con ${entry.email}`);
+                } else {
+                    failures.push(`No se pudo compartir con ${entry.email}`);
+                }
             }
         }
 
