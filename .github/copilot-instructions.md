@@ -239,7 +239,17 @@ Workflow documentation and task-specific guides (e.g., `shortcut-move-request-wo
 ✅ Check copilot/plans/active/ for related work
 ✅ Search for similar patterns in the codebase
 ✅ Read protocol files if unfamiliar
+✅ For AUTOPILOT ONLY: Read copilot/autopilot/git-workflow-rules.md
 ✅ Before making any changes, ensure the task is fully understood. If there is any ambiguity, missing detail, or uncertainty about requirements, use `vscode/askQuestions` to clarify with the user before proceeding. Do not proceed until the scope, constraints, and expected outcomes are clear.
+```
+
+### 1.5 Git Workflow Setup (AUTOPILOT ONLY - MANDATORY)
+```
+✅ Check current branch: git branch --show-current
+✅ If on main: Create new feature branch (git checkout -b feature/<task-name>)
+✅ If on feature branch: Continue on existing branch
+✅ Read copilot/autopilot/git-workflow-rules.md for commit message format
+✅ Plan periodic Git commits (every logical work unit)
 ```
 
 ### 2. Pre-Change Checklist
@@ -429,6 +439,94 @@ Before completing ANY interaction, verify:
 2. **Plan Creation Protocol** - Multi-step or risky work
 3. **Debug Protocol** - Complex issues
 4. **Code Explanation Protocol** - Documentation updates
+
+---
+
+## 🔀 Autopilot Git Workflow (MANDATORY)
+
+**Applies to ALL autopilot tasks. Reference: `copilot/autopilot/git-workflow-rules.md`**
+
+### Git Branch Rules (REQUIRED)
+
+1. **Main Branch Protection (ABSOLUTE)**:
+   - NEVER push to `main` branch - categorically forbidden
+   - If on `main`: immediately create feature branch (`git checkout -b feature/<task-name>`)
+   - Always verify before commits: `git branch --show-current` must NOT return "main"
+
+2. **Branch Creation Strategy**:
+   - **Large tasks**: Create new feature branch with date (e.g., `feature/firestore-migration-2026-0331`)
+   - **Small tasks**: Update existing feature branch if not on `main`
+   - **Format**: `feature/<descriptive-name>` or `hotfix/<brief-description>`
+
+3. **Commit Message Format** (MANDATORY):
+   ```
+   <type>(<scope>): <subject>
+   
+   Types: feat, fix, docs, style, refactor, perf, test, chore
+   Scope: autopilot, admin-dashboard, auth, firestore, ui, etc.
+   Subject: Imperative, no period, max 50 chars
+   
+   Example: feat(autopilot): Add automatic git branch creation for large tasks
+   ```
+
+4. **Push Frequency**:
+   - After each logical work unit (feature block, fix, test suite)
+   - Command: `git push origin <branch-name>`
+   - Always verify branch before pushing
+
+### Autopilot vscode/askQuestions Self-Response Loop (REQUIRED)
+
+**After completing each major work block:**
+
+1. Execute vscode/askQuestions:
+   ```
+   Question: "Continue with next phase or proceed to final verification?"
+   Options: ["Continue working", "Run final verification"]
+   ```
+
+2. **Autopilot responds to itself** - No user input needed:
+   - If more work remains → Answer "Continue working" and proceed autonomously
+   - If all work done → Answer "Run final verification"
+
+3. **Repeat until 100% task completion**:
+   - Never stop between phases
+   - Continue autonomously until all requested features are implemented
+   - All tests pass
+   - All documentation is complete
+
+### Final Verification (BEFORE TASK CLOSURE)
+
+Execute final vscode/askQuestions with comprehensive checklist:
+
+```
+Final Pre-Closure Verification:
+
+□ All requested features implemented and working
+□ All existing functionality preserved (lossless)
+□ All tests passing (npm run test ✅)
+□ All linting passing (npm run lint ✅)
+□ All documentation updated/created
+□ All Git commits pushed to feature branch
+□ Code review ready (clean history, clear messages)
+□ No console.log debug statements left behind
+□ All Spanish text verified for proper grammar
+□ File path comments added to new files
+
+Ready to close task?
+```
+
+User confirms all items → Task closure only after confirmation.
+
+### Git Safety Guardrails (AUTOPILOT CRITICAL)
+
+| Rule | Enforcement |
+|------|-------------|
+| Never push to main | Check branch before every push |
+| Never force-push | Banned: `git push -f` |
+| Commit frequently | After every logical work unit |
+| Clear commit messages | Follow format in git-workflow-rules.md |
+| Verify branch status | Run `git branch --show-current` before push |
+| Handle conflicts | Pull, resolve manually, re-commit |
 
 ---
 

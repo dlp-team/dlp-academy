@@ -8,19 +8,39 @@ When operating in Bypass Approvals or Autopilot mode, you have terminal access. 
    - **ABSOLUTELY BANNED**: `firebase deploy --only firestore:rules` (or any variation). Multiple developers may be modifying Firestore schemas simultaneously; deploying from an agent will cause disastrous overwrites.
    - **BANNED**: `firebase deploy`, `npm run deploy`, or any command that pushes code to production or staging.
 3. **NO DESTRUCTIVE COMMANDS**: Do not run `rm -rf` on root directories, do not drop databases, and do not reset git branches hard (`git reset --hard`) without explicit user permission.
+4. **NO MAIN BRANCH PUSHES** (AUTOPILOT CRITICAL): 
+   - **ABSOLUTELY BANNED**: Pushing to `main` branch in any case
+   - **ABSOLUTELY BANNED**: Committing directly to `main` branch
+   - **REQUIRED**: Always verify current branch before any push (`git branch --show-current`)
+   - **REQUIRED**: If on `main`, create new feature branch immediately (see `copilot/autopilot/git-workflow-rules.md`)
+5. **NO FORCE PUSHES**: Banned: `git push -f`, `git push --force` (protection for collaborative work)
 
 
 ## 🔄 Autopilot Execution Loop
 When operating in Autopilot mode, follow this exact loop until the task is complete:
 
 1. **Pre-Execution Clarification**: Before any code or documentation changes, ensure the task is fully understood. If there is any ambiguity, missing detail, or uncertainty about requirements, use `vscode/askQuestions` to clarify with the user before proceeding. Do not proceed until the scope, constraints, and expected outcomes are clear.
-2. **Context & Plan**: Read `copilot-instructions.md` and relevant files in `copilot/explanations/`.
-3. **Execute**: Make surgical code changes (following the Lossless Change Protocol).
-4. **Test Generation**: If you created a new component, utility, or feature, you MUST create a corresponding test file.
-5. **Validate & Test**: Run local validation (`npm run test`) via the `terminal` tool. **(Local execution only. See BANNED ACTIONS).**
-6. **Analyze**: If tests fail, automatically read the errors, devise a fix, and repeat steps 3-5. Do NOT halt to ask the user to fix test failures.
-7. **Document**: Generate the required lossless report in `copilot/explanations/temporal/lossless-reports/`.
-8. **Terminate**: Only call the `task_complete` tool when ALL above steps are 100% finished and passing.
+2. **Git Workflow Setup** (REQUIRED): 
+   - Read `copilot/autopilot/git-workflow-rules.md` (MANDATORY)
+   - Check current branch: `git branch --show-current`
+   - If on `main`: Create new feature branch (`git checkout -b feature/<task-name>`)
+   - If on feature branch: Continue on existing branch
+3. **Context & Plan**: Read `copilot-instructions.md` and relevant files in `copilot/explanations/`.
+4. **Execute**: Make surgical code changes (following the Lossless Change Protocol).
+5. **Commit & Push** (PERIODIC):
+   - After each logical work unit, commit with proper message format
+   - Use format: `<type>(<scope>): <subject>` (see git-workflow-rules.md)
+   - Push to feature branch: `git push origin <branch-name>`
+6. **Test Generation**: If you created a new component, utility, or feature, you MUST create a corresponding test file.
+7. **Validate & Test**: Run local validation (`npm run test`) via the `terminal` tool. **(Local execution only. See BANNED ACTIONS).**
+8. **Analyze**: If tests fail, automatically read the errors, devise a fix, and repeat steps 4-7. Do NOT halt to ask the user to fix test failures.
+9. **Document**: Generate the required lossless report in `copilot/explanations/temporal/lossless-reports/`.
+10. **Self-Response Loop** (REQUIRED): After completing each major work block, execute vscode/askQuestions:
+    - Question: "Continue with next phase or proceed to final verification?"
+    - Response: **Autopilot must answer itself** and continue autonomously
+    - **Repeat this loop until 100% of task is complete**
+11. **Final Verification**: When all work is done, run final verification via vscode/askQuestions with full checklist
+12. **Terminate**: Only call the `task_complete` tool when ALL above steps are 100% finished, all tests pass, and final verification confirms completion.
 
 ### Premium Anti-Waste Enforcement (MANDATORY)
 1. **No micro-delivery responses**: If the user requested a complete plan or full implementation, do not stop after tiny edits.
@@ -42,6 +62,12 @@ Use these commands in the terminal to validate your work autonomously:
 1. **Infinite Loops**: If you try to fix the same test failure 3 times without success, STOP. Document the failure state and ask the user for direction.
 2. **Destructive Firebase Changes**: STOP and ask if modifying `firestore.rules` revokes access.
 3. **Missing Dependencies**: Propose via `vscode/askQuestions` first.
+4. **Git Branch Protection** (AUTOPILOT ONLY):
+   - **STOP IMMEDIATELY** if current branch is `main` before making any commits
+   - **CREATE NEW FEATURE BRANCH** and migrate work if needed (see git-workflow-rules.md)
+   - **VERIFY BRANCH** before every push: `git branch --show-current` must NOT return "main"
+5. **Push Failures**: If push fails, diagnose cause (conflicts, permissions) via `git status`. Ask user for direction if unresolvable.
+6. **Git History Corruption**: Do NOT use `git reset --hard`, `git rebase -i`, or destructive Git operations without explicit user permission.
 
 ## ✅ Definition of Done (DoD)
 Before calling `task_complete`, you must internally verify:
