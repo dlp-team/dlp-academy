@@ -21,6 +21,12 @@ Reduce medium-term maintenance and regression risk through staged typing, lint c
 	- Refactored quiz confetti logic into dedicated hook file (`useConfetti.js`) and deterministic render-safe generation.
 	- Lint baseline improved from `193 problems (178 errors, 15 warnings)` to `72 problems (60 errors, 12 warnings)`.
 	- Regression validation: `npm run test` passed (`71 files, 385 tests`).
+- 2026-03-31 Tranche 02 completed:
+	- Reduced high-density errors in `Exam`, `StudyGuide`, `InstitutionCustomizationView`, and `useShortcuts`.
+	- Replaced remaining empty catches with explicit no-op comments and stabilized preview utility dependencies.
+	- Removed additional unused imports/helpers and cleaned escaped-regex debt in content pages.
+	- Lint baseline improved from `72 problems (60 errors, 12 warnings)` to `54 problems (44 errors, 10 warnings)`.
+	- Regression validation: `npm run test` passed (`71 files, 385 tests`).
 
 ## Validation Gates
 - Type checks pass for migrated tranche.

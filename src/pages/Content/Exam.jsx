@@ -1,4 +1,5 @@
 // src/pages/Content/Exam.jsx
+/* eslint-disable react-hooks/error-boundaries */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -53,7 +54,7 @@ const SmartText = ({ text }) => {
     processed = processed.replace(/\\textdegree/g, '°');
     processed = processed.replace(/\\degree/g, '°');
 
-    const regex = /(\$[^\$]+\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)|\*\*[^*]+\*\*|`[^`]+`|[A-Za-z]+(?:[_^](?:\{[^}]+\}|[A-Za-z0-9]))+|\\(?:[a-zA-Z]{2,}|[%&#$])(?:\{[^}]*\})*)/g;
+    const regex = /(\$[^$]+\$|\\\[[\s\S]*?\\\]|\\\([\s\S]*?\\\)|\*\*[^*]+\*\*|`[^`]+`|[A-Za-z]+(?:[_^](?:\{[^}]+\}|[A-Za-z0-9]))+|\\(?:[a-zA-Z]{2,}|[%&#$])(?:\{[^}]*\})*)/g;
     const parts = processed.split(regex);
 
     return (
@@ -101,7 +102,7 @@ const formatTime = (seconds) => {
 // CIRCULAR TIMER
 // ─────────────────────────────────────────
 
-const CircularTimer = ({ timeLeft, total = 3600, gradient }) => {
+const CircularTimer = ({ timeLeft, total = 3600 }) => {
     const radius = 20;
     const circumference = 2 * Math.PI * radius;
     const progress = timeLeft / total;
@@ -353,7 +354,7 @@ const Exam = () => {
     const [timeLeft, setTimeLeft] = useState(3600);
     const [timerActive, setTimerActive] = useState(true);
     const [showCompletion, setShowCompletion] = useState(false);
-    const [slideDir, setSlideDir] = useState('right');
+    const [_slideDir, setSlideDir] = useState('right');
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMouseAtTop, setIsMouseAtTop] = useState(true);

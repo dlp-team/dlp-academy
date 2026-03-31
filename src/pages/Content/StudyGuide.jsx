@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-import { applyThemeToDom } from '../../utils/themeMode';
 
 import 'katex/dist/katex.min.css';
 import { BlockMath, InlineMath } from 'react-katex';
@@ -17,27 +16,7 @@ import { BlockMath, InlineMath } from 'react-katex';
 
 // ==================== CONSTANTS ====================
 
-const COLOR_MAP = {
-    blue: '#2563eb',
-    indigo: '#4f46e5',
-    purple: '#9333ea',
-    green: '#16a34a',
-    red: '#dc2626',
-    orange: '#ea580c',
-    amber: '#d97706',
-    teal: '#0d9488',
-    cyan: '#0891b2',
-    pink: '#db2777',
-    rose: '#e11d48'
-};
-
 // ==================== UTILITY FUNCTIONS ====================
-
-const extractColorFromGradient = (gradient) => {
-    if (!gradient) return null;
-    const mainColorName = gradient.split(' ')[0].replace('from-', '').split('-')[0];
-    return COLOR_MAP[mainColorName] || null;
-};
 
 const cleanMath = (math) => {
     if (typeof math !== 'string') return '';
@@ -63,7 +42,7 @@ const SmartTextRenderer = ({ text }) => {
 
     // CORRECCIÓN AQUÍ: He añadido "|(?:\`.*?\`)" al final del regex.
     // Esto le enseña al código a reconocer textos como `SUMA` o `PRODUCTO`.
-    const regex = /((?:\$[^\$]+\$)|(?:\\\[[\s\S]*?\\\])|(?:\\\([\s\S]*?\\\))|(?:\d+(?:[.,]\d+)?\s*\\times\s*10\^\{?-?\d+\}?)|(?:\b[a-zA-Z]+\^\{?-?\d+\}?(?:[a-zA-Z]+\^\{?-?\d+\}?)*)|(?:\\[a-zA-Z]+)|(?:\*\*.*?\*\*)|(?:\`.*?\`))/g;
+    const regex = /((?:\$[^$]+\$)|(?:\\\[[\s\S]*?\\\])|(?:\\\([\s\S]*?\\\))|(?:\d+(?:[.,]\d+)?\s*\\times\s*10\^\{?-?\d+\}?)|(?:\b[a-zA-Z]+\^\{?-?\d+\}?(?:[a-zA-Z]+\^\{?-?\d+\}?)*)|(?:\\[a-zA-Z]+)|(?:\*\*.*?\*\*)|(?:`.*?`))/g;
 
     const parts = text.split(regex);
 

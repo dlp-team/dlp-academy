@@ -261,7 +261,7 @@ export const useShortcuts = (user) => {
                             };
                         }
                     }
-                } catch (_) {
+                } catch {
                     // Ignore parent folder lookup failures and continue with normal resolved shortcut
                 }
             }
@@ -304,7 +304,7 @@ export const useShortcuts = (user) => {
                                     ...missingAppearanceUpdate,
                                     updatedAt: new Date()
                                 });
-                            } catch (_) {
+                            } catch {
                                 // Best effort cache update.
                             }
                         }
@@ -447,7 +447,7 @@ export const useShortcuts = (user) => {
             if (targetSnapshot.exists()) {
                 sourceAppearance = buildAppearanceFromTargetData(targetType, targetSnapshot.data() || {});
             }
-        } catch (_) {
+        } catch {
             sourceAppearance = {};
         }
 

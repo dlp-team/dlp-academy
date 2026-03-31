@@ -21,6 +21,8 @@ import {
   injectTheme,
 } from './customization/themePreviewUtils';
 
+const COLOR_FIELDS = ['primary', 'secondary', 'accent', 'cardBorder'];
+
 const InstitutionCustomizationView = ({
   initialValues,
   onSave,
@@ -44,8 +46,6 @@ const InstitutionCustomizationView = ({
 
   const iframeRef = useRef(null);
   const lastValidPreviewRef = useRef({ ...DEFAULTS, ...(initialValues || {}) });
-
-  const COLOR_FIELDS = ['primary', 'secondary', 'accent', 'cardBorder'];
 
   const isValidHexColor = useCallback((value) => {
     if (typeof value !== 'string') return false;
@@ -108,7 +108,11 @@ const InstitutionCustomizationView = ({
   }, [form, iframeReady, activeToken, getPreviewSafeForm]);
 
   useEffect(() => {
-    try { localStorage.setItem('dlp_cust_sidebar', sidebarOpen ? 'open' : 'closed'); } catch {}
+    try {
+      localStorage.setItem('dlp_cust_sidebar', sidebarOpen ? 'open' : 'closed');
+    } catch {
+      // Ignore localStorage write failures in restricted browsing contexts.
+    }
   }, [sidebarOpen]);
 
   useEffect(() => {
@@ -172,12 +176,13 @@ const InstitutionCustomizationView = ({
         iframe.contentWindow.location.replace(homeUrl);
         return;
       }
-    } catch {}
+    } catch {
+      // Ignore cross-origin/initial-load access errors until iframe is ready.
+    }
     setIframeReady(true);
     const safeForm = getPreviewSafeForm(form, lastValidPreviewRef.current);
     lastValidPreviewRef.current = safeForm;
     injectTheme(iframe, safeForm);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [homeUrl, form, getPreviewSafeForm]);
 
   const reloadIframe = () => {
@@ -365,9 +370,9 @@ const InstitutionCustomizationView = ({
             <span className="text-xs font-mono text-slate-400 truncate">{homeUrl}</span>
           </div>
           <div className="flex items-center gap-0.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-0.5 shrink-0">
-            {VIEWPORTS.map(({ id, Icon, label }) => (
-              <button key={id} onClick={() => setViewport(id)} title={label} className={`p-1.5 rounded-md transition text-sm ${viewport === id ? 'text-white shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`} style={viewport === id ? { backgroundColor: form.primary } : {}}>
-                <Icon size={13} />
+            {VIEWPORTS.map((vp) => (
+              <button key={vp.id} onClick={() => setViewport(vp.id)} title={vp.label} className={`p-1.5 rounded-md transition text-sm ${viewport === vp.id ? 'text-white shadow-sm' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`} style={viewport === vp.id ? { backgroundColor: form.primary } : {}}>
+                <vp.Icon size={13} />
               </button>
             ))}
           </div>
