@@ -50,6 +50,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [availableCourses, setAvailableCourses] = useState([]);
     const [coursesLoading, setCoursesLoading] = useState(false);
     const [coursesLoadError, setCoursesLoadError] = useState('');
+    const [institutionEmailsLoadError, setInstitutionEmailsLoadError] = useState('');
     const subjectNameInputRef = React.useRef(null);
     const subjectCourseSelectRef = React.useRef(null);
 
@@ -119,6 +120,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setClassesActionSuccess('');
             setClassesLoadError('');
             setCoursesLoadError('');
+            setInstitutionEmailsLoadError('');
             if (isEditing && initialData) {
                 const fallbackCourse = (initialData.level && initialData.grade)
                     ? `${initialData.grade} ${initialData.level}`
@@ -312,11 +314,15 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
         const loadInstitutionEmails = async () => {
             if (!isOpen || !user?.institutionId) {
-                if (active) setInstitutionEmails([]);
+                if (active) {
+                    setInstitutionEmails([]);
+                    setInstitutionEmailsLoadError('');
+                }
                 return;
             }
 
             try {
+                setInstitutionEmailsLoadError('');
                 const usersRef = collection(db, 'users');
                 const usersQuery = query(usersRef, where('institutionId', '==', user.institutionId));
                 const usersSnapshot = await getDocs(usersQuery);
@@ -330,8 +336,16 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 ));
 
                 setInstitutionEmails(uniqueEmails);
-            } catch {
-                if (active) setInstitutionEmails([]);
+                setInstitutionEmailsLoadError('');
+            } catch (error) {
+                if (active) {
+                    setInstitutionEmails([]);
+                    if (error?.code === 'permission-denied') {
+                        setInstitutionEmailsLoadError('No tienes permiso para cargar sugerencias de usuarios de la institución.');
+                    } else {
+                        setInstitutionEmailsLoadError('No se pudieron cargar las sugerencias de usuarios. Intentalo de nuevo.');
+                    }
+                }
             }
         };
 
@@ -931,6 +945,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                             <div className="space-y-4">
                                 {canManageSharing && (
                                     <div>
+                                        {institutionEmailsLoadError && (
+                                            <div className="mb-3 rounded-lg border border-red-200 dark:border-red-700 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300">
+                                                {institutionEmailsLoadError}
+                                            </div>
+                                        )}
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                             Compartir con
                                         </label>

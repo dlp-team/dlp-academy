@@ -24,6 +24,19 @@ The classes-tab loader in `SubjectFormModal` silently fell back to an empty list
 ### Validation
 - Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied `courses` query regression coverage.
 
+## [2026-03-31] Sharing Suggestions Load Feedback Hardening
+### Context & Architecture
+`SubjectFormModal` sharing suggestions preload (institution users list) previously failed silently by falling back to an empty suggestions set when the `users` query errored.
+
+### Change
+- Added dedicated sharing preload feedback state: `institutionEmailsLoadError`.
+- Added permission-specific feedback for denied institution `users` reads.
+- Added generic retry feedback for non-permission suggestion-load failures.
+- Rendered explicit inline banner in the sharing tab above share controls.
+
+### Validation
+- Expanded `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` with denied institution `users` query regression coverage.
+
 ## [2026-03-13] Permission Hardening: Viewer Class Tab is Read-Only
 ### Context & Architecture
 Teachers with `viewer` shortcut permissions were still able to interact with class assignment controls in the `Clases` tab.

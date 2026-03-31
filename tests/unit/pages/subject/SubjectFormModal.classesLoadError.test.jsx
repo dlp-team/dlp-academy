@@ -172,4 +172,21 @@ describe('SubjectFormModal classes-load feedback', () => {
       expect(screen.getByText('No tienes permiso para cargar los cursos de esta institución.')).toBeTruthy();
     });
   });
+
+  it('shows sharing-tab feedback when institution users query fails with denied permissions', async () => {
+    firestoreMocks.getDocs.mockImplementation(async (source) => {
+      if (getCollectionName(source) === 'users') {
+        const deniedError = new Error('permission-denied');
+        deniedError.code = 'permission-denied';
+        throw deniedError;
+      }
+      return { docs: [] };
+    });
+
+    renderModal({ initialTab: 'sharing' });
+
+    await waitFor(() => {
+      expect(screen.getByText('No tienes permiso para cargar sugerencias de usuarios de la institución.')).toBeTruthy();
+    });
+  });
 });

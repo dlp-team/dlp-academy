@@ -11,10 +11,14 @@
 - Verifies classes-query permission failures render explicit inline feedback.
 - Verifies classes empty-state remains deterministic after classes-load failure.
 - Verifies courses-query permission failures render explicit inline feedback in the general tab.
+- Verifies sharing-tab institution users query permission failures render explicit preload feedback.
 
 ## Changelog
 ### 2026-03-31
 - Expanded suite with denied `courses` query regression coverage for general-tab load feedback.
+
+### 2026-03-31
+- Expanded suite with denied institution `users` query regression coverage for sharing suggestions preload feedback.
 
 ### 2026-03-31
 - Added initial regression suite for `SubjectFormModal` classes-load success/error reliability behavior.

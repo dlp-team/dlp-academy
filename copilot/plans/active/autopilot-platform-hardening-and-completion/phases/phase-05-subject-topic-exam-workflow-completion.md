@@ -369,6 +369,12 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
 - Added inline general-tab feedback banner so course-load failures are distinguishable from truly empty course lists.
 - Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied `courses` query failures render explicit feedback.
 
+## Progress Update - 2026-03-31 (Slice 40)
+- Hardened `SubjectFormModal` sharing-tab institution-user suggestion preload determinism in `src/pages/Subject/modals/SubjectFormModal.jsx`.
+- Added explicit `institutionEmailsLoadError` feedback state for failed institution `users` query reads.
+- Added permission-specific and generic sharing-tab feedback messaging so suggestion preload failures are visible.
+- Expanded focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` verifying denied institution `users` query failures render explicit sharing-tab feedback.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,
