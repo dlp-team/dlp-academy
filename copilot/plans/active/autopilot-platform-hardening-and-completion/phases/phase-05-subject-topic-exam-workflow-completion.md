@@ -290,6 +290,19 @@ Close the remaining functional gaps in academic workflows (subjects, topics, exa
   - timeout-driven error fallback rendering,
   - retry action returns viewer to loading state.
 
+## Progress Update - 2026-03-31 (Slice 32)
+- Hardened `QuizReviewPage` load determinism in `src/pages/Quizzes/QuizReviewPage.jsx` with explicit fallback states for:
+  - missing route context (`subjectId`/`topicId`/`quizId`),
+  - quiz not found,
+  - permission-denied attempt query failures,
+  - generic load failures.
+- Added explicit fallback card UI (`No se pudo abrir la revision`) with preserved route recovery action (`Volver al tema`) instead of leaving users on ambiguous empty state.
+- Preserved no-attempt success behavior by keeping the existing informational state when attempts load succeeds with zero documents.
+- Added focused page-level regression coverage in `tests/unit/pages/quizzes/QuizReviewPage.test.jsx` verifying:
+  - missing quiz document path renders explicit fallback messaging,
+  - permission-denied attempts query path renders explicit access feedback,
+  - successful empty attempts path still renders the original no-attempt informational state.
+
 ## Validation Gates
 - Workflow checks:
   - teacher create/edit/assign path behaves correctly,
