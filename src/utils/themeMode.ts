@@ -1,9 +1,9 @@
 const THEME_TRANSITION_CLASS = 'theme-switching';
 const THEME_TRANSITION_DURATION_MS = 260;
 
-let transitionCleanupTimer = null;
+let transitionCleanupTimer: ReturnType<typeof setTimeout> | null = null;
 
-const prefersDarkMode = () => {
+const prefersDarkMode = (): boolean => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
         return false;
     }
@@ -11,7 +11,7 @@ const prefersDarkMode = () => {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
 };
 
-const beginThemeTransition = (root) => {
+const beginThemeTransition = (root: HTMLElement): void => {
     root.style.setProperty('--theme-transition-duration', `${THEME_TRANSITION_DURATION_MS}ms`);
     root.classList.add(THEME_TRANSITION_CLASS);
 
@@ -24,7 +24,9 @@ const beginThemeTransition = (root) => {
     }, THEME_TRANSITION_DURATION_MS + 60);
 };
 
-export const resolveThemeMode = (theme) => {
+export type ThemeType = 'light' | 'dark' | 'system' | string | null;
+
+export const resolveThemeMode = (theme: ThemeType): 'light' | 'dark' => {
     if (theme === 'system') {
         return prefersDarkMode() ? 'dark' : 'light';
     }
@@ -32,7 +34,12 @@ export const resolveThemeMode = (theme) => {
     return theme === 'dark' ? 'dark' : 'light';
 };
 
-export const applyThemeToDom = (theme, options = {}) => {
+interface ApplyThemeOptions {
+    animate?: boolean;
+    persist?: boolean;
+}
+
+export const applyThemeToDom = (theme: ThemeType, options: ApplyThemeOptions = {}): 'light' | 'dark' => {
     if (typeof document === 'undefined') {
         return resolveThemeMode(theme);
     }
@@ -51,7 +58,7 @@ export const applyThemeToDom = (theme, options = {}) => {
     root.classList.toggle('dark', shouldUseDark);
 
     if (persist && typeof window !== 'undefined') {
-        localStorage.setItem('theme', theme);
+        localStorage.setItem('theme', theme || 'system');
     }
 
     return resolvedTheme;

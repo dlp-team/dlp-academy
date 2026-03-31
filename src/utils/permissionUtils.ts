@@ -18,7 +18,7 @@
  * @param {string} userId - Current user's UID
  * @returns {boolean}
  */
-export const isOwner = (item, userId) => {
+export const isOwner = (item: any, userId: any): boolean => {
     if (!item || !userId) {
         // console.log('[PERMISSION] isOwner: false', { item, userId });
         return false;
@@ -38,7 +38,7 @@ export const isOwner = (item, userId) => {
  * @param {string} userId - Current user's UID
  * @returns {boolean}
  */
-export const canEdit = (item, userId) => {
+export const canEdit = (item: any, userId: any): boolean => {
     if (!item || !userId) {
         // console.log('[PERMISSION] canEdit: false', { item, userId });
         return false;
@@ -58,7 +58,7 @@ export const canEdit = (item, userId) => {
     // Legacy fallback: check sharedWith array with canEdit property
     let sharedEdit = false;
     if (Array.isArray(item.sharedWith)) {
-        sharedEdit = item.sharedWith.some(share => 
+        sharedEdit = item.sharedWith.some((share: any) => 
             (share.uid === userId || share.email === userId) && (share.canEdit === true || share.role === 'editor')
         );
         if (sharedEdit) {
@@ -81,7 +81,7 @@ export const canEdit = (item, userId) => {
  * @param {string} userId - Current user's UID
  * @returns {boolean}
  */
-export const canView = (item, userId) => {
+export const canView = (item: any, userId: any): boolean => {
     if (!item || !userId) return false;
     
     // If user can edit, they can also view
@@ -94,7 +94,7 @@ export const canView = (item, userId) => {
     
     // Legacy fallback: check sharedWith array (any permission level)
     if (Array.isArray(item.sharedWith)) {
-        return item.sharedWith.some(share => 
+        return item.sharedWith.some((share: any) => 
             share.uid === userId || share.email === userId
         );
     }
@@ -115,7 +115,7 @@ export const canView = (item, userId) => {
  * @param {string} userId - Current user's UID
  * @returns {boolean}
  */
-export const canDelete = (item, userId) => {
+export const canDelete = (item: any, userId: any): boolean => {
     return canEdit(item, userId);
 };
 
@@ -127,7 +127,7 @@ export const canDelete = (item, userId) => {
  * @param {Object} item
  * @returns {boolean}
  */
-export const isShortcutItem = (item) => {
+export const isShortcutItem = (item: any): boolean => {
     if (!item || typeof item !== 'object') return false;
 
     const hasNativeShortcutShape =
@@ -144,7 +144,7 @@ export const isShortcutItem = (item) => {
  * @param {Object} user
  * @returns {boolean}
  */
-export const isOwnedByCurrentUser = (item, user) => {
+export const isOwnedByCurrentUser = (item: any, user: any): boolean => {
     const currentUserId = user?.uid || null;
     if (!item || !currentUserId) return false;
     if (item?.isOwner === true) return true;
@@ -254,7 +254,7 @@ export const getPermissionLevel = (item, userId) => {
     
     // Legacy fallback: check sharedWith array
     if (Array.isArray(item.sharedWith)) {
-        const share = item.sharedWith.find(s => 
+        const share = item.sharedWith.find((s: any) => 
             s.uid === userId || s.email === userId
         );
         if (share) {
@@ -287,7 +287,7 @@ export const isOrphanedShortcut = (shortcut) => {
  * @param {string} userId - Current user's UID
  * @returns {Array} Filtered items
  */
-export const filterViewableItems = (items, userId) => {
+export const filterViewableItems = (items: any[], userId: any): any[] => {
     if (!userId || !Array.isArray(items)) return [];
     return items.filter(item => canView(item, userId));
 };
@@ -299,7 +299,7 @@ export const filterViewableItems = (items, userId) => {
  * @param {string} userId - Current user's UID
  * @returns {Array} Filtered items
  */
-export const filterEditableItems = (items, userId) => {
+export const filterEditableItems = (items: any[], userId: any): any[] => {
     if (!userId || !Array.isArray(items)) return [];
     return items.filter(item => canEdit(item, userId));
 };

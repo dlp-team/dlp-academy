@@ -8,7 +8,7 @@ import {
   Divide, SquareFunction
 } from 'lucide-react';
 
-export const ICON_MAP = {
+export const ICON_MAP: Record<string, any> = {
     // STEM (Science, Tech, Engineering)
     science: FlaskConical,
     physics: Atom,
@@ -58,9 +58,9 @@ export const ICON_MAP = {
     start: Star
 };
 
-export const ICON_KEYS = Object.keys(ICON_MAP);
+export const ICON_KEYS: string[] = Object.keys(ICON_MAP);
 
-export const COLORS = [
+export const COLORS: string[] = [
     'from-blue-400 to-blue-600 dark:from-blue-300 dark:to-blue-500',
     'from-indigo-400 to-indigo-600 dark:from-indigo-300 dark:to-indigo-500',
     'from-purple-400 to-purple-600 dark:from-fuchsia-300 dark:to-violet-400',
@@ -75,7 +75,7 @@ export const COLORS = [
     'from-amber-400 to-amber-600 dark:from-amber-300 dark:to-orange-500',
 ];
 
-const LEGACY_GRADIENT_DARK_VARIANTS = {
+const LEGACY_GRADIENT_DARK_VARIANTS: Record<string, string> = {
     'from-blue-400 to-blue-600': 'dark:from-blue-300 dark:to-blue-500',
     'from-indigo-400 to-indigo-600': 'dark:from-indigo-300 dark:to-indigo-500',
     'from-purple-400 to-purple-600': 'dark:from-fuchsia-300 dark:to-violet-400',
@@ -90,7 +90,7 @@ const LEGACY_GRADIENT_DARK_VARIANTS = {
     'from-amber-400 to-amber-600': 'dark:from-amber-300 dark:to-orange-500'
 };
 
-export const withDarkGradientVariant = (gradientValue = '') => {
+export const withDarkGradientVariant = (gradientValue: string = ''): string => {
     const normalized = String(gradientValue || '').trim().replace(/\s+/g, ' ');
     if (!normalized) return 'from-slate-500 to-slate-700 dark:from-slate-300 dark:to-slate-500';
     if (normalized.includes('dark:')) return normalized;
@@ -102,7 +102,7 @@ export const withDarkGradientVariant = (gradientValue = '') => {
 };
 
 // --- EDUCATION LEVELS CONSTANTS ---
-export const EDUCATION_LEVELS = {
+export const EDUCATION_LEVELS: Record<string, string[]> = {
     'Primaria': ['1º', '2º', '3º', '4º', '5º', '6º'],
     'ESO': ['1º', '2º', '3º', '4º'],
     'Bachillerato': ['1º', '2º'],
@@ -111,7 +111,7 @@ export const EDUCATION_LEVELS = {
 };
 
  // Modern Fill Colors - More vibrant, visible gradients with proper CSS classes
-export const MODERN_FILL_COLORS = [
+export const MODERN_FILL_COLORS: Array<{name: string, value: string}> = [
     { name: 'Neutral', value: 'bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900' },
     { name: 'Azul', value: 'bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/60 dark:to-blue-950/60' },
     { name: 'Índigo', value: 'bg-gradient-to-br from-indigo-100 to-indigo-200 dark:from-indigo-900/60 dark:to-indigo-950/60' },
