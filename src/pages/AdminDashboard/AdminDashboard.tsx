@@ -10,7 +10,6 @@ import {
 import {
     collection, query, where, getDocs,
     serverTimestamp, deleteDoc, doc, updateDoc, writeBatch,
-    limit, startAfter
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
@@ -22,6 +21,7 @@ import AdminConfirmModal from './components/AdminConfirmModal';
 import { parseCsvEmails } from './utils/adminEmailUtils';
 import { filterAdminUsers } from './utils/adminUserFilterUtils';
 import { filterInstitutions } from './utils/adminInstitutionFilterUtils';
+import { buildAdminUsersPageQuery } from './utils/adminUserPaginationQueryUtils';
 import UserTableRow from './components/UserTableRow';
 import InstitutionTableRow from './components/InstitutionTableRow';
 
@@ -556,11 +556,7 @@ const UsersTab = () => {
         else setLoading(true);
 
         try {
-            let q = query(collection(db, 'users'), limit(PAGE_SIZE));
-            
-            if (isNextPage && cursor) {
-                q = query(collection(db, 'users'), startAfter(cursor), limit(PAGE_SIZE));
-            }
+            const q = buildAdminUsersPageQuery(PAGE_SIZE, isNextPage ? cursor : null);
 
             const snap = await getDocs(q);
             

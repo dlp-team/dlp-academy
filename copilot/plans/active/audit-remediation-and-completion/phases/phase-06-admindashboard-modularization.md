@@ -53,10 +53,15 @@ Reduce `AdminDashboard.tsx` complexity by extracting reusable UI primitives from
 - New file: `tests/unit/pages/admin/adminInstitutionFilterUtils.test.js`
 - Moved inline institutions filtering expression in `InstitutionsTab` to `filterInstitutions(...)` utility while preserving filtering semantics.
 
+### Extracted users pagination query utility
+- New file: `src/pages/AdminDashboard/utils/adminUserPaginationQueryUtils.ts`
+- New file: `tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js`
+- Moved inline users pagination query-building expression in `UsersTab` `fetchUsers(...)` to `buildAdminUsersPageQuery(...)` utility while preserving cursor/page-size query semantics.
+
 ## Validation
 - `get_errors`: clean in touched files.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 8/8 files passing, 18/18 tests passing.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 9/9 files passing, 20/20 tests passing.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Next Slices
-- Evaluate extraction of pagination query-building helpers.
+- Evaluate extraction of users confirm-dialog copy/label derivation helpers.
