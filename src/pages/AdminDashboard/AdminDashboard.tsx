@@ -20,6 +20,7 @@ import { buildUserScopedPersistenceKey } from '../../utils/pagePersistence';
 import RoleBadge from './components/RoleBadge';
 import AdminConfirmModal from './components/AdminConfirmModal';
 import { parseCsvEmails } from './utils/adminEmailUtils';
+import UserTableRow from './components/UserTableRow';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -747,32 +748,13 @@ const UsersTab = () => {
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {filtered.length === 0 ? (
                                     <tr><td colSpan={6} className="px-6 py-10 text-center text-slate-400">No se encontraron usuarios.</td></tr>
-                                ) : filtered.map(u => (
-                                    <tr key={u.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 ${u.enabled === false ? 'opacity-60' : ''}`}>
-                                        <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{u.displayName || 'Sin nombre'}</td>
-                                        <td className="px-6 py-4">{u.email}</td>
-                                        <td className="px-6 py-4"><RoleBadge role={u.role} /></td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${u.enabled !== false ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                                                {u.enabled !== false ? 'Activo' : 'Deshabilitado'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <select value={u.role || ''} onChange={e => handleRoleChange(u, e.target.value)}
-                                                className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-purple-400">
-                                                <option value="student">Alumno</option>
-                                                <option value="teacher">Profesor</option>
-                                                <option value="institutionadmin">Admin Institución</option>
-                                                <option value="admin">Admin Global</option>
-                                            </select>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button onClick={() => handleToggle(u)} title={u.enabled !== false ? 'Deshabilitar' : 'Habilitar'}
-                                                className="text-slate-400 hover:text-amber-500 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors">
-                                                {u.enabled !== false ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                                            </button>
-                                        </td>
-                                    </tr>
+                                ) : filtered.map((u) => (
+                                    <UserTableRow
+                                        key={u.id}
+                                        userData={u}
+                                        handleRoleChange={handleRoleChange}
+                                        handleToggle={handleToggle}
+                                    />
                                 ))}
                             </tbody>
                         </table>

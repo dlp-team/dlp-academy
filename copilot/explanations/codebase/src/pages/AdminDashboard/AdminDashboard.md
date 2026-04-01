@@ -34,6 +34,8 @@
 - Re-validated existing integration coverage:
 	- `tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`.
 - Extracted `parseCsvEmails` into `src/pages/AdminDashboard/utils/adminEmailUtils.ts` and added focused utility tests in `tests/unit/pages/admin/adminEmailUtils.test.js`.
+- Extracted users table row UI/actions into `UserTableRow.tsx` and `UserStatusBadge.tsx`, reducing inline table-row complexity in `AdminDashboard.tsx`.
+- Added focused row interaction coverage in `tests/unit/pages/admin/UserTableRow.test.jsx` and re-validated confirm-dialog integration tests.
 
 ### 2026-03-30
 - Replaced browser `window.confirm(...)` dialogs in Admin institutions/users tabs with a shared in-page confirmation modal (`AdminConfirmModal`).

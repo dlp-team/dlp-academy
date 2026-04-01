@@ -26,12 +26,19 @@ Reduce `AdminDashboard.tsx` complexity by extracting reusable UI primitives from
 - New file: `tests/unit/pages/admin/adminEmailUtils.test.js`
 - Moved inline `parseCsvEmails` helper from `AdminDashboard.tsx` to utility module and kept call sites unchanged.
 
+### Extracted users table row components
+- New file: `src/pages/AdminDashboard/components/UserStatusBadge.tsx`
+- New file: `src/pages/AdminDashboard/components/UserTableRow.tsx`
+- New file: `tests/unit/pages/admin/UserTableRow.test.jsx`
+- Moved users-row rendering logic from inline table rows to `UserTableRow` component while preserving callbacks:
+  - role change flow via `handleRoleChange`
+  - enable/disable flow via `handleToggle`
+
 ## Validation
 - `get_errors`: clean in touched files.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 4/4 files passing, 11/11 tests passing.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 5/5 files passing, 13/13 tests passing.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Next Slices
 - Extract institutions-table row actions into a focused component.
-- Extract users-table row actions into a focused component.
 - Evaluate extraction of query-building helpers for pagination and filters.
