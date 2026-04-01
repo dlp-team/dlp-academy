@@ -25,6 +25,15 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+### 2026-04-01
+- Extracted `RoleBadge` and `AdminConfirmModal` from `AdminDashboard.tsx` into dedicated components under `src/pages/AdminDashboard/components/`.
+- Preserved existing dialog contracts and role-label rendering behavior by keeping prop and display logic intact.
+- Added focused component tests:
+	- `tests/unit/pages/admin/RoleBadge.test.jsx`
+	- `tests/unit/pages/admin/AdminConfirmModal.test.jsx`
+- Re-validated existing integration coverage:
+	- `tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`.
+
 ### 2026-03-30
 - Replaced browser `window.confirm(...)` dialogs in Admin institutions/users tabs with a shared in-page confirmation modal (`AdminConfirmModal`).
 - Institution destructive actions now execute only after explicit modal confirmation:
