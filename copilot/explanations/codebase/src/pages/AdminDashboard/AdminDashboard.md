@@ -45,6 +45,7 @@
 - Extracted users role constants and display mappers to `src/pages/AdminDashboard/utils/adminUserRoleConstants.ts`, replacing inline role filter labels and confirm-copy role-label map usage.
 - Extracted users filter controls to `src/pages/AdminDashboard/components/AdminUsersFilters.tsx`, replacing inline users-tab role/search/status controls with componentized callback wiring.
 - Extracted institutions filter controls and create-toggle trigger to `src/pages/AdminDashboard/components/AdminInstitutionsFilters.tsx`, replacing inline institutions-tab filter/search/button controls with componentized callback wiring.
+- Extracted institutions create/edit form panel to `src/pages/AdminDashboard/components/InstitutionFormPanel.tsx`, replacing inline form markup and preserving submit/close and field-normalization behavior.
 
 ### 2026-03-30
 - Replaced browser `window.confirm(...)` dialogs in Admin institutions/users tabs with a shared in-page confirmation modal (`AdminConfirmModal`).
