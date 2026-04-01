@@ -1,7 +1,6 @@
 // src/pages/Home/Home.jsx
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 
@@ -10,7 +9,11 @@ import { useHomeLogic } from './hooks/useHomeLogic';
 import { useFolders } from '../../hooks/useFolders'; 
 import { useHomePageState } from './hooks/useHomePageState';
 import { useHomePageHandlers } from './hooks/useHomePageHandlers';
-import { useHomeKeyboardShortcuts } from './hooks/useHomeKeyboardShortcuts';
+import { useHomeFolderRoutingSync } from './hooks/useHomeFolderRoutingSync';
+import { useHomeTreeData } from './hooks/useHomeTreeData';
+import { useHomeBulkSelection } from './hooks/useHomeBulkSelection';
+import { useHomeControlTags } from './hooks/useHomeControlTags';
+import { useHomeKeyboardCoordination } from './hooks/useHomeKeyboardCoordination';
 
 
 // Layout & Global Components
@@ -22,8 +25,10 @@ import SharedView from './components/SharedView';
 // Sub-Components
 import HomeControls from './components/HomeControls';
 import HomeSelectionToolbar from './components/HomeSelectionToolbar';
+import HomeShortcutFeedback from './components/HomeShortcutFeedback';
 import HomeContent from './components/HomeContent';
 import HomeEmptyState from './components/HomeEmptyState';
+import HomeLoader from './components/HomeLoader';
 import HomeModals from './components/HomeModals';
 import HomeShareConfirmModals from './components/HomeShareConfirmModals';
 import BinView from './components/BinView';
@@ -39,7 +44,6 @@ import {
     isShortcutItem,
     isSharedForCurrentUser as isSharedForCurrentUserUtil
 } from '../../utils/permissionUtils';
-import { mergeSourceAndShortcutItems } from '../../utils/mergeUtils';
 import { useInstitutionHomeThemeTokens } from './hooks/useInstitutionHomeThemeTokens';
 import {
     saveLastHomeFolderId,
@@ -49,16 +53,11 @@ import {
 
 const HomeControlsComponent: any = HomeControls;
 
-
-
 const Home = ({ user }: any) => {
 
     const [searchQuery, setSearchQuery] = useState('');
     const [sharedScopeSelected, setSharedScopeSelected] = useState(true);
     const [hasInitialDataLoaded, setHasInitialDataLoaded] = useState(false);
-    const [selectMode, setSelectMode] = useState(false);
-    const [selectedItemsByKey, setSelectedItemsByKey] = useState<any>({});
-    const [bulkMoveTargetFolderId, setBulkMoveTargetFolderId] = useState('');
     const [bulkActionMessage, setBulkActionMessage] = useState('');
     const [bulkActionTone, setBulkActionTone] = useState('success');
     const [searchParams, setSearchParams] = useSearchParams();
@@ -66,12 +65,30 @@ const Home = ({ user }: any) => {
     const isStudentRole = useMemo(() => getNormalizedRole(user) === 'student', [user]);
     const rememberOrganization = user?.rememberSort !== false;
     const defaultViewMode = user?.viewMode || 'grid';
+
     const publishHomeFeedback = React.useCallback((message, tone = 'success') => {
         setBulkActionTone(tone);
         setBulkActionMessage(message || '');
     }, []);
 
     const logic: any = useHomeLogic(user, searchQuery, rememberOrganization, publishHomeFeedback);
+    const {
+        selectMode,
+        setSelectMode,
+        selectedItems,
+        selectedItemKeys,
+        bulkMoveTargetFolderId,
+        setBulkMoveTargetFolderId,
+        clearSelection,
+        toggleSelectItem,
+        runBulkMoveToFolder,
+        handleBulkDelete,
+        handleCreateFolderFromSelection
+    } = useHomeBulkSelection({
+        logic,
+        isStudentRole,
+        onHomeFeedback: publishHomeFeedback
+    });
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
     const {
         isFilterOpen,
@@ -129,70 +146,17 @@ const Home = ({ user }: any) => {
         logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: subject, initialTab: 'sharing' });
     }, [logic]);
 
-    React.useEffect(() => {
-        if (!user) {
-            setHasInitialDataLoaded(false);
-            return;
-        }
-
-        if (!logic.loading && !logic.loadingFolders) {
-            setHasInitialDataLoaded(true);
-        }
-    }, [user, logic.loading, logic.loadingFolders]);
-
-    React.useEffect(() => {
-        if (isStudentRole) {
-            if (logic.currentFolder) {
-                logic.setCurrentFolder(null);
-            }
-            if (logic.viewMode === 'shared') {
-                logic.setViewMode('grid');
-            }
-            if (rememberOrganization) {
-                clearLastHomeFolderId();
-            }
-            const next = new URLSearchParams(searchParams);
-            if (next.has('folderId')) {
-                next.delete('folderId');
-                setSearchParams(next, { replace: true });
-            }
-            return;
-        }
-
-        if (!folderIdFromUrl || !Array.isArray(logic.folders) || logic.folders.length === 0) return;
-
-        const targetFolder = logic.folders.find(folder => folder.id === folderIdFromUrl);
-
-        if (targetFolder && (!logic.currentFolder || logic.currentFolder.id !== targetFolder.id)) {
-            logic.setCurrentFolder(targetFolder);
-            setPersistedFolderId(targetFolder);
-        }
-
-        if (!targetFolder) {
-            const next = new URLSearchParams(searchParams);
-            next.delete('folderId');
-            setSearchParams(next, { replace: true });
-        }
-    }, [folderIdFromUrl, logic.folders, isStudentRole, rememberOrganization, setSearchParams, setPersistedFolderId]);
-
-    React.useEffect(() => {
-        if (isStudentRole) return;
-        const next = new URLSearchParams(searchParams);
-        const currentId = logic.currentFolder ? logic.currentFolder.id : null;
-
-        if (currentId) {
-            if (next.get('folderId') !== currentId) {
-                next.set('folderId', currentId);
-                setSearchParams(next, { replace: true });
-            }
-            return;
-        }
-
-        if (next.has('folderId')) {
-            next.delete('folderId');
-            setSearchParams(next, { replace: true });
-        }
-    }, [logic.currentFolder?.id, isStudentRole]);
+    useHomeFolderRoutingSync({
+        user,
+        logic,
+        isStudentRole,
+        rememberOrganization,
+        searchParams,
+        setSearchParams,
+        folderIdFromUrl,
+        setPersistedFolderId,
+        setHasInitialDataLoaded
+    });
 
     const {
         handleSaveFolderWrapper,
@@ -222,34 +186,12 @@ const Home = ({ user }: any) => {
         rememberOrganization
     });
 
-    const { handleCardFocus, shortcutFeedback, getCardVisualState } = useHomeKeyboardShortcuts({
+    const { handleCardFocus, shortcutFeedback, getCardVisualState } = useHomeKeyboardCoordination({
         user,
         logic
     });
 
-    const treeFolders = useMemo(() => {
-        const baseFolders = Array.isArray(logic.folders) ? logic.folders : [];
-        const shortcutFolders = Array.isArray(logic.resolvedShortcuts)
-            ? logic.resolvedShortcuts.filter(item => item?.targetType === 'folder')
-            : [];
-
-        return (mergeSourceAndShortcutItems as any)({
-            sourceItems: baseFolders as any[],
-            shortcutItems: shortcutFolders as any[]
-        }) as any[];
-    }, [logic.folders, logic.resolvedShortcuts]);
-
-    const treeSubjects = useMemo(() => {
-        const baseSubjects = Array.isArray(logic.subjects) ? logic.subjects : [];
-        const shortcutSubjects = Array.isArray(logic.resolvedShortcuts)
-            ? logic.resolvedShortcuts.filter(item => item?.targetType === 'subject')
-            : [];
-
-        return (mergeSourceAndShortcutItems as any)({
-            sourceItems: baseSubjects as any[],
-            shortcutItems: shortcutSubjects as any[]
-        }) as any[];
-    }, [logic.subjects, logic.resolvedShortcuts]);
+    const { treeFolders, treeSubjects } = useHomeTreeData(logic);
 
     const isSharedForCurrentUser = React.useCallback((item: any) => {
         return isSharedForCurrentUserUtil(item, user);
@@ -257,27 +199,22 @@ const Home = ({ user }: any) => {
 
     const effectiveSharedScopeSelected = logic.viewMode === 'shared' ? true : sharedScopeSelected;
 
+    const { availableControlTags } = useHomeControlTags({
+        logic,
+        isStudentRole,
+        sharedFolders,
+        sharedSubjects,
+        sharedSelectedTags,
+        setSharedSelectedTags,
+        effectiveSharedScopeSelected,
+        isSharedForCurrentUser
+    });
+
     React.useEffect(() => {
         if (logic.viewMode === 'shared' && sharedScopeSelected !== true) {
             setSharedScopeSelected(true);
         }
     }, [logic.viewMode, sharedScopeSelected]);
-
-    const availableControlTags = useMemo(() => {
-        const sourceFolders = logic.viewMode === 'shared' ? (sharedFolders || []) : (logic.filteredFolders || logic.folders || []);
-        const sourceSubjects = logic.viewMode === 'shared' ? (sharedSubjects || []) : (logic.filteredSubjects || logic.subjects || []);
-
-        const roleScopedFolders = isStudentRole ? [] : sourceFolders;
-
-        const effectiveFolders = effectiveSharedScopeSelected ? roleScopedFolders : roleScopedFolders.filter(item => !isSharedForCurrentUser(item));
-        const effectiveSubjects = effectiveSharedScopeSelected ? sourceSubjects : sourceSubjects.filter(item => !isSharedForCurrentUser(item));
-
-        const tagSet = new Set();
-        effectiveFolders.forEach(folder => (Array.isArray(folder?.tags) ? folder.tags : []).forEach(tag => tagSet.add(tag)));
-        effectiveSubjects.forEach(subject => (Array.isArray(subject?.tags) ? subject.tags : []).forEach(tag => tagSet.add(tag)));
-
-        return Array.from(tagSet).filter(Boolean).sort();
-    }, [logic.viewMode, sharedFolders, sharedSubjects, logic.filteredFolders, logic.folders, logic.filteredSubjects, logic.subjects, effectiveSharedScopeSelected, isSharedForCurrentUser, isStudentRole]);
 
     const canCreateInManualContext = useMemo(() => {
         if (!canCreateSubjectByRole(user)) return false;
@@ -300,212 +237,6 @@ const Home = ({ user }: any) => {
         return Object.values(logic.groupedContent || {}).some((bucket) => Array.isArray(bucket) && bucket.length > 0);
     }, [isStudentRole, hasContent, logic.groupedContent]);
 
-    const selectedItems = useMemo(() => Object.values(selectedItemsByKey), [selectedItemsByKey]);
-    const selectedItemKeys = useMemo(() => new Set(Object.keys(selectedItemsByKey)), [selectedItemsByKey]);
-
-    const buildSelectionKey = React.useCallback((item, type) => `${type}:${item?.shortcutId || item?.id}`, []);
-
-    const clearSelection = React.useCallback(() => {
-        setSelectedItemsByKey({});
-        setBulkMoveTargetFolderId('');
-    }, []);
-
-    const setSelectionFromEntries = React.useCallback((entries: any[] = []) => {
-        const nextSelection: any = {};
-        entries.forEach((entry: any) => {
-            if (!entry?.key) return;
-            nextSelection[entry.key] = entry;
-        });
-        setSelectedItemsByKey(nextSelection);
-        if (entries.length === 0) {
-            setBulkMoveTargetFolderId('');
-        }
-    }, []);
-
-    const toggleSelectItem = React.useCallback((item, type: any) => {
-        if (!item?.id || !type) return;
-        const key = buildSelectionKey(item, type);
-        setSelectedItemsByKey((prev: any) => {
-            if (prev[key]) {
-                const next = { ...prev };
-                delete next[key];
-                return next;
-            }
-            return {
-                ...prev,
-                [key]: { key, type, item }
-            };
-        });
-    }, [buildSelectionKey]);
-
-    const runBulkMoveToFolder = React.useCallback(async (targetFolderId: any) => {
-        const destination = targetFolderId || null;
-        const itemsToMove = Object.values(selectedItemsByKey);
-        if (itemsToMove.length === 0) return;
-
-        const settledResults = await Promise.allSettled(
-            itemsToMove.map(async (entry: any) => {
-                const item = entry?.item;
-                const type = entry?.type;
-                if (!item?.id || !type) {
-                    return { moved: false, skipped: true, entry };
-                }
-
-                try {
-                    if (type === 'subject') {
-                        if (isShortcutItem(item) && item?.shortcutId) {
-                            await logic.moveShortcut(item.shortcutId, destination);
-                            return { moved: true, entry };
-                        }
-
-                        await logic.updateSubject(item.id, { folderId: destination });
-                        return { moved: true, entry };
-                    }
-
-                    if (type === 'folder') {
-                        if (destination && item.id === destination) {
-                            return { moved: false, skipped: true, entry };
-                        }
-
-                        if (isShortcutItem(item) && item?.shortcutId) {
-                            await logic.moveShortcut(item.shortcutId, destination);
-                            return { moved: true, entry };
-                        }
-
-                        await logic.updateFolder(item.id, { parentId: destination });
-                        return { moved: true, entry };
-                    }
-
-                    return { moved: false, skipped: true, entry };
-                } catch (error: any) {
-                    const wrappedError: any = new Error(error?.message || 'No se pudo mover el elemento.');
-                    wrappedError.entry = entry;
-                    throw wrappedError;
-                }
-            })
-        );
-
-        let moved = 0;
-        const failedEntries: any[] = [];
-
-        settledResults.forEach((result: any) => {
-            if (result.status === 'fulfilled') {
-                if (result.value?.moved) moved += 1;
-                return;
-            }
-
-            if (result.reason?.entry) {
-                failedEntries.push(result.reason.entry);
-            }
-        });
-
-        if (failedEntries.length > 0) {
-            setSelectionFromEntries(failedEntries);
-            setSelectMode(true);
-        } else {
-            clearSelection();
-            setSelectMode(false);
-        }
-
-        if (failedEntries.length === 0) {
-            publishHomeFeedback(`Se movieron ${moved} elemento(s).`, 'success');
-        } else if (moved === 0) {
-            publishHomeFeedback('No se pudieron mover los elementos seleccionados por permisos o conflictos.', 'error');
-        } else {
-            publishHomeFeedback(`Se movieron ${moved} elemento(s) y ${failedEntries.length} no se pudieron mover.`, 'warning');
-        }
-    }, [selectedItemsByKey, logic, clearSelection, setSelectionFromEntries, publishHomeFeedback]);
-
-    const handleBulkDelete = React.useCallback(async () => {
-        const itemsToDelete = Object.values(selectedItemsByKey);
-        if (itemsToDelete.length === 0) return;
-
-        const settledResults = await Promise.allSettled(
-            itemsToDelete.map(async (entry: any) => {
-                const item = entry?.item;
-                const type = entry?.type;
-                if (!item?.id || !type) {
-                    return { deleted: false, skipped: true, entry };
-                }
-
-                try {
-                    if (isShortcutItem(item) && item?.shortcutId) {
-                        await logic.deleteShortcut(item.shortcutId);
-                        return { deleted: true, entry };
-                    }
-
-                    if (type === 'subject') {
-                        await logic.deleteSubject(item.id);
-                        return { deleted: true, entry };
-                    }
-
-                    await logic.deleteFolder(item.id);
-                    return { deleted: true, entry };
-                } catch (error: any) {
-                    const wrappedError: any = new Error(error?.message || 'No se pudo eliminar el elemento.');
-                    wrappedError.entry = entry;
-                    throw wrappedError;
-                }
-            })
-        );
-
-        let deleted = 0;
-        const failedEntries: any[] = [];
-
-        settledResults.forEach((result: any) => {
-            if (result.status === 'fulfilled') {
-                if (result.value?.deleted) deleted += 1;
-                return;
-            }
-
-            if (result.reason?.entry) {
-                failedEntries.push(result.reason.entry);
-            }
-        });
-
-        if (failedEntries.length > 0) {
-            setSelectionFromEntries(failedEntries);
-            setSelectMode(true);
-        } else {
-            clearSelection();
-            setSelectMode(false);
-        }
-
-        if (failedEntries.length === 0) {
-            publishHomeFeedback(`Se eliminaron ${deleted} elemento(s).`, 'success');
-        } else if (deleted === 0) {
-            publishHomeFeedback('No se pudieron eliminar los elementos seleccionados por permisos o dependencias.', 'error');
-        } else {
-            publishHomeFeedback(`Se eliminaron ${deleted} elemento(s) y ${failedEntries.length} no se pudieron eliminar.`, 'warning');
-        }
-    }, [selectedItemsByKey, logic, clearSelection, setSelectionFromEntries, publishHomeFeedback]);
-
-    const handleCreateFolderFromSelection = React.useCallback(async () => {
-        const itemsToOrganize = Object.values(selectedItemsByKey);
-        if (itemsToOrganize.length === 0) return;
-
-        try {
-            const createdFolder = await logic.addFolder({
-                name: 'Nueva carpeta seleccionada',
-                parentId: logic.currentFolder?.id || null,
-                color: 'from-amber-400 to-amber-600'
-            });
-
-            await runBulkMoveToFolder(createdFolder?.id || null);
-            publishHomeFeedback('Se creó una carpeta nueva y se procesó la selección.', 'success');
-            setSelectMode(false);
-        } catch {
-            publishHomeFeedback('No se pudo crear la carpeta para organizar la selección.', 'error');
-        }
-    }, [selectedItemsByKey, logic, runBulkMoveToFolder, publishHomeFeedback]);
-
-    React.useEffect(() => {
-        if (logic.viewMode === 'shared' || logic.viewMode === 'bin' || isStudentRole) {
-            setSelectMode(false);
-            clearSelection();
-        }
-    }, [logic.viewMode, isStudentRole, clearSelection]);
-
     React.useEffect(() => {
         if (!bulkActionMessage) return;
         const timer = window.setTimeout(() => {
@@ -515,29 +246,8 @@ const Home = ({ user }: any) => {
         return () => window.clearTimeout(timer);
     }, [bulkActionMessage]);
 
-    React.useEffect(() => {
-        const availableTagSet = new Set(availableControlTags);
-        if (logic.viewMode === 'shared') {
-            const pruned = (sharedSelectedTags || []).filter(tag => availableTagSet.has(tag));
-            if (pruned.length !== (sharedSelectedTags || []).length) {
-                setSharedSelectedTags(pruned);
-            }
-            return;
-        }
-
-        const currentTags = logic.selectedTags || [];
-        const pruned = currentTags.filter(tag => availableTagSet.has(tag));
-        if (pruned.length !== currentTags.length) {
-            logic.setSelectedTags(pruned);
-        }
-    }, [availableControlTags, logic.viewMode, sharedSelectedTags, setSharedSelectedTags, logic.selectedTags, logic.setSelectedTags]);
-
     if (!user || (!hasInitialDataLoaded && (logic.loading || logic.loadingFolders))) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 transition-colors">
-                <Loader2 className="w-10 h-10 text-indigo-600 dark:text-indigo-400 animate-spin" />
-            </div>
-        );
+        return <HomeLoader fullPage />;
     }
 
     return (
@@ -602,11 +312,7 @@ const Home = ({ user }: any) => {
 
                 </div>
 
-                {shortcutFeedback ? (
-                    <p className={`${homeThemeTokens.mutedTextClass} mt-4 rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/60`}>
-                        {shortcutFeedback}
-                    </p>
-                ) : null}
+                <HomeShortcutFeedback message={shortcutFeedback} mutedTextClass={homeThemeTokens.mutedTextClass} />
 
                 <HomeSelectionToolbar
                     visible={logic.viewMode !== 'shared' && logic.viewMode !== 'bin' && !isStudentRole}
@@ -763,9 +469,7 @@ const Home = ({ user }: any) => {
                         />
 
                         {!hasInitialDataLoaded && logic.loading ? (
-                             <div className="flex justify-center py-12">
-                                <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
-                            </div>
+                            <HomeLoader />
                         ) : (
                             <>
                                 {effectiveHasContent ? (

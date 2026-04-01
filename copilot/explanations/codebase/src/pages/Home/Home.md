@@ -1,6 +1,10 @@
 # Home.jsx
 
 ## Changelog
+- **2026-04-01:** Extracted keyboard feedback coordination into `useHomeKeyboardCoordination.ts` and moved feedback banner UI into `HomeShortcutFeedback.tsx` to keep `Home.tsx` orchestration-focused.
+- **2026-04-01:** Extracted control-tag derivation and selected-tag pruning into `useHomeControlTags.ts` to reduce `Home.tsx` memo/effect density while preserving shared/manual tag behavior.
+- **2026-04-01:** Extracted both bootstrap and inline loading shells into `HomeLoader.tsx` so `Home.tsx` no longer owns loading presentation markup.
+- **2026-04-01:** Extracted bulk selection orchestration from `Home.tsx` into `useHomeBulkSelection.ts`, preserving toolbar behaviors (move/delete/create-folder-from-selection), partial-failure handling, and mode-based selection reset.
 - **2026-03-13:** Bulk selection actions now auto-exit selection mode after execution (delete, move, and create-folder-from-selection).
 - **2026-03-13:** Extracted selection toolbar UI into `HomeSelectionToolbar` component to keep `Home.jsx` orchestration-focused while preserving existing bulk-selection behavior.
 - **2026-03-13:** Added `Modo selección` workflow in Home manual views with bulk actions for selected cards: delete selected, move selection to existing folder/root, and create new folder with selected elements.
