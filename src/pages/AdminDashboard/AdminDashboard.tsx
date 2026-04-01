@@ -20,6 +20,7 @@ import { buildUserScopedPersistenceKey } from '../../utils/pagePersistence';
 import RoleBadge from './components/RoleBadge';
 import AdminConfirmModal from './components/AdminConfirmModal';
 import { parseCsvEmails } from './utils/adminEmailUtils';
+import { filterAdminUsers } from './utils/adminUserFilterUtils';
 import UserTableRow from './components/UserTableRow';
 import InstitutionTableRow from './components/InstitutionTableRow';
 
@@ -640,17 +641,7 @@ const UsersTab = () => {
 
     const ROLES = ['all', 'admin', 'institutionadmin', 'teacher', 'student'];
 
-    const filtered = users.filter(u => {
-        const matchSearch = u.email?.toLowerCase().includes(search.toLowerCase()) ||
-                            u.displayName?.toLowerCase().includes(search.toLowerCase());
-        const matchRole = roleFilter === 'all' || u.role === roleFilter;
-        
-        const matchStatus = statusFilter === 'all' ? true :
-                            statusFilter === 'active' ? u.enabled !== false :
-                            u.enabled === false;
-
-        return matchSearch && matchRole && matchStatus;
-    });
+    const filtered = filterAdminUsers(users, search, roleFilter, statusFilter);
 
     const targetUserLabel = userConfirm.user?.email || userConfirm.user?.displayName || 'este usuario';
     const userConfirmTitle = userConfirm.action === 'role'
