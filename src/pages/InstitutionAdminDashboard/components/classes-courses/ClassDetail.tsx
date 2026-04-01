@@ -1,4 +1,4 @@
-// src/pages/InstitutionAdminDashboard/components/classes-courses/ClassDetail.jsx
+// src/pages/InstitutionAdminDashboard/components/classes-courses/ClassDetail.tsx
 // ─────────────────────────────────────────────────────────────────────────────
 // Detailed view for a single class.
 // • Every field editable individually via pencil → inline form → save/cancel.
@@ -15,7 +15,7 @@ import {
   SearchInput,
   SectionCard,
   StatCard,
-} from './Shared.jsx';
+} from './Shared';
 
 // ─── PersonPicker ─────────────────────────────────────────────────────────────
 // One component for both teacher (singleSelect=true) and students (singleSelect=false).

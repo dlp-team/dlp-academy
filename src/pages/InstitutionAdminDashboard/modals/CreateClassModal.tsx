@@ -1,4 +1,4 @@
-// src/pages/InstitutionAdminDashboard/modals/CreateClassModal.jsx
+// src/pages/InstitutionAdminDashboard/modals/CreateClassModal.tsx
 // ─────────────────────────────────────────────────────────────────────────────
 // Creates a new class.
 //
@@ -17,7 +17,7 @@ import {
   Modal,
   primaryBtnCls,
   SearchInput,
-} from '../components/classes-courses/Shared.jsx';
+} from '../components/classes-courses/Shared';
 
 // ─── Shared PersonPicker ──────────────────────────────────────────────────────
 // Identical component to the one in ClassDetail, extracted here so both files

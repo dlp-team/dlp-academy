@@ -13,7 +13,7 @@ const mocks = vi.hoisted(() => ({
   deleteClass: vi.fn(),
 }));
 
-vi.mock('../../../../src/pages/InstitutionAdminDashboard/hooks/useClassesCourses.js', () => ({
+vi.mock('../../../../src/pages/InstitutionAdminDashboard/hooks/useClassesCourses', () => ({
   useClassesCourses: () => ({
     courses: [
       {

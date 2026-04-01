@@ -1,4 +1,4 @@
-// src/pages/InstitutionAdminDashboard/modals/CreateCourseModal.jsx
+// src/pages/InstitutionAdminDashboard/modals/CreateCourseModal.tsx
 // ─────────────────────────────────────────────────────────────────────────────
 // Course name is built from two separate fields:
 //   • courseNumber  – positive integer  (e.g. 1)
@@ -17,7 +17,7 @@ import {
   inputCls,
   Modal,
   primaryBtnCls,
-} from '../components/classes-courses/Shared.jsx';
+} from '../components/classes-courses/Shared';
 
 const CreateCourseModal = ({ onClose, onSubmit, submitting, error }: any) => {
   const [courseNumber, setCourseNumber] = useState('');

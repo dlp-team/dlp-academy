@@ -1,6 +1,7 @@
+// src/main.tsx
 import { createRoot } from 'react-dom/client'
 import './index.css'
-import App from './App.jsx'
+import App from './App'
 
 // StrictMode removed: Firebase onSnapshot listeners are incompatible with
 // StrictMode's intentional double-invocation of effects in dev mode.

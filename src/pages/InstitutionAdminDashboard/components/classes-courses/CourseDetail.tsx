@@ -1,4 +1,4 @@
-// src/pages/InstitutionAdminDashboard/components/classes-courses/CourseDetail.jsx
+// src/pages/InstitutionAdminDashboard/components/classes-courses/CourseDetail.tsx
 // ─────────────────────────────────────────────────────────────────────────────
 // Detailed view for a single course.
 // • Per-field inline editing via pencil → form → save/cancel.
@@ -15,7 +15,7 @@ import {
   inputCls,
   SectionCard,
   StatCard,
-} from './Shared.jsx';
+} from './Shared';
 
 // ─── Classes mini-list inside course detail ───────────────────────────────────
 const CourseClassesList = ({ courseClasses, allTeachers, color }: any) => {

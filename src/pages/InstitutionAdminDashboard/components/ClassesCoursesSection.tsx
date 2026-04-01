@@ -1,4 +1,4 @@
-// src/pages/InstitutionAdminDashboard/components/ClassesCoursesSection.jsx
+// src/pages/InstitutionAdminDashboard/components/ClassesCoursesSection.tsx
 // ─────────────────────────────────────────────────────────────────────────────
 // Orchestrator: owns navigation state (which tab / which item / which modal)
 // and delegates all data ops to useClassesCourses, all rendering to sub-components.
@@ -6,15 +6,15 @@
 import React from 'react';
 import { FolderOpen, LayoutGrid, Loader2, Plus } from 'lucide-react';
 
-import { useClassesCourses } from '../hooks/useClassesCourses.js';
-import CourseList            from './classes-courses/CourseList.jsx';
-import CourseDetail          from './classes-courses/CourseDetail.jsx';
-import ClassList             from './classes-courses/ClassList.jsx';
-import ClassDetail           from './classes-courses/ClassDetail.jsx';
-import CreateCourseModal     from '../modals/CreateCourseModal.jsx';
-import CreateClassModal      from '../modals/CreateClassModal.jsx';
-import { usePersistentState } from '../../../hooks/usePersistentState.js';
-import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence.js';
+import { useClassesCourses } from '../hooks/useClassesCourses';
+import CourseList            from './classes-courses/CourseList';
+import CourseDetail          from './classes-courses/CourseDetail';
+import ClassList             from './classes-courses/ClassList';
+import ClassDetail           from './classes-courses/ClassDetail';
+import CreateCourseModal     from '../modals/CreateCourseModal';
+import CreateClassModal      from '../modals/CreateClassModal';
+import { usePersistentState } from '../../../hooks/usePersistentState';
+import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence';
 
 const TAB_COURSES = 'courses';
 const TAB_CLASSES = 'classes';
