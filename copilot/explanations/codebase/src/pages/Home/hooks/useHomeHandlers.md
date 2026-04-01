@@ -1,4 +1,14 @@
 <!-- copilot/explanations/codebase/src/pages/Home/hooks/useHomeHandlers.md -->
+## [2026-04-01] Subject Save Flow: Policy-Specific Teacher Creation Denial Messaging
+### Context & Architecture
+- Phase 09 added teacher creation policy gating in `useSubjects.addSubject`, producing a specific user-facing denial message when disabled.
+
+### Change
+- Updated `handleSaveSubject` error handling to surface the specific policy-denial message while preserving generic fallback messaging for all other save failures.
+
+### Validation
+- Covered by focused Home/useSubjects suite and policy integration tests.
+
 ## [2026-03-30] Replaced Alert-Based DnD Errors with In-Page Feedback
 ### Context & Architecture
 - Home drag-and-drop failure handlers were still using browser alerts, which interrupted workflow and violated in-page feedback UX requirements.

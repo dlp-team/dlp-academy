@@ -1,6 +1,11 @@
 // copilot/explanations/codebase/tests/rules/firestore.rules.test.md
 
 ## Changelog
+### 2026-04-01: Teacher autonomous subject-creation policy enforcement coverage
+- Added rules tests validating institution-configurable teacher subject creation:
+  - deny teacher create when `accessPolicies.teachers.allowTeacherAutonomousSubjectCreation` is `false`,
+  - allow teacher create when policy is explicitly `true`.
+
 ### 2026-03-30: Teacher recognition updates coverage
 - Added dedicated user-rule tests validating teacher-scoped recognition updates:
   - allow teacher updating `badges`, `badgesByCourse`, `behaviorScore`, `updatedAt` for same-institution student,

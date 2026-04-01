@@ -95,6 +95,12 @@ describe('route role guard helpers', () => {
 
     expect(canCreateSubjectByRole('student')).toBe(false);
     expect(canCreateSubjectByRole('teacher')).toBe(true);
+    expect(
+      canCreateSubjectByRole('teacher', { allowTeacherAutonomousSubjectCreation: false })
+    ).toBe(false);
+    expect(
+      canCreateSubjectByRole('institutionadmin', { allowTeacherAutonomousSubjectCreation: false })
+    ).toBe(true);
 
     expect(canCreateFolderByRole('student')).toBe(false);
     expect(canCreateFolderByRole('institutionadmin')).toBe(true);

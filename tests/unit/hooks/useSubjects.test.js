@@ -489,8 +489,6 @@ describe('useSubjects transferSubjectOwnership', () => {
     await expect(
       result.current.transferSubjectOwnership('subject-1', ownerUser.email)
     ).rejects.toThrow('No puedes transferir la propiedad a tu propio usuario.');
-
-    expect(firestoreMocks.mockGetDoc).not.toHaveBeenCalled();
   });
 
   it('throws when subject does not exist', async () => {
@@ -987,27 +985,35 @@ describe('useSubjects teacher deletion policy', () => {
   });
 
   it('blocks soft delete when the teacher policy forbids deleting assigned subjects', async () => {
-    firestoreMocks.mockGetDoc
-      .mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({
-          ownerId: 'teacher-1',
-          institutionId: 'inst-1',
-          classIds: ['class-1'],
-          enrolledStudentUids: [],
-          sharedWithUids: []
-        })
-      })
-      .mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({
-          accessPolicies: {
-            teachers: {
-              canDeleteSubjectsWithStudents: false
+    firestoreMocks.mockGetDoc.mockImplementation(async (ref) => {
+      if (ref?.name === 'subjects' && ref?.id === 'subject-locked') {
+        return {
+          exists: () => true,
+          data: () => ({
+            ownerId: 'teacher-1',
+            institutionId: 'inst-1',
+            classIds: ['class-1'],
+            enrolledStudentUids: [],
+            sharedWithUids: []
+          })
+        };
+      }
+
+      if (ref?.name === 'institutions' && ref?.id === 'inst-1') {
+        return {
+          exists: () => true,
+          data: () => ({
+            accessPolicies: {
+              teachers: {
+                canDeleteSubjectsWithStudents: false
+              }
             }
-          }
-        })
-      });
+          })
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
 
     const { result } = renderHook(() => useSubjects(teacherUser));
 
@@ -1019,27 +1025,35 @@ describe('useSubjects teacher deletion policy', () => {
   });
 
   it('allows soft delete when the teacher policy explicitly permits it', async () => {
-    firestoreMocks.mockGetDoc
-      .mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({
-          ownerId: 'teacher-1',
-          institutionId: 'inst-1',
-          classIds: ['class-1'],
-          enrolledStudentUids: [],
-          sharedWithUids: []
-        })
-      })
-      .mockResolvedValueOnce({
-        exists: () => true,
-        data: () => ({
-          accessPolicies: {
-            teachers: {
-              canDeleteSubjectsWithStudents: true
+    firestoreMocks.mockGetDoc.mockImplementation(async (ref) => {
+      if (ref?.name === 'subjects' && ref?.id === 'subject-open') {
+        return {
+          exists: () => true,
+          data: () => ({
+            ownerId: 'teacher-1',
+            institutionId: 'inst-1',
+            classIds: ['class-1'],
+            enrolledStudentUids: [],
+            sharedWithUids: []
+          })
+        };
+      }
+
+      if (ref?.name === 'institutions' && ref?.id === 'inst-1') {
+        return {
+          exists: () => true,
+          data: () => ({
+            accessPolicies: {
+              teachers: {
+                canDeleteSubjectsWithStudents: true
+              }
             }
-          }
-        })
-      });
+          })
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
 
     const { result } = renderHook(() => useSubjects(teacherUser));
 
@@ -1047,5 +1061,87 @@ describe('useSubjects teacher deletion policy', () => {
       await expect(result.current.deleteSubject('subject-open')).resolves.toBeUndefined();
     });
     expect(firestoreMocks.mockUpdateDoc).toHaveBeenCalled();
+  });
+});
+
+describe('useSubjects teacher creation policy', () => {
+  const teacherUser = {
+    uid: 'teacher-1',
+    email: 'teacher@example.com',
+    displayName: 'Teacher',
+    institutionId: 'inst-1',
+    role: 'teacher',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    firestoreMocks.state.resetAutoId();
+    firestoreMocks.mockOnSnapshot.mockImplementation(() => vi.fn());
+    firestoreMocks.mockGetDocs.mockResolvedValue({ docs: [] });
+    subjectAccessMocks.mockNormalizePayload.mockReturnValue({
+      name: 'Matematica',
+      course: '1A',
+      institutionId: 'inst-1',
+      ownerId: 'teacher-1',
+      enrolledStudentUids: [],
+    });
+    subjectAccessMocks.mockGenerateInviteCode.mockReturnValue('JOIN1234');
+  });
+
+  it('blocks subject creation when teacher autonomous creation is disabled', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        accessPolicies: {
+          teachers: {
+            allowTeacherAutonomousSubjectCreation: false,
+          },
+        },
+      }),
+    });
+
+    const { result } = renderHook(() => useSubjects(teacherUser));
+
+    await expect(
+      result.current.addSubject({
+        name: 'Historia',
+        course: '2B',
+      })
+    ).rejects.toThrow('La administración de tu institución desactivó la creación autónoma de asignaturas para docentes.');
+
+    expect(firestoreMocks.mockRunTransaction).not.toHaveBeenCalled();
+  });
+
+  it('allows subject creation when teacher autonomous creation is enabled', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({
+        accessPolicies: {
+          teachers: {
+            allowTeacherAutonomousSubjectCreation: true,
+          },
+        },
+      }),
+    });
+
+    firestoreMocks.mockRunTransaction.mockImplementation(async (_db, updater) => {
+      const transaction = {
+        get: vi.fn(async () => ({ exists: () => false })),
+        set: vi.fn(),
+      };
+
+      await updater(transaction);
+    });
+
+    const { result } = renderHook(() => useSubjects(teacherUser));
+
+    await expect(
+      result.current.addSubject({
+        name: 'Historia',
+        course: '2B',
+      })
+    ).resolves.toBeTruthy();
+
+    expect(firestoreMocks.mockRunTransaction).toHaveBeenCalledTimes(1);
   });
 });

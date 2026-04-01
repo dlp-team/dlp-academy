@@ -6,12 +6,18 @@ import {
 import { db } from '../firebase/config';
 import { generateSubjectInviteCode, normalizeSubjectAccessPayload } from '../utils/subjectAccessUtils';
 import { getNormalizedRole } from '../utils/permissionUtils';
-import { canTeacherDeleteSubjectsWithStudents, DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../utils/institutionPolicyUtils';
+import {
+    canTeacherDeleteSubjectsWithStudents,
+    canTeacherCreateSubjectsAutonomously,
+    DEFAULT_ACCESS_POLICIES,
+    normalizeAccessPolicies
+} from '../utils/institutionPolicyUtils';
 import { DEFAULT_TOPIC_CASCADE_COLLECTIONS, cascadeDeleteTopicResources } from '../utils/topicDeletionUtils';
 
 export const useSubjects = (user: any) => {
     const [subjects, setSubjects] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [teacherSubjectCreationAllowed, setTeacherSubjectCreationAllowed] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
     const canReadHomeData = Boolean(user?.role && user?.displayName);
     const debugShare = (stage, payload = {}) => {
@@ -51,6 +57,39 @@ export const useSubjects = (user: any) => {
 
         throw new Error('No puedes eliminar una asignatura con estudiantes asociados sin autorización del administrador de la institución.');
     };
+
+    const ensureTeacherCanCreateSubject = async (institutionId: any) => {
+        if (getNormalizedRole(user) !== 'teacher') return;
+
+        const policies = await getInstitutionAccessPolicies(institutionId || currentInstitutionId);
+        if (canTeacherCreateSubjectsAutonomously(policies)) return;
+
+        throw new Error('La administración de tu institución desactivó la creación autónoma de asignaturas para docentes.');
+    };
+
+    useEffect(() => {
+        let active = true;
+
+        const resolveTeacherCreationPolicy = async () => {
+            if (getNormalizedRole(user) !== 'teacher') {
+                if (active) setTeacherSubjectCreationAllowed(true);
+                return;
+            }
+
+            const policies = await getInstitutionAccessPolicies(currentInstitutionId);
+            if (!active) return;
+
+            setTeacherSubjectCreationAllowed(canTeacherCreateSubjectsAutonomously(policies));
+        };
+
+        resolveTeacherCreationPolicy().catch(() => {
+            if (active) setTeacherSubjectCreationAllowed(true);
+        });
+
+        return () => {
+            active = false;
+        };
+    }, [user?.uid, user?.role, currentInstitutionId]);
 
 
     useEffect(() => {
@@ -246,6 +285,8 @@ export const useSubjects = (user: any) => {
         if (!targetInstitutionId && !user?.uid) {
             throw new Error('No se pudo resolver la institucion para crear la asignatura.');
         }
+
+        await ensureTeacherCanCreateSubject(targetInstitutionId);
 
         let inviteCode = generateSubjectInviteCode();
         let createdSubjectId: any = null;
@@ -1058,6 +1099,7 @@ export const useSubjects = (user: any) => {
     return { 
         subjects, 
         loading, 
+        teacherSubjectCreationAllowed,
         addSubject, 
         joinSubjectByInviteCode,
         updateSubject, 

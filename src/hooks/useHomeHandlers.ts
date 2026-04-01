@@ -165,6 +165,11 @@ export const useHomeHandlers = ({
             setSubjectModalConfig({ isOpen: false, isEditing: false, data: null });
         } catch (error: any) {
             console.error('Error saving subject:', error);
+            const errorMessage = String(error?.message || '').trim();
+            if (errorMessage === 'La administración de tu institución desactivó la creación autónoma de asignaturas para docentes.') {
+                reportHomeError(errorMessage);
+                return;
+            }
             reportHomeError('No se pudo guardar la asignatura. Revisa los datos e intentalo nuevamente.');
         }
     };

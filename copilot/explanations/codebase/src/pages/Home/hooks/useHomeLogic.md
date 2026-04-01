@@ -2,6 +2,10 @@
 # useHomeLogic.js
 
 ## Changelog
+### 2026-04-01: Exposed teacher subject-creation policy state
+- Added `teacherSubjectCreationAllowed` passthrough from `useSubjects` into `useHomeLogic` return payload.
+- Enables policy-aware create-subject gating in Home coordinator hooks.
+
 ### 2026-03-30: Home feedback callback threading
 - Added optional `onHomeFeedback` argument passthrough from `useHomeLogic` to `useHomeHandlers`.
 - Enables page-level inline feedback for drag/drop and nesting failures without browser alerts.

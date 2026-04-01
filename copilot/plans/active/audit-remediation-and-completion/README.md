@@ -52,12 +52,42 @@ DLP Academy has reached a development inflection point: core features work, but 
 6. **Documentation Priority:** Explanation files updated as work progresses; lossless reports created per protocol
 
 ## Success Criteria (DoD)
-- [ ] All CRITICAL audit items resolved (type safety, data model, test coverage gap addressed)
-- [ ] All HIGH audit items resolved (console cleanup, dead code, component complexity)
-- [ ] Zero regressions: all existing tests pass + new tests added
-- [ ] Zero ESLint/type errors
-- [ ] Architecture documentation complete
-- [ ] All phases validated per roadmap
+
+## Review Log: Finished Phases (as of 2026-04-01)
+
+### Phase 01: Type Safety & App.tsx Refactoring
+- No missing items identified; all objectives and validation steps appear complete.
+
+### Phase 03: Subject Data Enforcement & Consistency
+- The following items are incomplete or missing:
+	- [ ] Dedicated test: Student can join subject via invite code (should add scenario test)
+	- [ ] Validation: classId must belong to same institutionId (test and Firestore rule addition pending)
+	- [ ] Test: Classes can only be assigned if they match subject's institutionId
+	- [ ] Test cases for all 3 access vectors (teacher, student by class, guest by invite) not fully implemented
+
+### Phase 04: Subject Access Query Redesign
+- Additional scenario tests for class/enrollment vectors recommended (see Phase 07 for coverage plan)
+
+### Phase 05: Home Modularization
+- No missing items identified; regression tests for modularization present.
+
+### Phase 06: AdminDashboard Modularization
+- No missing items identified; regression tests for extracted components/utilities present.
+
+### Phase 07: Invite Security Test Coverage
+- No missing items identified; all planned tests and validations present.
+
+### Phase 08: Architecture Documentation
+- No missing items identified; deliverables and validation steps complete.
+
+### Phase 09: Teacher Subject Creation Permissions
+- Completed in this execution slice.
+- Delivered:
+	- institution-level teacher policy flag (`allowTeacherAutonomousSubjectCreation`) with default-enabled behavior,
+	- Home/UI policy-aware guard behavior,
+	- hook-level enforcement with explicit teacher-facing denial message,
+	- Firestore rules enforcement,
+	- targeted unit and rules regression coverage.
 - [ ] Lossless reports created for each phase
 - [ ] Git history clean with logical commits
 
@@ -89,5 +119,5 @@ DLP Academy has reached a development inflection point: core features work, but 
 4. **Data Rollback:** Firestore restore from backup if schema migration fails
 
 ## Next Steps
-→ **IMMEDIATELY EXECUTE** Phase 1: Type Safety & App.tsx Refactoring (0.5 days)
-→ Continue through Phase 10 with validation gates between each phase
+→ **NEXT EXECUTION TARGET:** Phase 10 - Subject Completion Tracking (UI + Data)
+→ Keep Phase 11-12 pending until Phase 10 lands and is validated

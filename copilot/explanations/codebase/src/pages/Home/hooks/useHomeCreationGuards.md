@@ -2,6 +2,11 @@
 
 # useHomeCreationGuards.ts
 
+## Changelog
+### 2026-04-01: Teacher autonomous subject-creation policy support
+- Added optional `teacherSubjectCreationAllowed` input.
+- Subject-create guard now evaluates both role capability and institution policy, while preserving folder-create and content-derivation behavior.
+
 ## Overview
 - **Source file:** `src/pages/Home/hooks/useHomeCreationGuards.ts`
 - **Last documented:** 2026-04-01

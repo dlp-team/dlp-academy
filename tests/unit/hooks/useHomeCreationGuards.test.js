@@ -35,4 +35,18 @@ describe('useHomeCreationGuards', () => {
 
     expect(result.current.effectiveHasContent).toBe(true);
   });
+
+  it('blocks teacher subject creation when institution policy disables autonomous creation', () => {
+    const { result } = renderHook(() =>
+      useHomeCreationGuards({
+        user: { uid: 'teacher-1', role: 'teacher' },
+        logic: { viewMode: 'grid', currentFolder: null, groupedContent: {} },
+        isStudentRole: false,
+        hasContent: true,
+        teacherSubjectCreationAllowed: false,
+      })
+    );
+
+    expect(result.current.canCreateInManualContext).toBe(false);
+  });
 });

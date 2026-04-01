@@ -489,6 +489,52 @@ describe('Firestore rules integration', () => {
         })
       );
     });
+
+    it('denies teacher subject creation when institution disables autonomous creation', async () => {
+      await seedDoc('institutions', 'inst-1', {
+        name: 'Inst 1',
+        accessPolicies: {
+          teachers: {
+            allowTeacherAutonomousSubjectCreation: false,
+          },
+        },
+      });
+
+      const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+      await assertFails(
+        setDoc(doc(teacherDb, 'subjects', 'subject-teacher-policy-disabled'), {
+          course: 'Blocked Subject',
+          institutionId: 'inst-1',
+          inviteCode: 'BLOCK123',
+          enrolledStudentUids: [],
+          ownerId: 'teacher-1',
+        })
+      );
+    });
+
+    it('allows teacher subject creation when institution explicitly enables autonomous creation', async () => {
+      await seedDoc('institutions', 'inst-1', {
+        name: 'Inst 1',
+        accessPolicies: {
+          teachers: {
+            allowTeacherAutonomousSubjectCreation: true,
+          },
+        },
+      });
+
+      const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+      await assertSucceeds(
+        setDoc(doc(teacherDb, 'subjects', 'subject-teacher-policy-enabled'), {
+          course: 'Allowed Subject',
+          institutionId: 'inst-1',
+          inviteCode: 'ALLOW123',
+          enrolledStudentUids: [],
+          ownerId: 'teacher-1',
+        })
+      );
+    });
   });
 
   describe('Vulnerability #2: Student cannot update subject metadata', () => {

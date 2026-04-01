@@ -1,6 +1,7 @@
 # Home.jsx
 
 ## Changelog
+- **2026-04-01:** Wired `teacherSubjectCreationAllowed` from `useHomeLogic` into `useHomeCreationGuards`, making Home subject-create controls respect institution teacher-creation policy.
 - **2026-04-01:** Extracted inline bulk-action feedback banner into `HomeBulkActionFeedback.tsx`, preserving tone-specific visual semantics and empty-message guard behavior while reducing coordinator JSX in `Home.tsx`.
 - **2026-04-01:** Extracted creation/content guard derivations into `useHomeCreationGuards.ts`, preserving permission checks while reducing inline `useMemo` blocks in `Home.tsx`.
 - **2026-04-01:** Extracted the Home view-mode content branch into `HomeMainContent.tsx`, preserving `bin/shared/manual` behavior while reducing coordinator complexity in `Home.tsx`.

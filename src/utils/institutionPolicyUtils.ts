@@ -5,6 +5,7 @@ export const DEFAULT_ACCESS_POLICIES = {
         allowedDomains: '',
         requireCode: true,
         rotationIntervalHours: 24,
+        allowTeacherAutonomousSubjectCreation: true,
         canAssignClassesAndStudents: true,
         canDeleteSubjectsWithStudents: false
     },
@@ -41,4 +42,8 @@ export const canTeacherAssignClassesAndStudents = (accessPolicies: any) => {
 
 export const canTeacherDeleteSubjectsWithStudents = (accessPolicies: any) => {
     return getTeacherAccessPolicy(accessPolicies).canDeleteSubjectsWithStudents === true;
+};
+
+export const canTeacherCreateSubjectsAutonomously = (accessPolicies: any) => {
+    return getTeacherAccessPolicy(accessPolicies).allowTeacherAutonomousSubjectCreation !== false;
 };

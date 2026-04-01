@@ -76,4 +76,21 @@ describe('UsersTabContent invite removal confirmation', () => {
     expect(globalThis.confirm).not.toHaveBeenCalled();
     expect(screen.queryByRole('heading', { name: /eliminar acceso de profesor/i })).toBeNull();
   });
+
+  it('persists teacher autonomous subject creation policy through save action', () => {
+    const props = renderUsersTab();
+
+    const toggle = screen.getByLabelText(/los profesores pueden crear asignaturas sin aprobación del administrador/i);
+    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole('button', { name: /guardar políticas/i }));
+
+    expect(props.onSavePolicies).toHaveBeenCalledTimes(1);
+    expect(props.onSavePolicies).toHaveBeenCalledWith(
+      expect.objectContaining({
+        teachers: expect.objectContaining({
+          allowTeacherAutonomousSubjectCreation: false,
+        }),
+      })
+    );
+  });
 });

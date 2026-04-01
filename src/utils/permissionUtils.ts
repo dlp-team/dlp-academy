@@ -390,9 +390,15 @@ export const isReadOnlyRole = (userOrRole) => !hasRequiredRoleAccess(userOrRole,
  * Role-level capability for creating subjects.
  *
  * @param {Object|string|null|undefined} userOrRole
+ * @param {{ allowTeacherAutonomousSubjectCreation?: boolean }|undefined} options
  * @returns {boolean}
  */
-export const canCreateSubjectByRole = (userOrRole) => hasRequiredRoleAccess(userOrRole, 'teacher');
+export const canCreateSubjectByRole = (userOrRole, options: any = {}) => {
+    const normalizedRole = getNormalizedRole(userOrRole);
+    if (!hasRequiredRoleAccess(normalizedRole, 'teacher')) return false;
+    if (normalizedRole !== 'teacher') return true;
+    return options?.allowTeacherAutonomousSubjectCreation !== false;
+};
 
 /**
  * Role-level capability for creating folders.

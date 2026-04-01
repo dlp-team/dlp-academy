@@ -217,7 +217,8 @@ const Home = ({ user }: any) => {
         user,
         logic,
         isStudentRole,
-        hasContent
+        hasContent,
+        teacherSubjectCreationAllowed: logic.teacherSubjectCreationAllowed
     });
 
     React.useEffect(() => {

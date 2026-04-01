@@ -1,4 +1,18 @@
 <!-- copilot/explanations/codebase/src/hooks/useSubjects.md -->
+## [2026-04-01] Teacher Autonomous Subject Creation Policy Enforcement
+### Context
+- Phase 09 required institution-level control over whether teachers can create subjects autonomously.
+
+### Change
+- Added teacher policy preload state (`teacherSubjectCreationAllowed`) in `useSubjects`.
+- Added `ensureTeacherCanCreateSubject(...)` gate to `addSubject(...)`.
+- Teacher subject creation now throws explicit user-facing denial message when institution policy disables autonomous creation.
+
+### Validation
+- Focused unit + rules validation passed:
+  - `npm run test -- tests/unit/utils/permissionUtils.test.js tests/unit/hooks/useHomeCreationGuards.test.js tests/unit/hooks/useSubjects.test.js tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx`
+  - `npm run test:rules`
+
 ## [2026-03-30] Subject Permanent Delete Now Uses Shared Topic Cascade Utility
 ### Context
 - Subject permanent deletion still had inline duplicate cleanup logic for topic-linked artifacts.

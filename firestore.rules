@@ -119,6 +119,17 @@ service cloud.firestore {
           && institutionId == currentUserInstitutionId()
         );
     }
+
+    function allowsTeacherAutonomousSubjectCreation(institutionId) {
+      return institutionId == null
+        || !exists(/databases/$(database)/documents/institutions/$(institutionId))
+        || !get(/databases/$(database)/documents/institutions/$(institutionId)).data.keys().hasAny(['accessPolicies'])
+        || !(get(/databases/$(database)/documents/institutions/$(institutionId)).data.accessPolicies is map)
+        || !get(/databases/$(database)/documents/institutions/$(institutionId)).data.accessPolicies.keys().hasAny(['teachers'])
+        || !(get(/databases/$(database)/documents/institutions/$(institutionId)).data.accessPolicies.teachers is map)
+        || !get(/databases/$(database)/documents/institutions/$(institutionId)).data.accessPolicies.teachers.keys().hasAny(['allowTeacherAutonomousSubjectCreation'])
+        || get(/databases/$(database)/documents/institutions/$(institutionId)).data.accessPolicies.teachers.allowTeacherAutonomousSubjectCreation == true;
+    }
     
     function isOwner() {
         return resource.data.ownerId == request.auth.uid || resource.data.userId == request.auth.uid;
@@ -260,6 +271,10 @@ service cloud.firestore {
     match /subjects/{subjectId} {
       allow create: if isSignedIn()
         && !isStudentRole()
+        && (
+          !isTeacherRole()
+          || allowsTeacherAutonomousSubjectCreation(request.resource.data.institutionId)
+        )
         && (
           isGlobalAdmin()
           || (

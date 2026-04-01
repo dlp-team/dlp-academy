@@ -244,6 +244,21 @@ const UsersTabContent = ({
                     <label className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
                       <input
                         type="checkbox"
+                        checked={editPolicy.allowTeacherAutonomousSubjectCreation !== false}
+                        onChange={(e) => setEditPolicy({ ...editPolicy, allowTeacherAutonomousSubjectCreation: e.target.checked })}
+                        className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                      />
+                      Los profesores pueden crear asignaturas sin aprobación del administrador
+                    </label>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      Activado por defecto. Si se desactiva, solo administradores podrán crear asignaturas nuevas.
+                    </p>
+                  </div>
+
+                  <div className="space-y-3 p-4 bg-white/50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
+                    <label className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
+                      <input
+                        type="checkbox"
                         checked={editPolicy.canAssignClassesAndStudents !== false}
                         onChange={(e) => setEditPolicy({ ...editPolicy, canAssignClassesAndStudents: e.target.checked })}
                         className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"

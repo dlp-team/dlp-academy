@@ -11,16 +11,17 @@ type HomeCreationGuardsParams = {
     logic: any;
     isStudentRole: boolean;
     hasContent: boolean;
+    teacherSubjectCreationAllowed?: boolean;
 };
 
-export const useHomeCreationGuards = ({ user, logic, isStudentRole, hasContent }: HomeCreationGuardsParams) => {
+export const useHomeCreationGuards = ({ user, logic, isStudentRole, hasContent, teacherSubjectCreationAllowed = true }: HomeCreationGuardsParams) => {
     const canCreateInManualContext = useMemo(() => {
-        if (!canCreateSubjectByRole(user)) return false;
+        if (!canCreateSubjectByRole(user, { allowTeacherAutonomousSubjectCreation: teacherSubjectCreationAllowed })) return false;
         if (logic.viewMode !== 'grid') return true;
         if (logic.currentFolder?.isShared !== true) return true;
         const permission = user?.uid ? getPermissionLevel(logic.currentFolder, user.uid) : 'none';
         return permission === 'editor' || permission === 'owner';
-    }, [logic.viewMode, logic.currentFolder, user]);
+    }, [logic.viewMode, logic.currentFolder, user, teacherSubjectCreationAllowed]);
 
     const canCreateFolderInManualContext = useMemo(() => {
         if (!canCreateFolderByRole(user)) return false;

@@ -19,6 +19,7 @@ export const useHomeLogic = (user: any, searchQuery = '', rememberOrganization =
     const {
         subjects,
         loading,
+        teacherSubjectCreationAllowed,
         addSubject,
         updateSubject,
         deleteSubject,
@@ -182,6 +183,7 @@ export const useHomeLogic = (user: any, searchQuery = '', rememberOrganization =
         user,
         subjects,
         folders,
+        teacherSubjectCreationAllowed,
         shortcuts,
         resolvedShortcuts,
         searchFolders,

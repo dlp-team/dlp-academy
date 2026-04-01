@@ -26,7 +26,7 @@ Day 4 (Apr 4):
   └─ Phase 08: Architecture Documentation                  [4-6h]  → ✅ COMPLETED
 
 Day 5 (Apr 5):
-  ├─ Phase 09: Teacher Subject Creation Permissions        [6-8h]  → 📋 TODO
+  ├─ Phase 09: Teacher Subject Creation Permissions        [6-8h]  → ✅ COMPLETED
   └─ Phase 10: Subject Completion Tracking (UI + Data)     [6-8h]  → 📋 TODO
 
 Day 6-7 (Apr 6-7):
@@ -263,7 +263,7 @@ Manual review - architecture should be clear to new contributor reading docs
 ---
 
 ### Phase 09: Teacher Subject Creation Permissions
-**Status:** 📋 TODO
+**Status:** ✅ COMPLETED
 **Owner:** DLP_Architect
 **Duration:** 6-8 hours
 **Priority:** 🟡 HIGH
@@ -279,10 +279,18 @@ Manual review - architecture should be clear to new contributor reading docs
 
 **Validation:**
 ```bash
-npm run test:rules -- subject-creation  # New rules tests pass
-npm run test                            # All tests pass
-# Emulator test: Teacher creates subject without admin approval
+npm run test -- tests/unit/utils/permissionUtils.test.js tests/unit/hooks/useHomeCreationGuards.test.js tests/unit/hooks/useSubjects.test.js tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx
+npm run test:rules
 ```
+
+**Completion Notes (2026-04-01):**
+- Added teacher policy flag `allowTeacherAutonomousSubjectCreation` (default `true`) in institution access policies.
+- Updated role permission helper to evaluate teacher creation permission against policy.
+- Enforced policy at hook level (`useSubjects.addSubject`) with explicit user-facing denial message.
+- Added policy-aware Home creation guard wiring so create-UI access reflects policy.
+- Added institution admin policy toggle in `UsersTabContent`.
+- Added Firestore rules enforcement for teacher subject creation based on institution policy.
+- Added unit + rules regression tests for policy-enabled and policy-disabled paths.
 
 **Risks:** MEDIUM - Permission logic affects security posture
 **Mitigation:** Rules tests validate; lossless protocol maintained

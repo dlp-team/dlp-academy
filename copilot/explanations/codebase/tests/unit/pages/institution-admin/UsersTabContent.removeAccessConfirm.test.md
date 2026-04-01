@@ -11,7 +11,11 @@
 - Confirm path invokes `onRemoveAccess` only after explicit user confirmation.
 - Cancel path closes modal and does not invoke destructive handler.
 - Browser `window.confirm(...)` is never used by the migrated flow.
+- Policy-save path persists `allowTeacherAutonomousSubjectCreation` toggle changes in submitted payload.
 
 ## Changelog
+### 2026-04-01
+- Added regression assertion for teacher autonomous subject-creation policy toggle save behavior.
+
 ### 2026-03-30
 - Added initial regression suite for modal-first invite-access removal in `UsersTabContent`.

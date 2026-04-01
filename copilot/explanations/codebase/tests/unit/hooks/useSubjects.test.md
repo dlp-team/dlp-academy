@@ -1,6 +1,12 @@
 // copilot/explanations/codebase/tests/unit/hooks/useSubjects.test.md
 
 ## Changelog
+### 2026-04-01: Teacher autonomous subject-creation policy coverage
+- Added `useSubjects` coverage for institution policy gating on teacher subject creation:
+  - reject create when `allowTeacherAutonomousSubjectCreation` is `false`,
+  - allow create when policy is `true`.
+- Stabilized teacher deletion-policy tests to use ref-aware `getDoc` mocking due additional policy preload reads.
+
 ### 2026-03-30: Subject Cascade Coverage Expanded to Exams
 - Updated permanent-delete cascade assertions to include exam artifact collections:
   - `exams`
