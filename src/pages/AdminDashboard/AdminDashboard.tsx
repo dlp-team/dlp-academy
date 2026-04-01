@@ -26,6 +26,11 @@ import {
     buildInstitutionConfirmDialogText,
     buildUserConfirmDialogText,
 } from './utils/adminConfirmDialogTextUtils';
+import {
+    ADMIN_USER_ROLE_FILTERS,
+    ADMIN_USER_ROLE_LABELS,
+    getAdminRoleFilterLabel,
+} from './utils/adminUserRoleConstants';
 import UserTableRow from './components/UserTableRow';
 import InstitutionTableRow from './components/InstitutionTableRow';
 
@@ -538,13 +543,6 @@ const UsersTab = () => {
     });
     const [isConfirmingUserAction, setIsConfirmingUserAction] = useState(false);
 
-    const ROLE_LABELS = {
-        admin: 'Admin Global',
-        institutionadmin: 'Admin Institución',
-        teacher: 'Profesor',
-        student: 'Alumno',
-    };
-
     const fetchUsers = useCallback(async (isNextPage = false, cursor = null) => {
         if (isNextPage) setLoadingMore(true);
         else setLoading(true);
@@ -618,23 +616,21 @@ const UsersTab = () => {
         queueUserConfirm({ action: 'role', user: u, newRole });
     };
 
-    const ROLES = ['all', 'admin', 'institutionadmin', 'teacher', 'student'];
-
     const filtered = filterAdminUsers(users, search, roleFilter, statusFilter);
 
-    const userConfirmText = buildUserConfirmDialogText(userConfirm, ROLE_LABELS);
+    const userConfirmText = buildUserConfirmDialogText(userConfirm, ADMIN_USER_ROLE_LABELS);
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Filter bar */}
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 mb-6 flex flex-col md:flex-row gap-4 justify-between">
                 <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit flex-wrap gap-1">
-                    {ROLES.map(r => (
+                    {ADMIN_USER_ROLE_FILTERS.map(r => (
                         <button key={r} onClick={() => setRoleFilter(r)}
                             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all capitalize ${
                                 roleFilter === r ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
                             }`}>
-                            {r === 'all' ? 'Todos' : r === 'institutionadmin' ? 'Admin Inst.' : r.charAt(0).toUpperCase() + r.slice(1)}
+                            {getAdminRoleFilterLabel(r)}
                         </button>
                     ))}
                 </div>

@@ -20,3 +20,8 @@
 - `lucide-react`
 - `./RoleBadge`
 - `./UserStatusBadge`
+- `../utils/adminUserRoleConstants`
+
+## Changelog
+### 2026-04-01
+- Replaced inline role option labels with shared constants/mappers from `src/pages/AdminDashboard/utils/adminUserRoleConstants.ts` to keep role display semantics centralized.

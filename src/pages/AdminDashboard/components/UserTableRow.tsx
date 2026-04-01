@@ -3,6 +3,10 @@ import React from 'react';
 import { ToggleLeft, ToggleRight } from 'lucide-react';
 import RoleBadge from './RoleBadge';
 import UserStatusBadge from './UserStatusBadge';
+import {
+    ADMIN_USER_ROLE_OPTIONS,
+    getAdminRoleOptionLabel,
+} from '../utils/adminUserRoleConstants';
 
 type UserTableRowProps = {
     userData: any;
@@ -25,10 +29,9 @@ const UserTableRow = ({ userData, handleRoleChange, handleToggle }: UserTableRow
                     onChange={(e) => handleRoleChange(userData, e.target.value)}
                     className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-purple-400"
                 >
-                    <option value="student">Alumno</option>
-                    <option value="teacher">Profesor</option>
-                    <option value="institutionadmin">Admin Institución</option>
-                    <option value="admin">Admin Global</option>
+                    {ADMIN_USER_ROLE_OPTIONS.map((roleValue) => (
+                        <option key={roleValue} value={roleValue}>{getAdminRoleOptionLabel(roleValue)}</option>
+                    ))}
                 </select>
             </td>
             <td className="px-6 py-4 text-right">

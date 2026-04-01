@@ -63,10 +63,16 @@ Reduce `AdminDashboard.tsx` complexity by extracting reusable UI primitives from
 - New file: `tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js`
 - Moved inline institution/user confirm modal title/description/confirm-label derivation to dedicated utility helpers while preserving text semantics and fallback labels.
 
+### Extracted users role constants and label mappers
+- New file: `src/pages/AdminDashboard/utils/adminUserRoleConstants.ts`
+- New file: `tests/unit/pages/admin/adminUserRoleConstants.test.js`
+- Replaced inline users-tab role filter arrays/labels and role-confirm label map with centralized constants.
+- Replaced `UserTableRow` inline role option labels with constants + option-label mapper.
+
 ## Validation
 - `get_errors`: clean in touched files.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 10/10 files passing, 24/24 tests passing.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 11/11 files passing, 27/27 tests passing.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Next Slices
-- Evaluate extraction of role labels/constants and related display mappers.
+- Evaluate extraction of users tab filter-bar UI into a dedicated component.
