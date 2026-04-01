@@ -19,15 +19,9 @@ import { usePersistentState } from '../../hooks/usePersistentState';
 import { buildUserScopedPersistenceKey } from '../../utils/pagePersistence';
 import RoleBadge from './components/RoleBadge';
 import AdminConfirmModal from './components/AdminConfirmModal';
+import { parseCsvEmails } from './utils/adminEmailUtils';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
-
-const parseCsvEmails = (value = '') => {
-    return value
-        .split(',')
-        .map(v => v.trim().toLowerCase())
-        .filter(Boolean);
-};
 
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 

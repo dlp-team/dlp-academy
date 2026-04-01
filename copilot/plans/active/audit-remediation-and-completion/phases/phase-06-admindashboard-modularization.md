@@ -21,9 +21,14 @@ Reduce `AdminDashboard.tsx` complexity by extracting reusable UI primitives from
 - Re-ran existing dialog integration tests:
   - `tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`
 
+### Extracted email parsing utility
+- New file: `src/pages/AdminDashboard/utils/adminEmailUtils.ts`
+- New file: `tests/unit/pages/admin/adminEmailUtils.test.js`
+- Moved inline `parseCsvEmails` helper from `AdminDashboard.tsx` to utility module and kept call sites unchanged.
+
 ## Validation
 - `get_errors`: clean in touched files.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 3/3 files passing, 9/9 tests passing.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 4/4 files passing, 11/11 tests passing.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Next Slices

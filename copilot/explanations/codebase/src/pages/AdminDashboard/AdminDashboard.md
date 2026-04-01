@@ -33,6 +33,7 @@
 	- `tests/unit/pages/admin/AdminConfirmModal.test.jsx`
 - Re-validated existing integration coverage:
 	- `tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`.
+- Extracted `parseCsvEmails` into `src/pages/AdminDashboard/utils/adminEmailUtils.ts` and added focused utility tests in `tests/unit/pages/admin/adminEmailUtils.test.js`.
 
 ### 2026-03-30
 - Replaced browser `window.confirm(...)` dialogs in Admin institutions/users tabs with a shared in-page confirmation modal (`AdminConfirmModal`).
