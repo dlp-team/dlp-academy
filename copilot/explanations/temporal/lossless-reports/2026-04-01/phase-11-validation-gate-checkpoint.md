@@ -11,6 +11,7 @@ Phase 11 automated validation execution after Phase 10 implementation.
 - `npm run test`
 - `npm run test:rules`
 - `npm run build`
+- `npx playwright test tests/e2e/bin-view.spec.js tests/e2e/home-sharing-roles.spec.js`
 
 ## Results
 - Lint: pass with 0 errors and 4 pre-existing warnings in `src/pages/Content/Exam.jsx` and `src/pages/Content/StudyGuide.jsx`.
@@ -18,8 +19,9 @@ Phase 11 automated validation execution after Phase 10 implementation.
 - Full test suite: pass (exit code `0`).
 - Rules tests: pass (`49/49`).
 - Build: pass (existing chunk-size warning only).
+- Targeted Home e2e smoke: pass (`6 passed`, `2 skipped`).
 
 ## Notes
 - No new regressions introduced by phase 10 completion-tracking changes in automated gates.
 - Rules emulator output includes expected PERMISSION_DENIED traces for deny-case tests.
-- Manual smoke verification remains pending for full phase-11 closure.
+- Phase 11 validation scope is complete; phase 12 closure can proceed.

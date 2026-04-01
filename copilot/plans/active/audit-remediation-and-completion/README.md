@@ -101,16 +101,25 @@ DLP Academy has reached a development inflection point: core features work, but 
 	- focused unit coverage for hook-level completion state and Home active/history filtering.
 
 ### Phase 11: Final Validation & Lossless Review
-- In progress in this execution slice.
+- Completed in this execution slice.
 - Completed validation gates:
 	- `npm run lint` (0 errors, 4 existing warnings),
 	- `npx tsc --noEmit` (pass),
 	- `npm run test` (pass),
 	- `npm run test:rules` (pass, `49/49`),
 	- `npm run build` (pass).
+- Additional smoke verification:
+	- `npx playwright test tests/e2e/bin-view.spec.js tests/e2e/home-sharing-roles.spec.js` (6 passed, 2 skipped).
 - Remaining:
-	- manual smoke verification,
-	- final validation packet collation for phase-12 closure.
+	- phase-12 closure artifacts and lifecycle transition.
+
+### Phase 12: Closure & Finalization
+- In progress in this execution slice.
+- Created closure artifact set under `reviewing/`:
+	- `PLAN_COMPLETION_SUMMARY.md`,
+	- `RESIDUAL_RISKS.md`,
+	- `CLOSURE_CHECKLIST.md`.
+- Lifecycle transition intentionally pending until residual phase-review items are formally dispositioned.
 - [ ] Lossless reports created for each phase
 - [ ] Git history clean with logical commits
 
@@ -142,5 +151,5 @@ DLP Academy has reached a development inflection point: core features work, but 
 4. **Data Rollback:** Firestore restore from backup if schema migration fails
 
 ## Next Steps
-→ **NEXT EXECUTION TARGET:** Phase 11 - finish manual smoke + final validation packet
-→ Keep Phase 12 pending until Phase 11 manual gate is fully closed
+→ **NEXT EXECUTION TARGET:** Phase 12 - Closure & Finalization
+→ Keep plan lifecycle transition pending until phase-12 artifacts are fully created

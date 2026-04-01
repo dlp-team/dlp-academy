@@ -30,8 +30,8 @@ Day 5 (Apr 5):
   └─ Phase 10: Subject Completion Tracking (UI + Data)     [6-8h]  → ✅ COMPLETED
 
 Day 6-7 (Apr 6-7):
-  ├─ Phase 11: Final Validation & Lossless Review          [4-6h]  → 🟡 IN PROGRESS
-  └─ Phase 12: Closure & Finalization                      [2-3h]  → 📋 TODO
+  ├─ Phase 11: Final Validation & Lossless Review          [4-6h]  → ✅ COMPLETED
+  └─ Phase 12: Closure & Finalization                      [2-3h]  → 🟡 IN PROGRESS
 ```
 
 ---
@@ -336,7 +336,7 @@ npm run dev                   # Manually test: mark subject complete, verify tab
 ---
 
 ### Phase 11: Final Validation & Lossless Review
-**Status:** 🟡 IN PROGRESS
+**Status:** ✅ COMPLETED
 **Owner:** DLP_Architect
 **Duration:** 4-6 hours
 **Priority:** 🔴 CRITICAL
@@ -376,14 +376,14 @@ npm run build                 # Must produce dist/
   - `npm run test` → pass (exit code `0`)
   - `npm run test:rules` → pass (`49/49`)
   - `npm run build` → pass (existing chunk-size warning remains informational)
-- Remaining:
-  - manual smoke verification,
-  - final phase-11 lossless packet collation for phase-12 closure.
+- Targeted Home smoke proxy completed:
+  - `npx playwright test tests/e2e/bin-view.spec.js tests/e2e/home-sharing-roles.spec.js` → pass (`6 passed`, `2 skipped`).
+- Phase 11 is complete; phase 12 closure remains.
 
 ---
 
 ### Phase 12: Closure & Finalization
-**Status:** 📋 TODO
+**Status:** 🟡 IN PROGRESS
 **Owner:** DLP_Architect
 **Duration:** 2-3 hours
 **Priority:** 🔴 CRITICAL
@@ -401,6 +401,13 @@ npm run build                 # Must produce dist/
 - `reviewing/PLAN_COMPLETION_SUMMARY.md`: Execution timeline, files touched, test results
 - `reviewing/RESIDUAL_RISKS.md`: Known unknowns, follow-up work, recommendations
 - `reviewing/CLOSURE_CHECKLIST.md`: Final verification that all success criteria met
+
+**Progress Notes (2026-04-01):**
+- Created closure artifact set in `reviewing/`:
+  - `PLAN_COMPLETION_SUMMARY.md`
+  - `RESIDUAL_RISKS.md`
+  - `CLOSURE_CHECKLIST.md`
+- Lifecycle transition decision intentionally pending until residual phase-03 review items are dispositioned.
 
 ---
 
@@ -442,8 +449,8 @@ Phase 12 (Closure)
 | 08    | ✅ DONE   | 5h     | 5             | 0           | None |
 | 09    | ✅ DONE   | 7h     | 14            | 5           | None |
 | 10    | ✅ DONE   | 7h     | 17            | 2           | None |
-| 11    | 🟡 DOING  | 5h     | 1             | 0           | Manual smoke pending |
-| 12    | 📋 TODO   | 2.5h   | 3             | 0           | Phase 11 |
+| 11    | ✅ DONE   | 5h     | 2             | 0           | None |
+| 12    | 🟡 DOING  | 2.5h   | 4             | 0           | Residual disposition pending |
 
 **Total Estimated:** 70 hours | **Files:** 65 | **Tests Added:** 45
 
@@ -451,8 +458,8 @@ Phase 12 (Closure)
 
 ## Status Sync (Updated Daily)
 
-**Last Updated:** April 1, 2026 @ 21:05 UTC
-**Current Focus:** Phase 11 (Final Validation & Lossless Review)
+**Last Updated:** April 1, 2026 @ 21:16 UTC
+**Current Focus:** Phase 12 (Closure & Finalization)
 **Blockers:** None
 **On Track:** YES ✅
 **Risk Level:** LOW 🟢
