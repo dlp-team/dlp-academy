@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/audit-remediation-and-completion/phases/phase-05-home-modularization.md -->
+<!-- copilot/plans/inReview/audit-remediation-and-completion/phases/phase-05-home-modularization.md -->
 
 # Phase 05: Home Modularization
 

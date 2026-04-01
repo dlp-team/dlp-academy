@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/audit-remediation-and-completion/phases/phase-01-type-safety.md -->
+<!-- copilot/plans/inReview/audit-remediation-and-completion/phases/phase-01-type-safety.md -->
 
 # Phase 01: Type Safety & App.tsx Refactoring
 

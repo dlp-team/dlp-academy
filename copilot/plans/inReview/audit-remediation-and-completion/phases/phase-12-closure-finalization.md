@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/audit-remediation-and-completion/phases/phase-12-closure-finalization.md -->
+<!-- copilot/plans/inReview/audit-remediation-and-completion/phases/phase-12-closure-finalization.md -->
 
 # Phase 12: Closure & Finalization
 

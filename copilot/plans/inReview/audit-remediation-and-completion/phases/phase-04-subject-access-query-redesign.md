@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/audit-remediation-and-completion/phases/phase-04-subject-access-query-redesign.md -->
+<!-- copilot/plans/inReview/audit-remediation-and-completion/phases/phase-04-subject-access-query-redesign.md -->
 
 # Phase 04: Subject Access Query Redesign
 

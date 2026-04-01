@@ -1,9 +1,9 @@
-<!-- copilot/plans/active/audit-remediation-and-completion/reviewing/PLAN_COMPLETION_SUMMARY.md -->
+<!-- copilot/plans/inReview/audit-remediation-and-completion/reviewing/PLAN_COMPLETION_SUMMARY.md -->
 
 # Plan Completion Summary (Checkpoint)
 
 ## Plan
-- `copilot/plans/active/audit-remediation-and-completion`
+- `copilot/plans/inReview/audit-remediation-and-completion`
 
 ## Current Completion Snapshot
 - Phase 09: ✅ Completed (teacher subject creation policy)

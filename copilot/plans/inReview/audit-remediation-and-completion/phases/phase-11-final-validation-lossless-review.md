@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/audit-remediation-and-completion/phases/phase-11-final-validation-lossless-review.md -->
+<!-- copilot/plans/inReview/audit-remediation-and-completion/phases/phase-11-final-validation-lossless-review.md -->
 
 # Phase 11: Final Validation & Lossless Review
 

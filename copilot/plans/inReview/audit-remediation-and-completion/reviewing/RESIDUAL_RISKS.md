@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/audit-remediation-and-completion/reviewing/RESIDUAL_RISKS.md -->
+<!-- copilot/plans/inReview/audit-remediation-and-completion/reviewing/RESIDUAL_RISKS.md -->
 
 # Residual Risks and Follow-Up
 

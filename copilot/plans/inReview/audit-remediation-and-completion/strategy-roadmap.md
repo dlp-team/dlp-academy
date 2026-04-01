@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/audit-remediation-and-completion/strategy-roadmap.md -->
+<!-- copilot/plans/inReview/audit-remediation-and-completion/strategy-roadmap.md -->
 
 # Strategy Roadmap: Audit Remediation & Completion
 
@@ -468,8 +468,8 @@ Phase 12 (Closure)
 
 ## Quick Reference Links
 
-- 📄 README: `copilot/plans/active/audit-remediation-and-completion/README.md`
-- 📊 This Roadmap: `copilot/plans/active/audit-remediation-and-completion/strategy-roadmap.md`
+- 📄 README: `copilot/plans/inReview/audit-remediation-and-completion/README.md`
+- 📊 This Roadmap: `copilot/plans/inReview/audit-remediation-and-completion/strategy-roadmap.md`
 - 🔍 Audit Report: Explore agent output (embedded in conversation)
 - 📋 Original Audit Issues: `copilot/explanations/codebase/AUDIT_FINDINGS_2026_04_01.md` (to be created)
 - 🔐 Related Security Plan: `copilot/plans/active/firestore-rules-access-reliability-recovery/`

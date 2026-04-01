@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/audit-remediation-and-completion/README.md -->
+<!-- copilot/plans/inReview/audit-remediation-and-completion/README.md -->
 
 # Audit Remediation & Platform Completion Plan
 

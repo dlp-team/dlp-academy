@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/audit-remediation-and-completion/phases/phase-06-admindashboard-modularization.md -->
+<!-- copilot/plans/inReview/audit-remediation-and-completion/phases/phase-06-admindashboard-modularization.md -->
 
 # Phase 06: AdminDashboard Modularization
 

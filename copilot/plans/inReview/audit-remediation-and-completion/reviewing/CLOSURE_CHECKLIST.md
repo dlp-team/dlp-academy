@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/audit-remediation-and-completion/reviewing/CLOSURE_CHECKLIST.md -->
+<!-- copilot/plans/inReview/audit-remediation-and-completion/reviewing/CLOSURE_CHECKLIST.md -->
 
 # Closure Checklist
 
