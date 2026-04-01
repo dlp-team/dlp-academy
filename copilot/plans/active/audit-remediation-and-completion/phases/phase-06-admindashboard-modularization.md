@@ -84,10 +84,15 @@ Reduce `AdminDashboard.tsx` complexity by extracting reusable UI primitives from
 - New file: `tests/unit/pages/admin/InstitutionFormPanel.test.jsx`
 - Moved institutions create/edit form panel markup and field/update wiring into a dedicated component while preserving submit/close and field-normalization behavior.
 
+### Extracted institution form-state utility
+- New file: `src/pages/AdminDashboard/utils/adminInstitutionFormUtils.ts`
+- New file: `tests/unit/pages/admin/adminInstitutionFormUtils.test.js`
+- Moved repeated institutions form default/reset/edit mapping logic into a dedicated utility while preserving initial values, admin-email fallback, and timezone defaults.
+
 ## Validation
 - `get_errors`: clean in touched files.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/InstitutionFormPanel.test.jsx tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 14/14 files passing, 33/33 tests passing.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/InstitutionFormPanel.test.jsx tests/unit/pages/admin/adminInstitutionFormUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 15/15 files passing, 35/35 tests passing.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Next Slices
-- Evaluate extraction of institutions CRUD handlers into dedicated hook/util module.
+- Evaluate extraction of institution invite-sync diff logic into dedicated utility.

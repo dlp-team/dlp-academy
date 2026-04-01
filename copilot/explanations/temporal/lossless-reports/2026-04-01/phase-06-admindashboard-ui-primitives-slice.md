@@ -1,6 +1,6 @@
 <!-- copilot/explanations/temporal/lossless-reports/2026-04-01/phase-06-admindashboard-ui-primitives-slice.md -->
 
-# Lossless Report: Phase 06 AdminDashboard UI Primitives + Utility + Users/Institutions Row + User/Institution Filter + Users Pagination Query + Confirm-Copy + Role Constants + Users/Institutions Filters + Institution Form Slices
+# Lossless Report: Phase 06 AdminDashboard UI Primitives + Utility + Users/Institutions Row + User/Institution Filter + Users Pagination Query + Confirm-Copy + Role Constants + Users/Institutions Filters + Institution Form + Institution Form-State Utility Slices
 
 Date: 2026-04-01
 
@@ -17,6 +17,7 @@ Then continue Phase 06 with extraction of users role constants/display mappers.
 Then continue Phase 06 with extraction of users-tab filter controls into a dedicated component.
 Then continue Phase 06 with extraction of institutions-tab filter controls into a dedicated component.
 Then continue Phase 06 with extraction of institutions create/edit form panel into a dedicated component.
+Then continue Phase 06 with extraction of repeated institutions form default/reset/edit mapping logic into a utility.
 
 ## Explicitly Preserved (Out of Scope)
 - No Firestore query or mutation behavior changes.
@@ -39,6 +40,7 @@ Then continue Phase 06 with extraction of institutions create/edit form panel in
 - `src/pages/AdminDashboard/components/AdminUsersFilters.tsx` (new)
 - `src/pages/AdminDashboard/components/AdminInstitutionsFilters.tsx` (new)
 - `src/pages/AdminDashboard/components/InstitutionFormPanel.tsx` (new)
+- `src/pages/AdminDashboard/utils/adminInstitutionFormUtils.ts` (new)
 - `tests/unit/pages/admin/RoleBadge.test.jsx` (new)
 - `tests/unit/pages/admin/AdminConfirmModal.test.jsx` (new)
 - `tests/unit/pages/admin/adminEmailUtils.test.js` (new)
@@ -52,6 +54,7 @@ Then continue Phase 06 with extraction of institutions create/edit form panel in
 - `tests/unit/pages/admin/AdminUsersFilters.test.jsx` (new)
 - `tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx` (new)
 - `tests/unit/pages/admin/InstitutionFormPanel.test.jsx` (new)
+- `tests/unit/pages/admin/adminInstitutionFormUtils.test.js` (new)
 - `copilot/plans/active/audit-remediation-and-completion/phases/phase-06-admindashboard-modularization.md` (new)
 - `copilot/plans/active/audit-remediation-and-completion/strategy-roadmap.md`
 - `copilot/explanations/codebase/src/pages/AdminDashboard/AdminDashboard.md`
@@ -69,6 +72,7 @@ Then continue Phase 06 with extraction of institutions create/edit form panel in
 - `copilot/explanations/codebase/src/pages/AdminDashboard/components/AdminUsersFilters.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/components/AdminInstitutionsFilters.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/components/InstitutionFormPanel.md` (new)
+- `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminInstitutionFormUtils.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/components/UserTableRow.md`
 
 ## Per-File Verification
@@ -96,10 +100,11 @@ Then continue Phase 06 with extraction of institutions create/edit form panel in
 - Verified users-filters component tests pass and integration confirmations remain green.
 - Verified institutions-filters component tests pass and integration confirmations remain green.
 - Verified institution-form component tests pass and integration confirmations remain green.
+- Verified institution form-state utility tests pass and integration confirmations remain green.
 
 ## Validation Summary
 - `get_errors` on touched files: clean.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/InstitutionFormPanel.test.jsx tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 14/14 files passed, 33/33 tests passed.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/InstitutionFormPanel.test.jsx tests/unit/pages/admin/adminInstitutionFormUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 15/15 files passed, 35/35 tests passed.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Risks and Checks
@@ -129,3 +134,5 @@ Then continue Phase 06 with extraction of institutions create/edit form panel in
   - Check: dedicated component tests assert status/type/search/button callback wiring and existing integration tests remained green.
 - Risk: institution form input/update behavior drift during component extraction.
   - Check: dedicated component tests assert create/edit mode rendering and institutional code normalization; existing integration tests remained green.
+- Risk: institutions form defaults/edit mapping drift during utility extraction.
+  - Check: utility tests assert default form-state values, fresh object creation, and edit mapping fallbacks; integration tests remained green.

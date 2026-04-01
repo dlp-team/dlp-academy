@@ -20,6 +20,10 @@ import AdminConfirmModal from './components/AdminConfirmModal';
 import { parseCsvEmails } from './utils/adminEmailUtils';
 import { filterAdminUsers } from './utils/adminUserFilterUtils';
 import { filterInstitutions } from './utils/adminInstitutionFilterUtils';
+import {
+    createAdminInstitutionFormState,
+    mapInstitutionToFormState,
+} from './utils/adminInstitutionFormUtils';
 import { buildAdminUsersPageQuery } from './utils/adminUserPaginationQueryUtils';
 import {
     buildInstitutionConfirmDialogText,
@@ -85,16 +89,7 @@ const InstitutionsTab = () => {
 
     const [showCreateForm, setShowCreateForm] = useState(false);
     const [editingInstitutionId, setEditingInstitutionId] = useState<any>(null);
-    const [form, setForm] = useState({
-        name: '',
-        domain: '',
-        institutionAdministrators: '',
-        institutionalCode: '',
-        type: 'school',
-        city: '',
-        country: '',
-        timezone: 'Europe/Madrid'
-    });
+    const [form, setForm] = useState(createAdminInstitutionFormState());
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -256,16 +251,7 @@ const InstitutionsTab = () => {
                 setSuccess(`Institución "${name}" creada correctamente.`);
             }
 
-            setForm({
-                name: '',
-                domain: '',
-                institutionAdministrators: '',
-                type: 'school',
-                city: '',
-                country: '',
-                timezone: 'Europe/Madrid',
-                institutionalCode: ''
-            });
+            setForm(createAdminInstitutionFormState());
             setEditingInstitutionId(null);
             setShowCreateForm(false);
             fetchInstitutions();
@@ -318,18 +304,7 @@ const InstitutionsTab = () => {
         setError('');
         setSuccess('');
         setEditingInstitutionId(school.id);
-        setForm({
-            name: school.name || '',
-            domain: school.domain || school.domains?.[0] || '',
-            institutionAdministrators: Array.isArray(school.institutionAdministrators)
-                ? school.institutionAdministrators.join(', ')
-                : (school.adminEmail || ''),
-            type: school.type || 'school',
-            city: school.city || '',
-            country: school.country || '',
-            timezone: school.timezone || 'Europe/Madrid',
-            institutionalCode: ''
-        });
+        setForm(mapInstitutionToFormState(school));
         setShowCreateForm(true);
     };
 
