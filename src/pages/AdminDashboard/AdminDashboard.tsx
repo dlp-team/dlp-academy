@@ -27,6 +27,7 @@ import {
     queueInstitutionCreateBatchOps,
     queueInstitutionEditBatchOps,
 } from './utils/adminInstitutionBatchQueueUtils';
+import { loadInstitutionAdminInvites } from './utils/adminInstitutionInviteQueryUtils';
 import {
     buildInstitutionPayload,
     normalizeInstitutionFormInput,
@@ -141,18 +142,7 @@ const InstitutionsTab = () => {
                 const institutionRef = doc(db, 'institutions', editingInstitutionId);
                 batch.update(institutionRef, institutionPayload);
 
-                // 1. Fetch current invites for this institution
-                const invitesQuery = query(
-                    collection(db, 'institution_invites'), 
-                    where('institutionId', '==', editingInstitutionId),
-                    where('role', '==', 'institutionadmin')
-                );
-                const invitesSnap = await getDocs(invitesQuery);
-                
-                const existingInvites: any[] = [];
-                invitesSnap.forEach(snapDoc => {
-                    existingInvites.push({ id: snapDoc.id, email: snapDoc.data().email });
-                });
+                const existingInvites = await loadInstitutionAdminInvites(editingInstitutionId);
 
                 queueInstitutionEditBatchOps({
                     batch,
