@@ -3,8 +3,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Building2, Users, Search, CheckCircle2, XCircle,
-    Loader2, Trash2, BookOpen, GraduationCap,
-    Plus, ChevronRight, ToggleLeft, ToggleRight,
+    Loader2, BookOpen, GraduationCap,
+    Plus,
     ShieldAlert, Globe, BarChart3, Pencil
 } from 'lucide-react';
 import {
@@ -21,6 +21,7 @@ import RoleBadge from './components/RoleBadge';
 import AdminConfirmModal from './components/AdminConfirmModal';
 import { parseCsvEmails } from './utils/adminEmailUtils';
 import UserTableRow from './components/UserTableRow';
+import InstitutionTableRow from './components/InstitutionTableRow';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -302,6 +303,25 @@ const InstitutionsTab = () => {
         queueInstitutionConfirm('delete', school);
     };
 
+    const handleEditInstitution = (school: any) => {
+        setError('');
+        setSuccess('');
+        setEditingInstitutionId(school.id);
+        setForm({
+            name: school.name || '',
+            domain: school.domain || school.domains?.[0] || '',
+            institutionAdministrators: Array.isArray(school.institutionAdministrators)
+                ? school.institutionAdministrators.join(', ')
+                : (school.adminEmail || ''),
+            type: school.type || 'school',
+            city: school.city || '',
+            country: school.country || '',
+            timezone: school.timezone || 'Europe/Madrid',
+            institutionalCode: ''
+        });
+        setShowCreateForm(true);
+    };
+
     const filtered = Institutions.filter(s => {
         const matchSearch = s.name?.toLowerCase().includes(search.toLowerCase()) ||
                             s.city?.toLowerCase().includes(search.toLowerCase()) ||
@@ -482,63 +502,15 @@ const InstitutionsTab = () => {
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {filtered.length === 0 ? (
                                     <tr><td colSpan={8} className="px-6 py-10 text-center text-slate-400">No hay instituciones registradas.</td></tr>
-                                ) : filtered.map(school => (
-                                    <tr key={school.id} className={`hover:bg-slate-50 dark:hover:bg-slate-800/50 ${school.enabled === false ? 'opacity-60' : ''}`}>
-                                        <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{school.name}</td>
-                                        <td className="px-6 py-4 font-mono text-xs" title={school.id}>{school.id}</td>
-                                        <td className="px-6 py-4">{school.domain || school.domains?.[0] || '—'}</td>
-                                        <td className="px-6 py-4 capitalize">{school.type || 'school'}</td>
-                                        <td className="px-6 py-4">{school.city || '—'}</td>
-                                        <td className="px-6 py-4">{Array.isArray(school.institutionAdministrators) ? school.institutionAdministrators.join(', ') : (school.adminEmail || '—')}</td>
-                                        <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${school.enabled !== false ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                                                {school.enabled !== false ? 'Activa' : 'Deshabilitada'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-1">
-                                                <button
-                                                    onClick={() => navigate(`/institution-admin-dashboard?institutionId=${encodeURIComponent(school.id)}`)}
-                                                    title="Abrir panel de institución"
-                                                    className="text-slate-400 hover:text-violet-500 p-2 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors"
-                                                >
-                                                    <ChevronRight className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setError('');
-                                                        setSuccess('');
-                                                        setEditingInstitutionId(school.id);
-                                                        setForm({
-                                                            name: school.name || '',
-                                                            domain: school.domain || school.domains?.[0] || '',
-                                                            institutionAdministrators: Array.isArray(school.institutionAdministrators)
-                                                                ? school.institutionAdministrators.join(', ')
-                                                                : (school.adminEmail || ''),
-                                                            type: school.type || 'school',
-                                                            city: school.city || '',
-                                                            country: school.country || '',
-                                                            timezone: school.timezone || 'Europe/Madrid',
-                                                            institutionalCode: ''
-                                                        });
-                                                        setShowCreateForm(true);
-                                                    }}
-                                                    title="Editar"
-                                                    className="text-slate-400 hover:text-indigo-500 p-2 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-                                                >
-                                                    <Pencil className="w-4 h-4" />
-                                                </button>
-                                                <button onClick={() => handleToggle(school)} title={school.enabled !== false ? 'Deshabilitar' : 'Habilitar'}
-                                                    className="text-slate-400 hover:text-amber-500 p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors">
-                                                    {school.enabled !== false ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                                                </button>
-                                                <button onClick={() => handleDelete(school)} title="Eliminar"
-                                                    className="text-slate-400 hover:text-red-500 p-2 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                ) : filtered.map((school) => (
+                                    <InstitutionTableRow
+                                        key={school.id}
+                                        school={school}
+                                        onOpenDashboard={(schoolId) => navigate(`/institution-admin-dashboard?institutionId=${encodeURIComponent(schoolId)}`)}
+                                        onEdit={handleEditInstitution}
+                                        onToggle={handleToggle}
+                                        onDelete={handleDelete}
+                                    />
                                 ))}
                             </tbody>
                         </table>

@@ -34,11 +34,19 @@ Reduce `AdminDashboard.tsx` complexity by extracting reusable UI primitives from
   - role change flow via `handleRoleChange`
   - enable/disable flow via `handleToggle`
 
+### Extracted institutions table row component
+- New file: `src/pages/AdminDashboard/components/InstitutionTableRow.tsx`
+- New file: `tests/unit/pages/admin/InstitutionTableRow.test.jsx`
+- Moved institutions-row rendering/action markup from `AdminDashboard.tsx` into `InstitutionTableRow` while preserving callbacks:
+  - open institution dashboard
+  - edit institution
+  - enable/disable institution
+  - delete institution
+
 ## Validation
 - `get_errors`: clean in touched files.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 5/5 files passing, 13/13 tests passing.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 6/6 files passing, 14/14 tests passing.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Next Slices
-- Extract institutions-table row actions into a focused component.
 - Evaluate extraction of query-building helpers for pagination and filters.

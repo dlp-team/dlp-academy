@@ -1,6 +1,6 @@
 <!-- copilot/explanations/temporal/lossless-reports/2026-04-01/phase-06-admindashboard-ui-primitives-slice.md -->
 
-# Lossless Report: Phase 06 AdminDashboard UI Primitives + Utility + Users-Row Slice
+# Lossless Report: Phase 06 AdminDashboard UI Primitives + Utility + Users/Institutions Row Slices
 
 Date: 2026-04-01
 
@@ -8,6 +8,7 @@ Date: 2026-04-01
 Continue the plan with commit/push-per-task discipline and begin Phase 06 by extracting reusable UI primitives from `AdminDashboard.tsx`.
 Then continue Phase 06 with extraction of reusable email parsing utility.
 Then continue Phase 06 with extraction of users-table row rendering/actions.
+Then continue Phase 06 with extraction of institutions-table row rendering/actions.
 
 ## Explicitly Preserved (Out of Scope)
 - No Firestore query or mutation behavior changes.
@@ -21,10 +22,12 @@ Then continue Phase 06 with extraction of users-table row rendering/actions.
 - `src/pages/AdminDashboard/utils/adminEmailUtils.ts` (new)
 - `src/pages/AdminDashboard/components/UserStatusBadge.tsx` (new)
 - `src/pages/AdminDashboard/components/UserTableRow.tsx` (new)
+- `src/pages/AdminDashboard/components/InstitutionTableRow.tsx` (new)
 - `tests/unit/pages/admin/RoleBadge.test.jsx` (new)
 - `tests/unit/pages/admin/AdminConfirmModal.test.jsx` (new)
 - `tests/unit/pages/admin/adminEmailUtils.test.js` (new)
 - `tests/unit/pages/admin/UserTableRow.test.jsx` (new)
+- `tests/unit/pages/admin/InstitutionTableRow.test.jsx` (new)
 - `copilot/plans/active/audit-remediation-and-completion/phases/phase-06-admindashboard-modularization.md` (new)
 - `copilot/plans/active/audit-remediation-and-completion/strategy-roadmap.md`
 - `copilot/explanations/codebase/src/pages/AdminDashboard/AdminDashboard.md`
@@ -33,6 +36,7 @@ Then continue Phase 06 with extraction of users-table row rendering/actions.
 - `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminEmailUtils.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/components/UserStatusBadge.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/components/UserTableRow.md` (new)
+- `copilot/explanations/codebase/src/pages/AdminDashboard/components/InstitutionTableRow.md` (new)
 
 ## Per-File Verification
 1. `src/pages/AdminDashboard/AdminDashboard.tsx`
@@ -50,10 +54,11 @@ Then continue Phase 06 with extraction of users-table row rendering/actions.
 - Verified existing confirmation-dialog integration tests still pass.
 - Verified new `parseCsvEmails` utility tests pass.
 - Verified users-row extraction tests pass and integration confirmations remain green.
+- Verified institutions-row extraction tests pass and integration confirmations remain green.
 
 ## Validation Summary
 - `get_errors` on touched files: clean.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 5/5 files passed, 13/13 tests passed.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 6/6 files passed, 14/14 tests passed.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Risks and Checks
@@ -65,3 +70,5 @@ Then continue Phase 06 with extraction of users-table row rendering/actions.
   - Check: added dedicated utility tests for normalization and empty-entry trimming.
 - Risk: users-table row action wiring regressions.
   - Check: extracted row component preserves callback contracts and is covered by focused row tests plus existing integration suite.
+- Risk: institutions-table row action wiring regressions.
+  - Check: extracted row component preserves callbacks and is covered by focused row tests plus existing confirmation-dialog integration tests.
