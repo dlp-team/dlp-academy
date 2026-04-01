@@ -39,6 +39,7 @@
 - Extracted institutions table row UI/actions into `InstitutionTableRow.tsx`, moving row-level action buttons and status display out of `AdminDashboard.tsx`.
 - Added focused institutions row interaction coverage in `tests/unit/pages/admin/InstitutionTableRow.test.jsx` and re-validated existing integration tests.
 - Extracted users-table filtering logic to `src/pages/AdminDashboard/utils/adminUserFilterUtils.ts` and added focused utility tests in `tests/unit/pages/admin/adminUserFilterUtils.test.js`.
+- Extracted institutions-table filtering logic to `src/pages/AdminDashboard/utils/adminInstitutionFilterUtils.ts` and added focused utility tests in `tests/unit/pages/admin/adminInstitutionFilterUtils.test.js`.
 
 ### 2026-03-30
 - Replaced browser `window.confirm(...)` dialogs in Admin institutions/users tabs with a shared in-page confirmation modal (`AdminConfirmModal`).

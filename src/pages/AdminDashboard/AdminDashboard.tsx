@@ -21,6 +21,7 @@ import RoleBadge from './components/RoleBadge';
 import AdminConfirmModal from './components/AdminConfirmModal';
 import { parseCsvEmails } from './utils/adminEmailUtils';
 import { filterAdminUsers } from './utils/adminUserFilterUtils';
+import { filterInstitutions } from './utils/adminInstitutionFilterUtils';
 import UserTableRow from './components/UserTableRow';
 import InstitutionTableRow from './components/InstitutionTableRow';
 
@@ -323,19 +324,7 @@ const InstitutionsTab = () => {
         setShowCreateForm(true);
     };
 
-    const filtered = Institutions.filter(s => {
-        const matchSearch = s.name?.toLowerCase().includes(search.toLowerCase()) ||
-                            s.city?.toLowerCase().includes(search.toLowerCase()) ||
-                            s.adminEmail?.toLowerCase().includes(search.toLowerCase());
-        
-        const matchStatus = statusFilter === 'all' ? true :
-                            statusFilter === 'active' ? s.enabled !== false :
-                            s.enabled === false;
-                            
-        const matchType = typeFilter === 'all' ? true : s.type === typeFilter;
-
-        return matchSearch && matchStatus && matchType;
-    });
+    const filtered = filterInstitutions(Institutions, search, statusFilter, typeFilter);
 
     const institutionConfirmTitle = institutionConfirm.action === 'toggle'
         ? `${institutionConfirm.institution?.enabled !== false ? 'Deshabilitar' : 'Habilitar'} institución`

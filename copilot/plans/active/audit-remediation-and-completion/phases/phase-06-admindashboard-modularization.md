@@ -48,9 +48,14 @@ Reduce `AdminDashboard.tsx` complexity by extracting reusable UI primitives from
 - New file: `tests/unit/pages/admin/adminUserFilterUtils.test.js`
 - Moved inline users filtering expression in `UsersTab` to `filterAdminUsers(...)` utility while preserving filtering semantics.
 
+### Extracted institutions filtering utility
+- New file: `src/pages/AdminDashboard/utils/adminInstitutionFilterUtils.ts`
+- New file: `tests/unit/pages/admin/adminInstitutionFilterUtils.test.js`
+- Moved inline institutions filtering expression in `InstitutionsTab` to `filterInstitutions(...)` utility while preserving filtering semantics.
+
 ## Validation
 - `get_errors`: clean in touched files.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 7/7 files passing, 16/16 tests passing.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 8/8 files passing, 18/18 tests passing.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Next Slices
