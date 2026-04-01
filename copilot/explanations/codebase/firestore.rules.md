@@ -1,6 +1,16 @@
 // copilot/explanations/codebase/firestore.rules.md
 
 ## Changelog
+### 2026-04-01: Subject class assignment integrity and constrained student invite joins
+- Added `classBelongsToInstitution(classId, institutionId)` and applied it to `subjects` create/update when `classId` is present.
+- Added constrained student join path `canStudentJoinSubjectByInvite()` in `subjects` update rules.
+- Student join updates are now limited to self-join semantics and only allow:
+  - `sharedWithUids`
+  - `enrolledStudentUids`
+  - `isShared`
+  - `updatedAt`
+- Prevents student metadata edits while enabling invite-based enrollment safely.
+
 ### 2026-03-30: Teacher recognition-field constrained writes
 - Added constrained teacher update path in `match /users/{userId}` for same-institution student documents.
 - Allowed fields are restricted to recognition and teacher feedback surfaces only:

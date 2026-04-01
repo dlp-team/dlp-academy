@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/audit-remediation-and-completion/phases/phase-10-subject-completion-tracking.md -->
+<!-- copilot/plans/finished/audit-remediation-and-completion/phases/phase-10-subject-completion-tracking.md -->
 
 # Phase 10: Subject Completion Tracking
 

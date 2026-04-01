@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/audit-remediation-and-completion/phases/phase-03-subject-data-enforcement.md -->
+<!-- copilot/plans/finished/audit-remediation-and-completion/phases/phase-03-subject-data-enforcement.md -->
 
 # Phase 03: Subject Data Enforcement & Consistency
 
@@ -28,17 +28,17 @@
 ### 3. Enable Invite Code Based Access
 - [x] Verify `inviteCode` is always generated on creation ✅ (already automatic)
 - [x] Ensure `enrolledStudentUids` array is initialized (_already done_)
-- [ ] Test: Student can join subject via invite code → added to `enrolledStudentUids` (pending dedicated scenario test)
+- [x] Test: Student can join subject via invite code → added to `enrolledStudentUids`
 
 ### 4. Validation: Class-Institution Relationship
-- [ ] Verify `classId` must belong to same `institutionId`
-- [ ] Add Firestore rule to prevent cross-institution class assignment
-- [ ] Test: Classes can only be assigned if they match subject's institutionId
+- [x] Verify `classId` must belong to same `institutionId`
+- [x] Add Firestore rule to prevent cross-institution class assignment
+- [x] Test: Classes can only be assigned if they match subject's institutionId
 
 ### 5. Update Subject Access Query (Prep for Phase 04)
 - [x] Document current single-condition queries
 - [x] Prepare multi-condition OR logic for Phase 04
-- [ ] Add test cases for 3 access vectors:
+- [x] Add test cases for 3 access vectors:
   - Teachers: by `ownerId`
   - Standard Students: by `classId` match
   - Guest Students: by `uid` in `enrolledStudentUids`
@@ -148,13 +148,13 @@ npm run test:rules
 
 ## Success Criteria
 
-- [ ] `course` field is required in UI form
-- [ ] `classId` stays synced with `classIds[0]`
-- [ ] `enrolledStudentUids` properly initialized
-- [ ] Firestore rules validate class-institution relationship
-- [ ] All tests pass
-- [ ] No type errors
-- [ ] Linting clean
+- [x] `course` field is required in UI form
+- [x] `classId` stays synced with `classIds[0]`
+- [x] `enrolledStudentUids` properly initialized
+- [x] Firestore rules validate class-institution relationship
+- [x] All tests pass
+- [x] No type errors
+- [x] Linting clean
 
 ## Notes
 
@@ -171,3 +171,7 @@ npm run test:rules
 - Added invite-code governance controls in class section (three-dots menu): enable/disable joins, rotation interval, and regenerate now.
 - Enforced invite-code validity checks on join flow: disabled-code block, stale-code block, and interval-based expiration enforcement.
 - Hardened `firestore.rules` for invite governance fields and privacy: `subjectInviteCodes` now allows `get` only and denies `list`.
+- Added class-institution integrity enforcement in `firestore.rules` via class reference checks on `subjects.classId` (create/update).
+- Added rules coverage for class assignment allow/deny paths (`same institution` vs `cross institution`).
+- Added constrained student invite-join rules coverage and hook-level enrollment assertion updates.
+- Added hook-level access-vector coverage for owner + class-match + invite-enrolled listeners.

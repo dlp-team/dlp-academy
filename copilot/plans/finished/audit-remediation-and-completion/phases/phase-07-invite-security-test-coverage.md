@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/audit-remediation-and-completion/phases/phase-07-invite-security-test-coverage.md -->
+<!-- copilot/plans/finished/audit-remediation-and-completion/phases/phase-07-invite-security-test-coverage.md -->
 
 # Phase 07: Invite Security Test Coverage
 

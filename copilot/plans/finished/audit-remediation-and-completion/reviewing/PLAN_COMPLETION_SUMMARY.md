@@ -1,15 +1,15 @@
-<!-- copilot/plans/inReview/audit-remediation-and-completion/reviewing/PLAN_COMPLETION_SUMMARY.md -->
+<!-- copilot/plans/finished/audit-remediation-and-completion/reviewing/PLAN_COMPLETION_SUMMARY.md -->
 
 # Plan Completion Summary (Checkpoint)
 
 ## Plan
-- `copilot/plans/inReview/audit-remediation-and-completion`
+- `copilot/plans/finished/audit-remediation-and-completion`
 
 ## Current Completion Snapshot
 - Phase 09: ✅ Completed (teacher subject creation policy)
 - Phase 10: ✅ Completed (subject completion tracking)
 - Phase 11: ✅ Completed (automated + targeted e2e validation gate)
-- Phase 12: 🟡 In progress (closure artifacts and lifecycle transition decision)
+- Phase 12: ✅ Completed (closure artifacts, residual remediation, and validation refresh)
 
 ## Key Delivered Outcomes
 - Institution-level teacher autonomous subject creation policy enforced across UI + hook + rules.
@@ -33,4 +33,5 @@
 - `ce4cce0` feat(permissions): enforce teacher subject creation policy
 
 ## Notes
-- Closure artifacts are now present; final lifecycle move should be performed after confirming disposition of previously logged phase-03 residual items.
+- Previously logged phase-03 residual items were remediated in this closure slice and validated with updated unit + rules suites.
+- Plan is ready for lifecycle transition from `inReview` to `finished`.

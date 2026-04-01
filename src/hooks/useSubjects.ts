@@ -469,16 +469,18 @@ export const useSubjects = (user: any) => {
             shareOrigin: 'invite-code',
             sharedAt: new Date()
         };
+        const normalizedUserRole = String(user?.role || '').toLowerCase();
 
         const subjectUpdatePayload: any = {
             sharedWithUids: arrayUnion(user.uid),
-            sharedWith: arrayUnion(shareEntry),
             isShared: true,
             updatedAt: new Date()
         };
 
-        if (String(user?.role || '').toLowerCase() === 'student') {
+        if (normalizedUserRole === 'student') {
             subjectUpdatePayload.enrolledStudentUids = arrayUnion(user.uid);
+        } else {
+            subjectUpdatePayload.sharedWith = arrayUnion(shareEntry);
         }
 
         await updateDoc(subjectRef, subjectUpdatePayload);

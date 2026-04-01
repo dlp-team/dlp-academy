@@ -1,8 +1,8 @@
-<!-- copilot/plans/inReview/audit-remediation-and-completion/strategy-roadmap.md -->
+<!-- copilot/plans/finished/audit-remediation-and-completion/strategy-roadmap.md -->
 
 # Strategy Roadmap: Audit Remediation & Completion
 
-**Start Date:** April 1, 2026 | **Target Completion:** April 7, 2026 | **Status:** IN REVIEW
+**Start Date:** April 1, 2026 | **Target Completion:** April 7, 2026 | **Status:** FINISHED
 
 ## Phase Execution Timeline
 
@@ -31,7 +31,7 @@ Day 5 (Apr 5):
 
 Day 6-7 (Apr 6-7):
   ├─ Phase 11: Final Validation & Lossless Review          [4-6h]  → ✅ COMPLETED
-  └─ Phase 12: Closure & Finalization                      [2-3h]  → 🟡 IN PROGRESS
+  └─ Phase 12: Closure & Finalization                      [2-3h]  → ✅ COMPLETED
 ```
 
 ---
@@ -378,12 +378,12 @@ npm run build                 # Must produce dist/
   - `npm run build` → pass (existing chunk-size warning remains informational)
 - Targeted Home smoke proxy completed:
   - `npx playwright test tests/e2e/bin-view.spec.js tests/e2e/home-sharing-roles.spec.js` → pass (`6 passed`, `2 skipped`).
-- Phase 11 is complete; phase 12 closure remains.
+- Phase 11 is complete.
 
 ---
 
 ### Phase 12: Closure & Finalization
-**Status:** 🟡 IN PROGRESS
+**Status:** ✅ COMPLETED
 **Owner:** DLP_Architect
 **Duration:** 2-3 hours
 **Priority:** 🔴 CRITICAL
@@ -407,7 +407,8 @@ npm run build                 # Must produce dist/
   - `PLAN_COMPLETION_SUMMARY.md`
   - `RESIDUAL_RISKS.md`
   - `CLOSURE_CHECKLIST.md`
-- Lifecycle transition to `inReview` completed; final move to `finished` intentionally pending until residual phase-03 review items are dispositioned.
+- Residual Phase 03 review blockers remediated and validated in this closure slice.
+- Lifecycle move from `inReview` to `finished` executed.
 
 ---
 
@@ -440,9 +441,9 @@ Phase 12 (Closure)
 | Phase | Status | Duration | Files Changed | Tests Added | Blockers |
 |-------|--------|----------|---------------|-------------|----------|
 | 01    | ✅ DONE   | 0.5h   | 2             | 0           | None    |
-| 02    | ⏳ DOING  | 2.5h   | 8             | 0           | None    |
-| 03    | 📋 TODO   | 7h     | 6             | 3           | None    |
-| 04    | 📋 TODO   | 5h     | 4             | 8           | Phase 03 |
+| 02    | ✅ DONE   | 2.5h   | 8             | 0           | None    |
+| 03    | ✅ DONE   | 7h     | 6             | 3           | None    |
+| 04    | ✅ DONE   | 5h     | 4             | 8           | None    |
 | 05    | ✅ DONE   | 7h     | 7             | 6           | None |
 | 06    | ✅ DONE   | 5h     | 9             | 5           | None |
 | 07    | ✅ DONE   | 9h     | 11            | 16          | None |
@@ -450,7 +451,7 @@ Phase 12 (Closure)
 | 09    | ✅ DONE   | 7h     | 14            | 5           | None |
 | 10    | ✅ DONE   | 7h     | 17            | 2           | None |
 | 11    | ✅ DONE   | 5h     | 2             | 0           | None |
-| 12    | 🟡 DOING  | 2.5h   | 4             | 0           | Residual disposition pending |
+| 12    | ✅ DONE   | 3h     | 10            | 6           | None |
 
 **Total Estimated:** 70 hours | **Files:** 65 | **Tests Added:** 45
 
@@ -459,7 +460,7 @@ Phase 12 (Closure)
 ## Status Sync (Updated Daily)
 
 **Last Updated:** April 1, 2026 @ 21:16 UTC
-**Current Focus:** Phase 12 (Closure & Finalization)
+**Current Focus:** Plan closed (`finished` lifecycle)
 **Blockers:** None
 **On Track:** YES ✅
 **Risk Level:** LOW 🟢
@@ -468,8 +469,8 @@ Phase 12 (Closure)
 
 ## Quick Reference Links
 
-- 📄 README: `copilot/plans/inReview/audit-remediation-and-completion/README.md`
-- 📊 This Roadmap: `copilot/plans/inReview/audit-remediation-and-completion/strategy-roadmap.md`
+- 📄 README: `copilot/plans/finished/audit-remediation-and-completion/README.md`
+- 📊 This Roadmap: `copilot/plans/finished/audit-remediation-and-completion/strategy-roadmap.md`
 - 🔍 Audit Report: Explore agent output (embedded in conversation)
 - 📋 Original Audit Issues: `copilot/explanations/codebase/AUDIT_FINDINGS_2026_04_01.md` (to be created)
 - 🔐 Related Security Plan: `copilot/plans/active/firestore-rules-access-reliability-recovery/`

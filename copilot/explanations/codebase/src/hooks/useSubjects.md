@@ -1,4 +1,20 @@
 <!-- copilot/explanations/codebase/src/hooks/useSubjects.md -->
+## [2026-04-01] Student invite join write-surface hardening
+### Context
+- Rules now allow student invite joins only through a constrained update payload.
+
+### Change
+- Updated `joinSubjectByInviteCode(...)` so student joins write only:
+  - `sharedWithUids`
+  - `enrolledStudentUids`
+  - `isShared`
+  - `updatedAt`
+- Non-student invite joins keep writing `sharedWith` entries for explicit share metadata.
+
+### Validation
+- `npm run test:unit -- tests/unit/hooks/useSubjects.test.js`
+- `npm run test:rules`
+
 ## [2026-04-01] User-Scoped Subject Completion Tracking
 ### Context
 - Phase 10 required persisted completion state per user and a hook API consumable by Home views.

@@ -1,6 +1,14 @@
 // copilot/explanations/codebase/tests/rules/firestore.rules.test.md
 
 ## Changelog
+### 2026-04-01: Phase 03 residual coverage closure
+- Added subject class assignment integrity tests:
+  - allow teacher create/update when `classId` matches subject `institutionId`,
+  - deny teacher create/update when `classId` belongs to a different institution.
+- Added constrained student invite-join rules tests:
+  - allow self-join payload updates,
+  - deny payloads that attempt to add extra users.
+
 ### 2026-04-01: Teacher autonomous subject-creation policy enforcement coverage
 - Added rules tests validating institution-configurable teacher subject creation:
   - deny teacher create when `accessPolicies.teachers.allowTeacherAutonomousSubjectCreation` is `false`,

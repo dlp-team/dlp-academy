@@ -130,6 +130,48 @@ service cloud.firestore {
         || !get(/databases/$(database)/documents/institutions/$(institutionId)).data.accessPolicies.teachers.keys().hasAny(['allowTeacherAutonomousSubjectCreation'])
         || get(/databases/$(database)/documents/institutions/$(institutionId)).data.accessPolicies.teachers.allowTeacherAutonomousSubjectCreation == true;
     }
+
+    function classBelongsToInstitution(classId, institutionId) {
+      return classId == null
+        || (
+          classId is string
+          && classId.size() > 0
+          && exists(/databases/$(database)/documents/classes/$(classId))
+          && get(/databases/$(database)/documents/classes/$(classId)).data.institutionId == institutionId
+        );
+    }
+
+    function subjectSharedWithUids(data) {
+      return data.keys().hasAny(['sharedWithUids']) && data.sharedWithUids is list
+        ? data.sharedWithUids
+        : [];
+    }
+
+    function subjectEnrolledStudentUids(data) {
+      return data.keys().hasAny(['enrolledStudentUids']) && data.enrolledStudentUids is list
+        ? data.enrolledStudentUids
+        : [];
+    }
+
+    function canStudentJoinSubjectByInvite() {
+      return isStudentRole()
+        && sameInstitution(resource.data)
+        && request.resource.data.institutionId == resource.data.institutionId
+        && request.resource.data.ownerId == resource.data.ownerId
+        && request.resource.data.course == resource.data.course
+        && (!resource.data.keys().hasAny(['status']) || resource.data.status != 'trashed')
+        && (!resource.data.keys().hasAny(['inviteCodeEnabled']) || resource.data.inviteCodeEnabled == true)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sharedWithUids', 'enrolledStudentUids', 'isShared', 'updatedAt'])
+        && request.resource.data.isShared == true
+        && !(request.auth.uid in subjectSharedWithUids(resource.data))
+        && !(request.auth.uid in subjectEnrolledStudentUids(resource.data))
+        && request.auth.uid in subjectSharedWithUids(request.resource.data)
+        && request.auth.uid in subjectEnrolledStudentUids(request.resource.data)
+        && subjectSharedWithUids(request.resource.data).hasAll(subjectSharedWithUids(resource.data))
+        && subjectEnrolledStudentUids(request.resource.data).hasAll(subjectEnrolledStudentUids(resource.data))
+        && subjectSharedWithUids(request.resource.data).size() == subjectSharedWithUids(resource.data).size() + 1
+        && subjectEnrolledStudentUids(request.resource.data).size() == subjectEnrolledStudentUids(resource.data).size() + 1;
+    }
     
     function isOwner() {
         return resource.data.ownerId == request.auth.uid || resource.data.userId == request.auth.uid;
@@ -299,8 +341,7 @@ service cloud.firestore {
           )
         && (
           !request.resource.data.keys().hasAny(['classId'])
-          || request.resource.data.classId == null
-          || request.resource.data.classId is string
+          || classBelongsToInstitution(request.resource.data.classId, request.resource.data.institutionId)
         )
         && (
           !request.resource.data.keys().hasAny(['inviteCodeEnabled'])
@@ -335,47 +376,51 @@ service cloud.firestore {
           || (resource.data.keys().hasAny(['sharedWithUids']) && request.auth.uid in resource.data.sharedWithUids)
         );
       allow update: if isSignedIn()
-        && !isStudentRole()
         && (
-          canWriteResource(resource.data)
-          || resource.data.ownerId == request.auth.uid
-          || resource.data.uid == request.auth.uid
-          || (
-            resource.data.keys().hasAny(['folderId'])
-            && canManageFolderById(resource.data.folderId)
+          (
+            !isStudentRole()
+            && (
+              canWriteResource(resource.data)
+              || resource.data.ownerId == request.auth.uid
+              || resource.data.uid == request.auth.uid
+              || (
+                resource.data.keys().hasAny(['folderId'])
+                && canManageFolderById(resource.data.folderId)
+              )
+            )
+            && (
+              !request.writeFields.hasAny(['inviteCode'])
+              || (
+                request.resource.data.inviteCode is string
+                && request.resource.data.inviteCode.size() > 0
+              )
+            )
+            && (
+              !request.writeFields.hasAny(['enrolledStudentUids'])
+              || request.resource.data.enrolledStudentUids is list
+            )
+            && (
+              !request.writeFields.hasAny(['classId'])
+              || classBelongsToInstitution(request.resource.data.classId, request.resource.data.institutionId)
+            )
+            && (
+              !request.writeFields.hasAny(['inviteCodeEnabled'])
+              || request.resource.data.inviteCodeEnabled is bool
+            )
+            && (
+              !request.writeFields.hasAny(['inviteCodeRotationIntervalHours'])
+              || (
+                request.resource.data.inviteCodeRotationIntervalHours is number
+                && request.resource.data.inviteCodeRotationIntervalHours >= 1
+                && request.resource.data.inviteCodeRotationIntervalHours <= 168
+              )
+            )
+            && (
+              !request.writeFields.hasAny(['inviteCodeLastRotatedAt'])
+              || request.resource.data.inviteCodeLastRotatedAt is timestamp
+            )
           )
-        )
-        && (
-          !request.writeFields.hasAny(['inviteCode'])
-          || (
-            request.resource.data.inviteCode is string
-            && request.resource.data.inviteCode.size() > 0
-          )
-        )
-        && (
-          !request.writeFields.hasAny(['enrolledStudentUids'])
-          || request.resource.data.enrolledStudentUids is list
-        )
-        && (
-          !request.writeFields.hasAny(['classId'])
-          || request.resource.data.classId == null
-          || request.resource.data.classId is string
-        )
-        && (
-          !request.writeFields.hasAny(['inviteCodeEnabled'])
-          || request.resource.data.inviteCodeEnabled is bool
-        )
-        && (
-          !request.writeFields.hasAny(['inviteCodeRotationIntervalHours'])
-          || (
-            request.resource.data.inviteCodeRotationIntervalHours is number
-            && request.resource.data.inviteCodeRotationIntervalHours >= 1
-            && request.resource.data.inviteCodeRotationIntervalHours <= 168
-          )
-        )
-        && (
-          !request.writeFields.hasAny(['inviteCodeLastRotatedAt'])
-          || request.resource.data.inviteCodeLastRotatedAt is timestamp
+          || canStudentJoinSubjectByInvite()
         );
       allow delete: if isSignedIn()
         && (

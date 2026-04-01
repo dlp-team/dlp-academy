@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/audit-remediation-and-completion/reviewing/CLOSURE_CHECKLIST.md -->
+<!-- copilot/plans/finished/audit-remediation-and-completion/reviewing/CLOSURE_CHECKLIST.md -->
 
 # Closure Checklist
 
@@ -26,4 +26,5 @@
 - [x] Working tree clean after checkpoints
 
 ## Pending Final Decision
-- [ ] Decide lifecycle transition (`inReview` -> `finished`) after residual phase-03 items are dispositioned.
+- [x] Residual phase-03 items dispositioned and validated.
+- [x] Lifecycle transition (`inReview` -> `finished`) approved for execution.

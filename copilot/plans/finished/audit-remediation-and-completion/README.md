@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/audit-remediation-and-completion/README.md -->
+<!-- copilot/plans/finished/audit-remediation-and-completion/README.md -->
 
 # Audit Remediation & Platform Completion Plan
 
@@ -39,11 +39,11 @@ DLP Academy has reached a development inflection point: core features work, but 
 - Broad refactors unrelated to identified gaps
 
 ## Current Status
-- **Lifecycle:** `inReview` (moved from `active` on 2026-04-01)
+- **Lifecycle:** `finished` (moved from `inReview` on 2026-04-01)
 - **Created:** April 1, 2026
 - **Estimated Duration:** 5-7 days (2 parallel tracks where possible)
 - **Execution Team:** DLP_Architect (autopilot agent)
-- **Validation:** Lossless reports per phase, final comprehensive review before closure
+- **Validation:** Final quality gates completed and closure artifacts synchronized
 
 ## Key Decisions and Assumptions
 1. **Type Safety First:** Removing `any` types enables safe refactoring downstream
@@ -61,11 +61,11 @@ DLP Academy has reached a development inflection point: core features work, but 
 - No missing items identified; all objectives and validation steps appear complete.
 
 ### Phase 03: Subject Data Enforcement & Consistency
-- The following items are incomplete or missing:
-	- [ ] Dedicated test: Student can join subject via invite code (should add scenario test)
-	- [ ] Validation: classId must belong to same institutionId (test and Firestore rule addition pending)
-	- [ ] Test: Classes can only be assigned if they match subject's institutionId
-	- [ ] Test cases for all 3 access vectors (teacher, student by class, guest by invite) not fully implemented
+- Residual Phase 03 items were completed in this execution slice:
+	- [x] Dedicated student join-via-invite coverage added (rules + hook behavior assertion).
+	- [x] Firestore rules now enforce class-to-institution alignment for `subjects.classId` on create/update.
+	- [x] Rules coverage added for same-institution class assignment allow and cross-institution deny paths.
+	- [x] Access-vector coverage added for teacher ownership plus student class/invite vectors in `useSubjects`.
 
 ### Phase 04: Subject Access Query Redesign
 - Additional scenario tests for class/enrollment vectors recommended (see Phase 07 for coverage plan)
@@ -110,18 +110,19 @@ DLP Academy has reached a development inflection point: core features work, but 
 	- `npm run build` (pass).
 - Additional smoke verification:
 	- `npx playwright test tests/e2e/bin-view.spec.js tests/e2e/home-sharing-roles.spec.js` (6 passed, 2 skipped).
-- Remaining:
-	- phase-12 closure artifacts and lifecycle transition.
+- Remaining: none.
 
 ### Phase 12: Closure & Finalization
-- In progress in this execution slice.
-- Created closure artifact set under `reviewing/`:
+- Completed in this execution slice.
+- Closure artifact set under `reviewing/`:
 	- `PLAN_COMPLETION_SUMMARY.md`,
 	- `RESIDUAL_RISKS.md`,
-	- `CLOSURE_CHECKLIST.md`.
-- Lifecycle transition to `inReview` completed; final transition to `finished` remains pending until residual phase-review items are formally dispositioned.
-- [ ] Lossless reports created for each phase
-- [ ] Git history clean with logical commits
+	- `CLOSURE_CHECKLIST.md`,
+	- `finished-transition-complete-2026-04-01.md`.
+- Residual phase-review blockers from Phase 03 are now remediated and validated.
+- Lifecycle transition to `finished` executed.
+- [x] Lossless reports created for each phase
+- [x] Git history clean with logical commits
 
 ## Plan Artifacts
 - `strategy-roadmap.md` - Phase sequencing, dependencies, status tracking (source of truth)
@@ -151,5 +152,5 @@ DLP Academy has reached a development inflection point: core features work, but 
 4. **Data Rollback:** Firestore restore from backup if schema migration fails
 
 ## Next Steps
-→ **NEXT EXECUTION TARGET:** Phase 12 - Closure & Finalization
-→ Keep plan lifecycle transition pending until phase-12 artifacts are fully created
+→ Plan closed in `finished` lifecycle.
+→ Optional follow-up: continue with remaining independent security/performance tracks.

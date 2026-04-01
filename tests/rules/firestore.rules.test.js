@@ -535,6 +535,46 @@ describe('Firestore rules integration', () => {
         })
       );
     });
+
+    it('allows teacher subject creation when classId belongs to the same institution', async () => {
+      await seedDoc('classes', 'class-inst-1', {
+        institutionId: 'inst-1',
+        name: 'Clase Inst 1',
+      });
+
+      const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+      await assertSucceeds(
+        setDoc(doc(teacherDb, 'subjects', 'subject-teacher-class-valid'), {
+          course: 'Valid Subject',
+          institutionId: 'inst-1',
+          classId: 'class-inst-1',
+          inviteCode: 'CLASS111',
+          enrolledStudentUids: [],
+          ownerId: 'teacher-1',
+        })
+      );
+    });
+
+    it('denies teacher subject creation when classId belongs to another institution', async () => {
+      await seedDoc('classes', 'class-inst-2', {
+        institutionId: 'inst-2',
+        name: 'Clase Inst 2',
+      });
+
+      const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+      await assertFails(
+        setDoc(doc(teacherDb, 'subjects', 'subject-teacher-class-invalid'), {
+          course: 'Blocked Subject',
+          institutionId: 'inst-1',
+          classId: 'class-inst-2',
+          inviteCode: 'CLASS222',
+          enrolledStudentUids: [],
+          ownerId: 'teacher-1',
+        })
+      );
+    });
   });
 
   describe('Vulnerability #2: Student cannot update subject metadata', () => {
@@ -628,6 +668,120 @@ describe('Firestore rules integration', () => {
             inviteCodeEnabled: false,
             inviteCodeRotationIntervalHours: 72,
             inviteCodeLastRotatedAt: new Date(),
+          },
+          { merge: true }
+        )
+      );
+    });
+
+    it('denies teacher subject class reassignment when target class belongs to another institution', async () => {
+      await seedDoc('classes', 'class-inst-1-update', {
+        institutionId: 'inst-1',
+        name: 'Clase Inst 1 Update',
+      });
+      await seedDoc('classes', 'class-inst-2-update', {
+        institutionId: 'inst-2',
+        name: 'Clase Inst 2 Update',
+      });
+      await seedDoc('subjects', 'subject-class-reassign-deny', {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        course: 'Original',
+        inviteCode: 'CLASSUP1',
+        classId: 'class-inst-1-update',
+        enrolledStudentUids: [],
+      });
+
+      const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+      await assertFails(
+        setDoc(
+          doc(teacherDb, 'subjects', 'subject-class-reassign-deny'),
+          { classId: 'class-inst-2-update' },
+          { merge: true }
+        )
+      );
+    });
+
+    it('allows teacher subject class reassignment when target class is in the same institution', async () => {
+      await seedDoc('classes', 'class-inst-1-current', {
+        institutionId: 'inst-1',
+        name: 'Clase Inst 1 Current',
+      });
+      await seedDoc('classes', 'class-inst-1-next', {
+        institutionId: 'inst-1',
+        name: 'Clase Inst 1 Next',
+      });
+      await seedDoc('subjects', 'subject-class-reassign-allow', {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        course: 'Original',
+        inviteCode: 'CLASSUP2',
+        classId: 'class-inst-1-current',
+        enrolledStudentUids: [],
+      });
+
+      const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+      await assertSucceeds(
+        setDoc(
+          doc(teacherDb, 'subjects', 'subject-class-reassign-allow'),
+          { classId: 'class-inst-1-next' },
+          { merge: true }
+        )
+      );
+    });
+  });
+
+  describe('Residual: student invite join path is constrained and allowed', () => {
+    it('allows student self-join payload with sharedWithUids and enrolledStudentUids only', async () => {
+      await seedDoc('subjects', 'subject-student-join-allow', {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        course: 'Joinable Subject',
+        inviteCode: 'JOINSELF',
+        inviteCodeEnabled: true,
+        sharedWithUids: [],
+        enrolledStudentUids: [],
+      });
+
+      const studentDb = testEnv.authenticatedContext('student-1').firestore();
+
+      await assertSucceeds(
+        setDoc(
+          doc(studentDb, 'subjects', 'subject-student-join-allow'),
+          {
+            sharedWithUids: ['student-1'],
+            enrolledStudentUids: ['student-1'],
+            isShared: true,
+            updatedAt: new Date(),
+          },
+          { merge: true }
+        )
+      );
+    });
+
+    it('denies student join payload that attempts to add extra users', async () => {
+      await seedDoc('subjects', 'subject-student-join-deny', {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        course: 'Joinable Subject',
+        inviteCode: 'JOINDENY',
+        inviteCodeEnabled: true,
+        sharedWithUids: [],
+        enrolledStudentUids: [],
+      });
+
+      const studentDb = testEnv.authenticatedContext('student-1').firestore();
+
+      await assertFails(
+        setDoc(
+          doc(studentDb, 'subjects', 'subject-student-join-deny'),
+          {
+            sharedWithUids: ['student-1', 'student-2'],
+            enrolledStudentUids: ['student-1', 'student-2'],
+            isShared: true,
+            updatedAt: new Date(),
           },
           { merge: true }
         )

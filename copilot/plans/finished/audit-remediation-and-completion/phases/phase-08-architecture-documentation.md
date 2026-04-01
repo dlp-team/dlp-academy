@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/audit-remediation-and-completion/phases/phase-08-architecture-documentation.md -->
+<!-- copilot/plans/finished/audit-remediation-and-completion/phases/phase-08-architecture-documentation.md -->
 
 # Phase 08: Architecture Documentation
 

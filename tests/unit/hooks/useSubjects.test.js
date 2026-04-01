@@ -303,6 +303,14 @@ describe('useSubjects joinSubjectByInviteCode', () => {
 
     expect(joinResult).toEqual({ subjectId: 'subject-join-1', alreadyJoined: false });
     expect(firestoreMocks.mockUpdateDoc).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-join-1' }),
+      expect.objectContaining({
+        sharedWithUids: ['student-1'],
+        enrolledStudentUids: ['student-1'],
+        isShared: true,
+      })
+    );
     expect(firestoreMocks.mockSetDoc).toHaveBeenCalledTimes(1);
   });
 
@@ -1202,5 +1210,50 @@ describe('useSubjects teacher creation policy', () => {
     ).resolves.toBeTruthy();
 
     expect(firestoreMocks.mockRunTransaction).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('useSubjects student access vectors', () => {
+  const studentUser = {
+    uid: 'student-1',
+    email: 'student-1@test.com',
+    role: 'student',
+    displayName: 'Student One',
+    institutionId: 'inst-1',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    firestoreMocks.state.resetAutoId();
+    firestoreMocks.mockOnSnapshot.mockImplementation(() => vi.fn());
+    firestoreMocks.mockGetDocs.mockResolvedValue({ docs: [] });
+  });
+
+  it('subscribes to owner, shared, class and invite enrollment vectors for students', () => {
+    renderHook(() => useSubjects({ ...studentUser, classId: 'class-1' }));
+
+    expect(firestoreMocks.mockWhere).toHaveBeenCalledWith('ownerId', '==', 'student-1');
+    expect(firestoreMocks.mockWhere).toHaveBeenCalledWith('sharedWithUids', 'array-contains', 'student-1');
+    expect(firestoreMocks.mockWhere).toHaveBeenCalledWith('classId', '==', 'class-1');
+    expect(firestoreMocks.mockWhere).toHaveBeenCalledWith('enrolledStudentUids', 'array-contains', 'student-1');
+    expect(firestoreMocks.mockOnSnapshot).toHaveBeenCalledTimes(4);
+  });
+
+  it('uses a capped in-query when a student has multiple classes', () => {
+    const classIds = Array.from({ length: 12 }, (_, index) => ` class-${index + 1} `);
+    renderHook(() => useSubjects({ ...studentUser, classIds }));
+
+    expect(firestoreMocks.mockWhere).toHaveBeenCalledWith('classId', 'in', [
+      'class-1',
+      'class-2',
+      'class-3',
+      'class-4',
+      'class-5',
+      'class-6',
+      'class-7',
+      'class-8',
+      'class-9',
+      'class-10',
+    ]);
   });
 });

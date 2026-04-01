@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/audit-remediation-and-completion/phases/phase-09-teacher-subject-creation-permissions.md -->
+<!-- copilot/plans/finished/audit-remediation-and-completion/phases/phase-09-teacher-subject-creation-permissions.md -->
 
 # Phase 09: Teacher Subject Creation Permissions
 
