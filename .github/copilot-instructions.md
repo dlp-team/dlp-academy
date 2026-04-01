@@ -2,6 +2,23 @@
 
 ## ⚠️ CRITICAL: Premium Request Optimization
 
+## Skills Routing (VS Code Agent Skills)
+
+This workspace uses on-demand skills in `.github/skills/` for protocol-heavy workflows.
+
+- Keep this file and `AGENTS.md` as always-on policy and safety rules.
+- Use skills for task-specific flows to avoid overloading baseline context.
+- Preferred skill mapping:
+   - Plan work: `create-plan`
+   - Surgical implementation: `lossless-change`
+   - Complex debugging: `debug-in-depth`
+   - Test gap audit: `find-missing-tests`
+   - Test remediation: `test-stabilization`
+   - Documentation sync: `docs-sync` and `explain-code`
+   - Branching/commit/push discipline: `git-workflow`
+   - Final closure leverage: `askquestions-leverage`
+
+
 **This user has LIMITED premium requests. Every interaction must deliver MAXIMUM value.**
 
 ### Non-Negotiable Performance Standards:
