@@ -5,9 +5,11 @@
 ## Skills Routing (VS Code Agent Skills)
 
 This workspace uses on-demand skills in `.github/skills/` for protocol-heavy workflows.
+This workspace also uses scoped file instructions in `.github/instructions/` to reduce always-on context size.
 
 - Keep this file and `AGENTS.md` as always-on policy and safety rules.
 - Use skills for task-specific flows to avoid overloading baseline context.
+- Keep this root file focused on global policy; place file-type specifics into `.github/instructions/*.instructions.md`.
 - Preferred skill mapping:
    - Plan work: `create-plan`
    - Surgical implementation: `lossless-change`
