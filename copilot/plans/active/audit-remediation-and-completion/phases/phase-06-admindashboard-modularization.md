@@ -94,10 +94,15 @@ Reduce `AdminDashboard.tsx` complexity by extracting reusable UI primitives from
 - New file: `tests/unit/pages/admin/adminInstitutionInviteSyncUtils.test.js`
 - Moved inline invite-diff computation in institutions edit flow into a dedicated utility while preserving invite add/delete semantics.
 
+### Extracted institution payload utility
+- New file: `src/pages/AdminDashboard/utils/adminInstitutionPayloadUtils.ts`
+- New file: `tests/unit/pages/admin/adminInstitutionPayloadUtils.test.js`
+- Moved institutions submit input normalization and payload construction into a dedicated utility while preserving trimming, timezone fallback, and payload-shape semantics.
+
 ## Validation
 - `get_errors`: clean in touched files.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/InstitutionFormPanel.test.jsx tests/unit/pages/admin/adminInstitutionFormUtils.test.js tests/unit/pages/admin/adminInstitutionInviteSyncUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 16/16 files passing, 37/37 tests passing.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/InstitutionFormPanel.test.jsx tests/unit/pages/admin/adminInstitutionFormUtils.test.js tests/unit/pages/admin/adminInstitutionInviteSyncUtils.test.js tests/unit/pages/admin/adminInstitutionPayloadUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 17/17 files passing, 39/39 tests passing.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Next Slices
-- Evaluate extraction of institutions create/edit submit orchestration into dedicated hook/service.
+- Evaluate extraction of institutions create/edit submit validation into dedicated utility.

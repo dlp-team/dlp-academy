@@ -17,7 +17,6 @@ import { usePersistentState } from '../../hooks/usePersistentState';
 import { buildUserScopedPersistenceKey } from '../../utils/pagePersistence';
 import RoleBadge from './components/RoleBadge';
 import AdminConfirmModal from './components/AdminConfirmModal';
-import { parseCsvEmails } from './utils/adminEmailUtils';
 import { filterAdminUsers } from './utils/adminUserFilterUtils';
 import { filterInstitutions } from './utils/adminInstitutionFilterUtils';
 import {
@@ -25,6 +24,10 @@ import {
     mapInstitutionToFormState,
 } from './utils/adminInstitutionFormUtils';
 import { buildInstitutionInviteSyncPlan } from './utils/adminInstitutionInviteSyncUtils';
+import {
+    buildInstitutionPayload,
+    normalizeInstitutionFormInput,
+} from './utils/adminInstitutionPayloadUtils';
 import { buildAdminUsersPageQuery } from './utils/adminUserPaginationQueryUtils';
 import {
     buildInstitutionConfirmDialogText,
@@ -116,14 +119,9 @@ const InstitutionsTab = () => {
         e.preventDefault();
         setError(''); setSuccess(''); setSubmitting(true);
 
-        const name = form.name.trim();
-        const domain = form.domain.toLowerCase().trim();
-        const admins = parseCsvEmails(form.institutionAdministrators);
-        const institutionType = (form.type || 'school').trim();
-        const city = form.city.trim();
-        const country = form.country.trim();
-        const timezone = form.timezone.trim() || 'Europe/Madrid';
-        const institutionalCode = (form.institutionalCode || '').trim();
+        const normalizedInput = normalizeInstitutionFormInput(form);
+        const { name, domain, admins, institutionType, institutionalCode } = normalizedInput;
+
         if (!name) {
             setError('El nombre es obligatorio.');
             setSubmitting(false);
@@ -156,18 +154,7 @@ const InstitutionsTab = () => {
         }
 
         try {
-            const institutionPayload = {
-                name,
-                domain,
-                domains: [domain],
-                institutionAdministrators: admins,
-                adminEmail: admins[0],
-                type: institutionType,
-                city,
-                country,
-                timezone,
-                updatedAt: serverTimestamp(),
-            };
+            const institutionPayload = buildInstitutionPayload(normalizedInput, serverTimestamp());
 
             if (editingInstitutionId) {
                 const batch = writeBatch(db);

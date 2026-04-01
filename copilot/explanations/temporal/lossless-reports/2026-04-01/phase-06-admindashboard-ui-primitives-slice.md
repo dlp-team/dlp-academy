@@ -1,6 +1,6 @@
 <!-- copilot/explanations/temporal/lossless-reports/2026-04-01/phase-06-admindashboard-ui-primitives-slice.md -->
 
-# Lossless Report: Phase 06 AdminDashboard UI Primitives + Utility + Users/Institutions Row + User/Institution Filter + Users Pagination Query + Confirm-Copy + Role Constants + Users/Institutions Filters + Institution Form + Institution Form-State + Institution Invite-Sync Utility Slices
+# Lossless Report: Phase 06 AdminDashboard UI Primitives + Utility + Users/Institutions Row + User/Institution Filter + Users Pagination Query + Confirm-Copy + Role Constants + Users/Institutions Filters + Institution Form + Institution Form-State + Institution Invite-Sync + Institution Payload Utility Slices
 
 Date: 2026-04-01
 
@@ -19,6 +19,7 @@ Then continue Phase 06 with extraction of institutions-tab filter controls into 
 Then continue Phase 06 with extraction of institutions create/edit form panel into a dedicated component.
 Then continue Phase 06 with extraction of repeated institutions form default/reset/edit mapping logic into a utility.
 Then continue Phase 06 with extraction of institutions invite-sync diff logic into a utility.
+Then continue Phase 06 with extraction of institutions submit normalization/payload construction into a utility.
 
 ## Explicitly Preserved (Out of Scope)
 - No Firestore query or mutation behavior changes.
@@ -43,6 +44,7 @@ Then continue Phase 06 with extraction of institutions invite-sync diff logic in
 - `src/pages/AdminDashboard/components/InstitutionFormPanel.tsx` (new)
 - `src/pages/AdminDashboard/utils/adminInstitutionFormUtils.ts` (new)
 - `src/pages/AdminDashboard/utils/adminInstitutionInviteSyncUtils.ts` (new)
+- `src/pages/AdminDashboard/utils/adminInstitutionPayloadUtils.ts` (new)
 - `tests/unit/pages/admin/RoleBadge.test.jsx` (new)
 - `tests/unit/pages/admin/AdminConfirmModal.test.jsx` (new)
 - `tests/unit/pages/admin/adminEmailUtils.test.js` (new)
@@ -58,6 +60,7 @@ Then continue Phase 06 with extraction of institutions invite-sync diff logic in
 - `tests/unit/pages/admin/InstitutionFormPanel.test.jsx` (new)
 - `tests/unit/pages/admin/adminInstitutionFormUtils.test.js` (new)
 - `tests/unit/pages/admin/adminInstitutionInviteSyncUtils.test.js` (new)
+- `tests/unit/pages/admin/adminInstitutionPayloadUtils.test.js` (new)
 - `copilot/plans/active/audit-remediation-and-completion/phases/phase-06-admindashboard-modularization.md` (new)
 - `copilot/plans/active/audit-remediation-and-completion/strategy-roadmap.md`
 - `copilot/explanations/codebase/src/pages/AdminDashboard/AdminDashboard.md`
@@ -77,6 +80,7 @@ Then continue Phase 06 with extraction of institutions invite-sync diff logic in
 - `copilot/explanations/codebase/src/pages/AdminDashboard/components/InstitutionFormPanel.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminInstitutionFormUtils.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminInstitutionInviteSyncUtils.md` (new)
+- `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminInstitutionPayloadUtils.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/components/UserTableRow.md`
 
 ## Per-File Verification
@@ -106,10 +110,11 @@ Then continue Phase 06 with extraction of institutions invite-sync diff logic in
 - Verified institution-form component tests pass and integration confirmations remain green.
 - Verified institution form-state utility tests pass and integration confirmations remain green.
 - Verified institution invite-sync utility tests pass and integration confirmations remain green.
+- Verified institution payload utility tests pass and integration confirmations remain green.
 
 ## Validation Summary
 - `get_errors` on touched files: clean.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/InstitutionFormPanel.test.jsx tests/unit/pages/admin/adminInstitutionFormUtils.test.js tests/unit/pages/admin/adminInstitutionInviteSyncUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 16/16 files passed, 37/37 tests passed.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/InstitutionFormPanel.test.jsx tests/unit/pages/admin/adminInstitutionFormUtils.test.js tests/unit/pages/admin/adminInstitutionInviteSyncUtils.test.js tests/unit/pages/admin/adminInstitutionPayloadUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 17/17 files passed, 39/39 tests passed.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Risks and Checks
@@ -143,3 +148,5 @@ Then continue Phase 06 with extraction of institutions invite-sync diff logic in
   - Check: utility tests assert default form-state values, fresh object creation, and edit mapping fallbacks; integration tests remained green.
 - Risk: institution invite add/delete diff semantics drift during utility extraction.
   - Check: utility tests assert invite add/delete outcomes for changed and unchanged sets; integration tests remained green.
+- Risk: submit normalization/payload shape semantics drift during utility extraction.
+  - Check: utility tests assert trimming, timezone fallback, admin parsing, and payload field mapping; integration tests remained green.

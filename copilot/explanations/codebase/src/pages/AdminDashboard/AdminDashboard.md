@@ -48,6 +48,7 @@
 - Extracted institutions create/edit form panel to `src/pages/AdminDashboard/components/InstitutionFormPanel.tsx`, replacing inline form markup and preserving submit/close and field-normalization behavior.
 - Extracted institutions form-state default/reset/edit mapping to `src/pages/AdminDashboard/utils/adminInstitutionFormUtils.ts`, replacing repeated inline object construction in `InstitutionsTab`.
 - Extracted institutions invite-diff computation to `src/pages/AdminDashboard/utils/adminInstitutionInviteSyncUtils.ts`, replacing inline invite add/delete calculation in the edit flow.
+- Extracted institutions submit normalization/payload construction to `src/pages/AdminDashboard/utils/adminInstitutionPayloadUtils.ts`, reducing inline payload assembly in `handleCreate`.
 
 ### 2026-03-30
 - Replaced browser `window.confirm(...)` dialogs in Admin institutions/users tabs with a shared in-page confirmation modal (`AdminConfirmModal`).
