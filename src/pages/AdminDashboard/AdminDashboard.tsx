@@ -22,6 +22,10 @@ import { parseCsvEmails } from './utils/adminEmailUtils';
 import { filterAdminUsers } from './utils/adminUserFilterUtils';
 import { filterInstitutions } from './utils/adminInstitutionFilterUtils';
 import { buildAdminUsersPageQuery } from './utils/adminUserPaginationQueryUtils';
+import {
+    buildInstitutionConfirmDialogText,
+    buildUserConfirmDialogText,
+} from './utils/adminConfirmDialogTextUtils';
 import UserTableRow from './components/UserTableRow';
 import InstitutionTableRow from './components/InstitutionTableRow';
 
@@ -326,17 +330,7 @@ const InstitutionsTab = () => {
 
     const filtered = filterInstitutions(Institutions, search, statusFilter, typeFilter);
 
-    const institutionConfirmTitle = institutionConfirm.action === 'toggle'
-        ? `${institutionConfirm.institution?.enabled !== false ? 'Deshabilitar' : 'Habilitar'} institución`
-        : 'Eliminar institución';
-
-    const institutionConfirmDescription = institutionConfirm.action === 'toggle'
-        ? `Se ${institutionConfirm.institution?.enabled !== false ? 'deshabilitará' : 'habilitará'} "${institutionConfirm.institution?.name || ''}".`
-        : `Se eliminará "${institutionConfirm.institution?.name || ''}". Esta acción no elimina los usuarios asociados.`;
-
-    const institutionConfirmLabel = institutionConfirm.action === 'toggle'
-        ? `${institutionConfirm.institution?.enabled !== false ? 'Deshabilitar' : 'Habilitar'} institución`
-        : 'Eliminar institución';
+    const institutionConfirmText = buildInstitutionConfirmDialogText(institutionConfirm);
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -510,9 +504,9 @@ const InstitutionsTab = () => {
 
             <AdminConfirmModal
                 isOpen={institutionConfirm.isOpen}
-                title={institutionConfirmTitle}
-                description={institutionConfirmDescription}
-                confirmLabel={institutionConfirmLabel}
+                title={institutionConfirmText.title}
+                description={institutionConfirmText.description}
+                confirmLabel={institutionConfirmText.confirmLabel}
                 isConfirming={isConfirmingInstitutionAction}
                 onCancel={closeInstitutionConfirm}
                 onConfirm={confirmInstitutionAction}
@@ -628,16 +622,7 @@ const UsersTab = () => {
 
     const filtered = filterAdminUsers(users, search, roleFilter, statusFilter);
 
-    const targetUserLabel = userConfirm.user?.email || userConfirm.user?.displayName || 'este usuario';
-    const userConfirmTitle = userConfirm.action === 'role'
-        ? 'Cambiar rol de usuario'
-        : `${userConfirm.user?.enabled !== false ? 'Deshabilitar' : 'Habilitar'} usuario`;
-    const userConfirmDescription = userConfirm.action === 'role'
-        ? `Se cambiará el rol de "${targetUserLabel}" a "${ROLE_LABELS[userConfirm.newRole] || userConfirm.newRole}".`
-        : `Se ${userConfirm.user?.enabled !== false ? 'deshabilitará' : 'habilitará'} "${targetUserLabel}".`;
-    const userConfirmLabel = userConfirm.action === 'role'
-        ? 'Cambiar rol'
-        : `${userConfirm.user?.enabled !== false ? 'Deshabilitar' : 'Habilitar'} usuario`;
+    const userConfirmText = buildUserConfirmDialogText(userConfirm, ROLE_LABELS);
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -727,9 +712,9 @@ const UsersTab = () => {
 
             <AdminConfirmModal
                 isOpen={userConfirm.isOpen}
-                title={userConfirmTitle}
-                description={userConfirmDescription}
-                confirmLabel={userConfirmLabel}
+                title={userConfirmText.title}
+                description={userConfirmText.description}
+                confirmLabel={userConfirmText.confirmLabel}
                 isConfirming={isConfirmingUserAction}
                 onCancel={closeUserConfirm}
                 onConfirm={confirmUserAction}

@@ -1,6 +1,6 @@
 <!-- copilot/explanations/temporal/lossless-reports/2026-04-01/phase-06-admindashboard-ui-primitives-slice.md -->
 
-# Lossless Report: Phase 06 AdminDashboard UI Primitives + Utility + Users/Institutions Row + User/Institution Filter + Users Pagination Query Slices
+# Lossless Report: Phase 06 AdminDashboard UI Primitives + Utility + Users/Institutions Row + User/Institution Filter + Users Pagination Query + Confirm-Copy Slices
 
 Date: 2026-04-01
 
@@ -12,6 +12,7 @@ Then continue Phase 06 with extraction of institutions-table row rendering/actio
 Then continue Phase 06 with extraction of users filtering utility logic.
 Then continue Phase 06 with extraction of institutions filtering utility logic.
 Then continue Phase 06 with extraction of users pagination query-building utility logic.
+Then continue Phase 06 with extraction of user/institution confirm-dialog copy derivation logic.
 
 ## Explicitly Preserved (Out of Scope)
 - No Firestore query or mutation behavior changes.
@@ -29,6 +30,7 @@ Then continue Phase 06 with extraction of users pagination query-building utilit
 - `src/pages/AdminDashboard/utils/adminUserFilterUtils.ts` (new)
 - `src/pages/AdminDashboard/utils/adminInstitutionFilterUtils.ts` (new)
 - `src/pages/AdminDashboard/utils/adminUserPaginationQueryUtils.ts` (new)
+- `src/pages/AdminDashboard/utils/adminConfirmDialogTextUtils.ts` (new)
 - `tests/unit/pages/admin/RoleBadge.test.jsx` (new)
 - `tests/unit/pages/admin/AdminConfirmModal.test.jsx` (new)
 - `tests/unit/pages/admin/adminEmailUtils.test.js` (new)
@@ -37,6 +39,7 @@ Then continue Phase 06 with extraction of users pagination query-building utilit
 - `tests/unit/pages/admin/adminUserFilterUtils.test.js` (new)
 - `tests/unit/pages/admin/adminInstitutionFilterUtils.test.js` (new)
 - `tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js` (new)
+- `tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js` (new)
 - `copilot/plans/active/audit-remediation-and-completion/phases/phase-06-admindashboard-modularization.md` (new)
 - `copilot/plans/active/audit-remediation-and-completion/strategy-roadmap.md`
 - `copilot/explanations/codebase/src/pages/AdminDashboard/AdminDashboard.md`
@@ -49,6 +52,7 @@ Then continue Phase 06 with extraction of users pagination query-building utilit
 - `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminUserFilterUtils.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminInstitutionFilterUtils.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminUserPaginationQueryUtils.md` (new)
+- `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminConfirmDialogTextUtils.md` (new)
 
 ## Per-File Verification
 1. `src/pages/AdminDashboard/AdminDashboard.tsx`
@@ -70,10 +74,11 @@ Then continue Phase 06 with extraction of users pagination query-building utilit
 - Verified users-filter utility tests pass and integration confirmations remain green.
 - Verified institutions-filter utility tests pass and integration confirmations remain green.
 - Verified users pagination query utility tests pass and integration confirmations remain green.
+- Verified confirm-dialog copy utility tests pass and integration confirmations remain green.
 
 ## Validation Summary
 - `get_errors` on touched files: clean.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 9/9 files passed, 20/20 tests passed.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 10/10 files passed, 24/24 tests passed.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Risks and Checks
@@ -93,3 +98,5 @@ Then continue Phase 06 with extraction of users pagination query-building utilit
   - Check: extracted utility mirrors prior conditions and is covered by focused utility tests plus existing integration suite.
 - Risk: users pagination query semantics drift during utility extraction.
   - Check: utility tests assert first-page and next-page Firestore query-shape semantics, and existing pagination integration test remains green.
+- Risk: confirm-dialog messaging semantics drift during copy utility extraction.
+  - Check: dedicated utility tests assert action-specific titles/labels/fallbacks and existing confirmation integration tests remained green.

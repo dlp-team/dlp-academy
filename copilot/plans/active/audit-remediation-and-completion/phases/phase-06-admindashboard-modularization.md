@@ -58,10 +58,15 @@ Reduce `AdminDashboard.tsx` complexity by extracting reusable UI primitives from
 - New file: `tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js`
 - Moved inline users pagination query-building expression in `UsersTab` `fetchUsers(...)` to `buildAdminUsersPageQuery(...)` utility while preserving cursor/page-size query semantics.
 
+### Extracted confirm-dialog copy utility
+- New file: `src/pages/AdminDashboard/utils/adminConfirmDialogTextUtils.ts`
+- New file: `tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js`
+- Moved inline institution/user confirm modal title/description/confirm-label derivation to dedicated utility helpers while preserving text semantics and fallback labels.
+
 ## Validation
 - `get_errors`: clean in touched files.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 9/9 files passing, 20/20 tests passing.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 10/10 files passing, 24/24 tests passing.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Next Slices
-- Evaluate extraction of users confirm-dialog copy/label derivation helpers.
+- Evaluate extraction of role labels/constants and related display mappers.

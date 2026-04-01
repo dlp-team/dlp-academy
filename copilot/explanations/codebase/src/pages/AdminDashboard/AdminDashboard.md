@@ -41,6 +41,7 @@
 - Extracted users-table filtering logic to `src/pages/AdminDashboard/utils/adminUserFilterUtils.ts` and added focused utility tests in `tests/unit/pages/admin/adminUserFilterUtils.test.js`.
 - Extracted institutions-table filtering logic to `src/pages/AdminDashboard/utils/adminInstitutionFilterUtils.ts` and added focused utility tests in `tests/unit/pages/admin/adminInstitutionFilterUtils.test.js`.
 - Extracted users pagination query-building logic to `src/pages/AdminDashboard/utils/adminUserPaginationQueryUtils.ts` and added focused query-shape tests in `tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js`.
+- Extracted users/institutions confirmation modal copy derivation to `src/pages/AdminDashboard/utils/adminConfirmDialogTextUtils.ts` and added focused copy coverage in `tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js`.
 
 ### 2026-03-30
 - Replaced browser `window.confirm(...)` dialogs in Admin institutions/users tabs with a shared in-page confirmation modal (`AdminConfirmModal`).
