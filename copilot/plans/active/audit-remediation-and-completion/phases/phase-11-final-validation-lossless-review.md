@@ -18,6 +18,8 @@ Run final cross-phase verification to confirm no regressions, preserve lossless 
   - Result: ✅ passed (full test suite exit code `0`).
 - `npm run test:rules`
   - Result: ✅ passed (`49/49` rules tests).
+- `npm run build`
+  - Result: ✅ passed (bundle built successfully; existing chunk-size warning remains informational).
 
 ## Lossless Review Notes
 - Phase 09 and Phase 10 behavior remains intact after full-suite execution.

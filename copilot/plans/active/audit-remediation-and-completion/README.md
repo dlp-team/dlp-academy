@@ -106,7 +106,8 @@ DLP Academy has reached a development inflection point: core features work, but 
 	- `npm run lint` (0 errors, 4 existing warnings),
 	- `npx tsc --noEmit` (pass),
 	- `npm run test` (pass),
-	- `npm run test:rules` (pass, `49/49`).
+	- `npm run test:rules` (pass, `49/49`),
+	- `npm run build` (pass).
 - Remaining:
 	- manual smoke verification,
 	- final validation packet collation for phase-12 closure.

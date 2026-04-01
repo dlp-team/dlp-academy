@@ -10,12 +10,14 @@ Phase 11 automated validation execution after Phase 10 implementation.
 - `npx tsc --noEmit`
 - `npm run test`
 - `npm run test:rules`
+- `npm run build`
 
 ## Results
 - Lint: pass with 0 errors and 4 pre-existing warnings in `src/pages/Content/Exam.jsx` and `src/pages/Content/StudyGuide.jsx`.
 - Typecheck: pass.
 - Full test suite: pass (exit code `0`).
 - Rules tests: pass (`49/49`).
+- Build: pass (existing chunk-size warning only).
 
 ## Notes
 - No new regressions introduced by phase 10 completion-tracking changes in automated gates.

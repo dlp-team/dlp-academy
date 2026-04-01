@@ -375,6 +375,7 @@ npm run build                 # Must produce dist/
   - `npx tsc --noEmit` → pass
   - `npm run test` → pass (exit code `0`)
   - `npm run test:rules` → pass (`49/49`)
+  - `npm run build` → pass (existing chunk-size warning remains informational)
 - Remaining:
   - manual smoke verification,
   - final phase-11 lossless packet collation for phase-12 closure.
