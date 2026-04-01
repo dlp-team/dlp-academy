@@ -19,7 +19,7 @@ Day 2 (Apr 2):
 
 Day 3 (Apr 3):
   ├─ Phase 05: Large Component Splitting (Home.tsx)        [6-8h]  → 🔄 IN PROGRESS (bulk-selection, loader, control-tags, keyboard-feedback, main-content, and creation-guards slices complete)
-  └─ Phase 06: Large Component Splitting (Other pages)     [4-6h]  → 🔄 IN PROGRESS (AdminDashboard UI primitives slice complete)
+  └─ Phase 06: Large Component Splitting (Other pages)     [4-6h]  → 🔄 IN PROGRESS (AdminDashboard component + utility extraction slices expanded across filters, forms, and submit logic)
 
 Day 4 (Apr 4):
   ├─ Phase 07: Integration Tests & Workflow Coverage       [8-10h] → 🔄 IN PROGRESS (invite-security slice complete)
@@ -185,7 +185,7 @@ npm run dev                   # Home page renders identically
 ---
 
 ### Phase 06: Large Component Splitting (AdminDashboard & StudyGuide)
-**Status:** 📋 TODO
+**Status:** 🔄 IN PROGRESS
 **Owner:** DLP_Architect
 **Duration:** 4-6 hours
 **Priority:** 🟡 HIGH
@@ -197,6 +197,10 @@ npm run dev                   # Home page renders identically
 - StudyGuide.tsx → Extract: editor logic, formatter utils, modal handlers
 - Keep main components as coordinators
 - Update all imports and tests
+
+**Progress Snapshot (Apr 1):**
+- AdminDashboard: extracted reusable table rows, filters components, institution form panel, and several utilities (email parsing, users/institutions filtering, pagination query, confirm copy, role constants, institution form state, invite-sync, payload, validation).
+- Expanded targeted admin regression suite to cover extracted modules with passing consolidated runs.
 
 **Validation:**
 ```bash
