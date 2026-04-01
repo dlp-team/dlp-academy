@@ -28,6 +28,7 @@ import {
     buildInstitutionPayload,
     normalizeInstitutionFormInput,
 } from './utils/adminInstitutionPayloadUtils';
+import { getInstitutionSubmitValidationError } from './utils/adminInstitutionValidationUtils';
 import { buildAdminUsersPageQuery } from './utils/adminUserPaginationQueryUtils';
 import {
     buildInstitutionConfirmDialogText,
@@ -122,33 +123,9 @@ const InstitutionsTab = () => {
         const normalizedInput = normalizeInstitutionFormInput(form);
         const { name, domain, admins, institutionType, institutionalCode } = normalizedInput;
 
-        if (!name) {
-            setError('El nombre es obligatorio.');
-            setSubmitting(false);
-            return;
-        }
-
-        if (!domain || !domain.includes('.')) {
-            setError('El dominio es obligatorio y debe ser válido (ej: universidad.edu).');
-            setSubmitting(false);
-            return;
-        }
-
-        if (admins.length === 0) {
-            setError('Debes indicar al menos un administrador institucional.');
-            setSubmitting(false);
-            return;
-        }
-
-        const invalidAdmins = admins.filter(email => !/^\S+@\S+\.\S+$/.test(email));
-        if (invalidAdmins.length > 0) {
-            setError(`Emails de administradores inválidos: ${invalidAdmins.join(', ')}`);
-            setSubmitting(false);
-            return;
-        }
-
-        if (!institutionType) {
-            setError('El tipo de institución es obligatorio.');
+        const validationError = getInstitutionSubmitValidationError(normalizedInput);
+        if (validationError) {
+            setError(validationError);
             setSubmitting(false);
             return;
         }
