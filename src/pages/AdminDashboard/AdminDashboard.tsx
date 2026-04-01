@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Building2, Users, Search, CheckCircle2, XCircle,
+    Building2, Users, CheckCircle2, XCircle,
     Loader2, BookOpen, GraduationCap,
     Plus,
     ShieldAlert, Globe, BarChart3, Pencil
@@ -32,6 +32,7 @@ import {
 import UserTableRow from './components/UserTableRow';
 import InstitutionTableRow from './components/InstitutionTableRow';
 import AdminUsersFilters from './components/AdminUsersFilters';
+import AdminInstitutionsFilters from './components/AdminInstitutionsFilters';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -332,60 +333,28 @@ const InstitutionsTab = () => {
         setShowCreateForm(true);
     };
 
+    const toggleInstitutionCreateForm = () => {
+        setError('');
+        setSuccess('');
+        setEditingInstitutionId(null);
+        setShowCreateForm(prev => !prev);
+    };
+
     const filtered = filterInstitutions(Institutions, search, statusFilter, typeFilter);
 
     const institutionConfirmText = buildInstitutionConfirmDialogText(institutionConfirm);
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Filter bar */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 mb-6 flex flex-col md:flex-row gap-4 justify-between">
-                <div className="flex gap-2">
-                    <select
-                        value={statusFilter}
-                        onChange={e => setStatusFilter(e.target.value)}
-                        className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-purple-500 text-slate-600 dark:text-slate-300"
-                    >
-                        <option value="all">Todos los estados</option>
-                        <option value="active">Activas</option>
-                        <option value="disabled">Deshabilitadas</option>
-                    </select>
-                    <select
-                        value={typeFilter}
-                        onChange={e => setTypeFilter(e.target.value)}
-                        className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-purple-500 text-slate-600 dark:text-slate-300"
-                    >
-                        <option value="all">Todos los tipos</option>
-                        <option value="school">Escuela</option>
-                        <option value="academy">Academia</option>
-                        <option value="university">Universidad</option>
-                        <option value="training-center">Centro</option>
-                        <option value="other">Otro</option>
-                    </select>
-                </div>
-                
-                <div className="relative flex-1 md:max-w-xs">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                        type="text"
-                        placeholder="Buscar institución..."
-                        value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                </div>
-                <button
-                    onClick={() => {
-                        setError('');
-                        setSuccess('');
-                        setEditingInstitutionId(null);
-                        setShowCreateForm(prev => !prev);
-                    }}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg shadow-purple-200 dark:shadow-purple-900/20 transition-all active:scale-95 text-sm"
-                >
-                    <Plus className="w-4 h-4" /> Nueva Institución
-                </button>
-            </div>
+            <AdminInstitutionsFilters
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
+                typeFilter={typeFilter}
+                onTypeFilterChange={setTypeFilter}
+                search={search}
+                onSearchChange={setSearch}
+                onToggleCreateForm={toggleInstitutionCreateForm}
+            />
 
             {showCreateForm && (
                 <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 mb-6 animate-in fade-in slide-in-from-top-2 duration-200">

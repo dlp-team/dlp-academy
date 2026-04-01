@@ -1,6 +1,6 @@
 <!-- copilot/explanations/temporal/lossless-reports/2026-04-01/phase-06-admindashboard-ui-primitives-slice.md -->
 
-# Lossless Report: Phase 06 AdminDashboard UI Primitives + Utility + Users/Institutions Row + User/Institution Filter + Users Pagination Query + Confirm-Copy + Role Constants + Users Filters Component Slices
+# Lossless Report: Phase 06 AdminDashboard UI Primitives + Utility + Users/Institutions Row + User/Institution Filter + Users Pagination Query + Confirm-Copy + Role Constants + Users/Institutions Filters Component Slices
 
 Date: 2026-04-01
 
@@ -15,6 +15,7 @@ Then continue Phase 06 with extraction of users pagination query-building utilit
 Then continue Phase 06 with extraction of user/institution confirm-dialog copy derivation logic.
 Then continue Phase 06 with extraction of users role constants/display mappers.
 Then continue Phase 06 with extraction of users-tab filter controls into a dedicated component.
+Then continue Phase 06 with extraction of institutions-tab filter controls into a dedicated component.
 
 ## Explicitly Preserved (Out of Scope)
 - No Firestore query or mutation behavior changes.
@@ -35,6 +36,7 @@ Then continue Phase 06 with extraction of users-tab filter controls into a dedic
 - `src/pages/AdminDashboard/utils/adminConfirmDialogTextUtils.ts` (new)
 - `src/pages/AdminDashboard/utils/adminUserRoleConstants.ts` (new)
 - `src/pages/AdminDashboard/components/AdminUsersFilters.tsx` (new)
+- `src/pages/AdminDashboard/components/AdminInstitutionsFilters.tsx` (new)
 - `tests/unit/pages/admin/RoleBadge.test.jsx` (new)
 - `tests/unit/pages/admin/AdminConfirmModal.test.jsx` (new)
 - `tests/unit/pages/admin/adminEmailUtils.test.js` (new)
@@ -46,6 +48,7 @@ Then continue Phase 06 with extraction of users-tab filter controls into a dedic
 - `tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js` (new)
 - `tests/unit/pages/admin/adminUserRoleConstants.test.js` (new)
 - `tests/unit/pages/admin/AdminUsersFilters.test.jsx` (new)
+- `tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx` (new)
 - `copilot/plans/active/audit-remediation-and-completion/phases/phase-06-admindashboard-modularization.md` (new)
 - `copilot/plans/active/audit-remediation-and-completion/strategy-roadmap.md`
 - `copilot/explanations/codebase/src/pages/AdminDashboard/AdminDashboard.md`
@@ -61,6 +64,7 @@ Then continue Phase 06 with extraction of users-tab filter controls into a dedic
 - `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminConfirmDialogTextUtils.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminUserRoleConstants.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/components/AdminUsersFilters.md` (new)
+- `copilot/explanations/codebase/src/pages/AdminDashboard/components/AdminInstitutionsFilters.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/components/UserTableRow.md`
 
 ## Per-File Verification
@@ -86,10 +90,11 @@ Then continue Phase 06 with extraction of users-tab filter controls into a dedic
 - Verified confirm-dialog copy utility tests pass and integration confirmations remain green.
 - Verified users role constants/label mapper tests pass and integration confirmations remain green.
 - Verified users-filters component tests pass and integration confirmations remain green.
+- Verified institutions-filters component tests pass and integration confirmations remain green.
 
 ## Validation Summary
 - `get_errors` on touched files: clean.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 12/12 files passed, 29/29 tests passed.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 13/13 files passed, 31/31 tests passed.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Risks and Checks
@@ -115,3 +120,5 @@ Then continue Phase 06 with extraction of users-tab filter controls into a dedic
   - Check: dedicated utility tests assert exported arrays/labels and fallback behavior; row and integration tests remained green.
 - Risk: users-tab filter control wiring drift during component extraction.
   - Check: dedicated component tests assert role/search/status callback wiring and existing integration tests remained green.
+- Risk: institutions-tab filter/control wiring drift during component extraction.
+  - Check: dedicated component tests assert status/type/search/button callback wiring and existing integration tests remained green.

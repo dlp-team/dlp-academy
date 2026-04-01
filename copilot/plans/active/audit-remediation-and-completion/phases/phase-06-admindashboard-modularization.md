@@ -74,10 +74,15 @@ Reduce `AdminDashboard.tsx` complexity by extracting reusable UI primitives from
 - New file: `tests/unit/pages/admin/AdminUsersFilters.test.jsx`
 - Moved users-tab role filter buttons, search field, and status selector UI into a dedicated component while preserving callback wiring and control semantics.
 
+### Extracted institutions filters component
+- New file: `src/pages/AdminDashboard/components/AdminInstitutionsFilters.tsx`
+- New file: `tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx`
+- Moved institutions-tab status/type filters, search field, and create-form toggle trigger UI into a dedicated component while preserving callback wiring and control semantics.
+
 ## Validation
 - `get_errors`: clean in touched files.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 12/12 files passing, 29/29 tests passing.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 13/13 files passing, 31/31 tests passing.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Next Slices
-- Evaluate extraction of institutions tab filter/search controls into a dedicated component.
+- Evaluate extraction of create/edit institution form into dedicated component(s).
