@@ -64,10 +64,19 @@ Reduce `Home.tsx` complexity by extracting cohesive logic blocks into dedicated 
 - New file: `tests/unit/pages/home/HomeShortcutFeedback.test.jsx`
 - `Home.tsx` now consumes `useHomeKeyboardCoordination(...)` and delegates feedback banner rendering to `HomeShortcutFeedback`.
 
+### Extracted Home main content router
+- New file: `src/pages/Home/components/HomeMainContent.tsx`
+- New file: `tests/unit/pages/home/HomeMainContent.test.jsx`
+- Moved the large `bin/shared/manual` conditional content branch from `Home.tsx` into `HomeMainContent`.
+- Preserved behavior for:
+  - shared-folder/shared-subject action menus and shortcut-aware delete/unshare flows.
+  - manual view content/loading/empty-state branching.
+  - forwarded drag/drop and selection wiring to `HomeContent`.
+
 ## Validation
 - `get_errors`: clean in touched files.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
-- `npm run test -- Home`: 13/13 files passing, 105/105 tests passing.
+- `npm run test -- Home`: 14/14 files passing, 108/108 tests passing.
 
 ## Next Slices
 - Extract keyboard coordination state from `Home.tsx`.

@@ -18,20 +18,15 @@ import { useHomeKeyboardCoordination } from './hooks/useHomeKeyboardCoordination
 
 // Layout & Global Components
 import Header from '../../components/layout/Header';
-import BreadcrumbNav from './components/BreadcrumbNav';
-import SharedView from './components/SharedView';
 
 
 // Sub-Components
 import HomeControls from './components/HomeControls';
 import HomeSelectionToolbar from './components/HomeSelectionToolbar';
 import HomeShortcutFeedback from './components/HomeShortcutFeedback';
-import HomeContent from './components/HomeContent';
-import HomeEmptyState from './components/HomeEmptyState';
 import HomeLoader from './components/HomeLoader';
+import HomeMainContent from './components/HomeMainContent';
 import HomeModals from './components/HomeModals';
-import HomeShareConfirmModals from './components/HomeShareConfirmModals';
-import BinView from './components/BinView';
 import FolderTreeModal from '../../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../Subject/modals/SubjectTopicModal';
 
@@ -41,7 +36,6 @@ import {
     canCreateSubjectByRole,
     getPermissionLevel,
     getNormalizedRole,
-    isShortcutItem,
     isSharedForCurrentUser as isSharedForCurrentUserUtil
 } from '../../utils/permissionUtils';
 import { useInstitutionHomeThemeTokens } from './hooks/useInstitutionHomeThemeTokens';
@@ -345,230 +339,43 @@ const Home = ({ user }: any) => {
                     </p>
                 ) : null}
 
-                {logic.viewMode === 'bin' ? (
-                    <BinView user={user} cardScale={logic.cardScale} layoutMode={logic.layoutMode} />
-                ) : logic.viewMode === 'shared' && !isStudentRole ? (
-                    <>
-                        <BreadcrumbNav
-                            currentFolder={logic.currentFolder}
-                            onNavigate={(folder: any) => {
-                                handleSetCurrentFolder(folder);
-                            }}
-                            allFolders={logic.folders || []}
-                            onDropOnBreadcrumb={handleBreadcrumbDrop}
-                            draggedItem={logic.draggedItem}
-                            draggedItemType={logic.draggedItemType}
-                        />
-                        <SharedView 
-                            user={user}
-                            homeThemeTokens={homeThemeTokens}
-                            sharedFolders={sharedFolders}
-                            sharedSubjects={sharedSubjects}
-                            cardScale={logic.cardScale}
-                            allFolders={logic.folders || []}
-                            allSubjects={logic.subjects || []}
-                            currentFolder={logic.currentFolder}
-                            
-                            layoutMode={logic.layoutMode} 
-
-                            // Handlers
-                            onOpenFolder={logic.handleOpenFolder}
-                            onSelectSubject={(subject: any) => {
-                                logic.touchSubject(subject.id);
-                                logic.navigate(`/home/subject/${subject.id}`);
-                            }}
-                            
-                            // UI State
-                            activeMenu={logic.activeMenu}
-                            onToggleMenu={logic.setActiveMenu}
-                            flippedSubjectId={logic.flippedSubjectId}
-                            onFlipSubject={logic.setFlippedSubjectId}
-                            
-                            // Navigation
-                            onSelectTopic={(sid, tid) => logic.navigate(`/home/subject/${sid}/topic/${tid}`)}
-                            navigate={logic.navigate}
-
-                            onEditFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
-                            onDeleteFolder={(f, action = 'delete') => {
-                                if (isShortcutItem(f) && f?.shortcutId) {
-                                    logic.setDeleteConfig({
-                                        isOpen: true,
-                                        type: 'shortcut-folder',
-                                        action: action === 'unshareAndDelete'
-                                            ? 'unshare'
-                                            : action === 'deleteShortcut'
-                                                ? 'deleteShortcut'
-                                            : action === 'showInManual'
-                                                ? 'unhide'
-                                                : 'hide',
-                                        item: f
-                                    });
-                                    return;
-                                }
-                                logic.setDeleteConfig({ isOpen: true, type: 'folder', item: f });
-                            }}
-                            onShareFolder={(f) => logic.setFolderModalConfig({ isOpen: true, isEditing: true, data: f, initialTab: 'sharing' })}
-                            onEditSubject={(e, s: any) => {
-                                e.stopPropagation();
-                                logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s });
-                                logic.setActiveMenu(null);
-                            }}
-                            onDeleteSubject={(e, s, action = 'delete') => {
-                                e.stopPropagation();
-                                if (isShortcutItem(s) && s?.shortcutId) {
-                                    logic.setDeleteConfig({
-                                        isOpen: true,
-                                        type: 'shortcut-subject',
-                                        action: action === 'unshareAndDelete'
-                                            ? 'unshare'
-                                            : action === 'deleteShortcut'
-                                                ? 'deleteShortcut'
-                                            : action === 'showInManual'
-                                                ? 'unhide'
-                                                : 'hide',
-                                        item: s
-                                    });
-                                } else {
-                                    logic.setDeleteConfig({ isOpen: true, type: 'subject', item: s });
-                                }
-                                logic.setActiveMenu(null);
-                            }}
-                            onShareSubject={(s: any) => {
-                                handleOpenSubjectSharing(s);
-                                logic.setActiveMenu(null);
-                            }}
-                            onOpenSubjectClasses={(s: any) => {
-                                logic.setSubjectModalConfig({ isOpen: true, isEditing: true, data: s, initialTab: 'classes' });
-                                logic.setActiveMenu(null);
-                            }}
-
-                            // Search
-                            searchTerm={searchQuery}
-                            onSearchChange={setSearchQuery}
-                        />
-                    </>
-                ) : (
-                    <>
-                        <HomeShareConfirmModals
-                            homeThemeTokens={homeThemeTokens}
-                            shareConfirm={shareConfirm}
-                            setShareConfirm={setShareConfirm}
-                            unshareConfirm={unshareConfirm}
-                            setUnshareConfirm={setUnshareConfirm}
-                            subjects={logic.subjects || []}
-                        />
-                        <BreadcrumbNav 
-                            currentFolder={logic.currentFolder} 
-                            onNavigate={(folder: any) => {
-                                handleSetCurrentFolder(folder);
-                            }}
-                            allFolders={logic.folders || []}
-                            onDropOnBreadcrumb={handleBreadcrumbDrop}
-                            draggedItem={logic.draggedItem}
-                            draggedItemType={logic.draggedItemType}
-                        />
-
-                        {!hasInitialDataLoaded && logic.loading ? (
-                            <HomeLoader />
-                        ) : (
-                            <>
-                                {effectiveHasContent ? (
-                                    <HomeContent 
-                                        user={user}
-                                        homeThemeTokens={homeThemeTokens}
-                                        subjects={logic.subjects || []}
-                                        folders={isStudentRole ? [] : (logic.folders || [])}
-                                        resolvedShortcuts={isStudentRole
-                                            ? (logic.resolvedShortcuts || []).filter(item => item?.targetType === 'subject')
-                                            : (logic.resolvedShortcuts || [])}
-                                        groupedContent={logic.groupedContent || {}} 
-                                        collapsedGroups={logic.collapsedGroups || {}}
-                                        orderedFolders={isStudentRole ? [] : displayedFolders}
-                                        
-                                        layoutMode={logic.layoutMode || 'grid'}
-                                        cardScale={logic.cardScale || 100}
-                                        viewMode={logic.viewMode}
-                                        currentFolder={logic.currentFolder}
-                                        
-                                        activeMenu={logic.activeMenu}
-                                        setActiveMenu={logic.setActiveMenu}
-                                        toggleGroup={logic.toggleGroup}
-                                        
-                                        setSubjectModalConfig={logic.setSubjectModalConfig}
-                                        setFolderModalConfig={logic.setFolderModalConfig}
-                                        setDeleteConfig={logic.setDeleteConfig}
-                                        
-                                        handleSelectSubject={(id) => logic.navigate(`/home/subject/${id}`)}
-                                        handleOpenFolder={(folder: any) => {
-                                            handleSetCurrentFolder(folder);
-                                        }}
-                                        onCardFocus={handleCardFocus}
-                                        getCardVisualState={getCardVisualState}
-                                        handleShareFolder={logic.handleShareFolder}
-                                        handlePromoteSubject={handlePromoteSubjectWrapper}
-                                        handlePromoteFolder={handlePromoteFolderWrapper}
-                                        handleDropOnFolder={handleDropOnFolderWrapper}
-                                        handleNestFolder={handleNestFolder}
-                                        handleShowFolderContents={handleShowFolderContents}
-                                        onShareSubject={handleOpenSubjectSharing}
-                                        
-                                        handleMoveSubjectWithSource={handleTreeMoveSubject}
-                                        onOpenTopics={handleOpenTopics}
-                                        
-                                        isDragAndDropEnabled={logic.isDragAndDropEnabled}
-                                        draggedItem={logic.draggedItem}
-                                        draggedItemType={logic.draggedItemType}
-                                        handleDragStartSubject={logic.handleDragStartSubject}
-                                        handleDragStartFolder={logic.handleDragStartFolder}
-                                        handleDragEnd={logic.handleDragEnd}
-                                        handleDragOverSubject={logic.handleDragOverSubject}
-                                        handleDragOverFolder={logic.handleDragOverFolder}
-                                        handleDropReorderSubject={logic.handleDropReorderSubject}
-                                        handleDropReorderFolder={logic.handleDropReorderFolder}
-                                        filterOverlayOpen={isFilterOpen || isScaleOverlayOpen}
-
-                                        
-                                        activeFilter={logic.activeFilter}
-                                        selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
-                                        sharedScopeSelected={effectiveSharedScopeSelected}
-                                        studentMode={isStudentRole}
-                                        selectMode={selectMode}
-                                        selectedItemKeys={selectedItemKeys}
-                                        onToggleSelectItem={toggleSelectItem}
-                                        
-                                        navigate={logic.navigate}
-                                    />
-                                ) : searchQuery ? (
-                                    <div className="flex flex-col items-center justify-center py-16">
-                                        <div className="text-6xl mb-4">🔍</div>
-                                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                                            No se encontraron resultados
-                                        </h3>
-                                        <p className={`${homeThemeTokens.mutedTextClass} text-center max-w-md`}>
-                                            No hay asignaturas o carpetas que coincidan con "<span className="font-semibold">{searchQuery}</span>"
-                                        </p>
-                                        <button
-                                            onClick={() => setSearchQuery('')}
-                                            className="mt-6 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-colors"
-                                        >
-                                            Limpiar búsqueda
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <HomeEmptyState 
-                                        homeThemeTokens={homeThemeTokens}
-                                        setSubjectModalConfig={logic.setSubjectModalConfig}
-                                        viewMode={logic.viewMode}
-                                        layoutMode={logic.layoutMode}
-                                        canCreateSubject={canCreateInManualContext}
-                                        cardScale={logic.cardScale || 100}
-                                        currentFolder={logic.currentFolder}
-                                    />
-                                )}
-                            </>
-                        )}
-                    </>
-                )}
+                <HomeMainContent
+                    user={user}
+                    logic={logic}
+                    isStudentRole={isStudentRole}
+                    homeThemeTokens={homeThemeTokens}
+                    sharedFolders={sharedFolders}
+                    sharedSubjects={sharedSubjects}
+                    sharedSelectedTags={sharedSelectedTags}
+                    effectiveSharedScopeSelected={effectiveSharedScopeSelected}
+                    shareConfirm={shareConfirm}
+                    setShareConfirm={setShareConfirm}
+                    unshareConfirm={unshareConfirm}
+                    setUnshareConfirm={setUnshareConfirm}
+                    hasInitialDataLoaded={hasInitialDataLoaded}
+                    effectiveHasContent={effectiveHasContent}
+                    displayedFolders={displayedFolders}
+                    isFilterOpen={isFilterOpen}
+                    isScaleOverlayOpen={isScaleOverlayOpen}
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    canCreateInManualContext={canCreateInManualContext}
+                    selectMode={selectMode}
+                    selectedItemKeys={selectedItemKeys}
+                    toggleSelectItem={toggleSelectItem}
+                    handleSetCurrentFolder={handleSetCurrentFolder}
+                    handleBreadcrumbDrop={handleBreadcrumbDrop}
+                    handleOpenSubjectSharing={handleOpenSubjectSharing}
+                    handlePromoteSubjectWrapper={handlePromoteSubjectWrapper}
+                    handlePromoteFolderWrapper={handlePromoteFolderWrapper}
+                    handleDropOnFolderWrapper={handleDropOnFolderWrapper}
+                    handleNestFolder={handleNestFolder}
+                    handleShowFolderContents={handleShowFolderContents}
+                    handleTreeMoveSubject={handleTreeMoveSubject}
+                    handleOpenTopics={handleOpenTopics}
+                    handleCardFocus={handleCardFocus}
+                    getCardVisualState={getCardVisualState}
+                />
             </main>
 
             <HomeModals 
