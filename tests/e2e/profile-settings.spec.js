@@ -1,3 +1,4 @@
+// tests/e2e/profile-settings.spec.js
 import { test, expect } from '@playwright/test';
 import admin from 'firebase-admin';
 
@@ -84,7 +85,7 @@ test.describe('Profile and settings coverage', () => {
     await page.goto('/settings');
     await page.waitForURL(/\/settings/);
 
-    await expect(page.getByRole('heading', { name: /configuración/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /configuración|settings/i })).toBeVisible();
     await expect(page.getByText(/apariencia/i)).toBeVisible();
 
     await page.getByRole('button', { name: /oscuro/i }).click();
@@ -189,6 +190,9 @@ test.describe('Profile and settings coverage', () => {
     const wasEnabled = await emailToggle.evaluate((btn) => btn.className.includes('bg-indigo-'));
     await emailToggle.click();
     await expect(page.getByText(/guardado|guardando/i)).toBeVisible();
+    await expect
+      .poll(async () => emailToggle.evaluate((btn) => btn.className.includes('bg-indigo-')))
+      .toBe(!wasEnabled);
 
     await page.reload();
     await page.waitForURL(/\/settings/);
@@ -197,7 +201,9 @@ test.describe('Profile and settings coverage', () => {
     await expect(page.getByRole('button', { name: /oscuro/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /claro/i })).toBeVisible();
 
-    const isEnabledAfterReload = await emailToggle.evaluate((btn) => btn.className.includes('bg-indigo-'));
+    const notifSectionAfterReload = page.locator('section').filter({ hasText: /notificaciones/i }).first();
+    const emailToggleAfterReload = notifSectionAfterReload.locator('button').first();
+    const isEnabledAfterReload = await emailToggleAfterReload.evaluate((btn) => btn.className.includes('bg-indigo-'));
     expect(isEnabledAfterReload).toBe(!wasEnabled);
   });
 });

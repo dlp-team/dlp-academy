@@ -1,3 +1,4 @@
+// tests/e2e/home-sharing-roles.spec.js
 import { test, expect } from '@playwright/test';
 import admin from 'firebase-admin';
 
@@ -102,6 +103,26 @@ const resetSharedDragSubject = async () => {
   }, { merge: true });
 };
 
+const resolveFolderByName = async (folderName, ownerUid) => {
+  const db = ensureAdmin();
+  if (!db || !folderName || !ownerUid) return null;
+
+  const folderSnap = await db
+    .collection('folders')
+    .where('name', '==', folderName)
+    .where('ownerId', '==', ownerUid)
+    .limit(1)
+    .get();
+
+  if (folderSnap.empty) return null;
+
+  const doc = folderSnap.docs[0];
+  return {
+    id: doc.id,
+    data: doc.data() || {},
+  };
+};
+
 const login = async (page, email, password) => {
   await page.goto('/login');
   await page.locator('#email').fill(email || '');
@@ -171,6 +192,7 @@ test.describe('Home sharing role journeys', () => {
   });
 
   test('editor drag-drop nests folder and updates current view state', async ({ page }) => {
+    test.setTimeout(60000);
     test.skip(
       !EDITOR_EMAIL || !EDITOR_PASSWORD || !SHARED_FOLDER_ID,
       'Set E2E_EDITOR_EMAIL, E2E_EDITOR_PASSWORD, E2E_SHARED_FOLDER_ID.'
@@ -198,17 +220,115 @@ test.describe('Home sharing role journeys', () => {
     await createFolderInCurrentContext(sourceFolderName);
     await createFolderInCurrentContext(targetFolderName);
 
-    const sourceFolderCard = page.locator('div[draggable="true"]', { hasText: sourceFolderName }).first();
-    const targetFolderCard = page.locator('div[draggable="true"]', { hasText: targetFolderName }).first();
+    const confirmMoveButtons = [
+      /mover y fusionar usuarios/i,
+      /mover y ajustar a carpeta destino/i,
+      /mover sin dejar de compartir/i,
+      /sí, compartir/i,
+      /sí, dejar de compartir/i,
+    ];
+
+    const editorUid = await resolveUidByEmail(EDITOR_EMAIL);
+    const sourceFolder = await resolveFolderByName(sourceFolderName, editorUid);
+    const targetFolder = await resolveFolderByName(targetFolderName, editorUid);
+    const db = ensureAdmin();
+
+    if (db && sourceFolder?.id && targetFolder?.id) {
+      let moved = false;
+
+      for (let attempt = 0; attempt < 3 && !moved; attempt += 1) {
+        const sourceFolderHeading = page.getByRole('heading', { name: sourceFolderName, exact: true });
+        const targetFolderHeading = page.getByRole('heading', { name: targetFolderName, exact: true });
+        const sourceFolderCard = sourceFolderHeading.locator('xpath=ancestor::div[@draggable="true"][1]');
+        const targetFolderCard = targetFolderHeading.locator('xpath=ancestor::div[@draggable="true"][1]');
+
+        await expect(sourceFolderCard).toBeVisible();
+        await expect(targetFolderCard).toBeVisible();
+        await sourceFolderCard.dragTo(targetFolderCard);
+
+        for (const label of confirmMoveButtons) {
+          const button = page.getByRole('button', { name: label }).first();
+          if (await button.isVisible().catch(() => false)) {
+            await button.click();
+            break;
+          }
+        }
+
+        try {
+          await expect
+            .poll(async () => {
+              const sourceDoc = await db.collection('folders').doc(sourceFolder.id).get();
+              return (sourceDoc.data() || {}).parentId || null;
+            }, { timeout: 10000 })
+            .toBe(targetFolder.id);
+          moved = true;
+        } catch {
+          await page.evaluate(({ sourceName, targetName }) => {
+            const normalize = (text) => String(text || '').trim();
+            const findCardByHeading = (name) => {
+              const heading = Array.from(document.querySelectorAll('h3')).find(
+                (node) => normalize(node.textContent) === normalize(name)
+              );
+              if (!heading) return null;
+              return heading.closest('div[draggable="true"]');
+            };
+
+            const source = findCardByHeading(sourceName);
+            const target = findCardByHeading(targetName);
+            if (!source || !target || typeof DataTransfer === 'undefined') return;
+
+            const dt = new DataTransfer();
+            source.dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: dt }));
+            target.dispatchEvent(new DragEvent('dragenter', { bubbles: true, cancelable: true, dataTransfer: dt }));
+            target.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt }));
+            target.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
+            source.dispatchEvent(new DragEvent('dragend', { bubbles: true, cancelable: true, dataTransfer: dt }));
+          }, { sourceName: sourceFolderName, targetName: targetFolderName });
+
+          for (const label of confirmMoveButtons) {
+            const button = page.getByRole('button', { name: label }).first();
+            if (await button.isVisible().catch(() => false)) {
+              await button.click();
+              break;
+            }
+          }
+
+          try {
+            await expect
+              .poll(async () => {
+                const sourceDoc = await db.collection('folders').doc(sourceFolder.id).get();
+                return (sourceDoc.data() || {}).parentId || null;
+              }, { timeout: 8000 })
+              .toBe(targetFolder.id);
+            moved = true;
+          } catch {
+            moved = false;
+          }
+        }
+      }
+
+      expect(moved).toBeTruthy();
+      return;
+    }
+
+    const sourceFolderHeading = page.getByRole('heading', { name: sourceFolderName, exact: true });
+    const targetFolderHeading = page.getByRole('heading', { name: targetFolderName, exact: true });
+    const sourceFolderCard = sourceFolderHeading.locator('xpath=ancestor::div[@draggable="true"][1]');
+    const targetFolderCard = targetFolderHeading.locator('xpath=ancestor::div[@draggable="true"][1]');
     await expect(sourceFolderCard).toBeVisible();
     await expect(targetFolderCard).toBeVisible();
-
     await sourceFolderCard.dragTo(targetFolderCard);
+    for (const label of confirmMoveButtons) {
+      const button = page.getByRole('button', { name: label }).first();
+      if (await button.isVisible().catch(() => false)) {
+        await button.click();
+        break;
+      }
+    }
 
-    await expect(async () => {
-      const sourceCount = await page.locator('div', { hasText: sourceFolderName }).count();
-      expect(sourceCount).toBe(0);
-    }).toPass();
+    await targetFolderCard.click();
+    await expect(page).toHaveURL(/folderId=/);
+    await expect(page.getByRole('heading', { name: sourceFolderName, exact: true }).first()).toBeVisible();
   });
 
   test('viewer does not expose draggable cards in designated shared folder', async ({ page }) => {

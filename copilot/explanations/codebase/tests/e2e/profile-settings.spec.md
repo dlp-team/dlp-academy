@@ -8,6 +8,10 @@
   - notification toggle state continuity,
   - theme controls remaining available after reload.
 
+### 2026-04-01: Settings route resilience and toggle persistence hardening
+- Heading assertion now tolerates locale-dependent labels (`Configuración` or `Settings`).
+- Notification persistence flow now waits for post-click state transition before reload and re-selects controls after reload to avoid stale-locator flakiness.
+
 ## Overview
 This E2E suite validates authenticated profile/settings user flows, including profile modal interactions and settings behavior under real route transitions.
 

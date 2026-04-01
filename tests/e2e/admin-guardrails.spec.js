@@ -1,3 +1,4 @@
+// tests/e2e/admin-guardrails.spec.js
 import { test, expect } from '@playwright/test';
 
 const ROLE_FIXTURES = [
@@ -132,9 +133,13 @@ test.describe('Admin guardrails', () => {
     const inviteRow = page.locator('tr', { hasText: inviteEmail }).first();
     await expect(inviteRow).toBeVisible();
 
-    page.once('dialog', (dialog) => dialog.accept());
     await inviteRow.getByTitle(/eliminar invitación/i).click();
-    await expect(page.locator('tr', { hasText: inviteEmail })).toHaveCount(0);
+
+    const removeDialog = page.getByRole('dialog', { name: /eliminar acceso de profesor/i });
+    await expect(removeDialog).toBeVisible();
+    await removeDialog.getByRole('button', { name: /eliminar acceso/i }).click();
+
+    await expect(page.locator('tr', { hasText: inviteEmail })).toHaveCount(0, { timeout: 10000 });
   });
 
   test('institution admin can save access policies', async ({ page }) => {

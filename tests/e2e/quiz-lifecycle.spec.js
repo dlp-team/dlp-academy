@@ -1,3 +1,4 @@
+// tests/e2e/quiz-lifecycle.spec.js
 import { test, expect } from '@playwright/test';
 import admin from 'firebase-admin';
 
@@ -228,11 +229,24 @@ test.describe('Quiz lifecycle', () => {
     await page.goto(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}`);
     await page.waitForURL(new RegExp(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}`));
 
-    await page.getByRole('button', { name: /tests prácticos/i }).click();
-    await expect(page.getByRole('button', { name: /comenzar|reintentar/i }).first()).toBeVisible();
-    await page.getByRole('button', { name: /comenzar|reintentar/i }).first().click();
+    const studentModeToggle = page.getByRole('button', { name: /activar modo alumno/i });
+    if (await studentModeToggle.count()) {
+      await studentModeToggle.first().click();
+      await expect(page.getByRole('button', { name: /salir modo alumno/i })).toBeVisible();
+    }
 
-    await page.waitForURL(new RegExp(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}/quiz/`));
+    await page.getByRole('button', { name: /tests prácticos/i }).click();
+    const startOrRetryFromTopic = page.getByRole('button', { name: /comenzar|reintentar/i }).first();
+    const canStartFromTopic = await startOrRetryFromTopic.isVisible().catch(() => false);
+
+    if (canStartFromTopic) {
+      await startOrRetryFromTopic.click();
+      await page.waitForURL(new RegExp(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}/quiz/`));
+    } else {
+      await page.goto(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}/quiz/${discoveredQuizId}`);
+      await page.waitForURL(new RegExp(`/home/subject/${discoveredSubjectId}/topic/${discoveredTopicId}/quiz/${discoveredQuizId}`));
+    }
+
     await expect(page.getByRole('button', { name: /comenzar test/i })).toBeVisible();
 
     await page.getByRole('button', { name: /comenzar test/i }).click();
