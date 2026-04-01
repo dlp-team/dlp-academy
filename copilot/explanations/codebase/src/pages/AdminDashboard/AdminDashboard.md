@@ -50,6 +50,7 @@
 - Extracted institutions invite-diff computation to `src/pages/AdminDashboard/utils/adminInstitutionInviteSyncUtils.ts`, replacing inline invite add/delete calculation in the edit flow.
 - Extracted institutions submit normalization/payload construction to `src/pages/AdminDashboard/utils/adminInstitutionPayloadUtils.ts`, reducing inline payload assembly in `handleCreate`.
 - Extracted institutions submit validation checks/messages to `src/pages/AdminDashboard/utils/adminInstitutionValidationUtils.ts`, replacing repeated inline validation branches in `handleCreate`.
+- Extracted institutions submit batch queue orchestration to `src/pages/AdminDashboard/utils/adminInstitutionBatchQueueUtils.ts`, replacing inline create/edit queue wiring in `handleCreate`.
 
 ### 2026-03-30
 - Replaced browser `window.confirm(...)` dialogs in Admin institutions/users tabs with a shared in-page confirmation modal (`AdminConfirmModal`).

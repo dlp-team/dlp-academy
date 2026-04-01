@@ -23,7 +23,10 @@ import {
     createAdminInstitutionFormState,
     mapInstitutionToFormState,
 } from './utils/adminInstitutionFormUtils';
-import { buildInstitutionInviteSyncPlan } from './utils/adminInstitutionInviteSyncUtils';
+import {
+    queueInstitutionCreateBatchOps,
+    queueInstitutionEditBatchOps,
+} from './utils/adminInstitutionBatchQueueUtils';
 import {
     buildInstitutionPayload,
     normalizeInstitutionFormInput,
@@ -151,33 +154,18 @@ const InstitutionsTab = () => {
                     existingInvites.push({ id: snapDoc.id, email: snapDoc.data().email });
                 });
 
-                // 2. Identify which emails to add and which to delete
-                const { emailsToAdd, invitesToDelete } = buildInstitutionInviteSyncPlan(existingInvites, admins);
-
-                // 3. Add deletion tasks to batch
-                invitesToDelete.forEach(inv => {
-                    batch.delete(doc(db, 'institution_invites', inv.id));
+                queueInstitutionEditBatchOps({
+                    batch,
+                    institutionRef,
+                    institutionPayload,
+                    existingInvites,
+                    admins,
+                    institutionalCode,
+                    institutionId: editingInstitutionId,
+                    createAutoInviteRef: () => doc(collection(db, 'institution_invites')),
+                    createInviteRefById: (inviteId: string) => doc(db, 'institution_invites', inviteId),
+                    createTimestamp: serverTimestamp,
                 });
-
-                // 4. Add creation tasks to batch
-                emailsToAdd.forEach(email => {
-                    const newInviteRef = doc(collection(db, 'institution_invites'));
-                    batch.set(newInviteRef, {
-                        email: email,
-                        role: 'institutionadmin',
-                        institutionId: editingInstitutionId,
-                        invitedAt: serverTimestamp()
-                    });
-                });
-
-                if (institutionalCode) {
-                    const newCodeRef = doc(db, 'institution_invites', institutionalCode);
-                    batch.set(newCodeRef, {
-                        type: 'institutional',
-                        institutionId: editingInstitutionId,
-                        createdAt: serverTimestamp()
-                    });
-                }
 
                 await batch.commit();
                 setSuccess(`Institución "${name}" actualizada y administradores sincronizados.`);
@@ -185,30 +173,17 @@ const InstitutionsTab = () => {
                 const batch = writeBatch(db);
                 const institutionDocRef = doc(collection(db, 'institutions'));
 
-                batch.set(institutionDocRef, {
-                    ...institutionPayload,
-                    enabled: true,
-                    createdAt: serverTimestamp(),
+                queueInstitutionCreateBatchOps({
+                    batch,
+                    institutionRef: institutionDocRef,
+                    institutionPayload,
+                    admins,
+                    institutionalCode,
+                    institutionId: institutionDocRef.id,
+                    createAutoInviteRef: () => doc(collection(db, 'institution_invites')),
+                    createInviteRefById: (inviteId: string) => doc(db, 'institution_invites', inviteId),
+                    createTimestamp: serverTimestamp,
                 });
-
-                admins.forEach(email => {
-                    const inviteRef = doc(collection(db, 'institution_invites'));
-                    batch.set(inviteRef, {
-                        email: email,
-                        role: 'institutionadmin',
-                        institutionId: institutionDocRef.id,
-                        invitedAt: serverTimestamp()
-                    });
-                });
-
-                if (institutionalCode) {
-                    const newCodeRef = doc(db, 'institution_invites', institutionalCode);
-                    batch.set(newCodeRef, {
-                        type: 'institutional',
-                        institutionId: institutionDocRef.id,
-                        createdAt: serverTimestamp()
-                    });
-                }
 
                 await batch.commit();
                 setSuccess(`Institución "${name}" creada correctamente.`);
