@@ -1,16 +1,42 @@
-# React + Vite
+# DLP Academy
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+DLP Academy is a multi-tenant Learning Management and Study Organization platform.
 
-Currently, two official plugins are available:
+## Stack
+- Frontend: React 18 + Vite + TypeScript
+- Backend: Firebase (Firestore, Auth, Storage, Functions)
+- Testing: Vitest + Testing Library + Firestore Rules tests
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Quick Start
+1. Install dependencies:
+```bash
+npm install
+```
+2. Run development server:
+```bash
+npm run dev
+```
+3. Run lint:
+```bash
+npm run lint
+```
+4. Run unit tests:
+```bash
+npm run test
+```
+5. Run rules tests:
+```bash
+npm run test:rules
+```
 
-## React Compiler
+## Project Docs
+- Architecture: `copilot/explanations/codebase/ARCHITECTURE.md`
+- Firestore schema: `copilot/explanations/codebase/FIRESTORE_SCHEMA.md`
+- Multi-tenancy model: `copilot/explanations/codebase/MULTI_TENANCY.md`
+- Contribution guide: `CONTRIBUTING.md`
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Development Rules
+- Keep visible UI copy in Spanish.
+- Preserve institution-level tenant isolation with `institutionId`.
+- Follow least-privilege patterns for Firestore access.
+- Keep changes lossless and covered by deterministic tests.
