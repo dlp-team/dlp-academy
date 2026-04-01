@@ -1,6 +1,6 @@
 <!-- copilot/explanations/temporal/lossless-reports/2026-04-01/phase-05-home-bulk-selection-slice.md -->
 
-# Lossless Report: Phase 05 Home Selection + Loader + Control-Tags + Keyboard + Main-Content Slices
+# Lossless Report: Phase 05 Home Selection + Loader + Control-Tags + Keyboard + Main-Content + Creation-Guards Slices
 
 Date: 2026-04-01
 
@@ -11,6 +11,7 @@ Continue plan execution with deeper Phase 05 modularization slices in `Home.tsx`
 3) extract control-tag derivation/pruning into a dedicated hook.
 4) extract keyboard feedback coordination and banner rendering into dedicated hook/component.
 5) extract `bin/shared/manual` content router into a dedicated `HomeMainContent` component.
+6) extract creation/content guard derivations into a dedicated `useHomeCreationGuards` hook.
 
 ## Explicitly Preserved (Out of Scope)
 - No behavior changes for drag-and-drop, shared-tab rendering, or folder tree modal flows.
@@ -24,12 +25,14 @@ Continue plan execution with deeper Phase 05 modularization slices in `Home.tsx`
 - `src/pages/Home/hooks/useHomeKeyboardCoordination.ts` (new)
 - `src/pages/Home/components/HomeShortcutFeedback.tsx` (new)
 - `src/pages/Home/components/HomeMainContent.tsx` (new)
+- `src/pages/Home/hooks/useHomeCreationGuards.ts` (new)
 - `src/pages/Home/Home.tsx`
 - `tests/unit/hooks/useHomeBulkSelection.test.js` (new)
 - `tests/unit/hooks/useHomeControlTags.test.js` (new)
 - `tests/unit/pages/home/HomeLoader.test.jsx` (new)
 - `tests/unit/pages/home/HomeShortcutFeedback.test.jsx` (new)
 - `tests/unit/pages/home/HomeMainContent.test.jsx` (new)
+- `tests/unit/hooks/useHomeCreationGuards.test.js` (new)
 - `copilot/plans/active/audit-remediation-and-completion/phases/phase-05-home-modularization.md`
 - `copilot/plans/active/audit-remediation-and-completion/strategy-roadmap.md`
 - `copilot/explanations/codebase/src/pages/Home/Home.md`
@@ -39,6 +42,7 @@ Continue plan execution with deeper Phase 05 modularization slices in `Home.tsx`
 - `copilot/explanations/codebase/src/pages/Home/hooks/useHomeKeyboardCoordination.md` (new)
 - `copilot/explanations/codebase/src/pages/Home/components/HomeShortcutFeedback.md` (new)
 - `copilot/explanations/codebase/src/pages/Home/components/HomeMainContent.md` (new)
+- `copilot/explanations/codebase/src/pages/Home/hooks/useHomeCreationGuards.md` (new)
 
 ## Per-File Verification
 1. `src/pages/Home/hooks/useHomeBulkSelection.ts`
@@ -62,29 +66,35 @@ Continue plan execution with deeper Phase 05 modularization slices in `Home.tsx`
 - Verified shared actions preserve shortcut-aware delete/unshare behavior.
 - Verified manual branch still wires selection, drag/drop, and content/empty/loading branches.
 
-7. `src/pages/Home/Home.tsx`
+7. `src/pages/Home/hooks/useHomeCreationGuards.ts`
+- Verified extracted guard logic preserves role and shared-folder permission checks.
+- Verified student content computation remains based on grouped buckets.
+
+8. `src/pages/Home/Home.tsx`
 - Verified hook wiring preserves toolbar interactions and message rendering.
 - Verified loading branches now delegate to `HomeLoader` without changing conditional logic.
 - Verified available control tags now come from `useHomeControlTags` with existing filtering semantics preserved.
 - Verified keyboard feedback now comes from coordination hook and renders through dedicated component with same visual classes.
 - Verified large inline content branch was replaced by `HomeMainContent` invocation without changing surrounding modal/tree/topic orchestration.
+- Verified creation/content guards now come from `useHomeCreationGuards` with unchanged behavior in controls and empty-state gates.
 - Verified `isShortcutItem` usage remains available in shared-view actions.
 - Verified existing page routing, shared/manual branches, and modal plumbing remain unchanged.
 
-8. Plan/docs files
+9. Plan/docs files
 - Verified Phase 05 file now records this slice and adjusted next-slice checklist.
 - Verified roadmap line reflects latest in-progress note.
 - Verified codebase explanations now include the new hook/component and Home changelog entries.
 
-9. New modularization tests
+10. New modularization tests
 - Verified new hook/component tests pass and enforce behavior contracts for selection reset, tag pruning, and loader rendering.
 - Verified new shortcut-feedback component test passes.
 - Verified `HomeMainContent` branch-selection tests pass.
+- Verified `useHomeCreationGuards` tests pass for creation restrictions and student content derivation.
 
 ## Validation Summary
 - `get_errors` on touched code files: clean.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
-- `npm run test -- Home`: 14/14 files passed, 108/108 tests passed.
+- `npm run test -- Home`: 15/15 files passed, 110/110 tests passed.
 
 ## Risks and Checks
 - Risk: Lost feedback path from `useHomeLogic` during extraction.

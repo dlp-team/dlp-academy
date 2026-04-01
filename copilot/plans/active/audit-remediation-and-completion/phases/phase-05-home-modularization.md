@@ -73,10 +73,18 @@ Reduce `Home.tsx` complexity by extracting cohesive logic blocks into dedicated 
   - manual view content/loading/empty-state branching.
   - forwarded drag/drop and selection wiring to `HomeContent`.
 
+### Extracted creation/content guards
+- New file: `src/pages/Home/hooks/useHomeCreationGuards.ts`
+- New file: `tests/unit/hooks/useHomeCreationGuards.test.js`
+- Moved three memoized derivations out of `Home.tsx`:
+  - `canCreateInManualContext`
+  - `canCreateFolderInManualContext`
+  - `effectiveHasContent`
+
 ## Validation
 - `get_errors`: clean in touched files.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
-- `npm run test -- Home`: 14/14 files passing, 108/108 tests passing.
+- `npm run test -- Home`: 15/15 files passing, 110/110 tests passing.
 
 ## Next Slices
 - Extract keyboard coordination state from `Home.tsx`.

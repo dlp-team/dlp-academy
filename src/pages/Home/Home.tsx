@@ -14,6 +14,7 @@ import { useHomeTreeData } from './hooks/useHomeTreeData';
 import { useHomeBulkSelection } from './hooks/useHomeBulkSelection';
 import { useHomeControlTags } from './hooks/useHomeControlTags';
 import { useHomeKeyboardCoordination } from './hooks/useHomeKeyboardCoordination';
+import { useHomeCreationGuards } from './hooks/useHomeCreationGuards';
 
 
 // Layout & Global Components
@@ -32,9 +33,6 @@ import SubjectTopicsModal from '../Subject/modals/SubjectTopicModal';
 
 // Utils
 import {
-    canCreateFolderByRole,
-    canCreateSubjectByRole,
-    getPermissionLevel,
     getNormalizedRole,
     isSharedForCurrentUser as isSharedForCurrentUserUtil
 } from '../../utils/permissionUtils';
@@ -210,26 +208,16 @@ const Home = ({ user }: any) => {
         }
     }, [logic.viewMode, sharedScopeSelected]);
 
-    const canCreateInManualContext = useMemo(() => {
-        if (!canCreateSubjectByRole(user)) return false;
-        if (logic.viewMode !== 'grid') return true;
-        if (logic.currentFolder?.isShared !== true) return true;
-        const permission = user?.uid ? getPermissionLevel(logic.currentFolder, user.uid) : 'none';
-        return permission === 'editor' || permission === 'owner';
-    }, [logic.viewMode, logic.currentFolder, user]);
-
-    const canCreateFolderInManualContext = useMemo(() => {
-        if (!canCreateFolderByRole(user)) return false;
-        if (logic.viewMode !== 'grid') return false;
-        if (logic.currentFolder?.isShared !== true) return true;
-        const permission = user?.uid ? getPermissionLevel(logic.currentFolder, user.uid) : 'none';
-        return permission === 'editor' || permission === 'owner';
-    }, [logic.viewMode, logic.currentFolder, user]);
-
-    const effectiveHasContent = useMemo(() => {
-        if (!isStudentRole) return hasContent;
-        return Object.values(logic.groupedContent || {}).some((bucket) => Array.isArray(bucket) && bucket.length > 0);
-    }, [isStudentRole, hasContent, logic.groupedContent]);
+    const {
+        canCreateInManualContext,
+        canCreateFolderInManualContext,
+        effectiveHasContent
+    } = useHomeCreationGuards({
+        user,
+        logic,
+        isStudentRole,
+        hasContent
+    });
 
     React.useEffect(() => {
         if (!bulkActionMessage) return;

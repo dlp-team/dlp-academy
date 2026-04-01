@@ -1,6 +1,7 @@
 # Home.jsx
 
 ## Changelog
+- **2026-04-01:** Extracted creation/content guard derivations into `useHomeCreationGuards.ts`, preserving permission checks while reducing inline `useMemo` blocks in `Home.tsx`.
 - **2026-04-01:** Extracted the Home view-mode content branch into `HomeMainContent.tsx`, preserving `bin/shared/manual` behavior while reducing coordinator complexity in `Home.tsx`.
 - **2026-04-01:** Extracted keyboard feedback coordination into `useHomeKeyboardCoordination.ts` and moved feedback banner UI into `HomeShortcutFeedback.tsx` to keep `Home.tsx` orchestration-focused.
 - **2026-04-01:** Extracted control-tag derivation and selected-tag pruning into `useHomeControlTags.ts` to reduce `Home.tsx` memo/effect density while preserving shared/manual tag behavior.
