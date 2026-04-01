@@ -531,6 +531,62 @@ describe('Firestore rules integration', () => {
         )
       );
     });
+
+    it('denies invalid invite governance payload updates', async () => {
+      await seedDoc('subjects', 'subject-invite-governance-update', {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        course: 'Original',
+        inviteCode: 'INV12345',
+        inviteCodeEnabled: true,
+        inviteCodeRotationIntervalHours: 24,
+        enrolledStudentUids: [],
+      });
+
+      const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+      await assertFails(
+        setDoc(
+          doc(teacherDb, 'subjects', 'subject-invite-governance-update'),
+          { inviteCodeEnabled: 'yes' },
+          { merge: true }
+        )
+      );
+
+      await assertFails(
+        setDoc(
+          doc(teacherDb, 'subjects', 'subject-invite-governance-update'),
+          { inviteCodeRotationIntervalHours: 0 },
+          { merge: true }
+        )
+      );
+    });
+
+    it('allows valid invite governance payload updates', async () => {
+      await seedDoc('subjects', 'subject-invite-governance-valid', {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        course: 'Original',
+        inviteCode: 'INV56789',
+        inviteCodeEnabled: true,
+        inviteCodeRotationIntervalHours: 24,
+        enrolledStudentUids: [],
+      });
+
+      const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+      await assertSucceeds(
+        setDoc(
+          doc(teacherDb, 'subjects', 'subject-invite-governance-valid'),
+          {
+            inviteCodeEnabled: false,
+            inviteCodeRotationIntervalHours: 72,
+            inviteCodeLastRotatedAt: new Date(),
+          },
+          { merge: true }
+        )
+      );
+    });
   });
 
   describe('Vulnerability #3: Student cannot create root topic', () => {
@@ -767,6 +823,33 @@ describe('Firestore rules integration', () => {
           createdAt: new Date(),
         })
       );
+    });
+
+    it('denies listing subject invite codes to prevent enumeration', async () => {
+      await seedDoc('subjects', 'subject-owner-invites-list', {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        course: 'Teacher Subject',
+        inviteCode: 'LIST1234',
+        enrolledStudentUids: [],
+      });
+
+      await seedDoc('subjectInviteCodes', 'inst-1_LIST1234', {
+        inviteCode: 'LIST1234',
+        institutionId: 'inst-1',
+        subjectId: 'subject-owner-invites-list',
+        createdBy: 'teacher-1',
+        createdAt: new Date(),
+      });
+
+      const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+      const listQuery = query(
+        collection(teacherDb, 'subjectInviteCodes'),
+        where('institutionId', '==', 'inst-1')
+      );
+
+      await assertFails(getDocs(listQuery));
+      await assertSucceeds(getDoc(doc(teacherDb, 'subjectInviteCodes', 'inst-1_LIST1234')));
     });
   });
 

@@ -100,6 +100,11 @@ export const useHomeHandlers = ({
             icon: formData.icon || 'book',
             tags: formData.tags,
             ...(Array.isArray(formData.classIds) ? { classIds: formData.classIds } : {}),
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'classId') ? { classId: formData.classId } : {}),
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'inviteCode') ? { inviteCode: formData.inviteCode } : {}),
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'inviteCodeEnabled') ? { inviteCodeEnabled: formData.inviteCodeEnabled } : {}),
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'inviteCodeRotationIntervalHours') ? { inviteCodeRotationIntervalHours: formData.inviteCodeRotationIntervalHours } : {}),
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'inviteCodeLastRotatedAt') ? { inviteCodeLastRotatedAt: formData.inviteCodeLastRotatedAt } : {}),
             cardStyle: formData.cardStyle || 'default',
             modernFillColor: formData.modernFillColor || null,
             updatedAt: new Date()

@@ -63,7 +63,6 @@ const QuizModal = ({
 
         // Enviar en segundo plano
         try {
-            console.log(`📤 Enviando test a ${subjectId}/${topicId}...`);
             const response = await fetch(WEBHOOK_URL, {
                 method: 'POST',
                 body: dataToSend,
@@ -79,7 +78,6 @@ const QuizModal = ({
             } catch {
                 result = null;
             }
-            console.log("✅ Respuesta de n8n:", result);
             if (onToast) onToast({ show: true, message: '¡Test generado correctamente! Recarga para verlo.' });
         } catch (error) {
             console.error("❌ Error enviando al webhook:", error);

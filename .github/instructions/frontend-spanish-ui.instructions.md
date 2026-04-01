@@ -1,4 +1,4 @@
----
+contin---
 # .github/instructions/frontend-spanish-ui.instructions.md
 description: Apply UX language/style constraints for visible UI text and interface behavior in frontend files.
 applyTo: "src/**/*.{js,jsx,ts,tsx,css}"

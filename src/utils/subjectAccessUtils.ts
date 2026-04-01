@@ -63,6 +63,11 @@ export const normalizeSubjectAccessPayload = (payload: any = {}, { requireCourse
         : classIds;
 
     const inviteCode = sanitizeString(payload.inviteCode) || generateSubjectInviteCode();
+    const inviteCodeEnabled = payload?.inviteCodeEnabled !== false;
+    const parsedRotationHours = Number(payload?.inviteCodeRotationIntervalHours);
+    const inviteCodeRotationIntervalHours = Number.isFinite(parsedRotationHours)
+        ? Math.min(168, Math.max(1, Math.floor(parsedRotationHours)))
+        : 24;
 
     return {
         ...payload,
@@ -70,7 +75,9 @@ export const normalizeSubjectAccessPayload = (payload: any = {}, { requireCourse
         classId,
         classIds: normalizedClassIds,
         enrolledStudentUids: uniqueStringArray(payload.enrolledStudentUids),
-        inviteCode
+        inviteCode,
+        inviteCodeEnabled,
+        inviteCodeRotationIntervalHours
     };
 };
 

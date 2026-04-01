@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'; // Import Firestore functions
@@ -37,6 +37,17 @@ import StudentDashboard from './pages/StudentDashboard/StudentDashboard';
 import TeacherStudentDetailView from './pages/TeacherDashboard/components/TeacherStudentDetailView';
 import { hasRequiredRoleAccess } from './utils/permissionUtils';
 
+// src/App.tsx
+interface AppUser {
+  uid: string;
+  email: string | null;
+  photoURL: string | null;
+  displayName: string;
+  role?: string;
+  institutionId?: string | null;
+  [key: string]: any;
+}
+
 const HomePage: any = Home;
 const SubjectPage: any = Subject;
 const TopicPage: any = Topic;
@@ -59,7 +70,14 @@ const TeacherStudentDetailViewPage: any = TeacherStudentDetailView;
 const StudentDashboardPage: any = StudentDashboard;
 
 // Updated ProtectedRoute to handle Role Checks
-const ProtectedRoute = ({ children, user, loading, requiredRole }: any) => {
+interface ProtectedRouteProps {
+  children: ReactNode;
+  user: any;
+  loading: boolean;
+  requiredRole?: string;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, user, loading, requiredRole }) => {
   // 1. Wait for Auth & Database Fetch
   if (loading) {
     return (
@@ -82,13 +100,13 @@ const ProtectedRoute = ({ children, user, loading, requiredRole }: any) => {
 };
 
 function App() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let unsubscribeUserDoc: any = null;
+    let unsubscribeUserDoc: (() => void) | null = null;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser: any) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
       // Clean up previous user doc listener
       if (unsubscribeUserDoc) {
         unsubscribeUserDoc();
@@ -127,9 +145,9 @@ function App() {
                 }
               }, { merge: true });
             }
-          } catch (error: any) {
+          } catch (error) {
             // If profile read is denied, avoid opening a realtime listener that will spam uncaught watch errors.
-            if (error?.code === 'permission-denied') {
+            if ((error as any)?.code === 'permission-denied') {
               console.error('Permission denied reading users doc on auth bootstrap:', error);
               setUser(baseUser);
               setLoading(false);
@@ -138,7 +156,7 @@ function App() {
           }
 
           // Listen to user doc in real-time so role updates (e.g. from OnboardingWizard) are reflected immediately
-          unsubscribeUserDoc = onSnapshot(userDocRef, (userDoc: any) => {
+          unsubscribeUserDoc = onSnapshot(userDocRef, (userDoc) => {
             if (userDoc.exists()) {
               const userData = userDoc.data();
               setUser({

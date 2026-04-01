@@ -304,6 +304,87 @@ describe('useSubjects joinSubjectByInviteCode', () => {
     expect(firestoreMocks.mockUpdateDoc).not.toHaveBeenCalled();
     expect(firestoreMocks.mockSetDoc).not.toHaveBeenCalled();
   });
+
+  it('blocks join when invite access is disabled by teacher', async () => {
+    firestoreMocks.mockGetDoc.mockImplementation(async (ref) => {
+      if (ref?.name === 'subjectInviteCodes') {
+        return {
+          exists: () => true,
+          data: () => ({
+            inviteCode: 'JOIN1234',
+            subjectId: 'subject-join-disabled',
+            institutionId: 'inst-1',
+          }),
+        };
+      }
+
+      if (ref?.name === 'subjects') {
+        return {
+          exists: () => true,
+          data: () => ({
+            name: 'Quimica',
+            institutionId: 'inst-1',
+            ownerId: 'teacher-1',
+            inviteCodeEnabled: false,
+            inviteCode: 'JOIN1234',
+            sharedWithUids: [],
+            sharedWith: [],
+            enrolledStudentUids: [],
+          }),
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    const { result } = renderHook(() => useSubjects(baseUser));
+
+    await expect(result.current.joinSubjectByInviteCode('JOIN1234')).rejects.toThrow(
+      'El acceso por código de invitación está deshabilitado por el docente.'
+    );
+  });
+
+  it('blocks join when invite code is expired by rotation policy', async () => {
+    const staleDate = new Date(Date.now() - (26 * 60 * 60 * 1000));
+    firestoreMocks.mockGetDoc.mockImplementation(async (ref) => {
+      if (ref?.name === 'subjectInviteCodes') {
+        return {
+          exists: () => true,
+          data: () => ({
+            inviteCode: 'JOIN1234',
+            subjectId: 'subject-join-expired',
+            institutionId: 'inst-1',
+          }),
+        };
+      }
+
+      if (ref?.name === 'subjects') {
+        return {
+          exists: () => true,
+          data: () => ({
+            name: 'Fisica',
+            institutionId: 'inst-1',
+            ownerId: 'teacher-1',
+            inviteCodeEnabled: true,
+            inviteCode: 'JOIN1234',
+            inviteCodeRotationIntervalHours: 24,
+            inviteCodeLastRotatedAt: staleDate,
+            sharedWithUids: [],
+            sharedWith: [],
+            enrolledStudentUids: [],
+          }),
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    const { result } = renderHook(() => useSubjects(baseUser));
+
+    await expect(result.current.joinSubjectByInviteCode('JOIN1234')).rejects.toThrow(
+      'El código de invitación expiró. Solicita el código actualizado al docente.'
+    );
+  });
 });
 
 describe('useSubjects transferSubjectOwnership', () => {

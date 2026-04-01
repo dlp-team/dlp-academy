@@ -1,6 +1,6 @@
 // src/pages/Subject/modals/SubjectFormModal.jsx
 import React, { useState, useEffect } from 'react';
-import { X, Save, Users, Trash2, Share2, Loader2, CheckCircle, AlertCircle, RotateCcw, Copy } from 'lucide-react';
+import { X, Save, Users, Trash2, Share2, Loader2, CheckCircle, AlertCircle, RotateCcw, Copy, MoreVertical } from 'lucide-react';
 import { MODERN_FILL_COLORS } from '../../../utils/subjectConstants';
 import { addDoc, collection, getDocs, query, where, getDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
@@ -13,6 +13,7 @@ import AppearanceSection from './subject-form/AppearanceSection';
 import StyleSelector from './subject-form/StyleSelector';
 import { getNormalizedRole, getPermissionLevel } from '../../../utils/permissionUtils';
 import { canTeacherAssignClassesAndStudents, DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils/institutionPolicyUtils';
+import { generateSubjectInviteCode } from '../../../utils/subjectAccessUtils';
 
 const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onTransferOwnership, onDeleteShortcut, user, allFolders = [], initialTab = 'general', studentShortcutTagOnlyMode = false }: any) => {
     const [formData, setFormData] = useState<any>({ 
@@ -46,6 +47,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [classesActionSuccess, setClassesActionSuccess] = useState('');
     const [classesLoadError, setClassesLoadError] = useState('');
     const [inviteCodeCopyStatus, setInviteCodeCopyStatus] = useState('');
+    const [inviteCodeMenuOpen, setInviteCodeMenuOpen] = useState(false);
     const [validationErrors, setValidationErrors] = useState<any>({});
     const [availableCourses, setAvailableCourses] = useState<any[]>([]);
     const [coursesLoading, setCoursesLoading] = useState(false);
@@ -133,6 +135,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     id: initialData.id,
                     ownerId: initialData.ownerId,
                     inviteCode: initialData.inviteCode || '',
+                    inviteCodeEnabled: initialData.inviteCodeEnabled !== false,
+                    inviteCodeRotationIntervalHours: Number(initialData.inviteCodeRotationIntervalHours || 24),
+                    inviteCodeLastRotatedAt: initialData.inviteCodeLastRotatedAt || initialData.updatedAt || initialData.createdAt || null,
                     shortcutId: initialData.shortcutId || null,
                     isShortcut: initialData.isShortcut === true,
                     shortcutPermissionLevel: initialData.isShortcut
@@ -162,6 +167,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 
                 setFormData({ 
                     inviteCode: '',
+                    inviteCodeEnabled: true,
+                    inviteCodeRotationIntervalHours: 24,
+                    inviteCodeLastRotatedAt: null,
                     shortcutId: null,
                     isShortcut: false,
                     shortcutPermissionLevel: 'owner',
@@ -288,6 +296,37 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         }
 
         setTimeout(() => setInviteCodeCopyStatus(''), 2000);
+    };
+
+    const handleToggleInviteCodeEnabled = () => {
+        if (!canModifyClassAssignments) return;
+        setFormData((prev: any) => ({
+            ...prev,
+            inviteCodeEnabled: prev?.inviteCodeEnabled === false
+        }));
+        setInviteCodeCopyStatus('Configuración actualizada. Guarda para aplicar.');
+        setInviteCodeMenuOpen(false);
+    };
+
+    const handleChangeInviteCodeRotationInterval = (hours: any) => {
+        if (!canModifyClassAssignments) return;
+        const normalizedHours = Math.min(168, Math.max(1, Number(hours || 24)));
+        setFormData((prev: any) => ({
+            ...prev,
+            inviteCodeRotationIntervalHours: normalizedHours
+        }));
+        setInviteCodeCopyStatus('Intervalo actualizado. Guarda para aplicar.');
+    };
+
+    const handleRegenerateInviteCode = () => {
+        if (!canModifyClassAssignments) return;
+        setFormData((prev: any) => ({
+            ...prev,
+            inviteCode: generateSubjectInviteCode(),
+            inviteCodeLastRotatedAt: new Date()
+        }));
+        setInviteCodeCopyStatus('Código regenerado. Guarda para aplicar.');
+        setInviteCodeMenuOpen(false);
     };
 
     useEffect(() => {
@@ -456,9 +495,12 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
     const handleSaveClassAssignments = () => {
         if (!canModifyClassAssignments || !canDirectAssignClasses) return;
+        const nextClassIds = Array.isArray(selectedClassIds) ? selectedClassIds : [];
+        const primaryClassId = String(nextClassIds[0] || '').trim() || null;
         onSave({
             ...formData,
-            classIds: selectedClassIds
+            classIds: nextClassIds,
+            classId: primaryClassId
         });
         setClassesActionSuccess('Clases actualizadas correctamente.');
         setTimeout(() => setClassesActionSuccess(''), 2500);
@@ -1306,14 +1348,69 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                         <div>
                                             <h4 className="text-sm font-semibold text-indigo-900 dark:text-indigo-200">Código de invitación de asignatura</h4>
                                             <p className="mt-1 text-xs text-indigo-700 dark:text-indigo-300">Úsalo para inscribir estudiantes que no estén asociados a una clase.</p>
+                                            <p className="mt-1 text-xs text-indigo-700 dark:text-indigo-300">
+                                                Estado: {formData?.inviteCodeEnabled === false ? 'Deshabilitado' : 'Habilitado'} · Rotación: cada {Number(formData?.inviteCodeRotationIntervalHours || 24)}h
+                                            </p>
                                         </div>
-                                        <button
-                                            type="button"
-                                            onClick={handleCopyInviteCode}
-                                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
-                                        >
-                                            <Copy className="w-4 h-4" /> Copiar
-                                        </button>
+                                        <div className="relative flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={handleCopyInviteCode}
+                                                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+                                            >
+                                                <Copy className="w-4 h-4" /> Copiar
+                                            </button>
+                                            {canModifyClassAssignments && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setInviteCodeMenuOpen((prev: any) => !prev)}
+                                                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg border border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+                                                    aria-label="Opciones del código de invitación"
+                                                >
+                                                    <MoreVertical className="w-4 h-4" />
+                                                </button>
+                                            )}
+
+                                            {inviteCodeMenuOpen && canModifyClassAssignments && (
+                                                <div className="absolute right-0 top-11 z-20 w-72 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 shadow-lg p-3 space-y-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleToggleInviteCodeEnabled}
+                                                        className="w-full text-left px-3 py-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+                                                    >
+                                                        {formData?.inviteCodeEnabled === false ? 'Habilitar uniones por código' : 'Deshabilitar uniones por código'}
+                                                    </button>
+
+                                                    <div>
+                                                        <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Rotar código cada</label>
+                                                        <select
+                                                            value={Number(formData?.inviteCodeRotationIntervalHours || 24)}
+                                                            onChange={(e: any) => handleChangeInviteCodeRotationInterval(e.target.value)}
+                                                            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100"
+                                                        >
+                                                            <option value={1}>1 hora</option>
+                                                            <option value={6}>6 horas</option>
+                                                            <option value={12}>12 horas</option>
+                                                            <option value={24}>24 horas</option>
+                                                            <option value={72}>72 horas</option>
+                                                            <option value={168}>168 horas</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleRegenerateInviteCode}
+                                                        className="w-full text-left px-3 py-2 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors"
+                                                    >
+                                                        Regenerar código ahora
+                                                    </button>
+
+                                                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                                                        Los cambios se aplican al guardar en esta pestaña.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="mt-3 font-mono tracking-[0.2em] text-base text-indigo-900 dark:text-indigo-100 bg-white/80 dark:bg-slate-900/70 border border-indigo-200 dark:border-indigo-800 rounded-lg px-3 py-2">
                                         {String(formData?.inviteCode || initialData?.inviteCode || 'NO-DISPONIBLE').toUpperCase()}

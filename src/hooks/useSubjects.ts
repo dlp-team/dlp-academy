@@ -61,6 +61,17 @@ export const useSubjects = (user: any) => {
         }
 
         setLoading(true);
+        const normalizedRole = getNormalizedRole(user);
+        const studentClassIds = Array.from(
+            new Set(
+                [
+                    ...(Array.isArray(user?.classIds) ? user.classIds : []),
+                    user?.classId
+                ]
+                    .map(classId => String(classId || '').trim())
+                    .filter(Boolean)
+            )
+        );
 
         // 1. Query subjects created by the user (Owned)
         const ownedQuery = query(
@@ -70,9 +81,11 @@ export const useSubjects = (user: any) => {
 
         let ownedSubjects: any[] = [];
         let sharedSubjects: any[] = [];
+        let classMatchedSubjects: any[] = [];
+        let enrolledSubjects: any[] = [];
 
         const updateSubjectsState = async () => {
-            const merged = [...ownedSubjects, ...sharedSubjects];
+            const merged = [...ownedSubjects, ...sharedSubjects, ...classMatchedSubjects, ...enrolledSubjects];
             const dedupMap = new Map<any, any>();
 
             merged.forEach(subject => {
@@ -166,9 +179,63 @@ export const useSubjects = (user: any) => {
             updateSubjectsState();
         });
 
+        let unsubscribeClassMatched: any = () => {};
+        if (normalizedRole === 'student' && studentClassIds.length > 0) {
+            const classConstraint = studentClassIds.length === 1
+                ? where('classId', '==', studentClassIds[0])
+                : where('classId', 'in', studentClassIds.slice(0, 10));
+
+            const classMatchedQuery = query(
+                collection(db, 'subjects'),
+                classConstraint
+            );
+
+            unsubscribeClassMatched = onSnapshot(classMatchedQuery, (snapshot: any) => {
+                classMatchedSubjects = snapshot.docs
+                    .map(d => ({ id: d.id, ...d.data(), isOwner: false }))
+                    .filter(subject => {
+                        if (subject?.ownerId === user?.uid) return false;
+                        if (currentInstitutionId && subject?.institutionId && subject.institutionId !== currentInstitutionId) {
+                            return false;
+                        }
+                        return true;
+                    });
+                updateSubjectsState();
+            }, () => {
+                classMatchedSubjects = [];
+                updateSubjectsState();
+            });
+        }
+
+        let unsubscribeEnrolled: any = () => {};
+        if (normalizedRole === 'student') {
+            const enrolledQuery = query(
+                collection(db, 'subjects'),
+                where('enrolledStudentUids', 'array-contains', user.uid)
+            );
+
+            unsubscribeEnrolled = onSnapshot(enrolledQuery, (snapshot: any) => {
+                enrolledSubjects = snapshot.docs
+                    .map(d => ({ id: d.id, ...d.data(), isOwner: false }))
+                    .filter(subject => {
+                        if (subject?.ownerId === user?.uid) return false;
+                        if (currentInstitutionId && subject?.institutionId && subject.institutionId !== currentInstitutionId) {
+                            return false;
+                        }
+                        return true;
+                    });
+                updateSubjectsState();
+            }, () => {
+                enrolledSubjects = [];
+                updateSubjectsState();
+            });
+        }
+
         return () => {
             unsubscribeOwned();
             unsubscribeShared();
+            unsubscribeClassMatched();
+            unsubscribeEnrolled();
         };
     }, [user, currentInstitutionId, canReadHomeData]);
 
@@ -208,6 +275,9 @@ export const useSubjects = (user: any) => {
                     transaction.set(subjectRef, {
                         ...normalizedPayload,
                         inviteCode,
+                        inviteCodeEnabled: normalizedPayload?.inviteCodeEnabled !== false,
+                        inviteCodeRotationIntervalHours: Number(normalizedPayload?.inviteCodeRotationIntervalHours || 24),
+                        inviteCodeLastRotatedAt: new Date(),
                         ownerId: normalizedPayload?.ownerId || user.uid,
                         institutionId: targetInstitutionId,
                         enrolledStudentUids: Array.isArray(normalizedPayload?.enrolledStudentUids)
@@ -286,6 +356,10 @@ export const useSubjects = (user: any) => {
             throw new Error('La asignatura asociada al codigo ya no esta disponible.');
         }
 
+        if (subjectData?.inviteCodeEnabled === false) {
+            throw new Error('El acceso por código de invitación está deshabilitado por el docente.');
+        }
+
         const normalizedEmail = String(user?.email || '').toLowerCase().trim();
         const sharedWithUids = Array.isArray(subjectData.sharedWithUids) ? subjectData.sharedWithUids : [];
         const sharedWithEntries = Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : [];
@@ -300,6 +374,23 @@ export const useSubjects = (user: any) => {
 
         if (alreadyOwner || alreadySharedByUid || alreadySharedByEntry || alreadyEnrolled) {
             return { subjectId, alreadyJoined: true };
+        }
+
+        const activeInviteCode = String(subjectData?.inviteCode || '').trim().toUpperCase();
+        if (activeInviteCode && activeInviteCode !== normalizedInviteCode) {
+            throw new Error('Este código ya no es válido. Solicita el código actualizado al docente.');
+        }
+
+        const rotationIntervalHours = Math.min(168, Math.max(1, Number(subjectData?.inviteCodeRotationIntervalHours || 24)));
+        const lastRotationValue = subjectData?.inviteCodeLastRotatedAt || subjectData?.updatedAt || subjectData?.createdAt;
+        const lastRotationDate = lastRotationValue?.toDate ? lastRotationValue.toDate() : (lastRotationValue ? new Date(lastRotationValue) : null);
+        if (lastRotationDate && Number.isFinite(lastRotationDate.getTime())) {
+            const nowMs = Date.now();
+            const elapsedMs = nowMs - lastRotationDate.getTime();
+            const maxAgeMs = rotationIntervalHours * 60 * 60 * 1000;
+            if (elapsedMs > maxAgeMs) {
+                throw new Error('El código de invitación expiró. Solicita el código actualizado al docente.');
+            }
         }
 
         const shareEntry = {
@@ -348,6 +439,9 @@ export const useSubjects = (user: any) => {
     };
 
     const updateSubject = async (id, payload: any) => {
+        const subjectRef = doc(db, "subjects", id);
+        const currentSnap = await getDoc(subjectRef);
+        const currentData = currentSnap.exists() ? (currentSnap.data() || {}) : {};
         const updatePayload = { ...payload };
 
         if (Object.prototype.hasOwnProperty.call(updatePayload, 'course')) {
@@ -379,9 +473,48 @@ export const useSubjects = (user: any) => {
         if (Object.prototype.hasOwnProperty.call(updatePayload, 'inviteCode')) {
             const inviteCode = String(updatePayload.inviteCode || '').trim();
             updatePayload.inviteCode = inviteCode || generateSubjectInviteCode();
+            updatePayload.inviteCodeLastRotatedAt = new Date();
         }
 
-        await updateDoc(doc(db, "subjects", id), updatePayload);
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'inviteCodeEnabled')) {
+            updatePayload.inviteCodeEnabled = updatePayload.inviteCodeEnabled !== false;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'inviteCodeRotationIntervalHours')) {
+            const parsedRotation = Number(updatePayload.inviteCodeRotationIntervalHours);
+            updatePayload.inviteCodeRotationIntervalHours = Number.isFinite(parsedRotation)
+                ? Math.min(168, Math.max(1, Math.floor(parsedRotation)))
+                : 24;
+        }
+
+        await updateDoc(subjectRef, updatePayload);
+
+        const didChangeInviteCode = Object.prototype.hasOwnProperty.call(updatePayload, 'inviteCode')
+            && String(updatePayload.inviteCode || '').trim().length > 0;
+
+        if (didChangeInviteCode) {
+            const institutionId = updatePayload?.institutionId || currentData?.institutionId || currentInstitutionId || null;
+            if (institutionId) {
+                const nextInviteCode = String(updatePayload.inviteCode).trim().toUpperCase();
+                const nextInviteCodeKey = `${institutionId}_${nextInviteCode}`;
+                await setDoc(doc(db, 'subjectInviteCodes', nextInviteCodeKey), {
+                    inviteCode: nextInviteCode,
+                    institutionId,
+                    subjectId: id,
+                    createdBy: currentData?.ownerId || user?.uid || null,
+                    createdAt: new Date()
+                }, { merge: true });
+
+                const previousInviteCode = String(currentData?.inviteCode || '').trim().toUpperCase();
+                if (previousInviteCode && previousInviteCode !== nextInviteCode) {
+                    const previousInviteCodeKey = `${institutionId}_${previousInviteCode}`;
+                    await deleteDoc(doc(db, 'subjectInviteCodes', previousInviteCodeKey)).catch(() => {
+                        // Best-effort cleanup for old mappings.
+                    });
+                }
+            }
+        }
+
         setSubjects(prev => prev.map(s => s.id === id ? { ...s, ...updatePayload } : s));
     };
 

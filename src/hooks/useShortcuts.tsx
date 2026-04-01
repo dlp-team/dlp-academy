@@ -434,7 +434,6 @@ export const useShortcuts = (user: any) => {
      */
     const createShortcut = async (targetId, targetType, parentId = null, institutionId = null, visualOverrides: any = {}) => {
         if (!user) {
-            console.log('[SHORTCUT] createShortcut: user missing');
             throw new Error("User must be authenticated to create shortcuts");
         }
 
@@ -489,14 +488,6 @@ export const useShortcuts = (user: any) => {
                 );
             }
 
-            console.log('[SHORTCUT] Existing shortcut updated:', {
-                shortcutId: primaryShortcut.id,
-                targetId,
-                targetType,
-                parentId,
-                duplicatesRemoved: duplicates.length
-            });
-
             return primaryShortcut.id;
         }
 
@@ -517,21 +508,8 @@ export const useShortcuts = (user: any) => {
             createdAt: new Date()
         };
 
-        console.log('[SHORTCUT] createShortcut called:', {
-            targetId,
-            targetType,
-            parentId,
-            institutionId: effectiveInstitutionId,
-            user,
-            shortcutData
-        });
-
         try {
             const docRef = await addDoc(collection(db, "shortcuts"), shortcutData);
-            console.log('[SHORTCUT] Shortcut created:', {
-                docId: docRef.id,
-                shortcutData
-            });
             return docRef.id;
         } catch (error) {
             console.error('[SHORTCUT] Error creating shortcut:', error, shortcutData);
@@ -549,7 +527,6 @@ export const useShortcuts = (user: any) => {
         if (!shortcutId) throw new Error("Shortcut ID required");
         
         await deleteDoc(doc(db, "shortcuts", shortcutId));
-        console.log(`Shortcut deleted: ${shortcutId}`);
     };
 
     /**
@@ -567,8 +544,6 @@ export const useShortcuts = (user: any) => {
             parentId: newParentId,
             updatedAt: new Date()
         });
-        
-        console.log(`Shortcut moved: ${shortcutId} → folder:${newParentId || 'root'}`);
     };
 
     const updateShortcutAppearance = async (shortcutId, appearanceData: any = {}) => {
@@ -609,8 +584,7 @@ export const useShortcuts = (user: any) => {
         await Promise.all(
             orphans.map(orphan => deleteShortcut(orphan.shortcutId))
         );
-        
-        console.log(`Deleted ${orphans.length} orphaned shortcuts`);
+
         return orphans.length;
     };
 

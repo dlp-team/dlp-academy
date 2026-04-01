@@ -286,6 +286,22 @@ service cloud.firestore {
           !request.resource.data.keys().hasAny(['classId'])
           || request.resource.data.classId == null
           || request.resource.data.classId is string
+        )
+        && (
+          !request.resource.data.keys().hasAny(['inviteCodeEnabled'])
+          || request.resource.data.inviteCodeEnabled is bool
+        )
+        && (
+          !request.resource.data.keys().hasAny(['inviteCodeRotationIntervalHours'])
+          || (
+            request.resource.data.inviteCodeRotationIntervalHours is number
+            && request.resource.data.inviteCodeRotationIntervalHours >= 1
+            && request.resource.data.inviteCodeRotationIntervalHours <= 168
+          )
+        )
+        && (
+          !request.resource.data.keys().hasAny(['inviteCodeLastRotatedAt'])
+          || request.resource.data.inviteCodeLastRotatedAt is timestamp
         );
       allow read: if isSignedIn()
         && (
@@ -329,6 +345,22 @@ service cloud.firestore {
           !request.writeFields.hasAny(['classId'])
           || request.resource.data.classId == null
           || request.resource.data.classId is string
+        )
+        && (
+          !request.writeFields.hasAny(['inviteCodeEnabled'])
+          || request.resource.data.inviteCodeEnabled is bool
+        )
+        && (
+          !request.writeFields.hasAny(['inviteCodeRotationIntervalHours'])
+          || (
+            request.resource.data.inviteCodeRotationIntervalHours is number
+            && request.resource.data.inviteCodeRotationIntervalHours >= 1
+            && request.resource.data.inviteCodeRotationIntervalHours <= 168
+          )
+        )
+        && (
+          !request.writeFields.hasAny(['inviteCodeLastRotatedAt'])
+          || request.resource.data.inviteCodeLastRotatedAt is timestamp
         );
       allow delete: if isSignedIn()
         && (
@@ -410,7 +442,7 @@ service cloud.firestore {
             )
           )
         );
-      allow read: if isSignedIn()
+      allow get: if isSignedIn()
         && (
           isGlobalAdmin()
           || (
@@ -424,6 +456,7 @@ service cloud.firestore {
             
           )
         );
+      allow list: if false;
       allow update, delete: if false;
     }
     
