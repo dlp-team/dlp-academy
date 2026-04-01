@@ -1,6 +1,12 @@
 // copilot/explanations/codebase/tests/unit/hooks/useSubjects.test.md
 
 ## Changelog
+### 2026-04-01: Subject completion tracking test coverage
+- Added unit coverage for new completion-state behavior in `useSubjects`:
+  - normalized `completedSubjectIds` derivation from profile payload,
+  - `setSubjectCompletion(..., true)` writes via `arrayUnion`,
+  - `setSubjectCompletion(..., false)` writes via `arrayRemove`.
+
 ### 2026-04-01: Teacher autonomous subject-creation policy coverage
 - Added `useSubjects` coverage for institution policy gating on teacher subject creation:
   - reject create when `allowTeacherAutonomousSubjectCreation` is `false`,

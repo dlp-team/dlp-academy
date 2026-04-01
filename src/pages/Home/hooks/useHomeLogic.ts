@@ -20,6 +20,8 @@ export const useHomeLogic = (user: any, searchQuery = '', rememberOrganization =
         subjects,
         loading,
         teacherSubjectCreationAllowed,
+        completedSubjectIds,
+        setSubjectCompletion,
         addSubject,
         updateSubject,
         deleteSubject,
@@ -107,6 +109,7 @@ export const useHomeLogic = (user: any, searchQuery = '', rememberOrganization =
         searchQuery,
         subjects,
         folders,
+        completedSubjectIds,
         preferences,
         loadingPreferences,
         updatePreference,
@@ -184,6 +187,7 @@ export const useHomeLogic = (user: any, searchQuery = '', rememberOrganization =
         subjects,
         folders,
         teacherSubjectCreationAllowed,
+        completedSubjectIds,
         shortcuts,
         resolvedShortcuts,
         searchFolders,
@@ -260,6 +264,7 @@ export const useHomeLogic = (user: any, searchQuery = '', rememberOrganization =
         updateFolder,
         deleteSubject,
         deleteFolder,
+        setSubjectCompletion,
         
         // Shortcut Functions
         createShortcut,

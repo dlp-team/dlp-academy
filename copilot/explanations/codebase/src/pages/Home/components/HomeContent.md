@@ -1,6 +1,11 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-04-01: Completion toggle wiring for subject cards and list rows
+- Added completion state inputs (`completedSubjectIds`) and updater callback (`setSubjectCompletion`).
+- Added completion-aware action passthrough to both grid and list subject renderers.
+- Completion ID resolution supports source and shortcut subject entries (`targetId` fallback).
+
 ### 2026-03-13: Select mode behavior for cards
 - Added selection-mode props (`selectMode`, `selectedItemKeys`, `onToggleSelectItem`) to support bulk workflows.
 - In selection mode, card interactions toggle selection instead of navigating/opening.

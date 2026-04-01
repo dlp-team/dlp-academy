@@ -98,6 +98,8 @@ const SubjectCard = (props: any) => {
                 <SubjectCardFront 
                     subject={subject}
                     user={user}
+                    isCompleted={Boolean(props.isCompleted)}
+                    onToggleCompletion={props.onToggleCompletion}
                     onSelect={onSelect}
                     activeMenu={activeMenu}
                     onToggleMenu={onToggleMenu}

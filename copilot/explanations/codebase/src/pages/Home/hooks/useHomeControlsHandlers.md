@@ -1,5 +1,10 @@
 # useHomeControlsHandlers.js
 
+## Changelog
+### 2026-04-01: Added history mode option
+- Added `HOME_VIEW_MODES` entry `{ id: 'history', label: 'Historial' }`.
+- Preserves existing reset behavior (tags/collapsed/current folder) when switching modes.
+
 ## Overview
 - **Source file:** `src/pages/Home/hooks/useHomeControlsHandlers.js`
 - **Last documented:** 2026-02-24

@@ -22,6 +22,8 @@ const ListViewItem = ({
     onShare,
     onOpenClasses,
     onGoToFolder,
+    onToggleCompletion,
+    isCompleted = false,
     disableAllActions = false,
     disableDeleteActions = false,
     disableUnshareActions = false,
@@ -200,12 +202,14 @@ const ListViewItem = ({
                         <SubjectListItem 
                             user={user}
                             subject={item} 
+                            isCompleted={isCompleted}
                             onSelect={() => onNavigateSubject(item.id)} 
                             onEdit={onEdit} 
                             onDelete={onDelete} 
                             onShare={onShare}
                             onOpenClasses={onOpenClasses}
                             onGoToFolder={onGoToFolder}
+                            onToggleCompletion={onToggleCompletion}
                             disableAllActions={disableAllActions}
                             disableDeleteActions={disableDeleteActions}
                             disableUnshareActions={disableUnshareForItem}

@@ -36,6 +36,8 @@ const HomeContent = ({
     setSubjectModalConfig,
     setFolderModalConfig,
     setDeleteConfig,
+    setSubjectCompletion = null,
+    completedSubjectIds = [],
     
     handleSelectSubject,
     handleOpenFolder,
@@ -78,6 +80,14 @@ const HomeContent = ({
     onToggleSelectItem = () => {},
 }: any) => {
     const contentRef = useRef<any>(null);
+    const completedSubjectsSet = useMemo(
+        () => new Set(
+            (Array.isArray(completedSubjectIds) ? completedSubjectIds : [])
+                .map((subjectId: any) => String(subjectId || '').trim())
+                .filter(Boolean)
+        ),
+        [completedSubjectIds]
+    );
     const sharedFolderPermission = currentFolder?.isShared && user?.uid
         ? getPermissionLevel(currentFolder, user.uid)
         : 'none';
@@ -145,6 +155,31 @@ const HomeContent = ({
     };
 
     const getSelectionKey = (item, type) => `${type}:${item?.shortcutId || item?.id}`;
+
+    const getCompletionReferenceId = (subjectEntry: any) => {
+        if (!subjectEntry) return '';
+        const sourceId = isShortcutItem(subjectEntry)
+            ? (subjectEntry.targetId || subjectEntry.id)
+            : subjectEntry.id;
+        return String(sourceId || '').trim();
+    };
+
+    const isSubjectCompleted = (subjectEntry: any) => {
+        const completionId = getCompletionReferenceId(subjectEntry);
+        return Boolean(completionId && completedSubjectsSet.has(completionId));
+    };
+
+    const handleToggleSubjectCompletion = async (subjectEntry: any, completed: any) => {
+        if (typeof setSubjectCompletion !== 'function' || !subjectEntry) return;
+        const completionId = getCompletionReferenceId(subjectEntry);
+        if (!completionId) return;
+
+        try {
+            await setSubjectCompletion(completionId, completed);
+        } catch (error) {
+            console.error('No se pudo actualizar el estado de completado de la asignatura:', error);
+        }
+    };
 
     const matchesTagFilter = (item: any) => {
         if (!Array.isArray(selectedTags) || selectedTags.length === 0) return true;
@@ -499,6 +534,8 @@ const HomeContent = ({
                                                     <SubjectCardComponent
                                                         subject={subject}
                                                         user={user}
+                                                        isCompleted={isSubjectCompleted(subject)}
+                                                        onToggleCompletion={handleToggleSubjectCompletion}
                                                         isSelected={isSelected}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
@@ -705,6 +742,8 @@ const HomeContent = ({
                                                     user={user}
                                                     item={subject}
                                                     type="subject"
+                                                    isCompleted={isSubjectCompleted(subject)}
+                                                    onToggleCompletion={handleToggleSubjectCompletion}
                                                     index={index}
                                                     parentId={currentFolder ? currentFolder.id : null}
                                                     allFolders={allFoldersForTree}

@@ -1,5 +1,12 @@
 # SubjectListItem.jsx
 
+## Changelog
+### 2026-04-01: Added completion toggle action in list menu
+- Added list-menu action for completion state transitions:
+  - `Marcar como completada`
+  - `Marcar como activa`
+- Action is available through new props (`isCompleted`, `onToggleCompletion`) and closes the menu after execution.
+
 ## Purpose
 - **Source file:** `src/components/modules/ListItems/SubjectListItem.jsx`
 - **Last documented:** 2026-02-24

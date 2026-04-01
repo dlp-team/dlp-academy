@@ -1,5 +1,8 @@
 # SubjectCard.jsx
 
+## Changelog
+- **2026-04-01:** Added completion-state passthrough (`isCompleted`, `onToggleCompletion`) from `SubjectCard` to `SubjectCardFront`.
+
 ## Purpose
 - **Source file:** `src/components/modules/SubjectCard/SubjectCard.jsx`
 - **Last documented:** 2026-02-24

@@ -1,4 +1,17 @@
 <!-- copilot/explanations/codebase/src/hooks/useSubjects.md -->
+## [2026-04-01] User-Scoped Subject Completion Tracking
+### Context
+- Phase 10 required persisted completion state per user and a hook API consumable by Home views.
+
+### Change
+- Added derived `completedSubjectIds` from `user.completedSubjects` with trim/dedupe normalization.
+- Added `setSubjectCompletion(subjectId, completed)`:
+  - writes to `users/{uid}.completedSubjects` using `arrayUnion` when completing,
+  - writes using `arrayRemove` when reverting to active.
+
+### Validation
+- `npm run test -- tests/unit/hooks/useSubjects.test.js tests/unit/hooks/useHomeState.completionTracking.test.js`
+
 ## [2026-04-01] Teacher Autonomous Subject Creation Policy Enforcement
 ### Context
 - Phase 09 required institution-level control over whether teachers can create subjects autonomously.

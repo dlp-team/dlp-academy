@@ -1,7 +1,7 @@
 // src/hooks/useSubjects.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
-    collection, query, where, getDocs, getDoc, setDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, orderBy, serverTimestamp, runTransaction
+    collection, query, where, getDocs, getDoc, setDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy, serverTimestamp, runTransaction
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { generateSubjectInviteCode, normalizeSubjectAccessPayload } from '../utils/subjectAccessUtils';
@@ -20,6 +20,14 @@ export const useSubjects = (user: any) => {
     const [teacherSubjectCreationAllowed, setTeacherSubjectCreationAllowed] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
     const canReadHomeData = Boolean(user?.role && user?.displayName);
+    const completedSubjectIds = useMemo(
+        () => Array.from(new Set(
+            (Array.isArray(user?.completedSubjects) ? user.completedSubjects : [])
+                .map((subjectId: any) => String(subjectId || '').trim())
+                .filter(Boolean)
+        )),
+        [user?.completedSubjects]
+    );
     const debugShare = (stage, payload = {}) => {
         console.info('[SHARE_DEBUG][subject]', {
             ts: new Date().toISOString(),
@@ -348,6 +356,25 @@ export const useSubjects = (user: any) => {
 
         // Return the ID explicitly to handle the folder link correctly
         return createdSubjectId;
+    };
+
+    const setSubjectCompletion = async (subjectId: any, completed = true) => {
+        const normalizedSubjectId = String(subjectId || '').trim();
+        if (!normalizedSubjectId) {
+            throw new Error('No se pudo resolver la asignatura para actualizar su estado.');
+        }
+
+        if (!user?.uid) {
+            throw new Error('Debes iniciar sesion para actualizar el estado de una asignatura.');
+        }
+
+        const userRef = doc(db, 'users', user.uid);
+        await updateDoc(userRef, {
+            completedSubjects: completed
+                ? arrayUnion(normalizedSubjectId)
+                : arrayRemove(normalizedSubjectId),
+            updatedAt: new Date()
+        });
     };
 
     const joinSubjectByInviteCode = async (inviteCodeInput: any) => {
@@ -1100,6 +1127,8 @@ export const useSubjects = (user: any) => {
         subjects, 
         loading, 
         teacherSubjectCreationAllowed,
+        completedSubjectIds,
+        setSubjectCompletion,
         addSubject, 
         joinSubjectByInviteCode,
         updateSubject, 

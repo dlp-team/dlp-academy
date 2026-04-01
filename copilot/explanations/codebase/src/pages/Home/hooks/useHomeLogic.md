@@ -2,6 +2,10 @@
 # useHomeLogic.js
 
 ## Changelog
+### 2026-04-01: Completion tracking passthrough wiring
+- Added `completedSubjectIds` and `setSubjectCompletion` passthroughs from `useSubjects`.
+- Forwarded `completedSubjectIds` into `useHomeState` for active/history filtering.
+
 ### 2026-04-01: Exposed teacher subject-creation policy state
 - Added `teacherSubjectCreationAllowed` passthrough from `useSubjects` into `useHomeLogic` return payload.
 - Enables policy-aware create-subject gating in Home coordinator hooks.

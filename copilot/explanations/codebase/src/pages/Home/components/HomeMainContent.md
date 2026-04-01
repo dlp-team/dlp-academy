@@ -2,6 +2,9 @@
 
 # HomeMainContent.tsx
 
+## Changelog
+- **2026-04-01:** Forwarded `completedSubjectIds` and `setSubjectCompletion` into `HomeContent` for phase 10 completion actions.
+
 ## Overview
 - **Source file:** `src/pages/Home/components/HomeMainContent.tsx`
 - **Last documented:** 2026-04-01

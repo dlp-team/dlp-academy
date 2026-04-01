@@ -1,6 +1,9 @@
 # ListViewItem.jsx
 
 ## Changelog
+### 2026-04-01: Completion state passthrough for list rows
+- Added subject-row passthrough props `isCompleted` and `onToggleCompletion` to support completion toggles in list layout.
+
 ### 2026-03-09: Keyboard copy/cut visual feedback support
 - Added optional `getCardVisualState(id, type)` integration.
 - Applies scale pulse and cut-pending opacity classes to both folder and subject list rows.

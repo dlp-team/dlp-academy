@@ -190,6 +190,65 @@ describe('useSubjects addSubject transaction hardening', () => {
   });
 });
 
+describe('useSubjects completion tracking', () => {
+  const baseUser = {
+    uid: 'student-1',
+    email: 'student1@test.com',
+    role: 'student',
+    displayName: 'Student One',
+    institutionId: 'inst-1',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    firestoreMocks.state.resetAutoId();
+    firestoreMocks.mockOnSnapshot.mockReturnValue(vi.fn());
+  });
+
+  it('normalizes completedSubjectIds from user profile data', () => {
+    const { result } = renderHook(() =>
+      useSubjects({
+        ...baseUser,
+        completedSubjects: ['subject-1', ' subject-1 ', null, '', 'subject-2'],
+      })
+    );
+
+    expect(result.current.completedSubjectIds).toEqual(['subject-1', 'subject-2']);
+  });
+
+  it('updates user completedSubjects with arrayUnion when marking as completed', async () => {
+    const { result } = renderHook(() => useSubjects(baseUser));
+
+    await act(async () => {
+      await result.current.setSubjectCompletion('subject-9', true);
+    });
+
+    expect(firestoreMocks.mockArrayUnion).toHaveBeenCalledWith('subject-9');
+    expect(firestoreMocks.mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'users', id: 'student-1' }),
+      expect.objectContaining({
+        completedSubjects: ['subject-9'],
+      })
+    );
+  });
+
+  it('updates user completedSubjects with arrayRemove when marking as active', async () => {
+    const { result } = renderHook(() => useSubjects(baseUser));
+
+    await act(async () => {
+      await result.current.setSubjectCompletion('subject-9', false);
+    });
+
+    expect(firestoreMocks.mockArrayRemove).toHaveBeenCalledWith('subject-9');
+    expect(firestoreMocks.mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'users', id: 'student-1' }),
+      expect.objectContaining({
+        completedSubjects: ['subject-9'],
+      })
+    );
+  });
+});
+
 describe('useSubjects joinSubjectByInviteCode', () => {
   const baseUser = {
     uid: 'student-1',

@@ -1,7 +1,7 @@
 // src/components/modules/ListItems/SubjectListItem.jsx
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight, Edit2, Trash2, MoreVertical, Users , Share2, School } from 'lucide-react';
+import { ChevronRight, Edit2, Trash2, MoreVertical, Users , Share2, School, CircleCheckBig } from 'lucide-react';
 import SubjectIcon from '../../ui/SubjectIcon';
 import { getIconColor } from '../../../utils/subjectColorUtils';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem, getNormalizedRole } from '../../../utils/permissionUtils';
@@ -17,6 +17,8 @@ const SubjectListItem = ({
     onShare, 
     onOpenClasses,
     onGoToFolder,
+    onToggleCompletion,
+    isCompleted = false,
     disableAllActions = false,
     disableDeleteActions = false,
     disableUnshareActions = false,
@@ -59,6 +61,7 @@ const SubjectListItem = ({
     const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
     const canShowShortcutVisibility = !disableAllActions && isShortcut;
     const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || (!isSourceOwner && !disableUnshareActions));
+    const canToggleCompletion = typeof onToggleCompletion === 'function' && !isOrphan;
     const isPassedShortcut = isShortcut && isHiddenFromManual && getNormalizedRole(user) === 'student';
 
     // Minimum scale for the menu is 1 (100%)
@@ -259,6 +262,15 @@ const SubjectListItem = ({
                                     >
                                         <School size={14 * menuScale} /> Clases
                                     </button>
+                                    {canToggleCompletion && (
+                                        <button
+                                            onClick={(e: any) => { e.stopPropagation(); onToggleCompletion(subject, !isCompleted); setShowMenu(false); }}
+                                            className="w-full flex items-center gap-2 p-2 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg text-emerald-700 dark:text-emerald-400 transition-colors cursor-pointer"
+                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                        >
+                                            <CircleCheckBig size={14 * menuScale} /> <span className="whitespace-nowrap">{isCompleted ? 'Marcar como activa' : 'Marcar como completada'}</span>
+                                        </button>
+                                    )}
                                     {canShowShortcutVisibility && (
                                         <button
                                             onClick={(e: any) => { e.stopPropagation(); onDelete(subject, isHiddenFromManual ? 'showInManual' : 'removeShortcut'); setShowMenu(false); }}
@@ -285,7 +297,7 @@ const SubjectListItem = ({
                                     >
                                         <Trash2 size={14 * menuScale} /> Eliminar
                                     </button>
-                                    {!effectiveShowEditUI && !effectiveCanShareFromMenu && !canOpenClassesFromMenu && !effectiveShowDeleteUI && !canShowShortcutVisibility && !canShowShortcutDelete && (
+                                    {!effectiveShowEditUI && !effectiveCanShareFromMenu && !canOpenClassesFromMenu && !canToggleCompletion && !effectiveShowDeleteUI && !canShowShortcutVisibility && !canShowShortcutDelete && (
                                         <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
                                     )}
                                 </div>

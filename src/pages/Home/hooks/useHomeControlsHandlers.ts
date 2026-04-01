@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 
 export const HOME_VIEW_MODES = [
     { id: 'grid', label: 'Manual' },
+    { id: 'history', label: 'Historial' },
     { id: 'usage', label: 'Uso' },
     { id: 'courses', label: 'Cursos' },
     { id: 'shared', label: 'Compartido' },

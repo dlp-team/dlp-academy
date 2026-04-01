@@ -1,5 +1,12 @@
 # useHomeState.js
 
+## Changelog
+### 2026-04-01: Completion-aware active/history subject grouping
+- Added `completedSubjectIds` input support and completion-ID normalization that works for source subjects and shortcut entries (`targetId`).
+- Added `history` Home mode grouping (`Historial`) that renders completed subjects only.
+- Active Home groupings now exclude completed subjects by default.
+- Search grouping now respects active/history completion scope.
+
 ## Overview
 - **Source file:** `src/pages/Home/hooks/useHomeState.js`
 - **Last documented:** 2026-02-24

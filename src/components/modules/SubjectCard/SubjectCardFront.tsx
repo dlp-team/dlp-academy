@@ -1,7 +1,7 @@
 // src/components/modules/SubjectCard/SubjectCardFront.jsx
 import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronRight, MoreVertical, Edit2, Trash2, Share2, School } from 'lucide-react';
+import { ChevronRight, MoreVertical, Edit2, Trash2, Share2, School, CircleCheckBig } from 'lucide-react';
 import SubjectIcon from '../../ui/SubjectIcon'; // Adjust path if necessary
 import { getIconColor } from '../../../utils/subjectColorUtils';
 import { Users } from 'lucide-react';
@@ -31,7 +31,9 @@ const SubjectCardFront = ({
     disableDeleteActions = false,
     disableUnshareActions = false,
     hideSharedIndicator = false,
-    isPassedShortcut = false
+    isPassedShortcut = false,
+    isCompleted = false,
+    onToggleCompletion
 }) => {
     const HEADER_SAFE_TOP = 112;
     const MENU_MARGIN = 8;
@@ -61,7 +63,8 @@ const SubjectCardFront = ({
     const effectiveShowDeleteUI = !disableAllActions && !disableDeleteActions && showDeleteUI;
     const canShowShortcutVisibility = !disableAllActions && isShortcut;
     const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || (!isSourceOwner && !disableUnshareActions));
-    const hasMenuActions = effectiveShowEditUI || effectiveCanShareFromMenu || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete;
+    const canToggleCompletion = typeof onToggleCompletion === 'function' && !isOrphan;
+    const hasMenuActions = effectiveShowEditUI || effectiveCanShareFromMenu || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete || canToggleCompletion;
     const menuBtnRef = useRef<any>(null);
     const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
 
@@ -216,7 +219,7 @@ const SubjectCardFront = ({
                                 transformOrigin: 'top left'
                             }}
                         >
-                                    {(effectiveShowEditUI || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete || effectiveCanShareFromMenu || canOpenClassesFromMenu) ? (
+                                    {(effectiveShowEditUI || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete || effectiveCanShareFromMenu || canOpenClassesFromMenu || canToggleCompletion) ? (
                                 <>
                                     {effectiveShowEditUI && (
                                         <button onClick={(e) => onEdit(e, subject)} className="w-full flex items-center gap-2 p-2 text-left hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-gray-700 dark:text-gray-300 transition-colors" style={{ fontSize: `${14 * menuScale}px` }}>
@@ -233,7 +236,22 @@ const SubjectCardFront = ({
                                             <School size={14 * menuScale} /> Clases
                                         </button>
                                     )}
-                                            {(effectiveShowEditUI || canOpenClassesFromMenu || effectiveCanShareFromMenu) && (effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete) && (
+                                    {canToggleCompletion && (
+                                        <button
+                                            onClick={(e: any) => {
+                                                e.stopPropagation();
+                                                onToggleCompletion(subject, !isCompleted);
+                                                if (typeof onToggleMenu === 'function') {
+                                                    onToggleMenu(null);
+                                                }
+                                            }}
+                                            className="w-full flex items-center gap-2 p-2 text-left hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg text-emerald-700 dark:text-emerald-400 transition-colors"
+                                            style={{ fontSize: `${14 * menuScale}px` }}
+                                        >
+                                            <CircleCheckBig size={14 * menuScale} /> {isCompleted ? 'Marcar como activa' : 'Marcar como completada'}
+                                        </button>
+                                    )}
+                                            {(effectiveShowEditUI || canOpenClassesFromMenu || effectiveCanShareFromMenu || canToggleCompletion) && (effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete) && (
                                         <div className="h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
                                     )}
                                     {canShowShortcutVisibility && (

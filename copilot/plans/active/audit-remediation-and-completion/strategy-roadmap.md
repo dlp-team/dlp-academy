@@ -27,7 +27,7 @@ Day 4 (Apr 4):
 
 Day 5 (Apr 5):
   ├─ Phase 09: Teacher Subject Creation Permissions        [6-8h]  → ✅ COMPLETED
-  └─ Phase 10: Subject Completion Tracking (UI + Data)     [6-8h]  → 📋 TODO
+  └─ Phase 10: Subject Completion Tracking (UI + Data)     [6-8h]  → ✅ COMPLETED
 
 Day 6-7 (Apr 6-7):
   ├─ Phase 11: Final Validation & Lossless Review          [4-6h]  → 📋 TODO
@@ -298,7 +298,7 @@ npm run test:rules
 ---
 
 ### Phase 10: Subject Completion Tracking
-**Status:** 📋 TODO
+**Status:** ✅ COMPLETED
 **Owner:** DLP_Architect
 **Duration:** 6-8 hours
 **Priority:** 🟡 HIGH
@@ -317,6 +317,18 @@ npm run test:rules
 npm run test                   # All tests pass
 npm run dev                   # Manually test: mark subject complete, verify tabs
 ```
+
+**Completion Notes (2026-04-01):**
+- Added user-scoped completion state in `useSubjects` (`completedSubjectIds`, `setSubjectCompletion`).
+- Added Home `history` mode (`Historial`) and completion-aware filtering in `useHomeState`.
+- Active Home modes now exclude completed subjects; history mode lists completed subjects only.
+- Added completion toggle actions to both grid and list subject menus:
+  - `Marcar como completada`
+  - `Marcar como activa`
+- Added focused regression coverage:
+  - `tests/unit/hooks/useSubjects.test.js` (completion state behavior)
+  - `tests/unit/hooks/useHomeState.completionTracking.test.js` (active/history filtering)
+  - confirmed no regression in existing Home shell tests.
 
 **Risks:** MEDIUM - UI state management must be correct
 **Rollback:** Remove completedSubjects field and revert filtering

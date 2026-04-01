@@ -22,11 +22,13 @@ DLP Academy has reached a development inflection point: core features work, but 
 - **Phase 3:** Implement critical data model changes (subject schema + migration)
 - **Phase 4:** Refactor subject access queries to OR-based logic
 - **Phase 5:** Split large components (Home, AdminDashboard, StudyGuide)
-- **Phase 6:** Add integration/page-level tests for key workflows
-- **Phase 7:** Architecture documentation (multi-tenancy, permission model, data flow)
-- **Phase 8:** Teacher subject creation permission flow (configurable institution setting)
-- **Phase 9:** Subject completion tracking (completedSubjects array + UI tabs)
-- **Phase 10:** Final validation, lossless review, and closure
+- **Phase 6:** Continue large component splitting and modular cleanup (AdminDashboard focus)
+- **Phase 7:** Add integration/page-level tests for key workflows
+- **Phase 8:** Architecture documentation (multi-tenancy, permission model, data flow)
+- **Phase 9:** Teacher subject creation permission flow (configurable institution setting)
+- **Phase 10:** Subject completion tracking (completedSubjects array + UI tabs)
+- **Phase 11:** Final validation and lossless review
+- **Phase 12:** Closure and finalization
 
 ### ❌ OUT OF SCOPE
 - Firestore rules security hardening (active plan: `copilot/plans/active/firestore-rules-access-reliability-recovery/`)
@@ -88,6 +90,15 @@ DLP Academy has reached a development inflection point: core features work, but 
 	- hook-level enforcement with explicit teacher-facing denial message,
 	- Firestore rules enforcement,
 	- targeted unit and rules regression coverage.
+
+### Phase 10: Subject Completion Tracking
+- Completed in this execution slice.
+- Delivered:
+	- user-level completion state API in `useSubjects` (`completedSubjectIds` + `setSubjectCompletion`),
+	- new Home tab mode `Historial` and completion-aware subject filtering,
+	- active Home views now hide completed subjects while history shows completed-only entries,
+	- completion toggles in both grid and list subject action menus,
+	- focused unit coverage for hook-level completion state and Home active/history filtering.
 - [ ] Lossless reports created for each phase
 - [ ] Git history clean with logical commits
 
@@ -119,5 +130,5 @@ DLP Academy has reached a development inflection point: core features work, but 
 4. **Data Rollback:** Firestore restore from backup if schema migration fails
 
 ## Next Steps
-→ **NEXT EXECUTION TARGET:** Phase 10 - Subject Completion Tracking (UI + Data)
-→ Keep Phase 11-12 pending until Phase 10 lands and is validated
+→ **NEXT EXECUTION TARGET:** Phase 11 - Final Validation & Lossless Review
+→ Keep Phase 12 pending until full Phase 11 validation gate passes
