@@ -114,10 +114,15 @@ Reduce `AdminDashboard.tsx` complexity by extracting reusable UI primitives from
 - New file: `tests/unit/pages/admin/adminInstitutionInviteQueryUtils.test.js`
 - Moved institutions edit-flow invite query/loading logic into a dedicated utility while preserving query filters and invite mapping semantics.
 
+### Extracted users confirm-action utility
+- New file: `src/pages/AdminDashboard/utils/adminUserConfirmActionUtils.ts`
+- New file: `tests/unit/pages/admin/adminUserConfirmActionUtils.test.js`
+- Moved users confirm action update-payload derivation into a dedicated utility while preserving toggle and role-change semantics.
+
 ## Validation
 - `get_errors`: clean in touched files.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/InstitutionFormPanel.test.jsx tests/unit/pages/admin/adminInstitutionFormUtils.test.js tests/unit/pages/admin/adminInstitutionInviteSyncUtils.test.js tests/unit/pages/admin/adminInstitutionPayloadUtils.test.js tests/unit/pages/admin/adminInstitutionValidationUtils.test.js tests/unit/pages/admin/adminInstitutionBatchQueueUtils.test.js tests/unit/pages/admin/adminInstitutionInviteQueryUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 20/20 files passing, 47/47 tests passing.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/InstitutionFormPanel.test.jsx tests/unit/pages/admin/adminInstitutionFormUtils.test.js tests/unit/pages/admin/adminInstitutionInviteSyncUtils.test.js tests/unit/pages/admin/adminInstitutionPayloadUtils.test.js tests/unit/pages/admin/adminInstitutionValidationUtils.test.js tests/unit/pages/admin/adminInstitutionBatchQueueUtils.test.js tests/unit/pages/admin/adminInstitutionInviteQueryUtils.test.js tests/unit/pages/admin/adminUserConfirmActionUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 21/21 files passing, 50/50 tests passing.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Next Slices
-- Evaluate extraction of users confirm action side-effect orchestration into dedicated utility.
+- Evaluate extraction of users pagination response-state update logic into dedicated utility.

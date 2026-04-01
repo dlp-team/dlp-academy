@@ -34,6 +34,7 @@ import {
 } from './utils/adminInstitutionPayloadUtils';
 import { getInstitutionSubmitValidationError } from './utils/adminInstitutionValidationUtils';
 import { buildAdminUsersPageQuery } from './utils/adminUserPaginationQueryUtils';
+import { buildUserConfirmUpdatePayload } from './utils/adminUserConfirmActionUtils';
 import {
     buildInstitutionConfirmDialogText,
     buildUserConfirmDialogText,
@@ -396,16 +397,9 @@ const UsersTab = () => {
 
         setIsConfirmingUserAction(true);
         try {
-            if (userConfirm.action === 'toggle') {
-                await updateDoc(doc(db, 'users', userConfirm.user.id), {
-                    enabled: !(userConfirm.user.enabled !== false)
-                });
-            }
-
-            if (userConfirm.action === 'role') {
-                await updateDoc(doc(db, 'users', userConfirm.user.id), {
-                    role: userConfirm.newRole
-                });
+            const updatePayload = buildUserConfirmUpdatePayload(userConfirm);
+            if (updatePayload) {
+                await updateDoc(doc(db, 'users', userConfirm.user.id), updatePayload);
             }
 
             await fetchUsers();

@@ -1,6 +1,6 @@
 <!-- copilot/explanations/temporal/lossless-reports/2026-04-01/phase-06-admindashboard-ui-primitives-slice.md -->
 
-# Lossless Report: Phase 06 AdminDashboard UI Primitives + Utility + Users/Institutions Row + User/Institution Filter + Users Pagination Query + Confirm-Copy + Role Constants + Users/Institutions Filters + Institution Form + Institution Form-State + Institution Invite-Sync + Institution Payload + Institution Validation + Institution Batch-Queue + Institution Invite-Query Utility Slices
+# Lossless Report: Phase 06 AdminDashboard UI Primitives + Utility + Users/Institutions Row + User/Institution Filter + Users Pagination Query + Confirm-Copy + Role Constants + Users/Institutions Filters + Institution Form + Institution Form-State + Institution Invite-Sync + Institution Payload + Institution Validation + Institution Batch-Queue + Institution Invite-Query + User Confirm-Action Utility Slices
 
 Date: 2026-04-01
 
@@ -23,6 +23,7 @@ Then continue Phase 06 with extraction of institutions submit normalization/payl
 Then continue Phase 06 with extraction of institutions submit validation checks/messages into a utility.
 Then continue Phase 06 with extraction of institutions create/edit batch queue orchestration into utilities.
 Then continue Phase 06 with extraction of institutions edit-flow invite query/loading into a utility.
+Then continue Phase 06 with extraction of users confirm-action update payload derivation into a utility.
 
 ## Explicitly Preserved (Out of Scope)
 - No Firestore query or mutation behavior changes.
@@ -51,6 +52,7 @@ Then continue Phase 06 with extraction of institutions edit-flow invite query/lo
 - `src/pages/AdminDashboard/utils/adminInstitutionValidationUtils.ts` (new)
 - `src/pages/AdminDashboard/utils/adminInstitutionBatchQueueUtils.ts` (new)
 - `src/pages/AdminDashboard/utils/adminInstitutionInviteQueryUtils.ts` (new)
+- `src/pages/AdminDashboard/utils/adminUserConfirmActionUtils.ts` (new)
 - `tests/unit/pages/admin/RoleBadge.test.jsx` (new)
 - `tests/unit/pages/admin/AdminConfirmModal.test.jsx` (new)
 - `tests/unit/pages/admin/adminEmailUtils.test.js` (new)
@@ -70,6 +72,7 @@ Then continue Phase 06 with extraction of institutions edit-flow invite query/lo
 - `tests/unit/pages/admin/adminInstitutionValidationUtils.test.js` (new)
 - `tests/unit/pages/admin/adminInstitutionBatchQueueUtils.test.js` (new)
 - `tests/unit/pages/admin/adminInstitutionInviteQueryUtils.test.js` (new)
+- `tests/unit/pages/admin/adminUserConfirmActionUtils.test.js` (new)
 - `copilot/plans/active/audit-remediation-and-completion/phases/phase-06-admindashboard-modularization.md` (new)
 - `copilot/plans/active/audit-remediation-and-completion/strategy-roadmap.md`
 - `copilot/explanations/codebase/src/pages/AdminDashboard/AdminDashboard.md`
@@ -93,6 +96,7 @@ Then continue Phase 06 with extraction of institutions edit-flow invite query/lo
 - `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminInstitutionValidationUtils.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminInstitutionBatchQueueUtils.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminInstitutionInviteQueryUtils.md` (new)
+- `copilot/explanations/codebase/src/pages/AdminDashboard/utils/adminUserConfirmActionUtils.md` (new)
 - `copilot/explanations/codebase/src/pages/AdminDashboard/components/UserTableRow.md`
 
 ## Per-File Verification
@@ -126,10 +130,11 @@ Then continue Phase 06 with extraction of institutions edit-flow invite query/lo
 - Verified institution validation utility tests pass and integration confirmations remain green.
 - Verified institution batch-queue utility tests pass and integration confirmations remain green.
 - Verified institution invite-query utility tests pass and integration confirmations remain green.
+- Verified users confirm-action utility tests pass and integration confirmations remain green.
 
 ## Validation Summary
 - `get_errors` on touched files: clean.
-- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/InstitutionFormPanel.test.jsx tests/unit/pages/admin/adminInstitutionFormUtils.test.js tests/unit/pages/admin/adminInstitutionInviteSyncUtils.test.js tests/unit/pages/admin/adminInstitutionPayloadUtils.test.js tests/unit/pages/admin/adminInstitutionValidationUtils.test.js tests/unit/pages/admin/adminInstitutionBatchQueueUtils.test.js tests/unit/pages/admin/adminInstitutionInviteQueryUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 20/20 files passed, 47/47 tests passed.
+- `npm run test -- tests/unit/pages/admin/AdminConfirmModal.test.jsx tests/unit/pages/admin/RoleBadge.test.jsx tests/unit/pages/admin/adminEmailUtils.test.js tests/unit/pages/admin/UserTableRow.test.jsx tests/unit/pages/admin/InstitutionTableRow.test.jsx tests/unit/pages/admin/adminUserFilterUtils.test.js tests/unit/pages/admin/adminInstitutionFilterUtils.test.js tests/unit/pages/admin/adminUserPaginationQueryUtils.test.js tests/unit/pages/admin/adminConfirmDialogTextUtils.test.js tests/unit/pages/admin/adminUserRoleConstants.test.js tests/unit/pages/admin/AdminUsersFilters.test.jsx tests/unit/pages/admin/AdminInstitutionsFilters.test.jsx tests/unit/pages/admin/InstitutionFormPanel.test.jsx tests/unit/pages/admin/adminInstitutionFormUtils.test.js tests/unit/pages/admin/adminInstitutionInviteSyncUtils.test.js tests/unit/pages/admin/adminInstitutionPayloadUtils.test.js tests/unit/pages/admin/adminInstitutionValidationUtils.test.js tests/unit/pages/admin/adminInstitutionBatchQueueUtils.test.js tests/unit/pages/admin/adminInstitutionInviteQueryUtils.test.js tests/unit/pages/admin/adminUserConfirmActionUtils.test.js tests/unit/pages/admin/AdminDashboard.confirmDialogs.test.jsx`: 21/21 files passed, 50/50 tests passed.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
 
 ## Risks and Checks
@@ -171,3 +176,5 @@ Then continue Phase 06 with extraction of institutions edit-flow invite query/lo
   - Check: utility tests assert queued set/update/delete operations for edit/create branches and integration tests remained green.
 - Risk: edit-flow invite query filter/mapping semantics drift during utility extraction.
   - Check: utility tests assert query constraints and mapped invite records; integration tests remained green.
+- Risk: users confirm-action update semantics drift during utility extraction.
+  - Check: utility tests assert toggle/role payload outputs and fallback behavior; integration tests remained green.
