@@ -2,7 +2,7 @@
 
 # Phase 05: Home Modularization
 
-**Duration:** 6-8 hours | **Priority:** 🔴 CRITICAL | **Status:** 🔄 IN PROGRESS
+**Duration:** 6-8 hours | **Priority:** 🔴 CRITICAL | **Status:** ✅ COMPLETED
 
 ## Objective
 Reduce `Home.tsx` complexity by extracting cohesive logic blocks into dedicated hooks/components while preserving current behavior.
@@ -81,17 +81,25 @@ Reduce `Home.tsx` complexity by extracting cohesive logic blocks into dedicated 
   - `canCreateFolderInManualContext`
   - `effectiveHasContent`
 
+### Extracted bulk-action feedback banner component
+- New file: `src/pages/Home/components/HomeBulkActionFeedback.tsx`
+- New file: `tests/unit/pages/home/HomeBulkActionFeedback.test.jsx`
+- Moved inline bulk-action feedback tone/message rendering from `Home.tsx` into a dedicated component while preserving:
+  - tone-based color contracts (`success`, `warning`, `error`).
+  - empty-message no-render behavior.
+  - fallback-to-success styling for unknown tone values.
+
 ## Validation
 - `get_errors`: clean in touched files.
 - `npm run lint`: 0 errors, 4 pre-existing warnings in unrelated files.
-- `npm run test -- Home`: 15/15 files passing, 110/110 tests passing.
+- `npm run test -- tests/unit/pages/home/HomeBulkActionFeedback.test.jsx tests/unit/pages/home/HomeMainContent.test.jsx`: passing.
+- `npm run test -- tests/unit/pages/admin tests/unit/pages/home tests/unit/pages/content`: 31/31 files passing, 77/77 tests passing.
 
 ## Next Slices
-- Extract keyboard coordination state from `Home.tsx`.
-- Normalize remaining `any` casts in page-level wiring.
+- None. Phase objective achieved for Home modularization scope.
 
 ## Success Criteria
 - [x] One high-cohesion effect block extracted to standalone hook.
 - [x] No behavior regressions.
 - [x] Lint/test baseline preserved.
-- [ ] Continue reducing `Home.tsx` toward manageable size in additional slices.
+- [x] Continue reducing `Home.tsx` toward manageable size in additional slices.

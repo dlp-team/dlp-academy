@@ -1,4 +1,4 @@
-// src/pages/Home/Home.jsx
+// src/pages/Home/Home.tsx
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -25,6 +25,7 @@ import Header from '../../components/layout/Header';
 import HomeControls from './components/HomeControls';
 import HomeSelectionToolbar from './components/HomeSelectionToolbar';
 import HomeShortcutFeedback from './components/HomeShortcutFeedback';
+import HomeBulkActionFeedback from './components/HomeBulkActionFeedback';
 import HomeLoader from './components/HomeLoader';
 import HomeMainContent from './components/HomeMainContent';
 import HomeModals from './components/HomeModals';
@@ -315,17 +316,7 @@ const Home = ({ user }: any) => {
                     onClearSelection={clearSelection}
                 />
 
-                {bulkActionMessage ? (
-                    <p className={`mt-3 text-sm rounded-lg px-3 py-2 border ${
-                        bulkActionTone === 'error'
-                            ? 'text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                            : bulkActionTone === 'warning'
-                                ? 'text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
-                                : 'text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-                    }`}>
-                        {bulkActionMessage}
-                    </p>
-                ) : null}
+                <HomeBulkActionFeedback message={bulkActionMessage} tone={bulkActionTone} />
 
                 <HomeMainContent
                     user={user}

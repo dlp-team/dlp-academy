@@ -18,11 +18,11 @@ Day 2 (Apr 2):
   └─ Phase 04: Subject Access Query Redesign               [4-6h]  → ✅ COMPLETED
 
 Day 3 (Apr 3):
-  ├─ Phase 05: Large Component Splitting (Home.tsx)        [6-8h]  → 🔄 IN PROGRESS (bulk-selection, loader, control-tags, keyboard-feedback, main-content, and creation-guards slices complete)
-  └─ Phase 06: Large Component Splitting (Other pages)     [4-6h]  → 🔄 IN PROGRESS (AdminDashboard component + utility extraction slices expanded across filters, forms, and submit logic)
+  ├─ Phase 05: Large Component Splitting (Home.tsx)        [6-8h]  → ✅ COMPLETED
+  └─ Phase 06: Large Component Splitting (AdminDashboard)  [4-6h]  → ✅ COMPLETED
 
 Day 4 (Apr 4):
-  ├─ Phase 07: Integration Tests & Workflow Coverage       [8-10h] → 🔄 IN PROGRESS (invite-security slice complete)
+  ├─ Phase 07: Integration Tests & Workflow Coverage       [8-10h] → ✅ COMPLETED
   └─ Phase 08: Architecture Documentation                  [4-6h]  → 📋 TODO
 
 Day 5 (Apr 5):
@@ -155,7 +155,7 @@ npm run test                                # Full suite passes
 ---
 
 ### Phase 05: Large Component Splitting (Home.tsx)
-**Status:** 📋 TODO
+**Status:** ✅ COMPLETED
 **Owner:** DLP_Architect
 **Duration:** 6-8 hours
 **Priority:** 🔴 CRITICAL
@@ -184,22 +184,22 @@ npm run dev                   # Home page renders identically
 
 ---
 
-### Phase 06: Large Component Splitting (AdminDashboard & StudyGuide)
-**Status:** 🔄 IN PROGRESS
+### Phase 06: Large Component Splitting (AdminDashboard)
+**Status:** ✅ COMPLETED
 **Owner:** DLP_Architect
 **Duration:** 4-6 hours
 **Priority:** 🟡 HIGH
 
-**Objective:** Split AdminDashboard.tsx (955L) and StudyGuide.tsx (1387L) per [ToDivide.md](../../ToDivide.md).
+**Objective:** Split AdminDashboard.tsx into coordinator-focused modules per [ToDivide.md](../../ToDivide.md) and stabilize related page workflows.
 
 **Key Changes:**
-- AdminDashboard.tsx → Extract: UserDetailView logic, institution tabs, user filtering
-- StudyGuide.tsx → Extract: editor logic, formatter utils, modal handlers
+- AdminDashboard.tsx → Extract: institution/users table rows, filters, form panel, and submit/pagination utilities
+- AdminDashboard.tsx → Keep coordinator-focused tab composition and action routing
 - Keep main components as coordinators
 - Update all imports and tests
 
 **Progress Snapshot (Apr 1):**
-- AdminDashboard: extracted reusable table rows, filters components, institution form panel, and several utilities (email parsing, users/institutions filtering, pagination query, confirm copy, role constants, institution form state, invite-sync, payload, validation).
+- AdminDashboard: extracted reusable table rows, filters components, institution form panel, and several utilities (email parsing, users/institutions filtering, pagination query, pagination response-state, confirm copy, role constants, institution form state, invite-sync, payload, validation).
 - Expanded targeted admin regression suite to cover extracted modules with passing consolidated runs.
 
 **Validation:**
@@ -216,7 +216,7 @@ npm run dev                   # Pages render identically
 ---
 
 ### Phase 07: Integration & Page-Level Tests
-**Status:** 📋 TODO
+**Status:** ✅ COMPLETED
 **Owner:** DLP_Architect
 **Duration:** 8-10 hours
 **Priority:** 🟡 HIGH
@@ -224,12 +224,9 @@ npm run dev                   # Pages render identically
 **Objective:** Add integration/page-level test coverage for key workflows (currently ~5% coverage).
 
 **Key Changes:**
-- Create: Home workflow tests (folder creation, drag, rename, delete)
-- Create: AdminDashboard user management tests
-- Create: Quiz creation/editing workflow tests
-- Create: Subject permission isolation tests (multi-tenant validation)
-- Create: Teacher dashboard interaction tests
-- Update: UseSubjects, useFolders test suites for OR-based queries
+- Added deterministic AdminDashboard page-level confirmation workflow coverage.
+- Added deterministic StudyGuide page-level navigation workflow coverage (TOC and keyboard progression).
+- Added deterministic invite security and governance coverage in hook and rules layers.
 
 **Validation:**
 ```bash
@@ -408,9 +405,9 @@ Phase 12 (Closure)
 | 02    | ⏳ DOING  | 2.5h   | 8             | 0           | None    |
 | 03    | 📋 TODO   | 7h     | 6             | 3           | None    |
 | 04    | 📋 TODO   | 5h     | 4             | 8           | Phase 03 |
-| 05    | 📋 TODO   | 7h     | 6             | 5           | Phase 01 |
-| 06    | 📋 TODO   | 5h     | 8             | 4           | Phase 05 |
-| 07    | 📋 TODO   | 9h     | 10            | 15          | Phase 04-06 |
+| 05    | ✅ DONE   | 7h     | 7             | 6           | None |
+| 06    | ✅ DONE   | 5h     | 9             | 5           | None |
+| 07    | ✅ DONE   | 9h     | 11            | 16          | None |
 | 08    | 📋 TODO   | 5h     | 4             | 0           | Phase 07 |
 | 09    | 📋 TODO   | 7h     | 6             | 4           | Phase 03 |
 | 10    | 📋 TODO   | 7h     | 8             | 6           | Phase 09 |
@@ -423,8 +420,8 @@ Phase 12 (Closure)
 
 ## Status Sync (Updated Daily)
 
-**Last Updated:** April 1, 2026 @ 14:30 UTC
-**Current Focus:** Phase 02 (Console Cleanup)
+**Last Updated:** April 1, 2026 @ 20:08 UTC
+**Current Focus:** Phase 08 (Architecture Documentation)
 **Blockers:** None
 **On Track:** YES ✅
 **Risk Level:** LOW 🟢

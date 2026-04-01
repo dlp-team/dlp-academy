@@ -53,6 +53,7 @@
 - Extracted institutions submit batch queue orchestration to `src/pages/AdminDashboard/utils/adminInstitutionBatchQueueUtils.ts`, replacing inline create/edit queue wiring in `handleCreate`.
 - Extracted institutions edit-flow invite query/loading to `src/pages/AdminDashboard/utils/adminInstitutionInviteQueryUtils.ts`, replacing inline query and mapping in `handleCreate`.
 - Extracted users confirm-action update payload derivation to `src/pages/AdminDashboard/utils/adminUserConfirmActionUtils.ts`, replacing inline toggle/role update branches in `confirmUserAction`.
+- Extracted users pagination response-state updates to `src/pages/AdminDashboard/utils/adminUserPaginationStateUtils.ts`, replacing inline cursor/has-more/append state branches in `fetchUsers`.
 
 ### 2026-03-30
 - Replaced browser `window.confirm(...)` dialogs in Admin institutions/users tabs with a shared in-page confirmation modal (`AdminConfirmModal`).

@@ -1,6 +1,7 @@
 # Home.jsx
 
 ## Changelog
+- **2026-04-01:** Extracted inline bulk-action feedback banner into `HomeBulkActionFeedback.tsx`, preserving tone-specific visual semantics and empty-message guard behavior while reducing coordinator JSX in `Home.tsx`.
 - **2026-04-01:** Extracted creation/content guard derivations into `useHomeCreationGuards.ts`, preserving permission checks while reducing inline `useMemo` blocks in `Home.tsx`.
 - **2026-04-01:** Extracted the Home view-mode content branch into `HomeMainContent.tsx`, preserving `bin/shared/manual` behavior while reducing coordinator complexity in `Home.tsx`.
 - **2026-04-01:** Extracted keyboard feedback coordination into `useHomeKeyboardCoordination.ts` and moved feedback banner UI into `HomeShortcutFeedback.tsx` to keep `Home.tsx` orchestration-focused.
@@ -41,4 +42,3 @@
 
 ## Changelog
 - **2026-03-06:** Updated `BinView` integration to pass `layoutMode` in addition to `cardScale`, so trash section follows the same grid/list contracts as the other Home tabs.
-git 

@@ -1,4 +1,4 @@
-// src/pages/AdminDashboard/AdminDashboard.jsx
+// src/pages/AdminDashboard/AdminDashboard.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -34,6 +34,10 @@ import {
 } from './utils/adminInstitutionPayloadUtils';
 import { getInstitutionSubmitValidationError } from './utils/adminInstitutionValidationUtils';
 import { buildAdminUsersPageQuery } from './utils/adminUserPaginationQueryUtils';
+import {
+    buildAdminUsersPageMeta,
+    mergeAdminUsersPage,
+} from './utils/adminUserPaginationStateUtils';
 import { buildUserConfirmUpdatePayload } from './utils/adminUserConfirmActionUtils';
 import {
     buildInstitutionConfirmDialogText,
@@ -364,15 +368,18 @@ const UsersTab = () => {
             const snap = await getDocs(q);
             
             const fetchedUsers = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            const pageMeta = buildAdminUsersPageMeta(snap.docs, PAGE_SIZE);
             
-            setLastVisible(snap.docs[snap.docs.length - 1]);
-            setHasMore(snap.docs.length === PAGE_SIZE);
-            
-            if (isNextPage) {
-                setUsers(prev => [...prev, ...fetchedUsers]);
-            } else {
-                setUsers(fetchedUsers);
-            }
+            setLastVisible(pageMeta.lastVisible);
+            setHasMore(pageMeta.hasMore);
+
+            setUsers((previousUsers) =>
+                mergeAdminUsersPage({
+                    previousUsers,
+                    fetchedUsers,
+                    isNextPage,
+                })
+            );
         } catch (e) { 
             console.error(e); 
         } finally { 
