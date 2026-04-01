@@ -39,7 +39,7 @@ DLP Academy has reached a development inflection point: core features work, but 
 - Broad refactors unrelated to identified gaps
 
 ## Current Status
-- **Lifecycle:** `active` → immediately begin Phase 1
+- **Lifecycle:** `inReview` (moved from `active` on 2026-04-01)
 - **Created:** April 1, 2026
 - **Estimated Duration:** 5-7 days (2 parallel tracks where possible)
 - **Execution Team:** DLP_Architect (autopilot agent)
@@ -119,7 +119,7 @@ DLP Academy has reached a development inflection point: core features work, but 
 	- `PLAN_COMPLETION_SUMMARY.md`,
 	- `RESIDUAL_RISKS.md`,
 	- `CLOSURE_CHECKLIST.md`.
-- Lifecycle transition intentionally pending until residual phase-review items are formally dispositioned.
+- Lifecycle transition to `inReview` completed; final transition to `finished` remains pending until residual phase-review items are formally dispositioned.
 - [ ] Lossless reports created for each phase
 - [ ] Git history clean with logical commits
 

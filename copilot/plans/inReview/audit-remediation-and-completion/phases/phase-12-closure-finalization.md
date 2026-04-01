@@ -5,7 +5,7 @@
 **Duration:** 2-3 hours | **Priority:** 🔴 CRITICAL | **Status:** 🟡 IN PROGRESS
 
 ## Objective
-Prepare closure artifacts, summarize execution outcomes, and define lifecycle transition conditions for moving this plan out of `active`.
+Prepare closure artifacts, summarize execution outcomes, and define lifecycle transition conditions for moving this plan from `inReview` to `finished`.
 
 ## Completed in This Slice (2026-04-01)
 - Created closure artifacts scaffold in `reviewing/`:
@@ -16,5 +16,5 @@ Prepare closure artifacts, summarize execution outcomes, and define lifecycle tr
 - Captured all validation evidence references (lint/typecheck/tests/rules/build/e2e smoke).
 
 ## Remaining
-- Final decision on lifecycle transition (`active` -> `inReview` or `finished`) after confirming whether unresolved audit review items from earlier phases are accepted residuals or require additional implementation.
+- Final decision on lifecycle transition (`inReview` -> `finished`) after confirming whether unresolved audit review items from earlier phases are accepted residuals or require additional implementation.
 - Optional: produce a consolidated final lossless report spanning phases 09-12 if this plan is formally closed.

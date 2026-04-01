@@ -19,6 +19,6 @@
 - If strict completion chronology is required, add `completedAtBySubject` metadata in user profile or equivalent indexed model.
 
 ## Recommendation
-- Keep plan in `active` until team confirms whether remaining phase-03 review items are:
+- Keep plan in `inReview` until team confirms whether remaining phase-03 review items are:
   - accepted as backlog follow-up, or
   - required for this plan’s formal completion criteria.

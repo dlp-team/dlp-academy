@@ -26,4 +26,4 @@
 - [x] Working tree clean after checkpoints
 
 ## Pending Final Decision
-- [ ] Decide lifecycle transition (`active` -> `inReview` or `finished`) after residual phase-03 items are dispositioned.
+- [ ] Decide lifecycle transition (`inReview` -> `finished`) after residual phase-03 items are dispositioned.

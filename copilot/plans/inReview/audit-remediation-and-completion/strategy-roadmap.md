@@ -2,7 +2,7 @@
 
 # Strategy Roadmap: Audit Remediation & Completion
 
-**Start Date:** April 1, 2026 | **Target Completion:** April 7, 2026 | **Status:** ACTIVE
+**Start Date:** April 1, 2026 | **Target Completion:** April 7, 2026 | **Status:** IN REVIEW
 
 ## Phase Execution Timeline
 
@@ -388,7 +388,7 @@ npm run build                 # Must produce dist/
 **Duration:** 2-3 hours
 **Priority:** 🔴 CRITICAL
 
-**Objective:** Move plan to finished, create transition artifacts, and close out.
+**Objective:** Finalize in-review validation, then move plan to `finished` and close out.
 
 **Key Activities:**
 - Move plan to `copilot/plans/finished/audit-remediation-and-completion/`
@@ -407,7 +407,7 @@ npm run build                 # Must produce dist/
   - `PLAN_COMPLETION_SUMMARY.md`
   - `RESIDUAL_RISKS.md`
   - `CLOSURE_CHECKLIST.md`
-- Lifecycle transition decision intentionally pending until residual phase-03 review items are dispositioned.
+- Lifecycle transition to `inReview` completed; final move to `finished` intentionally pending until residual phase-03 review items are dispositioned.
 
 ---
 
