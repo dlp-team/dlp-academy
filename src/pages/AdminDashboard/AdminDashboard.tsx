@@ -27,12 +27,11 @@ import {
     buildUserConfirmDialogText,
 } from './utils/adminConfirmDialogTextUtils';
 import {
-    ADMIN_USER_ROLE_FILTERS,
     ADMIN_USER_ROLE_LABELS,
-    getAdminRoleFilterLabel,
 } from './utils/adminUserRoleConstants';
 import UserTableRow from './components/UserTableRow';
 import InstitutionTableRow from './components/InstitutionTableRow';
+import AdminUsersFilters from './components/AdminUsersFilters';
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 
@@ -622,36 +621,14 @@ const UsersTab = () => {
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Filter bar */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 mb-6 flex flex-col md:flex-row gap-4 justify-between">
-                <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit flex-wrap gap-1">
-                    {ADMIN_USER_ROLE_FILTERS.map(r => (
-                        <button key={r} onClick={() => setRoleFilter(r)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all capitalize ${
-                                roleFilter === r ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
-                            }`}>
-                            {getAdminRoleFilterLabel(r)}
-                        </button>
-                    ))}
-                </div>
-                <div className="relative flex-1 md:max-w-xs">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input type="text" placeholder="Buscar por nombre o email..." value={search}
-                        onChange={e => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-purple-500" />
-                </div>
-            </div>
-
-            {/* Status Dropdown */}
-            <select
-                value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-purple-500 text-slate-600 dark:text-slate-300"
-            >
-                <option value="all">Todos los estados</option>
-                <option value="active">Activos</option>
-                <option value="disabled">Deshabilitados</option>
-            </select>
+            <AdminUsersFilters
+                roleFilter={roleFilter}
+                onRoleFilterChange={setRoleFilter}
+                search={search}
+                onSearchChange={setSearch}
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
+            />
 
             {loading ? (
                 <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin text-purple-500" /></div>
