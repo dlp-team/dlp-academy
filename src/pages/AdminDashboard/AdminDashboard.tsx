@@ -24,6 +24,7 @@ import {
     createAdminInstitutionFormState,
     mapInstitutionToFormState,
 } from './utils/adminInstitutionFormUtils';
+import { buildInstitutionInviteSyncPlan } from './utils/adminInstitutionInviteSyncUtils';
 import { buildAdminUsersPageQuery } from './utils/adminUserPaginationQueryUtils';
 import {
     buildInstitutionConfirmDialogText,
@@ -185,11 +186,9 @@ const InstitutionsTab = () => {
                 invitesSnap.forEach(snapDoc => {
                     existingInvites.push({ id: snapDoc.id, email: snapDoc.data().email });
                 });
-                const existingEmails = existingInvites.map(inv => inv.email);
 
                 // 2. Identify which emails to add and which to delete
-                const emailsToAdd = admins.filter(email => !existingEmails.includes(email));
-                const invitesToDelete = existingInvites.filter(inv => !admins.includes(inv.email));
+                const { emailsToAdd, invitesToDelete } = buildInstitutionInviteSyncPlan(existingInvites, admins);
 
                 // 3. Add deletion tasks to batch
                 invitesToDelete.forEach(inv => {
