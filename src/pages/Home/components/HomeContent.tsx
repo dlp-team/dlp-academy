@@ -2,7 +2,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useRef } from 'react';
 import { 
-    Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp, ArrowUpCircle
+    Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp, ArrowUpCircle, CalendarRange
 } from 'lucide-react';
 import SubjectIcon from '../../../components/ui/SubjectIcon';
 import SubjectCard from '../../../components/modules/SubjectCard/SubjectCard';
@@ -300,6 +300,47 @@ const HomeContent = ({
         return normalizedLabel.replace(/\s\((\d{4}-\d{4}|Sin año académico)\)$/i, '').trim();
     };
 
+    const groupedEntries = useMemo(() => Object.entries(groupedContent || {}), [groupedContent]);
+
+    const coursesYearWrappers = useMemo(() => {
+        const wrapperPattern = /\((\d{4}-\d{4}|Sin año académico)\)$/i;
+        const yearByGroup = new Map<string, string>();
+        const firstGroupByYear = new Set<string>();
+        const subjectsCountByYear = new Map<string, number>();
+        const seenYears = new Set<string>();
+
+        let hasUnlabeledGroup = false;
+
+        groupedEntries.forEach(([groupName, groupSubjects]: any) => {
+            const match = String(groupName || '').match(wrapperPattern);
+            if (!match) {
+                hasUnlabeledGroup = true;
+                return;
+            }
+
+            const yearLabel = String(match[1] || '').trim();
+            yearByGroup.set(groupName, yearLabel);
+
+            if (!seenYears.has(yearLabel)) {
+                seenYears.add(yearLabel);
+                firstGroupByYear.add(groupName);
+            }
+
+            const currentCount = subjectsCountByYear.get(yearLabel) || 0;
+            const nextCount = currentCount + (Array.isArray(groupSubjects) ? groupSubjects.length : 0);
+            subjectsCountByYear.set(yearLabel, nextCount);
+        });
+
+        const enabled = viewMode === 'courses' && !hasUnlabeledGroup && seenYears.size > 1;
+
+        return {
+            enabled,
+            yearByGroup,
+            firstGroupByYear,
+            subjectsCountByYear
+        };
+    }, [groupedEntries, viewMode]);
+
     
     return (
         <div
@@ -307,12 +348,39 @@ const HomeContent = ({
         className={`transition-opacity duration-200 ${
         filterOverlayOpen ? 'pointer-events-none opacity-100' : ''
         }`}>
-            {groupedContent && Object.entries(groupedContent).map(([groupName, groupSubjects]: any) => {
+            {groupedEntries.map(([groupName, groupSubjects]: any) => {
                 const isCollapsed = isGroupCollapsed(groupName);
                 const displayedGroupSubjects = getFilteredSubjectsForGroup(groupSubjects);
+                const yearLabel = coursesYearWrappers.yearByGroup.get(groupName) || '';
+                const isFirstGroupForYear = coursesYearWrappers.enabled && coursesYearWrappers.firstGroupByYear.has(groupName);
+                const yearWrapperKey = yearLabel ? `courses-year:${yearLabel}` : '';
+                const isYearCollapsed = coursesYearWrappers.enabled && yearWrapperKey
+                    ? isGroupCollapsed(yearWrapperKey)
+                    : false;
+                const yearSubjectCount = yearLabel
+                    ? (coursesYearWrappers.subjectsCountByYear.get(yearLabel) || 0)
+                    : 0;
 
                 return (
-                    <div key={groupName} className="mb-10">
+                    <React.Fragment key={groupName}>
+                        {isFirstGroupForYear && (
+                            <button
+                                onClick={() => toggleGroup(yearWrapperKey, isYearCollapsed)}
+                                className="flex items-center gap-2 w-full text-left rounded-xl py-2 px-2 mb-4 bg-indigo-50/70 dark:bg-indigo-900/25 border border-indigo-100 dark:border-indigo-800/60 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors"
+                            >
+                                <CalendarRange className="text-indigo-500 dark:text-indigo-300" size={18} />
+                                <h3 className="text-lg font-bold text-indigo-800 dark:text-indigo-200 flex-1">
+                                    {yearLabel}
+                                </h3>
+                                <span className="bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 text-xs font-bold px-2 py-1 rounded-full">
+                                    {yearSubjectCount}
+                                </span>
+                                <span className={`transition-transform ${isYearCollapsed ? '-rotate-90' : ''}`}>▼</span>
+                            </button>
+                        )}
+
+                        {(!coursesYearWrappers.enabled || !isYearCollapsed) && (
+                    <div className="mb-10">
                         {showCollapsibleGroups && (
                             <button
                                 onClick={() => toggleGroup(groupName, isCollapsed)}
@@ -801,6 +869,8 @@ const HomeContent = ({
                             </>
                         )}
                     </div>
+                        )}
+                    </React.Fragment>
                 );
             })}
         </div>

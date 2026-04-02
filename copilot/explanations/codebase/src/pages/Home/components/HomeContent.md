@@ -1,6 +1,10 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-04-02: Nested academic-year wrappers for multi-year courses view
+- Added outer academic-year collapsible wrappers in `courses` mode when multiple academic years are present.
+- Year wrappers default to collapsed and contain the existing per-course collapsible groups.
+
 ### 2026-04-02: Courses groups collapse by default + year-suffix-safe creation prefill
 - Courses-mode collapsible groups now default to collapsed state unless explicitly opened by the user.
 - Added course-label normalization for create-subject prefills, removing trailing academic-year suffixes like `(2025-2026)` before writing `course` draft data.

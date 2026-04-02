@@ -623,34 +623,45 @@ export const useHomeState = ({
                 );
             };
 
-            Object.keys(currentEducationLevels).forEach((group) => {
-                currentEducationLevels[group].forEach((year) => {
-                    academicYearOrder.forEach((academicYearLabel) => {
+            const addKnownBucketsForAcademicYear = (academicYearLabel: string) => {
+                Object.keys(currentEducationLevels).forEach((group) => {
+                    currentEducationLevels[group].forEach((year) => {
                         const bucket = groupMap[group]?.[year]?.[academicYearLabel] || [];
                         addBucket(`${group} ${year}`, academicYearLabel, bucket);
                     });
                 });
-            });
+            };
 
-            Object.keys(groupMap).forEach((group) => {
-                Object.keys(groupMap[group]).forEach((year) => {
-                    const knownYears = currentEducationLevels[group] || [];
-                    if (knownYears.includes(year)) {
-                        return;
-                    }
+            const addCustomBucketsForAcademicYear = (academicYearLabel: string) => {
+                Object.keys(groupMap).forEach((group) => {
+                    Object.keys(groupMap[group]).forEach((year) => {
+                        const knownYears = currentEducationLevels[group] || [];
+                        if (knownYears.includes(year)) {
+                            return;
+                        }
 
-                    academicYearOrder.forEach((academicYearLabel) => {
                         const baseLabel = year ? `${group} ${year}` : group;
                         const bucket = groupMap[group]?.[year]?.[academicYearLabel] || [];
                         addBucket(baseLabel, academicYearLabel, bucket);
                     });
                 });
-            });
+            };
 
-            academicYearOrder.forEach((academicYearLabel) => {
-                const noCourseEntries = noCourseMap[academicYearLabel] || [];
-                addBucket('Sin Curso', academicYearLabel, noCourseEntries);
-            });
+            if (hasMultipleAcademicYears) {
+                academicYearOrder.forEach((academicYearLabel) => {
+                    addKnownBucketsForAcademicYear(academicYearLabel);
+                    addCustomBucketsForAcademicYear(academicYearLabel);
+                    const noCourseEntries = noCourseMap[academicYearLabel] || [];
+                    addBucket('Sin Curso', academicYearLabel, noCourseEntries);
+                });
+            } else {
+                academicYearOrder.forEach((academicYearLabel) => {
+                    addKnownBucketsForAcademicYear(academicYearLabel);
+                    addCustomBucketsForAcademicYear(academicYearLabel);
+                    const noCourseEntries = noCourseMap[academicYearLabel] || [];
+                    addBucket('Sin Curso', academicYearLabel, noCourseEntries);
+                });
+            }
 
             return sortedGroups;
         }

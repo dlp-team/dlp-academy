@@ -62,4 +62,10 @@
 		- courses grouping filtered by selected year range,
 		- courses group sections default-collapsed.
 	- Focused hook tests passed for academic-year filtering and fallback coverage (4 tests).
+- 2026-04-02 (Phase 05 Slice 04):
+	- Multi-year nested wrapper behavior validated:
+		- outer academic-year collapsibles render for multi-year courses result sets,
+		- wrapper sections default-collapsed and preserve inner per-course collapsibles,
+		- grouped ordering remains deterministic for year-wrapper navigation.
+	- Focused Home rendering + hook tests passed (7 tests).
 

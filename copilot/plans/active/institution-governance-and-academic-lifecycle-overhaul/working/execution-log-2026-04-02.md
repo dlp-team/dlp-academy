@@ -236,3 +236,17 @@
 - `npm run lint` (pass, warnings only outside scope)
 - `get_errors` on touched files (clean)
 
+## Phase 05 Slice 04 - Nested Academic-Year Wrappers
+- Updated courses multi-year rendering to include outer academic-year wrapper sections in `HomeContent`:
+   - wrapper sections render only when more than one academic year is present,
+   - each wrapper has its own collapsed state and subject-count badge,
+   - wrappers default to collapsed.
+- Updated courses grouping emission order in `useHomeState` to year-first sequencing so wrapper sections render contiguous grouped buckets.
+- Preserved inner per-course collapsible behavior and year suffixes in multi-year course titles.
+
+## Phase 05 Slice 04 Validation
+- `npm run test -- tests/unit/hooks/useHomeState.academicYearFilter.test.js tests/unit/hooks/useHomeState.completionTracking.test.js tests/unit/pages/home/HomeMainContent.test.jsx` (pass, 7 tests)
+- `npx tsc --noEmit` (pass)
+- `npm run lint` (pass, warnings only outside scope)
+- `get_errors` on touched files (clean)
+

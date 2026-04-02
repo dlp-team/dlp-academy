@@ -5,6 +5,7 @@
 - Added persisted `coursesAcademicYearFilter` state (`startYear`/`endYear`) with normalization against available academic years.
 - Added `availableCourseAcademicYears` derivation from visible subjects for courses-tab filter options.
 - Courses grouping now filters by academic-year range and appends `(YYYY-YYYY)` to course bucket labels when multiple academic years are visible.
+- Multi-year course buckets are emitted in academic-year-first order to support nested year-wrapper rendering in Home content.
 
 ### 2026-04-02: History mode retirement and unified subject visibility
 - Removed history-specific grouping paths so unsupported persisted `history` mode naturally falls back to regular grouped behavior.

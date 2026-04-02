@@ -58,7 +58,11 @@ Establish a deterministic academic-year model with mandatory format controls and
    - Updated courses grouping to filter by selected academic-year range and append year labels in multi-year result sets.
    - Set courses collapsible groups to default-collapsed behavior for faster navigation in dense courses views.
    - Added deterministic tests for available-year derivation and year-range filtering behavior.
+- 2026-04-02 (Slice 04 complete):
+   - Added nested academic-year wrapper collapsibles for multi-year courses views.
+   - Wrapper sections default to collapsed and host the inner per-course collapsible groups.
+   - Adjusted courses grouping output ordering (year-first) so each wrapper renders contiguous grouped content.
+   - Added focused validation including Home content rendering tests for nested wrapper compatibility.
 - Remaining for phase closure:
-   - Year-level nested collapsibles for multi-year courses grouping wrappers.
    - Role-aware ended-subject indicators.
 

@@ -25,4 +25,5 @@
 - 2026-04-02: Slice 01 completed academic-year governance baseline in institution-admin course/class flows.
 - 2026-04-02: Slice 02 completed Home history/send-to-history retirement and persisted-mode fallback coverage.
 - 2026-04-02: Slice 03 completed Home courses academic-year range filtering baseline (persisted selection, paginated year panel, and grouped filtering).
+- 2026-04-02: Slice 04 completed nested academic-year wrapper collapsibles for multi-year courses rendering.
 
