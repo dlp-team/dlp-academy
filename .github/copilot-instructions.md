@@ -461,6 +461,89 @@ Before completing ANY interaction, verify:
 
 ---
 
+## ⚡ Autopilot Command Authorization Control (MANDATORY)
+
+**Reference:** `copilot/autopilot/README.md` and related command files
+
+In Autopilot mode, Copilot operates under strict command authorization framework ensuring safe, auditable autonomous execution:
+
+### Command Authorization System
+
+1. **ALLOWED_COMMANDS.md** — Whitelist of Pre-Approved Commands
+   - All test/lint/build commands (`npm run test`, `npm run lint`, `npm run build`)
+   - All feature-branch Git operations (exclude main)
+   - All file operations within project scope
+   - All search/utility commands (grep, find, cat)
+   - Firebase emulator testing (`firebase emulators:exec`)
+   - **Execution:** Runs immediately without delay
+
+2. **FORBIDDEN_COMMANDS.md** — Hard Blocklist
+   - Production deployments (`firebase deploy`, `npm run deploy`)
+   - Main branch operations (`git push origin main`)
+   - Destructive operations (`git push -f`, `git reset --hard`)
+   - System-level access or root operations
+   - **Execution:** Blocked immediately with reason reported
+
+3. **PENDING_COMMANDS.md** — Command Review Queue
+   - Unknown commands logged here by Copilot
+   - Each entry includes: command, description, pros/cons, risks
+   - User reviews async (no blocking)
+   - Once approved/rejected, moved to ALLOWED or FORBIDDEN
+   - **Execution:** Depends on user decision
+
+### Copilot's Command Flow in Autopilot
+
+```
+Copilot wants to execute command
+    ↓
+Check ALLOWED_COMMANDS.md?
+    ├─ YES → Execute immediately ✅
+    └─ NO → Check FORBIDDEN_COMMANDS.md?
+            ├─ YES → Block & report ❌
+            └─ NO → Log in PENDING_COMMANDS.md & ask user ⏳
+
+User reviews pending command
+    ├─ Approve → Move to ALLOWED → Copilot resumes ✅
+    ├─ Reject → Move to FORBIDDEN → Copilot skips ❌
+    └─ Clarify → Add note → Await response ⏳
+```
+
+### Safety Principles
+
+- ✅ **Transparency:** Every decision logged and auditable
+- ✅ **Predictability:** Only pre-approved commands execute automatically
+- ✅ **Flexibility:** New commands reviewed before execution
+- ✅ **Efficiency:** Approved commands execute without delay
+- ✅ **Failure-Safe:** Unknown defaults to deny (safe default)
+
+### Integration with Git Workflow
+
+Command authorization works **in conjunction with** Git workflow rules:
+- Git commands only run on **feature branches** (not main)
+- Push only with `git push origin <branch>` (never main)
+- Force-push banned as forbidden command
+- All changes committed before final verification
+
+### First-Time Setup
+
+Before first autopilot task:
+1. Read `copilot/autopilot/README.md` (overview)
+2. Review `copilot/autopilot/ALLOWED_COMMANDS.md` (whitelist)
+3. Review `copilot/autopilot/FORBIDDEN_COMMANDS.md` (blacklist)
+4. Ensure `copilot/autopilot/PENDING_COMMANDS.md` is empty
+5. Proceed with autopilot task
+
+During autopilot execution:
+- Monitor `PENDING_COMMANDS.md` for review requests
+- Approve/reject commands as they arrive
+- No interruption to Copilot execution (async)
+
+### Historical Context
+
+Command control system built from analysis of **25+ commands** across **15+ executed plans**. All safe commands pre-approved in ALLOWED list. New commands automatically reviewed via PENDING queue.
+
+---
+
 ## 🔀 Autopilot Git Workflow (MANDATORY)
 
 **Applies to ALL autopilot tasks. Reference: `copilot/autopilot/git-workflow-rules.md`**

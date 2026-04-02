@@ -4,27 +4,36 @@
 When operating in Bypass Approvals or Autopilot mode, you have terminal access. You must exercise extreme caution and strictly adhere to these limitations:
 
 1. **NO EXTERNAL TOOL CALLS**: You are strictly forbidden from making external API calls, webhook triggers, or using any external tools outside of the local VS Code environment. 
-2. **NO DEPLOYMENTS**: You must NEVER run deployment commands. 
+2. **COMMAND AUTHORIZATION MANDATORY**: All shell commands MUST comply with the authorization system:
+   - Check `copilot/autopilot/ALLOWED_COMMANDS.md` — execute these immediately
+   - Check `copilot/autopilot/FORBIDDEN_COMMANDS.md` — NEVER execute these
+   - Unknown commands → Log in `copilot/autopilot/PENDING_COMMANDS.md` and ask user
+3. **NO DEPLOYMENTS**: You must NEVER run deployment commands (enforced in FORBIDDEN_COMMANDS.md) 
    - **ABSOLUTELY BANNED**: `firebase deploy --only firestore:rules` (or any variation). Multiple developers may be modifying Firestore schemas simultaneously; deploying from an agent will cause disastrous overwrites.
    - **BANNED**: `firebase deploy`, `npm run deploy`, or any command that pushes code to production or staging.
-3. **NO DESTRUCTIVE COMMANDS**: Do not run `rm -rf` on root directories, do not drop databases, and do not reset git branches hard (`git reset --hard`) without explicit user permission.
-4. **NO MAIN BRANCH PUSHES** (AUTOPILOT CRITICAL): 
+4. **NO DESTRUCTIVE COMMANDS**: Do not run `rm -rf` on root directories, do not drop databases, and do not reset git branches hard (`git reset --hard`) without explicit user permission.
+5. **NO MAIN BRANCH PUSHES** (AUTOPILOT CRITICAL, enforced in FORBIDDEN_COMMANDS.md): 
    - **ABSOLUTELY BANNED**: Pushing to `main` branch in any case
    - **ABSOLUTELY BANNED**: Committing directly to `main` branch
    - **REQUIRED**: Always verify current branch before any push (`git branch --show-current`)
    - **REQUIRED**: If on `main`, create new feature branch immediately (see `copilot/autopilot/git-workflow-rules.md`)
-5. **NO FORCE PUSHES**: Banned: `git push -f`, `git push --force` (protection for collaborative work)
+6. **NO FORCE PUSHES**: Banned: `git push -f`, `git push --force` (protection for collaborative work, enforced in FORBIDDEN_COMMANDS.md)
 
 
 ## 🔄 Autopilot Execution Loop
 When operating in Autopilot mode, follow this exact loop until the task is complete:
 
 1. **Pre-Execution Clarification**: Before any code or documentation changes, ensure the task is fully understood. If there is any ambiguity, missing detail, or uncertainty about requirements, use `vscode/askQuestions` to clarify with the user before proceeding. Do not proceed until the scope, constraints, and expected outcomes are clear.
-2. **Git Workflow Setup** (REQUIRED): 
-   - Read `copilot/autopilot/git-workflow-rules.md` (MANDATORY)
+2. **Setup & Authorization** (REQUIRED): 
+   - Read `copilot/autopilot/README.md` (Command authorization overview)
+   - Read `copilot/autopilot/git-workflow-rules.md` (Git discipline rules)
    - Check current branch: `git branch --show-current`
    - If on `main`: Create new feature branch (`git checkout -b feature/<task-name>`)
    - If on feature branch: Continue on existing branch
+   - **Command execution MUST follow the authorization framework:**
+     - Check `copilot/autopilot/ALLOWED_COMMANDS.md` before executing any command
+     - Check `copilot/autopilot/FORBIDDEN_COMMANDS.md` to ensure command is not banned
+     - If command is unknown, log in `copilot/autopilot/PENDING_COMMANDS.md` and ask user via `vscode/askQuestions`
 3. **Context & Plan**: Read `copilot-instructions.md` and relevant files in `copilot/explanations/`.
 4. **Execute**: Make surgical code changes (following the Lossless Change Protocol).
 5. **Commit & Push** (PERIODIC):
