@@ -1,6 +1,10 @@
 # SubjectListItem.jsx
 
 ## Changelog
+### 2026-04-02: Added role-aware ended lifecycle badges in list rows
+- Integrated shared lifecycle badge mapping for ended subjects directly in list title rows.
+- Keeps existing pass-shortcut badge precedence so shortcut completion status does not duplicate ended-state chips.
+
 ### 2026-04-01: Added completion toggle action in list menu
 - Added list-menu action for completion state transitions:
   - `Marcar como completada`

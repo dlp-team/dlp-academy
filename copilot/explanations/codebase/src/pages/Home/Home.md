@@ -1,6 +1,7 @@
 # Home.jsx
 
 ## Changelog
+- **2026-04-02:** Wired persisted `showOnlyCurrentSubjects` lifecycle visibility state from `useHomeLogic` into `HomeControls` for courses/usage active-only filtering.
 - **2026-04-02:** Wired courses-tab academic-year filter state (`coursesAcademicYearFilter`, setter, and available years) from `useHomeLogic` into `HomeControls` for persistent year-range filtering UX.
 - **2026-04-01:** Wired `teacherSubjectCreationAllowed` from `useHomeLogic` into `useHomeCreationGuards`, making Home subject-create controls respect institution teacher-creation policy.
 - **2026-04-01:** Extracted inline bulk-action feedback banner into `HomeBulkActionFeedback.tsx`, preserving tone-specific visual semantics and empty-message guard behavior while reducing coordinator JSX in `Home.tsx`.

@@ -6,6 +6,7 @@ import { useGhostDrag } from '../../../hooks/useGhostDrag';
 import { buildDragPayload, writeDragPayloadToDataTransfer } from '../../../utils/dragPayloadUtils';
 import { withDarkGradientVariant } from '../../../utils/subjectConstants';
 import { getNormalizedRole } from '../../../utils/permissionUtils';
+import { getEndedSubjectBadge } from '../../../utils/academicYearLifecycleUtils';
 
 const SubjectCard = (props: any) => {
 
@@ -37,7 +38,11 @@ const SubjectCard = (props: any) => {
     } = props;
 
     const gradientClass = withDarkGradientVariant(subject?.color || 'from-slate-500 to-slate-700');
-    const isPassedShortcut = subject?.hiddenInManual === true && subject?.targetType === 'subject' && getNormalizedRole(user) === 'student';
+    const normalizedRole = getNormalizedRole(user);
+    const isPassedShortcut = subject?.hiddenInManual === true && subject?.targetType === 'subject' && normalizedRole === 'student';
+    const endedBadge = isPassedShortcut
+        ? null
+        : getEndedSubjectBadge({ subject, user });
     const modernShellClass = isPassedShortcut
         ? 'bg-gradient-to-br from-emerald-400 via-cyan-400 to-teal-500 dark:from-emerald-300 dark:via-cyan-300 dark:to-teal-400'
         : `bg-gradient-to-br ${gradientClass}`;
@@ -119,6 +124,7 @@ const SubjectCard = (props: any) => {
                     disableUnshareActions={disableUnshareActions}
                     hideSharedIndicator={props.hideSharedIndicator}
                     isPassedShortcut={isPassedShortcut}
+                    endedBadge={endedBadge}
                 />
             </div>
         </div>

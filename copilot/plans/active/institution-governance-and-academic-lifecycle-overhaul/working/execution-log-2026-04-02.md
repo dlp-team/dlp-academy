@@ -250,3 +250,27 @@
 - `npm run lint` (pass, warnings only outside scope)
 - `get_errors` on touched files (clean)
 
+## Phase 05 Slice 05 - Ended Indicators + Active/Current Visibility Controls
+- Added shared lifecycle utility `academicYearLifecycleUtils`:
+   - current academic-year resolution,
+   - ended/current subject classification,
+   - robust subject score/pass extraction,
+   - role-aware ended badge style mapping (teacher yellow, student red-to-green).
+- Added persisted Home controls toggle `showOnlyCurrentSubjects` for `courses` and `usage` tabs.
+- Updated `useHomeState` grouped-content pipeline:
+   - applies active/current filtering in courses and usage views,
+   - applies same filter in search results while in courses/usage context.
+- Updated Home subject surfaces:
+   - `SubjectCard`/`SubjectCardFront` render top-left ended bookmark badges,
+   - `SubjectListItem` renders inline ended badges in list rows.
+- Added/updated focused deterministic tests:
+   - `useHomeState.academicYearFilter.test.js` (courses/usage active-only coverage),
+   - `HomeControls.activeCurrentToggle.test.jsx` (toggle visibility + preference wiring),
+   - `academicYearLifecycleUtils.test.js` (lifecycle helper + badge mapping behavior).
+
+## Phase 05 Slice 05 Validation
+- `npm run test -- tests/unit/hooks/useHomeState.academicYearFilter.test.js tests/unit/pages/home/HomeControls.activeCurrentToggle.test.jsx tests/unit/utils/academicYearLifecycleUtils.test.js tests/unit/pages/home/HomeMainContent.test.jsx` (pass, 14 tests)
+- `npx tsc --noEmit` (pass)
+- `npm run lint` (pass, 4 pre-existing warnings only in unrelated `src/pages/Content/*`)
+- `get_errors` on touched files (clean)
+

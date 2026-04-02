@@ -12,6 +12,7 @@ export const HOME_VIEW_MODES = [
 const useHomeControlsHandlers = ({
     setViewMode,
     setSelectedTags,
+    setShowOnlyCurrentSubjects,
     setCoursesAcademicYearFilter,
     setCollapsedGroups,
     setCurrentFolder,
@@ -57,12 +58,20 @@ const useHomeControlsHandlers = ({
         }
     }, [setCoursesAcademicYearFilter, onPreferenceChange]);
 
+    const handleShowOnlyCurrentSubjectsChange = useCallback((enabled: boolean) => {
+        setShowOnlyCurrentSubjects(enabled);
+        if (onPreferenceChange) {
+            onPreferenceChange('showOnlyCurrentSubjects', enabled);
+        }
+    }, [setShowOnlyCurrentSubjects, onPreferenceChange]);
+
     return {
         handleViewModeChange,
         handleLayoutModeChange,
         handleCardScaleChange,
         handleTagsChange,
-        handleCoursesAcademicYearFilterChange
+        handleCoursesAcademicYearFilterChange,
+        handleShowOnlyCurrentSubjectsChange
     };
 };
 

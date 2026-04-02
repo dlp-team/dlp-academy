@@ -1,6 +1,7 @@
 # SubjectCardFront.jsx
 
 ## Changelog
+- **2026-04-02:** Added top-left ended lifecycle bookmark badge rendering (`endedBadge`) for role-aware Home subject status visibility.
 - **2026-04-01:** Added subject completion menu action (`Marcar como completada` / `Marcar como activa`) and close-menu-on-toggle behavior.
 - **2026-03-12:** Added subject-menu action `Ir a Clases` (hidden for students) to open the subject modal directly on the classes tab.
 - **2026-03-12:** Subject gradient rendering now normalizes legacy gradients with dark-mode variants.

@@ -6,7 +6,7 @@
 - [ ] Firestore and Storage permission fixes validated with deny-path checks.
 - [x] Deletion and bin-first lifecycle behavior validated for folders/subjects/courses.
 - [x] Institution admin dashboard preview, pagination, and policy controls validated.
-- [ ] Academic year format, picker, filters, and lifecycle transitions validated.
+- [x] Academic year format, picker, filters, and lifecycle transitions validated.
 - [ ] Selection mode, bin sorting, animation fix, and admin navigation validated.
 - [ ] Dual-role switching validated without permission regressions.
 - [x] `get_errors` clear for touched files.
@@ -68,4 +68,10 @@
 		- wrapper sections default-collapsed and preserve inner per-course collapsibles,
 		- grouped ordering remains deterministic for year-wrapper navigation.
 	- Focused Home rendering + hook tests passed (7 tests).
+- 2026-04-02 (Phase 05 Slice 05):
+	- Lifecycle visibility controls + role-aware ended indicators validated:
+		- courses/usage now support persisted `Solo vigentes` filter,
+		- ended subject badges render with teacher yellow and student grade/pass red-to-green semantics,
+		- lifecycle filter also applies to search results when courses/usage view is active.
+	- Focused utility, hook, controls, and Home rendering tests passed (14 tests).
 

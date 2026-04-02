@@ -1,6 +1,11 @@
 # useHomeState.js
 
 ## Changelog
+### 2026-04-02: Active/current visibility toggle and lifecycle filtering
+- Added persisted `showOnlyCurrentSubjects` state for Home `courses` and `usage` modes.
+- Grouped-content generation now filters to current lifecycle subjects when the toggle is enabled.
+- Search results in `courses`/`usage` context now apply the same lifecycle visibility filter.
+
 ### 2026-04-02: Courses academic-year range filtering and multi-year labels
 - Added persisted `coursesAcademicYearFilter` state (`startYear`/`endYear`) with normalization against available academic years.
 - Added `availableCourseAcademicYears` derivation from visible subjects for courses-tab filter options.

@@ -7,6 +7,11 @@ This suite validates courses-tab academic-year filtering behavior in `useHomeSta
 - single-year range filtering returns only matching course buckets.
 
 ## Changelog
+### 2026-04-02: Added active/current lifecycle filtering assertions
+- Added deterministic coverage for `showOnlyCurrentSubjects` in:
+  - `courses` mode (current-year + legacy subjects remain, ended-year subjects excluded),
+  - `usage` mode (ended subjects removed from recent list).
+
 ### 2026-04-02: Initial coverage for courses academic-year range filtering
 - Added deterministic hook tests for:
   - available-year derivation ordering,

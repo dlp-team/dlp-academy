@@ -2,6 +2,10 @@
 # useHomeLogic.js
 
 ## Changelog
+### 2026-04-02: Lifecycle visibility toggle passthrough
+- Added `showOnlyCurrentSubjects` and `setShowOnlyCurrentSubjects` passthroughs from `useHomeState` into `useHomeLogic` return payload.
+- Enables Home controls to toggle and persist active/current-only subject visibility for usage/courses tabs.
+
 ### 2026-04-02: Courses academic-year filter passthrough
 - Added `coursesAcademicYearFilter`, `setCoursesAcademicYearFilter`, and `availableCourseAcademicYears` passthroughs from `useHomeState` into `useHomeLogic` return payload.
 - Enables Home controls to render and persist courses-tab academic-year range selections.

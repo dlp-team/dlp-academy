@@ -1,6 +1,7 @@
 # SubjectCard.jsx
 
 ## Changelog
+- **2026-04-02:** Added role-aware ended-subject badge wiring (`endedBadge`) via shared lifecycle utility, with pass-shortcut precedence to avoid duplicate status badges.
 - **2026-04-01:** Added completion-state passthrough (`isCompleted`, `onToggleCompletion`) from `SubjectCard` to `SubjectCardFront`.
 
 ## Purpose

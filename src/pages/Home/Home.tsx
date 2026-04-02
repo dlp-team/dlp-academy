@@ -266,6 +266,8 @@ const Home = ({ user }: any) => {
                         allTags={availableControlTags}
                         selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
                         setSelectedTags={logic.viewMode === 'shared' ? setSharedSelectedTags : logic.setSelectedTags}
+                        showOnlyCurrentSubjects={Boolean(logic.showOnlyCurrentSubjects)}
+                        setShowOnlyCurrentSubjects={logic.setShowOnlyCurrentSubjects}
                         coursesAcademicYearFilter={logic.coursesAcademicYearFilter}
                         setCoursesAcademicYearFilter={logic.setCoursesAcademicYearFilter}
                         availableCourseAcademicYears={logic.availableCourseAcademicYears || []}

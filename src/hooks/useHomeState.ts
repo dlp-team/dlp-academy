@@ -8,6 +8,7 @@ import { clearLastHomeFolderId, loadLastHomeFolderId } from '../pages/Home/utils
 import { EDUCATION_LEVELS } from '../utils/subjectConstants';
 import { usePersistentState } from './usePersistentState';
 import { buildUserScopedPersistenceKey } from '../utils/pagePersistence';
+import { getAcademicYearStartYear, normalizeAcademicYear, isSubjectCurrentAcademicYear } from '../utils/academicYearLifecycleUtils';
 
 const EMPTY_MANUAL_ORDER: { subjects: any[], folders: any[] } = { subjects: [], folders: [] };
 
@@ -35,25 +36,7 @@ const areManualOrdersEqual = (left, right: any) => {
     return true;
 };
 
-const ACADEMIC_YEAR_PATTERN = /^(\d{4})-(\d{4})$/;
 const EMPTY_COURSE_ACADEMIC_YEAR_FILTER = { startYear: '', endYear: '' };
-
-const getAcademicYearStartYear = (value: any): number | null => {
-    const normalizedValue = String(value || '').trim();
-    const match = normalizedValue.match(ACADEMIC_YEAR_PATTERN);
-    if (!match) return null;
-
-    const startYear = Number(match[1]);
-    const endYear = Number(match[2]);
-    if (!Number.isInteger(startYear) || !Number.isInteger(endYear)) return null;
-    if (endYear !== startYear + 1) return null;
-    return startYear;
-};
-
-const normalizeAcademicYear = (value: any): string => {
-    const normalizedValue = String(value || '').trim();
-    return getAcademicYearStartYear(normalizedValue) === null ? '' : normalizedValue;
-};
 
 const sortAcademicYearsDesc = (years: any[] = []) => {
     return [...years]
@@ -141,6 +124,7 @@ export const useHomeState = ({
     const [currentFolder, setCurrentFolder] = useState<any>(null);
     const [activeFilter, setActiveFilter] = useState<string>('all');
     const [coursesAcademicYearFilter, setCoursesAcademicYearFilter] = useState<any>(() => normalizeCourseAcademicYearFilter(preferences?.coursesAcademicYearFilter));
+    const [showOnlyCurrentSubjects, setShowOnlyCurrentSubjects] = useState<boolean>(Boolean(preferences?.showOnlyCurrentSubjects));
 
     const [draggedItem, setDraggedItem] = useState<any>(null);
     const [draggedItemType, setDraggedItemType] = useState<any>(null);
@@ -500,7 +484,12 @@ export const useHomeState = ({
                 const studentScopeAllowed = !(isStudentRole && (viewMode === 'usage' || viewMode === 'courses')) || isRootLevelSubject(s);
                 return subjectName.includes(query) && isRelated(s) && studentScopeAllowed && (viewMode !== 'grid' || isVisibleInManual(s));
             });
-            return { 'Resultados de búsqueda': matchedSubjects };
+            const shouldFilterCurrentOnlyInSearch = showOnlyCurrentSubjects && (viewMode === 'usage' || viewMode === 'courses');
+            const lifecycleVisibleSearchSubjects = shouldFilterCurrentOnlyInSearch
+                ? matchedSubjects.filter((subject: any) => isSubjectCurrentAcademicYear(subject?.academicYear))
+                : matchedSubjects;
+
+            return { 'Resultados de búsqueda': lifecycleVisibleSearchSubjects };
         }
 
         if (viewMode === 'grid' && selectedTags.length > 0) {
@@ -530,9 +519,13 @@ export const useHomeState = ({
                 if (!(isStudentRole && (viewMode === 'usage' || viewMode === 'courses'))) return true;
                 return isRootLevelSubject(sub);
             });
+        const shouldFilterByCurrentLifecycle = showOnlyCurrentSubjects && (viewMode === 'usage' || viewMode === 'courses');
+        const lifecycleVisibleSubjects = shouldFilterByCurrentLifecycle
+            ? subjectsToGroup.filter((subject: any) => isSubjectCurrentAcademicYear(subject?.academicYear))
+            : subjectsToGroup;
 
         if (viewMode === 'usage') {
-            const sorted = [...subjectsToGroup].sort((a, b: any) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+            const sorted = [...lifecycleVisibleSubjects].sort((a, b: any) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
             return { Recientes: sorted };
         }
 
@@ -563,7 +556,7 @@ export const useHomeState = ({
                 return { group: course, year: '' };
             }
 
-            const subjectsInAcademicYearRange = subjectsToGroup.filter((sub: any) => {
+            const subjectsInAcademicYearRange = lifecycleVisibleSubjects.filter((sub: any) => {
                 const subjectAcademicYear = normalizeAcademicYear(sub?.academicYear);
                 return isAcademicYearWithinRange(subjectAcademicYear, normalizedCoursesAcademicYearFilter);
             });
@@ -690,7 +683,7 @@ export const useHomeState = ({
         }
 
         return { Todas: subjectsToGroup };
-    }, [subjects, subjectsWithShortcuts, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery, isStudentRole, normalizedCoursesAcademicYearFilter]);
+    }, [subjects, subjectsWithShortcuts, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery, isStudentRole, normalizedCoursesAcademicYearFilter, showOnlyCurrentSubjects]);
 
     const { searchFolders, searchSubjects } = useMemo(() => {
         if (!searchQuery || searchQuery.trim() === '') {
@@ -761,6 +754,7 @@ export const useHomeState = ({
             setLayoutMode(preferences.layoutMode || 'grid');
             setCardScale(preferences.cardScale || 100);
             setSelectedTags(preferences.selectedTags || []);
+            setShowOnlyCurrentSubjects(Boolean(preferences.showOnlyCurrentSubjects));
             const nextCoursesFilter = normalizeCourseAcademicYearFilter(preferences.coursesAcademicYearFilter, availableCourseAcademicYears);
             setCoursesAcademicYearFilter((previousFilter: any) => (
                 areCourseAcademicYearFiltersEqual(previousFilter, nextCoursesFilter)
@@ -809,6 +803,8 @@ export const useHomeState = ({
         setCollapsedGroups,
         selectedTags,
         setSelectedTags,
+        showOnlyCurrentSubjects,
+        setShowOnlyCurrentSubjects,
         coursesAcademicYearFilter,
         setCoursesAcademicYearFilter,
         availableCourseAcademicYears,

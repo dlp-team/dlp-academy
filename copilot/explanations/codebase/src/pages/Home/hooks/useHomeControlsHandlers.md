@@ -1,6 +1,10 @@
 # useHomeControlsHandlers.js
 
 ## Changelog
+### 2026-04-02: Added active/current lifecycle visibility handler
+- Added `handleShowOnlyCurrentSubjectsChange` to update `showOnlyCurrentSubjects` and persist via `onPreferenceChange`.
+- Keeps lifecycle-visibility preference behavior aligned with existing Home control persistence flow.
+
 ### 2026-04-02: Added courses academic-year range filter handler
 - Added `handleCoursesAcademicYearFilterChange` to update `coursesAcademicYearFilter` state and persist selection via `onPreferenceChange`.
 - Keeps courses academic-year filter selections durable across sessions while preserving existing mode/layout/tag handlers.

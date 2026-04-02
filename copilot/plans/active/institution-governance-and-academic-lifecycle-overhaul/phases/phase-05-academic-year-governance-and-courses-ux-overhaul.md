@@ -3,7 +3,7 @@
 # Phase 05 - Academic Year Governance and Courses UX Overhaul
 
 ## Status
-- IN_PROGRESS
+- COMPLETED
 
 ## Objective
 Establish a deterministic academic-year model with mandatory format controls and role-aware lifecycle visibility across courses and subject presentation.
@@ -63,6 +63,11 @@ Establish a deterministic academic-year model with mandatory format controls and
    - Wrapper sections default to collapsed and host the inner per-course collapsible groups.
    - Adjusted courses grouping output ordering (year-first) so each wrapper renders contiguous grouped content.
    - Added focused validation including Home content rendering tests for nested wrapper compatibility.
-- Remaining for phase closure:
-   - Role-aware ended-subject indicators.
+- 2026-04-02 (Slice 05 complete):
+   - Added persisted `showOnlyCurrentSubjects` toggle for courses/usage views to filter to current lifecycle subjects only.
+   - Added role-aware ended-subject badges in Home subject cards/list rows:
+      - teacher/institution-admin: yellow `Finalizada` badge,
+      - student: red-to-green badge scale based on grade/pass context.
+   - Added shared Home lifecycle utility helpers for current-vs-ended detection and resilient score/pass extraction.
+   - Added deterministic coverage for courses/usage active-only filtering, lifecycle utility behavior, and controls toggle wiring.
 

@@ -32,9 +32,10 @@ const SubjectCardFront = ({
     disableUnshareActions = false,
     hideSharedIndicator = false,
     isPassedShortcut = false,
+    endedBadge = null,
     isCompleted = false,
     onToggleCompletion
-}) => {
+}: any) => {
     const HEADER_SAFE_TOP = 112;
     const MENU_MARGIN = 8;
     // Permission checks
@@ -125,6 +126,20 @@ const SubjectCardFront = ({
             {/* Modern Hover Effect */}
             {isModern && (
                 <div className="absolute inset-0 bg-slate-100/30 dark:bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            )}
+
+            {endedBadge && (
+                <div className="absolute top-0 left-0 z-40 pointer-events-none">
+                    <span
+                        className={`inline-flex items-center font-semibold rounded-br-xl rounded-tl-xl ${endedBadge.className}`}
+                        style={{
+                            fontSize: `${11 * scaleMultiplier}px`,
+                            padding: `${5 * scaleMultiplier}px ${10 * scaleMultiplier}px`
+                        }}
+                    >
+                        {endedBadge.label}
+                    </span>
+                </div>
             )}
 
             

@@ -26,6 +26,18 @@ vi.mock('../../../src/utils/pagePersistence', () => ({
 }));
 
 describe('useHomeState academic-year range filter for courses mode', () => {
+  const resolveCurrentAcademicYear = () => {
+    const now = new Date();
+    const startYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
+    return `${startYear}-${startYear + 1}`;
+  };
+
+  const resolvePreviousAcademicYear = () => {
+    const currentStart = Number(resolveCurrentAcademicYear().split('-')[0]);
+    const previousStart = currentStart - 1;
+    return `${previousStart}-${previousStart + 1}`;
+  };
+
   const baseUser = {
     uid: 'teacher-1',
     email: 'teacher@test.com',
@@ -100,5 +112,66 @@ describe('useHomeState academic-year range filter for courses mode', () => {
 
     expect(result.current.groupedContent['Bachillerato 1º'].map((subject) => subject.id)).toEqual(['subject-2025-a']);
     expect(result.current.groupedContent['Bachillerato 2º'].map((subject) => subject.id)).toEqual(['subject-2025-b']);
+  });
+
+  it('keeps only current academic-year subjects in courses mode when active-only filter is enabled', () => {
+    const currentAcademicYear = resolveCurrentAcademicYear();
+    const previousAcademicYear = resolvePreviousAcademicYear();
+    const lifecycleSubjects = [
+      { id: 'subject-current', name: 'Lengua', ownerId: 'teacher-1', course: 'ESO 3º', academicYear: currentAcademicYear },
+      { id: 'subject-previous', name: 'Biologia', ownerId: 'teacher-1', course: 'ESO 3º', academicYear: previousAcademicYear },
+      { id: 'subject-legacy', name: 'Musica', ownerId: 'teacher-1', course: 'ESO 4º', academicYear: '' },
+    ];
+
+    const { result } = renderHook(() =>
+      useHomeState({
+        user: baseUser,
+        searchQuery: '',
+        subjects: lifecycleSubjects,
+        folders: [],
+        preferences: {
+          ...basePreferences,
+          viewMode: 'courses',
+          showOnlyCurrentSubjects: true,
+        },
+        loadingPreferences: false,
+        updatePreference: vi.fn(),
+        rememberOrganization: true,
+      })
+    );
+
+    const groupedIds = Object.values(result.current.groupedContent)
+      .flat()
+      .map((subject) => subject.id)
+      .sort();
+
+    expect(groupedIds).toEqual(['subject-current', 'subject-legacy']);
+  });
+
+  it('applies active-only lifecycle filtering in usage mode', () => {
+    const currentAcademicYear = resolveCurrentAcademicYear();
+    const previousAcademicYear = resolvePreviousAcademicYear();
+
+    const { result } = renderHook(() =>
+      useHomeState({
+        user: baseUser,
+        searchQuery: '',
+        subjects: [
+          { id: 'subject-old', name: 'Historia', ownerId: 'teacher-1', academicYear: previousAcademicYear, updatedAt: { seconds: 20 } },
+          { id: 'subject-current', name: 'Fisica', ownerId: 'teacher-1', academicYear: currentAcademicYear, updatedAt: { seconds: 10 } },
+        ],
+        folders: [],
+        preferences: {
+          ...basePreferences,
+          viewMode: 'usage',
+          showOnlyCurrentSubjects: true,
+        },
+        loadingPreferences: false,
+        updatePreference: vi.fn(),
+        rememberOrganization: true,
+      })
+    );
+
+    expect(result.current.groupedContent.Recientes.map((subject) => subject.id)).toEqual(['subject-current']);
   });
 });

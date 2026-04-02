@@ -7,6 +7,7 @@ import { getIconColor } from '../../../utils/subjectColorUtils';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem, getNormalizedRole } from '../../../utils/permissionUtils';
 import { SHORTCUT_LIST_MENU_WIDTH } from '../shared/shortcutMenuConfig';
 import { withDarkGradientVariant } from '../../../utils/subjectConstants';
+import { getEndedSubjectBadge } from '../../../utils/academicYearLifecycleUtils';
 
 const SubjectListItem = ({ 
     user,
@@ -41,6 +42,7 @@ const SubjectListItem = ({
     const showDeleteUI = user && shouldShowDeleteUI(subject, user.uid);
     const canShare = user && canEditItem(subject, user.uid);
     const isShortcut = isShortcutItem(subject);
+    const normalizedRole = getNormalizedRole(user);
     const isHiddenFromManual = subject?.hiddenInManual === true;
     const isOrphan = subject?.isOrphan === true;
     const isMovedToShared = subject?._reason === 'moved-to-shared-folder';
@@ -54,7 +56,7 @@ const SubjectListItem = ({
     const shortcutPermissionLevel = isShortcut && user ? getPermissionLevel(subject, user.uid) : 'none';
     const isShortcutEditor = shortcutPermissionLevel === 'editor' || shortcutPermissionLevel === 'owner';
     const canShareFromMenu = isShortcut ? isShortcutEditor : canShare;
-    const canOpenClassesFromMenu = typeof onOpenClasses === 'function' && getNormalizedRole(user) !== 'student' && !disableAllActions;
+    const canOpenClassesFromMenu = typeof onOpenClasses === 'function' && normalizedRole !== 'student' && !disableAllActions;
     const isSourceOwner = user && subject?.ownerId === user.uid;
     const effectiveShowEditUI = !disableAllActions && showEditUI;
     const effectiveCanShareFromMenu = !disableAllActions && canShareFromMenu;
@@ -62,7 +64,10 @@ const SubjectListItem = ({
     const canShowShortcutVisibility = !disableAllActions && isShortcut;
     const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || (!isSourceOwner && !disableUnshareActions));
     const canToggleCompletion = typeof onToggleCompletion === 'function' && !isOrphan;
-    const isPassedShortcut = isShortcut && isHiddenFromManual && getNormalizedRole(user) === 'student';
+    const isPassedShortcut = isShortcut && isHiddenFromManual && normalizedRole === 'student';
+    const endedBadge = isPassedShortcut
+        ? null
+        : getEndedSubjectBadge({ subject, user });
 
     // Minimum scale for the menu is 1 (100%)
     const menuScale = Math.max(scale, 1);
@@ -145,6 +150,11 @@ const SubjectListItem = ({
                         >
                             {subject.name}
                         </h3>
+                        {endedBadge && (
+                            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold ${endedBadge.className}`}>
+                                {endedBadge.label}
+                            </span>
+                        )}
                         {isPassedShortcut && (
                             <span className="inline-flex items-center rounded-full bg-emerald-100 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-400/20 px-2 py-0.5 text-[11px] font-semibold">
                                 Aprobada

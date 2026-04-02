@@ -1,7 +1,7 @@
 // src/pages/Home/components/HomeControls.jsx
 import React from 'react';
 import { 
-    Clock, Folder as FolderIcon, Users, FolderPlus, Move, Trash2
+    Clock, Folder as FolderIcon, Users, FolderPlus, Move, Trash2, CircleDot
 } from 'lucide-react';
 import ViewLayoutSelector from '../../../components/ui/ViewLayoutSelector';
 import CardScaleSlider from '../../../components/ui/CardScaleSlider';
@@ -24,6 +24,8 @@ const HomeControls = ({
     cardScale, setCardScale,
     allTags,
     selectedTags, setSelectedTags,
+    showOnlyCurrentSubjects = false,
+    setShowOnlyCurrentSubjects = () => {},
     coursesAcademicYearFilter = { startYear: '', endYear: '' },
     setCoursesAcademicYearFilter = () => {},
     availableCourseAcademicYears = [],
@@ -52,10 +54,12 @@ const HomeControls = ({
         handleLayoutModeChange,
         handleCardScaleChange,
         handleTagsChange,
-        handleCoursesAcademicYearFilterChange
+        handleCoursesAcademicYearFilterChange,
+        handleShowOnlyCurrentSubjectsChange
     } = useHomeControlsHandlers({
         setViewMode,
         setSelectedTags,
+        setShowOnlyCurrentSubjects,
         setCoursesAcademicYearFilter,
         setCollapsedGroups,
         setCurrentFolder,
@@ -140,6 +144,24 @@ const HomeControls = ({
                         onChange={handleCoursesAcademicYearFilterChange}
                         onOverlayToggle={onFilterOverlayChange}
                     />
+                )}
+
+                {(viewMode === 'courses' || viewMode === 'usage') && (
+                    <button
+                        type="button"
+                        onClick={() => handleShowOnlyCurrentSubjectsChange(!showOnlyCurrentSubjects)}
+                        className={`flex items-center gap-2 px-4 py-2 border rounded-xl text-sm font-medium shadow-sm transition-colors cursor-pointer ${
+                            showOnlyCurrentSubjects
+                                ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300'
+                                : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
+                        }`}
+                        aria-pressed={showOnlyCurrentSubjects}
+                        aria-label="Alternar filtro de asignaturas vigentes"
+                        title={showOnlyCurrentSubjects ? 'Mostrando solo asignaturas vigentes' : 'Mostrar solo asignaturas vigentes'}
+                    >
+                        <CircleDot size={16} />
+                        <span className="hidden sm:inline">Solo vigentes</span>
+                    </button>
                 )}
 
                 {/* Create Folder Button and Search Bar (Manual mode only) */}
