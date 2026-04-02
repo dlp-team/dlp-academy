@@ -1,13 +1,17 @@
 # useHomeControlsHandlers.js
 
 ## Changelog
+### 2026-04-02: Retired history mode from Home mode switcher
+- Removed `history` from `HOME_VIEW_MODES`; available modes now remain `grid`, `usage`, `courses`, `shared`, and `bin`.
+- Preserved existing mode-change reset behavior (tag filters, collapsed groups, and current folder reset) while removing only the retired mode entry.
+
 ### 2026-04-01: Added history mode option
 - Added `HOME_VIEW_MODES` entry `{ id: 'history', label: 'Historial' }`.
 - Preserves existing reset behavior (tags/collapsed/current folder) when switching modes.
 
 ## Overview
-- **Source file:** `src/pages/Home/hooks/useHomeControlsHandlers.js`
-- **Last documented:** 2026-02-24
+- **Source file:** `src/pages/Home/hooks/useHomeControlsHandlers.ts`
+- **Last documented:** 2026-04-02
 - **Role:** Custom hook with stateful/business logic for this page area.
 
 ## Responsibilities

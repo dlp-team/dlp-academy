@@ -65,7 +65,7 @@ export const useHomePageState = ({
         if (didRestoreRef.current) return;
         if (!logic || !logic.folders) return;
 
-        const allowedModes = new Set(['grid', 'history', 'usage', 'courses', 'tags', 'shared', 'bin']);
+        const allowedModes = new Set(['grid', 'usage', 'courses', 'tags', 'shared', 'bin']);
         let safeDefaultMode = allowedModes.has(defaultViewMode) ? defaultViewMode : 'grid';
         if (!showSharedTab && safeDefaultMode === 'shared') {
             safeDefaultMode = 'grid';

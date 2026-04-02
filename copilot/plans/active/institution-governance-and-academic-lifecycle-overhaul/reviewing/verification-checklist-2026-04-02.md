@@ -49,4 +49,10 @@
 		- course-owned year derivation into class create/edit paths,
 		- hook-level normalization and course-to-class propagation.
 	- Focused tests passed for utility + create-modal behavior (7 tests).
+- 2026-04-02 (Phase 05 Slice 02):
+	- Home history/send-to-history retirement validated:
+		- history mode removed from controls + persisted restore allow-list,
+		- Home content no longer wires completion-toggle actions,
+		- grouped/manual subject visibility keeps completed subjects discoverable.
+	- Focused hook tests passed for post-history fallback behavior (2 tests).
 

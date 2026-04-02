@@ -14,9 +14,13 @@
 
 ## Acceptance Criteria
 - New/edited classes enforce `YYYY-YYYY`.
-- Ended subjects move out of manual tab and remain discoverable in courses/usage.
+- Home history mode and send-to-history pathways are removed without breaking grouped subject visibility.
 - Role-aware visual indicators render correctly.
 
 ## Status
 - IN_PROGRESS
+
+## Progress Notes
+- 2026-04-02: Slice 01 completed academic-year governance baseline in institution-admin course/class flows.
+- 2026-04-02: Slice 02 completed Home history/send-to-history retirement and persisted-mode fallback coverage.
 

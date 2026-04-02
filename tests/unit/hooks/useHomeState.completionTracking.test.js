@@ -25,7 +25,7 @@ vi.mock('../../../src/utils/pagePersistence', () => ({
   buildUserScopedPersistenceKey: () => 'home-collapsed-groups-test',
 }));
 
-describe('useHomeState completion tracking integration', () => {
+describe('useHomeState subject visibility after history retirement', () => {
   const baseUser = {
     uid: 'teacher-1',
     email: 'teacher@test.com',
@@ -52,7 +52,7 @@ describe('useHomeState completion tracking integration', () => {
     shortcutsState.resolvedShortcuts = [];
   });
 
-  it('excludes completed subjects from active manual groups', () => {
+  it('keeps completed subjects visible in manual mode', () => {
     const { result } = renderHook(() =>
       useHomeState({
         user: baseUser,
@@ -67,11 +67,14 @@ describe('useHomeState completion tracking integration', () => {
       })
     );
 
-    expect(result.current.groupedContent.Todas).toHaveLength(1);
-    expect(result.current.groupedContent.Todas[0].id).toBe('subject-active');
+    expect(result.current.groupedContent.Todas).toHaveLength(2);
+    expect(result.current.groupedContent.Todas.map((subject) => subject.id)).toEqual([
+      'subject-active',
+      'subject-completed',
+    ]);
   });
 
-  it('shows only completed subjects in historial mode', () => {
+  it('falls back to regular grouping when persisted mode is history', () => {
     const { result } = renderHook(() =>
       useHomeState({
         user: baseUser,
@@ -86,7 +89,10 @@ describe('useHomeState completion tracking integration', () => {
       })
     );
 
-    expect(result.current.groupedContent.Historial).toHaveLength(1);
-    expect(result.current.groupedContent.Historial[0].id).toBe('subject-completed');
+    expect(result.current.groupedContent.Todas).toHaveLength(2);
+    expect(result.current.groupedContent.Todas.map((subject) => subject.id)).toEqual([
+      'subject-active',
+      'subject-completed',
+    ]);
   });
 });

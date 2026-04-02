@@ -219,7 +219,6 @@ const HomeMainContent = ({
                             groupedContent={logic.groupedContent || {}}
                             collapsedGroups={logic.collapsedGroups || {}}
                             orderedFolders={isStudentRole ? [] : displayedFolders}
-                            completedSubjectIds={logic.completedSubjectIds || []}
                             layoutMode={logic.layoutMode || 'grid'}
                             cardScale={logic.cardScale || 100}
                             viewMode={logic.viewMode}
@@ -230,7 +229,6 @@ const HomeMainContent = ({
                             setSubjectModalConfig={logic.setSubjectModalConfig}
                             setFolderModalConfig={logic.setFolderModalConfig}
                             setDeleteConfig={logic.setDeleteConfig}
-                            setSubjectCompletion={logic.setSubjectCompletion}
                             handleSelectSubject={(id) => logic.navigate(`/home/subject/${id}`)}
                             handleOpenFolder={(folder: any) => {
                                 handleSetCurrentFolder(folder);

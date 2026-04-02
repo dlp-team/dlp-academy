@@ -1,12 +1,13 @@
 # HomeControls.jsx
 
 ## Changelog
+- **2026-04-02:** Retired `Historial` mode from the Home mode switcher and removed its icon mapping, preserving all remaining mode controls.
 - **2026-04-01:** Added `Historial` mode tab with dedicated icon mapping (`history` -> completion icon) in the Home mode switcher.
 - **2026-03-12:** Added explicit support for hiding the shared-scope toggle in contexts where it should not appear (notably the shared tab).
 
 ## Overview
-- **Source file:** `src/pages/Home/components/HomeControls.jsx`
-- **Last documented:** 2026-02-24
+- **Source file:** `src/pages/Home/components/HomeControls.tsx`
+- **Last documented:** 2026-04-02
 - **Role:** Reusable UI component consumed by the parent page/module.
 
 ## Responsibilities

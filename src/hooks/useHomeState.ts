@@ -43,8 +43,7 @@ export const useHomeState = ({
     preferences,
     loadingPreferences,
     updatePreference,
-    rememberOrganization = true,
-    completedSubjectIds = []
+    rememberOrganization = true
 }: any) => {
     const collapsedGroupsKey = buildUserScopedPersistenceKey('home', user, 'collapsed-groups');
     // Fetch user's shortcuts
@@ -70,30 +69,8 @@ export const useHomeState = ({
     const [folderModalConfig, setFolderModalConfig] = useState<any>({ isOpen: false, isEditing: false, data: null });
     const [deleteConfig, setDeleteConfig] = useState<any>({ isOpen: false, type: null, item: null });
 
-    const isAllLevelsMode = viewMode === 'usage' || viewMode === 'courses' || viewMode === 'shared' || viewMode === 'history';
+    const isAllLevelsMode = viewMode === 'usage' || viewMode === 'courses' || viewMode === 'shared';
     const isStudentRole = getNormalizedRole(user) === 'student';
-    const completedSubjectsSet = useMemo(
-        () => new Set(
-            (Array.isArray(completedSubjectIds) ? completedSubjectIds : [])
-                .map((subjectId: any) => String(subjectId || '').trim())
-                .filter(Boolean)
-        ),
-        [completedSubjectIds]
-    );
-
-    const getCompletionReferenceId = (subjectEntry: any) => {
-        if (!subjectEntry) return '';
-        const baseId = isShortcutItem(subjectEntry)
-            ? (subjectEntry.targetId || subjectEntry.id)
-            : subjectEntry.id;
-        return String(baseId || '').trim();
-    };
-
-    const isCompletedSubject = (subjectEntry: any) => {
-        const completionId = getCompletionReferenceId(subjectEntry);
-        if (!completionId) return false;
-        return completedSubjectsSet.has(completionId);
-    };
 
     const getSubjectParentId = (subjectEntry: any) => {
         if (!subjectEntry) return null;
@@ -409,41 +386,24 @@ export const useHomeState = ({
             const matchedSubjects = subjectsWithShortcuts.filter(s => {
                 const subjectName = (s.name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
                 const studentScopeAllowed = !(isStudentRole && (viewMode === 'usage' || viewMode === 'courses')) || isRootLevelSubject(s);
-                const completionScopeAllowed = viewMode === 'history' ? isCompletedSubject(s) : !isCompletedSubject(s);
-                return subjectName.includes(query) && isRelated(s) && studentScopeAllowed && completionScopeAllowed && (viewMode !== 'grid' || isVisibleInManual(s));
+                return subjectName.includes(query) && isRelated(s) && studentScopeAllowed && (viewMode !== 'grid' || isVisibleInManual(s));
             });
             return { 'Resultados de búsqueda': matchedSubjects };
         }
 
         if (viewMode === 'grid' && selectedTags.length > 0) {
-            return { Filtradas: applyManualOrder(filteredSubjectsByTags.filter(sub => !isCompletedSubject(sub)), 'subject') };
+            return { Filtradas: applyManualOrder(filteredSubjectsByTags, 'subject') };
         }
         if (viewMode === 'grid' && currentFolder) {
-            const folderSubjects = subjectsWithShortcuts
-                .filter(isVisibleInManual)
-                .filter(sub => !isCompletedSubject(sub));
+            const folderSubjects = subjectsWithShortcuts.filter(isVisibleInManual);
             return {
                 [currentFolder.name]: applyManualOrder(folderSubjects, 'subject')
             };
         }
         if (viewMode === 'grid' && !currentFolder) {
-            const unfolderedSubjects = subjectsWithShortcuts
-                .filter(isVisibleInManual)
-                .filter(sub => !isCompletedSubject(sub));
+            const unfolderedSubjects = subjectsWithShortcuts.filter(isVisibleInManual);
             return {
                 Todas: applyManualOrder(unfolderedSubjects, 'subject')
-            };
-        }
-
-        if (viewMode === 'history') {
-            const completedSubjects = subjectsWithShortcuts
-                .filter(isRelated)
-                .filter(sub => isCompletedSubject(sub));
-
-            return {
-                Historial: completedSubjects
-                    .slice()
-                    .sort((a, b: any) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0))
             };
         }
 
@@ -457,8 +417,7 @@ export const useHomeState = ({
             .filter(sub => {
                 if (!(isStudentRole && (viewMode === 'usage' || viewMode === 'courses'))) return true;
                 return isRootLevelSubject(sub);
-            })
-            .filter(sub => !isCompletedSubject(sub));
+            });
 
         if (viewMode === 'usage') {
             const sorted = [...subjectsToGroup].sort((a, b: any) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
@@ -558,7 +517,7 @@ export const useHomeState = ({
         }
 
         return { Todas: subjectsToGroup };
-    }, [subjects, subjectsWithShortcuts, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery, isStudentRole, completedSubjectsSet]);
+    }, [subjects, subjectsWithShortcuts, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery, isStudentRole]);
 
     const { searchFolders, searchSubjects } = useMemo(() => {
         if (!searchQuery || searchQuery.trim() === '') {

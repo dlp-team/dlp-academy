@@ -47,7 +47,12 @@ Establish a deterministic academic-year model with mandatory format controls and
    - Added reusable academic-year picker and wired it into course creation/detail editing flows.
    - Enforced course-owned academic-year model with class derivation in create/edit/hook write paths.
    - Added deterministic tests for utility logic and class/course modal behavior.
+- 2026-04-02 (Slice 02 complete):
+   - Retired Home `history` mode and removed send-to-history wiring from Home controls/state/content paths.
+   - Removed `history` from persisted mode allow-list so stale saved preferences restore to supported modes.
+   - Updated Home subject grouping so completed subjects remain visible in regular grouped/manual views.
+   - Updated deterministic hook tests to validate post-history fallback behavior.
 - Remaining for phase closure:
    - Home courses-tab year filter persistence + nested year collapsibles.
-   - History-tab/send-to-history removal and role-aware ended-subject indicators.
+   - Role-aware ended-subject indicators.
 

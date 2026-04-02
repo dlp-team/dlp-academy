@@ -1,6 +1,10 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-04-02: Removed Home completion-toggle wiring
+- Removed completion-tracking props (`completedSubjectIds`, `setSubjectCompletion`) from `HomeContent` inputs.
+- Stopped forwarding completion-action callbacks to subject card/list render paths in this Home content surface.
+
 ### 2026-04-01: Completion toggle wiring for subject cards and list rows
 - Added completion state inputs (`completedSubjectIds`) and updater callback (`setSubjectCompletion`).
 - Added completion-aware action passthrough to both grid and list subject renderers.
@@ -23,8 +27,8 @@
 - Enables Ctrl+C/X targeting based on hovered card, not only last clicked card.
 
 ## Overview
-- **Source file:** `src/pages/Home/components/HomeContent.jsx`
-- **Last documented:** 2026-02-24
+- **Source file:** `src/pages/Home/components/HomeContent.tsx`
+- **Last documented:** 2026-04-02
 - **Role:** Reusable UI component consumed by the parent page/module.
 
 ## Responsibilities

@@ -82,8 +82,8 @@
 
 ## Immediate Next Actions
 1. Re-run emulator-backed rules validation once emulator startup configuration is available, then close remaining Phase 02 validation gate.
-2. Continue Phase 05 with Home-side slices (history tab removal, year filter persistence, multi-year collapsibles, lifecycle role indicators).
-3. Keep plan/explanation sync current while Phase 05 moves from governance baseline into UX completion slices.
+2. Continue Phase 05 with remaining Home-side slices (courses year-filter persistence, multi-year collapsibles, lifecycle role indicators).
+3. Keep plan/explanation sync current while Phase 05 moves from history retirement into courses/lifecycle visibility completion slices.
 
 ## Rollback Strategy
 - Keep all rule changes atomic and scoped by failure class.

@@ -3,6 +3,7 @@
 # HomeMainContent.tsx
 
 ## Changelog
+- **2026-04-02:** Stopped forwarding completion-tracking props into `HomeContent` as part of Home history/send-to-history retirement.
 - **2026-04-01:** Forwarded `completedSubjectIds` and `setSubjectCompletion` into `HomeContent` for phase 10 completion actions.
 
 ## Overview

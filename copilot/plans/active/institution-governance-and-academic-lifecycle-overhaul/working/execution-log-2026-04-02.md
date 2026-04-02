@@ -192,3 +192,23 @@
 - `npm run lint` (pass, warnings only outside scope)
 - `get_errors` on touched files (clean)
 
+## Phase 05 Slice 02 - History Retirement on Home Surfaces
+- Retired Home history mode in controls/state wiring:
+   - removed `history` from `HOME_VIEW_MODES`,
+   - removed history icon mapping from `HomeControls`,
+   - removed `history` from persisted-mode allow-list in `useHomePageState` restore flow.
+- Removed send-to-history wiring on Home content pipeline:
+   - `HomeMainContent` no longer forwards completion-tracking props into `HomeContent`,
+   - `HomeContent` no longer forwards completion toggle callbacks to subject card/list renderers.
+- Updated grouped visibility behavior in `useHomeState`:
+   - removed history-only grouping branch,
+   - kept completed subjects visible in regular grouped/manual views,
+   - stale `history` persisted preference now falls back to regular grouping behavior.
+- Updated deterministic hook coverage in `useHomeState.completionTracking.test.js` to assert post-history fallback behavior.
+
+## Phase 05 Slice 02 Validation
+- `npm run test -- tests/unit/hooks/useHomeState.completionTracking.test.js` (pass, 2 tests)
+- `npx tsc --noEmit` (pass)
+- `npm run lint` (pass, warnings only outside scope)
+- `get_errors` on touched files (clean)
+
