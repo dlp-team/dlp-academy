@@ -36,8 +36,8 @@ Deliver a lossless, phased, security-first overhaul that resolves all requested 
 
 ## Lifecycle Status
 - Lifecycle: `active`
-- Current phase: `Phase 07 in progress (Slices 01-04 delivered: shell switch, deterministic route gates, broad surface alignment, and residual Profile role-context alignment; Phase 02 emulator gate remains pending)`
-- Overall progress: `97%`
+- Current phase: `Phase 08 in progress (Phase 07 completed across slices 01-04; remaining blocker is Phase 02 emulator validation gate)`
+- Overall progress: `98%`
 
 ## Key Decisions to Record During Execution
 1. Exact approach for institution customization preview (component reuse + mock provider vs account simulation path).

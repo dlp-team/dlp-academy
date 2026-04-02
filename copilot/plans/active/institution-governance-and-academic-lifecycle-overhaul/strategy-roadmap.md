@@ -65,7 +65,7 @@
   - clickable institution rows in admin dashboard.
 
 ### Phase 07 - Dual-Role Model Implementation
-- Status: IN_PROGRESS
+- Status: COMPLETED
 - Goal: support institution-admin plus teacher coexistence with deterministic role switching and no identity collisions.
 - Outputs:
   - finalized role model,
@@ -73,7 +73,7 @@
   - permission and route guard validation.
 
 ### Phase 08 - Stabilization, Documentation Sync, and Review Gate
-- Status: PLANNED
+- Status: IN_PROGRESS
 - Goal: complete full validation suite, sync documentation, and prepare closure.
 - Outputs:
   - passing targeted + impacted test runs,
@@ -82,8 +82,8 @@
 
 ## Immediate Next Actions
 1. Re-run emulator-backed rules validation once emulator startup configuration is available, then close remaining Phase 02 validation gate.
-2. Close Phase 07 Slice 04 checkpoint (commit/push + leverage prompt) and decide whether to mark Phase 07 complete or continue additional role-context refinements.
-3. Keep plan/explanation sync current and keep verification evidence aligned with current in-progress Phase 07 scope.
+2. Keep Phase 08 stabilization artifacts synchronized while awaiting the Phase 02 emulator gate.
+3. Once the emulator gate is closed, run final review checklist sweep and transition plan lifecycle to `inReview`.
 
 ## Rollback Strategy
 - Keep all rule changes atomic and scoped by failure class.
