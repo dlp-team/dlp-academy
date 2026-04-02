@@ -37,3 +37,21 @@
 ### Validation
 - `get_errors` clean for `src/App.tsx`.
 - Focused tests passed: `tests/unit/App.authListener.test.jsx`.
+
+## [2026-04-02] Deterministic Allowed-Role Route Gate
+
+### Context
+- Active-role switching required exact route-level enforcement for dashboard surfaces where inherited rank checks were too permissive for switched contexts.
+
+### Change
+- Extended `ProtectedRoute` with optional `allowedRoles` whitelist.
+- Applied explicit active-role route gates:
+	- `/admin-dashboard` -> admin only,
+	- `/institution-admin-dashboard/**` -> institution admin + admin,
+	- `/teacher-dashboard/**` -> teacher only,
+	- `/student-dashboard` -> student only.
+- Kept existing `requiredRole` hierarchy checks for non-whitelist routes.
+
+### Validation
+- Added route-level dual-role denial coverage in `tests/unit/App.authListener.test.jsx`.
+- Focused suite passed with updated role-context scenarios.

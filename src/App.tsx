@@ -119,9 +119,16 @@ interface ProtectedRouteProps {
   user: any;
   loading: boolean;
   requiredRole?: string;
+  allowedRoles?: string[];
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, user, loading, requiredRole }) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
+  children,
+  user,
+  loading,
+  requiredRole,
+  allowedRoles,
+}) => {
   // 1. Wait for Auth & Database Fetch
   if (loading) {
     return (
@@ -133,6 +140,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, user, loading
   
   // 2. Not Logged In? -> Login
   if (!user) return <Navigate to="/login" />;
+
+  if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
+    const activeRole = getActiveRole(user);
+    const normalizedAllowedRoles = allowedRoles.map((role) => String(role || '').trim().toLowerCase());
+    if (!normalizedAllowedRoles.includes(activeRole)) {
+      console.warn(`Access denied: active role '${activeRole}' not in [${normalizedAllowedRoles.join(', ')}]`);
+      return <Navigate to="/home" />;
+    }
+  }
 
   // 3. Wrong Role? -> Home (Prevent access to Admin Dashboard)
   if (requiredRole && !hasRequiredRoleAccess(user, requiredRole)) {
@@ -403,7 +419,12 @@ function App() {
         <Route 
           path="/admin-dashboard" 
           element={
-            <ProtectedRoute user={user} loading={loading} requiredRole="admin">
+            <ProtectedRoute
+              user={user}
+              loading={loading}
+              requiredRole="admin"
+              allowedRoles={['admin']}
+            >
               <AdminDashboardPage user={user} />
             </ProtectedRoute>
           } 
@@ -413,7 +434,12 @@ function App() {
         <Route 
           path="/institution-admin-dashboard" 
           element={
-            <ProtectedRoute user={user} loading={loading} requiredRole="institutionadmin">
+            <ProtectedRoute
+              user={user}
+              loading={loading}
+              requiredRole="institutionadmin"
+              allowedRoles={['institutionadmin', 'admin']}
+            >
               <InstitutionAdminDashboardPage user={user} />
             </ProtectedRoute>
           } 
@@ -421,7 +447,12 @@ function App() {
         <Route
           path="/institution-admin-dashboard/teacher/:teacherId"
           element={
-            <ProtectedRoute user={user} loading={loading} requiredRole="institutionadmin">
+            <ProtectedRoute
+              user={user}
+              loading={loading}
+              requiredRole="institutionadmin"
+              allowedRoles={['institutionadmin', 'admin']}
+            >
               <TeacherDetailViewPage user={user} />
             </ProtectedRoute>
           }
@@ -429,7 +460,12 @@ function App() {
         <Route
           path="/institution-admin-dashboard/student/:studentId"
           element={
-            <ProtectedRoute user={user} loading={loading} requiredRole="institutionadmin">
+            <ProtectedRoute
+              user={user}
+              loading={loading}
+              requiredRole="institutionadmin"
+              allowedRoles={['institutionadmin', 'admin']}
+            >
               <StudentDetailViewPage user={user} />
             </ProtectedRoute>
           }
@@ -439,7 +475,12 @@ function App() {
         <Route 
           path="/teacher-dashboard" 
           element={
-            <ProtectedRoute user={user} loading={loading} requiredRole="teacher">
+            <ProtectedRoute
+              user={user}
+              loading={loading}
+              requiredRole="teacher"
+              allowedRoles={['teacher']}
+            >
               <TeacherDashboardPage user={user} />
             </ProtectedRoute>
           } 
@@ -447,7 +488,12 @@ function App() {
         <Route
           path="/teacher-dashboard/student/:studentId"
           element={
-            <ProtectedRoute user={user} loading={loading} requiredRole="teacher">
+            <ProtectedRoute
+              user={user}
+              loading={loading}
+              requiredRole="teacher"
+              allowedRoles={['teacher']}
+            >
               <TeacherStudentDetailViewPage user={user} />
             </ProtectedRoute>
           }
@@ -456,7 +502,12 @@ function App() {
         <Route
           path="/student-dashboard"
           element={
-            <ProtectedRoute user={user} loading={loading} requiredRole="student">
+            <ProtectedRoute
+              user={user}
+              loading={loading}
+              requiredRole="student"
+              allowedRoles={['student']}
+            >
               <StudentDashboardPage user={user} />
             </ProtectedRoute>
           }

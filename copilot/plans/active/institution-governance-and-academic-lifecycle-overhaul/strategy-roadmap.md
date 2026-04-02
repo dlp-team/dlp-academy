@@ -82,7 +82,7 @@
 
 ## Immediate Next Actions
 1. Re-run emulator-backed rules validation once emulator startup configuration is available, then close remaining Phase 02 validation gate.
-2. Continue Phase 07 with route/action regression sweep on additional role-aware surfaces after active-role shell switch baseline.
+2. Continue Phase 07 with additional role-aware surface audit beyond dashboards (content/session flows still reading raw `user.role` where applicable).
 3. Keep plan/explanation sync current and keep verification evidence aligned with current in-progress Phase 07 scope.
 
 ## Rollback Strategy

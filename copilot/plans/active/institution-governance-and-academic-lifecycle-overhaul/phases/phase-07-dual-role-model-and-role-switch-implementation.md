@@ -42,4 +42,12 @@ Support users who need both institution admin and teacher responsibilities witho
 	- Added/updated targeted tests:
 		- `tests/unit/utils/permissionUtils.test.js`
 		- `tests/unit/App.authListener.test.jsx`
+- 2026-04-02 (Slice 02 deterministic route gate):
+	- Added explicit `allowedRoles` guard support in `ProtectedRoute` for dashboard routes that must enforce exact active-role context.
+	- Applied exact active-role route gates:
+		- admin dashboard: `admin` only,
+		- institution admin routes: `institutionadmin` + `admin`,
+		- teacher routes: `teacher` only,
+		- student dashboard: `student` only.
+	- Extended `App.authListener` unit suite with active-role switched dual-role denial path for `/admin-dashboard`.
 

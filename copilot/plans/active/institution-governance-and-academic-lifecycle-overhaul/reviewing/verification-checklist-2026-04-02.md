@@ -90,4 +90,11 @@
 		- admin/teacher/student strict guards now evaluate active role,
 		- institution admin effective-context resolution now reads active role.
 	- Focused tests for permission-utils role context and app auth-listener compatibility passed (16 tests).
+- 2026-04-02 (Phase 07 Slice 02):
+	- Deterministic allowed-role route gates validated:
+		- explicit active-role whitelist support added to `ProtectedRoute`,
+		- dashboard routes now enforce exact active-role eligibility where required.
+	- Route-level regression validated:
+		- dual-role `admin+teacher` with active role `teacher` is redirected away from `/admin-dashboard`.
+	- Focused role-context suite passed (17 tests).
 

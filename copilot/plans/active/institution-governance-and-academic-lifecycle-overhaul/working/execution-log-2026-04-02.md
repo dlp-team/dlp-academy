@@ -330,3 +330,22 @@
 - `npm run lint` (pass, 4 pre-existing warnings only in unrelated `src/pages/Content/*`)
 - `get_errors` on touched files (clean)
 
+## Phase 07 Slice 02 - Deterministic Allowed-Role Route Gate
+- Extended `ProtectedRoute` with optional `allowedRoles` for explicit active-role route whitelists.
+- Applied explicit allowed-role gates to dashboard routes in `App.tsx`:
+   - `/admin-dashboard` -> `['admin']`
+   - `/institution-admin-dashboard/**` -> `['institutionadmin', 'admin']`
+   - `/teacher-dashboard/**` -> `['teacher']`
+   - `/student-dashboard` -> `['student']`
+- Added deterministic route-level regression test in `App.authListener.test.jsx`:
+   - dual-role admin+teacher with active role `teacher` is denied admin dashboard route and redirected to Home.
+- Stabilized auth-listener test setup for role-context persistence:
+   - mocked `getDoc`/`setDoc` Firestore calls,
+   - clear `localStorage` per test to isolate active-role preference behavior.
+
+## Phase 07 Slice 02 Validation
+- `npm run test -- tests/unit/utils/permissionUtils.test.js tests/unit/App.authListener.test.jsx` (pass, 17 tests)
+- `npx tsc --noEmit` (pass)
+- `npm run lint` (pass, 4 pre-existing warnings only in unrelated `src/pages/Content/*`)
+- `get_errors` on touched files (clean)
+

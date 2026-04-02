@@ -10,6 +10,8 @@ const authMocks = vi.hoisted(() => ({
 
 const firestoreMocks = vi.hoisted(() => ({
   mockDoc: vi.fn((_db, name, id) => ({ name, id })),
+  mockGetDoc: vi.fn(),
+  mockSetDoc: vi.fn(),
   mockOnSnapshot: vi.fn(),
 }));
 
@@ -27,6 +29,8 @@ vi.mock('firebase/firestore', async () => {
   return {
     ...actual,
     doc: firestoreMocks.mockDoc,
+    getDoc: firestoreMocks.mockGetDoc,
+    setDoc: firestoreMocks.mockSetDoc,
     onSnapshot: firestoreMocks.mockOnSnapshot,
   };
 });
@@ -71,6 +75,11 @@ vi.mock('../../src/pages/TeacherDashboard/components/TeacherStudentDetailView', 
 describe('App auth listener fallback', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
+
+    firestoreMocks.mockGetDoc.mockResolvedValue({
+      exists: () => true,
+    });
 
     authMocks.mockOnAuthStateChanged.mockImplementation((_auth, callback) => {
       callback({
@@ -103,5 +112,29 @@ describe('App auth listener fallback', () => {
       'user-1'
     );
     expect(firestoreMocks.mockOnSnapshot).toHaveBeenCalledTimes(1);
+  });
+
+  it('blocks admin dashboard route when active role is switched to teacher', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementationOnce((_docRef, onNext) => {
+      onNext({
+        exists: () => true,
+        data: () => ({
+          role: 'admin',
+          roles: ['admin', 'teacher'],
+          activeRole: 'teacher',
+        }),
+      });
+      return vi.fn();
+    });
+
+    window.history.pushState({}, '', '/admin-dashboard');
+
+    render(<App />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Home Mock teacher@test.com')).toBeTruthy();
+    });
+
+    expect(screen.queryByText('Admin Mock')).toBeNull();
   });
 });
