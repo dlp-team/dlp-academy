@@ -7,7 +7,7 @@
 - [x] Deletion and bin-first lifecycle behavior validated for folders/subjects/courses.
 - [x] Institution admin dashboard preview, pagination, and policy controls validated.
 - [x] Academic year format, picker, filters, and lifecycle transitions validated.
-- [ ] Selection mode, bin sorting, animation fix, and admin navigation validated.
+- [x] Selection mode, bin sorting, animation fix, and admin navigation validated.
 - [ ] Dual-role switching validated without permission regressions.
 - [x] `get_errors` clear for touched files.
 - [x] Required tests pass for impacted areas.
@@ -74,4 +74,11 @@
 		- ended subject badges render with teacher yellow and student grade/pass red-to-green semantics,
 		- lifecycle filter also applies to search results when courses/usage view is active.
 	- Focused utility, hook, controls, and Home rendering tests passed (14 tests).
+- 2026-04-02 (Phase 06 Slice 01):
+	- Home/Admin UX reliability and selection upgrades validated:
+		- Home selection toolbar now clarifies safe action flow and destructive intent,
+		- bin supports urgency/alpha sorting and bin-only multi-select restore/delete actions,
+		- Escala/Filtrar overlays no longer jump from top-left on first open,
+		- institution rows are directly clickable for dashboard navigation and action buttons remain isolated.
+	- Focused tests for bin sort helpers and institution row navigation passed (8 tests).
 

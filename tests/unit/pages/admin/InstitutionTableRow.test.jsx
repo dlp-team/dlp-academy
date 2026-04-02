@@ -37,12 +37,17 @@ describe('InstitutionTableRow', () => {
     expect(screen.getByText('demo.edu')).not.toBeNull();
     expect(screen.getByText('Activa')).not.toBeNull();
 
-    fireEvent.click(screen.getByTitle('Abrir panel de institución'));
+    const row = screen.getByText('Institucion Demo').closest('tr');
+    fireEvent.click(row);
+
+    expect(onOpenDashboard).toHaveBeenCalledWith('inst-1');
+    expect(onOpenDashboard).toHaveBeenCalledTimes(1);
+
     fireEvent.click(screen.getByTitle('Editar'));
     fireEvent.click(screen.getByTitle('Deshabilitar'));
     fireEvent.click(screen.getByTitle('Eliminar'));
 
-    expect(onOpenDashboard).toHaveBeenCalledWith('inst-1');
+    expect(onOpenDashboard).toHaveBeenCalledTimes(1);
     expect(onEdit).toHaveBeenCalledWith(school);
     expect(onToggle).toHaveBeenCalledWith(school);
     expect(onDelete).toHaveBeenCalledWith(school);

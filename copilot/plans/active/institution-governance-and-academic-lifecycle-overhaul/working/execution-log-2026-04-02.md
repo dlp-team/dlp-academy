@@ -274,3 +274,33 @@
 - `npm run lint` (pass, 4 pre-existing warnings only in unrelated `src/pages/Content/*`)
 - `get_errors` on touched files (clean)
 
+## Phase 06 Slice 01 - Selection/Bin UX Reliability + Admin Row Navigation
+- Updated Home selection toolbar (`HomeSelectionToolbar`) for safer multi-select flow communication:
+   - clearer grouped actions (create folder, move, move to bin),
+   - explicit safety copy clarifying that selection delete moves items to paper bin (not permanent).
+- Extended bin utility/helpers (`binViewUtils`) with deterministic sort modes:
+   - urgency ascending/descending,
+   - alphabetical ascending/descending.
+- Upgraded `BinView` with bin-only selection mode:
+   - multi-select toggles in both grid and list bin layouts,
+   - bulk restore action,
+   - bulk permanent delete action protected by confirmation modal,
+   - selection-safe behavior across folder-bin navigation boundaries,
+   - toolbar sort selector + mode-specific guidance.
+- Extended `BinConfirmModals` for reusable bulk-delete confirmation copy and loading states.
+- Fixed first-open overlay jump for Escala/Filtrar controls:
+   - `CardScaleSlider` and `TagFilter` now compute panel position before display to avoid top-left flash.
+- Updated admin institution table interaction:
+   - removed chevron entry button,
+   - institution row click (plus keyboard Enter/Space) opens institution dashboard,
+   - action buttons stop propagation to preserve edit/toggle/delete behavior.
+- Added/updated targeted tests:
+   - `binViewUtils.test.js` now covers new sort-mode behavior,
+   - `InstitutionTableRow.test.jsx` now validates row-click navigation and non-propagating action buttons.
+
+## Phase 06 Slice 01 Validation
+- `npm run test -- tests/unit/pages/home/binViewUtils.test.js tests/unit/pages/admin/InstitutionTableRow.test.jsx` (pass, 8 tests)
+- `npx tsc --noEmit` (pass)
+- `npm run lint` (pass, 4 pre-existing warnings only in unrelated `src/pages/Content/*`)
+- `get_errors` on touched files (clean)
+

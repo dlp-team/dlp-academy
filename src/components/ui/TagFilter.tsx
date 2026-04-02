@@ -14,6 +14,7 @@ const TagFilter = ({
     hideSharedScopeToggle = false
 }) => {
     const [showFilter, setShowFilter] = useState(false);
+    const [panelReady, setPanelReady] = useState(false);
     const triggerRef = useRef<any>(null);
     const [panelPos, setPanelPos] = useState({ top: 0, left: 0 });
     const PANEL_WIDTH = 320;
@@ -22,6 +23,12 @@ const TagFilter = ({
 
 
     const handleSetShowFilter = (newState: any) => {
+        if (newState) {
+            setPanelPos(getPanelPos());
+            setPanelReady(true);
+        } else {
+            setPanelReady(false);
+        }
         setShowFilter(newState);
         if (onOverlayToggle) onOverlayToggle(newState);
     };
@@ -77,10 +84,8 @@ const TagFilter = ({
 
     useLayoutEffect(() => {
         if (!showFilter) return;
-        const frame = window.requestAnimationFrame(() => {
-            setPanelPos(getPanelPos());
-        });
-        return () => window.cancelAnimationFrame(frame);
+        setPanelPos(getPanelPos());
+        setPanelReady(true);
     }, [showFilter]);
 
     return (
@@ -113,7 +118,7 @@ const TagFilter = ({
                     
                     {/* Filter Panel */}
                     <div
-                        className="fixed bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-[60] w-80 max-h-96 overflow-y-auto clean-scrollbar"
+                        className={`fixed bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-[60] w-80 max-h-96 overflow-y-auto clean-scrollbar transition-opacity duration-75 ${panelReady ? 'opacity-100' : 'opacity-0'}`}
                         style={{ top: panelPos.top, left: panelPos.left }}
                     >
                         <div className="flex items-center justify-between mb-3 relative">

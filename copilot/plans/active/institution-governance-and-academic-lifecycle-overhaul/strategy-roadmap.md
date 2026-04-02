@@ -56,7 +56,7 @@
   - ended-subject visual indicators per role.
 
 ### Phase 06 - Home/Admin UX Reliability and Selection Mode Enhancements
-- Status: PLANNED
+- Status: COMPLETED
 - Goal: improve selection mode and bin management UX, fix animation defect, and streamline admin institution navigation.
 - Outputs:
   - improved selection mode controls,
@@ -82,8 +82,8 @@
 
 ## Immediate Next Actions
 1. Re-run emulator-backed rules validation once emulator startup configuration is available, then close remaining Phase 02 validation gate.
-2. Keep plan/explanation sync current and keep verification evidence aligned with the completed Phase 05 lifecycle scope.
-3. Start Phase 06 Home/Admin UX reliability workstream once active execution resumes beyond current lifecycle slice closure.
+2. Keep plan/explanation sync current and keep verification evidence aligned with the completed Phase 06 UX reliability scope.
+3. Start Phase 07 dual-role model implementation workstream (role switch + guard validation).
 
 ## Rollback Strategy
 - Keep all rule changes atomic and scoped by failure class.

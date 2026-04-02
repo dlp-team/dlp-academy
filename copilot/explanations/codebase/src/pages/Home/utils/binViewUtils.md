@@ -11,9 +11,11 @@
 - Converts trash timestamp values into `Date` for display.
 - Computes remaining milliseconds/days before auto-deletion.
 - Maps remaining days to urgency text color classes.
+- Provides deterministic bin sort modes and comparators (urgency +/- and alphabetic +/-).
 
 ## Main Dependencies
 - `../../../utils/trashRetentionUtils`
 
 ## Changelog
+- 2026-04-02: Added `BIN_SORT_MODES`, default sort mode, and reusable `compareBinItems`/`sortBinItems` helpers to centralize bin ordering behavior.
 - 2026-04-02: Migrated retention math to shared `trashRetentionUtils` helpers to keep day/expiry behavior consistent across Home and institution-admin bin flows.

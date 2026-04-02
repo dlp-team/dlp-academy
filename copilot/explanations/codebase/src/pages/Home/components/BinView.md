@@ -1,7 +1,7 @@
-# BinView.jsx
+# BinView.tsx
 
 ## Overview
-- **Source file:** `src/pages/Home/components/BinView.jsx`
+- **Source file:** `src/pages/Home/components/BinView.tsx`
 - **Last documented:** 2026-04-02
 - **Role:** Renders trash contents (paper bin) with restore/permanent-delete actions and content preview.
 
@@ -24,6 +24,11 @@
 - `../../../components/modules/ListViewItem`
 
 ## Changelog
+- **2026-04-02:** Completed Phase 06 UX reliability updates:
+	- added bin sort selector (`urgency asc/desc`, `name A-Z/Z-A`),
+	- added bin-only selection mode with multi-select restore/permanent-delete actions,
+	- added bulk-delete confirmation flow for selected bin items,
+	- preserved single-item detail overlay behavior outside selection mode.
 - **2026-04-02:** Reintroduced retention-window enforcement with controlled auto-purge during load:
 	- expired top-level trashed folders are permanently removed automatically,
 	- expired trashed subjects outside expired folder roots are permanently removed automatically,

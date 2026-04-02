@@ -4,6 +4,7 @@ import { Maximize2 } from 'lucide-react';
 
 const CardScaleSlider = ({ cardScale, setCardScale, onOverlayToggle }: any) => {
     const [isOpen, setIsOpen] = useState(false);
+    const [panelReady, setPanelReady] = useState(false);
     const triggerRef = useRef<any>(null);
     const [panelPos, setPanelPos] = useState({ top: 0, left: 0 });
     const PANEL_WIDTH = 288;
@@ -21,6 +22,12 @@ const CardScaleSlider = ({ cardScale, setCardScale, onOverlayToggle }: any) => {
 
     // 2. CREATE HELPER
     const handleSetIsOpen = (newState: any) => {
+        if (newState) {
+            setPanelPos(getPanelPos());
+            setPanelReady(true);
+        } else {
+            setPanelReady(false);
+        }
         setIsOpen(newState);
         if (onOverlayToggle) onOverlayToggle(newState);
     };
@@ -58,10 +65,8 @@ const CardScaleSlider = ({ cardScale, setCardScale, onOverlayToggle }: any) => {
 
     useLayoutEffect(() => {
         if (!isOpen) return;
-        const frame = window.requestAnimationFrame(() => {
-            setPanelPos(getPanelPos());
-        });
-        return () => window.cancelAnimationFrame(frame);
+        setPanelPos(getPanelPos());
+        setPanelReady(true);
     }, [isOpen]);
 
     return (
@@ -84,7 +89,7 @@ const CardScaleSlider = ({ cardScale, setCardScale, onOverlayToggle }: any) => {
                     
                     {/* Slider Panel */}
                     <div
-                        className="fixed bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-50 w-72"
+                        className={`fixed bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl shadow-xl p-4 z-50 w-72 transition-opacity duration-75 ${panelReady ? 'opacity-100' : 'opacity-0'}`}
                         style={{ top: panelPos.top, left: panelPos.left }}
                     >
                         <div className="flex items-center justify-between mb-3">

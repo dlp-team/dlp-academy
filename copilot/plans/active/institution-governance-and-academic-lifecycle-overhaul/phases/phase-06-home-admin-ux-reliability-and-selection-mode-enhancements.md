@@ -3,7 +3,7 @@
 # Phase 06 - Home/Admin UX Reliability and Selection Mode Enhancements
 
 ## Status
-- PLANNED
+- COMPLETED
 
 ## Objective
 Improve high-usage navigation and bulk-operation UX while removing known visual defects.
@@ -18,11 +18,13 @@ Improve high-usage navigation and bulk-operation UX while removing known visual 
 5. Admin dashboard institutions list: remove chevron entry icon and route by row click.
 
 ## Files Expected
-- `src/pages/Home/Home.jsx`
-- `src/pages/Home/components/HomeControls.jsx`
-- `src/pages/Home/components/HomeSelectionToolbar.jsx`
-- `src/pages/Home/components/BinView.jsx`
-- `src/pages/AdminDashboard/AdminDashboard.jsx`
+- `src/pages/Home/components/HomeSelectionToolbar.tsx`
+- `src/pages/Home/components/BinView.tsx`
+- `src/pages/Home/components/bin/BinConfirmModals.tsx`
+- `src/pages/Home/utils/binViewUtils.ts`
+- `src/components/ui/CardScaleSlider.tsx`
+- `src/components/ui/TagFilter.tsx`
+- `src/pages/AdminDashboard/components/InstitutionTableRow.tsx`
 
 ## Risks
 - Selection mode action collisions with existing keyboard shortcuts.
@@ -38,5 +40,15 @@ Improve high-usage navigation and bulk-operation UX while removing known visual 
 - Preserve legacy interaction paths until new controls validated.
 
 ## Completion Notes
-- Pending.
+- Implemented and validated in a single slice:
+   - Selection toolbar clarified with safer action messaging for non-permanent delete flow.
+   - Bin sorting now supports urgency ascending/descending and alphabetical ascending/descending.
+   - Bin-only selection mode added with bulk restore and bulk permanent delete (with explicit confirmation).
+   - Escala/Filtrar overlays now compute position before render to remove first-load top-left jump.
+   - Institution rows in global admin now navigate by row click; chevron entry icon removed.
+- Validation evidence:
+   - `npm run test -- tests/unit/pages/home/binViewUtils.test.js tests/unit/pages/admin/InstitutionTableRow.test.jsx` (pass)
+   - `npx tsc --noEmit` (pass)
+   - `npm run lint` (pass, 4 pre-existing warnings in unrelated `src/pages/Content/*`)
+   - `get_errors` on touched files (clean)
 

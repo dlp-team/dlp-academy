@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import {
+  BIN_SORT_MODES,
+  DEFAULT_BIN_SORT_MODE,
   DAYS_UNTIL_AUTO_DELETE,
   DAY_MS,
   toJsDate,
   getRemainingMs,
   getDaysRemaining,
   getDaysRemainingTextClass,
+  sortBinItems,
 } from '../../../../src/pages/Home/utils/binViewUtils';
 
 describe('binViewUtils', () => {
@@ -42,5 +45,43 @@ describe('binViewUtils', () => {
     expect(getDaysRemainingTextClass(3)).toContain('text-orange-700');
     expect(getDaysRemainingTextClass(7)).toContain('text-amber-700');
     expect(getDaysRemainingTextClass(10)).toContain('text-emerald-700');
+  });
+
+  it('sortBinItems defaults to urgency ascending', () => {
+    const now = new Date('2026-03-10T00:00:00.000Z');
+    const items = [
+      { id: 'a', name: 'Historia', trashedAt: { toDate: () => new Date(now.getTime() - (1 * DAY_MS)) } },
+      { id: 'b', name: 'Algebra', trashedAt: { toDate: () => new Date(now.getTime() - (12 * DAY_MS)) } },
+      { id: 'c', name: 'Biologia', trashedAt: { toDate: () => new Date(now.getTime() - (6 * DAY_MS)) } },
+    ];
+
+    const sorted = sortBinItems(items, DEFAULT_BIN_SORT_MODE, now);
+    expect(sorted.map(item => item.id)).toEqual(['b', 'c', 'a']);
+  });
+
+  it('sortBinItems supports urgency descending', () => {
+    const now = new Date('2026-03-10T00:00:00.000Z');
+    const items = [
+      { id: 'a', name: 'Historia', trashedAt: { toDate: () => new Date(now.getTime() - (1 * DAY_MS)) } },
+      { id: 'b', name: 'Algebra', trashedAt: { toDate: () => new Date(now.getTime() - (12 * DAY_MS)) } },
+      { id: 'c', name: 'Biologia', trashedAt: { toDate: () => new Date(now.getTime() - (6 * DAY_MS)) } },
+    ];
+
+    const sorted = sortBinItems(items, BIN_SORT_MODES.URGENCY_DESC, now);
+    expect(sorted.map(item => item.id)).toEqual(['a', 'c', 'b']);
+  });
+
+  it('sortBinItems supports alphabetical sort modes', () => {
+    const items = [
+      { id: 'a', name: 'Historia', trashedAt: { toDate: () => new Date('2026-03-09T00:00:00.000Z') } },
+      { id: 'b', name: 'Algebra', trashedAt: { toDate: () => new Date('2026-03-02T00:00:00.000Z') } },
+      { id: 'c', name: 'Biologia', trashedAt: { toDate: () => new Date('2026-03-08T00:00:00.000Z') } },
+    ];
+
+    const asc = sortBinItems(items, BIN_SORT_MODES.ALPHA_ASC);
+    const desc = sortBinItems(items, BIN_SORT_MODES.ALPHA_DESC);
+
+    expect(asc.map(item => item.id)).toEqual(['b', 'c', 'a']);
+    expect(desc.map(item => item.id)).toEqual(['a', 'c', 'b']);
   });
 });

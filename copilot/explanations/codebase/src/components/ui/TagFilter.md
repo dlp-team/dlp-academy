@@ -1,11 +1,12 @@
-# TagFilter.jsx
+# TagFilter.tsx
 
 ## Changelog
+- **2026-04-02:** Removed first-open top-left flash by resolving panel coordinates before opening the filter overlay and applying immediate positioned render.
 - **2026-03-12:** Filter panel now uses a clean hidden-scrollbar style for a cleaner overlay presentation while preserving scroll behavior.
 
 ## Purpose
-- **Source file:** `src/components/ui/TagFilter.jsx`
-- **Last documented:** 2026-02-24
+- **Source file:** `src/components/ui/TagFilter.tsx`
+- **Last documented:** 2026-04-02
 - **Role:** UI primitive/reusable presentational component.
 
 ## File Flow (High Level)

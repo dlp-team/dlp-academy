@@ -1,12 +1,19 @@
 // src/pages/Home/components/BinView.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Trash2, Loader2, XCircle, ArrowLeft } from 'lucide-react';
+import { Trash2, Loader2, XCircle, ArrowLeft, CheckSquare, Square, RotateCcw } from 'lucide-react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import ListViewItem from '../../../components/modules/ListViewItem';
 import { db } from '../../../firebase/config';
 import { useSubjects } from '../../../hooks/useSubjects';
 import { useFolders } from '../../../hooks/useFolders';
-import { getRemainingMs, getDaysRemaining, getDaysRemainingTextClass, toJsDate } from '../utils/binViewUtils';
+import {
+    BIN_SORT_MODES,
+    DEFAULT_BIN_SORT_MODE,
+    getDaysRemaining,
+    getDaysRemainingTextClass,
+    sortBinItems,
+    toJsDate
+} from '../utils/binViewUtils';
 import { isTrashRetentionExpired } from '../../../utils/trashRetentionUtils';
 
 import BinGridItem          from './bin/BinGridItem';
@@ -20,6 +27,20 @@ const isTopLevelTrashedFolderEntry = (folderEntry: any) => {
     const rootFolderId = folderEntry?.trashedRootFolderId || folderEntry?.id;
     const parentTrashMarker = folderEntry?.trashedByFolderId || null;
     return !parentTrashMarker && rootFolderId === folderEntry?.id;
+};
+
+const BIN_SORT_OPTIONS = [
+    { id: BIN_SORT_MODES.URGENCY_ASC, label: 'Urgencia: primero vence' },
+    { id: BIN_SORT_MODES.URGENCY_DESC, label: 'Urgencia: más margen' },
+    { id: BIN_SORT_MODES.ALPHA_ASC, label: 'Nombre: A-Z' },
+    { id: BIN_SORT_MODES.ALPHA_DESC, label: 'Nombre: Z-A' }
+];
+
+const BIN_SORT_DESCRIPTIONS = {
+    [BIN_SORT_MODES.URGENCY_ASC]: 'Ordenado por urgencia: menos tiempo restante primero.',
+    [BIN_SORT_MODES.URGENCY_DESC]: 'Ordenado por urgencia: más tiempo restante primero.',
+    [BIN_SORT_MODES.ALPHA_ASC]: 'Ordenado alfabéticamente de A a Z.',
+    [BIN_SORT_MODES.ALPHA_DESC]: 'Ordenado alfabéticamente de Z a A.'
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -41,6 +62,11 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
     const [descriptionModal, setDescriptionModal] = useState<any>(null);
     const [loadingDescription, setLoadingDescription] = useState(false);
     const [expandedTopics, setExpandedTopics] = useState<any>({});
+    const [sortMode, setSortMode] = useState<string>(DEFAULT_BIN_SORT_MODE);
+    const [selectionMode, setSelectionMode] = useState(false);
+    const [bulkSelection, setBulkSelection] = useState<any>({});
+    const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
+    const [bulkActionLoading, setBulkActionLoading] = useState(false);
 
     const selectedCardRef = useRef<any>(null);
 
@@ -65,10 +91,14 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
         [trashedItems]
     );
 
+    const sortedTopLevelTrashedItems = useMemo(
+        () => sortBinItems(trashedItems, sortMode),
+        [trashedItems, sortMode]
+    );
+
     const nestedFolderItems = useMemo(() => {
         if (!activeFolderBinId) return [];
 
-        const now = new Date();
         return allTrashedFolders
             .filter(folder => folder.id !== activeFolderBinId)
             .filter(folder => {
@@ -76,35 +106,30 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                 if (!activeFolderRootId) return true;
                 const folderRootId = folder?.trashedRootFolderId || folder?.id;
                 return folderRootId === activeFolderRootId;
-            })
-            .sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
+            });
     }, [allTrashedFolders, activeFolderBinId, activeFolderRootId]);
 
     const nestedFolderSubjectItems = useMemo(() => {
         if (!activeFolderBinId) return [];
 
-        const now = new Date();
         return allTrashedSubjects
             .filter(subject => {
                 if (subject?.folderId !== activeFolderBinId) return false;
                 if (!activeFolderRootId) return true;
                 const subjectRootId = subject?.trashedRootFolderId || subject?.trashedByFolderId || null;
                 return !subjectRootId || subjectRootId === activeFolderRootId;
-            })
-            .sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
+            });
     }, [allTrashedSubjects, activeFolderBinId, activeFolderRootId]);
 
     const activeFolderBinItems = useMemo(() => {
         if (!activeFolderBinId) return [];
 
-        const now = new Date();
-        return [...nestedFolderItems, ...nestedFolderSubjectItems]
-            .sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
-    }, [activeFolderBinId, nestedFolderItems, nestedFolderSubjectItems]);
+        return sortBinItems([...nestedFolderItems, ...nestedFolderSubjectItems], sortMode);
+    }, [activeFolderBinId, nestedFolderItems, nestedFolderSubjectItems, sortMode]);
 
     const visibleTrashedItems = useMemo(
-        () => (activeFolderBinId ? activeFolderBinItems : trashedItems),
-        [activeFolderBinId, activeFolderBinItems, trashedItems]
+        () => (activeFolderBinId ? activeFolderBinItems : sortedTopLevelTrashedItems),
+        [activeFolderBinId, activeFolderBinItems, sortedTopLevelTrashedItems]
     );
 
     const selectedItem = useMemo(
@@ -112,7 +137,11 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
         [visibleTrashedItems, selectedItemId, selectedItemType]
     );
 
-    const buildActionKey = (itemId: any, itemType: any) => `${itemType}:${itemId}`;
+    const buildActionKey = React.useCallback((itemId: any, itemType: any) => `${itemType}:${itemId}`, []);
+
+    const selectedBulkEntries = useMemo(() => Object.values(bulkSelection), [bulkSelection]);
+    const selectedBulkCount = selectedBulkEntries.length;
+    const selectedBulkKeys = useMemo(() => new Set(Object.keys(bulkSelection)), [bulkSelection]);
 
     const loadTrashedItems = async (options: any = {}) => {
         const skipAutoRetentionPurge = options?.skipAutoRetentionPurge === true;
@@ -207,13 +236,10 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
             const subjectItems = allSubjectItems
                 .filter((subject: any) => !subject?.trashedByFolderId);
 
-            const now = new Date();
-            const sortedItems = [...subjectItems, ...folderItems]
-                .sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
+            const topLevelItems = [...subjectItems, ...folderItems];
+            setTrashedItems(topLevelItems);
 
-            setTrashedItems(sortedItems);
-
-            const allKnownItems = [...sortedItems, ...allSubjectItems, ...allFolderItems];
+            const allKnownItems = [...topLevelItems, ...allSubjectItems, ...allFolderItems];
             if (selectedItemId && !allKnownItems.some(item => item.id === selectedItemId && item.itemType === selectedItemType)) {
                 setSelectedItemId(null);
                 setSelectedItemType(null);
@@ -245,7 +271,164 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
         }
     }, [visibleTrashedItems, selectedItemId, selectedItemType]);
 
+    useEffect(() => {
+        if (!selectionMode) return;
+
+        const visibleKeys = new Set(visibleTrashedItems.map(item => buildActionKey(item.id, item.itemType)));
+        setBulkSelection((previousSelection: any) => {
+            const nextSelection: any = {};
+            let changed = false;
+
+            Object.keys(previousSelection).forEach((key: string) => {
+                if (visibleKeys.has(key)) {
+                    nextSelection[key] = previousSelection[key];
+                } else {
+                    changed = true;
+                }
+            });
+
+            if (!changed && Object.keys(nextSelection).length === Object.keys(previousSelection).length) {
+                return previousSelection;
+            }
+
+            return nextSelection;
+        });
+    }, [selectionMode, visibleTrashedItems, buildActionKey]);
+
+    useEffect(() => {
+        if (!selectionMode) return;
+        setSelectedItemId(null);
+        setSelectedItemType(null);
+    }, [selectionMode]);
+
+    useEffect(() => {
+        setSelectionMode(false);
+        setBulkSelection({});
+        setBulkDeleteConfirmOpen(false);
+    }, [activeFolderBinId]);
+
     // ── Action handlers ────────────────────────────────────────────────────────
+    const clearBulkSelection = () => {
+        setBulkSelection({});
+    };
+
+    const toggleBulkSelectionMode = () => {
+        setSelectionMode((previous: boolean) => {
+            const next = !previous;
+            if (!next) {
+                setBulkSelection({});
+                setBulkDeleteConfirmOpen(false);
+            }
+            return next;
+        });
+        setSelectedItemId(null);
+        setSelectedItemType(null);
+    };
+
+    const toggleBulkItemSelection = (itemId: any, itemType: any) => {
+        const selectionKey = buildActionKey(itemId, itemType);
+        setBulkSelection((previousSelection: any) => {
+            if (previousSelection[selectionKey]) {
+                const nextSelection = { ...previousSelection };
+                delete nextSelection[selectionKey];
+                return nextSelection;
+            }
+
+            return {
+                ...previousSelection,
+                [selectionKey]: { id: itemId, itemType }
+            };
+        });
+    };
+
+    const handleSelectAllVisible = () => {
+        if (selectedBulkCount === visibleTrashedItems.length) {
+            setBulkSelection({});
+            return;
+        }
+
+        const nextSelection: any = {};
+        visibleTrashedItems.forEach((item: any) => {
+            const selectionKey = buildActionKey(item.id, item.itemType);
+            nextSelection[selectionKey] = { id: item.id, itemType: item.itemType };
+        });
+        setBulkSelection(nextSelection);
+    };
+
+    const handleBulkRestore = async () => {
+        if (selectedBulkEntries.length === 0) return;
+
+        setBulkActionLoading(true);
+        setErrorMessage(null);
+
+        try {
+            const results = await Promise.allSettled(
+                selectedBulkEntries.map((entry: any) => {
+                    if (entry.itemType === 'folder') {
+                        return restoreFolder(entry.id);
+                    }
+                    return restoreSubject(entry.id);
+                })
+            );
+
+            const failures = results.filter((result: any) => result.status === 'rejected');
+            const restoredCount = results.length - failures.length;
+
+            if (failures.length > 0) {
+                setErrorMessage(`Se restauraron ${restoredCount} de ${results.length} elementos. Algunos fallaron por permisos insuficientes.`);
+            }
+
+            setSelectionMode(false);
+            setBulkSelection({});
+            setSelectedItemId(null);
+            setSelectedItemType(null);
+            await loadTrashedItems();
+        } catch (err: any) {
+            console.error('Error restoring bulk selection:', err);
+            setErrorMessage('Error al restaurar los elementos seleccionados. Por favor, intenta mas tarde.');
+        } finally {
+            setBulkActionLoading(false);
+        }
+    };
+
+    const handleBulkPermanentDelete = async () => {
+        if (selectedBulkEntries.length === 0) return;
+
+        setBulkActionLoading(true);
+        setErrorMessage(null);
+
+        try {
+            const results = await Promise.allSettled(
+                selectedBulkEntries.map((entry: any) => {
+                    if (entry.itemType === 'folder') {
+                        return permanentlyDeleteFolder(entry.id);
+                    }
+                    return permanentlyDeleteSubject(entry.id);
+                })
+            );
+
+            const failures = results.filter((result: any) => result.status === 'rejected');
+            const deletedCount = results.length - failures.length;
+
+            if (failures.length > 0) {
+                setErrorMessage(`Se eliminaron ${deletedCount} de ${results.length} elementos. Algunos fallaron por permisos insuficientes.`);
+            }
+
+            setSelectionMode(false);
+            setBulkSelection({});
+            setBulkDeleteConfirmOpen(false);
+            setSelectedItemId(null);
+            setSelectedItemType(null);
+            await loadTrashedItems();
+        } catch (err: any) {
+            console.error('Error deleting bulk selection:', err);
+            setErrorMessage('Error al eliminar permanentemente la selección. Por favor, intenta mas tarde.');
+            setBulkDeleteConfirmOpen(false);
+        } finally {
+            setBulkActionLoading(false);
+        }
+    };
+
     const handleRestore = async (itemId: any, itemType: any) => {
         const actionKey = buildActionKey(itemId, itemType);
         setActionLoading(actionKey);
@@ -345,6 +528,9 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
 
             setSelectedItemId(null);
             setSelectedItemType(null);
+            setSelectionMode(false);
+            setBulkSelection({});
+            setBulkDeleteConfirmOpen(false);
 
             await loadTrashedItems();
             setEmptyConfirmOpen(false);
@@ -392,6 +578,11 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
         setExpandedTopics(prev => ({ ...prev, [topicId]: !prev[topicId] }));
 
     const handleSelectItem = (itemId: any, itemType: any) => {
+        if (selectionMode) {
+            toggleBulkItemSelection(itemId, itemType);
+            return;
+        }
+
         const isSameSelection = selectedItemId === itemId && selectedItemType === itemType;
         if (isSameSelection) {
             setSelectedItemId(null);
@@ -423,6 +614,8 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
 
         setSelectedItemId(null);
         setSelectedItemType(null);
+        setSelectionMode(false);
+        clearBulkSelection();
     };
 
     const handleCloseFolderTrashView = () => {
@@ -432,6 +625,8 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
         });
         setSelectedItemId(null);
         setSelectedItemType(null);
+        setSelectionMode(false);
+        clearBulkSelection();
     };
 
     // Restrict access for students
@@ -512,7 +707,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
             )}
 
             {/* Toolbar */}
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4 mb-2">
                 <div>
                     {activeFolderBinId && (
                         <button
@@ -531,24 +726,114 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         {activeFolderBinId
                             ? 'Contenido interno de la carpeta eliminada. Puedes abrir subcarpetas y restaurar o eliminar elementos individuales.'
-                            : 'Ordenado por urgencia: menos tiempo restante primero'}
+                            : BIN_SORT_DESCRIPTIONS[sortMode as keyof typeof BIN_SORT_DESCRIPTIONS]}
                     </p>
                 </div>
-                <button
-                    onClick={() => setEmptyConfirmOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
-                >
-                    <Trash2 size={16} />
-                    {activeFolderBinId ? 'Vaciar vista actual' : 'Vaciar papelera'}
-                </button>
+
+                <div className="flex flex-col items-start lg:items-end gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <label className="text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wide" htmlFor="bin-sort-select">
+                            Ordenar
+                        </label>
+                        <select
+                            id="bin-sort-select"
+                            value={sortMode}
+                            onChange={(event) => setSortMode(event.target.value)}
+                            className="px-3 py-2 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-sm text-gray-700 dark:text-gray-200"
+                            aria-label="Ordenar elementos de la papelera"
+                        >
+                            {BIN_SORT_OPTIONS.map((option: any) => (
+                                <option key={option.id} value={option.id}>{option.label}</option>
+                            ))}
+                        </select>
+
+                        <button
+                            type="button"
+                            onClick={toggleBulkSelectionMode}
+                            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
+                                selectionMode
+                                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                    : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
+                            }`}
+                            aria-pressed={selectionMode}
+                        >
+                            {selectionMode ? <CheckSquare size={16} /> : <Square size={16} />}
+                            {selectionMode ? 'Salir selección' : 'Modo selección'}
+                        </button>
+
+                        {!selectionMode && (
+                            <button
+                                onClick={() => setEmptyConfirmOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
+                            >
+                                <Trash2 size={16} />
+                                {activeFolderBinId ? 'Vaciar vista actual' : 'Vaciar papelera'}
+                            </button>
+                        )}
+                    </div>
+
+                    {selectionMode && (
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                                {selectedBulkCount} seleccionado(s)
+                            </span>
+                            <button
+                                type="button"
+                                onClick={handleSelectAllVisible}
+                                disabled={visibleTrashedItems.length === 0}
+                                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                            >
+                                {selectedBulkCount === visibleTrashedItems.length && visibleTrashedItems.length > 0
+                                    ? 'Quitar todo'
+                                    : 'Seleccionar todo'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={clearBulkSelection}
+                                disabled={selectedBulkCount === 0}
+                                className="px-3 py-2 rounded-lg border border-gray-200 dark:border-slate-700 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-50"
+                            >
+                                Limpiar
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleBulkRestore}
+                                disabled={selectedBulkCount === 0 || bulkActionLoading}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white rounded-xl text-sm font-medium transition-colors"
+                            >
+                                {bulkActionLoading ? <Loader2 className="animate-spin" size={16} /> : <RotateCcw size={16} />}
+                                Restaurar seleccionados
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setBulkDeleteConfirmOpen(true)}
+                                disabled={selectedBulkCount === 0 || bulkActionLoading}
+                                className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-xl text-sm font-medium transition-colors"
+                            >
+                                {bulkActionLoading ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+                                Eliminar seleccionados
+                            </button>
+                        </div>
+                    )}
+
+                    {selectionMode && (
+                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                            Modo seguro: selecciona elementos y confirma antes de eliminar permanentemente.
+                        </p>
+                    )}
+                </div>
             </div>
 
             {/* Grid / List */}
             {layoutMode === 'grid' ? (
                 <div className="grid gap-6" style={gridStyle}>
                     {visibleTrashedItems.map((item: any) => {
-                        const isSelected = selectedItemId === item.id && selectedItemType === item.itemType;
-                        const hasSelection = Boolean(selectedItemId);
+                        const isSelected = selectionMode
+                            ? selectedBulkKeys.has(buildActionKey(item.id, item.itemType))
+                            : (selectedItemId === item.id && selectedItemType === item.itemType);
+                        const hasSelection = selectionMode
+                            ? selectedBulkCount > 0
+                            : Boolean(selectedItemId);
 
                         return (
                             <BinGridItem
@@ -568,7 +853,9 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
             ) : (
                 <div className="space-y-2">
                     {visibleTrashedItems.map((item: any) => {
-                        const isSelected = selectedItemId === item.id && selectedItemType === item.itemType;
+                        const isSelected = selectionMode
+                            ? selectedBulkKeys.has(buildActionKey(item.id, item.itemType))
+                            : (selectedItemId === item.id && selectedItemType === item.itemType);
                         const daysRemaining = getDaysRemaining(item);
                         const trashedDate = toJsDate(item.trashedAt);
                         const isFolderItem = item.itemType === 'folder';
@@ -609,7 +896,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
             )}
 
             {/* ── Selection overlay (grid mode) ────────────────────────────────── */}
-            {selectedItem && layoutMode === 'grid' && (
+            {selectedItem && layoutMode === 'grid' && !selectionMode && (
                 <BinSelectionOverlay
                     item={selectedItem}
                     itemType={selectedItem.itemType}
@@ -642,7 +929,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
             )}
 
             {/* List-mode inline panel (below the list, unchanged) */}
-            {selectedItem && layoutMode !== 'grid' && (
+            {selectedItem && layoutMode !== 'grid' && !selectionMode && (
                 <aside className="mt-4 h-fit rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-4">
                     <div className="space-y-4">
                         <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Elemento seleccionado</p>
@@ -701,6 +988,18 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                     count={visibleTrashedItems.length}
                     onConfirm={handleEmptyBin}
                     onCancel={() => setEmptyConfirmOpen(false)}
+                />
+            )}
+
+            {bulkDeleteConfirmOpen && (
+                <EmptyBinConfirmModal
+                    count={selectedBulkCount}
+                    title="Eliminar selección"
+                    description={`Seguro que deseas eliminar permanentemente los ${selectedBulkCount} elementos seleccionados?`}
+                    confirmLabel="Eliminar seleccionados"
+                    isConfirming={bulkActionLoading}
+                    onConfirm={handleBulkPermanentDelete}
+                    onCancel={() => setBulkDeleteConfirmOpen(false)}
                 />
             )}
         </div>

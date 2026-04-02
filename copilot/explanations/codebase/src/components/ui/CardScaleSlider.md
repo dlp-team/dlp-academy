@@ -1,9 +1,12 @@
-# CardScaleSlider.jsx
+# CardScaleSlider.tsx
 
 ## Purpose
-- **Source file:** `src/components/ui/CardScaleSlider.jsx`
-- **Last documented:** 2026-02-24
+- **Source file:** `src/components/ui/CardScaleSlider.tsx`
+- **Last documented:** 2026-04-02
 - **Role:** UI primitive/reusable presentational component.
+
+## Changelog
+- **2026-04-02:** Fixed first-open overlay positioning jump by resolving panel coordinates before render and removing one-frame delayed positioning.
 
 ## File Flow (High Level)
 - Receives data/capabilities from imported modules and React ecosystem APIs.

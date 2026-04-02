@@ -9,7 +9,8 @@
 
 ## Responsibilities
 - Renders institution identity/status/admin summary cells.
-- Exposes row actions through callback props (open dashboard, edit, toggle, delete).
+- Routes to institution dashboard through row click/keyboard interaction.
+- Exposes row actions through callback props (edit, toggle, delete) without triggering row navigation.
 - Keeps institutions row markup/interaction logic out of `AdminDashboard.tsx`.
 
 ## Exports
@@ -18,3 +19,6 @@
 ## Main Dependencies
 - `react`
 - `lucide-react`
+
+## Changelog
+- **2026-04-02:** Removed chevron entry icon and switched to row-click dashboard navigation; action buttons now stop event propagation to keep edit/toggle/delete behavior lossless.
