@@ -52,7 +52,13 @@ Establish a deterministic academic-year model with mandatory format controls and
    - Removed `history` from persisted mode allow-list so stale saved preferences restore to supported modes.
    - Updated Home subject grouping so completed subjects remain visible in regular grouped/manual views.
    - Updated deterministic hook tests to validate post-history fallback behavior.
+- 2026-04-02 (Slice 03 complete):
+   - Added courses-tab academic-year range control next to `Filtrar` with existing-years-only options and panel pagination (`10` per page).
+   - Added persisted `coursesAcademicYearFilter` (`startYear`/`endYear`) wiring through Home controls/logic/state.
+   - Updated courses grouping to filter by selected academic-year range and append year labels in multi-year result sets.
+   - Set courses collapsible groups to default-collapsed behavior for faster navigation in dense courses views.
+   - Added deterministic tests for available-year derivation and year-range filtering behavior.
 - Remaining for phase closure:
-   - Home courses-tab year filter persistence + nested year collapsibles.
+   - Year-level nested collapsibles for multi-year courses grouping wrappers.
    - Role-aware ended-subject indicators.
 

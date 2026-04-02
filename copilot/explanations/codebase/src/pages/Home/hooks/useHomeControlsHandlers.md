@@ -1,6 +1,10 @@
 # useHomeControlsHandlers.js
 
 ## Changelog
+### 2026-04-02: Added courses academic-year range filter handler
+- Added `handleCoursesAcademicYearFilterChange` to update `coursesAcademicYearFilter` state and persist selection via `onPreferenceChange`.
+- Keeps courses academic-year filter selections durable across sessions while preserving existing mode/layout/tag handlers.
+
 ### 2026-04-02: Retired history mode from Home mode switcher
 - Removed `history` from `HOME_VIEW_MODES`; available modes now remain `grid`, `usage`, `courses`, `shared`, and `bin`.
 - Preserved existing mode-change reset behavior (tag filters, collapsed groups, and current folder reset) while removing only the retired mode entry.

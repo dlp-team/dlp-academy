@@ -1,6 +1,10 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-04-02: Courses groups collapse by default + year-suffix-safe creation prefill
+- Courses-mode collapsible groups now default to collapsed state unless explicitly opened by the user.
+- Added course-label normalization for create-subject prefills, removing trailing academic-year suffixes like `(2025-2026)` before writing `course` draft data.
+
 ### 2026-04-02: Removed Home completion-toggle wiring
 - Removed completion-tracking props (`completedSubjectIds`, `setSubjectCompletion`) from `HomeContent` inputs.
 - Stopped forwarding completion-action callbacks to subject card/list render paths in this Home content surface.

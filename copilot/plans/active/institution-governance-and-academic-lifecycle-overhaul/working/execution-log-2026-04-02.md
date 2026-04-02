@@ -212,3 +212,27 @@
 - `npm run lint` (pass, warnings only outside scope)
 - `get_errors` on touched files (clean)
 
+## Phase 05 Slice 03 - Courses Academic-Year Range Filter Baseline
+- Added courses-tab academic-year range filter UI next to `Filtrar`:
+   - new reusable `AcademicYearRangeFilter` control,
+   - existing-years-only options,
+   - paginated selector panel (`10` per page),
+   - explicit start/end year bound selection.
+- Added Home state wiring for persisted courses year-range selection:
+   - `coursesAcademicYearFilter` state in `useHomeState`,
+   - normalization/clamping against available years,
+   - preference hydration via existing Home preference flow.
+- Added courses grouping logic updates in `useHomeState`:
+   - filters courses buckets by selected academic-year range,
+   - appends year suffix to bucket labels in multi-year result sets.
+- Added courses UX behavior updates:
+   - courses collapsible groups now default to collapsed,
+   - create-subject prefill sanitizes grouped labels that include academic-year suffixes.
+- Added deterministic test suite `useHomeState.academicYearFilter.test.js`.
+
+## Phase 05 Slice 03 Validation
+- `npm run test -- tests/unit/hooks/useHomeState.academicYearFilter.test.js tests/unit/hooks/useHomeState.completionTracking.test.js` (pass, 4 tests)
+- `npx tsc --noEmit` (pass)
+- `npm run lint` (pass, warnings only outside scope)
+- `get_errors` on touched files (clean)
+

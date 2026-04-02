@@ -6,6 +6,7 @@ import {
 import ViewLayoutSelector from '../../../components/ui/ViewLayoutSelector';
 import CardScaleSlider from '../../../components/ui/CardScaleSlider';
 import TagFilter from '../../../components/ui/TagFilter';
+import AcademicYearRangeFilter from '../../../components/ui/AcademicYearRangeFilter';
 import SearchBar from '../../../components/ui/SearchBar';
 import useHomeControlsHandlers, { HOME_VIEW_MODES } from '../hooks/useHomeControlsHandlers';
 
@@ -23,6 +24,9 @@ const HomeControls = ({
     cardScale, setCardScale,
     allTags,
     selectedTags, setSelectedTags,
+    coursesAcademicYearFilter = { startYear: '', endYear: '' },
+    setCoursesAcademicYearFilter = () => {},
+    availableCourseAcademicYears = [],
     currentFolder,
     setFolderModalConfig,
     setCollapsedGroups = () => {},
@@ -47,10 +51,12 @@ const HomeControls = ({
         handleViewModeChange,
         handleLayoutModeChange,
         handleCardScaleChange,
-        handleTagsChange
+        handleTagsChange,
+        handleCoursesAcademicYearFilterChange
     } = useHomeControlsHandlers({
         setViewMode,
         setSelectedTags,
+        setCoursesAcademicYearFilter,
         setCollapsedGroups,
         setCurrentFolder,
         setLayoutMode,
@@ -126,6 +132,15 @@ const HomeControls = ({
                     onSharedScopeChange={onSharedScopeChange}
                     hideSharedScopeToggle={hideSharedScopeToggle}
                 />
+
+                {viewMode === 'courses' && (
+                    <AcademicYearRangeFilter
+                        availableAcademicYears={availableCourseAcademicYears}
+                        value={coursesAcademicYearFilter}
+                        onChange={handleCoursesAcademicYearFilterChange}
+                        onOverlayToggle={onFilterOverlayChange}
+                    />
+                )}
 
                 {/* Create Folder Button and Search Bar (Manual mode only) */}
                 {viewMode === 'grid' && canCreateFolder && (

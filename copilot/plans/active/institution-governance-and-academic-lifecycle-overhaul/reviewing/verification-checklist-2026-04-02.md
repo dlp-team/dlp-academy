@@ -55,4 +55,11 @@
 		- Home content no longer wires completion-toggle actions,
 		- grouped/manual subject visibility keeps completed subjects discoverable.
 	- Focused hook tests passed for post-history fallback behavior (2 tests).
+- 2026-04-02 (Phase 05 Slice 03):
+	- Courses-tab academic-year range baseline validated:
+		- persisted `startYear`/`endYear` selection wiring,
+		- existing-years-only paginated year selector UI,
+		- courses grouping filtered by selected year range,
+		- courses group sections default-collapsed.
+	- Focused hook tests passed for academic-year filtering and fallback coverage (4 tests).
 

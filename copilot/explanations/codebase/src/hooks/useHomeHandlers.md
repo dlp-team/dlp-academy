@@ -4,6 +4,9 @@
 
 ## Changelog
 ### 2026-04-02
+- Updated `toggleGroup` to accept an optional explicit `currentState` parameter so callers can reliably invert UI sections with non-standard defaults (used by courses groups default-collapsed behavior).
+
+### 2026-04-02
 - Updated `handleDelete` subject branch to allow deletion attempts by:
 	- owner,
 	- global admin,

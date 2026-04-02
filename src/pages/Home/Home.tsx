@@ -266,6 +266,9 @@ const Home = ({ user }: any) => {
                         allTags={availableControlTags}
                         selectedTags={logic.viewMode === 'shared' ? sharedSelectedTags : (logic.selectedTags || [])}
                         setSelectedTags={logic.viewMode === 'shared' ? setSharedSelectedTags : logic.setSelectedTags}
+                        coursesAcademicYearFilter={logic.coursesAcademicYearFilter}
+                        setCoursesAcademicYearFilter={logic.setCoursesAcademicYearFilter}
+                        availableCourseAcademicYears={logic.availableCourseAcademicYears || []}
                         currentFolder={logic.currentFolder}
                         setFolderModalConfig={logic.setFolderModalConfig}
                         { ...(logic.setCollapsedGroups ? { setCollapsedGroups: logic.setCollapsedGroups } : {}) }

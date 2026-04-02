@@ -288,6 +288,18 @@ const HomeContent = ({
         });
     };
 
+    const isGroupCollapsed = (groupKey: string) => {
+        if (viewMode === 'courses') {
+            return collapsedGroups[groupKey] !== false;
+        }
+        return Boolean(collapsedGroups[groupKey]);
+    };
+
+    const getCourseLabelForCreation = (groupLabel: any) => {
+        const normalizedLabel = String(groupLabel || '').trim();
+        return normalizedLabel.replace(/\s\((\d{4}-\d{4}|Sin año académico)\)$/i, '').trim();
+    };
+
     
     return (
         <div
@@ -296,14 +308,14 @@ const HomeContent = ({
         filterOverlayOpen ? 'pointer-events-none opacity-100' : ''
         }`}>
             {groupedContent && Object.entries(groupedContent).map(([groupName, groupSubjects]: any) => {
-                const isCollapsed = collapsedGroups[groupName];
+                const isCollapsed = isGroupCollapsed(groupName);
                 const displayedGroupSubjects = getFilteredSubjectsForGroup(groupSubjects);
 
                 return (
                     <div key={groupName} className="mb-10">
                         {showCollapsibleGroups && (
                             <button
-                                onClick={() => toggleGroup(groupName)}
+                                onClick={() => toggleGroup(groupName, isCollapsed)}
                                 className={`flex items-center gap-2 w-full text-left group rounded-lg py-2 px-1 mb-4 transition-colors
                                     ${viewMode === 'courses' ? 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20' : 'hover:bg-pink-50 dark:hover:bg-pink-900/20'}
                                 `}
@@ -339,11 +351,7 @@ const HomeContent = ({
                                                     onClick={() => {
                                                         let data: any = null;
                                                         if (viewMode === 'courses') {
-                                                            // groupName comes as "6º Universidad" so swap for correct format
-                                                            const parts = groupName.split(' ');
-                                                            const grade = parts[0]; // e.g., "6º"
-                                                            const level = parts.slice(1).join(' '); // e.g., "Universidad"
-                                                            data = { course: groupName, level, grade };
+                                                            data = { course: getCourseLabelForCreation(groupName) };
                                                         }
                                                         setSubjectModalConfig({ 
                                                             isOpen: true, 
@@ -582,11 +590,7 @@ const HomeContent = ({
                                                     if (!draggedItem) {
                                                         let data: any = null;
                                                         if (viewMode === 'courses') {
-                                                            // groupName comes as "6º Universidad" so swap for correct format
-                                                            const parts = groupName.split(' ');
-                                                            const grade = parts[0]; // e.g., "6º"
-                                                            const level = parts.slice(1).join(' '); // e.g., "Universidad"
-                                                            data = { course: groupName, level, grade };
+                                                            data = { course: getCourseLabelForCreation(groupName) };
                                                         }
                                                         setSubjectModalConfig({ 
                                                             isOpen: true, 

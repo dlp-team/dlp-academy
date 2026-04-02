@@ -1,6 +1,7 @@
 # Home.jsx
 
 ## Changelog
+- **2026-04-02:** Wired courses-tab academic-year filter state (`coursesAcademicYearFilter`, setter, and available years) from `useHomeLogic` into `HomeControls` for persistent year-range filtering UX.
 - **2026-04-01:** Wired `teacherSubjectCreationAllowed` from `useHomeLogic` into `useHomeCreationGuards`, making Home subject-create controls respect institution teacher-creation policy.
 - **2026-04-01:** Extracted inline bulk-action feedback banner into `HomeBulkActionFeedback.tsx`, preserving tone-specific visual semantics and empty-message guard behavior while reducing coordinator JSX in `Home.tsx`.
 - **2026-04-01:** Extracted creation/content guard derivations into `useHomeCreationGuards.ts`, preserving permission checks while reducing inline `useMemo` blocks in `Home.tsx`.
@@ -15,8 +16,8 @@
 - **2026-03-12:** Shared-scope filter is now forced to enabled in `shared` tab context and the shared-scope toggle is hidden there, preventing accidental exclusion of “shared with me” items from the shared page.
 
 ## Overview
-- **Source file:** `src/pages/Home/Home.jsx`
-- **Last documented:** 2026-02-24
+- **Source file:** `src/pages/Home/Home.tsx`
+- **Last documented:** 2026-04-02
 - **Role:** Page-level or feature-level module that orchestrates UI and logic.
 
 ## Responsibilities

@@ -407,8 +407,13 @@ export const useHomeHandlers = ({
         });
     };
 
-    const toggleGroup = groupName => {
-        setCollapsedGroups(prev => ({ ...prev, [groupName]: !prev[groupName] }));
+    const toggleGroup = (groupName, currentState: any = null) => {
+        setCollapsedGroups(prev => {
+            const safeCurrentState = typeof currentState === 'boolean'
+                ? currentState
+                : Boolean(prev[groupName]);
+            return { ...prev, [groupName]: !safeCurrentState };
+        });
     };
 
     const handleFilterChange = filterType => {

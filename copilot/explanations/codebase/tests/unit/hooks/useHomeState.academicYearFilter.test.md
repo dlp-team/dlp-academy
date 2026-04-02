@@ -1,0 +1,17 @@
+<!-- copilot/explanations/codebase/tests/unit/hooks/useHomeState.academicYearFilter.test.md -->
+
+## Overview
+This suite validates courses-tab academic-year filtering behavior in `useHomeState`:
+- available academic years are derived and sorted from visible subjects,
+- multi-year grouped output appends academic-year labels,
+- single-year range filtering returns only matching course buckets.
+
+## Changelog
+### 2026-04-02: Initial coverage for courses academic-year range filtering
+- Added deterministic hook tests for:
+  - available-year derivation ordering,
+  - multi-year label rendering in grouped content,
+  - single-year range filtering behavior.
+
+## Validation
+- `npm run test -- tests/unit/hooks/useHomeState.academicYearFilter.test.js tests/unit/hooks/useHomeState.completionTracking.test.js`

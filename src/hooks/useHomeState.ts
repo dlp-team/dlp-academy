@@ -35,6 +35,89 @@ const areManualOrdersEqual = (left, right: any) => {
     return true;
 };
 
+const ACADEMIC_YEAR_PATTERN = /^(\d{4})-(\d{4})$/;
+const EMPTY_COURSE_ACADEMIC_YEAR_FILTER = { startYear: '', endYear: '' };
+
+const getAcademicYearStartYear = (value: any): number | null => {
+    const normalizedValue = String(value || '').trim();
+    const match = normalizedValue.match(ACADEMIC_YEAR_PATTERN);
+    if (!match) return null;
+
+    const startYear = Number(match[1]);
+    const endYear = Number(match[2]);
+    if (!Number.isInteger(startYear) || !Number.isInteger(endYear)) return null;
+    if (endYear !== startYear + 1) return null;
+    return startYear;
+};
+
+const normalizeAcademicYear = (value: any): string => {
+    const normalizedValue = String(value || '').trim();
+    return getAcademicYearStartYear(normalizedValue) === null ? '' : normalizedValue;
+};
+
+const sortAcademicYearsDesc = (years: any[] = []) => {
+    return [...years]
+        .map((year) => normalizeAcademicYear(year))
+        .filter(Boolean)
+        .sort((left, right) => {
+            const leftStart = getAcademicYearStartYear(left) || 0;
+            const rightStart = getAcademicYearStartYear(right) || 0;
+            return rightStart - leftStart;
+        });
+};
+
+const areCourseAcademicYearFiltersEqual = (left: any, right: any) => {
+    if (!left || !right) return false;
+    return left.startYear === right.startYear && left.endYear === right.endYear;
+};
+
+const normalizeCourseAcademicYearFilter = (value: any, availableAcademicYears: any[] = []) => {
+    const safeValue = value && typeof value === 'object' ? value : EMPTY_COURSE_ACADEMIC_YEAR_FILTER;
+    const availableYearsSet = new Set(sortAcademicYearsDesc(availableAcademicYears));
+
+    const normalizedStartYear = normalizeAcademicYear(safeValue.startYear);
+    const normalizedEndYear = normalizeAcademicYear(safeValue.endYear);
+
+    const clampedStartYear = normalizedStartYear && (availableYearsSet.size === 0 || availableYearsSet.has(normalizedStartYear))
+        ? normalizedStartYear
+        : '';
+    const clampedEndYear = normalizedEndYear && (availableYearsSet.size === 0 || availableYearsSet.has(normalizedEndYear))
+        ? normalizedEndYear
+        : '';
+
+    const startValue = getAcademicYearStartYear(clampedStartYear);
+    const endValue = getAcademicYearStartYear(clampedEndYear);
+
+    if (startValue !== null && endValue !== null && startValue > endValue) {
+        return {
+            startYear: clampedEndYear,
+            endYear: clampedStartYear
+        };
+    }
+
+    return {
+        startYear: clampedStartYear,
+        endYear: clampedEndYear
+    };
+};
+
+const isAcademicYearWithinRange = (academicYear: any, filterRange: any) => {
+    if (!filterRange?.startYear && !filterRange?.endYear) return true;
+
+    const subjectStartYear = getAcademicYearStartYear(academicYear);
+    if (subjectStartYear === null) return false;
+
+    const startValue = getAcademicYearStartYear(filterRange?.startYear);
+    const endValue = getAcademicYearStartYear(filterRange?.endYear);
+
+    const minBound = startValue === null ? Number.NEGATIVE_INFINITY : startValue;
+    const maxBound = endValue === null ? Number.POSITIVE_INFINITY : endValue;
+    const lowerBound = Math.min(minBound, maxBound);
+    const upperBound = Math.max(minBound, maxBound);
+
+    return subjectStartYear >= lowerBound && subjectStartYear <= upperBound;
+};
+
 export const useHomeState = ({
     user,
     searchQuery = '',
@@ -57,6 +140,7 @@ export const useHomeState = ({
     const [collapsedGroups, setCollapsedGroups] = usePersistentState(collapsedGroupsKey, {});
     const [currentFolder, setCurrentFolder] = useState<any>(null);
     const [activeFilter, setActiveFilter] = useState<string>('all');
+    const [coursesAcademicYearFilter, setCoursesAcademicYearFilter] = useState<any>(() => normalizeCourseAcademicYearFilter(preferences?.coursesAcademicYearFilter));
 
     const [draggedItem, setDraggedItem] = useState<any>(null);
     const [draggedItemType, setDraggedItemType] = useState<any>(null);
@@ -317,6 +401,34 @@ export const useHomeState = ({
         return source.filter(item => !isOwnedByCurrentUser(item, user) && isSharedWithCurrentUser(item, user));
     }, [subjectsWithShortcuts, subjects, user?.uid, user?.email]);
 
+    const availableCourseAcademicYears = useMemo(() => {
+        const isRelated = (item: any) => {
+            if (!item) return false;
+            if (isShortcutItem(item)) return true;
+            return isOwnedByCurrentUser(item, user) || isSharedWithCurrentUser(item, user);
+        };
+
+        const sourceSubjects = selectedTags.length > 0 || viewMode === 'tags'
+            ? filteredSubjectsByTags
+            : subjectsWithShortcuts;
+
+        const years = sourceSubjects
+            .filter(isRelated)
+            .filter((sub: any) => {
+                if (!(isStudentRole && viewMode === 'courses')) return true;
+                return isRootLevelSubject(sub);
+            })
+            .map((subject: any) => normalizeAcademicYear(subject?.academicYear))
+            .filter(Boolean);
+
+        return sortAcademicYearsDesc(Array.from(new Set(years)));
+    }, [subjectsWithShortcuts, filteredSubjectsByTags, selectedTags, viewMode, isStudentRole, user?.uid, user?.email]);
+
+    const normalizedCoursesAcademicYearFilter = useMemo(
+        () => normalizeCourseAcademicYearFilter(coursesAcademicYearFilter, availableCourseAcademicYears),
+        [coursesAcademicYearFilter, availableCourseAcademicYears]
+    );
+
     const applyManualOrder = (items: any[] = [], type: any) => {
         if (viewMode !== 'grid') return items;
 
@@ -451,45 +563,95 @@ export const useHomeState = ({
                 return { group: course, year: '' };
             }
 
-            const groupMap: Record<string, Record<string, any[]>> = {};
-            const noCourse: any[] = [];
-            subjectsToGroup.forEach(sub => {
+            const subjectsInAcademicYearRange = subjectsToGroup.filter((sub: any) => {
+                const subjectAcademicYear = normalizeAcademicYear(sub?.academicYear);
+                return isAcademicYearWithinRange(subjectAcademicYear, normalizedCoursesAcademicYearFilter);
+            });
+
+            const validAcademicYears = sortAcademicYearsDesc(
+                Array.from(new Set(subjectsInAcademicYearRange
+                    .map((sub: any) => normalizeAcademicYear(sub?.academicYear))
+                    .filter(Boolean)))
+            );
+            const hasMissingAcademicYearSubjects = subjectsInAcademicYearRange.some(
+                (sub: any) => !normalizeAcademicYear(sub?.academicYear)
+            );
+            const hasMultipleAcademicYears = validAcademicYears.length > 1;
+            const academicYearOrder = [
+                ...validAcademicYears,
+                ...(hasMissingAcademicYearSubjects ? ['Sin año académico'] : [])
+            ];
+
+            const groupMap: Record<string, Record<string, Record<string, any[]>>> = {};
+            const noCourseMap: Record<string, any[]> = {};
+
+            subjectsInAcademicYearRange.forEach((sub: any) => {
                 const { group, year } = parseCourse(sub.course);
+                const academicYearLabel = normalizeAcademicYear(sub?.academicYear) || 'Sin año académico';
+
                 if (!group && !year) {
-                    noCourse.push(sub);
-                } else {
-                    const groupKey = String(group || 'Sin Curso');
-                    const yearKey = String(year || '');
-                    if (!groupMap[groupKey]) groupMap[groupKey] = {};
-                    if (!groupMap[groupKey][yearKey]) groupMap[groupKey][yearKey] = [];
-                    groupMap[groupKey][yearKey].push(sub);
+                    if (!noCourseMap[academicYearLabel]) noCourseMap[academicYearLabel] = [];
+                    noCourseMap[academicYearLabel].push(sub);
+                    return;
                 }
+
+                const groupKey = String(group || 'Sin Curso');
+                const yearKey = String(year || '');
+
+                if (!groupMap[groupKey]) groupMap[groupKey] = {};
+                if (!groupMap[groupKey][yearKey]) groupMap[groupKey][yearKey] = {};
+                if (!groupMap[groupKey][yearKey][academicYearLabel]) groupMap[groupKey][yearKey][academicYearLabel] = [];
+                groupMap[groupKey][yearKey][academicYearLabel].push(sub);
             });
 
             const sortedGroups: Record<string, any[]> = {};
-            Object.keys(currentEducationLevels).forEach(group => {
-                currentEducationLevels[group].forEach(year => {
-                    const key = `${group} ${year}`;
-                    if (groupMap[group] && groupMap[group][year]) {
-                        sortedGroups[key] = groupMap[group][year]
-                            .slice()
-                            .sort((a, b: any) => (a.name || '').localeCompare(b.name || ''));
-                    }
+            const addBucket = (baseLabel: string, academicYearLabel: string, entries: any[] = []) => {
+                if (!Array.isArray(entries) || entries.length === 0) return;
+
+                const label = hasMultipleAcademicYears ? `${baseLabel} (${academicYearLabel})` : baseLabel;
+                const sortedEntries = entries
+                    .slice()
+                    .sort((a, b: any) => (a.name || '').localeCompare(b.name || ''));
+
+                if (!sortedGroups[label]) {
+                    sortedGroups[label] = sortedEntries;
+                    return;
+                }
+
+                sortedGroups[label] = [...sortedGroups[label], ...sortedEntries].sort((a, b: any) =>
+                    (a.name || '').localeCompare(b.name || '')
+                );
+            };
+
+            Object.keys(currentEducationLevels).forEach((group) => {
+                currentEducationLevels[group].forEach((year) => {
+                    academicYearOrder.forEach((academicYearLabel) => {
+                        const bucket = groupMap[group]?.[year]?.[academicYearLabel] || [];
+                        addBucket(`${group} ${year}`, academicYearLabel, bucket);
+                    });
                 });
             });
-            Object.keys(groupMap).forEach(group => {
-                Object.keys(groupMap[group]).forEach(year => {
-                    const key = year ? `${group} ${year}` : group;
-                    if (!sortedGroups[key]) {
-                        sortedGroups[key] = groupMap[group][year]
-                            .slice()
-                            .sort((a, b: any) => (a.name || '').localeCompare(b.name || ''));
+
+            Object.keys(groupMap).forEach((group) => {
+                Object.keys(groupMap[group]).forEach((year) => {
+                    const knownYears = currentEducationLevels[group] || [];
+                    if (knownYears.includes(year)) {
+                        return;
                     }
+
+                    academicYearOrder.forEach((academicYearLabel) => {
+                        const baseLabel = year ? `${group} ${year}` : group;
+                        const bucket = groupMap[group]?.[year]?.[academicYearLabel] || [];
+                        addBucket(baseLabel, academicYearLabel, bucket);
+                    });
                 });
             });
-            if (noCourse.length > 0) {
-                sortedGroups['Sin Curso'] = noCourse.slice().sort((a, b: any) => (a.name || '').localeCompare(b.name || ''));
-            }
+
+            academicYearOrder.forEach((academicYearLabel) => {
+                const noCourseEntries = noCourseMap[academicYearLabel] || [];
+                addBucket('Sin Curso', academicYearLabel, noCourseEntries);
+            });
+
             return sortedGroups;
         }
 
@@ -517,7 +679,7 @@ export const useHomeState = ({
         }
 
         return { Todas: subjectsToGroup };
-    }, [subjects, subjectsWithShortcuts, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery, isStudentRole]);
+    }, [subjects, subjectsWithShortcuts, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery, isStudentRole, normalizedCoursesAcademicYearFilter]);
 
     const { searchFolders, searchSubjects } = useMemo(() => {
         if (!searchQuery || searchQuery.trim() === '') {
@@ -574,13 +736,28 @@ export const useHomeState = ({
     }, [subjects, folders]);
 
     useEffect(() => {
+        setCoursesAcademicYearFilter((previousFilter: any) => {
+            const normalizedFilter = normalizeCourseAcademicYearFilter(previousFilter, availableCourseAcademicYears);
+            return areCourseAcademicYearFiltersEqual(previousFilter, normalizedFilter)
+                ? previousFilter
+                : normalizedFilter;
+        });
+    }, [availableCourseAcademicYears]);
+
+    useEffect(() => {
         if (preferences && !loadingPreferences) {
             setViewMode(prev => prev || preferences.viewMode || 'grid');
             setLayoutMode(preferences.layoutMode || 'grid');
             setCardScale(preferences.cardScale || 100);
             setSelectedTags(preferences.selectedTags || []);
+            const nextCoursesFilter = normalizeCourseAcademicYearFilter(preferences.coursesAcademicYearFilter, availableCourseAcademicYears);
+            setCoursesAcademicYearFilter((previousFilter: any) => (
+                areCourseAcademicYearFiltersEqual(previousFilter, nextCoursesFilter)
+                    ? previousFilter
+                    : nextCoursesFilter
+            ));
         }
-    }, [preferences, loadingPreferences]);
+    }, [preferences, loadingPreferences, availableCourseAcademicYears]);
 
     useEffect(() => {
         if (loadingPreferences) return;
@@ -621,6 +798,9 @@ export const useHomeState = ({
         setCollapsedGroups,
         selectedTags,
         setSelectedTags,
+        coursesAcademicYearFilter,
+        setCoursesAcademicYearFilter,
+        availableCourseAcademicYears,
         currentFolder,
         setCurrentFolder,
         activeFilter,

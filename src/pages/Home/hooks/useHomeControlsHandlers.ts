@@ -12,6 +12,7 @@ export const HOME_VIEW_MODES = [
 const useHomeControlsHandlers = ({
     setViewMode,
     setSelectedTags,
+    setCoursesAcademicYearFilter,
     setCollapsedGroups,
     setCurrentFolder,
     setLayoutMode,
@@ -49,11 +50,19 @@ const useHomeControlsHandlers = ({
         }
     }, [setSelectedTags, onPreferenceChange]);
 
+    const handleCoursesAcademicYearFilterChange = useCallback((nextFilter: any) => {
+        setCoursesAcademicYearFilter(nextFilter);
+        if (onPreferenceChange) {
+            onPreferenceChange('coursesAcademicYearFilter', nextFilter);
+        }
+    }, [setCoursesAcademicYearFilter, onPreferenceChange]);
+
     return {
         handleViewModeChange,
         handleLayoutModeChange,
         handleCardScaleChange,
-        handleTagsChange
+        handleTagsChange,
+        handleCoursesAcademicYearFilterChange
     };
 };
 

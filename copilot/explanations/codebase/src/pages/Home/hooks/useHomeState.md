@@ -1,6 +1,11 @@
 # useHomeState.js
 
 ## Changelog
+### 2026-04-02: Courses academic-year range filtering and multi-year labels
+- Added persisted `coursesAcademicYearFilter` state (`startYear`/`endYear`) with normalization against available academic years.
+- Added `availableCourseAcademicYears` derivation from visible subjects for courses-tab filter options.
+- Courses grouping now filters by academic-year range and appends `(YYYY-YYYY)` to course bucket labels when multiple academic years are visible.
+
 ### 2026-04-02: History mode retirement and unified subject visibility
 - Removed history-specific grouping paths so unsupported persisted `history` mode naturally falls back to regular grouped behavior.
 - Removed completion-based exclusion from non-history groupings; completed subjects remain visible in manual and standard grouped views.

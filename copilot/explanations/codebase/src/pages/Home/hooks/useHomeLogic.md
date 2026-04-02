@@ -2,6 +2,10 @@
 # useHomeLogic.js
 
 ## Changelog
+### 2026-04-02: Courses academic-year filter passthrough
+- Added `coursesAcademicYearFilter`, `setCoursesAcademicYearFilter`, and `availableCourseAcademicYears` passthroughs from `useHomeState` into `useHomeLogic` return payload.
+- Enables Home controls to render and persist courses-tab academic-year range selections.
+
 ### 2026-04-01: Completion tracking passthrough wiring
 - Added `completedSubjectIds` and `setSubjectCompletion` passthroughs from `useSubjects`.
 - Forwarded `completedSubjectIds` into `useHomeState` for active/history filtering.
@@ -23,8 +27,8 @@
 - Preserves existing Home logic contracts while enabling Ctrl+Z restore fallback in keyboard flows.
 
 ## Overview
-- **Source file:** `src/pages/Home/hooks/useHomeLogic.js`
-- **Last documented:** 2026-02-24
+- **Source file:** `src/pages/Home/hooks/useHomeLogic.ts`
+- **Last documented:** 2026-04-02
 - **Role:** Custom hook with stateful/business logic for this page area.
 
 ## Responsibilities
