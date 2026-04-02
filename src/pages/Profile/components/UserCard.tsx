@@ -2,11 +2,17 @@
 import React from 'react';
 import { Edit2, LogOut, BookOpen, GraduationCap, Shield, Crown } from 'lucide-react';
 import Avatar from '../../../components/ui/Avatar'; 
+import { getActiveRole } from '../../../utils/permissionUtils';
 
 const UserCard = ({ user, userProfile, onEdit, onLogout }: any) => {
     const displayName = userProfile?.displayName || user?.displayName || "Usuario";
     const photoURL = userProfile?.photoURL || user?.photoURL;
-    const normalizedRole = String(userProfile?.role || user?.role || '').toLowerCase();
+    const normalizedRole = getActiveRole({
+        ...(user || {}),
+        ...(userProfile || {}),
+        activeRole: user?.activeRole || userProfile?.activeRole || null,
+        availableRoles: user?.availableRoles || userProfile?.availableRoles || []
+    });
 
     const roleBadgeConfig = (() => {
         if (normalizedRole === 'admin') {

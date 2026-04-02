@@ -104,4 +104,10 @@
 	- Test stability update validated:
 		- `useShortcuts` + `useTopicLogic` unit mocks now include `getActiveRole` export.
 	- Focused impacted suite passed (46 tests), typecheck passed, lint passed with only pre-existing warnings.
+- 2026-04-02 (Phase 07 Slice 04):
+	- Residual Profile role-context alignment validated:
+		- `useProfile` role-sensitive badge-award and teacher-student fetch paths now use active role.
+		- `UserCard` role badge now follows active role context.
+	- Residual src role-audit scan (`user.role`) completed with no remaining matches.
+	- Focused impacted suite passed (49 tests), typecheck passed, lint passed with only pre-existing warnings.
 

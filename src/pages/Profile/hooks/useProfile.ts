@@ -12,6 +12,7 @@ import {
     normalizeCourseKey,
     upsertCourseBadge
 } from '../../../utils/badgeUtils';
+import { getActiveRole } from '../../../utils/permissionUtils';
 
 const fetchTeacherAssignedStudents = async ({ institutionId, teacherUid }: any) => {
     if (!institutionId || !teacherUid) return [];
@@ -88,10 +89,19 @@ export const useProfile = (user: any) => {
     const [assignedStudents, setAssignedStudents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
+    const resolveRoleContext = (profileData: any = null) => {
+        return getActiveRole({
+            ...(user || {}),
+            ...(profileData || {}),
+            activeRole: user?.activeRole || profileData?.activeRole || null,
+            availableRoles: user?.availableRoles || profileData?.availableRoles || []
+        });
+    };
+
     const awardBadgeToStudent = async (studentUid: any, badgeKey: any, options: any = {}) => {
         if (!user?.uid || !studentUid || !badgeKey) return false;
 
-        const currentRole = String(userProfile?.role || user?.role || '').toLowerCase();
+        const currentRole = resolveRoleContext(userProfile);
         const canAwardBadges = currentRole === 'teacher' || currentRole === 'institutionadmin' || currentRole === 'admin';
         if (!canAwardBadges) return false;
 
@@ -168,7 +178,7 @@ export const useProfile = (user: any) => {
                     setUserProfile(profileData);
                 }
 
-                const resolvedRole = String(profileData?.role || user?.role || '').toLowerCase();
+                const resolvedRole = resolveRoleContext(profileData);
                 const effectiveInstitutionId = profileData?.institutionId || user?.institutionId || null;
 
                 // 2. Get Subjects

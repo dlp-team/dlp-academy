@@ -63,4 +63,17 @@ Support users who need both institution admin and teacher responsibilities witho
 		- `npx tsc --noEmit` (exit 0)
 		- `npm run lint` (exit 0, 4 pre-existing warnings in unrelated `src/pages/Content/*`)
 		- `get_errors` clean on touched source/test files.
+- 2026-04-02 (Slice 04 residual Profile role-context alignment):
+	- Aligned residual Profile role checks to active-role semantics:
+		- `src/pages/Profile/hooks/useProfile.ts`
+		- `src/pages/Profile/components/UserCard.tsx`
+	- Added unit-test compatibility for new helper import:
+		- `tests/unit/hooks/useProfile.test.js`
+	- Residual audit scan checkpoint:
+		- src-wide search for raw `user.role` checks returned no matches.
+	- Validation checkpoint:
+		- `npm run test -- tests/unit/hooks/useProfile.test.js tests/unit/hooks/useTopicLogic.test.js tests/unit/hooks/useShortcuts.test.js tests/unit/utils/permissionUtils.test.js tests/unit/App.authListener.test.jsx` (pass, 49 tests)
+		- `npx tsc --noEmit` (exit 0)
+		- `npm run lint` (exit 0, 4 pre-existing warnings in unrelated `src/pages/Content/*`)
+		- `get_errors` clean on touched Profile source/test files.
 

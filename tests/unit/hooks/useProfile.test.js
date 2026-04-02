@@ -40,6 +40,10 @@ vi.mock('firebase/firestore', async () => {
   };
 });
 
+vi.mock('../../../src/utils/permissionUtils', () => ({
+  getActiveRole: vi.fn((context) => String(context?.activeRole || context?.role || '').toLowerCase()),
+}));
+
 describe('useProfile', () => {
   const user = { uid: 'user-1', email: 'user@test.dev' };
 

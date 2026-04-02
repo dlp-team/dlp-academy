@@ -365,3 +365,19 @@
 - `npm run lint` (exit 0, 4 pre-existing warnings only in unrelated `src/pages/Content/*`)
 - `get_errors` on touched source/test files (clean)
 
+## Phase 07 Slice 04 - Residual Profile Role-Context Alignment
+- Aligned remaining role-sensitive Profile reads with active-role semantics:
+   - `src/pages/Profile/hooks/useProfile.ts`
+   - `src/pages/Profile/components/UserCard.tsx`
+- Added profile-hook test mock compatibility:
+   - `tests/unit/hooks/useProfile.test.js` now mocks `permissionUtils.getActiveRole`.
+- Synced codebase explanations for profile hook/component and added new test explanation mirror for `useProfile.test.js`.
+- Residual role-audit check:
+   - src-wide search for raw `user.role` checks returned no matches.
+
+## Phase 07 Slice 04 Validation
+- `npm run test -- tests/unit/hooks/useProfile.test.js tests/unit/hooks/useTopicLogic.test.js tests/unit/hooks/useShortcuts.test.js tests/unit/utils/permissionUtils.test.js tests/unit/App.authListener.test.jsx` (pass, 49 tests)
+- `npx tsc --noEmit` (exit 0)
+- `npm run lint` (exit 0, 4 pre-existing warnings only in unrelated `src/pages/Content/*`)
+- `get_errors` on touched Profile source/test files (clean)
+
