@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/subplans/subplan-03-institution-admin-dashboard-upgrades.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/subplans/subplan-03-institution-admin-dashboard-upgrades.md -->
 
 # Subplan 03 - Institution Admin Dashboard Upgrades
 

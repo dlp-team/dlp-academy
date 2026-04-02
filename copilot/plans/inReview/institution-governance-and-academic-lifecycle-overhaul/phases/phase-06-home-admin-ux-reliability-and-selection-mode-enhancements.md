@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/phases/phase-06-home-admin-ux-reliability-and-selection-mode-enhancements.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/phases/phase-06-home-admin-ux-reliability-and-selection-mode-enhancements.md -->
 
 # Phase 06 - Home/Admin UX Reliability and Selection Mode Enhancements
 

@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/phases/phase-05-academic-year-governance-and-courses-ux-overhaul.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/phases/phase-05-academic-year-governance-and-courses-ux-overhaul.md -->
 
 # Phase 05 - Academic Year Governance and Courses UX Overhaul
 

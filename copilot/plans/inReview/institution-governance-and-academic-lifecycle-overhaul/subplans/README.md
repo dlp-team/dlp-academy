@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/subplans/README.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/subplans/README.md -->
 
 # Subplans Index
 

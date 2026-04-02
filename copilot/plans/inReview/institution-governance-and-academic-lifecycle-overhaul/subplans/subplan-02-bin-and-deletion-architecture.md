@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/subplans/subplan-02-bin-and-deletion-architecture.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/subplans/subplan-02-bin-and-deletion-architecture.md -->
 
 # Subplan 02 - Bin and Deletion Architecture
 

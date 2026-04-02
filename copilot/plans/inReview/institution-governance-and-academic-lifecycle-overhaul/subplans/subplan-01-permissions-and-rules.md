@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/subplans/subplan-01-permissions-and-rules.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/subplans/subplan-01-permissions-and-rules.md -->
 
 # Subplan 01 - Permissions and Rules
 

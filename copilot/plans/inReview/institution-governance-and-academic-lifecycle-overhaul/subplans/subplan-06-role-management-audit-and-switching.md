@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/subplans/subplan-06-role-management-audit-and-switching.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/subplans/subplan-06-role-management-audit-and-switching.md -->
 
 # Subplan 06 - Role Management Audit and Switching
 

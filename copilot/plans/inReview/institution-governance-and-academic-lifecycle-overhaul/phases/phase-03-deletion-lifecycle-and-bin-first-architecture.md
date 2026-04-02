@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/phases/phase-03-deletion-lifecycle-and-bin-first-architecture.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/phases/phase-03-deletion-lifecycle-and-bin-first-architecture.md -->
 
 # Phase 03 - Deletion Lifecycle and Bin-First Architecture
 

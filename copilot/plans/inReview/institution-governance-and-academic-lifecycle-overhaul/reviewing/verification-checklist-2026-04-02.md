@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/reviewing/verification-checklist-2026-04-02.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/reviewing/verification-checklist-2026-04-02.md -->
 
 # Verification Checklist - Institution Governance and Academic Lifecycle Overhaul
 

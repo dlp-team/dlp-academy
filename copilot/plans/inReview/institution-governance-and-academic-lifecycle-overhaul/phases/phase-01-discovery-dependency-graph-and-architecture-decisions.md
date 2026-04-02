@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/phases/phase-01-discovery-dependency-graph-and-architecture-decisions.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/phases/phase-01-discovery-dependency-graph-and-architecture-decisions.md -->
 
 # Phase 01 - Discovery, Dependency Graph, and Architecture Decisions
 

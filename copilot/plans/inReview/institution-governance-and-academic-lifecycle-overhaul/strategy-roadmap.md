@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/strategy-roadmap.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/strategy-roadmap.md -->
 
 # Strategy Roadmap - Institution Governance and Academic Lifecycle Overhaul
 
@@ -81,7 +81,7 @@
   - completed review checklist and closure summary.
 
 ## Immediate Next Actions
-1. Transition plan lifecycle from `active` to `inReview` with this synchronized artifact set.
+1. Complete reviewer sweep of checklist and closure evidence in this inReview package.
 2. Preserve rollback notes and closure summary for final `finished` transition.
 3. Run final leverage confirmation before finishing lifecycle handoff.
 

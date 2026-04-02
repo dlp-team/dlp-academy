@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/phases/phase-04-institution-admin-dashboard-upgrades.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/phases/phase-04-institution-admin-dashboard-upgrades.md -->
 
 # Phase 04 - Institution Admin Dashboard Upgrades
 

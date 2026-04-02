@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/README.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/README.md -->
 
 # Institution Governance and Academic Lifecycle Overhaul
 
@@ -35,8 +35,8 @@ Deliver a lossless, phased, security-first overhaul that resolves all requested 
 - Do not widen access globally to pass tests.
 
 ## Lifecycle Status
-- Lifecycle: `active`
-- Current phase: `Phase 08 completed (all validation gates green; plan is ready for lifecycle transition to inReview)`
+- Lifecycle: `inReview`
+- Current phase: `Phase 08 completed (all validation gates green; lifecycle transitioned to inReview)`
 - Overall progress: `99%`
 
 ## Key Decisions to Record During Execution

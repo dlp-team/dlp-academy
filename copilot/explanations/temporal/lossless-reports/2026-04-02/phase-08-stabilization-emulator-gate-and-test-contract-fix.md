@@ -17,12 +17,12 @@ Continue Phase 08 by resolving the remaining rules-emulator validation blocker a
 - `copilot/explanations/codebase/tests/rules/firestore.rules.test.md`
 - `copilot/explanations/codebase/firebase.json.md`
 - Plan artifacts under:
-  - `copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/README.md`
-  - `copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/strategy-roadmap.md`
-  - `copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/phases/phase-02-access-control-reliability-recovery-firestore-storage.md`
-  - `copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/phases/phase-08-stabilization-doc-sync-and-review-gate.md`
-  - `copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/reviewing/verification-checklist-2026-04-02.md`
-  - `copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/working/execution-log-2026-04-02.md`
+  - `copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/README.md`
+  - `copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/strategy-roadmap.md`
+  - `copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/phases/phase-02-access-control-reliability-recovery-firestore-storage.md`
+  - `copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/phases/phase-08-stabilization-doc-sync-and-review-gate.md`
+  - `copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/reviewing/verification-checklist-2026-04-02.md`
+  - `copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/working/execution-log-2026-04-02.md`
 
 ## Per-File Verification
 - `firebase.json`
@@ -46,4 +46,4 @@ Continue Phase 08 by resolving the remaining rules-emulator validation blocker a
   - `npm run lint` -> exit 0 with 4 pre-existing warnings in unrelated `src/pages/Content/*`.
 
 ## Residual Risk / Next Step
-- Phase 08 validations are green and documentation is synchronized. Next lifecycle step is plan transition to `inReview` when you want closure packaging finalized.
+- Phase 08 validations are green and documentation is synchronized. The plan now sits in `inReview`; remaining step is final reviewer sweep before `finished` transition.

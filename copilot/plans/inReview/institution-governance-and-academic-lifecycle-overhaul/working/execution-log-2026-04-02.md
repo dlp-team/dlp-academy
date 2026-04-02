@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/working/execution-log-2026-04-02.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/working/execution-log-2026-04-02.md -->
 
 # Execution Log - 2026-04-02
 
@@ -406,5 +406,9 @@
 
 ## Phase 08 Status Sync
 - Marked Phase 08 as `COMPLETED` in phase + roadmap artifacts.
-- Plan remains under `active` lifecycle pending final transition to `inReview`.
+
+## Lifecycle Transition - inReview
+- Leverage confirmation selected: `Yes, move to inReview now`.
+- Plan folder transitioned from `copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul` to `copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul`.
+- Path-header comments in moved plan artifacts were synchronized to the inReview location.
 

@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/phases/phase-02-access-control-reliability-recovery-firestore-storage.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/phases/phase-02-access-control-reliability-recovery-firestore-storage.md -->
 
 # Phase 02 - Access Control Reliability Recovery (Firestore + Storage)
 

@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/subplans/subplan-05-ui-ux-and-navigation-polish.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/subplans/subplan-05-ui-ux-and-navigation-polish.md -->
 
 # Subplan 05 - UI/UX and Navigation Polish
 

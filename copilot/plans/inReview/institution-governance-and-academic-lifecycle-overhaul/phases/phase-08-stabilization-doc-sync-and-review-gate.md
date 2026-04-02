@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/phases/phase-08-stabilization-doc-sync-and-review-gate.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/phases/phase-08-stabilization-doc-sync-and-review-gate.md -->
 
 # Phase 08 - Stabilization, Documentation Sync, and Review Gate
 

@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-governance-and-academic-lifecycle-overhaul/phases/phase-07-dual-role-model-and-role-switch-implementation.md -->
+<!-- copilot/plans/inReview/institution-governance-and-academic-lifecycle-overhaul/phases/phase-07-dual-role-model-and-role-switch-implementation.md -->
 
 # Phase 07 - Dual-Role Model and Role Switch Implementation
 
