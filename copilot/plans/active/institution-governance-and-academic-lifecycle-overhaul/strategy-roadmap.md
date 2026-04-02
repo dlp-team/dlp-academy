@@ -65,7 +65,7 @@
   - clickable institution rows in admin dashboard.
 
 ### Phase 07 - Dual-Role Model Implementation
-- Status: PLANNED
+- Status: IN_PROGRESS
 - Goal: support institution-admin plus teacher coexistence with deterministic role switching and no identity collisions.
 - Outputs:
   - finalized role model,
@@ -82,8 +82,8 @@
 
 ## Immediate Next Actions
 1. Re-run emulator-backed rules validation once emulator startup configuration is available, then close remaining Phase 02 validation gate.
-2. Keep plan/explanation sync current and keep verification evidence aligned with the completed Phase 06 UX reliability scope.
-3. Start Phase 07 dual-role model implementation workstream (role switch + guard validation).
+2. Continue Phase 07 with route/action regression sweep on additional role-aware surfaces after active-role shell switch baseline.
+3. Keep plan/explanation sync current and keep verification evidence aligned with current in-progress Phase 07 scope.
 
 ## Rollback Strategy
 - Keep all rule changes atomic and scoped by failure class.

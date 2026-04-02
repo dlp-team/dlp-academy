@@ -304,3 +304,29 @@
 - `npm run lint` (pass, 4 pre-existing warnings only in unrelated `src/pages/Content/*`)
 - `get_errors` on touched files (clean)
 
+## Phase 07 Slice 01 - Active Role Model Baseline (Shell + Guards)
+- Added canonical active-role model in `permissionUtils`:
+   - `getAssignedRoles(...)` resolves deduplicated assigned roles from legacy + additive profile fields.
+   - `getActiveRole(...)` resolves validated active role with deterministic fallback to assigned primary role.
+   - `hasRequiredRoleAccess(...)` now evaluates required role against active-role context.
+- Updated root auth shell (`App.tsx`):
+   - user hydration now enriches auth profile with `availableRoles` + `activeRole`,
+   - active role preference persists per-user in `localStorage` and rehydrates on auth restore,
+   - app listens to role-switch event + storage updates to keep route guards synchronized in-tab and cross-tab.
+- Updated header role UX (`Header.tsx`):
+   - added active-role selector for users with multiple assigned roles,
+   - dashboard shortcut route/label now resolves from active role,
+   - role switch emits app-level active-role change event without logout.
+- Updated dashboard guards to consume active role context:
+   - `AdminDashboard`, `TeacherDashboard`, `StudentDashboard` strict guards now evaluate `getActiveRole(user)`.
+   - `InstitutionAdminDashboard` now derives admin-only institution override from active role.
+- Added/updated focused tests:
+   - `tests/unit/utils/permissionUtils.test.js` (dual-role assigned/active role resolution coverage).
+   - `tests/unit/App.authListener.test.jsx` (permission utils mock compatibility with new role helpers).
+
+## Phase 07 Slice 01 Validation
+- `npm run test -- tests/unit/utils/permissionUtils.test.js tests/unit/App.authListener.test.jsx` (pass, 16 tests)
+- `npx tsc --noEmit` (pass)
+- `npm run lint` (pass, 4 pre-existing warnings only in unrelated `src/pages/Content/*`)
+- `get_errors` on touched files (clean)
+

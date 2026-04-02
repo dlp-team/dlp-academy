@@ -25,6 +25,9 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+### 2026-04-02
+- Updated dashboard guard to evaluate `getActiveRole(user)` so teacher view access follows selected role context in dual-role sessions.
+
 ### 2026-03-30
 - Added `subjects` tab with per-subject summary (course, student count, topic count).
 - Added teacher student-table actions to set `behaviorScore` and award manual badges (`participacion`, `esfuerzo`).

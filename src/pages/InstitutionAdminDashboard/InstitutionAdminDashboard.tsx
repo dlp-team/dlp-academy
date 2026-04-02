@@ -19,7 +19,7 @@ import AddTeacherModal from './components/AddTeacherModal';
 import CustomizationTab from './components/CustomizationTab';
 
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
-import { hasRequiredRoleAccess } from '../../utils/permissionUtils';
+import { getActiveRole, hasRequiredRoleAccess } from '../../utils/permissionUtils';
 import { useUsers } from './hooks/useUsers';
 import { useCustomization } from './hooks/useCustomization';
 import { usePersistentState } from '../../hooks/usePersistentState';
@@ -37,7 +37,8 @@ const InstitutionAdminDashboard = ({ user }: any) => {
   useIdleTimeout(15);
 
   const institutionIdFromQuery = searchParams.get('institutionId');
-  const effectiveInstitutionId = user?.role === 'admin' && institutionIdFromQuery
+  const activeRole = getActiveRole(user);
+  const effectiveInstitutionId = activeRole === 'admin' && institutionIdFromQuery
     ? institutionIdFromQuery
     : user?.institutionId || null;
   const activeTabKey = buildInstitutionScopedPersistenceKey('institution-admin-dashboard', effectiveInstitutionId, 'active-tab');

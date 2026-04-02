@@ -15,6 +15,7 @@ import Header from '../../components/layout/Header';
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { buildUserScopedPersistenceKey } from '../../utils/pagePersistence';
+import { getActiveRole } from '../../utils/permissionUtils';
 import RoleBadge from './components/RoleBadge';
 import AdminConfirmModal from './components/AdminConfirmModal';
 import { filterAdminUsers } from './utils/adminUserFilterUtils';
@@ -513,17 +514,18 @@ const UsersTab = () => {
 const AdminDashboard = ({ user }: any) => {
     const navigate = useNavigate();
     useIdleTimeout(15);
+    const activeRole = getActiveRole(user);
     const activeTabKey = buildUserScopedPersistenceKey('admin-dashboard', user, 'active-tab');
     const [activeTab, setActiveTab] = usePersistentState(activeTabKey, 'overview');
     const [stats, setStats] = useState<any>({ Institutions: null, teachers: null, students: null, total: null });
     const [statsLoading, setStatsLoading] = useState(true);
 
     useEffect(() => {
-        if (user && user.role !== 'admin') {
+        if (user && activeRole !== 'admin') {
             console.warn('Unauthorized access to Admin Dashboard');
             navigate('/home');
         }
-    }, [user, navigate]);
+    }, [user, activeRole, navigate]);
 
     useEffect(() => {
         const fetchStats = async () => {

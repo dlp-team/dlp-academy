@@ -25,6 +25,9 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+### 2026-04-02
+- Updated unauthorized-route guard to evaluate `getActiveRole(user)` so dual-role sessions respect selected active context when entering global admin dashboard.
+
 ### 2026-04-01
 - Extracted `RoleBadge` and `AdminConfirmModal` from `AdminDashboard.tsx` into dedicated components under `src/pages/AdminDashboard/components/`.
 - Preserved existing dialog contracts and role-label rendering behavior by keeping prop and display logic intact.

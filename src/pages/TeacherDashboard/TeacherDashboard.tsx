@@ -17,6 +17,7 @@ import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { buildUserScopedPersistenceKey } from '../../utils/pagePersistence';
 import { buildManualBadge, getActiveCourseBadges, normalizeCourseKey, upsertCourseBadge } from '../../utils/badgeUtils';
+import { getActiveRole } from '../../utils/permissionUtils';
 
 // ─── Overview Tab ─────────────────────────────────────────────────────────────
 
@@ -361,6 +362,7 @@ const SubjectsTab = ({ subjects = [], loading }: any) => {
 const TeacherDashboard = ({ user }: any) => {
     const navigate = useNavigate();
     useIdleTimeout(15);
+    const activeRole = getActiveRole(user);
     const activeTabKey = buildUserScopedPersistenceKey('teacher-dashboard', user, 'active-tab');
     const [activeTab, setActiveTab] = usePersistentState(activeTabKey, 'overview');
 
@@ -372,11 +374,11 @@ const TeacherDashboard = ({ user }: any) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (user && user.role !== 'teacher') {
+        if (user && activeRole !== 'teacher') {
             console.warn('Unauthorized access to Teacher Dashboard');
             navigate('/home');
         }
-    }, [user, navigate]);
+    }, [user, activeRole, navigate]);
 
     useEffect(() => {
         if (!studentActionMessage) return undefined;

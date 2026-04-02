@@ -3,7 +3,7 @@
 # Phase 07 - Dual-Role Model and Role Switch Implementation
 
 ## Status
-- PLANNED
+- IN_PROGRESS
 
 ## Objective
 Support users who need both institution admin and teacher responsibilities without account duplication or permission ambiguity.
@@ -35,5 +35,11 @@ Support users who need both institution admin and teacher responsibilities witho
 - Keep role switch path gated behind capability checks and fallback to legacy role behavior.
 
 ## Completion Notes
-- Pending.
+- 2026-04-02 (Slice 01 baseline):
+	- Added canonical dual-role helpers in `permissionUtils` (`getAssignedRoles`, `getActiveRole`) and moved role-access checks to active-role semantics.
+	- Implemented authenticated-shell role switch control in `Header` with persisted active-role rehydration via app-level storage/event synchronization in `App.tsx`.
+	- Updated dashboard guard checks (`AdminDashboard`, `TeacherDashboard`, `StudentDashboard`, `InstitutionAdminDashboard`) to read active role context.
+	- Added/updated targeted tests:
+		- `tests/unit/utils/permissionUtils.test.js`
+		- `tests/unit/App.authListener.test.jsx`
 

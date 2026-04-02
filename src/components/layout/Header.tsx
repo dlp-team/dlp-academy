@@ -1,3 +1,4 @@
+// src/components/layout/Header.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Settings, Moon, Sun, LayoutDashboard } from 'lucide-react';
@@ -5,6 +6,7 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config'; 
 import useInstitutionBranding from '../../hooks/useInstitutionBranding';
 import { applyThemeToDom } from '../../utils/themeMode';
+import { getActiveRole, getAssignedRoles } from '../../utils/permissionUtils';
 
 // Import UI Helpers
 import Avatar from '../ui/Avatar';
@@ -13,6 +15,15 @@ import MailboxIcon from '../ui/MailboxIcon';
 import NotificationsPanel from '../ui/NotificationsPanel';
 import AppToast from '../ui/AppToast';
 import { useNotifications } from '../../hooks/useNotifications';
+
+const ACTIVE_ROLE_CHANGE_EVENT = 'dlp-active-role-change';
+
+const ROLE_VIEW_LABELS: any = {
+  admin: 'Admin Global',
+  institutionadmin: 'Admin Institución',
+  teacher: 'Profesor',
+  student: 'Estudiante',
+};
 
 const Header = ({ user }: any) => {
   const navigate = useNavigate();
@@ -97,7 +108,10 @@ const Header = ({ user }: any) => {
   }, [user?.uid]);
 
   // Determine which data to show
-  const userData = firestoreUser || user;
+  const userData = { ...(user || {}), ...(firestoreUser || {}) };
+  const assignedRoles = getAssignedRoles(userData);
+  const activeRole = getActiveRole(userData);
+  const canSwitchRole = assignedRoles.length > 1;
   const institutionBranding = useInstitutionBranding(userData);
 
   const getDisplayName = () => {
@@ -109,8 +123,7 @@ const Header = ({ user }: any) => {
   const displayName = getDisplayName();
 
   // --- 3. ROLE-BASED PANEL NAVIGATION ---
-  const getDashboardRoute = () => {
-    const role = userData?.role || 'student';
+  const getDashboardRoute = (role: any) => {
     switch (role) {
       case 'admin':
         return '/admin-dashboard';
@@ -125,8 +138,7 @@ const Header = ({ user }: any) => {
     }
   };
 
-  const getDashboardLabel = () => {
-    const role = userData?.role || 'student';
+  const getDashboardLabel = (role: any) => {
     switch (role) {
       case 'admin':
         return 'Panel Admin';
@@ -141,8 +153,20 @@ const Header = ({ user }: any) => {
     }
   };
 
-  const dashboardRoute = getDashboardRoute();
-  const dashboardLabel = getDashboardLabel();
+  const dashboardRoute = getDashboardRoute(activeRole);
+  const dashboardLabel = getDashboardLabel(activeRole);
+
+  const handleRoleSwitch = (event: any) => {
+    const nextRole = event?.target?.value;
+    if (!userData?.uid || !nextRole || nextRole === activeRole) return;
+
+    window.dispatchEvent(new CustomEvent(ACTIVE_ROLE_CHANGE_EVENT, {
+      detail: {
+        uid: userData.uid,
+        activeRole: nextRole,
+      },
+    }));
+  };
 
   // --- 4. NOTIFICATIONS ---
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(userData);
@@ -211,7 +235,26 @@ const Header = ({ user }: any) => {
                 <Moon size={14} className={`hidden sm:block transition-colors ${darkMode ? 'text-indigo-400' : 'text-gray-400'}`} />
             </div>
 
-            {/* 2. DASHBOARD BUTTON (Role-based) */}
+            {/* 2. ROLE SWITCHER */}
+            {canSwitchRole && (
+              <label className="flex items-center gap-2 px-2 py-1 rounded-lg border border-gray-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/50 max-w-[10.5rem]">
+                <span className="hidden lg:inline text-xs font-medium text-gray-500 dark:text-slate-400">Vista</span>
+                <select
+                  aria-label="Seleccionar vista de rol"
+                  value={activeRole}
+                  onChange={handleRoleSwitch}
+                  className="w-full min-w-0 bg-transparent text-xs sm:text-sm font-medium text-gray-700 dark:text-slate-200 outline-none"
+                >
+                  {assignedRoles.map((roleName: any) => (
+                    <option key={roleName} value={roleName}>
+                      {ROLE_VIEW_LABELS[roleName] || roleName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {/* 3. DASHBOARD BUTTON (Role-based) */}
             {dashboardRoute && (
                 <button
                     onClick={() => navigate(dashboardRoute)}
@@ -223,7 +266,7 @@ const Header = ({ user }: any) => {
                 </button>
             )}
 
-            {/* 3. SETTINGS BUTTON */}
+            {/* 4. SETTINGS BUTTON */}
             <button 
                 onClick={() => navigate('/settings')}
                 className="p-2.5 text-gray-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-full transition-all duration-200 cursor-pointer"
@@ -232,7 +275,7 @@ const Header = ({ user }: any) => {
                 <Settings size={20} />
             </button>
 
-            {/* 4. USER PROFILE (Clickable Area) */}
+            {/* 5. USER PROFILE (Clickable Area) */}
             <div 
                 className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
                 onClick={() => navigate('/profile')} 
@@ -257,7 +300,7 @@ const Header = ({ user }: any) => {
                 />
             </div>
 
-            {/* 5. MAILBOX ICON - PLACED RIGHT OF AVATAR */}
+            {/* 6. MAILBOX ICON - PLACED RIGHT OF AVATAR */}
             <div className="border-l pl-4 border-gray-200 dark:border-slate-700 relative">
                 <MailboxIcon
                     mailCount={unreadCount}

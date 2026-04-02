@@ -7,6 +7,8 @@ import {
   shouldShowDeleteUI,
   hasRequiredRoleAccess,
   getNormalizedRole,
+  getAssignedRoles,
+  getActiveRole,
   isReadOnlyRole,
   canCreateSubjectByRole,
   canCreateFolderByRole,
@@ -87,6 +89,31 @@ describe('route role guard helpers', () => {
     expect(getNormalizedRole({ role: 'institutionadmin' })).toBe('institutionadmin');
     expect(getNormalizedRole({ role: 'unknown-role' })).toBe('student');
     expect(getNormalizedRole(null)).toBe('student');
+  });
+
+  it('resolves assigned and active role for dual-role profiles', () => {
+    const dualRoleUser = {
+      role: 'institutionadmin',
+      roles: ['teacher', 'institutionadmin'],
+      activeRole: 'teacher',
+    };
+
+    expect(getAssignedRoles(dualRoleUser)).toEqual(['institutionadmin', 'teacher']);
+    expect(getActiveRole(dualRoleUser)).toBe('teacher');
+    expect(hasRequiredRoleAccess(dualRoleUser, 'teacher')).toBe(true);
+    expect(hasRequiredRoleAccess(dualRoleUser, 'institutionadmin')).toBe(false);
+  });
+
+  it('falls back to primary role when active role is not assigned', () => {
+    const invalidActiveRoleUser = {
+      role: 'institutionadmin',
+      roles: ['teacher'],
+      activeRole: 'admin',
+    };
+
+    expect(getAssignedRoles(invalidActiveRoleUser)).toEqual(['institutionadmin', 'teacher']);
+    expect(getActiveRole(invalidActiveRoleUser)).toBe('institutionadmin');
+    expect(hasRequiredRoleAccess(invalidActiveRoleUser, 'institutionadmin')).toBe(true);
   });
 
   it('applies read-only and create capabilities by role', () => {

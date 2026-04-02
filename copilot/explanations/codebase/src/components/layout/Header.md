@@ -125,3 +125,10 @@ function ExampleScreen() {
 ## Maintenance Notes
 - Keep this explanation updated when adding, renaming, or deleting functions in the source file.
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
+
+## Changelog
+### 2026-04-02
+- Added active-role selector in header actions for dual-role users.
+- Dashboard shortcut route and label now resolve from active role context instead of raw `user.role`.
+- Header now emits shell-level active-role change event (`dlp-active-role-change`) consumed by `App.tsx` role-context synchronization.
+- Merged `user` + Firestore profile snapshots before rendering so active role metadata from app shell is preserved.

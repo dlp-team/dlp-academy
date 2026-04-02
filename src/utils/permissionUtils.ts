@@ -351,6 +351,22 @@ const ROLE_RANK = {
     admin: 3,
 };
 
+const normalizeRoleCandidate = (roleCandidate: any) => {
+    if (typeof roleCandidate !== 'string') return null;
+    const normalizedRole = roleCandidate.trim().toLowerCase();
+    return Object.prototype.hasOwnProperty.call(ROLE_RANK, normalizedRole)
+        ? normalizedRole
+        : null;
+};
+
+const pushUniqueRole = (bucket: any[], roleCandidate: any) => {
+    const normalizedRole = normalizeRoleCandidate(roleCandidate);
+    if (!normalizedRole) return;
+    if (!bucket.includes(normalizedRole)) {
+        bucket.push(normalizedRole);
+    }
+};
+
 /**
  * Normalize role value from user/profile docs.
  * Unknown roles are treated as student for safety.
@@ -360,8 +376,65 @@ const ROLE_RANK = {
  */
 export const getNormalizedRole = (userOrRole: any) => {
     const rawRole = typeof userOrRole === 'string' ? userOrRole : userOrRole?.role;
-    const normalized = typeof rawRole === 'string' ? rawRole.trim().toLowerCase() : 'student';
-    return Object.prototype.hasOwnProperty.call(ROLE_RANK, normalized) ? normalized : 'student';
+    return normalizeRoleCandidate(rawRole) || 'student';
+};
+
+/**
+ * Resolve all assigned roles for a user profile.
+ * Backward compatible with existing `role` field while supporting additive arrays.
+ *
+ * @param {Object|string|null|undefined} userOrRole
+ * @returns {Array<'student'|'teacher'|'institutionadmin'|'admin'>}
+ */
+export const getAssignedRoles = (userOrRole: any) => {
+    if (typeof userOrRole === 'string') {
+        return [getNormalizedRole(userOrRole)];
+    }
+
+    if (!userOrRole || typeof userOrRole !== 'object') {
+        return ['student'];
+    }
+
+    const assignedRoles: any[] = [];
+
+    pushUniqueRole(assignedRoles, userOrRole?.role);
+    pushUniqueRole(assignedRoles, userOrRole?.primaryRole);
+
+    const roleArrays = [userOrRole?.roles, userOrRole?.secondaryRoles, userOrRole?.assignedRoles];
+    roleArrays.forEach((roleArray) => {
+        if (!Array.isArray(roleArray)) return;
+        roleArray.forEach((roleValue) => pushUniqueRole(assignedRoles, roleValue));
+    });
+
+    pushUniqueRole(assignedRoles, userOrRole?.secondaryRole);
+
+    if (assignedRoles.length === 0) {
+        assignedRoles.push('student');
+    }
+
+    return assignedRoles;
+};
+
+/**
+ * Resolve currently active role context for UI and route checks.
+ * Falls back to the first assigned role when `activeRole` is absent/invalid.
+ *
+ * @param {Object|string|null|undefined} userOrRole
+ * @returns {'student'|'teacher'|'institutionadmin'|'admin'}
+ */
+export const getActiveRole = (userOrRole: any) => {
+    if (typeof userOrRole === 'string') {
+        return getNormalizedRole(userOrRole);
+    }
+
+    const assignedRoles = getAssignedRoles(userOrRole);
+    const preferredActiveRole = normalizeRoleCandidate(userOrRole?.activeRole);
+
+    if (preferredActiveRole && assignedRoles.includes(preferredActiveRole)) {
+        return preferredActiveRole;
+    }
+
+    return assignedRoles[0] || 'student';
 };
 
 /**
@@ -373,7 +446,7 @@ export const getNormalizedRole = (userOrRole: any) => {
  * @returns {boolean}
  */
 export const hasRequiredRoleAccess = (userOrRole, requiredRole = 'student') => {
-    const userRole = getNormalizedRole(userOrRole);
+    const userRole = getActiveRole(userOrRole);
     const required = getNormalizedRole(requiredRole);
     return ROLE_RANK[userRole] >= ROLE_RANK[required];
 };
@@ -394,7 +467,7 @@ export const isReadOnlyRole = (userOrRole) => !hasRequiredRoleAccess(userOrRole,
  * @returns {boolean}
  */
 export const canCreateSubjectByRole = (userOrRole, options: any = {}) => {
-    const normalizedRole = getNormalizedRole(userOrRole);
+    const normalizedRole = getActiveRole(userOrRole);
     if (!hasRequiredRoleAccess(normalizedRole, 'teacher')) return false;
     if (normalizedRole !== 'teacher') return true;
     return options?.allowTeacherAutonomousSubjectCreation !== false;

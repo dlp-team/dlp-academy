@@ -1,19 +1,22 @@
+// src/pages/StudentDashboard/StudentDashboard.tsx
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, GraduationCap, Clock, BarChart3 } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
+import { getActiveRole } from '../../utils/permissionUtils';
 
 const StudentDashboard = ({ user }: any) => {
   const navigate = useNavigate();
   useIdleTimeout(15);
+  const activeRole = getActiveRole(user);
 
   useEffect(() => {
-    if (user && user.role !== 'student') {
+    if (user && activeRole !== 'student') {
       console.warn('Unauthorized access to Student Dashboard');
       navigate('/home');
     }
-  }, [user, navigate]);
+  }, [user, activeRole, navigate]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors">

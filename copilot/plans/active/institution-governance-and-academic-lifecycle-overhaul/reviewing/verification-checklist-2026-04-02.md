@@ -81,4 +81,13 @@
 		- Escala/Filtrar overlays no longer jump from top-left on first open,
 		- institution rows are directly clickable for dashboard navigation and action buttons remain isolated.
 	- Focused tests for bin sort helpers and institution row navigation passed (8 tests).
+- 2026-04-02 (Phase 07 Slice 01):
+	- Active-role shell baseline validated:
+		- dual-role helpers (`getAssignedRoles`, `getActiveRole`) now drive route access context,
+		- header exposes role switch control and dashboard routing by active role,
+		- app shell persists and rehydrates active role per user session.
+	- Guard alignment validated for dashboard surfaces:
+		- admin/teacher/student strict guards now evaluate active role,
+		- institution admin effective-context resolution now reads active role.
+	- Focused tests for permission-utils role context and app auth-listener compatibility passed (16 tests).
 

@@ -35,7 +35,51 @@ import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard/StudentDashboard';
 import TeacherStudentDetailView from './pages/TeacherDashboard/components/TeacherStudentDetailView';
-import { hasRequiredRoleAccess } from './utils/permissionUtils';
+import { getActiveRole, getAssignedRoles, hasRequiredRoleAccess } from './utils/permissionUtils';
+
+const ACTIVE_ROLE_STORAGE_KEY_PREFIX = 'dlp_active_role_';
+const ACTIVE_ROLE_CHANGE_EVENT = 'dlp-active-role-change';
+const VALID_ROLES = new Set(['student', 'teacher', 'institutionadmin', 'admin']);
+
+const buildActiveRoleStorageKey = (uid: any) => {
+  if (!uid) return null;
+  return `${ACTIVE_ROLE_STORAGE_KEY_PREFIX}${uid}`;
+};
+
+const readStoredActiveRole = (uid: any) => {
+  if (typeof window === 'undefined') return null;
+  const storageKey = buildActiveRoleStorageKey(uid);
+  if (!storageKey) return null;
+  const storedRole = window.localStorage.getItem(storageKey);
+  if (!storedRole || typeof storedRole !== 'string') return null;
+  const normalizedRole = storedRole.trim().toLowerCase();
+  return VALID_ROLES.has(normalizedRole) ? normalizedRole : null;
+};
+
+const writeStoredActiveRole = (uid: any, role: any) => {
+  if (typeof window === 'undefined') return;
+  const storageKey = buildActiveRoleStorageKey(uid);
+  if (!storageKey || typeof role !== 'string') return;
+  window.localStorage.setItem(storageKey, role);
+};
+
+const withActiveRoleContext = (rawUser: any) => {
+  if (!rawUser) return rawUser;
+
+  const assignedRoles = getAssignedRoles(rawUser);
+  const preferredActiveRole = readStoredActiveRole(rawUser.uid) || rawUser?.activeRole || null;
+  const activeRole = getActiveRole({ ...rawUser, activeRole: preferredActiveRole });
+
+  if (rawUser?.uid) {
+    writeStoredActiveRole(rawUser.uid, activeRole);
+  }
+
+  return {
+    ...rawUser,
+    availableRoles: assignedRoles,
+    activeRole,
+  };
+};
 
 // src/App.tsx
 interface AppUser {
@@ -92,7 +136,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, user, loading
 
   // 3. Wrong Role? -> Home (Prevent access to Admin Dashboard)
   if (requiredRole && !hasRequiredRoleAccess(user, requiredRole)) {
-    console.warn(`Access denied: User role '${user.role}' is not '${requiredRole}'`);
+    const activeRole = getActiveRole(user);
+    console.warn(`Access denied: active role '${activeRole}' cannot access '${requiredRole}'`);
     return <Navigate to="/home" />;
   }
   
@@ -102,6 +147,68 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, user, loading
 function App() {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const applyActiveRole = (uid: any, requestedRole: any) => {
+      setUser((previousUser) => {
+        if (!previousUser || !uid || previousUser.uid !== uid) return previousUser;
+
+        const nextActiveRole = getActiveRole({
+          ...previousUser,
+          activeRole: requestedRole,
+        });
+
+        if (nextActiveRole === previousUser.activeRole) return previousUser;
+
+        writeStoredActiveRole(previousUser.uid, nextActiveRole);
+
+        return {
+          ...previousUser,
+          availableRoles: getAssignedRoles(previousUser),
+          activeRole: nextActiveRole,
+        };
+      });
+    };
+
+    const handleRoleChangeEvent = (event: Event) => {
+      const roleEvent = event as CustomEvent<{ uid?: string; activeRole?: string }>;
+      applyActiveRole(roleEvent?.detail?.uid, roleEvent?.detail?.activeRole);
+    };
+
+    const handleStorageEvent = (event: StorageEvent) => {
+      setUser((previousUser) => {
+        if (!previousUser) return previousUser;
+
+        const expectedStorageKey = buildActiveRoleStorageKey(previousUser.uid);
+        if (!expectedStorageKey || event.key !== expectedStorageKey || !event.newValue) {
+          return previousUser;
+        }
+
+        const nextActiveRole = getActiveRole({
+          ...previousUser,
+          activeRole: event.newValue,
+        });
+
+        if (nextActiveRole === previousUser.activeRole) return previousUser;
+
+        return {
+          ...previousUser,
+          availableRoles: getAssignedRoles(previousUser),
+          activeRole: nextActiveRole,
+        };
+      });
+    };
+
+    window.addEventListener(ACTIVE_ROLE_CHANGE_EVENT, handleRoleChangeEvent as EventListener);
+    window.addEventListener('storage', handleStorageEvent);
+
+    return () => {
+      window.removeEventListener(ACTIVE_ROLE_CHANGE_EVENT, handleRoleChangeEvent as EventListener);
+      window.removeEventListener('storage', handleStorageEvent);
+    };
+  }, []);
 
   useEffect(() => {
     let unsubscribeUserDoc: (() => void) | null = null;
@@ -149,7 +256,7 @@ function App() {
             // If profile read is denied, avoid opening a realtime listener that will spam uncaught watch errors.
             if ((error as any)?.code === 'permission-denied') {
               console.error('Permission denied reading users doc on auth bootstrap:', error);
-              setUser(baseUser);
+              setUser(withActiveRoleContext(baseUser));
               setLoading(false);
               return;
             }
@@ -159,17 +266,18 @@ function App() {
           unsubscribeUserDoc = onSnapshot(userDocRef, (userDoc) => {
             if (userDoc.exists()) {
               const userData = userDoc.data();
-              setUser({
+              const mergedUser = {
                 ...baseUser,
                 ...userData
-              });
+              };
+              setUser(withActiveRoleContext(mergedUser));
             } else {
-              setUser(baseUser);
+              setUser(withActiveRoleContext(baseUser));
             }
             setLoading(false);
           }, (error: any) => {
             console.error("Error listening to user data:", error);
-            setUser(baseUser);
+            setUser(withActiveRoleContext(baseUser));
             setLoading(false);
           });
         })();

@@ -33,6 +33,11 @@ vi.mock('firebase/firestore', async () => {
 
 vi.mock('../../src/utils/permissionUtils', () => ({
   hasRequiredRoleAccess: vi.fn(() => true),
+  getActiveRole: vi.fn((user) => user?.activeRole || user?.role || 'student'),
+  getAssignedRoles: vi.fn((user) => {
+    const normalizedRole = String(user?.role || 'student').toLowerCase();
+    return [normalizedRole];
+  }),
 }));
 
 vi.mock('../../src/pages/Auth/Login', () => ({ default: () => <div>Login Mock</div> }));

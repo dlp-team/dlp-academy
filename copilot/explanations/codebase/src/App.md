@@ -19,3 +19,21 @@
 - **Source file:** `src/App.jsx`
 - **Last documented:** 2026-03-29
 - **Role:** Root app shell that wires auth state, user bootstrap, route protection, and page routing.
+
+## [2026-04-02] Active Role Context Rehydration
+
+### Context
+- Phase 07 dual-role implementation required route guards to evaluate an explicit active role (not only persisted primary role), with deterministic session rehydration.
+
+### Change
+- Added app-level role-context hydration that enriches authenticated user snapshots with:
+	- `availableRoles`,
+	- `activeRole` (validated and persisted per user in localStorage).
+- Added active-role synchronization listeners:
+	- in-tab event listener (`dlp-active-role-change`) for shell-level role switching,
+	- `storage` listener for cross-tab consistency.
+- Updated `ProtectedRoute` denial logging to report active role context.
+
+### Validation
+- `get_errors` clean for `src/App.tsx`.
+- Focused tests passed: `tests/unit/App.authListener.test.jsx`.
