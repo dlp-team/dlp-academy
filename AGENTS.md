@@ -1,6 +1,22 @@
 # Autonomous Execution Guidelines (AGENTS.md)
 
-## 🚫 BANNED ACTIONS & TERMINAL RESTRICTIONS (CRITICAL)
+## CRITICAL: CREDENTIAL SECURITY BEFORE ANY GIT OPERATION
+
+🚨 **ABSOLUTE RULE**: NEVER hardcode ANY API key - even old, test, or example keys.
+- GitGuardian detects EVEN OLD, INACTIVE, or EXAMPLE API keys
+- Even keys in comments or docs will be flagged
+- **SOLUTION**: Use environment variables ONLY
+
+**INCIDENT**: April 2, 2026 - Firebase API key leaked via build artifact.  
+**ACTION**: Before EVERY `git add`, `git commit`, or `git push`:
+1. Run `git diff --cached | grep -iE "AIza|private_key|password|secret|token"` and verify ZERO matches
+2. Verify `.env` is ignored: `git check-ignore -v .env`
+3. If ANY credentials found → **ABORT** and notify user immediately
+4. NEVER commit: `.env*`, `*serviceAccount*.json`, `*credentials*.json`, `phase*-lint*.json`
+
+---
+
+##�🚫 BANNED ACTIONS & TERMINAL RESTRICTIONS (CRITICAL)
 When operating in Bypass Approvals or Autopilot mode, you have terminal access. You must exercise extreme caution and strictly adhere to these limitations:
 
 1. **NO EXTERNAL TOOL CALLS**: You are strictly forbidden from making external API calls, webhook triggers, or using any external tools outside of the local VS Code environment. 
@@ -36,9 +52,13 @@ When operating in Autopilot mode, follow this exact loop until the task is compl
      - If command is unknown, log in `copilot/autopilot/PENDING_COMMANDS.md` and ask user via `vscode/askQuestions`
 3. **Context & Plan**: Read `copilot-instructions.md` and relevant files in `copilot/explanations/`.
 4. **Execute**: Make surgical code changes (following the Lossless Change Protocol).
-5. **Commit & Push** (PERIODIC):
+5. **Commit & Push** (PERIODIC) - WITH CREDENTIAL SECURITY SCAN:
+   - **MANDATORY**: Before `git commit`, scan for credentials: `git diff --cached | grep -iE "AIza|private_key|password|secret|token"` (MUST return zero matches)
+   - **MANDATORY**: Verify `.env` is ignored: `git check-ignore -v .env` (must show it's ignored)
    - After each logical work unit, commit with proper message format
    - Use format: `<type>(<scope>): <subject>` (see git-workflow-rules.md)
+   - **MANDATORY**: Before `git push`, scan entire branch: `git diff origin/main..HEAD | grep -iE "AIza|private_key"` (MUST return zero matches)
+   - If ANY secrets found → STOP and ask user before proceeding
    - Push to feature branch: `git push origin <branch-name>`
 6. **Test Generation**: If you created a new component, utility, or feature, you MUST create a corresponding test file.
 7. **Validate & Test**: Run local validation (`npm run test`) via the `terminal` tool. **(Local execution only. See BANNED ACTIONS).**

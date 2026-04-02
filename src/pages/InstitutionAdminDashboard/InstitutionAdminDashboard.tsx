@@ -53,7 +53,7 @@ const InstitutionAdminDashboard = ({ user }: any) => {
   }, [user, navigate]);
 
   // ── Domain logic hooks ──
-  const users = useUsers(user, effectiveInstitutionId);
+  const users = useUsers(user, effectiveInstitutionId, { loadAllUsers: activeTab === 'organization' });
   const customization = useCustomization(user, effectiveInstitutionId);
 
   return (
@@ -114,6 +114,9 @@ const InstitutionAdminDashboard = ({ user }: any) => {
             loading={users.loading}
             teachers={users.teachers}
             students={users.students}
+            canLoadMoreUsers={users.canLoadMoreUsers}
+            isLoadingMoreUsers={users.isLoadingMoreUsers}
+            onLoadMoreUsers={users.handleLoadMoreUsers}
             allowedTeachers={users.allowedTeachers}
             onNavigateTeacher={(id) => navigate(`/institution-admin-dashboard/teacher/${id}`)}
             onNavigateStudent={(id) => navigate(`/institution-admin-dashboard/student/${id}`)}

@@ -3,7 +3,7 @@
 
 ## Overview
 - **Source file:** `src/pages/InstitutionAdminDashboard/components/UsersTabContent.jsx`
-- **Last documented:** 2026-03-30
+- **Last documented:** 2026-04-02
 - **Role:** Institution Admin users tab UI orchestrator for policy controls, user tables, and invite management actions.
 
 ## Responsibilities
@@ -11,6 +11,7 @@
 - Renders access policy controls and save action wiring.
 - Displays pending invite rows and invite code copy actions.
 - Controls in-page confirmation modal for invite-access removal before destructive execution.
+- Renders pagination controls for teacher/student tables and delegates cursor loading via `onLoadMoreUsers`.
 
 ## Exports
 - `default UsersTabContent`
@@ -21,6 +22,8 @@
 - `../../../utils/institutionPolicyUtils`
 
 ## Changelog
+- 2026-04-02: Added `Cargar más profesores/alumnos` pagination controls with loading state wiring.
+- 2026-04-02: Switched user table filtering to explicit precomputed filtered arrays for clearer pagination + search behavior.
 - 2026-04-01: Added teacher policy toggle `allowTeacherAutonomousSubjectCreation` to the security panel and included it in policy save payloads.
 - 2026-03-30: Replaced invite deletion browser confirm with modal-first in-page confirmation (`accessDeleteConfirm`, `confirmRemoveAccess`, `closeAccessDeleteConfirm`).
 - 2026-03-30: Invite removal now executes only after explicit confirm action and keeps cancel path side-effect free.

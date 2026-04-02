@@ -15,6 +15,7 @@ import CreateCourseModal     from '../modals/CreateCourseModal';
 import CreateClassModal      from '../modals/CreateClassModal';
 import { usePersistentState } from '../../../hooks/usePersistentState';
 import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence';
+import { getTrashDaysRemaining } from '../../../utils/trashRetentionUtils';
 
 const TAB_COURSES = 'courses';
 const TAB_CLASSES = 'classes';
@@ -251,6 +252,14 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
     }
   };
 
+  const formatRetentionInfo = (value: any) => {
+    const daysRemaining = getTrashDaysRemaining(value, Date.now());
+    if (daysRemaining <= 0) {
+      return 'Se eliminará automáticamente hoy.';
+    }
+    return `Se eliminará automáticamente en ${daysRemaining} ${daysRemaining === 1 ? 'día' : 'días'}.`;
+  };
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
 
@@ -385,6 +394,7 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
                             <div>
                               <p className="font-semibold text-slate-900 dark:text-white">{course.name}</p>
                               <p className="text-xs text-slate-400">En papelera desde: {formatTrashedDate(course.trashedAt)}</p>
+                              <p className="text-xs text-amber-600 dark:text-amber-300 mt-0.5">{formatRetentionInfo(course.trashedAt)}</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <button
@@ -426,6 +436,7 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
                             <div>
                               <p className="font-semibold text-slate-900 dark:text-white">{cls.name}</p>
                               <p className="text-xs text-slate-400">En papelera desde: {formatTrashedDate(cls.trashedAt)}</p>
+                              <p className="text-xs text-amber-600 dark:text-amber-300 mt-0.5">{formatRetentionInfo(cls.trashedAt)}</p>
                             </div>
                             <div className="flex items-center gap-2">
                               <button

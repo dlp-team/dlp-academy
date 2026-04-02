@@ -7,6 +7,7 @@ import { db } from '../../../firebase/config';
 import { useSubjects } from '../../../hooks/useSubjects';
 import { useFolders } from '../../../hooks/useFolders';
 import { getRemainingMs, getDaysRemaining, getDaysRemainingTextClass, toJsDate } from '../utils/binViewUtils';
+import { isTrashRetentionExpired } from '../../../utils/trashRetentionUtils';
 
 import BinGridItem          from './bin/BinGridItem';
 import BinSelectionOverlay  from './bin/BinSelectionOverlay';
@@ -113,7 +114,9 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
 
     const buildActionKey = (itemId: any, itemType: any) => `${itemType}:${itemId}`;
 
-    const loadTrashedItems = async () => {
+    const loadTrashedItems = async (options: any = {}) => {
+        const skipAutoRetentionPurge = options?.skipAutoRetentionPurge === true;
+
         if (isStudent) {
             setTrashedItems([]);
             setAllTrashedSubjects([]);
@@ -129,6 +132,32 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                 getTrashedSubjects(),
                 getTrashedFolders({ includeNested: true }),
             ]);
+
+            if (!skipAutoRetentionPurge) {
+                const nowMs = Date.now();
+                const expiredRootFolderItems = folders
+                    .filter(isTopLevelTrashedFolderEntry)
+                    .filter((folder: any) => isTrashRetentionExpired(folder?.trashedAt, nowMs));
+
+                const expiredRootFolderIds = new Set(expiredRootFolderItems.map((folder: any) => folder.id));
+
+                const expiredSubjectItems = subjects.filter((subject: any) => {
+                    if (!isTrashRetentionExpired(subject?.trashedAt, nowMs)) return false;
+
+                    const subjectFolderRoot = subject?.trashedRootFolderId || subject?.trashedByFolderId || null;
+                    return !subjectFolderRoot || !expiredRootFolderIds.has(subjectFolderRoot);
+                });
+
+                if (expiredRootFolderItems.length > 0 || expiredSubjectItems.length > 0) {
+                    await Promise.allSettled([
+                        ...expiredRootFolderItems.map((folder: any) => permanentlyDeleteFolder(folder.id)),
+                        ...expiredSubjectItems.map((subject: any) => permanentlyDeleteSubject(subject.id)),
+                    ]);
+
+                    await loadTrashedItems({ skipAutoRetentionPurge: true });
+                    return;
+                }
+            }
 
             const allSubjectItems = subjects.map((subject: any) => ({ ...subject, itemType: 'subject' }));
             setAllTrashedSubjects(allSubjectItems);

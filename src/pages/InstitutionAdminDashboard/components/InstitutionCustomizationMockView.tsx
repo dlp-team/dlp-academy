@@ -1,7 +1,6 @@
-// src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.jsx
+// src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  BookOpen,
   Check,
   Eye,
   GraduationCap,
@@ -15,7 +14,8 @@ import {
 } from 'lucide-react';
 
 import ColorField from './customization/ColorField';
-import { COLOR_TOKENS, DEFAULTS, VIEWPORTS, hexToRgba } from './customization/themePreviewUtils';
+import { COLOR_TOKENS, DEFAULTS, VIEWPORTS } from './customization/themePreviewUtils';
+import CustomizationHomeExactPreview from './customization/CustomizationHomeExactPreview';
 
 const COLOR_FIELDS = ['primary', 'secondary', 'accent', 'cardBorder'];
 
@@ -40,106 +40,6 @@ const buildSafeForm = (candidate: any, fallback: any = DEFAULTS) => {
   });
 
   return safe;
-};
-
-const TeacherMockPreview = ({ form, activeToken }: any) => {
-  const borderStyle = { borderColor: form.cardBorder };
-  const activeOutline = activeToken
-    ? { boxShadow: `0 0 0 2px ${hexToRgba(form[activeToken], 0.45)}` }
-    : {};
-
-  return (
-    <div className="space-y-4">
-      <div
-        className="rounded-2xl p-4 text-white shadow-sm"
-        style={{
-          background: `linear-gradient(135deg, ${form.primary}, ${form.secondary})`,
-          ...activeOutline,
-        }}
-      >
-        <p className="text-xs uppercase tracking-wide opacity-90">Panel Docente</p>
-        <h3 className="text-lg font-bold mt-1">Resumen de curso</h3>
-        <p className="text-xs opacity-90 mt-1">3 clases activas · 82 alumnos</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl border bg-white p-3" style={borderStyle}>
-          <p className="text-xs text-slate-500">Asistencia semanal</p>
-          <p className="text-2xl font-black mt-1" style={{ color: form.primary }}>94%</p>
-        </div>
-        <div className="rounded-xl border bg-white p-3" style={borderStyle}>
-          <p className="text-xs text-slate-500">Evaluaciones corregidas</p>
-          <p className="text-2xl font-black mt-1" style={{ color: form.secondary }}>27</p>
-        </div>
-      </div>
-
-      <div className="rounded-xl border bg-white p-3" style={borderStyle}>
-        <p className="text-sm font-semibold text-slate-700 mb-2">Reconocimientos recientes</p>
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs bg-slate-50 rounded-lg px-2.5 py-2">
-            <span className="text-slate-600">Laura Ruiz</span>
-            <span className="px-2 py-1 rounded-full font-semibold text-white" style={{ backgroundColor: form.accent }}>Participación</span>
-          </div>
-          <div className="flex items-center justify-between text-xs bg-slate-50 rounded-lg px-2.5 py-2">
-            <span className="text-slate-600">Diego Martín</span>
-            <span className="px-2 py-1 rounded-full font-semibold text-white" style={{ backgroundColor: form.accent }}>Esfuerzo</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const StudentMockPreview = ({ form, activeToken }: any) => {
-  const borderStyle = { borderColor: form.cardBorder };
-  const activeOutline = activeToken
-    ? { boxShadow: `0 0 0 2px ${hexToRgba(form[activeToken], 0.45)}` }
-    : {};
-
-  return (
-    <div className="space-y-4">
-      <div
-        className="rounded-2xl p-4 text-white shadow-sm"
-        style={{
-          background: `linear-gradient(135deg, ${form.secondary}, ${form.primary})`,
-          ...activeOutline,
-        }}
-      >
-        <p className="text-xs uppercase tracking-wide opacity-90">Panel Estudiante</p>
-        <h3 className="text-lg font-bold mt-1">Tu progreso</h3>
-        <p className="text-xs opacity-90 mt-1">Promedio 86 · 4 logros desbloqueados</p>
-      </div>
-
-      <div className="rounded-xl border bg-white p-3" style={borderStyle}>
-        <p className="text-sm font-semibold text-slate-700 mb-2">Próximas actividades</p>
-        <div className="space-y-2 text-xs">
-          <div className="flex items-center justify-between rounded-lg px-2.5 py-2" style={{ backgroundColor: hexToRgba(form.primary, 0.08) || 'rgba(99,102,241,0.08)' }}>
-            <span className="text-slate-600">Quiz de Matemáticas</span>
-            <span className="font-semibold" style={{ color: form.primary }}>Mañana</span>
-          </div>
-          <div className="flex items-center justify-between rounded-lg px-2.5 py-2" style={{ backgroundColor: hexToRgba(form.secondary, 0.08) || 'rgba(139,92,246,0.08)' }}>
-            <span className="text-slate-600">Entrega de Historia</span>
-            <span className="font-semibold" style={{ color: form.secondary }}>Viernes</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl border bg-white p-3 text-center" style={borderStyle}>
-          <p className="text-[10px] uppercase text-slate-400">Insignias</p>
-          <p className="text-xl font-black mt-1" style={{ color: form.accent }}>6</p>
-        </div>
-        <div className="rounded-xl border bg-white p-3 text-center" style={borderStyle}>
-          <p className="text-[10px] uppercase text-slate-400">Temas</p>
-          <p className="text-xl font-black mt-1" style={{ color: form.primary }}>18</p>
-        </div>
-        <div className="rounded-xl border bg-white p-3 text-center" style={borderStyle}>
-          <p className="text-[10px] uppercase text-slate-400">Racha</p>
-          <p className="text-xl font-black mt-1" style={{ color: form.secondary }}>9</p>
-        </div>
-      </div>
-    </div>
-  );
 };
 
 const InstitutionCustomizationMockView = ({
@@ -221,7 +121,7 @@ const InstitutionCustomizationMockView = ({
             </div>
             <div>
               <p className="text-sm font-bold text-slate-900 dark:text-white">Editor de tema</p>
-              <p className="text-[11px] text-slate-400">Vista mock docente/estudiante</p>
+              <p className="text-[11px] text-slate-400">Vista exacta de Home (docente/estudiante)</p>
             </div>
           </div>
         </div>
@@ -283,7 +183,7 @@ const InstitutionCustomizationMockView = ({
       <div className="flex-1 min-w-0 flex flex-col">
         <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-bold text-slate-900 dark:text-white">Vista previa simulada</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white">Vista previa exacta de Home</p>
             <p className="text-xs text-slate-400">{institutionLabel}</p>
           </div>
 
@@ -319,41 +219,13 @@ const InstitutionCustomizationMockView = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-5 bg-slate-200 dark:bg-slate-950 flex justify-center">
-          <div
-            className="w-full rounded-2xl border bg-white p-4 shadow-xl transition-all"
-            style={{
-              maxWidth: viewportConfig.width,
-              borderColor: form.cardBorder,
-            }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center text-white" style={{ backgroundColor: form.primary }}>
-                  <BookOpen size={16} />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-800">{institutionLabel}</p>
-                  <p className="text-[11px] text-slate-400">Tema institucional activo</p>
-                </div>
-              </div>
-              <span
-                className="px-2 py-1 rounded-full text-[11px] font-semibold"
-                style={{
-                  backgroundColor: hexToRgba(form.accent, 0.16) || 'rgba(168,85,247,0.16)',
-                  color: form.accent,
-                }}
-              >
-                Preview
-              </span>
-            </div>
-
-            {previewRole === 'teacher' ? (
-              <TeacherMockPreview form={form} activeToken={activeToken} />
-            ) : (
-              <StudentMockPreview form={form} activeToken={activeToken} />
-            )}
-          </div>
+        <div className="flex-1 overflow-auto p-5 bg-slate-200 dark:bg-slate-950">
+          <CustomizationHomeExactPreview
+            form={form}
+            previewRole={previewRole}
+            viewportWidth={viewportConfig.width}
+            activeToken={activeToken}
+          />
         </div>
       </div>
     </div>

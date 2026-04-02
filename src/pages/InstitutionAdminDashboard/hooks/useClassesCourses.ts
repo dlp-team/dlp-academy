@@ -17,6 +17,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { isTrashRetentionExpired } from '../../../utils/trashRetentionUtils';
 
 const normalizeEntityStatus = (entity: any) => String(entity?.status || 'active').trim().toLowerCase();
 const isTrashedEntity = (entity: any) => normalizeEntityStatus(entity) === 'trashed';
@@ -45,13 +46,56 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
     if (!effectiveInstitutionId) return;
     setLoading(true);
     try {
-      const [cSnap, clSnap] = await Promise.all([
-        getDocs(query(collection(db, 'courses'), where('institutionId', '==', effectiveInstitutionId))),
-        getDocs(query(collection(db, 'classes'), where('institutionId', '==', effectiveInstitutionId))),
-      ]);
+      const readInstitutionCollections = async () => {
+        const [cSnap, clSnap] = await Promise.all([
+          getDocs(query(collection(db, 'courses'), where('institutionId', '==', effectiveInstitutionId))),
+          getDocs(query(collection(db, 'classes'), where('institutionId', '==', effectiveInstitutionId))),
+        ]);
 
-      const allCourses = cSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-      const allClasses = clSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const allCourses: any[] = cSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const allClasses: any[] = clSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+        return {
+          allCourses,
+          allClasses,
+        };
+      };
+
+      let { allCourses, allClasses } = await readInstitutionCollections();
+
+      const nowMs = Date.now();
+      const expiredCourseIds = new Set(
+        allCourses
+          .filter((course) => isTrashedEntity(course) && isTrashRetentionExpired(course?.trashedAt, nowMs))
+          .map((course) => course.id)
+      );
+
+      const expiredClassIds = new Set<any>();
+
+      allClasses.forEach((cls) => {
+        if (expiredCourseIds.has(cls?.courseId)) {
+          expiredClassIds.add(cls.id);
+          return;
+        }
+
+        if (isTrashedEntity(cls) && isTrashRetentionExpired(cls?.trashedAt, nowMs)) {
+          expiredClassIds.add(cls.id);
+        }
+      });
+
+      if (expiredCourseIds.size > 0 || expiredClassIds.size > 0) {
+        try {
+          const deleteRefs = [
+            ...Array.from(expiredClassIds).map((classId: any) => doc(db, 'classes', classId)),
+            ...Array.from(expiredCourseIds).map((courseId: any) => doc(db, 'courses', courseId)),
+          ];
+
+          await applyDeleteBatchInChunks(deleteRefs);
+          ({ allCourses, allClasses } = await readInstitutionCollections());
+        } catch (purgeError) {
+          console.error('useClassesCourses purgeExpired:', purgeError);
+        }
+      }
 
       setCourses(allCourses.filter((course) => !isTrashedEntity(course)));
       setClasses(allClasses.filter((cls) => !isTrashedEntity(cls)));

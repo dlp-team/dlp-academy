@@ -23,6 +23,44 @@ This workspace also uses scoped file instructions in `.github/instructions/` to 
 
 **This user has LIMITED premium requests. Every interaction must deliver MAXIMUM value.**
 
+## 🔐 CRITICAL: CREDENTIAL SECURITY (MANDATORY - NO EXCEPTIONS)
+
+🚨 **ABSOLUTE RULE: NEVER HARDCODE ANY API KEY - EVEN OLD/EXAMPLE KEYS**
+- GitGuardian detects EVEN OLD, INACTIVE, or EXAMPLE API keys
+- Even keys you think are "test only" will trigger alerts
+- Even keys in comments, docs, or examples will be flagged
+- **SOLUTION**: Use environment variables ONLY - `import.meta.env.VITE_FIREBASE_API_KEY`
+
+**INCIDENT**: On April 2, 2026, a Firebase API key was leaked to GitHub via `phase07-lint-current.json`. This must NEVER happen again.
+
+### Before ANY Commit or Push
+1. **SCAN for exposed credentials** (MANDATORY):
+   - `git diff --cached` - Review ALL staged changes for secrets
+   - Search for patterns: `AIza`, `private_key`, `password=`, `secret=`, `token=`
+   - Check for `.env`, `.env.*`, `*-credentials.json`, `*-key.json` files
+   - Verify NO test credentials, API keys, or service accounts are included
+
+2. **Verify `.gitignore` protection**:
+   - Run `git check-ignore -v .env` - MUST show `.env` is ignored
+   - NEVER commit: `.env`, `.env.*`, `*serviceAccount*.json`, `*credentials*.json`
+
+3. **Check build artifacts**:
+   - Do NOT commit files like `phase*-lint-current.json`, `*.build.json`, or config snapshots with embedded secrets
+   - These are ephemeral and should be in `.gitignore`
+
+4. **Use environment variables**:
+   - Firebase config, API keys, test credentials must use `import.meta.env.VITE_*`
+   - NEVER hardcode: API keys, JWT secrets, passwords, private keys
+
+### Credential Types That Must NEVER Be Committed
+- 🔴 **CRITICAL**: Firebase service account private keys (entire JSON)
+- 🔴 **CRITICAL**: Firebase API keys (AIza...)
+- 🔴 **CRITICAL**: Private keys (RSA, JWT, SSH)
+- 🟠 **HIGH**: Test account credentials (emails, passwords)
+- 🟠 **HIGH**: Database connection strings
+- 🟠 **HIGH**: OAuth tokens, API tokens
+- 🟡 **MEDIUM**: Document IDs if targeting specific data in tests
+
 ### Non-Negotiable Performance Standards:
 1. **Read ALL relevant context BEFORE acting** - Use parallel tool calls to gather comprehensive context upfront
 2. **Complete tasks fully in ONE session** - No partial work, no "I'll start with..." approaches

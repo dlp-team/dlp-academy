@@ -7,9 +7,11 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   query,
   serverTimestamp,
   setDoc,
+  startAfter,
   updateDoc,
   where,
   writeBatch,
@@ -20,7 +22,10 @@ import { DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils
 import { usePersistentState } from '../../../hooks/usePersistentState';
 import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence';
 
-export const useUsers = (user, institutionIdOverride = null) => {
+const USERS_PAGE_SIZE = 25;
+
+export const useUsers = (user, institutionIdOverride = null, options: any = {}) => {
+  const shouldLoadAllUsers = options?.loadAllUsers === true;
   const effectiveInstitutionId = institutionIdOverride || user?.institutionId || null;
   const userTypeKey = buildInstitutionScopedPersistenceKey('institution-admin-users', effectiveInstitutionId, 'user-type');
   const [userType, setUserType] = usePersistentState(userTypeKey, 'teachers');
@@ -30,6 +35,9 @@ export const useUsers = (user, institutionIdOverride = null) => {
   const [allTeachers, setAllTeachers] = useState<any[]>([]);
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoadingMoreUsers, setIsLoadingMoreUsers] = useState(false);
+  const [teacherPagination, setTeacherPagination] = useState<{ lastVisible: any; hasMore: boolean }>({ lastVisible: null, hasMore: false });
+  const [studentPagination, setStudentPagination] = useState<{ lastVisible: any; hasMore: boolean }>({ lastVisible: null, hasMore: false });
   const [searchTerm, setSearchTerm] = useState('');
 
   const [showAddUserModal, setShowAddUserModal] = useState(false);
@@ -52,24 +60,55 @@ export const useUsers = (user, institutionIdOverride = null) => {
   const [showSudoModal, setShowSudoModal] = useState(false);
   const [pendingPolicies, setPendingPolicies] = useState<any>(null);
 
+  const buildInstitutionRoleUsersQuery = (role: any, cursor: any = null) => {
+    const queryConstraints: any[] = [
+      where('institutionId', '==', effectiveInstitutionId),
+      where('role', '==', role),
+      limit(USERS_PAGE_SIZE),
+    ];
+
+    if (cursor) {
+      queryConstraints.push(startAfter(cursor));
+    }
+
+    return query(collection(db, 'users'), ...queryConstraints);
+  };
+
   const fetchData = useCallback(async () => {
     if (!effectiveInstitutionId) return;
     setLoading(true);
+    setIsLoadingMoreUsers(false);
     try {
       if (userType === 'teachers') {
         const [teachersSnap, allowedSnap] = await Promise.all([
-          getDocs(query(collection(db, 'users'), where('institutionId', '==', effectiveInstitutionId), where('role', '==', 'teacher'))),
+          getDocs(buildInstitutionRoleUsersQuery('teacher')),
           getDocs(query(collection(db, 'institution_invites'), where('institutionId', '==', effectiveInstitutionId))),
         ]);
-        setTeachers(teachersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+
+        const teacherDocs = teachersSnap.docs;
+        setTeachers(teacherDocs.map(d => ({ id: d.id, ...d.data() })));
+        setTeacherPagination({
+          lastVisible: teacherDocs.length > 0 ? teacherDocs[teacherDocs.length - 1] : null,
+          hasMore: teacherDocs.length === USERS_PAGE_SIZE,
+        });
+
         setAllowedTeachers(allowedSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         const generalInvite = allowedSnap.docs.find(d => d.data().type === 'institutional');
         setInstitutionalCode(generalInvite ? generalInvite.id : '');
         setStudents([]);
+        setStudentPagination({ lastVisible: null, hasMore: false });
       } else {
-        const studentsSnap = await getDocs(query(collection(db, 'users'), where('institutionId', '==', effectiveInstitutionId), where('role', '==', 'student')));
-        setStudents(studentsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        const studentsSnap = await getDocs(buildInstitutionRoleUsersQuery('student'));
+        const studentDocs = studentsSnap.docs;
+
+        setStudents(studentDocs.map(d => ({ id: d.id, ...d.data() })));
+        setStudentPagination({
+          lastVisible: studentDocs.length > 0 ? studentDocs[studentDocs.length - 1] : null,
+          hasMore: studentDocs.length === USERS_PAGE_SIZE,
+        });
+
         setTeachers([]);
+        setTeacherPagination({ lastVisible: null, hasMore: false });
         setAllowedTeachers([]);
       }
       const instDoc = await getDoc(doc(db, 'institutions', effectiveInstitutionId));
@@ -86,6 +125,41 @@ export const useUsers = (user, institutionIdOverride = null) => {
   }, [effectiveInstitutionId, userType]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleLoadMoreUsers = async () => {
+    if (!effectiveInstitutionId || isLoadingMoreUsers || loading) return;
+
+    const loadingTeachers = userType === 'teachers';
+    const currentPagination = loadingTeachers ? teacherPagination : studentPagination;
+    if (!currentPagination?.hasMore || !currentPagination?.lastVisible) return;
+
+    setIsLoadingMoreUsers(true);
+    try {
+      const nextPageSnap = await getDocs(
+        buildInstitutionRoleUsersQuery(loadingTeachers ? 'teacher' : 'student', currentPagination.lastVisible)
+      );
+      const nextDocs = nextPageSnap.docs;
+      const mappedUsers = nextDocs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+
+      if (loadingTeachers) {
+        setTeachers((prev: any[]) => [...prev, ...mappedUsers]);
+        setTeacherPagination({
+          lastVisible: nextDocs.length > 0 ? nextDocs[nextDocs.length - 1] : currentPagination.lastVisible,
+          hasMore: nextDocs.length === USERS_PAGE_SIZE,
+        });
+      } else {
+        setStudents((prev: any[]) => [...prev, ...mappedUsers]);
+        setStudentPagination({
+          lastVisible: nextDocs.length > 0 ? nextDocs[nextDocs.length - 1] : currentPagination.lastVisible,
+          hasMore: nextDocs.length === USERS_PAGE_SIZE,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading more users:', error);
+    } finally {
+      setIsLoadingMoreUsers(false);
+    }
+  };
 
   // Live access code polling
   useEffect(() => {
@@ -122,7 +196,12 @@ export const useUsers = (user, institutionIdOverride = null) => {
 
   // Fetch all teachers/students for org view
   useEffect(() => {
-    if (!effectiveInstitutionId) return;
+    if (!effectiveInstitutionId || !shouldLoadAllUsers) {
+      setAllTeachers([]);
+      setAllStudents([]);
+      return;
+    }
+
     Promise.all([
       getDocs(query(collection(db, 'users'), where('institutionId', '==', effectiveInstitutionId), where('role', '==', 'teacher'))),
       getDocs(query(collection(db, 'users'), where('institutionId', '==', effectiveInstitutionId), where('role', '==', 'student'))),
@@ -130,7 +209,7 @@ export const useUsers = (user, institutionIdOverride = null) => {
       setAllTeachers(teachersSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       setAllStudents(studentsSnap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
-  }, [user, effectiveInstitutionId]);
+  }, [effectiveInstitutionId, shouldLoadAllUsers]);
 
   const handleAddUser = async (e: any) => {
     e.preventDefault();
@@ -242,6 +321,8 @@ export const useUsers = (user, institutionIdOverride = null) => {
     userType, setUserType,
     effectiveInstitutionId,
     teachers, students, allowedTeachers, allTeachers, allStudents,
+    canLoadMoreUsers: userType === 'teachers' ? teacherPagination.hasMore : studentPagination.hasMore,
+    isLoadingMoreUsers,
     loading, searchTerm, setSearchTerm,
     showAddUserModal, setShowAddUserModal,
     newUserEmail, setNewUserEmail,
@@ -257,5 +338,6 @@ export const useUsers = (user, institutionIdOverride = null) => {
     handleSavePolicies,
     handleConfirmSavePolicies,
     handleRemoveAccess,
+    handleLoadMoreUsers,
   };
 };

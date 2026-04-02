@@ -26,6 +26,9 @@ const UsersTabContent = ({
   loading,
   teachers,
   students,
+  canLoadMoreUsers,
+  isLoadingMoreUsers,
+  onLoadMoreUsers,
   allowedTeachers,
   onNavigateTeacher,
   onNavigateStudent,
@@ -36,6 +39,9 @@ const UsersTabContent = ({
 }: any) => {
   // 1. Filter out the general code so it doesn't appear in the specific invites table
   const specificInvites = allowedTeachers.filter(t => t.type !== 'institutional');
+  const normalizedSearchTerm = searchTerm.toLowerCase();
+  const filteredTeachers = teachers.filter((teacher: any) => teacher.email?.toLowerCase().includes(normalizedSearchTerm));
+  const filteredStudents = students.filter((student: any) => student.email?.toLowerCase().includes(normalizedSearchTerm));
 
   const [copied, setCopied] = useState(false);
   const [accessDeleteConfirm, setAccessDeleteConfirm] = useState({
@@ -323,7 +329,7 @@ const UsersTabContent = ({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {teachers.filter(u => u.email?.toLowerCase().includes(searchTerm.toLowerCase())).map(u => (
+                      {filteredTeachers.map(u => (
                         <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer" onClick={() => onNavigateTeacher(u.id)}>
                           <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{u.displayName || 'Sin Nombre'}</td>
                           <td className="px-6 py-4">{u.email}</td>
@@ -335,10 +341,26 @@ const UsersTabContent = ({
                           <td className="px-6 py-4 text-right"><ChevronRight className="w-4 h-4 text-slate-300 ml-auto" /></td>
                         </tr>
                       ))}
-                      {teachers.length === 0 && <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">No hay profesores registrados aún.</td></tr>}
+                      {filteredTeachers.length === 0 && <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">No hay profesores registrados aún.</td></tr>}
                     </tbody>
                   </table>
                 </div>
+                {canLoadMoreUsers && (
+                  <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-center">
+                    <button
+                      onClick={onLoadMoreUsers}
+                      disabled={isLoadingMoreUsers}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60"
+                    >
+                      {isLoadingMoreUsers ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Cargando...
+                        </>
+                      ) : 'Cargar más profesores'}
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
@@ -415,7 +437,7 @@ const UsersTabContent = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {students.filter(u => u.email?.toLowerCase().includes(searchTerm.toLowerCase())).map(u => (
+                    {filteredStudents.map(u => (
                       <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer" onClick={() => onNavigateStudent(u.id)}>
                         <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{u.displayName || 'Sin Nombre'}</td>
                         <td className="px-6 py-4">{u.email}</td>
@@ -425,10 +447,26 @@ const UsersTabContent = ({
                         <td className="px-6 py-4 text-right"><ChevronRight className="w-4 h-4 text-slate-300 ml-auto" /></td>
                       </tr>
                     ))}
-                    {students.length === 0 && <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">No hay alumnos registrados aún.</td></tr>}
+                    {filteredStudents.length === 0 && <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">No hay alumnos registrados aún.</td></tr>}
                   </tbody>
                 </table>
               </div>
+              {canLoadMoreUsers && (
+                <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-center">
+                  <button
+                    onClick={onLoadMoreUsers}
+                    disabled={isLoadingMoreUsers}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60"
+                  >
+                    {isLoadingMoreUsers ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Cargando...
+                      </>
+                    ) : 'Cargar más alumnos'}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

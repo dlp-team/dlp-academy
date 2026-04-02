@@ -2,7 +2,7 @@
 
 ## Overview
 - **Source file:** `src/pages/Home/components/BinView.jsx`
-- **Last documented:** 2026-03-06
+- **Last documented:** 2026-04-02
 - **Role:** Renders trash contents (paper bin) with restore/permanent-delete actions and content preview.
 
 ## Responsibilities
@@ -24,6 +24,10 @@
 - `../../../components/modules/ListViewItem`
 
 ## Changelog
+- **2026-04-02:** Reintroduced retention-window enforcement with controlled auto-purge during load:
+	- expired top-level trashed folders are permanently removed automatically,
+	- expired trashed subjects outside expired folder roots are permanently removed automatically,
+	- purge runs once per load cycle with recursion guard to prevent repeated delete loops.
 - **2026-04-02:** Extended folder drilldown to full nested navigation inside bin:
 	- keeps a breadcrumb-like folder trail for multi-level navigation,
 	- shows immediate subfolders plus immediate subjects for the active trashed folder level,

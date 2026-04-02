@@ -11,7 +11,7 @@
 
 ## Overview
 - **Source file:** `src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.jsx`
-- **Last documented:** 2026-02-24
+- **Last documented:** 2026-04-02
 - **Role:** Page-level or feature-level module that orchestrates UI and logic.
 
 ## Responsibilities
@@ -29,6 +29,9 @@
 - `react-router-dom`
 - `../../firebase/config`
 - `../../components/layout/Header`
+
+## Changelog
+- 2026-04-02: Updated `useUsers` integration to pass `loadAllUsers: activeTab === 'organization'` so full teachers/students fetches are deferred outside organization workflows.
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.

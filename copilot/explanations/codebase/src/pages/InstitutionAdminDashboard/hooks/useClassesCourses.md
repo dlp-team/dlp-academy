@@ -12,6 +12,7 @@
 - Applies soft-delete lifecycle (`status: trashed`, `trashedAt`, `trashedByUid`) for course/class removal.
 - Cascades course soft-delete/restore to linked classes.
 - Executes permanent deletion for course/class records (including linked class cleanup for courses).
+- Enforces 15-day trash retention by purging expired trashed courses/classes during fetch cycles.
 
 ## Exports
 - `useClassesCourses(user, institutionIdOverride?)`
@@ -22,6 +23,7 @@
 - `../../../firebase/config`
 
 ## Changelog
+- 2026-04-02: Added fetch-time retention purge for trashed courses/classes older than 15 days, including dependent class cleanup for expired trashed courses.
 - 2026-04-02: Added active/trashed state partition (`courses`, `classes`, `trashedCourses`, `trashedClasses`) and normalized status handling.
 - 2026-04-02: Converted course/class delete flows to trash-first soft deletion with lifecycle metadata.
 - 2026-04-02: Added `restoreCourse`, `restoreClass`, `permanentlyDeleteCourse`, and `permanentlyDeleteClass` hook APIs for bin lifecycle orchestration.

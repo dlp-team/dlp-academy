@@ -3,7 +3,7 @@
 
 ## Overview
 - **Source file:** `tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx`
-- **Last documented:** 2026-03-30
+- **Last documented:** 2026-04-02
 - **Role:** Focused regression coverage for Institution Admin invite-access removal confirmation behavior.
 
 ## Coverage
@@ -12,8 +12,12 @@
 - Cancel path closes modal and does not invoke destructive handler.
 - Browser `window.confirm(...)` is never used by the migrated flow.
 - Policy-save path persists `allowTeacherAutonomousSubjectCreation` toggle changes in submitted payload.
+- Teacher table pagination button delegates to `onLoadMoreUsers`.
 
 ## Changelog
+### 2026-04-02
+- Added regression case that validates teacher pagination control invokes `onLoadMoreUsers`.
+
 ### 2026-04-01
 - Added regression assertion for teacher autonomous subject-creation policy toggle save behavior.
 

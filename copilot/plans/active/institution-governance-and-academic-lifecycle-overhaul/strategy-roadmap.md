@@ -29,7 +29,7 @@
   - explicit deny-path validation evidence.
 
 ### Phase 03 - Deletion Lifecycle and Bin-First Architecture
-- Status: IN_PROGRESS
+- Status: COMPLETED
 - Goal: enforce bin-first lifecycle where requested, including folder and course/class deletion semantics.
 - Outputs:
   - folder delete mode implementation updates,
@@ -38,7 +38,7 @@
   - confirmation overlays with typed-name guards.
 
 ### Phase 04 - Institution Admin Dashboard Upgrades
-- Status: PLANNED
+- Status: COMPLETED
 - Goal: deliver reliable governance tooling for customization preview, policy enforcement, and large-list pagination.
 - Outputs:
   - exact-app preview implementation,
@@ -81,9 +81,9 @@
   - completed review checklist and closure summary.
 
 ## Immediate Next Actions
-1. Validate and document 15-day retention semantics for folder/course/class bin lifecycle (including purge execution path).
-2. Consolidate full Phase 03 behavior matrix evidence (folder options + nested drilldown + institution-admin lifecycle) and prepare phase close gate.
-3. Re-run emulator-backed rules validation once emulator startup configuration is available, then close remaining Phase 02 validation gate.
+1. Re-run emulator-backed rules validation once emulator startup configuration is available, then close remaining Phase 02 validation gate.
+2. Start Phase 05 academic-year governance and courses UX overhaul slices.
+3. Keep plan/explanation sync current while transitioning from Phase 04 completion into the next execution block.
 
 ## Rollback Strategy
 - Keep all rule changes atomic and scoped by failure class.

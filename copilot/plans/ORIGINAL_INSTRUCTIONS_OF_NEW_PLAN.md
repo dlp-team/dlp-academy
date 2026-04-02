@@ -3,7 +3,7 @@ You are a deeply professional developer. You are going to make deep analysis and
 Create a plan like from the protocol with subplans for each one where you log everything so you know how to continue and what to do next, so we don't lose track of the changes and everything
 
 Firestore Permissions
-When a teacher tries to create a subject, it gets: POST https://firestore.googleapis.com/v1/projects/dlp-academ/databases/(default)/documents:batchGet?key=AIzaSyDPIEiAOkCkAm24X9KOiMUoV1f5PXwDC5s 403 (Forbidden)
+When a teacher tries to create a subject, it gets: POST https://firestore.googleapis.com/v1/projects/dlp-academ/databases/(default)/documents:batchGet?key=AIza...REDACTED 403 (Forbidden)
 345.e.send @ injectScriptAdjust.js:1
 h.ea @ firebase_firestore.js?v=66228a36:1853
 (anonymous) @ firebase_firestore.js?v=66228a36:12585
@@ -60,7 +60,7 @@ batchedUpdates$1 @ react-dom_client.js?v=66228a36:2626
 dispatchEventForPluginEventSystem @ react-dom_client.js?v=66228a36:13763
 dispatchEvent @ react-dom_client.js?v=66228a36:16784
 dispatchDiscreteEvent @ react-dom_client.js?v=66228a36:16765Understand this error
-useSubjects.ts:309 [2026-04-02T07:57:42.212Z]  @firebase/firestore: Firestore (12.8.0): RestConnection RPC 'BatchGetDocuments' 0x8f0236d2 failed with error:  {"code":"permission-denied","name":"FirebaseError"} url:  https://firestore.googleapis.com/v1/projects/dlp-academ/databases/(default)/documents:batchGet?key=AIzaSyDPIEiAOkCkAm24X9KOiMUoV1f5PXwDC5s request: {"documents":["projects/dlp-academ/databases/(default)/documents/subjectInviteCodes/OfvtfLA39z0ahpnwwKPC_ZTW2GMK5"]}
+useSubjects.ts:309 [2026-04-02T07:57:42.212Z]  @firebase/firestore: Firestore (12.8.0): RestConnection RPC 'BatchGetDocuments' 0x8f0236d2 failed with error:  {"code":"permission-denied","name":"FirebaseError"} url:  https://firestore.googleapis.com/v1/projects/dlp-academ/databases/(default)/documents:batchGet?key=AIza...REDACTED request: {"documents":["projects/dlp-academ/databases/(default)/documents/subjectInviteCodes/OfvtfLA39z0ahpnwwKPC_ZTW2GMK5"]}
 defaultLogHandler @ chunk-TQ6CG7TX.js?v=66228a36:1220
 warn @ chunk-TQ6CG7TX.js?v=66228a36:1284
 __PRIVATE_logWarn @ firebase_firestore.js?v=66228a36:2570

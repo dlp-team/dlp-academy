@@ -14,6 +14,7 @@
 - Enforces in-page confirmation-first deletion for courses/classes through shared modal state.
 - Adds dedicated `Papelera` tab for trashed courses/classes with restore and permanent-delete actions.
 - Requires typed-name confirmation only for permanent delete actions.
+- Displays retention countdown messaging for trashed courses/classes.
 
 ## Exports
 - `default ClassesCoursesSection`
@@ -32,6 +33,7 @@
 - `../../../utils/pagePersistence.js`
 
 ## Changelog
+- 2026-04-02: Added retention-window countdown copy in bin rows (`Se eliminará automáticamente en ...`) for trashed courses/classes.
 - 2026-04-02: Added institution-admin `Papelera` tab with trashed courses/classes listing, restore actions, and permanent-delete routing.
 - 2026-04-02: Updated confirmation modal behavior to distinguish `trash` vs `permanent` actions and enforce typed-name confirmation only for permanent deletion.
 - 2026-03-30: Replaced `window.confirm(...)` delete flows for courses/classes with queued in-page confirmation modal (`deleteConfirm`, `confirmDelete`, `closeDeleteConfirm`).

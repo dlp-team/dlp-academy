@@ -3,7 +3,7 @@
 # Phase 03 - Deletion Lifecycle and Bin-First Architecture
 
 ## Status
-- IN_PROGRESS
+- COMPLETED
 
 ## Objective
 Unify deletion behavior so requested entities are routed through bin-first semantics, with explicit exceptions and typed confirmation for destructive operations.
@@ -61,6 +61,14 @@ Unify deletion behavior so requested entities are routed through bin-first seman
       - move-to-trash confirmation copy and handler routing,
       - bin restore action,
       - typed-name guard for permanent delete.
+- Slice 04 completed (2026-04-02):
+   - Added shared retention helper `trashRetentionUtils` to centralize 15-day lifecycle calculations.
+   - Home `BinView` now auto-purges expired trashed entries on load with controlled one-pass guard:
+      - expired top-level folders are permanently deleted,
+      - expired subjects outside expired folders are permanently deleted.
+   - Institution-admin `useClassesCourses` now purges expired trashed courses/classes during fetch cycles (including linked class cleanup for expired trashed courses).
+   - Institution-admin paper-bin rows now surface retention countdown copy.
+   - Added retention utility unit coverage and revalidated bin utility/component tests.
 - Remaining for phase closure:
-   - confirm/validate retention-window behavior (15-day policy) and document purge execution path.
+   - none (transitioned to Phase 04).
 

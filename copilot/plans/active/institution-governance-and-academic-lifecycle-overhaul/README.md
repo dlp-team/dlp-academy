@@ -36,8 +36,8 @@ Deliver a lossless, phased, security-first overhaul that resolves all requested 
 
 ## Lifecycle Status
 - Lifecycle: `active`
-- Current phase: `Phase 03 - Deletion lifecycle and bin-first architecture`
-- Overall progress: `42%`
+- Current phase: `Phase 02/04 validation closure and handoff`
+- Overall progress: `58%`
 
 ## Key Decisions to Record During Execution
 1. Exact approach for institution customization preview (component reuse + mock provider vs account simulation path).

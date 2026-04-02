@@ -16,5 +16,11 @@
 - Policy toggles produce deterministic behavior in affected workflows.
 
 ## Status
-- PLANNED
+- COMPLETED
+- Completed in current cycle:
+	- cursor-based pagination for teachers/students lists,
+	- load-more controls in users tab,
+	- deferred full-list fetch outside organization workflows,
+	- exact preview architecture implemented with Home component reuse + isolated mock-data provider,
+	- policy-toggle verification matrix executed (dynamic code + teacher creation/assignment/deletion controls) with deterministic pass evidence.
 

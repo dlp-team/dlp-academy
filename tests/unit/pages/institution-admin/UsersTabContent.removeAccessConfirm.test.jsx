@@ -19,6 +19,9 @@ describe('UsersTabContent invite removal confirmation', () => {
       loading: false,
       teachers: [],
       students: [],
+      canLoadMoreUsers: false,
+      isLoadingMoreUsers: false,
+      onLoadMoreUsers: vi.fn(),
       allowedTeachers: [
         { id: 'invite-1', type: 'direct', email: 'profe@example.com' },
         { id: 'institutional-1', type: 'institutional', email: '' },
@@ -92,5 +95,21 @@ describe('UsersTabContent invite removal confirmation', () => {
         }),
       })
     );
+  });
+
+  it('calls load-more handler from teacher table pagination control', () => {
+    const props = renderUsersTab({
+      teachers: Array.from({ length: 2 }).map((_, index) => ({
+        id: `teacher-${index}`,
+        displayName: `Profesor ${index}`,
+        email: `profesor-${index}@example.com`,
+        enabled: true,
+      })),
+      canLoadMoreUsers: true,
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /cargar más profesores/i }));
+
+    expect(props.onLoadMoreUsers).toHaveBeenCalledTimes(1);
   });
 });

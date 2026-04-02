@@ -106,3 +106,64 @@
 - `npm run lint` (pass, warnings only outside scope)
 - `get_errors` on touched files (clean)
 
+## Phase 03 Slice 04 - Retention Window Enforcement
+- Added shared retention utility `src/utils/trashRetentionUtils.ts`:
+   - canonical 15-day constants,
+   - timestamp normalization helpers,
+   - expiry/remaining-day calculations.
+- Updated Home bin retention flow:
+   - `BinView` now purges expired trashed folders/subjects during load,
+   - purge executes once per load cycle with recursion guard.
+- Updated institution-admin retention flow:
+   - `useClassesCourses.fetchAll` purges expired trashed courses/classes,
+   - expired trashed course purge includes linked class cleanup,
+   - bin rows now show auto-delete countdown copy.
+- Added retention-focused unit coverage and synced helper docs.
+
+## Phase 03 Slice 04 Validation
+- `npm run test -- tests/unit/utils/trashRetentionUtils.test.js tests/unit/pages/home/binViewUtils.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.deleteConfirm.test.jsx` (pass, 12 tests)
+- `npx tsc --noEmit` (pass)
+- `npm run lint` (pass, warnings only outside scope)
+- `get_errors` on touched files (clean)
+
+## Phase 04 Slice 01 - Institution User List Pagination
+- Refactored `useUsers` with cursor-based pagination for teachers/students:
+   - initial reads use `limit(25)`,
+   - subsequent reads use `startAfter(lastVisible)` via `handleLoadMoreUsers`,
+   - per-tab pagination state now tracks `hasMore` and cursor snapshots.
+- Updated users tab UI (`UsersTabContent`):
+   - renders `Cargar más profesores/alumnos` controls,
+   - binds loading state for paginated fetch requests,
+   - keeps existing search/filter behavior on currently loaded rows.
+- Reduced unnecessary heavy reads:
+   - `useUsers` now accepts `loadAllUsers` option,
+   - `InstitutionAdminDashboard` enables full teachers/students fetch only when `organization` tab is active.
+- Updated focused users-tab unit suite with pagination callback coverage.
+
+## Phase 04 Slice 01 Validation
+- `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.deleteConfirm.test.jsx` (pass, 9 tests)
+- `npx tsc --noEmit` (pass)
+- `npm run lint` (pass, warnings only outside scope)
+- `get_errors` on touched files (clean)
+
+## Phase 04 Slice 02 - Exact Preview + Policy Matrix Verification
+- Reworked customization preview architecture in `InstitutionCustomizationMockView`:
+   - replaced static mock cards with exact Home UI surface rendering,
+   - preserved existing editor interactions (palette apply, role toggle, viewport toggle, save/reset).
+- Added new adapter component `CustomizationHomeExactPreview`:
+   - reuses `HomeControls` and `HomeContent` directly,
+   - uses isolated deterministic mock data (no auth/account coupling),
+   - applies live theme colors via Home CSS variables for parity.
+- Executed policy-toggle verification matrix (Phase 04 scope):
+   - dynamic code requirement path (`useRegister` + institutional code callable flow),
+   - teacher autonomous subject creation toggle enforcement (`useSubjects`),
+   - teacher class/student assignment restricted path (`SubjectFormModal` request path),
+   - teacher deletion with associated students toggle enforcement (`useSubjects`).
+
+## Phase 04 Slice 02 Validation
+- `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (pass, 3 tests)
+- `npm run test -- tests/unit/hooks/useSubjects.test.js tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx tests/unit/hooks/useRegister.test.js tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx` (pass, 54 tests)
+- `npx tsc --noEmit` (pass)
+- `npm run lint` (pass, warnings only outside scope)
+- `get_errors` on touched files (clean)
+

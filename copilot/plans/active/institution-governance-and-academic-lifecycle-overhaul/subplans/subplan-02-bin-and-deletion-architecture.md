@@ -19,4 +19,5 @@
 	- top-level bin container behavior for trashed folders,
 	- nested subfolder drilldown and subtree-scoped restore/permanent-delete actions.
 	- institution admin course/class bin lifecycle with typed-name destructive confirmation.
+	- 15-day retention-window purge enforcement for Home bin and institution-admin trashed course/class lifecycle.
 

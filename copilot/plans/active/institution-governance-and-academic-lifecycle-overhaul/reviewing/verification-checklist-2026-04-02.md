@@ -5,7 +5,7 @@
 - [x] Phase 01 decisions documented and accepted for implementation.
 - [ ] Firestore and Storage permission fixes validated with deny-path checks.
 - [x] Deletion and bin-first lifecycle behavior validated for folders/subjects/courses.
-- [ ] Institution admin dashboard preview, pagination, and policy controls validated.
+- [x] Institution admin dashboard preview, pagination, and policy controls validated.
 - [ ] Academic year format, picker, filters, and lifecycle transitions validated.
 - [ ] Selection mode, bin sorting, animation fix, and admin navigation validated.
 - [ ] Dual-role switching validated without permission regressions.
@@ -28,5 +28,18 @@
 		- soft-delete routes items to paper bin,
 		- bin supports restore + permanent delete actions,
 		- permanent delete requires exact typed-name confirmation.
-	- Remaining validation item for this phase: retention-window (15-day) execution path evidence.
+- 2026-04-02 (Phase 03 Slice 04):
+	- Retention-window enforcement validated:
+		- Home bin auto-purges expired trashed folders/subjects,
+		- institution-admin lifecycle fetch purges expired trashed courses/classes,
+		- retention utility tests and bin helper tests pass.
+- 2026-04-02 (Phase 04 Slice 01):
+	- Institution-admin users tab pagination validated:
+		- cursor-based loading for teachers/students,
+		- load-more controls wired with loading state,
+		- full all-users fetch deferred outside organization tab.
+- 2026-04-02 (Phase 04 Slice 02):
+	- Exact customization preview validated with Home component reuse and isolated mock-data provider.
+	- Policy-toggle enforcement matrix validated for dynamic-code + teacher creation/assignment/deletion controls.
+	- No policy mismatches detected in targeted matrix runs.
 

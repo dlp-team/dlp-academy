@@ -27,12 +27,38 @@ Keep git history clean, safe, and protocol-compliant. **Commits are logs of vali
   - `refactor(payment): Extract payment utils to shared module` + validation
   - = 4 commits, full audit trail of progress
 
+## 🔐 Security Scan BEFORE EVERY Commit (MANDATORY)
+
+🚨 **CRITICAL**: NEVER hardcode ANY API key - even old, test, or example keys.
+GitGuardian detects ALL API keys (AIza...), regardless of status or age.
+**SOLUTION**: Use environment variables ONLY - `import.meta.env.VITE_FIREBASE_API_KEY`
+
+**Alert**: Credentials leaked on April 2, 2026. This CANNOT happen again.
+
+Before `git commit`:
+1. **Scan for secrets in staged changes**:
+   ```bash
+   git diff --cached | grep -iE "AIza|private_key|password|secret|token"
+   ```
+   - MUST return ZERO matches
+   - If matches found: `git reset` and DO NOT COMMIT
+
+2. **Verify `.env` protection**: `git check-ignore -v .env` (must be ignored)
+
+3. **Check build artifacts**: No `*-lint-*.json`, `*serviceAccount*.json` files
+
+Before `git push`:
+1. Final scan: `git diff origin/main..HEAD | grep -iE "AIza|private_key|password"`
+   - MUST return ZERO matches
+
 ## Verification before EVERY push
 - `git status` - Confirm clean working directory or staged changes are intentional
 - `git branch --show-current` - MUST NOT return "main"
 - Tests/validation relevant to scope MUST be complete BEFORE commit
 - Linting must pass BEFORE commit
 - No `console.log` or debug code in commit
+- 🔐 **NO CREDENTIALS** (API keys, private keys, passwords, tokens)
+- 🔐 **`.env` files MUST be ignored** by git
 
 ## Commit Message Format (MANDATORY)
 
