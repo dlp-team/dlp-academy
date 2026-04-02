@@ -16,6 +16,7 @@ import {
   SectionCard,
   StatCard,
 } from './Shared';
+import { getDefaultAcademicYear, normalizeAcademicYear } from './academicYearUtils';
 
 // ─── PersonPicker ─────────────────────────────────────────────────────────────
 // One component for both teacher (singleSelect=true) and students (singleSelect=false).
@@ -139,6 +140,10 @@ const ClassDetail = ({
   const course  = courses.find(c => c.id === cls.courseId);
   const teacher = allTeachers.find(t => t.id === cls.teacherId);
   const color   = course?.color || '#6366f1';
+  const resolvedAcademicYear =
+    normalizeAcademicYear(course?.academicYear)
+    || normalizeAcademicYear(cls.academicYear)
+    || getDefaultAcademicYear();
 
   const getIdentifier = () => {
     if (!course) return cls.name;
@@ -154,8 +159,6 @@ const ClassDetail = ({
       setDraft({ teacherIds: cls.teacherId ? [cls.teacherId] : [] });
     } else if (key === 'students') {
       setDraft({ studentIds: cls.studentIds ? [...cls.studentIds] : [] });
-    } else if (key === 'academicYear') {
-      setDraft({ academicYear: cls.academicYear || '' });
     }
     setEditingKey(key);
   };
@@ -171,13 +174,18 @@ const ClassDetail = ({
         const sel = courses.find(c => c.id === draft.courseId);
         if (!draft.courseId)                        { setSaveError('Debes seleccionar un curso.'); setSaving(false); return; }
         if (!String(draft.identifier || '').trim()) { setSaveError('El identificador no puede estar vacío.'); setSaving(false); return; }
-        patch = { name: `${sel.name} ${draft.identifier.trim()}`, courseId: draft.courseId };
+        const nextAcademicYear = normalizeAcademicYear(sel?.academicYear)
+          || normalizeAcademicYear(cls.academicYear)
+          || getDefaultAcademicYear();
+        patch = {
+          name: `${sel.name} ${draft.identifier.trim()}`,
+          courseId: draft.courseId,
+          academicYear: nextAcademicYear,
+        };
       } else if (key === 'teacher') {
         patch = { teacherId: draft.teacherIds?.[0] ?? '' };
       } else if (key === 'students') {
         patch = { studentIds: draft.studentIds };
-      } else if (key === 'academicYear') {
-        patch = { academicYear: draft.academicYear };
       }
       await onUpdateField(cls.id, patch);
       setEditingKey(null);
@@ -213,7 +221,7 @@ const ClassDetail = ({
         onBack={onBack}
         color={color}
         title={cls.name}
-        badge={`Clase · ${course ? course.name : 'Sin curso asignado'}${cls.academicYear ? ` · ${cls.academicYear}` : ''}`}
+        badge={`Clase · ${course ? course.name : 'Sin curso asignado'}${resolvedAcademicYear ? ` · ${resolvedAcademicYear}` : ''}`}
         onEdit={() => startEdit('identifier')}
         onDelete={onDelete}
       />
@@ -222,7 +230,7 @@ const ClassDetail = ({
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <StatCard icon={Users}        label="Alumnos inscritos" value={(cls.studentIds || []).length} color={color} />
         <StatCard icon={BookOpen}     label="Curso"             value={course?.name || '—'}           color={color} />
-        <StatCard icon={CalendarDays} label="Año académico"     value={cls.academicYear || '—'}       color={color} />
+        <StatCard icon={CalendarDays} label="Año académico"     value={resolvedAcademicYear || '—'}   color={color} />
       </div>
 
       {saveError && (
@@ -280,42 +288,21 @@ const ClassDetail = ({
           </div>
         </InlineEditField>
 
-        {/* Año académico */}
-        <InlineEditField
-          label="Año académico"
-          displayValue={
-            cls.academicYear
-              ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <CalendarDays className="w-3.5 h-3.5 text-slate-400" />
-                  {cls.academicYear}
-                  {cls.status === 'archived' && (
-                    <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-400 rounded font-medium">
-                      Archivada
-                    </span>
-                  )}
-                </span>
-              )
-              : null
-          }
-          editingKey={editingKey}
-          fieldKey="academicYear"
-          onStartEdit={startEdit}
-          onCancelEdit={cancelEdit}
-          onSave={saveField}
-          saving={saving}
-        >
-          <input
-            type="text"
-            value={draft.academicYear ?? ''}
-            onChange={e => setDraft(p => ({ ...p, academicYear: e.target.value }))}
-            placeholder="2024-2025"
-            className={inputCls}
-          />
-          <p className="text-xs text-slate-400 mt-1.5">
-            Clases de distintos años coexisten sin conflicto. Al archivar un año los alumnos mantienen acceso histórico a sus asignaturas.
+        <div className="py-3 border-b border-slate-100 dark:border-slate-800">
+          <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">Año académico</p>
+          <p className="text-sm text-slate-800 dark:text-slate-200 inline-flex items-center gap-1.5">
+            <CalendarDays className="w-3.5 h-3.5 text-slate-400" />
+            {resolvedAcademicYear}
+            {cls.status === 'archived' && (
+              <span className="text-[10px] px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 text-slate-400 rounded font-medium">
+                Archivada
+              </span>
+            )}
           </p>
-        </InlineEditField>
+          <p className="text-xs text-slate-400 mt-1">
+            Este valor se hereda del curso asignado para mantener coherencia académica.
+          </p>
+        </div>
 
         {/* Profesor — single-select PersonPicker */}
         <InlineEditField

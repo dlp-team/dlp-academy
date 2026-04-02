@@ -167,3 +167,28 @@
 - `npm run lint` (pass, warnings only outside scope)
 - `get_errors` on touched files (clean)
 
+## Phase 05 Slice 01 - Academic-Year Governance Baseline
+- Added shared academic-year governance utilities:
+   - strict `YYYY-YYYY` consecutive validation,
+   - canonical default-year resolver (`Jul-Dec => Y-(Y+1)`, `Jan-Jun => (Y-1)-Y`),
+   - selectable range builder (`-20` to `+10`).
+- Added reusable `AcademicYearPicker` for deterministic year selection in institution-admin flows.
+- Updated course governance flows:
+   - `CreateCourseModal` now requires academic year,
+   - `CourseDetail` can edit canonical academic year with strict validation,
+   - `useClassesCourses` normalizes persisted year values and propagates course year updates to linked classes.
+- Updated class governance flows:
+   - `CreateClassModal` derives year from selected course (fallback for legacy invalid courses),
+   - `ClassDetail` now treats year as course-derived metadata and no longer supports direct free-form editing.
+- Added defensive validation in `ClassesCoursesSection` create handlers.
+- Added focused deterministic tests:
+   - `academicYearUtils.test.js`,
+   - `CreateClassModal.academicYear.test.jsx`,
+   - `CreateCourseModal.academicYear.test.jsx`.
+
+## Phase 05 Slice 01 Validation
+- `npm run test -- tests/unit/pages/institution-admin/academicYearUtils.test.js tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx` (pass, 7 tests)
+- `npx tsc --noEmit` (pass)
+- `npm run lint` (pass, warnings only outside scope)
+- `get_errors` on touched files (clean)
+

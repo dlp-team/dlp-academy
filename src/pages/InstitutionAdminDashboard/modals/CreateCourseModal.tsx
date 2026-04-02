@@ -18,10 +18,17 @@ import {
   Modal,
   primaryBtnCls,
 } from '../components/classes-courses/Shared';
+import AcademicYearPicker from '../components/classes-courses/AcademicYearPicker';
+import {
+  getDefaultAcademicYear,
+  isValidAcademicYear,
+  normalizeAcademicYear,
+} from '../components/classes-courses/academicYearUtils';
 
 const CreateCourseModal = ({ onClose, onSubmit, submitting, error }: any) => {
   const [courseNumber, setCourseNumber] = useState('');
   const [courseName,   setCourseName]   = useState('');
+  const [academicYear, setAcademicYear] = useState(getDefaultAcademicYear());
   const [description,  setDescription]  = useState('');
   const [color,        setColor]        = useState('#6366f1');
 
@@ -30,7 +37,8 @@ const CreateCourseModal = ({ onClose, onSubmit, submitting, error }: any) => {
   const numStr = Number.isInteger(num) && num > 0 ? `${num}º` : '';
   const preview = [numStr, courseName.trim()].filter(Boolean).join(' ');
 
-  const isValid = preview.trim().length > 0;
+  const isAcademicYearValid = isValidAcademicYear(academicYear);
+  const isValid = preview.trim().length > 0 && isAcademicYearValid;
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
@@ -39,6 +47,7 @@ const CreateCourseModal = ({ onClose, onSubmit, submitting, error }: any) => {
       courseNumber: Number.isInteger(num) && num > 0 ? num : null,
       courseName:   courseName.trim(),
       name:         preview,   // composed, stored for display/queries
+      academicYear: normalizeAcademicYear(academicYear),
       description,
       color,
     });
@@ -100,6 +109,23 @@ const CreateCourseModal = ({ onClose, onSubmit, submitting, error }: any) => {
             </p>
           </div>
         )}
+
+        {/* ── Description ── */}
+        <InputField label="Año académico" required>
+          <AcademicYearPicker
+            value={academicYear}
+            onChange={setAcademicYear}
+            placeholder="2024-2025"
+          />
+          <p className="mt-1 text-xs text-slate-400">
+            Formato obligatorio YYYY-YYYY. Se usa como fuente canónica para las clases del curso.
+          </p>
+          {!isAcademicYearValid && (
+            <p className="mt-1 text-xs font-medium text-red-500">
+              El año académico debe tener formato YYYY-YYYY y representar años consecutivos.
+            </p>
+          )}
+        </InputField>
 
         {/* ── Description ── */}
         <InputField label="Descripción">

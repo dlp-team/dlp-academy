@@ -9,7 +9,7 @@
 - History tab removal.
 
 ## Proposed Ownership
-- Course/class owns `academicYear` as canonical source.
+- Course owns `academicYear` as canonical source (classes derive from selected course).
 - Subjects inherit and do not override under normal UI flow.
 
 ## Acceptance Criteria
@@ -18,5 +18,5 @@
 - Role-aware visual indicators render correctly.
 
 ## Status
-- PLANNED
+- IN_PROGRESS
 

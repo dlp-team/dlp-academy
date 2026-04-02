@@ -33,6 +33,7 @@
 - `../../../utils/pagePersistence.js`
 
 ## Changelog
+- 2026-04-02: Added defensive academic-year validation gates on `handleCreateCourse` and `handleCreateClass` before delegating to hook writes.
 - 2026-04-02: Added retention-window countdown copy in bin rows (`Se eliminará automáticamente en ...`) for trashed courses/classes.
 - 2026-04-02: Added institution-admin `Papelera` tab with trashed courses/classes listing, restore actions, and permanent-delete routing.
 - 2026-04-02: Updated confirmation modal behavior to distinguish `trash` vs `permanent` actions and enforce typed-name confirmation only for permanent deletion.

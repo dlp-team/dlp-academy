@@ -42,4 +42,11 @@
 	- Exact customization preview validated with Home component reuse and isolated mock-data provider.
 	- Policy-toggle enforcement matrix validated for dynamic-code + teacher creation/assignment/deletion controls.
 	- No policy mismatches detected in targeted matrix runs.
+- 2026-04-02 (Phase 05 Slice 01):
+	- Academic-year governance baseline validated in institution-admin course/class flows:
+		- strict format + default-year utility,
+		- picker integration,
+		- course-owned year derivation into class create/edit paths,
+		- hook-level normalization and course-to-class propagation.
+	- Focused tests passed for utility + create-modal behavior (7 tests).
 

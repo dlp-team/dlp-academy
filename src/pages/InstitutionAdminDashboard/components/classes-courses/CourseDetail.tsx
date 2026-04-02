@@ -6,7 +6,7 @@
 //   mirroring the CreateCourseModal. Combined name stored as `name` on save.
 
 import React, { useState } from 'react';
-import { Hash, LayoutGrid, Type, User, Users } from 'lucide-react';
+import { CalendarDays, Hash, LayoutGrid, Type, User, Users } from 'lucide-react';
 import {
   AvatarChip,
   ColorPicker,
@@ -16,6 +16,12 @@ import {
   SectionCard,
   StatCard,
 } from './Shared';
+import AcademicYearPicker from './AcademicYearPicker';
+import {
+  getDefaultAcademicYear,
+  isValidAcademicYear,
+  normalizeAcademicYear,
+} from './academicYearUtils';
 
 // ─── Classes mini-list inside course detail ───────────────────────────────────
 const CourseClassesList = ({ courseClasses, allTeachers, color }: any) => {
@@ -78,6 +84,7 @@ const CourseDetail = ({
   const [saveError,  setSaveError]  = useState('');
 
   const color         = course.color || '#6366f1';
+  const resolvedAcademicYear = normalizeAcademicYear(course.academicYear) || getDefaultAcademicYear();
   const courseClasses = classes.filter(cl => cl.courseId === course.id);
   const totalStudents = new Set(courseClasses.flatMap(cl => cl.studentIds || [])).size;
   const totalTeachers = new Set(courseClasses.map(cl => cl.teacherId).filter(Boolean)).size;
@@ -90,6 +97,8 @@ const CourseDetail = ({
         courseNumber: course.courseNumber != null ? String(course.courseNumber) : '',
         courseName:   course.courseName   ?? course.name ?? '',
       });
+    } else if (key === 'academicYear') {
+      setDraft({ academicYear: resolvedAcademicYear });
     } else {
       setDraft({ [key]: course[key] ?? '' });
     }
@@ -113,6 +122,14 @@ const CourseDetail = ({
           courseName:   cname,
           name:         [numStr, cname].filter(Boolean).join(' '),
         };
+      } else if (key === 'academicYear') {
+        const nextAcademicYear = normalizeAcademicYear(draft.academicYear);
+        if (!isValidAcademicYear(nextAcademicYear)) {
+          setSaveError('El año académico debe tener formato YYYY-YYYY y años consecutivos.');
+          setSaving(false);
+          return;
+        }
+        patch = { academicYear: nextAcademicYear };
       } else {
         patch = { [key]: draft[key] };
       }
@@ -139,14 +156,15 @@ const CourseDetail = ({
         onBack={onBack}
         color={color}
         title={course.name}
-        badge={`Curso · ${courseClasses.length} clase${courseClasses.length !== 1 ? 's' : ''}`}
+        badge={`Curso · ${resolvedAcademicYear} · ${courseClasses.length} clase${courseClasses.length !== 1 ? 's' : ''}`}
         onEdit={() => startEdit('name')}
         onDelete={onDelete}
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard icon={LayoutGrid} label="Clases"         value={courseClasses.length} color={color} />
+        <StatCard icon={CalendarDays} label="Año académico" value={resolvedAcademicYear} color={color} />
         <StatCard icon={Users}      label="Alumnos únicos" value={totalStudents}        color={color} />
         <StatCard icon={User}       label="Profesores"     value={totalTeachers}        color={color} />
       </div>
@@ -212,6 +230,25 @@ const CourseDetail = ({
               </div>
             )}
           </div>
+        </InlineEditField>
+
+        <InlineEditField
+          label="Año académico"
+          displayValue={resolvedAcademicYear}
+          editingKey={editingKey}
+          fieldKey="academicYear"
+          onStartEdit={startEdit}
+          onCancelEdit={cancelEdit}
+          onSave={saveField}
+          saving={saving}
+        >
+          <AcademicYearPicker
+            value={draft.academicYear ?? resolvedAcademicYear}
+            onChange={(nextValue) => setDraft((previous) => ({ ...previous, academicYear: nextValue }))}
+          />
+          <p className="text-xs text-slate-400 mt-1.5">
+            Formato obligatorio YYYY-YYYY. Este valor se hereda automáticamente en las clases vinculadas.
+          </p>
         </InlineEditField>
 
         {/* Description */}

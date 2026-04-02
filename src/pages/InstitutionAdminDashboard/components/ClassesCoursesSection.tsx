@@ -16,6 +16,7 @@ import CreateClassModal      from '../modals/CreateClassModal';
 import { usePersistentState } from '../../../hooks/usePersistentState';
 import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence';
 import { getTrashDaysRemaining } from '../../../utils/trashRetentionUtils';
+import { isValidAcademicYear } from './classes-courses/academicYearUtils';
 
 const TAB_COURSES = 'courses';
 const TAB_CLASSES = 'classes';
@@ -180,6 +181,10 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
   const handleCreateCourse = async (form: any) => {
     setCourseModalErr('');
     if (!form.name.trim()) { setCourseModalErr('El nombre es obligatorio.'); return; }
+    if (!isValidAcademicYear(form.academicYear)) {
+      setCourseModalErr('El año académico debe tener formato YYYY-YYYY y años consecutivos.');
+      return;
+    }
     setCourseSubmitting(true);
     try {
       await createCourse(form);
@@ -202,6 +207,10 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
     setClassModalErr('');
     if (!form.courseId)     { setClassModalErr('El curso es obligatorio.');         return; }
     if (!form.name?.trim()) { setClassModalErr('El identificador es obligatorio.'); return; }
+    if (!isValidAcademicYear(form.academicYear)) {
+      setClassModalErr('No se pudo resolver un año académico válido para la clase.');
+      return;
+    }
     setClassSubmitting(true);
     try {
       await createClass(form);

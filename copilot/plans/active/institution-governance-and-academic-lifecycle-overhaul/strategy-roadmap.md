@@ -46,7 +46,7 @@
   - hardened institution policy application behavior.
 
 ### Phase 05 - Academic Year Governance and Courses UX Overhaul
-- Status: PLANNED
+- Status: IN_PROGRESS
 - Goal: establish mandatory academic-year model and role-aware lifecycle visibility across courses/manual tabs.
 - Outputs:
   - mandatory format validation and auto-fill,
@@ -82,8 +82,8 @@
 
 ## Immediate Next Actions
 1. Re-run emulator-backed rules validation once emulator startup configuration is available, then close remaining Phase 02 validation gate.
-2. Start Phase 05 academic-year governance and courses UX overhaul slices.
-3. Keep plan/explanation sync current while transitioning from Phase 04 completion into the next execution block.
+2. Continue Phase 05 with Home-side slices (history tab removal, year filter persistence, multi-year collapsibles, lifecycle role indicators).
+3. Keep plan/explanation sync current while Phase 05 moves from governance baseline into UX completion slices.
 
 ## Rollback Strategy
 - Keep all rule changes atomic and scoped by failure class.

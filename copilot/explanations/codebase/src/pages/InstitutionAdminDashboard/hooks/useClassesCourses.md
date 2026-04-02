@@ -23,6 +23,8 @@
 - `../../../firebase/config`
 
 ## Changelog
+- 2026-04-02: Added canonical academic-year normalization defaults on course/class create/update paths.
+- 2026-04-02: Added course-year propagation to linked classes when a course academic year changes.
 - 2026-04-02: Added fetch-time retention purge for trashed courses/classes older than 15 days, including dependent class cleanup for expired trashed courses.
 - 2026-04-02: Added active/trashed state partition (`courses`, `classes`, `trashedCourses`, `trashedClasses`) and normalized status handling.
 - 2026-04-02: Converted course/class delete flows to trash-first soft deletion with lifecycle metadata.

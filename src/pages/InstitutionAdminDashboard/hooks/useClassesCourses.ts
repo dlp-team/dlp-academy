@@ -9,6 +9,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   query,
   serverTimestamp,
@@ -18,6 +19,10 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { isTrashRetentionExpired } from '../../../utils/trashRetentionUtils';
+import {
+  getDefaultAcademicYear,
+  normalizeAcademicYear,
+} from '../components/classes-courses/academicYearUtils';
 
 const normalizeEntityStatus = (entity: any) => String(entity?.status || 'active').trim().toLowerCase();
 const isTrashedEntity = (entity: any) => normalizeEntityStatus(entity) === 'trashed';
@@ -112,8 +117,11 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
 
   // ── Course CRUD ───────────────────────────────────────────────────────────
   const createCourse = async (form: any) => {
+    const normalizedAcademicYear = normalizeAcademicYear(form?.academicYear) || getDefaultAcademicYear();
+
     await addDoc(collection(db, 'courses'), {
       ...form,
+      academicYear: normalizedAcademicYear,
       institutionId: effectiveInstitutionId,
       status: 'active',
       createdBy: user.uid,
@@ -124,7 +132,34 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
   };
 
   const updateCourse = async (id, patch: any) => {
-    await updateDoc(doc(db, 'courses', id), { ...patch, updatedAt: serverTimestamp() });
+    const hasAcademicYearPatch = Object.prototype.hasOwnProperty.call(patch || {}, 'academicYear');
+    const normalizedPatch = { ...patch };
+    let normalizedAcademicYear = '';
+
+    if (hasAcademicYearPatch) {
+      normalizedAcademicYear = normalizeAcademicYear(patch?.academicYear) || getDefaultAcademicYear();
+      normalizedPatch.academicYear = normalizedAcademicYear;
+    }
+
+    await updateDoc(doc(db, 'courses', id), { ...normalizedPatch, updatedAt: serverTimestamp() });
+
+    if (hasAcademicYearPatch) {
+      const linkedClassesSnapshot = await getDocs(
+        query(
+          collection(db, 'classes'),
+          where('institutionId', '==', effectiveInstitutionId),
+          where('courseId', '==', id)
+        )
+      );
+
+      await Promise.all(linkedClassesSnapshot.docs.map((classDoc: any) =>
+        updateDoc(doc(db, 'classes', classDoc.id), {
+          academicYear: normalizedAcademicYear,
+          updatedAt: serverTimestamp(),
+        })
+      ));
+    }
+
     await fetchAll();
   };
 
@@ -161,8 +196,22 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
 
   // ── Class CRUD ────────────────────────────────────────────────────────────
   const createClass = async (form: any) => {
+    let resolvedAcademicYear = normalizeAcademicYear(form?.academicYear);
+
+    if (!resolvedAcademicYear && form?.courseId) {
+      const linkedCourseSnapshot = await getDoc(doc(db, 'courses', form.courseId));
+      if (linkedCourseSnapshot.exists()) {
+        resolvedAcademicYear = normalizeAcademicYear(linkedCourseSnapshot.data()?.academicYear);
+      }
+    }
+
+    if (!resolvedAcademicYear) {
+      resolvedAcademicYear = getDefaultAcademicYear();
+    }
+
     await addDoc(collection(db, 'classes'), {
       ...form,
+      academicYear: resolvedAcademicYear,
       institutionId: effectiveInstitutionId,
       status: 'active',
       createdBy: user.uid,
@@ -173,7 +222,21 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
   };
 
   const updateClass = async (id, patch: any) => {
-    await updateDoc(doc(db, 'classes', id), { ...patch, updatedAt: serverTimestamp() });
+    const normalizedPatch = { ...patch };
+
+    if (Object.prototype.hasOwnProperty.call(patch || {}, 'academicYear')) {
+      normalizedPatch.academicYear = normalizeAcademicYear(patch?.academicYear) || getDefaultAcademicYear();
+    } else if (patch?.courseId) {
+      const linkedCourseSnapshot = await getDoc(doc(db, 'courses', patch.courseId));
+      if (linkedCourseSnapshot.exists()) {
+        const linkedCourseAcademicYear = normalizeAcademicYear(linkedCourseSnapshot.data()?.academicYear);
+        if (linkedCourseAcademicYear) {
+          normalizedPatch.academicYear = linkedCourseAcademicYear;
+        }
+      }
+    }
+
+    await updateDoc(doc(db, 'classes', id), { ...normalizedPatch, updatedAt: serverTimestamp() });
     await fetchAll();
   };
 

@@ -3,7 +3,7 @@
 # Phase 05 - Academic Year Governance and Courses UX Overhaul
 
 ## Status
-- PLANNED
+- IN_PROGRESS
 
 ## Objective
 Establish a deterministic academic-year model with mandatory format controls and role-aware lifecycle visibility across courses and subject presentation.
@@ -42,5 +42,12 @@ Establish a deterministic academic-year model with mandatory format controls and
 - Keep migration-compatible fallbacks for legacy course records without academic year.
 
 ## Completion Notes
-- Pending.
+- 2026-04-02 (Slice 01 complete):
+   - Added strict academic-year utility baseline (`YYYY-YYYY` consecutive validation, Jul-Dec/Jan-Jun default, range builder).
+   - Added reusable academic-year picker and wired it into course creation/detail editing flows.
+   - Enforced course-owned academic-year model with class derivation in create/edit/hook write paths.
+   - Added deterministic tests for utility logic and class/course modal behavior.
+- Remaining for phase closure:
+   - Home courses-tab year filter persistence + nested year collapsibles.
+   - History-tab/send-to-history removal and role-aware ended-subject indicators.
 
