@@ -4,6 +4,8 @@
 
 Define a consistent process for creating, executing, reviewing, and closing plans in `copilot/plans`.
 
+**CRITICAL PHILOSOPHY**: Quality and thoroughness are more important than speed. Every phase must be fully validated before marking complete.
+
 ## When to Create a New Plan
 
 Create a new plan when work is multi-step, cross-cutting, migration-related, risky, or expected to span more than one session.
@@ -55,6 +57,14 @@ Each plan folder should contain:
 2. Any phase marked IN_PROGRESS or COMPLETED must have a matching file in `phases/`.
 3. Phase files must be updated when status or scope changes.
 4. Plan `README.md` must always reflect current phase state.
+5. **Quality-First Rule**: Before marking a phase COMPLETED:
+   - [ ] All tests passed locally (`npm run test`)
+   - [ ] Linting passed (`npm run lint`)
+   - [ ] Adjacent functionality verified (no regressions)
+   - [ ] Edge cases and error states tested
+   - [ ] Developer did not rush or skip validation steps
+   - [ ] Lossless report documents all changes and validations
+   - [ ] 3-5 commits exist for that phase (showing incremental, validated progress)
 
 ## Review Gate (Before Finished)
 
