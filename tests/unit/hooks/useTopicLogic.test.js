@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   canEdit: vi.fn(() => true),
   canView: vi.fn(() => true),
   canDelete: vi.fn(() => false),
+  getActiveRole: vi.fn((user) => user?.activeRole || user?.role || 'student'),
   shouldShowEditUI: vi.fn(() => true),
   shouldShowDeleteUI: vi.fn(() => false),
   collection: vi.fn((db, name) => ({ __kind: 'collection', db, name })),
@@ -41,6 +42,7 @@ vi.mock('../../../src/utils/permissionUtils', () => ({
   canEdit: (...args) => mocks.canEdit(...args),
   canView: (...args) => mocks.canView(...args),
   canDelete: (...args) => mocks.canDelete(...args),
+  getActiveRole: (...args) => mocks.getActiveRole(...args),
   shouldShowEditUI: (...args) => mocks.shouldShowEditUI(...args),
   shouldShowDeleteUI: (...args) => mocks.shouldShowDeleteUI(...args),
 }));

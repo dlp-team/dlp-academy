@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { canEdit, canView, canDelete, shouldShowEditUI, shouldShowDeleteUI } from '../../../utils/permissionUtils';
+import { canEdit, canView, canDelete, getActiveRole, shouldShowEditUI, shouldShowDeleteUI } from '../../../utils/permissionUtils';
 import { canUserAccessSubject } from '../../../utils/subjectAccessUtils';
 import {
     DEFAULT_TOPIC_CASCADE_COLLECTIONS,
@@ -45,6 +45,7 @@ export const useTopicLogic = (user: any) => {
     const [uploading] = useState(false);
     const activeTabKey = buildUserScopedPersistenceKey('topic-page', user, `${subjectId || 'no-subject'}:${topicId || 'no-topic'}:active-tab`);
     const [activeTab, setActiveTab] = usePersistentState(activeTabKey, 'materials');
+    const activeRole = getActiveRole(user);
     
     // Notificaciones
     const [toast, setToast] = useState({ show: false, message: '' });
@@ -300,7 +301,7 @@ export const useTopicLogic = (user: any) => {
 
         // Carga de exams/examns por lectura puntual para evitar ruido de watch
         // cuando las reglas bloquean listeners en algunos roles.
-        if (user && topicId && user?.role !== 'student') {
+        if (user && topicId && activeRole !== 'student') {
             const loadExams = async () => {
                 try {
                     const examsQ = query(collection(db, "exams"), where("topicId", "==", topicId));
@@ -337,7 +338,7 @@ export const useTopicLogic = (user: any) => {
             if (unsubscribeExamns) unsubscribeExamns();
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         };
-    }, [user, subjectId, topicId, navigate]);
+    }, [user, subjectId, topicId, navigate, activeRole]);
 
     // --- HELPERS VISUALES ---
     const getFileVisuals = (type: any) => {
@@ -709,7 +710,7 @@ export const useTopicLogic = (user: any) => {
         };
 
         // Students never get edit/delete permissions
-        if (user?.role === 'student') {
+        if (activeRole === 'student') {
             return {
                 canEdit: false,
                 canView: true,
@@ -734,7 +735,7 @@ export const useTopicLogic = (user: any) => {
             showDeleteUI: shouldShowDeleteUI(topic, user.uid),
             isViewer: isViewerOnly
         };
-    }, [topic, user]);
+    }, [topic, user, activeRole]);
 
     return {
         // Data

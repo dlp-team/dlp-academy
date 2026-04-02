@@ -7,6 +7,7 @@ import {
 import { addDoc, collection, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config'; 
 import { canUserAccessSubject } from '../../utils/subjectAccessUtils';
+import { getActiveRole } from '../../utils/permissionUtils';
 
 // ==================== IMPORTACIONES DE COMPONENTES ====================
 // Apuntan a la carpeta components/quizzes
@@ -507,7 +508,8 @@ const Quizzes = ({ user }: any) => {
         return Number.isNaN(parsed.getTime()) ? null : parsed;
     };
 
-    const isStudent = user?.role === 'student' || previewAsStudent;
+    const activeRole = getActiveRole(user);
+    const isStudent = activeRole === 'student' || previewAsStudent;
     const now = new Date();
     const assignmentStart = toDate(quizData.assignmentStartAt);
     const assignmentDue = toDate(quizData.assignmentDueAt);

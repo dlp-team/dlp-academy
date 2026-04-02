@@ -50,4 +50,17 @@ Support users who need both institution admin and teacher responsibilities witho
 		- teacher routes: `teacher` only,
 		- student dashboard: `student` only.
 	- Extended `App.authListener` unit suite with active-role switched dual-role denial path for `/admin-dashboard`.
+- 2026-04-02 (Slice 03 broad active-role surface alignment):
+	- Replaced raw `user.role` checks with `getActiveRole(user)` in key role-sensitive surfaces:
+		- Topic stack: `Topic`, `useTopicLogic`, `TopicTabs`, `TopicContent`, `TopicAssignmentsSection`.
+		- Subject stack: `Subject`, `SubjectTestsPanel`, `SubjectGradesPanel`.
+		- Additional user-role-sensitive modules: `Quizzes`, `BinView`, `useNotifications`, `useFolders`, `useSubjects`, `useShortcuts`, `useCustomization`.
+	- Updated test mocks for new permission helper surface:
+		- `tests/unit/hooks/useShortcuts.test.js`
+		- `tests/unit/hooks/useTopicLogic.test.js`
+	- Validation checkpoint:
+		- `npm run test -- tests/unit/hooks/useTopicLogic.test.js tests/unit/hooks/useShortcuts.test.js tests/unit/utils/permissionUtils.test.js tests/unit/App.authListener.test.jsx` (pass, 46 tests)
+		- `npx tsc --noEmit` (exit 0)
+		- `npm run lint` (exit 0, 4 pre-existing warnings in unrelated `src/pages/Content/*`)
+		- `get_errors` clean on touched source/test files.
 

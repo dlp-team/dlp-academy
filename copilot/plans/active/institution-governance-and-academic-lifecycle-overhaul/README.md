@@ -36,8 +36,8 @@ Deliver a lossless, phased, security-first overhaul that resolves all requested 
 
 ## Lifecycle Status
 - Lifecycle: `active`
-- Current phase: `Phase 07 in progress (active-role shell switch + deterministic dashboard route gates delivered; Phase 02 emulator gate remains pending)`
-- Overall progress: `95%`
+- Current phase: `Phase 07 in progress (Slices 01-03 delivered: shell switch, deterministic route gates, and broad active-role surface alignment; Phase 02 emulator gate remains pending)`
+- Overall progress: `96%`
 
 ## Key Decisions to Record During Execution
 1. Exact approach for institution customization preview (component reuse + mock provider vs account simulation path).

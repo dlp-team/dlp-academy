@@ -13,6 +13,15 @@
 ### Validation
 - `get_errors` returned no issues for `src/hooks/useNotifications.js`.
 
+## [2026-04-02] Active Role Student Notification Gate
+
+### Change
+- Student-only assignment notification bootstrap now resolves user role through `getActiveRole(user)`.
+- Hook dependency wiring now tracks `activeRole` instead of raw `user.role`.
+
+### Impact
+- Notification listeners stay aligned with switched role context in dual-role sessions.
+
 ## Overview
 - **Source file:** `src/hooks/useNotifications.js`
 - **Last documented:** 2026-03-29

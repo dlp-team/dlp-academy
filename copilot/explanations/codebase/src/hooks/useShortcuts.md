@@ -1,3 +1,15 @@
+## [2026-04-02] Active-Role Shortcut Read Context
+
+### Context
+- Student-vs-non-student shortcut query branching was still derived from `user.role`.
+
+### Change
+- `useShortcuts` now resolves role context using `getActiveRole(user)`.
+- Home read readiness and student-only shortcut query filters now follow switched active role context.
+
+### Impact
+- Shortcut visibility/filtering remains deterministic for dual-role users after role switching.
+
 ## [2026-03-29] Student Shortcut Query Rule-Compatibility Fix
 
 ### Context

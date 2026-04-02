@@ -5,7 +5,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { generateSubjectInviteCode, normalizeSubjectAccessPayload } from '../utils/subjectAccessUtils';
-import { getNormalizedRole } from '../utils/permissionUtils';
+import { getActiveRole } from '../utils/permissionUtils';
 import {
     canTeacherDeleteSubjectsWithStudents,
     canTeacherCreateSubjectsAutonomously,
@@ -19,7 +19,8 @@ export const useSubjects = (user: any) => {
     const [loading, setLoading] = useState(true);
     const [teacherSubjectCreationAllowed, setTeacherSubjectCreationAllowed] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
-    const canReadHomeData = Boolean(user?.role && user?.displayName);
+    const activeRole = getActiveRole(user);
+    const canReadHomeData = Boolean(activeRole && user?.displayName);
     const completedSubjectIds = useMemo(
         () => Array.from(new Set(
             (Array.isArray(user?.completedSubjects) ? user.completedSubjects : [])
@@ -52,7 +53,7 @@ export const useSubjects = (user: any) => {
     };
 
     const ensureTeacherCanDeleteSubject = async (subjectData: any) => {
-        if (getNormalizedRole(user) !== 'teacher') return;
+        if (activeRole !== 'teacher') return;
 
         const enrolledStudentUids = Array.isArray(subjectData?.enrolledStudentUids) ? subjectData.enrolledStudentUids : [];
         const classIds = Array.isArray(subjectData?.classIds) ? subjectData.classIds : [];
@@ -67,7 +68,7 @@ export const useSubjects = (user: any) => {
     };
 
     const ensureTeacherCanCreateSubject = async (institutionId: any) => {
-        if (getNormalizedRole(user) !== 'teacher') return;
+        if (activeRole !== 'teacher') return;
 
         const policies = await getInstitutionAccessPolicies(institutionId || currentInstitutionId);
         if (canTeacherCreateSubjectsAutonomously(policies)) return;
@@ -79,7 +80,7 @@ export const useSubjects = (user: any) => {
         let active = true;
 
         const resolveTeacherCreationPolicy = async () => {
-            if (getNormalizedRole(user) !== 'teacher') {
+            if (activeRole !== 'teacher') {
                 if (active) setTeacherSubjectCreationAllowed(true);
                 return;
             }
@@ -97,7 +98,7 @@ export const useSubjects = (user: any) => {
         return () => {
             active = false;
         };
-    }, [user?.uid, user?.role, currentInstitutionId]);
+    }, [user?.uid, activeRole, currentInstitutionId]);
 
 
     useEffect(() => {
@@ -108,7 +109,7 @@ export const useSubjects = (user: any) => {
         }
 
         setLoading(true);
-        const normalizedRole = getNormalizedRole(user);
+        const normalizedRole = activeRole;
         const studentClassIds = Array.from(
             new Set(
                 [
@@ -284,7 +285,7 @@ export const useSubjects = (user: any) => {
             unsubscribeClassMatched();
             unsubscribeEnrolled();
         };
-    }, [user, currentInstitutionId, canReadHomeData]);
+    }, [user, currentInstitutionId, canReadHomeData, activeRole]);
 
     const addSubject = async (payload: any) => {
         const normalizedPayload: any = normalizeSubjectAccessPayload(payload, { requireCourse: true });
@@ -407,7 +408,7 @@ export const useSubjects = (user: any) => {
             currentInstitutionId
             && inviteInstitutionId
             && inviteInstitutionId !== currentInstitutionId
-            && String(user?.role || '').toLowerCase() !== 'admin'
+            && activeRole !== 'admin'
         ) {
             throw new Error('El codigo pertenece a otra institucion.');
         }
@@ -469,7 +470,7 @@ export const useSubjects = (user: any) => {
             shareOrigin: 'invite-code',
             sharedAt: new Date()
         };
-        const normalizedUserRole = String(user?.role || '').toLowerCase();
+        const normalizedUserRole = activeRole;
 
         const subjectUpdatePayload: any = {
             sharedWithUids: arrayUnion(user.uid),

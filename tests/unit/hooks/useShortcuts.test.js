@@ -21,6 +21,7 @@ vi.mock('../../../src/firebase/config', () => ({
 
 vi.mock('../../../src/utils/permissionUtils', () => ({
   canView: vi.fn(() => true),
+  getActiveRole: vi.fn((user) => user?.activeRole || user?.role || 'student'),
 }));
 
 vi.mock('firebase/firestore', async () => {

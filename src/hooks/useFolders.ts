@@ -7,14 +7,15 @@ import {
 import { db } from '../firebase/config';
 import { isInvalidFolderMove } from '../utils/folderUtils';
 import { DEFAULT_TOPIC_CASCADE_COLLECTIONS, cascadeDeleteTopicResources } from '../utils/topicDeletionUtils';
+import { getActiveRole } from '../utils/permissionUtils';
 
 export const useFolders = (user: any) => {
     const [folders, setFolders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
-    const normalizedRole = String(user?.role || '').trim().toLowerCase();
+    const normalizedRole = getActiveRole(user);
     const isStudentRole = normalizedRole === 'student';
-    const canReadHomeData = Boolean(user?.role && user?.displayName);
+    const canReadHomeData = Boolean(normalizedRole && user?.displayName);
 
     const debugShare = (stage, payload = {}) => {
         console.info('[SHARE_DEBUG][folder]', {

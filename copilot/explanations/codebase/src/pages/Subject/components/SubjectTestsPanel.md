@@ -13,6 +13,9 @@
 - Shows inline panel-level feedback when quiz creation or listener operations fail.
 
 ## Changelog
+### 2026-04-02
+- Panel manage permissions now resolve via `getActiveRole(user)` instead of raw role strings.
+
 ### 2026-03-30
 - Added explicit Firestore snapshot error handling for subject quizzes.
 - Listener failures now stop loading and surface inline feedback (`No se pudieron cargar los tests. Intentalo de nuevo.`) instead of leaving the panel blocked in spinner state.

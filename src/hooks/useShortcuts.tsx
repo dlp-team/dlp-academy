@@ -5,7 +5,7 @@ import {
     onSnapshot, updateDoc, getDoc
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { canView } from '../utils/permissionUtils';
+import { canView, getActiveRole } from '../utils/permissionUtils';
 
 /**
  * Custom hook to manage user's shortcuts collection
@@ -30,7 +30,8 @@ export const useShortcuts = (user: any) => {
     const [loading, setLoading] = useState(true);
     const currentInstitutionId = user?.institutionId || null;
     const promotingShortcutIdsRef = useRef(new Set());
-    const canReadHomeData = Boolean(user?.role && user?.displayName);
+    const activeRole = getActiveRole(user);
+    const canReadHomeData = Boolean(activeRole && user?.displayName);
 
     const buildAppearanceFromTargetData = useCallback((targetType: any, targetData: any = {}) => {
         if (targetType === 'folder') {
@@ -93,8 +94,7 @@ export const useShortcuts = (user: any) => {
         }
 
         // Query shortcuts owned by current user
-        const normalizedRole = String(user?.role || '').trim().toLowerCase();
-        const isStudent = normalizedRole === 'student';
+        const isStudent = activeRole === 'student';
         const shortcutsQuery = isStudent
             ? query(
                 collection(db, "shortcuts"),
@@ -133,7 +133,7 @@ export const useShortcuts = (user: any) => {
         );
 
         return () => unsubscribe();
-    }, [user, currentInstitutionId, canReadHomeData]);
+    }, [user, currentInstitutionId, canReadHomeData, activeRole]);
 
     useEffect(() => {
         if (!user || !canReadHomeData) return;

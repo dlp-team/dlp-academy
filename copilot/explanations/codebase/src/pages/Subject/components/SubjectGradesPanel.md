@@ -23,6 +23,7 @@
 - `../../../firebase/config`
 
 ## Changelog
+- 2026-04-02: Teacher/student manage-mode detection now uses `getActiveRole(user)` to keep grading controls aligned with switched role context.
 - 2026-03-30: Added stream-specific realtime listener error tracking with inline panel banner feedback for snapshot failures in quizzes, exams, reviews, evaluation items/grades, and topic quiz-result streams.
 - 2026-03-30: Listener success callbacks now clear stale stream feedback while preserving existing fallback state resets (empty arrays/maps) on error paths.
 - 2026-03-30: Replaced `window.confirm(...)` in extra-activity deletion with in-page modal confirmation (`evaluationDeleteConfirm` + `confirmDeleteEvaluationItem`), preserving related grade cleanup through the existing Firestore batch path.

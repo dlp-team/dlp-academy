@@ -349,3 +349,19 @@
 - `npm run lint` (pass, 4 pre-existing warnings only in unrelated `src/pages/Content/*`)
 - `get_errors` on touched files (clean)
 
+## Phase 07 Slice 03 - Broad Active-Role Surface Alignment
+- Replaced remaining role-sensitive raw `user.role` checks in targeted Phase 07 surfaces with `getActiveRole(user)`:
+   - Topic stack: `Topic`, `useTopicLogic`, `TopicTabs`, `TopicContent`, `TopicAssignmentsSection`.
+   - Subject stack: `Subject`, `SubjectTestsPanel`, `SubjectGradesPanel`.
+   - Additional role-sensitive modules: `Quizzes`, `BinView`, `useNotifications`, `useFolders`, `useSubjects`, `useShortcuts`, `useCustomization`.
+- Fixed impacted test mock shape drift introduced by new helper imports:
+   - `tests/unit/hooks/useShortcuts.test.js` now mocks `getActiveRole`.
+   - `tests/unit/hooks/useTopicLogic.test.js` now mocks `getActiveRole`.
+- Confirmed no remaining raw role checks in targeted files via PowerShell search (`NO_MATCHES`).
+
+## Phase 07 Slice 03 Validation
+- `npm run test -- tests/unit/hooks/useTopicLogic.test.js tests/unit/hooks/useShortcuts.test.js tests/unit/utils/permissionUtils.test.js tests/unit/App.authListener.test.jsx` (pass, 46 tests)
+- `npx tsc --noEmit` (exit 0)
+- `npm run lint` (exit 0, 4 pre-existing warnings only in unrelated `src/pages/Content/*`)
+- `get_errors` on touched source/test files (clean)
+

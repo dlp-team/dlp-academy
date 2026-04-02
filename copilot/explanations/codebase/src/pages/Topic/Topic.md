@@ -103,3 +103,9 @@
 **Reason**: Prevent silent degradation when optional realtime streams fail, while keeping page rendering stable.
 
 **Impact**: Topic page now surfaces explicit inline feedback for realtime sync issues (e.g., assignments stream failures) without blocking the rest of the topic workflow.
+
+### 2026-04-02 - Active-Role Student View Resolution
+
+**Change**: Topic-level student/preview gating now resolves from `getActiveRole(user)` instead of raw `user.role`.
+
+**Impact**: Assignment visibility and preview-mode behavior stay consistent with switched role context in dual-role sessions.

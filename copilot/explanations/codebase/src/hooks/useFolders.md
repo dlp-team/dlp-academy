@@ -1,4 +1,15 @@
 <!-- copilot/explanations/codebase/src/hooks/useFolders.md -->
+## [2026-04-02] Active-Role Home Read Gate Alignment
+### Context
+- Dual-role sessions can switch active context without changing the base profile role field.
+
+### Change
+- `useFolders` now derives role context via `getActiveRole(user)`.
+- Student-mode shortcut/read filters and Home read readiness now track active role instead of raw `user.role`.
+
+### Impact
+- Folder read behavior follows switched role context deterministically for institution-admin/teacher dual-role users.
+
 ## [2026-04-02] Nested Folder Subtree Operations for Bin Drilldown
 ### Context
 - Phase 03 required nested subfolder actions in bin drilldown without applying restore/delete to sibling branches.

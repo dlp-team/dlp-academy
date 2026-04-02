@@ -15,6 +15,7 @@
 - Shows role-aware UI: management controls for editors, delivery toggle for students.
 
 ## Changelog
+- 2026-04-02: Student/manage gating now uses `getActiveRole(user)` so assignment creation/delivery controls follow switched role context.
 - 2026-03-29: Added assignment-instruction file attachments (multi-file upload to Storage with metadata persisted in `instructionFiles`).
 - 2026-03-29: Added student delivery files + optional note (`submissionFiles`, `note`) with per-assignment upload UI and delivered-file links.
 - 2026-03-29: Added client-side attachment constraints (max 5 files, max 20MB each) and clear rejection feedback.

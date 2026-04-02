@@ -27,6 +27,7 @@ import FileCard from '../FileCard/FileCard';
 import ExamCard from '../ExamCard/ExamCard';
 import TopicAssignmentsSection from './TopicAssignmentsSection';
 import QuizClassResultsModal from './QuizClassResultsModal';
+import { getActiveRole } from '../../../utils/permissionUtils';
 
 const TopicContent = ({ 
     activeTab, 
@@ -46,6 +47,8 @@ const TopicContent = ({
 }: any) => {
     const [selectedQuizForClassAnalytics, setSelectedQuizForClassAnalytics] = useState<any>(null);
     const [quizExportMessage, setQuizExportMessage] = useState('');
+    const activeRole = getActiveRole(user);
+    const isStudentRole = activeRole === 'student' || permissions?.isViewer;
     
     // 👇 CALCULAR completionByLevel DIRECTO DE topic.quizzes (que ya tienen .score)
     const completionByLevel = useMemo(() => {
@@ -748,7 +751,7 @@ const TopicContent = ({
             }
         };
 
-        const isTeacherAnalyticsView = Boolean(permissions?.canEdit) && !(user?.role === 'student' || permissions?.isViewer);
+        const isTeacherAnalyticsView = Boolean(permissions?.canEdit) && !isStudentRole;
 
         const exportAllTestsMatrixCsv = () => {
             setQuizExportMessage('');
@@ -878,7 +881,7 @@ const TopicContent = ({
                             {quizzesByLevel[levelKey].map((quiz: any) => {
                                 const isCompleted = quiz.score !== undefined && quiz.score !== null;
                                 const isPassed = isCompleted && quiz.score >= 50;
-                                const isStudent = user?.role === 'student' || permissions?.isViewer;
+                                const isStudent = isStudentRole;
                                 const canManageQuiz = Boolean(permissions?.canEdit) && !isStudent;
                                 const classAnalytics = quizAnalyticsByQuiz?.[quiz.id] || null;
                                 const isAssignment = Boolean(quiz.isAssignment);

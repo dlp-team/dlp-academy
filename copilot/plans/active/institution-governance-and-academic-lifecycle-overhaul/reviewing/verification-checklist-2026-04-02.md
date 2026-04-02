@@ -8,7 +8,7 @@
 - [x] Institution admin dashboard preview, pagination, and policy controls validated.
 - [x] Academic year format, picker, filters, and lifecycle transitions validated.
 - [x] Selection mode, bin sorting, animation fix, and admin navigation validated.
-- [ ] Dual-role switching validated without permission regressions.
+- [x] Dual-role switching validated without permission regressions.
 - [x] `get_errors` clear for touched files.
 - [x] Required tests pass for impacted areas.
 - [x] Lossless reports created for each implementation slice.
@@ -97,4 +97,11 @@
 	- Route-level regression validated:
 		- dual-role `admin+teacher` with active role `teacher` is redirected away from `/admin-dashboard`.
 	- Focused role-context suite passed (17 tests).
+- 2026-04-02 (Phase 07 Slice 03):
+	- Broad active-role surface alignment validated in Topic/Subject/Quizzes/Home/hooks:
+		- role-sensitive UI/permission branches now resolve with `getActiveRole(user)`.
+		- switched role context now drives student-vs-teacher behavior consistently across targeted surfaces.
+	- Test stability update validated:
+		- `useShortcuts` + `useTopicLogic` unit mocks now include `getActiveRole` export.
+	- Focused impacted suite passed (46 tests), typecheck passed, lint passed with only pre-existing warnings.
 

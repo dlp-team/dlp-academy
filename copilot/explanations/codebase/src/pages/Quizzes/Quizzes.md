@@ -30,6 +30,7 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-04-02: Student runtime mode now derives from `getActiveRole(user)` (plus preview override), keeping assignment availability checks aligned with switched role context.
 - 2026-03-31: Added explicit save-result failure feedback (`saveError`) for final quiz persistence errors with permission-specific and generic messaging.
 - 2026-03-31: Added results-state warning banner rendering for save failures and reset behavior on retry to prevent stale feedback.
 - 2026-03-31: Replaced silent/default runtime fallback behavior with explicit load-fallback states in `useQuizData` (missing route context, quiz-not-found, permission-denied, and generic load failures).

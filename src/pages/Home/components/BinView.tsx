@@ -15,6 +15,7 @@ import {
     toJsDate
 } from '../utils/binViewUtils';
 import { isTrashRetentionExpired } from '../../../utils/trashRetentionUtils';
+import { getActiveRole } from '../../../utils/permissionUtils';
 
 import BinGridItem          from './bin/BinGridItem';
 import BinSelectionOverlay  from './bin/BinSelectionOverlay';
@@ -46,7 +47,7 @@ const BIN_SORT_DESCRIPTIONS = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
-    const isStudent = user?.role === 'student';
+    const isStudent = getActiveRole(user) === 'student';
 
     const [trashedItems, setTrashedItems] = useState<any[]>([]);
     const [allTrashedSubjects, setAllTrashedSubjects] = useState<any[]>([]);

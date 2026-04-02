@@ -1,6 +1,7 @@
 // src/pages/Topic/components/TopicTabs.jsx
 import React from 'react';
 import { FileText, Upload, CheckCircle2, Plus, ClipboardList } from 'lucide-react';
+import { getActiveRole } from '../../../utils/permissionUtils';
 
 const TopicTabs = ({
     activeTab,
@@ -11,6 +12,7 @@ const TopicTabs = ({
     permissions,
     user
 }: any) => {
+    const activeRole = getActiveRole(user);
     const handleAssignmentsCreate = (event: any) => {
         event.stopPropagation();
         setActiveTab('assignments');
@@ -19,7 +21,7 @@ const TopicTabs = ({
 
     // Estudiantes reales o en preview ven: Materiales, Quizzes, Tareas
     // Profesores ven: Generados por IA, Mis Archivos, Tests Prácticos, Tareas
-    const isStudent = user?.role === 'student' || permissions?.isViewer;
+    const isStudent = activeRole === 'student' || permissions?.isViewer;
     const tabs = isStudent 
         ? ['materiales', 'quizzes', 'assignments']
         : ['materials', 'uploads', 'quizzes', 'assignments'];

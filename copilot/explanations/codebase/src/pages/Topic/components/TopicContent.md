@@ -21,6 +21,9 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+### 2026-04-02: Active-role student/teacher analytics alignment
+- Student/viewer detection in quiz cards and analytics sections now resolves from `getActiveRole(user)` + viewer permissions, avoiding stale behavior when active role is switched.
+
 ### 2026-03-30: Student exams cards aligned to StudyGuide gradient style
 - Applied the same StudyGuide-inspired full-gradient visual language to student-view generated exam cards in `materiales` (white typography, translucent chips, and glass CTA) for consistent cross-role presentation.
 

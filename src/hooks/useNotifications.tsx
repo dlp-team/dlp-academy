@@ -5,6 +5,7 @@ import {
     doc, setDoc, updateDoc, writeBatch, getDocs, serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { getActiveRole } from '../utils/permissionUtils';
 
 const NEW_ASSIGNMENT_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
 const DUE_SOON_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -25,6 +26,7 @@ const dateKey = (date: any) => {
 
 export const useNotifications = (user: any) => {
     const uid = user?.uid;
+    const activeRole = getActiveRole(user);
     const [notifications, setNotifications] = useState<any[]>([]);
     const existingNotificationIdsRef = useRef(new Set());
 
@@ -62,7 +64,7 @@ export const useNotifications = (user: any) => {
     }, [notifications]);
 
     useEffect(() => {
-        if (!uid || user?.role !== 'student' || !user?.institutionId) return undefined;
+        if (!uid || activeRole !== 'student' || !user?.institutionId) return undefined;
 
         let cancelled = false;
         let unsubscribeAssignments: any = null;
@@ -186,7 +188,7 @@ export const useNotifications = (user: any) => {
             if (unsubscribeAssignments) unsubscribeAssignments();
             if (unsubscribeSubmissions) unsubscribeSubmissions();
         };
-    }, [uid, user?.role, user?.institutionId]);
+    }, [uid, activeRole, user?.institutionId]);
 
     const unreadCount = notifications.filter(n => !n.read).length;
 

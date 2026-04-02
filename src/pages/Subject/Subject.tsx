@@ -18,11 +18,13 @@ import SubjectGradesPanel from './components/SubjectGradesPanel';
 import EditSubjectModal from '../Home/modals/EditSubjectModal';
 import TopicFormModal from './modals/TopicFormModal';
 import EditTopicModal from './modals/EditTopicModal';
+import { getActiveRole } from '../../utils/permissionUtils';
 
 const Subject = ({ user }: any) => {
     const params = useParams();
     const subjectId = params.subjectId || params.id; 
     const navigate = useNavigate();
+    const activeRole = getActiveRole(user);
     
     // Data Logic
     const { 
@@ -56,7 +58,7 @@ const Subject = ({ user }: any) => {
         filteredTopics
     } = useSubjectPageState(topics);
 
-    const isTeacherUser = user?.role !== 'student';
+    const isTeacherUser = activeRole !== 'student';
     const effectiveIsTeacher = isTeacherUser;
     const [topicDeleteConfirm, setTopicDeleteConfirm] = useState({
         isOpen: false,

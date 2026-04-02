@@ -8,6 +8,10 @@
 
 ## Changelog
 ### 2026-04-02
+- `verifyAndSyncClaims` now resolves expected role from `getActiveRole(user)` before claims reconciliation.
+- Branding upload claim checks now follow switched role context for dual-role sessions, reducing false mismatches when role switch is active.
+
+### 2026-04-02
 - Added auth-claim synchronization flow before institution branding uploads:
   - compares expected role/institution against token claims,
   - invokes callable `syncCurrentUserClaims` when claims are stale,

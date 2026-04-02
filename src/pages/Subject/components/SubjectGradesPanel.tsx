@@ -28,6 +28,7 @@ import {
     writeBatch
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { getActiveRole } from '../../../utils/permissionUtils';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const DEFAULT_BLOCK_WEIGHTS = {
@@ -68,7 +69,7 @@ const SubjectGradesPanel = ({ user, subject, topics = [], classMembers = [] }: a
         maxScore: '10'
     });
 
-    const role = (user?.role || '').toLowerCase();
+    const role = getActiveRole(user);
     const canManage = role !== 'student';
 
     // Stable key to avoid re-subscribing listeners when parent re-renders with same topics

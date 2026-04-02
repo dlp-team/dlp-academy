@@ -12,6 +12,7 @@ import {
   normalizeHexColor,
   resolveInstitutionBranding,
 } from '../../../utils/themeTokens';
+import { getActiveRole } from '../../../utils/permissionUtils';
 
 export const DEFAULT_CUSTOMIZATION_FORM = {
   institutionDisplayName: '',
@@ -90,7 +91,7 @@ export const useCustomization = (user, institutionIdOverride = null) => {
     const authUser = auth.currentUser;
     if (!authUser) return;
 
-    const expectedRole = String(user?.role || '').trim().toLowerCase();
+    const expectedRole = getActiveRole(user);
     const expectedInstitutionId = effectiveInstitutionId ? String(effectiveInstitutionId) : null;
 
     const tokenResult = await authUser.getIdTokenResult();

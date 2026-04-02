@@ -82,7 +82,7 @@
 
 ## Immediate Next Actions
 1. Re-run emulator-backed rules validation once emulator startup configuration is available, then close remaining Phase 02 validation gate.
-2. Continue Phase 07 with additional role-aware surface audit beyond dashboards (content/session flows still reading raw `user.role` where applicable).
+2. Close Phase 07 Slice 03 checkpoint (commit/push + leverage prompt) and decide whether to continue residual role-read audit beyond current Topic/Subject/Quizzes/Home/hook scope.
 3. Keep plan/explanation sync current and keep verification evidence aligned with current in-progress Phase 07 scope.
 
 ## Rollback Strategy

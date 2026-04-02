@@ -24,6 +24,7 @@
 - `../../../components/modules/ListViewItem`
 
 ## Changelog
+- **2026-04-02:** Bin student-mode hook wiring now resolves via `getActiveRole(user)` so read-only behavior follows switched role context.
 - **2026-04-02:** Completed Phase 06 UX reliability updates:
 	- added bin sort selector (`urgency asc/desc`, `name A-Z/Z-A`),
 	- added bin-only selection mode with multi-select restore/permanent-delete actions,

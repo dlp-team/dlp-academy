@@ -148,6 +148,7 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-04-02: Role-sensitive topic logic now resolves student/viewer context via `getActiveRole(user)` for exam-load and permission-branch checks, keeping switched role sessions deterministic.
 - 2026-03-31: Added deterministic teardown for nested topic child listeners before re-subscribing on topic snapshot updates; not-found/error branches now clear child listeners to avoid duplicate subscriptions.
 - 2026-03-30: Replaced `window.confirm(...)` destructive prompts with in-page modal-confirmed delete flow (`confirmDialog` + `confirmDeleteAction`) for file, quiz, and topic actions.
 - 2026-03-30: Removed remaining browser-alert error/info paths in Topic workflows and standardized these branches on toast notifications.

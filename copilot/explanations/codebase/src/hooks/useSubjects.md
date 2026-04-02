@@ -1,4 +1,15 @@
 <!-- copilot/explanations/codebase/src/hooks/useSubjects.md -->
+## [2026-04-02] Active-Role Access Context Wiring
+### Context
+- Subject listeners and policy gates were still keyed from legacy normalized base-role reads.
+
+### Change
+- `useSubjects` now resolves role context with `getActiveRole(user)`.
+- Teacher policy guards, listener role branches, and invite-join institution admin exception checks now use active role semantics.
+
+### Impact
+- Subject data access and teacher policy enforcement stay consistent after in-session role switches.
+
 ## [2026-04-01] Student invite join write-surface hardening
 ### Context
 - Rules now allow student invite joins only through a constrained update payload.

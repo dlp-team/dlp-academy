@@ -27,6 +27,7 @@ import {
 } from 'firebase/firestore';
 import { getDownloadURL, ref as storageRef, uploadBytes } from 'firebase/storage';
 import { db, storage } from '../../../firebase/config';
+import { getActiveRole } from '../../../utils/permissionUtils';
 
 const MAX_ATTACHMENT_COUNT = 5;
 const MAX_ATTACHMENT_SIZE_BYTES = 20 * 1024 * 1024;
@@ -38,7 +39,8 @@ const TopicAssignmentsSection = ({
     user,
     permissions
 }: any) => {
-    const isStudent = user?.role === 'student';
+    const activeRole = getActiveRole(user);
+    const isStudent = activeRole === 'student';
     const canManage = Boolean(permissions?.canEdit) && !isStudent;
     const [saving, setSaving] = useState(false);
     const [feedback, setFeedback] = useState({ type: '', message: '' });

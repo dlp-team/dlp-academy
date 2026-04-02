@@ -5,6 +5,7 @@ import { addDoc, collection, onSnapshot, query, serverTimestamp, where } from 'f
 import { useNavigate } from 'react-router-dom';
 import { db } from '../../../firebase/config';
 import SubjectTestModal from '../modals/SubjectTestModal';
+import { getActiveRole } from '../../../utils/permissionUtils';
 
 const LEVEL_SECTIONS = {
     basico: { title: 'Basico', levelValue: 'Principiante', subtitle: 'Refuerzo de conceptos base', icon: BookOpen },
@@ -36,7 +37,7 @@ const SubjectTestsPanel = ({ user, subject, topics = [] }: any) => {
     const [creating, setCreating] = useState(false);
     const [panelError, setPanelError] = useState('');
 
-    const role = (user?.role || '').toLowerCase();
+    const role = getActiveRole(user);
     const canManage = role !== 'student';
 
     useEffect(() => {
