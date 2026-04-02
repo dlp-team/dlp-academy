@@ -3,7 +3,7 @@
 # Verification Checklist - Institution Governance and Academic Lifecycle Overhaul
 
 - [x] Phase 01 decisions documented and accepted for implementation.
-- [ ] Firestore and Storage permission fixes validated with deny-path checks.
+- [x] Firestore and Storage permission fixes validated with deny-path checks.
 - [x] Deletion and bin-first lifecycle behavior validated for folders/subjects/courses.
 - [x] Institution admin dashboard preview, pagination, and policy controls validated.
 - [x] Academic year format, picker, filters, and lifecycle transitions validated.
@@ -113,4 +113,11 @@
 - 2026-04-02 (Phase 07 closure):
 	- Leverage decision selected `Mark Phase 07 complete`.
 	- Roadmap/phase status synchronized (Phase 07 completed, Phase 08 in progress).
+- 2026-04-02 (Phase 02 gate closure):
+	- Emulator-backed rules validation now passes after emulator config activation.
+	- `npm run test:rules` passed with Firestore + Storage deny-path coverage (58 tests).
+- 2026-04-02 (Phase 08 stabilization checkpoint):
+	- Broad suite rerun passed (`npm run test`: 108 files, 501 tests).
+	- Stabilization regression fixed in `BinConfirmModals` unit expectation to match typed confirm callback signature.
+	- Typecheck/lint snapshot remains green with only pre-existing lint warnings out of scope.
 

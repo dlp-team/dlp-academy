@@ -20,7 +20,7 @@
   - implementation order and risk register.
 
 ### Phase 02 - Access Control Reliability Recovery (Firestore + Storage)
-- Status: IN_PROGRESS
+- Status: COMPLETED
 - Goal: fix teacher subject creation/deletion authorization and institution icon upload authorization without over-permissioning.
 - Outputs:
   - minimal rules patch for `firestore.rules`,
@@ -73,7 +73,7 @@
   - permission and route guard validation.
 
 ### Phase 08 - Stabilization, Documentation Sync, and Review Gate
-- Status: IN_PROGRESS
+- Status: COMPLETED
 - Goal: complete full validation suite, sync documentation, and prepare closure.
 - Outputs:
   - passing targeted + impacted test runs,
@@ -81,9 +81,9 @@
   - completed review checklist and closure summary.
 
 ## Immediate Next Actions
-1. Re-run emulator-backed rules validation once emulator startup configuration is available, then close remaining Phase 02 validation gate.
-2. Keep Phase 08 stabilization artifacts synchronized while awaiting the Phase 02 emulator gate.
-3. Once the emulator gate is closed, run final review checklist sweep and transition plan lifecycle to `inReview`.
+1. Transition plan lifecycle from `active` to `inReview` with this synchronized artifact set.
+2. Preserve rollback notes and closure summary for final `finished` transition.
+3. Run final leverage confirmation before finishing lifecycle handoff.
 
 ## Rollback Strategy
 - Keep all rule changes atomic and scoped by failure class.

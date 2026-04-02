@@ -22,7 +22,7 @@ describe('BinConfirmModals', () => {
     fireEvent.click(screen.getByRole('button', { name: /eliminar permanentemente/i }));
 
     expect(onCancel).toHaveBeenCalledTimes(1);
-    expect(onConfirm).toHaveBeenCalledWith('subject-1');
+    expect(onConfirm).toHaveBeenCalledWith('subject-1', 'subject');
   });
 
   it('DeleteConfirmModal disables confirm button while action is loading', () => {

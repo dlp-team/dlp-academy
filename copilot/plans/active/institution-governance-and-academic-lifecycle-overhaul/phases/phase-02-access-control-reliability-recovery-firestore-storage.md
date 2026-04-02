@@ -3,7 +3,7 @@
 # Phase 02 - Access Control Reliability Recovery (Firestore + Storage)
 
 ## Status
-- IN_PROGRESS
+- COMPLETED
 
 ## Objective
 Resolve permission-denied failures for teacher subject creation/deletion and institution icon upload using least-privilege rule updates.
@@ -48,7 +48,9 @@ Resolve permission-denied failures for teacher subject creation/deletion and ins
 - Validation snapshot:
 	- `get_errors` clean for touched files,
 	- `npm run test -- tests/unit/hooks/useHomeHandlers.shortcuts.test.js` passed,
-	- emulator-backed rules tests currently blocked by missing emulator startup configuration (`No emulators to start`),
+	- emulator-backed rules tests now pass after emulator config activation:
+		- `npm run test:rules` (Firestore + Storage rules suites, 58 tests),
+		- Firebase emulators start/stop cleanly via `firebase emulators:exec --only firestore,storage`.
 	- `npm run lint` passed with pre-existing warnings outside scope,
 	- `npx tsc --noEmit` passed.
 

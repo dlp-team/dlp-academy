@@ -386,3 +386,25 @@
 - Phase 07 status synchronized to `COMPLETED` in phase/roadmap artifacts.
 - Phase 08 promoted to `IN_PROGRESS` for stabilization and closure tracking.
 
+## Phase 02 Emulator Validation Gate - Resolved
+- Added emulator configuration in `firebase.json` for Firestore/Storage/UI ports to unblock `firebase emulators:exec` startup.
+- Re-ran rules suite:
+   - `npm run test:rules`
+   - Result: pass (`58` tests across `tests/rules/firestore.rules.test.js` and `tests/rules/storage.rules.test.js`).
+
+## Phase 08 Stabilization Sweep
+- Ran broad validation suite:
+   - `npm run test` -> pass (`108` files, `501` tests).
+- Detected one test contract drift and fixed it losslessly:
+   - `tests/unit/components/BinConfirmModals.test.jsx` now expects `onConfirm('subject-1', 'subject')`.
+   - Added mirror explanation doc for this test.
+- Re-ran targeted and broad validations after fix:
+   - `npm run test -- tests/unit/components/BinConfirmModals.test.jsx` -> pass,
+   - `npm run test` -> pass (`108` files, `501` tests),
+   - `npx tsc --noEmit` -> exit 0,
+   - `npm run lint` -> exit 0 (4 pre-existing warnings in unrelated `src/pages/Content/*`).
+
+## Phase 08 Status Sync
+- Marked Phase 08 as `COMPLETED` in phase + roadmap artifacts.
+- Plan remains under `active` lifecycle pending final transition to `inReview`.
+

@@ -1,6 +1,10 @@
 // copilot/explanations/codebase/tests/rules/firestore.rules.test.md
 
 ## Changelog
+### 2026-04-02: Emulator gate closure validation
+- Revalidated this suite via `npm run test:rules` with active Firestore/Storage emulators after explicit emulator config activation in `firebase.json`.
+- Phase 02 rules validation gate is now closed with deterministic emulator-backed execution.
+
 ### 2026-04-02: Invite-code transaction preflight coverage
 - Added rules tests for `subjectInviteCodes` missing-doc preflight access:
   - allow same-institution teacher get on missing invite-code doc key,
