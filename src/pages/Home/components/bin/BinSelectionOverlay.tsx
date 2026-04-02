@@ -17,7 +17,8 @@ const GAP        = 12;    // px gap between card and panel
  * (z-index < 40). We read its position via selectedCardRef.getBoundingClientRect().
  */
 const BinSelectionOverlay = ({
-    subject,
+    item,
+    itemType = 'subject',
     selectedCardRef,
     actionLoading,
     onClose,
@@ -107,7 +108,8 @@ const BinSelectionOverlay = ({
                 style={{ top: panelTop, left: panelLeft }}
             >
                 <BinSelectionPanel
-                    subject={subject}
+                    item={item}
+                    itemType={itemType}
                     actionLoading={actionLoading}
                     onClose={onClose}
                     onShowDescription={onShowDescription}

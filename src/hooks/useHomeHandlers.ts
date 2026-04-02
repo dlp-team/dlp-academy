@@ -1,5 +1,5 @@
 // src/pages/Home/hooks/useHomeHandlers.js
-import { canEdit, isOwner } from '../utils/permissionUtils';
+import { canEdit, getNormalizedRole, isOwner } from '../utils/permissionUtils';
 import { clearLastHomeFolderId, saveLastHomeFolderId } from '../pages/Home/utils/homePersistence';
 
 export const useHomeHandlers = ({
@@ -222,8 +222,19 @@ export const useHomeHandlers = ({
         try {
             if (deleteConfig.type === 'subject' && deleteConfig.item) {
                 const isSubjectOwner = user?.uid ? isOwner(deleteConfig.item, user.uid) : false;
-                if (!isSubjectOwner) {
-                    setDeleteConfig({ isOpen: false, type: null, action: null, item: null });
+                const normalizedRole = getNormalizedRole(user);
+                const subjectInstitutionId = deleteConfig.item?.institutionId || null;
+                const canInstitutionAdminDelete =
+                    normalizedRole === 'institutionadmin'
+                    && Boolean(user?.institutionId)
+                    && subjectInstitutionId === user.institutionId;
+                const canDeleteByRole = isSubjectOwner || normalizedRole === 'admin' || canInstitutionAdminDelete;
+
+                if (!canDeleteByRole) {
+                    setDeleteConfig(prev => ({
+                        ...prev,
+                        errorMessage: 'No tienes permisos para eliminar esta asignatura.'
+                    }));
                     return;
                 }
                 try {

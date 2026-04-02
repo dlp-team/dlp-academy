@@ -11,6 +11,10 @@ const mocks = vi.hoisted(() => ({
   createClass: vi.fn(),
   updateClass: vi.fn(),
   deleteClass: vi.fn(),
+  restoreCourse: vi.fn(),
+  restoreClass: vi.fn(),
+  permanentlyDeleteCourse: vi.fn(),
+  permanentlyDeleteClass: vi.fn(),
 }));
 
 vi.mock('../../../../src/pages/InstitutionAdminDashboard/hooks/useClassesCourses', () => ({
@@ -31,6 +35,23 @@ vi.mock('../../../../src/pages/InstitutionAdminDashboard/hooks/useClassesCourses
         studentIds: [],
       },
     ],
+    trashedCourses: [
+      {
+        id: 'course-trash-1',
+        name: '2 ESO',
+        trashedAt: '2026-04-02T10:00:00.000Z',
+      },
+    ],
+    trashedClasses: [
+      {
+        id: 'class-trash-1',
+        name: '2 ESO B',
+        courseId: 'course-trash-1',
+        teacherId: 'teacher-1',
+        studentIds: [],
+        trashedAt: '2026-04-02T10:00:00.000Z',
+      },
+    ],
     loading: false,
     createCourse: mocks.createCourse,
     updateCourse: mocks.updateCourse,
@@ -38,6 +59,10 @@ vi.mock('../../../../src/pages/InstitutionAdminDashboard/hooks/useClassesCourses
     createClass: mocks.createClass,
     updateClass: mocks.updateClass,
     deleteClass: mocks.deleteClass,
+    restoreCourse: mocks.restoreCourse,
+    restoreClass: mocks.restoreClass,
+    permanentlyDeleteCourse: mocks.permanentlyDeleteCourse,
+    permanentlyDeleteClass: mocks.permanentlyDeleteClass,
   }),
 }));
 
@@ -66,12 +91,12 @@ describe('ClassesCoursesSection delete confirmation', () => {
 
     fireEvent.click(screen.getByTitle(/eliminar curso/i));
 
-    expect(screen.getByRole('heading', { name: /eliminar curso/i })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /mover curso a papelera/i })).toBeTruthy();
     expect(globalThis.confirm).not.toHaveBeenCalled();
     expect(mocks.deleteCourse).not.toHaveBeenCalled();
 
     fireEvent.click(
-      within(screen.getByRole('dialog')).getByRole('button', { name: /^eliminar curso$/i })
+      within(screen.getByRole('dialog')).getByRole('button', { name: /^mover a papelera$/i })
     );
 
     await waitFor(() => {
@@ -80,7 +105,7 @@ describe('ClassesCoursesSection delete confirmation', () => {
 
     expect(mocks.deleteCourse).toHaveBeenCalledWith('course-1');
     expect(mocks.deleteClass).not.toHaveBeenCalled();
-    expect(screen.queryByRole('heading', { name: /eliminar curso/i })).toBeNull();
+    expect(screen.queryByRole('heading', { name: /mover curso a papelera/i })).toBeNull();
   });
 
   it('cancels course deletion without calling delete handlers', () => {
@@ -89,7 +114,7 @@ describe('ClassesCoursesSection delete confirmation', () => {
     fireEvent.click(screen.getByTitle(/eliminar curso/i));
     fireEvent.click(screen.getByRole('button', { name: /cancelar/i }));
 
-    expect(screen.queryByRole('heading', { name: /eliminar curso/i })).toBeNull();
+    expect(screen.queryByRole('heading', { name: /mover curso a papelera/i })).toBeNull();
     expect(mocks.deleteCourse).not.toHaveBeenCalled();
     expect(mocks.deleteClass).not.toHaveBeenCalled();
     expect(globalThis.confirm).not.toHaveBeenCalled();
@@ -101,12 +126,12 @@ describe('ClassesCoursesSection delete confirmation', () => {
     fireEvent.click(screen.getByRole('button', { name: /clases/i }));
     fireEvent.click(screen.getByTitle(/^eliminar$/i));
 
-    expect(screen.getByRole('heading', { name: /eliminar clase/i })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: /mover clase a papelera/i })).toBeTruthy();
     expect(globalThis.confirm).not.toHaveBeenCalled();
     expect(mocks.deleteClass).not.toHaveBeenCalled();
 
     fireEvent.click(
-      within(screen.getByRole('dialog')).getByRole('button', { name: /^eliminar clase$/i })
+      within(screen.getByRole('dialog')).getByRole('button', { name: /^mover a papelera$/i })
     );
 
     await waitFor(() => {
@@ -114,6 +139,52 @@ describe('ClassesCoursesSection delete confirmation', () => {
     });
 
     expect(mocks.deleteClass).toHaveBeenCalledWith('class-1');
+    expect(mocks.deleteCourse).not.toHaveBeenCalled();
+  });
+
+  it('restores a trashed course from the bin tab', async () => {
+    renderSection();
+
+    fireEvent.click(screen.getByRole('button', { name: /papelera/i }));
+
+    const restoreButtons = screen.getAllByRole('button', { name: /^restaurar$/i });
+    fireEvent.click(restoreButtons[0]);
+
+    await waitFor(() => {
+      expect(mocks.restoreCourse).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mocks.restoreCourse).toHaveBeenCalledWith('course-trash-1');
+    expect(mocks.restoreClass).not.toHaveBeenCalled();
+  });
+
+  it('requires exact typed name before permanent deleting a trashed course', async () => {
+    renderSection();
+
+    fireEvent.click(screen.getByRole('button', { name: /papelera/i }));
+
+    fireEvent.click(screen.getAllByRole('button', { name: /eliminar definitivamente/i })[0]);
+
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('heading', { name: /eliminar curso definitivamente/i })).toBeTruthy();
+
+    const actionButton = within(dialog).getByRole('button', { name: /eliminar definitivamente/i });
+    expect(actionButton).toHaveProperty('disabled', true);
+
+    const input = within(dialog).getByLabelText(/escribe el nombre exacto para confirmar/i);
+    fireEvent.change(input, { target: { value: 'nombre incorrecto' } });
+    expect(actionButton).toHaveProperty('disabled', true);
+
+    fireEvent.change(input, { target: { value: '2 ESO' } });
+    expect(actionButton).toHaveProperty('disabled', false);
+
+    fireEvent.click(actionButton);
+
+    await waitFor(() => {
+      expect(mocks.permanentlyDeleteCourse).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mocks.permanentlyDeleteCourse).toHaveBeenCalledWith('course-trash-1');
     expect(mocks.deleteCourse).not.toHaveBeenCalled();
   });
 });

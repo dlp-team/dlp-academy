@@ -1,8 +1,9 @@
 // src/pages/InstitutionAdminDashboard/hooks/useCustomization.js
 import { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
 import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
-import { db } from '../../../firebase/config';
+import { auth, db, functions } from '../../../firebase/config';
 import {
   GLOBAL_BRAND_DEFAULTS,
   HOME_THEME_DEFAULT_COLORS,
@@ -85,6 +86,62 @@ export const useCustomization = (user, institutionIdOverride = null) => {
     return () => { active = false; };
   }, [effectiveInstitutionId]);
 
+  const syncAuthClaimsForStorage = async ({ force = false } = {}) => {
+    const authUser = auth.currentUser;
+    if (!authUser) return;
+
+    const expectedRole = String(user?.role || '').trim().toLowerCase();
+    const expectedInstitutionId = effectiveInstitutionId ? String(effectiveInstitutionId) : null;
+
+    const tokenResult = await authUser.getIdTokenResult();
+    const tokenRole = String(tokenResult?.claims?.role || '').trim().toLowerCase();
+    const tokenInstitutionId = tokenResult?.claims?.institutionId
+      ? String(tokenResult.claims.institutionId)
+      : null;
+
+    const shouldSync = force
+      || tokenRole !== expectedRole
+      || tokenInstitutionId !== expectedInstitutionId;
+
+    if (!shouldSync) return;
+
+    const syncClaims = httpsCallable(functions, 'syncCurrentUserClaims');
+    await syncClaims({});
+    await authUser.getIdToken(true);
+  };
+
+  const uploadBrandingAsset = async (file: any, assetName: any) => {
+    if (!effectiveInstitutionId) {
+      throw new Error('No se pudo resolver la institución para la subida de archivos.');
+    }
+
+    const fileExtension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : 'png';
+    const storageRef = ref(
+      getStorage(db.app),
+      `institutions/${effectiveInstitutionId}/branding/${assetName}.${fileExtension || 'png'}`
+    );
+
+    await syncAuthClaimsForStorage();
+
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        await uploadBytes(storageRef, file, { contentType: file.type });
+        return getDownloadURL(storageRef);
+      } catch (error: any) {
+        const isUnauthorized = String(error?.code || '').toLowerCase() === 'storage/unauthorized'
+          || String(error?.message || '').toLowerCase().includes('unauthorized');
+
+        if (!isUnauthorized || attempt > 0) {
+          throw error;
+        }
+
+        await syncAuthClaimsForStorage({ force: true });
+      }
+    }
+
+    throw new Error('No se pudo completar la subida del archivo de personalización.');
+  };
+
   const handleIconUpload = async (event: any) => {
     const file = event.target.files?.[0];
     event.target.value = '';
@@ -98,10 +155,7 @@ export const useCustomization = (user, institutionIdOverride = null) => {
     setCustomizationError('');
     setCustomizationSuccess('');
     try {
-      const fileExtension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : 'png';
-      const storageRef = ref(getStorage(db.app), `institutions/${effectiveInstitutionId}/branding/icon.${fileExtension || 'png'}`);
-      await uploadBytes(storageRef, file, { contentType: file.type });
-      const iconUrl = await getDownloadURL(storageRef);
+      const iconUrl = await uploadBrandingAsset(file, 'icon');
       await updateDoc(doc(db, 'institutions', effectiveInstitutionId), {
         'customization.iconUrl': iconUrl,
         updatedAt: serverTimestamp(),
@@ -129,10 +183,7 @@ export const useCustomization = (user, institutionIdOverride = null) => {
     setCustomizationError('');
     setCustomizationSuccess('');
     try {
-      const fileExtension = file.name.includes('.') ? file.name.split('.').pop()?.toLowerCase() : 'png';
-      const storageRef = ref(getStorage(db.app), `institutions/${effectiveInstitutionId}/branding/logo.${fileExtension || 'png'}`);
-      await uploadBytes(storageRef, file, { contentType: file.type });
-      const logoUrl = await getDownloadURL(storageRef);
+      const logoUrl = await uploadBrandingAsset(file, 'logo');
       await updateDoc(doc(db, 'institutions', effectiveInstitutionId), {
         'customization.logoUrl': logoUrl,
         updatedAt: serverTimestamp(),

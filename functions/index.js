@@ -1,5 +1,6 @@
 // functions/index.js
 import { initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
@@ -12,6 +13,17 @@ initializeApp();
 
 const db = getFirestore();
 const INSTITUTION_CODE_SALT = defineSecret('INSTITUTION_CODE_SALT');
+const ALLOWED_ROLE_CLAIMS = new Set(['admin', 'institutionadmin', 'teacher', 'student']);
+
+const normalizeRoleClaim = (value) => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return ALLOWED_ROLE_CLAIMS.has(normalized) ? normalized : 'student';
+};
+
+const normalizeInstitutionClaim = (value) => {
+  const normalized = String(value || '').trim();
+  return normalized.length > 0 ? normalized : null;
+};
 
 const normalizePolicy = (policy = {}) => ({
   requireCode: policy.requireCode !== false,
@@ -128,4 +140,44 @@ export const getInstitutionalAccessCodePreview = onCall(
     invoker: 'public',
   },
   getInstitutionalAccessCodePreviewHandler
+);
+
+export const syncCurrentUserClaims = onCall(
+  {
+    region: 'europe-west1',
+    invoker: 'public',
+  },
+  async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError('unauthenticated', 'Authentication is required.');
+    }
+
+    const uid = request.auth.uid;
+    const userSnapshot = await db.collection('users').doc(uid).get();
+
+    if (!userSnapshot.exists) {
+      throw new HttpsError('failed-precondition', 'User profile not found.');
+    }
+
+    const userData = userSnapshot.data() || {};
+    const role = normalizeRoleClaim(userData.role);
+    const institutionId = normalizeInstitutionClaim(userData.institutionId);
+
+    const authAdmin = getAuth();
+    const userRecord = await authAdmin.getUser(uid);
+    const currentClaims = userRecord.customClaims || {};
+    const { role: _legacyRole, institutionId: _legacyInstitutionId, ...remainingClaims } = currentClaims;
+
+    await authAdmin.setCustomUserClaims(uid, {
+      ...remainingClaims,
+      role,
+      institutionId,
+    });
+
+    return {
+      success: true,
+      role,
+      institutionId,
+    };
+  }
 );

@@ -322,17 +322,21 @@ describe('useFolders', () => {
       await result.current.deleteFolder('folder-1');
     });
 
-    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'subjects', id: 'subject-root' })
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-root' }),
+      expect.objectContaining({ status: 'trashed', trashedRootFolderId: 'folder-1', trashedByFolderId: 'folder-1' })
     );
-    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'subjects', id: 'subject-child' })
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-child' }),
+      expect.objectContaining({ status: 'trashed', trashedRootFolderId: 'folder-1', trashedByFolderId: 'folder-1' })
     );
-    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'folders', id: 'folder-child' })
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-child' }),
+      expect.objectContaining({ status: 'trashed', trashedRootFolderId: 'folder-1', trashedByFolderId: 'folder-1' })
     );
-    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'folders', id: 'folder-1' })
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-1' }),
+      expect.objectContaining({ status: 'trashed', trashedRootFolderId: 'folder-1', trashedByFolderId: null })
     );
     expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
   });
@@ -367,8 +371,9 @@ describe('useFolders', () => {
       await result.current.deleteFolder('folder-1');
     });
 
-    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'folders', id: 'folder-1' })
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-1' }),
+      expect.objectContaining({ status: 'trashed', trashedRootFolderId: 'folder-1', trashedByFolderId: null })
     );
     expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
   });
@@ -405,8 +410,9 @@ describe('useFolders', () => {
     });
 
     expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
-    expect(firestoreMocks.mockDeleteDoc).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'folders', id: 'folder-1' })
+    expect(firestoreMocks.mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-1' }),
+      expect.objectContaining({ status: 'trashed', trashedRootFolderId: 'folder-1', trashedByFolderId: null })
     );
   });
 
@@ -460,8 +466,9 @@ describe('useFolders', () => {
     });
 
     expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
-    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'folders', id: 'folder-1' })
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-1' }),
+      expect.objectContaining({ status: 'trashed', trashedRootFolderId: 'folder-1', trashedByFolderId: null })
     );
   });
 
@@ -524,11 +531,20 @@ describe('useFolders', () => {
       await result.current.deleteFolder('folder-shared');
     });
 
-    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'subjects', id: 'subject-shared-1' })
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-shared-1' }),
+      expect.objectContaining({
+        status: 'trashed',
+        trashedRootFolderId: 'folder-shared',
+        trashedByFolderId: 'folder-shared',
+        isShared: false,
+        sharedWith: [],
+        sharedWithUids: []
+      })
     );
-    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'folders', id: 'folder-shared' })
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-shared' }),
+      expect.objectContaining({ status: 'trashed', trashedRootFolderId: 'folder-shared', trashedByFolderId: null })
     );
   });
 
@@ -759,6 +775,597 @@ describe('useFolders', () => {
     expect(firestoreMocks.mockDeleteDoc).not.toHaveBeenCalled();
   });
 
+  it('getTrashedFolders returns only top-level trashed folders', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((_queryObj, callback) => {
+      callback({ docs: [] });
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filters = queryObj.parts.filter((entry) => entry?.field);
+      const fieldMap = new Map(filters.map((f) => [f.field, f.value]));
+
+      if (fieldMap.get('ownerId') === user.uid && fieldMap.get('status') === 'trashed') {
+        return {
+          docs: [
+            createDoc('folder-root', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: null,
+            }),
+            createDoc('folder-child', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: 'folder-root',
+            }),
+            createDoc('folder-legacy', {
+              ownerId: user.uid,
+              status: 'trashed',
+            }),
+          ],
+          forEach: (fn) => [
+            createDoc('folder-root', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: null,
+            }),
+            createDoc('folder-child', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: 'folder-root',
+            }),
+            createDoc('folder-legacy', {
+              ownerId: user.uid,
+              status: 'trashed',
+            }),
+          ].forEach(fn),
+        };
+      }
+
+      return { docs: [], forEach: () => {} };
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    let trashedFolders;
+    await act(async () => {
+      trashedFolders = await result.current.getTrashedFolders();
+    });
+
+    const trashedIds = trashedFolders.map((folder) => folder.id);
+    expect(trashedIds).toContain('folder-root');
+    expect(trashedIds).toContain('folder-legacy');
+    expect(trashedIds).not.toContain('folder-child');
+
+    let nestedTrashedFolders;
+    await act(async () => {
+      nestedTrashedFolders = await result.current.getTrashedFolders({ includeNested: true });
+    });
+
+    const nestedIds = nestedTrashedFolders.map((folder) => folder.id);
+    expect(nestedIds).toContain('folder-root');
+    expect(nestedIds).toContain('folder-legacy');
+    expect(nestedIds).toContain('folder-child');
+  });
+
+  it('restoreFolder restores folder tree and nested trashed subjects', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((_queryObj, callback) => {
+      callback({ docs: [] });
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDoc.mockImplementation(async (docRef) => {
+      if (docRef?.name === 'folders' && docRef?.id === 'folder-root') {
+        return {
+          exists: () => true,
+          data: () => ({
+            ownerId: user.uid,
+            status: 'trashed',
+            trashedRootFolderId: 'folder-root',
+            trashedOriginalParentId: null,
+          }),
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filters = queryObj.parts.filter((entry) => entry?.field);
+      const fieldMap = new Map(filters.map((f) => [f.field, f.value]));
+
+      if (fieldMap.get('ownerId') === user.uid && fieldMap.get('status') === 'trashed') {
+        return {
+          docs: [
+            createDoc('folder-root', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: null,
+            }),
+            createDoc('folder-child', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: 'folder-root',
+            }),
+          ],
+          forEach: (fn) => [
+            createDoc('folder-root', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: null,
+            }),
+            createDoc('folder-child', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: 'folder-root',
+            }),
+          ].forEach(fn),
+        };
+      }
+
+      if (fieldMap.get('folderId') === 'folder-root') {
+        return {
+          docs: [
+            createDoc('subject-root', {
+              status: 'trashed',
+              folderId: 'folder-root',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ],
+          forEach: (fn) => [
+            createDoc('subject-root', {
+              status: 'trashed',
+              folderId: 'folder-root',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ].forEach(fn),
+        };
+      }
+
+      if (fieldMap.get('folderId') === 'folder-child') {
+        return {
+          docs: [
+            createDoc('subject-child', {
+              status: 'trashed',
+              folderId: 'folder-child',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ],
+          forEach: (fn) => [
+            createDoc('subject-child', {
+              status: 'trashed',
+              folderId: 'folder-child',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ].forEach(fn),
+        };
+      }
+
+      return { docs: [], forEach: () => {} };
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.restoreFolder('folder-root');
+    });
+
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-root' }),
+      expect.objectContaining({ status: 'active', trashedRootFolderId: null, trashedByFolderId: null, parentId: null })
+    );
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-child' }),
+      expect.objectContaining({ status: 'active', trashedRootFolderId: null, trashedByFolderId: null })
+    );
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-root' }),
+      expect.objectContaining({ status: 'active', trashedRootFolderId: null, trashedByFolderId: null })
+    );
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-child' }),
+      expect.objectContaining({ status: 'active', trashedRootFolderId: null, trashedByFolderId: null })
+    );
+  });
+
+  it('restoreFolder restores only the selected nested folder subtree', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((_queryObj, callback) => {
+      callback({ docs: [] });
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDoc.mockImplementation(async (docRef) => {
+      if (docRef?.name === 'folders' && docRef?.id === 'folder-child-selected') {
+        return {
+          exists: () => true,
+          data: () => ({
+            ownerId: user.uid,
+            status: 'trashed',
+            trashedRootFolderId: 'folder-root',
+            parentId: 'folder-root',
+          }),
+        };
+      }
+
+      if (docRef?.name === 'folders' && docRef?.id === 'folder-root') {
+        return {
+          exists: () => true,
+          data: () => ({
+            ownerId: user.uid,
+            status: 'trashed',
+          }),
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filters = queryObj.parts.filter((entry) => entry?.field);
+      const fieldMap = new Map(filters.map((f) => [f.field, f.value]));
+
+      if (fieldMap.get('ownerId') === user.uid && fieldMap.get('status') === 'trashed') {
+        return {
+          docs: [
+            createDoc('folder-root', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: null,
+              parentId: null,
+            }),
+            createDoc('folder-child-selected', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: 'folder-root',
+              parentId: 'folder-root',
+            }),
+            createDoc('folder-sibling', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: 'folder-root',
+              parentId: 'folder-root',
+            }),
+          ],
+          forEach: (fn) => [
+            createDoc('folder-root', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: null,
+              parentId: null,
+            }),
+            createDoc('folder-child-selected', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: 'folder-root',
+              parentId: 'folder-root',
+            }),
+            createDoc('folder-sibling', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: 'folder-root',
+              parentId: 'folder-root',
+            }),
+          ].forEach(fn),
+        };
+      }
+
+      if (fieldMap.get('folderId') === 'folder-child-selected') {
+        return {
+          docs: [
+            createDoc('subject-child-selected', {
+              status: 'trashed',
+              folderId: 'folder-child-selected',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ],
+          forEach: (fn) => [
+            createDoc('subject-child-selected', {
+              status: 'trashed',
+              folderId: 'folder-child-selected',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ].forEach(fn),
+        };
+      }
+
+      if (fieldMap.get('folderId') === 'folder-sibling') {
+        return {
+          docs: [
+            createDoc('subject-sibling', {
+              status: 'trashed',
+              folderId: 'folder-sibling',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ],
+          forEach: (fn) => [
+            createDoc('subject-sibling', {
+              status: 'trashed',
+              folderId: 'folder-sibling',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ].forEach(fn),
+        };
+      }
+
+      return { docs: [], forEach: () => {} };
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.restoreFolder('folder-child-selected');
+    });
+
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-child-selected' }),
+      expect.objectContaining({ status: 'active', trashedRootFolderId: null, trashedByFolderId: null, parentId: null })
+    );
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-child-selected' }),
+      expect.objectContaining({ status: 'active', trashedRootFolderId: null, trashedByFolderId: null })
+    );
+
+    expect(firestoreMocks.mockBatchUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-root' }),
+      expect.anything()
+    );
+    expect(firestoreMocks.mockBatchUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-sibling' }),
+      expect.anything()
+    );
+    expect(firestoreMocks.mockBatchUpdate).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-sibling' }),
+      expect.anything()
+    );
+  });
+
+  it('permanentlyDeleteFolder deletes trashed subtree folders and subjects', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((_queryObj, callback) => {
+      callback({ docs: [] });
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDoc.mockImplementation(async (docRef) => {
+      if (docRef?.name === 'folders' && docRef?.id === 'folder-root') {
+        return {
+          exists: () => true,
+          data: () => ({
+            ownerId: user.uid,
+            status: 'trashed',
+            trashedRootFolderId: 'folder-root',
+          }),
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filters = queryObj.parts.filter((entry) => entry?.field);
+      const fieldMap = new Map(filters.map((f) => [f.field, f.value]));
+
+      if (fieldMap.get('ownerId') === user.uid && fieldMap.get('status') === 'trashed') {
+        return {
+          docs: [
+            createDoc('folder-root', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: null,
+            }),
+          ],
+          forEach: (fn) => [
+            createDoc('folder-root', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: null,
+            }),
+          ].forEach(fn),
+        };
+      }
+
+      if (fieldMap.get('folderId') === 'folder-root') {
+        return {
+          docs: [
+            createDoc('subject-root', {
+              status: 'trashed',
+              folderId: 'folder-root',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ],
+          forEach: (fn) => [
+            createDoc('subject-root', {
+              status: 'trashed',
+              folderId: 'folder-root',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ].forEach(fn),
+        };
+      }
+
+      if (fieldMap.get('subjectId') === 'subject-root') {
+        return { docs: [], forEach: () => {} };
+      }
+
+      return { docs: [], forEach: () => {} };
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.permanentlyDeleteFolder('folder-root');
+    });
+
+    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-root' })
+    );
+    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-root' })
+    );
+    expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
+  });
+
+  it('permanentlyDeleteFolder deletes only selected nested folder subtree', async () => {
+    firestoreMocks.mockOnSnapshot.mockImplementation((_queryObj, callback) => {
+      callback({ docs: [] });
+      return vi.fn();
+    });
+
+    firestoreMocks.mockGetDoc.mockImplementation(async (docRef) => {
+      if (docRef?.name === 'folders' && docRef?.id === 'folder-child-selected') {
+        return {
+          exists: () => true,
+          data: () => ({
+            ownerId: user.uid,
+            status: 'trashed',
+            trashedRootFolderId: 'folder-root',
+          }),
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObj) => {
+      const filters = queryObj.parts.filter((entry) => entry?.field);
+      const fieldMap = new Map(filters.map((f) => [f.field, f.value]));
+
+      if (fieldMap.get('ownerId') === user.uid && fieldMap.get('status') === 'trashed') {
+        return {
+          docs: [
+            createDoc('folder-root', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: null,
+              parentId: null,
+            }),
+            createDoc('folder-child-selected', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: 'folder-root',
+              parentId: 'folder-root',
+            }),
+            createDoc('folder-sibling', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: 'folder-root',
+              parentId: 'folder-root',
+            }),
+          ],
+          forEach: (fn) => [
+            createDoc('folder-root', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: null,
+              parentId: null,
+            }),
+            createDoc('folder-child-selected', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: 'folder-root',
+              parentId: 'folder-root',
+            }),
+            createDoc('folder-sibling', {
+              ownerId: user.uid,
+              status: 'trashed',
+              trashedRootFolderId: 'folder-root',
+              trashedByFolderId: 'folder-root',
+              parentId: 'folder-root',
+            }),
+          ].forEach(fn),
+        };
+      }
+
+      if (fieldMap.get('folderId') === 'folder-child-selected') {
+        return {
+          docs: [
+            createDoc('subject-child-selected', {
+              status: 'trashed',
+              folderId: 'folder-child-selected',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ],
+          forEach: (fn) => [
+            createDoc('subject-child-selected', {
+              status: 'trashed',
+              folderId: 'folder-child-selected',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ].forEach(fn),
+        };
+      }
+
+      if (fieldMap.get('subjectId') === 'subject-child-selected') {
+        return { docs: [], forEach: () => {} };
+      }
+
+      if (fieldMap.get('folderId') === 'folder-sibling') {
+        return {
+          docs: [
+            createDoc('subject-sibling', {
+              status: 'trashed',
+              folderId: 'folder-sibling',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ],
+          forEach: (fn) => [
+            createDoc('subject-sibling', {
+              status: 'trashed',
+              folderId: 'folder-sibling',
+              trashedRootFolderId: 'folder-root',
+            }),
+          ].forEach(fn),
+        };
+      }
+
+      return { docs: [], forEach: () => {} };
+    });
+
+    const { result } = renderHook(() => useFolders(user));
+
+    await act(async () => {
+      await result.current.permanentlyDeleteFolder('folder-child-selected');
+    });
+
+    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-child-selected' })
+    );
+    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-child-selected' })
+    );
+
+    expect(firestoreMocks.mockBatchDelete).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-root' })
+    );
+    expect(firestoreMocks.mockBatchDelete).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-sibling' })
+    );
+    expect(firestoreMocks.mockBatchDelete).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'subjects', id: 'subject-sibling' })
+    );
+    expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
+  });
+
   it('deleteFolder still cascades when folder institutionId is missing', async () => {
     firestoreMocks.mockOnSnapshot.mockImplementation((queryObj, callback) => {
       const isOwnedQuery = queryObj.parts.some((entry) => entry?.field === 'ownerId');
@@ -788,8 +1395,9 @@ describe('useFolders', () => {
       await result.current.deleteFolder('folder-no-inst');
     });
 
-    expect(firestoreMocks.mockBatchDelete).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'folders', id: 'folder-no-inst' })
+    expect(firestoreMocks.mockBatchUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'folders', id: 'folder-no-inst' }),
+      expect.objectContaining({ status: 'trashed', trashedRootFolderId: 'folder-no-inst', trashedByFolderId: null })
     );
     expect(firestoreMocks.mockBatchCommit).toHaveBeenCalledTimes(1);
   });

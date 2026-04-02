@@ -120,6 +120,13 @@ service cloud.firestore {
         );
     }
 
+    function inviteCodeKeyMatchesInstitution(inviteCodeKey, institutionId) {
+      return inviteCodeKey is string
+        && institutionId is string
+        && institutionId.size() > 0
+        && inviteCodeKey.matches('^' + institutionId + '_[A-Za-z0-9]+$');
+    }
+
     function allowsTeacherAutonomousSubjectCreation(institutionId) {
       return institutionId == null
         || !exists(/databases/$(database)/documents/institutions/$(institutionId))
@@ -495,10 +502,10 @@ service cloud.firestore {
           || (
             currentUserInstitutionId() != null
             && request.resource.data.institutionId == currentUserInstitutionId()
-            && exists(/databases/$(database)/documents/subjects/$(request.resource.data.subjectId))
+            && existsAfter(/databases/$(database)/documents/subjects/$(request.resource.data.subjectId))
             && (
-              get(/databases/$(database)/documents/subjects/$(request.resource.data.subjectId)).data.ownerId == request.auth.uid
-              || (isTeacherRole() && sameInstitution(get(/databases/$(database)/documents/subjects/$(request.resource.data.subjectId)).data))
+              getAfter(/databases/$(database)/documents/subjects/$(request.resource.data.subjectId)).data.ownerId == request.auth.uid
+              || (isTeacherRole() && sameInstitution(getAfter(/databases/$(database)/documents/subjects/$(request.resource.data.subjectId)).data))
             )
           )
         );
@@ -508,12 +515,14 @@ service cloud.firestore {
           || (
             currentUserInstitutionId() != null
             && (
-              
-                resource != null
-                && resource.data.institutionId == currentUserInstitutionId()
+              (resource != null
+                && resource.data.institutionId == currentUserInstitutionId())
+              || (
+                resource == null
+                && !isStudentRole()
+                && inviteCodeKeyMatchesInstitution(inviteCodeKey, currentUserInstitutionId())
+              )
             )
-              
-            
           )
         );
       allow list: if false;

@@ -5,7 +5,7 @@ import {
   assertSucceeds,
   assertFails,
 } from '@firebase/rules-unit-testing';
-import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, where, writeBatch } from 'firebase/firestore';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1050,6 +1050,39 @@ describe('Firestore rules integration', () => {
 
       await assertFails(getDocs(listQuery));
       await assertSucceeds(getDoc(doc(teacherDb, 'subjectInviteCodes', 'inst-1_LIST1234')));
+    });
+
+    it('allows same-institution invite-code preflight get for missing doc (teacher subject creation transaction path)', async () => {
+      const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+      await assertSucceeds(getDoc(doc(teacherDb, 'subjectInviteCodes', 'inst-1_MISSING001')));
+    });
+
+    it('denies cross-institution invite-code preflight get for missing doc', async () => {
+      const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+      await assertFails(getDoc(doc(teacherDb, 'subjectInviteCodes', 'inst-2_MISSING001')));
+    });
+
+    it('allows teacher to reserve invite code and create subject in the same batch', async () => {
+      const teacherDb = testEnv.authenticatedContext('teacher-1').firestore();
+      const batch = writeBatch(teacherDb);
+
+      batch.set(doc(teacherDb, 'subjectInviteCodes', 'inst-1_BATCHCODE1'), {
+        inviteCode: 'BATCHCODE1',
+        institutionId: 'inst-1',
+        subjectId: 'subject-batch-create',
+        createdBy: 'teacher-1',
+        createdAt: new Date(),
+      });
+
+      batch.set(doc(teacherDb, 'subjects', 'subject-batch-create'), {
+        ownerId: 'teacher-1',
+        institutionId: 'inst-1',
+        course: 'Batch Course',
+        inviteCode: 'BATCHCODE1',
+        enrolledStudentUids: [],
+      });
+
+      await assertSucceeds(batch.commit());
     });
   });
 

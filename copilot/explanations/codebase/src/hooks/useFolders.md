@@ -1,4 +1,44 @@
 <!-- copilot/explanations/codebase/src/hooks/useFolders.md -->
+## [2026-04-02] Nested Folder Subtree Operations for Bin Drilldown
+### Context
+- Phase 03 required nested subfolder actions in bin drilldown without applying restore/delete to sibling branches.
+
+### Change
+- `getTrashedFolders` now supports options for drilldown fetches:
+  - `includeNested` to return all trashed folders (not only top-level containers),
+  - `rootFolderId` to constrain to one trashed root tree when needed.
+- `restoreFolder` and `permanentlyDeleteFolder` now resolve scope by selected folder:
+  - selecting a root trashed folder keeps full-tree behavior,
+  - selecting a nested trashed folder applies only to that nested subtree.
+- Restore parent reconciliation now validates whether external parents are still active before reconnecting; otherwise restored folders are safely re-rooted.
+
+### Validation
+- `npm run test -- tests/unit/hooks/useFolders.test.js tests/unit/hooks/useHomeHandlers.shortcuts.test.js tests/unit/hooks/useHomeLogic.test.js`
+- `npx tsc --noEmit`
+- `npm run lint`
+
+## [2026-04-02] Folder Bin-First Lifecycle APIs and Soft-Delete Cascade
+### Context
+- Phase 03 required replacing recursive hard-delete for folders with a bin-first lifecycle while preserving folder-only delete behavior.
+
+### Change
+- `deleteFolder` now performs a trash cascade instead of immediate deletion:
+  - marks folder subtree as `status: 'trashed'`,
+  - marks contained subjects as trashed and clears sharing arrays,
+  - records `trashedRootFolderId`/`trashedByFolderId` metadata,
+  - removes owner shortcuts for affected folder/subject targets.
+- Added chunk-safe batch helper for large subtree updates.
+- Added folder-bin APIs:
+  - `getTrashedFolders()` (top-level folder containers only),
+  - `restoreFolder()` (subtree restore + nested subject restore),
+  - `permanentlyDeleteFolder()` (subtree hard delete + topic/resource cleanup).
+- Active folder subscriptions now exclude trashed folders from standard Home views.
+
+### Validation
+- `npm run test -- tests/unit/hooks/useFolders.test.js`
+- `npm run test -- tests/unit/hooks/useHomeHandlers.shortcuts.test.js tests/unit/hooks/useHomeLogic.test.js`
+- `npx tsc --noEmit`
+
 ## [2026-03-30] Circular Folder Move Guard Uses Non-Blocking Feedback
 ### Context
 - `moveFolderBetweenParents` still used a browser alert for circular move attempts, which conflicted with non-blocking feedback standards in active workflows.

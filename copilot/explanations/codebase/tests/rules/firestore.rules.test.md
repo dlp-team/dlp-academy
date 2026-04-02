@@ -1,6 +1,12 @@
 // copilot/explanations/codebase/tests/rules/firestore.rules.test.md
 
 ## Changelog
+### 2026-04-02: Invite-code transaction preflight coverage
+- Added rules tests for `subjectInviteCodes` missing-doc preflight access:
+  - allow same-institution teacher get on missing invite-code doc key,
+  - deny cross-institution teacher get on missing invite-code doc key.
+- Added same-batch create regression test ensuring teacher can reserve invite code and create the corresponding subject in one batched write.
+
 ### 2026-04-01: Phase 03 residual coverage closure
 - Added subject class assignment integrity tests:
   - allow teacher create/update when `classId` matches subject `institutionId`,

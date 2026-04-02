@@ -348,7 +348,7 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
     expect(nextState.subjects).toEqual(['subject-2']);
   });
 
-  it('blocks subject deletion when current user is not owner (ghost/read-only context)', async () => {
+  it('blocks subject deletion when current user is not owner and surfaces explicit permission feedback', async () => {
     const config = createBaseConfig({
       deleteConfig: {
         isOpen: true,
@@ -367,7 +367,80 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
 
     expect(config.deleteSubject).not.toHaveBeenCalled();
     expect(config.setManualOrder).not.toHaveBeenCalled();
-    expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
+    expect(config.setDeleteConfig).toHaveBeenCalledTimes(1);
+    const updater = config.setDeleteConfig.mock.calls[0][0];
+    expect(typeof updater).toBe('function');
+    expect(
+      updater({ isOpen: true, type: 'subject', action: null, item: { id: 'subject-ghost-nonowner' } })
+    ).toEqual({
+      isOpen: true,
+      type: 'subject',
+      action: null,
+      item: { id: 'subject-ghost-nonowner' },
+      errorMessage: 'No tienes permisos para eliminar esta asignatura.'
+    });
+  });
+
+  it('allows institution admin subject deletion within the same institution even when not owner', async () => {
+    const config = createBaseConfig({
+      user: {
+        uid: 'inst-admin-1',
+        email: 'inst-admin-1@test.com',
+        role: 'institutionadmin',
+        institutionId: 'inst-1',
+      },
+      deleteConfig: {
+        isOpen: true,
+        type: 'subject',
+        item: {
+          id: 'subject-inst-admin-delete',
+          ownerId: 'teacher-1',
+          institutionId: 'inst-1',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.deleteSubject).toHaveBeenCalledWith('subject-inst-admin-delete');
+  });
+
+  it('denies institution admin subject deletion across institutions', async () => {
+    const config = createBaseConfig({
+      user: {
+        uid: 'inst-admin-1',
+        email: 'inst-admin-1@test.com',
+        role: 'institutionadmin',
+        institutionId: 'inst-1',
+      },
+      deleteConfig: {
+        isOpen: true,
+        type: 'subject',
+        item: {
+          id: 'subject-cross-inst-delete',
+          ownerId: 'teacher-2',
+          institutionId: 'inst-2',
+        },
+      },
+    });
+
+    const handlers = useHomeHandlers(config);
+    await handlers.handleDelete();
+
+    expect(config.deleteSubject).not.toHaveBeenCalled();
+    expect(config.setDeleteConfig).toHaveBeenCalledTimes(1);
+    const updater = config.setDeleteConfig.mock.calls[0][0];
+    expect(typeof updater).toBe('function');
+    expect(
+      updater({ isOpen: true, type: 'subject', action: null, item: { id: 'subject-cross-inst-delete' } })
+    ).toEqual({
+      isOpen: true,
+      type: 'subject',
+      action: null,
+      item: { id: 'subject-cross-inst-delete' },
+      errorMessage: 'No tienes permisos para eliminar esta asignatura.'
+    });
   });
 
   it('allows owner subject deletion in shared context and preserves manual-order integrity', async () => {

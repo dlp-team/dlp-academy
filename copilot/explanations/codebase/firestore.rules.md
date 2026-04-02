@@ -1,6 +1,11 @@
 // copilot/explanations/codebase/firestore.rules.md
 
 ## Changelog
+### 2026-04-02: Invite-code transaction preflight and same-batch subject reservation hardening
+- Updated `subjectInviteCodes` create rule to validate subject ownership/institution via `existsAfter/getAfter`, enabling transaction-safe subject + invite-code creation in one atomic write.
+- Updated `subjectInviteCodes` get rule to allow same-institution missing-doc preflight reads for non-student actors when the invite key matches the caller institution prefix.
+- Preserved anti-enumeration behavior (`list` remains denied) and tenant boundaries (cross-institution key probes denied).
+
 ### 2026-04-01: Subject class assignment integrity and constrained student invite joins
 - Added `classBelongsToInstitution(classId, institutionId)` and applied it to `subjects` create/update when `classId` is present.
 - Added constrained student join path `canStudentJoinSubjectByInvite()` in `subjects` update rules.

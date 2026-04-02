@@ -4,14 +4,15 @@ import { Info, RotateCcw, Trash2, Loader2, PanelRightClose } from 'lucide-react'
 import { getDaysRemaining } from '../../utils/binViewUtils';
 
 const BinSelectionPanel = ({
-    subject,
+    item,
+    itemType = 'subject',
     actionLoading,
     onClose,
     onShowDescription,
     onRestore,
     onDeleteConfirm,
 }: any) => {
-    const daysRemaining = getDaysRemaining(subject);
+    const daysRemaining = getDaysRemaining(item);
     const isUrgent = daysRemaining <= 3;
     const isMedium = !isUrgent && daysRemaining <= 7;
 
@@ -37,7 +38,9 @@ const BinSelectionPanel = ({
             border: 'border-emerald-200 dark:border-emerald-900/50'
         };
 
-    const isLoading = actionLoading === subject.id;
+    const actionKey = `${itemType}:${item?.id}`;
+    const isLoading = actionLoading === actionKey;
+    const isFolderItem = itemType === 'folder';
 
     return (
         <div
@@ -51,7 +54,7 @@ const BinSelectionPanel = ({
                         Elemento seleccionado
                     </p>
                     <h4 className="text-lg font-semibold text-gray-900 dark:text-white mt-1">
-                        {subject.name}
+                        {item?.name}
                     </h4>
                 </div>
                 <button
@@ -65,29 +68,31 @@ const BinSelectionPanel = ({
 
             {/* ── Acciones principales ────────────────────────── */}
             <div className="px-5 space-y-2">
-                <ActionButton
-                    onClick={onShowDescription}
-                    disabled={isLoading}
-                    icon={<Info size={18} />}
-                    label="Ver contenido"
-                    themeClasses={{
-                        text: 'text-gray-700 dark:text-gray-200',
-                        bg: 'bg-gray-100 dark:bg-slate-800',
-                        hoverBg: 'hover:bg-gray-200 dark:hover:bg-slate-700',
-                        border: 'border-transparent dark:border-slate-700'
-                    }}
-                />
+                {typeof onShowDescription === 'function' && (
+                    <ActionButton
+                        onClick={onShowDescription}
+                        disabled={isLoading}
+                        icon={<Info size={18} />}
+                        label={isFolderItem ? 'Abrir contenido de carpeta' : 'Ver contenido'}
+                        themeClasses={{
+                            text: 'text-gray-700 dark:text-gray-200',
+                            bg: 'bg-gray-100 dark:bg-slate-800',
+                            hoverBg: 'hover:bg-gray-200 dark:hover:bg-slate-700',
+                            border: 'border-transparent dark:border-slate-700'
+                        }}
+                    />
+                )}
 
                 <ActionButton
-                    onClick={() => onRestore(subject.id)}
+                    onClick={() => onRestore(item?.id, itemType)}
                     disabled={isLoading}
                     icon={isLoading ? <Loader2 className="animate-spin" size={18} /> : <RotateCcw size={18} />}
-                    label="Restaurar asignatura"
+                    label={isFolderItem ? 'Restaurar carpeta completa' : 'Restaurar asignatura'}
                     themeClasses={theme} // Usa el tema verde/naranja/rojo de antes
                 />
 
                 <ActionButton
-                    onClick={() => onDeleteConfirm(subject.id)}
+                    onClick={() => onDeleteConfirm(item?.id, itemType)}
                     disabled={isLoading}
                     icon={<Trash2 size={18} />}
                     label="Eliminar permanentemente"

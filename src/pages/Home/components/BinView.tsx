@@ -1,10 +1,11 @@
 // src/pages/Home/components/BinView.jsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Trash2, Loader2, XCircle } from 'lucide-react';
+import { Trash2, Loader2, XCircle, ArrowLeft } from 'lucide-react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import ListViewItem from '../../../components/modules/ListViewItem';
 import { db } from '../../../firebase/config';
 import { useSubjects } from '../../../hooks/useSubjects';
+import { useFolders } from '../../../hooks/useFolders';
 import { getRemainingMs, getDaysRemaining, getDaysRemainingTextClass, toJsDate } from '../utils/binViewUtils';
 
 import BinGridItem          from './bin/BinGridItem';
@@ -14,46 +15,179 @@ import { DeleteConfirmModal, EmptyBinConfirmModal } from './bin/BinConfirmModals
 
 const ListViewItemComponent: any = ListViewItem;
 
+const isTopLevelTrashedFolderEntry = (folderEntry: any) => {
+    const rootFolderId = folderEntry?.trashedRootFolderId || folderEntry?.id;
+    const parentTrashMarker = folderEntry?.trashedByFolderId || null;
+    return !parentTrashMarker && rootFolderId === folderEntry?.id;
+};
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
     const isStudent = user?.role === 'student';
 
-    const [trashedSubjects,   setTrashedSubjects]   = useState<any[]>([]);
-    const [loading,           setLoading]           = useState(true);
-    const [actionLoading,     setActionLoading]     = useState<any>(null);
-    const [deleteConfirm,     setDeleteConfirm]     = useState<any>(null);
-    const [emptyConfirmOpen,  setEmptyConfirmOpen]  = useState(false);
-    const [errorMessage,      setErrorMessage]      = useState<any>(null);
-    const [selectedSubjectId, setSelectedSubjectId] = useState<any>(null);
-    const [descriptionModal,  setDescriptionModal]  = useState<any>(null);
-    const [loadingDescription,setLoadingDescription]= useState(false);
-    const [expandedTopics,    setExpandedTopics]    = useState<any>({});
+    const [trashedItems, setTrashedItems] = useState<any[]>([]);
+    const [allTrashedSubjects, setAllTrashedSubjects] = useState<any[]>([]);
+    const [allTrashedFolders, setAllTrashedFolders] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState<any>(null);
+    const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
+    const [emptyConfirmOpen, setEmptyConfirmOpen] = useState(false);
+    const [errorMessage, setErrorMessage] = useState<any>(null);
+    const [selectedItemId, setSelectedItemId] = useState<any>(null);
+    const [selectedItemType, setSelectedItemType] = useState<any>(null);
+    const [folderBinTrail, setFolderBinTrail] = useState<any[]>([]);
+    const [descriptionModal, setDescriptionModal] = useState<any>(null);
+    const [loadingDescription, setLoadingDescription] = useState(false);
+    const [expandedTopics, setExpandedTopics] = useState<any>({});
 
     const selectedCardRef = useRef<any>(null);
 
     const { getTrashedSubjects, restoreSubject, permanentlyDeleteSubject } = useSubjects(isStudent ? null : user);
+    const { getTrashedFolders, restoreFolder, permanentlyDeleteFolder } = useFolders(isStudent ? null : user);
 
-    const selectedSubject = useMemo(
-        () => trashedSubjects.find(s => s.id === selectedSubjectId) ?? null,
-        [trashedSubjects, selectedSubjectId]
+    const activeFolderBin = useMemo(
+        () => (folderBinTrail.length > 0 ? folderBinTrail[folderBinTrail.length - 1] : null),
+        [folderBinTrail]
     );
+
+    const activeFolderBinId = activeFolderBin?.id || null;
+    const activeFolderRootId = folderBinTrail.length > 0 ? folderBinTrail[0]?.id || null : null;
+
+    const topLevelTrashedSubjects = useMemo(
+        () => trashedItems.filter(item => item.itemType === 'subject'),
+        [trashedItems]
+    );
+
+    const topLevelTrashedFolders = useMemo(
+        () => trashedItems.filter(item => item.itemType === 'folder'),
+        [trashedItems]
+    );
+
+    const nestedFolderItems = useMemo(() => {
+        if (!activeFolderBinId) return [];
+
+        const now = new Date();
+        return allTrashedFolders
+            .filter(folder => folder.id !== activeFolderBinId)
+            .filter(folder => {
+                if ((folder?.parentId || null) !== activeFolderBinId) return false;
+                if (!activeFolderRootId) return true;
+                const folderRootId = folder?.trashedRootFolderId || folder?.id;
+                return folderRootId === activeFolderRootId;
+            })
+            .sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
+    }, [allTrashedFolders, activeFolderBinId, activeFolderRootId]);
+
+    const nestedFolderSubjectItems = useMemo(() => {
+        if (!activeFolderBinId) return [];
+
+        const now = new Date();
+        return allTrashedSubjects
+            .filter(subject => {
+                if (subject?.folderId !== activeFolderBinId) return false;
+                if (!activeFolderRootId) return true;
+                const subjectRootId = subject?.trashedRootFolderId || subject?.trashedByFolderId || null;
+                return !subjectRootId || subjectRootId === activeFolderRootId;
+            })
+            .sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
+    }, [allTrashedSubjects, activeFolderBinId, activeFolderRootId]);
+
+    const activeFolderBinItems = useMemo(() => {
+        if (!activeFolderBinId) return [];
+
+        const now = new Date();
+        return [...nestedFolderItems, ...nestedFolderSubjectItems]
+            .sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
+    }, [activeFolderBinId, nestedFolderItems, nestedFolderSubjectItems]);
+
+    const visibleTrashedItems = useMemo(
+        () => (activeFolderBinId ? activeFolderBinItems : trashedItems),
+        [activeFolderBinId, activeFolderBinItems, trashedItems]
+    );
+
+    const selectedItem = useMemo(
+        () => visibleTrashedItems.find(item => item.id === selectedItemId && item.itemType === selectedItemType) ?? null,
+        [visibleTrashedItems, selectedItemId, selectedItemType]
+    );
+
+    const buildActionKey = (itemId: any, itemType: any) => `${itemType}:${itemId}`;
 
     const loadTrashedItems = async () => {
         if (isStudent) {
-            setTrashedSubjects([]);
+            setTrashedItems([]);
+            setAllTrashedSubjects([]);
+            setAllTrashedFolders([]);
+            setFolderBinTrail([]);
             setLoading(false);
             return;
         }
+
         setLoading(true);
         try {
-            const items = await getTrashedSubjects();
-            const now   = new Date();
-            const sorted = [...items].sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
-            setTrashedSubjects(sorted);
+            const [subjects, folders] = await Promise.all([
+                getTrashedSubjects(),
+                getTrashedFolders({ includeNested: true }),
+            ]);
 
-            if (selectedSubjectId && !sorted.some(s => s.id === selectedSubjectId)) {
-                setSelectedSubjectId(null);
+            const allSubjectItems = subjects.map((subject: any) => ({ ...subject, itemType: 'subject' }));
+            setAllTrashedSubjects(allSubjectItems);
+
+            const allFolderItems = folders.map((folder: any) => ({ ...folder, itemType: 'folder' }));
+            setAllTrashedFolders(allFolderItems);
+
+            const folderItems = allFolderItems.filter(isTopLevelTrashedFolderEntry);
+
+            setFolderBinTrail(previousTrail => {
+                if (!previousTrail.length) return previousTrail;
+
+                const folderById = new Map<any, any>(
+                    allFolderItems.map(folderItem => [folderItem.id, folderItem])
+                );
+
+                const nextTrail: any[] = [];
+                for (let index = 0; index < previousTrail.length; index += 1) {
+                    const trailEntry = previousTrail[index];
+                    const currentFolder = folderById.get(trailEntry.id);
+                    if (!currentFolder) break;
+
+                    if (index === 0) {
+                        if (!isTopLevelTrashedFolderEntry(currentFolder)) break;
+                    } else {
+                        const expectedParentId = nextTrail[index - 1]?.id || null;
+                        if ((currentFolder?.parentId || null) !== expectedParentId) break;
+                    }
+
+                    nextTrail.push({
+                        id: currentFolder.id,
+                        name: currentFolder?.name || trailEntry?.name || 'Carpeta'
+                    });
+                }
+
+                const isUnchanged = nextTrail.length === previousTrail.length
+                    && nextTrail.every((entry, idx) => (
+                        entry.id === previousTrail[idx]?.id
+                        && entry.name === previousTrail[idx]?.name
+                    ));
+
+                return isUnchanged ? previousTrail : nextTrail;
+            });
+
+            // Subjects trashed by folder deletion stay nested under their folder and
+            // should not be duplicated in the top-level bin listing.
+            const subjectItems = allSubjectItems
+                .filter((subject: any) => !subject?.trashedByFolderId);
+
+            const now = new Date();
+            const sortedItems = [...subjectItems, ...folderItems]
+                .sort((a, b) => getRemainingMs(a, now) - getRemainingMs(b, now));
+
+            setTrashedItems(sortedItems);
+
+            const allKnownItems = [...sortedItems, ...allSubjectItems, ...allFolderItems];
+            if (selectedItemId && !allKnownItems.some(item => item.id === selectedItemId && item.itemType === selectedItemType)) {
+                setSelectedItemId(null);
+                setSelectedItemType(null);
             }
         } catch (err: any) {
             console.error('Error loading trashed items:', err);
@@ -69,38 +203,92 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.uid, isStudent]);
 
+    useEffect(() => {
+        if (!selectedItemId) return;
+
+        const selectedStillVisible = visibleTrashedItems.some(item =>
+            item.id === selectedItemId && item.itemType === selectedItemType
+        );
+
+        if (!selectedStillVisible) {
+            setSelectedItemId(null);
+            setSelectedItemType(null);
+        }
+    }, [visibleTrashedItems, selectedItemId, selectedItemType]);
+
     // ── Action handlers ────────────────────────────────────────────────────────
-    const handleRestore = async (subjectId: any) => {
-        setActionLoading(subjectId);
+    const handleRestore = async (itemId: any, itemType: any) => {
+        const actionKey = buildActionKey(itemId, itemType);
+        setActionLoading(actionKey);
         setErrorMessage(null);
+
         try {
-            await restoreSubject(subjectId);
-            if (selectedSubjectId === subjectId) setSelectedSubjectId(null);
+            if (itemType === 'folder') {
+                await restoreFolder(itemId);
+            } else {
+                await restoreSubject(itemId);
+            }
+
+            if (selectedItemId === itemId && selectedItemType === itemType) {
+                setSelectedItemId(null);
+                setSelectedItemType(null);
+            }
+
+            if (itemType === 'folder') {
+                setFolderBinTrail(previousTrail => {
+                    const targetIndex = previousTrail.findIndex(entry => entry.id === itemId);
+                    if (targetIndex === -1) return previousTrail;
+                    return previousTrail.slice(0, targetIndex);
+                });
+            }
+
             await loadTrashedItems();
         } catch (err: any) {
-            console.error('Error restoring subject:', err);
-            setErrorMessage('No se pudo restaurar la asignatura. Verifica tus permisos e intenta nuevamente.');
+            console.error('Error restoring trashed item:', err);
+            setErrorMessage(itemType === 'folder'
+                ? 'No se pudo restaurar la carpeta completa. Verifica tus permisos e intenta nuevamente.'
+                : 'No se pudo restaurar la asignatura. Verifica tus permisos e intenta nuevamente.'
+            );
         } finally {
             setActionLoading(null);
         }
     };
 
-    const handlePermanentDelete = async (subjectId: any) => {
-        setActionLoading(subjectId);
+    const handlePermanentDelete = async (itemId: any, itemType: any) => {
+        const actionKey = buildActionKey(itemId, itemType);
+        setActionLoading(actionKey);
         setErrorMessage(null);
+
         try {
-            await permanentlyDeleteSubject(subjectId);
-            if (selectedSubjectId === subjectId) setSelectedSubjectId(null);
+            if (itemType === 'folder') {
+                await permanentlyDeleteFolder(itemId);
+            } else {
+                await permanentlyDeleteSubject(itemId);
+            }
+
+            if (selectedItemId === itemId && selectedItemType === itemType) {
+                setSelectedItemId(null);
+                setSelectedItemType(null);
+            }
+
+            if (itemType === 'folder') {
+                setFolderBinTrail(previousTrail => {
+                    const targetIndex = previousTrail.findIndex(entry => entry.id === itemId);
+                    if (targetIndex === -1) return previousTrail;
+                    return previousTrail.slice(0, targetIndex);
+                });
+            }
+
             await loadTrashedItems();
             setDeleteConfirm(null);
         } catch (err: any) {
-            console.error('Error permanently deleting subject:', err);
+            console.error('Error permanently deleting trashed item:', err);
             const isPermErr = err?.code === 'permission-denied'
                 || err?.message?.includes('permission')
                 || err?.message?.includes('insufficient');
             setErrorMessage(isPermErr
                 ? 'No tienes permisos para eliminar algunos elementos relacionados. Intenta vaciar la papelera completa o contacta al administrador.'
-                : 'Error al eliminar la asignatura. Por favor, intenta mas tarde.'
+                : 'Error al eliminar el elemento. Por favor, intenta mas tarde.'
             );
             setDeleteConfirm(null);
         } finally {
@@ -112,14 +300,23 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
         setLoading(true);
         setErrorMessage(null);
         try {
-            const results  = await Promise.allSettled(
-                trashedSubjects.map(s => permanentlyDeleteSubject(s.id))
+            const results = await Promise.allSettled(
+                visibleTrashedItems.map(item => {
+                    if (item.itemType === 'folder') {
+                        return permanentlyDeleteFolder(item.id);
+                    }
+                    return permanentlyDeleteSubject(item.id);
+                })
             );
+
             const failures = results.filter(r => r.status === 'rejected');
             if (failures.length > 0) {
                 setErrorMessage(`Se eliminaron ${results.length - failures.length} de ${results.length} elementos. Algunos fallaron por permisos insuficientes.`);
             }
-            setSelectedSubjectId(null);
+
+            setSelectedItemId(null);
+            setSelectedItemType(null);
+
             await loadTrashedItems();
             setEmptyConfirmOpen(false);
         } catch (err: any) {
@@ -165,8 +362,48 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
     const toggleTopic = (topicId: any) =>
         setExpandedTopics(prev => ({ ...prev, [topicId]: !prev[topicId] }));
 
-    const handleSelectSubject = (id: any) =>
-        setSelectedSubjectId(prev => (prev === id ? null : id));
+    const handleSelectItem = (itemId: any, itemType: any) => {
+        const isSameSelection = selectedItemId === itemId && selectedItemType === itemType;
+        if (isSameSelection) {
+            setSelectedItemId(null);
+            setSelectedItemType(null);
+            return;
+        }
+
+        setSelectedItemId(itemId);
+        setSelectedItemType(itemType);
+    };
+
+    const handleOpenFolderTrashView = (folderItem: any) => {
+        if (!folderItem?.id) return;
+
+        setFolderBinTrail(previousTrail => {
+            const existingIndex = previousTrail.findIndex(entry => entry.id === folderItem.id);
+            if (existingIndex >= 0) {
+                return previousTrail.slice(0, existingIndex + 1);
+            }
+
+            return [
+                ...previousTrail,
+                {
+                    id: folderItem.id,
+                    name: folderItem?.name || 'Carpeta'
+                }
+            ];
+        });
+
+        setSelectedItemId(null);
+        setSelectedItemType(null);
+    };
+
+    const handleCloseFolderTrashView = () => {
+        setFolderBinTrail(previousTrail => {
+            if (!previousTrail.length) return previousTrail;
+            return previousTrail.slice(0, -1);
+        });
+        setSelectedItemId(null);
+        setSelectedItemType(null);
+    };
 
     // Restrict access for students
     if (isStudent) {
@@ -188,12 +425,35 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
         );
     }
 
-    if (trashedSubjects.length === 0) {
+    const activeFolderPathLabel = folderBinTrail
+        .map(folderEntry => folderEntry?.name || 'Carpeta')
+        .join(' / ');
+
+    const folderBackButtonLabel = folderBinTrail.length > 1
+        ? 'Volver a carpeta anterior'
+        : 'Volver a papelera principal';
+
+    if (visibleTrashedItems.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-64 text-gray-500 dark:text-gray-400">
                 <Trash2 size={64} className="mb-4 opacity-20" />
-                <p className="text-lg font-medium">La papelera esta vacia</p>
-                <p className="text-sm mt-1">Las asignaturas eliminadas apareceran aqui</p>
+                <p className="text-lg font-medium">
+                    {activeFolderBinId ? 'Esta carpeta no tiene elementos en papelera' : 'La papelera esta vacia'}
+                </p>
+                <p className="text-sm mt-1">
+                    {activeFolderBinId
+                        ? 'Vuelve atras para revisar otros elementos eliminados.'
+                        : 'Las carpetas y asignaturas eliminadas apareceran aqui'}
+                </p>
+                {activeFolderBinId && (
+                    <button
+                        onClick={handleCloseFolderTrashView}
+                        className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
+                    >
+                        <ArrowLeft size={16} />
+                        {folderBackButtonLabel}
+                    </button>
+                )}
             </div>
         );
     }
@@ -225,11 +485,24 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
             {/* Toolbar */}
             <div className="flex items-center justify-between mb-2">
                 <div>
+                    {activeFolderBinId && (
+                        <button
+                            onClick={handleCloseFolderTrashView}
+                            className="inline-flex items-center gap-2 mb-2 text-sm font-medium text-blue-700 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
+                        >
+                            <ArrowLeft size={15} />
+                            {folderBackButtonLabel}
+                        </button>
+                    )}
                     <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        Papelera ({trashedSubjects.length})
+                        {activeFolderBinId
+                            ? `Papelera / ${activeFolderPathLabel} (${visibleTrashedItems.length})`
+                            : `Papelera (${visibleTrashedItems.length})`}
                     </h3>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        Ordenado por urgencia: menos tiempo restante primero
+                        {activeFolderBinId
+                            ? 'Contenido interno de la carpeta eliminada. Puedes abrir subcarpetas y restaurar o eliminar elementos individuales.'
+                            : 'Ordenado por urgencia: menos tiempo restante primero'}
                     </p>
                 </div>
                 <button
@@ -237,56 +510,59 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                     className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition-colors"
                 >
                     <Trash2 size={16} />
-                    Vaciar papelera
+                    {activeFolderBinId ? 'Vaciar vista actual' : 'Vaciar papelera'}
                 </button>
             </div>
 
             {/* Grid / List */}
             {layoutMode === 'grid' ? (
                 <div className="grid gap-6" style={gridStyle}>
-                    {trashedSubjects.map((subject: any) => {
-                        const isSelected  = selectedSubjectId === subject.id;
-                        const hasSelection = Boolean(selectedSubjectId);
+                    {visibleTrashedItems.map((item: any) => {
+                        const isSelected = selectedItemId === item.id && selectedItemType === item.itemType;
+                        const hasSelection = Boolean(selectedItemId);
 
                         return (
                             <BinGridItem
-                                key={subject.id}
+                                key={`${item.itemType}-${item.id}`}
                                 ref={isSelected ? selectedCardRef : null}
-                                subject={subject}
+                                item={item}
+                                itemType={item.itemType}
                                 user={user}
                                 cardScale={cardScale}
                                 isSelected={isSelected}
                                 hasSelection={hasSelection}
-                                onSelect={() => handleSelectSubject(subject.id)}
+                                onSelect={() => handleSelectItem(item.id, item.itemType)}
                             />
                         );
                     })}
                 </div>
             ) : (
                 <div className="space-y-2">
-                    {trashedSubjects.map((subject: any) => {
-                        const isSelected   = selectedSubjectId === subject.id;
-                        const daysRemaining = getDaysRemaining(subject);
-                        const trashedDate   = toJsDate(subject.trashedAt);
+                    {visibleTrashedItems.map((item: any) => {
+                        const isSelected = selectedItemId === item.id && selectedItemType === item.itemType;
+                        const daysRemaining = getDaysRemaining(item);
+                        const trashedDate = toJsDate(item.trashedAt);
+                        const isFolderItem = item.itemType === 'folder';
 
                         return (
                             <div
-                                key={subject.id}
+                                key={`${item.itemType}-${item.id}`}
                                 className={`rounded-xl transition-all ${isSelected ? 'ring-2 ring-blue-400 bg-blue-50/40 dark:bg-blue-900/10' : ''}`}
                             >
                                 <ListViewItemComponent
                                     user={user}
-                                    item={subject}
-                                    type="subject"
-                                    onNavigateSubject={() => handleSelectSubject(subject.id)}
+                                    item={item}
+                                    type={isFolderItem ? 'folder' : 'subject'}
+                                    onNavigate={() => handleSelectItem(item.id, item.itemType)}
+                                    onNavigateSubject={() => handleSelectItem(item.id, item.itemType)}
                                     onEdit={() => {}}
                                     onDelete={() => {}}
                                     onShare={() => {}}
                                     draggable={false}
                                     cardScale={cardScale}
                                     onDropAction={() => {}}
-                                    allFolders={[]}
-                                    allSubjects={trashedSubjects}
+                                    allFolders={activeFolderBinId ? nestedFolderItems : topLevelTrashedFolders}
+                                    allSubjects={activeFolderBinId ? nestedFolderSubjectItems : topLevelTrashedSubjects}
                                     disableAllActions={true}
                                 />
                                 <div className="px-3 pb-2">
@@ -304,46 +580,66 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
             )}
 
             {/* ── Selection overlay (grid mode) ────────────────────────────────── */}
-            {selectedSubject && layoutMode === 'grid' && (
+            {selectedItem && layoutMode === 'grid' && (
                 <BinSelectionOverlay
-                    subject={selectedSubject}
+                    item={selectedItem}
+                    itemType={selectedItem.itemType}
                     selectedCardRef={selectedCardRef}
                     actionLoading={actionLoading}
-                    onClose={() => setSelectedSubjectId(null)}
-                    onShowDescription={handleShowDescription}
+                    onClose={() => {
+                        setSelectedItemId(null);
+                        setSelectedItemType(null);
+                    }}
+                    onShowDescription={selectedItem.itemType === 'subject'
+                        ? () => handleShowDescription(selectedItem)
+                        : () => handleOpenFolderTrashView(selectedItem)}
                     onRestore={handleRestore}
-                    onDeleteConfirm={setDeleteConfirm}
+                    onDeleteConfirm={(itemId: any, itemType: any) => setDeleteConfirm({ id: itemId, itemType })}
                 >
                     {/* Re-render the card inside the overlay so it sits above the dim */}
                     <BinGridItem
-                        subject={selectedSubject}
+                        item={selectedItem}
+                        itemType={selectedItem.itemType}
                         user={user}
                         cardScale={cardScale}
                         isSelected={true}
                         hasSelection={false}
-                        onSelect={() => setSelectedSubjectId(null)}
+                        onSelect={() => {
+                            setSelectedItemId(null);
+                            setSelectedItemType(null);
+                        }}
                     />
                 </BinSelectionOverlay>
             )}
 
             {/* List-mode inline panel (below the list, unchanged) */}
-            {selectedSubject && layoutMode !== 'grid' && (
+            {selectedItem && layoutMode !== 'grid' && (
                 <aside className="mt-4 h-fit rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-4">
                     <div className="space-y-4">
                         <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Elemento seleccionado</p>
-                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedSubject.name}</h4>
+                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedItem.name}</h4>
                         <div className="space-y-2">
-                            <button onClick={() => handleShowDescription(selectedSubject)}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all">
-                                Ver contenido
-                            </button>
-                            <button onClick={() => handleRestore(selectedSubject.id)}
-                                disabled={actionLoading === selectedSubject.id}
+                            {selectedItem.itemType === 'folder' && (
+                                <button onClick={() => handleOpenFolderTrashView(selectedItem)}
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all">
+                                    Abrir contenido de carpeta
+                                </button>
+                            )}
+                            {selectedItem.itemType === 'subject' && (
+                                <button onClick={() => handleShowDescription(selectedItem)}
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all">
+                                    Ver contenido
+                                </button>
+                            )}
+                            <button onClick={() => handleRestore(selectedItem.id, selectedItem.itemType)}
+                                disabled={actionLoading === buildActionKey(selectedItem.id, selectedItem.itemType)}
                                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-xl font-semibold transition-all">
-                                {actionLoading === selectedSubject.id ? <Loader2 className="animate-spin" size={18} /> : 'Restaurar'}
+                                {actionLoading === buildActionKey(selectedItem.id, selectedItem.itemType)
+                                    ? <Loader2 className="animate-spin" size={18} />
+                                    : (selectedItem.itemType === 'folder' ? 'Restaurar carpeta completa' : 'Restaurar')}
                             </button>
-                            <button onClick={() => setDeleteConfirm(selectedSubject.id)}
-                                disabled={actionLoading === selectedSubject.id}
+                            <button onClick={() => setDeleteConfirm({ id: selectedItem.id, itemType: selectedItem.itemType })}
+                                disabled={actionLoading === buildActionKey(selectedItem.id, selectedItem.itemType)}
                                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-xl font-semibold transition-all">
                                 Eliminar permanentemente
                             </button>
@@ -363,16 +659,17 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
 
             {deleteConfirm && (
                 <DeleteConfirmModal
-                    subjectId={deleteConfirm}
+                    targetId={deleteConfirm.id}
+                    itemType={deleteConfirm.itemType}
                     actionLoading={actionLoading}
-                    onConfirm={handlePermanentDelete}
+                    onConfirm={() => handlePermanentDelete(deleteConfirm.id, deleteConfirm.itemType)}
                     onCancel={() => setDeleteConfirm(null)}
                 />
             )}
 
             {emptyConfirmOpen && (
                 <EmptyBinConfirmModal
-                    count={trashedSubjects.length}
+                    count={visibleTrashedItems.length}
                     onConfirm={handleEmptyBin}
                     onCancel={() => setEmptyConfirmOpen(false)}
                 />

@@ -13,6 +13,12 @@
 - Drag/drop and folder nesting error reporting via `onHomeFeedback` callback.
 
 ## Changelog
+### 2026-04-02
+- Updated non-owner subject deletion assertion to reflect explicit feedback behavior (`setDeleteConfig` updater adds permission error message) instead of silent modal close.
+- Added institution-admin subject deletion role-path tests:
+	- allow same-institution institution admin deletion,
+	- deny cross-institution institution admin deletion with explicit feedback.
+
 ### 2026-04-01
 - Updated import path in `tests/unit/hooks/useHomeHandlers.shortcuts.test.js` to the current module location (`src/hooks/useHomeHandlers`) after hook relocation.
 - Keeps shortcut sharing/role-gate coverage executable under current source layout without changing behavioral assertions.

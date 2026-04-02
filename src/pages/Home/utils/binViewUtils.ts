@@ -1,25 +1,27 @@
 // src/pages/Home/utils/binViewUtils.js
-export const DAYS_UNTIL_AUTO_DELETE = 15;
+import {
+    TRASH_RETENTION_DAYS,
+    getTrashDaysRemaining,
+    getTrashRemainingMs,
+    toTrashTimestampMs,
+} from '../../../utils/trashRetentionUtils';
+
+export const DAYS_UNTIL_AUTO_DELETE = TRASH_RETENTION_DAYS;
 export const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const toJsDate = (timestampLike: any) => {
-    if (!timestampLike) return null;
-    if (typeof timestampLike.toDate === 'function') return timestampLike.toDate();
-    if (typeof timestampLike?.seconds === 'number') return new Date(timestampLike.seconds * 1000);
-    return null;
+    const asMillis = toTrashTimestampMs(timestampLike);
+    if (!asMillis) return null;
+    return new Date(asMillis);
 };
 
 export const getRemainingMs = (subject, now = new Date()) => {
-    const trashedDate = toJsDate(subject?.trashedAt);
-    if (!trashedDate) return DAYS_UNTIL_AUTO_DELETE * DAY_MS;
-    const expiresAt = trashedDate.getTime() + (DAYS_UNTIL_AUTO_DELETE * DAY_MS);
-    return expiresAt - now.getTime();
+    const nowMs = now instanceof Date ? now.getTime() : Date.now();
+    return getTrashRemainingMs(subject?.trashedAt, nowMs);
 };
 
 export const getDaysRemaining = (subject: any) => {
-    const remaining = getRemainingMs(subject);
-    if (remaining <= 0) return 0;
-    return Math.ceil(remaining / DAY_MS);
+    return getTrashDaysRemaining(subject?.trashedAt, Date.now());
 };
 
 export const getDaysRemainingTextClass = (daysRemaining: any) => {

@@ -1,0 +1,27 @@
+<!-- copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/hooks/useClassesCourses.md -->
+# useClassesCourses.ts
+
+## Overview
+- **Source file:** `src/pages/InstitutionAdminDashboard/hooks/useClassesCourses.ts`
+- **Last documented:** 2026-04-02
+- **Role:** Data hook for Institution Admin courses/classes lifecycle with active vs trashed partitioning and restoration/permanent-deletion handlers.
+
+## Responsibilities
+- Fetches institution-scoped courses/classes and splits each set into active and trashed collections.
+- Creates and updates courses/classes with timestamp metadata.
+- Applies soft-delete lifecycle (`status: trashed`, `trashedAt`, `trashedByUid`) for course/class removal.
+- Cascades course soft-delete/restore to linked classes.
+- Executes permanent deletion for course/class records (including linked class cleanup for courses).
+
+## Exports
+- `useClassesCourses(user, institutionIdOverride?)`
+
+## Main Dependencies
+- `react`
+- `firebase/firestore`
+- `../../../firebase/config`
+
+## Changelog
+- 2026-04-02: Added active/trashed state partition (`courses`, `classes`, `trashedCourses`, `trashedClasses`) and normalized status handling.
+- 2026-04-02: Converted course/class delete flows to trash-first soft deletion with lifecycle metadata.
+- 2026-04-02: Added `restoreCourse`, `restoreClass`, `permanentlyDeleteCourse`, and `permanentlyDeleteClass` hook APIs for bin lifecycle orchestration.

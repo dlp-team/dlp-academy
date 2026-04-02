@@ -2,10 +2,11 @@
 import { useState, useEffect } from 'react';
 import { 
     collection, query, where, addDoc, updateDoc, deleteDoc, doc, 
-    getDoc, setDoc, onSnapshot, writeBatch, getDocs
+    getDoc, setDoc, onSnapshot, writeBatch, getDocs, serverTimestamp, deleteField
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { isInvalidFolderMove } from '../utils/folderUtils';
+import { DEFAULT_TOPIC_CASCADE_COLLECTIONS, cascadeDeleteTopicResources } from '../utils/topicDeletionUtils';
 
 export const useFolders = (user: any) => {
     const [folders, setFolders] = useState<any[]>([]);
@@ -54,6 +55,7 @@ export const useFolders = (user: any) => {
                 ownedFolders = snapshot.docs
                     .map(d => ({ id: d.id, ...d.data(), parentId: d.data().parentId || null, isOwner: true }))
                     .filter(folder => {
+                        if (folder?.status === 'trashed') return false;
                         // Owner always sees their own folders
                         if (folder?.ownerId === user?.uid) return true;
                         if (!currentInstitutionId || !folder?.institutionId) return true;
@@ -74,6 +76,9 @@ export const useFolders = (user: any) => {
                 sharedFolders = snapshot.docs.filter(d => {
                     const data = d.data();
                     const userEmail = user.email?.toLowerCase() || '';
+                    if (data?.status === 'trashed') {
+                        return false;
+                    }
                     if (currentInstitutionId && data?.institutionId && data.institutionId !== currentInstitutionId) {
                         return false;
                     }
@@ -94,6 +99,99 @@ export const useFolders = (user: any) => {
 
         return () => { unsubscribeOwned(); unsubscribeShared(); };
     }, [user, currentInstitutionId, canReadHomeData, isStudentRole]);
+
+    const applyBatchOperationsInChunks = async (operations: any[] = [], chunkSize = 450) => {
+        for (let index = 0; index < operations.length; index += chunkSize) {
+            const batch = writeBatch(db);
+            const chunk = operations.slice(index, index + chunkSize);
+            chunk.forEach(runOperation => runOperation(batch));
+            await batch.commit();
+        }
+    };
+
+    const collectFolderTree = async (rootFolderId: any) => {
+        const visited = new Set<any>();
+        const queue: any[] = [rootFolderId];
+        const folderDataById = new Map<any, any>();
+
+        const rootFolderFromState = folders.find(folderEntry => folderEntry.id === rootFolderId);
+        if (rootFolderFromState) {
+            folderDataById.set(rootFolderId, rootFolderFromState);
+        }
+
+        while (queue.length > 0) {
+            const currentFolderId = queue.shift();
+            if (!currentFolderId || visited.has(currentFolderId)) continue;
+            visited.add(currentFolderId);
+
+            if (!folderDataById.has(currentFolderId)) {
+                try {
+                    const currentFolderSnap = await getDoc(doc(db, 'folders', currentFolderId));
+                    if (!currentFolderSnap.exists()) {
+                        continue;
+                    }
+                    folderDataById.set(currentFolderId, currentFolderSnap.data() || {});
+                } catch (error) {
+                    console.error('Error loading folder while collecting tree:', error);
+                    continue;
+                }
+            }
+
+            try {
+                const childFoldersSnap = await getDocs(
+                    query(collection(db, 'folders'), where('parentId', '==', currentFolderId))
+                );
+
+                childFoldersSnap.docs.forEach(childDoc => {
+                    if (!folderDataById.has(childDoc.id)) {
+                        folderDataById.set(childDoc.id, childDoc.data() || {});
+                    }
+                    if (!visited.has(childDoc.id)) {
+                        queue.push(childDoc.id);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading child folders while collecting tree:', error);
+            }
+        }
+
+        return Array.from(visited).map(folderId => ({
+            id: folderId,
+            data: folderDataById.get(folderId) || {}
+        }));
+    };
+
+    const collectTrashedFolderSubtree = (targetFolderId: any, trashedFolders: any[] = []) => {
+        const visited = new Set<any>();
+        const queue: any[] = [targetFolderId];
+        const childrenByParentId = new Map<any, any[]>();
+
+        trashedFolders.forEach(folderEntry => {
+            const folderId = folderEntry?.id;
+            if (!folderId) return;
+
+            const parentId = folderEntry?.data?.parentId || null;
+            if (!childrenByParentId.has(parentId)) {
+                childrenByParentId.set(parentId, []);
+            }
+            childrenByParentId.get(parentId)?.push(folderId);
+        });
+
+        while (queue.length > 0) {
+            const currentFolderId = queue.shift();
+            if (!currentFolderId || visited.has(currentFolderId)) continue;
+            visited.add(currentFolderId);
+
+            const childFolderIds = childrenByParentId.get(currentFolderId) || [];
+            childFolderIds.forEach(childFolderId => {
+                if (!visited.has(childFolderId)) {
+                    queue.push(childFolderId);
+                }
+            });
+        }
+
+        return Array.from(visited);
+    };
 
     // --- ATOMIC HELPERS ---
 
@@ -214,7 +312,12 @@ export const useFolders = (user: any) => {
         const folder = folders.find(f => f.id === id);
         if (!folder) return;
 
-        const batch = writeBatch(db);
+        const folderTree = await collectFolderTree(id);
+        if (folderTree.length === 0) {
+            return;
+        }
+
+        const operations: any[] = [];
         const shortcutDeletionPromises: Promise<any>[] = [];
 
         const queueShortcutCleanup = async (targetId, targetType: any) => {
@@ -242,57 +345,69 @@ export const useFolders = (user: any) => {
             }
         };
 
-        // Helper to recursively delete folders and their contents
-        const deleteFolderRecursive = async (folderId: any) => {
-            const folderToDelete = folders.find(f => f.id === folderId);
-            if (!folderToDelete) return;
+        for (const folderEntry of folderTree) {
+            const folderId = folderEntry.id;
+            const folderData = folderEntry.data || {};
 
-            // 1. Delete all child subjects (query by folderId)
             try {
                 const subjectsSnap = await getDocs(
-                    query(collection(db, "subjects"), where("folderId", "==", folderId))
+                    query(collection(db, 'subjects'), where('folderId', '==', folderId))
                 );
-                for (const docSnap of subjectsSnap.docs) {
-                    const subjectRef = doc(db, "subjects", docSnap.id);
-                    batch.delete(subjectRef);
-                    await queueShortcutCleanup(docSnap.id, 'subject');
+
+                subjectsSnap.docs.forEach(subjectDoc => {
+                    const subjectRef = doc(db, 'subjects', subjectDoc.id);
+                    operations.push((batch: any) => batch.update(subjectRef, {
+                        status: 'trashed',
+                        trashedAt: serverTimestamp(),
+                        trashedByFolderId: id,
+                        trashedRootFolderId: id,
+                        restoredAt: null,
+                        isShared: false,
+                        sharedWith: [],
+                        sharedWithUids: [],
+                        updatedAt: new Date()
+                    }));
+                });
+
+                for (const subjectDoc of subjectsSnap.docs) {
+                    await queueShortcutCleanup(subjectDoc.id, 'subject');
                 }
-            } catch (e) {
-                console.error("Error fetching subjects for deletion:", e);
+            } catch (error) {
+                console.error('Error loading subjects for folder trash operation:', error);
             }
 
-            // 2. Recursively delete all child folders (query by parentId)
-            try {
-                const childFoldersSnap = await getDocs(
-                    query(collection(db, "folders"), where("parentId", "==", folderId))
-                );
-                for (const childDoc of childFoldersSnap.docs) {
-                    await deleteFolderRecursive(childDoc.id);
-                }
-            } catch (e) {
-                console.error("Error fetching child folders for deletion:", e);
-            }
+            const folderRef = doc(db, 'folders', folderId);
+            operations.push((batch: any) => batch.update(folderRef, {
+                status: 'trashed',
+                trashedAt: serverTimestamp(),
+                trashedByFolderId: folderId === id ? null : id,
+                trashedRootFolderId: id,
+                trashedOriginalParentId: folderId === id ? (folderData?.parentId || null) : deleteField(),
+                restoredAt: null,
+                updatedAt: new Date()
+            }));
 
-            // 3. Delete the folder itself
             await queueShortcutCleanup(folderId, 'folder');
-            const folderRef = doc(db, "folders", folderId);
-            batch.delete(folderRef);
-        };
-
-        // Start recursive deletion
-        await deleteFolderRecursive(id);
+        }
 
         await Promise.allSettled(shortcutDeletionPromises);
 
-        // Commit all deletions in one batch
         try {
-            await batch.commit();
+            await applyBatchOperationsInChunks(operations);
         } catch (commitError) {
-            console.error('Error committing folder cascade deletion batch:', commitError);
+            console.error('Error committing folder trash batch:', commitError);
             try {
-                await deleteDoc(doc(db, 'folders', id));
+                await updateDoc(doc(db, 'folders', id), {
+                    status: 'trashed',
+                    trashedAt: serverTimestamp(),
+                    trashedByFolderId: null,
+                    trashedRootFolderId: id,
+                    trashedOriginalParentId: folder?.parentId || null,
+                    restoredAt: null,
+                    updatedAt: new Date()
+                });
             } catch (fallbackError) {
-                console.error('Error deleting root folder after batch failure:', fallbackError);
+                console.error('Error applying fallback trash update for root folder:', fallbackError);
             }
         }
     };
@@ -369,6 +484,289 @@ export const useFolders = (user: any) => {
 
         // 6. Delete the folder itself
         await deleteDoc(doc(db, "folders", id));
+    };
+
+    const getTrashedFolders = async (options: any = {}) => {
+        try {
+            if (!user || !canReadHomeData || isStudentRole) return [];
+
+            const includeNested = options?.includeNested === true;
+            const rootFolderIdFilter = options?.rootFolderId || null;
+
+            const trashedFoldersQuery = query(
+                collection(db, 'folders'),
+                where('ownerId', '==', user.uid),
+                where('status', '==', 'trashed')
+            );
+
+            const snapshot = await getDocs(trashedFoldersQuery);
+            const allTrashedFolders: any[] = snapshot.docs.map((folderDoc: any) => ({
+                id: folderDoc.id,
+                ...(folderDoc.data() || {})
+            }));
+
+            const filteredByRoot = rootFolderIdFilter
+                ? allTrashedFolders.filter((folderEntry: any) => {
+                    const rootFolderId = folderEntry?.trashedRootFolderId || folderEntry?.id;
+                    return rootFolderId === rootFolderIdFilter;
+                })
+                : allTrashedFolders;
+
+            if (includeNested) {
+                return filteredByRoot;
+            }
+
+            return filteredByRoot.filter((folderEntry: any) => {
+                const rootFolderId = folderEntry?.trashedRootFolderId || folderEntry?.id;
+                const parentTrashMarker = folderEntry?.trashedByFolderId || null;
+                return !parentTrashMarker && rootFolderId === folderEntry?.id;
+            });
+        } catch (error) {
+            console.error('Error fetching trashed folders:', error);
+            return [];
+        }
+    };
+
+    const restoreFolder = async (id: any) => {
+        if (!id || !user?.uid) return;
+
+        const selectedFolderRef = doc(db, 'folders', id);
+        const selectedFolderSnap = await getDoc(selectedFolderRef);
+        if (!selectedFolderSnap.exists()) {
+            throw new Error('Carpeta no encontrada');
+        }
+
+        const selectedFolderData = selectedFolderSnap.data() || {};
+        if (selectedFolderData?.ownerId !== user.uid) {
+            throw new Error('Solo el propietario puede restaurar esta carpeta.');
+        }
+        if (selectedFolderData?.status !== 'trashed') {
+            return;
+        }
+
+        const selectedRootFolderId = selectedFolderData?.trashedRootFolderId || id;
+
+        const trashedFoldersQuery = query(
+            collection(db, 'folders'),
+            where('ownerId', '==', user.uid),
+            where('status', '==', 'trashed')
+        );
+        const trashedFoldersSnapshot = await getDocs(trashedFoldersQuery);
+
+        const allCandidateFolders = trashedFoldersSnapshot.docs
+            .map(folderDoc => ({ id: folderDoc.id, data: folderDoc.data() || {} }))
+            .filter(folderEntry => (folderEntry.data?.trashedRootFolderId || folderEntry.id) === selectedRootFolderId);
+
+        if (!allCandidateFolders.some(folderEntry => folderEntry.id === id)) {
+            allCandidateFolders.push({ id, data: selectedFolderData });
+        }
+
+        const folderIdsToRestore = id === selectedRootFolderId
+            ? allCandidateFolders.map(folderEntry => folderEntry.id)
+            : collectTrashedFolderSubtree(id, allCandidateFolders);
+        const folderIdsToRestoreSet = new Set(folderIdsToRestore);
+        const folderDataById = new Map<any, any>(
+            allCandidateFolders.map(folderEntry => [folderEntry.id, folderEntry.data || {}])
+        );
+        if (!folderDataById.has(id)) {
+            folderDataById.set(id, selectedFolderData);
+        }
+
+        const externalParentValidationCache = new Map<any, boolean>();
+
+        const resolveRestoredParentId = async (folderId: any, folderData: any) => {
+            const preferredParentId = folderId === id
+                ? (folderData?.trashedOriginalParentId ?? folderData?.parentId ?? null)
+                : (folderData?.parentId ?? null);
+
+            if (!preferredParentId) return null;
+            if (folderIdsToRestoreSet.has(preferredParentId)) return preferredParentId;
+
+            if (externalParentValidationCache.has(preferredParentId)) {
+                return externalParentValidationCache.get(preferredParentId) ? preferredParentId : null;
+            }
+
+            try {
+                const parentSnap = await getDoc(doc(db, 'folders', preferredParentId));
+                const isValidParent = parentSnap.exists() && parentSnap.data()?.status !== 'trashed';
+                externalParentValidationCache.set(preferredParentId, isValidParent);
+                return isValidParent ? preferredParentId : null;
+            } catch (error) {
+                console.error('Error validating restore parent folder:', error);
+                externalParentValidationCache.set(preferredParentId, false);
+                return null;
+            }
+        };
+
+        const operations: any[] = [];
+
+        for (const folderId of folderIdsToRestore) {
+            const folderData = folderDataById.get(folderId) || {};
+            const folderRef = doc(db, 'folders', folderId);
+            const restoredParentId = await resolveRestoredParentId(folderId, folderData);
+
+            operations.push((batch: any) => {
+                batch.update(folderRef, {
+                    parentId: restoredParentId,
+                    status: 'active',
+                    trashedAt: null,
+                    trashedByFolderId: null,
+                    trashedRootFolderId: null,
+                    trashedOriginalParentId: deleteField(),
+                    restoredAt: serverTimestamp(),
+                    updatedAt: new Date()
+                });
+            });
+
+            try {
+                const subjectsSnapshot = await getDocs(
+                    query(collection(db, 'subjects'), where('folderId', '==', folderId))
+                );
+
+                subjectsSnapshot.docs.forEach(subjectDoc => {
+                    const subjectData = subjectDoc.data() || {};
+                    if (subjectData?.status !== 'trashed') return;
+
+                    const subjectRef = doc(db, 'subjects', subjectDoc.id);
+                    operations.push((batch: any) => batch.update(subjectRef, {
+                        status: 'active',
+                        trashedAt: null,
+                        trashedByFolderId: null,
+                        trashedRootFolderId: null,
+                        restoredAt: serverTimestamp(),
+                        updatedAt: new Date()
+                    }));
+                });
+            } catch (error) {
+                console.error('Error loading trashed subjects for folder restore:', error);
+            }
+        }
+
+        await applyBatchOperationsInChunks(operations);
+    };
+
+    const permanentlyDeleteFolder = async (id: any) => {
+        if (!id || !user?.uid) return;
+
+        const selectedFolderRef = doc(db, 'folders', id);
+        const selectedFolderSnap = await getDoc(selectedFolderRef);
+        if (!selectedFolderSnap.exists()) {
+            throw new Error('Carpeta no encontrada');
+        }
+
+        const selectedFolderData = selectedFolderSnap.data() || {};
+        if (selectedFolderData?.ownerId !== user.uid) {
+            throw new Error('Solo el propietario puede eliminar permanentemente esta carpeta.');
+        }
+        if (selectedFolderData?.status !== 'trashed') {
+            return;
+        }
+
+        const selectedRootFolderId = selectedFolderData?.trashedRootFolderId || id;
+
+        const trashedFoldersQuery = query(
+            collection(db, 'folders'),
+            where('ownerId', '==', user.uid),
+            where('status', '==', 'trashed')
+        );
+        const trashedFoldersSnapshot = await getDocs(trashedFoldersQuery);
+
+        const allCandidateFolders = trashedFoldersSnapshot.docs
+            .map(folderDoc => ({ id: folderDoc.id, data: folderDoc.data() || {} }))
+            .filter(folderEntry => (folderEntry.data?.trashedRootFolderId || folderEntry.id) === selectedRootFolderId);
+
+        if (!allCandidateFolders.some(folderEntry => folderEntry.id === id)) {
+            allCandidateFolders.push({ id, data: selectedFolderData });
+        }
+
+        const folderIdsToDelete = id === selectedRootFolderId
+            ? allCandidateFolders.map(folderEntry => folderEntry.id)
+            : collectTrashedFolderSubtree(id, allCandidateFolders);
+
+        const operations: any[] = [];
+        const shortcutDeletionPromises: Promise<any>[] = [];
+
+        const queueShortcutCleanup = async (targetId, targetType: any) => {
+            if (!targetId || !targetType || !user?.uid) return;
+
+            try {
+                const shortcutsSnap = await getDocs(
+                    query(
+                        collection(db, 'shortcuts'),
+                        where('targetId', '==', targetId),
+                        where('targetType', '==', targetType),
+                        where('ownerId', '==', user.uid)
+                    )
+                );
+
+                shortcutsSnap.docs.forEach(shortcutDoc => {
+                    shortcutDeletionPromises.push(
+                        deleteDoc(doc(db, 'shortcuts', shortcutDoc.id)).catch((err: any) => {
+                            console.warn(`Error deleting shortcut ${shortcutDoc.id}:`, err);
+                        })
+                    );
+                });
+            } catch (error) {
+                console.error(`Error querying ${targetType} shortcuts for cleanup:`, error);
+            }
+        };
+
+        for (const folderId of folderIdsToDelete) {
+
+            try {
+                const subjectsSnapshot = await getDocs(
+                    query(collection(db, 'subjects'), where('folderId', '==', folderId))
+                );
+
+                for (const subjectDoc of subjectsSnapshot.docs) {
+                    const subjectData = subjectDoc.data() || {};
+                    if (subjectData?.status !== 'trashed') continue;
+
+                    const subjectRootId = subjectData?.trashedRootFolderId || null;
+                    if (subjectRootId && subjectRootId !== selectedRootFolderId) continue;
+
+                    try {
+                        const topicsSnapshot = await getDocs(
+                            query(collection(db, 'topics'), where('subjectId', '==', subjectDoc.id))
+                        );
+
+                        const topicCleanupPromises = topicsSnapshot.docs.map(topicDoc =>
+                            cascadeDeleteTopicResources({
+                                db,
+                                topicId: topicDoc.id,
+                                collections: DEFAULT_TOPIC_CASCADE_COLLECTIONS,
+                            }).catch((err: any) => {
+                                console.warn(`Failed to cascade-delete topic resources for ${topicDoc.id}:`, err);
+                            })
+                        );
+
+                        await Promise.allSettled(topicCleanupPromises);
+
+                        const topicDeletePromises = topicsSnapshot.docs.map(topicDoc =>
+                            deleteDoc(doc(db, 'topics', topicDoc.id)).catch((err: any) => {
+                                console.warn(`Failed to delete topic ${topicDoc.id}:`, err);
+                            })
+                        );
+
+                        await Promise.allSettled(topicDeletePromises);
+                    } catch (error) {
+                        console.error('Error cleaning topics before permanent subject deletion:', error);
+                    }
+
+                    await queueShortcutCleanup(subjectDoc.id, 'subject');
+                    const subjectRef = doc(db, 'subjects', subjectDoc.id);
+                    operations.push((batch: any) => batch.delete(subjectRef));
+                }
+            } catch (error) {
+                console.error('Error loading subjects for permanent folder deletion:', error);
+            }
+
+            await queueShortcutCleanup(folderId, 'folder');
+            operations.push((batch: any) => batch.delete(doc(db, 'folders', folderId)));
+        }
+
+        await Promise.allSettled(shortcutDeletionPromises);
+        await applyBatchOperationsInChunks(operations);
     };
 
     const shareFolder = async (folderId, email, role = 'viewer') => {
@@ -1213,6 +1611,7 @@ export const useFolders = (user: any) => {
 
     return { 
         folders, loading, addFolder, updateFolder, deleteFolder, deleteFolderOnly,
+        getTrashedFolders, restoreFolder, permanentlyDeleteFolder,
         shareFolder, unshareFolder, 
         moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders,
         addSubjectToFolder,

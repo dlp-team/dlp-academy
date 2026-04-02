@@ -4,7 +4,7 @@
 // and delegates all data ops to useClassesCourses, all rendering to sub-components.
 
 import React from 'react';
-import { FolderOpen, LayoutGrid, Loader2, Plus } from 'lucide-react';
+import { Archive, FolderOpen, LayoutGrid, Loader2, Plus, RotateCcw, Trash2 } from 'lucide-react';
 
 import { useClassesCourses } from '../hooks/useClassesCourses';
 import CourseList            from './classes-courses/CourseList';
@@ -18,11 +18,15 @@ import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersist
 
 const TAB_COURSES = 'courses';
 const TAB_CLASSES = 'classes';
+const TAB_BIN = 'bin';
 const INITIAL_DELETE_CONFIRM_STATE = {
   isOpen: false,
   targetType: null,
   targetId: null,
   targetName: '',
+  actionMode: 'trash',
+  typedName: '',
+  errorMessage: '',
 };
 
 const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }: any) => {
@@ -43,12 +47,16 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
   const [classSubmitting,  setClassSubmitting]  = React.useState(false);
   const [deleteConfirm, setDeleteConfirm] = React.useState(INITIAL_DELETE_CONFIRM_STATE);
   const [isDeletingItem, setIsDeletingItem] = React.useState(false);
+  const [binActionLoadingKey, setBinActionLoadingKey] = React.useState('');
+  const [binActionError, setBinActionError] = React.useState('');
 
   // ── Data ────────────────────────────────────────────────────────────────────
   const {
-    courses, classes, loading,
+    courses, classes, trashedCourses, trashedClasses, loading,
     createCourse, updateCourse, deleteCourse,
     createClass,  updateClass,  deleteClass,
+    restoreCourse, restoreClass,
+    permanentlyDeleteCourse, permanentlyDeleteClass,
   } = useClassesCourses(user, institutionId);
 
   // ── Tab switch ──────────────────────────────────────────────────────────────
@@ -65,11 +73,13 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
     setJumpToEdit(false);
   };
 
-  const queueDeleteConfirm = (targetType, id: any) => {
+  const queueDeleteConfirm = (targetType, id: any, actionMode: any = 'trash') => {
     if (!id || isDeletingItem) return;
 
     const isCourseTarget = targetType === TAB_COURSES;
-    const sourceItems = isCourseTarget ? courses : classes;
+    const sourceItems = actionMode === 'permanent'
+      ? (isCourseTarget ? trashedCourses : trashedClasses)
+      : (isCourseTarget ? courses : classes);
     const selectedItem = sourceItems.find((item) => item.id === id);
 
     setDeleteConfirm({
@@ -77,6 +87,9 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
       targetType,
       targetId: id,
       targetName: selectedItem?.name || (isCourseTarget ? 'este curso' : 'esta clase'),
+      actionMode,
+      typedName: '',
+      errorMessage: '',
     });
   };
 
@@ -85,23 +98,81 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
     setDeleteConfirm(INITIAL_DELETE_CONFIRM_STATE);
   };
 
+  const updateDeleteTypedName = (value: any) => {
+    setDeleteConfirm((prev: any) => ({
+      ...prev,
+      typedName: value,
+      errorMessage: '',
+    }));
+  };
+
   const confirmDelete = async () => {
     if (!deleteConfirm.targetId || isDeletingItem) return;
 
+    if (deleteConfirm.actionMode === 'permanent') {
+      const expectedName = String(deleteConfirm.targetName || '').trim().toLowerCase();
+      const typedName = String(deleteConfirm.typedName || '').trim().toLowerCase();
+      if (!typedName || typedName !== expectedName) {
+        setDeleteConfirm((prev: any) => ({
+          ...prev,
+          errorMessage: 'Debes escribir el nombre exacto para confirmar esta acción.'
+        }));
+        return;
+      }
+    }
+
     setIsDeletingItem(true);
+    let deleteSucceeded = false;
 
     try {
-      if (deleteConfirm.targetType === TAB_COURSES) {
-        await deleteCourse(deleteConfirm.targetId);
-        if (selectedCourse?.id === deleteConfirm.targetId) setSelectedCourse(null);
+      if (deleteConfirm.actionMode === 'permanent') {
+        if (deleteConfirm.targetType === TAB_COURSES) {
+          await permanentlyDeleteCourse(deleteConfirm.targetId);
+        } else {
+          await permanentlyDeleteClass(deleteConfirm.targetId);
+        }
       } else {
-        await deleteClass(deleteConfirm.targetId);
-        if (selectedClass?.id === deleteConfirm.targetId) setSelectedClass(null);
+        if (deleteConfirm.targetType === TAB_COURSES) {
+          await deleteCourse(deleteConfirm.targetId);
+          if (selectedCourse?.id === deleteConfirm.targetId) setSelectedCourse(null);
+        } else {
+          await deleteClass(deleteConfirm.targetId);
+          if (selectedClass?.id === deleteConfirm.targetId) setSelectedClass(null);
+        }
       }
+
+      deleteSucceeded = true;
+    } catch {
+      setDeleteConfirm((prev: any) => ({
+        ...prev,
+        errorMessage: 'No se pudo completar la operación. Inténtalo de nuevo.'
+      }));
     } finally {
       setIsDeletingItem(false);
-      setDeleteConfirm(INITIAL_DELETE_CONFIRM_STATE);
+      if (deleteSucceeded) {
+        setDeleteConfirm(INITIAL_DELETE_CONFIRM_STATE);
+      }
     }
+  };
+
+  const runBinAction = async (actionKey: any, actionFn: any) => {
+    setBinActionError('');
+    setBinActionLoadingKey(actionKey);
+    try {
+      await actionFn();
+    } catch {
+      setBinActionError('No se pudo completar la acción en la papelera. Inténtalo de nuevo.');
+    } finally {
+      setBinActionLoadingKey('');
+    }
+  };
+
+  const handleRestoreCourse = async (id: any) => {
+    await runBinAction(`restore:${TAB_COURSES}:${id}`, () => restoreCourse(id));
+  };
+
+  const handleRestoreClass = async (id: any) => {
+    await runBinAction(`restore:${TAB_CLASSES}:${id}`, () => restoreClass(id));
   };
 
   // ── Course handlers ─────────────────────────────────────────────────────────
@@ -117,7 +188,7 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
   };
 
   const handleDeleteCourse = (id: any) => {
-    queueDeleteConfirm(TAB_COURSES, id);
+    queueDeleteConfirm(TAB_COURSES, id, 'trash');
   };
 
   const handleUpdateCourseField = async (id, patch: any) => {
@@ -139,7 +210,7 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
   };
 
   const handleDeleteClass = (id: any) => {
-    queueDeleteConfirm(TAB_CLASSES, id);
+    queueDeleteConfirm(TAB_CLASSES, id, 'trash');
   };
 
   const handleUpdateClassField = async (id, patch: any) => {
@@ -151,12 +222,34 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
   const handleEditClass   = (cl: any) => { setSelectedClass(cl); setJumpToEdit(true);  };
 
   const showingDetail = selectedCourse || selectedClass;
+  const isPermanentDelete = deleteConfirm.actionMode === 'permanent';
   const deletingCourse = deleteConfirm.targetType === TAB_COURSES;
-  const deleteDialogTitle = deletingCourse ? 'Eliminar curso' : 'Eliminar clase';
-  const deleteDialogActionLabel = deletingCourse ? 'Eliminar curso' : 'Eliminar clase';
-  const deleteDialogMessage = deletingCourse
-    ? `Se eliminará "${deleteConfirm.targetName || 'este curso'}". Las clases asociadas no se eliminarán. Esta acción no se puede deshacer.`
-    : `Se eliminará "${deleteConfirm.targetName || 'esta clase'}". Esta acción no se puede deshacer.`;
+  const normalizedDeleteTargetName = String(deleteConfirm.targetName || '').trim().toLowerCase();
+  const normalizedDeleteTypedName = String(deleteConfirm.typedName || '').trim().toLowerCase();
+  const isDeleteNameValid = normalizedDeleteTypedName.length > 0 && normalizedDeleteTypedName === normalizedDeleteTargetName;
+  const deleteDialogTitle = isPermanentDelete
+    ? (deletingCourse ? 'Eliminar curso definitivamente' : 'Eliminar clase definitivamente')
+    : (deletingCourse ? 'Mover curso a papelera' : 'Mover clase a papelera');
+  const deleteDialogActionLabel = isPermanentDelete ? 'Eliminar definitivamente' : 'Mover a papelera';
+  const deleteDialogMessage = isPermanentDelete
+    ? (deletingCourse
+      ? `Se eliminará definitivamente "${deleteConfirm.targetName || 'este curso'}" junto con sus clases asociadas.`
+      : `Se eliminará definitivamente "${deleteConfirm.targetName || 'esta clase'}".`)
+    : (deletingCourse
+      ? `"${deleteConfirm.targetName || 'Este curso'}" se moverá a la papelera junto con sus clases asociadas.`
+      : `"${deleteConfirm.targetName || 'Esta clase'}" se moverá a la papelera.`);
+
+  const formatTrashedDate = (value: any) => {
+    if (!value) return 'Fecha no disponible';
+    try {
+      if (typeof value?.toDate === 'function') {
+        return value.toDate().toLocaleDateString();
+      }
+      return new Date(value).toLocaleDateString();
+    } catch {
+      return 'Fecha no disponible';
+    }
+  };
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -167,6 +260,7 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
           {[
             { key: TAB_COURSES, label: 'Cursos', icon: FolderOpen },
             { key: TAB_CLASSES, label: 'Clases', icon: LayoutGrid },
+            { key: TAB_BIN, label: 'Papelera', icon: Archive },
           ].map(({ key, label, icon }: any) => (
             <button
               key={key}
@@ -182,7 +276,7 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
           ))}
         </div>
 
-        {!showingDetail && (
+        {!showingDetail && tab !== TAB_BIN && (
           <button
             onClick={() => tab === TAB_COURSES ? setShowCourseModal(true) : setShowClassModal(true)}
             className="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white
@@ -248,6 +342,118 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
               />
             )
           )}
+
+          {/* BIN */}
+          {tab === TAB_BIN && (
+            <div className="space-y-5">
+              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5">
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                  <Archive className="w-4 h-4 text-amber-500" />
+                  Papelera de cursos y clases
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  Aquí puedes restaurar elementos o eliminarlos definitivamente. La eliminación definitiva exige escribir el nombre exacto.
+                </p>
+              </div>
+
+              {binActionError && (
+                <div className="rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-300">
+                  {binActionError}
+                </div>
+              )}
+
+              {trashedCourses.length === 0 && trashedClasses.length === 0 ? (
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-12 text-center">
+                  <Archive className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+                  <p className="text-slate-500 dark:text-slate-400">La papelera está vacía.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+                      <h4 className="font-semibold text-slate-900 dark:text-white">Cursos en papelera ({trashedCourses.length})</h4>
+                    </div>
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {trashedCourses.length === 0 ? (
+                        <p className="px-5 py-4 text-sm text-slate-400">No hay cursos en papelera.</p>
+                      ) : trashedCourses.map((course: any) => {
+                        const restoreKey = `restore:${TAB_COURSES}:${course.id}`;
+                        const restoreLoading = binActionLoadingKey === restoreKey;
+
+                        return (
+                          <div key={course.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div>
+                              <p className="font-semibold text-slate-900 dark:text-white">{course.name}</p>
+                              <p className="text-xs text-slate-400">En papelera desde: {formatTrashedDate(course.trashedAt)}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleRestoreCourse(course.id)}
+                                disabled={restoreLoading || isDeletingItem}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 disabled:opacity-60"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                                {restoreLoading ? 'Restaurando...' : 'Restaurar'}
+                              </button>
+                              <button
+                                onClick={() => queueDeleteConfirm(TAB_COURSES, course.id, 'permanent')}
+                                disabled={isDeletingItem}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 disabled:opacity-60"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Eliminar definitivamente
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    <div className="px-5 py-4 border-b border-slate-100 dark:border-slate-800">
+                      <h4 className="font-semibold text-slate-900 dark:text-white">Clases en papelera ({trashedClasses.length})</h4>
+                    </div>
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {trashedClasses.length === 0 ? (
+                        <p className="px-5 py-4 text-sm text-slate-400">No hay clases en papelera.</p>
+                      ) : trashedClasses.map((cls: any) => {
+                        const restoreKey = `restore:${TAB_CLASSES}:${cls.id}`;
+                        const restoreLoading = binActionLoadingKey === restoreKey;
+
+                        return (
+                          <div key={cls.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div>
+                              <p className="font-semibold text-slate-900 dark:text-white">{cls.name}</p>
+                              <p className="text-xs text-slate-400">En papelera desde: {formatTrashedDate(cls.trashedAt)}</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleRestoreClass(cls.id)}
+                                disabled={restoreLoading || isDeletingItem}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 disabled:opacity-60"
+                              >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                                {restoreLoading ? 'Restaurando...' : 'Restaurar'}
+                              </button>
+                              <button
+                                onClick={() => queueDeleteConfirm(TAB_CLASSES, cls.id, 'permanent')}
+                                disabled={isDeletingItem}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 disabled:opacity-60"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                Eliminar definitivamente
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </>
       )}
 
@@ -271,6 +477,30 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 {deleteDialogMessage}
               </p>
+              {isPermanentDelete && (
+                <div className="mt-4 space-y-2">
+                  <label
+                    htmlFor="delete-confirm-name"
+                    className="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  >
+                    Escribe el nombre exacto para confirmar
+                  </label>
+                  <input
+                    id="delete-confirm-name"
+                    type="text"
+                    value={deleteConfirm.typedName}
+                    onChange={(event) => updateDeleteTypedName(event.target.value)}
+                    className="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-red-400"
+                    placeholder={deleteConfirm.targetName || 'Nombre del elemento'}
+                    autoComplete="off"
+                  />
+                </div>
+              )}
+              {deleteConfirm.errorMessage && (
+                <p className="mt-3 text-sm font-medium text-red-600 dark:text-red-300">
+                  {deleteConfirm.errorMessage}
+                </p>
+              )}
               <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
@@ -283,7 +513,7 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
                 <button
                   type="button"
                   onClick={confirmDelete}
-                  disabled={isDeletingItem}
+                  disabled={isDeletingItem || (isPermanentDelete && !isDeleteNameValid)}
                   className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60"
                 >
                   {isDeletingItem ? 'Eliminando...' : deleteDialogActionLabel}
