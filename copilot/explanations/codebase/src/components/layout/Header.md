@@ -132,3 +132,5 @@ function ExampleScreen() {
 - Dashboard shortcut route and label now resolve from active role context instead of raw `user.role`.
 - Header now emits shell-level active-role change event (`dlp-active-role-change`) consumed by `App.tsx` role-context synchronization.
 - Merged `user` + Firestore profile snapshots before rendering so active role metadata from app shell is preserved.
+- Wired notification panel owner actions for shortcut move requests (`approve` / `reject`) through `useNotifications` resolution API.
+- Added toast feedback for resolution outcomes (success and failure) after action execution.

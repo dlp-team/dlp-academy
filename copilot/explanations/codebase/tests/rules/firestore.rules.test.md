@@ -1,6 +1,17 @@
 // copilot/explanations/codebase/tests/rules/firestore.rules.test.md
 
 ## Changelog
+### 2026-04-02: Shortcut move request boundary coverage
+- Added deterministic tests for `shortcutMoveRequests` access boundaries:
+  - allow requester read,
+  - allow target-folder owner read,
+  - allow same-institution institution-admin read,
+  - deny cross-institution institution-admin read,
+  - deny unrelated teacher read.
+- Added write deny-path coverage:
+  - deny direct client `create`,
+  - deny direct client `update`.
+
 ### 2026-04-02: Emulator gate closure validation
 - Revalidated this suite via `npm run test:rules` with active Firestore/Storage emulators after explicit emulator config activation in `firebase.json`.
 - Phase 02 rules validation gate is now closed with deterministic emulator-backed execution.

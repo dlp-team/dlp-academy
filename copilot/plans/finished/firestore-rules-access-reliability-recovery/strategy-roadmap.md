@@ -49,7 +49,7 @@
   - final lossless closure notes.
 
 ## Immediate Next Actions
-1. Move plan package to `finished` and keep review artifacts attached.
+1. Plan lifecycle transition is complete; keep review artifacts attached for traceability.
 2. Track optional follow-up to de-skip unrelated e2e suites outside this plan scope.
 
 ## Rollback Strategy (High Level)

@@ -1,8 +1,16 @@
+// src/components/ui/NotificationsPanel.tsx
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCheck, BellOff, FlaskConical } from 'lucide-react';
+import { Check, CheckCheck, BellOff, FlaskConical, FolderSync, Loader2, X } from 'lucide-react';
 
-const NotificationsPanel = ({ notifications, onMarkAsRead, onMarkAllAsRead, onClose }: any) => {
+const NotificationsPanel = ({
+    notifications,
+    onMarkAsRead,
+    onMarkAllAsRead,
+    onResolveMoveRequest,
+    isResolvingMoveRequest,
+    onClose
+}: any) => {
     const navigate = useNavigate();
     const panelRef = useRef<any>(null);
 
@@ -20,8 +28,23 @@ const NotificationsPanel = ({ notifications, onMarkAsRead, onMarkAllAsRead, onCl
         if (!notification.read) {
             onMarkAsRead(notification.id);
         }
-        navigate(`/subject/${notification.subjectId}`);
-        onClose();
+
+        if (notification?.subjectId) {
+            navigate(`/subject/${notification.subjectId}`);
+            onClose();
+        }
+    };
+
+    const isPendingShortcutMoveRequest = (notification: any) => {
+        const type = String(notification?.type || '').trim().toLowerCase();
+        const status = String(notification?.shortcutMoveRequestStatus || '').trim().toLowerCase();
+        return type === 'shortcut_move_request' && status === 'pending' && Boolean(notification?.shortcutMoveRequestId);
+    };
+
+    const handleResolveMoveRequest = async (event: any, notification: any, resolution: any) => {
+        event.stopPropagation();
+        if (typeof onResolveMoveRequest !== 'function') return;
+        await onResolveMoveRequest(notification, resolution);
     };
 
     const formatTime = (timestamp: any) => {
@@ -75,16 +98,28 @@ const NotificationsPanel = ({ notifications, onMarkAsRead, onMarkAllAsRead, onCl
                     </div>
                 ) : (
                     notifications.map(n => (
-                        <button
+                        <div
                             key={n.id}
                             onClick={() => handleNotificationClick(n)}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter' || event.key === ' ') {
+                                    event.preventDefault();
+                                    handleNotificationClick(n);
+                                }
+                            }}
+                            role="button"
+                            tabIndex={0}
                             className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800/60 transition-colors flex items-start gap-3 ${
                                 !n.read ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''
                             }`}
                         >
                             {/* Icon */}
                             <div className="shrink-0 mt-0.5 bg-gradient-to-br from-indigo-500 to-purple-600 p-1.5 rounded-lg">
-                                <FlaskConical className="w-4 h-4 text-white" />
+                                {isPendingShortcutMoveRequest(n) ? (
+                                    <FolderSync className="w-4 h-4 text-white" />
+                                ) : (
+                                    <FlaskConical className="w-4 h-4 text-white" />
+                                )}
                             </div>
 
                             {/* Content */}
@@ -98,13 +133,43 @@ const NotificationsPanel = ({ notifications, onMarkAsRead, onMarkAllAsRead, onCl
                                 <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                                     {formatTime(n.createdAt)}
                                 </p>
+                                {isPendingShortcutMoveRequest(n) && (
+                                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                                        <button
+                                            type="button"
+                                            disabled={Boolean(isResolvingMoveRequest?.(n.shortcutMoveRequestId))}
+                                            onClick={(event) => handleResolveMoveRequest(event, n, 'approved')}
+                                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
+                                        >
+                                            {isResolvingMoveRequest?.(n.shortcutMoveRequestId) ? (
+                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            ) : (
+                                                <Check className="h-3.5 w-3.5" />
+                                            )}
+                                            Aprobar
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={Boolean(isResolvingMoveRequest?.(n.shortcutMoveRequestId))}
+                                            onClick={(event) => handleResolveMoveRequest(event, n, 'rejected')}
+                                            className="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
+                                        >
+                                            {isResolvingMoveRequest?.(n.shortcutMoveRequestId) ? (
+                                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                            ) : (
+                                                <X className="h-3.5 w-3.5" />
+                                            )}
+                                            Rechazar
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Unread dot */}
                             {!n.read && (
                                 <span className="shrink-0 mt-1.5 w-2 h-2 rounded-full bg-indigo-500" />
                             )}
-                        </button>
+                        </div>
                     ))
                 )}
             </div>

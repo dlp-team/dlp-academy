@@ -176,7 +176,8 @@ const Home = ({ user }: any) => {
         setUnshareConfirm,
         setTopicsModalConfig,
         setFolderContentsModalConfig,
-        rememberOrganization
+        rememberOrganization,
+        onHomeFeedback: publishHomeFeedback
     });
 
     const { handleCardFocus, shortcutFeedback, getCardVisualState } = useHomeKeyboardCoordination({

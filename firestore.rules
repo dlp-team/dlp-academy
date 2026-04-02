@@ -1402,6 +1402,26 @@ service cloud.firestore {
     }
 
       // -----------------------------------------
+      // SHORTCUT MOVE REQUESTS
+      // -----------------------------------------
+      match /shortcutMoveRequests/{requestId} {
+        allow read: if isSignedIn()
+          && (
+            isGlobalAdmin()
+            || resource.data.requesterUid == request.auth.uid
+            || resource.data.targetFolderOwnerUid == request.auth.uid
+            || (
+              isInstitutionAdmin()
+              && resource.data.keys().hasAny(['institutionId'])
+              && resource.data.institutionId == currentUserInstitutionId()
+            )
+          );
+
+        // Writable only from trusted server code via Admin SDK.
+        allow create, update, delete: if false;
+      }
+
+      // -----------------------------------------
       // NOTIFICATIONS
       // -----------------------------------------
       match /notifications/{notificationId} {

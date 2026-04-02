@@ -3,6 +3,7 @@ import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { isInvalidFolderMove } from '../../../utils/folderUtils';
 import { canEdit, getPermissionLevel } from '../../../utils/permissionUtils';
+import { createShortcutMoveRequest } from '../../../services/shortcutMoveRequestService';
 import { clearLastHomeFolderId, saveLastHomeFolderId } from '../utils/homePersistence';
 
 export const useHomePageHandlers = ({
@@ -16,8 +17,15 @@ export const useHomePageHandlers = ({
     setUnshareConfirm,
     setTopicsModalConfig,
     setFolderContentsModalConfig,
-    rememberOrganization = true
+    rememberOrganization = true,
+    onHomeFeedback = null
 }: any): any => {
+    const publishHomeFeedback = (message: any, tone = 'success') => {
+        if (typeof onHomeFeedback === 'function') {
+            onHomeFeedback(message, tone);
+        }
+    };
+
     const closeShareConfirm = () => {
         setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null, onMergeConfirm: null });
     };
@@ -239,18 +247,24 @@ export const useHomePageHandlers = ({
             requestedShortcutId: shortcutId,
             requestedTargetId: targetId,
             onConfirm: async () => {
-                // TODO(shortcut-move-request): send email to shared folder owner requesting source-item move approval.
-                // TODO(shortcut-move-request): create in-app notification for owner with approve/reject actions.
-                // TODO(shortcut-move-request): if owner approves, execute source move (folder/subject), never move shortcut into shared folder.
-                console.info('[SHORTCUT_MOVE_REQUEST][queued]', {
-                    shortcutId,
-                    targetFolderId,
-                    targetFolderName: targetFolder?.name || null,
-                    targetType,
-                    targetId,
-                    requestedBy: currentUserId || null
-                });
-                closeShareConfirm();
+                try {
+                    await createShortcutMoveRequest({
+                        shortcutId,
+                        targetFolderId,
+                        targetId,
+                        shortcutType: targetType
+                    });
+                    publishHomeFeedback('Solicitud enviada al propietario de la carpeta compartida.', 'success');
+                    closeShareConfirm();
+                } catch (error: any) {
+                    const errorCode = String(error?.code || '').toLowerCase();
+                    if (errorCode.includes('already-exists')) {
+                        publishHomeFeedback('Ya existe una solicitud pendiente para este acceso directo.', 'warning');
+                        closeShareConfirm();
+                        return;
+                    }
+                    publishHomeFeedback('No se pudo enviar la solicitud de movimiento. Intentalo de nuevo.', 'error');
+                }
             }
         });
 

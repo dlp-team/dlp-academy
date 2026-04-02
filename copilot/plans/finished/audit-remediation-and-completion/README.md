@@ -32,8 +32,8 @@ DLP Academy has reached a development inflection point: core features work, but 
 
 ### ❌ OUT OF SCOPE
 - Firestore rules security hardening (active plan: `copilot/plans/active/firestore-rules-access-reliability-recovery/`)
-- Test suite stabilization (active plan: `copilot/plans/inReview/test-suite-stability-and-skip-remediation/`)
-- Autopilot platform completion (inReview plan: `copilot/plans/inReview/autopilot-platform-hardening-and-completion/`)
+- Test suite stabilization (separate finished plan: `copilot/plans/finished/test-suite-stability-and-skip-remediation/`)
+- Autopilot platform completion (separate finished plan: `copilot/plans/finished/autopilot-platform-hardening-and-completion/`)
 - Visual redesign or UX overhaul (only responsive/a11y fixes)
 - Performance profiling and optimization (separate future work)
 - Broad refactors unrelated to identified gaps
@@ -131,9 +131,9 @@ DLP Academy has reached a development inflection point: core features work, but 
 - `working/` - Assumptions, dependencies, operational notes
 
 ## Related Plans
-- 🔴 **Active:** `firestore-rules-access-reliability-recovery/` - Security hardening (separate track)
-- 🟡 **InReview:** `test-suite-stability-and-skip-remediation/` - Test stabilization (baseline complete)
-- 🟡 **InReview:** `autopilot-platform-hardening-and-completion/` - Broader platform work (finished)
+- ✅ **Finished:** `firestore-rules-access-reliability-recovery/` - Security hardening (separate track)
+- ✅ **Finished:** `test-suite-stability-and-skip-remediation/` - Test stabilization (baseline complete)
+- ✅ **Finished:** `autopilot-platform-hardening-and-completion/` - Broader platform work.
 
 ## Risks and Mitigations
 

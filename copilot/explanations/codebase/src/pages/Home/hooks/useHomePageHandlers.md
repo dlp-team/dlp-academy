@@ -1,3 +1,20 @@
+## [2026-04-02] Shortcut Move Request Callable Wiring
+### Context & Behavior
+- Replaced shortcut move-request placeholder logging with real callable submission flow.
+- Added `createShortcutMoveRequest` service dependency in Home drag/drop handlers.
+- `shortcut-move-request` confirmation payload now sends:
+	- `shortcutId`,
+	- `targetFolderId`,
+	- `targetId`,
+	- `shortcutType` (`subject` or `folder`).
+
+### UX/Feedback Changes
+- Added `onHomeFeedback` wiring at hook boundary so request outcomes are surfaced inline in Home feedback banner.
+- Added explicit feedback paths:
+	- success: request submitted,
+	- duplicate pending request: warning,
+	- unexpected callable failure: error.
+
 ## [2026-03-06] Test Hardening: DnD Matrix and Confirmation Overlay Branches
 ### Context & Validation Additions
 - Added a dedicated matrix suite `tests/unit/hooks/useHomePageHandlers.dndMatrix.test.js` to close high-risk drag/drop branches.

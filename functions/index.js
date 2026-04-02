@@ -1,11 +1,12 @@
 // functions/index.js
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import {
   assertNonEmptyString,
+  requireAuthUid,
 } from './security/guards.js';
 import { createGetInstitutionalAccessCodePreviewHandler } from './security/previewHandler.js';
 
@@ -14,6 +15,10 @@ initializeApp();
 const db = getFirestore();
 const INSTITUTION_CODE_SALT = defineSecret('INSTITUTION_CODE_SALT');
 const ALLOWED_ROLE_CLAIMS = new Set(['admin', 'institutionadmin', 'teacher', 'student']);
+const ALLOWED_SHORTCUT_TYPES = new Set(['subject', 'folder']);
+const MOVE_REQUEST_STATUS_PENDING = 'pending';
+const MOVE_REQUEST_STATUS_APPROVED = 'approved';
+const MOVE_REQUEST_STATUS_REJECTED = 'rejected';
 
 const normalizeRoleClaim = (value) => {
   const normalized = String(value || '').trim().toLowerCase();
@@ -24,6 +29,95 @@ const normalizeInstitutionClaim = (value) => {
   const normalized = String(value || '').trim();
   return normalized.length > 0 ? normalized : null;
 };
+
+const normalizeEmail = (value) => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const normalizeShortcutType = (value) => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return ALLOWED_SHORTCUT_TYPES.has(normalized) ? normalized : null;
+};
+
+const sanitizeRequestIdFragment = (value) =>
+  String(value || '')
+    .trim()
+    .replace(/[^A-Za-z0-9_-]/g, '_')
+    .slice(0, 120);
+
+const buildShortcutMoveRequestId = ({ requesterUid, shortcutId, targetFolderId }) => {
+  const uidPart = sanitizeRequestIdFragment(requesterUid);
+  const shortcutPart = sanitizeRequestIdFragment(shortcutId);
+  const folderPart = sanitizeRequestIdFragment(targetFolderId);
+  return `shortcut_move_request_${uidPart}_${shortcutPart}_${folderPart}`;
+};
+
+const dedupeSharedWithEntries = (entries = []) => {
+  const byKey = new Map();
+
+  entries.forEach((entry) => {
+    const uid = String(entry?.uid || '').trim();
+    const email = normalizeEmail(entry?.email);
+    const key = uid || (email ? `email:${email}` : null);
+    if (!key || byKey.has(key)) return;
+    byKey.set(key, {
+      ...(uid ? { uid } : {}),
+      ...(email ? { email } : {}),
+      ...(entry?.displayName ? { displayName: String(entry.displayName) } : {}),
+      ...(entry?.name ? { name: String(entry.name) } : {}),
+    });
+  });
+
+  return Array.from(byKey.values());
+};
+
+const mergeSharedWithUids = (left = [], right = []) => {
+  const merged = new Set();
+  [...left, ...right].forEach((uid) => {
+    const normalized = String(uid || '').trim();
+    if (normalized) merged.add(normalized);
+  });
+  return Array.from(merged);
+};
+
+const extractFolderShareSnapshot = (folderData = {}, folderOwnerUid = null) => {
+  const folderSharedWith = Array.isArray(folderData?.sharedWith) ? folderData.sharedWith : [];
+  const folderSharedWithUids = Array.isArray(folderData?.sharedWithUids) ? folderData.sharedWithUids : [];
+  const ownerUid = String(folderOwnerUid || '').trim();
+  const ownerEmail = normalizeEmail(folderData?.ownerEmail || null);
+
+  const normalizedFolderSharedWith = dedupeSharedWithEntries([
+    ...folderSharedWith,
+    ...(ownerUid ? [{ uid: ownerUid, email: ownerEmail || undefined }] : []),
+  ]);
+
+  const normalizedFolderSharedWithUids = mergeSharedWithUids(
+    folderSharedWithUids,
+    ownerUid ? [ownerUid] : []
+  );
+
+  return {
+    sharedWith: normalizedFolderSharedWith,
+    sharedWithUids: normalizedFolderSharedWithUids,
+  };
+};
+
+const createMailQueuePayload = ({
+  to,
+  subject,
+  title,
+  bodyText,
+  metadata,
+}) => ({
+  to: [to],
+  message: {
+    subject,
+    text: `${title}\n\n${bodyText}`,
+  },
+  metadata,
+  createdAt: FieldValue.serverTimestamp(),
+});
 
 const normalizePolicy = (policy = {}) => ({
   requireCode: policy.requireCode !== false,
@@ -178,6 +272,489 @@ export const syncCurrentUserClaims = onCall(
       success: true,
       role,
       institutionId,
+    };
+  }
+);
+
+const commitOperationsInChunks = async (operations = [], chunkSize = 400) => {
+  for (let index = 0; index < operations.length; index += chunkSize) {
+    const batch = db.batch();
+    const chunk = operations.slice(index, index + chunkSize);
+    chunk.forEach((applyOperation) => applyOperation(batch));
+    await batch.commit();
+  }
+};
+
+const collectFolderSubtreeIds = async (rootFolderId) => {
+  const visited = new Set();
+  const queue = [rootFolderId];
+
+  while (queue.length > 0) {
+    const currentFolderId = queue.shift();
+    if (!currentFolderId || visited.has(currentFolderId)) continue;
+    visited.add(currentFolderId);
+
+    const childFoldersSnapshot = await db
+      .collection('folders')
+      .where('parentId', '==', currentFolderId)
+      .get();
+
+    childFoldersSnapshot.docs.forEach((childDoc) => {
+      if (!visited.has(childDoc.id)) {
+        queue.push(childDoc.id);
+      }
+    });
+  }
+
+  return Array.from(visited);
+};
+
+const ensureFolderMoveDoesNotCreateCycle = async ({ sourceFolderId, targetFolderId }) => {
+  let cursorId = targetFolderId;
+  let safety = 0;
+
+  while (cursorId && safety < 250) {
+    if (cursorId === sourceFolderId) {
+      throw new HttpsError('failed-precondition', 'Cannot move a folder into its own subtree.');
+    }
+
+    const cursorSnapshot = await db.collection('folders').doc(cursorId).get();
+    if (!cursorSnapshot.exists) break;
+
+    const cursorData = cursorSnapshot.data() || {};
+    cursorId = normalizeInstitutionClaim(cursorData.parentId);
+    safety += 1;
+  }
+};
+
+export const createShortcutMoveRequest = onCall(
+  {
+    region: 'europe-west1',
+    invoker: 'public',
+  },
+  async (request) => {
+    const requesterUid = requireAuthUid(request);
+    const shortcutId = assertNonEmptyString(request.data?.shortcutId, 'shortcutId');
+    const targetFolderId = assertNonEmptyString(request.data?.targetFolderId, 'targetFolderId');
+    const requestedTargetId = assertNonEmptyString(request.data?.targetId, 'targetId');
+    const requestedShortcutType = normalizeShortcutType(request.data?.shortcutType);
+
+    if (!requestedShortcutType) {
+      throw new HttpsError('invalid-argument', 'shortcutType must be subject or folder.');
+    }
+
+    const requesterSnapshot = await db.collection('users').doc(requesterUid).get();
+    if (!requesterSnapshot.exists) {
+      throw new HttpsError('failed-precondition', 'Requester profile not found.');
+    }
+
+    const requesterData = requesterSnapshot.data() || {};
+    const requesterEmail = normalizeEmail(requesterData.email || request.auth?.token?.email || null);
+    const requesterInstitutionId = normalizeInstitutionClaim(requesterData.institutionId);
+
+    const shortcutSnapshot = await db.collection('shortcuts').doc(shortcutId).get();
+    if (!shortcutSnapshot.exists) {
+      throw new HttpsError('not-found', 'Shortcut not found.');
+    }
+
+    const shortcutData = shortcutSnapshot.data() || {};
+    const shortcutType = normalizeShortcutType(shortcutData.targetType);
+
+    if (shortcutData.ownerId !== requesterUid) {
+      throw new HttpsError('permission-denied', 'Only the shortcut owner can create a move request.');
+    }
+
+    if (!shortcutType || shortcutType !== requestedShortcutType) {
+      throw new HttpsError('invalid-argument', 'Shortcut type mismatch.');
+    }
+
+    if (String(shortcutData.targetId || '').trim() !== requestedTargetId) {
+      throw new HttpsError('invalid-argument', 'Shortcut target mismatch.');
+    }
+
+    const shortcutInstitutionId = normalizeInstitutionClaim(shortcutData.institutionId);
+    if (
+      requesterInstitutionId
+      && shortcutInstitutionId
+      && requesterInstitutionId !== shortcutInstitutionId
+    ) {
+      throw new HttpsError('permission-denied', 'Shortcut institution does not match requester institution.');
+    }
+
+    const targetFolderSnapshot = await db.collection('folders').doc(targetFolderId).get();
+    if (!targetFolderSnapshot.exists) {
+      throw new HttpsError('not-found', 'Target folder not found.');
+    }
+
+    const targetFolderData = targetFolderSnapshot.data() || {};
+    const targetFolderOwnerUid = String(targetFolderData.ownerId || targetFolderData.uid || '').trim();
+    const targetFolderInstitutionId = normalizeInstitutionClaim(targetFolderData.institutionId);
+
+    if (targetFolderData.isShared !== true) {
+      throw new HttpsError('failed-precondition', 'Target folder must be shared.');
+    }
+
+    if (!targetFolderOwnerUid) {
+      throw new HttpsError('failed-precondition', 'Target folder owner is missing.');
+    }
+
+    if (targetFolderOwnerUid === requesterUid) {
+      throw new HttpsError('failed-precondition', 'Owner can move the original item directly without a request.');
+    }
+
+    if (
+      requesterInstitutionId
+      && targetFolderInstitutionId
+      && requesterInstitutionId !== targetFolderInstitutionId
+    ) {
+      throw new HttpsError('permission-denied', 'Target folder belongs to another institution.');
+    }
+
+    const requestId = buildShortcutMoveRequestId({
+      requesterUid,
+      shortcutId,
+      targetFolderId,
+    });
+
+    const requestRef = db.collection('shortcutMoveRequests').doc(requestId);
+    const existingRequestSnapshot = await requestRef.get();
+    if (
+      existingRequestSnapshot.exists
+      && existingRequestSnapshot.data()?.status === MOVE_REQUEST_STATUS_PENDING
+    ) {
+      throw new HttpsError('already-exists', 'A pending move request already exists for this shortcut and folder.');
+    }
+
+    const ownerUserSnapshot = await db.collection('users').doc(targetFolderOwnerUid).get();
+    const ownerData = ownerUserSnapshot.exists ? ownerUserSnapshot.data() || {} : {};
+    const ownerEmail = normalizeEmail(ownerData.email);
+
+    const institutionId = targetFolderInstitutionId || shortcutInstitutionId || requesterInstitutionId || null;
+    const folderName = String(targetFolderData.name || 'carpeta compartida');
+    const actorLabel = requesterEmail || 'Un usuario';
+
+    const ownerNotificationRef = db
+      .collection('notifications')
+      .doc(`shortcut_move_request_owner_${requestId}`);
+
+    const batch = db.batch();
+
+    batch.set(requestRef, {
+      requesterUid,
+      requesterEmail,
+      requesterInstitutionId: requesterInstitutionId || null,
+      shortcutId,
+      shortcutType,
+      targetId: shortcutData.targetId,
+      targetFolderId,
+      targetFolderName: folderName,
+      targetFolderOwnerUid,
+      institutionId,
+      status: MOVE_REQUEST_STATUS_PENDING,
+      resolution: null,
+      resolvedAt: null,
+      resolvedByUid: null,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    batch.set(ownerNotificationRef, {
+      userId: targetFolderOwnerUid,
+      institutionId,
+      read: false,
+      type: 'shortcut_move_request',
+      shortcutMoveRequestId: requestId,
+      shortcutMoveRequestStatus: MOVE_REQUEST_STATUS_PENDING,
+      shortcutId,
+      shortcutType,
+      targetId: shortcutData.targetId,
+      targetFolderId,
+      targetFolderName: folderName,
+      requesterUid,
+      requesterEmail,
+      title: 'Solicitud de movimiento pendiente',
+      message: `${actorLabel} solicita mover un elemento original a "${folderName}".`,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    if (ownerEmail) {
+      const ownerMailRef = db.collection('mail').doc(`shortcut_move_request_owner_mail_${requestId}`);
+      batch.set(ownerMailRef, createMailQueuePayload({
+        to: ownerEmail,
+        subject: 'Nueva solicitud de movimiento en carpeta compartida',
+        title: 'Tienes una solicitud pendiente',
+        bodyText: `${actorLabel} solicita mover un elemento original a "${folderName}". Revisa la notificacion en DLP Academy para aprobar o rechazar.`,
+        metadata: {
+          type: 'shortcut_move_request',
+          requestId,
+          requesterUid,
+          targetFolderOwnerUid,
+          institutionId,
+        },
+      }));
+    }
+
+    await batch.commit();
+
+    return {
+      success: true,
+      requestId,
+      status: MOVE_REQUEST_STATUS_PENDING,
+      targetFolderOwnerUid,
+    };
+  }
+);
+
+export const resolveShortcutMoveRequest = onCall(
+  {
+    region: 'europe-west1',
+    invoker: 'public',
+  },
+  async (request) => {
+    const actorUid = requireAuthUid(request);
+    const requestId = assertNonEmptyString(request.data?.requestId, 'requestId');
+    const resolution = String(request.data?.resolution || '').trim().toLowerCase();
+
+    if (resolution !== MOVE_REQUEST_STATUS_APPROVED && resolution !== MOVE_REQUEST_STATUS_REJECTED) {
+      throw new HttpsError('invalid-argument', 'resolution must be approve or reject.');
+    }
+
+    const actorSnapshot = await db.collection('users').doc(actorUid).get();
+    if (!actorSnapshot.exists) {
+      throw new HttpsError('failed-precondition', 'Actor profile not found.');
+    }
+
+    const actorData = actorSnapshot.data() || {};
+    const actorRole = normalizeRoleClaim(actorData.role);
+    const actorInstitutionId = normalizeInstitutionClaim(actorData.institutionId);
+
+    const requestRef = db.collection('shortcutMoveRequests').doc(requestId);
+    const requestSnapshot = await requestRef.get();
+    if (!requestSnapshot.exists) {
+      throw new HttpsError('not-found', 'Move request not found.');
+    }
+
+    const moveRequest = requestSnapshot.data() || {};
+    const requestInstitutionId = normalizeInstitutionClaim(moveRequest.institutionId);
+
+    const canResolveAsOwner = moveRequest.targetFolderOwnerUid === actorUid;
+    const canResolveAsGlobalAdmin = actorRole === 'admin';
+    const canResolveAsInstitutionAdmin = actorRole === 'institutionadmin'
+      && actorInstitutionId
+      && requestInstitutionId
+      && actorInstitutionId === requestInstitutionId;
+
+    if (!canResolveAsOwner && !canResolveAsGlobalAdmin && !canResolveAsInstitutionAdmin) {
+      throw new HttpsError('permission-denied', 'Only folder owner or admins can resolve this move request.');
+    }
+
+    if (moveRequest.status !== MOVE_REQUEST_STATUS_PENDING) {
+      throw new HttpsError('failed-precondition', 'Move request is already resolved.');
+    }
+
+    const requesterUid = assertNonEmptyString(moveRequest.requesterUid, 'requesterUid');
+    const shortcutType = normalizeShortcutType(moveRequest.shortcutType);
+    const targetId = assertNonEmptyString(moveRequest.targetId, 'targetId');
+    const targetFolderId = assertNonEmptyString(moveRequest.targetFolderId, 'targetFolderId');
+
+    if (!shortcutType) {
+      throw new HttpsError('failed-precondition', 'Move request shortcut type is invalid.');
+    }
+
+    const targetFolderSnapshot = await db.collection('folders').doc(targetFolderId).get();
+    if (!targetFolderSnapshot.exists) {
+      throw new HttpsError('not-found', 'Target folder no longer exists.');
+    }
+
+    const targetFolderData = targetFolderSnapshot.data() || {};
+    if (targetFolderData.isShared !== true) {
+      throw new HttpsError('failed-precondition', 'Target folder is no longer shared.');
+    }
+
+    const targetFolderOwnerUid = String(targetFolderData.ownerId || targetFolderData.uid || '').trim();
+    if (!targetFolderOwnerUid) {
+      throw new HttpsError('failed-precondition', 'Target folder owner is missing.');
+    }
+
+    const { sharedWith, sharedWithUids } = extractFolderShareSnapshot(targetFolderData, targetFolderOwnerUid);
+    const institutionId = normalizeInstitutionClaim(targetFolderData.institutionId)
+      || normalizeInstitutionClaim(moveRequest.institutionId)
+      || null;
+
+    const operations = [];
+
+    if (resolution === MOVE_REQUEST_STATUS_APPROVED) {
+      if (shortcutType === 'subject') {
+        const sourceSubjectRef = db.collection('subjects').doc(targetId);
+        const sourceSubjectSnapshot = await sourceSubjectRef.get();
+        if (!sourceSubjectSnapshot.exists) {
+          throw new HttpsError('not-found', 'Source subject no longer exists.');
+        }
+
+        const sourceSubjectData = sourceSubjectSnapshot.data() || {};
+        const mergedSharedWithUids = mergeSharedWithUids(sourceSubjectData.sharedWithUids || [], sharedWithUids);
+        const mergedSharedWith = dedupeSharedWithEntries([
+          ...(Array.isArray(sourceSubjectData.sharedWith) ? sourceSubjectData.sharedWith : []),
+          ...sharedWith,
+        ]);
+
+        operations.push((batch) => {
+          batch.update(sourceSubjectRef, {
+            folderId: targetFolderId,
+            isShared: mergedSharedWithUids.length > 0,
+            sharedWithUids: mergedSharedWithUids,
+            sharedWith: mergedSharedWith,
+            updatedAt: FieldValue.serverTimestamp(),
+          });
+        });
+      }
+
+      if (shortcutType === 'folder') {
+        const sourceFolderRef = db.collection('folders').doc(targetId);
+        const sourceFolderSnapshot = await sourceFolderRef.get();
+        if (!sourceFolderSnapshot.exists) {
+          throw new HttpsError('not-found', 'Source folder no longer exists.');
+        }
+
+        await ensureFolderMoveDoesNotCreateCycle({
+          sourceFolderId: targetId,
+          targetFolderId,
+        });
+
+        const folderSubtreeIds = await collectFolderSubtreeIds(targetId);
+
+        for (const folderId of folderSubtreeIds) {
+          const folderSnapshot = await db.collection('folders').doc(folderId).get();
+          if (!folderSnapshot.exists) continue;
+
+          const folderData = folderSnapshot.data() || {};
+          const mergedFolderSharedWithUids = mergeSharedWithUids(folderData.sharedWithUids || [], sharedWithUids);
+          const mergedFolderSharedWith = dedupeSharedWithEntries([
+            ...(Array.isArray(folderData.sharedWith) ? folderData.sharedWith : []),
+            ...sharedWith,
+          ]);
+
+          const folderUpdatePayload = {
+            ...(folderId === targetId ? { parentId: targetFolderId } : {}),
+            isShared: mergedFolderSharedWithUids.length > 0,
+            sharedWithUids: mergedFolderSharedWithUids,
+            sharedWith: mergedFolderSharedWith,
+            updatedAt: FieldValue.serverTimestamp(),
+          };
+
+          operations.push((batch) => {
+            batch.update(db.collection('folders').doc(folderId), folderUpdatePayload);
+          });
+
+          const subjectsSnapshot = await db
+            .collection('subjects')
+            .where('folderId', '==', folderId)
+            .get();
+
+          subjectsSnapshot.docs.forEach((subjectDoc) => {
+            const subjectData = subjectDoc.data() || {};
+            const mergedSubjectSharedWithUids = mergeSharedWithUids(subjectData.sharedWithUids || [], sharedWithUids);
+            const mergedSubjectSharedWith = dedupeSharedWithEntries([
+              ...(Array.isArray(subjectData.sharedWith) ? subjectData.sharedWith : []),
+              ...sharedWith,
+            ]);
+
+            operations.push((batch) => {
+              batch.update(subjectDoc.ref, {
+                isShared: mergedSubjectSharedWithUids.length > 0,
+                sharedWithUids: mergedSubjectSharedWithUids,
+                sharedWith: mergedSubjectSharedWith,
+                updatedAt: FieldValue.serverTimestamp(),
+              });
+            });
+          });
+        }
+      }
+    }
+
+    const ownerNotificationRef = db
+      .collection('notifications')
+      .doc(`shortcut_move_request_owner_${requestId}`);
+    const requesterNotificationRef = db
+      .collection('notifications')
+      .doc(`shortcut_move_request_requester_${requestId}`);
+
+    operations.push((batch) => {
+      batch.update(requestRef, {
+        status: resolution,
+        resolution,
+        resolvedAt: FieldValue.serverTimestamp(),
+        resolvedByUid: actorUid,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    });
+
+    operations.push((batch) => {
+      batch.set(ownerNotificationRef, {
+        read: true,
+        shortcutMoveRequestStatus: resolution,
+        resolvedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    });
+
+    operations.push((batch) => {
+      batch.set(requesterNotificationRef, {
+        userId: requesterUid,
+        institutionId,
+        read: false,
+        type: resolution === MOVE_REQUEST_STATUS_APPROVED
+          ? 'shortcut_move_request_approved'
+          : 'shortcut_move_request_rejected',
+        shortcutMoveRequestId: requestId,
+        shortcutMoveRequestStatus: resolution,
+        shortcutId: moveRequest.shortcutId || null,
+        shortcutType,
+        targetId,
+        targetFolderId,
+        targetFolderName: String(targetFolderData.name || moveRequest.targetFolderName || 'carpeta compartida'),
+        title: resolution === MOVE_REQUEST_STATUS_APPROVED
+          ? 'Solicitud aprobada'
+          : 'Solicitud rechazada',
+        message: resolution === MOVE_REQUEST_STATUS_APPROVED
+          ? 'El propietario movio el elemento original a la carpeta compartida.'
+          : 'El propietario rechazo la solicitud de movimiento.',
+        createdAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    });
+
+    const requesterEmail = normalizeEmail(moveRequest.requesterEmail);
+    if (requesterEmail) {
+      const requesterMailRef = db.collection('mail').doc(`shortcut_move_request_requester_mail_${requestId}_${resolution}`);
+      operations.push((batch) => {
+        batch.set(requesterMailRef, createMailQueuePayload({
+          to: requesterEmail,
+          subject: resolution === MOVE_REQUEST_STATUS_APPROVED
+            ? 'Tu solicitud de movimiento fue aprobada'
+            : 'Tu solicitud de movimiento fue rechazada',
+          title: resolution === MOVE_REQUEST_STATUS_APPROVED
+            ? 'Solicitud aprobada'
+            : 'Solicitud rechazada',
+          bodyText: resolution === MOVE_REQUEST_STATUS_APPROVED
+            ? 'El propietario movio el elemento original a la carpeta compartida solicitada.'
+            : 'El propietario rechazo la solicitud de movimiento del elemento original.',
+          metadata: {
+            type: 'shortcut_move_request_resolution',
+            requestId,
+            resolution,
+            requesterUid,
+            resolverUid: actorUid,
+            institutionId,
+          },
+        }));
+      });
+    }
+
+    await commitOperationsInChunks(operations);
+
+    return {
+      success: true,
+      requestId,
+      status: resolution,
     };
   }
 );

@@ -169,11 +169,36 @@ const Header = ({ user }: any) => {
   };
 
   // --- 4. NOTIFICATIONS ---
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(userData);
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    resolveMoveRequestFromNotification,
+    isResolvingMoveRequest,
+  } = useNotifications(userData);
   const [showPanel, setShowPanel] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '' });
   const prevCountRef = useRef<any>(null);
   const isFirstLoadRef = useRef(true);
+
+  const handleResolveMoveRequest = async (notification: any, resolution: any) => {
+    try {
+      await resolveMoveRequestFromNotification(notification, resolution);
+      setToast({
+        show: true,
+        message: resolution === 'approved'
+          ? 'Solicitud aprobada correctamente.'
+          : 'Solicitud rechazada correctamente.',
+      });
+    } catch (error) {
+      console.error('Error resolving shortcut move request notification:', error);
+      setToast({
+        show: true,
+        message: 'No se pudo procesar la solicitud de movimiento.',
+      });
+    }
+  };
 
   useEffect(() => {
     if (isFirstLoadRef.current) {
@@ -312,6 +337,8 @@ const Header = ({ user }: any) => {
                         notifications={notifications}
                         onMarkAsRead={markAsRead}
                         onMarkAllAsRead={markAllAsRead}
+                      onResolveMoveRequest={handleResolveMoveRequest}
+                      isResolvingMoveRequest={isResolvingMoveRequest}
                         onClose={() => setShowPanel(false)}
                     />
                 )}

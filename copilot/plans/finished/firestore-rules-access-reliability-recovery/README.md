@@ -20,7 +20,7 @@ Recover stable, least-privilege behavior for Home and related flows by identifyi
 - Deploying rules from agent environment.
 
 ## Status
-- Lifecycle: `inReview`
+- Lifecycle: `finished`
 - Current phase: COMPLETED (Phase 05 - Review Gate, Rollback, and Closure)
 
 ## Assumptions

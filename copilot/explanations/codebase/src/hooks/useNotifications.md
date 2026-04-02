@@ -22,6 +22,19 @@
 ### Impact
 - Notification listeners stay aligned with switched role context in dual-role sessions.
 
+## [2026-04-02] Shortcut Move Request Resolution Actions
+
+### Change
+- Added integration with `resolveShortcutMoveRequest` callable through new hook API:
+	- `resolveMoveRequestFromNotification(notification, resolution)`.
+- Added local resolving-state tracking keyed by request id:
+	- `isResolvingMoveRequest(requestId)`.
+- Resolution flow now updates the owner notification as read/resolved after callable success.
+
+### Impact
+- Header notification panel can trigger approve/reject actions directly from pending move-request notifications.
+- Action buttons can reflect in-flight state deterministically while avoiding duplicate submissions.
+
 ## Overview
 - **Source file:** `src/hooks/useNotifications.js`
 - **Last documented:** 2026-03-29

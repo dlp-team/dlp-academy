@@ -11,6 +11,10 @@ const persistenceMocks = vi.hoisted(() => ({
   clearLastHomeFolderId: vi.fn(),
 }));
 
+const shortcutMoveRequestServiceMocks = vi.hoisted(() => ({
+  createShortcutMoveRequest: vi.fn(),
+}));
+
 vi.mock('../../../src/firebase/config', () => ({
   db: { __db: 'mock-db' },
 }));
@@ -31,6 +35,10 @@ vi.mock('../../../src/utils/folderUtils', () => ({
 vi.mock('../../../src/pages/Home/utils/homePersistence', () => ({
   saveLastHomeFolderId: (...args) => persistenceMocks.saveLastHomeFolderId(...args),
   clearLastHomeFolderId: (...args) => persistenceMocks.clearLastHomeFolderId(...args),
+}));
+
+vi.mock('../../../src/services/shortcutMoveRequestService', () => ({
+  createShortcutMoveRequest: (...args) => shortcutMoveRequestServiceMocks.createShortcutMoveRequest(...args),
 }));
 
 const createBaseConfig = (overrides = {}) => {
@@ -54,6 +62,7 @@ const createBaseConfig = (overrides = {}) => {
     setTopicsModalConfig: vi.fn(),
     setFolderContentsModalConfig: vi.fn(),
     rememberOrganization: false,
+    onHomeFeedback: vi.fn(),
   };
 
   return {
@@ -70,6 +79,11 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     folderUtilsMocks.isInvalidFolderMove.mockReturnValue(false);
+    shortcutMoveRequestServiceMocks.createShortcutMoveRequest.mockResolvedValue({
+      success: true,
+      requestId: 'shortcut_move_request_1',
+      status: 'pending',
+    });
   });
 
   it('requests owner approval when moving a shortcut into a shared target folder', () => {
@@ -95,6 +109,33 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
       })
     );
     expect(config.logic.moveShortcut).not.toHaveBeenCalled();
+  });
+
+  it('submits shortcut move request and reports success feedback on confirm', async () => {
+    const config = createBaseConfig({
+      logic: {
+        folders: [
+          { id: 'shared-target', isShared: true, ownerId: 'owner-2', parentId: null },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    handlers.handleDropOnFolderWrapper('shared-target', 'subject-1', 'subject', null, 'shortcut-1');
+
+    const shareConfirmPayload = config.setShareConfirm.mock.calls[0][0];
+    await shareConfirmPayload.onConfirm();
+
+    expect(shortcutMoveRequestServiceMocks.createShortcutMoveRequest).toHaveBeenCalledWith({
+      shortcutId: 'shortcut-1',
+      targetFolderId: 'shared-target',
+      targetId: 'subject-1',
+      shortcutType: 'subject',
+    });
+    expect(config.onHomeFeedback).toHaveBeenCalledWith(
+      'Solicitud enviada al propietario de la carpeta compartida.',
+      'success'
+    );
   });
 
   it('blocks viewer from moving a subject into a shared target folder', () => {

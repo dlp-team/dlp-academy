@@ -1,6 +1,15 @@
 // copilot/explanations/codebase/firestore.rules.md
 
 ## Changelog
+### 2026-04-02: Shortcut move request least-privilege policy
+- Added explicit `match /shortcutMoveRequests/{requestId}` block.
+- Read access limited to:
+  - global admins,
+  - `requesterUid`,
+  - `targetFolderOwnerUid`,
+  - same-institution institution admins (`institutionId` scoped).
+- Direct client writes (`create/update/delete`) are denied to enforce callable-only mutation through trusted backend code.
+
 ### 2026-04-02: Invite-code transaction preflight and same-batch subject reservation hardening
 - Updated `subjectInviteCodes` create rule to validate subject ownership/institution via `existsAfter/getAfter`, enabling transaction-safe subject + invite-code creation in one atomic write.
 - Updated `subjectInviteCodes` get rule to allow same-institution missing-doc preflight reads for non-student actors when the invite key matches the caller institution prefix.

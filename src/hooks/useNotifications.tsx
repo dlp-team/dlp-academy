@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { getActiveRole } from '../utils/permissionUtils';
+import { resolveShortcutMoveRequest } from '../services/shortcutMoveRequestService';
 
 const NEW_ASSIGNMENT_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
 const DUE_SOON_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -28,6 +29,7 @@ export const useNotifications = (user: any) => {
     const uid = user?.uid;
     const activeRole = getActiveRole(user);
     const [notifications, setNotifications] = useState<any[]>([]);
+    const [resolvingMoveRequestIds, setResolvingMoveRequestIds] = useState<any>({});
     const existingNotificationIdsRef = useRef(new Set());
 
     useEffect(() => {
@@ -206,5 +208,52 @@ export const useNotifications = (user: any) => {
         await batch.commit();
     };
 
-    return { notifications, unreadCount, markAsRead, markAllAsRead };
+    const setMoveRequestResolvingState = (requestId: any, isResolving: any) => {
+        const normalizedRequestId = String(requestId || '').trim();
+        if (!normalizedRequestId) return;
+        setResolvingMoveRequestIds((prev: any) => {
+            const next = { ...(prev || {}) };
+            if (isResolving) {
+                next[normalizedRequestId] = true;
+            } else {
+                delete next[normalizedRequestId];
+            }
+            return next;
+        });
+    };
+
+    const resolveMoveRequestFromNotification = async (notification: any, resolution: any) => {
+        const requestId = String(notification?.shortcutMoveRequestId || '').trim();
+        const notificationId = String(notification?.id || '').trim();
+        if (!requestId || !notificationId) {
+            throw new Error('Missing shortcut move request notification metadata.');
+        }
+
+        setMoveRequestResolvingState(requestId, true);
+
+        try {
+            await resolveShortcutMoveRequest({ requestId, resolution });
+            await updateDoc(doc(db, 'notifications', notificationId), {
+                read: true,
+                shortcutMoveRequestStatus: resolution,
+                resolvedAt: serverTimestamp()
+            });
+        } finally {
+            setMoveRequestResolvingState(requestId, false);
+        }
+    };
+
+    const isResolvingMoveRequest = (requestId: any) => {
+        const normalizedRequestId = String(requestId || '').trim();
+        return Boolean(normalizedRequestId && resolvingMoveRequestIds?.[normalizedRequestId]);
+    };
+
+    return {
+        notifications,
+        unreadCount,
+        markAsRead,
+        markAllAsRead,
+        resolveMoveRequestFromNotification,
+        isResolvingMoveRequest
+    };
 };

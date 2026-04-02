@@ -1,0 +1,27 @@
+<!-- copilot/explanations/codebase/src/components/ui/NotificationsPanel.md -->
+# NotificationsPanel.tsx
+
+## Changelog
+### 2026-04-02
+- Added explicit owner actions for pending shortcut move requests:
+  - `Aprobar`
+  - `Rechazar`
+- Added `onResolveMoveRequest` and `isResolvingMoveRequest` props.
+- Added pending-request visual state and loading spinner handling for action buttons.
+- Updated click behavior to avoid forced navigation when notifications do not contain a `subjectId`.
+- Replaced root notification container from nested button structure to keyboard-accessible `div[role="button"]` to keep action buttons valid.
+
+## Overview
+- **Source file:** `src/components/ui/NotificationsPanel.tsx`
+- **Role:** Notification dropdown renderer with read-state and actionable item controls.
+
+## Props
+- `notifications`
+- `onMarkAsRead`
+- `onMarkAllAsRead`
+- `onResolveMoveRequest`
+- `isResolvingMoveRequest`
+- `onClose`
+
+## Notes
+- Shortcut move request actions are only rendered for `type === shortcut_move_request` and `shortcutMoveRequestStatus === pending`.

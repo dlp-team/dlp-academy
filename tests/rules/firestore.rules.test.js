@@ -1086,6 +1086,91 @@ describe('Firestore rules integration', () => {
     });
   });
 
+  describe('Shortcut move requests access control', () => {
+    const requestId = 'shortcut-move-request-1';
+
+    const seedShortcutMoveRequest = async (overrides = {}) => {
+      await seedUser({ uid: 'teacher-owner-1', role: 'teacher', institutionId: 'inst-1' });
+      await seedDoc('shortcutMoveRequests', requestId, {
+        requesterUid: 'teacher-1',
+        requesterEmail: 'teacher-1@test.com',
+        shortcutId: 'shortcut-1',
+        shortcutType: 'subject',
+        targetId: 'subject-inst1',
+        targetFolderId: 'folder-shared-1',
+        targetFolderOwnerUid: 'teacher-owner-1',
+        institutionId: 'inst-1',
+        status: 'pending',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...overrides,
+      });
+    };
+
+    it('allows requester to read own move request', async () => {
+      await seedShortcutMoveRequest();
+
+      const requesterDb = testEnv.authenticatedContext('teacher-1').firestore();
+      await assertSucceeds(getDoc(doc(requesterDb, 'shortcutMoveRequests', requestId)));
+    });
+
+    it('allows target folder owner to read move request', async () => {
+      await seedShortcutMoveRequest();
+
+      const ownerDb = testEnv.authenticatedContext('teacher-owner-1').firestore();
+      await assertSucceeds(getDoc(doc(ownerDb, 'shortcutMoveRequests', requestId)));
+    });
+
+    it('allows same-institution admin to read move request', async () => {
+      await seedShortcutMoveRequest();
+
+      const institutionAdminDb = testEnv.authenticatedContext('institution-admin-1').firestore();
+      await assertSucceeds(getDoc(doc(institutionAdminDb, 'shortcutMoveRequests', requestId)));
+    });
+
+    it('denies cross-institution admin reading move request', async () => {
+      await seedShortcutMoveRequest();
+
+      const institutionAdminDb = testEnv.authenticatedContext('institution-admin-2').firestore();
+      await assertFails(getDoc(doc(institutionAdminDb, 'shortcutMoveRequests', requestId)));
+    });
+
+    it('denies unrelated teacher reading move request', async () => {
+      await seedShortcutMoveRequest();
+
+      const unrelatedTeacherDb = testEnv.authenticatedContext('teacher-2').firestore();
+      await assertFails(getDoc(doc(unrelatedTeacherDb, 'shortcutMoveRequests', requestId)));
+    });
+
+    it('denies direct client create on shortcutMoveRequests', async () => {
+      const requesterDb = testEnv.authenticatedContext('teacher-1').firestore();
+
+      await assertFails(
+        setDoc(doc(requesterDb, 'shortcutMoveRequests', 'shortcut-move-request-deny-create'), {
+          requesterUid: 'teacher-1',
+          targetFolderOwnerUid: 'teacher-owner-1',
+          institutionId: 'inst-1',
+          status: 'pending',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+      );
+    });
+
+    it('denies direct client update on shortcutMoveRequests', async () => {
+      await seedShortcutMoveRequest();
+
+      const requesterDb = testEnv.authenticatedContext('teacher-1').firestore();
+      await assertFails(
+        setDoc(
+          doc(requesterDb, 'shortcutMoveRequests', requestId),
+          { status: 'approved' },
+          { merge: true }
+        )
+      );
+    });
+  });
+
   describe('Vulnerability #9: Shortcuts || true bypass removed', () => {
     it('denies shortcut creation for unshared target', async () => {
       await seedDoc('subjects', 'subject-private', {

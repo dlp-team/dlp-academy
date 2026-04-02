@@ -102,7 +102,11 @@ describe('StudyGuide navegacion de pagina', () => {
     const tocLabel = screen.getAllByText('Navegación Premium')[0];
     fireEvent.click(tocLabel.closest('button'));
 
-    const secondSectionEntry = screen.getAllByText('Segunda Seccion')[0];
+    const secondSectionEntry = screen.getAllByText('Segunda Seccion').find((entry) => {
+      const entryButton = entry.closest('button');
+      return entryButton && String(entryButton.className).includes('group/item');
+    });
+    expect(secondSectionEntry).toBeTruthy();
     fireEvent.click(secondSectionEntry.closest('button'));
 
     await waitFor(() => {
