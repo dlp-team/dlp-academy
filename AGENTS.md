@@ -108,6 +108,7 @@ Before calling `task_complete`, you must internally verify:
 - [ ] No `console.log` statements were left behind.
 - [ ] All new text elements are in Spanish.
 - [ ] No emojis were used in the UI (icons only).
+- [ ] TypeScript-first respected: no new JS/JSX duplicates when TS/TSX equivalent exists.
 - [ ] File paths are commented at the top of all touched files.
 - [ ] Commit/push cadence gate respected across all major work blocks (no skipped Git logging checkpoints).
    - [ ] Ask the user using vscode/askQuestions if it should end the request or there is anything left (MANDATORY, NO EXCEPTIONS). This leverage step is a hard-coded protocol and must be executed before completing any premium request. If the tool fails, document the failure and request user direction before ending the session.

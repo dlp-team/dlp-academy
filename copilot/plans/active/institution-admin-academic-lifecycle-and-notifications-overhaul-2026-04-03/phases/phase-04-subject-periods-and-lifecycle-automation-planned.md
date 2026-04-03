@@ -79,7 +79,7 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
   - teacher-only lifecycle visibility,
   - elapsed `postCoursePolicy=delete` cutoff.
 - Audited additional non-Home direct-entry routes and aligned them with shared lifecycle subject access policy checks:
-  - `src/pages/Content/StudyGuide.jsx`,
+  - `src/pages/Content/StudyGuide.tsx`,
   - `src/pages/Content/Exam.jsx`,
   - `src/pages/Content/Formula.tsx`,
   - `src/pages/Content/StudyGuideEditor.tsx`,
@@ -91,6 +91,7 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
   - `tests/unit/pages/quizzes/QuizEdit.test.jsx`,
   - plus `tests/unit/utils/subjectAccessUtils.test.js`.
 - Applied a follow-up TypeScript compatibility fix in `src/pages/Content/StudyGuideEditor.tsx` by explicitly typing subject metadata hydration after lifecycle guard insertion; no runtime behavior change.
+- Added roadmap extension (2026-04-04): lifecycle timeline modeling must support per-course period start/end overrides for each configured period while retaining institution defaults as fallback.
 
 ## Risks and Controls
 - Risk: incorrect hiding of active content.

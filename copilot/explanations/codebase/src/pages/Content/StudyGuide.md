@@ -1,8 +1,8 @@
-# StudyGuide.jsx
+# StudyGuide.tsx
 
 ## Overview
-- **Source file:** `src/pages/Content/StudyGuide.jsx`
-- **Last documented:** 2026-02-24
+- **Source file:** `src/pages/Content/StudyGuide.tsx`
+- **Last documented:** 2026-04-04
 - **Role:** Page-level or feature-level module that orchestrates UI and logic.
 
 ## Responsibilities
@@ -27,6 +27,7 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-04-04: Consolidated `StudyGuide` into TypeScript-only implementation by removing duplicate `StudyGuide.jsx` and keeping lifecycle access guard (`canUserAccessSubject(...)`) in `StudyGuide.tsx`.
 - 2026-04-03: Added lifecycle-aware subject access gate via `canUserAccessSubject(...)` during subject context load; direct guide entry now redirects to Home when subject visibility policy denies access.
 - 2026-04-01: Added deterministic page-level navigation coverage in `tests/unit/pages/content/StudyGuide.navigation.test.jsx` for TOC-driven section jumps and keyboard arrow progression to block navigation regressions.
 - 2026-03-29: StudyGuide flow now supports location-state prefetch consumption in runtime; fallback tests were aligned to router context expectations to preserve controlled "contenido no disponible" behavior.

@@ -110,6 +110,8 @@ This workspace also uses scoped file instructions in `.github/instructions/` to 
 - **Split oversized files**: If a file exceeds ~500 lines or has multiple distinct concerns, split it into focused modules
 - **Centralize reusable logic**: Extract duplicated code into shared utilities, hooks, or components
 - **Follow the single responsibility principle**: Each file should have one clear purpose
+- **TypeScript-first for app code**: Prefer `.ts`/`.tsx` for new frontend modules; do not introduce new `.js`/`.jsx` siblings when a TypeScript module for the same feature exists
+- **No parallel duplicate modules**: Never keep two active files with the same base name across JS/TS variants (example: `Feature.jsx` + `Feature.tsx`)
 
 #### 2. When to Create New Files
 ✅ **Create a new file when:**

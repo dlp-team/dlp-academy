@@ -60,11 +60,25 @@ Create complete plan artifacts and immediately start execution when requested wi
 - `copilot/plans/<state>/<plan-name>/reviewing/*.md`
 - `copilot/plans/<state>/<plan-name>/working/*.md`
 - `copilot/plans/<state>/<plan-name>/subplans/README.md`
+- `copilot/plans/<state>/<plan-name>/user-updates.md`
+
+## User Update Channel (MANDATORY)
+Every plan package must include `user-updates.md` as the user-editable intake file.
+
+Minimum template:
+- `## How to Use`
+- `## Pending User Updates`
+- `## Processed Updates`
+
+Execution rule:
+1. Before starting any implementation block for an active plan, read `user-updates.md`.
+2. If new pending items exist, sync them into `README.md`, `strategy-roadmap.md`, and impacted phase files before coding.
+3. Move handled items from `Pending` to `Processed` with a date note.
 
 ## Lifecycle
 1. Create in `todo/`.
 2. Move to `active/` when implementation starts.
-3. Keep roadmap and phase statuses synchronized.
+3. Keep roadmap, phase statuses, and `user-updates.md` synchronized.
 4. Move to `inReview/` after implementation + validation.
 5. Move to `finished/` after reviewer closure.
 

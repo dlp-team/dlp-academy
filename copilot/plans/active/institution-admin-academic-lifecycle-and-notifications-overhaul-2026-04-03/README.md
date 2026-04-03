@@ -16,6 +16,7 @@ Execute the institutional roadmap described by the user in the original plan pro
 - Subject class assignment constrained to classes in the same academic year.
 - New Institution Admin settings/configuration section for academic calendar controls.
 - Ordinary and extraordinary period timelines plus trimester/cuatrimester/custom period model.
+- Institution-level calendar windows remain the default baseline while each course can define per-period start/end timelines for trimester/cuatrimester/custom periods.
 - Mandatory subject period metadata on creation and lifecycle-based visibility transitions.
 - Home filtering by academic period.
 - Course-finish policy controls for deletion/retention/access behavior.
@@ -36,7 +37,7 @@ Execute the institutional roadmap described by the user in the original plan pro
 ## Lifecycle Status
 - Lifecycle: `active`
 - Current phase: `Phase 05 - Student-course linking and transfer flows (IN_PROGRESS)`
-- Last updated: 2026-04-03
+- Last updated: 2026-04-04
 
 ## Key Decisions
 - This plan starts directly in `active` because execution begins immediately in this same session.

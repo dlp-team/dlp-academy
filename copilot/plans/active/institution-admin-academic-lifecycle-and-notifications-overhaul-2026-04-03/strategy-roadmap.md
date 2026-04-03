@@ -16,13 +16,14 @@
 - Phase 01 precedes all implementation-heavy work to avoid rework in schema/UX decisions.
 - Settings and lifecycle policy model (Phase 02) must be established before subject automation (Phase 04).
 - Courses/classes linkage updates (Phase 03) are prerequisites for class filtering and student assignment constraints.
+- Course-level period schedule overrides must preserve Phase 02 institution defaults and feed Phase 04 lifecycle timing decisions.
 - Student-course linking and transfer logic (Phase 05) depends on finalized academic-year model.
 - Notification/page and preview changes are feature-isolated and can proceed after domain model stabilization.
 - Final validation and docs sync remain explicit to prevent lifecycle drift.
 
 ## Immediate Next Actions
+- Define and implement per-course period schedule structure (trimester/cuatrimester/custom) with fallback to institution-level ordinary/extraordinary defaults.
 - Extend Phase 05 student-course constraints into institution-admin student linking surfaces (manual and bulk flows).
-- Add class-edit regression tests that cover preserving preselected out-of-course students while blocking new out-of-course additions.
 - Define transfer/promote dry-run payload shape and rollback metadata before implementing migration writes.
 
 ## Validation Gates
@@ -42,5 +43,7 @@
   - Control: role-aware decision matrix and deterministic test cases.
 - Risk: course transfer workflow may duplicate or orphan student links.
   - Control: idempotent transfer job design plus dry-run preview.
+- Risk: course-level period schedules diverge from institution defaults and create lifecycle cutoff mismatches.
+  - Control: explicit precedence rules (course period override first, institution default fallback) and timeline consistency tests.
 - Risk: notifications TTL may remove records still needed by users.
   - Control: type-based retention policy with soft-delete window first.
