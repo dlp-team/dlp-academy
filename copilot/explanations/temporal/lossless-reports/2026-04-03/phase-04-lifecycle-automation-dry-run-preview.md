@@ -34,6 +34,16 @@
 - Targeted tests:
   - `npm run test -- tests/unit/functions/subjectLifecycleAutomation.test.js tests/unit/utils/subjectPeriodLifecycleUtils.test.js tests/unit/hooks/useHomeState.academicYearFilter.test.js`
   - Result: 3 files passed, 23 tests passed.
+- Emulator-backed callable dry-run execution:
+  - `firebase emulators:exec --only 'firestore,functions,auth' "node scripts/lifecycle-dry-run-emulator-check.mjs"`
+  - Result payload:
+    - `success: true`
+    - `dryRun: true`
+    - `scannedSubjects: 2`
+    - `updatedSubjects: 1`
+    - `skippedSubjects: 1`
+    - `committedUpdates: 0`
+    - `previewSubjectIds: ['dryrun-subject-update']`
 - Typecheck:
   - `npx tsc --noEmit` passed.
 - Lint:

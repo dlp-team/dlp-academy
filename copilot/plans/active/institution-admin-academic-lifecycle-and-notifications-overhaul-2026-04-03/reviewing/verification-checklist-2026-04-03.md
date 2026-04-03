@@ -28,3 +28,6 @@
 - `npm run test`: **PASS** (113 files, 536 tests).
 - `npx tsc --noEmit`: **PASS**.
 - `npm run lint`: **PASS with 4 pre-existing warnings** (`Exam.jsx`, `StudyGuide.jsx`), no new lint errors.
+- Emulator callable dry-run validation: **PASS**
+	- Command: `firebase emulators:exec --only 'firestore,functions,auth' "node scripts/lifecycle-dry-run-emulator-check.mjs"`
+	- Result: `scannedSubjects=2`, `updatedSubjects=1`, `skippedSubjects=1`, `committedUpdates=0`, `previewSubjectIds=['dryrun-subject-update']`.

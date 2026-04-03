@@ -63,6 +63,12 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
   - supports dry-run preview mode with bounded affected-subject ID preview.
 - Added scheduled trigger `reconcileSubjectLifecycleAutomation` (`every day 02:15`, `Europe/Madrid`) to apply lifecycle transitions without Home interaction.
 - Added deterministic backend automation test coverage in `tests/unit/functions/subjectLifecycleAutomation.test.js`, including dry-run summary/preview behavior.
+- Added emulator validation harness `scripts/lifecycle-dry-run-emulator-check.mjs` and executed callable dry-run evidence flow with institution-scoped fixtures:
+  - `scannedSubjects: 2`
+  - `updatedSubjects: 1`
+  - `skippedSubjects: 1`
+  - `committedUpdates: 0`
+  - `previewSubjectIds: ['dryrun-subject-update']`
 
 ## Risks and Controls
 - Risk: incorrect hiding of active content.
