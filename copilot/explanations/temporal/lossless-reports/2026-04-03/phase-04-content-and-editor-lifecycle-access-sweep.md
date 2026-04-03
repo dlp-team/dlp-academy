@@ -21,12 +21,15 @@
 - `src/pages/Content/StudyGuideEditor.tsx`
   - Added lifecycle-aware subject access check after topic edit-permission gate.
   - Corrected top-of-file path comment to `.tsx` path.
+  - Added explicit metadata typing for subject payload hydration to satisfy strict TypeScript checks.
 - `src/pages/Quizzes/QuizEdit.tsx`
   - Added lifecycle-aware subject access check while hydrating subject context.
   - Corrected top-of-file path comment to `.tsx` path.
 
 ## Validation Evidence
 - `get_errors` on all touched route files: no errors.
+- `npm run lint`: PASS with 4 existing warnings (`Exam.jsx` and `StudyGuide.jsx`, no new errors).
+- `npx tsc --noEmit`: PASS.
 - Targeted unit validation command:
   - `npm run test:unit -- tests/unit/utils/subjectAccessUtils.test.js tests/unit/pages/content/StudyGuide.navigation.test.jsx tests/unit/pages/content/StudyGuide.fallback.test.jsx tests/unit/pages/content/Exam.test.jsx tests/unit/pages/quizzes/QuizEdit.test.jsx`
   - Result: PASS (`5` files, `24` tests).

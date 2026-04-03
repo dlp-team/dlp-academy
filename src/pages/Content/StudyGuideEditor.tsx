@@ -204,7 +204,7 @@ const StudyGuideEditor = ({ user }: any) => {
                 // 2. Load subject color (Priority)
                 const subjectSnap = await getDoc(doc(db, 'subjects', subjectId));
                 if (subjectSnap.exists()) {
-                    const subjectData = { id: subjectSnap.id, ...subjectSnap.data() };
+                    const subjectData: any = { id: subjectSnap.id, ...(subjectSnap.data() as any) };
 
                     if (user?.uid) {
                         const hasSubjectAccess = await canUserAccessSubject({ subject: subjectData, user });

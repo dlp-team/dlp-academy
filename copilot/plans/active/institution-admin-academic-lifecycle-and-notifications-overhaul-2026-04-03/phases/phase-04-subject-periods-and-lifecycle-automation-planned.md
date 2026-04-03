@@ -90,6 +90,7 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
   - `tests/unit/pages/content/Exam.test.jsx`,
   - `tests/unit/pages/quizzes/QuizEdit.test.jsx`,
   - plus `tests/unit/utils/subjectAccessUtils.test.js`.
+- Applied a follow-up TypeScript compatibility fix in `src/pages/Content/StudyGuideEditor.tsx` by explicitly typing subject metadata hydration after lifecycle guard insertion; no runtime behavior change.
 
 ## Risks and Controls
 - Risk: incorrect hiding of active content.
