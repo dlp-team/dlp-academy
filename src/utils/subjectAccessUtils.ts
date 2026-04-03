@@ -54,6 +54,11 @@ export const normalizeSubjectAccessPayload = (payload: any = {}, { requireCourse
     const course = sanitizeString(payload.course);
     const courseId = sanitizeString(payload.courseId);
     const academicYear = sanitizeString(payload.academicYear);
+    const periodType = sanitizeString(payload.periodType);
+    const periodLabel = sanitizeString(payload.periodLabel);
+    const normalizedPeriodIndexRaw = String(payload?.periodIndex ?? '').trim();
+    const parsedPeriodIndex = normalizedPeriodIndexRaw ? Number(normalizedPeriodIndexRaw) : NaN;
+    const periodIndex = Number.isFinite(parsedPeriodIndex) ? Math.max(1, Math.floor(parsedPeriodIndex)) : null;
     if (requireCourse && !course) {
         throw new Error('El curso es obligatorio para crear la asignatura.');
     }
@@ -76,6 +81,9 @@ export const normalizeSubjectAccessPayload = (payload: any = {}, { requireCourse
         ...(course ? { course } : {}),
         courseId: courseId || null,
         academicYear: academicYear || null,
+        periodType: periodType || null,
+        periodLabel: periodLabel || null,
+        periodIndex,
         classId,
         classIds: normalizedClassIds,
         enrolledStudentUids: uniqueStringArray(payload.enrolledStudentUids),

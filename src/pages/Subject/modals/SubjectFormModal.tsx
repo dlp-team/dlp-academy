@@ -16,9 +16,45 @@ import { normalizeAcademicYear } from '../../../utils/academicYearLifecycleUtils
 import { canTeacherAssignClassesAndStudents, DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils/institutionPolicyUtils';
 import { generateSubjectInviteCode } from '../../../utils/subjectAccessUtils';
 
+const DEFAULT_SUBJECT_PERIOD_MODE = 'trimester';
+
+const normalizeSubjectPeriodMode = (value: any) => {
+    if (value === 'trimester' || value === 'cuatrimester' || value === 'custom') {
+        return value;
+    }
+
+    return DEFAULT_SUBJECT_PERIOD_MODE;
+};
+
+const buildSubjectPeriodOptions = (mode: any, customLabel: any) => {
+    const normalizedMode = normalizeSubjectPeriodMode(mode);
+    const normalizedCustomLabel = String(customLabel || '').trim();
+
+    if (normalizedMode === 'cuatrimester') {
+        return [
+            { value: 'cuatrimester-1', mode: 'cuatrimester', index: 1, label: 'Cuatrimestre 1' },
+            { value: 'cuatrimester-2', mode: 'cuatrimester', index: 2, label: 'Cuatrimestre 2' },
+        ];
+    }
+
+    if (normalizedMode === 'custom') {
+        const customPeriodBaseLabel = normalizedCustomLabel || 'Periodo';
+        return [
+            { value: 'custom-1', mode: 'custom', index: 1, label: `${customPeriodBaseLabel} 1` },
+        ];
+    }
+
+    return [
+        { value: 'trimester-1', mode: 'trimester', index: 1, label: 'Trimestre 1' },
+        { value: 'trimester-2', mode: 'trimester', index: 2, label: 'Trimestre 2' },
+        { value: 'trimester-3', mode: 'trimester', index: 3, label: 'Trimestre 3' },
+    ];
+};
+
 const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onTransferOwnership, onDeleteShortcut, user, allFolders = [], initialTab = 'general', studentShortcutTagOnlyMode = false }: any) => {
     const [formData, setFormData] = useState<any>({ 
         name: '', level: '', grade: '', course: '', courseId: '',
+        periodType: '', periodLabel: '', periodIndex: null,
         color: 'from-blue-400 to-blue-600', icon: 'book', tags: [],
         cardStyle: 'default', modernFillColor: MODERN_FILL_COLORS[0].value
     });
@@ -53,11 +89,17 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [availableCourses, setAvailableCourses] = useState<any[]>([]);
     const [coursesLoading, setCoursesLoading] = useState(false);
     const [coursesLoadError, setCoursesLoadError] = useState('');
+    const [subjectPeriodLoadError, setSubjectPeriodLoadError] = useState('');
+    const [subjectPeriodMode, setSubjectPeriodMode] = useState(DEFAULT_SUBJECT_PERIOD_MODE);
+    const [subjectPeriodOptions, setSubjectPeriodOptions] = useState<any[]>(
+        buildSubjectPeriodOptions(DEFAULT_SUBJECT_PERIOD_MODE, '')
+    );
     const [institutionEmailsLoadError, setInstitutionEmailsLoadError] = useState('');
     const [ownerEmailResolveError, setOwnerEmailResolveError] = useState('');
     const [institutionPolicyLoadError, setInstitutionPolicyLoadError] = useState('');
     const subjectNameInputRef = React.useRef<any>(null);
     const subjectCourseSelectRef = React.useRef<any>(null);
+    const subjectPeriodSelectRef = React.useRef<any>(null);
 
     const isShortcutEditing = isEditing && formData?.isShortcut === true;
     const isTagOnlyShortcutEdit = studentShortcutTagOnlyMode && isShortcutEditing;
@@ -92,17 +134,40 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const subjectAcademicYear = normalizeAcademicYear(initialData?.academicYear)
         || normalizeAcademicYear(selectedCourseEntry?.academicYear);
 
+    const selectedSubjectPeriodValue = useMemo(() => {
+        const normalizedPeriodType = String(formData?.periodType || '').trim();
+        const normalizedPeriodIndex = Number(formData?.periodIndex);
+        if (normalizedPeriodType && Number.isFinite(normalizedPeriodIndex)) {
+            return `${normalizedPeriodType}-${normalizedPeriodIndex}`;
+        }
+
+        const normalizedPeriodLabel = String(formData?.periodLabel || '').trim().toLowerCase();
+        if (!normalizedPeriodLabel) {
+            return '';
+        }
+
+        return subjectPeriodOptions.find((option: any) => (
+            String(option?.label || '').trim().toLowerCase() === normalizedPeriodLabel
+        ))?.value || '';
+    }, [formData?.periodIndex, formData?.periodLabel, formData?.periodType, subjectPeriodOptions]);
+
     const buildNormalizedSubjectPayload = (extraPayload: any = {}) => {
         const normalizedCourseName = String(selectedCourseEntry?.name || formData?.course || '').trim();
         const normalizedCourseId = String(selectedCourseEntry?.id || formData?.courseId || '').trim();
         const normalizedSubjectAcademicYear = subjectAcademicYear || normalizeAcademicYear(formData?.academicYear);
+        const normalizedPeriodType = String(formData?.periodType || '').trim();
+        const normalizedPeriodLabel = String(formData?.periodLabel || '').trim();
+        const normalizedPeriodIndex = Number(formData?.periodIndex);
 
         return {
             ...formData,
             ...extraPayload,
             course: normalizedCourseName,
             courseId: normalizedCourseId || null,
-            academicYear: normalizedSubjectAcademicYear || null
+            academicYear: normalizedSubjectAcademicYear || null,
+            periodType: normalizedPeriodType || null,
+            periodLabel: normalizedPeriodLabel || null,
+            periodIndex: Number.isFinite(normalizedPeriodIndex) ? normalizedPeriodIndex : null
         };
     };
 
@@ -160,6 +225,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setClassesActionSuccess('');
             setClassesLoadError('');
             setCoursesLoadError('');
+            setSubjectPeriodLoadError('');
             setInstitutionEmailsLoadError('');
             setOwnerEmailResolveError('');
             setInstitutionPolicyLoadError('');
@@ -183,6 +249,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     course: initialData.course || fallbackCourse,
                     courseId: initialData.courseId || '',
                     academicYear: initialData.academicYear || '',
+                    periodType: initialData.periodType || '',
+                    periodLabel: initialData.periodLabel || '',
+                    periodIndex: Number.isFinite(Number(initialData.periodIndex)) ? Number(initialData.periodIndex) : null,
                     level: initialData.level || '',
                     grade: initialData.grade || '',
                     color: initialData.color || 'from-blue-400 to-blue-600',
@@ -217,6 +286,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     course: initialData?.course || fallbackCourse,
                     courseId: initialData?.courseId || '',
                     academicYear: initialData?.academicYear || '',
+                    periodType: initialData?.periodType || '',
+                    periodLabel: initialData?.periodLabel || '',
+                    periodIndex: Number.isFinite(Number(initialData?.periodIndex)) ? Number(initialData.periodIndex) : null,
                     color: 'from-blue-400 to-blue-600',
                     icon: 'book',
                     tags: [],
@@ -233,12 +305,19 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     useEffect(() => {
         let active = true;
 
+        const applyDefaultPeriodConfig = () => {
+            setSubjectPeriodMode(DEFAULT_SUBJECT_PERIOD_MODE);
+            setSubjectPeriodOptions(buildSubjectPeriodOptions(DEFAULT_SUBJECT_PERIOD_MODE, ''));
+        };
+
         const loadInstitutionPolicies = async () => {
             const institutionId = user?.institutionId || initialData?.institutionId || '';
             if (!institutionId) {
                 if (active) {
                     setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
                     setInstitutionPolicyLoadError('');
+                    applyDefaultPeriodConfig();
+                    setSubjectPeriodLoadError('');
                 }
                 return;
             }
@@ -250,18 +329,31 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 if (!institutionSnapshot.exists()) {
                     setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
                     setInstitutionPolicyLoadError('');
+                    applyDefaultPeriodConfig();
+                    setSubjectPeriodLoadError('');
                     return;
                 }
 
-                setInstitutionAccessPolicies(normalizeAccessPolicies(institutionSnapshot.data()?.accessPolicies));
+                const institutionData = institutionSnapshot.data() || {};
+                const periodization = institutionData?.academicCalendar?.periodization || {};
+                const normalizedPeriodMode = normalizeSubjectPeriodMode(periodization?.mode);
+                const normalizedCustomPeriodLabel = String(periodization?.customLabel || '').trim();
+
+                setInstitutionAccessPolicies(normalizeAccessPolicies(institutionData?.accessPolicies));
+                setSubjectPeriodMode(normalizedPeriodMode);
+                setSubjectPeriodOptions(buildSubjectPeriodOptions(normalizedPeriodMode, normalizedCustomPeriodLabel));
                 setInstitutionPolicyLoadError('');
+                setSubjectPeriodLoadError('');
             } catch (error: any) {
                 if (active) {
                     setInstitutionAccessPolicies(DEFAULT_ACCESS_POLICIES);
+                    applyDefaultPeriodConfig();
                     if (error?.code === 'permission-denied') {
                         setInstitutionPolicyLoadError('No tienes permiso para cargar las políticas de acceso de esta institución.');
+                        setSubjectPeriodLoadError('No tienes permiso para cargar la configuración de periodos académicos.');
                     } else {
                         setInstitutionPolicyLoadError('No se pudieron cargar las políticas de acceso. Intentalo de nuevo.');
+                        setSubjectPeriodLoadError('No se pudo cargar la configuración de periodos académicos. Intentalo de nuevo.');
                     }
                 }
             }
@@ -476,6 +568,30 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     }, [isTagOnlyShortcutEdit, activeTab]);
 
     useEffect(() => {
+        if (!isOpen || subjectPeriodOptions.length === 0) return;
+
+        const normalizedPeriodType = String(formData?.periodType || '').trim();
+        const normalizedPeriodIndex = Number(formData?.periodIndex);
+        if (normalizedPeriodType && Number.isFinite(normalizedPeriodIndex)) return;
+
+        const normalizedPeriodLabel = String(formData?.periodLabel || '').trim().toLowerCase();
+        if (!normalizedPeriodLabel) return;
+
+        const matchingOption = subjectPeriodOptions.find((option: any) => (
+            String(option?.label || '').trim().toLowerCase() === normalizedPeriodLabel
+        ));
+
+        if (!matchingOption) return;
+
+        setFormData((previous: any) => ({
+            ...previous,
+            periodType: matchingOption.mode,
+            periodLabel: matchingOption.label,
+            periodIndex: matchingOption.index,
+        }));
+    }, [isOpen, subjectPeriodOptions, formData?.periodType, formData?.periodIndex, formData?.periodLabel]);
+
+    useEffect(() => {
         let active = true;
 
         const loadClasses = async () => {
@@ -603,6 +719,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             const nextErrors: any = {};
             const hasName = String(formData?.name || '').trim().length > 0;
             const hasCourse = String(formData?.course || '').trim().length > 0;
+            const requiresPeriodMetadata = !isEditing;
+            const hasPeriod = String(formData?.periodLabel || '').trim().length > 0;
 
             if (!hasName) {
                 nextErrors.name = 'Campo obligatorio.';
@@ -610,6 +728,10 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
 
             if (!hasCourse) {
                 nextErrors.course = 'Campo obligatorio.';
+            }
+
+            if (requiresPeriodMetadata && !hasPeriod) {
+                nextErrors.period = 'Selecciona un periodo académico.';
             }
 
             if (Object.keys(nextErrors).length > 0) {
@@ -622,6 +744,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 } else if (subjectCourseSelectRef.current) {
                     subjectCourseSelectRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     subjectCourseSelectRef.current.focus();
+                } else if (nextErrors.period && subjectPeriodSelectRef.current) {
+                    subjectPeriodSelectRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    subjectPeriodSelectRef.current.focus();
                 }
 
                 return;
@@ -1089,6 +1214,53 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                 availableCourses={availableCourses}
                                                 coursesLoading={coursesLoading}
                                             />
+                                        )}
+                                        {canEditOriginalFields && (
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Periodo académico</label>
+                                                <select
+                                                    ref={subjectPeriodSelectRef}
+                                                    value={selectedSubjectPeriodValue}
+                                                    onChange={(event: any) => {
+                                                        const nextPeriodValue = String(event.target.value || '').trim();
+                                                        const selectedPeriodOption = subjectPeriodOptions.find((option: any) => option.value === nextPeriodValue);
+
+                                                        setFormData((previous: any) => ({
+                                                            ...previous,
+                                                            periodType: selectedPeriodOption?.mode || '',
+                                                            periodLabel: selectedPeriodOption?.label || '',
+                                                            periodIndex: selectedPeriodOption?.index ?? null,
+                                                        }));
+
+                                                        if (validationErrors?.period) {
+                                                            setValidationErrors((previous: any) => ({ ...previous, period: '' }));
+                                                        }
+                                                    }}
+                                                    className={`w-full px-4 py-2 border rounded-xl focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-white transition-colors ${
+                                                        validationErrors?.period
+                                                            ? 'border-red-500 dark:border-red-500'
+                                                            : 'border-gray-300 dark:border-slate-700'
+                                                    }`}
+                                                >
+                                                    <option value="" className="dark:bg-slate-800">Selecciona un periodo</option>
+                                                    {subjectPeriodOptions.map((option: any) => (
+                                                        <option key={option.value} value={option.value} className="dark:bg-slate-800">
+                                                            {option.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                                    {isEditing
+                                                        ? 'Puedes ajustar este periodo para mejorar la organización académica de la asignatura.'
+                                                        : `Campo obligatorio para crear la asignatura (${subjectPeriodMode === 'custom' ? 'modo personalizado' : 'configuración institucional'}).`}
+                                                </p>
+                                                {subjectPeriodLoadError ? (
+                                                    <p className="mt-1 text-xs font-medium text-amber-600 dark:text-amber-300">{subjectPeriodLoadError}</p>
+                                                ) : null}
+                                                {validationErrors?.period ? (
+                                                    <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">{validationErrors.period}</p>
+                                                ) : null}
+                                            </div>
                                         )}
                                         <TagManager formData={formData} setFormData={setFormData} />
                                         <AppearanceSection

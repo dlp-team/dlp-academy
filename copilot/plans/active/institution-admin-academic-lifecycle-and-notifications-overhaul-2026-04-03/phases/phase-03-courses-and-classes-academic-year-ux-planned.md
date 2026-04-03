@@ -1,5 +1,5 @@
 <!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-03-courses-and-classes-academic-year-ux-planned.md -->
-# Phase 03 - Courses and Classes Academic-Year UX (IN_PROGRESS)
+# Phase 03 - Courses and Classes Academic-Year UX (COMPLETED)
 
 ## Objective
 Make academic year a first-class organizing axis in Institution Admin course/class management and subject assignment flows.

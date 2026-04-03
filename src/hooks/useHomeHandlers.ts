@@ -93,11 +93,17 @@ export const useHomeHandlers = ({
             return;
         }
 
+        const normalizedPeriodIndexRaw = String(formData?.periodIndex ?? '').trim();
+        const normalizedPeriodIndex = normalizedPeriodIndexRaw ? Number(normalizedPeriodIndexRaw) : NaN;
+
         const payload = {
             name: formData.name,
             course: formData.course,
             ...(Object.prototype.hasOwnProperty.call(formData || {}, 'courseId') ? { courseId: formData.courseId || null } : {}),
             ...(Object.prototype.hasOwnProperty.call(formData || {}, 'academicYear') ? { academicYear: formData.academicYear || null } : {}),
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'periodType') ? { periodType: formData.periodType || null } : {}),
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'periodLabel') ? { periodLabel: formData.periodLabel || null } : {}),
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'periodIndex') ? { periodIndex: Number.isFinite(normalizedPeriodIndex) ? Math.max(1, Math.floor(normalizedPeriodIndex)) : null } : {}),
             color: formData.color,
             icon: formData.icon || 'book',
             tags: formData.tags,
@@ -121,6 +127,9 @@ export const useHomeHandlers = ({
                             course: formData.course,
                             courseId: formData.courseId || null,
                             academicYear: formData.academicYear || null,
+                            periodType: formData.periodType || null,
+                            periodLabel: formData.periodLabel || null,
+                            periodIndex: Number.isFinite(normalizedPeriodIndex) ? Math.max(1, Math.floor(normalizedPeriodIndex)) : null,
                             icon: formData.icon || 'book',
                             updatedAt: new Date()
                         });

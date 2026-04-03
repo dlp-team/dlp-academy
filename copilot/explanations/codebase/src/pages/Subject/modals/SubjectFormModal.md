@@ -1,3 +1,24 @@
+## [2026-04-03] Phase 04 Kickoff: Mandatory Period Metadata on Subject Creation
+### Context & Architecture
+Phase 04 requires subjects to include period metadata aligned with institution periodization (trimester/cuatrimester/custom) to enable later lifecycle automation.
+
+### Change
+- Added periodization helpers in modal scope to derive period options from institution settings.
+- Reused institution settings fetch path to load `academicCalendar.periodization` and expose period configuration feedback.
+- Added general-tab `Periodo académico` selector:
+	- mandatory when creating a subject,
+	- optional when editing legacy subjects.
+- Save payload normalization now includes:
+	- `periodType`
+	- `periodLabel`
+	- `periodIndex`
+
+### Validation
+- `get_errors` clean for touched files.
+- `npx vitest run tests/unit/utils/subjectAccessUtils.test.js` passed.
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed with existing unrelated warnings in content pages.
+
 ## [2026-04-03] Create/Edit Class Filtering Now Follows Selected Course Year
 ### Context & Architecture
 Create flows could still expose cross-year classes because filtering only derived `subjectAcademicYear` from `initialData`, which is often empty during creation.

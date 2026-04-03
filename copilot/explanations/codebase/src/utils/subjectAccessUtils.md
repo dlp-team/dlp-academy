@@ -6,6 +6,10 @@
 - `normalizeSubjectAccessPayload(...)` now normalizes optional subject linkage metadata:
   - `courseId` (trimmed string or `null`)
   - `academicYear` (trimmed string or `null`)
+- `normalizeSubjectAccessPayload(...)` now normalizes optional period metadata:
+  - `periodType` (trimmed string or `null`)
+  - `periodLabel` (trimmed string or `null`)
+  - `periodIndex` (positive integer or `null`)
 - Keeps existing required-course guard and class/enrollment normalization behavior unchanged.
 
 ## Overview

@@ -5,6 +5,7 @@
 ### 2026-04-03
 - Extended normalization coverage for optional subject metadata fields in `normalizeSubjectAccessPayload(...)`:
   - verifies `courseId` and `academicYear` are trimmed when present,
+  - verifies `periodType` / `periodLabel` normalization and `periodIndex` integer coercion,
   - verifies empty values are stored as `null`.
 - Preserved existing access-control behavior coverage for owner/shared/class/institution paths.
 

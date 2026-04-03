@@ -533,6 +533,24 @@ export const useSubjects = (user: any) => {
             updatePayload.academicYear = academicYearValue || null;
         }
 
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'periodType')) {
+            const periodTypeValue = String(updatePayload.periodType || '').trim();
+            updatePayload.periodType = periodTypeValue || null;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'periodLabel')) {
+            const periodLabelValue = String(updatePayload.periodLabel || '').trim();
+            updatePayload.periodLabel = periodLabelValue || null;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'periodIndex')) {
+            const normalizedPeriodIndexRaw = String(updatePayload?.periodIndex ?? '').trim();
+            const parsedPeriodIndex = normalizedPeriodIndexRaw ? Number(normalizedPeriodIndexRaw) : NaN;
+            updatePayload.periodIndex = Number.isFinite(parsedPeriodIndex)
+                ? Math.max(1, Math.floor(parsedPeriodIndex))
+                : null;
+        }
+
         if (Object.prototype.hasOwnProperty.call(updatePayload, 'classIds') && !Object.prototype.hasOwnProperty.call(updatePayload, 'classId')) {
             const firstClassId = Array.isArray(updatePayload.classIds)
                 ? String(updatePayload.classIds[0] || '').trim()

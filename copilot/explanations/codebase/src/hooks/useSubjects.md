@@ -5,6 +5,10 @@
 
 ### Change
 - `updateSubject(...)` now trims and normalizes optional `courseId` and `academicYear` fields before writing.
+- `updateSubject(...)` now also normalizes period metadata fields:
+  - `periodType`
+  - `periodLabel`
+  - `periodIndex` (coerced to positive integer or `null`)
 - Empty values are coerced to `null` for consistent Firestore shape.
 
 ### Impact

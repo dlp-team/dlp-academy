@@ -7,6 +7,10 @@
 - `handleSaveSubject` now forwards normalized subject course linkage metadata in save payloads:
 	- `courseId`
 	- `academicYear`
+- `handleSaveSubject` now also forwards period metadata fields:
+	- `periodType`
+	- `periodLabel`
+	- `periodIndex` (normalized integer or `null`)
 - Shortcut-editor subject updates now also propagate `courseId` and `academicYear` when original subject fields are editable.
 
 ### 2026-04-03

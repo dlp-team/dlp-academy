@@ -34,6 +34,9 @@ describe('subjectAccessUtils', () => {
       course: '  4to B  ',
       courseId: ' course-4b ',
       academicYear: ' 2026-2027 ',
+      periodType: ' trimester ',
+      periodLabel: ' Trimestre 2 ',
+      periodIndex: '2',
       classId: ' class-main ',
       classIds: ['class-aux', 'class-main', '  class-aux  ', ''],
       enrolledStudentUids: [' student-1 ', 'student-2', 'student-1', null],
@@ -43,6 +46,9 @@ describe('subjectAccessUtils', () => {
     expect(normalized.course).toBe('4to B');
     expect(normalized.courseId).toBe('course-4b');
     expect(normalized.academicYear).toBe('2026-2027');
+    expect(normalized.periodType).toBe('trimester');
+    expect(normalized.periodLabel).toBe('Trimestre 2');
+    expect(normalized.periodIndex).toBe(2);
     expect(normalized.classId).toBe('class-main');
     expect(normalized.classIds).toEqual(['class-main', 'class-aux']);
     expect(normalized.enrolledStudentUids).toEqual(['student-1', 'student-2']);
@@ -54,10 +60,16 @@ describe('subjectAccessUtils', () => {
       course: 'Curso base',
       courseId: '   ',
       academicYear: '',
+      periodType: '',
+      periodLabel: '  ',
+      periodIndex: '',
     });
 
     expect(normalized.courseId).toBeNull();
     expect(normalized.academicYear).toBeNull();
+    expect(normalized.periodType).toBeNull();
+    expect(normalized.periodLabel).toBeNull();
+    expect(normalized.periodIndex).toBeNull();
   });
 
   it('rejects missing course when required', () => {
