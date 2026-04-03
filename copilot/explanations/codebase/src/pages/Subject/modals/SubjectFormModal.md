@@ -1,3 +1,24 @@
+## [2026-04-03] Phase 04 Lifecycle Bounds: Subject Period Timeline Metadata
+### Context & Architecture
+Phase 04 lifecycle behavior requires explicit subject-level period windows so Home visibility can differentiate ordinary vs extraordinary timelines.
+
+### Change
+- Added period timeline computation in subject save normalization using institution calendar settings:
+	- `academicCalendar.startDate`
+	- `academicCalendar.ordinaryEndDate`
+	- `academicCalendar.extraordinaryEndDate`
+- Save payload now persists period lifecycle boundary fields:
+	- `periodStartAt`
+	- `periodEndAt`
+	- `periodExtraordinaryEndAt`
+- Added modal state wiring for calendar settings preload from institution doc reads.
+
+### Validation
+- `get_errors` clean for touched files.
+- `npm run test:unit -- tests/unit/utils/subjectPeriodLifecycleUtils.test.js tests/unit/utils/subjectAccessUtils.test.js` passed.
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed with existing unrelated warnings in content pages.
+
 ## [2026-04-03] Phase 04 Kickoff: Mandatory Period Metadata on Subject Creation
 ### Context & Architecture
 Phase 04 requires subjects to include period metadata aligned with institution periodization (trimester/cuatrimester/custom) to enable later lifecycle automation.

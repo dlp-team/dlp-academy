@@ -1,0 +1,89 @@
+// tests/unit/utils/subjectPeriodLifecycleUtils.test.js
+import { describe, expect, it } from 'vitest';
+import {
+  buildSubjectPeriodTimeline,
+  isSubjectActiveInPeriodLifecycle,
+  normalizePeriodBoundaryDate,
+} from '../../../src/utils/subjectPeriodLifecycleUtils';
+
+describe('subjectPeriodLifecycleUtils', () => {
+  it('builds period timeline bounds for configured academic calendar windows', () => {
+    const timeline = buildSubjectPeriodTimeline({
+      academicYear: '2025-2026',
+      periodType: 'trimester',
+      periodIndex: 2,
+      academicCalendar: {
+        startDate: '2025-09-01',
+        ordinaryEndDate: '2026-06-20',
+        extraordinaryEndDate: '2026-07-10',
+      },
+    });
+
+    expect(timeline).not.toBeNull();
+    expect(timeline.periodStartAt < timeline.periodEndAt).toBe(true);
+    expect(timeline.periodExtraordinaryEndAt).toBe('2026-07-10');
+  });
+
+  it('applies student/teacher extraordinary-window visibility matrix', () => {
+    const subjectBase = {
+      id: 'subject-1',
+      periodEndAt: '2026-05-01',
+      periodExtraordinaryEndAt: '2026-05-30',
+      academicYear: '2025-2026',
+    };
+
+    const duringExtraordinary = new Date('2026-05-10T12:00:00Z');
+
+    const passedStudentVisible = isSubjectActiveInPeriodLifecycle({
+      subject: { ...subjectBase, passed: true },
+      user: { uid: 'student-1', role: 'student' },
+      referenceDate: duringExtraordinary,
+    });
+
+    const failedStudentVisible = isSubjectActiveInPeriodLifecycle({
+      subject: { ...subjectBase, passed: false },
+      user: { uid: 'student-1', role: 'student' },
+      referenceDate: duringExtraordinary,
+    });
+
+    const teacherVisible = isSubjectActiveInPeriodLifecycle({
+      subject: { ...subjectBase, passed: true },
+      user: { uid: 'teacher-1', role: 'teacher' },
+      referenceDate: duringExtraordinary,
+    });
+
+    const afterExtraordinaryVisible = isSubjectActiveInPeriodLifecycle({
+      subject: { ...subjectBase, passed: false },
+      user: { uid: 'teacher-1', role: 'teacher' },
+      referenceDate: new Date('2026-06-10T12:00:00Z'),
+    });
+
+    expect(passedStudentVisible).toBe(false);
+    expect(failedStudentVisible).toBe(true);
+    expect(teacherVisible).toBe(true);
+    expect(afterExtraordinaryVisible).toBe(false);
+  });
+
+  it('falls back to academic-year lifecycle when period bounds are missing', () => {
+    const referenceDate = new Date('2026-10-01T12:00:00Z');
+
+    expect(
+      isSubjectActiveInPeriodLifecycle({
+        subject: { academicYear: '2026-2027' },
+        user: { uid: 'teacher-1', role: 'teacher' },
+        referenceDate,
+      })
+    ).toBe(true);
+
+    expect(
+      isSubjectActiveInPeriodLifecycle({
+        subject: { academicYear: '2025-2026' },
+        user: { uid: 'teacher-1', role: 'teacher' },
+        referenceDate,
+      })
+    ).toBe(false);
+
+    expect(normalizePeriodBoundaryDate('2026-07-05')).toBe('2026-07-05');
+    expect(normalizePeriodBoundaryDate('invalid')).toBeNull();
+  });
+});

@@ -10,6 +10,10 @@
   - `periodType` (trimmed string or `null`)
   - `periodLabel` (trimmed string or `null`)
   - `periodIndex` (positive integer or `null`)
+- `normalizeSubjectAccessPayload(...)` now normalizes optional lifecycle boundary fields:
+  - `periodStartAt` (ISO date `YYYY-MM-DD` or `null`)
+  - `periodEndAt` (ISO date `YYYY-MM-DD` or `null`)
+  - `periodExtraordinaryEndAt` (ISO date `YYYY-MM-DD` or `null`)
 - Keeps existing required-course guard and class/enrollment normalization behavior unchanged.
 
 ## Overview

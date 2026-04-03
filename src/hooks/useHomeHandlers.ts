@@ -95,6 +95,9 @@ export const useHomeHandlers = ({
 
         const normalizedPeriodIndexRaw = String(formData?.periodIndex ?? '').trim();
         const normalizedPeriodIndex = normalizedPeriodIndexRaw ? Number(normalizedPeriodIndexRaw) : NaN;
+        const normalizedPeriodStartAt = String(formData?.periodStartAt || '').trim();
+        const normalizedPeriodEndAt = String(formData?.periodEndAt || '').trim();
+        const normalizedPeriodExtraordinaryEndAt = String(formData?.periodExtraordinaryEndAt || '').trim();
 
         const payload = {
             name: formData.name,
@@ -104,6 +107,9 @@ export const useHomeHandlers = ({
             ...(Object.prototype.hasOwnProperty.call(formData || {}, 'periodType') ? { periodType: formData.periodType || null } : {}),
             ...(Object.prototype.hasOwnProperty.call(formData || {}, 'periodLabel') ? { periodLabel: formData.periodLabel || null } : {}),
             ...(Object.prototype.hasOwnProperty.call(formData || {}, 'periodIndex') ? { periodIndex: Number.isFinite(normalizedPeriodIndex) ? Math.max(1, Math.floor(normalizedPeriodIndex)) : null } : {}),
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'periodStartAt') ? { periodStartAt: normalizedPeriodStartAt || null } : {}),
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'periodEndAt') ? { periodEndAt: normalizedPeriodEndAt || null } : {}),
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'periodExtraordinaryEndAt') ? { periodExtraordinaryEndAt: normalizedPeriodExtraordinaryEndAt || null } : {}),
             color: formData.color,
             icon: formData.icon || 'book',
             tags: formData.tags,
@@ -130,6 +136,9 @@ export const useHomeHandlers = ({
                             periodType: formData.periodType || null,
                             periodLabel: formData.periodLabel || null,
                             periodIndex: Number.isFinite(normalizedPeriodIndex) ? Math.max(1, Math.floor(normalizedPeriodIndex)) : null,
+                            periodStartAt: normalizedPeriodStartAt || null,
+                            periodEndAt: normalizedPeriodEndAt || null,
+                            periodExtraordinaryEndAt: normalizedPeriodExtraordinaryEndAt || null,
                             icon: formData.icon || 'book',
                             updatedAt: new Date()
                         });

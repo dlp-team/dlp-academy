@@ -29,6 +29,18 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
 - Added deterministic unit coverage updates in:
   - `tests/unit/hooks/useHomeState.academicYearFilter.test.js`
   - `tests/unit/pages/home/HomeControls.activeCurrentToggle.test.jsx`
+- Added timeline-bound metadata generation on subject save using institution calendar inputs:
+  - `periodStartAt`
+  - `periodEndAt`
+  - `periodExtraordinaryEndAt`
+- Added lifecycle utility modeling in `src/utils/subjectPeriodLifecycleUtils.ts` for:
+  - timeline generation,
+  - role-aware extraordinary-window visibility decisions.
+- Home `showOnlyCurrentSubjects` filtering now uses period lifecycle windows when available, with academic-year fallback for legacy subjects.
+- Added deterministic lifecycle matrix coverage in:
+  - `tests/unit/utils/subjectPeriodLifecycleUtils.test.js`
+  - `tests/unit/hooks/useHomeState.academicYearFilter.test.js`
+  - `tests/unit/utils/subjectAccessUtils.test.js`
 
 ## Risks and Controls
 - Risk: incorrect hiding of active content.

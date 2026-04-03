@@ -26,6 +26,12 @@ vi.mock('../../../src/utils/pagePersistence', () => ({
 }));
 
 describe('useHomeState academic-year range filter for courses mode', () => {
+  const resolveRelativeIsoDate = (offsetDays = 0) => {
+    const date = new Date();
+    date.setUTCDate(date.getUTCDate() + offsetDays);
+    return date.toISOString().slice(0, 10);
+  };
+
   const resolveCurrentAcademicYear = () => {
     const now = new Date();
     const startYear = now.getMonth() >= 6 ? now.getFullYear() : now.getFullYear() - 1;
@@ -234,5 +240,103 @@ describe('useHomeState academic-year range filter for courses mode', () => {
     );
 
     expect(result.current.groupedContent.Recientes.map((subject) => subject.id)).toEqual(['subject-current']);
+  });
+
+  it('hides passed student subjects after ordinary period but before extraordinary close', () => {
+    const previousAcademicYear = resolvePreviousAcademicYear();
+
+    const { result } = renderHook(() =>
+      useHomeState({
+        user: {
+          uid: 'student-1',
+          email: 'student@test.com',
+          role: 'student',
+        },
+        searchQuery: '',
+        subjects: [
+          {
+            id: 'subject-passed',
+            name: 'Algebra',
+            ownerId: 'student-1',
+            academicYear: previousAcademicYear,
+            periodEndAt: resolveRelativeIsoDate(-1),
+            periodExtraordinaryEndAt: resolveRelativeIsoDate(10),
+            passed: true,
+            updatedAt: { seconds: 20 },
+          },
+          {
+            id: 'subject-failed',
+            name: 'Historia',
+            ownerId: 'student-1',
+            academicYear: previousAcademicYear,
+            periodEndAt: resolveRelativeIsoDate(-1),
+            periodExtraordinaryEndAt: resolveRelativeIsoDate(10),
+            passed: false,
+            updatedAt: { seconds: 10 },
+          },
+        ],
+        folders: [],
+        preferences: {
+          ...basePreferences,
+          viewMode: 'usage',
+          showOnlyCurrentSubjects: true,
+        },
+        loadingPreferences: false,
+        updatePreference: vi.fn(),
+        rememberOrganization: true,
+      })
+    );
+
+    expect(result.current.groupedContent.Recientes.map((subject) => subject.id)).toEqual(['subject-failed']);
+  });
+
+  it('keeps teacher subjects visible during extraordinary window', () => {
+    const previousAcademicYear = resolvePreviousAcademicYear();
+
+    const { result } = renderHook(() =>
+      useHomeState({
+        user: {
+          ...baseUser,
+          role: 'teacher',
+        },
+        searchQuery: '',
+        subjects: [
+          {
+            id: 'subject-passed',
+            name: 'Algebra',
+            ownerId: 'teacher-1',
+            academicYear: previousAcademicYear,
+            periodEndAt: resolveRelativeIsoDate(-1),
+            periodExtraordinaryEndAt: resolveRelativeIsoDate(10),
+            passed: true,
+            updatedAt: { seconds: 20 },
+          },
+          {
+            id: 'subject-failed',
+            name: 'Historia',
+            ownerId: 'teacher-1',
+            academicYear: previousAcademicYear,
+            periodEndAt: resolveRelativeIsoDate(-1),
+            periodExtraordinaryEndAt: resolveRelativeIsoDate(10),
+            passed: false,
+            updatedAt: { seconds: 10 },
+          },
+        ],
+        folders: [],
+        preferences: {
+          ...basePreferences,
+          viewMode: 'usage',
+          showOnlyCurrentSubjects: true,
+        },
+        loadingPreferences: false,
+        updatePreference: vi.fn(),
+        rememberOrganization: true,
+      })
+    );
+
+    expect(result.current.groupedContent.Recientes.map((subject) => subject.id)).toEqual([
+      'subject-passed',
+      'subject-failed',
+    ]);
   });
 });

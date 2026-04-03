@@ -37,6 +37,9 @@ describe('subjectAccessUtils', () => {
       periodType: ' trimester ',
       periodLabel: ' Trimestre 2 ',
       periodIndex: '2',
+      periodStartAt: ' 2026-01-15 ',
+      periodEndAt: '2026-03-30',
+      periodExtraordinaryEndAt: ' 2026-07-05 ',
       classId: ' class-main ',
       classIds: ['class-aux', 'class-main', '  class-aux  ', ''],
       enrolledStudentUids: [' student-1 ', 'student-2', 'student-1', null],
@@ -49,6 +52,9 @@ describe('subjectAccessUtils', () => {
     expect(normalized.periodType).toBe('trimester');
     expect(normalized.periodLabel).toBe('Trimestre 2');
     expect(normalized.periodIndex).toBe(2);
+    expect(normalized.periodStartAt).toBe('2026-01-15');
+    expect(normalized.periodEndAt).toBe('2026-03-30');
+    expect(normalized.periodExtraordinaryEndAt).toBe('2026-07-05');
     expect(normalized.classId).toBe('class-main');
     expect(normalized.classIds).toEqual(['class-main', 'class-aux']);
     expect(normalized.enrolledStudentUids).toEqual(['student-1', 'student-2']);
@@ -63,6 +69,9 @@ describe('subjectAccessUtils', () => {
       periodType: '',
       periodLabel: '  ',
       periodIndex: '',
+      periodStartAt: '',
+      periodEndAt: 'invalid-date',
+      periodExtraordinaryEndAt: '2026/07/05',
     });
 
     expect(normalized.courseId).toBeNull();
@@ -70,6 +79,9 @@ describe('subjectAccessUtils', () => {
     expect(normalized.periodType).toBeNull();
     expect(normalized.periodLabel).toBeNull();
     expect(normalized.periodIndex).toBeNull();
+    expect(normalized.periodStartAt).toBeNull();
+    expect(normalized.periodEndAt).toBeNull();
+    expect(normalized.periodExtraordinaryEndAt).toBeNull();
   });
 
   it('rejects missing course when required', () => {

@@ -11,6 +11,10 @@
 	- `periodType`
 	- `periodLabel`
 	- `periodIndex` (normalized integer or `null`)
+- `handleSaveSubject` now also forwards period lifecycle boundary metadata:
+	- `periodStartAt`
+	- `periodEndAt`
+	- `periodExtraordinaryEndAt`
 - Shortcut-editor subject updates now also propagate `courseId` and `academicYear` when original subject fields are editable.
 
 ### 2026-04-03

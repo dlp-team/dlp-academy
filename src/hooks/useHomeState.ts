@@ -8,7 +8,8 @@ import { clearLastHomeFolderId, loadLastHomeFolderId } from '../pages/Home/utils
 import { EDUCATION_LEVELS } from '../utils/subjectConstants';
 import { usePersistentState } from './usePersistentState';
 import { buildUserScopedPersistenceKey } from '../utils/pagePersistence';
-import { getAcademicYearStartYear, normalizeAcademicYear, isSubjectCurrentAcademicYear } from '../utils/academicYearLifecycleUtils';
+import { getAcademicYearStartYear, normalizeAcademicYear } from '../utils/academicYearLifecycleUtils';
+import { isSubjectActiveInPeriodLifecycle } from '../utils/subjectPeriodLifecycleUtils';
 
 const EMPTY_MANUAL_ORDER: { subjects: any[], folders: any[] } = { subjects: [], folders: [] };
 
@@ -645,7 +646,7 @@ export const useHomeState = ({
             });
             const shouldFilterCurrentOnlyInSearch = showOnlyCurrentSubjects && (viewMode === 'usage' || viewMode === 'courses');
             const lifecycleVisibleSearchSubjects = shouldFilterCurrentOnlyInSearch
-                ? matchedSubjects.filter((subject: any) => isSubjectCurrentAcademicYear(subject?.academicYear))
+                ? matchedSubjects.filter((subject: any) => isSubjectActiveInPeriodLifecycle({ subject, user }))
                 : matchedSubjects;
             const shouldFilterSearchBySubjectPeriod = Boolean(normalizedSubjectPeriodFilter)
                 && (viewMode === 'usage' || viewMode === 'courses');
@@ -687,7 +688,7 @@ export const useHomeState = ({
             });
         const shouldFilterByCurrentLifecycle = showOnlyCurrentSubjects && (viewMode === 'usage' || viewMode === 'courses');
         const lifecycleVisibleSubjects = shouldFilterByCurrentLifecycle
-            ? subjectsToGroup.filter((subject: any) => isSubjectCurrentAcademicYear(subject?.academicYear))
+            ? subjectsToGroup.filter((subject: any) => isSubjectActiveInPeriodLifecycle({ subject, user }))
             : subjectsToGroup;
         const shouldFilterBySubjectPeriod = Boolean(normalizedSubjectPeriodFilter)
             && (viewMode === 'usage' || viewMode === 'courses');
@@ -856,7 +857,7 @@ export const useHomeState = ({
         }
 
         return { Todas: subjectsToGroup };
-    }, [subjects, subjectsWithShortcuts, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery, isStudentRole, normalizedCoursesAcademicYearFilter, normalizedSubjectPeriodFilter, showOnlyCurrentSubjects]);
+    }, [subjects, subjectsWithShortcuts, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery, isStudentRole, normalizedCoursesAcademicYearFilter, normalizedSubjectPeriodFilter, showOnlyCurrentSubjects, user]);
 
     const { searchFolders, searchSubjects } = useMemo(() => {
         if (!searchQuery || searchQuery.trim() === '') {

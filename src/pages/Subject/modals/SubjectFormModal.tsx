@@ -15,6 +15,7 @@ import { getNormalizedRole, getPermissionLevel } from '../../../utils/permission
 import { normalizeAcademicYear } from '../../../utils/academicYearLifecycleUtils';
 import { canTeacherAssignClassesAndStudents, DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils/institutionPolicyUtils';
 import { generateSubjectInviteCode } from '../../../utils/subjectAccessUtils';
+import { buildSubjectPeriodTimeline } from '../../../utils/subjectPeriodLifecycleUtils';
 
 const DEFAULT_SUBJECT_PERIOD_MODE = 'trimester';
 
@@ -55,6 +56,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [formData, setFormData] = useState<any>({ 
         name: '', level: '', grade: '', course: '', courseId: '',
         periodType: '', periodLabel: '', periodIndex: null,
+        periodStartAt: '', periodEndAt: '', periodExtraordinaryEndAt: '',
         color: 'from-blue-400 to-blue-600', icon: 'book', tags: [],
         cardStyle: 'default', modernFillColor: MODERN_FILL_COLORS[0].value
     });
@@ -94,6 +96,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [subjectPeriodOptions, setSubjectPeriodOptions] = useState<any[]>(
         buildSubjectPeriodOptions(DEFAULT_SUBJECT_PERIOD_MODE, '')
     );
+    const [subjectCalendarSettings, setSubjectCalendarSettings] = useState<any>({
+        startDate: '',
+        ordinaryEndDate: '',
+        extraordinaryEndDate: ''
+    });
     const [institutionEmailsLoadError, setInstitutionEmailsLoadError] = useState('');
     const [ownerEmailResolveError, setOwnerEmailResolveError] = useState('');
     const [institutionPolicyLoadError, setInstitutionPolicyLoadError] = useState('');
@@ -158,6 +165,17 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         const normalizedPeriodType = String(formData?.periodType || '').trim();
         const normalizedPeriodLabel = String(formData?.periodLabel || '').trim();
         const normalizedPeriodIndex = Number(formData?.periodIndex);
+        const normalizedPeriodStartAt = String(formData?.periodStartAt || '').trim();
+        const normalizedPeriodEndAt = String(formData?.periodEndAt || '').trim();
+        const normalizedPeriodExtraordinaryEndAt = String(formData?.periodExtraordinaryEndAt || '').trim();
+        const periodTimeline = buildSubjectPeriodTimeline({
+            academicYear: normalizedSubjectAcademicYear,
+            periodType: normalizedPeriodType,
+            periodIndex: Number.isFinite(normalizedPeriodIndex)
+                ? Math.max(1, Math.floor(normalizedPeriodIndex))
+                : null,
+            academicCalendar: subjectCalendarSettings
+        });
 
         return {
             ...formData,
@@ -167,7 +185,10 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             academicYear: normalizedSubjectAcademicYear || null,
             periodType: normalizedPeriodType || null,
             periodLabel: normalizedPeriodLabel || null,
-            periodIndex: Number.isFinite(normalizedPeriodIndex) ? normalizedPeriodIndex : null
+            periodIndex: Number.isFinite(normalizedPeriodIndex) ? normalizedPeriodIndex : null,
+            periodStartAt: periodTimeline?.periodStartAt || normalizedPeriodStartAt || null,
+            periodEndAt: periodTimeline?.periodEndAt || normalizedPeriodEndAt || null,
+            periodExtraordinaryEndAt: periodTimeline?.periodExtraordinaryEndAt || normalizedPeriodExtraordinaryEndAt || null
         };
     };
 
@@ -252,6 +273,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     periodType: initialData.periodType || '',
                     periodLabel: initialData.periodLabel || '',
                     periodIndex: Number.isFinite(Number(initialData.periodIndex)) ? Number(initialData.periodIndex) : null,
+                    periodStartAt: initialData.periodStartAt || '',
+                    periodEndAt: initialData.periodEndAt || '',
+                    periodExtraordinaryEndAt: initialData.periodExtraordinaryEndAt || '',
                     level: initialData.level || '',
                     grade: initialData.grade || '',
                     color: initialData.color || 'from-blue-400 to-blue-600',
@@ -289,6 +313,9 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     periodType: initialData?.periodType || '',
                     periodLabel: initialData?.periodLabel || '',
                     periodIndex: Number.isFinite(Number(initialData?.periodIndex)) ? Number(initialData.periodIndex) : null,
+                    periodStartAt: initialData?.periodStartAt || '',
+                    periodEndAt: initialData?.periodEndAt || '',
+                    periodExtraordinaryEndAt: initialData?.periodExtraordinaryEndAt || '',
                     color: 'from-blue-400 to-blue-600',
                     icon: 'book',
                     tags: [],
@@ -308,6 +335,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         const applyDefaultPeriodConfig = () => {
             setSubjectPeriodMode(DEFAULT_SUBJECT_PERIOD_MODE);
             setSubjectPeriodOptions(buildSubjectPeriodOptions(DEFAULT_SUBJECT_PERIOD_MODE, ''));
+            setSubjectCalendarSettings({
+                startDate: '',
+                ordinaryEndDate: '',
+                extraordinaryEndDate: ''
+            });
         };
 
         const loadInstitutionPolicies = async () => {
@@ -335,6 +367,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 }
 
                 const institutionData = institutionSnapshot.data() || {};
+                const academicCalendar = institutionData?.academicCalendar || {};
                 const periodization = institutionData?.academicCalendar?.periodization || {};
                 const normalizedPeriodMode = normalizeSubjectPeriodMode(periodization?.mode);
                 const normalizedCustomPeriodLabel = String(periodization?.customLabel || '').trim();
@@ -342,6 +375,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 setInstitutionAccessPolicies(normalizeAccessPolicies(institutionData?.accessPolicies));
                 setSubjectPeriodMode(normalizedPeriodMode);
                 setSubjectPeriodOptions(buildSubjectPeriodOptions(normalizedPeriodMode, normalizedCustomPeriodLabel));
+                setSubjectCalendarSettings({
+                    startDate: String(academicCalendar?.startDate || '').trim(),
+                    ordinaryEndDate: String(academicCalendar?.ordinaryEndDate || '').trim(),
+                    extraordinaryEndDate: String(academicCalendar?.extraordinaryEndDate || '').trim()
+                });
                 setInstitutionPolicyLoadError('');
                 setSubjectPeriodLoadError('');
             } catch (error: any) {

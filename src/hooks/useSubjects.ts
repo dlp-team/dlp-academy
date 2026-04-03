@@ -14,6 +14,13 @@ import {
 } from '../utils/institutionPolicyUtils';
 import { DEFAULT_TOPIC_CASCADE_COLLECTIONS, cascadeDeleteTopicResources } from '../utils/topicDeletionUtils';
 
+const ISO_DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+const normalizeDateOnlyValue = (value: any) => {
+    const normalizedValue = String(value || '').trim();
+    return ISO_DATE_ONLY_PATTERN.test(normalizedValue) ? normalizedValue : null;
+};
+
 export const useSubjects = (user: any) => {
     const [subjects, setSubjects] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -549,6 +556,18 @@ export const useSubjects = (user: any) => {
             updatePayload.periodIndex = Number.isFinite(parsedPeriodIndex)
                 ? Math.max(1, Math.floor(parsedPeriodIndex))
                 : null;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'periodStartAt')) {
+            updatePayload.periodStartAt = normalizeDateOnlyValue(updatePayload.periodStartAt);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'periodEndAt')) {
+            updatePayload.periodEndAt = normalizeDateOnlyValue(updatePayload.periodEndAt);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'periodExtraordinaryEndAt')) {
+            updatePayload.periodExtraordinaryEndAt = normalizeDateOnlyValue(updatePayload.periodExtraordinaryEndAt);
         }
 
         if (Object.prototype.hasOwnProperty.call(updatePayload, 'classIds') && !Object.prototype.hasOwnProperty.call(updatePayload, 'classId')) {

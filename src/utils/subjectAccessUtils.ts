@@ -4,6 +4,7 @@ import { db } from '../firebase/config';
 
 const INVITE_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const classCache = new Map<any, any>();
+const ISO_DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const ROLE_RANK = {
     student: 0,
     teacher: 1,
@@ -14,6 +15,11 @@ const ROLE_RANK = {
 const sanitizeString = (value: any) => {
     if (typeof value !== 'string') return '';
     return value.trim();
+};
+
+const sanitizeDateOnly = (value: any) => {
+    const normalizedValue = sanitizeString(value);
+    return ISO_DATE_ONLY_PATTERN.test(normalizedValue) ? normalizedValue : null;
 };
 
 const uniqueStringArray = (value: any) => {
@@ -59,6 +65,9 @@ export const normalizeSubjectAccessPayload = (payload: any = {}, { requireCourse
     const normalizedPeriodIndexRaw = String(payload?.periodIndex ?? '').trim();
     const parsedPeriodIndex = normalizedPeriodIndexRaw ? Number(normalizedPeriodIndexRaw) : NaN;
     const periodIndex = Number.isFinite(parsedPeriodIndex) ? Math.max(1, Math.floor(parsedPeriodIndex)) : null;
+    const periodStartAt = sanitizeDateOnly(payload.periodStartAt);
+    const periodEndAt = sanitizeDateOnly(payload.periodEndAt);
+    const periodExtraordinaryEndAt = sanitizeDateOnly(payload.periodExtraordinaryEndAt);
     if (requireCourse && !course) {
         throw new Error('El curso es obligatorio para crear la asignatura.');
     }
@@ -84,6 +93,9 @@ export const normalizeSubjectAccessPayload = (payload: any = {}, { requireCourse
         periodType: periodType || null,
         periodLabel: periodLabel || null,
         periodIndex,
+        periodStartAt,
+        periodEndAt,
+        periodExtraordinaryEndAt,
         classId,
         classIds: normalizedClassIds,
         enrolledStudentUids: uniqueStringArray(payload.enrolledStudentUids),

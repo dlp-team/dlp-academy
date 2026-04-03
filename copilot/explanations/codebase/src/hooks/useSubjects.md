@@ -1,4 +1,17 @@
 <!-- copilot/explanations/codebase/src/hooks/useSubjects.md -->
+## [2026-04-03] Subject Update Payload Normalizes Period Lifecycle Boundaries
+### Context
+- Phase 04 introduces subject-level period timeline metadata to support role-aware lifecycle transitions.
+
+### Change
+- `updateSubject(...)` now normalizes boundary fields to date-only ISO values or `null`:
+  - `periodStartAt`
+  - `periodEndAt`
+  - `periodExtraordinaryEndAt`
+
+### Impact
+- Prevents invalid date-string drift in lifecycle fields consumed by Home visibility filtering.
+
 ## [2026-04-03] Subject Update Payload Normalizes `courseId` and `academicYear`
 ### Context
 - Subject saves started persisting optional course linkage metadata (`courseId`) and year metadata (`academicYear`) from modal flows.

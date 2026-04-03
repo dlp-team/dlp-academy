@@ -7,6 +7,12 @@ This suite validates courses-tab academic-year filtering behavior in `useHomeSta
 - single-year range filtering returns only matching course buckets.
 
 ## Changelog
+### 2026-04-03: Added extraordinary-window role matrix assertions
+- Added deterministic usage-mode tests for `showOnlyCurrentSubjects` when period bounds exist:
+  - passed students are hidden after ordinary cutoff,
+  - failed students remain visible through extraordinary cutoff,
+  - teachers remain visible through extraordinary cutoff.
+
 ### 2026-04-03: Added subject period filter coverage
 - Added deterministic hook coverage that asserts:
   - `availableSubjectPeriods` derivation from subject metadata,
@@ -24,4 +30,4 @@ This suite validates courses-tab academic-year filtering behavior in `useHomeSta
   - single-year range filtering behavior.
 
 ## Validation
-- `npm run test:unit -- tests/unit/hooks/useHomeState.academicYearFilter.test.js`
+- `npm run test:unit -- tests/unit/hooks/useHomeState.academicYearFilter.test.js tests/unit/utils/subjectPeriodLifecycleUtils.test.js`

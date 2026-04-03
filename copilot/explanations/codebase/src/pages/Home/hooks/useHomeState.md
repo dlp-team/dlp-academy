@@ -1,6 +1,14 @@
 # useHomeState.js
 
 ## Changelog
+### 2026-04-03: Role-aware lifecycle visibility with period windows
+- `showOnlyCurrentSubjects` filtering now evaluates period lifecycle windows when subject timeline bounds are available.
+- Integrated `isSubjectActiveInPeriodLifecycle(...)` decision path for usage/courses current-only filtering:
+	- students marked as passed are hidden after ordinary cutoff,
+	- teachers remain visible through extraordinary cutoff,
+	- all roles are hidden after extraordinary cutoff.
+- Legacy subjects without period windows keep academic-year fallback behavior.
+
 ### 2026-04-03: Subject period filter in Home usage/courses views
 - Added persisted `subjectPeriodFilter` state with option clamping against visible period metadata.
 - Added `availableSubjectPeriods` derivation from visible and role-allowed subjects (`periodType` + `periodIndex`).
