@@ -410,6 +410,56 @@ describe('useHomeState academic-year range filter for courses mode', () => {
     expect(result.current.groupedContent.Recientes.map((subject) => subject.id)).toEqual(['subject-retain-all']);
   });
 
+  it('applies backend lifecycle snapshot visibility fields in usage mode', () => {
+    const { result } = renderHook(() =>
+      useHomeState({
+        user: {
+          uid: 'student-1',
+          email: 'student@test.com',
+          role: 'student',
+        },
+        searchQuery: '',
+        subjects: [
+          {
+            id: 'subject-hidden',
+            name: 'Robotica',
+            ownerId: 'student-1',
+            lifecyclePhase: 'post_extraordinary',
+            lifecyclePostCourseVisibility: 'hidden',
+            updatedAt: { seconds: 30 },
+          },
+          {
+            id: 'subject-teacher-only',
+            name: 'Programacion',
+            ownerId: 'student-1',
+            lifecyclePhase: 'post_extraordinary',
+            lifecyclePostCourseVisibility: 'teacher_only',
+            updatedAt: { seconds: 20 },
+          },
+          {
+            id: 'subject-visible',
+            name: 'Historia del Arte',
+            ownerId: 'student-1',
+            lifecyclePhase: 'post_extraordinary',
+            lifecyclePostCourseVisibility: 'all_no_join',
+            updatedAt: { seconds: 10 },
+          },
+        ],
+        folders: [],
+        preferences: {
+          ...basePreferences,
+          viewMode: 'usage',
+          showOnlyCurrentSubjects: false,
+        },
+        loadingPreferences: false,
+        updatePreference: vi.fn(),
+        rememberOrganization: true,
+      })
+    );
+
+    expect(result.current.groupedContent.Recientes.map((subject) => subject.id)).toEqual(['subject-visible']);
+  });
+
   it('applies post-course policy visibility for teachers after extraordinary cutoff', () => {
     const previousAcademicYear = resolvePreviousAcademicYear();
 

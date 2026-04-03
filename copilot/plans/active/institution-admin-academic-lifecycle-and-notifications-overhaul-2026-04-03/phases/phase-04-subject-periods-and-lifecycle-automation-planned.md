@@ -37,6 +37,10 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
 - Added lifecycle utility modeling in `src/utils/subjectPeriodLifecycleUtils.ts` for:
   - timeline generation,
   - role-aware extraordinary-window visibility decisions.
+- Lifecycle utility now also consumes backend automation snapshot fields when present:
+  - `lifecyclePhase`,
+  - `lifecyclePostCourseVisibility`,
+  while preserving date/policy fallback behavior.
 - Subject save payloads now persist `postCoursePolicy` snapshots from institution settings for lifecycle visibility decisions.
 - Home `showOnlyCurrentSubjects` filtering now uses period lifecycle windows when available, with academic-year fallback for legacy subjects.
 - Home `usage`/`courses` grouping now applies post-extraordinary visibility filtering by `postCoursePolicy`:

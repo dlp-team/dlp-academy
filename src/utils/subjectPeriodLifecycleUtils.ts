@@ -13,6 +13,8 @@ const DEFAULT_ORDINARY_END_MONTH_DAY = { month: 6, day: 30 };
 const DEFAULT_EXTRAORDINARY_END_MONTH_DAY = { month: 7, day: 15 };
 const DEFAULT_POST_COURSE_POLICY = 'retain_all_no_join';
 export const UNKNOWN_PASS_STATE_EXTRAORDINARY_POLICY = 'treat_as_pending_until_extraordinary_end';
+const LIFECYCLE_PHASE_VALUES = new Set(['active', 'extraordinary', 'post_extraordinary']);
+const LIFECYCLE_VISIBILITY_VALUES = new Set(['all', 'all_no_join', 'teacher_only', 'hidden']);
 
 const normalizePostCoursePolicy = (value: any) => {
     const normalizedValue = String(value || '').trim();
@@ -21,6 +23,16 @@ const normalizePostCoursePolicy = (value: any) => {
     }
 
     return DEFAULT_POST_COURSE_POLICY;
+};
+
+const normalizeLifecyclePhase = (value: any) => {
+    const normalizedValue = String(value || '').trim().toLowerCase();
+    return LIFECYCLE_PHASE_VALUES.has(normalizedValue) ? normalizedValue : '';
+};
+
+const normalizeLifecycleVisibility = (value: any) => {
+    const normalizedValue = String(value || '').trim().toLowerCase();
+    return LIFECYCLE_VISIBILITY_VALUES.has(normalizedValue) ? normalizedValue : '';
 };
 
 const normalizePeriodType = (value: any) => {
@@ -244,6 +256,24 @@ export const isSubjectActiveInPeriodLifecycle = ({
     user: any;
     referenceDate?: Date;
 }) => {
+    const lifecyclePhase = normalizeLifecyclePhase(subject?.lifecyclePhase);
+    if (lifecyclePhase) {
+        if (lifecyclePhase === 'active') {
+            return true;
+        }
+
+        if (lifecyclePhase === 'extraordinary') {
+            const normalizedRole = getNormalizedRole(user);
+            if (normalizedRole === 'student') {
+                return shouldStudentRemainActiveDuringExtraordinaryWindow({ subject });
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
     const ordinaryBoundary = parseBoundaryDate(subject?.periodEndAt, true);
     let extraordinaryBoundary = parseBoundaryDate(subject?.periodExtraordinaryEndAt || subject?.periodEndAt, true);
 
@@ -281,6 +311,37 @@ export const isSubjectVisibleByPostCoursePolicy = ({
     user: any;
     referenceDate?: Date;
 }) => {
+    const lifecycleVisibility = normalizeLifecycleVisibility(subject?.lifecyclePostCourseVisibility);
+    if (lifecycleVisibility) {
+        if (lifecycleVisibility === 'hidden') {
+            return false;
+        }
+
+        if (lifecycleVisibility === 'teacher_only') {
+            return getNormalizedRole(user) !== 'student';
+        }
+
+        return true;
+    }
+
+    const lifecyclePhase = normalizeLifecyclePhase(subject?.lifecyclePhase);
+    if (lifecyclePhase === 'active' || lifecyclePhase === 'extraordinary') {
+        return true;
+    }
+
+    if (lifecyclePhase === 'post_extraordinary') {
+        const postCoursePolicyFromLifecyclePhase = normalizePostCoursePolicy(subject?.postCoursePolicy);
+        if (postCoursePolicyFromLifecyclePhase === 'delete') {
+            return false;
+        }
+
+        if (postCoursePolicyFromLifecyclePhase === 'retain_teacher_only') {
+            return getNormalizedRole(user) !== 'student';
+        }
+
+        return true;
+    }
+
     const extraordinaryBoundary = parseBoundaryDate(subject?.periodExtraordinaryEndAt || subject?.periodEndAt, true);
     if (!extraordinaryBoundary) {
         return true;

@@ -7,6 +7,7 @@
   - timeline bound generation from institution calendar windows,
   - extraordinary-window role matrix behavior,
   - unknown pass-state students remain visible during extraordinary window,
+  - backend lifecycle snapshot field behavior (`lifecyclePhase`, `lifecyclePostCourseVisibility`),
   - post-course policy visibility behavior after extraordinary cutoff,
   - academic-year fallback behavior for legacy subjects without period bounds.
 

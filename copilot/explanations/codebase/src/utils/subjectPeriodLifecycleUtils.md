@@ -11,6 +11,8 @@
 - Added `shouldStudentRemainActiveDuringExtraordinaryWindow(...)` with explicit unknown pass-state handling policy (`treat_as_pending_until_extraordinary_end`).
 - Added `isSubjectVisibleByPostCoursePolicy(...)` for post-extraordinary policy decisions (`delete`, `retain_all_no_join`, `retain_teacher_only`).
 - Added `normalizePeriodBoundaryDate(...)` helper for safe date-only normalization.
+- `isSubjectActiveInPeriodLifecycle(...)` now consumes backend lifecycle snapshots (`lifecyclePhase`) when available, with date-window fallback preserved.
+- `isSubjectVisibleByPostCoursePolicy(...)` now consumes backend lifecycle visibility snapshots (`lifecyclePostCourseVisibility`) when available, with policy/date fallback preserved.
 
 ## Overview
 - **Source file:** `src/utils/subjectPeriodLifecycleUtils.ts`

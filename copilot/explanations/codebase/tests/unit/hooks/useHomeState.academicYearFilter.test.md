@@ -7,6 +7,11 @@ This suite validates courses-tab academic-year filtering behavior in `useHomeSta
 - single-year range filtering returns only matching course buckets.
 
 ## Changelog
+### 2026-04-03: Added backend lifecycle snapshot visibility assertions
+- Added usage-mode student test to verify Home visibility decisions consume backend lifecycle snapshot fields:
+  - `lifecyclePhase`,
+  - `lifecyclePostCourseVisibility`.
+
 ### 2026-04-03: Extended policy filtering coverage beyond grouped content
 - Added deterministic assertions for usage mode to ensure post-course policy visibility is also enforced in:
   - `searchSubjects`,

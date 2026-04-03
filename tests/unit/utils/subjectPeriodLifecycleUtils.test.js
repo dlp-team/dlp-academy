@@ -134,4 +134,54 @@ describe('subjectPeriodLifecycleUtils', () => {
       })
     ).toBe(true);
   });
+
+  it('prioritizes backend lifecycle snapshot fields when available', () => {
+    expect(
+      isSubjectActiveInPeriodLifecycle({
+        subject: { lifecyclePhase: 'active' },
+        user: { uid: 'student-1', role: 'student' },
+        referenceDate: new Date('2030-01-01T12:00:00Z'),
+      })
+    ).toBe(true);
+
+    expect(
+      isSubjectActiveInPeriodLifecycle({
+        subject: { lifecyclePhase: 'extraordinary', passed: true },
+        user: { uid: 'student-1', role: 'student' },
+        referenceDate: new Date('2030-01-01T12:00:00Z'),
+      })
+    ).toBe(false);
+
+    expect(
+      isSubjectActiveInPeriodLifecycle({
+        subject: { lifecyclePhase: 'extraordinary', passed: false },
+        user: { uid: 'student-1', role: 'student' },
+        referenceDate: new Date('2030-01-01T12:00:00Z'),
+      })
+    ).toBe(true);
+
+    expect(
+      isSubjectVisibleByPostCoursePolicy({
+        subject: { lifecyclePostCourseVisibility: 'hidden' },
+        user: { uid: 'teacher-1', role: 'teacher' },
+        referenceDate: new Date('2030-01-01T12:00:00Z'),
+      })
+    ).toBe(false);
+
+    expect(
+      isSubjectVisibleByPostCoursePolicy({
+        subject: { lifecyclePostCourseVisibility: 'teacher_only' },
+        user: { uid: 'student-1', role: 'student' },
+        referenceDate: new Date('2030-01-01T12:00:00Z'),
+      })
+    ).toBe(false);
+
+    expect(
+      isSubjectVisibleByPostCoursePolicy({
+        subject: { lifecyclePostCourseVisibility: 'all_no_join' },
+        user: { uid: 'student-1', role: 'student' },
+        referenceDate: new Date('2030-01-01T12:00:00Z'),
+      })
+    ).toBe(true);
+  });
 });
