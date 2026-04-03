@@ -37,6 +37,13 @@ const areManualOrdersEqual = (left, right: any) => {
 };
 
 const EMPTY_COURSE_ACADEMIC_YEAR_FILTER = { startYear: '', endYear: '' };
+const EMPTY_SUBJECT_PERIOD_FILTER = '';
+
+const SUBJECT_PERIOD_TYPE_ORDER: Record<string, number> = {
+    trimester: 1,
+    cuatrimester: 2,
+    custom: 3
+};
 
 const sortAcademicYearsDesc = (years: any[] = []) => {
     return [...years]
@@ -52,6 +59,103 @@ const sortAcademicYearsDesc = (years: any[] = []) => {
 const areCourseAcademicYearFiltersEqual = (left: any, right: any) => {
     if (!left || !right) return false;
     return left.startYear === right.startYear && left.endYear === right.endYear;
+};
+
+const normalizeSubjectPeriodType = (value: any) => {
+    const normalizedValue = String(value || '').trim().toLowerCase();
+    if (normalizedValue === 'trimester' || normalizedValue === 'cuatrimester' || normalizedValue === 'custom') {
+        return normalizedValue;
+    }
+
+    return '';
+};
+
+const normalizeSubjectPeriodIndex = (value: any) => {
+    const numericValue = Number(value);
+    if (!Number.isFinite(numericValue)) return null;
+
+    const normalizedIndex = Math.trunc(numericValue);
+    return normalizedIndex > 0 ? normalizedIndex : null;
+};
+
+const buildSubjectPeriodFilterValue = (periodType: any, periodIndex: any) => {
+    const normalizedPeriodType = normalizeSubjectPeriodType(periodType);
+    const normalizedPeriodIndex = normalizeSubjectPeriodIndex(periodIndex);
+    if (!normalizedPeriodType || normalizedPeriodIndex === null) {
+        return '';
+    }
+
+    return `${normalizedPeriodType}-${normalizedPeriodIndex}`;
+};
+
+const getSubjectPeriodFilterValue = (subject: any) => {
+    if (!subject) return '';
+    return buildSubjectPeriodFilterValue(subject?.periodType, subject?.periodIndex);
+};
+
+const buildSubjectPeriodLabel = ({ periodType, periodIndex, periodLabel }: any) => {
+    const normalizedPeriodLabel = String(periodLabel || '').trim();
+    if (normalizedPeriodLabel) {
+        return normalizedPeriodLabel;
+    }
+
+    if (periodType === 'cuatrimester') {
+        return `Cuatrimestre ${periodIndex}`;
+    }
+
+    if (periodType === 'custom') {
+        return `Periodo ${periodIndex}`;
+    }
+
+    return `Trimestre ${periodIndex}`;
+};
+
+const sortSubjectPeriodOptions = (options: any[] = []) => {
+    return [...options].sort((left: any, right: any) => {
+        const leftTypeOrder = SUBJECT_PERIOD_TYPE_ORDER[left?.periodType] || 99;
+        const rightTypeOrder = SUBJECT_PERIOD_TYPE_ORDER[right?.periodType] || 99;
+        if (leftTypeOrder !== rightTypeOrder) {
+            return leftTypeOrder - rightTypeOrder;
+        }
+
+        const leftPeriodIndex = normalizeSubjectPeriodIndex(left?.periodIndex) || 0;
+        const rightPeriodIndex = normalizeSubjectPeriodIndex(right?.periodIndex) || 0;
+        if (leftPeriodIndex !== rightPeriodIndex) {
+            return leftPeriodIndex - rightPeriodIndex;
+        }
+
+        return String(left?.label || '').localeCompare(String(right?.label || ''));
+    });
+};
+
+const normalizeSubjectPeriodFilter = (value: any, availableValues: any[] = []) => {
+    const normalizedValue = String(value || '').trim().toLowerCase();
+    if (!normalizedValue) {
+        return EMPTY_SUBJECT_PERIOD_FILTER;
+    }
+
+    if (!Array.isArray(availableValues) || availableValues.length === 0) {
+        return normalizedValue;
+    }
+
+    const availableValueSet = new Set(
+        availableValues
+            .map((entry: any) => String(entry || '').trim().toLowerCase())
+            .filter(Boolean)
+    );
+
+    return availableValueSet.has(normalizedValue)
+        ? normalizedValue
+        : EMPTY_SUBJECT_PERIOD_FILTER;
+};
+
+const doesSubjectMatchPeriodFilter = (subject: any, periodFilterValue: any) => {
+    const normalizedFilterValue = normalizeSubjectPeriodFilter(periodFilterValue);
+    if (!normalizedFilterValue) {
+        return true;
+    }
+
+    return getSubjectPeriodFilterValue(subject) === normalizedFilterValue;
 };
 
 const normalizeCourseAcademicYearFilter = (value: any, availableAcademicYears: any[] = []) => {
@@ -124,6 +228,7 @@ export const useHomeState = ({
     const [currentFolder, setCurrentFolder] = useState<any>(null);
     const [activeFilter, setActiveFilter] = useState<string>('all');
     const [coursesAcademicYearFilter, setCoursesAcademicYearFilter] = useState<any>(() => normalizeCourseAcademicYearFilter(preferences?.coursesAcademicYearFilter));
+    const [subjectPeriodFilter, setSubjectPeriodFilter] = useState<string>(() => normalizeSubjectPeriodFilter(preferences?.subjectPeriodFilter));
     const [showOnlyCurrentSubjects, setShowOnlyCurrentSubjects] = useState<boolean>(Boolean(preferences?.showOnlyCurrentSubjects));
 
     const [draggedItem, setDraggedItem] = useState<any>(null);
@@ -413,6 +518,60 @@ export const useHomeState = ({
         [coursesAcademicYearFilter, availableCourseAcademicYears]
     );
 
+    const availableSubjectPeriods = useMemo(() => {
+        const isRelated = (item: any) => {
+            if (!item) return false;
+            if (isShortcutItem(item)) return true;
+            return isOwnedByCurrentUser(item, user) || isSharedWithCurrentUser(item, user);
+        };
+
+        const sourceSubjects = selectedTags.length > 0 || viewMode === 'tags'
+            ? filteredSubjectsByTags
+            : subjectsWithShortcuts;
+
+        const optionsByValue = new Map<string, any>();
+
+        sourceSubjects
+            .filter(isRelated)
+            .filter((subject: any) => {
+                if (!(isStudentRole && (viewMode === 'usage' || viewMode === 'courses'))) return true;
+                return isRootLevelSubject(subject);
+            })
+            .forEach((subject: any) => {
+                const periodType = normalizeSubjectPeriodType(subject?.periodType);
+                const periodIndex = normalizeSubjectPeriodIndex(subject?.periodIndex);
+                const value = buildSubjectPeriodFilterValue(periodType, periodIndex);
+                if (!periodType || periodIndex === null || !value) {
+                    return;
+                }
+
+                if (optionsByValue.has(value)) {
+                    return;
+                }
+
+                optionsByValue.set(value, {
+                    value,
+                    label: buildSubjectPeriodLabel({
+                        periodType,
+                        periodIndex,
+                        periodLabel: subject?.periodLabel
+                    }),
+                    periodType,
+                    periodIndex
+                });
+            });
+
+        return sortSubjectPeriodOptions(Array.from(optionsByValue.values()));
+    }, [subjectsWithShortcuts, filteredSubjectsByTags, selectedTags, viewMode, isStudentRole, user?.uid, user?.email]);
+
+    const normalizedSubjectPeriodFilter = useMemo(
+        () => normalizeSubjectPeriodFilter(
+            subjectPeriodFilter,
+            availableSubjectPeriods.map((option: any) => option?.value)
+        ),
+        [subjectPeriodFilter, availableSubjectPeriods]
+    );
+
     const applyManualOrder = (items: any[] = [], type: any) => {
         if (viewMode !== 'grid') return items;
 
@@ -488,8 +647,15 @@ export const useHomeState = ({
             const lifecycleVisibleSearchSubjects = shouldFilterCurrentOnlyInSearch
                 ? matchedSubjects.filter((subject: any) => isSubjectCurrentAcademicYear(subject?.academicYear))
                 : matchedSubjects;
+            const shouldFilterSearchBySubjectPeriod = Boolean(normalizedSubjectPeriodFilter)
+                && (viewMode === 'usage' || viewMode === 'courses');
+            const periodFilteredSearchSubjects = shouldFilterSearchBySubjectPeriod
+                ? lifecycleVisibleSearchSubjects.filter((subject: any) =>
+                    doesSubjectMatchPeriodFilter(subject, normalizedSubjectPeriodFilter)
+                )
+                : lifecycleVisibleSearchSubjects;
 
-            return { 'Resultados de búsqueda': lifecycleVisibleSearchSubjects };
+            return { 'Resultados de búsqueda': periodFilteredSearchSubjects };
         }
 
         if (viewMode === 'grid' && selectedTags.length > 0) {
@@ -523,9 +689,16 @@ export const useHomeState = ({
         const lifecycleVisibleSubjects = shouldFilterByCurrentLifecycle
             ? subjectsToGroup.filter((subject: any) => isSubjectCurrentAcademicYear(subject?.academicYear))
             : subjectsToGroup;
+        const shouldFilterBySubjectPeriod = Boolean(normalizedSubjectPeriodFilter)
+            && (viewMode === 'usage' || viewMode === 'courses');
+        const periodFilteredSubjects = shouldFilterBySubjectPeriod
+            ? lifecycleVisibleSubjects.filter((subject: any) =>
+                doesSubjectMatchPeriodFilter(subject, normalizedSubjectPeriodFilter)
+            )
+            : lifecycleVisibleSubjects;
 
         if (viewMode === 'usage') {
-            const sorted = [...lifecycleVisibleSubjects].sort((a, b: any) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+            const sorted = [...periodFilteredSubjects].sort((a, b: any) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
             return { Recientes: sorted };
         }
 
@@ -556,7 +729,7 @@ export const useHomeState = ({
                 return { group: course, year: '' };
             }
 
-            const subjectsInAcademicYearRange = lifecycleVisibleSubjects.filter((sub: any) => {
+            const subjectsInAcademicYearRange = periodFilteredSubjects.filter((sub: any) => {
                 const subjectAcademicYear = normalizeAcademicYear(sub?.academicYear);
                 return isAcademicYearWithinRange(subjectAcademicYear, normalizedCoursesAcademicYearFilter);
             });
@@ -683,7 +856,7 @@ export const useHomeState = ({
         }
 
         return { Todas: subjectsToGroup };
-    }, [subjects, subjectsWithShortcuts, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery, isStudentRole, normalizedCoursesAcademicYearFilter, showOnlyCurrentSubjects]);
+    }, [subjects, subjectsWithShortcuts, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery, isStudentRole, normalizedCoursesAcademicYearFilter, normalizedSubjectPeriodFilter, showOnlyCurrentSubjects]);
 
     const { searchFolders, searchSubjects } = useMemo(() => {
         if (!searchQuery || searchQuery.trim() === '') {
@@ -749,6 +922,16 @@ export const useHomeState = ({
     }, [availableCourseAcademicYears]);
 
     useEffect(() => {
+        setSubjectPeriodFilter((previousFilter: any) => {
+            const normalizedFilter = normalizeSubjectPeriodFilter(
+                previousFilter,
+                availableSubjectPeriods.map((option: any) => option?.value)
+            );
+            return previousFilter === normalizedFilter ? previousFilter : normalizedFilter;
+        });
+    }, [availableSubjectPeriods]);
+
+    useEffect(() => {
         if (preferences && !loadingPreferences) {
             setViewMode(prev => prev || preferences.viewMode || 'grid');
             setLayoutMode(preferences.layoutMode || 'grid');
@@ -761,8 +944,17 @@ export const useHomeState = ({
                     ? previousFilter
                     : nextCoursesFilter
             ));
+            const nextSubjectPeriodFilter = normalizeSubjectPeriodFilter(
+                preferences.subjectPeriodFilter,
+                availableSubjectPeriods.map((option: any) => option?.value)
+            );
+            setSubjectPeriodFilter((previousFilter: any) => (
+                previousFilter === nextSubjectPeriodFilter
+                    ? previousFilter
+                    : nextSubjectPeriodFilter
+            ));
         }
-    }, [preferences, loadingPreferences, availableCourseAcademicYears]);
+    }, [preferences, loadingPreferences, availableCourseAcademicYears, availableSubjectPeriods]);
 
     useEffect(() => {
         if (loadingPreferences) return;
@@ -808,6 +1000,9 @@ export const useHomeState = ({
         coursesAcademicYearFilter,
         setCoursesAcademicYearFilter,
         availableCourseAcademicYears,
+        subjectPeriodFilter,
+        setSubjectPeriodFilter,
+        availableSubjectPeriods,
         currentFolder,
         setCurrentFolder,
         activeFilter,

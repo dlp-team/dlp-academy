@@ -7,6 +7,11 @@ This suite validates courses-tab academic-year filtering behavior in `useHomeSta
 - single-year range filtering returns only matching course buckets.
 
 ## Changelog
+### 2026-04-03: Added subject period filter coverage
+- Added deterministic hook coverage that asserts:
+  - `availableSubjectPeriods` derivation from subject metadata,
+  - `subjectPeriodFilter` in `courses` mode filters grouped output to matching subjects only.
+
 ### 2026-04-02: Added active/current lifecycle filtering assertions
 - Added deterministic coverage for `showOnlyCurrentSubjects` in:
   - `courses` mode (current-year + legacy subjects remain, ended-year subjects excluded),
@@ -19,4 +24,4 @@ This suite validates courses-tab academic-year filtering behavior in `useHomeSta
   - single-year range filtering behavior.
 
 ## Validation
-- `npm run test -- tests/unit/hooks/useHomeState.academicYearFilter.test.js tests/unit/hooks/useHomeState.completionTracking.test.js`
+- `npm run test:unit -- tests/unit/hooks/useHomeState.academicYearFilter.test.js`

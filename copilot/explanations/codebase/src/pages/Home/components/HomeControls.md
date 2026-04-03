@@ -1,6 +1,7 @@
 # HomeControls.jsx
 
 ## Changelog
+- **2026-04-03:** Added `Periodo` selector for `courses` and `usage` modes, wired to `subjectPeriodFilter` persistence and sourced from `availableSubjectPeriods` options.
 - **2026-04-02:** Added `Solo vigentes` toggle for `courses` and `usage` modes, wired to persisted `showOnlyCurrentSubjects` preference updates.
 - **2026-04-02:** Added `Año académico` range filter control (existing years only, paginated panel) next to `Filtrar` in `courses` mode and wired overlay state sharing.
 - **2026-04-02:** Retired `Historial` mode from the Home mode switcher and removed its icon mapping, preserving all remaining mode controls.
@@ -9,7 +10,7 @@
 
 ## Overview
 - **Source file:** `src/pages/Home/components/HomeControls.tsx`
-- **Last documented:** 2026-04-02
+- **Last documented:** 2026-04-03
 - **Role:** Reusable UI component consumed by the parent page/module.
 
 ## Responsibilities

@@ -1,7 +1,7 @@
 // src/pages/Home/components/HomeControls.jsx
 import React from 'react';
 import { 
-    Clock, Folder as FolderIcon, Users, FolderPlus, Move, Trash2, CircleDot
+    Clock, Folder as FolderIcon, Users, FolderPlus, Move, Trash2, CircleDot, Filter
 } from 'lucide-react';
 import ViewLayoutSelector from '../../../components/ui/ViewLayoutSelector';
 import CardScaleSlider from '../../../components/ui/CardScaleSlider';
@@ -29,6 +29,9 @@ const HomeControls = ({
     coursesAcademicYearFilter = { startYear: '', endYear: '' },
     setCoursesAcademicYearFilter = () => {},
     availableCourseAcademicYears = [],
+    subjectPeriodFilter = '',
+    setSubjectPeriodFilter = () => {},
+    availableSubjectPeriods = [],
     currentFolder,
     setFolderModalConfig,
     setCollapsedGroups = () => {},
@@ -55,12 +58,14 @@ const HomeControls = ({
         handleCardScaleChange,
         handleTagsChange,
         handleCoursesAcademicYearFilterChange,
+        handleSubjectPeriodFilterChange,
         handleShowOnlyCurrentSubjectsChange
     } = useHomeControlsHandlers({
         setViewMode,
         setSelectedTags,
         setShowOnlyCurrentSubjects,
         setCoursesAcademicYearFilter,
+        setSubjectPeriodFilter,
         setCollapsedGroups,
         setCurrentFolder,
         setLayoutMode,
@@ -144,6 +149,26 @@ const HomeControls = ({
                         onChange={handleCoursesAcademicYearFilterChange}
                         onOverlayToggle={onFilterOverlayChange}
                     />
+                )}
+
+                {(viewMode === 'courses' || viewMode === 'usage') && (
+                    <label className="flex items-center gap-2 px-3 py-2 border rounded-xl text-sm font-medium shadow-sm bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300">
+                        <Filter size={16} />
+                        <span className="hidden sm:inline">Periodo</span>
+                        <select
+                            aria-label="Filtrar por periodo academico"
+                            value={subjectPeriodFilter}
+                            onChange={(event) => handleSubjectPeriodFilterChange(event.target.value)}
+                            className="bg-transparent text-sm outline-none cursor-pointer min-w-[140px]"
+                        >
+                            <option value="">Todos los periodos</option>
+                            {availableSubjectPeriods.map((periodOption: any) => (
+                                <option key={periodOption.value} value={periodOption.value}>
+                                    {periodOption.label}
+                                </option>
+                            ))}
+                        </select>
+                    </label>
                 )}
 
                 {(viewMode === 'courses' || viewMode === 'usage') && (

@@ -24,6 +24,11 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
   - `src/hooks/useSubjects.ts`
   - `src/utils/subjectAccessUtils.ts`
 - Added unit coverage updates in `tests/unit/utils/subjectAccessUtils.test.js`.
+- Added Home controls period selector (`Periodo`) for `courses` and `usage` modes with persisted preference key `subjectPeriodFilter`.
+- Added Home state derivation for `availableSubjectPeriods` and period-filter application across grouped content and search results in `courses`/`usage` modes.
+- Added deterministic unit coverage updates in:
+  - `tests/unit/hooks/useHomeState.academicYearFilter.test.js`
+  - `tests/unit/pages/home/HomeControls.activeCurrentToggle.test.jsx`
 
 ## Risks and Controls
 - Risk: incorrect hiding of active content.

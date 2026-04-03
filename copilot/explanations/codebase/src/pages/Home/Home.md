@@ -1,6 +1,7 @@
 # Home.jsx
 
 ## Changelog
+- **2026-04-03:** Wired `subjectPeriodFilter`, `setSubjectPeriodFilter`, and `availableSubjectPeriods` from `useHomeLogic` into `HomeControls` to expose persisted period filtering in `usage`/`courses` modes.
 - **2026-04-02:** Passed `publishHomeFeedback` into `useHomePageHandlers` so shortcut move-request callable outcomes are shown in the existing Home feedback banner.
 - **2026-04-02:** Wired persisted `showOnlyCurrentSubjects` lifecycle visibility state from `useHomeLogic` into `HomeControls` for courses/usage active-only filtering.
 - **2026-04-02:** Wired courses-tab academic-year filter state (`coursesAcademicYearFilter`, setter, and available years) from `useHomeLogic` into `HomeControls` for persistent year-range filtering UX.
@@ -19,7 +20,7 @@
 
 ## Overview
 - **Source file:** `src/pages/Home/Home.tsx`
-- **Last documented:** 2026-04-02
+- **Last documented:** 2026-04-03
 - **Role:** Page-level or feature-level module that orchestrates UI and logic.
 
 ## Responsibilities

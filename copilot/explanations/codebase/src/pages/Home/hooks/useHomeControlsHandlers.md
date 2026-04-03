@@ -1,6 +1,10 @@
 # useHomeControlsHandlers.js
 
 ## Changelog
+### 2026-04-03: Added subject period filter handler
+- Added `handleSubjectPeriodFilterChange` to update `subjectPeriodFilter` and persist via `onPreferenceChange`.
+- Keeps period-filter preference wiring aligned with existing Home control persistence patterns.
+
 ### 2026-04-02: Added active/current lifecycle visibility handler
 - Added `handleShowOnlyCurrentSubjectsChange` to update `showOnlyCurrentSubjects` and persist via `onPreferenceChange`.
 - Keeps lifecycle-visibility preference behavior aligned with existing Home control persistence flow.
@@ -19,7 +23,7 @@
 
 ## Overview
 - **Source file:** `src/pages/Home/hooks/useHomeControlsHandlers.ts`
-- **Last documented:** 2026-04-02
+- **Last documented:** 2026-04-03
 - **Role:** Custom hook with stateful/business logic for this page area.
 
 ## Responsibilities

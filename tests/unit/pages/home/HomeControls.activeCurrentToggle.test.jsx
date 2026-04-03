@@ -19,6 +19,12 @@ const buildBaseProps = (overrides = {}) => ({
   coursesAcademicYearFilter: { startYear: '', endYear: '' },
   setCoursesAcademicYearFilter: vi.fn(),
   availableCourseAcademicYears: ['2025-2026', '2024-2025'],
+  subjectPeriodFilter: '',
+  setSubjectPeriodFilter: vi.fn(),
+  availableSubjectPeriods: [
+    { value: 'trimester-1', label: 'Trimestre 1' },
+    { value: 'trimester-2', label: 'Trimestre 2' },
+  ],
   currentFolder: null,
   setFolderModalConfig: vi.fn(),
   setCollapsedGroups: vi.fn(),
@@ -62,9 +68,32 @@ describe('HomeControls active/current subjects toggle', () => {
     expect(onPreferenceChange).toHaveBeenCalledWith('showOnlyCurrentSubjects', true);
   });
 
+  it('updates subject period filter and persists user preference', () => {
+    const setSubjectPeriodFilter = vi.fn();
+    const onPreferenceChange = vi.fn();
+
+    render(
+      <HomeControls
+        {...buildBaseProps({
+          viewMode: 'courses',
+          setSubjectPeriodFilter,
+          onPreferenceChange,
+        })}
+      />
+    );
+
+    fireEvent.change(screen.getByLabelText('Filtrar por periodo academico'), {
+      target: { value: 'trimester-2' },
+    });
+
+    expect(setSubjectPeriodFilter).toHaveBeenCalledWith('trimester-2');
+    expect(onPreferenceChange).toHaveBeenCalledWith('subjectPeriodFilter', 'trimester-2');
+  });
+
   it('hides lifecycle toggle outside usage/courses modes', () => {
     render(<HomeControls {...buildBaseProps({ viewMode: 'grid' })} />);
 
     expect(screen.queryByRole('button', { name: 'Alternar filtro de asignaturas vigentes' })).toBeNull();
+    expect(screen.queryByLabelText('Filtrar por periodo academico')).toBeNull();
   });
 });

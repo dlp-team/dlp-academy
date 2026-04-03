@@ -2,6 +2,10 @@
 # useHomeLogic.js
 
 ## Changelog
+### 2026-04-03: Subject period filter passthrough wiring
+- Added `subjectPeriodFilter`, `setSubjectPeriodFilter`, and `availableSubjectPeriods` passthroughs from `useHomeState` into `useHomeLogic` return payload.
+- Enables Home controls to render and persist period-based filtering in usage/courses modes.
+
 ### 2026-04-02: Lifecycle visibility toggle passthrough
 - Added `showOnlyCurrentSubjects` and `setShowOnlyCurrentSubjects` passthroughs from `useHomeState` into `useHomeLogic` return payload.
 - Enables Home controls to toggle and persist active/current-only subject visibility for usage/courses tabs.
@@ -32,7 +36,7 @@
 
 ## Overview
 - **Source file:** `src/pages/Home/hooks/useHomeLogic.ts`
-- **Last documented:** 2026-04-02
+- **Last documented:** 2026-04-03
 - **Role:** Custom hook with stateful/business logic for this page area.
 
 ## Responsibilities

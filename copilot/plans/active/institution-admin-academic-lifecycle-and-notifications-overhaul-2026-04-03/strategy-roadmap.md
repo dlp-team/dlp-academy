@@ -21,9 +21,9 @@
 - Final validation and docs sync remain explicit to prevent lifecycle drift.
 
 ## Immediate Next Actions
-- Add Home-level academic period filtering once period metadata is present in newly created/edited subjects.
 - Extend period metadata model with explicit timeline bounds (`periodStartAt`, `periodEndAt`) and extraordinary-phase handling.
 - Define lifecycle transition matrix for teacher/student visibility after ordinary and extraordinary cutoffs.
+- Implement lifecycle transition wiring in Home visibility paths using the matrix and institutional settings windows.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.

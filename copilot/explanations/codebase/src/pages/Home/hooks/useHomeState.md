@@ -1,6 +1,12 @@
 # useHomeState.js
 
 ## Changelog
+### 2026-04-03: Subject period filter in Home usage/courses views
+- Added persisted `subjectPeriodFilter` state with option clamping against visible period metadata.
+- Added `availableSubjectPeriods` derivation from visible and role-allowed subjects (`periodType` + `periodIndex`).
+- Applied period filtering in grouped content and grouped search results for `usage` and `courses` views.
+- Exposed new outputs from the hook: `subjectPeriodFilter`, `setSubjectPeriodFilter`, and `availableSubjectPeriods`.
+
 ### 2026-04-02: Active/current visibility toggle and lifecycle filtering
 - Added persisted `showOnlyCurrentSubjects` state for Home `courses` and `usage` modes.
 - Grouped-content generation now filters to current lifecycle subjects when the toggle is enabled.
@@ -24,7 +30,7 @@
 
 ## Overview
 - **Source file:** `src/hooks/useHomeState.ts`
-- **Last documented:** 2026-04-02
+- **Last documented:** 2026-04-03
 - **Role:** Custom hook with stateful/business logic for this page area.
 
 ## Responsibilities

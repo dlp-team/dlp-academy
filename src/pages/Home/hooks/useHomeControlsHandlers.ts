@@ -14,6 +14,7 @@ const useHomeControlsHandlers = ({
     setSelectedTags,
     setShowOnlyCurrentSubjects,
     setCoursesAcademicYearFilter,
+    setSubjectPeriodFilter,
     setCollapsedGroups,
     setCurrentFolder,
     setLayoutMode,
@@ -58,6 +59,13 @@ const useHomeControlsHandlers = ({
         }
     }, [setCoursesAcademicYearFilter, onPreferenceChange]);
 
+    const handleSubjectPeriodFilterChange = useCallback((nextValue: string) => {
+        setSubjectPeriodFilter(nextValue);
+        if (onPreferenceChange) {
+            onPreferenceChange('subjectPeriodFilter', nextValue);
+        }
+    }, [setSubjectPeriodFilter, onPreferenceChange]);
+
     const handleShowOnlyCurrentSubjectsChange = useCallback((enabled: boolean) => {
         setShowOnlyCurrentSubjects(enabled);
         if (onPreferenceChange) {
@@ -71,6 +79,7 @@ const useHomeControlsHandlers = ({
         handleCardScaleChange,
         handleTagsChange,
         handleCoursesAcademicYearFilterChange,
+        handleSubjectPeriodFilterChange,
         handleShowOnlyCurrentSubjectsChange
     };
 };

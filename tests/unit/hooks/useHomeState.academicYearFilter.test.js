@@ -114,6 +114,67 @@ describe('useHomeState academic-year range filter for courses mode', () => {
     expect(result.current.groupedContent['Bachillerato 2º'].map((subject) => subject.id)).toEqual(['subject-2025-b']);
   });
 
+  it('filters courses by selected subject period metadata', () => {
+    const periodSubjects = [
+      {
+        id: 'subject-period-1',
+        name: 'Quimica',
+        ownerId: 'teacher-1',
+        course: 'Bachillerato 1º',
+        academicYear: '2025-2026',
+        periodType: 'trimester',
+        periodLabel: 'Trimestre 1',
+        periodIndex: 1,
+      },
+      {
+        id: 'subject-period-2',
+        name: 'Fisica',
+        ownerId: 'teacher-1',
+        course: 'Bachillerato 1º',
+        academicYear: '2025-2026',
+        periodType: 'trimester',
+        periodLabel: 'Trimestre 2',
+        periodIndex: 2,
+      },
+      {
+        id: 'subject-without-period',
+        name: 'Lengua',
+        ownerId: 'teacher-1',
+        course: 'Bachillerato 2º',
+        academicYear: '2025-2026',
+      },
+    ];
+
+    const { result } = renderHook(() =>
+      useHomeState({
+        user: baseUser,
+        searchQuery: '',
+        subjects: periodSubjects,
+        folders: [],
+        preferences: {
+          ...basePreferences,
+          viewMode: 'courses',
+          subjectPeriodFilter: 'trimester-2',
+        },
+        loadingPreferences: false,
+        updatePreference: vi.fn(),
+        rememberOrganization: true,
+      })
+    );
+
+    expect(result.current.availableSubjectPeriods.map((option) => option.value)).toEqual([
+      'trimester-1',
+      'trimester-2',
+    ]);
+
+    const groupedIds = Object.values(result.current.groupedContent)
+      .flat()
+      .map((subject) => subject.id)
+      .sort();
+
+    expect(groupedIds).toEqual(['subject-period-2']);
+  });
+
   it('keeps only current academic-year subjects in courses mode when active-only filter is enabled', () => {
     const currentAcademicYear = resolveCurrentAcademicYear();
     const previousAcademicYear = resolvePreviousAcademicYear();

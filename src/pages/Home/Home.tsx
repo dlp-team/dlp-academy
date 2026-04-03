@@ -272,6 +272,9 @@ const Home = ({ user }: any) => {
                         coursesAcademicYearFilter={logic.coursesAcademicYearFilter}
                         setCoursesAcademicYearFilter={logic.setCoursesAcademicYearFilter}
                         availableCourseAcademicYears={logic.availableCourseAcademicYears || []}
+                        subjectPeriodFilter={logic.subjectPeriodFilter || ''}
+                        setSubjectPeriodFilter={logic.setSubjectPeriodFilter}
+                        availableSubjectPeriods={logic.availableSubjectPeriods || []}
                         currentFolder={logic.currentFolder}
                         setFolderModalConfig={logic.setFolderModalConfig}
                         { ...(logic.setCollapsedGroups ? { setCollapsedGroups: logic.setCollapsedGroups } : {}) }
