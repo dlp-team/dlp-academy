@@ -10,7 +10,7 @@ import {
   requireAuthUid,
 } from './security/guards.js';
 import { createGetInstitutionalAccessCodePreviewHandler } from './security/previewHandler.js';
-import { buildSubjectLifecycleAutomationUpdate } from './security/subjectLifecycleAutomation.js';
+import { evaluateSubjectLifecycleAutomationRun } from './security/subjectLifecycleAutomation.js';
 
 initializeApp();
 
@@ -292,6 +292,8 @@ const runSubjectLifecycleAutomationInternal = async ({
   institutionId = null,
   referenceDate = new Date(),
   triggeredBy = 'system',
+  dryRun = false,
+  maxPreviewSubjectIds = 25,
 } = {}) => {
   let query = db.collection('subjects');
   if (institutionId) {
@@ -299,35 +301,31 @@ const runSubjectLifecycleAutomationInternal = async ({
   }
 
   const subjectsSnapshot = await query.get();
+  const subjectsForEvaluation = subjectsSnapshot.docs.map((subjectDoc) => ({
+    id: subjectDoc.id,
+    data: subjectDoc.data() || {},
+  }));
+
+  const lifecycleEvaluation = evaluateSubjectLifecycleAutomationRun({
+    subjects: subjectsForEvaluation,
+    referenceDate,
+    maxPreviewSubjectIds,
+  });
+
+  const subjectRefsById = new Map();
+  subjectsSnapshot.docs.forEach((subjectDoc) => {
+    subjectRefsById.set(subjectDoc.id, subjectDoc.ref);
+  });
+
   const operations = [];
 
-  let scannedSubjects = 0;
-  let updatedSubjects = 0;
-  let skippedSubjects = 0;
+  lifecycleEvaluation.updates.forEach((entry) => {
+    const subjectRef = subjectRefsById.get(entry.id);
+    if (!subjectRef) return;
 
-  subjectsSnapshot.docs.forEach((subjectDoc) => {
-    scannedSubjects += 1;
-
-    const subjectData = subjectDoc.data() || {};
-    if (subjectData.status === 'trashed') {
-      skippedSubjects += 1;
-      return;
-    }
-
-    const lifecycleDecision = buildSubjectLifecycleAutomationUpdate({
-      subject: subjectData,
-      referenceDate,
-    });
-
-    if (!lifecycleDecision || !lifecycleDecision.shouldUpdate) {
-      skippedSubjects += 1;
-      return;
-    }
-
-    updatedSubjects += 1;
     operations.push((batch) => {
-      batch.update(subjectDoc.ref, {
-        ...lifecycleDecision.updates,
+      batch.update(subjectRef, {
+        ...entry.updates,
         lifecycleEvaluatedAt: FieldValue.serverTimestamp(),
         lifecycleAutomationTrigger: String(triggeredBy || 'system'),
         updatedAt: FieldValue.serverTimestamp(),
@@ -335,13 +333,18 @@ const runSubjectLifecycleAutomationInternal = async ({
     });
   });
 
-  await commitOperationsInChunks(operations, LIFECYCLE_AUTOMATION_CHUNK_SIZE);
+  if (!dryRun) {
+    await commitOperationsInChunks(operations, LIFECYCLE_AUTOMATION_CHUNK_SIZE);
+  }
 
   return {
     institutionId,
-    scannedSubjects,
-    updatedSubjects,
-    skippedSubjects,
+    dryRun,
+    scannedSubjects: lifecycleEvaluation.scannedSubjects,
+    updatedSubjects: lifecycleEvaluation.updatedSubjects,
+    skippedSubjects: lifecycleEvaluation.skippedSubjects,
+    committedUpdates: dryRun ? 0 : lifecycleEvaluation.updatedSubjects,
+    previewSubjectIds: lifecycleEvaluation.previewSubjectIds,
   };
 };
 
@@ -362,6 +365,11 @@ export const runSubjectLifecycleAutomation = onCall(
     const actorRole = normalizeRoleClaim(actorData.role);
     const actorInstitutionId = normalizeInstitutionClaim(actorData.institutionId);
     const requestedInstitutionId = normalizeInstitutionClaim(request.data?.institutionId);
+    const dryRun = request.data?.dryRun === true;
+    const parsedMaxPreviewSubjectIds = Number(request.data?.maxPreviewSubjectIds);
+    const maxPreviewSubjectIds = Number.isFinite(parsedMaxPreviewSubjectIds)
+      ? Math.max(0, Math.min(100, Math.floor(parsedMaxPreviewSubjectIds)))
+      : 25;
 
     const canRunAsGlobalAdmin = actorRole === 'admin';
     const canRunAsInstitutionAdmin = actorRole === 'institutionadmin';
@@ -387,6 +395,8 @@ export const runSubjectLifecycleAutomation = onCall(
     const result = await runSubjectLifecycleAutomationInternal({
       institutionId: scopedInstitutionId || null,
       triggeredBy: `manual:${actorUid}`,
+      dryRun,
+      maxPreviewSubjectIds,
     });
 
     return {
@@ -406,6 +416,8 @@ export const reconcileSubjectLifecycleAutomation = onSchedule(
     return runSubjectLifecycleAutomationInternal({
       institutionId: null,
       triggeredBy: 'schedule:daily',
+      dryRun: false,
+      maxPreviewSubjectIds: 0,
     });
   }
 );

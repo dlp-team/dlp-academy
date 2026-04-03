@@ -59,9 +59,10 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
 - Added lifecycle automation engine in `functions/security/subjectLifecycleAutomation.js` with deterministic phase/policy derivation and minimal-update output generation.
 - Added callable trigger `runSubjectLifecycleAutomation` in `functions/index.js`:
   - global admin supports global or institution-scoped execution,
-  - institution admin is restricted to own institution.
+  - institution admin is restricted to own institution,
+  - supports dry-run preview mode with bounded affected-subject ID preview.
 - Added scheduled trigger `reconcileSubjectLifecycleAutomation` (`every day 02:15`, `Europe/Madrid`) to apply lifecycle transitions without Home interaction.
-- Added deterministic backend automation test coverage in `tests/unit/functions/subjectLifecycleAutomation.test.js`.
+- Added deterministic backend automation test coverage in `tests/unit/functions/subjectLifecycleAutomation.test.js`, including dry-run summary/preview behavior.
 
 ## Risks and Controls
 - Risk: incorrect hiding of active content.

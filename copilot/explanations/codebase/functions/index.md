@@ -13,13 +13,16 @@
   - requires authenticated caller profile,
   - allows only `admin` or `institutionadmin`,
   - enforces tenant scoping for institution admins (own institution only),
+  - supports `dryRun` mode for preview-only evaluation,
+  - supports bounded preview output via `maxPreviewSubjectIds`,
   - evaluates subject lifecycle transitions and applies updates only when derived state changes.
 - Added scheduled function `reconcileSubjectLifecycleAutomation` (`every day 02:15`, `Europe/Madrid`) to apply lifecycle transitions without requiring Home view interaction.
 - Added internal automation runner that:
   - skips trashed subjects,
   - computes lifecycle phase and post-course visibility,
+  - returns deterministic scan/update summaries and preview IDs,
   - disables invite-code joins after extraordinary cutoff,
-  - writes batch updates with evaluation metadata.
+  - writes batch updates with evaluation metadata (unless `dryRun`).
 
 ### 2026-04-02
 - Added callable function `syncCurrentUserClaims`.

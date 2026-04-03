@@ -8,7 +8,8 @@
   - lifecycle phase transitions (`active`, `extraordinary`, `post_extraordinary`),
   - post-extraordinary policy mapping (`delete`, `retain_teacher_only`, `retain_all_no_join`),
   - invite-code disabling after extraordinary cutoff,
-  - no-op detection when subject lifecycle fields are already aligned.
+  - no-op detection when subject lifecycle fields are already aligned,
+  - dry-run evaluation summary counters and bounded preview-ID behavior.
 
 ## Overview
 - Source file: `tests/unit/functions/subjectLifecycleAutomation.test.js`

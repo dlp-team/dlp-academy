@@ -133,6 +133,66 @@ export const buildSubjectLifecycleAutomationUpdate = ({ subject = {}, referenceD
   };
 };
 
+export const evaluateSubjectLifecycleAutomationRun = ({
+  subjects = [],
+  referenceDate = new Date(),
+  maxPreviewSubjectIds = 25,
+} = {}) => {
+  const safeSubjects = Array.isArray(subjects) ? subjects : [];
+  const parsedMaxPreview = Number(maxPreviewSubjectIds);
+  const normalizedMaxPreview = Number.isFinite(parsedMaxPreview)
+    ? Math.max(0, Math.min(100, Math.floor(parsedMaxPreview)))
+    : 25;
+
+  const updates = [];
+  const previewSubjectIds = [];
+
+  let scannedSubjects = 0;
+  let updatedSubjects = 0;
+  let skippedSubjects = 0;
+
+  safeSubjects.forEach((entry) => {
+    scannedSubjects += 1;
+
+    const subjectData = entry?.data && typeof entry.data === 'object' ? entry.data : {};
+    const subjectId = String(entry?.id || '').trim();
+
+    if (subjectData.status === 'trashed') {
+      skippedSubjects += 1;
+      return;
+    }
+
+    const lifecycleDecision = buildSubjectLifecycleAutomationUpdate({
+      subject: subjectData,
+      referenceDate,
+    });
+
+    if (!lifecycleDecision || !lifecycleDecision.shouldUpdate) {
+      skippedSubjects += 1;
+      return;
+    }
+
+    updatedSubjects += 1;
+
+    if (subjectId && previewSubjectIds.length < normalizedMaxPreview) {
+      previewSubjectIds.push(subjectId);
+    }
+
+    updates.push({
+      id: subjectId,
+      updates: lifecycleDecision.updates,
+    });
+  });
+
+  return {
+    scannedSubjects,
+    updatedSubjects,
+    skippedSubjects,
+    previewSubjectIds,
+    updates,
+  };
+};
+
 export {
   SUBJECT_LIFECYCLE_AUTOMATION_VERSION,
   SUBJECT_UNKNOWN_PASS_STATE_POLICY,

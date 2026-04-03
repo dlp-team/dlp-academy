@@ -19,6 +19,10 @@
   - `lifecycleUnknownPassStatePolicy`,
   - `lifecycleAutomationVersion`,
   - post-extraordinary invite-code disable flags.
+- Added `evaluateSubjectLifecycleAutomationRun(...)` for deterministic dry-run/preview execution:
+  - scan/update/skip counters,
+  - bounded `previewSubjectIds`,
+  - derived update payload list for write pipelines.
 
 ## Overview
 - Source file: `functions/security/subjectLifecycleAutomation.js`
