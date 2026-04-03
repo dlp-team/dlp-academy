@@ -469,4 +469,63 @@ describe('useHomeState academic-year range filter for courses mode', () => {
       'subject-retain-all',
     ]);
   });
+
+  it('applies post-course policy visibility to search and filtered subject outputs in usage mode', () => {
+    const previousAcademicYear = resolvePreviousAcademicYear();
+
+    const { result } = renderHook(() =>
+      useHomeState({
+        user: {
+          uid: 'student-1',
+          email: 'student@test.com',
+          role: 'student',
+        },
+        searchQuery: 'historia',
+        subjects: [
+          {
+            id: 'subject-delete',
+            name: 'Historia Geografica',
+            ownerId: 'student-1',
+            academicYear: previousAcademicYear,
+            periodEndAt: resolveRelativeIsoDate(-20),
+            periodExtraordinaryEndAt: resolveRelativeIsoDate(-1),
+            postCoursePolicy: 'delete',
+            updatedAt: { seconds: 30 },
+          },
+          {
+            id: 'subject-teacher-only',
+            name: 'Historia de la Literatura',
+            ownerId: 'student-1',
+            academicYear: previousAcademicYear,
+            periodEndAt: resolveRelativeIsoDate(-20),
+            periodExtraordinaryEndAt: resolveRelativeIsoDate(-1),
+            postCoursePolicy: 'retain_teacher_only',
+            updatedAt: { seconds: 20 },
+          },
+          {
+            id: 'subject-retain-all',
+            name: 'Historia Universal',
+            ownerId: 'student-1',
+            academicYear: previousAcademicYear,
+            periodEndAt: resolveRelativeIsoDate(-20),
+            periodExtraordinaryEndAt: resolveRelativeIsoDate(-1),
+            postCoursePolicy: 'retain_all_no_join',
+            updatedAt: { seconds: 10 },
+          },
+        ],
+        folders: [],
+        preferences: {
+          ...basePreferences,
+          viewMode: 'usage',
+          showOnlyCurrentSubjects: false,
+        },
+        loadingPreferences: false,
+        updatePreference: vi.fn(),
+        rememberOrganization: true,
+      })
+    );
+
+    expect(result.current.searchSubjects.map((subject) => subject.id)).toEqual(['subject-retain-all']);
+    expect(result.current.filteredSubjects.map((subject) => subject.id)).toEqual(['subject-retain-all']);
+  });
 });

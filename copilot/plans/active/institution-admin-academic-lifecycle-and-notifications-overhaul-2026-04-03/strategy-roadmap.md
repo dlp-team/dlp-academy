@@ -21,9 +21,9 @@
 - Final validation and docs sync remain explicit to prevent lifecycle drift.
 
 ## Immediate Next Actions
-- Extend policy-driven lifecycle visibility beyond Home `usage`/`courses` grouped paths where required by product behavior.
 - Add targeted UI/service consumers for backend lifecycle fields (`lifecyclePhase`, `lifecyclePostCourseVisibility`) where post-course behavior must be enforced outside Home.
 - Validate scheduled and manual lifecycle automation in emulator/staging with institution-scoped dry-run evidence.
+- Prepare Phase 04 exit review evidence and decide whether remaining post-course enforcement surfaces should be implemented in this phase or deferred to Phase 09 hardening.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.

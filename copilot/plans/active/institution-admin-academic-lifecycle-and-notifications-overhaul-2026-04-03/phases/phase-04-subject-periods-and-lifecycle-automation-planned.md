@@ -43,6 +43,10 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
   - `delete` => hidden,
   - `retain_teacher_only` => teacher/staff visible, students hidden,
   - `retain_all_no_join` => visible.
+- Home lifecycle policy filtering is now shared and reused for auxiliary usage/courses outputs:
+  - grouped search results,
+  - `searchSubjects`,
+  - `filteredSubjects` hook output used by control/tag flows.
 - Added deterministic lifecycle matrix coverage in:
   - `tests/unit/utils/subjectPeriodLifecycleUtils.test.js`
   - `tests/unit/hooks/useHomeState.academicYearFilter.test.js`

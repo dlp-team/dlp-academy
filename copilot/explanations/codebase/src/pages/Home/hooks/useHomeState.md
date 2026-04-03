@@ -1,6 +1,13 @@
 # useHomeState.js
 
 ## Changelog
+### 2026-04-03: Lifecycle policy filtering extended beyond grouped buckets
+- Introduced shared lifecycle policy filter application for `usage`/`courses` outputs.
+- Extended post-course and lifecycle filtering to auxiliary subject collections:
+	- `searchSubjects`,
+	- `filteredSubjects` (hook output used by control/tag flows).
+- Result: Home controls/search-adjacent flows now stay consistent with grouped visibility after extraordinary cutoff.
+
 ### 2026-04-03: Post-course policy visibility after extraordinary cutoff
 - Usage/courses grouped subjects now apply post-extraordinary visibility policy filtering via `isSubjectVisibleByPostCoursePolicy(...)`.
 - Implemented policy behavior:

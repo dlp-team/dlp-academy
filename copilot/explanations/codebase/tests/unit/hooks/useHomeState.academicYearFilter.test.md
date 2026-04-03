@@ -7,6 +7,11 @@ This suite validates courses-tab academic-year filtering behavior in `useHomeSta
 - single-year range filtering returns only matching course buckets.
 
 ## Changelog
+### 2026-04-03: Extended policy filtering coverage beyond grouped content
+- Added deterministic assertions for usage mode to ensure post-course policy visibility is also enforced in:
+  - `searchSubjects`,
+  - `filteredSubjects` hook output.
+
 ### 2026-04-03: Added post-course policy visibility assertions
 - Added usage-mode tests for post-extraordinary behavior:
   - students only keep `retain_all_no_join` subjects,

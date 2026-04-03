@@ -573,6 +573,35 @@ export const useHomeState = ({
         [subjectPeriodFilter, availableSubjectPeriods]
     );
 
+    const applyLifecyclePolicyFilters = (subjectEntries: any[] = [], { enforceStudentRootScope = false } = {}) => {
+        const shouldApplyLifecyclePolicy = viewMode === 'usage' || viewMode === 'courses';
+        if (!shouldApplyLifecyclePolicy) {
+            return subjectEntries;
+        }
+
+        const studentScopedEntries = (enforceStudentRootScope && isStudentRole)
+            ? subjectEntries.filter((subject: any) => isRootLevelSubject(subject))
+            : subjectEntries;
+
+        const policyVisibleSubjects = studentScopedEntries.filter((subject: any) =>
+            isSubjectVisibleByPostCoursePolicy({ subject, user })
+        );
+
+        const lifecycleVisibleSubjects = showOnlyCurrentSubjects
+            ? policyVisibleSubjects.filter((subject: any) =>
+                isSubjectActiveInPeriodLifecycle({ subject, user })
+            )
+            : policyVisibleSubjects;
+
+        if (!normalizedSubjectPeriodFilter) {
+            return lifecycleVisibleSubjects;
+        }
+
+        return lifecycleVisibleSubjects.filter((subject: any) =>
+            doesSubjectMatchPeriodFilter(subject, normalizedSubjectPeriodFilter)
+        );
+    };
+
     const applyManualOrder = (items: any[] = [], type: any) => {
         if (viewMode !== 'grid') return items;
 
@@ -644,20 +673,7 @@ export const useHomeState = ({
                 const studentScopeAllowed = !(isStudentRole && (viewMode === 'usage' || viewMode === 'courses')) || isRootLevelSubject(s);
                 return subjectName.includes(query) && isRelated(s) && studentScopeAllowed && (viewMode !== 'grid' || isVisibleInManual(s));
             });
-            const policyVisibleSearchSubjects = (viewMode === 'usage' || viewMode === 'courses')
-                ? matchedSubjects.filter((subject: any) => isSubjectVisibleByPostCoursePolicy({ subject, user }))
-                : matchedSubjects;
-            const shouldFilterCurrentOnlyInSearch = showOnlyCurrentSubjects && (viewMode === 'usage' || viewMode === 'courses');
-            const lifecycleVisibleSearchSubjects = shouldFilterCurrentOnlyInSearch
-                ? policyVisibleSearchSubjects.filter((subject: any) => isSubjectActiveInPeriodLifecycle({ subject, user }))
-                : policyVisibleSearchSubjects;
-            const shouldFilterSearchBySubjectPeriod = Boolean(normalizedSubjectPeriodFilter)
-                && (viewMode === 'usage' || viewMode === 'courses');
-            const periodFilteredSearchSubjects = shouldFilterSearchBySubjectPeriod
-                ? lifecycleVisibleSearchSubjects.filter((subject: any) =>
-                    doesSubjectMatchPeriodFilter(subject, normalizedSubjectPeriodFilter)
-                )
-                : lifecycleVisibleSearchSubjects;
+            const periodFilteredSearchSubjects = applyLifecyclePolicyFilters(matchedSubjects);
 
             return { 'Resultados de búsqueda': periodFilteredSearchSubjects };
         }
@@ -689,20 +705,7 @@ export const useHomeState = ({
                 if (!(isStudentRole && (viewMode === 'usage' || viewMode === 'courses'))) return true;
                 return isRootLevelSubject(sub);
             });
-        const policyVisibleSubjects = (viewMode === 'usage' || viewMode === 'courses')
-            ? subjectsToGroup.filter((subject: any) => isSubjectVisibleByPostCoursePolicy({ subject, user }))
-            : subjectsToGroup;
-        const shouldFilterByCurrentLifecycle = showOnlyCurrentSubjects && (viewMode === 'usage' || viewMode === 'courses');
-        const lifecycleVisibleSubjects = shouldFilterByCurrentLifecycle
-            ? policyVisibleSubjects.filter((subject: any) => isSubjectActiveInPeriodLifecycle({ subject, user }))
-            : policyVisibleSubjects;
-        const shouldFilterBySubjectPeriod = Boolean(normalizedSubjectPeriodFilter)
-            && (viewMode === 'usage' || viewMode === 'courses');
-        const periodFilteredSubjects = shouldFilterBySubjectPeriod
-            ? lifecycleVisibleSubjects.filter((subject: any) =>
-                doesSubjectMatchPeriodFilter(subject, normalizedSubjectPeriodFilter)
-            )
-            : lifecycleVisibleSubjects;
+        const periodFilteredSubjects = applyLifecyclePolicyFilters(subjectsToGroup);
 
         if (viewMode === 'usage') {
             const sorted = [...periodFilteredSubjects].sort((a, b: any) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
@@ -865,6 +868,11 @@ export const useHomeState = ({
         return { Todas: subjectsToGroup };
     }, [subjects, subjectsWithShortcuts, filteredSubjectsByTags, viewMode, currentFolder, folders, manualOrder, activeFilter, searchQuery, isStudentRole, normalizedCoursesAcademicYearFilter, normalizedSubjectPeriodFilter, showOnlyCurrentSubjects, user]);
 
+    const filteredSubjectsForCurrentView = useMemo(
+        () => applyLifecyclePolicyFilters(subjectsWithShortcuts, { enforceStudentRootScope: true }),
+        [subjectsWithShortcuts, viewMode, isStudentRole, showOnlyCurrentSubjects, normalizedSubjectPeriodFilter, user?.uid, user?.email]
+    );
+
     const { searchFolders, searchSubjects } = useMemo(() => {
         if (!searchQuery || searchQuery.trim() === '') {
             return { searchFolders: [], searchSubjects: [] };
@@ -903,8 +911,13 @@ export const useHomeState = ({
             return location === currentFolder.id;
         });
 
-        return { searchFolders: sFolders, searchSubjects: sSubjects };
-    }, [foldersWithShortcuts, folders, subjectsWithShortcuts, searchQuery, user, currentFolder]);
+        const lifecycleScopedSearchSubjects = applyLifecyclePolicyFilters(
+            sSubjects,
+            { enforceStudentRootScope: true }
+        );
+
+        return { searchFolders: sFolders, searchSubjects: lifecycleScopedSearchSubjects };
+    }, [foldersWithShortcuts, folders, subjectsWithShortcuts, searchQuery, user, currentFolder, viewMode, isStudentRole, showOnlyCurrentSubjects, normalizedSubjectPeriodFilter]);
 
     useEffect(() => {
         const closeMenu = () => setActiveMenu(null);
@@ -1033,7 +1046,7 @@ export const useHomeState = ({
         allTags,
         filteredFoldersByTags,
         filteredFolders: foldersWithShortcuts,
-        filteredSubjects: subjectsWithShortcuts,
+        filteredSubjects: filteredSubjectsForCurrentView,
         searchFolders,
         searchSubjects,
         sharedFolders,
