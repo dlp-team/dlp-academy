@@ -17,6 +17,7 @@ Phase 05 started with a focused integrity slice: class assignment pickers were s
 ## Validation
 - `get_errors` clean on touched files.
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js` passed.
+- `npm run test:unit -- tests/unit/pages/institution-admin/ClassDetail.studentCourseEligibility.test.jsx tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js` passed.
 
 ## Follow-up in Phase 05
 - Apply same linking constraints in institution-admin user linking surfaces (manual + CSV).

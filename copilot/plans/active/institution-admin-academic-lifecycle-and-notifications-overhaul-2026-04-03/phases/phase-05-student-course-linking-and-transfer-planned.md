@@ -15,9 +15,11 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Added shared helper `studentCourseLinkUtils.ts` to centralize eligibility resolution from profile links and existing class memberships.
 - Added compatibility fallback when student-course links are not yet populated so legacy institutions keep operability while migration progresses.
 - Extended deterministic tests for modal behavior and utility filtering matrix.
+- Added ClassDetail regression tests to verify out-of-course options are blocked for new assignments while preserving selected/legacy visibility and fallback behavior.
 
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
+- `npm run test:unit -- tests/unit/pages/institution-admin/ClassDetail.studentCourseEligibility.test.jsx tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
 - `get_errors` clean for all touched source and test files in this slice.
 
 ## Remaining in Phase 05
