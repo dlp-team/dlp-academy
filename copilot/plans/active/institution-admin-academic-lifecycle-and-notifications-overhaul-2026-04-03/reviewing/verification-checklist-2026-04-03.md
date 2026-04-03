@@ -19,7 +19,12 @@
 - [x] `get_errors` clean for touched files in this phase block.
 - [ ] `npm run lint` clean.
 - [x] `npx tsc --noEmit` clean.
-- [ ] `npm run test` clean.
+- [x] `npm run test` clean.
 - [x] Lossless report created and linked.
 - [x] Relevant codebase explanation docs updated.
 - [ ] Lifecycle transition to `inReview` executed after implementation.
+
+## Current Evidence Snapshot (2026-04-03)
+- `npm run test`: **PASS** (113 files, 536 tests).
+- `npx tsc --noEmit`: **PASS**.
+- `npm run lint`: **PASS with 4 pre-existing warnings** (`Exam.jsx`, `StudyGuide.jsx`), no new lint errors.

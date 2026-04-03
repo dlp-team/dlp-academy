@@ -80,18 +80,20 @@ describe('UsersTabContent invite removal confirmation', () => {
     expect(screen.queryByRole('heading', { name: /eliminar acceso de profesor/i })).toBeNull();
   });
 
-  it('persists teacher autonomous subject creation policy through save action', () => {
+  it('shows teacher-permission guidance and preserves policy payload on save', () => {
     const props = renderUsersTab();
 
-    const toggle = screen.getByLabelText(/los profesores pueden crear asignaturas sin aprobación del administrador/i);
-    fireEvent.click(toggle);
+    expect(
+      screen.getByText(/las opciones de permisos docentes se gestionan ahora desde la pestaña/i)
+    ).toBeTruthy();
+
     fireEvent.click(screen.getByRole('button', { name: /guardar políticas/i }));
 
     expect(props.onSavePolicies).toHaveBeenCalledTimes(1);
     expect(props.onSavePolicies).toHaveBeenCalledWith(
       expect.objectContaining({
         teachers: expect.objectContaining({
-          allowTeacherAutonomousSubjectCreation: false,
+          allowTeacherAutonomousSubjectCreation: DEFAULT_ACCESS_POLICIES.teachers.allowTeacherAutonomousSubjectCreation,
         }),
       })
     );
