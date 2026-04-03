@@ -2,6 +2,13 @@
 # subjectPeriodLifecycleUtils.ts
 
 ## Changelog
+### 2026-04-04
+- Extended `buildSubjectPeriodTimeline(...)` with optional `coursePeriodSchedule` support.
+- Added precedence model for timeline resolution:
+  - course-level period boundaries (when valid and matching period type),
+  - institution calendar defaults fallback.
+- Added guardrails for invalid course schedule windows and extraordinary boundary normalization.
+
 ### 2026-04-03
 - Added `buildSubjectPeriodTimeline(...)` to derive subject timeline bounds from:
   - subject academic year,

@@ -139,11 +139,93 @@ export const normalizePeriodBoundaryDate = (value: any) => {
     return formatDateOnly(buildUtcDate(parsed.year, parsed.month, parsed.day));
 };
 
+const toBoundaryUtcDate = (value: any, endOfDay = false) => {
+    const parsed = parseIsoDate(value);
+    if (!parsed) return null;
+
+    return buildUtcDate(parsed.year, parsed.month, parsed.day, endOfDay);
+};
+
+const normalizeCourseSchedulePeriod = (rawPeriod: any) => {
+    const normalizedPeriodIndex = normalizePeriodIndex(rawPeriod?.periodIndex ?? rawPeriod?.index);
+    const normalizedPeriodStartAt = normalizePeriodBoundaryDate(rawPeriod?.periodStartAt || rawPeriod?.startDate);
+    const normalizedPeriodEndAt = normalizePeriodBoundaryDate(rawPeriod?.periodEndAt || rawPeriod?.endDate);
+
+    if (normalizedPeriodIndex === null || !normalizedPeriodStartAt || !normalizedPeriodEndAt) {
+        return null;
+    }
+
+    const startDate = toBoundaryUtcDate(normalizedPeriodStartAt, false);
+    const endDate = toBoundaryUtcDate(normalizedPeriodEndAt, true);
+    if (!startDate || !endDate || endDate.getTime() < startDate.getTime()) {
+        return null;
+    }
+
+    return {
+        periodIndex: normalizedPeriodIndex,
+        periodStartAt: normalizedPeriodStartAt,
+        periodEndAt: normalizedPeriodEndAt,
+    };
+};
+
+const resolveTimelineFromCourseSchedule = ({
+    periodType,
+    periodIndex,
+    coursePeriodSchedule,
+}: any) => {
+    if (!coursePeriodSchedule || typeof coursePeriodSchedule !== 'object') {
+        return null;
+    }
+
+    const normalizedScheduleType = normalizePeriodType(
+        coursePeriodSchedule?.periodType || coursePeriodSchedule?.mode || coursePeriodSchedule?.type
+    );
+    if (normalizedScheduleType && normalizedScheduleType !== periodType) {
+        return null;
+    }
+
+    const rawPeriods = Array.isArray(coursePeriodSchedule?.periods)
+        ? coursePeriodSchedule.periods
+        : [];
+
+    const normalizedPeriods = rawPeriods
+        .map(normalizeCourseSchedulePeriod)
+        .filter(Boolean);
+
+    const targetPeriod = normalizedPeriods.find((entry: any) => entry.periodIndex === periodIndex);
+    if (!targetPeriod) {
+        return null;
+    }
+
+    const targetPeriodEndDate = toBoundaryUtcDate(targetPeriod.periodEndAt, true);
+    if (!targetPeriodEndDate) {
+        return null;
+    }
+
+    const normalizedExtraordinaryBoundary = normalizePeriodBoundaryDate(
+        coursePeriodSchedule?.extraordinaryEndDate || coursePeriodSchedule?.periodExtraordinaryEndAt
+    );
+
+    let periodExtraordinaryEndAt = normalizedExtraordinaryBoundary || targetPeriod.periodEndAt;
+    const extraordinaryBoundaryDate = toBoundaryUtcDate(periodExtraordinaryEndAt, true);
+
+    if (!extraordinaryBoundaryDate || extraordinaryBoundaryDate.getTime() < targetPeriodEndDate.getTime()) {
+        periodExtraordinaryEndAt = targetPeriod.periodEndAt;
+    }
+
+    return {
+        periodStartAt: targetPeriod.periodStartAt,
+        periodEndAt: targetPeriod.periodEndAt,
+        periodExtraordinaryEndAt,
+    };
+};
+
 export const buildSubjectPeriodTimeline = ({
     academicYear,
     periodType,
     periodIndex,
-    academicCalendar = {}
+    academicCalendar = {},
+    coursePeriodSchedule = null,
 }: any) => {
     const normalizedPeriodType = normalizePeriodType(periodType);
     const normalizedPeriodIndex = normalizePeriodIndex(periodIndex);
@@ -159,6 +241,15 @@ export const buildSubjectPeriodTimeline = ({
     const normalizedAcademicYear = String(academicYear || '').trim();
     if (getAcademicYearStartYear(normalizedAcademicYear) === null) {
         return null;
+    }
+
+    const scheduleTimeline = resolveTimelineFromCourseSchedule({
+        periodType: normalizedPeriodType,
+        periodIndex: normalizedPeriodIndex,
+        coursePeriodSchedule,
+    });
+    if (scheduleTimeline) {
+        return scheduleTimeline;
     }
 
     const startMonthDay = parseMonthDay(academicCalendar?.startDate, DEFAULT_START_MONTH_DAY);

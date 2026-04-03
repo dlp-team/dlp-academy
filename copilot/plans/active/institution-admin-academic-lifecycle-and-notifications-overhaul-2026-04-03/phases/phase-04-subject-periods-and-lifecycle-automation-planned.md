@@ -92,6 +92,10 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
   - plus `tests/unit/utils/subjectAccessUtils.test.js`.
 - Applied a follow-up TypeScript compatibility fix in `src/pages/Content/StudyGuideEditor.tsx` by explicitly typing subject metadata hydration after lifecycle guard insertion; no runtime behavior change.
 - Added roadmap extension (2026-04-04): lifecycle timeline modeling must support per-course period start/end overrides for each configured period while retaining institution defaults as fallback.
+- Implemented timeline groundwork in `src/utils/subjectPeriodLifecycleUtils.ts`:
+  - `buildSubjectPeriodTimeline(...)` now accepts optional `coursePeriodSchedule`.
+  - Timeline precedence now supports course-level period boundaries with institution fallback when override data is missing/invalid.
+- Added deterministic coverage for override and fallback paths in `tests/unit/utils/subjectPeriodLifecycleUtils.test.js`.
 
 ## Risks and Controls
 - Risk: incorrect hiding of active content.

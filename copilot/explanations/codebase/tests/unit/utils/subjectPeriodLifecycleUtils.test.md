@@ -2,6 +2,10 @@
 # subjectPeriodLifecycleUtils.test.js
 
 ## Changelog
+### 2026-04-04
+- Added deterministic coverage for course-level period schedule overrides in `buildSubjectPeriodTimeline(...)`.
+- Added fallback coverage confirming institution defaults are used when course schedule is missing target period boundaries.
+
 ### 2026-04-03
 - Added deterministic unit coverage for `subjectPeriodLifecycleUtils`:
   - timeline bound generation from institution calendar windows,

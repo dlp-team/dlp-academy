@@ -23,6 +23,12 @@ Support course-specific start/end schedules for every configured academic period
 - UI tests for course editor setup and period selector propagation.
 - Regression tests for Home/Content lifecycle visibility behavior when overrides exist vs absent.
 
+## Progress Update (2026-04-04)
+- Completed foundational timeline support in `buildSubjectPeriodTimeline(...)` with optional `coursePeriodSchedule` input.
+- Added deterministic unit coverage for:
+	- override precedence,
+	- fallback to institution defaults when course period data is incomplete.
+
 ## Rollback Notes
 - Keep additive schema changes only.
 - Gate lifecycle consumers behind fallback-first resolver utilities.

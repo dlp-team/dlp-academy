@@ -25,6 +25,58 @@ describe('subjectPeriodLifecycleUtils', () => {
     expect(timeline.periodExtraordinaryEndAt).toBe('2026-07-10');
   });
 
+  it('prioritizes course-level period boundaries when provided', () => {
+    const timeline = buildSubjectPeriodTimeline({
+      academicYear: '2025-2026',
+      periodType: 'trimester',
+      periodIndex: 2,
+      academicCalendar: {
+        startDate: '2025-09-01',
+        ordinaryEndDate: '2026-06-20',
+        extraordinaryEndDate: '2026-07-10',
+      },
+      coursePeriodSchedule: {
+        periodType: 'trimester',
+        extraordinaryEndDate: '2026-03-20',
+        periods: [
+          { periodIndex: 1, startDate: '2025-09-05', endDate: '2025-12-01' },
+          { periodIndex: 2, startDate: '2025-12-02', endDate: '2026-03-15' },
+          { periodIndex: 3, startDate: '2026-03-16', endDate: '2026-06-25' },
+        ],
+      },
+    });
+
+    expect(timeline).toEqual({
+      periodStartAt: '2025-12-02',
+      periodEndAt: '2026-03-15',
+      periodExtraordinaryEndAt: '2026-03-20',
+    });
+  });
+
+  it('falls back to institution timeline when course schedule is missing target period', () => {
+    const timeline = buildSubjectPeriodTimeline({
+      academicYear: '2025-2026',
+      periodType: 'trimester',
+      periodIndex: 3,
+      academicCalendar: {
+        startDate: '2025-09-01',
+        ordinaryEndDate: '2026-06-20',
+        extraordinaryEndDate: '2026-07-10',
+      },
+      coursePeriodSchedule: {
+        periodType: 'trimester',
+        periods: [
+          { periodIndex: 1, startDate: '2025-09-05', endDate: '2025-12-01' },
+          { periodIndex: 2, startDate: '2025-12-02', endDate: '2026-03-15' },
+        ],
+      },
+    });
+
+    expect(timeline).not.toBeNull();
+    expect(timeline.periodStartAt).not.toBe('2025-12-02');
+    expect(timeline.periodExtraordinaryEndAt).toBe('2026-07-10');
+  });
+
   it('applies student/teacher extraordinary-window visibility matrix', () => {
     const subjectBase = {
       id: 'subject-1',

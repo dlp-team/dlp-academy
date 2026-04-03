@@ -22,7 +22,7 @@
 - Final validation and docs sync remain explicit to prevent lifecycle drift.
 
 ## Immediate Next Actions
-- Define and implement per-course period schedule structure (trimester/cuatrimester/custom) with fallback to institution-level ordinary/extraordinary defaults.
+- Wire per-course period schedule fields into course/settings flows and pass them to subject timeline generation.
 - Extend Phase 05 student-course constraints into institution-admin student linking surfaces (manual and bulk flows).
 - Define transfer/promote dry-run payload shape and rollback metadata before implementing migration writes.
 

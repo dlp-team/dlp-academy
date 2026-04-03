@@ -17,3 +17,6 @@
     - `phases/phase-02-settings-domain-model-foundation-planned.md` follow-up addendum
     - `phases/phase-04-subject-periods-and-lifecycle-automation-planned.md` roadmap extension note
     - `subplans/course-period-overrides-subplan.md`
+  - Implementation started:
+    - `src/utils/subjectPeriodLifecycleUtils.ts` now supports optional `coursePeriodSchedule` override boundaries in `buildSubjectPeriodTimeline(...)`.
+    - `tests/unit/utils/subjectPeriodLifecycleUtils.test.js` includes override/fallback coverage.
