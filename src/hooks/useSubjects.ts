@@ -15,10 +15,20 @@ import {
 import { DEFAULT_TOPIC_CASCADE_COLLECTIONS, cascadeDeleteTopicResources } from '../utils/topicDeletionUtils';
 
 const ISO_DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const DEFAULT_POST_COURSE_POLICY = 'retain_all_no_join';
 
 const normalizeDateOnlyValue = (value: any) => {
     const normalizedValue = String(value || '').trim();
     return ISO_DATE_ONLY_PATTERN.test(normalizedValue) ? normalizedValue : null;
+};
+
+const normalizePostCoursePolicyValue = (value: any) => {
+    const normalizedValue = String(value || '').trim();
+    if (normalizedValue === 'delete' || normalizedValue === 'retain_all_no_join' || normalizedValue === 'retain_teacher_only') {
+        return normalizedValue;
+    }
+
+    return DEFAULT_POST_COURSE_POLICY;
 };
 
 export const useSubjects = (user: any) => {
@@ -568,6 +578,10 @@ export const useSubjects = (user: any) => {
 
         if (Object.prototype.hasOwnProperty.call(updatePayload, 'periodExtraordinaryEndAt')) {
             updatePayload.periodExtraordinaryEndAt = normalizeDateOnlyValue(updatePayload.periodExtraordinaryEndAt);
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'postCoursePolicy')) {
+            updatePayload.postCoursePolicy = normalizePostCoursePolicyValue(updatePayload.postCoursePolicy);
         }
 
         if (Object.prototype.hasOwnProperty.call(updatePayload, 'classIds') && !Object.prototype.hasOwnProperty.call(updatePayload, 'classId')) {

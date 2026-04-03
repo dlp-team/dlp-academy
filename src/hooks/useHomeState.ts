@@ -9,7 +9,7 @@ import { EDUCATION_LEVELS } from '../utils/subjectConstants';
 import { usePersistentState } from './usePersistentState';
 import { buildUserScopedPersistenceKey } from '../utils/pagePersistence';
 import { getAcademicYearStartYear, normalizeAcademicYear } from '../utils/academicYearLifecycleUtils';
-import { isSubjectActiveInPeriodLifecycle } from '../utils/subjectPeriodLifecycleUtils';
+import { isSubjectActiveInPeriodLifecycle, isSubjectVisibleByPostCoursePolicy } from '../utils/subjectPeriodLifecycleUtils';
 
 const EMPTY_MANUAL_ORDER: { subjects: any[], folders: any[] } = { subjects: [], folders: [] };
 
@@ -644,10 +644,13 @@ export const useHomeState = ({
                 const studentScopeAllowed = !(isStudentRole && (viewMode === 'usage' || viewMode === 'courses')) || isRootLevelSubject(s);
                 return subjectName.includes(query) && isRelated(s) && studentScopeAllowed && (viewMode !== 'grid' || isVisibleInManual(s));
             });
+            const policyVisibleSearchSubjects = (viewMode === 'usage' || viewMode === 'courses')
+                ? matchedSubjects.filter((subject: any) => isSubjectVisibleByPostCoursePolicy({ subject, user }))
+                : matchedSubjects;
             const shouldFilterCurrentOnlyInSearch = showOnlyCurrentSubjects && (viewMode === 'usage' || viewMode === 'courses');
             const lifecycleVisibleSearchSubjects = shouldFilterCurrentOnlyInSearch
-                ? matchedSubjects.filter((subject: any) => isSubjectActiveInPeriodLifecycle({ subject, user }))
-                : matchedSubjects;
+                ? policyVisibleSearchSubjects.filter((subject: any) => isSubjectActiveInPeriodLifecycle({ subject, user }))
+                : policyVisibleSearchSubjects;
             const shouldFilterSearchBySubjectPeriod = Boolean(normalizedSubjectPeriodFilter)
                 && (viewMode === 'usage' || viewMode === 'courses');
             const periodFilteredSearchSubjects = shouldFilterSearchBySubjectPeriod
@@ -686,10 +689,13 @@ export const useHomeState = ({
                 if (!(isStudentRole && (viewMode === 'usage' || viewMode === 'courses'))) return true;
                 return isRootLevelSubject(sub);
             });
+        const policyVisibleSubjects = (viewMode === 'usage' || viewMode === 'courses')
+            ? subjectsToGroup.filter((subject: any) => isSubjectVisibleByPostCoursePolicy({ subject, user }))
+            : subjectsToGroup;
         const shouldFilterByCurrentLifecycle = showOnlyCurrentSubjects && (viewMode === 'usage' || viewMode === 'courses');
         const lifecycleVisibleSubjects = shouldFilterByCurrentLifecycle
-            ? subjectsToGroup.filter((subject: any) => isSubjectActiveInPeriodLifecycle({ subject, user }))
-            : subjectsToGroup;
+            ? policyVisibleSubjects.filter((subject: any) => isSubjectActiveInPeriodLifecycle({ subject, user }))
+            : policyVisibleSubjects;
         const shouldFilterBySubjectPeriod = Boolean(normalizedSubjectPeriodFilter)
             && (viewMode === 'usage' || viewMode === 'courses');
         const periodFilteredSubjects = shouldFilterBySubjectPeriod

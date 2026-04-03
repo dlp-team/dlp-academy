@@ -11,6 +11,16 @@ const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DEFAULT_START_MONTH_DAY = { month: 9, day: 1 };
 const DEFAULT_ORDINARY_END_MONTH_DAY = { month: 6, day: 30 };
 const DEFAULT_EXTRAORDINARY_END_MONTH_DAY = { month: 7, day: 15 };
+const DEFAULT_POST_COURSE_POLICY = 'retain_all_no_join';
+
+const normalizePostCoursePolicy = (value: any) => {
+    const normalizedValue = String(value || '').trim();
+    if (normalizedValue === 'delete' || normalizedValue === 'retain_all_no_join' || normalizedValue === 'retain_teacher_only') {
+        return normalizedValue;
+    }
+
+    return DEFAULT_POST_COURSE_POLICY;
+};
 
 const normalizePeriodType = (value: any) => {
     const normalizedValue = String(value || '').trim().toLowerCase();
@@ -246,4 +256,34 @@ export const isSubjectActiveInPeriodLifecycle = ({
     }
 
     return false;
+};
+
+export const isSubjectVisibleByPostCoursePolicy = ({
+    subject,
+    user,
+    referenceDate = new Date()
+}: {
+    subject: any;
+    user: any;
+    referenceDate?: Date;
+}) => {
+    const extraordinaryBoundary = parseBoundaryDate(subject?.periodExtraordinaryEndAt || subject?.periodEndAt, true);
+    if (!extraordinaryBoundary) {
+        return true;
+    }
+
+    if (referenceDate.getTime() <= extraordinaryBoundary.getTime()) {
+        return true;
+    }
+
+    const postCoursePolicy = normalizePostCoursePolicy(subject?.postCoursePolicy);
+    if (postCoursePolicy === 'delete') {
+        return false;
+    }
+
+    if (postCoursePolicy === 'retain_teacher_only') {
+        return getNormalizedRole(user) !== 'student';
+    }
+
+    return true;
 };

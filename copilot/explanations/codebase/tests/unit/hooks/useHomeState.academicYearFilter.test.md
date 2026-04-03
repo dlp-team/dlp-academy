@@ -7,6 +7,12 @@ This suite validates courses-tab academic-year filtering behavior in `useHomeSta
 - single-year range filtering returns only matching course buckets.
 
 ## Changelog
+### 2026-04-03: Added post-course policy visibility assertions
+- Added usage-mode tests for post-extraordinary behavior:
+  - students only keep `retain_all_no_join` subjects,
+  - teachers keep `retain_teacher_only` and `retain_all_no_join`,
+  - `delete` policy subjects are hidden.
+
 ### 2026-04-03: Added extraordinary-window role matrix assertions
 - Added deterministic usage-mode tests for `showOnlyCurrentSubjects` when period bounds exist:
   - passed students are hidden after ordinary cutoff,

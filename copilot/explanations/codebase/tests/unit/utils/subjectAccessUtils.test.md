@@ -7,6 +7,7 @@
   - verifies `courseId` and `academicYear` are trimmed when present,
   - verifies `periodType` / `periodLabel` normalization and `periodIndex` integer coercion,
   - verifies `periodStartAt` / `periodEndAt` / `periodExtraordinaryEndAt` date-only normalization,
+  - verifies `postCoursePolicy` normalization and default fallback.
   - verifies empty values are stored as `null`.
 - Preserved existing access-control behavior coverage for owner/shared/class/institution paths.
 

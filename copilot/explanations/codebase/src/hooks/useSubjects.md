@@ -8,6 +8,10 @@
   - `periodStartAt`
   - `periodEndAt`
   - `periodExtraordinaryEndAt`
+- `updateSubject(...)` now normalizes `postCoursePolicy` to allowed policy values:
+  - `delete`
+  - `retain_all_no_join`
+  - `retain_teacher_only`
 
 ### Impact
 - Prevents invalid date-string drift in lifecycle fields consumed by Home visibility filtering.

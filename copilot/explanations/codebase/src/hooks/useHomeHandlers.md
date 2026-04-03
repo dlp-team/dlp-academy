@@ -15,6 +15,7 @@
 	- `periodStartAt`
 	- `periodEndAt`
 	- `periodExtraordinaryEndAt`
+- `handleSaveSubject` now forwards `postCoursePolicy` when present in subject form payloads.
 - Shortcut-editor subject updates now also propagate `courseId` and `academicYear` when original subject fields are editable.
 
 ### 2026-04-03

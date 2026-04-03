@@ -36,7 +36,12 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
 - Added lifecycle utility modeling in `src/utils/subjectPeriodLifecycleUtils.ts` for:
   - timeline generation,
   - role-aware extraordinary-window visibility decisions.
+- Subject save payloads now persist `postCoursePolicy` snapshots from institution settings for lifecycle visibility decisions.
 - Home `showOnlyCurrentSubjects` filtering now uses period lifecycle windows when available, with academic-year fallback for legacy subjects.
+- Home `usage`/`courses` grouping now applies post-extraordinary visibility filtering by `postCoursePolicy`:
+  - `delete` => hidden,
+  - `retain_teacher_only` => teacher/staff visible, students hidden,
+  - `retain_all_no_join` => visible.
 - Added deterministic lifecycle matrix coverage in:
   - `tests/unit/utils/subjectPeriodLifecycleUtils.test.js`
   - `tests/unit/hooks/useHomeState.academicYearFilter.test.js`

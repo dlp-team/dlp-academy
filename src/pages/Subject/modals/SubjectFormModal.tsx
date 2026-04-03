@@ -18,6 +18,7 @@ import { generateSubjectInviteCode } from '../../../utils/subjectAccessUtils';
 import { buildSubjectPeriodTimeline } from '../../../utils/subjectPeriodLifecycleUtils';
 
 const DEFAULT_SUBJECT_PERIOD_MODE = 'trimester';
+const DEFAULT_POST_COURSE_POLICY = 'retain_all_no_join';
 
 const normalizeSubjectPeriodMode = (value: any) => {
     if (value === 'trimester' || value === 'cuatrimester' || value === 'custom') {
@@ -25,6 +26,15 @@ const normalizeSubjectPeriodMode = (value: any) => {
     }
 
     return DEFAULT_SUBJECT_PERIOD_MODE;
+};
+
+const normalizePostCoursePolicy = (value: any) => {
+    const normalizedValue = String(value || '').trim();
+    if (normalizedValue === 'delete' || normalizedValue === 'retain_all_no_join' || normalizedValue === 'retain_teacher_only') {
+        return normalizedValue;
+    }
+
+    return DEFAULT_POST_COURSE_POLICY;
 };
 
 const buildSubjectPeriodOptions = (mode: any, customLabel: any) => {
@@ -57,6 +67,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         name: '', level: '', grade: '', course: '', courseId: '',
         periodType: '', periodLabel: '', periodIndex: null,
         periodStartAt: '', periodEndAt: '', periodExtraordinaryEndAt: '',
+        postCoursePolicy: DEFAULT_POST_COURSE_POLICY,
         color: 'from-blue-400 to-blue-600', icon: 'book', tags: [],
         cardStyle: 'default', modernFillColor: MODERN_FILL_COLORS[0].value
     });
@@ -96,6 +107,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [subjectPeriodOptions, setSubjectPeriodOptions] = useState<any[]>(
         buildSubjectPeriodOptions(DEFAULT_SUBJECT_PERIOD_MODE, '')
     );
+    const [subjectPostCoursePolicy, setSubjectPostCoursePolicy] = useState(DEFAULT_POST_COURSE_POLICY);
     const [subjectCalendarSettings, setSubjectCalendarSettings] = useState<any>({
         startDate: '',
         ordinaryEndDate: '',
@@ -168,6 +180,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         const normalizedPeriodStartAt = String(formData?.periodStartAt || '').trim();
         const normalizedPeriodEndAt = String(formData?.periodEndAt || '').trim();
         const normalizedPeriodExtraordinaryEndAt = String(formData?.periodExtraordinaryEndAt || '').trim();
+        const normalizedPostCoursePolicy = normalizePostCoursePolicy(formData?.postCoursePolicy || subjectPostCoursePolicy);
         const periodTimeline = buildSubjectPeriodTimeline({
             academicYear: normalizedSubjectAcademicYear,
             periodType: normalizedPeriodType,
@@ -188,7 +201,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             periodIndex: Number.isFinite(normalizedPeriodIndex) ? normalizedPeriodIndex : null,
             periodStartAt: periodTimeline?.periodStartAt || normalizedPeriodStartAt || null,
             periodEndAt: periodTimeline?.periodEndAt || normalizedPeriodEndAt || null,
-            periodExtraordinaryEndAt: periodTimeline?.periodExtraordinaryEndAt || normalizedPeriodExtraordinaryEndAt || null
+            periodExtraordinaryEndAt: periodTimeline?.periodExtraordinaryEndAt || normalizedPeriodExtraordinaryEndAt || null,
+            postCoursePolicy: normalizedPostCoursePolicy
         };
     };
 
@@ -276,6 +290,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     periodStartAt: initialData.periodStartAt || '',
                     periodEndAt: initialData.periodEndAt || '',
                     periodExtraordinaryEndAt: initialData.periodExtraordinaryEndAt || '',
+                    postCoursePolicy: normalizePostCoursePolicy(initialData.postCoursePolicy),
                     level: initialData.level || '',
                     grade: initialData.grade || '',
                     color: initialData.color || 'from-blue-400 to-blue-600',
@@ -316,6 +331,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     periodStartAt: initialData?.periodStartAt || '',
                     periodEndAt: initialData?.periodEndAt || '',
                     periodExtraordinaryEndAt: initialData?.periodExtraordinaryEndAt || '',
+                    postCoursePolicy: normalizePostCoursePolicy(initialData?.postCoursePolicy),
                     color: 'from-blue-400 to-blue-600',
                     icon: 'book',
                     tags: [],
@@ -335,6 +351,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         const applyDefaultPeriodConfig = () => {
             setSubjectPeriodMode(DEFAULT_SUBJECT_PERIOD_MODE);
             setSubjectPeriodOptions(buildSubjectPeriodOptions(DEFAULT_SUBJECT_PERIOD_MODE, ''));
+            setSubjectPostCoursePolicy(DEFAULT_POST_COURSE_POLICY);
             setSubjectCalendarSettings({
                 startDate: '',
                 ordinaryEndDate: '',
@@ -371,10 +388,14 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 const periodization = institutionData?.academicCalendar?.periodization || {};
                 const normalizedPeriodMode = normalizeSubjectPeriodMode(periodization?.mode);
                 const normalizedCustomPeriodLabel = String(periodization?.customLabel || '').trim();
+                const normalizedPostCoursePolicy = normalizePostCoursePolicy(
+                    institutionData?.courseLifecycle?.postCoursePolicy
+                );
 
                 setInstitutionAccessPolicies(normalizeAccessPolicies(institutionData?.accessPolicies));
                 setSubjectPeriodMode(normalizedPeriodMode);
                 setSubjectPeriodOptions(buildSubjectPeriodOptions(normalizedPeriodMode, normalizedCustomPeriodLabel));
+                setSubjectPostCoursePolicy(normalizedPostCoursePolicy);
                 setSubjectCalendarSettings({
                     startDate: String(academicCalendar?.startDate || '').trim(),
                     ordinaryEndDate: String(academicCalendar?.ordinaryEndDate || '').trim(),

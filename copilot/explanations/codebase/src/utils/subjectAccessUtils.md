@@ -14,6 +14,7 @@
   - `periodStartAt` (ISO date `YYYY-MM-DD` or `null`)
   - `periodEndAt` (ISO date `YYYY-MM-DD` or `null`)
   - `periodExtraordinaryEndAt` (ISO date `YYYY-MM-DD` or `null`)
+- `normalizeSubjectAccessPayload(...)` now normalizes `postCoursePolicy` to supported policy keys with default fallback `retain_all_no_join`.
 - Keeps existing required-course guard and class/enrollment normalization behavior unchanged.
 
 ## Overview

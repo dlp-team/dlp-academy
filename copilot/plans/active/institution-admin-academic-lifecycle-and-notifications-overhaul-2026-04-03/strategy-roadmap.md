@@ -21,9 +21,9 @@
 - Final validation and docs sync remain explicit to prevent lifecycle drift.
 
 ## Immediate Next Actions
-- Apply post-extraordinary transition behavior according to `courseLifecycle.postCoursePolicy` (`delete`, `retain_all_no_join`, `retain_teacher_only`).
 - Define and implement deterministic handling for unknown pass-state students during extraordinary window close.
 - Prepare scheduled/triggered automation path to apply lifecycle transitions without requiring Home view interaction.
+- Extend policy-driven lifecycle visibility beyond Home `usage`/`courses` grouped paths where required by product behavior.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.

@@ -5,6 +5,7 @@ import { db } from '../firebase/config';
 const INVITE_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const classCache = new Map<any, any>();
 const ISO_DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const DEFAULT_POST_COURSE_POLICY = 'retain_all_no_join';
 const ROLE_RANK = {
     student: 0,
     teacher: 1,
@@ -20,6 +21,15 @@ const sanitizeString = (value: any) => {
 const sanitizeDateOnly = (value: any) => {
     const normalizedValue = sanitizeString(value);
     return ISO_DATE_ONLY_PATTERN.test(normalizedValue) ? normalizedValue : null;
+};
+
+const sanitizePostCoursePolicy = (value: any) => {
+    const normalizedValue = sanitizeString(value);
+    if (normalizedValue === 'delete' || normalizedValue === 'retain_all_no_join' || normalizedValue === 'retain_teacher_only') {
+        return normalizedValue;
+    }
+
+    return DEFAULT_POST_COURSE_POLICY;
 };
 
 const uniqueStringArray = (value: any) => {
@@ -68,6 +78,7 @@ export const normalizeSubjectAccessPayload = (payload: any = {}, { requireCourse
     const periodStartAt = sanitizeDateOnly(payload.periodStartAt);
     const periodEndAt = sanitizeDateOnly(payload.periodEndAt);
     const periodExtraordinaryEndAt = sanitizeDateOnly(payload.periodExtraordinaryEndAt);
+    const postCoursePolicy = sanitizePostCoursePolicy(payload.postCoursePolicy);
     if (requireCourse && !course) {
         throw new Error('El curso es obligatorio para crear la asignatura.');
     }
@@ -96,6 +107,7 @@ export const normalizeSubjectAccessPayload = (payload: any = {}, { requireCourse
         periodStartAt,
         periodEndAt,
         periodExtraordinaryEndAt,
+        postCoursePolicy,
         classId,
         classIds: normalizedClassIds,
         enrolledStudentUids: uniqueStringArray(payload.enrolledStudentUids),

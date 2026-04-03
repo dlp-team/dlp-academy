@@ -110,6 +110,7 @@ export const useHomeHandlers = ({
             ...(Object.prototype.hasOwnProperty.call(formData || {}, 'periodStartAt') ? { periodStartAt: normalizedPeriodStartAt || null } : {}),
             ...(Object.prototype.hasOwnProperty.call(formData || {}, 'periodEndAt') ? { periodEndAt: normalizedPeriodEndAt || null } : {}),
             ...(Object.prototype.hasOwnProperty.call(formData || {}, 'periodExtraordinaryEndAt') ? { periodExtraordinaryEndAt: normalizedPeriodExtraordinaryEndAt || null } : {}),
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'postCoursePolicy') ? { postCoursePolicy: formData.postCoursePolicy || null } : {}),
             color: formData.color,
             icon: formData.icon || 'book',
             tags: formData.tags,
@@ -139,6 +140,7 @@ export const useHomeHandlers = ({
                             periodStartAt: normalizedPeriodStartAt || null,
                             periodEndAt: normalizedPeriodEndAt || null,
                             periodExtraordinaryEndAt: normalizedPeriodExtraordinaryEndAt || null,
+                            postCoursePolicy: formData.postCoursePolicy || null,
                             icon: formData.icon || 'book',
                             updatedAt: new Date()
                         });

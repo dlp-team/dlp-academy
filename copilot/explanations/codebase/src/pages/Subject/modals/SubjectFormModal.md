@@ -11,6 +11,7 @@ Phase 04 lifecycle behavior requires explicit subject-level period windows so Ho
 	- `periodStartAt`
 	- `periodEndAt`
 	- `periodExtraordinaryEndAt`
+- Save payload now also snapshots normalized `postCoursePolicy` from institution settings.
 - Added modal state wiring for calendar settings preload from institution doc reads.
 
 ### Validation

@@ -1,6 +1,13 @@
 # useHomeState.js
 
 ## Changelog
+### 2026-04-03: Post-course policy visibility after extraordinary cutoff
+- Usage/courses grouped subjects now apply post-extraordinary visibility policy filtering via `isSubjectVisibleByPostCoursePolicy(...)`.
+- Implemented policy behavior:
+	- `delete` => hide subject,
+	- `retain_teacher_only` => hide for students, keep for teacher/staff,
+	- `retain_all_no_join` => keep visible.
+
 ### 2026-04-03: Role-aware lifecycle visibility with period windows
 - `showOnlyCurrentSubjects` filtering now evaluates period lifecycle windows when subject timeline bounds are available.
 - Integrated `isSubjectActiveInPeriodLifecycle(...)` decision path for usage/courses current-only filtering:

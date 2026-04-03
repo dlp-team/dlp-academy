@@ -40,6 +40,7 @@ describe('subjectAccessUtils', () => {
       periodStartAt: ' 2026-01-15 ',
       periodEndAt: '2026-03-30',
       periodExtraordinaryEndAt: ' 2026-07-05 ',
+      postCoursePolicy: ' retain_teacher_only ',
       classId: ' class-main ',
       classIds: ['class-aux', 'class-main', '  class-aux  ', ''],
       enrolledStudentUids: [' student-1 ', 'student-2', 'student-1', null],
@@ -55,6 +56,7 @@ describe('subjectAccessUtils', () => {
     expect(normalized.periodStartAt).toBe('2026-01-15');
     expect(normalized.periodEndAt).toBe('2026-03-30');
     expect(normalized.periodExtraordinaryEndAt).toBe('2026-07-05');
+    expect(normalized.postCoursePolicy).toBe('retain_teacher_only');
     expect(normalized.classId).toBe('class-main');
     expect(normalized.classIds).toEqual(['class-main', 'class-aux']);
     expect(normalized.enrolledStudentUids).toEqual(['student-1', 'student-2']);
@@ -72,6 +74,7 @@ describe('subjectAccessUtils', () => {
       periodStartAt: '',
       periodEndAt: 'invalid-date',
       periodExtraordinaryEndAt: '2026/07/05',
+      postCoursePolicy: 'unknown-policy',
     });
 
     expect(normalized.courseId).toBeNull();
@@ -82,6 +85,7 @@ describe('subjectAccessUtils', () => {
     expect(normalized.periodStartAt).toBeNull();
     expect(normalized.periodEndAt).toBeNull();
     expect(normalized.periodExtraordinaryEndAt).toBeNull();
+    expect(normalized.postCoursePolicy).toBe('retain_all_no_join');
   });
 
   it('rejects missing course when required', () => {

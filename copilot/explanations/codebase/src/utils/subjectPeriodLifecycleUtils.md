@@ -8,6 +8,7 @@
   - selected period type/index,
   - institution calendar settings (`startDate`, `ordinaryEndDate`, `extraordinaryEndDate`).
 - Added `isSubjectActiveInPeriodLifecycle(...)` for role-aware visibility decisions across ordinary/extraordinary windows.
+- Added `isSubjectVisibleByPostCoursePolicy(...)` for post-extraordinary policy decisions (`delete`, `retain_all_no_join`, `retain_teacher_only`).
 - Added `normalizePeriodBoundaryDate(...)` helper for safe date-only normalization.
 
 ## Overview

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSubjectPeriodTimeline,
   isSubjectActiveInPeriodLifecycle,
+  isSubjectVisibleByPostCoursePolicy,
   normalizePeriodBoundaryDate,
 } from '../../../src/utils/subjectPeriodLifecycleUtils';
 
@@ -85,5 +86,45 @@ describe('subjectPeriodLifecycleUtils', () => {
 
     expect(normalizePeriodBoundaryDate('2026-07-05')).toBe('2026-07-05');
     expect(normalizePeriodBoundaryDate('invalid')).toBeNull();
+  });
+
+  it('applies post-course policy visibility after extraordinary cutoff', () => {
+    const referenceDate = new Date('2026-07-20T12:00:00Z');
+    const subjectBase = {
+      periodEndAt: '2026-06-20',
+      periodExtraordinaryEndAt: '2026-07-10',
+    };
+
+    expect(
+      isSubjectVisibleByPostCoursePolicy({
+        subject: { ...subjectBase, postCoursePolicy: 'delete' },
+        user: { uid: 'teacher-1', role: 'teacher' },
+        referenceDate,
+      })
+    ).toBe(false);
+
+    expect(
+      isSubjectVisibleByPostCoursePolicy({
+        subject: { ...subjectBase, postCoursePolicy: 'retain_teacher_only' },
+        user: { uid: 'student-1', role: 'student' },
+        referenceDate,
+      })
+    ).toBe(false);
+
+    expect(
+      isSubjectVisibleByPostCoursePolicy({
+        subject: { ...subjectBase, postCoursePolicy: 'retain_teacher_only' },
+        user: { uid: 'teacher-1', role: 'teacher' },
+        referenceDate,
+      })
+    ).toBe(true);
+
+    expect(
+      isSubjectVisibleByPostCoursePolicy({
+        subject: { ...subjectBase, postCoursePolicy: 'retain_all_no_join' },
+        user: { uid: 'student-1', role: 'student' },
+        referenceDate,
+      })
+    ).toBe(true);
   });
 });
