@@ -16,6 +16,7 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Added compatibility fallback when student-course links are not yet populated so legacy institutions keep operability while migration progresses.
 - Extended deterministic tests for modal behavior and utility filtering matrix.
 - Added ClassDetail regression tests to verify out-of-course options are blocked for new assignments while preserving selected/legacy visibility and fallback behavior.
+- Hardened class course-change flow: when a class switches course, student assignments are normalized to the new course eligibility set (with legacy fallback preservation).
 
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`

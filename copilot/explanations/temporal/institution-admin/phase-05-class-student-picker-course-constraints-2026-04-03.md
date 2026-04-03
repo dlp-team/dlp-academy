@@ -12,6 +12,7 @@ Phase 05 started with a focused integrity slice: class assignment pickers were s
 ## UX Behavior After Change
 - Create class: student picker filters to selected course when links exist.
 - Edit class: picker is course-aware and blocks adding new out-of-course students.
+- Edit class (course switch): save payload now drops incompatible student assignments to keep class/course linkage consistent.
 - Legacy data: explicit informational copy appears and full list is retained temporarily.
 
 ## Validation

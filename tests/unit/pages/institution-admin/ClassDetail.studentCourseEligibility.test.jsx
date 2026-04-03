@@ -89,4 +89,43 @@ describe('ClassDetail student course eligibility', () => {
     expect(screen.getByText('Alumno Dos')).toBeTruthy();
     expect(screen.getByText(/listado completo temporalmente/i)).toBeTruthy();
   });
+
+  it('prunes incompatible students when changing class course', async () => {
+    const onUpdateField = vi.fn().mockResolvedValue(undefined);
+
+    render(
+      <ClassDetail
+        cls={{ ...baseClass, studentIds: ['student-legacy', 'student-in-course'] }}
+        courses={[
+          baseCourse,
+          { id: 'course-2', name: '2 ESO', academicYear: '2026-2027', color: '#14b8a6' },
+        ]}
+        allTeachers={[baseTeacher]}
+        allStudents={[
+          { id: 'student-legacy', displayName: 'Alumno Legacy', email: 'legacy@example.com', courseId: 'course-2' },
+          { id: 'student-in-course', displayName: 'Alumno Curso', email: 'curso@example.com', courseId: 'course-1' },
+        ]}
+        allClasses={[{ ...baseClass, studentIds: ['student-legacy', 'student-in-course'] }]}
+        onBack={() => {}}
+        onDelete={() => {}}
+        onUpdateField={onUpdateField}
+      />
+    );
+
+    fireEvent.click(screen.getByTitle(/editar nombre de la clase/i));
+
+    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'course-2' } });
+    fireEvent.change(screen.getByPlaceholderText('A'), { target: { value: 'B' } });
+    fireEvent.click(screen.getByRole('button', { name: /guardar/i }));
+
+    await waitFor(() => {
+      expect(onUpdateField).toHaveBeenCalledTimes(1);
+    });
+
+    expect(onUpdateField).toHaveBeenCalledWith('class-1', expect.objectContaining({
+      name: '2 ESO B',
+      courseId: 'course-2',
+      studentIds: ['student-legacy'],
+    }));
+  });
 });

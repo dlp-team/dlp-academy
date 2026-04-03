@@ -232,10 +232,25 @@ const ClassDetail = ({
         const nextAcademicYear = normalizeAcademicYear(sel?.academicYear)
           || normalizeAcademicYear(cls.academicYear)
           || getDefaultAcademicYear();
+        const {
+          eligibleStudents: nextEligibleStudents,
+          isLegacyFallback: nextEligibilityFallback,
+        } = resolveEligibleStudentsForCourse({
+          students: allStudents,
+          selectedCourseId: draft.courseId,
+          classes: allClasses,
+        });
+        const nextEligibleStudentIdSet = new Set(nextEligibleStudents.map((student: any) => student.id));
+        const currentStudentIds = Array.isArray(cls.studentIds) ? cls.studentIds : [];
+        const normalizedStudentIds = nextEligibilityFallback
+          ? currentStudentIds
+          : currentStudentIds.filter((studentId: any) => nextEligibleStudentIdSet.has(studentId));
+
         patch = {
           name: `${sel.name} ${draft.identifier.trim()}`,
           courseId: draft.courseId,
           academicYear: nextAcademicYear,
+          studentIds: normalizedStudentIds,
         };
       } else if (key === 'teacher') {
         patch = { teacherId: draft.teacherIds?.[0] ?? '' };
