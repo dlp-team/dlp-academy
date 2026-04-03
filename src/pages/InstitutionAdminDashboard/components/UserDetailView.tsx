@@ -1,3 +1,4 @@
+// src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -12,10 +13,20 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import Header from '../../../components/layout/Header';
 import { getCourseDisplayLabel } from '../../../utils/courseLabelUtils';
+
+const normalizeId = (value: any) => String(value || '').trim();
+
+const toUniqueIds = (values: any[] = []) => Array.from(new Set(values.map(normalizeId).filter(Boolean)));
+
+const getStudentProfileLinkedCourseIds = (student: any = {}) => toUniqueIds([
+  student?.courseId,
+  ...(Array.isArray(student?.courseIds) ? student.courseIds : []),
+  ...(Array.isArray(student?.enrolledCourseIds) ? student.enrolledCourseIds : []),
+]);
 
 const formatDate = (timestampValue: any) => {
   try {
@@ -40,6 +51,11 @@ const UserDetailView = ({ user, userType }: any) => {
     subjectCount: 0,
   });
   const [relatedRows, setRelatedRows] = useState<any[]>([]);
+  const [institutionCourses, setInstitutionCourses] = useState<any[]>([]);
+  const [linkedCourseIds, setLinkedCourseIds] = useState<any[]>([]);
+  const [selectedCourseId, setSelectedCourseId] = useState('');
+  const [isUpdatingCourseLinks, setIsUpdatingCourseLinks] = useState(false);
+  const [courseLinkMessage, setCourseLinkMessage] = useState({ type: '', text: '' });
   const [loading, setLoading] = useState(true);
 
   const userId = userType === 'teacher' ? teacherId : studentId;
@@ -82,6 +98,8 @@ const UserDetailView = ({ user, userType }: any) => {
         const allCourses = coursesSnap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
         const teachersById = new Map<string, any>(teachersSnap.docs.map((d) => [d.id, { id: d.id, ...d.data() }]));
         const coursesById = new Map(allCourses.map((course) => [course.id, course]));
+        setInstitutionCourses(allCourses);
+
         const getCourseLabelById = (courseId: any) => {
           const course = coursesById.get(courseId);
           return course ? getCourseDisplayLabel(course) : 'Sin curso';
@@ -105,13 +123,21 @@ const UserDetailView = ({ user, userType }: any) => {
             assignedClasses.map((cl: any) => ({
               id: cl.id,
               name: cl.name || 'Clase sin nombre',
+              courseId: cl.courseId || null,
               subtitle: getCourseLabelById(cl.courseId),
               meta: `${(cl.studentIds || []).length} alumno(s)`,
             })),
           );
+
+          setLinkedCourseIds([]);
+          setSelectedCourseId('');
+          setCourseLinkMessage({ type: '', text: '' });
         } else {
           const studentClasses = allClasses.filter((cl: any) => (cl.studentIds || []).includes(userId));
-          const uniqueCourseIds = new Set(studentClasses.map((cl) => cl.courseId).filter(Boolean));
+          const uniqueCourseIds = new Set([
+            ...studentClasses.map((cl) => cl.courseId).filter(Boolean),
+            ...getStudentProfileLinkedCourseIds(fetchedUser),
+          ]);
           const uniqueTeacherIds = new Set(studentClasses.map((cl) => cl.teacherId).filter(Boolean));
 
           setMetrics({
@@ -128,11 +154,16 @@ const UserDetailView = ({ user, userType }: any) => {
               return {
                 id: cl.id,
                 name: cl.name || 'Clase sin nombre',
+                courseId: cl.courseId || null,
                 subtitle: getCourseLabelById(cl.courseId),
                 meta: teacher ? (teacher.displayName || teacher.email || 'Profesor asignado') : 'Sin profesor asignado',
               };
             }),
           );
+
+          setLinkedCourseIds(getStudentProfileLinkedCourseIds(fetchedUser));
+          setCourseLinkMessage({ type: '', text: '' });
+          setSelectedCourseId('');
         }
       } catch (error) {
         console.error('Error fetching user details:', error);
@@ -148,6 +179,99 @@ const UserDetailView = ({ user, userType }: any) => {
     () => (userType === 'teacher' ? '👨‍🏫 Profesor' : '👨‍🎓 Alumno'),
     [userType],
   );
+
+  const coursesById = useMemo(
+    () => new Map(institutionCourses.map((course: any) => [course.id, course])),
+    [institutionCourses],
+  );
+
+  const linkedCourses = useMemo(() => (
+    linkedCourseIds.map((courseId: any) => {
+      const course = coursesById.get(courseId);
+      return {
+        id: courseId,
+        label: course ? getCourseDisplayLabel(course) : `Curso (${courseId})`,
+        isArchived: !course,
+      };
+    })
+  ), [linkedCourseIds, coursesById]);
+
+  const availableCourses = useMemo(() => {
+    const linkedSet = new Set(linkedCourseIds.map((courseId: any) => normalizeId(courseId)));
+    return institutionCourses.filter((course: any) => !linkedSet.has(normalizeId(course?.id)));
+  }, [institutionCourses, linkedCourseIds]);
+
+  const syncStudentCourseLinks = async (nextCourseIds: any[] = []) => {
+    if (userType !== 'student' || !viewedUser?.id || isUpdatingCourseLinks) return;
+
+    if (normalizeId(viewedUser?.institutionId) && normalizeId(viewedUser?.institutionId) !== normalizeId(user?.institutionId)) {
+      setCourseLinkMessage({
+        type: 'error',
+        text: 'No se pueden modificar cursos de un alumno de otra institución.',
+      });
+      return;
+    }
+
+    const normalizedCourseIds = toUniqueIds(nextCourseIds);
+    const courseIdsFromClasses = new Set(relatedRows.map((row: any) => normalizeId(row?.courseId)).filter(Boolean));
+    const mergedCourseCount = new Set([...Array.from(courseIdsFromClasses), ...normalizedCourseIds]).size;
+
+    setIsUpdatingCourseLinks(true);
+    setCourseLinkMessage({ type: '', text: '' });
+    try {
+      await updateDoc(doc(db, 'users', viewedUser.id), {
+        courseId: normalizedCourseIds[0] || null,
+        courseIds: normalizedCourseIds,
+        enrolledCourseIds: normalizedCourseIds,
+        updatedAt: serverTimestamp(),
+      });
+
+      setLinkedCourseIds(normalizedCourseIds);
+      setViewedUser((prev: any) => ({
+        ...prev,
+        courseId: normalizedCourseIds[0] || null,
+        courseIds: normalizedCourseIds,
+        enrolledCourseIds: normalizedCourseIds,
+      }));
+      setMetrics((previous: any) => ({
+        ...previous,
+        courseCount: mergedCourseCount,
+      }));
+      setCourseLinkMessage({ type: 'success', text: 'Cursos actualizados correctamente.' });
+    } catch (error) {
+      console.error('Error updating student course links:', error);
+      setCourseLinkMessage({
+        type: 'error',
+        text: 'No se pudieron actualizar los cursos del alumno. Inténtalo de nuevo.',
+      });
+    } finally {
+      setIsUpdatingCourseLinks(false);
+    }
+  };
+
+  const handleAddCourseLink = async () => {
+    const normalizedSelectedCourseId = normalizeId(selectedCourseId);
+    if (!normalizedSelectedCourseId) {
+      setCourseLinkMessage({ type: 'error', text: 'Selecciona un curso para vincular.' });
+      return;
+    }
+
+    const selectedCourseExists = availableCourses.some((course: any) => normalizeId(course?.id) === normalizedSelectedCourseId);
+    if (!selectedCourseExists) {
+      setCourseLinkMessage({ type: 'error', text: 'El curso seleccionado no está disponible para vincular.' });
+      return;
+    }
+
+    await syncStudentCourseLinks([...linkedCourseIds, normalizedSelectedCourseId]);
+    setSelectedCourseId('');
+  };
+
+  const handleRemoveCourseLink = async (courseIdToRemove: any) => {
+    const normalizedCourseId = normalizeId(courseIdToRemove);
+    if (!normalizedCourseId) return;
+
+    await syncStudentCourseLinks(linkedCourseIds.filter((courseId: any) => normalizeId(courseId) !== normalizedCourseId));
+  };
 
   if (loading) {
     return (
@@ -263,6 +387,70 @@ const UserDetailView = ({ user, userType }: any) => {
             <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Último acceso</p>
           </div>
         </div>
+
+        {userType === 'student' && (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-800 p-8 mb-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Vinculación de cursos</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              Gestiona qué cursos puede tomar este alumno en la institución.
+            </p>
+
+            <div className="flex flex-col md:flex-row gap-3 md:items-center mb-4">
+              <select
+                value={selectedCourseId}
+                onChange={(event) => setSelectedCourseId(event.target.value)}
+                disabled={isUpdatingCourseLinks || availableCourses.length === 0}
+                className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">Selecciona un curso...</option>
+                {availableCourses.map((course: any) => (
+                  <option key={course.id} value={course.id}>
+                    {getCourseDisplayLabel(course)}
+                  </option>
+                ))}
+              </select>
+
+              <button
+                type="button"
+                onClick={handleAddCourseLink}
+                disabled={isUpdatingCourseLinks || !selectedCourseId}
+                className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold disabled:opacity-60"
+              >
+                {isUpdatingCourseLinks ? 'Guardando...' : 'Vincular curso'}
+              </button>
+            </div>
+
+            {courseLinkMessage.text && (
+              <p className={`mb-4 text-sm font-medium ${courseLinkMessage.type === 'success' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                {courseLinkMessage.text}
+              </p>
+            )}
+
+            {linkedCourses.length === 0 ? (
+              <p className="text-sm text-slate-500 dark:text-slate-400">Este alumno todavía no tiene cursos vinculados manualmente.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {linkedCourses.map((course: any) => (
+                  <span
+                    key={course.id}
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${course.isArchived ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300' : 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300'}`}
+                  >
+                    {course.label}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCourseLink(course.id)}
+                      disabled={isUpdatingCourseLinks}
+                      aria-label={`Quitar ${course.label}`}
+                      className="text-xs font-black hover:opacity-80 disabled:opacity-50"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-800 p-8">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
