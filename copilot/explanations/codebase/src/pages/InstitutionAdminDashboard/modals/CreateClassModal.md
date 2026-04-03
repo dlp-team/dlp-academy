@@ -11,10 +11,12 @@
 - Keeps teacher/student picker behavior unchanged.
 - Derives `academicYear` from selected course; shows fallback message for legacy invalid courses.
 - Removes free-form year editing from class creation path.
+- Constrains student picker options to students linked with the selected course (with legacy fallback when no links exist yet).
 
 ## Exports
 - `default CreateClassModal`
 
 ## Changelog
+- 2026-04-03: Added course-constrained student picker filtering with compatibility fallback and stale-selection cleanup on course change.
 - 2026-04-03: Updated course selector labels to use shared `Nombre (AAAA-AAAA)` formatting for cross-year name disambiguation.
 - 2026-04-02: Switched class creation to course-derived academic year with fallback handling and warning copy.

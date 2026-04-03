@@ -8,7 +8,10 @@
 
 ## Coverage
 - Inherited year submission from selected course.
-- Fallback year submission using deterministic system time.
+- Fallback year submission when selected course has invalid academic-year metadata.
+- Student picker filtering by selected course when links exist.
+- Legacy compatibility fallback when student-course links are not populated.
 
 ## Changelog
+- 2026-04-03: Added student-course picker filtering/fallback test cases and stabilized fallback-year assertion against shared helper logic.
 - 2026-04-02: Added modal tests for course-derived academic-year behavior.

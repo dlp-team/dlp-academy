@@ -1,5 +1,5 @@
 <!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md -->
-# Phase 05 - Student-Course Linking and Transfer Flows (PLANNED)
+# Phase 05 - Student-Course Linking and Transfer Flows (IN_PROGRESS)
 
 ## Objective
 Implement safe pathways to link students to courses (CSV/manual), constrain class assignment by course, and support next-year transfer/promotion flows.
@@ -9,6 +9,21 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Class assignment picker constrained to students in selected course.
 - Course hierarchy configuration (common presets + custom order).
 - Next-academic-year course duplication/transfer tooling with visibility controls.
+
+## Progress Update (2026-04-03)
+- Implemented first Phase 05 slice: class student pickers now resolve eligible students by selected course in both create and edit experiences.
+- Added shared helper `studentCourseLinkUtils.ts` to centralize eligibility resolution from profile links and existing class memberships.
+- Added compatibility fallback when student-course links are not yet populated so legacy institutions keep operability while migration progresses.
+- Extended deterministic tests for modal behavior and utility filtering matrix.
+
+## Validation Evidence
+- `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
+- `get_errors` clean for all touched source and test files in this slice.
+
+## Remaining in Phase 05
+- Add manual/CSV linking interfaces in institution-admin user management flows.
+- Define and implement transfer/promote orchestration with dry-run and rollback metadata.
+- Add end-to-end validation for cross-course assignment constraints after linking rollout.
 
 ## Risks and Controls
 - Risk: orphaned student mappings after transfer.

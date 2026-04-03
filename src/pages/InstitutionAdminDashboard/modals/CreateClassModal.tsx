@@ -8,7 +8,7 @@
 // • Teacher (single-select) and students (multi-select) use the same
 //   PersonPicker component: search bar + scrollable checklist.
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CalendarDays, Loader2, Save, XCircle } from 'lucide-react';
 import {
   ghostBtnCls,
@@ -23,6 +23,9 @@ import {
   normalizeAcademicYear,
 } from '../components/classes-courses/academicYearUtils';
 import { getCourseDisplayLabel } from '../../../utils/courseLabelUtils';
+import { resolveEligibleStudentsForCourse } from '../components/classes-courses/studentCourseLinkUtils';
+
+const EMPTY_CLASSES: any[] = [];
 
 const PersonPicker = ({
   people,
@@ -100,6 +103,7 @@ const CreateClassModal = ({
   courses,
   allTeachers,
   allStudents,
+  classes = EMPTY_CLASSES,
 }: any) => {
   const [courseId, setCourseId] = useState('');
   const [identifier, setIdentifier] = useState('');
@@ -111,6 +115,19 @@ const CreateClassModal = ({
   const fallbackAcademicYear = getDefaultAcademicYear();
   const derivedAcademicYear = selectedCourseAcademicYear || fallbackAcademicYear;
   const usingFallbackAcademicYear = Boolean(courseId) && !selectedCourseAcademicYear;
+
+  const {
+    eligibleStudents,
+    isLegacyFallback: isLegacyStudentFilterFallback,
+  } = useMemo(
+    () => resolveEligibleStudentsForCourse({ students: allStudents, selectedCourseId: courseId, classes }),
+    [allStudents, courseId, classes]
+  );
+
+  const eligibleStudentIdSet = useMemo(
+    () => new Set(eligibleStudents.map((student: any) => student.id)),
+    [eligibleStudents]
+  );
 
   const fullName = selectedCourse
     ? `${selectedCourse.name}${identifier.trim() ? ' ' + identifier.trim() : ''}`
@@ -125,10 +142,25 @@ const CreateClassModal = ({
   };
 
   const handleStudentToggle = (id: any) => {
+    if (id === null) return;
+
     setStudentIds((previous) =>
+      courseId && !eligibleStudentIdSet.has(id)
+        ? previous
+        : (
       previous.includes(id) ? previous.filter((studentId) => studentId !== id) : [...previous, id]
+        )
     );
   };
+
+  useEffect(() => {
+    if (!courseId) return;
+
+    setStudentIds((previous) => {
+      const filtered = previous.filter((studentId) => eligibleStudentIdSet.has(studentId));
+      return filtered.length === previous.length ? previous : filtered;
+    });
+  }, [courseId, eligibleStudentIdSet]);
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
@@ -232,12 +264,22 @@ const CreateClassModal = ({
           hint={studentIds.length > 0 ? `${studentIds.length} seleccionado(s)` : '(opcional)'}
         >
           <PersonPicker
-            people={allStudents}
+            people={eligibleStudents}
             selectedIds={studentIds}
             onToggle={handleStudentToggle}
             placeholder="Buscar alumno…"
             emptyLabel="No hay alumnos registrados."
           />
+          {Boolean(courseId) && isLegacyStudentFilterFallback && (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
+              Aun no hay vínculos curso-alumno en los perfiles. Se muestra el listado completo temporalmente.
+            </p>
+          )}
+          {Boolean(courseId) && !isLegacyStudentFilterFallback && eligibleStudents.length === 0 && (
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              No hay alumnos vinculados al curso seleccionado.
+            </p>
+          )}
         </InputField>
 
         {error && (

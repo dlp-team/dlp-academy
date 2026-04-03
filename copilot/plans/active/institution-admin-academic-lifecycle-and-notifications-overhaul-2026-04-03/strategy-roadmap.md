@@ -5,8 +5,8 @@
 1. COMPLETED - Audits, source normalization, and dependency mapping.
 2. COMPLETED - Institution settings domain model and calendar foundation.
 3. COMPLETED - Courses/classes academic-year UX and linkage hardening.
-4. IN_PROGRESS - Subject period metadata and lifecycle automation.
-5. PLANNED - Student-course linking, transfer/promote architecture, and enrollment flow hardening.
+4. IN_REVIEW - Subject period metadata and lifecycle automation.
+5. IN_PROGRESS - Student-course linking, transfer/promote architecture, and enrollment flow hardening.
 6. PLANNED - Notifications behavior fixes, dedicated page, TTL, and email sync.
 7. PLANNED - Institution customization preview full-screen fix and parity improvements.
 8. PLANNED - Bin selection mode parity, visual dimming, and urgency sort labels.
@@ -21,9 +21,9 @@
 - Final validation and docs sync remain explicit to prevent lifecycle drift.
 
 ## Immediate Next Actions
-- Capture Phase 04 exit evidence for the completed non-Home lifecycle enforcement sweep (content viewers/editors and quiz edit route).
-- Keep ongoing watch for newly added subject direct-entry routes to ensure they reuse `canUserAccessSubject(...)`.
-- Transition Phase 04 to `inReview` when the team confirms current lint-warning baseline acceptance for closure gating.
+- Extend Phase 05 student-course constraints into institution-admin student linking surfaces (manual and bulk flows).
+- Add class-edit regression tests that cover preserving preselected out-of-course students while blocking new out-of-course additions.
+- Define transfer/promote dry-run payload shape and rollback metadata before implementing migration writes.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.

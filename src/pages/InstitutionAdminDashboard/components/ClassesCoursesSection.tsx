@@ -566,6 +566,7 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
                 courses={courses}
                 allTeachers={allTeachers}
                 allStudents={allStudents}
+                allClasses={classes}
                 onBack={handleBack}
                 onDelete={() => handleDeleteClass(selectedClass.id)}
                 onUpdateField={handleUpdateClassField}
@@ -819,6 +820,7 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
           courses={courses}
           allTeachers={allTeachers}
           allStudents={allStudents}
+          classes={classes}
         />
       )}
     </div>

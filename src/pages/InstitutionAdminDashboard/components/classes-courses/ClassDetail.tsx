@@ -18,6 +18,9 @@ import {
 } from './Shared';
 import { getDefaultAcademicYear, normalizeAcademicYear } from './academicYearUtils';
 import { getCourseDisplayLabel } from '../../../../utils/courseLabelUtils';
+import { resolveEligibleStudentsForCourse } from './studentCourseLinkUtils';
+
+const EMPTY_CLASSES: any[] = [];
 
 // ─── PersonPicker ─────────────────────────────────────────────────────────────
 // One component for both teacher (singleSelect=true) and students (singleSelect=false).
@@ -128,6 +131,7 @@ const ClassDetail = ({
   courses,
   allTeachers,
   allStudents,
+  allClasses = EMPTY_CLASSES,
   onBack,
   onDelete,
   onUpdateField, // (id, patch) => Promise
@@ -151,6 +155,50 @@ const ClassDetail = ({
     : resolvedAcademicYear
       ? `Sin curso asignado (${resolvedAcademicYear})`
       : 'Sin curso asignado';
+  const selectedCourseIdForStudents = editingKey === 'identifier'
+    ? (draft.courseId || cls.courseId)
+    : cls.courseId;
+
+  const {
+    eligibleStudents: eligibleStudentsByCourse,
+    isLegacyFallback: isLegacyStudentFilterFallback,
+  } = useMemo(
+    () => resolveEligibleStudentsForCourse({
+      students: allStudents,
+      selectedCourseId: selectedCourseIdForStudents,
+      classes: allClasses,
+    }),
+    [allStudents, selectedCourseIdForStudents, allClasses]
+  );
+
+  const eligibleStudentIdSet = useMemo(
+    () => new Set(eligibleStudentsByCourse.map((student: any) => student.id)),
+    [eligibleStudentsByCourse]
+  );
+
+  const studentsShownInPicker = useMemo(() => {
+    if (editingKey !== 'students') return eligibleStudentsByCourse;
+
+    const selectedStudentIds = Array.isArray(draft.studentIds) ? draft.studentIds : [];
+    const mergedStudentsById = new Map(
+      eligibleStudentsByCourse.map((student: any) => [student.id, student])
+    );
+
+    allStudents.forEach((student: any) => {
+      if (selectedStudentIds.includes(student.id)) {
+        mergedStudentsById.set(student.id, student);
+      }
+    });
+
+    return Array.from(mergedStudentsById.values());
+  }, [editingKey, draft.studentIds, eligibleStudentsByCourse, allStudents]);
+
+  const outOfCourseSelectedCount = useMemo(() => {
+    if (editingKey !== 'students' || isLegacyStudentFilterFallback) return 0;
+
+    const selectedStudentIds = Array.isArray(draft.studentIds) ? draft.studentIds : [];
+    return selectedStudentIds.filter((studentId: any) => !eligibleStudentIdSet.has(studentId)).length;
+  }, [editingKey, draft.studentIds, isLegacyStudentFilterFallback, eligibleStudentIdSet]);
 
   const getIdentifier = () => {
     if (!course) return cls.name;
@@ -214,12 +262,23 @@ const ClassDetail = ({
   };
 
   const handleStudentToggle = (id: any) => {
-    setDraft(p => ({
-      ...p,
-      studentIds: (p.studentIds || []).includes(id)
-        ? p.studentIds.filter(s => s !== id)
-        : [...(p.studentIds || []), id],
-    }));
+    if (id === null) return;
+
+    setDraft((p: any) => {
+      const selectedStudentIds = Array.isArray(p.studentIds) ? p.studentIds : [];
+      const isCurrentlySelected = selectedStudentIds.includes(id);
+
+      if (!isCurrentlySelected && !isLegacyStudentFilterFallback && !eligibleStudentIdSet.has(id)) {
+        return p;
+      }
+
+      return {
+        ...p,
+        studentIds: isCurrentlySelected
+          ? selectedStudentIds.filter((studentId: any) => studentId !== id)
+          : [...selectedStudentIds, id],
+      };
+    });
   };
 
   return (
@@ -348,12 +407,27 @@ const ClassDetail = ({
           saving={saving}
         >
           <PersonPicker
-            people={allStudents}
+            people={studentsShownInPicker}
             selectedIds={draft.studentIds ?? []}
             onToggle={handleStudentToggle}
             placeholder="Buscar alumno…"
             emptyLabel="No hay alumnos registrados."
           />
+          {isLegacyStudentFilterFallback && (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
+              Aun no hay vínculos curso-alumno en los perfiles. Se mantiene el listado completo temporalmente.
+            </p>
+          )}
+          {!isLegacyStudentFilterFallback && eligibleStudentsByCourse.length === 0 && (
+            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+              No hay alumnos vinculados al curso de esta clase.
+            </p>
+          )}
+          {outOfCourseSelectedCount > 0 && (
+            <p className="mt-2 text-xs text-amber-600 dark:text-amber-300">
+              {outOfCourseSelectedCount} alumno(s) seleccionados no pertenecen al curso actual. Puedes desmarcarlos para regularizar la clase.
+            </p>
+          )}
         </InlineEditField>
       </div>
 

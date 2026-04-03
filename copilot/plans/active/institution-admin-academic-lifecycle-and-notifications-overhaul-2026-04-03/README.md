@@ -35,7 +35,7 @@ Execute the institutional roadmap described by the user in the original plan pro
 
 ## Lifecycle Status
 - Lifecycle: `active`
-- Current phase: `Phase 04 - Subject periods and lifecycle automation (IN_PROGRESS)`
+- Current phase: `Phase 05 - Student-course linking and transfer flows (IN_PROGRESS)`
 - Last updated: 2026-04-03
 
 ## Key Decisions

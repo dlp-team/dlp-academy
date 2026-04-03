@@ -11,6 +11,7 @@
 - Coordinates selected detail state for course/class views.
 - Wires create/update/delete handlers from `useClassesCourses` to list/detail UI components.
 - Controls creation modals (`CreateCourseModal`, `CreateClassModal`) and submission feedback.
+- Passes current class collection into class create/detail views so enrollment eligibility can resolve against course and existing class memberships.
 - Enforces in-page confirmation-first deletion for courses/classes through shared modal state.
 - Adds dedicated `Papelera` tab for trashed courses/classes with restore and permanent-delete actions.
 - Requires typed-name confirmation only for permanent delete actions.
@@ -34,6 +35,7 @@
 - `../../../utils/courseLabelUtils`
 
 ## Changelog
+- 2026-04-03: Injected live `classes` into `CreateClassModal` and `ClassDetail` to support Phase 05 course-constrained student eligibility checks.
 - 2026-04-03: Added `Desde/Hasta` academic-year range filters and collapsible year-group sections for both courses and classes in organization tab.
 - 2026-04-03: Updated trashed-course rows in `Papelera` to use shared `Nombre (AAAA-AAAA)` label formatting.
 - 2026-04-02: Added defensive academic-year validation gates on `handleCreateCourse` and `handleCreateClass` before delegating to hook writes.
