@@ -1,3 +1,4 @@
+// src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx
 import React, { useState } from 'react';
 import {
   BookOpen,
@@ -10,7 +11,8 @@ import {
   UserPlus,
   Copy,
   ShieldAlert,
-  XCircle
+  XCircle,
+  FileSpreadsheet
 } from 'lucide-react';
 import { DEFAULT_ACCESS_POLICIES } from '../../../utils/institutionPolicyUtils';
 
@@ -35,7 +37,9 @@ const UsersTabContent = ({
   onRemoveAccess,
   liveAccessCode,
   liveCodeLoading,
-  liveCodeError
+  liveCodeError,
+  institutionCourses,
+  onBulkLinkStudentsCsv,
 }: any) => {
   // 1. Filter out the general code so it doesn't appear in the specific invites table
   const specificInvites = allowedTeachers.filter(t => t.type !== 'institutional');
@@ -51,6 +55,11 @@ const UsersTabContent = ({
     inviteLabel: ''
   });
   const [isRemovingAccess, setIsRemovingAccess] = useState(false);
+  const [showBulkLinkModal, setShowBulkLinkModal] = useState(false);
+  const [bulkCsvText, setBulkCsvText] = useState('');
+  const [isApplyingBulkLinks, setIsApplyingBulkLinks] = useState(false);
+  const [bulkLinkSummary, setBulkLinkSummary] = useState<any>(null);
+  const [bulkLinkError, setBulkLinkError] = useState('');
 
   // 1. Safe policy handling and local state
   const defaultPolicy = userType === 'teachers'
@@ -112,6 +121,35 @@ const UsersTabContent = ({
         inviteId: null,
         inviteLabel: ''
       });
+    }
+  };
+
+  const openBulkLinkModal = () => {
+    setBulkCsvText('');
+    setBulkLinkSummary(null);
+    setBulkLinkError('');
+    setShowBulkLinkModal(true);
+  };
+
+  const closeBulkLinkModal = () => {
+    if (isApplyingBulkLinks) return;
+    setShowBulkLinkModal(false);
+  };
+
+  const applyBulkLinks = async () => {
+    if (!onBulkLinkStudentsCsv || isApplyingBulkLinks) return;
+
+    setIsApplyingBulkLinks(true);
+    setBulkLinkSummary(null);
+    setBulkLinkError('');
+    try {
+      const summary = await onBulkLinkStudentsCsv(bulkCsvText);
+      setBulkLinkSummary(summary);
+    } catch (error) {
+      console.error('Error applying bulk student-course links:', error);
+      setBulkLinkError('No se pudieron aplicar los vínculos CSV. Revisa el formato e inténtalo de nuevo.');
+    } finally {
+      setIsApplyingBulkLinks(false);
     }
   };
 
@@ -388,10 +426,17 @@ const UsersTabContent = ({
 
           {userType === 'students' && (
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                   <GraduationCap className="w-4 h-4 text-blue-500" /> Alumnos Registrados
                 </h3>
+                <button
+                  type="button"
+                  onClick={openBulkLinkModal}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-xs font-semibold"
+                >
+                  <FileSpreadsheet className="w-4 h-4" /> Vincular cursos por CSV
+                </button>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
@@ -471,6 +516,76 @@ const UsersTabContent = ({
                   className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60"
                 >
                   {isRemovingAccess ? 'Eliminando...' : 'Eliminar acceso'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkLinkModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-slate-950/60" onClick={closeBulkLinkModal} />
+          <div className="relative w-full max-w-2xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl">
+            <div className="p-6">
+              <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                <FileSpreadsheet className="w-5 h-5 text-indigo-500" />
+                Vinculación masiva de cursos
+              </h3>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                Pega un CSV con formato <strong>email,courseId</strong>. Puedes incluir cabecera. Se añadirán vínculos de curso por alumno sin sobrescribir cursos ya existentes.
+              </p>
+              {Array.isArray(institutionCourses) && institutionCourses.length > 0 && (
+                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  Cursos disponibles: {institutionCourses.length}
+                </p>
+              )}
+
+              <textarea
+                value={bulkCsvText}
+                onChange={(event) => setBulkCsvText(event.target.value)}
+                rows={10}
+                placeholder={'email,courseId\nalumno1@colegio.com,course-1\nalumno2@colegio.com,course-2'}
+                className="mt-4 w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-950 px-4 py-3 text-sm font-mono outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+
+              {bulkLinkError && (
+                <p className="mt-3 text-sm font-medium text-red-600 dark:text-red-400">{bulkLinkError}</p>
+              )}
+
+              {bulkLinkSummary && (
+                <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 p-4 text-sm text-slate-700 dark:text-slate-200 space-y-1">
+                  <p>Filas procesadas: <strong>{bulkLinkSummary.totalRows}</strong></p>
+                  <p>Filas vinculadas: <strong>{bulkLinkSummary.linkedRows}</strong></p>
+                  <p>Alumnos actualizados: <strong>{bulkLinkSummary.linkedStudents}</strong></p>
+                  {Array.isArray(bulkLinkSummary.invalidRows) && bulkLinkSummary.invalidRows.length > 0 && (
+                    <p>Líneas inválidas: <strong>{bulkLinkSummary.invalidRows.join(', ')}</strong></p>
+                  )}
+                  {Array.isArray(bulkLinkSummary.missingStudents) && bulkLinkSummary.missingStudents.length > 0 && (
+                    <p>Alumnos no encontrados: <strong>{bulkLinkSummary.missingStudents.join(', ')}</strong></p>
+                  )}
+                  {Array.isArray(bulkLinkSummary.missingCourses) && bulkLinkSummary.missingCourses.length > 0 && (
+                    <p>Cursos no encontrados: <strong>{bulkLinkSummary.missingCourses.join(', ')}</strong></p>
+                  )}
+                </div>
+              )}
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={closeBulkLinkModal}
+                  disabled={isApplyingBulkLinks}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60"
+                >
+                  Cerrar
+                </button>
+                <button
+                  type="button"
+                  onClick={applyBulkLinks}
+                  disabled={isApplyingBulkLinks || !bulkCsvText.trim()}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60"
+                >
+                  {isApplyingBulkLinks ? 'Aplicando...' : 'Aplicar vínculos'}
                 </button>
               </div>
             </div>

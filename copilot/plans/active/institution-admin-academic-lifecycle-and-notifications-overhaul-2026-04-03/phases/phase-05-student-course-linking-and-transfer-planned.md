@@ -24,16 +24,17 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Updated exam unit suite to mock `canUserAccessSubject(...)` deterministically and verify redirect to `/home` when a student loses lifecycle visibility.
 - Added manual student-course linking controls to Institution Admin student detail view with institution-scoped Firestore updates (`courseId`, `courseIds`, `enrolledCourseIds`).
 - Added inline add/remove feedback and deterministic regression tests for manual link mutations.
+- Added CSV bulk-linking workflow in Users tab (students view) with in-page modal, summary reporting, and hook-level Firestore writes that append profile course links per student.
 
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
 - `npm run test:unit -- tests/unit/pages/institution-admin/ClassDetail.studentCourseEligibility.test.jsx tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
 - `npm run test:unit -- tests/unit/pages/content/Exam.test.jsx`
 - `npm run test:unit -- tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
+- `npm run test:unit -- tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
 - `get_errors` clean for all touched source and test files in this slice.
 
 ## Remaining in Phase 05
-- Add CSV/bulk linking interfaces in institution-admin user management flows.
 - Define and implement transfer/promote orchestration with dry-run and rollback metadata.
 - Add end-to-end validation for cross-course assignment constraints after linking rollout.
 

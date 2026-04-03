@@ -23,8 +23,8 @@
 
 ## Immediate Next Actions
 - Wire per-course period schedule fields into course/settings flows and pass them to subject timeline generation.
-- Extend Phase 05 student-course constraints into institution-admin student linking bulk/CSV flows using the same profile-link fields.
 - Define transfer/promote dry-run payload shape and rollback metadata before implementing migration writes.
+- Add end-to-end validation coverage for class/course eligibility after manual + CSV student linking rollout.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.

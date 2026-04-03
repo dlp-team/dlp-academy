@@ -1,9 +1,9 @@
 <!-- copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/UsersTabContent.md -->
-# UsersTabContent.jsx
+# UsersTabContent.tsx
 
 ## Overview
-- **Source file:** `src/pages/InstitutionAdminDashboard/components/UsersTabContent.jsx`
-- **Last documented:** 2026-04-02
+- **Source file:** `src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx`
+- **Last documented:** 2026-04-04
 - **Role:** Institution Admin users tab UI orchestrator for policy controls, user tables, and invite management actions.
 
 ## Responsibilities
@@ -12,6 +12,7 @@
 - Displays pending invite rows and invite code copy actions.
 - Controls in-page confirmation modal for invite-access removal before destructive execution.
 - Renders pagination controls for teacher/student tables and delegates cursor loading via `onLoadMoreUsers`.
+- Adds student CSV bulk-link modal with summary/error feedback for mass course-link operations.
 
 ## Exports
 - `default UsersTabContent`
@@ -22,6 +23,7 @@
 - `../../../utils/institutionPolicyUtils`
 
 ## Changelog
+- 2026-04-04: Added student-side CSV bulk-link modal (`email,courseId`) with summary rendering, error handling, and async delegation via `onBulkLinkStudentsCsv`.
 - 2026-04-03: Moved teacher-governance toggles out of `UsersTabContent` into the new dashboard `Configuración` tab (`SettingsTabContent`) and added in-tab guidance message for teachers.
 - 2026-04-02: Added `Cargar más profesores/alumnos` pagination controls with loading state wiring.
 - 2026-04-02: Switched user table filtering to explicit precomputed filtered arrays for clearer pagination + search behavior.

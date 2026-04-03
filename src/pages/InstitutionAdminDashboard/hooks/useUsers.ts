@@ -1,4 +1,4 @@
-// src/pages/InstitutionAdminDashboard/hooks/useUsers.js
+// src/pages/InstitutionAdminDashboard/hooks/useUsers.ts
 import { useCallback, useEffect, useState } from 'react';
 import {
   addDoc,
@@ -24,6 +24,16 @@ import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersist
 
 const USERS_PAGE_SIZE = 25;
 
+const normalizeId = (value: any) => String(value || '').trim();
+
+const toUniqueIds = (values: any[] = []) => Array.from(new Set(values.map(normalizeId).filter(Boolean)));
+
+const getStudentProfileCourseIds = (student: any = {}) => toUniqueIds([
+  student?.courseId,
+  ...(Array.isArray(student?.courseIds) ? student.courseIds : []),
+  ...(Array.isArray(student?.enrolledCourseIds) ? student.enrolledCourseIds : []),
+]);
+
 export const useUsers = (user, institutionIdOverride = null, options: any = {}) => {
   const shouldLoadAllUsers = options?.loadAllUsers === true;
   const effectiveInstitutionId = institutionIdOverride || user?.institutionId || null;
@@ -34,6 +44,7 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
   const [allowedTeachers, setAllowedTeachers] = useState<any[]>([]);
   const [allTeachers, setAllTeachers] = useState<any[]>([]);
   const [allStudents, setAllStudents] = useState<any[]>([]);
+  const [institutionCourses, setInstitutionCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoadingMoreUsers, setIsLoadingMoreUsers] = useState(false);
   const [teacherPagination, setTeacherPagination] = useState<{ lastVisible: any; hasMore: boolean }>({ lastVisible: null, hasMore: false });
@@ -96,16 +107,22 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
         const generalInvite = allowedSnap.docs.find(d => d.data().type === 'institutional');
         setInstitutionalCode(generalInvite ? generalInvite.id : '');
         setStudents([]);
+        setInstitutionCourses([]);
         setStudentPagination({ lastVisible: null, hasMore: false });
       } else {
-        const studentsSnap = await getDocs(buildInstitutionRoleUsersQuery('student'));
+        const [studentsSnap, coursesSnap] = await Promise.all([
+          getDocs(buildInstitutionRoleUsersQuery('student')),
+          getDocs(query(collection(db, 'courses'), where('institutionId', '==', effectiveInstitutionId))),
+        ]);
         const studentDocs = studentsSnap.docs;
+        const courseDocs = coursesSnap.docs.map((courseDoc: any) => ({ id: courseDoc.id, ...courseDoc.data() }));
 
         setStudents(studentDocs.map(d => ({ id: d.id, ...d.data() })));
         setStudentPagination({
           lastVisible: studentDocs.length > 0 ? studentDocs[studentDocs.length - 1] : null,
           hasMore: studentDocs.length === USERS_PAGE_SIZE,
         });
+        setInstitutionCourses(courseDocs.filter((course: any) => course?.status !== 'trashed'));
 
         setTeachers([]);
         setTeacherPagination({ lastVisible: null, hasMore: false });
@@ -317,10 +334,114 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
     }
   };
 
+  const handleBulkLinkStudentsCsv = useCallback(async (csvInput: any) => {
+    const rawLines = String(csvInput || '')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+
+    if (rawLines.length === 0) {
+      return {
+        totalRows: 0,
+        linkedStudents: 0,
+        linkedRows: 0,
+        invalidRows: [],
+        missingStudents: [],
+        missingCourses: [],
+      };
+    }
+
+    const hasHeader = /email/i.test(rawLines[0]) && /course/i.test(rawLines[0]);
+    const contentRows = hasHeader ? rawLines.slice(1) : rawLines;
+    const rows = contentRows.map((line, index) => {
+      const [emailValue = '', courseIdValue = ''] = line.split(',');
+      return {
+        lineNumber: (hasHeader ? 2 : 1) + index,
+        email: emailValue.trim().toLowerCase(),
+        courseId: normalizeId(courseIdValue),
+      };
+    });
+
+    const invalidRows = rows.filter((row) => !row.email || !row.email.includes('@') || !row.courseId);
+    const validRows = rows.filter((row) => !invalidRows.includes(row));
+
+    const [studentsSnap, coursesSnap] = await Promise.all([
+      getDocs(query(collection(db, 'users'), where('institutionId', '==', effectiveInstitutionId), where('role', '==', 'student'))),
+      getDocs(query(collection(db, 'courses'), where('institutionId', '==', effectiveInstitutionId))),
+    ]);
+
+    const studentsByEmail = new Map(
+      studentsSnap.docs.map((studentDoc: any) => {
+        const studentData = { id: studentDoc.id, ...studentDoc.data() };
+        return [String(studentData?.email || '').trim().toLowerCase(), studentData];
+      })
+    );
+
+    const validCourseIdSet = new Set(
+      coursesSnap.docs
+        .map((courseDoc: any) => ({ id: courseDoc.id, ...courseDoc.data() }))
+        .filter((course: any) => course?.status !== 'trashed')
+        .map((course: any) => normalizeId(course.id))
+        .filter(Boolean)
+    );
+
+    const missingStudents = new Set<any>();
+    const missingCourses = new Set<any>();
+    const nextCourseIdsByStudentId = new Map<any, any>();
+    const linkedRows = { count: 0 };
+
+    validRows.forEach((row) => {
+      const student = studentsByEmail.get(row.email);
+
+      if (!student) {
+        missingStudents.add(row.email);
+        return;
+      }
+
+      if (!validCourseIdSet.has(row.courseId)) {
+        missingCourses.add(row.courseId);
+        return;
+      }
+
+      const existingCourseIds = nextCourseIdsByStudentId.get(student.id)
+        || getStudentProfileCourseIds(student);
+      const nextCourseIds = toUniqueIds([...existingCourseIds, row.courseId]);
+      nextCourseIdsByStudentId.set(student.id, nextCourseIds);
+      linkedRows.count += 1;
+    });
+
+    const updates = Array.from(nextCourseIdsByStudentId.entries());
+
+    await Promise.all(
+      updates.map(([studentId, nextCourseIds]) => (
+        updateDoc(doc(db, 'users', studentId), {
+          courseId: nextCourseIds[0] || null,
+          courseIds: nextCourseIds,
+          enrolledCourseIds: nextCourseIds,
+          updatedAt: serverTimestamp(),
+        })
+      ))
+    );
+
+    if (updates.length > 0) {
+      await fetchData();
+    }
+
+    return {
+      totalRows: rows.length,
+      linkedStudents: updates.length,
+      linkedRows: linkedRows.count,
+      invalidRows: invalidRows.map((row) => row.lineNumber),
+      missingStudents: Array.from(missingStudents),
+      missingCourses: Array.from(missingCourses),
+    };
+  }, [effectiveInstitutionId, fetchData]);
+
   return {
     userType, setUserType,
     effectiveInstitutionId,
     teachers, students, allowedTeachers, allTeachers, allStudents,
+    institutionCourses,
     canLoadMoreUsers: userType === 'teachers' ? teacherPagination.hasMore : studentPagination.hasMore,
     isLoadingMoreUsers,
     loading, searchTerm, setSearchTerm,
@@ -339,5 +460,6 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
     handleConfirmSavePolicies,
     handleRemoveAccess,
     handleLoadMoreUsers,
+    handleBulkLinkStudentsCsv,
   };
 };

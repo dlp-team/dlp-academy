@@ -1,4 +1,4 @@
-// src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.jsx
+// src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx
 //
 // ─── Refactor summary ─────────────────────────────────────────────────────────
 //  • All user/invite/policy logic → hooks/useUsers.js
@@ -134,6 +134,8 @@ const InstitutionAdminDashboard = ({ user }: any) => {
             liveAccessCode={users.liveAccessCode}
             liveCodeLoading={users.liveCodeLoading}
             liveCodeError={users.liveCodeError}
+            institutionCourses={users.institutionCourses}
+            onBulkLinkStudentsCsv={users.handleBulkLinkStudentsCsv}
           />
         )}
 

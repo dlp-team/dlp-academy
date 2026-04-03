@@ -1,9 +1,9 @@
 <!-- copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/hooks/useUsers.md -->
-# useUsers.js
+# useUsers.ts
 
 ## Overview
-- **Source file:** `src/pages/InstitutionAdminDashboard/hooks/useUsers.js`
-- **Last documented:** 2026-04-02
+- **Source file:** `src/pages/InstitutionAdminDashboard/hooks/useUsers.ts`
+- **Last documented:** 2026-04-04
 - **Role:** Institution Admin users-domain hook for paginated user loading, invite management, and policy update operations.
 
 ## Responsibilities
@@ -12,6 +12,7 @@
 - Handles invite creation and invite-access removal writes.
 - Manages institutional dynamic-code updates and policy persistence.
 - Lazily loads full teacher/student sets only when organization tab needs cross-list datasets.
+- Provides CSV bulk-link application flow for student-course profile links.
 - Exposes users tab state/actions to `InstitutionAdminDashboard`.
 
 ## Exports
@@ -27,6 +28,8 @@
 - `../../../utils/pagePersistence`
 
 ## Changelog
+- 2026-04-04: Added student CSV bulk-link handler that appends course links to student profile fields (`courseId`, `courseIds`, `enrolledCourseIds`) with per-run summary output.
+- 2026-04-04: Added student-tab course catalog loading for CSV validation and users-tab modal wiring.
 - 2026-04-02: Added cursor-based pagination state (`hasMore`, `lastVisible`) and `handleLoadMoreUsers` for teachers/students.
 - 2026-04-02: Added `loadAllUsers` option to defer full teachers/students collection fetches until organization workflows require them.
 - 2026-03-30: Removed `window.confirm(...)` from `handleRemoveAccess`; confirmation is now UI-owned to support in-page modal flow.

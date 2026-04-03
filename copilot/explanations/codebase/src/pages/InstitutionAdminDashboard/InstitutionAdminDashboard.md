@@ -7,11 +7,11 @@
 - `InstitutionAdminDashboard` now requests live access code previews from backend callable `getInstitutionalAccessCodePreview`.
 - Added refresh cycle every 30 seconds and safe UI fallback/error state for code preview.
 
-# InstitutionAdminDashboard.jsx
+# InstitutionAdminDashboard.tsx
 
 ## Overview
-- **Source file:** `src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.jsx`
-- **Last documented:** 2026-04-02
+- **Source file:** `src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx`
+- **Last documented:** 2026-04-04
 - **Role:** Page-level or feature-level module that orchestrates UI and logic.
 
 ## Responsibilities
@@ -31,6 +31,7 @@
 - `../../components/layout/Header`
 
 ## Changelog
+- 2026-04-04: Wired student CSV bulk-link props (`institutionCourses`, `onBulkLinkStudentsCsv`) from `useUsers` into `UsersTabContent` for Phase 05 linking rollout.
 - 2026-04-03: Added new `Configuración` tab in Institution Admin dashboard and wired dedicated settings flow via `useInstitutionSettings` + `SettingsTabContent`.
 - 2026-04-02: Updated effective institution-id derivation to use `getActiveRole(user)` so admin-only institution override via query param applies only when the active context is global admin.
 - 2026-04-02: Updated `useUsers` integration to pass `loadAllUsers: activeTab === 'organization'` so full teachers/students fetches are deferred outside organization workflows.
