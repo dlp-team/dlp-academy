@@ -68,6 +68,26 @@ Create complete plan artifacts and immediately start execution when requested wi
 4. Move to `inReview/` after implementation + validation.
 5. Move to `finished/` after reviewer closure.
 
+## Dual-Source Intake Rule (ORIGINAL_PLAN + GEMINI_PLAN)
+When both source files exist for the same request (`copilot/plans/ORIGINAL_PLAN.md` and `copilot/plans/GEMINI_PLAN.md`), apply this flow without exception:
+
+1. **Authority precedence**:
+	- `ORIGINAL_PLAN.md` is the primary source of truth.
+	- `GEMINI_PLAN.md` is secondary and can only improve structure/readability.
+	- Never drop, weaken, or replace requirements present in the original user-authored file.
+
+2. **Plan creation behavior**:
+	- Create the new plan package first.
+	- Move both source files into that new plan folder.
+	- Rename both files to task-specific names to avoid future ambiguity, using this pattern:
+	  - `source-original-user-spec-<plan-topic>.md`
+	  - `source-gemini-structured-reference-<plan-topic>.md`
+
+3. **Traceability requirements**:
+	- Update plan `README.md` with explicit source-priority notes.
+	- Ensure top-level duplicates (`copilot/plans/ORIGINAL_PLAN.md`, `copilot/plans/GEMINI_PLAN.md`) are not left behind.
+	- If destination filenames already exist, append a date slug while preserving the naming pattern.
+
 ## Quality gates
 - Include explicit scope and out-of-scope.
 - Include rollback strategy and validation commands.

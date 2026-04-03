@@ -16,4 +16,5 @@
 - `default CreateClassModal`
 
 ## Changelog
+- 2026-04-03: Updated course selector labels to use shared `Nombre (AAAA-AAAA)` formatting for cross-year name disambiguation.
 - 2026-04-02: Switched class creation to course-derived academic year with fallback handling and warning copy.

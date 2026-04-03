@@ -15,5 +15,6 @@
 - `default ClassDetail`
 
 ## Changelog
+- 2026-04-03: Switched course labels in header badge, stats, course picker, and preview to shared `Nombre (AAAA-AAAA)` formatting for cross-year disambiguation.
 - 2026-04-02: Removed direct class academic-year editing and aligned updates to course-derived year ownership.
 - 2026-04-02: Included derived year in header/stats and identifier save payload.

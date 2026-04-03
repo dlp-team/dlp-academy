@@ -17,6 +17,7 @@ import {
   StatCard,
 } from './Shared';
 import { getDefaultAcademicYear, normalizeAcademicYear } from './academicYearUtils';
+import { getCourseDisplayLabel } from '../../../../utils/courseLabelUtils';
 
 // ─── PersonPicker ─────────────────────────────────────────────────────────────
 // One component for both teacher (singleSelect=true) and students (singleSelect=false).
@@ -140,10 +141,16 @@ const ClassDetail = ({
   const course  = courses.find(c => c.id === cls.courseId);
   const teacher = allTeachers.find(t => t.id === cls.teacherId);
   const color   = course?.color || '#6366f1';
+  const selectedDraftCourse = courses.find(c => c.id === draft.courseId);
   const resolvedAcademicYear =
     normalizeAcademicYear(course?.academicYear)
     || normalizeAcademicYear(cls.academicYear)
     || getDefaultAcademicYear();
+  const courseBadgeLabel = course
+    ? getCourseDisplayLabel(course)
+    : resolvedAcademicYear
+      ? `Sin curso asignado (${resolvedAcademicYear})`
+      : 'Sin curso asignado';
 
   const getIdentifier = () => {
     if (!course) return cls.name;
@@ -221,7 +228,7 @@ const ClassDetail = ({
         onBack={onBack}
         color={color}
         title={cls.name}
-        badge={`Clase · ${course ? course.name : 'Sin curso asignado'}${resolvedAcademicYear ? ` · ${resolvedAcademicYear}` : ''}`}
+        badge={`Clase · ${courseBadgeLabel}`}
         onEdit={() => startEdit('identifier')}
         onDelete={onDelete}
       />
@@ -229,7 +236,7 @@ const ClassDetail = ({
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <StatCard icon={Users}        label="Alumnos inscritos" value={(cls.studentIds || []).length} color={color} />
-        <StatCard icon={BookOpen}     label="Curso"             value={course?.name || '—'}           color={color} />
+        <StatCard icon={BookOpen}     label="Curso"             value={course ? getCourseDisplayLabel(course) : '—'} color={color} />
         <StatCard icon={CalendarDays} label="Año académico"     value={resolvedAcademicYear || '—'}   color={color} />
       </div>
 
@@ -263,7 +270,7 @@ const ClassDetail = ({
                 required
               >
                 <option value="">— Selecciona un curso —</option>
-                {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {courses.map(c => <option key={c.id} value={c.id}>{getCourseDisplayLabel(c)}</option>)}
               </select>
             </div>
             <div>
@@ -280,7 +287,7 @@ const ClassDetail = ({
               <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
                 <p className="text-xs text-slate-400">Vista previa</p>
                 <p className="font-bold text-slate-800 dark:text-white text-sm">
-                  {courses.find(c => c.id === draft.courseId)?.name ?? ''}
+                  {selectedDraftCourse ? getCourseDisplayLabel(selectedDraftCourse) : ''}
                   {draft.identifier?.trim() ? ` ${draft.identifier.trim()}` : ''}
                 </p>
               </div>

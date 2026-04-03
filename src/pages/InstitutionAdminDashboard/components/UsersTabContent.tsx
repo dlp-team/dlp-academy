@@ -236,51 +236,10 @@ const UsersTabContent = ({
               </div>
 
               {userType === 'teachers' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                  <div className="space-y-3 p-4 bg-white/50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
-                    <label className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
-                      <input
-                        type="checkbox"
-                        checked={editPolicy.allowTeacherAutonomousSubjectCreation !== false}
-                        onChange={(e) => setEditPolicy({ ...editPolicy, allowTeacherAutonomousSubjectCreation: e.target.checked })}
-                        className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
-                      />
-                      Los profesores pueden crear asignaturas sin aprobación del administrador
-                    </label>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Activado por defecto. Si se desactiva, solo administradores podrán crear asignaturas nuevas.
-                    </p>
-                  </div>
-
-                  <div className="space-y-3 p-4 bg-white/50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
-                    <label className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
-                      <input
-                        type="checkbox"
-                        checked={editPolicy.canAssignClassesAndStudents !== false}
-                        onChange={(e) => setEditPolicy({ ...editPolicy, canAssignClassesAndStudents: e.target.checked })}
-                        className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
-                      />
-                      Los profesores pueden asignar clases y estudiantes sin permiso del administrador
-                    </label>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Activado por defecto. Cuando está desactivado, las asignaciones directas pasan a solicitud para revisión.
-                    </p>
-                  </div>
-
-                  <div className="space-y-3 p-4 bg-white/50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700/50">
-                    <label className="flex items-center gap-2 font-medium text-slate-700 dark:text-slate-300">
-                      <input
-                        type="checkbox"
-                        checked={editPolicy.canDeleteSubjectsWithStudents === true}
-                        onChange={(e) => setEditPolicy({ ...editPolicy, canDeleteSubjectsWithStudents: e.target.checked })}
-                        className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
-                      />
-                      Los profesores pueden eliminar asignaturas con estudiantes asociados sin permiso del administrador
-                    </label>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      Desactivado por defecto. Si sigue desactivado, el profesor no podrá enviar a la papelera asignaturas con clases o alumnos vinculados.
-                    </p>
-                  </div>
+                <div className="mt-6 rounded-xl border border-indigo-100 dark:border-indigo-500/20 bg-indigo-50/70 dark:bg-indigo-900/15 px-4 py-3">
+                  <p className="text-sm text-indigo-700 dark:text-indigo-300">
+                    Las opciones de permisos docentes se gestionan ahora desde la pestaña <strong>Configuración</strong>.
+                  </p>
                 </div>
               )}
 

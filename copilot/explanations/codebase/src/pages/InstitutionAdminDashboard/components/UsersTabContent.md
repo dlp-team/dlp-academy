@@ -22,6 +22,7 @@
 - `../../../utils/institutionPolicyUtils`
 
 ## Changelog
+- 2026-04-03: Moved teacher-governance toggles out of `UsersTabContent` into the new dashboard `Configuración` tab (`SettingsTabContent`) and added in-tab guidance message for teachers.
 - 2026-04-02: Added `Cargar más profesores/alumnos` pagination controls with loading state wiring.
 - 2026-04-02: Switched user table filtering to explicit precomputed filtered arrays for clearer pagination + search behavior.
 - 2026-04-01: Added teacher policy toggle `allowTeacherAutonomousSubjectCreation` to the security panel and included it in policy save payloads.

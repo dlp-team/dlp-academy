@@ -19,6 +19,8 @@
 - `react`
 - `lucide-react`
 - `../../../../components/ui/TablePagination`
+- `../../../../utils/courseLabelUtils`
 
 ## Changelog
+- 2026-04-03: Switched course column labels to shared `Nombre (AAAA-AAAA)` formatting for cross-year disambiguation.
 - 2026-04-03: Added client-side pagination using shared `TablePagination` (`15` items per page) without changing row-level edit/delete interactions.

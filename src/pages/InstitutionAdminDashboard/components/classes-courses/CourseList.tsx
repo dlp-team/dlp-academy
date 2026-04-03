@@ -5,6 +5,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { FolderOpen, LayoutGrid, Trash2 } from 'lucide-react';
 import TablePagination from '../../../../components/ui/TablePagination';
+import { getCourseDisplayLabel } from '../../../../utils/courseLabelUtils';
 
 const COURSE_PAGE_SIZE = 12;
 
@@ -19,7 +20,7 @@ const CourseCard = ({ course, classCount, onClick, onDelete }: any) => (
     <div className="p-5">
       <div className="flex items-start justify-between mb-1 gap-2">
         <h4 className="font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-tight">
-          {course.name}
+          {getCourseDisplayLabel(course)}
         </h4>
         <button
           onClick={e => { e.stopPropagation(); onDelete(course.id); }}

@@ -9,7 +9,7 @@
 
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { LayoutGrid, Palette, UserPlus, Users } from 'lucide-react';
+import { LayoutGrid, Palette, Settings2, UserPlus, Users } from 'lucide-react';
 
 import Header from '../../components/layout/Header';
 import SudoModal from '../../components/modals/SudoModal';
@@ -17,17 +17,20 @@ import ClassesCoursesSection from './components/ClassesCoursesSection';
 import UsersTabContent from './components/UsersTabContent';
 import AddTeacherModal from './components/AddTeacherModal';
 import CustomizationTab from './components/CustomizationTab';
+import SettingsTabContent from './components/SettingsTabContent';
 
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { getActiveRole, hasRequiredRoleAccess } from '../../utils/permissionUtils';
 import { useUsers } from './hooks/useUsers';
 import { useCustomization } from './hooks/useCustomization';
+import { useInstitutionSettings } from './hooks/useInstitutionSettings';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { buildInstitutionScopedPersistenceKey } from '../../utils/pagePersistence';
 
 const TABS = [
   { key: 'users',         label: 'Usuarios',         icon: Users },
   { key: 'organization',  label: 'Cursos y Clases',   icon: LayoutGrid },
+  { key: 'settings',      label: 'Configuración',     icon: Settings2 },
   { key: 'customization', label: 'Personalización',   icon: Palette },
 ];
 
@@ -56,6 +59,7 @@ const InstitutionAdminDashboard = ({ user }: any) => {
   // ── Domain logic hooks ──
   const users = useUsers(user, effectiveInstitutionId, { loadAllUsers: activeTab === 'organization' });
   const customization = useCustomization(user, effectiveInstitutionId);
+  const institutionSettings = useInstitutionSettings(user, effectiveInstitutionId);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans transition-colors">
@@ -140,6 +144,19 @@ const InstitutionAdminDashboard = ({ user }: any) => {
             institutionId={effectiveInstitutionId}
             allStudents={users.allStudents}
             allTeachers={users.allTeachers}
+          />
+        )}
+
+        {/* ── Settings tab ── */}
+        {activeTab === 'settings' && (
+          <SettingsTabContent
+            loading={institutionSettings.loading}
+            saving={institutionSettings.saving}
+            canSave={institutionSettings.canSave}
+            settingsForm={institutionSettings.settingsForm}
+            setSettingsForm={institutionSettings.setSettingsForm}
+            settingsMessage={institutionSettings.settingsMessage}
+            onSave={institutionSettings.handleSaveSettings}
           />
         )}
 

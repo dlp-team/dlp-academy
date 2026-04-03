@@ -1,3 +1,16 @@
+## [2026-04-03] Subject Class Selector Limited to Subject Academic Year
+### Context & Architecture
+When editing a subject in the `Clases` tab, the modal previously listed every available class for the institution (or every teacher-owned class), even when the subject belonged to a specific academic year.
+
+### Change
+- Added academic-year normalization import and derived `subjectAcademicYear` from `initialData`.
+- Filtered loaded class candidates to only those whose `class.academicYear` matches the subject academic year when that year is defined.
+- Added inline classes-tab guidance text: `Solo se muestran clases del año académico ...`.
+
+### Validation
+- `get_errors` clean for `src/pages/Subject/modals/SubjectFormModal.tsx`.
+- Project lint/type checks passed (existing unrelated lint warnings remained in content pages).
+
 ## [2026-03-31] Classes Tab Load Feedback Hardening
 ### Context & Architecture
 The classes-tab loader in `SubjectFormModal` silently fell back to an empty list when the Firestore classes query failed, making load failures indistinguishable from true no-classes states.

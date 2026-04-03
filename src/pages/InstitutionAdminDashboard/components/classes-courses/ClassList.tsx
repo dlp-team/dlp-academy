@@ -5,6 +5,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Edit3, LayoutGrid, Trash2 } from 'lucide-react';
 import TablePagination from '../../../../components/ui/TablePagination';
+import { getCourseDisplayLabel } from '../../../../utils/courseLabelUtils';
 
 const CLASS_PAGE_SIZE = 15;
 
@@ -25,7 +26,10 @@ const ClassList = ({ classes, courses, allTeachers, onSelect, onEdit, onDelete }
     }
   }, [currentPage, totalPages]);
 
-  const getCourseName  = (id) => courses.find(c => c.id === id)?.name || '—';
+  const getCourseName  = (id) => {
+    const course = courses.find(c => c.id === id);
+    return course ? getCourseDisplayLabel(course) : '—';
+  };
   const getCourseColor = (id) => courses.find(c => c.id === id)?.color || '#6366f1';
   const getTeacherName = (id: any) => {
     const t = allTeachers.find(t => t.id === id);

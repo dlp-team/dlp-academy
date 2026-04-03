@@ -15,6 +15,7 @@ import {
 import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import Header from '../../../components/layout/Header';
+import { getCourseDisplayLabel } from '../../../utils/courseLabelUtils';
 
 const formatDate = (timestampValue: any) => {
   try {
@@ -81,6 +82,10 @@ const UserDetailView = ({ user, userType }: any) => {
         const allCourses = coursesSnap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
         const teachersById = new Map<string, any>(teachersSnap.docs.map((d) => [d.id, { id: d.id, ...d.data() }]));
         const coursesById = new Map(allCourses.map((course) => [course.id, course]));
+        const getCourseLabelById = (courseId: any) => {
+          const course = coursesById.get(courseId);
+          return course ? getCourseDisplayLabel(course) : 'Sin curso';
+        };
 
         if (userType === 'teacher') {
           const assignedClasses = allClasses.filter((cl) => cl.teacherId === userId);
@@ -100,7 +105,7 @@ const UserDetailView = ({ user, userType }: any) => {
             assignedClasses.map((cl: any) => ({
               id: cl.id,
               name: cl.name || 'Clase sin nombre',
-              subtitle: coursesById.get(cl.courseId)?.name || 'Sin curso',
+              subtitle: getCourseLabelById(cl.courseId),
               meta: `${(cl.studentIds || []).length} alumno(s)`,
             })),
           );
@@ -123,7 +128,7 @@ const UserDetailView = ({ user, userType }: any) => {
               return {
                 id: cl.id,
                 name: cl.name || 'Clase sin nombre',
-                subtitle: coursesById.get(cl.courseId)?.name || 'Sin curso',
+                subtitle: getCourseLabelById(cl.courseId),
                 meta: teacher ? (teacher.displayName || teacher.email || 'Profesor asignado') : 'Sin profesor asignado',
               };
             }),

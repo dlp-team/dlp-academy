@@ -31,6 +31,7 @@
 - `../../components/layout/Header`
 
 ## Changelog
+- 2026-04-03: Added new `Configuración` tab in Institution Admin dashboard and wired dedicated settings flow via `useInstitutionSettings` + `SettingsTabContent`.
 - 2026-04-02: Updated effective institution-id derivation to use `getActiveRole(user)` so admin-only institution override via query param applies only when the active context is global admin.
 - 2026-04-02: Updated `useUsers` integration to pass `loadAllUsers: activeTab === 'organization'` so full teachers/students fetches are deferred outside organization workflows.
 

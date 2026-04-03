@@ -19,6 +19,8 @@
 - `react`
 - `lucide-react`
 - `../../../../components/ui/TablePagination`
+- `../../../../utils/courseLabelUtils`
 
 ## Changelog
+- 2026-04-03: Updated course card titles to shared `Nombre (AAAA-AAAA)` formatting to disambiguate duplicate names across academic years.
 - 2026-04-03: Added client-side pagination using shared `TablePagination` (`12` items per page) while preserving existing card actions and empty-state behavior.

@@ -4,7 +4,7 @@
 // and delegates all data ops to useClassesCourses, all rendering to sub-components.
 
 import React from 'react';
-import { Archive, FolderOpen, LayoutGrid, Loader2, Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { Archive, ChevronDown, ChevronRight, FilterX, FolderOpen, LayoutGrid, Loader2, Plus, RotateCcw, Trash2 } from 'lucide-react';
 
 import { useClassesCourses } from '../hooks/useClassesCourses';
 import CourseList            from './classes-courses/CourseList';
@@ -15,8 +15,9 @@ import CreateCourseModal     from '../modals/CreateCourseModal';
 import CreateClassModal      from '../modals/CreateClassModal';
 import { usePersistentState } from '../../../hooks/usePersistentState';
 import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence';
+import { getCourseDisplayLabel } from '../../../utils/courseLabelUtils';
 import { getTrashDaysRemaining } from '../../../utils/trashRetentionUtils';
-import { isValidAcademicYear } from './classes-courses/academicYearUtils';
+import { getAcademicYearStartYear, isValidAcademicYear, normalizeAcademicYear } from './classes-courses/academicYearUtils';
 
 const TAB_COURSES = 'courses';
 const TAB_CLASSES = 'classes';
@@ -29,6 +30,57 @@ const INITIAL_DELETE_CONFIRM_STATE = {
   actionMode: 'trash',
   typedName: '',
   errorMessage: '',
+};
+const NO_ACADEMIC_YEAR_LABEL = 'Sin año académico';
+
+const sortAcademicYearsDesc = (years: any[] = []) => (
+  [...years].sort((left, right) => {
+    const leftStart = getAcademicYearStartYear(left);
+    const rightStart = getAcademicYearStartYear(right);
+
+    if (leftStart === null && rightStart === null) return String(left).localeCompare(String(right));
+    if (leftStart === null) return 1;
+    if (rightStart === null) return -1;
+    return rightStart - leftStart;
+  })
+);
+
+const isAcademicYearWithinRange = (academicYear: any, startYear: any, endYear: any): boolean => {
+  const normalizedAcademicYear = normalizeAcademicYear(academicYear);
+  const normalizedStartYear = normalizeAcademicYear(startYear);
+  const normalizedEndYear = normalizeAcademicYear(endYear);
+
+  if (!normalizedStartYear && !normalizedEndYear) {
+    return true;
+  }
+
+  if (!normalizedAcademicYear) {
+    return false;
+  }
+
+  const academicYearStart = getAcademicYearStartYear(normalizedAcademicYear);
+  if (academicYearStart === null) {
+    return false;
+  }
+
+  const startValue = getAcademicYearStartYear(normalizedStartYear);
+  const endValue = getAcademicYearStartYear(normalizedEndYear);
+
+  if (startValue !== null && endValue !== null) {
+    const minYear = Math.min(startValue, endValue);
+    const maxYear = Math.max(startValue, endValue);
+    return academicYearStart >= minYear && academicYearStart <= maxYear;
+  }
+
+  if (startValue !== null) {
+    return academicYearStart >= startValue;
+  }
+
+  if (endValue !== null) {
+    return academicYearStart <= endValue;
+  }
+
+  return true;
 };
 
 const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }: any) => {
@@ -51,6 +103,10 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
   const [isDeletingItem, setIsDeletingItem] = React.useState(false);
   const [binActionLoadingKey, setBinActionLoadingKey] = React.useState('');
   const [binActionError, setBinActionError] = React.useState('');
+  const [academicYearStartFilter, setAcademicYearStartFilter] = React.useState('');
+  const [academicYearEndFilter, setAcademicYearEndFilter] = React.useState('');
+  const [collapsedCourseYears, setCollapsedCourseYears] = React.useState<Record<string, boolean>>({});
+  const [collapsedClassYears, setCollapsedClassYears] = React.useState<Record<string, boolean>>({});
 
   // ── Data ────────────────────────────────────────────────────────────────────
   const {
@@ -60,6 +116,95 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
     restoreCourse, restoreClass,
     permanentlyDeleteCourse, permanentlyDeleteClass,
   } = useClassesCourses(user, institutionId);
+
+  const coursesById = React.useMemo(
+    () => new Map(courses.map((course: any) => [course.id, course])),
+    [courses]
+  );
+
+  const resolveClassAcademicYear = React.useCallback((cls: any) => {
+    const classAcademicYear = normalizeAcademicYear(cls?.academicYear);
+    if (classAcademicYear) {
+      return classAcademicYear;
+    }
+
+    const linkedCourseAcademicYear = normalizeAcademicYear(coursesById.get(cls?.courseId)?.academicYear);
+    return linkedCourseAcademicYear;
+  }, [coursesById]);
+
+  const availableAcademicYears = React.useMemo(() => {
+    const years = new Set<string>();
+
+    courses.forEach((course: any) => {
+      const academicYear = normalizeAcademicYear(course?.academicYear);
+      if (academicYear) years.add(academicYear);
+    });
+
+    classes.forEach((cls: any) => {
+      const academicYear = resolveClassAcademicYear(cls);
+      if (academicYear) years.add(academicYear);
+    });
+
+    return sortAcademicYearsDesc(Array.from(years));
+  }, [courses, classes, resolveClassAcademicYear]);
+
+  const filteredCourses = React.useMemo(() => (
+    courses.filter((course: any) => isAcademicYearWithinRange(course?.academicYear, academicYearStartFilter, academicYearEndFilter))
+  ), [courses, academicYearStartFilter, academicYearEndFilter]);
+
+  const filteredClasses = React.useMemo(() => (
+    classes.filter((cls: any) => isAcademicYearWithinRange(resolveClassAcademicYear(cls), academicYearStartFilter, academicYearEndFilter))
+  ), [classes, resolveClassAcademicYear, academicYearStartFilter, academicYearEndFilter]);
+
+  const groupedCourses = React.useMemo(() => {
+    const grouped: Record<string, any[]> = {};
+
+    filteredCourses.forEach((course: any) => {
+      const academicYear = normalizeAcademicYear(course?.academicYear) || NO_ACADEMIC_YEAR_LABEL;
+      if (!grouped[academicYear]) grouped[academicYear] = [];
+      grouped[academicYear].push(course);
+    });
+
+    return sortAcademicYearsDesc(Object.keys(grouped)).map((academicYear) => ({
+      academicYear,
+      entries: [...grouped[academicYear]].sort((left: any, right: any) => String(left?.name || '').localeCompare(String(right?.name || ''), 'es', { sensitivity: 'base' })),
+    }));
+  }, [filteredCourses]);
+
+  const groupedClasses = React.useMemo(() => {
+    const grouped: Record<string, any[]> = {};
+
+    filteredClasses.forEach((cls: any) => {
+      const academicYear = resolveClassAcademicYear(cls) || NO_ACADEMIC_YEAR_LABEL;
+      if (!grouped[academicYear]) grouped[academicYear] = [];
+      grouped[academicYear].push(cls);
+    });
+
+    return sortAcademicYearsDesc(Object.keys(grouped)).map((academicYear) => ({
+      academicYear,
+      entries: [...grouped[academicYear]].sort((left: any, right: any) => String(left?.name || '').localeCompare(String(right?.name || ''), 'es', { sensitivity: 'base' })),
+    }));
+  }, [filteredClasses, resolveClassAcademicYear]);
+
+  const hasAcademicYearFilter = Boolean(academicYearStartFilter || academicYearEndFilter);
+  const clearAcademicYearFilter = () => {
+    setAcademicYearStartFilter('');
+    setAcademicYearEndFilter('');
+  };
+
+  const toggleCourseYearGroup = (academicYear: string) => {
+    setCollapsedCourseYears((previous) => ({
+      ...previous,
+      [academicYear]: !previous[academicYear],
+    }));
+  };
+
+  const toggleClassYearGroup = (academicYear: string) => {
+    setCollapsedClassYears((previous) => ({
+      ...previous,
+      [academicYear]: !previous[academicYear],
+    }));
+  };
 
   // ── Tab switch ──────────────────────────────────────────────────────────────
   const switchTab = (next: any) => {
@@ -295,6 +440,48 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
         </div>
 
         {!showingDetail && tab !== TAB_BIN && (
+          <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+            <label className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
+              Desde
+              <select
+                value={academicYearStartFilter}
+                onChange={(event: any) => setAcademicYearStartFilter(event.target.value)}
+                className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200"
+              >
+                <option value="">Todos</option>
+                {availableAcademicYears.map((academicYear) => (
+                  <option key={`start-${academicYear}`} value={academicYear}>{academicYear}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1 text-xs text-slate-500 dark:text-slate-400">
+              Hasta
+              <select
+                value={academicYearEndFilter}
+                onChange={(event: any) => setAcademicYearEndFilter(event.target.value)}
+                className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200"
+              >
+                <option value="">Todos</option>
+                {availableAcademicYears.map((academicYear) => (
+                  <option key={`end-${academicYear}`} value={academicYear}>{academicYear}</option>
+                ))}
+              </select>
+            </label>
+
+            {hasAcademicYearFilter && (
+              <button
+                type="button"
+                onClick={clearAcademicYearFilter}
+                className="self-end sm:self-auto inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
+              >
+                <FilterX className="w-3.5 h-3.5" /> Limpiar filtro
+              </button>
+            )}
+          </div>
+        )}
+
+        {!showingDetail && tab !== TAB_BIN && (
           <button
             onClick={() => tab === TAB_COURSES ? setShowCourseModal(true) : setShowClassModal(true)}
             className="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white
@@ -327,12 +514,47 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
                 onUpdateField={handleUpdateCourseField}
               />
             ) : (
-              <CourseList
-                courses={courses}
-                classes={classes}
-                onSelect={setSelectedCourse}
-                onDelete={handleDeleteCourse}
-              />
+              groupedCourses.length === 0 ? (
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                  No hay cursos en el rango de años académicos seleccionado.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {groupedCourses.map((group: any) => {
+                    const isCollapsed = collapsedCourseYears[group.academicYear] === true;
+                    const yearTitle = group.academicYear === NO_ACADEMIC_YEAR_LABEL
+                      ? NO_ACADEMIC_YEAR_LABEL
+                      : `Año académico ${group.academicYear}`;
+
+                    return (
+                      <div key={`courses-group-${group.academicYear}`} className="space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => toggleCourseYearGroup(group.academicYear)}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors"
+                        >
+                          <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            {isCollapsed ? <ChevronRight className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                            {yearTitle}
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {group.entries.length} curso{group.entries.length !== 1 ? 's' : ''}
+                          </span>
+                        </button>
+
+                        {!isCollapsed && (
+                          <CourseList
+                            courses={group.entries}
+                            classes={filteredClasses}
+                            onSelect={setSelectedCourse}
+                            onDelete={handleDeleteCourse}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )
             )
           )}
 
@@ -350,14 +572,49 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
                 initialEditKey={jumpToEdit ? 'identifier' : null}
               />
             ) : (
-              <ClassList
-                classes={classes}
-                courses={courses}
-                allTeachers={allTeachers}
-                onSelect={handleSelectClass}
-                onEdit={handleEditClass}
-                onDelete={handleDeleteClass}
-              />
+              groupedClasses.length === 0 ? (
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                  No hay clases en el rango de años académicos seleccionado.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {groupedClasses.map((group: any) => {
+                    const isCollapsed = collapsedClassYears[group.academicYear] === true;
+                    const yearTitle = group.academicYear === NO_ACADEMIC_YEAR_LABEL
+                      ? NO_ACADEMIC_YEAR_LABEL
+                      : `Año académico ${group.academicYear}`;
+
+                    return (
+                      <div key={`classes-group-${group.academicYear}`} className="space-y-3">
+                        <button
+                          type="button"
+                          onClick={() => toggleClassYearGroup(group.academicYear)}
+                          className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex items-center justify-between text-left hover:bg-slate-50 dark:hover:bg-slate-800/70 transition-colors"
+                        >
+                          <span className="inline-flex items-center gap-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                            {isCollapsed ? <ChevronRight className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                            {yearTitle}
+                          </span>
+                          <span className="text-xs text-slate-500 dark:text-slate-400">
+                            {group.entries.length} clase{group.entries.length !== 1 ? 's' : ''}
+                          </span>
+                        </button>
+
+                        {!isCollapsed && (
+                          <ClassList
+                            classes={group.entries}
+                            courses={courses}
+                            allTeachers={allTeachers}
+                            onSelect={handleSelectClass}
+                            onEdit={handleEditClass}
+                            onDelete={handleDeleteClass}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )
             )
           )}
 
@@ -401,7 +658,7 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
                         return (
                           <div key={course.id} className="px-5 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                             <div>
-                              <p className="font-semibold text-slate-900 dark:text-white">{course.name}</p>
+                              <p className="font-semibold text-slate-900 dark:text-white">{getCourseDisplayLabel(course)}</p>
                               <p className="text-xs text-slate-400">En papelera desde: {formatTrashedDate(course.trashedAt)}</p>
                               <p className="text-xs text-amber-600 dark:text-amber-300 mt-0.5">{formatRetentionInfo(course.trashedAt)}</p>
                             </div>

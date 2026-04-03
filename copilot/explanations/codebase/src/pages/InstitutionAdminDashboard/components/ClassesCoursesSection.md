@@ -31,8 +31,11 @@
 - `../modals/CreateClassModal.jsx`
 - `../../../hooks/usePersistentState.js`
 - `../../../utils/pagePersistence.js`
+- `../../../utils/courseLabelUtils`
 
 ## Changelog
+- 2026-04-03: Added `Desde/Hasta` academic-year range filters and collapsible year-group sections for both courses and classes in organization tab.
+- 2026-04-03: Updated trashed-course rows in `Papelera` to use shared `Nombre (AAAA-AAAA)` label formatting.
 - 2026-04-02: Added defensive academic-year validation gates on `handleCreateCourse` and `handleCreateClass` before delegating to hook writes.
 - 2026-04-02: Added retention-window countdown copy in bin rows (`Se eliminará automáticamente en ...`) for trashed courses/classes.
 - 2026-04-02: Added institution-admin `Papelera` tab with trashed courses/classes listing, restore actions, and permanent-delete routing.

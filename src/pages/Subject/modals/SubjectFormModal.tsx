@@ -12,6 +12,7 @@ import TagManager from './subject-form/TagManager';
 import AppearanceSection from './subject-form/AppearanceSection';
 import StyleSelector from './subject-form/StyleSelector';
 import { getNormalizedRole, getPermissionLevel } from '../../../utils/permissionUtils';
+import { normalizeAcademicYear } from '../../../utils/academicYearLifecycleUtils';
 import { canTeacherAssignClassesAndStudents, DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils/institutionPolicyUtils';
 import { generateSubjectInviteCode } from '../../../utils/subjectAccessUtils';
 
@@ -70,6 +71,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const canManageSharing = !isTagOnlyShortcutEdit && (!isShortcutEditing || isShortcutEditor);
     const canModifyClassAssignments = canAccessClassesTab && canManageSharing;
     const canEditOriginalFields = !isShortcutEditing || isShortcutEditor;
+    const subjectAcademicYear = normalizeAcademicYear(initialData?.academicYear);
     const isOwnerManager = isShortcutEditing
         ? shortcutPermissionLevel === 'owner'
         : Boolean((initialData?.ownerId || formData?.ownerId) && user?.uid && (initialData?.ownerId || formData?.ownerId) === user.uid);
@@ -460,7 +462,14 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 const classesSnap = await getDocs(classesQuery);
 
                 if (!active) return;
-                const loaded = classesSnap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
+                let loaded = classesSnap.docs.map((d: any) => ({ id: d.id, ...d.data() }));
+
+                if (subjectAcademicYear) {
+                    loaded = loaded.filter((classEntry: any) => (
+                        normalizeAcademicYear(classEntry?.academicYear) === subjectAcademicYear
+                    ));
+                }
+
                 setAvailableClasses(loaded);
                 setClassesLoadError('');
             } catch (error: any) {
@@ -483,7 +492,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         return () => {
             active = false;
         };
-    }, [isOpen, canAccessClassesTab, user?.institutionId, user?.uid, currentRole]);
+    }, [isOpen, canAccessClassesTab, user?.institutionId, user?.uid, currentRole, subjectAcademicYear]);
 
     const toggleClassSelection = (classId: any) => {
         setSelectedClassIds((prev: any) => (
@@ -1435,6 +1444,11 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                                                 ? 'Selecciona tus clases y envía una solicitud para que administración la apruebe.'
                                                 : 'Vista de solo lectura para permisos de lector.'}
                                     </p>
+                                    {subjectAcademicYear && (
+                                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                            Solo se muestran clases del año académico {subjectAcademicYear}.
+                                        </p>
+                                    )}
                                 </div>
 
                                 {classesActionError && (

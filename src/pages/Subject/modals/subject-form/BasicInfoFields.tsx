@@ -1,5 +1,6 @@
 // src/pages/Subject/modals/subject-form/BasicInfoFields.jsx
 import React from 'react';
+import { getCourseDisplayLabel } from '../../../../utils/courseLabelUtils';
 
 const BasicInfoFields = ({
     formData,
@@ -65,7 +66,7 @@ const BasicInfoFields = ({
                     <option value="" className="dark:bg-slate-800">{coursesLoading ? 'Cargando cursos...' : 'Selecciona un curso'}</option>
                     {availableCourses.map((course: any) => (
                         <option key={course.id} value={course.name} className="dark:bg-slate-800">
-                            {course.name}
+                            {getCourseDisplayLabel(course)}
                         </option>
                     ))}
                 </select>

@@ -22,6 +22,7 @@ import {
   getDefaultAcademicYear,
   normalizeAcademicYear,
 } from '../components/classes-courses/academicYearUtils';
+import { getCourseDisplayLabel } from '../../../utils/courseLabelUtils';
 
 const PersonPicker = ({
   people,
@@ -155,7 +156,7 @@ const CreateClassModal = ({
           >
             <option value="">— Selecciona un curso —</option>
             {courses.map((course) => (
-              <option key={course.id} value={course.id}>{course.name}</option>
+              <option key={course.id} value={course.id}>{getCourseDisplayLabel(course)}</option>
             ))}
           </select>
           {courses.length === 0 && (

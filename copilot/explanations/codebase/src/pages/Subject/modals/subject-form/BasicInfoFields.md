@@ -1,6 +1,10 @@
 # BasicInfoFields.jsx
 
 ## Changelog
+### 2026-04-03: Etiquetas de curso con año académico en selector
+- Reused shared `courseLabelUtils` formatter for course `<option>` labels.
+- Keeps stored value compatibility (`course.name`) while displaying `Nombre (AAAA-AAAA)` to reduce ambiguity when duplicate course names exist across years.
+
 ### 2026-03-12: Curso desde Firestore (institución)
 - Replaced the `level` + `grade` selector pair with a single `course` selector.
 - Added support for `availableCourses`, `coursesLoading`, and `courseSelectRef` props.
