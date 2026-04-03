@@ -1,4 +1,4 @@
-// src/pages/Content/Exam.jsx
+// src/pages/Content/Exam.tsx
 /* eslint-disable react-hooks/error-boundaries */
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { canUserAccessSubject } from '../../utils/subjectAccessUtils';
+
 
 import 'katex/dist/katex.min.css';
 import { BlockMath, InlineMath } from 'react-katex';
@@ -338,7 +340,7 @@ const CompletionScreen = ({ examData, revealedAnswers, timeLeft, total, gradient
 // MAIN COMPONENT
 // ─────────────────────────────────────────
 
-const Exam = () => {
+const Exam = ({ user }) => {
     const { subjectId, topicId, examId } = useParams();
     const navigate = useNavigate();
     const questionRef = useRef<any>(null);
@@ -382,8 +384,24 @@ const Exam = () => {
                 try {
                     if (subjectId) {
                         const subSnap = await getDoc(doc(db, 'subjects', subjectId));
-                        if (subSnap.exists() && subSnap.data().color) {
-                            setTopicGradient(subSnap.data().color);
+                        if (subSnap.exists()) {
+                            const subjectData = subSnap.data();
+    
+                            if (user?.uid) {
+                                const hasSubjectAccess = await canUserAccessSubject({
+                                    subject: { id: subSnap.id, ...subjectData },
+                                    user
+                                });
+    
+                                if (!hasSubjectAccess) {
+                                    navigate('/home');
+                                    return;
+                                }
+                            }
+    
+                            if (subjectData?.color) {
+                                setTopicGradient(subjectData.color);
+                            }
                         }
                     }
                 } catch (subjectError) {
@@ -415,7 +433,8 @@ const Exam = () => {
             }
         };
         load();
-    }, [subjectId, examId]);
+    }, [subjectId, examId, navigate, user]);
+
 
     // Timer
     useEffect(() => {

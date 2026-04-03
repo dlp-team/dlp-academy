@@ -18,9 +18,15 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Added ClassDetail regression tests to verify out-of-course options are blocked for new assignments while preserving selected/legacy visibility and fallback behavior.
 - Hardened class course-change flow: when a class switches course, student assignments are normalized to the new course eligibility set (with legacy fallback preservation).
 
+## Progress Update (2026-04-04)
+- Consolidated exam content surface to TypeScript-only source by removing duplicate `src/pages/Content/Exam.jsx` and keeping `src/pages/Content/Exam.tsx` as canonical implementation.
+- Preserved lifecycle subject-access gate behavior on direct exam routes and added explicit regression coverage for denied access redirects.
+- Updated exam unit suite to mock `canUserAccessSubject(...)` deterministically and verify redirect to `/home` when a student loses lifecycle visibility.
+
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
 - `npm run test:unit -- tests/unit/pages/institution-admin/ClassDetail.studentCourseEligibility.test.jsx tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
+- `npm run test:unit -- tests/unit/pages/content/Exam.test.jsx`
 - `get_errors` clean for all touched source and test files in this slice.
 
 ## Remaining in Phase 05

@@ -15,6 +15,10 @@ const firestoreMocks = vi.hoisted(() => ({
   doc: vi.fn((_db, collectionName, id) => ({ collectionName, id })),
 }));
 
+const subjectAccessMocks = vi.hoisted(() => ({
+  canUserAccessSubject: vi.fn(async () => true),
+}));
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
@@ -37,11 +41,16 @@ vi.mock('firebase/firestore', async () => {
   };
 });
 
+vi.mock('../../../../src/utils/subjectAccessUtils', () => ({
+  canUserAccessSubject: (...args) => subjectAccessMocks.canUserAccessSubject(...args),
+}));
+
 describe('Exam load fallback behavior', () => {
   let consoleErrorSpy;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    subjectAccessMocks.canUserAccessSubject.mockResolvedValue(true);
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
@@ -146,5 +155,43 @@ describe('Exam load fallback behavior', () => {
         screen.getByText(/no se pudo cargar el contexto de la asignatura\. el examen se mostrara con el tema por defecto\./i)
       ).toBeTruthy();
     });
+  });
+
+  it('redirects to home when subject lifecycle access is denied for the user', async () => {
+    subjectAccessMocks.canUserAccessSubject.mockResolvedValue(false);
+
+    firestoreMocks.getDoc.mockImplementation(async (ref) => {
+      if (ref.collectionName === 'subjects') {
+        return {
+          id: 'subject-1',
+          exists: () => true,
+          data: () => ({ color: 'from-blue-500 to-cyan-600' }),
+        };
+      }
+
+      if (ref.collectionName === 'exams') {
+        return {
+          exists: () => true,
+          data: () => ({
+            title: 'Examen no visible',
+            questions: [{ question: 'Q', answer: 'A' }],
+          }),
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    render(
+      <MemoryRouter>
+        <Exam user={{ uid: 'student-1', role: 'student' }} />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(routeMocks.navigate).toHaveBeenCalledWith('/home');
+    });
+
+    expect(firestoreMocks.getDoc).toHaveBeenCalledTimes(1);
   });
 });
