@@ -1,4 +1,15 @@
 <!-- copilot/explanations/codebase/src/hooks/useSubjects.md -->
+## [2026-04-03] Invite-Code Sync Is Best-Effort After Subject Save
+### Context
+- Subject updates could succeed in Firestore while follow-up invite-code mapping sync failed, surfacing a false save error in Home flows.
+
+### Change
+- `updateSubject(...)` now keeps invite-code mapping sync (`subjectInviteCodes`) as a best-effort step after the main subject document update.
+- Mapping-sync failures are logged with `console.warn` and no longer throw back to the caller.
+
+### Impact
+- Prevents false-negative “no se pudo guardar” feedback when the core subject update has already succeeded.
+
 ## [2026-04-02] Active-Role Access Context Wiring
 ### Context
 - Subject listeners and policy gates were still keyed from legacy normalized base-role reads.

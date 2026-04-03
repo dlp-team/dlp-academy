@@ -1,4 +1,4 @@
-// src/pages/Home/components/HomeSelectionToolbar.jsx
+// src/pages/Home/components/HomeSelectionToolbar.tsx
 import React from 'react';
 import { CheckSquare, Square, Trash2, FolderPlus, FolderInput, MoveRight } from 'lucide-react';
 
@@ -18,48 +18,61 @@ const HomeSelectionToolbar = ({
     if (!visible) return null;
 
     const hasSelection = selectedCount > 0;
+    const containerTone = selectMode && hasSelection
+        ? 'border-sky-300 dark:border-sky-700 bg-sky-50/70 dark:bg-sky-950/25'
+        : selectMode
+            ? 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900/80'
+            : 'border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70';
+    const toggleTone = selectMode && hasSelection
+        ? 'bg-sky-600 hover:bg-sky-700 text-white border border-sky-600'
+        : 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800';
 
     return (
-        <div className={`mt-4 mb-6 rounded-xl border p-3 flex flex-col gap-3 ${
-            selectMode
-                ? 'border-indigo-300 dark:border-indigo-700 bg-indigo-50/60 dark:bg-indigo-950/30'
-                : 'border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70'
-        }`}>
-            <button
-                type="button"
-                onClick={onToggleSelectMode}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium transition-colors"
-                title={selectMode ? 'Salir de selección' : 'Modo selección'}
-            >
-                {selectMode ? <CheckSquare size={16} /> : <Square size={16} />}
-                <span className="hidden sm:inline">{selectMode ? 'Salir de selección' : 'Modo selección'}</span>
-            </button>
+        <div className={`mt-4 mb-6 rounded-xl border p-3 flex flex-col gap-3 ${containerTone}`}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={onToggleSelectMode}
+                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${toggleTone}`}
+                        title={selectMode ? 'Salir de la selección' : 'Modo selección'}
+                    >
+                        {selectMode ? <CheckSquare size={16} /> : <Square size={16} />}
+                        <span>{selectMode ? 'Salir de la selección' : 'Modo selección'}</span>
+                    </button>
 
-            {selectMode && (
-                <>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 text-xs font-semibold">
-                            {selectedCount} seleccionado(s)
+                    {selectMode && (
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                            hasSelection
+                                ? 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                        }`}>
+                            {selectedCount} seleccionados
                         </span>
+                    )}
+                </div>
+
+                {selectMode && (
+                    <div className="flex flex-wrap items-center gap-2">
                         <button
                             type="button"
                             onClick={onCreateFolderFromSelection}
                             disabled={!hasSelection}
                             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Nueva carpeta con selección"
+                            title="Crear carpeta con selección"
                         >
-                            <FolderPlus size={16} /> <span className="hidden sm:inline">Crear carpeta</span>
+                            <FolderPlus size={16} /> Crear carpeta
                         </button>
 
-                        <div className="inline-flex flex-wrap items-center gap-2">
+                        <div className="inline-flex flex-wrap items-center gap-2 px-2 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/90">
                             <FolderInput size={16} className="text-slate-500 dark:text-slate-300" />
                             <select
                                 value={bulkMoveTargetFolderId}
                                 onChange={(event) => onMoveTargetChange(event.target.value)}
-                                className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-800 dark:text-slate-200 max-w-[150px] sm:max-w-none"
+                                className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-sm text-slate-800 dark:text-slate-200 max-w-[170px] sm:max-w-none"
                                 aria-label="Destino para mover selección"
                             >
-                                <option value="">Mover al inicio</option>
+                                <option value="">Mover a inicio</option>
                                 {folders.map((folder: any) => (
                                     <option key={folder.id} value={folder.id}>{folder.name}</option>
                                 ))}
@@ -71,7 +84,7 @@ const HomeSelectionToolbar = ({
                                 className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                 title="Mover selección"
                             >
-                                <MoveRight size={16} /> <span className="hidden sm:inline">Mover</span>
+                                <MoveRight size={16} /> Mover a...
                             </button>
                         </div>
 
@@ -80,9 +93,9 @@ const HomeSelectionToolbar = ({
                             onClick={onDeleteSelected}
                             disabled={!hasSelection}
                             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="Eliminar seleccionados"
+                            title="Mover selección a papelera"
                         >
-                            <Trash2 size={16} /> <span className="hidden sm:inline">Mover a papelera</span>
+                            <Trash2 size={16} /> Mover a papelera
                         </button>
 
                         <button
@@ -91,15 +104,16 @@ const HomeSelectionToolbar = ({
                             className="px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                             title="Limpiar selección"
                         >
-                            <span className="hidden sm:inline">Limpiar selección</span>
-                            <span className="sm:hidden">Limpiar</span>
+                            Limpiar
                         </button>
                     </div>
+                )}
+            </div>
 
-                    <p className="text-xs text-slate-600 dark:text-slate-300">
-                        Seguridad: esta acción solo mueve elementos a la papelera. La eliminación permanente se gestiona dentro de la pestaña Papelera.
-                    </p>
-                </>
+            {selectMode && (
+                <p className="text-xs text-slate-600 dark:text-slate-300">
+                    Modo seguro: esta acción mueve elementos a la papelera. La eliminación permanente se gestiona dentro de la pestaña Papelera.
+                </p>
             )}
         </div>
     );

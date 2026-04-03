@@ -23,6 +23,8 @@
 - `../../../firebase/config`
 
 ## Changelog
+- 2026-04-03: Removed post-mutation `fetchAll()` refetch cycles and replaced them with local state synchronization after create/update/delete/restore flows to reduce repeated Firestore read pressure.
+- 2026-04-03: Preserved existing initial full fetch partitioning (`active` vs `trashed`) and retention purge semantics while improving runtime request efficiency for mutation-heavy sessions.
 - 2026-04-02: Added canonical academic-year normalization defaults on course/class create/update paths.
 - 2026-04-02: Added course-year propagation to linked classes when a course academic year changes.
 - 2026-04-02: Added fetch-time retention purge for trashed courses/classes older than 15 days, including dependent class cleanup for expired trashed courses.

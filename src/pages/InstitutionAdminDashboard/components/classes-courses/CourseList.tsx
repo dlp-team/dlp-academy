@@ -2,8 +2,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Grid of course cards. Clicking a card opens the detail view.
 
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { FolderOpen, LayoutGrid, Trash2 } from 'lucide-react';
+import TablePagination from '../../../../components/ui/TablePagination';
+
+const COURSE_PAGE_SIZE = 12;
 
 const CourseCard = ({ course, classCount, onClick, onDelete }: any) => (
   <div
@@ -48,6 +51,22 @@ const CourseCard = ({ course, classCount, onClick, onDelete }: any) => (
 );
 
 const CourseList = ({ courses, classes, onSelect, onDelete }: any) => {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(courses.length / COURSE_PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const visibleCourses = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * COURSE_PAGE_SIZE;
+    return courses.slice(startIndex, startIndex + COURSE_PAGE_SIZE);
+  }, [courses, safeCurrentPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   if (courses.length === 0) {
     return (
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-12 text-center">
@@ -59,16 +78,24 @@ const CourseList = ({ courses, classes, onSelect, onDelete }: any) => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {courses.map(course => (
-        <CourseCard
-          key={course.id}
-          course={course}
-          classCount={classes.filter(cl => cl.courseId === course.id).length}
-          onClick={() => onSelect(course)}
-          onDelete={onDelete}
-        />
-      ))}
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {visibleCourses.map(course => (
+          <CourseCard
+            key={course.id}
+            course={course}
+            classCount={classes.filter(cl => cl.courseId === course.id).length}
+            onClick={() => onSelect(course)}
+            onDelete={onDelete}
+          />
+        ))}
+      </div>
+
+      <TablePagination
+        currentPage={safeCurrentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };

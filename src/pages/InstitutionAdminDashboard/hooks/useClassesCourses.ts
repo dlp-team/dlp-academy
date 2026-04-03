@@ -27,6 +27,24 @@ import {
 const normalizeEntityStatus = (entity: any) => String(entity?.status || 'active').trim().toLowerCase();
 const isTrashedEntity = (entity: any) => normalizeEntityStatus(entity) === 'trashed';
 
+const upsertEntityById = (entities: any[] = [], entity: any) => {
+  if (!entity?.id) return entities;
+  const existingIndex = entities.findIndex((entry: any) => entry.id === entity.id);
+  if (existingIndex === -1) {
+    return [entity, ...entities];
+  }
+
+  const next = [...entities];
+  next[existingIndex] = { ...next[existingIndex], ...entity };
+  return next;
+};
+
+const removeEntitiesById = (entities: any[] = [], ids: any[] = []) => {
+  const idSet = new Set(ids);
+  if (idSet.size === 0) return entities;
+  return entities.filter((entry: any) => !idSet.has(entry.id));
+};
+
 const applyDeleteBatchInChunks = async (docRefs: any[] = [], chunkSize = 450) => {
   for (let index = 0; index < docRefs.length; index += chunkSize) {
     const batch = writeBatch(db);
@@ -119,16 +137,25 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
   const createCourse = async (form: any) => {
     const normalizedAcademicYear = normalizeAcademicYear(form?.academicYear) || getDefaultAcademicYear();
 
-    await addDoc(collection(db, 'courses'), {
+    const clientCourseDraft = {
       ...form,
       academicYear: normalizedAcademicYear,
       institutionId: effectiveInstitutionId,
       status: 'active',
       createdBy: user.uid,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const courseRef = await addDoc(collection(db, 'courses'), {
+      ...clientCourseDraft,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-    await fetchAll();
+
+    const nextCourse = { id: courseRef.id, ...clientCourseDraft };
+    setCourses((previous) => upsertEntityById(previous, nextCourse));
+    setTrashedCourses((previous) => removeEntitiesById(previous, [courseRef.id]));
   };
 
   const updateCourse = async (id, patch: any) => {
@@ -141,6 +168,7 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
       normalizedPatch.academicYear = normalizedAcademicYear;
     }
 
+    const nextUpdatedAt = new Date();
     await updateDoc(doc(db, 'courses', id), { ...normalizedPatch, updatedAt: serverTimestamp() });
 
     if (hasAcademicYearPatch) {
@@ -158,18 +186,47 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
           updatedAt: serverTimestamp(),
         })
       ));
+
+      setClasses((previous) => previous.map((cls: any) => (
+        cls?.courseId === id
+          ? {
+            ...cls,
+            academicYear: normalizedAcademicYear,
+            updatedAt: nextUpdatedAt,
+          }
+          : cls
+      )));
+
+      setTrashedClasses((previous) => previous.map((cls: any) => (
+        cls?.courseId === id
+          ? {
+            ...cls,
+            academicYear: normalizedAcademicYear,
+            updatedAt: nextUpdatedAt,
+          }
+          : cls
+      )));
     }
 
-    await fetchAll();
+    const nextCoursePatch = {
+      id,
+      ...normalizedPatch,
+      updatedAt: nextUpdatedAt,
+    };
+    setCourses((previous) => upsertEntityById(previous, nextCoursePatch));
+    setTrashedCourses((previous) => upsertEntityById(previous, nextCoursePatch));
   };
 
   const deleteCourse = async (id: any) => {
     if (!id) return;
 
+    const nextTrashedAt = new Date();
+    const trashedByUid = user?.uid || null;
+
     await updateDoc(doc(db, 'courses', id), {
       status: 'trashed',
       trashedAt: serverTimestamp(),
-      trashedByUid: user?.uid || null,
+      trashedByUid,
       updatedAt: serverTimestamp(),
     });
 
@@ -185,13 +242,45 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
       updateDoc(doc(db, 'classes', classDoc.id), {
         status: 'trashed',
         trashedAt: serverTimestamp(),
-        trashedByUid: user?.uid || null,
+        trashedByUid,
         trashedByCourseId: id,
         updatedAt: serverTimestamp(),
       })
     ));
 
-    await fetchAll();
+    const linkedClassIds = linkedClassesSnapshot.docs.map((classDoc: any) => classDoc.id);
+
+    setCourses((previous) => removeEntitiesById(previous, [id]));
+    setTrashedCourses((previous) => {
+      const sourceCourse = courses.find((course: any) => course.id === id) || trashedCourses.find((course: any) => course.id === id);
+      const nextCourse = {
+        ...(sourceCourse || { id }),
+        status: 'trashed',
+        trashedAt: nextTrashedAt,
+        trashedByUid,
+        updatedAt: nextTrashedAt,
+      };
+      return upsertEntityById(previous, nextCourse);
+    });
+
+    setClasses((previous) => removeEntitiesById(previous, linkedClassIds));
+    setTrashedClasses((previous) => {
+      const previousById = new Map(previous.map((entry: any) => [entry.id, entry]));
+      const activeById = new Map(classes.map((entry: any) => [entry.id, entry]));
+      const nextEntries = linkedClassIds.map((classId: any) => {
+        const sourceClass = activeById.get(classId) || previousById.get(classId) || { id: classId, courseId: id };
+        return {
+          ...sourceClass,
+          status: 'trashed',
+          trashedAt: nextTrashedAt,
+          trashedByUid,
+          trashedByCourseId: id,
+          updatedAt: nextTrashedAt,
+        };
+      });
+
+      return nextEntries.reduce((acc: any, entry: any) => upsertEntityById(acc, entry), previous);
+    });
   };
 
   // ── Class CRUD ────────────────────────────────────────────────────────────
@@ -209,16 +298,25 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
       resolvedAcademicYear = getDefaultAcademicYear();
     }
 
-    await addDoc(collection(db, 'classes'), {
+    const clientClassDraft = {
       ...form,
       academicYear: resolvedAcademicYear,
       institutionId: effectiveInstitutionId,
       status: 'active',
       createdBy: user.uid,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    const classRef = await addDoc(collection(db, 'classes'), {
+      ...clientClassDraft,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
-    await fetchAll();
+
+    const nextClass = { id: classRef.id, ...clientClassDraft };
+    setClasses((previous) => upsertEntityById(previous, nextClass));
+    setTrashedClasses((previous) => removeEntitiesById(previous, [classRef.id]));
   };
 
   const updateClass = async (id, patch: any) => {
@@ -236,25 +334,49 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
       }
     }
 
+    const nextUpdatedAt = new Date();
     await updateDoc(doc(db, 'classes', id), { ...normalizedPatch, updatedAt: serverTimestamp() });
-    await fetchAll();
+
+    const nextClassPatch = {
+      id,
+      ...normalizedPatch,
+      updatedAt: nextUpdatedAt,
+    };
+    setClasses((previous) => upsertEntityById(previous, nextClassPatch));
+    setTrashedClasses((previous) => upsertEntityById(previous, nextClassPatch));
   };
 
   const deleteClass = async (id: any) => {
     if (!id) return;
 
+    const nextTrashedAt = new Date();
+    const trashedByUid = user?.uid || null;
+
     await updateDoc(doc(db, 'classes', id), {
       status: 'trashed',
       trashedAt: serverTimestamp(),
-      trashedByUid: user?.uid || null,
+      trashedByUid,
       updatedAt: serverTimestamp(),
     });
 
-    await fetchAll();
+    setClasses((previous) => removeEntitiesById(previous, [id]));
+    setTrashedClasses((previous) => {
+      const sourceClass = classes.find((entry: any) => entry.id === id) || trashedClasses.find((entry: any) => entry.id === id);
+      const nextClass = {
+        ...(sourceClass || { id }),
+        status: 'trashed',
+        trashedAt: nextTrashedAt,
+        trashedByUid,
+        updatedAt: nextTrashedAt,
+      };
+      return upsertEntityById(previous, nextClass);
+    });
   };
 
   const restoreCourse = async (id: any) => {
     if (!id) return;
+
+    const restoredAt = new Date();
 
     await updateDoc(doc(db, 'courses', id), {
       status: 'active',
@@ -281,11 +403,45 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
       })
     ));
 
-    await fetchAll();
+    const linkedClassIds = linkedClassesSnapshot.docs.map((classDoc: any) => classDoc.id);
+
+    setTrashedCourses((previous) => removeEntitiesById(previous, [id]));
+    setCourses((previous) => {
+      const sourceCourse = trashedCourses.find((entry: any) => entry.id === id) || courses.find((entry: any) => entry.id === id);
+      const nextCourse = {
+        ...(sourceCourse || { id }),
+        status: 'active',
+        trashedAt: null,
+        trashedByUid: null,
+        updatedAt: restoredAt,
+      };
+      return upsertEntityById(previous, nextCourse);
+    });
+
+    setTrashedClasses((previous) => removeEntitiesById(previous, linkedClassIds));
+    setClasses((previous) => {
+      const trashedById = new Map(trashedClasses.map((entry: any) => [entry.id, entry]));
+      const activeById = new Map(previous.map((entry: any) => [entry.id, entry]));
+      const nextEntries = linkedClassIds.map((classId: any) => {
+        const sourceClass = activeById.get(classId) || trashedById.get(classId) || { id: classId, courseId: id };
+        return {
+          ...sourceClass,
+          status: 'active',
+          trashedAt: null,
+          trashedByUid: null,
+          trashedByCourseId: null,
+          updatedAt: restoredAt,
+        };
+      });
+
+      return nextEntries.reduce((acc: any, entry: any) => upsertEntityById(acc, entry), previous);
+    });
   };
 
   const restoreClass = async (id: any) => {
     if (!id) return;
+
+    const restoredAt = new Date();
 
     await updateDoc(doc(db, 'classes', id), {
       status: 'active',
@@ -295,7 +451,19 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
       updatedAt: serverTimestamp(),
     });
 
-    await fetchAll();
+    setTrashedClasses((previous) => removeEntitiesById(previous, [id]));
+    setClasses((previous) => {
+      const sourceClass = trashedClasses.find((entry: any) => entry.id === id) || classes.find((entry: any) => entry.id === id);
+      const nextClass = {
+        ...(sourceClass || { id }),
+        status: 'active',
+        trashedAt: null,
+        trashedByUid: null,
+        trashedByCourseId: null,
+        updatedAt: restoredAt,
+      };
+      return upsertEntityById(previous, nextClass);
+    });
   };
 
   const permanentlyDeleteCourse = async (id: any) => {
@@ -312,14 +480,20 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
     const classRefs = linkedClassesSnapshot.docs.map((classDoc: any) => doc(db, 'classes', classDoc.id));
     await applyDeleteBatchInChunks([...classRefs, doc(db, 'courses', id)]);
 
-    await fetchAll();
+    const linkedClassIds = linkedClassesSnapshot.docs.map((classDoc: any) => classDoc.id);
+    setCourses((previous) => removeEntitiesById(previous, [id]));
+    setTrashedCourses((previous) => removeEntitiesById(previous, [id]));
+    setClasses((previous) => removeEntitiesById(previous, linkedClassIds));
+    setTrashedClasses((previous) => removeEntitiesById(previous, linkedClassIds));
   };
 
   const permanentlyDeleteClass = async (id: any) => {
     if (!id) return;
 
     await deleteDoc(doc(db, 'classes', id));
-    await fetchAll();
+
+    setClasses((previous) => removeEntitiesById(previous, [id]));
+    setTrashedClasses((previous) => removeEntitiesById(previous, [id]));
   };
 
   // ── Helpers ───────────────────────────────────────────────────────────────

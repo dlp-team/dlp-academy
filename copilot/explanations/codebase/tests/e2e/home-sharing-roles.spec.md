@@ -1,6 +1,10 @@
 // copilot/explanations/codebase/tests/e2e/home-sharing-roles.spec.md
 
 ## Changelog
+### 2026-04-03: Seeding hook timeout stabilization
+- Added bounded, best-effort wrapper for shared fixture seeding/reset in `beforeAll` and `beforeEach`.
+- Prevents optional admin-fixture prep latency from failing role-visibility tests before assertions run.
+
 ### 2026-04-01: Shared-folder drag/drop deterministic hardening
 - Refined folder selectors to heading-based exact matching for source/target cards.
 - Added modal-aware confirmation handling for share/unshare prompts triggered by folder moves.

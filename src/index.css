@@ -251,6 +251,8 @@ html.theme-switching *::after {
 /* Force custom scrollbar on html/body when Home page is active */
 
 html.custom-scrollbar-active, body.custom-scrollbar-active {
+  overflow-y: auto;
+  scrollbar-gutter: stable both-edges;
   scrollbar-width: thin;
   scrollbar-color: rgba(99,102,241,0.24) transparent;
 }
@@ -274,23 +276,74 @@ html.custom-scrollbar-active::-webkit-scrollbar-corner, body.custom-scrollbar-ac
 html.custom-scrollbar-active::-webkit-scrollbar-thumb, body.custom-scrollbar-active::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, rgba(99,102,241,0.24) 0%, rgba(139,92,246,0.24) 100%);
   border-radius: 8px;
-  opacity: 0.85;
+  opacity: 0.45;
   transition: background 0.3s ease, opacity 0.3s ease;
 }
 html.custom-scrollbar-active::-webkit-scrollbar-thumb:hover, body.custom-scrollbar-active::-webkit-scrollbar-thumb:hover,
 html.custom-scrollbar-active::-webkit-scrollbar-thumb:active, body.custom-scrollbar-active::-webkit-scrollbar-thumb:active {
   background: linear-gradient(180deg, rgba(99,102,241,0.38) 0%, rgba(139,92,246,0.38) 100%);
-  opacity: 1;
+  opacity: 0.95;
 }
 .dark html.custom-scrollbar-active::-webkit-scrollbar-track, .dark body.custom-scrollbar-active::-webkit-scrollbar-track {
   background: transparent;
 }
 .dark html.custom-scrollbar-active::-webkit-scrollbar-thumb, .dark body.custom-scrollbar-active::-webkit-scrollbar-thumb {
   background: linear-gradient(180deg, rgba(139,92,246,0.3) 0%, rgba(99,102,241,0.3) 100%);
-  opacity: 0.88;
+  opacity: 0.5;
 }
 .dark html.custom-scrollbar-active::-webkit-scrollbar-thumb:hover, .dark body.custom-scrollbar-active::-webkit-scrollbar-thumb:hover,
 .dark html.custom-scrollbar-active::-webkit-scrollbar-thumb:active, .dark body.custom-scrollbar-active::-webkit-scrollbar-thumb:active {
   background: linear-gradient(180deg, rgba(139,92,246,0.38) 0%, rgba(99,102,241,0.38) 100%);
-  opacity: 1;
+  opacity: 0.95;
+}
+
+/* Minimal variant: only center bar visible with low opacity until hover/press. */
+.minimal-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99,102,241,0.26) transparent;
+}
+
+.minimal-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: transparent;
+}
+
+.minimal-scrollbar::-webkit-scrollbar-track,
+.minimal-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.minimal-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.minimal-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(99,102,241,0.24);
+  border-radius: 999px;
+  opacity: 0.36;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.minimal-scrollbar::-webkit-scrollbar-thumb:hover,
+.minimal-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgba(99,102,241,0.42);
+  opacity: 0.95;
+}
+
+.dark .minimal-scrollbar {
+  scrollbar-color: rgba(139,92,246,0.32) transparent;
+}
+
+.dark .minimal-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(139,92,246,0.3);
+  opacity: 0.4;
+}
+
+.dark .minimal-scrollbar::-webkit-scrollbar-thumb:hover,
+.dark .minimal-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgba(139,92,246,0.46);
+  opacity: 0.95;
 }

@@ -1,6 +1,11 @@
 // copilot/explanations/codebase/tests/e2e/profile-settings.spec.md
 
 ## Changelog
+### 2026-04-03: Notification persistence selector hardening
+- Tightened notification toggle selection to the specific row labeled `Notificaciones por Email` instead of positional first-button lookup.
+- Updated persistence wait step to require confirmed `Guardado` visibility before reload.
+- Prevented intermittent false failures when save status was still transitioning.
+
 ### 2026-03-09: Phase 03 settings persistence expansion
 - Added coverage for post-reload settings continuity in `/settings`.
 - Validates persistence-oriented behavior for:

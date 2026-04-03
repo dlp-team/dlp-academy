@@ -69,7 +69,7 @@ describe('SecuritySection', () => {
       target: { value: 'password999' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /actualizar contraseña/i }));
+    fireEvent.click(screen.getByRole('button', { name: /actualizar ahora/i }));
 
     expect(screen.getByText(/la confirmación no coincide/i)).toBeTruthy();
     expect(updatePasswordMock).not.toHaveBeenCalled();
@@ -86,7 +86,7 @@ describe('SecuritySection', () => {
       target: { value: 'password123' },
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /actualizar contraseña/i }));
+    fireEvent.click(screen.getByRole('button', { name: /actualizar ahora/i }));
 
     expect(screen.getByTestId('sudo-modal-mock')).toBeTruthy();
 

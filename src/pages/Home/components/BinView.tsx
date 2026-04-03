@@ -1,4 +1,4 @@
-// src/pages/Home/components/BinView.jsx
+// src/pages/Home/components/BinView.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Trash2, Loader2, XCircle, ArrowLeft, CheckSquare, Square, RotateCcw } from 'lucide-react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
@@ -6,6 +6,7 @@ import ListViewItem from '../../../components/modules/ListViewItem';
 import { db } from '../../../firebase/config';
 import { useSubjects } from '../../../hooks/useSubjects';
 import { useFolders } from '../../../hooks/useFolders';
+import { useShortcuts } from '../../../hooks/useShortcuts';
 import {
     BIN_SORT_MODES,
     DEFAULT_BIN_SORT_MODE,
@@ -73,6 +74,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
 
     const { getTrashedSubjects, restoreSubject, permanentlyDeleteSubject } = useSubjects(isStudent ? null : user);
     const { getTrashedFolders, restoreFolder, permanentlyDeleteFolder } = useFolders(isStudent ? null : user);
+    const { getTrashedShortcuts, restoreShortcut, permanentlyDeleteShortcut } = useShortcuts(isStudent ? null : user);
 
     const activeFolderBin = useMemo(
         () => (folderBinTrail.length > 0 ? folderBinTrail[folderBinTrail.length - 1] : null),
@@ -138,6 +140,9 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
         [visibleTrashedItems, selectedItemId, selectedItemType]
     );
 
+    const isShortcutItemType = (itemType: any) => itemType === 'shortcut-subject' || itemType === 'shortcut-folder';
+    const isFolderItemType = (itemType: any) => itemType === 'folder' || itemType === 'shortcut-folder';
+
     const buildActionKey = React.useCallback((itemId: any, itemType: any) => `${itemType}:${itemId}`, []);
 
     const selectedBulkEntries = useMemo(() => Object.values(bulkSelection), [bulkSelection]);
@@ -158,9 +163,10 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
 
         setLoading(true);
         try {
-            const [subjects, folders] = await Promise.all([
+            const [subjects, folders, shortcuts] = await Promise.all([
                 getTrashedSubjects(),
                 getTrashedFolders({ includeNested: true }),
+                getTrashedShortcuts(),
             ]);
 
             if (!skipAutoRetentionPurge) {
@@ -194,6 +200,12 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
 
             const allFolderItems = folders.map((folder: any) => ({ ...folder, itemType: 'folder' }));
             setAllTrashedFolders(allFolderItems);
+
+            const allShortcutItems = shortcuts.map((shortcut: any) => ({
+                ...shortcut,
+                itemType: shortcut?.itemType
+                    || (shortcut?.targetType === 'folder' ? 'shortcut-folder' : 'shortcut-subject')
+            }));
 
             const folderItems = allFolderItems.filter(isTopLevelTrashedFolderEntry);
 
@@ -237,10 +249,10 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
             const subjectItems = allSubjectItems
                 .filter((subject: any) => !subject?.trashedByFolderId);
 
-            const topLevelItems = [...subjectItems, ...folderItems];
+            const topLevelItems = [...subjectItems, ...folderItems, ...allShortcutItems];
             setTrashedItems(topLevelItems);
 
-            const allKnownItems = [...topLevelItems, ...allSubjectItems, ...allFolderItems];
+            const allKnownItems = [...topLevelItems, ...allSubjectItems, ...allFolderItems, ...allShortcutItems];
             if (selectedItemId && !allKnownItems.some(item => item.id === selectedItemId && item.itemType === selectedItemType)) {
                 setSelectedItemId(null);
                 setSelectedItemType(null);
@@ -368,6 +380,9 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                     if (entry.itemType === 'folder') {
                         return restoreFolder(entry.id);
                     }
+                    if (isShortcutItemType(entry.itemType)) {
+                        return restoreShortcut(entry.id);
+                    }
                     return restoreSubject(entry.id);
                 })
             );
@@ -404,6 +419,9 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                     if (entry.itemType === 'folder') {
                         return permanentlyDeleteFolder(entry.id);
                     }
+                    if (isShortcutItemType(entry.itemType)) {
+                        return permanentlyDeleteShortcut(entry.id);
+                    }
                     return permanentlyDeleteSubject(entry.id);
                 })
             );
@@ -438,6 +456,8 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
         try {
             if (itemType === 'folder') {
                 await restoreFolder(itemId);
+            } else if (isShortcutItemType(itemType)) {
+                await restoreShortcut(itemId);
             } else {
                 await restoreSubject(itemId);
             }
@@ -460,6 +480,8 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
             console.error('Error restoring trashed item:', err);
             setErrorMessage(itemType === 'folder'
                 ? 'No se pudo restaurar la carpeta completa. Verifica tus permisos e intenta nuevamente.'
+                : isShortcutItemType(itemType)
+                    ? 'No se pudo restaurar el acceso directo. Verifica tus permisos e intenta nuevamente.'
                 : 'No se pudo restaurar la asignatura. Verifica tus permisos e intenta nuevamente.'
             );
         } finally {
@@ -475,6 +497,8 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
         try {
             if (itemType === 'folder') {
                 await permanentlyDeleteFolder(itemId);
+            } else if (isShortcutItemType(itemType)) {
+                await permanentlyDeleteShortcut(itemId);
             } else {
                 await permanentlyDeleteSubject(itemId);
             }
@@ -517,6 +541,9 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                 visibleTrashedItems.map(item => {
                     if (item.itemType === 'folder') {
                         return permanentlyDeleteFolder(item.id);
+                    }
+                    if (isShortcutItemType(item.itemType)) {
+                        return permanentlyDeleteShortcut(item.id);
                     }
                     return permanentlyDeleteSubject(item.id);
                 })
@@ -752,15 +779,25 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                             type="button"
                             onClick={toggleBulkSelectionMode}
                             className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
-                                selectionMode
-                                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                selectionMode && selectedBulkCount > 0
+                                    ? 'bg-sky-600 hover:bg-sky-700 text-white'
                                     : 'bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
                             }`}
                             aria-pressed={selectionMode}
                         >
                             {selectionMode ? <CheckSquare size={16} /> : <Square size={16} />}
-                            {selectionMode ? 'Salir selección' : 'Modo selección'}
+                            {selectionMode ? 'Salir de la selección' : 'Modo selección'}
                         </button>
+
+                        {selectionMode && (
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                selectedBulkCount > 0
+                                    ? 'bg-sky-100 dark:bg-sky-900/40 text-sky-700 dark:text-sky-300'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                            }`}>
+                                {selectedBulkCount} seleccionados
+                            </span>
+                        )}
 
                         {!selectionMode && (
                             <button
@@ -775,9 +812,6 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
 
                     {selectionMode && (
                         <div className="flex flex-wrap items-center justify-end gap-2">
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
-                                {selectedBulkCount} seleccionado(s)
-                            </span>
                             <button
                                 type="button"
                                 onClick={handleSelectAllVisible}
@@ -803,7 +837,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white rounded-xl text-sm font-medium transition-colors"
                             >
                                 {bulkActionLoading ? <Loader2 className="animate-spin" size={16} /> : <RotateCcw size={16} />}
-                                Restaurar seleccionados
+                                Restaurar selección
                             </button>
                             <button
                                 type="button"
@@ -812,7 +846,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-xl text-sm font-medium transition-colors"
                             >
                                 {bulkActionLoading ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
-                                Eliminar seleccionados
+                                Eliminar selección
                             </button>
                         </div>
                     )}
@@ -846,6 +880,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 cardScale={cardScale}
                                 isSelected={isSelected}
                                 hasSelection={hasSelection}
+                                selectionMode={selectionMode}
                                 onSelect={() => handleSelectItem(item.id, item.itemType)}
                             />
                         );
@@ -859,7 +894,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                             : (selectedItemId === item.id && selectedItemType === item.itemType);
                         const daysRemaining = getDaysRemaining(item);
                         const trashedDate = toJsDate(item.trashedAt);
-                        const isFolderItem = item.itemType === 'folder';
+                        const isFolderItem = isFolderItemType(item.itemType);
 
                         return (
                             <div
@@ -909,7 +944,9 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                     }}
                     onShowDescription={selectedItem.itemType === 'subject'
                         ? () => handleShowDescription(selectedItem)
-                        : () => handleOpenFolderTrashView(selectedItem)}
+                        : selectedItem.itemType === 'folder'
+                            ? () => handleOpenFolderTrashView(selectedItem)
+                            : undefined}
                     onRestore={handleRestore}
                     onDeleteConfirm={(itemId: any, itemType: any) => setDeleteConfirm({ id: itemId, itemType })}
                 >
@@ -921,6 +958,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                         cardScale={cardScale}
                         isSelected={true}
                         hasSelection={false}
+                        selectionMode={false}
                         onSelect={() => {
                             setSelectedItemId(null);
                             setSelectedItemType(null);
@@ -953,7 +991,11 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-xl font-semibold transition-all">
                                 {actionLoading === buildActionKey(selectedItem.id, selectedItem.itemType)
                                     ? <Loader2 className="animate-spin" size={18} />
-                                    : (selectedItem.itemType === 'folder' ? 'Restaurar carpeta completa' : 'Restaurar')}
+                                    : (selectedItem.itemType === 'folder'
+                                        ? 'Restaurar carpeta completa'
+                                        : isShortcutItemType(selectedItem.itemType)
+                                            ? 'Restaurar acceso directo'
+                                            : 'Restaurar')}
                             </button>
                             <button onClick={() => setDeleteConfirm({ id: selectedItem.id, itemType: selectedItem.itemType })}
                                 disabled={actionLoading === buildActionKey(selectedItem.id, selectedItem.itemType)}

@@ -2,10 +2,29 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // Table of all classes. Row click → detail view. Hover actions: edit, delete.
 
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Edit3, LayoutGrid, Trash2 } from 'lucide-react';
+import TablePagination from '../../../../components/ui/TablePagination';
+
+const CLASS_PAGE_SIZE = 15;
 
 const ClassList = ({ classes, courses, allTeachers, onSelect, onEdit, onDelete }: any) => {
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(classes.length / CLASS_PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const visibleClasses = useMemo(() => {
+    const startIndex = (safeCurrentPage - 1) * CLASS_PAGE_SIZE;
+    return classes.slice(startIndex, startIndex + CLASS_PAGE_SIZE);
+  }, [classes, safeCurrentPage]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   const getCourseName  = (id) => courses.find(c => c.id === id)?.name || '—';
   const getCourseColor = (id) => courses.find(c => c.id === id)?.color || '#6366f1';
   const getTeacherName = (id: any) => {
@@ -41,7 +60,7 @@ const ClassList = ({ classes, courses, allTeachers, onSelect, onEdit, onDelete }
                 </td>
               </tr>
             ) : (
-              classes.map(cl => {
+              visibleClasses.map(cl => {
                 const color = getCourseColor(cl.courseId);
                 return (
                   <tr
@@ -83,6 +102,12 @@ const ClassList = ({ classes, courses, allTeachers, onSelect, onEdit, onDelete }
           </tbody>
         </table>
       </div>
+
+      <TablePagination
+        currentPage={safeCurrentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 };

@@ -1,8 +1,8 @@
-// src/hooks/useShortcuts.js
+// src/hooks/useShortcuts.tsx
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { 
     collection, query, where, addDoc, deleteDoc, doc, 
-    onSnapshot, updateDoc, getDoc
+    onSnapshot, updateDoc, getDoc, getDocs, serverTimestamp
 } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { canView, getActiveRole } from '../utils/permissionUtils';
@@ -112,6 +112,7 @@ export const useShortcuts = (user: any) => {
                 const shortcutDocs = snapshot.docs
                     .map(d => ({ id: d.id, ...d.data() }))
                     .filter(shortcut => {
+                        if (shortcut?.status === 'trashed') return false;
                         // Owner always sees their own shortcuts
                         if (shortcut?.ownerId === user?.uid) return true;
                         if (!currentInstitutionId || !shortcut?.institutionId) return true;
@@ -521,12 +522,124 @@ export const useShortcuts = (user: any) => {
      * Delete a shortcut (does not affect the source item)
      * 
      * @param {string} shortcutId - ID of shortcut to delete
+     * @param {Object} options
+     * @param {boolean} options.moveToBin - Soft delete shortcut into bin (default false)
      * @returns {Promise<void>}
      */
-    const deleteShortcut = async (shortcutId: any) => {
+    const deleteShortcut = async (shortcutId: any, options: any = {}) => {
         if (!shortcutId) throw new Error("Shortcut ID required");
+
+        const moveToBin = options?.moveToBin === true;
+        if (moveToBin) {
+            const shortcutRef = doc(db, 'shortcuts', shortcutId);
+            const shortcutSnap = await getDoc(shortcutRef);
+            if (!shortcutSnap.exists()) {
+                return;
+            }
+
+            const shortcutData = shortcutSnap.data() || {};
+            if (shortcutData?.status === 'trashed') {
+                return;
+            }
+
+            await updateDoc(shortcutRef, {
+                status: 'trashed',
+                trashedAt: serverTimestamp(),
+                trashedOriginalParentId: shortcutData?.parentId ?? null,
+                restoredAt: null,
+                updatedAt: new Date()
+            });
+            return;
+        }
         
         await deleteDoc(doc(db, "shortcuts", shortcutId));
+    };
+
+    const getTrashedShortcuts = async () => {
+        if (!user || !canReadHomeData) return [];
+
+        const trashedShortcutsQuery = query(
+            collection(db, 'shortcuts'),
+            where('ownerId', '==', user.uid),
+            where('status', '==', 'trashed')
+        );
+
+        const snapshot = await getDocs(trashedShortcutsQuery);
+        return snapshot.docs.map((shortcutDoc: any) => {
+            const shortcutData = shortcutDoc.data() || {};
+            const isFolderShortcut = shortcutData?.targetType === 'folder';
+
+            return {
+                id: shortcutDoc.id,
+                itemType: isFolderShortcut ? 'shortcut-folder' : 'shortcut-subject',
+                targetType: shortcutData?.targetType || 'subject',
+                targetId: shortcutData?.targetId || null,
+                shortcutId: shortcutDoc.id,
+                ownerId: shortcutData?.ownerId || user.uid,
+                institutionId: shortcutData?.institutionId || currentInstitutionId || null,
+                parentId: shortcutData?.parentId ?? null,
+                shortcutParentId: shortcutData?.parentId ?? null,
+                name: shortcutData?.shortcutName || (isFolderShortcut ? 'Carpeta' : 'Asignatura'),
+                course: shortcutData?.shortcutCourse || null,
+                tags: Array.isArray(shortcutData?.shortcutTags) ? shortcutData.shortcutTags : [],
+                color: shortcutData?.shortcutColor || 'from-slate-500 to-slate-700',
+                icon: shortcutData?.shortcutIcon || (isFolderShortcut ? 'folder' : 'book'),
+                cardStyle: shortcutData?.shortcutCardStyle || 'default',
+                modernFillColor: shortcutData?.shortcutModernFillColor ?? null,
+                hiddenInManual: shortcutData?.hiddenInManual === true,
+                isShortcut: true,
+                isOrphan: Boolean(shortcutData?.orphanReason),
+                trashedAt: shortcutData?.trashedAt || null,
+                _reason: shortcutData?.orphanReason || 'shortcut-trashed'
+            };
+        });
+    };
+
+    const restoreShortcut = async (shortcutId: any) => {
+        if (!shortcutId) throw new Error('Shortcut ID required');
+
+        const shortcutRef = doc(db, 'shortcuts', shortcutId);
+        const shortcutSnap = await getDoc(shortcutRef);
+
+        if (!shortcutSnap.exists()) {
+            throw new Error('Acceso directo no encontrado.');
+        }
+
+        const shortcutData = shortcutSnap.data() || {};
+        if (shortcutData?.ownerId && shortcutData.ownerId !== user?.uid) {
+            throw new Error('Solo el propietario puede restaurar este acceso directo.');
+        }
+
+        if (shortcutData?.status !== 'trashed') {
+            return;
+        }
+
+        await updateDoc(shortcutRef, {
+            status: 'active',
+            trashedAt: null,
+            restoredAt: serverTimestamp(),
+            parentId: shortcutData?.trashedOriginalParentId ?? shortcutData?.parentId ?? null,
+            trashedOriginalParentId: null,
+            updatedAt: new Date()
+        });
+    };
+
+    const permanentlyDeleteShortcut = async (shortcutId: any) => {
+        if (!shortcutId) throw new Error('Shortcut ID required');
+
+        const shortcutRef = doc(db, 'shortcuts', shortcutId);
+        const shortcutSnap = await getDoc(shortcutRef);
+
+        if (!shortcutSnap.exists()) {
+            return;
+        }
+
+        const shortcutData = shortcutSnap.data() || {};
+        if (shortcutData?.ownerId && shortcutData.ownerId !== user?.uid) {
+            throw new Error('Solo el propietario puede eliminar este acceso directo.');
+        }
+
+        await deleteDoc(shortcutRef);
     };
 
     /**
@@ -597,6 +710,9 @@ export const useShortcuts = (user: any) => {
         moveShortcut,
         updateShortcutAppearance,
         setShortcutHiddenInManual,
-        deleteOrphanedShortcuts
+        deleteOrphanedShortcuts,
+        getTrashedShortcuts,
+        restoreShortcut,
+        permanentlyDeleteShortcut
     };
 };

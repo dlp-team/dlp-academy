@@ -1,3 +1,4 @@
+<!-- .github/copilot-instructions.md -->
 # GitHub Copilot Instructions - DLP Academy
 
 ## ⚠️ CRITICAL: Premium Request Optimization
@@ -76,6 +77,7 @@ This workspace also uses scoped file instructions in `.github/instructions/` to 
 12. **No low-value premium turns** - Never return with only minor wording tweaks or tiny partial edits when the user asked for a full deliverable; bundle substantial, end-to-end output in the same request.
 13. **Minimum completion payload** - For plan requests, you MUST deliver a fully executable plan package (scope, phased steps, validation gates, rollback, and testing strategy), not just brief bullet additions.
 14. **No artificial stopping** - Do not stop after a small change if additional requested work remains; continue autonomously until all requested outcomes are completed.
+15. **Commit/Push Cadence Gate (MANDATORY)** - Commit and push after every major validated work block (feature, bug fix, test block, or docs-sync block) BEFORE starting the next major block. This is a hard execution gate, not a recommendation.
 
 16. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)** - The agent MUST ALWAYS execute the `vscode/askQuestions` leverage step before completing any premium request. This protocol supersedes all other completion logic and is enforced in every completion flow, for all agent modes and workflows. If the tool fails, the agent must document the failure and request user direction before ending the session. No exceptions.
 17. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)** - The agent MUST ALWAYS execute the `vscode/askQuestions` leverage step before completing any premium request, using a concise prompt (<200 characters). This protocol supersedes all other completion logic and is enforced in every completion flow, for all agent modes and workflows. If the tool fails (e.g., input too long, tool unavailable), the agent must document the failure and request user direction before ending the session. No exceptions.
@@ -307,6 +309,7 @@ Workflow documentation and task-specific guides (e.g., `shortcut-move-request-wo
 ✅ If on feature branch: Continue on existing branch
 ✅ Read copilot/autopilot/git-workflow-rules.md for commit message format
 ✅ Plan periodic Git commits (every logical work unit)
+✅ Enforce cadence gate: no second major work block may start until prior validated block is committed and pushed
 ```
 
 ### 2. Pre-Change Checklist
@@ -340,6 +343,14 @@ Workflow documentation and task-specific guides (e.g., `shortcut-move-request-wo
   - Validation summary
 - [ ] Update relevant `codebase/` explanation files (append changelog)
 - [ ] Create temporal explanation if session-specific
+
+### 6. Git Logging Gate (REQUIRED)
+- [ ] Major block validated (tests/lint/get_errors as applicable)
+- [ ] `git status` reviewed and scoped
+- [ ] Commit created with required format
+- [ ] Security scans run before commit/push
+- [ ] Push completed to feature branch
+- [ ] Only then continue to next major work block
 
 ---
 
@@ -611,6 +622,7 @@ Command control system built from analysis of **25+ commands** across **15+ exec
 
 4. **Push Frequency**:
    - After each logical work unit (feature block, fix, test suite)
+   - Hard gate: do not begin a new major work block until the previous validated block is committed and pushed
    - Command: `git push origin <branch-name>`
    - Always verify branch before pushing
 

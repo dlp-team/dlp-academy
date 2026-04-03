@@ -186,10 +186,11 @@ test.describe('Profile and settings coverage', () => {
       .toBe(true);
 
     const notifSection = page.locator('section').filter({ hasText: /notificaciones/i }).first();
-    const emailToggle = notifSection.locator('button').first();
+    const emailRow = notifSection.locator('div.p-4').filter({ hasText: /notificaciones por email/i }).first();
+    const emailToggle = emailRow.getByRole('button');
     const wasEnabled = await emailToggle.evaluate((btn) => btn.className.includes('bg-indigo-'));
     await emailToggle.click();
-    await expect(page.getByText(/guardado|guardando/i)).toBeVisible();
+    await expect(page.getByText(/guardado/i)).toBeVisible();
     await expect
       .poll(async () => emailToggle.evaluate((btn) => btn.className.includes('bg-indigo-')))
       .toBe(!wasEnabled);
@@ -202,7 +203,8 @@ test.describe('Profile and settings coverage', () => {
     await expect(page.getByRole('button', { name: /claro/i })).toBeVisible();
 
     const notifSectionAfterReload = page.locator('section').filter({ hasText: /notificaciones/i }).first();
-    const emailToggleAfterReload = notifSectionAfterReload.locator('button').first();
+    const emailRowAfterReload = notifSectionAfterReload.locator('div.p-4').filter({ hasText: /notificaciones por email/i }).first();
+    const emailToggleAfterReload = emailRowAfterReload.getByRole('button');
     const isEnabledAfterReload = await emailToggleAfterReload.evaluate((btn) => btn.className.includes('bg-indigo-'));
     expect(isEnabledAfterReload).toBe(!wasEnabled);
   });

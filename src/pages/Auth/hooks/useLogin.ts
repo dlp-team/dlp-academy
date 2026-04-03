@@ -130,8 +130,10 @@ export const useLogin = () => {
 
     const handleGoogleLogin = async () => {
         try {
+            const persistenceType = formData.rememberMe ? browserLocalPersistence : browserSessionPersistence;
+            await setPersistence(auth, persistenceType);
             const result = await signInWithPopup(auth, provider);
-            await saveUserToFirestore(result.user);
+            await saveUserToFirestore(result.user, formData.rememberMe);
             navigate('/home');
         } catch (err) {
             console.error(err);

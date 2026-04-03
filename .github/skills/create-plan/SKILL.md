@@ -43,6 +43,8 @@ Create complete plan artifacts and immediately start execution when requested wi
 - **Target: 3-5 commits per phase** (reflects incremental, validated progress)
 - Push to feature branch: `git push origin <branch-name>`
 - Never commit to `main` branch
+- **Cadence gate**: Do NOT begin a new major work block until the previous validated block is both committed and pushed
+- **No batching rule**: Never batch multiple validated major blocks into one delayed commit/push
 
 **4. RED FLAGS - Stop Immediately If You Think This:**
 - "Let me quickly move to the next phase..."

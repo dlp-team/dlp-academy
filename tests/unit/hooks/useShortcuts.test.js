@@ -93,6 +93,30 @@ describe('useShortcuts', () => {
     );
   });
 
+  it('deleteShortcut can move orphan shortcuts to bin instead of hard deleting', async () => {
+    firestoreMocks.mockGetDoc.mockResolvedValueOnce({
+      exists: () => true,
+      data: () => ({ status: 'active', parentId: 'folder-a' }),
+    });
+
+    const { result } = renderHook(() => useShortcuts(user));
+
+    await act(async () => {
+      await result.current.deleteShortcut('shortcut-bin-1', { moveToBin: true });
+    });
+
+    expect(firestoreMocks.mockUpdateDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'shortcuts', id: 'shortcut-bin-1' }),
+      expect.objectContaining({
+        status: 'trashed',
+        trashedOriginalParentId: 'folder-a',
+      })
+    );
+    expect(firestoreMocks.mockDeleteDoc).not.toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'shortcuts', id: 'shortcut-bin-1' })
+    );
+  });
+
   it('deleteOrphanedShortcuts deletes only orphan shortcuts', async () => {
     const shortcuts = [
       {

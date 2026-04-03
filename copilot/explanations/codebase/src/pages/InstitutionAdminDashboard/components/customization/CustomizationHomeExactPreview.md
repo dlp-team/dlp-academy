@@ -22,6 +22,13 @@
 - `src/pages/InstitutionAdminDashboard/components/customization/themePreviewUtils`
 
 ## Changelog
+### 2026-04-03
+- Extended preview navigation to support all Home tabs: `Manual`, `Uso`, `Cursos`, `Compartido`, and `Papelera`.
+- Added mock academic-year aware grouping/filtering for `Cursos` and recent-activity grouping for `Uso`.
+- Reused `SharedView` for shared-tab parity and added a deterministic mock bin panel for paper-bin simulation.
+- Added deep drilldown panel (`asignatura -> tema -> contenido`) with explicit cards for exámenes, tests, quizzes, material, fórmulas, and guías.
+- Added breadcrumb-aware folder traversal and role-safe mock navigation reset behavior across tab switches.
+
 ### 2026-04-02
 - Added exact-preview adapter to implement Home-surface reuse strategy from Phase 04.
 - Added isolated mock-data provider and role-aware preview behavior for deterministic parity checks.

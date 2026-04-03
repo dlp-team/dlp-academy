@@ -3,6 +3,12 @@
 # useHomeHandlers.ts
 
 ## Changelog
+### 2026-04-03
+- `handleDelete` shortcut branches now split deletion semantics by intent:
+	- `unshare` now removes the share and then removes the local shortcut (no bin route),
+	- orphan shortcut delete actions now route to shortcut bin (`moveToBin`) instead of hard delete.
+- Preserved existing `hide`/`unhide` shortcut behavior and shared-tree unshare guard.
+
 ### 2026-04-02
 - Updated `toggleGroup` to accept an optional explicit `currentState` parameter so callers can reliably invert UI sections with non-standard defaults (used by courses groups default-collapsed behavior).
 

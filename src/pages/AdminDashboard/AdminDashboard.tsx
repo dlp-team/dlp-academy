@@ -7,8 +7,12 @@ import {
     ShieldAlert, Globe, BarChart3
 } from 'lucide-react';
 import {
+    documentId,
     collection, query, where, getDocs,
+    limit,
+    orderBy,
     serverTimestamp, deleteDoc, doc, updateDoc, writeBatch,
+    startAfter,
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
@@ -97,6 +101,9 @@ const InstitutionsTab = () => {
     const navigate = useNavigate();
     const [Institutions, setInstitutions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMoreInstitutions, setLoadingMoreInstitutions] = useState(false);
+    const [lastInstitutionDoc, setLastInstitutionDoc] = useState<any>(null);
+    const [hasMoreInstitutions, setHasMoreInstitutions] = useState(false);
     const [search, setSearch] = useState('');
 
     const [statusFilter, setStatusFilter] = useState('all');
@@ -114,14 +121,41 @@ const InstitutionsTab = () => {
         institution: null,
     });
     const [isConfirmingInstitutionAction, setIsConfirmingInstitutionAction] = useState(false);
+    const INSTITUTIONS_PAGE_SIZE = 25;
 
-    const fetchInstitutions = async () => {
-        setLoading(true);
+    const fetchInstitutions = async (append = false) => {
+        if (append) {
+            setLoadingMoreInstitutions(true);
+        } else {
+            setLoading(true);
+        }
         try {
-            const snap = await getDocs(collection(db, 'institutions'));
-            setInstitutions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+            const queryConstraints: any[] = [
+                orderBy(documentId()),
+                limit(INSTITUTIONS_PAGE_SIZE),
+            ];
+
+            if (append && lastInstitutionDoc) {
+                queryConstraints.push(startAfter(lastInstitutionDoc));
+            }
+
+            const institutionsQuery = query(collection(db, 'institutions'), ...queryConstraints);
+            const snap = await getDocs(institutionsQuery);
+            const fetchedInstitutions = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+
+            setInstitutions((prevInstitutions) => (
+                append ? [...prevInstitutions, ...fetchedInstitutions] : fetchedInstitutions
+            ));
+            setLastInstitutionDoc(snap.docs.length > 0 ? snap.docs[snap.docs.length - 1] : null);
+            setHasMoreInstitutions(snap.docs.length === INSTITUTIONS_PAGE_SIZE);
         } catch (e) { console.error(e); }
-        finally { setLoading(false); }
+        finally {
+            if (append) {
+                setLoadingMoreInstitutions(false);
+            } else {
+                setLoading(false);
+            }
+        }
     };
 
     useEffect(() => { fetchInstitutions(); }, []);
@@ -320,6 +354,19 @@ const InstitutionsTab = () => {
                             </tbody>
                         </table>
                     </div>
+
+                    {hasMoreInstitutions && (
+                        <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20 flex justify-center">
+                            <button
+                                onClick={() => fetchInstitutions(true)}
+                                disabled={loadingMoreInstitutions}
+                                className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-2 disabled:opacity-60"
+                            >
+                                {loadingMoreInstitutions && <Loader2 className="w-4 h-4 animate-spin" />}
+                                Cargar más instituciones
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
 

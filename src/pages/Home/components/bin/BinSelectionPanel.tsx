@@ -1,4 +1,4 @@
-// src/pages/Home/components/bin/BinSelectionPanel.jsx
+// src/pages/Home/components/bin/BinSelectionPanel.tsx
 import React from 'react';
 import { Info, RotateCcw, Trash2, Loader2, PanelRightClose } from 'lucide-react';
 import { getDaysRemaining } from '../../utils/binViewUtils';
@@ -41,6 +41,7 @@ const BinSelectionPanel = ({
     const actionKey = `${itemType}:${item?.id}`;
     const isLoading = actionLoading === actionKey;
     const isFolderItem = itemType === 'folder';
+    const isShortcutItem = itemType === 'shortcut-subject' || itemType === 'shortcut-folder';
 
     return (
         <div
@@ -87,7 +88,11 @@ const BinSelectionPanel = ({
                     onClick={() => onRestore(item?.id, itemType)}
                     disabled={isLoading}
                     icon={isLoading ? <Loader2 className="animate-spin" size={18} /> : <RotateCcw size={18} />}
-                    label={isFolderItem ? 'Restaurar carpeta completa' : 'Restaurar asignatura'}
+                    label={isFolderItem
+                        ? 'Restaurar carpeta completa'
+                        : isShortcutItem
+                            ? 'Restaurar acceso directo'
+                            : 'Restaurar asignatura'}
                     themeClasses={theme} // Usa el tema verde/naranja/rojo de antes
                 />
 

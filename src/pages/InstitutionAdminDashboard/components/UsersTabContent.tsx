@@ -42,6 +42,7 @@ const UsersTabContent = ({
   const normalizedSearchTerm = searchTerm.toLowerCase();
   const filteredTeachers = teachers.filter((teacher: any) => teacher.email?.toLowerCase().includes(normalizedSearchTerm));
   const filteredStudents = students.filter((student: any) => student.email?.toLowerCase().includes(normalizedSearchTerm));
+  const activeVisibleCount = userType === 'teachers' ? filteredTeachers.length : filteredStudents.length;
 
   const [copied, setCopied] = useState(false);
   const [accessDeleteConfirm, setAccessDeleteConfirm] = useState({
@@ -140,16 +141,6 @@ const UsersTabContent = ({
           >
             <GraduationCap className="w-4 h-4" /> Alumnos
           </button>
-        </div>
-        <div className="relative flex-1 md:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Buscar por email..."
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
-          />
         </div>
       </div>
 
@@ -310,6 +301,23 @@ const UsersTabContent = ({
               </div>
             </div>
           )}
+
+          <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 mb-6 flex flex-col md:flex-row md:items-center gap-3 justify-between">
+            <div className="relative w-full md:max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Buscar por email..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
+              {activeVisibleCount} resultado(s)
+            </span>
+          </div>
+
           {userType === 'teachers' && (
             <>
               <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">

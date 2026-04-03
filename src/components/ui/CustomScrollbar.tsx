@@ -1,4 +1,4 @@
-// src/components/ui/CustomScrollbar.jsx
+// src/components/ui/CustomScrollbar.tsx
 import React, { useEffect } from 'react';
 
 /**

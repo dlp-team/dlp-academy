@@ -21,5 +21,8 @@
 - `react`
 - `../../../utils/permissionUtils`
 
+## Changelog
+- **2026-04-03:** Bulk delete now routes orphan shortcuts through shortcut bin soft-delete (`moveToBin`) while preserving direct hard-delete behavior for non-orphan shortcuts and non-shortcut items.
+
 ## Notes
 - This hook is intentionally focused on selection orchestration only; rendering and feedback presentation remain in `Home.tsx`.

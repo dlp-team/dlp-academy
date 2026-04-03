@@ -16,6 +16,8 @@ Keep git history clean, safe, and protocol-compliant. **Commits are logs of vali
 4. **Push frequently to maintain audit trail of progress** (target: 3-5 commits per phase for larger tasks).
 5. Do not force-push.
 6. **Each commit represents validated work** - tests run, linting passed, adjacent functionality verified BEFORE committing.
+7. **Hard cadence gate**: no new major work block starts until prior validated block is committed and pushed.
+8. **Required transition**: implement -> validate -> commit -> push -> next block.
 
 ## Commit Frequency Philosophy
 

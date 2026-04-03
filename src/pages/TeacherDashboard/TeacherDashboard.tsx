@@ -1,4 +1,4 @@
-// src/pages/TeacherDashboard/TeacherDashboard.jsx
+// src/pages/TeacherDashboard/TeacherDashboard.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -13,6 +13,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import Header from '../../components/layout/Header';
+import TablePagination from '../../components/ui/TablePagination';
 import { useIdleTimeout } from '../../hooks/useIdleTimeout';
 import { usePersistentState } from '../../hooks/usePersistentState';
 import { buildUserScopedPersistenceKey } from '../../utils/pagePersistence';
@@ -87,11 +88,33 @@ const OverviewTab = ({ classes, students, loading }: any) => {
 const MyClassesTab = ({ classes, allStudents, loading }: any) => {
     const [selected, setSelected] = useState<any>(null);
     const [search, setSearch] = useState('');
+    const [classStudentsPage, setClassStudentsPage] = useState(1);
+    const CLASS_STUDENTS_PAGE_SIZE = 12;
 
     const selectedClass = classes.find(c => c.id === selected);
     const classStudents = selectedClass
         ? allStudents.filter(s => selectedClass.studentIds?.includes(s.id))
         : [];
+    const filteredClassStudents = classStudents.filter(s =>
+        s.displayName?.toLowerCase().includes(search.toLowerCase()) ||
+        s.email?.toLowerCase().includes(search.toLowerCase())
+    );
+    const classStudentsTotalPages = Math.max(1, Math.ceil(filteredClassStudents.length / CLASS_STUDENTS_PAGE_SIZE));
+    const safeClassStudentsPage = Math.min(classStudentsPage, classStudentsTotalPages);
+    const visibleClassStudents = filteredClassStudents.slice(
+        (safeClassStudentsPage - 1) * CLASS_STUDENTS_PAGE_SIZE,
+        safeClassStudentsPage * CLASS_STUDENTS_PAGE_SIZE
+    );
+
+    useEffect(() => {
+        setClassStudentsPage(1);
+    }, [selected, search]);
+
+    useEffect(() => {
+        if (classStudentsPage > classStudentsTotalPages) {
+            setClassStudentsPage(classStudentsTotalPages);
+        }
+    }, [classStudentsPage, classStudentsTotalPages]);
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -150,8 +173,7 @@ const MyClassesTab = ({ classes, allStudents, loading }: any) => {
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                            {classStudents
-                                                .filter(s => s.displayName?.toLowerCase().includes(search.toLowerCase()) || s.email?.toLowerCase().includes(search.toLowerCase()))
+                                            {visibleClassStudents
                                                 .map(s => (
                                                     <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                                                         <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{s.displayName || 'Sin nombre'}</td>
@@ -164,12 +186,17 @@ const MyClassesTab = ({ classes, allStudents, loading }: any) => {
                                                     </tr>
                                                 ))
                                             }
-                                            {classStudents.length === 0 && (
+                                            {filteredClassStudents.length === 0 && (
                                                 <tr><td colSpan={3} className="px-6 py-8 text-center text-slate-400">Esta clase no tiene alumnos asignados.</td></tr>
                                             )}
                                         </tbody>
                                     </table>
                                 </div>
+                                <TablePagination
+                                    currentPage={safeClassStudentsPage}
+                                    totalPages={classStudentsTotalPages}
+                                    onPageChange={setClassStudentsPage}
+                                />
                             </div>
                         )}
                     </div>
@@ -191,12 +218,30 @@ const MyStudentsTab = ({
 }: any) => {
     const navigate = useNavigate();
     const [search, setSearch] = useState('');
+    const [studentsPage, setStudentsPage] = useState(1);
+    const STUDENTS_PAGE_SIZE = 15;
     const behaviorOptions = Array.from({ length: 11 }, (_, index) => index);
 
     const filtered = allStudents.filter(s =>
         s.displayName?.toLowerCase().includes(search.toLowerCase()) ||
         s.email?.toLowerCase().includes(search.toLowerCase())
     );
+    const studentsTotalPages = Math.max(1, Math.ceil(filtered.length / STUDENTS_PAGE_SIZE));
+    const safeStudentsPage = Math.min(studentsPage, studentsTotalPages);
+    const visibleStudents = filtered.slice(
+        (safeStudentsPage - 1) * STUDENTS_PAGE_SIZE,
+        safeStudentsPage * STUDENTS_PAGE_SIZE
+    );
+
+    useEffect(() => {
+        setStudentsPage(1);
+    }, [search]);
+
+    useEffect(() => {
+        if (studentsPage > studentsTotalPages) {
+            setStudentsPage(studentsTotalPages);
+        }
+    }, [studentsPage, studentsTotalPages]);
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -236,7 +281,7 @@ const MyStudentsTab = ({
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {filtered.length === 0 ? (
                                     <tr><td colSpan={7} className="px-6 py-10 text-center text-slate-400">No se encontraron alumnos.</td></tr>
-                                ) : filtered.map(s => (
+                                ) : visibleStudents.map(s => (
                                     <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer"
                                         onClick={() => navigate(`/teacher-dashboard/student/${s.id}`)}>
                                         <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{s.displayName || 'Sin nombre'}</td>
@@ -292,6 +337,11 @@ const MyStudentsTab = ({
                             </tbody>
                         </table>
                     </div>
+                    <TablePagination
+                        currentPage={safeStudentsPage}
+                        totalPages={studentsTotalPages}
+                        onPageChange={setStudentsPage}
+                    />
                 </div>
             )}
         </div>
@@ -299,8 +349,26 @@ const MyStudentsTab = ({
 };
 
 const SubjectsTab = ({ subjects = [], loading }: any) => {
+    const [subjectsPage, setSubjectsPage] = useState(1);
+    const SUBJECTS_PAGE_SIZE = 12;
     const totalStudents = subjects.reduce((acc, subject) => acc + (subject.studentCount || 0), 0);
     const totalTopics = subjects.reduce((acc, subject) => acc + (subject.topicCount || 0), 0);
+    const subjectsTotalPages = Math.max(1, Math.ceil(subjects.length / SUBJECTS_PAGE_SIZE));
+    const safeSubjectsPage = Math.min(subjectsPage, subjectsTotalPages);
+    const visibleSubjects = subjects.slice(
+        (safeSubjectsPage - 1) * SUBJECTS_PAGE_SIZE,
+        safeSubjectsPage * SUBJECTS_PAGE_SIZE
+    );
+
+    useEffect(() => {
+        setSubjectsPage(1);
+    }, [subjects.length]);
+
+    useEffect(() => {
+        if (subjectsPage > subjectsTotalPages) {
+            setSubjectsPage(subjectsTotalPages);
+        }
+    }, [subjectsPage, subjectsTotalPages]);
 
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
@@ -329,28 +397,35 @@ const SubjectsTab = ({ subjects = [], loading }: any) => {
                 ) : subjects.length === 0 ? (
                     <div className="px-6 py-10 text-center text-slate-400">No hay asignaturas vinculadas a tu cuenta.</div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
-                            <thead className="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase font-semibold text-slate-500">
-                                <tr>
-                                    <th className="px-6 py-4">Asignatura</th>
-                                    <th className="px-6 py-4">Curso</th>
-                                    <th className="px-6 py-4">Alumnos</th>
-                                    <th className="px-6 py-4">Temas</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {subjects.map((subject: any) => (
-                                    <tr key={subject.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                                        <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{subject.name || 'Sin nombre'}</td>
-                                        <td className="px-6 py-4">{subject.course || 'Sin curso'}</td>
-                                        <td className="px-6 py-4">{subject.studentCount || 0}</td>
-                                        <td className="px-6 py-4">{subject.topicCount || 0}</td>
+                    <>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left text-sm text-slate-600 dark:text-slate-400">
+                                <thead className="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase font-semibold text-slate-500">
+                                    <tr>
+                                        <th className="px-6 py-4">Asignatura</th>
+                                        <th className="px-6 py-4">Curso</th>
+                                        <th className="px-6 py-4">Alumnos</th>
+                                        <th className="px-6 py-4">Temas</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                                    {visibleSubjects.map((subject: any) => (
+                                        <tr key={subject.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                            <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">{subject.name || 'Sin nombre'}</td>
+                                            <td className="px-6 py-4">{subject.course || 'Sin curso'}</td>
+                                            <td className="px-6 py-4">{subject.studentCount || 0}</td>
+                                            <td className="px-6 py-4">{subject.topicCount || 0}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <TablePagination
+                            currentPage={safeSubjectsPage}
+                            totalPages={subjectsTotalPages}
+                            onPageChange={setSubjectsPage}
+                        />
+                    </>
                 )}
             </div>
         </div>

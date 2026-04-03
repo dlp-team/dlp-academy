@@ -2,16 +2,24 @@
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import InstitutionCustomizationMockView from '../../../../src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView';
 
-describe('InstitutionCustomizationMockView', () => {
-  it('switches preview role between docente and estudiante', () => {
-    render(
+const renderCustomizationPreview = (props = {}) => {
+  return render(
+    <MemoryRouter>
       <InstitutionCustomizationMockView
         initialValues={{ institutionName: 'Academia Demo' }}
         onSave={vi.fn(async () => {})}
+        {...props}
       />
-    );
+    </MemoryRouter>
+  );
+};
+
+describe('InstitutionCustomizationMockView', () => {
+  it('switches preview role between docente and estudiante', () => {
+    renderCustomizationPreview();
 
     expect(screen.getByText(/panel docente/i)).toBeTruthy();
 
@@ -23,12 +31,7 @@ describe('InstitutionCustomizationMockView', () => {
   it('calls onSave with updated form values', async () => {
     const onSave = vi.fn(async () => {});
 
-    render(
-      <InstitutionCustomizationMockView
-        initialValues={{ institutionName: 'Academia Demo' }}
-        onSave={onSave}
-      />
-    );
+    renderCustomizationPreview({ onSave });
 
     fireEvent.change(screen.getByPlaceholderText(/nombre visible/i), {
       target: { value: 'Colegio Horizonte' },
@@ -47,21 +50,56 @@ describe('InstitutionCustomizationMockView', () => {
 
   it('applies palette preview input without persisting automatically', () => {
     const { rerender } = render(
-      <InstitutionCustomizationMockView
-        initialValues={{ primary: '#6366f1' }}
-        previewPaletteApply={null}
-        onSave={vi.fn(async () => {})}
-      />
+      <MemoryRouter>
+        <InstitutionCustomizationMockView
+          initialValues={{ primary: '#6366f1' }}
+          previewPaletteApply={null}
+          onSave={vi.fn(async () => {})}
+        />
+      </MemoryRouter>
     );
 
     rerender(
-      <InstitutionCustomizationMockView
-        initialValues={{ primary: '#6366f1' }}
-        previewPaletteApply={{ token: 'primary', color: '#123456', _ts: Date.now() }}
-        onSave={vi.fn(async () => {})}
-      />
+      <MemoryRouter>
+        <InstitutionCustomizationMockView
+          initialValues={{ primary: '#6366f1' }}
+          previewPaletteApply={{ token: 'primary', color: '#123456', _ts: Date.now() }}
+          onSave={vi.fn(async () => {})}
+        />
+      </MemoryRouter>
     );
 
     expect(screen.getAllByDisplayValue('#123456').length).toBeGreaterThan(0);
+  });
+
+  it('toggles fullscreen mode and collapses controls panel', () => {
+    renderCustomizationPreview();
+
+    const collapseButton = screen.getByTitle(/colapsar panel de controles/i);
+    fireEvent.click(collapseButton);
+    expect(screen.getByTitle(/expandir panel de controles/i)).toBeTruthy();
+
+    const fullscreenButton = screen.getByTitle(/pantalla completa/i);
+    fireEvent.click(fullscreenButton);
+
+    expect(screen.getByText(/pulsa esc para salir de pantalla completa/i)).toBeTruthy();
+    expect(screen.getByTitle(/salir de pantalla completa/i)).toBeTruthy();
+  });
+
+  it('switches preview tabs and supports subject topic drilldown', () => {
+    renderCustomizationPreview();
+
+    fireEvent.click(screen.getByRole('button', { name: /papelera/i }));
+    expect(screen.getByText(/papelera de vista previa/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /compartido/i }));
+    expect(screen.getByText(/asignaturas compartidas/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /manual/i }));
+    fireEvent.click(screen.getByText('Matemáticas'));
+
+    expect(screen.getByText(/temas de la asignatura/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /ecuaciones lineales/i }));
+    expect(screen.getByText(/guías de estudio/i)).toBeTruthy();
   });
 });

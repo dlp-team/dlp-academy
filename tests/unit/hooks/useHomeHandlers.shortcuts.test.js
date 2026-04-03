@@ -99,7 +99,7 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
     await handlers.handleDelete();
 
     expect(config.unshareSubject).toHaveBeenCalledWith('subject-2', 'user1@test.com');
-    expect(config.deleteShortcut).not.toHaveBeenCalled();
+    expect(config.deleteShortcut).toHaveBeenCalledWith('shortcut-sub-2');
     expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
   });
 
@@ -229,7 +229,7 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
     await handlers.handleDelete();
 
     expect(config.unshareFolder).toHaveBeenCalledWith('folder-6', 'user1@test.com');
-    expect(config.deleteShortcut).not.toHaveBeenCalled();
+    expect(config.deleteShortcut).toHaveBeenCalledWith('shortcut-folder-6');
   });
 
   it('unhides shortcut-subject and supports direct shortcut deletion action', async () => {
@@ -271,7 +271,7 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
     expect(deleteConfig.deleteShortcut).toHaveBeenCalledWith('shortcut-sub-10');
   });
 
-  it('allows shortcut-subject direct deletion in shared-tree ghost context', async () => {
+  it('moves orphan shortcut-subject deletion to bin in shared-tree ghost context', async () => {
     const config = createBaseConfig({
       folders: [
         { id: 'root-shared', isShared: true, parentId: null },
@@ -280,12 +280,13 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
       deleteConfig: {
         isOpen: true,
         type: 'shortcut-subject',
-        action: 'delete',
+        action: 'deleteShortcut',
         item: {
           id: 'subject-ghost-1',
           targetId: 'subject-ghost-1',
           shortcutParentId: 'child-folder',
           shortcutId: 'shortcut-sub-ghost-1',
+          isOrphan: true,
         },
       },
     });
@@ -293,12 +294,12 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
     const handlers = useHomeHandlers(config);
     await handlers.handleDelete();
 
-    expect(config.deleteShortcut).toHaveBeenCalledWith('shortcut-sub-ghost-1');
+    expect(config.deleteShortcut).toHaveBeenCalledWith('shortcut-sub-ghost-1', { moveToBin: true });
     expect(config.unshareSubject).not.toHaveBeenCalled();
     expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
   });
 
-  it('allows shortcut-folder direct deletion in shared-tree ghost context', async () => {
+  it('moves orphan shortcut-folder deletion to bin in shared-tree ghost context', async () => {
     const config = createBaseConfig({
       folders: [
         { id: 'root-shared', isShared: true, parentId: null },
@@ -307,12 +308,13 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
       deleteConfig: {
         isOpen: true,
         type: 'shortcut-folder',
-        action: 'delete',
+        action: 'deleteShortcut',
         item: {
           id: 'folder-ghost-1',
           targetId: 'folder-ghost-1',
           shortcutParentId: 'child-folder',
           shortcutId: 'shortcut-folder-ghost-1',
+          isOrphan: true,
         },
       },
     });
@@ -320,7 +322,7 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
     const handlers = useHomeHandlers(config);
     await handlers.handleDelete();
 
-    expect(config.deleteShortcut).toHaveBeenCalledWith('shortcut-folder-ghost-1');
+    expect(config.deleteShortcut).toHaveBeenCalledWith('shortcut-folder-ghost-1', { moveToBin: true });
     expect(config.unshareFolder).not.toHaveBeenCalled();
     expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
   });
@@ -494,7 +496,7 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
     expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
   });
 
-  it('unshares shortcut-folder outside shared tree without deleting shortcut link directly', async () => {
+  it('unshares shortcut-folder outside shared tree and removes shortcut link directly', async () => {
     const config = createBaseConfig({
       folders: [{ id: 'private-parent', isShared: false, parentId: null }],
       deleteConfig: {
@@ -514,7 +516,7 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
     await handlers.handleDelete();
 
     expect(config.unshareFolder).toHaveBeenCalledWith('folder-private-1', 'user1@test.com');
-    expect(config.deleteShortcut).not.toHaveBeenCalled();
+    expect(config.deleteShortcut).toHaveBeenCalledWith('shortcut-folder-private-1');
     expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
   });
 
@@ -738,6 +740,7 @@ describe('useHomeHandlers shortcut sharing + roles', () => {
       'No se pudo quitar el acceso compartido de la carpeta. Intentalo de nuevo.',
       'error'
     );
+    expect(config.deleteShortcut).toHaveBeenCalledWith('shortcut-folder-err-1');
     expect(config.setDeleteConfig).toHaveBeenCalledWith({ isOpen: false, type: null, action: null, item: null });
   });
 });

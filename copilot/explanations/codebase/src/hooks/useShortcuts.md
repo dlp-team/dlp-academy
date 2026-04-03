@@ -1,3 +1,21 @@
+## [2026-04-03] Shortcut Bin Lifecycle Support
+
+### Context
+- Phase 08 required different deletion outcomes for shortcut actions:
+  - orphan shortcut deletion should move to bin,
+  - non-owner shared delete should remove shortcut directly after unshare.
+
+### Change
+- `deleteShortcut(shortcutId, { moveToBin: true })` now supports soft-delete into shortcut bin state (`status: trashed`, `trashedAt`).
+- Added shortcut-bin lifecycle helpers:
+  - `getTrashedShortcuts()`
+  - `restoreShortcut(shortcutId)`
+  - `permanentlyDeleteShortcut(shortcutId)`
+- Active Home shortcut stream now filters out trashed shortcuts so bin-routed entries disappear from normal views.
+
+### Impact
+- Shortcut deletion flows can now be losslessly routed either to direct removal or recoverable bin state depending on action context.
+
 ## [2026-04-02] Active-Role Shortcut Read Context
 
 ### Context

@@ -143,7 +143,11 @@ export const useHomeBulkSelection = ({ logic, isStudentRole, onHomeFeedback }: H
 
                 try {
                     if (isShortcutItem(item) && item?.shortcutId) {
-                        await logic.deleteShortcut(item.shortcutId);
+                        if (item?.isOrphan) {
+                            await logic.deleteShortcut(item.shortcutId, { moveToBin: true });
+                        } else {
+                            await logic.deleteShortcut(item.shortcutId);
+                        }
                         return { deleted: true, entry };
                     }
 

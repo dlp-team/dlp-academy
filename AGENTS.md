@@ -1,3 +1,4 @@
+<!-- AGENTS.md -->
 # Autonomous Execution Guidelines (AGENTS.md)
 
 ## CRITICAL: CREDENTIAL SECURITY BEFORE ANY GIT OPERATION
@@ -56,6 +57,8 @@ When operating in Autopilot mode, follow this exact loop until the task is compl
    - **MANDATORY**: Before `git commit`, scan for credentials: `git diff --cached | grep -iE "AIza|private_key|password|secret|token"` (MUST return zero matches)
    - **MANDATORY**: Verify `.env` is ignored: `git check-ignore -v .env` (must show it's ignored)
    - After each logical work unit, commit with proper message format
+   - **CADENCE GATE (NON-NEGOTIABLE)**: Do NOT start a second major work block until the prior validated block has both commit and push completed
+   - **BLOCK TRANSITION RULE**: feature block -> validate -> commit -> push -> only then next feature block
    - Use format: `<type>(<scope>): <subject>` (see git-workflow-rules.md)
    - **MANDATORY**: Before `git push`, scan entire branch: `git diff origin/main..HEAD | grep -iE "AIza|private_key"` (MUST return zero matches)
    - If ANY secrets found → STOP and ask user before proceeding
@@ -106,4 +109,5 @@ Before calling `task_complete`, you must internally verify:
 - [ ] All new text elements are in Spanish.
 - [ ] No emojis were used in the UI (icons only).
 - [ ] File paths are commented at the top of all touched files.
+- [ ] Commit/push cadence gate respected across all major work blocks (no skipped Git logging checkpoints).
    - [ ] Ask the user using vscode/askQuestions if it should end the request or there is anything left (MANDATORY, NO EXCEPTIONS). This leverage step is a hard-coded protocol and must be executed before completing any premium request. If the tool fails, document the failure and request user direction before ending the session.

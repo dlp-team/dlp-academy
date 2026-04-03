@@ -84,7 +84,7 @@ const InstitutionAdminDashboard = ({ user }: any) => {
         </div>
 
         {/* Tab nav */}
-        <div className="flex items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800 overflow-x-auto whitespace-nowrap pb-px no-scrollbar">
+        <div className="flex flex-wrap items-center gap-2 mb-8 border-b border-slate-200 dark:border-slate-800 pb-px">
             {TABS.map(({ key, label, icon }: any) => (
               <button
                 key={key}

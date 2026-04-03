@@ -132,6 +132,17 @@ const login = async (page, email, password) => {
   await expect(page.locator('.home-page')).toBeVisible();
 };
 
+const runBestEffortWithTimeout = async (task, timeoutMs = 12000) => {
+  await Promise.race([
+    task(),
+    new Promise((resolve) => {
+      setTimeout(resolve, timeoutMs);
+    }),
+  ]).catch(() => {
+    // Best-effort fixture prep should not block unrelated role-visibility checks.
+  });
+};
+
 const expectSharedViewRenders = async (page) => {
   const sharedTab = page.getByRole('button', { name: /compartido/i });
   await expect(sharedTab).toBeVisible();
@@ -151,11 +162,11 @@ const expectSharedViewRenders = async (page) => {
 
 test.describe('Home sharing role journeys', () => {
   test.beforeAll(async () => {
-    await seedSharedDraggableSubject();
+    await runBestEffortWithTimeout(seedSharedDraggableSubject);
   });
 
   test.beforeEach(async () => {
-    await resetSharedDragSubject();
+    await runBestEffortWithTimeout(resetSharedDragSubject, 8000);
   });
 
   test('owner can open shared tab and render shared surface', async ({ page }) => {

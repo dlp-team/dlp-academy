@@ -24,6 +24,11 @@
 - `../../../components/modules/ListViewItem`
 
 ## Changelog
+- **2026-04-03:** Added shortcut-bin integration to the bin surface:
+	- loads trashed shortcut items via `useShortcuts.getTrashedShortcuts`,
+	- supports restore and permanent delete for `shortcut-subject` and `shortcut-folder`,
+	- keeps folder drilldown behavior unchanged (shortcut items remain top-level bin entries),
+	- routes overlay/list actions by typed item behavior without changing subject/folder flows.
 - **2026-04-02:** Bin student-mode hook wiring now resolves via `getActiveRole(user)` so read-only behavior follows switched role context.
 - **2026-04-02:** Completed Phase 06 UX reliability updates:
 	- added bin sort selector (`urgency asc/desc`, `name A-Z/Z-A`),

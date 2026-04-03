@@ -23,6 +23,11 @@
 - `./customization/CustomizationHomeExactPreview`
 
 ## Changelog
+### 2026-04-03
+- Added fullscreen preview mode with keyboard `Esc` exit and explicit UI toggle.
+- Added collapsible controls sidebar with compact collapsed-state save/reset actions.
+- Preserved preview-safe persistence semantics: form updates remain local until explicit save.
+
 ### 2026-04-02
 - Replaced static mock cards with exact Home-surface preview composition while preserving editor flow and explicit save behavior.
 - Kept role/viewport toggles and live palette injection semantics unchanged.

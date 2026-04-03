@@ -1,4 +1,4 @@
-// src/hooks/useSubjects.js
+// src/hooks/useSubjects.ts
 import { useState, useEffect, useMemo } from 'react';
 import { 
     collection, query, where, getDocs, getDoc, setDoc, updateDoc, deleteDoc, doc, onSnapshot, arrayUnion, arrayRemove, orderBy, serverTimestamp, runTransaction
@@ -566,22 +566,26 @@ export const useSubjects = (user: any) => {
         if (didChangeInviteCode) {
             const institutionId = updatePayload?.institutionId || currentData?.institutionId || currentInstitutionId || null;
             if (institutionId) {
-                const nextInviteCode = String(updatePayload.inviteCode).trim().toUpperCase();
-                const nextInviteCodeKey = `${institutionId}_${nextInviteCode}`;
-                await setDoc(doc(db, 'subjectInviteCodes', nextInviteCodeKey), {
-                    inviteCode: nextInviteCode,
-                    institutionId,
-                    subjectId: id,
-                    createdBy: currentData?.ownerId || user?.uid || null,
-                    createdAt: new Date()
-                }, { merge: true });
+                try {
+                    const nextInviteCode = String(updatePayload.inviteCode).trim().toUpperCase();
+                    const nextInviteCodeKey = `${institutionId}_${nextInviteCode}`;
+                    await setDoc(doc(db, 'subjectInviteCodes', nextInviteCodeKey), {
+                        inviteCode: nextInviteCode,
+                        institutionId,
+                        subjectId: id,
+                        createdBy: currentData?.ownerId || user?.uid || null,
+                        createdAt: new Date()
+                    }, { merge: true });
 
-                const previousInviteCode = String(currentData?.inviteCode || '').trim().toUpperCase();
-                if (previousInviteCode && previousInviteCode !== nextInviteCode) {
-                    const previousInviteCodeKey = `${institutionId}_${previousInviteCode}`;
-                    await deleteDoc(doc(db, 'subjectInviteCodes', previousInviteCodeKey)).catch(() => {
-                        // Best-effort cleanup for old mappings.
-                    });
+                    const previousInviteCode = String(currentData?.inviteCode || '').trim().toUpperCase();
+                    if (previousInviteCode && previousInviteCode !== nextInviteCode) {
+                        const previousInviteCodeKey = `${institutionId}_${previousInviteCode}`;
+                        await deleteDoc(doc(db, 'subjectInviteCodes', previousInviteCodeKey)).catch(() => {
+                            // Best-effort cleanup for old mappings.
+                        });
+                    }
+                } catch (inviteCodeSyncError) {
+                    console.warn('Invite code mapping sync failed after subject update:', inviteCodeSyncError);
                 }
             }
         }
