@@ -6,6 +6,7 @@
 - Added deterministic unit coverage for `subjectPeriodLifecycleUtils`:
   - timeline bound generation from institution calendar windows,
   - extraordinary-window role matrix behavior,
+  - unknown pass-state students remain visible during extraordinary window,
   - post-course policy visibility behavior after extraordinary cutoff,
   - academic-year fallback behavior for legacy subjects without period bounds.
 

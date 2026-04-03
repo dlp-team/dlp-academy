@@ -7,6 +7,20 @@
 - Role: Cloud Functions entrypoint for institutional access-code flows and backend security helpers.
 
 ## Changelog
+### 2026-04-03
+- Added callable function `runSubjectLifecycleAutomation`.
+- `runSubjectLifecycleAutomation` behavior:
+  - requires authenticated caller profile,
+  - allows only `admin` or `institutionadmin`,
+  - enforces tenant scoping for institution admins (own institution only),
+  - evaluates subject lifecycle transitions and applies updates only when derived state changes.
+- Added scheduled function `reconcileSubjectLifecycleAutomation` (`every day 02:15`, `Europe/Madrid`) to apply lifecycle transitions without requiring Home view interaction.
+- Added internal automation runner that:
+  - skips trashed subjects,
+  - computes lifecycle phase and post-course visibility,
+  - disables invite-code joins after extraordinary cutoff,
+  - writes batch updates with evaluation metadata.
+
 ### 2026-04-02
 - Added callable function `syncCurrentUserClaims`.
 - `syncCurrentUserClaims` behavior:

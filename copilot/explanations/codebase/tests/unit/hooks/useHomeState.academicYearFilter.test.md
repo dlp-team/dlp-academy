@@ -17,6 +17,7 @@ This suite validates courses-tab academic-year filtering behavior in `useHomeSta
 - Added deterministic usage-mode tests for `showOnlyCurrentSubjects` when period bounds exist:
   - passed students are hidden after ordinary cutoff,
   - failed students remain visible through extraordinary cutoff,
+  - students with unknown pass-state remain visible through extraordinary cutoff,
   - teachers remain visible through extraordinary cutoff.
 
 ### 2026-04-03: Added subject period filter coverage

@@ -12,6 +12,7 @@ const DEFAULT_START_MONTH_DAY = { month: 9, day: 1 };
 const DEFAULT_ORDINARY_END_MONTH_DAY = { month: 6, day: 30 };
 const DEFAULT_EXTRAORDINARY_END_MONTH_DAY = { month: 7, day: 15 };
 const DEFAULT_POST_COURSE_POLICY = 'retain_all_no_join';
+export const UNKNOWN_PASS_STATE_EXTRAORDINARY_POLICY = 'treat_as_pending_until_extraordinary_end';
 
 const normalizePostCoursePolicy = (value: any) => {
     const normalizedValue = String(value || '').trim();
@@ -220,6 +221,20 @@ const parseBoundaryDate = (value: any, endOfDay = false) => {
     return buildUtcDate(parsedDate.year, parsedDate.month, parsedDate.day, endOfDay);
 };
 
+export const shouldStudentRemainActiveDuringExtraordinaryWindow = ({
+    subject
+}: {
+    subject: any;
+}) => {
+    const passedState = getSubjectPassedState(subject);
+    if (passedState === true) {
+        return false;
+    }
+
+    // Unknown pass state is treated as pending until extraordinary closes.
+    return true;
+};
+
 export const isSubjectActiveInPeriodLifecycle = ({
     subject,
     user,
@@ -248,8 +263,7 @@ export const isSubjectActiveInPeriodLifecycle = ({
     if (nowMs <= extraordinaryBoundary.getTime()) {
         const normalizedRole = getNormalizedRole(user);
         if (normalizedRole === 'student') {
-            const passedState = getSubjectPassedState(subject);
-            return passedState !== true;
+            return shouldStudentRemainActiveDuringExtraordinaryWindow({ subject });
         }
 
         return true;

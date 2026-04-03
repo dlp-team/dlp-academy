@@ -47,6 +47,12 @@ describe('subjectPeriodLifecycleUtils', () => {
       referenceDate: duringExtraordinary,
     });
 
+    const unknownStudentVisible = isSubjectActiveInPeriodLifecycle({
+      subject: { ...subjectBase },
+      user: { uid: 'student-1', role: 'student' },
+      referenceDate: duringExtraordinary,
+    });
+
     const teacherVisible = isSubjectActiveInPeriodLifecycle({
       subject: { ...subjectBase, passed: true },
       user: { uid: 'teacher-1', role: 'teacher' },
@@ -61,6 +67,7 @@ describe('subjectPeriodLifecycleUtils', () => {
 
     expect(passedStudentVisible).toBe(false);
     expect(failedStudentVisible).toBe(true);
+    expect(unknownStudentVisible).toBe(true);
     expect(teacherVisible).toBe(true);
     expect(afterExtraordinaryVisible).toBe(false);
   });

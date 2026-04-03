@@ -11,6 +11,7 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
   - period-end behavior
   - ordinary vs extraordinary handling
   - role-sensitive visibility for teachers and students
+- Prepare scheduled/triggered lifecycle automation path beyond Home runtime filtering.
 
 ## Progress Notes
 - Added institution-driven period option modeling in `SubjectFormModal` based on `academicCalendar.periodization`.
@@ -46,6 +47,13 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
   - `tests/unit/utils/subjectPeriodLifecycleUtils.test.js`
   - `tests/unit/hooks/useHomeState.academicYearFilter.test.js`
   - `tests/unit/utils/subjectAccessUtils.test.js`
+- Explicitly codified unknown pass-state handling during extraordinary window in `subjectPeriodLifecycleUtils` (`treat_as_pending_until_extraordinary_end`).
+- Added lifecycle automation engine in `functions/security/subjectLifecycleAutomation.js` with deterministic phase/policy derivation and minimal-update output generation.
+- Added callable trigger `runSubjectLifecycleAutomation` in `functions/index.js`:
+  - global admin supports global or institution-scoped execution,
+  - institution admin is restricted to own institution.
+- Added scheduled trigger `reconcileSubjectLifecycleAutomation` (`every day 02:15`, `Europe/Madrid`) to apply lifecycle transitions without Home interaction.
+- Added deterministic backend automation test coverage in `tests/unit/functions/subjectLifecycleAutomation.test.js`.
 
 ## Risks and Controls
 - Risk: incorrect hiding of active content.

@@ -3,12 +3,14 @@ import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { defineSecret } from 'firebase-functions/params';
 import {
   assertNonEmptyString,
   requireAuthUid,
 } from './security/guards.js';
 import { createGetInstitutionalAccessCodePreviewHandler } from './security/previewHandler.js';
+import { buildSubjectLifecycleAutomationUpdate } from './security/subjectLifecycleAutomation.js';
 
 initializeApp();
 
@@ -19,6 +21,7 @@ const ALLOWED_SHORTCUT_TYPES = new Set(['subject', 'folder']);
 const MOVE_REQUEST_STATUS_PENDING = 'pending';
 const MOVE_REQUEST_STATUS_APPROVED = 'approved';
 const MOVE_REQUEST_STATUS_REJECTED = 'rejected';
+const LIFECYCLE_AUTOMATION_CHUNK_SIZE = 400;
 
 const normalizeRoleClaim = (value) => {
   const normalized = String(value || '').trim().toLowerCase();
@@ -284,6 +287,128 @@ const commitOperationsInChunks = async (operations = [], chunkSize = 400) => {
     await batch.commit();
   }
 };
+
+const runSubjectLifecycleAutomationInternal = async ({
+  institutionId = null,
+  referenceDate = new Date(),
+  triggeredBy = 'system',
+} = {}) => {
+  let query = db.collection('subjects');
+  if (institutionId) {
+    query = query.where('institutionId', '==', institutionId);
+  }
+
+  const subjectsSnapshot = await query.get();
+  const operations = [];
+
+  let scannedSubjects = 0;
+  let updatedSubjects = 0;
+  let skippedSubjects = 0;
+
+  subjectsSnapshot.docs.forEach((subjectDoc) => {
+    scannedSubjects += 1;
+
+    const subjectData = subjectDoc.data() || {};
+    if (subjectData.status === 'trashed') {
+      skippedSubjects += 1;
+      return;
+    }
+
+    const lifecycleDecision = buildSubjectLifecycleAutomationUpdate({
+      subject: subjectData,
+      referenceDate,
+    });
+
+    if (!lifecycleDecision || !lifecycleDecision.shouldUpdate) {
+      skippedSubjects += 1;
+      return;
+    }
+
+    updatedSubjects += 1;
+    operations.push((batch) => {
+      batch.update(subjectDoc.ref, {
+        ...lifecycleDecision.updates,
+        lifecycleEvaluatedAt: FieldValue.serverTimestamp(),
+        lifecycleAutomationTrigger: String(triggeredBy || 'system'),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    });
+  });
+
+  await commitOperationsInChunks(operations, LIFECYCLE_AUTOMATION_CHUNK_SIZE);
+
+  return {
+    institutionId,
+    scannedSubjects,
+    updatedSubjects,
+    skippedSubjects,
+  };
+};
+
+export const runSubjectLifecycleAutomation = onCall(
+  {
+    region: 'europe-west1',
+    invoker: 'public',
+  },
+  async (request) => {
+    const actorUid = requireAuthUid(request);
+
+    const actorSnapshot = await db.collection('users').doc(actorUid).get();
+    if (!actorSnapshot.exists) {
+      throw new HttpsError('failed-precondition', 'Actor profile not found.');
+    }
+
+    const actorData = actorSnapshot.data() || {};
+    const actorRole = normalizeRoleClaim(actorData.role);
+    const actorInstitutionId = normalizeInstitutionClaim(actorData.institutionId);
+    const requestedInstitutionId = normalizeInstitutionClaim(request.data?.institutionId);
+
+    const canRunAsGlobalAdmin = actorRole === 'admin';
+    const canRunAsInstitutionAdmin = actorRole === 'institutionadmin';
+
+    if (!canRunAsGlobalAdmin && !canRunAsInstitutionAdmin) {
+      throw new HttpsError('permission-denied', 'Only admins can trigger lifecycle automation.');
+    }
+
+    let scopedInstitutionId = requestedInstitutionId;
+
+    if (canRunAsInstitutionAdmin) {
+      if (!actorInstitutionId) {
+        throw new HttpsError('failed-precondition', 'Institution admin profile is missing institutionId.');
+      }
+
+      if (requestedInstitutionId && requestedInstitutionId !== actorInstitutionId) {
+        throw new HttpsError('permission-denied', 'Institution admins can only run automation for their own institution.');
+      }
+
+      scopedInstitutionId = actorInstitutionId;
+    }
+
+    const result = await runSubjectLifecycleAutomationInternal({
+      institutionId: scopedInstitutionId || null,
+      triggeredBy: `manual:${actorUid}`,
+    });
+
+    return {
+      success: true,
+      ...result,
+    };
+  }
+);
+
+export const reconcileSubjectLifecycleAutomation = onSchedule(
+  {
+    region: 'europe-west1',
+    schedule: 'every day 02:15',
+    timeZone: 'Europe/Madrid',
+  },
+  async () => {
+    return runSubjectLifecycleAutomationInternal({
+      institutionId: null,
+      triggeredBy: 'schedule:daily',
+    });
+  }
+);
 
 const collectFolderSubtreeIds = async (rootFolderId) => {
   const visited = new Set();

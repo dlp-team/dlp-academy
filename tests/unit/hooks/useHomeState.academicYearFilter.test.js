@@ -274,6 +274,15 @@ describe('useHomeState academic-year range filter for courses mode', () => {
             passed: false,
             updatedAt: { seconds: 10 },
           },
+          {
+            id: 'subject-unknown',
+            name: 'Quimica',
+            ownerId: 'student-1',
+            academicYear: previousAcademicYear,
+            periodEndAt: resolveRelativeIsoDate(-1),
+            periodExtraordinaryEndAt: resolveRelativeIsoDate(10),
+            updatedAt: { seconds: 15 },
+          },
         ],
         folders: [],
         preferences: {
@@ -287,7 +296,10 @@ describe('useHomeState academic-year range filter for courses mode', () => {
       })
     );
 
-    expect(result.current.groupedContent.Recientes.map((subject) => subject.id)).toEqual(['subject-failed']);
+    expect(result.current.groupedContent.Recientes.map((subject) => subject.id)).toEqual([
+      'subject-unknown',
+      'subject-failed',
+    ]);
   });
 
   it('keeps teacher subjects visible during extraordinary window', () => {
