@@ -144,6 +144,58 @@ describe('subjectAccessUtils', () => {
     expect(canAccess).toBe(true);
   });
 
+  it('denies access when lifecycle visibility is hidden', async () => {
+    const canAccess = await canUserAccessSubject({
+      subject: {
+        id: 'subject-lifecycle-hidden',
+        institutionId: 'inst-1',
+        lifecyclePostCourseVisibility: 'hidden',
+      },
+      user: {
+        uid: 'teacher-1',
+        role: 'teacher',
+        institutionId: 'inst-1',
+      },
+    });
+
+    expect(canAccess).toBe(false);
+  });
+
+  it('denies student access when lifecycle visibility is teacher_only', async () => {
+    const canAccess = await canUserAccessSubject({
+      subject: {
+        id: 'subject-lifecycle-teacher-only',
+        institutionId: 'inst-1',
+        lifecyclePostCourseVisibility: 'teacher_only',
+      },
+      user: {
+        uid: 'student-1',
+        role: 'student',
+        institutionId: 'inst-1',
+      },
+    });
+
+    expect(canAccess).toBe(false);
+  });
+
+  it('denies access when post-course delete policy has elapsed', async () => {
+    const canAccess = await canUserAccessSubject({
+      subject: {
+        id: 'subject-post-course-delete',
+        institutionId: 'inst-1',
+        postCoursePolicy: 'delete',
+        periodExtraordinaryEndAt: '2000-01-01',
+      },
+      user: {
+        uid: 'teacher-1',
+        role: 'teacher',
+        institutionId: 'inst-1',
+      },
+    });
+
+    expect(canAccess).toBe(false);
+  });
+
   it('allows teachers assigned to the class', async () => {
     firestoreMocks.mockGetDoc.mockResolvedValue({
       exists: () => true,

@@ -21,8 +21,8 @@
 - Final validation and docs sync remain explicit to prevent lifecycle drift.
 
 ## Immediate Next Actions
-- Prepare Phase 04 exit review evidence and decide whether remaining post-course enforcement surfaces should be implemented in this phase or deferred to Phase 09 hardening.
-- Decide whether any non-Home surfaces still require direct lifecycle snapshot consumption in Phase 04, and document deferments explicitly if postponed.
+- Capture Phase 04 exit evidence for newly completed non-Home lifecycle enforcement in shared subject access gates.
+- Confirm whether any additional non-Home surfaces bypass `canUserAccessSubject(...)`; if none are found, mark this decision as closed for Phase 04.
 - Transition Phase 04 to `inReview` when the team confirms current lint-warning baseline acceptance for closure gating.
 
 ## Validation Gates

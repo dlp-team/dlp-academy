@@ -69,6 +69,15 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
   - `skippedSubjects: 1`
   - `committedUpdates: 0`
   - `previewSubjectIds: ['dryrun-subject-update']`
+- Extended non-Home lifecycle enforcement by applying `isSubjectVisibleByPostCoursePolicy` inside `canUserAccessSubject(...)`:
+  - Subject page direct access (`src/pages/Subject/hooks/useSubjectManager.ts` consumer path),
+  - Topic page direct access (`src/pages/Topic/hooks/useTopicLogic.ts` consumer path),
+  - Quiz player direct access (`src/pages/Quizzes/Quizzes.tsx` consumer path),
+  - Quiz review direct access (`src/pages/Quizzes/QuizReviewPage.tsx` consumer path).
+- Added deterministic subject access coverage for lifecycle policy gates in `tests/unit/utils/subjectAccessUtils.test.js`:
+  - hidden lifecycle visibility,
+  - teacher-only lifecycle visibility,
+  - elapsed `postCoursePolicy=delete` cutoff.
 
 ## Risks and Controls
 - Risk: incorrect hiding of active content.

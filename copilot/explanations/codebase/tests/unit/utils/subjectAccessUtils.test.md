@@ -2,6 +2,12 @@
 # subjectAccessUtils.test.js
 
 ## Changelog
+### 2026-04-03 (Lifecycle access gate coverage)
+- Added deterministic `canUserAccessSubject(...)` tests for lifecycle policy visibility gates:
+  - denies access when `lifecyclePostCourseVisibility` is `hidden`,
+  - denies student access when `lifecyclePostCourseVisibility` is `teacher_only`,
+  - denies access when `postCoursePolicy=delete` after elapsed extraordinary boundary.
+
 ### 2026-04-03
 - Extended normalization coverage for optional subject metadata fields in `normalizeSubjectAccessPayload(...)`:
   - verifies `courseId` and `academicYear` are trimmed when present,

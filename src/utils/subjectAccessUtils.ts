@@ -1,6 +1,7 @@
 // src/utils/subjectAccessUtils.ts
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { isSubjectVisibleByPostCoursePolicy } from './subjectPeriodLifecycleUtils';
 
 const INVITE_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const classCache = new Map<any, any>();
@@ -159,6 +160,10 @@ export const canUserAccessSubject = async ({ subject, user }: any) => {
         && role !== 'admin'
         && subjectInstitutionId !== userInstitutionId
     ) {
+        return false;
+    }
+
+    if (!isSubjectVisibleByPostCoursePolicy({ subject, user })) {
         return false;
     }
 

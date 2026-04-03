@@ -4,7 +4,7 @@
 This folder tracks deeper execution subplans that depend on phase readiness.
 
 ## Planned Subplans
-- `course-lifecycle-automation-subplan.md` (to be created during Phase 04)
+- `course-lifecycle-automation-subplan.md` (created 2026-04-03; Phase 04 lifecycle consistency scope)
 - `student-course-linking-and-transfer-subplan.md` (to be created during Phase 05)
 - `notifications-ttl-and-email-delivery-subplan.md` (to be created during Phase 06)
 - `customization-preview-parity-subplan.md` (to be created during Phase 07)

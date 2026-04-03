@@ -2,6 +2,10 @@
 # subjectAccessUtils.ts
 
 ## Changelog
+### 2026-04-03 (Lifecycle visibility enforcement beyond Home)
+- `canUserAccessSubject(...)` now enforces post-course lifecycle visibility through `isSubjectVisibleByPostCoursePolicy(...)` before role/class membership allow paths.
+- This aligns direct subject-resource entry points (Subject, Topic, Quiz, QuizReview) with lifecycle policy visibility rules already applied in Home usage/courses modes.
+
 ### 2026-04-03
 - `normalizeSubjectAccessPayload(...)` now normalizes optional subject linkage metadata:
   - `courseId` (trimmed string or `null`)
