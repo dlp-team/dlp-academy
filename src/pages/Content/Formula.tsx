@@ -1,8 +1,10 @@
+// src/pages/Content/Formula.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Calculator, List, ArrowUp } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { canUserAccessSubject } from '../../utils/subjectAccessUtils';
 
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
@@ -16,7 +18,7 @@ const cleanMath = (math: any) => {
     return cleaned;
 };
 
-const Formula = () => {
+const Formula = ({ user }: any) => {
     const { subjectId, topicId, fileId } = useParams();
     const navigate = useNavigate();
 
@@ -45,7 +47,21 @@ const Formula = () => {
                 if (subjectId) {
                     const subjectSnap = await getDoc(doc(db, 'subjects', subjectId));
                     if (subjectSnap.exists()) {
-                        const color = subjectSnap.data().color;
+                        const subjectData = subjectSnap.data();
+
+                        if (user?.uid) {
+                            const hasSubjectAccess = await canUserAccessSubject({
+                                subject: { id: subjectSnap.id, ...subjectData },
+                                user
+                            });
+
+                            if (!hasSubjectAccess) {
+                                navigate('/home');
+                                return;
+                            }
+                        }
+
+                        const color = subjectData.color;
                         if (color) setTopicGradient(color);
                     }
                 }
@@ -69,7 +85,7 @@ const Formula = () => {
             }
         };
         load();
-    }, [subjectId, fileId]);
+    }, [subjectId, fileId, navigate, user]);
 
     const totalFormulas = sections.reduce((sum, s) => sum + (s.formulas?.length || 0), 0);
 

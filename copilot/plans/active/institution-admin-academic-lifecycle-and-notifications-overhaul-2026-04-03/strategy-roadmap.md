@@ -21,8 +21,8 @@
 - Final validation and docs sync remain explicit to prevent lifecycle drift.
 
 ## Immediate Next Actions
-- Capture Phase 04 exit evidence for newly completed non-Home lifecycle enforcement in shared subject access gates.
-- Confirm whether any additional non-Home surfaces bypass `canUserAccessSubject(...)`; if none are found, mark this decision as closed for Phase 04.
+- Capture Phase 04 exit evidence for the completed non-Home lifecycle enforcement sweep (content viewers/editors and quiz edit route).
+- Keep ongoing watch for newly added subject direct-entry routes to ensure they reuse `canUserAccessSubject(...)`.
 - Transition Phase 04 to `inReview` when the team confirms current lint-warning baseline acceptance for closure gating.
 
 ## Validation Gates

@@ -1,8 +1,8 @@
 <!-- copilot/explanations/codebase/src/pages/Quizzes/QuizEdit.md -->
-# QuizEdit.jsx
+# QuizEdit.tsx
 
 ## Overview
-- **Source file:** `src/pages/Quizzes/QuizEdit.jsx`
+- **Source file:** `src/pages/Quizzes/QuizEdit.tsx`
 - **Last documented:** 2026-03-30
 - **Role:** Page-level or feature-level module that orchestrates UI and logic.
 
@@ -22,6 +22,7 @@
 - `firebase/firestore`
 - `../../firebase/config`
 - `../../utils/permissionUtils`
+- `../../utils/subjectAccessUtils`
 - `react-katex`
 - `katex/dist/katex.min.css`
 
@@ -29,6 +30,7 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-04-03: Added lifecycle-aware subject access gate via `canUserAccessSubject(...)` while hydrating subject context, so direct quiz-edit entry is blocked when post-course visibility policy denies access.
 - 2026-03-30: Replaced question delete `window.confirm(...)` flow with in-page confirmation modal (`questionDeleteConfirm`) so deletion executes only after explicit confirm action.
 - 2026-03-30: Added accessible per-question delete labels (`Eliminar pregunta N`) to support deterministic user interaction and regression tests.
 - 2026-03-30: Replaced topic-missing browser alert with inline not-found feedback UI and preserved back navigation action from the editor route.

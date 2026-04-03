@@ -34,3 +34,4 @@ Consolidate Phase 04 lifecycle behavior so subject visibility is consistent acro
 
 ## Progress Notes
 - 2026-04-03: Added lifecycle visibility enforcement in shared subject access gate and corresponding deterministic unit tests.
+- 2026-04-03: Extended lifecycle enforcement to additional direct content/editor routes (`StudyGuide`, `Exam`, `Formula`, `StudyGuideEditor`, `QuizEdit`) and validated impacted unit coverage.

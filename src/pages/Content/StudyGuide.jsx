@@ -1,3 +1,4 @@
+// src/pages/Content/StudyGuide.jsx
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
@@ -9,6 +10,7 @@ import {
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { canUserAccessSubject } from '../../utils/subjectAccessUtils';
 
 import 'katex/dist/katex.min.css';
 import { BlockMath, InlineMath } from 'react-katex';
@@ -444,7 +446,7 @@ const TableOfContents = ({ sections, topicGradient, onNavigate, activeSection, i
 
 // ==================== MAIN COMPONENT ====================
 
-const StudyGuide = () => {
+const StudyGuide = ({ user }) => {
     const { subjectId, topicId, guideId, fileId } = useParams(); 
     const activeDocId = fileId || guideId;
     const navigate = useNavigate();
@@ -549,6 +551,19 @@ const StudyGuide = () => {
                     
                     if (subjectSnap.exists()) {
                         const sData = subjectSnap.data();
+
+                        if (user?.uid) {
+                            const hasSubjectAccess = await canUserAccessSubject({
+                                subject: { id: subjectSnap.id, ...sData },
+                                user
+                            });
+
+                            if (!hasSubjectAccess) {
+                                navigate('/home');
+                                return;
+                            }
+                        }
+
                         // Priorizamos el color de la asignatura
                         if (sData.color) {
                             setTopicGradient(sData.color);
@@ -647,7 +662,7 @@ const StudyGuide = () => {
         if (subjectId && topicId && activeDocId) {
             loadData();
         }
-    }, [subjectId, topicId, activeDocId, location?.state]);
+    }, [subjectId, topicId, activeDocId, location?.state, navigate, user]);
 
     const handleGoBack = () => navigate(-1);
     const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });

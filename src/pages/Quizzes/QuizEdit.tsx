@@ -1,4 +1,4 @@
-// src/pages/Quizzes/QuizEdit.jsx
+// src/pages/Quizzes/QuizEdit.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -10,6 +10,7 @@ import {
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { canEdit } from '../../utils/permissionUtils';
+import { canUserAccessSubject } from '../../utils/subjectAccessUtils';
 
 // Importaciones para matemáticas
 import 'katex/dist/katex.min.css';
@@ -196,6 +197,15 @@ const QuizEdit = ({ user }: any) => {
                     const subjectSnap = await getDoc(subjectRef);
                     if (subjectSnap.exists()) {
                         subjectData = { id: subjectSnap.id, ...subjectSnap.data() };
+
+                        if (user?.uid) {
+                            const hasSubjectAccess = await canUserAccessSubject({ subject: subjectData, user });
+                            if (!hasSubjectAccess) {
+                                navigate('/home');
+                                setLoading(false);
+                                return;
+                            }
+                        }
                     }
                 } catch (subjectError) {
                     console.error('[QUIZ_EDIT] Error loading subject context:', subjectError);

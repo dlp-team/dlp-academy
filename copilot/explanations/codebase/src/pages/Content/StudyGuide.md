@@ -27,6 +27,7 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-04-03: Added lifecycle-aware subject access gate via `canUserAccessSubject(...)` during subject context load; direct guide entry now redirects to Home when subject visibility policy denies access.
 - 2026-04-01: Added deterministic page-level navigation coverage in `tests/unit/pages/content/StudyGuide.navigation.test.jsx` for TOC-driven section jumps and keyboard arrow progression to block navigation regressions.
 - 2026-03-29: StudyGuide flow now supports location-state prefetch consumption in runtime; fallback tests were aligned to router context expectations to preserve controlled "contenido no disponible" behavior.
 - 2026-04-01: Fixed keyboard-navigation hook dependency crash by converting section navigation callbacks (`navigateToNextSection`, `navigateToPreviousSection`) from TDZ-prone callback constants to function declarations.

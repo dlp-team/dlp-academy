@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import { canUserAccessSubject } from '../../utils/subjectAccessUtils';
 
 import 'katex/dist/katex.min.css';
 import { BlockMath, InlineMath } from 'react-katex';
@@ -338,7 +339,7 @@ const CompletionScreen = ({ examData, revealedAnswers, timeLeft, total, gradient
 // MAIN COMPONENT
 // ─────────────────────────────────────────
 
-const Exam = () => {
+const Exam = ({ user }) => {
     const { subjectId, topicId, examId } = useParams();
     const navigate = useNavigate();
     const questionRef = useRef(null);
@@ -381,8 +382,24 @@ const Exam = () => {
 
                 try {
                     const subSnap = await getDoc(doc(db, 'subjects', subjectId));
-                    if (subSnap.exists() && subSnap.data().color) {
-                        setTopicGradient(subSnap.data().color);
+                    if (subSnap.exists()) {
+                        const subjectData = subSnap.data();
+
+                        if (user?.uid) {
+                            const hasSubjectAccess = await canUserAccessSubject({
+                                subject: { id: subSnap.id, ...subjectData },
+                                user
+                            });
+
+                            if (!hasSubjectAccess) {
+                                navigate('/home');
+                                return;
+                            }
+                        }
+
+                        if (subjectData?.color) {
+                            setTopicGradient(subjectData.color);
+                        }
                     }
                 } catch (subjectError) {
                     console.error('Error loading subject context for exam:', subjectError);
@@ -413,7 +430,7 @@ const Exam = () => {
             }
         };
         load();
-    }, [subjectId, examId]);
+    }, [subjectId, examId, navigate, user]);
 
     // Timer
     useEffect(() => {

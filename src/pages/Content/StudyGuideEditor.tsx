@@ -1,4 +1,4 @@
-// src/pages/Content/StudyGuideEditor.jsx
+// src/pages/Content/StudyGuideEditor.tsx
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -10,6 +10,7 @@ import {
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { canEdit } from '../../utils/permissionUtils';
+import { canUserAccessSubject } from '../../utils/subjectAccessUtils';
 
 import 'katex/dist/katex.min.css';
 import { BlockMath } from 'react-katex';
@@ -202,8 +203,20 @@ const StudyGuideEditor = ({ user }: any) => {
                 
                 // 2. Load subject color (Priority)
                 const subjectSnap = await getDoc(doc(db, 'subjects', subjectId));
-                if (subjectSnap.exists() && subjectSnap.data().color) {
-                    setTopicGradient(subjectSnap.data().color);
+                if (subjectSnap.exists()) {
+                    const subjectData = { id: subjectSnap.id, ...subjectSnap.data() };
+
+                    if (user?.uid) {
+                        const hasSubjectAccess = await canUserAccessSubject({ subject: subjectData, user });
+                        if (!hasSubjectAccess) {
+                            navigate('/home');
+                            return;
+                        }
+                    }
+
+                    if (subjectData.color) {
+                        setTopicGradient(subjectData.color);
+                    }
                 }
 
                 // 3. Load study guide

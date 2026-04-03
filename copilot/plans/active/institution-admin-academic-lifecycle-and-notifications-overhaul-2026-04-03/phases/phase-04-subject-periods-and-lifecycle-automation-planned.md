@@ -78,6 +78,18 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
   - hidden lifecycle visibility,
   - teacher-only lifecycle visibility,
   - elapsed `postCoursePolicy=delete` cutoff.
+- Audited additional non-Home direct-entry routes and aligned them with shared lifecycle subject access policy checks:
+  - `src/pages/Content/StudyGuide.jsx`,
+  - `src/pages/Content/Exam.jsx`,
+  - `src/pages/Content/Formula.tsx`,
+  - `src/pages/Content/StudyGuideEditor.tsx`,
+  - `src/pages/Quizzes/QuizEdit.tsx`.
+- Validated impacted route regressions with deterministic focused coverage:
+  - `tests/unit/pages/content/StudyGuide.navigation.test.jsx`,
+  - `tests/unit/pages/content/StudyGuide.fallback.test.jsx`,
+  - `tests/unit/pages/content/Exam.test.jsx`,
+  - `tests/unit/pages/quizzes/QuizEdit.test.jsx`,
+  - plus `tests/unit/utils/subjectAccessUtils.test.js`.
 
 ## Risks and Controls
 - Risk: incorrect hiding of active content.

@@ -25,5 +25,6 @@
 - Subject fetch failures are no longer silent; warning feedback is visible while preserving exam usability when exam payload loads successfully.
 
 ## Changelog
+- 2026-04-03: Added lifecycle-aware subject access gate via `canUserAccessSubject(...)` before exam payload rendering; denied lifecycle visibility now redirects direct exam entry to Home.
 - 2026-03-31: Added explicit not-found/error/warning fallback states for exam and subject-context loading paths, replacing silent failure behavior.
 - 2026-04-01: Resolved callback declaration-order crash in keyboard navigation effect by replacing TDZ-prone callback constants with function declarations (`toggleAnswer`, `navigateQuestion`), restoring stable unit execution.
