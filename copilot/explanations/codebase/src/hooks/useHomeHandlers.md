@@ -4,6 +4,12 @@
 
 ## Changelog
 ### 2026-04-03
+- `handleSaveSubject` now forwards normalized subject course linkage metadata in save payloads:
+	- `courseId`
+	- `academicYear`
+- Shortcut-editor subject updates now also propagate `courseId` and `academicYear` when original subject fields are editable.
+
+### 2026-04-03
 - `handleDelete` shortcut branches now split deletion semantics by intent:
 	- `unshare` now removes the share and then removes the local shortcut (no bin route),
 	- orphan shortcut delete actions now route to shortcut bin (`moveToBin`) instead of hard delete.

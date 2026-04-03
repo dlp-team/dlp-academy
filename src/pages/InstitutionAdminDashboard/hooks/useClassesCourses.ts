@@ -1,4 +1,4 @@
-// src/pages/InstitutionAdminDashboard/hooks/useClassesCourses.js
+// src/pages/InstitutionAdminDashboard/hooks/useClassesCourses.ts
 // ─────────────────────────────────────────────────────────────────────────────
 // All Firestore reads/writes for the Cursos & Clases section.
 // Components stay pure – they only call functions from this hook.
@@ -284,19 +284,34 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
   };
 
   // ── Class CRUD ────────────────────────────────────────────────────────────
-  const createClass = async (form: any) => {
-    let resolvedAcademicYear = normalizeAcademicYear(form?.academicYear);
+  const resolveCourseAcademicYear = async (courseId: any) => {
+    const normalizedCourseId = String(courseId || '').trim();
+    if (!normalizedCourseId) return '';
 
-    if (!resolvedAcademicYear && form?.courseId) {
-      const linkedCourseSnapshot = await getDoc(doc(db, 'courses', form.courseId));
+    const stateCourse = courses.find((course: any) => course.id === normalizedCourseId)
+      || trashedCourses.find((course: any) => course.id === normalizedCourseId);
+
+    const stateAcademicYear = normalizeAcademicYear(stateCourse?.academicYear);
+    if (stateAcademicYear) {
+      return stateAcademicYear;
+    }
+
+    try {
+      const linkedCourseSnapshot = await getDoc(doc(db, 'courses', normalizedCourseId));
       if (linkedCourseSnapshot.exists()) {
-        resolvedAcademicYear = normalizeAcademicYear(linkedCourseSnapshot.data()?.academicYear);
+        return normalizeAcademicYear(linkedCourseSnapshot.data()?.academicYear);
       }
+    } catch (error) {
+      console.error('useClassesCourses resolveCourseAcademicYear:', error);
     }
 
-    if (!resolvedAcademicYear) {
-      resolvedAcademicYear = getDefaultAcademicYear();
-    }
+    return '';
+  };
+
+  const createClass = async (form: any) => {
+    const linkedCourseAcademicYear = await resolveCourseAcademicYear(form?.courseId);
+    const fallbackAcademicYear = normalizeAcademicYear(form?.academicYear);
+    const resolvedAcademicYear = linkedCourseAcademicYear || fallbackAcademicYear || getDefaultAcademicYear();
 
     const clientClassDraft = {
       ...form,
@@ -322,15 +337,25 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
   const updateClass = async (id, patch: any) => {
     const normalizedPatch = { ...patch };
 
-    if (Object.prototype.hasOwnProperty.call(patch || {}, 'academicYear')) {
-      normalizedPatch.academicYear = normalizeAcademicYear(patch?.academicYear) || getDefaultAcademicYear();
-    } else if (patch?.courseId) {
-      const linkedCourseSnapshot = await getDoc(doc(db, 'courses', patch.courseId));
-      if (linkedCourseSnapshot.exists()) {
-        const linkedCourseAcademicYear = normalizeAcademicYear(linkedCourseSnapshot.data()?.academicYear);
-        if (linkedCourseAcademicYear) {
-          normalizedPatch.academicYear = linkedCourseAcademicYear;
-        }
+    const hasAcademicYearPatch = Object.prototype.hasOwnProperty.call(patch || {}, 'academicYear');
+    const hasCoursePatch = Object.prototype.hasOwnProperty.call(patch || {}, 'courseId');
+    const shouldReconcileAcademicYear = hasAcademicYearPatch || hasCoursePatch;
+
+    if (shouldReconcileAcademicYear) {
+      const currentClass = classes.find((entry: any) => entry.id === id)
+        || trashedClasses.find((entry: any) => entry.id === id);
+      const patchCourseId = String(patch?.courseId || '').trim();
+      const currentCourseId = String(currentClass?.courseId || '').trim();
+      const targetCourseId = hasCoursePatch ? patchCourseId : currentCourseId;
+
+      const linkedCourseAcademicYear = await resolveCourseAcademicYear(targetCourseId);
+      const fallbackAcademicYear = normalizeAcademicYear(currentClass?.academicYear)
+        || normalizeAcademicYear(patch?.academicYear);
+
+      if (targetCourseId) {
+        normalizedPatch.academicYear = linkedCourseAcademicYear || fallbackAcademicYear || getDefaultAcademicYear();
+      } else if (hasAcademicYearPatch) {
+        normalizedPatch.academicYear = normalizeAcademicYear(patch?.academicYear) || getDefaultAcademicYear();
       }
     }
 

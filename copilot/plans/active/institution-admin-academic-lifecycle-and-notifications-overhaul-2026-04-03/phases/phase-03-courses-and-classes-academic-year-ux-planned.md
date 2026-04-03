@@ -24,7 +24,11 @@ Make academic year a first-class organizing axis in Institution Admin course/cla
   - organization bin trashed-course rows
   - institution user detail related-class subtitles
 - Updated subject classes-tab loader to filter available classes by subject academic year when defined.
+- Updated subject course selector state to persist `courseId` alongside course name, eliminating duplicate-name ambiguity in create/edit flows.
+- Normalized subject save payloads (`general` + `classes` tabs) to persist `course`, `courseId`, and `academicYear` consistently.
+- Hardened class create/update data layer (`useClassesCourses`) so class `academicYear` is reconciled from linked course metadata whenever a course link exists.
 - Added deterministic unit coverage for label formatter behavior in `tests/unit/utils/courseLabelUtils.test.js`.
+- Added deterministic unit coverage for optional `courseId`/`academicYear` normalization in `tests/unit/utils/subjectAccessUtils.test.js`.
 
 ## Risks and Controls
 - Risk: inconsistent labels across dropdowns and cards.

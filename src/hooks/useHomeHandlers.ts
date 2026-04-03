@@ -96,6 +96,8 @@ export const useHomeHandlers = ({
         const payload = {
             name: formData.name,
             course: formData.course,
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'courseId') ? { courseId: formData.courseId || null } : {}),
+            ...(Object.prototype.hasOwnProperty.call(formData || {}, 'academicYear') ? { academicYear: formData.academicYear || null } : {}),
             color: formData.color,
             icon: formData.icon || 'book',
             tags: formData.tags,
@@ -117,6 +119,8 @@ export const useHomeHandlers = ({
                         await updateSubject(formData.id, {
                             name: formData.name,
                             course: formData.course,
+                            courseId: formData.courseId || null,
+                            academicYear: formData.academicYear || null,
                             icon: formData.icon || 'book',
                             updatedAt: new Date()
                         });

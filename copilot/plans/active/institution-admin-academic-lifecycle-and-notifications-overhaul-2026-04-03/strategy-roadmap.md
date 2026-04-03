@@ -21,9 +21,9 @@
 - Final validation and docs sync remain explicit to prevent lifecycle drift.
 
 ## Immediate Next Actions
-- Validate subject assignment behavior for same-year class visibility in teacher and institution-admin contexts.
-- Validate grouped/filter behavior against empty states and detail transitions.
+- Finalize Phase 03 closure checks with role-path smoke verification (teacher and institution-admin class assignment visibility).
 - Prepare Phase 04 kickoff for mandatory subject period metadata and lifecycle visibility rules.
+- Draft minimal field contract for subject period metadata (`periodType`, `periodStartAt`, `periodEndAt`, extraordinary metadata) before UI wiring.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.

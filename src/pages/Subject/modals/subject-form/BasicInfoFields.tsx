@@ -1,4 +1,4 @@
-// src/pages/Subject/modals/subject-form/BasicInfoFields.jsx
+// src/pages/Subject/modals/subject-form/BasicInfoFields.tsx
 import React from 'react';
 import { getCourseDisplayLabel } from '../../../../utils/courseLabelUtils';
 
@@ -12,6 +12,14 @@ const BasicInfoFields = ({
     availableCourses = [],
     coursesLoading = false
 }: any) => {
+    const normalizedSelectedCourseId = String(formData?.courseId || '').trim();
+    const normalizedSelectedCourseName = String(formData?.course || '').trim().toLowerCase();
+    const selectedCourseValue =
+        normalizedSelectedCourseId
+        || availableCourses.find((course: any) => String(course?.name || '').trim().toLowerCase() === normalizedSelectedCourseName)?.id
+        || '';
+    const hasUnavailableCourseSelection = Boolean(normalizedSelectedCourseName) && !selectedCourseValue;
+
     return (
         <>
             {/* Name */}
@@ -45,12 +53,14 @@ const BasicInfoFields = ({
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Curso</label>
                 <select
                     ref={courseSelectRef}
-                    value={formData.course || ''}
+                    value={hasUnavailableCourseSelection ? '__unavailable__' : selectedCourseValue}
                     onChange={(e: any) => {
-                        const nextCourse = e.target.value;
+                        const nextCourseId = String(e.target.value || '').trim();
+                        const selectedCourse = availableCourses.find((course: any) => course.id === nextCourseId);
                         setFormData(prev => ({
                             ...prev,
-                            course: nextCourse
+                            courseId: selectedCourse?.id || '',
+                            course: selectedCourse?.name || ''
                         }));
                         if (validationErrors?.course) {
                             setValidationErrors(prev => ({ ...prev, course: '' }));
@@ -64,8 +74,13 @@ const BasicInfoFields = ({
                     }`}
                 >
                     <option value="" className="dark:bg-slate-800">{coursesLoading ? 'Cargando cursos...' : 'Selecciona un curso'}</option>
+                    {hasUnavailableCourseSelection && (
+                        <option value="__unavailable__" disabled className="dark:bg-slate-800">
+                            {`${formData.course} (curso no disponible)`}
+                        </option>
+                    )}
                     {availableCourses.map((course: any) => (
-                        <option key={course.id} value={course.name} className="dark:bg-slate-800">
+                        <option key={course.id} value={course.id} className="dark:bg-slate-800">
                             {getCourseDisplayLabel(course)}
                         </option>
                     ))}

@@ -1,4 +1,4 @@
-// src/utils/subjectAccessUtils.js
+// src/utils/subjectAccessUtils.ts
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 
@@ -52,6 +52,8 @@ export const generateSubjectInviteCode = (length = 8) => {
 
 export const normalizeSubjectAccessPayload = (payload: any = {}, { requireCourse = true }: any = {}) => {
     const course = sanitizeString(payload.course);
+    const courseId = sanitizeString(payload.courseId);
+    const academicYear = sanitizeString(payload.academicYear);
     if (requireCourse && !course) {
         throw new Error('El curso es obligatorio para crear la asignatura.');
     }
@@ -72,6 +74,8 @@ export const normalizeSubjectAccessPayload = (payload: any = {}, { requireCourse
     return {
         ...payload,
         ...(course ? { course } : {}),
+        courseId: courseId || null,
+        academicYear: academicYear || null,
         classId,
         classIds: normalizedClassIds,
         enrolledStudentUids: uniqueStringArray(payload.enrolledStudentUids),

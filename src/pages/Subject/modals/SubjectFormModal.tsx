@@ -1,5 +1,5 @@
-// src/pages/Subject/modals/SubjectFormModal.jsx
-import React, { useState, useEffect } from 'react';
+// src/pages/Subject/modals/SubjectFormModal.tsx
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, Save, Users, Trash2, Share2, Loader2, CheckCircle, AlertCircle, RotateCcw, Copy, MoreVertical } from 'lucide-react';
 import { MODERN_FILL_COLORS } from '../../../utils/subjectConstants';
 import { addDoc, collection, getDocs, query, where, getDoc, doc, serverTimestamp } from 'firebase/firestore';
@@ -18,7 +18,7 @@ import { generateSubjectInviteCode } from '../../../utils/subjectAccessUtils';
 
 const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onTransferOwnership, onDeleteShortcut, user, allFolders = [], initialTab = 'general', studentShortcutTagOnlyMode = false }: any) => {
     const [formData, setFormData] = useState<any>({ 
-        name: '', level: '', grade: '', course: '', 
+        name: '', level: '', grade: '', course: '', courseId: '',
         color: 'from-blue-400 to-blue-600', icon: 'book', tags: [],
         cardStyle: 'default', modernFillColor: MODERN_FILL_COLORS[0].value
     });
@@ -71,7 +71,41 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const canManageSharing = !isTagOnlyShortcutEdit && (!isShortcutEditing || isShortcutEditor);
     const canModifyClassAssignments = canAccessClassesTab && canManageSharing;
     const canEditOriginalFields = !isShortcutEditing || isShortcutEditor;
-    const subjectAcademicYear = normalizeAcademicYear(initialData?.academicYear);
+    const selectedCourseEntry = useMemo(() => {
+        const selectedCourseId = String(formData?.courseId || '').trim();
+        if (selectedCourseId) {
+            return availableCourses.find((course: any) => course.id === selectedCourseId) || null;
+        }
+
+        const normalizedCourseName = String(formData?.course || '').trim().toLowerCase();
+        if (!normalizedCourseName) {
+            return null;
+        }
+
+        const nameMatches = availableCourses.filter((course: any) => (
+            String(course?.name || '').trim().toLowerCase() === normalizedCourseName
+        ));
+
+        return nameMatches.length === 1 ? nameMatches[0] : null;
+    }, [availableCourses, formData?.course, formData?.courseId]);
+
+    const subjectAcademicYear = normalizeAcademicYear(initialData?.academicYear)
+        || normalizeAcademicYear(selectedCourseEntry?.academicYear);
+
+    const buildNormalizedSubjectPayload = (extraPayload: any = {}) => {
+        const normalizedCourseName = String(selectedCourseEntry?.name || formData?.course || '').trim();
+        const normalizedCourseId = String(selectedCourseEntry?.id || formData?.courseId || '').trim();
+        const normalizedSubjectAcademicYear = subjectAcademicYear || normalizeAcademicYear(formData?.academicYear);
+
+        return {
+            ...formData,
+            ...extraPayload,
+            course: normalizedCourseName,
+            courseId: normalizedCourseId || null,
+            academicYear: normalizedSubjectAcademicYear || null
+        };
+    };
+
     const isOwnerManager = isShortcutEditing
         ? shortcutPermissionLevel === 'owner'
         : Boolean((initialData?.ownerId || formData?.ownerId) && user?.uid && (initialData?.ownerId || formData?.ownerId) === user.uid);
@@ -147,6 +181,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         : 'owner',
                     name: initialData.name || '',
                     course: initialData.course || fallbackCourse,
+                    courseId: initialData.courseId || '',
+                    academicYear: initialData.academicYear || '',
                     level: initialData.level || '',
                     grade: initialData.grade || '',
                     color: initialData.color || 'from-blue-400 to-blue-600',
@@ -179,6 +215,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     level: prefilledLevel,
                     grade: prefilledGrade,
                     course: initialData?.course || fallbackCourse,
+                    courseId: initialData?.courseId || '',
+                    academicYear: initialData?.academicYear || '',
                     color: 'from-blue-400 to-blue-600',
                     icon: 'book',
                     tags: [],
@@ -506,11 +544,10 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         if (!canModifyClassAssignments || !canDirectAssignClasses) return;
         const nextClassIds = Array.isArray(selectedClassIds) ? selectedClassIds : [];
         const primaryClassId = String(nextClassIds[0] || '').trim() || null;
-        onSave({
-            ...formData,
+        onSave(buildNormalizedSubjectPayload({
             classIds: nextClassIds,
             classId: primaryClassId
-        });
+        }));
         setClassesActionSuccess('Clases actualizadas correctamente.');
         setTimeout(() => setClassesActionSuccess(''), 2500);
     };
@@ -591,7 +628,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             }
         }
 
-        onSave(formData);
+        onSave(buildNormalizedSubjectPayload());
     };
 
     const validateShareCandidate = (email: any) => {

@@ -1,3 +1,18 @@
+## [2026-04-03] Create/Edit Class Filtering Now Follows Selected Course Year
+### Context & Architecture
+Create flows could still expose cross-year classes because filtering only derived `subjectAcademicYear` from `initialData`, which is often empty during creation.
+
+### Change
+- Added `courseId`-aware selected-course resolution in the modal (`selectedCourseEntry`) using loaded institution courses.
+- `subjectAcademicYear` now resolves from existing subject metadata OR the selected course academic year.
+- General-tab and classes-tab saves now normalize and persist `course`, `courseId`, and `academicYear` through a shared payload builder.
+
+### Validation
+- `get_errors` clean for `src/pages/Subject/modals/SubjectFormModal.tsx` and adjacent touched files.
+- `npx vitest run tests/unit/utils/subjectAccessUtils.test.js` passed.
+- `npx tsc --noEmit` passed.
+- `npm run lint` passed with existing unrelated warnings in content pages.
+
 ## [2026-04-03] Subject Class Selector Limited to Subject Academic Year
 ### Context & Architecture
 When editing a subject in the `Clases` tab, the modal previously listed every available class for the institution (or every teacher-owned class), even when the subject belonged to a specific academic year.

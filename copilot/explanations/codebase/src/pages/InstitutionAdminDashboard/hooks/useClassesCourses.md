@@ -23,6 +23,8 @@
 - `../../../firebase/config`
 
 ## Changelog
+- 2026-04-03: Added `resolveCourseAcademicYear(...)` reconciliation in class create/update paths so class `academicYear` is derived from linked course metadata whenever a course is present.
+- 2026-04-03: `updateClass` now ignores direct year drift when a class remains linked to a course, preserving course-year as source of truth while still providing fallback normalization for legacy/no-course cases.
 - 2026-04-03: Removed post-mutation `fetchAll()` refetch cycles and replaced them with local state synchronization after create/update/delete/restore flows to reduce repeated Firestore read pressure.
 - 2026-04-03: Preserved existing initial full fetch partitioning (`active` vs `trashed`) and retention purge semantics while improving runtime request efficiency for mutation-heavy sessions.
 - 2026-04-02: Added canonical academic-year normalization defaults on course/class create/update paths.

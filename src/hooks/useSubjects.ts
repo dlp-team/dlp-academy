@@ -523,6 +523,16 @@ export const useSubjects = (user: any) => {
             updatePayload.course = courseValue;
         }
 
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'courseId')) {
+            const courseIdValue = String(updatePayload.courseId || '').trim();
+            updatePayload.courseId = courseIdValue || null;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updatePayload, 'academicYear')) {
+            const academicYearValue = String(updatePayload.academicYear || '').trim();
+            updatePayload.academicYear = academicYearValue || null;
+        }
+
         if (Object.prototype.hasOwnProperty.call(updatePayload, 'classIds') && !Object.prototype.hasOwnProperty.call(updatePayload, 'classId')) {
             const firstClassId = Array.isArray(updatePayload.classIds)
                 ? String(updatePayload.classIds[0] || '').trim()

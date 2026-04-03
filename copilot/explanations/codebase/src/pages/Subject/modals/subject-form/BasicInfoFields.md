@@ -1,6 +1,11 @@
-# BasicInfoFields.jsx
+# BasicInfoFields.tsx
 
 ## Changelog
+### 2026-04-03: Selector de curso con `courseId` y compatibilidad legacy
+- El `<select>` ahora usa `course.id` como valor interno para eliminar ambigüedad cuando existen nombres de curso repetidos en distintos años académicos.
+- Al cambiar de opción, sincroniza ambos campos en `formData`: `courseId` (id) y `course` (nombre visible).
+- Si el curso guardado ya no existe en la institución, renderiza una opción deshabilitada `(curso no disponible)` para mantener contexto sin romper la edición.
+
 ### 2026-04-03: Etiquetas de curso con año académico en selector
 - Reused shared `courseLabelUtils` formatter for course `<option>` labels.
 - Keeps stored value compatibility (`course.name`) while displaying `Nombre (AAAA-AAAA)` to reduce ambiguity when duplicate course names exist across years.
@@ -17,7 +22,7 @@
 - Applies red borders and `Campo obligatorio.` helper text for missing required fields.
 
 ## Overview
-- **Source file:** `src/pages/Subject/modals/subject-form/BasicInfoFields.jsx`
+- **Source file:** `src/pages/Subject/modals/subject-form/BasicInfoFields.tsx`
 - **Last documented:** 2026-02-24
 - **Role:** Modal/dialog UI used for create, edit, confirm, or detail flows.
 
@@ -29,7 +34,7 @@
 
 ## Main Dependencies
 - `react`
-- `../../../../utils/subjectConstants`
+- `../../../../utils/courseLabelUtils`
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.

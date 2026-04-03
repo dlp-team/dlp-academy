@@ -1,4 +1,15 @@
 <!-- copilot/explanations/codebase/src/hooks/useSubjects.md -->
+## [2026-04-03] Subject Update Payload Normalizes `courseId` and `academicYear`
+### Context
+- Subject saves started persisting optional course linkage metadata (`courseId`) and year metadata (`academicYear`) from modal flows.
+
+### Change
+- `updateSubject(...)` now trims and normalizes optional `courseId` and `academicYear` fields before writing.
+- Empty values are coerced to `null` for consistent Firestore shape.
+
+### Impact
+- Prevents whitespace/empty-string drift in subject metadata used by class-year filtering and future lifecycle automation.
+
 ## [2026-04-03] Invite-Code Sync Is Best-Effort After Subject Save
 ### Context
 - Subject updates could succeed in Firestore while follow-up invite-code mapping sync failed, surfacing a false save error in Home flows.
