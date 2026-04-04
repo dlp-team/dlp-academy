@@ -4,6 +4,7 @@ export const DEFAULT_ACCESS_POLICIES = {
         requireDomain: false,
         allowedDomains: '',
         requireCode: true,
+        codeVersion: 0,
         rotationIntervalHours: 24,
         allowTeacherAutonomousSubjectCreation: true,
         canAssignClassesAndStudents: true,
@@ -13,6 +14,7 @@ export const DEFAULT_ACCESS_POLICIES = {
         requireDomain: false,
         allowedDomains: '',
         requireCode: true,
+        codeVersion: 0,
         rotationIntervalHours: 1
     }
 };

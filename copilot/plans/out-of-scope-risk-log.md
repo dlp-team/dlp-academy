@@ -34,3 +34,11 @@ Track risks discovered during implementation/review that are important but outsi
 	Why Out of Scope: Initially deferred because it required explicit run-state transitions and checkpoint persistence across chunk execution.
 	Recommended Follow-up: Core mitigation implemented with run states (`pending`, `applying`, `applied`, `failed`) and per-chunk checkpoints in [functions/security/transferPromotionApplyHandler.js](functions/security/transferPromotionApplyHandler.js) and [functions/security/transferPromotionRollbackHandler.js](functions/security/transferPromotionRollbackHandler.js). Keep stress validation and retry-policy review as follow-up hardening.
 	Owner/Status: MITIGATED - core recovery controls delivered 2026-04-04; fixture-backed execution evidence pending
+
+- Date: 2026-04-04
+	Plan/Phase: [copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-09-validation-docs-review-and-closure-planned.md](copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-09-validation-docs-review-and-closure-planned.md)
+	Related Files: [copilot/protocols/lossless-change-protocol.md](copilot/protocols/lossless-change-protocol.md), [copilot/explanations/temporal/security-audit-incident-2026-03-12.md](copilot/explanations/temporal/security-audit-incident-2026-03-12.md)
+	Risk Summary: Branch-wide credential scan (`git diff origin/main..HEAD`) reports historical credential-like strings from legacy docs/examples, producing repeated false-positive scan failures despite clean current commits.
+	Why Out of Scope: Resolving historical branch content and sanitizing legacy documentation spans prior unrelated work blocks and requires coordinated cleanup policy.
+	Recommended Follow-up: Perform dedicated branch-history/docs sanitization pass, then enforce stricter regexes for scans that differentiate real secrets from policy/example text.
+	Owner/Status: OPEN - requires dedicated security-hardening cleanup task

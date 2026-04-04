@@ -10,7 +10,7 @@
 6. COMPLETED - Notifications behavior fixes, dedicated page, TTL, and email sync.
 7. COMPLETED - Institution customization preview full-screen fix and parity improvements.
 8. COMPLETED - Bin selection mode parity, visual dimming, and urgency sort labels.
-9. PLANNED - Validation hardening, docs sync, review gate, and lifecycle transition.
+9. IN_PROGRESS - Validation hardening, docs sync, review gate, and lifecycle transition.
 
 ## Dependency Rationale
 - Phase 01 precedes all implementation-heavy work to avoid rework in schema/UX decisions.
@@ -23,7 +23,7 @@
 
 ## Immediate Next Actions
 - Optional environment follow-up: re-run transfer execution-path evidence against deployed callables (without mock mode) once callable environment readiness is restored.
-- Start Phase 09 validation-hardening and closure block.
+- Decide closure path for optional non-mock transfer evidence and execute lifecycle transition gate to `inReview`.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.

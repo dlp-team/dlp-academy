@@ -17,12 +17,18 @@
 
 ## Closure Gates (To Complete Later)
 - [x] `get_errors` clean for touched files in this phase block.
-- [ ] `npm run lint` clean.
+- [x] `npm run lint` clean.
 - [x] `npx tsc --noEmit` clean.
 - [x] `npm run test` clean.
 - [x] Lossless report created and linked.
 - [x] Relevant codebase explanation docs updated.
 - [ ] Lifecycle transition to `inReview` executed after implementation.
+
+## Current Evidence Snapshot (2026-04-04)
+- `npm run lint`: **PASS**.
+- `npx tsc --noEmit`: **PASS**.
+- `npm run test`: **PASS** (134 files, 606 tests).
+- Full suite includes latest Phase 08 bin parity regressions and Phase 09 type-safety fixes.
 
 ## Current Evidence Snapshot (2026-04-03)
 - `npm run test`: **PASS** (113 files, 536 tests).

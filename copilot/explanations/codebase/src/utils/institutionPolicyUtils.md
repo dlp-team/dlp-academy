@@ -3,6 +3,9 @@
 # institutionPolicyUtils.ts
 
 ## Changelog
+### 2026-04-04
+- Added `codeVersion: 0` to teacher/student default access policy shape so live-code rotation and preview typing remain consistent across normalized policy reads.
+
 ### 2026-04-01
 - Added teacher policy default: `allowTeacherAutonomousSubjectCreation: true`.
 - Added helper `canTeacherCreateSubjectsAutonomously(...)` for consumer hooks and guards.
