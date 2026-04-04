@@ -68,7 +68,7 @@ Identify potential credential types that may not be caught by the current high-c
 
 ### LOW RISK - Unlikely or out of scope
 7. **SSH Private Keys** (non-PEM formats, OpenSSH format)
-   - Format: `-----BEGIN OPENSSH PRIVATE KEY-----`
+   - Format: OpenSSH private key header (starts with `---- BEGIN` and ends with `KEY ----`)
    - Coverage: Partially covered by detector 2 (if it includes OPENSSH variant)
    - Likelihood: Low (SSH keys typically in .ssh, not in code)
    - Recommendation: Monitor; already covered by PEM detector
