@@ -18,11 +18,17 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { runTransferPromotionDryRun } from '../../../services/transferPromotionService';
 import { isTrashRetentionExpired } from '../../../utils/trashRetentionUtils';
 import {
   getDefaultAcademicYear,
   normalizeAcademicYear,
 } from '../components/classes-courses/academicYearUtils';
+import {
+  buildTransferPromotionDryRunPayload,
+  buildTransferRollbackMetadata,
+  validateTransferPromotionPayload,
+} from '../utils/transferPromotionPlanUtils';
 
 const normalizeEntityStatus = (entity: any) => String(entity?.status || 'active').trim().toLowerCase();
 const isTrashedEntity = (entity: any) => normalizeEntityStatus(entity) === 'trashed';
@@ -521,6 +527,60 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
     setTrashedClasses((previous) => removeEntitiesById(previous, [id]));
   };
 
+  const runTransferPromotionDryRunPreview = async ({
+    sourceAcademicYear,
+    targetAcademicYear,
+    mode,
+    options,
+  }: any) => {
+    if (!effectiveInstitutionId) {
+      throw new Error('MISSING_INSTITUTION');
+    }
+
+    const payloadInput = {
+      institutionId: effectiveInstitutionId,
+      sourceAcademicYear,
+      targetAcademicYear,
+      mode,
+      options,
+      initiatedByUid: user?.uid || null,
+    };
+
+    const payloadValidation = validateTransferPromotionPayload(payloadInput);
+    if (!payloadValidation.valid) {
+      throw new Error(payloadValidation.errors[0] || 'INVALID_TRANSFER_PROMOTION_PAYLOAD');
+    }
+
+    const dryRunPayload = buildTransferPromotionDryRunPayload(payloadInput);
+    const callableResult: any = await runTransferPromotionDryRun(dryRunPayload);
+
+    const plannedCourses = Array.isArray(callableResult?.mappings?.courses) ? callableResult.mappings.courses : [];
+    const plannedClasses = Array.isArray(callableResult?.mappings?.classes) ? callableResult.mappings.classes : [];
+    const plannedStudentAssignments = Array.isArray(callableResult?.mappings?.studentAssignments)
+      ? callableResult.mappings.studentAssignments
+      : [];
+
+    const rollbackMetadata = callableResult?.rollbackMetadata
+      || buildTransferRollbackMetadata({
+        dryRunPayload,
+        plannedCourses,
+        plannedClasses,
+        plannedStudentAssignments,
+      });
+
+    return {
+      ...callableResult,
+      dryRunPayload: callableResult?.dryRunPayload || dryRunPayload,
+      rollbackMetadata,
+      mappings: {
+        courses: plannedCourses,
+        classes: plannedClasses,
+        studentAssignments: plannedStudentAssignments,
+      },
+      warnings: Array.isArray(callableResult?.warnings) ? callableResult.warnings : [],
+    };
+  };
+
   // ── Helpers ───────────────────────────────────────────────────────────────
   const getCourseById  = (id) => courses.find(c => c.id === id);
   const getTeacherById = (id, allTeachers) => allTeachers.find(t => t.id === id);
@@ -532,6 +592,7 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
     createClass, updateClass, deleteClass,
     restoreCourse, restoreClass,
     permanentlyDeleteCourse, permanentlyDeleteClass,
+    runTransferPromotionDryRunPreview,
     getCourseById, getTeacherById, classesForCourse,
   };
 };

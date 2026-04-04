@@ -4,7 +4,7 @@
 // and delegates all data ops to useClassesCourses, all rendering to sub-components.
 
 import React from 'react';
-import { Archive, ChevronDown, ChevronRight, FileSpreadsheet, FilterX, FolderOpen, LayoutGrid, Loader2, Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { Archive, ArrowRightLeft, ChevronDown, ChevronRight, FileSpreadsheet, FilterX, FolderOpen, LayoutGrid, Loader2, Plus, RotateCcw, Trash2 } from 'lucide-react';
 
 import { useClassesCourses } from '../hooks/useClassesCourses';
 import CourseList            from './classes-courses/CourseList';
@@ -14,6 +14,7 @@ import ClassDetail           from './classes-courses/ClassDetail';
 import CreateCourseModal     from '../modals/CreateCourseModal';
 import CreateClassModal      from '../modals/CreateClassModal';
 import CsvImportWorkflowModal from './CsvImportWorkflowModal';
+import TransferPromotionDryRunModal from './TransferPromotionDryRunModal';
 import { usePersistentState } from '../../../hooks/usePersistentState';
 import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence';
 import { getCourseDisplayLabel } from '../../../utils/courseLabelUtils';
@@ -109,6 +110,7 @@ const ClassesCoursesSection = ({
   const [classModalErr,    setClassModalErr]    = React.useState('');
   const [classSubmitting,  setClassSubmitting]  = React.useState(false);
   const [showCourseLinkCsvModal, setShowCourseLinkCsvModal] = React.useState(false);
+  const [showTransferPromotionModal, setShowTransferPromotionModal] = React.useState(false);
   const [deleteConfirm, setDeleteConfirm] = React.useState(INITIAL_DELETE_CONFIRM_STATE);
   const [isDeletingItem, setIsDeletingItem] = React.useState(false);
   const [binActionLoadingKey, setBinActionLoadingKey] = React.useState('');
@@ -125,6 +127,7 @@ const ClassesCoursesSection = ({
     createClass,  updateClass,  deleteClass,
     restoreCourse, restoreClass,
     permanentlyDeleteCourse, permanentlyDeleteClass,
+    runTransferPromotionDryRunPreview,
   } = useClassesCourses(user, institutionId);
 
   const coursesById = React.useMemo(
@@ -494,14 +497,24 @@ const ClassesCoursesSection = ({
         {!showingDetail && tab !== TAB_BIN && (
           <div className="flex items-center gap-2 w-full md:w-auto justify-end">
             {tab === TAB_COURSES && (
-              <button
-                type="button"
-                onClick={() => setShowCourseLinkCsvModal(true)}
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-xs font-semibold"
-              >
-                <FileSpreadsheet className="w-4 h-4" />
-                Vincular cursos por CSV
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowCourseLinkCsvModal(true)}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-xs font-semibold"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Vincular cursos por CSV
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowTransferPromotionModal(true)}
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-xs font-semibold"
+                >
+                  <ArrowRightLeft className="w-4 h-4" />
+                  Simular traslado/promoción
+                </button>
+              </>
             )}
             <button
               onClick={() => tab === TAB_COURSES ? setShowCourseModal(true) : setShowClassModal(true)}
@@ -855,6 +868,13 @@ const ClassesCoursesSection = ({
         onUploadFile={onUploadUsersImportFile}
         onRunManualImport={onRunManualCourseLinkCsvImport}
         onRunN8nImport={onRunUsersImportN8n}
+      />
+
+      <TransferPromotionDryRunModal
+        isOpen={showTransferPromotionModal}
+        onClose={() => setShowTransferPromotionModal(false)}
+        availableAcademicYears={availableAcademicYears}
+        onRunDryRun={runTransferPromotionDryRunPreview}
       />
     </div>
   );

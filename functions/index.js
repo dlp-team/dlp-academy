@@ -11,6 +11,7 @@ import {
 } from './security/guards.js';
 import { createGetInstitutionalAccessCodePreviewHandler } from './security/previewHandler.js';
 import { createRotateInstitutionalAccessCodeNowHandler } from './security/rotateCodeHandler.js';
+import { createRunTransferPromotionDryRunHandler } from './security/transferPromotionDryRunHandler.js';
 import { evaluateSubjectLifecycleAutomationRun } from './security/subjectLifecycleAutomation.js';
 
 initializeApp();
@@ -253,6 +254,10 @@ const rotateInstitutionalAccessCodeNowHandler = createRotateInstitutionalAccessC
   serverTimestampProvider: () => FieldValue.serverTimestamp(),
 });
 
+const runTransferPromotionDryRunHandler = createRunTransferPromotionDryRunHandler({
+  dbInstance: db,
+});
+
 export const getInstitutionalAccessCodePreview = onCall(
   {
     region: 'europe-west1',
@@ -269,6 +274,14 @@ export const rotateInstitutionalAccessCodeNow = onCall(
     invoker: 'public',
   },
   rotateInstitutionalAccessCodeNowHandler
+);
+
+export const runTransferPromotionDryRun = onCall(
+  {
+    region: 'europe-west1',
+    invoker: 'public',
+  },
+  runTransferPromotionDryRunHandler
 );
 
 export const syncCurrentUserClaims = onCall(

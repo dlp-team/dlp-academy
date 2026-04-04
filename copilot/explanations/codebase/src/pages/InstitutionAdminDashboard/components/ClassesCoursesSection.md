@@ -36,6 +36,7 @@
 - `../../../utils/courseLabelUtils`
 
 ## Changelog
+- 2026-04-04: Added courses-tab trigger `Simular traslado/promoción` and wired `TransferPromotionDryRunModal` to execute institution-scoped dry-run previews through `useClassesCourses`.
 - 2026-04-04: Added courses-tab CSV workflow launcher and shared modal wiring to support storage upload + manual/n8n course-link imports.
 - 2026-04-03: Injected live `classes` into `CreateClassModal` and `ClassDetail` to support Phase 05 course-constrained student eligibility checks.
 - 2026-04-03: Added `Desde/Hasta` academic-year range filters and collapsible year-group sections for both courses and classes in organization tab.

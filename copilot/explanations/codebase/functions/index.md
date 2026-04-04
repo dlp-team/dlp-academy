@@ -8,6 +8,13 @@
 
 ## Changelog
 ### 2026-04-04
+- Added callable function `runTransferPromotionDryRun`.
+- `runTransferPromotionDryRun` behavior:
+  - requires authenticated admin/institution-admin caller,
+  - enforces institution-admin tenant scoping to own `institutionId`,
+  - validates dry-run payload (`institutionId`, `sourceAcademicYear`, `targetAcademicYear`, `mode`),
+  - computes institution-scoped preview mappings for courses/classes/student links,
+  - returns deterministic rollback metadata snapshot for later execution phase.
 - Added callable function `rotateInstitutionalAccessCodeNow`.
 - `rotateInstitutionalAccessCodeNow` behavior:
   - requires authenticated admin/institution-admin caller scoped to target institution,
