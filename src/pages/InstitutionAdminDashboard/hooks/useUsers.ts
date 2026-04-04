@@ -16,7 +16,8 @@ import {
   where,
   writeBatch,
 } from 'firebase/firestore';
-import { db } from '../../../firebase/config';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { db, storage } from '../../../firebase/config';
 import { getInstitutionalAccessCodePreview } from '../../../services/accessCodeService';
 import { DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils/institutionPolicyUtils';
 import { usePersistentState } from '../../../hooks/usePersistentState';
@@ -27,6 +28,106 @@ const USERS_PAGE_SIZE = 25;
 const normalizeId = (value: any) => String(value || '').trim();
 
 const toUniqueIds = (values: any[] = []) => Array.from(new Set(values.map(normalizeId).filter(Boolean)));
+
+const normalizeCsvHeaderKey = (value: any) => String(value || '').trim().toLowerCase();
+
+const sanitizeUploadFileName = (fileName: any) => String(fileName || 'import.csv')
+  .replace(/[^a-zA-Z0-9._-]+/g, '-')
+  .replace(/-+/g, '-')
+  .replace(/^-|-$/g, '')
+  || 'import.csv';
+
+const parseCsvLine = (line: any) => {
+  const cells: string[] = [];
+  let current = '';
+  let insideQuotes = false;
+
+  for (let index = 0; index < String(line || '').length; index += 1) {
+    const character = line[index];
+    if (character === '"') {
+      const nextCharacter = line[index + 1];
+      if (insideQuotes && nextCharacter === '"') {
+        current += '"';
+        index += 1;
+      } else {
+        insideQuotes = !insideQuotes;
+      }
+      continue;
+    }
+
+    if (character === ',' && !insideQuotes) {
+      cells.push(current.trim());
+      current = '';
+      continue;
+    }
+
+    current += character;
+  }
+
+  cells.push(current.trim());
+  return cells;
+};
+
+const parseCsvWithHeader = (csvInput: any) => {
+  const rawLines = String(csvInput || '')
+    .replace(/^\uFEFF/, '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (rawLines.length === 0) {
+    return {
+      headerCells: [],
+      headerIndexByKey: new Map(),
+      rows: [],
+    };
+  }
+
+  const headerCells = parseCsvLine(rawLines[0]);
+  const headerIndexByKey = new Map<any, any>();
+  headerCells.forEach((headerCell, index) => {
+    const normalizedKey = normalizeCsvHeaderKey(headerCell);
+    if (normalizedKey && !headerIndexByKey.has(normalizedKey)) {
+      headerIndexByKey.set(normalizedKey, index);
+    }
+  });
+
+  const rows = rawLines.slice(1).map((line, index) => ({
+    lineNumber: index + 2,
+    values: parseCsvLine(line),
+  }));
+
+  return {
+    headerCells,
+    headerIndexByKey,
+    rows,
+  };
+};
+
+const getMappedCsvValue = (row: any, headerIndexByKey: any, preferredColumnName: any) => {
+  const normalizedKey = normalizeCsvHeaderKey(preferredColumnName);
+  if (!normalizedKey) return '';
+  if (!headerIndexByKey.has(normalizedKey)) return '';
+  const columnIndex = headerIndexByKey.get(normalizedKey);
+  return String(row?.values?.[columnIndex] || '').trim();
+};
+
+const getStudentIdentifierValues = (student: any = {}) => {
+  const primaryIdentifier = String(student?.studentIdentifier || student?.identifier || student?.institutionStudentId || '').trim();
+  const identifierList = Array.isArray(student?.studentIdentifiers)
+    ? student.studentIdentifiers.map((value: any) => String(value || '').trim())
+    : [];
+
+  return toUniqueIds([primaryIdentifier, ...identifierList]);
+};
+
+const getCourseMatchValues = (course: any = {}) => toUniqueIds([
+  course?.id,
+  course?.name,
+  course?.identifier,
+  course?.code,
+  course?.courseCode,
+]);
 
 const getStudentProfileCourseIds = (student: any = {}) => toUniqueIds([
   student?.courseId,
@@ -334,108 +435,287 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
     }
   };
 
-  const handleBulkLinkStudentsCsv = useCallback(async (csvInput: any) => {
-    const rawLines = String(csvInput || '')
-      .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter(Boolean);
+  const uploadUsersImportFile = useCallback(async (file: any, workflowType: any = 'students') => {
+    if (!effectiveInstitutionId) {
+      throw new Error('MISSING_INSTITUTION');
+    }
 
-    if (rawLines.length === 0) {
+    const safeFileName = sanitizeUploadFileName(file?.name);
+    const uploadPath = `institutions/${effectiveInstitutionId}/imports/${String(workflowType || 'students')}/${Date.now()}-${safeFileName}`;
+    const importStorageRef = ref(storage, uploadPath);
+
+    await uploadBytes(importStorageRef, file, {
+      contentType: file?.type || 'text/csv',
+    });
+
+    const downloadUrl = await getDownloadURL(importStorageRef);
+    return {
+      name: file?.name || safeFileName,
+      storagePath: uploadPath,
+      downloadUrl,
+      mimeType: file?.type || 'text/csv',
+      size: Number(file?.size || 0),
+      uploadedAt: new Date().toISOString(),
+    };
+  }, [effectiveInstitutionId]);
+
+  const runStudentsCsvImportCore = useCallback(async (importPayload: any, options: any = {}) => {
+    if (!effectiveInstitutionId) {
+      throw new Error('MISSING_INSTITUTION');
+    }
+
+    const {
+      fileText,
+      mapping = {},
+    } = importPayload || {};
+
+    const {
+      requireCourseColumn = false,
+    } = options || {};
+
+    const parsedCsv = parseCsvWithHeader(fileText);
+    const { headerIndexByKey, rows } = parsedCsv;
+
+    if (rows.length === 0) {
       return {
-        totalRows: 0,
-        linkedStudents: 0,
+        processedRows: 0,
         linkedRows: 0,
+        linkedStudents: 0,
+        updatedStudents: 0,
         invalidRows: [],
+        skippedRows: [],
         missingStudents: [],
         missingCourses: [],
       };
     }
 
-    const hasHeader = /email/i.test(rawLines[0]) && /course/i.test(rawLines[0]);
-    const contentRows = hasHeader ? rawLines.slice(1) : rawLines;
-    const rows = contentRows.map((line, index) => {
-      const [emailValue = '', courseIdValue = ''] = line.split(',');
-      return {
-        lineNumber: (hasHeader ? 2 : 1) + index,
-        email: emailValue.trim().toLowerCase(),
-        courseId: normalizeId(courseIdValue),
-      };
-    });
+    const normalizedEmailColumn = normalizeCsvHeaderKey(mapping?.emailColumn);
+    const normalizedIdentifierColumn = normalizeCsvHeaderKey(mapping?.identifierColumn);
+    const normalizedNameColumn = normalizeCsvHeaderKey(mapping?.nameColumn);
+    const normalizedCourseColumn = normalizeCsvHeaderKey(mapping?.courseColumn);
 
-    const invalidRows = rows.filter((row) => !row.email || !row.email.includes('@') || !row.courseId);
-    const validRows = rows.filter((row) => !invalidRows.includes(row));
+    if (!normalizedEmailColumn && !normalizedIdentifierColumn) {
+      throw new Error('MISSING_STUDENT_MATCH_COLUMN');
+    }
+
+    if (requireCourseColumn && !normalizedCourseColumn) {
+      throw new Error('MISSING_COURSE_COLUMN');
+    }
 
     const [studentsSnap, coursesSnap] = await Promise.all([
       getDocs(query(collection(db, 'users'), where('institutionId', '==', effectiveInstitutionId), where('role', '==', 'student'))),
       getDocs(query(collection(db, 'courses'), where('institutionId', '==', effectiveInstitutionId))),
     ]);
 
-    const studentsByEmail = new Map(
-      studentsSnap.docs.map((studentDoc: any) => {
-        const studentData = { id: studentDoc.id, ...studentDoc.data() };
-        return [String(studentData?.email || '').trim().toLowerCase(), studentData];
-      })
-    );
+    const studentDocs = studentsSnap.docs.map((studentDoc: any) => ({ id: studentDoc.id, ...studentDoc.data() }));
+    const studentsByEmail = new Map<any, any>();
+    const studentsByIdentifier = new Map<any, any>();
 
-    const validCourseIdSet = new Set(
-      coursesSnap.docs
-        .map((courseDoc: any) => ({ id: courseDoc.id, ...courseDoc.data() }))
-        .filter((course: any) => course?.status !== 'trashed')
-        .map((course: any) => normalizeId(course.id))
-        .filter(Boolean)
-    );
+    studentDocs.forEach((student: any) => {
+      const studentEmail = String(student?.email || '').trim().toLowerCase();
+      if (studentEmail && !studentsByEmail.has(studentEmail)) {
+        studentsByEmail.set(studentEmail, student);
+      }
+
+      getStudentIdentifierValues(student).forEach((identifier: any) => {
+        const normalizedIdentifier = normalizeCsvHeaderKey(identifier);
+        if (normalizedIdentifier && !studentsByIdentifier.has(normalizedIdentifier)) {
+          studentsByIdentifier.set(normalizedIdentifier, student);
+        }
+      });
+    });
+
+    const institutionCourses = coursesSnap.docs
+      .map((courseDoc: any) => ({ id: courseDoc.id, ...courseDoc.data() }))
+      .filter((course: any) => course?.status !== 'trashed');
+
+    const courseIdByLookup = new Map<any, any>();
+    institutionCourses.forEach((course: any) => {
+      getCourseMatchValues(course).forEach((candidateValue: any) => {
+        const normalizedCandidate = normalizeCsvHeaderKey(candidateValue);
+        if (normalizedCandidate && !courseIdByLookup.has(normalizedCandidate)) {
+          courseIdByLookup.set(normalizedCandidate, course.id);
+        }
+      });
+    });
 
     const missingStudents = new Set<any>();
     const missingCourses = new Set<any>();
-    const nextCourseIdsByStudentId = new Map<any, any>();
-    const linkedRows = { count: 0 };
+    const invalidRows: any[] = [];
+    const skippedRows: any[] = [];
+    const linkedStudentIds = new Set<any>();
+    const updatesByStudentId = new Map<any, any>();
+    let linkedRows = 0;
 
-    validRows.forEach((row) => {
-      const student = studentsByEmail.get(row.email);
+    rows.forEach((row: any) => {
+      const rowEmail = getMappedCsvValue(row, headerIndexByKey, normalizedEmailColumn).toLowerCase();
+      const rowIdentifier = normalizeId(getMappedCsvValue(row, headerIndexByKey, normalizedIdentifierColumn));
+      const rowName = getMappedCsvValue(row, headerIndexByKey, normalizedNameColumn);
+      const rowCourse = getMappedCsvValue(row, headerIndexByKey, normalizedCourseColumn);
+
+      const hasStudentMatchValue = Boolean(rowEmail) || Boolean(rowIdentifier);
+      const hasCourseValue = Boolean(rowCourse);
+
+      if (!hasStudentMatchValue || (requireCourseColumn && !hasCourseValue)) {
+        invalidRows.push(row.lineNumber);
+        return;
+      }
+
+      const student = rowEmail
+        ? studentsByEmail.get(rowEmail)
+        : studentsByIdentifier.get(normalizeCsvHeaderKey(rowIdentifier));
 
       if (!student) {
-        missingStudents.add(row.email);
+        missingStudents.add(rowEmail || rowIdentifier || `line-${row.lineNumber}`);
         return;
       }
 
-      if (!validCourseIdSet.has(row.courseId)) {
-        missingCourses.add(row.courseId);
-        return;
+      const existingPatch = updatesByStudentId.get(student.id) || {};
+      let hasRowChanges = false;
+
+      if (rowIdentifier) {
+        const existingIdentifiers = toUniqueIds([
+          ...getStudentIdentifierValues(student),
+          existingPatch?.studentIdentifier,
+          ...(Array.isArray(existingPatch?.studentIdentifiers) ? existingPatch.studentIdentifiers : []),
+        ]);
+
+        if (!existingIdentifiers.includes(rowIdentifier)) {
+          if (!existingPatch?.studentIdentifier && !String(student?.studentIdentifier || '').trim()) {
+            existingPatch.studentIdentifier = rowIdentifier;
+          } else {
+            existingPatch.studentIdentifiers = toUniqueIds([...existingIdentifiers, rowIdentifier]);
+          }
+          hasRowChanges = true;
+        }
       }
 
-      const existingCourseIds = nextCourseIdsByStudentId.get(student.id)
-        || getStudentProfileCourseIds(student);
-      const nextCourseIds = toUniqueIds([...existingCourseIds, row.courseId]);
-      nextCourseIdsByStudentId.set(student.id, nextCourseIds);
-      linkedRows.count += 1;
+      if (rowName && !String(existingPatch?.displayName || student?.displayName || '').trim()) {
+        existingPatch.displayName = rowName;
+        hasRowChanges = true;
+      }
+
+      if (rowCourse) {
+        const resolvedCourseId = courseIdByLookup.get(normalizeCsvHeaderKey(rowCourse));
+        if (!resolvedCourseId) {
+          missingCourses.add(rowCourse);
+        } else {
+          const baselineCourseIds = Array.isArray(existingPatch?.courseIds)
+            ? existingPatch.courseIds
+            : getStudentProfileCourseIds(student);
+          const nextCourseIds = toUniqueIds([...baselineCourseIds, resolvedCourseId]);
+          const didCourseIdsChange = nextCourseIds.join('|') !== baselineCourseIds.join('|');
+
+          existingPatch.courseId = nextCourseIds[0] || null;
+          existingPatch.courseIds = nextCourseIds;
+          existingPatch.enrolledCourseIds = nextCourseIds;
+
+          if (didCourseIdsChange) {
+            linkedRows += 1;
+            linkedStudentIds.add(student.id);
+            hasRowChanges = true;
+          }
+        }
+      }
+
+      if (hasRowChanges) {
+        updatesByStudentId.set(student.id, existingPatch);
+      } else {
+        skippedRows.push(row.lineNumber);
+      }
     });
 
-    const updates = Array.from(nextCourseIdsByStudentId.entries());
+    const updateEntries = Array.from(updatesByStudentId.entries()).filter(([, patch]) => Object.keys(patch || {}).length > 0);
 
     await Promise.all(
-      updates.map(([studentId, nextCourseIds]) => (
+      updateEntries.map(([studentId, patch]) => (
         updateDoc(doc(db, 'users', studentId), {
-          courseId: nextCourseIds[0] || null,
-          courseIds: nextCourseIds,
-          enrolledCourseIds: nextCourseIds,
+          ...patch,
           updatedAt: serverTimestamp(),
         })
       ))
     );
 
-    if (updates.length > 0) {
+    if (updateEntries.length > 0) {
       await fetchData();
     }
 
     return {
-      totalRows: rows.length,
-      linkedStudents: updates.length,
-      linkedRows: linkedRows.count,
-      invalidRows: invalidRows.map((row) => row.lineNumber),
+      processedRows: rows.length,
+      linkedRows,
+      linkedStudents: linkedStudentIds.size,
+      updatedStudents: updateEntries.length,
+      invalidRows,
+      skippedRows,
       missingStudents: Array.from(missingStudents),
       missingCourses: Array.from(missingCourses),
     };
   }, [effectiveInstitutionId, fetchData]);
+
+  const runManualStudentsCsvImport = useCallback(async (importPayload: any) => (
+    runStudentsCsvImportCore(importPayload, { requireCourseColumn: false })
+  ), [runStudentsCsvImportCore]);
+
+  const runManualCourseLinkCsvImport = useCallback(async (importPayload: any) => (
+    runStudentsCsvImportCore(importPayload, { requireCourseColumn: true })
+  ), [runStudentsCsvImportCore]);
+
+  const triggerUsersImportN8n = useCallback(async (importPayload: any) => {
+    const webhookUrl = String(import.meta.env.VITE_N8N_CSV_IMPORT_WEBHOOK || '').trim();
+    if (!webhookUrl) {
+      throw new Error('MISSING_WEBHOOK_URL');
+    }
+
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        institutionId: effectiveInstitutionId,
+        workflowType: importPayload?.workflowType,
+        mapping: importPayload?.mapping || {},
+        file: importPayload?.uploadedFile || null,
+        source: 'institution-admin-users',
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`N8N_IMPORT_FAILED_${response.status}`);
+    }
+
+    let payload = {};
+    try {
+      payload = await response.json();
+    } catch {
+      payload = {};
+    }
+
+    return {
+      queued: true,
+      message: (payload as any)?.message || 'Proceso enviado a n8n para ejecución asíncrona.',
+      processedRows: (payload as any)?.processedRows,
+      linkedRows: (payload as any)?.linkedRows,
+      linkedStudents: (payload as any)?.linkedStudents,
+      updatedStudents: (payload as any)?.updatedStudents,
+      invalidRows: Array.isArray((payload as any)?.invalidRows) ? (payload as any).invalidRows : [],
+      skippedRows: Array.isArray((payload as any)?.skippedRows) ? (payload as any).skippedRows : [],
+      missingStudents: Array.isArray((payload as any)?.missingStudents) ? (payload as any).missingStudents : [],
+      missingCourses: Array.isArray((payload as any)?.missingCourses) ? (payload as any).missingCourses : [],
+    };
+  }, [effectiveInstitutionId]);
+
+  const handleBulkLinkStudentsCsv = useCallback(async (csvInput: any) => (
+    runManualCourseLinkCsvImport({
+      fileText: csvInput,
+      mapping: {
+        emailColumn: 'email',
+        identifierColumn: '',
+        nameColumn: '',
+        courseColumn: 'courseId',
+      },
+    })
+  ), [runManualCourseLinkCsvImport]);
 
   return {
     userType, setUserType,
@@ -460,6 +740,10 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
     handleConfirmSavePolicies,
     handleRemoveAccess,
     handleLoadMoreUsers,
+    uploadUsersImportFile,
+    runManualStudentsCsvImport,
+    runManualCourseLinkCsvImport,
+    triggerUsersImportN8n,
     handleBulkLinkStudentsCsv,
   };
 };

@@ -31,6 +31,7 @@
 - `../../components/layout/Header`
 
 ## Changelog
+- 2026-04-04: Rewired CSV import props to support split workflows: `UsersTabContent` now receives student-import handlers and `ClassesCoursesSection` receives course-link import handlers (upload + manual + n8n).
 - 2026-04-04: Wired student CSV bulk-link props (`institutionCourses`, `onBulkLinkStudentsCsv`) from `useUsers` into `UsersTabContent` for Phase 05 linking rollout.
 - 2026-04-03: Added new `Configuración` tab in Institution Admin dashboard and wired dedicated settings flow via `useInstitutionSettings` + `SettingsTabContent`.
 - 2026-04-02: Updated effective institution-id derivation to use `getActiveRole(user)` so admin-only institution override via query param applies only when the active context is global admin.

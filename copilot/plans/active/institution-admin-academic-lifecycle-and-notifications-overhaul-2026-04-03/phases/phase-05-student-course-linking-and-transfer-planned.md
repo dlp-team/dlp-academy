@@ -25,6 +25,10 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Added manual student-course linking controls to Institution Admin student detail view with institution-scoped Firestore updates (`courseId`, `courseIds`, `enrolledCourseIds`).
 - Added inline add/remove feedback and deterministic regression tests for manual link mutations.
 - Added CSV bulk-linking workflow in Users tab (students view) with in-page modal, summary reporting, and hook-level Firestore writes that append profile course links per student.
+- Split CSV workflows by domain intent: users tab now exposes `Vincular alumnos por CSV` while courses tab now exposes `Vincular cursos por CSV`.
+- Added shared storage-backed workflow modal (`CSV/Excel/TXT`) with two execution modes: manual in-app mapping and n8n webhook dispatch.
+- Extended users hook with institution-scoped import upload handler, manual student enrichment import (identifier/name/course optional), and manual course-link import (email or identifier + course).
+- Added deterministic regression coverage for new users-tab callback delegation and new courses-tab CSV action.
 
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
@@ -32,6 +36,7 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - `npm run test:unit -- tests/unit/pages/content/Exam.test.jsx`
 - `npm run test:unit -- tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
 - `npm run test:unit -- tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
+- `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.deleteConfirm.test.jsx`
 - `get_errors` clean for all touched source and test files in this slice.
 
 ## Remaining in Phase 05

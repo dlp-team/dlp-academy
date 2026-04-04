@@ -5,6 +5,23 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import UsersTabContent from '../../../../src/pages/InstitutionAdminDashboard/components/UsersTabContent';
 import { DEFAULT_ACCESS_POLICIES } from '../../../../src/utils/institutionPolicyUtils';
 
+vi.mock('../../../../src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal', () => ({
+  default: ({ isOpen, onRunManualImport, onRunN8nImport }) => {
+    if (!isOpen) return null;
+
+    return (
+      <div>
+        <button type="button" onClick={() => onRunManualImport?.({ workflowType: 'students', mapping: { emailColumn: 'email' } })}>
+          Ejecutar importación manual
+        </button>
+        <button type="button" onClick={() => onRunN8nImport?.({ workflowType: 'students' })}>
+          Ejecutar importación n8n
+        </button>
+      </div>
+    );
+  },
+}));
+
 const renderStudentsUsersTab = (overrides = {}) => {
   const props = {
     userType: 'students',
@@ -30,18 +47,21 @@ const renderStudentsUsersTab = (overrides = {}) => {
     liveAccessCode: 'ABC123',
     liveCodeLoading: false,
     liveCodeError: '',
-    institutionCourses: [
-      { id: 'course-1', name: '1 ESO', academicYear: '2026-2027' },
-      { id: 'course-2', name: '2 ESO', academicYear: '2026-2027' },
-    ],
-    onBulkLinkStudentsCsv: vi.fn(async () => ({
-      totalRows: 2,
-      linkedRows: 2,
-      linkedStudents: 2,
+    onUploadUsersImportFile: vi.fn(async () => ({
+      storagePath: 'institutions/inst-1/imports/students/import.csv',
+      downloadUrl: 'https://example.com/import.csv',
+    })),
+    onRunManualStudentsCsvImport: vi.fn(async () => ({
+      processedRows: 2,
+      updatedStudents: 2,
+      linkedRows: 1,
+      linkedStudents: 1,
       invalidRows: [],
+      skippedRows: [],
       missingStudents: [],
       missingCourses: [],
     })),
+    onRunUsersImportN8n: vi.fn(async () => ({ queued: true })),
     ...overrides,
   };
 
@@ -49,50 +69,34 @@ const renderStudentsUsersTab = (overrides = {}) => {
   return props;
 };
 
-describe('UsersTabContent bulk student-course CSV linking', () => {
+describe('UsersTabContent student CSV workflows', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('opens CSV modal, submits rows, and renders summary feedback', async () => {
+  it('opens student CSV workflow and triggers manual import callback', async () => {
     const props = renderStudentsUsersTab();
 
-    fireEvent.click(screen.getByRole('button', { name: /vincular cursos por csv/i }));
-
-    fireEvent.change(screen.getByPlaceholderText(/email,courseid/i), {
-      target: { value: 'email,courseId\nalumno1@colegio.com,course-1\nalumno2@colegio.com,course-2' },
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /aplicar vínculos/i }));
+    fireEvent.click(screen.getByRole('button', { name: /vincular alumnos por csv/i }));
+    fireEvent.click(screen.getByRole('button', { name: /ejecutar importación manual/i }));
 
     await waitFor(() => {
-      expect(props.onBulkLinkStudentsCsv).toHaveBeenCalledTimes(1);
+      expect(props.onRunManualStudentsCsvImport).toHaveBeenCalledTimes(1);
     });
-
-    expect(props.onBulkLinkStudentsCsv).toHaveBeenCalledWith(
-      'email,courseId\nalumno1@colegio.com,course-1\nalumno2@colegio.com,course-2'
-    );
-
-    expect(screen.getByText(/filas procesadas/i)).toBeTruthy();
-    expect(screen.getByText(/alumnos actualizados/i)).toBeTruthy();
   });
 
-  it('shows inline error when CSV linking handler fails', async () => {
+  it('opens student CSV workflow and triggers n8n callback', async () => {
+    const onRunUsersImportN8n = vi.fn(async () => ({ queued: true }));
+
     renderStudentsUsersTab({
-      onBulkLinkStudentsCsv: vi.fn(async () => {
-        throw new Error('boom');
-      }),
+      onRunUsersImportN8n,
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /vincular cursos por csv/i }));
-    fireEvent.change(screen.getByPlaceholderText(/email,courseid/i), {
-      target: { value: 'alumno1@colegio.com,course-1' },
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /aplicar vínculos/i }));
+    fireEvent.click(screen.getByRole('button', { name: /vincular alumnos por csv/i }));
+    fireEvent.click(screen.getByRole('button', { name: /ejecutar importación n8n/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/no se pudieron aplicar los vínculos csv/i)).toBeTruthy();
+      expect(onRunUsersImportN8n).toHaveBeenCalledTimes(1);
     });
   });
 });

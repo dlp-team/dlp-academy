@@ -134,8 +134,9 @@ const InstitutionAdminDashboard = ({ user }: any) => {
             liveAccessCode={users.liveAccessCode}
             liveCodeLoading={users.liveCodeLoading}
             liveCodeError={users.liveCodeError}
-            institutionCourses={users.institutionCourses}
-            onBulkLinkStudentsCsv={users.handleBulkLinkStudentsCsv}
+            onUploadUsersImportFile={users.uploadUsersImportFile}
+            onRunManualStudentsCsvImport={users.runManualStudentsCsvImport}
+            onRunUsersImportN8n={users.triggerUsersImportN8n}
           />
         )}
 
@@ -146,6 +147,9 @@ const InstitutionAdminDashboard = ({ user }: any) => {
             institutionId={effectiveInstitutionId}
             allStudents={users.allStudents}
             allTeachers={users.allTeachers}
+            onUploadUsersImportFile={users.uploadUsersImportFile}
+            onRunManualCourseLinkCsvImport={users.runManualCourseLinkCsvImport}
+            onRunUsersImportN8n={users.triggerUsersImportN8n}
           />
         )}
 

@@ -16,6 +16,7 @@
 - Adds dedicated `Papelera` tab for trashed courses/classes with restore and permanent-delete actions.
 - Requires typed-name confirmation only for permanent delete actions.
 - Displays retention countdown messaging for trashed courses/classes.
+- Adds course-tab entrypoint (`Vincular cursos por CSV`) using shared import workflow modal.
 
 ## Exports
 - `default ClassesCoursesSection`
@@ -35,6 +36,7 @@
 - `../../../utils/courseLabelUtils`
 
 ## Changelog
+- 2026-04-04: Added courses-tab CSV workflow launcher and shared modal wiring to support storage upload + manual/n8n course-link imports.
 - 2026-04-03: Injected live `classes` into `CreateClassModal` and `ClassDetail` to support Phase 05 course-constrained student eligibility checks.
 - 2026-04-03: Added `Desde/Hasta` academic-year range filters and collapsible year-group sections for both courses and classes in organization tab.
 - 2026-04-03: Updated trashed-course rows in `Papelera` to use shared `Nombre (AAAA-AAAA)` label formatting.

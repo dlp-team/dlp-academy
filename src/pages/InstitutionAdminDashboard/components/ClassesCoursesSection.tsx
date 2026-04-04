@@ -4,7 +4,7 @@
 // and delegates all data ops to useClassesCourses, all rendering to sub-components.
 
 import React from 'react';
-import { Archive, ChevronDown, ChevronRight, FilterX, FolderOpen, LayoutGrid, Loader2, Plus, RotateCcw, Trash2 } from 'lucide-react';
+import { Archive, ChevronDown, ChevronRight, FileSpreadsheet, FilterX, FolderOpen, LayoutGrid, Loader2, Plus, RotateCcw, Trash2 } from 'lucide-react';
 
 import { useClassesCourses } from '../hooks/useClassesCourses';
 import CourseList            from './classes-courses/CourseList';
@@ -13,6 +13,7 @@ import ClassList             from './classes-courses/ClassList';
 import ClassDetail           from './classes-courses/ClassDetail';
 import CreateCourseModal     from '../modals/CreateCourseModal';
 import CreateClassModal      from '../modals/CreateClassModal';
+import CsvImportWorkflowModal from './CsvImportWorkflowModal';
 import { usePersistentState } from '../../../hooks/usePersistentState';
 import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence';
 import { getCourseDisplayLabel } from '../../../utils/courseLabelUtils';
@@ -83,7 +84,15 @@ const isAcademicYearWithinRange = (academicYear: any, startYear: any, endYear: a
   return true;
 };
 
-const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }: any) => {
+const ClassesCoursesSection = ({
+  user,
+  institutionId,
+  allStudents,
+  allTeachers,
+  onUploadUsersImportFile,
+  onRunManualCourseLinkCsvImport,
+  onRunUsersImportN8n,
+}: any) => {
   const tabKey = buildInstitutionScopedPersistenceKey('institution-admin-organization', institutionId, 'tab');
   // ── Navigation ─────────────────────────────────────────────────────────────
   const [tab,            setTab]            = usePersistentState(tabKey, TAB_COURSES);
@@ -99,6 +108,7 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
   const [showClassModal,   setShowClassModal]   = React.useState(false);
   const [classModalErr,    setClassModalErr]    = React.useState('');
   const [classSubmitting,  setClassSubmitting]  = React.useState(false);
+  const [showCourseLinkCsvModal, setShowCourseLinkCsvModal] = React.useState(false);
   const [deleteConfirm, setDeleteConfirm] = React.useState(INITIAL_DELETE_CONFIRM_STATE);
   const [isDeletingItem, setIsDeletingItem] = React.useState(false);
   const [binActionLoadingKey, setBinActionLoadingKey] = React.useState('');
@@ -482,16 +492,28 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
         )}
 
         {!showingDetail && tab !== TAB_BIN && (
-          <button
-            onClick={() => tab === TAB_COURSES ? setShowCourseModal(true) : setShowClassModal(true)}
-            className="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white
-              px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg
-              shadow-[var(--color-primary-200)] dark:shadow-[var(--color-primary-900)/0.2]
-              transition-all active:scale-95 text-sm"
-          >
-            <Plus className="w-4 h-4" />
-            {tab === TAB_COURSES ? 'Nuevo Curso' : 'Nueva Clase'}
-          </button>
+          <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+            {tab === TAB_COURSES && (
+              <button
+                type="button"
+                onClick={() => setShowCourseLinkCsvModal(true)}
+                className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 text-xs font-semibold"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                Vincular cursos por CSV
+              </button>
+            )}
+            <button
+              onClick={() => tab === TAB_COURSES ? setShowCourseModal(true) : setShowClassModal(true)}
+              className="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white
+                px-4 py-2.5 rounded-xl font-medium flex items-center gap-2 shadow-lg
+                shadow-[var(--color-primary-200)] dark:shadow-[var(--color-primary-900)/0.2]
+                transition-all active:scale-95 text-sm"
+            >
+              <Plus className="w-4 h-4" />
+              {tab === TAB_COURSES ? 'Nuevo Curso' : 'Nueva Clase'}
+            </button>
+          </div>
         )}
       </div>
 
@@ -823,6 +845,17 @@ const ClassesCoursesSection = ({ user, institutionId, allStudents, allTeachers }
           classes={classes}
         />
       )}
+
+      <CsvImportWorkflowModal
+        isOpen={showCourseLinkCsvModal}
+        onClose={() => setShowCourseLinkCsvModal(false)}
+        workflowType="course-links"
+        title="Vincular cursos por CSV"
+        description="Sube un CSV/Excel para asignar cursos a alumnos usando email o identificador. También puedes enviar el archivo a n8n para mapeo automático."
+        onUploadFile={onUploadUsersImportFile}
+        onRunManualImport={onRunManualCourseLinkCsvImport}
+        onRunN8nImport={onRunUsersImportN8n}
+      />
     </div>
   );
 };

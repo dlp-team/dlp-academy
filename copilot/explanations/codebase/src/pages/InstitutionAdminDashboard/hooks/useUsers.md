@@ -12,7 +12,9 @@
 - Handles invite creation and invite-access removal writes.
 - Manages institutional dynamic-code updates and policy persistence.
 - Lazily loads full teacher/student sets only when organization tab needs cross-list datasets.
-- Provides CSV bulk-link application flow for student-course profile links.
+- Provides CSV import handlers for student enrichment and course-link assignment flows.
+- Uploads import files to institution-scoped Firebase Storage paths.
+- Delegates optional automation runs to n8n webhook integration.
 - Exposes users tab state/actions to `InstitutionAdminDashboard`.
 
 ## Exports
@@ -28,6 +30,7 @@
 - `../../../utils/pagePersistence`
 
 ## Changelog
+- 2026-04-04: Replaced legacy plain-text CSV linker with storage-backed import workflow handlers (`uploadUsersImportFile`, `runManualStudentsCsvImport`, `runManualCourseLinkCsvImport`, `triggerUsersImportN8n`) and kept compatibility wrapper for existing `handleBulkLinkStudentsCsv` call sites.
 - 2026-04-04: Added student CSV bulk-link handler that appends course links to student profile fields (`courseId`, `courseIds`, `enrolledCourseIds`) with per-run summary output.
 - 2026-04-04: Added student-tab course catalog loading for CSV validation and users-tab modal wiring.
 - 2026-04-02: Added cursor-based pagination state (`hasMore`, `lastVisible`) and `handleLoadMoreUsers` for teachers/students.

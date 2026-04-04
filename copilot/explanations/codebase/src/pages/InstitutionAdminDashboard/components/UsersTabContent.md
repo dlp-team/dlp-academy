@@ -12,7 +12,7 @@
 - Displays pending invite rows and invite code copy actions.
 - Controls in-page confirmation modal for invite-access removal before destructive execution.
 - Renders pagination controls for teacher/student tables and delegates cursor loading via `onLoadMoreUsers`.
-- Adds student CSV bulk-link modal with summary/error feedback for mass course-link operations.
+- Exposes `Vincular alumnos por CSV` workflow entrypoint with reusable storage/mapping/n8n modal integration.
 
 ## Exports
 - `default UsersTabContent`
@@ -23,6 +23,7 @@
 - `../../../utils/institutionPolicyUtils`
 
 ## Changelog
+- 2026-04-04: Renamed students action to `Vincular alumnos por CSV` and switched to shared `CsvImportWorkflowModal` so students import now supports file upload, manual column mapping, and n8n dispatch.
 - 2026-04-04: Added student-side CSV bulk-link modal (`email,courseId`) with summary rendering, error handling, and async delegation via `onBulkLinkStudentsCsv`.
 - 2026-04-03: Moved teacher-governance toggles out of `UsersTabContent` into the new dashboard `Configuración` tab (`SettingsTabContent`) and added in-tab guidance message for teachers.
 - 2026-04-02: Added `Cargar más profesores/alumnos` pagination controls with loading state wiring.
