@@ -13,5 +13,10 @@
 - Emits rollback metadata snapshot tied to dry-run request id.
 - Caps mapping previews to bounded response size and reports truncation warnings.
 
+## Changelog
+### 2026-04-04
+- Hardened user-query reliability for real e2e environments by replacing the multi-field Firestore query (`institutionId` + `role`) with an institution-only query plus in-memory student-role filtering.
+- Preserved transfer mapping semantics while reducing runtime dependency on composite-index availability for callable dry-run execution.
+
 ## Exports
 - `createRunTransferPromotionDryRunHandler({ dbInstance, nowProvider? })`

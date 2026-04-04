@@ -7,7 +7,7 @@
 3. COMPLETED - Courses/classes academic-year UX and linkage hardening.
 4. IN_REVIEW - Subject period metadata and lifecycle automation.
 5. IN_PROGRESS - Student-course linking, transfer/promote architecture, and enrollment flow hardening.
-6. PLANNED - Notifications behavior fixes, dedicated page, TTL, and email sync.
+6. IN_REVIEW - Notifications behavior fixes, dedicated page, TTL, and email sync.
 7. PLANNED - Institution customization preview full-screen fix and parity improvements.
 8. PLANNED - Bin selection mode parity, visual dimming, and urgency sort labels.
 9. PLANNED - Validation hardening, docs sync, review gate, and lifecycle transition.
@@ -22,8 +22,8 @@
 - Final validation and docs sync remain explicit to prevent lifecycle drift.
 
 ## Immediate Next Actions
-- Expand transfer/promotion browser-level e2e from current modal guardrails into full execution-path coverage (dry-run/apply/rollback) once dedicated fixtures are finalized.
-- Address Phase 05 out-of-scope risk-log items for transfer snapshot scaling and chunked-apply partial-failure recovery design in a dedicated follow-up block.
+- Resolve transfer dry-run callable environment readiness in the active e2e target (`internal` runtime response during execution-path calls), then rerun and archive a full non-skipped execution-path scenario (`dry-run -> apply -> rollback`) with `E2E_TRANSFER_PROMOTION_AUTO_SEED=1`, `E2E_TRANSFER_PROMOTION_EXECUTION=1`, and `E2E_TRANSFER_PROMOTION_APPLY_ROLLBACK=1`.
+- Execute final Phase 06 optimization/risk-review pass and transition the phase after checklist verification.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.

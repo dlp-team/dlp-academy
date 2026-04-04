@@ -29,6 +29,7 @@ const normalizeAcademicYear = (value) => String(value || '').trim();
 const normalizeEntityStatus = (value) => String(value || 'active').trim().toLowerCase();
 
 const isActiveEntity = (entity) => normalizeEntityStatus(entity?.status) !== 'trashed';
+const hasStudentRole = (value) => String(value || '').trim().toLowerCase() === 'student';
 
 const normalizeTextKey = (value) => String(value || '').trim().toLowerCase();
 
@@ -113,7 +114,7 @@ export const createRunTransferPromotionDryRunHandler = ({
   const [coursesSnapshot, classesSnapshot, studentsSnapshot] = await Promise.all([
     dbInstance.collection('courses').where('institutionId', '==', institutionId).get(),
     dbInstance.collection('classes').where('institutionId', '==', institutionId).get(),
-    dbInstance.collection('users').where('institutionId', '==', institutionId).where('role', '==', 'student').get(),
+    dbInstance.collection('users').where('institutionId', '==', institutionId).get(),
   ]);
 
   const activeCourses = coursesSnapshot.docs
@@ -125,7 +126,8 @@ export const createRunTransferPromotionDryRunHandler = ({
     .filter(isActiveEntity);
 
   const students = studentsSnapshot.docs
-    .map((studentDoc) => ({ id: studentDoc.id, ...studentDoc.data() }));
+    .map((studentDoc) => ({ id: studentDoc.id, ...studentDoc.data() }))
+    .filter((student) => hasStudentRole(student?.role));
 
   const sourceCourses = activeCourses.filter((course) => normalizeAcademicYear(course?.academicYear) === sourceAcademicYear);
   const targetCourses = activeCourses.filter((course) => normalizeAcademicYear(course?.academicYear) === targetAcademicYear);
