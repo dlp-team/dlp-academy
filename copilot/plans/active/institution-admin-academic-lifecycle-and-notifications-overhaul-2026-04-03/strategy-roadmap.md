@@ -23,14 +23,17 @@
 
 ## Immediate Next Actions
 - Wire per-course period schedule fields into course/settings flows and pass them to subject timeline generation.
-- Implement rollback execution callable/path backed by persisted `transferPromotionRollbacks` metadata.
 - Add end-to-end validation coverage for class/course eligibility after manual + CSV student linking rollout.
+- Begin inReview readiness work for Phase 05: optimization pass followed by deep risk analysis and out-of-scope risk logging.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.
 - Per major feature block: targeted tests first, then impacted suites.
 - Before `inReview`: `npm run lint`, `npx tsc --noEmit`, `npm run test`.
-- Before `finished`: reviewing checklist fully checked with evidence.
+- Before `finished`: complete two inReview subphases with evidence.
+  - Subphase 1: Optimization/consolidation pass across touched files.
+  - Subphase 2: Deep risk analysis (security, permissions, failure modes, real-world edge cases).
+  - Log out-of-scope risks in `copilot/plans/out-of-scope-risk-log.md`.
 
 ## Rollback Strategy
 - Keep each phase in isolated logical commits.

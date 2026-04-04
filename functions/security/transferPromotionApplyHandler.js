@@ -237,6 +237,19 @@ export const createApplyTransferPromotionPlanHandler = ({
   let studentsUpdated = 0;
   let targetClassMembershipUpdates = 0;
   let sourceClassMembershipUpdates = 0;
+  const createdCourseIds = [];
+  const createdClassIds = [];
+  const studentStateSnapshotsById = new Map();
+  const classMembershipSnapshotsById = new Map();
+
+  const addClassMembershipSnapshot = ({ classId, classData }) => {
+    if (!classId || classMembershipSnapshotsById.has(classId)) return;
+
+    classMembershipSnapshotsById.set(classId, {
+      classId,
+      studentIds: toUniqueIds(classData?.studentIds || []),
+    });
+  };
 
   plannedCourses.forEach((courseMapping) => {
     const action = normalizeMappingAction(courseMapping?.action);
@@ -280,6 +293,7 @@ export const createApplyTransferPromotionPlanHandler = ({
     operations.push((batch) => {
       batch.set(targetCourseRef, copiedCourseData, { merge: true });
     });
+    createdCourseIds.push(targetCourseId);
     coursesCreated += 1;
   });
 
@@ -333,6 +347,7 @@ export const createApplyTransferPromotionPlanHandler = ({
     operations.push((batch) => {
       batch.set(targetClassRef, copiedClassData, { merge: true });
     });
+    createdClassIds.push(targetClassId);
 
     if (seededStudentIds.length > 0) {
       targetClassAdditions.delete(targetClassId);
@@ -362,6 +377,16 @@ export const createApplyTransferPromotionPlanHandler = ({
       const fromCourseIds = toUniqueIds(assignment?.fromCourseIds || []);
       const toCourseIds = toUniqueIds(assignment?.toCourseIds || []);
       const existingCourseIds = getStudentCourseIds(studentData);
+
+      if (!studentStateSnapshotsById.has(studentId)) {
+        studentStateSnapshotsById.set(studentId, {
+          studentId,
+          courseId: studentData?.courseId || null,
+          courseIds: toUniqueIds(studentData?.courseIds || []),
+          enrolledCourseIds: toUniqueIds(studentData?.enrolledCourseIds || []),
+        });
+      }
+
       const resultingCourseIds = Array.isArray(assignment?.resultingCourseIds) && assignment.resultingCourseIds.length > 0
         ? toUniqueIds(assignment.resultingCourseIds)
         : (
@@ -387,6 +412,8 @@ export const createApplyTransferPromotionPlanHandler = ({
   }
 
   if (options.copyStudentLinks && options.includeClassMemberships) {
+    const createdClassIdSet = new Set(createdClassIds);
+
     targetClassAdditions.forEach((studentIdSet, targetClassId) => {
       const classData = referencedClassesById.get(targetClassId);
       if (!classData) {
@@ -399,6 +426,13 @@ export const createApplyTransferPromotionPlanHandler = ({
         institutionId,
         label: `Target class ${targetClassId}`,
       });
+
+      if (!createdClassIdSet.has(targetClassId)) {
+        addClassMembershipSnapshot({
+          classId: targetClassId,
+          classData,
+        });
+      }
 
       const nextStudentIds = toUniqueIds([
         ...(Array.isArray(classData?.studentIds) ? classData.studentIds : []),
@@ -427,6 +461,11 @@ export const createApplyTransferPromotionPlanHandler = ({
         label: `Source class ${sourceClassId}`,
       });
 
+      addClassMembershipSnapshot({
+        classId: sourceClassId,
+        classData,
+      });
+
       const currentStudentIds = toUniqueIds(classData?.studentIds || []);
       const nextStudentIds = currentStudentIds.filter((studentId) => !studentIdSet.has(studentId));
 
@@ -442,12 +481,22 @@ export const createApplyTransferPromotionPlanHandler = ({
 
   const rollbackId = assertNonEmptyString(rollbackMetadata?.rollbackId, 'rollbackMetadata.rollbackId');
   const rollbackRef = dbInstance.collection('transferPromotionRollbacks').doc(rollbackId);
+  const executionSnapshot = {
+    mode,
+    institutionId,
+    requestId,
+    createdCourseIds: toUniqueIds(createdCourseIds),
+    createdClassIds: toUniqueIds(createdClassIds),
+    studentStates: Array.from(studentStateSnapshotsById.values()),
+    classMembershipStates: Array.from(classMembershipSnapshotsById.values()),
+  };
 
   operations.push((batch) => {
     batch.set(rollbackRef, {
       ...rollbackMetadata,
       institutionId,
       requestId,
+      executionSnapshot,
       appliedByUid: actorUid,
       appliedAt: serverTimestampProvider(),
       status: 'ready',

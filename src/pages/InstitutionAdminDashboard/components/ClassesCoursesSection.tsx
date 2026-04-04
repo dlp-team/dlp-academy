@@ -129,6 +129,7 @@ const ClassesCoursesSection = ({
     permanentlyDeleteCourse, permanentlyDeleteClass,
     runTransferPromotionDryRunPreview,
     applyTransferPromotionDryRunPlan,
+    rollbackTransferPromotionPlanById,
   } = useClassesCourses(user, institutionId);
 
   const coursesById = React.useMemo(
@@ -877,6 +878,7 @@ const ClassesCoursesSection = ({
         availableAcademicYears={availableAcademicYears}
         onRunDryRun={runTransferPromotionDryRunPreview}
         onApplyPlan={applyTransferPromotionDryRunPlan}
+        onRollbackPlan={rollbackTransferPromotionPlanById}
       />
     </div>
   );

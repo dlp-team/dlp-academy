@@ -7,10 +7,32 @@
 - Copilot must read this file before each implementation block and sync accepted items into roadmap/phase docs.
 
 ## Pending User Updates
-- (No pending updates right now)
+
+- No pending updates.
+
 
 
 ## Processed Updates
+- 2026-04-04: Enforced clickable file-reference policy in instruction docs for operational logging and Ctrl+Click navigation.
+  - Synced in:
+    - `.github/copilot-instructions.md`
+    - `AGENTS.md`
+    - `README.md`
+    - `strategy-roadmap.md`
+    - `phases/phase-05-student-course-linking-and-transfer-planned.md`
+  - Implementation completed:
+    - Added mandatory Markdown file-link format for plan/explanation/log references.
+
+- 2026-04-04: Extended `create-plan` governance so `inReview` requires two ordered subphases (optimization, then deep risk analysis) and mandatory out-of-scope risk logging.
+  - Synced in:
+    - `.github/skills/create-plan/SKILL.md`
+    - `copilot/plans/out-of-scope-risk-log.md`
+    - `README.md`
+    - `strategy-roadmap.md`
+    - `phases/phase-05-student-course-linking-and-transfer-planned.md`
+  - Implementation completed:
+    - Added inReview two-step closure gate and required out-of-scope risk registry template.
+
 - 2026-04-04: Updated `create-plan` skill to enforce a final optimization phase at the end of each multi-phase plan.
   - Synced in:
     - `.github/skills/create-plan/SKILL.md`

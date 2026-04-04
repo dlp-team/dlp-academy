@@ -90,6 +90,31 @@ Minimum required checklist for that final phase:
 Closure rule:
 - A plan is not considered complete until this optimization phase is executed, validated, documented, and included in final review evidence.
 
+## InReview Two-Step Gate (MANDATORY)
+When a plan reaches `inReview`, it must execute these two required review subphases in order:
+
+1. **Optimization and Consolidation Review**
+	 - Complete the final optimization checklist (centralization, file splitting, readability, efficiency, lint/tests).
+2. **Deep Risk Analysis Review**
+	 - Perform exhaustive risk analysis of implemented scope covering at least:
+		 - security and permission boundaries,
+		 - data integrity and rollback safety,
+		 - runtime failure modes and degraded dependencies,
+		 - unintended real-world behavior under edge conditions.
+
+### Out-of-Scope Risk Logging (MANDATORY)
+- If risks are identified but are out of current plan scope, log them in:
+	- `copilot/plans/out-of-scope-risk-log.md`
+- Each logged item must include:
+	- date,
+	- related plan/phase,
+	- affected files/surfaces,
+	- risk description,
+	- recommended follow-up action.
+
+Closure gate:
+- A plan cannot move from `inReview` to `finished` until both inReview subphases are documented and any out-of-scope risks are captured in the risk log.
+
 ## Lifecycle
 1. Create in `todo/`.
 2. Move to `active/` when implementation starts.

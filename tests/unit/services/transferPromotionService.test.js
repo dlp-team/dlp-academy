@@ -1,6 +1,10 @@
 // tests/unit/services/transferPromotionService.test.js
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { applyTransferPromotionPlan, runTransferPromotionDryRun } from '../../../src/services/transferPromotionService';
+import {
+  applyTransferPromotionPlan,
+  rollbackTransferPromotionPlan,
+  runTransferPromotionDryRun,
+} from '../../../src/services/transferPromotionService';
 
 const serviceMocks = vi.hoisted(() => ({
   httpsCallable: vi.fn(),
@@ -114,6 +118,50 @@ describe('transferPromotionService', () => {
     expect(result).toEqual({
       success: true,
       requestId: 'transfer-promote-1',
+    });
+  });
+
+  it('calls rollbackTransferPromotionPlan callable with rollback payload', async () => {
+    serviceMocks.callableFn.mockResolvedValue({
+      data: {
+        success: true,
+        rollbackId: 'rollback-1',
+        requestId: 'transfer-promote-1',
+      },
+    });
+
+    const result = await rollbackTransferPromotionPlan({
+      rollbackId: 'rollback-1',
+      institutionId: 'inst-1',
+    });
+
+    expect(serviceMocks.httpsCallable).toHaveBeenCalledWith(serviceMocks.functionsRef, 'rollbackTransferPromotionPlan');
+    expect(serviceMocks.callableFn).toHaveBeenCalledWith({
+      rollbackId: 'rollback-1',
+      institutionId: 'inst-1',
+    });
+    expect(result).toEqual({
+      success: true,
+      rollbackId: 'rollback-1',
+      requestId: 'transfer-promote-1',
+    });
+  });
+
+  it('returns default rollback shape when callable has no data payload', async () => {
+    serviceMocks.callableFn.mockResolvedValue({ data: null });
+
+    const result = await rollbackTransferPromotionPlan({
+      rollbackId: 'rollback-1',
+      institutionId: 'inst-1',
+    });
+
+    expect(result).toEqual({
+      success: false,
+      alreadyRolledBack: false,
+      rollbackId: 'rollback-1',
+      requestId: null,
+      summary: null,
+      warnings: [],
     });
   });
 });

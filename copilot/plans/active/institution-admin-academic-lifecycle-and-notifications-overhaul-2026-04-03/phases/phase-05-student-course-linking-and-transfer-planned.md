@@ -37,6 +37,8 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Defined transfer/promote dry-run contract utilities with deterministic payload builder, payload validator, and rollback metadata snapshot builder.
 - Added dedicated utility tests to lock the new contract before wiring migration writes.
 - Synced plan-governance intake updates: `create-plan` skill now requires a final optimization phase and strict `Pending -> Processed` user-update transition before coding each block.
+- Synced governance update: operational logs/docs must use clickable Markdown file references to preserve Ctrl+Click file navigation.
+- Synced governance update: `inReview` now includes two required review subphases (optimization first, then deep risk analysis) with out-of-scope risks logged in `copilot/plans/out-of-scope-risk-log.md`.
 - Wired transfer/promote dry-run backend callable `runTransferPromotionDryRun` with strict tenant permission checks and deterministic mapping previews for courses, classes, and student assignments.
 - Added dry-run trigger modal in Institution Admin courses tab (`Simular traslado/promoción`) with mode/options selection and summary visualization.
 - Integrated `useClassesCourses` dry-run execution path to validate payloads, call backend preview, and normalize rollback metadata for UI consumption.
@@ -45,6 +47,10 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Added rollback/run persistence (`transferPromotionRollbacks`, `transferPromotionRuns`) with idempotent re-apply short-circuit by `requestId`.
 - Extended transfer modal flow with `Aplicar cambios planificados` action wired to hook/service apply API and inline apply feedback.
 - Added deterministic apply-handler unit tests and expanded service/UI wiring tests for apply callable delegation.
+- Implemented explicit rollback callable `rollbackTransferPromotionPlan` backed by persisted rollback execution snapshots.
+- Extended apply callable persistence with rollback execution snapshots (created entity ids + pre-apply student/class states) to support deterministic reverse operations.
+- Added rollback execution path to Institution Admin transfer modal (`Ejecutar rollback`) and hook/service callable wiring.
+- Added deterministic rollback-handler tests and expanded transfer service/UI wiring coverage for rollback delegation.
 
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
@@ -58,10 +64,10 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - `npm run test -- tests/unit/pages/institution-admin/transferPromotionPlanUtils.test.js`
 - `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
 - `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
+- `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-rollback-handler.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
 - `get_errors` clean for all touched source and test files in this slice.
 
 ## Remaining in Phase 05
-- Implement explicit rollback execution callable/path that consumes persisted rollback metadata to reverse applied transfer writes when needed.
 - Add end-to-end validation for cross-course assignment constraints after linking rollout.
 
 ## Risks and Controls

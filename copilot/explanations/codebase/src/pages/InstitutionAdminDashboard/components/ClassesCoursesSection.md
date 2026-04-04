@@ -36,6 +36,7 @@
 - `../../../utils/courseLabelUtils`
 
 ## Changelog
+- 2026-04-04: Wired rollback callback (`rollbackTransferPromotionPlanById`) into transfer modal so applied transfer runs can be reversed from organization tab.
 - 2026-04-04: Extended transfer/promotion modal wiring with apply callback (`applyTransferPromotionDryRunPlan`) so dry-run plans can be executed from the same UI flow.
 - 2026-04-04: Added courses-tab trigger `Simular traslado/promoción` and wired `TransferPromotionDryRunModal` to execute institution-scoped dry-run previews through `useClassesCourses`.
 - 2026-04-04: Added courses-tab CSV workflow launcher and shared modal wiring to support storage upload + manual/n8n course-link imports.

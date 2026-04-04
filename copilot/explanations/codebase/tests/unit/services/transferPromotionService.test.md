@@ -10,3 +10,4 @@
 - Asserts `runTransferPromotionDryRun` callable name and payload delegation.
 - Asserts deterministic default response shape when callable returns empty payload.
 - Asserts `applyTransferPromotionPlan` callable name and payload delegation.
+- Asserts `rollbackTransferPromotionPlan` callable name/payload delegation and fallback response shape.

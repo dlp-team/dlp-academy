@@ -11,6 +11,7 @@
 - Captures optional flags (`copyStudentLinks`, `includeClassMemberships`, `preserveVisibility`).
 - Invokes provided dry-run callback and renders summary + warnings + rollback reference.
 - Invokes apply callback to execute planned writes from dry-run output and renders apply status feedback.
+- Invokes rollback callback using persisted rollback id after apply and renders rollback execution feedback.
 - Keeps all visible copy in Spanish and disables closure/actions during execution.
 
 ## Exports

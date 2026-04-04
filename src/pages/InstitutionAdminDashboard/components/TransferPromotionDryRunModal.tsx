@@ -15,6 +15,7 @@ const TransferPromotionDryRunModal = ({
   availableAcademicYears = [],
   onRunDryRun,
   onApplyPlan,
+  onRollbackPlan,
 }: any) => {
   const [sourceAcademicYear, setSourceAcademicYear] = useState('');
   const [targetAcademicYear, setTargetAcademicYear] = useState('');
@@ -24,8 +25,10 @@ const TransferPromotionDryRunModal = ({
   const [preserveVisibility, setPreserveVisibility] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
+  const [isRollingBack, setIsRollingBack] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [applyMessage, setApplyMessage] = useState({ type: '', text: '' });
+  const [appliedRollbackId, setAppliedRollbackId] = useState('');
   const [summary, setSummary] = useState<any>(null);
 
   useEffect(() => {
@@ -42,6 +45,7 @@ const TransferPromotionDryRunModal = ({
     setPreserveVisibility(false);
     setErrorMessage('');
     setApplyMessage({ type: '', text: '' });
+    setAppliedRollbackId('');
     setSummary(null);
   }, [isOpen, availableAcademicYears]);
 
@@ -65,13 +69,14 @@ const TransferPromotionDryRunModal = ({
     });
   }, [availableAcademicYears, sourceAcademicYear]);
 
-  const canExecute = Boolean(sourceAcademicYear && targetAcademicYear && sourceAcademicYear !== targetAcademicYear && !isExecuting && !isApplying);
-  const canApply = Boolean(summary?.dryRunPayload && summary?.mappings && !isApplying && !isExecuting);
+  const canExecute = Boolean(sourceAcademicYear && targetAcademicYear && sourceAcademicYear !== targetAcademicYear && !isExecuting && !isApplying && !isRollingBack);
+  const canApply = Boolean(summary?.dryRunPayload && summary?.mappings && !isApplying && !isExecuting && !isRollingBack);
+  const canRollback = Boolean(appliedRollbackId && !isExecuting && !isApplying && !isRollingBack);
 
   if (!isOpen) return null;
 
   const closeModal = () => {
-    if (isExecuting || isApplying) return;
+    if (isExecuting || isApplying || isRollingBack) return;
     onClose?.();
   };
 
@@ -138,6 +143,19 @@ const TransferPromotionDryRunModal = ({
         setApplyMessage({ type: 'success', text: 'Cambios aplicados correctamente.' });
       }
 
+      const nextRollbackId = String(applyResult?.rollbackId || summary?.rollbackMetadata?.rollbackId || '').trim();
+      setAppliedRollbackId(nextRollbackId);
+
+      if (nextRollbackId) {
+        setSummary((previous: any) => ({
+          ...(previous || {}),
+          rollbackMetadata: {
+            ...(previous?.rollbackMetadata || {}),
+            rollbackId: nextRollbackId,
+          },
+        }));
+      }
+
       if (Array.isArray(applyResult?.warnings) && applyResult.warnings.length > 0) {
         setSummary((previous: any) => ({
           ...(previous || {}),
@@ -152,6 +170,45 @@ const TransferPromotionDryRunModal = ({
       });
     } finally {
       setIsApplying(false);
+    }
+  };
+
+  const rollbackPlan = async () => {
+    if (!canRollback || !onRollbackPlan) return;
+
+    setIsRollingBack(true);
+    setErrorMessage('');
+    setApplyMessage({ type: '', text: '' });
+
+    try {
+      const rollbackResult = await onRollbackPlan({
+        rollbackId: appliedRollbackId,
+      });
+
+      if (rollbackResult?.alreadyRolledBack) {
+        setApplyMessage({ type: 'info', text: 'Este rollback ya estaba ejecutado previamente.' });
+      } else {
+        setApplyMessage({ type: 'success', text: 'Rollback ejecutado correctamente.' });
+      }
+
+      if (Array.isArray(rollbackResult?.warnings) && rollbackResult.warnings.length > 0) {
+        setSummary((previous: any) => ({
+          ...(previous || {}),
+          warnings: rollbackResult.warnings,
+        }));
+      }
+
+      if (!rollbackResult?.alreadyRolledBack) {
+        setAppliedRollbackId('');
+      }
+    } catch (error: any) {
+      const rawMessage = String(error?.message || '').trim();
+      setApplyMessage({
+        type: 'error',
+        text: rawMessage || 'No se pudo ejecutar el rollback.',
+      });
+    } finally {
+      setIsRollingBack(false);
     }
   };
 
@@ -302,10 +359,19 @@ const TransferPromotionDryRunModal = ({
             <button
               type="button"
               onClick={closeModal}
-              disabled={isExecuting || isApplying}
+              disabled={isExecuting || isApplying || isRollingBack}
               className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60"
             >
               Cerrar
+            </button>
+            <button
+              type="button"
+              onClick={rollbackPlan}
+              disabled={!canRollback}
+              className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-60 inline-flex items-center gap-2"
+            >
+              {isRollingBack ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              Ejecutar rollback
             </button>
             <button
               type="button"

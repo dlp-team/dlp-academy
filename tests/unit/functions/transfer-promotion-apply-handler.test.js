@@ -178,6 +178,14 @@ describe('applyTransferPromotionPlan handler', () => {
     expect(writtenPaths).toContain('users/student-1');
     expect(writtenPaths).toContain('transferPromotionRollbacks/rollback-transfer-promote-inst-1');
     expect(writtenPaths).toContain('transferPromotionRuns/transfer-promote-inst-1-2025-2026-2026-2027-promote');
+
+    expect(dbMock.__store['transferPromotionRollbacks/rollback-transfer-promote-inst-1']).toMatchObject({
+      status: 'ready',
+      executionSnapshot: {
+        createdCourseIds: ['course-target-1'],
+        createdClassIds: ['class-target-1'],
+      },
+    });
   });
 
   it('returns alreadyApplied when request run was previously applied', async () => {

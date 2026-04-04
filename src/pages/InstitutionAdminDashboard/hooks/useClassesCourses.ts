@@ -18,7 +18,11 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { applyTransferPromotionPlan, runTransferPromotionDryRun } from '../../../services/transferPromotionService';
+import {
+  applyTransferPromotionPlan,
+  rollbackTransferPromotionPlan,
+  runTransferPromotionDryRun,
+} from '../../../services/transferPromotionService';
 import { isTrashRetentionExpired } from '../../../utils/trashRetentionUtils';
 import {
   getDefaultAcademicYear,
@@ -615,6 +619,31 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
     };
   };
 
+  const rollbackTransferPromotionPlanById = async ({
+    rollbackId,
+  }: any) => {
+    if (!effectiveInstitutionId) {
+      throw new Error('MISSING_INSTITUTION');
+    }
+
+    const normalizedRollbackId = String(rollbackId || '').trim();
+    if (!normalizedRollbackId) {
+      throw new Error('ROLLBACK_ID_REQUIRED');
+    }
+
+    const rollbackResult: any = await rollbackTransferPromotionPlan({
+      rollbackId: normalizedRollbackId,
+      institutionId: effectiveInstitutionId,
+    });
+
+    await fetchAll();
+
+    return {
+      ...rollbackResult,
+      warnings: Array.isArray(rollbackResult?.warnings) ? rollbackResult.warnings : [],
+    };
+  };
+
   // ── Helpers ───────────────────────────────────────────────────────────────
   const getCourseById  = (id) => courses.find(c => c.id === id);
   const getTeacherById = (id, allTeachers) => allTeachers.find(t => t.id === id);
@@ -628,6 +657,7 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
     permanentlyDeleteCourse, permanentlyDeleteClass,
     runTransferPromotionDryRunPreview,
     applyTransferPromotionDryRunPlan,
+    rollbackTransferPromotionPlanById,
     getCourseById, getTeacherById, classesForCourse,
   };
 };

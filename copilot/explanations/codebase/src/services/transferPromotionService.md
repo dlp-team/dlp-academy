@@ -9,9 +9,11 @@
 ## Exports
 - `runTransferPromotionDryRun(payload)`
 - `applyTransferPromotionPlan({ dryRunPayload, mappings, rollbackMetadata })`
+- `rollbackTransferPromotionPlan({ rollbackId, institutionId })`
 
 ## Behavior
 - Calls Cloud Function `runTransferPromotionDryRun` via `httpsCallable`.
 - Calls Cloud Function `applyTransferPromotionPlan` via `httpsCallable`.
+- Calls Cloud Function `rollbackTransferPromotionPlan` via `httpsCallable`.
 - Returns callable payload as-is when available.
 - Provides deterministic fallback shapes when callable returns empty data.

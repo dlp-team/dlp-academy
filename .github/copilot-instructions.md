@@ -21,6 +21,15 @@ This workspace also uses scoped file instructions in `.github/instructions/` to 
    - Branching/commit/push discipline: `git-workflow`
    - Final closure leverage: `askquestions-leverage`
 
+## File Reference Linkification (MANDATORY)
+
+When writing logs, reports, or plan updates that reference workspace files, use clickable Markdown links so Ctrl+Click navigates directly to the file.
+
+- File path format: `[path/to/file.ext](path/to/file.ext)`
+- Line format: `[path/to/file.ext](path/to/file.ext#L42)`
+- Keep paths workspace-relative and use `/` separators.
+- Apply this to `copilot/explanations/**`, `copilot/plans/**`, and other operational logs.
+
 
 **This user has LIMITED premium requests. Every interaction must deliver MAXIMUM value.**
 

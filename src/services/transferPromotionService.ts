@@ -4,6 +4,7 @@ import { functions } from '../firebase/config';
 
 const RUN_TRANSFER_PROMOTION_DRY_RUN_CALLABLE = 'runTransferPromotionDryRun';
 const APPLY_TRANSFER_PROMOTION_PLAN_CALLABLE = 'applyTransferPromotionPlan';
+const ROLLBACK_TRANSFER_PROMOTION_PLAN_CALLABLE = 'rollbackTransferPromotionPlan';
 
 export const runTransferPromotionDryRun = async (payload: any) => {
   const callable = httpsCallable(functions, RUN_TRANSFER_PROMOTION_DRY_RUN_CALLABLE);
@@ -40,6 +41,26 @@ export const applyTransferPromotionPlan = async ({
     alreadyApplied: false,
     requestId: dryRunPayload?.requestId || null,
     rollbackId: rollbackMetadata?.rollbackId || null,
+    summary: null,
+    warnings: [],
+  };
+};
+
+export const rollbackTransferPromotionPlan = async ({
+  rollbackId,
+  institutionId,
+}: any) => {
+  const callable = httpsCallable(functions, ROLLBACK_TRANSFER_PROMOTION_PLAN_CALLABLE);
+  const response: any = await callable({
+    rollbackId,
+    institutionId,
+  });
+
+  return response?.data || {
+    success: false,
+    alreadyRolledBack: false,
+    rollbackId: rollbackId || null,
+    requestId: null,
     summary: null,
     warnings: [],
   };

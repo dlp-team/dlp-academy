@@ -30,6 +30,11 @@ const mocks = vi.hoisted(() => ({
   applyTransferPromotionDryRunPlan: vi.fn(async () => ({
     success: true,
     requestId: 'transfer-promote-1',
+    rollbackId: 'rollback-1',
+  })),
+  rollbackTransferPromotionPlanById: vi.fn(async () => ({
+    success: true,
+    rollbackId: 'rollback-1',
   })),
 }));
 
@@ -59,11 +64,12 @@ vi.mock('../../../../src/pages/InstitutionAdminDashboard/hooks/useClassesCourses
     permanentlyDeleteClass: vi.fn(),
     runTransferPromotionDryRunPreview: mocks.runTransferPromotionDryRunPreview,
     applyTransferPromotionDryRunPlan: mocks.applyTransferPromotionDryRunPlan,
+    rollbackTransferPromotionPlanById: mocks.rollbackTransferPromotionPlanById,
   }),
 }));
 
 vi.mock('../../../../src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal', () => ({
-  default: ({ isOpen, onRunDryRun, onApplyPlan }) => {
+  default: ({ isOpen, onRunDryRun, onApplyPlan, onRollbackPlan }) => {
     if (!isOpen) return null;
     return (
       <>
@@ -102,6 +108,15 @@ vi.mock('../../../../src/pages/InstitutionAdminDashboard/components/TransferProm
         >
           Aplicar plan mock
         </button>
+
+        <button
+          type="button"
+          onClick={() => onRollbackPlan?.({
+            rollbackId: 'rollback-1',
+          })}
+        >
+          Ejecutar rollback mock
+        </button>
       </>
     );
   },
@@ -113,7 +128,7 @@ describe('ClassesCoursesSection transfer/promotion dry-run trigger', () => {
     localStorage.clear();
   });
 
-  it('opens transfer/promotion modal and delegates dry-run/apply callbacks to hook APIs', async () => {
+  it('opens transfer/promotion modal and delegates dry-run/apply/rollback callbacks to hook APIs', async () => {
     render(
       <ClassesCoursesSection
         user={{ uid: 'institution-admin-1', institutionId: 'inst-1' }}
@@ -129,6 +144,7 @@ describe('ClassesCoursesSection transfer/promotion dry-run trigger', () => {
     fireEvent.click(screen.getByRole('button', { name: /simular traslado\/promoción/i }));
     fireEvent.click(screen.getByRole('button', { name: /ejecutar simulación mock/i }));
     fireEvent.click(screen.getByRole('button', { name: /aplicar plan mock/i }));
+    fireEvent.click(screen.getByRole('button', { name: /ejecutar rollback mock/i }));
 
     await waitFor(() => {
       expect(mocks.runTransferPromotionDryRunPreview).toHaveBeenCalledTimes(1);
@@ -136,6 +152,10 @@ describe('ClassesCoursesSection transfer/promotion dry-run trigger', () => {
 
     await waitFor(() => {
       expect(mocks.applyTransferPromotionDryRunPlan).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(mocks.rollbackTransferPromotionPlanById).toHaveBeenCalledTimes(1);
     });
 
     expect(mocks.runTransferPromotionDryRunPreview).toHaveBeenCalledWith({
@@ -162,6 +182,10 @@ describe('ClassesCoursesSection transfer/promotion dry-run trigger', () => {
         rollbackId: 'rollback-1',
         requestId: 'transfer-promote-1',
       },
+    });
+
+    expect(mocks.rollbackTransferPromotionPlanById).toHaveBeenCalledWith({
+      rollbackId: 'rollback-1',
     });
   });
 });

@@ -17,6 +17,17 @@
 
 ---
 
+## FILE REFERENCE NAVIGATION (MANDATORY)
+
+For all operational docs/logs/plans/explanations, reference files using clickable Markdown links so Ctrl+Click opens the target directly.
+
+- File path: `[path/to/file.ext](path/to/file.ext)`
+- Specific line: `[path/to/file.ext](path/to/file.ext#L10)`
+- Use workspace-relative paths and `/` separators.
+- Applies to updates in `copilot/plans/**`, `copilot/explanations/**`, and related logs.
+
+---
+
 ##�🚫 BANNED ACTIONS & TERMINAL RESTRICTIONS (CRITICAL)
 When operating in Bypass Approvals or Autopilot mode, you have terminal access. You must exercise extreme caution and strictly adhere to these limitations:
 

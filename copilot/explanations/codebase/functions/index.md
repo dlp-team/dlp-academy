@@ -8,6 +8,12 @@
 
 ## Changelog
 ### 2026-04-04
+- Added callable function `rollbackTransferPromotionPlan`.
+- `rollbackTransferPromotionPlan` behavior:
+  - requires authenticated admin/institution-admin caller scoped to institution,
+  - consumes persisted rollback execution snapshot metadata,
+  - restores student/class membership states and removes created transfer artifacts,
+  - marks rollback/run records as `rolled_back` with idempotent short-circuit when already finalized.
 - Added callable function `applyTransferPromotionPlan`.
 - `applyTransferPromotionPlan` behavior:
   - requires authenticated admin/institution-admin caller,

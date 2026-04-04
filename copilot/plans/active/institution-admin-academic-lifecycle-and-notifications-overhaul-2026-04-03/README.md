@@ -45,6 +45,8 @@ Execute the institutional roadmap described by the user in the original plan pro
 - Existing utilities/components already present in the codebase (academic-year and notifications foundations) must be reused where possible.
 - Changes will remain lossless and traceable with per-phase verification and temporal reports.
 - Plan governance now enforces a final dedicated optimization phase and mandatory `Pending -> Processed` user-update logging before each implementation block.
+- Operational docs/logs must use clickable Markdown file references (`[path](path#Lx)`) for Ctrl+Click navigation.
+- `inReview` now enforces two mandatory review subphases: (1) optimization/consolidation and (2) deep risk analysis, with out-of-scope findings logged in `copilot/plans/out-of-scope-risk-log.md`.
 
 ## Success Criteria
 - All requirements from the original user-authored source are represented in phased scope without omission.

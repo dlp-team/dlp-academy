@@ -12,6 +12,7 @@
 - Applies planned course/class creation and student link updates in chunked batched writes.
 - Applies optional class membership updates based on transfer mode/options.
 - Persists rollback metadata and idempotent run state for replay protection.
+- Persists execution snapshots (created entity ids + pre-apply student/class states) required by rollback callable.
 
 ## Exports
 - `createApplyTransferPromotionPlanHandler({ dbInstance, serverTimestampProvider })`
