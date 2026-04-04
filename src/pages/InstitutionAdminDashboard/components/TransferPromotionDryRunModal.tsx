@@ -14,6 +14,7 @@ const TransferPromotionDryRunModal = ({
   onClose,
   availableAcademicYears = [],
   onRunDryRun,
+  onApplyPlan,
 }: any) => {
   const [sourceAcademicYear, setSourceAcademicYear] = useState('');
   const [targetAcademicYear, setTargetAcademicYear] = useState('');
@@ -22,7 +23,9 @@ const TransferPromotionDryRunModal = ({
   const [includeClassMemberships, setIncludeClassMemberships] = useState(true);
   const [preserveVisibility, setPreserveVisibility] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [applyMessage, setApplyMessage] = useState({ type: '', text: '' });
   const [summary, setSummary] = useState<any>(null);
 
   useEffect(() => {
@@ -38,6 +41,7 @@ const TransferPromotionDryRunModal = ({
     setIncludeClassMemberships(true);
     setPreserveVisibility(false);
     setErrorMessage('');
+    setApplyMessage({ type: '', text: '' });
     setSummary(null);
   }, [isOpen, availableAcademicYears]);
 
@@ -61,12 +65,13 @@ const TransferPromotionDryRunModal = ({
     });
   }, [availableAcademicYears, sourceAcademicYear]);
 
-  const canExecute = Boolean(sourceAcademicYear && targetAcademicYear && sourceAcademicYear !== targetAcademicYear && !isExecuting);
+  const canExecute = Boolean(sourceAcademicYear && targetAcademicYear && sourceAcademicYear !== targetAcademicYear && !isExecuting && !isApplying);
+  const canApply = Boolean(summary?.dryRunPayload && summary?.mappings && !isApplying && !isExecuting);
 
   if (!isOpen) return null;
 
   const closeModal = () => {
-    if (isExecuting) return;
+    if (isExecuting || isApplying) return;
     onClose?.();
   };
 
@@ -84,6 +89,7 @@ const TransferPromotionDryRunModal = ({
 
     setIsExecuting(true);
     setErrorMessage('');
+    setApplyMessage({ type: '', text: '' });
     setSummary(null);
 
     try {
@@ -109,6 +115,43 @@ const TransferPromotionDryRunModal = ({
       }
     } finally {
       setIsExecuting(false);
+    }
+  };
+
+  const applyPlan = async () => {
+    if (!canApply || !onApplyPlan) return;
+
+    setIsApplying(true);
+    setErrorMessage('');
+    setApplyMessage({ type: '', text: '' });
+
+    try {
+      const applyResult = await onApplyPlan({
+        dryRunPayload: summary?.dryRunPayload,
+        mappings: summary?.mappings,
+        rollbackMetadata: summary?.rollbackMetadata,
+      });
+
+      if (applyResult?.alreadyApplied) {
+        setApplyMessage({ type: 'info', text: 'Este plan ya estaba aplicado previamente.' });
+      } else {
+        setApplyMessage({ type: 'success', text: 'Cambios aplicados correctamente.' });
+      }
+
+      if (Array.isArray(applyResult?.warnings) && applyResult.warnings.length > 0) {
+        setSummary((previous: any) => ({
+          ...(previous || {}),
+          warnings: applyResult.warnings,
+        }));
+      }
+    } catch (error: any) {
+      const rawMessage = String(error?.message || '').trim();
+      setApplyMessage({
+        type: 'error',
+        text: rawMessage || 'No se pudieron aplicar los cambios planificados.',
+      });
+    } finally {
+      setIsApplying(false);
     }
   };
 
@@ -224,6 +267,18 @@ const TransferPromotionDryRunModal = ({
             </p>
           )}
 
+          {applyMessage.text && (
+            <p className={`mt-4 text-sm font-medium flex items-center gap-1.5 ${
+              applyMessage.type === 'error'
+                ? 'text-red-600 dark:text-red-300'
+                : applyMessage.type === 'info'
+                  ? 'text-amber-600 dark:text-amber-300'
+                  : 'text-emerald-600 dark:text-emerald-300'
+            }`}>
+              <ShieldCheck className="w-4 h-4" /> {applyMessage.text}
+            </p>
+          )}
+
           {summary?.summary && (
             <div className="mt-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 p-4 text-sm text-slate-700 dark:text-slate-200 space-y-1">
               <p className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
@@ -247,10 +302,19 @@ const TransferPromotionDryRunModal = ({
             <button
               type="button"
               onClick={closeModal}
-              disabled={isExecuting}
+              disabled={isExecuting || isApplying}
               className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60"
             >
               Cerrar
+            </button>
+            <button
+              type="button"
+              onClick={applyPlan}
+              disabled={!canApply}
+              className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 inline-flex items-center gap-2"
+            >
+              {isApplying ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              Aplicar cambios planificados
             </button>
             <button
               type="button"

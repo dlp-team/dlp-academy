@@ -41,6 +41,10 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Added dry-run trigger modal in Institution Admin courses tab (`Simular traslado/promoción`) with mode/options selection and summary visualization.
 - Integrated `useClassesCourses` dry-run execution path to validate payloads, call backend preview, and normalize rollback metadata for UI consumption.
 - Added deterministic unit coverage for callable handler, frontend service wrapper, and organization-tab dry-run trigger wiring.
+- Implemented apply callable `applyTransferPromotionPlan` to execute batched course/class/student updates from dry-run mappings with institution-scoped permission checks.
+- Added rollback/run persistence (`transferPromotionRollbacks`, `transferPromotionRuns`) with idempotent re-apply short-circuit by `requestId`.
+- Extended transfer modal flow with `Aplicar cambios planificados` action wired to hook/service apply API and inline apply feedback.
+- Added deterministic apply-handler unit tests and expanded service/UI wiring tests for apply callable delegation.
 
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
@@ -53,10 +57,11 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - `npm run test -- tests/unit/pages/institution-admin/importSourceUtils.test.js tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
 - `npm run test -- tests/unit/pages/institution-admin/transferPromotionPlanUtils.test.js`
 - `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
+- `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
 - `get_errors` clean for all touched source and test files in this slice.
 
 ## Remaining in Phase 05
-- Implement apply/write execution path for transfer/promote orchestration using dry-run contract output and rollback metadata.
+- Implement explicit rollback execution callable/path that consumes persisted rollback metadata to reverse applied transfer writes when needed.
 - Add end-to-end validation for cross-course assignment constraints after linking rollout.
 
 ## Risks and Controls

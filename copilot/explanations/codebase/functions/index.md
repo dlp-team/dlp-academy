@@ -8,6 +8,12 @@
 
 ## Changelog
 ### 2026-04-04
+- Added callable function `applyTransferPromotionPlan`.
+- `applyTransferPromotionPlan` behavior:
+  - requires authenticated admin/institution-admin caller,
+  - validates and applies dry-run mapping payloads for courses/classes/student links,
+  - stores rollback metadata in `transferPromotionRollbacks/{rollbackId}`,
+  - stores idempotent run status in `transferPromotionRuns/{requestId}` and short-circuits repeat applies.
 - Added callable function `runTransferPromotionDryRun`.
 - `runTransferPromotionDryRun` behavior:
   - requires authenticated admin/institution-admin caller,

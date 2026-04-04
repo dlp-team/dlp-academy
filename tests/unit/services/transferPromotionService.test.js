@@ -1,6 +1,6 @@
 // tests/unit/services/transferPromotionService.test.js
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { runTransferPromotionDryRun } from '../../../src/services/transferPromotionService';
+import { applyTransferPromotionPlan, runTransferPromotionDryRun } from '../../../src/services/transferPromotionService';
 
 const serviceMocks = vi.hoisted(() => ({
   httpsCallable: vi.fn(),
@@ -72,6 +72,48 @@ describe('transferPromotionService', () => {
       },
       rollbackMetadata: null,
       warnings: [],
+    });
+  });
+
+  it('calls applyTransferPromotionPlan callable with dry-run payload and mappings', async () => {
+    serviceMocks.callableFn.mockResolvedValue({
+      data: {
+        success: true,
+        requestId: 'transfer-promote-1',
+      },
+    });
+
+    const result = await applyTransferPromotionPlan({
+      dryRunPayload: {
+        requestId: 'transfer-promote-1',
+      },
+      mappings: {
+        courses: [{ sourceCourseId: 'source-1', targetCourseId: 'target-1' }],
+        classes: [],
+        studentAssignments: [],
+      },
+      rollbackMetadata: {
+        rollbackId: 'rollback-1',
+      },
+    });
+
+    expect(serviceMocks.httpsCallable).toHaveBeenCalledWith(serviceMocks.functionsRef, 'applyTransferPromotionPlan');
+    expect(serviceMocks.callableFn).toHaveBeenCalledWith({
+      dryRunPayload: {
+        requestId: 'transfer-promote-1',
+      },
+      mappings: {
+        courses: [{ sourceCourseId: 'source-1', targetCourseId: 'target-1' }],
+        classes: [],
+        studentAssignments: [],
+      },
+      rollbackMetadata: {
+        rollbackId: 'rollback-1',
+      },
+    });
+    expect(result).toEqual({
+      success: true,
+      requestId: 'transfer-promote-1',
     });
   });
 });

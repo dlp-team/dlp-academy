@@ -18,7 +18,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { runTransferPromotionDryRun } from '../../../services/transferPromotionService';
+import { applyTransferPromotionPlan, runTransferPromotionDryRun } from '../../../services/transferPromotionService';
 import { isTrashRetentionExpired } from '../../../utils/trashRetentionUtils';
 import {
   getDefaultAcademicYear,
@@ -581,6 +581,40 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
     };
   };
 
+  const applyTransferPromotionDryRunPlan = async ({
+    dryRunPayload,
+    mappings,
+    rollbackMetadata,
+  }: any) => {
+    if (!effectiveInstitutionId) {
+      throw new Error('MISSING_INSTITUTION');
+    }
+
+    const normalizedDryRunPayload = {
+      ...(dryRunPayload || {}),
+      institutionId: String(dryRunPayload?.institutionId || effectiveInstitutionId).trim(),
+      initiatedByUid: String(dryRunPayload?.initiatedByUid || user?.uid || '').trim() || null,
+    };
+
+    const payloadValidation = validateTransferPromotionPayload(normalizedDryRunPayload);
+    if (!payloadValidation.valid) {
+      throw new Error(payloadValidation.errors[0] || 'INVALID_TRANSFER_PROMOTION_PAYLOAD');
+    }
+
+    const applyResult: any = await applyTransferPromotionPlan({
+      dryRunPayload: normalizedDryRunPayload,
+      mappings,
+      rollbackMetadata,
+    });
+
+    await fetchAll();
+
+    return {
+      ...applyResult,
+      warnings: Array.isArray(applyResult?.warnings) ? applyResult.warnings : [],
+    };
+  };
+
   // ── Helpers ───────────────────────────────────────────────────────────────
   const getCourseById  = (id) => courses.find(c => c.id === id);
   const getTeacherById = (id, allTeachers) => allTeachers.find(t => t.id === id);
@@ -593,6 +627,7 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
     restoreCourse, restoreClass,
     permanentlyDeleteCourse, permanentlyDeleteClass,
     runTransferPromotionDryRunPreview,
+    applyTransferPromotionDryRunPlan,
     getCourseById, getTeacherById, classesForCourse,
   };
 };

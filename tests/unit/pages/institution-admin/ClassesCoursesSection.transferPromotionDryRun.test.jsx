@@ -7,9 +7,29 @@ import ClassesCoursesSection from '../../../../src/pages/InstitutionAdminDashboa
 const mocks = vi.hoisted(() => ({
   runTransferPromotionDryRunPreview: vi.fn(async () => ({
     success: true,
+    dryRunPayload: {
+      requestId: 'transfer-promote-1',
+      institutionId: 'inst-1',
+      sourceAcademicYear: '2025-2026',
+      targetAcademicYear: '2026-2027',
+      mode: 'promote',
+    },
+    mappings: {
+      courses: [],
+      classes: [],
+      studentAssignments: [],
+    },
+    rollbackMetadata: {
+      rollbackId: 'rollback-1',
+      requestId: 'transfer-promote-1',
+    },
     summary: {
       plannedCourseMappings: 2,
     },
+  })),
+  applyTransferPromotionDryRunPlan: vi.fn(async () => ({
+    success: true,
+    requestId: 'transfer-promote-1',
   })),
 }));
 
@@ -38,28 +58,51 @@ vi.mock('../../../../src/pages/InstitutionAdminDashboard/hooks/useClassesCourses
     permanentlyDeleteCourse: vi.fn(),
     permanentlyDeleteClass: vi.fn(),
     runTransferPromotionDryRunPreview: mocks.runTransferPromotionDryRunPreview,
+    applyTransferPromotionDryRunPlan: mocks.applyTransferPromotionDryRunPlan,
   }),
 }));
 
 vi.mock('../../../../src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal', () => ({
-  default: ({ isOpen, onRunDryRun }) => {
+  default: ({ isOpen, onRunDryRun, onApplyPlan }) => {
     if (!isOpen) return null;
     return (
-      <button
-        type="button"
-        onClick={() => onRunDryRun?.({
-          sourceAcademicYear: '2025-2026',
-          targetAcademicYear: '2026-2027',
-          mode: 'promote',
-          options: {
-            copyStudentLinks: true,
-            includeClassMemberships: true,
-            preserveVisibility: false,
-          },
-        })}
-      >
-        Ejecutar simulación mock
-      </button>
+      <>
+        <button
+          type="button"
+          onClick={() => onRunDryRun?.({
+            sourceAcademicYear: '2025-2026',
+            targetAcademicYear: '2026-2027',
+            mode: 'promote',
+            options: {
+              copyStudentLinks: true,
+              includeClassMemberships: true,
+              preserveVisibility: false,
+            },
+          })}
+        >
+          Ejecutar simulación mock
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onApplyPlan?.({
+            dryRunPayload: {
+              requestId: 'transfer-promote-1',
+            },
+            mappings: {
+              courses: [],
+              classes: [],
+              studentAssignments: [],
+            },
+            rollbackMetadata: {
+              rollbackId: 'rollback-1',
+              requestId: 'transfer-promote-1',
+            },
+          })}
+        >
+          Aplicar plan mock
+        </button>
+      </>
     );
   },
 }));
@@ -70,7 +113,7 @@ describe('ClassesCoursesSection transfer/promotion dry-run trigger', () => {
     localStorage.clear();
   });
 
-  it('opens transfer/promotion modal and delegates dry-run to hook callback', async () => {
+  it('opens transfer/promotion modal and delegates dry-run/apply callbacks to hook APIs', async () => {
     render(
       <ClassesCoursesSection
         user={{ uid: 'institution-admin-1', institutionId: 'inst-1' }}
@@ -85,9 +128,14 @@ describe('ClassesCoursesSection transfer/promotion dry-run trigger', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /simular traslado\/promoción/i }));
     fireEvent.click(screen.getByRole('button', { name: /ejecutar simulación mock/i }));
+    fireEvent.click(screen.getByRole('button', { name: /aplicar plan mock/i }));
 
     await waitFor(() => {
       expect(mocks.runTransferPromotionDryRunPreview).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      expect(mocks.applyTransferPromotionDryRunPlan).toHaveBeenCalledTimes(1);
     });
 
     expect(mocks.runTransferPromotionDryRunPreview).toHaveBeenCalledWith({
@@ -98,6 +146,21 @@ describe('ClassesCoursesSection transfer/promotion dry-run trigger', () => {
         copyStudentLinks: true,
         includeClassMemberships: true,
         preserveVisibility: false,
+      },
+    });
+
+    expect(mocks.applyTransferPromotionDryRunPlan).toHaveBeenCalledWith({
+      dryRunPayload: {
+        requestId: 'transfer-promote-1',
+      },
+      mappings: {
+        courses: [],
+        classes: [],
+        studentAssignments: [],
+      },
+      rollbackMetadata: {
+        rollbackId: 'rollback-1',
+        requestId: 'transfer-promote-1',
       },
     });
   });

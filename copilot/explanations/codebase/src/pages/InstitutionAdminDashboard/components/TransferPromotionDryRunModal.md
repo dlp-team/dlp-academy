@@ -10,6 +10,7 @@
 - Collects source/destination academic years and dry-run mode (`promote`/`transfer`).
 - Captures optional flags (`copyStudentLinks`, `includeClassMemberships`, `preserveVisibility`).
 - Invokes provided dry-run callback and renders summary + warnings + rollback reference.
+- Invokes apply callback to execute planned writes from dry-run output and renders apply status feedback.
 - Keeps all visible copy in Spanish and disables closure/actions during execution.
 
 ## Exports

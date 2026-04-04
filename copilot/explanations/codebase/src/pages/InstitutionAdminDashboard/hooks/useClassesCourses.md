@@ -14,6 +14,7 @@
 - Executes permanent deletion for course/class records (including linked class cleanup for courses).
 - Enforces 15-day trash retention by purging expired trashed courses/classes during fetch cycles.
 - Provides transfer/promote dry-run orchestration API that validates payloads, calls backend preview callable, and normalizes rollback metadata.
+- Provides transfer/promote apply API to execute backend write orchestration and refresh local course/class state.
 
 ## Exports
 - `useClassesCourses(user, institutionIdOverride?)`
@@ -24,6 +25,7 @@
 - `../../../firebase/config`
 
 ## Changelog
+- 2026-04-04: Added `applyTransferPromotionDryRunPlan(...)` hook API that sends dry-run outputs (`dryRunPayload`, `mappings`, `rollbackMetadata`) to backend apply callable and refetches organization data.
 - 2026-04-04: Added `runTransferPromotionDryRunPreview(...)` integration, delegating to callable `runTransferPromotionDryRun` with frontend payload validation + rollback metadata normalization.
 - 2026-04-03: Added `resolveCourseAcademicYear(...)` reconciliation in class create/update paths so class `academicYear` is derived from linked course metadata whenever a course is present.
 - 2026-04-03: `updateClass` now ignores direct year drift when a class remains linked to a course, preserving course-year as source of truth while still providing fallback normalization for legacy/no-course cases.

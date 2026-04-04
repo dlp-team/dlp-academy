@@ -9,3 +9,4 @@
 ## Coverage
 - Verifies the toolbar action `Simular traslado/promoción` opens the modal path.
 - Verifies modal dry-run execution delegates to `runTransferPromotionDryRunPreview` from `useClassesCourses`.
+- Verifies modal apply action delegates to `applyTransferPromotionDryRunPlan` from `useClassesCourses`.
