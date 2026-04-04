@@ -23,6 +23,11 @@
 - `./customization/CustomizationHomeExactPreview`
 
 ## Changelog
+### 2026-04-04
+- Hardened fullscreen mode container to preserve `flex` stage layout in overlay mode, preventing preview panel stacking/blank-screen regressions.
+- Added explicit body scroll-lock while fullscreen is active and safe overflow restoration on exit.
+- Added stable preview root test identifier for deterministic fullscreen regression assertions in unit coverage.
+
 ### 2026-04-03
 - Added fullscreen preview mode with keyboard `Esc` exit and explicit UI toggle.
 - Added collapsible controls sidebar with compact collapsed-state save/reset actions.

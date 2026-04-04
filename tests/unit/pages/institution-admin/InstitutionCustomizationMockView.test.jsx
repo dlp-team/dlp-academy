@@ -82,8 +82,14 @@ describe('InstitutionCustomizationMockView', () => {
     const fullscreenButton = screen.getByTitle(/pantalla completa/i);
     fireEvent.click(fullscreenButton);
 
+    const previewRoot = screen.getByTestId('institution-customization-preview-root');
+    expect(previewRoot.className).toContain('fixed');
+    expect(previewRoot.className).toContain('flex');
     expect(screen.getByText(/pulsa esc para salir de pantalla completa/i)).toBeTruthy();
     expect(screen.getByTitle(/salir de pantalla completa/i)).toBeTruthy();
+
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByText(/pulsa esc para salir de pantalla completa/i)).toBeNull();
   });
 
   it('switches preview tabs and supports subject topic drilldown', () => {
@@ -101,5 +107,6 @@ describe('InstitutionCustomizationMockView', () => {
     expect(screen.getByText(/temas de la asignatura/i)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /ecuaciones lineales/i }));
     expect(screen.getByText(/guías de estudio/i)).toBeTruthy();
+    expect(screen.getByText(/^archivos$/i)).toBeTruthy();
   });
 });

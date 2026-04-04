@@ -9,6 +9,7 @@ import {
   FlaskConical,
   FolderOpen,
   Link2,
+  Paperclip,
   RotateCcw,
   Sigma,
   TestTube2,
@@ -218,10 +219,11 @@ const PREVIEW_TOPICS_BY_SUBJECT = {
       name: 'Ecuaciones lineales',
       description: 'Resolución paso a paso y modelado de problemas.',
       resources: [
-        { id: 'math-quiz-1', type: 'quiz', label: 'Quizzes', total: 2 },
+        { id: 'math-quiz-1', type: 'quiz', label: 'Cuestionarios', total: 2 },
         { id: 'math-exam-1', type: 'exam', label: 'Exámenes', total: 1 },
         { id: 'math-test-1', type: 'test', label: 'Tests', total: 3 },
-        { id: 'math-material-1', type: 'material', label: 'Material', total: 5 },
+        { id: 'math-material-1', type: 'material', label: 'Materiales', total: 5 },
+        { id: 'math-file-1', type: 'file', label: 'Archivos', total: 4 },
         { id: 'math-formula-1', type: 'formula', label: 'Fórmulas', total: 8 },
         { id: 'math-guide-1', type: 'guide', label: 'Guías de estudio', total: 1 },
       ],
@@ -231,8 +233,8 @@ const PREVIEW_TOPICS_BY_SUBJECT = {
       name: 'Sistemas de ecuaciones',
       description: 'Métodos de sustitución, igualación y reducción.',
       resources: [
-        { id: 'math-quiz-2', type: 'quiz', label: 'Quizzes', total: 1 },
-        { id: 'math-material-2', type: 'material', label: 'Material', total: 3 },
+        { id: 'math-quiz-2', type: 'quiz', label: 'Cuestionarios', total: 1 },
+        { id: 'math-material-2', type: 'material', label: 'Materiales', total: 3 },
         { id: 'math-formula-2', type: 'formula', label: 'Fórmulas', total: 4 },
       ],
     },
@@ -244,7 +246,7 @@ const PREVIEW_TOPICS_BY_SUBJECT = {
       description: 'Ideas clave y conexión con cambios políticos.',
       resources: [
         { id: 'history-test-1', type: 'test', label: 'Tests', total: 2 },
-        { id: 'history-material-1', type: 'material', label: 'Material', total: 4 },
+        { id: 'history-material-1', type: 'material', label: 'Materiales', total: 4 },
         { id: 'history-guide-1', type: 'guide', label: 'Guías de estudio', total: 2 },
       ],
     },
@@ -255,9 +257,9 @@ const PREVIEW_TOPICS_BY_SUBJECT = {
       name: 'El método científico',
       description: 'Diseño experimental y análisis de resultados.',
       resources: [
-        { id: 'science-quiz-1', type: 'quiz', label: 'Quizzes', total: 2 },
+        { id: 'science-quiz-1', type: 'quiz', label: 'Cuestionarios', total: 2 },
         { id: 'science-exam-1', type: 'exam', label: 'Exámenes', total: 1 },
-        { id: 'science-material-1', type: 'material', label: 'Material', total: 6 },
+        { id: 'science-material-1', type: 'material', label: 'Materiales', total: 6 },
       ],
     },
   ],
@@ -268,7 +270,7 @@ const PREVIEW_TOPICS_BY_SUBJECT = {
       description: 'Estructura, técnicas narrativas y práctica guiada.',
       resources: [
         { id: 'language-test-1', type: 'test', label: 'Tests', total: 2 },
-        { id: 'language-material-1', type: 'material', label: 'Material', total: 4 },
+        { id: 'language-material-1', type: 'material', label: 'Materiales', total: 4 },
       ],
     },
   ],
@@ -278,7 +280,7 @@ const PREVIEW_TOPICS_BY_SUBJECT = {
       name: 'Enlace químico',
       description: 'Tipos de enlace y representaciones estructurales.',
       resources: [
-        { id: 'physics-quiz-1', type: 'quiz', label: 'Quizzes', total: 1 },
+        { id: 'physics-quiz-1', type: 'quiz', label: 'Cuestionarios', total: 1 },
         { id: 'physics-exam-1', type: 'exam', label: 'Exámenes', total: 1 },
         { id: 'physics-formula-1', type: 'formula', label: 'Fórmulas', total: 3 },
       ],
@@ -291,7 +293,7 @@ const PREVIEW_TOPICS_BY_SUBJECT = {
       description: 'Lectura de mapas y orientación espacial.',
       resources: [
         { id: 'shared-guide-1', type: 'guide', label: 'Guías de estudio', total: 1 },
-        { id: 'shared-material-1', type: 'material', label: 'Material', total: 3 },
+        { id: 'shared-material-1', type: 'material', label: 'Materiales', total: 3 },
       ],
     },
   ],
@@ -302,6 +304,7 @@ const RESOURCE_ICON_MAP = {
   test: TestTube2,
   quiz: FlaskConical,
   material: FileText,
+  file: Paperclip,
   formula: Sigma,
   guide: BookOpen,
 };
@@ -311,6 +314,7 @@ const RESOURCE_DESCRIPTION_MAP = {
   test: 'Pruebas cortas de comprobación continua.',
   quiz: 'Actividades interactivas autocorregibles.',
   material: 'Documentos, apuntes y recursos didácticos.',
+  file: 'Archivos descargables y adjuntos del tema.',
   formula: 'Resumen de fórmulas y relaciones clave.',
   guide: 'Plan de estudio guiado para repaso.',
 };

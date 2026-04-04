@@ -13,6 +13,10 @@
 - Preview tab switching across `Papelera`, `Compartido`, and `Manual` plus topic/resource drilldown assertions.
 
 ## Changelog
+### 2026-04-04
+- Strengthened fullscreen regression coverage by asserting overlay container layout classes and keyboard `Esc` exit behavior.
+- Extended topic drilldown assertions to validate `Archivos` resource rendering in the exact-preview data model.
+
 ### 2026-04-03
 - Added router-aware rendering harness for shared-tab coverage (`useNavigate` context).
 - Added regression tests for fullscreen/collapse controls and new multi-tab/deep-drilldown preview behavior.

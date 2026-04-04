@@ -91,6 +91,16 @@ const InstitutionCustomizationMockView = ({
     return () => window.removeEventListener('keydown', onEscape);
   }, [fullscreen]);
 
+  useEffect(() => {
+    if (!fullscreen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [fullscreen]);
+
   const handleChange = useCallback((field: any, value: any) => {
     setForm((previous: any) => buildSafeForm({ ...previous, [field]: value }, previous));
     setSaved(false);
@@ -123,7 +133,7 @@ const InstitutionCustomizationMockView = ({
   const viewportConfig = VIEWPORTS.find((entry) => entry.id === viewport) || VIEWPORTS[0];
   const institutionLabel = form.institutionName?.trim() || 'Tu Institución';
   const containerClassName = fullscreen
-    ? `fixed inset-0 z-[1100] bg-slate-100 dark:bg-slate-950 ${className}`
+    ? 'fixed inset-0 z-[1100] flex h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-950'
     : `flex h-full w-full overflow-hidden bg-slate-100 dark:bg-slate-950 ${className}`;
 
   const roleButtons = [
@@ -132,7 +142,7 @@ const InstitutionCustomizationMockView = ({
   ];
 
   return (
-    <div className={containerClassName}>
+    <div className={containerClassName} data-testid="institution-customization-preview-root">
       <aside
         className={`relative h-full shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-[width] duration-300 ease-in-out ${
           sidebarOpen ? 'w-80' : 'w-16'

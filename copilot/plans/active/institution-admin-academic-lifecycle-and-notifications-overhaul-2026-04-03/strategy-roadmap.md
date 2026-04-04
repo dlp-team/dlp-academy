@@ -8,7 +8,7 @@
 4. IN_REVIEW - Subject period metadata and lifecycle automation.
 5. IN_PROGRESS - Student-course linking, transfer/promote architecture, and enrollment flow hardening.
 6. COMPLETED - Notifications behavior fixes, dedicated page, TTL, and email sync.
-7. PLANNED - Institution customization preview full-screen fix and parity improvements.
+7. COMPLETED - Institution customization preview full-screen fix and parity improvements.
 8. PLANNED - Bin selection mode parity, visual dimming, and urgency sort labels.
 9. PLANNED - Validation hardening, docs sync, review gate, and lifecycle transition.
 
@@ -23,7 +23,7 @@
 
 ## Immediate Next Actions
 - Optional environment follow-up: re-run transfer execution-path evidence against deployed callables (without mock mode) once callable environment readiness is restored.
-- Start Phase 07 implementation block for institution customization preview full-screen parity fixes.
+- Start Phase 08 implementation block for bin selection-mode parity and urgency-sort label fixes.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.

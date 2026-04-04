@@ -22,6 +22,10 @@
 - `src/pages/InstitutionAdminDashboard/components/customization/themePreviewUtils`
 
 ## Changelog
+### 2026-04-04
+- Added `Archivos` as a first-class mock resource type in topic drilldown to better mirror production content structures.
+- Localized remaining resource labels to Spanish (`Cuestionarios`, `Materiales`) for consistency with the live product language policy.
+
 ### 2026-04-03
 - Extended preview navigation to support all Home tabs: `Manual`, `Uso`, `Cursos`, `Compartido`, and `Papelera`.
 - Added mock academic-year aware grouping/filtering for `Cursos` and recent-activity grouping for `Uso`.
