@@ -122,6 +122,32 @@ Closure gate:
 4. Move to `inReview/` after implementation + validation.
 5. Move to `finished/` after reviewer closure.
 
+### ⚠️ CRITICAL: Single Location Rule (NO DUPLICATES)
+**Plans must ONLY exist in ONE lifecycle folder at a time.** When transitioning between lifecycle states:
+
+- ✅ Copy plan folder to new lifecycle location
+- ✅ Update status markers (README.md, strategy-roadmap.md) to reflect new state
+- ✅ Commit and push changes
+- ✅ DELETE the plan folder from the previous lifecycle location
+- ❌ NEVER keep the same plan in multiple lifecycle folders simultaneously
+
+Example transition workflow:
+```
+1. Plan is in active/my-plan-name/
+2. Implementation complete → copy to inReview/my-plan-name/
+3. Update inReview copy status to "inReview"
+4. Commit: "docs(plan): transition my-plan-name to inReview"
+5. Delete active/my-plan-name/
+6. Commit: "docs(plan): remove my-plan-name from active after inReview transition"
+7. Push
+```
+
+Violation consequences:
+- Duplicate plans cause confusion about current state
+- Multiple "authoritative" copies lead to sync divergence
+- Review/closure gates become ambiguous
+- Do not proceed with other work when duplicates exist—remediate first
+
 ## Dual-Source Intake Rule (ORIGINAL_PLAN + GEMINI_PLAN)
 When both source files exist for the same request (`copilot/plans/ORIGINAL_PLAN.md` and `copilot/plans/GEMINI_PLAN.md`), apply this flow without exception:
 
