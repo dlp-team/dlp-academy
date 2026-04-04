@@ -3,7 +3,7 @@
 
 ## Overview
 - **Source file:** `tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx`
-- **Last documented:** 2026-04-02
+- **Last documented:** 2026-04-04
 - **Role:** Focused regression coverage for Institution Admin invite-access removal confirmation behavior.
 
 ## Coverage
@@ -13,8 +13,12 @@
 - Browser `window.confirm(...)` is never used by the migrated flow.
 - Policy-save path keeps teacher policy payload stable while teacher-permission controls are delegated to the Configuración tab.
 - Teacher table pagination button delegates to `onLoadMoreUsers`.
+- Security-panel immediate code regeneration button delegates to `onRotateLiveCode`.
 
 ## Changelog
+### 2026-04-04
+- Added regression assertion for `Regenerar ahora` security action delegation in users tab.
+
 ### 2026-04-03
 - Updated policy-save regression assertion to match current UI architecture:
 	- teacher autonomous-subject toggle is no longer rendered in `UsersTabContent`,

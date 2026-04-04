@@ -25,7 +25,6 @@
 - Wire per-course period schedule fields into course/settings flows and pass them to subject timeline generation.
 - Define transfer/promote dry-run payload shape and rollback metadata before implementing migration writes.
 - Add end-to-end validation coverage for class/course eligibility after manual + CSV student linking rollout.
-- Audit and implement immediate teacher/student access-code regeneration + explicit disable controls with least-risk rotation semantics.
 - Extend CSV import adapters for richer external flows (Google Sheets and enhanced n8n mapping feedback) after current upload/manual foundation.
 
 ## Validation Gates

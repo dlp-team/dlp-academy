@@ -47,6 +47,9 @@ const renderStudentsUsersTab = (overrides = {}) => {
     liveAccessCode: 'ABC123',
     liveCodeLoading: false,
     liveCodeError: '',
+    onRotateLiveCode: vi.fn(),
+    isRotatingLiveCode: false,
+    codeRotationMessage: { type: '', text: '' },
     onUploadUsersImportFile: vi.fn(async () => ({
       storagePath: 'institutions/inst-1/imports/students/import.csv',
       downloadUrl: 'https://example.com/import.csv',

@@ -9,9 +9,16 @@
 ## Pending User Updates
 - CSV workflow follow-up: add direct Google Sheets ingestion and richer n8n AI response mapping/reporting on top of current storage + manual/n8n import foundation.
 
-- Add that for both the student and the teacher codes on the users tab of the intitution admin dashboard, they can be changed immediately, and that they can be disabled. I don't know how to do the immediate change, because the codes go following a time restriction, so you maybe can change the restriction to 1 second and after the code changes don't change it until the it was suppossed to before, but I am not sure, make an audit on what would be the best implementation for this and decide how to do it.
-
 ## Processed Updates
+- 2026-04-04: Implemented immediate teacher/student access-code regeneration and preserved disable controls with versioned backend rotation.
+  - Synced in:
+    - `strategy-roadmap.md`
+    - `phases/phase-05-student-course-linking-and-transfer-planned.md`
+  - Implementation completed:
+    - Added backend callable `rotateInstitutionalAccessCodeNow` with institution-admin/global-admin guardrails.
+    - Added role policy `codeVersion` support so `Regenerar ahora` invalidates old code immediately without changing interval hours.
+    - Added users-tab `Regenerar ahora` action and inline feedback for both teacher and student security views.
+    - Preserved disable semantics (`requireCode = false`) and blocked rotation when disabled.
 - 2026-04-04: Implemented first CSV workflow overhaul slice for student/course linking imports.
   - Synced in:
     - `strategy-roadmap.md`

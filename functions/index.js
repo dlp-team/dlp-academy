@@ -10,6 +10,7 @@ import {
   requireAuthUid,
 } from './security/guards.js';
 import { createGetInstitutionalAccessCodePreviewHandler } from './security/previewHandler.js';
+import { createRotateInstitutionalAccessCodeNowHandler } from './security/rotateCodeHandler.js';
 import { evaluateSubjectLifecycleAutomationRun } from './security/subjectLifecycleAutomation.js';
 
 initializeApp();
@@ -127,6 +128,9 @@ const normalizePolicy = (policy = {}) => ({
   requireDomain: policy.requireDomain === true,
   allowedDomains: String(policy.allowedDomains || ''),
   rotationIntervalHours: Number(policy.rotationIntervalHours || 24),
+  codeVersion: Number.isFinite(Number(policy.codeVersion)) && Number(policy.codeVersion) >= 0
+    ? Math.floor(Number(policy.codeVersion))
+    : 0,
 });
 
 const normalizeAllowedDomains = (domainsString) =>
@@ -140,12 +144,22 @@ const emailDomain = (email) => {
   return parts.length === 2 ? parts[1] : '';
 };
 
-const generateDynamicCodeServer = ({ institutionId, role, intervalHours, currentTimeMs, salt }) => {
+const generateDynamicCodeServer = ({
+  institutionId,
+  role,
+  intervalHours,
+  codeVersion = 0,
+  currentTimeMs,
+  salt,
+}) => {
   if (!institutionId || !role || !intervalHours) return '------';
 
   const windowMs = intervalHours * 60 * 60 * 1000;
   const currentWindow = Math.floor(currentTimeMs / windowMs);
-  const seed = `${institutionId}-${role}-${currentWindow}-${salt}`;
+  const normalizedCodeVersion = Number.isFinite(Number(codeVersion)) && Number(codeVersion) >= 0
+    ? Math.floor(Number(codeVersion))
+    : 0;
+  const seed = `${institutionId}-${role}-${currentWindow}-${normalizedCodeVersion}-${salt}`;
 
   let hash = 0;
   for (let i = 0; i < seed.length; i += 1) {
@@ -195,6 +209,7 @@ export const validateInstitutionalAccessCode = onCall(
         institutionId,
         role,
         intervalHours: policy.rotationIntervalHours,
+        codeVersion: policy.codeVersion,
         currentTimeMs: now,
         salt,
       });
@@ -203,6 +218,7 @@ export const validateInstitutionalAccessCode = onCall(
         institutionId,
         role,
         intervalHours: policy.rotationIntervalHours,
+        codeVersion: policy.codeVersion,
         currentTimeMs: now - (policy.rotationIntervalHours * 60 * 60 * 1000),
         salt,
       });
@@ -230,6 +246,13 @@ const getInstitutionalAccessCodePreviewHandler = createGetInstitutionalAccessCod
   codeGenerator: generateDynamicCodeServer,
 });
 
+const rotateInstitutionalAccessCodeNowHandler = createRotateInstitutionalAccessCodeNowHandler({
+  dbInstance: db,
+  secretProvider: () => INSTITUTION_CODE_SALT.value(),
+  codeGenerator: generateDynamicCodeServer,
+  serverTimestampProvider: () => FieldValue.serverTimestamp(),
+});
+
 export const getInstitutionalAccessCodePreview = onCall(
   {
     region: 'europe-west1',
@@ -237,6 +260,15 @@ export const getInstitutionalAccessCodePreview = onCall(
     invoker: 'public',
   },
   getInstitutionalAccessCodePreviewHandler
+);
+
+export const rotateInstitutionalAccessCodeNow = onCall(
+  {
+    region: 'europe-west1',
+    secrets: [INSTITUTION_CODE_SALT],
+    invoker: 'public',
+  },
+  rotateInstitutionalAccessCodeNowHandler
 );
 
 export const syncCurrentUserClaims = onCall(

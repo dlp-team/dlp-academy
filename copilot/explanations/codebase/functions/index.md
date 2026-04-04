@@ -7,6 +7,15 @@
 - Role: Cloud Functions entrypoint for institutional access-code flows and backend security helpers.
 
 ## Changelog
+### 2026-04-04
+- Added callable function `rotateInstitutionalAccessCodeNow`.
+- `rotateInstitutionalAccessCodeNow` behavior:
+  - requires authenticated admin/institution-admin caller scoped to target institution,
+  - increments role policy `codeVersion` (`teachers`/`students`) without changing configured interval,
+  - returns immediate preview payload (`code`, `validUntilMs`, `codeVersion`) for UI refresh.
+- Updated dynamic institutional code generation seed to include policy `codeVersion`.
+- Updated `validateInstitutionalAccessCode` to validate against role policy `codeVersion` for immediate invalidation of previously rotated codes.
+
 ### 2026-04-03
 - Added callable function `runSubjectLifecycleAutomation`.
 - `runSubjectLifecycleAutomation` behavior:

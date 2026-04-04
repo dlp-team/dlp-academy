@@ -18,7 +18,7 @@ import {
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { db, storage } from '../../../firebase/config';
-import { getInstitutionalAccessCodePreview } from '../../../services/accessCodeService';
+import { getInstitutionalAccessCodePreview, rotateInstitutionalAccessCodeNow } from '../../../services/accessCodeService';
 import { DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils/institutionPolicyUtils';
 import { usePersistentState } from '../../../hooks/usePersistentState';
 import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence';
@@ -163,6 +163,8 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
   const [liveAccessCode, setLiveAccessCode] = useState('');
   const [liveCodeLoading, setLiveCodeLoading] = useState(false);
   const [liveCodeError, setLiveCodeError] = useState('');
+  const [isRotatingLiveCode, setIsRotatingLiveCode] = useState(false);
+  const [codeRotationMessage, setCodeRotationMessage] = useState({ type: '', text: '' });
   const [codeUpdateSuccess, setCodeUpdateSuccess] = useState('');
   const [codeUpdateError, setCodeUpdateError] = useState('');
 
@@ -298,6 +300,7 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
           institutionId: effectiveInstitutionId,
           userType: userType === 'students' ? 'student' : 'teacher',
           intervalHours: Number(policy.rotationIntervalHours || 24),
+          codeVersion: Number(policy.codeVersion || 0),
         });
         if (!cancelled) setLiveAccessCode(preview?.code || '------');
       } catch {
@@ -396,6 +399,53 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
       setTimeout(() => setCodeUpdateError(''), 5000);
     } finally {
       setIsUpdatingCode(false);
+    }
+  };
+
+  const handleRotateLiveCode = async () => {
+    if (!effectiveInstitutionId || isRotatingLiveCode) return;
+
+    const role = userType === 'students' ? 'student' : 'teacher';
+    const policyKey = role === 'student' ? 'students' : 'teachers';
+    const policy = accessPolicies?.[policyKey] || { requireCode: true, codeVersion: 0 };
+
+    if (policy.requireCode === false) {
+      setCodeRotationMessage({ type: 'error', text: 'El código está desactivado. Actívalo antes de regenerarlo.' });
+      return;
+    }
+
+    setIsRotatingLiveCode(true);
+    setCodeRotationMessage({ type: '', text: '' });
+
+    try {
+      const rotationResult: any = await rotateInstitutionalAccessCodeNow({
+        institutionId: effectiveInstitutionId,
+        userType: role,
+      });
+
+      const nextCodeVersion = Number(rotationResult?.codeVersion || Number(policy.codeVersion || 0) + 1);
+
+      setAccessPolicies((previous: any) => ({
+        ...previous,
+        [policyKey]: {
+          ...(previous?.[policyKey] || {}),
+          codeVersion: nextCodeVersion,
+        },
+      }));
+
+      if (rotationResult?.code) {
+        setLiveAccessCode(rotationResult.code);
+      }
+
+      setCodeRotationMessage({ type: 'success', text: 'Código regenerado correctamente.' });
+      setTimeout(() => {
+        setCodeRotationMessage((previous) => (previous.type ? { type: '', text: '' } : previous));
+      }, 4000);
+    } catch (error) {
+      console.error('Error rotating live access code:', error);
+      setCodeRotationMessage({ type: 'error', text: 'No se pudo regenerar el código en este momento.' });
+    } finally {
+      setIsRotatingLiveCode(false);
     }
   };
 
@@ -730,12 +780,14 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
     isSubmitting, addError, addSuccess,
     institutionalCode, isUpdatingCode,
     liveAccessCode, liveCodeLoading, liveCodeError,
+    isRotatingLiveCode, codeRotationMessage,
     codeUpdateSuccess, codeUpdateError,
     accessPolicies, isUpdatingPolicies, policyMessage,
     showSudoModal, setShowSudoModal,
     pendingPolicies,
     handleAddUser,
     handleUpdateInstitutionalCode,
+    handleRotateLiveCode,
     handleSavePolicies,
     handleConfirmSavePolicies,
     handleRemoveAccess,

@@ -18,6 +18,10 @@ export const createGetInstitutionalAccessCodePreviewHandler = ({
   const institutionId = assertNonEmptyString(request.data?.institutionId, 'institutionId');
   const role = String(request.data?.userType || 'teacher').trim().toLowerCase();
   const intervalHours = assertPositiveNumber(request.data?.intervalHours || 24, 'intervalHours');
+  const parsedCodeVersion = Number(request.data?.codeVersion || 0);
+  const codeVersion = Number.isFinite(parsedCodeVersion) && parsedCodeVersion >= 0
+    ? Math.floor(parsedCodeVersion)
+    : 0;
 
   const userSnap = await dbInstance.collection('users').doc(uid).get();
   if (!userSnap.exists) {
@@ -29,7 +33,14 @@ export const createGetInstitutionalAccessCodePreviewHandler = ({
 
   const salt = secretProvider() || 'DLP_DEFAULT_SERVER_SALT';
   const now = nowProvider();
-  const code = codeGenerator({ institutionId, role, intervalHours, currentTimeMs: now, salt });
+  const code = codeGenerator({
+    institutionId,
+    role,
+    intervalHours,
+    codeVersion,
+    currentTimeMs: now,
+    salt,
+  });
   const windowMs = intervalHours * 60 * 60 * 1000;
   const validUntilMs = (Math.floor(now / windowMs) + 1) * windowMs;
 

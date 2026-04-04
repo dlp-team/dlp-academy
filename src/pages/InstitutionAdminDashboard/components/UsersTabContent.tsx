@@ -6,6 +6,7 @@ import {
   ChevronRight,
   GraduationCap,
   Loader2,
+  RefreshCcw,
   Search,
   Trash2,
   UserPlus,
@@ -39,6 +40,9 @@ const UsersTabContent = ({
   liveAccessCode,
   liveCodeLoading,
   liveCodeError,
+  onRotateLiveCode,
+  isRotatingLiveCode,
+  codeRotationMessage,
   onUploadUsersImportFile,
   onRunManualStudentsCsvImport,
   onRunUsersImportN8n,
@@ -194,8 +198,24 @@ const UsersTabContent = ({
                       </button>
                     )}
                   </div>
+                  {liveCode !== 'DESACTIVADO' && (
+                    <button
+                      type="button"
+                      onClick={onRotateLiveCode}
+                      disabled={isRotatingLiveCode}
+                      className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-indigo-200 dark:border-indigo-700 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 disabled:opacity-60"
+                    >
+                      {isRotatingLiveCode ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCcw className="w-3.5 h-3.5" />}
+                      Regenerar ahora
+                    </button>
+                  )}
                   {liveCodeError && (
                     <p className="mt-2 text-[11px] text-red-500 font-medium">{liveCodeError}</p>
+                  )}
+                  {codeRotationMessage?.text && (
+                    <p className={`mt-2 text-[11px] font-medium ${codeRotationMessage.type === 'success' ? 'text-emerald-600 dark:text-emerald-300' : 'text-red-600 dark:text-red-300'}`}>
+                      {codeRotationMessage.text}
+                    </p>
                   )}
                 </div>
               </div>

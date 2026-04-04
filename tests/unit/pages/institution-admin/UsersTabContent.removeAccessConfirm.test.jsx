@@ -32,6 +32,9 @@ describe('UsersTabContent invite removal confirmation', () => {
       liveAccessCode: 'ABC123',
       liveCodeLoading: false,
       liveCodeError: '',
+      onRotateLiveCode: vi.fn(async () => {}),
+      isRotatingLiveCode: false,
+      codeRotationMessage: { type: '', text: '' },
       ...overrides,
     };
 
@@ -113,5 +116,13 @@ describe('UsersTabContent invite removal confirmation', () => {
     fireEvent.click(screen.getByRole('button', { name: /cargar más profesores/i }));
 
     expect(props.onLoadMoreUsers).toHaveBeenCalledTimes(1);
+  });
+
+  it('triggers immediate code regeneration handler from security card', () => {
+    const props = renderUsersTab();
+
+    fireEvent.click(screen.getByRole('button', { name: /regenerar ahora/i }));
+
+    expect(props.onRotateLiveCode).toHaveBeenCalledTimes(1);
   });
 });

@@ -134,6 +134,9 @@ const InstitutionAdminDashboard = ({ user }: any) => {
             liveAccessCode={users.liveAccessCode}
             liveCodeLoading={users.liveCodeLoading}
             liveCodeError={users.liveCodeError}
+            onRotateLiveCode={users.handleRotateLiveCode}
+            isRotatingLiveCode={users.isRotatingLiveCode}
+            codeRotationMessage={users.codeRotationMessage}
             onUploadUsersImportFile={users.uploadUsersImportFile}
             onRunManualStudentsCsvImport={users.runManualStudentsCsvImport}
             onRunUsersImportN8n={users.triggerUsersImportN8n}

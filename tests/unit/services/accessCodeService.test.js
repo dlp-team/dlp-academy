@@ -1,6 +1,10 @@
 // tests/unit/services/accessCodeService.test.js
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getInstitutionalAccessCodePreview, validateInstitutionalAccessCode } from '../../../src/services/accessCodeService';
+import {
+  getInstitutionalAccessCodePreview,
+  rotateInstitutionalAccessCodeNow,
+  validateInstitutionalAccessCode,
+} from '../../../src/services/accessCodeService';
 
 const serviceMocks = vi.hoisted(() => ({
   httpsCallable: vi.fn(),
@@ -59,7 +63,24 @@ describe('accessCodeService', () => {
       institutionId: 'inst-1',
       userType: 'teacher',
       intervalHours: 24,
+      codeVersion: 0,
     });
     expect(result).toEqual({ code: 'A1B2C3', validUntilMs: 1741353600000 });
+  });
+
+  it('calls rotateInstitutionalAccessCodeNow callable with expected payload', async () => {
+    serviceMocks.callableFn.mockResolvedValue({ data: { code: 'F0E1D2', validUntilMs: 1741353600000, codeVersion: 3 } });
+
+    const result = await rotateInstitutionalAccessCodeNow({
+      institutionId: 'inst-1',
+      userType: 'student',
+    });
+
+    expect(serviceMocks.httpsCallable).toHaveBeenCalledWith(serviceMocks.functionsRef, 'rotateInstitutionalAccessCodeNow');
+    expect(serviceMocks.callableFn).toHaveBeenCalledWith({
+      institutionId: 'inst-1',
+      userType: 'student',
+    });
+    expect(result).toEqual({ code: 'F0E1D2', validUntilMs: 1741353600000, codeVersion: 3 });
   });
 });
