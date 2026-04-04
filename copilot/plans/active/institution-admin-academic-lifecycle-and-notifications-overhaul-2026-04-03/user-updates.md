@@ -9,7 +9,24 @@
 ## Pending User Updates
 - (No pending updates right now)
 
+
 ## Processed Updates
+- 2026-04-04: Updated `create-plan` skill to enforce a final optimization phase at the end of each multi-phase plan.
+  - Synced in:
+    - `.github/skills/create-plan/SKILL.md`
+    - `README.md`
+    - `phases/phase-05-student-course-linking-and-transfer-planned.md`
+  - Implementation completed:
+    - Added mandatory final-phase checklist for deep optimization of touched files (centralization, file-division, readability/efficiency, lint + validation).
+
+- 2026-04-04: Updated `create-plan` skill intake flow to require immediate `Pending -> Processed` transition after syncing user updates into plan docs.
+  - Synced in:
+    - `.github/skills/create-plan/SKILL.md`
+    - `README.md`
+    - `phases/phase-05-student-course-linking-and-transfer-planned.md`
+  - Implementation completed:
+    - Added strict sequence rules: read intake, sync impacted plan docs, move handled entries to processed log, then start coding.
+
 - 2026-04-04: Completed CSV follow-up with direct Google Sheets ingestion and richer n8n AI response reporting.
   - Synced in:
     - `strategy-roadmap.md`

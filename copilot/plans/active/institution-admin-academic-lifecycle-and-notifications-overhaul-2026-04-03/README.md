@@ -44,6 +44,7 @@ Execute the institutional roadmap described by the user in the original plan pro
 - Execution order prioritizes architectural audits before high-risk data-model and lifecycle automation changes.
 - Existing utilities/components already present in the codebase (academic-year and notifications foundations) must be reused where possible.
 - Changes will remain lossless and traceable with per-phase verification and temporal reports.
+- Plan governance now enforces a final dedicated optimization phase and mandatory `Pending -> Processed` user-update logging before each implementation block.
 
 ## Success Criteria
 - All requirements from the original user-authored source are represented in phased scope without omission.

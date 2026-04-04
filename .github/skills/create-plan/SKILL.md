@@ -73,7 +73,22 @@ Minimum template:
 Execution rule:
 1. Before starting any implementation block for an active plan, read `user-updates.md`.
 2. If new pending items exist, sync them into `README.md`, `strategy-roadmap.md`, and impacted phase files before coding.
-3. Move handled items from `Pending` to `Processed` with a date note.
+3. Immediately after syncing those updates, move the handled entries from `Pending` to `Processed` with a dated log that lists the files where each update was integrated.
+4. Do not start feature implementation for that block until steps 1-3 are complete.
+
+## Mandatory Final Optimization Phase (NEW)
+Every multi-phase plan must end with a dedicated final phase focused on deep optimization of all touched files.
+
+Minimum required checklist for that final phase:
+- Centralize/unify repeated or highly similar logic to reduce maintenance overhead.
+- Split oversized files and improve module organization when file size/complexity justifies it.
+- Improve readability (naming, structure, comments only where needed) without behavior drift.
+- Apply efficiency improvements where safe and measurable.
+- Run `npm run lint` and resolve all errors related to touched scope.
+- Re-validate impacted tests after optimization changes.
+
+Closure rule:
+- A plan is not considered complete until this optimization phase is executed, validated, documented, and included in final review evidence.
 
 ## Lifecycle
 1. Create in `todo/`.

@@ -36,6 +36,7 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Extended n8n flow payload/summary with source metadata and richer AI reporting fields (`warnings`, `recommendations`, `detectedColumns`, `aiMapping`).
 - Defined transfer/promote dry-run contract utilities with deterministic payload builder, payload validator, and rollback metadata snapshot builder.
 - Added dedicated utility tests to lock the new contract before wiring migration writes.
+- Synced plan-governance intake updates: `create-plan` skill now requires a final optimization phase and strict `Pending -> Processed` user-update transition before coding each block.
 
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
