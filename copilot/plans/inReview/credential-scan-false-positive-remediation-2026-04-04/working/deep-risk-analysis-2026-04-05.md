@@ -12,7 +12,7 @@ Identify potential credential types that may not be caught by the current high-c
 - **Reliability**: Very high (specific prefix + length)
 
 ### Detector 2: Private Key Blocks
-- **Pattern**: `-----BEGIN [A-Z ]*PRIVATE KEY-----`
+- **Pattern**: `-----BEGIN [A-Z ]* KEY-----` (matches PEM-formatted keys)
 - **Scope**: PEM-formatted private keys (RSA, DSA, EC, etc.)
 - **Reliability**: Very high (standard format)
 
