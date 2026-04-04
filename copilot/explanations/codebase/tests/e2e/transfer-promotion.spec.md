@@ -1,6 +1,11 @@
 // copilot/explanations/codebase/tests/e2e/transfer-promotion.spec.md
 
 ## Changelog
+### 2026-04-04: Callable mock-mode full execution unblock
+- Added optional e2e runtime toggle `E2E_TRANSFER_PROMOTION_MOCK_CALLABLES=1`; when enabled, the test sets `window.__E2E_TRANSFER_PROMOTION_MOCK__ = true` before app bootstrap.
+- Combined with service-level mock support, this enables deterministic full-path browser validation (`dry-run -> apply -> rollback`) even when deployed callable infrastructure returns transient `internal` runtime failures.
+- Added modal state-preservation fix coverage context: apply/rollback feedback is now stable through post-apply data refreshes, allowing non-skipped assertion flow.
+
 ### 2026-04-04: UI fallback seeding and callable env-failure classification
 - Added browser-level fixture fallback in [tests/e2e/transfer-promotion.spec.js](tests/e2e/transfer-promotion.spec.js): when modal academic-year options are empty and `E2E_TRANSFER_PROMOTION_AUTO_SEED=1`, the suite now creates disposable source/target courses through the Institution Admin UI before retrying the modal.
 - Hardened academic-year selection to prefer configured fixture years (`E2E_TRANSFER_PROMOTION_SOURCE_YEAR` / `E2E_TRANSFER_PROMOTION_TARGET_YEAR`) over synthetic suggested years.

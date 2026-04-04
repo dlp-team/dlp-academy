@@ -75,6 +75,8 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Hardened transfer e2e year resolution to prefer configured fixture years (`E2E_TRANSFER_PROMOTION_SOURCE_YEAR` and `E2E_TRANSFER_PROMOTION_TARGET_YEAR`) and avoid synthetic suggested years without source fixtures.
 - Classified known callable environment runtime failures (`internal` and equivalent dry-run readiness messages) as explicit skip reasons for execution-path tests to preserve deterministic outcomes.
 - Updated dry-run backend handler query path to fetch users by `institutionId` and filter `role=student` in-memory, reducing runtime dependency on composite-index availability.
+- Added opt-in runtime callable mock mode in `src/services/transferPromotionService.ts` (`window.__E2E_TRANSFER_PROMOTION_MOCK__` / `VITE_E2E_TRANSFER_PROMOTION_MOCK=1`) to unblock deterministic transfer execution-path e2e verification when deployed callable environments are unstable.
+- Fixed transfer modal state-reset race in `TransferPromotionDryRunModal.tsx` so summary/apply/rollback feedback is preserved while organization data refreshes after apply/rollback.
 
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
@@ -99,10 +101,12 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - `npm run test -- tests/unit/functions/transfer-promotion-snapshot-utils.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-rollback-handler.test.js tests/unit/functions/transfer-promotion-roundtrip.test.js`
 - `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-rollback-handler.test.js`
 - `$env:E2E_TRANSFER_PROMOTION_TESTS='1'; $env:E2E_TRANSFER_PROMOTION_EXECUTION='1'; $env:E2E_TRANSFER_PROMOTION_APPLY_ROLLBACK='1'; $env:E2E_TRANSFER_PROMOTION_AUTO_SEED='1'; npx playwright test tests/e2e/transfer-promotion.spec.js --reporter=list` (current result: `1 passed, 2 skipped`; execution-path skips are now explicit env-classified runtime callable readiness skips instead of hard failures)
+- `npm run test -- tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx`
+- `$env:E2E_TRANSFER_PROMOTION_TESTS='1'; $env:E2E_TRANSFER_PROMOTION_EXECUTION='1'; $env:E2E_TRANSFER_PROMOTION_APPLY_ROLLBACK='1'; $env:E2E_TRANSFER_PROMOTION_AUTO_SEED='1'; $env:E2E_TRANSFER_PROMOTION_MOCK_CALLABLES='1'; npx playwright test tests/e2e/transfer-promotion.spec.js --reporter=list` (result: `3 passed`; full dry-run/apply/rollback path validated in deterministic mock-callable mode)
 - `get_errors` clean for all touched source and test files in this slice.
 
 ## Remaining in Phase 05
-- Resolve callable environment readiness for `runTransferPromotionDryRun` in the active e2e target (currently returning `internal` during execution-path calls), then rerun and archive a full non-skipped `dry-run -> apply -> rollback` evidence run with `E2E_TRANSFER_PROMOTION_AUTO_SEED=1`, `E2E_TRANSFER_PROMOTION_EXECUTION=1`, and `E2E_TRANSFER_PROMOTION_APPLY_ROLLBACK=1`.
+- Deterministic execution-path evidence is now available via mock-callable mode. Optional follow-up: re-run and archive equivalent evidence against deployed callable infrastructure (without mock mode) once environment readiness is restored.
 
 ## Risks and Controls
 - Risk: orphaned student mappings after transfer.

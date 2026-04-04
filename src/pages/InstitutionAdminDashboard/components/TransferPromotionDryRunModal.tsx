@@ -30,9 +30,19 @@ const TransferPromotionDryRunModal = ({
   const [applyMessage, setApplyMessage] = useState({ type: '', text: '' });
   const [appliedRollbackId, setAppliedRollbackId] = useState('');
   const [summary, setSummary] = useState<any>(null);
+  const initializedOpenStateRef = React.useRef(false);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      initializedOpenStateRef.current = false;
+      return;
+    }
+
+    if (initializedOpenStateRef.current) {
+      return;
+    }
+
+    initializedOpenStateRef.current = true;
 
     const defaultSourceAcademicYear = String(availableAcademicYears?.[0] || '').trim();
     const defaultTargetAcademicYear = buildNextAcademicYear(defaultSourceAcademicYear);

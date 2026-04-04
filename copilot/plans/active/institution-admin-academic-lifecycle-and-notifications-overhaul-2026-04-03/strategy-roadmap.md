@@ -22,7 +22,7 @@
 - Final validation and docs sync remain explicit to prevent lifecycle drift.
 
 ## Immediate Next Actions
-- Resolve transfer dry-run callable environment readiness in the active e2e target (`internal` runtime response during execution-path calls), then rerun and archive a full non-skipped execution-path scenario (`dry-run -> apply -> rollback`) with `E2E_TRANSFER_PROMOTION_AUTO_SEED=1`, `E2E_TRANSFER_PROMOTION_EXECUTION=1`, and `E2E_TRANSFER_PROMOTION_APPLY_ROLLBACK=1`.
+- Optional environment follow-up: re-run transfer execution-path evidence against deployed callables (without mock mode) once callable environment readiness is restored.
 - Start Phase 07 implementation block for institution customization preview full-screen parity fixes.
 
 ## Validation Gates

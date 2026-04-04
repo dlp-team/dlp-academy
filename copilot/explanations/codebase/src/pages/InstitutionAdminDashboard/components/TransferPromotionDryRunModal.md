@@ -14,5 +14,10 @@
 - Invokes rollback callback using persisted rollback id after apply and renders rollback execution feedback.
 - Keeps all visible copy in Spanish and disables closure/actions during execution.
 
+## Changelog
+### 2026-04-04
+- Fixed modal state-reset race by initializing default values only on open transitions (not on every `availableAcademicYears` refresh while open).
+- Preserves dry-run summary and apply/rollback feedback during post-apply `fetchAll()` refreshes, which is required for deterministic full execution-path e2e assertions.
+
 ## Exports
 - `default TransferPromotionDryRunModal`

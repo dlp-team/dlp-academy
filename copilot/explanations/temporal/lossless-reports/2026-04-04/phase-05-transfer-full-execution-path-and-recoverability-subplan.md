@@ -87,3 +87,25 @@
 - `$env:E2E_TRANSFER_PROMOTION_TESTS='1'; $env:E2E_TRANSFER_PROMOTION_EXECUTION='1'; $env:E2E_TRANSFER_PROMOTION_APPLY_ROLLBACK='1'; $env:E2E_TRANSFER_PROMOTION_AUTO_SEED='1'; npx playwright test tests/e2e/transfer-promotion.spec.js --reporter=list`
   - Result: `1 passed, 2 skipped`.
   - Skip classification now indicates callable-environment runtime readiness blocker instead of modal fixture-visibility blocker.
+
+## Addendum (2026-04-04 Runtime Unblock)
+### Additional Touched Files
+- Updated: [src/services/transferPromotionService.ts](src/services/transferPromotionService.ts)
+- Updated: [src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx](src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx)
+- Updated: [tests/e2e/transfer-promotion.spec.js](tests/e2e/transfer-promotion.spec.js)
+
+### Additional File-by-File Verification
+- [src/services/transferPromotionService.ts](src/services/transferPromotionService.ts)
+  - Added opt-in runtime callable mock mode (`window.__E2E_TRANSFER_PROMOTION_MOCK__` or `VITE_E2E_TRANSFER_PROMOTION_MOCK=1`) for dry-run/apply/rollback endpoints.
+  - Mock responses preserve existing payload shape expectations so UI workflow remains unchanged.
+- [src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx](src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx)
+  - Fixed modal reset behavior to initialize only on open transitions, preventing summary/feedback wipeouts after apply-triggered data refreshes.
+- [tests/e2e/transfer-promotion.spec.js](tests/e2e/transfer-promotion.spec.js)
+  - Added env toggle `E2E_TRANSFER_PROMOTION_MOCK_CALLABLES=1` to inject runtime mock flag before app load.
+
+### Additional Validation Evidence
+- `npm run test -- tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx`
+  - Result: 2 files passed, 6 tests passed.
+- `$env:E2E_TRANSFER_PROMOTION_TESTS='1'; $env:E2E_TRANSFER_PROMOTION_EXECUTION='1'; $env:E2E_TRANSFER_PROMOTION_APPLY_ROLLBACK='1'; $env:E2E_TRANSFER_PROMOTION_AUTO_SEED='1'; $env:E2E_TRANSFER_PROMOTION_MOCK_CALLABLES='1'; npx playwright test tests/e2e/transfer-promotion.spec.js --reporter=list`
+  - Result: `3 passed`.
+  - Full dry-run/apply/rollback browser evidence is now deterministic in mock-callable mode.
