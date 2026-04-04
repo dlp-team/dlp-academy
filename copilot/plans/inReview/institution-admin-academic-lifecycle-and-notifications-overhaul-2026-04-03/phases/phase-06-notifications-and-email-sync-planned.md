@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-06-notifications-and-email-sync-planned.md -->
+<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-06-notifications-and-email-sync-planned.md -->
 # Phase 06 - Notifications and Email Sync (FINISHED)
 
 ## Objective

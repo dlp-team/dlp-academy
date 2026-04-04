@@ -5,10 +5,10 @@
 Align planning-state artifacts after Phase 09 closure gates so Phase 04 lifecycle automation reflects current inReview-only status.
 
 ## Updated Artifacts
-- [copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md](copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md)
-- [copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/course-lifecycle-automation-subplan.md](copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/course-lifecycle-automation-subplan.md)
-- [copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md](copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md)
-- [copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md](copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md)
+- [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md)
+- [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/course-lifecycle-automation-subplan.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/course-lifecycle-automation-subplan.md)
+- [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md)
+- [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md)
 
 ## Change Summary
 - Phase 04 status moved from IN_PROGRESS to IN_REVIEW.

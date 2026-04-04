@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-03-courses-and-classes-academic-year-ux-planned.md -->
+<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-03-courses-and-classes-academic-year-ux-planned.md -->
 # Phase 03 - Courses and Classes Academic-Year UX (COMPLETED)
 
 ## Objective

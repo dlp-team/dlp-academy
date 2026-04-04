@@ -31,9 +31,9 @@
 - `tests/unit/services/accessCodeService.test.js`
 - `tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx`
 - `tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/user-updates.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/user-updates.md`
 - `copilot/explanations/codebase/functions/index.md`
 - `copilot/explanations/codebase/functions/security/previewHandler.md` (new)
 - `copilot/explanations/codebase/functions/security/rotateCodeHandler.md` (new)

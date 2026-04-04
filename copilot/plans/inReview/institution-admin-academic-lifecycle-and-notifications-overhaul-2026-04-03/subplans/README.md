@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/README.md -->
+<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/README.md -->
 # Subplans Index
 
 This folder tracks deeper execution subplans that depend on phase readiness.

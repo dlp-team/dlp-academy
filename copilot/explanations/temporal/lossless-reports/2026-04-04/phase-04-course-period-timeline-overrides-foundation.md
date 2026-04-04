@@ -24,10 +24,10 @@
 - Documentation sync:
   - `copilot/explanations/codebase/src/utils/subjectPeriodLifecycleUtils.md`
   - `copilot/explanations/codebase/tests/unit/utils/subjectPeriodLifecycleUtils.test.md`
-  - `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
-  - `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md`
-  - `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/course-period-overrides-subplan.md`
-  - `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/user-updates.md`
+  - `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
+  - `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md`
+  - `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/course-period-overrides-subplan.md`
+  - `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/user-updates.md`
 
 ## Validation Evidence
 - `get_errors` clean on touched source/test files.

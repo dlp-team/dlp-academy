@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/working/course-lifecycle-deep-dive.md -->
+<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/working/course-lifecycle-deep-dive.md -->
 # Course Lifecycle Deep Dive
 
 ## 1. Architectural Intent

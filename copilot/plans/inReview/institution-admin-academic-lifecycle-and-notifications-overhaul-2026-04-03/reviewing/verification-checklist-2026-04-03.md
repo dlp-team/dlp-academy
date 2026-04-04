@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md -->
+<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md -->
 # Verification Checklist (Seed)
 
 ## Plan Integrity

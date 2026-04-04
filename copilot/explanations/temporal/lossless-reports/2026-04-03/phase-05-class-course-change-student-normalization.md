@@ -19,7 +19,7 @@
 - `tests/unit/pages/institution-admin/ClassDetail.studentCourseEligibility.test.jsx`
   - Added deterministic regression test validating that changing class course prunes incompatible students from save payload.
 - Documentation sync updates:
-  - `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
+  - `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
   - `copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/classes-courses/ClassDetail.md`
   - `copilot/explanations/codebase/tests/unit/pages/institution-admin/ClassDetail.studentCourseEligibility.test.md`
   - `copilot/explanations/temporal/institution-admin/phase-05-class-student-picker-course-constraints-2026-04-03.md`

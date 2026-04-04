@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/subphase-1-optimization-consolidation-2026-04-04.md -->
+<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/subphase-1-optimization-consolidation-2026-04-04.md -->
 # InReview Subphase 1 - Optimization and Consolidation (2026-04-04)
 
 ## Objective

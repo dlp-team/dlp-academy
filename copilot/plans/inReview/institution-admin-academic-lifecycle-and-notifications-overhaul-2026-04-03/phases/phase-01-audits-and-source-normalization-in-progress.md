@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-01-audits-and-source-normalization-in-progress.md -->
+<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-01-audits-and-source-normalization-in-progress.md -->
 # Phase 01 - Audits and Source Normalization (COMPLETED)
 
 ## Objective

@@ -20,25 +20,25 @@
 
 ## 3) Touched files
 - `.github/skills/create-plan/SKILL.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/README.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/source-original-user-spec-institution-admin-academic-lifecycle.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/source-gemini-structured-reference-institution-admin-academic-lifecycle.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-01-audits-and-source-normalization-in-progress.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-02-settings-domain-model-foundation-planned.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-03-courses-and-classes-academic-year-ux-planned.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-06-notifications-and-email-sync-planned.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-07-customization-preview-parity-planned.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-08-bin-selection-mode-unification-planned.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-09-validation-docs-review-and-closure-planned.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/README.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/working/dependency-map-and-target-files-2026-04-03.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/working/course-lifecycle-summary.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/working/course-lifecycle-deep-dive.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/working/language-strategy-audit.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/README.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/source-original-user-spec-institution-admin-academic-lifecycle.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/source-gemini-structured-reference-institution-admin-academic-lifecycle.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-01-audits-and-source-normalization-in-progress.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-02-settings-domain-model-foundation-planned.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-03-courses-and-classes-academic-year-ux-planned.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-06-notifications-and-email-sync-planned.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-07-customization-preview-parity-planned.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-08-bin-selection-mode-unification-planned.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-09-validation-docs-review-and-closure-planned.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/README.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/working/dependency-map-and-target-files-2026-04-03.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/working/course-lifecycle-summary.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/working/course-lifecycle-deep-dive.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/working/language-strategy-audit.md`
 - `copilot/explanations/codebase/.github/skills/create-plan/SKILL.md`
 
 ## 4) Per-file verification (required)
@@ -50,7 +50,7 @@
   - new rule requires moving and renaming both source files into plan folder.
 - Result: ✅ adjusted intentionally.
 
-### File: `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/*`
+### File: `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/*`
 - Why touched: create a complete active plan package and start phase execution artifacts.
 - Reviewed items:
   - required structure present (`README`, roadmap, phases, reviewing, subplans, working).
@@ -58,7 +58,7 @@
   - phase 01 marks completed planning/audit tasks and keeps execution in progress.
 - Result: ✅ adjusted intentionally.
 
-### File: `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/source-*.md`
+### File: `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/source-*.md`
 - Why touched: fulfill user request to relocate and rename source inputs.
 - Reviewed items:
   - both source files exist in plan folder.

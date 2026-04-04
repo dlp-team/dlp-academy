@@ -21,11 +21,11 @@
 - `src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx`
 - `src/pages/InstitutionAdminDashboard/components/SettingsTabContent.tsx`
 - `src/pages/InstitutionAdminDashboard/hooks/useInstitutionSettings.ts`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/README.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-01-audits-and-source-normalization-in-progress.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-02-settings-domain-model-foundation-planned.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/README.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-01-audits-and-source-normalization-in-progress.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-02-settings-domain-model-foundation-planned.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md`
 - `copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.md`
 - `copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/UsersTabContent.md`
 - `copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/SettingsTabContent.md`
@@ -64,7 +64,7 @@
   - merged persistence of `accessPolicies.teachers` flags.
 - Result: ✅ adjusted intentionally.
 
-### File: `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/*`
+### File: `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/*`
 - Why touched: phase lifecycle synchronization.
 - Reviewed items:
   - roadmap state updated to phase 02 in progress.

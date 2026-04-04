@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/course-lifecycle-automation-subplan.md -->
+<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/course-lifecycle-automation-subplan.md -->
 # Course Lifecycle Automation Subplan
 
 ## Objective

@@ -20,14 +20,14 @@
   - Added unit regression test for denied lifecycle subject access redirect in `tests/unit/pages/content/Exam.test.jsx`.
   - Added deterministic mock for `canUserAccessSubject(...)` in the test suite.
 - Documentation sync:
-  - Updated `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md` with 2026-04-04 progress and validation evidence.
+  - Updated `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md` with 2026-04-04 progress and validation evidence.
   - Updated codebase explanation docs for exam page and test coverage.
 
 ## Touched Files
 - `src/pages/Content/Exam.tsx`
 - `src/pages/Content/Exam.jsx` (deleted)
 - `tests/unit/pages/content/Exam.test.jsx`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
 - `copilot/explanations/codebase/src/pages/Content/Exam.md`
 - `copilot/explanations/codebase/tests/unit/pages/content/Exam.test.md`
 

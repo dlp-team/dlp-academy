@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/working/language-strategy-audit.md -->
+<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/working/language-strategy-audit.md -->
 # Language Strategy Audit (Spanish-First Product)
 
 ## Current State

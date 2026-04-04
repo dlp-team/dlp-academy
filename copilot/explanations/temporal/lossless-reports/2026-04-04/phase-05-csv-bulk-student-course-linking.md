@@ -28,8 +28,8 @@
 - `src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx`
 - `src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx`
 - `tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
 - `copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/hooks/useUsers.md`
 - `copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/UsersTabContent.md`
 - `copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.md`

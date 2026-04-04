@@ -16,7 +16,7 @@
     - preserves visibility of selected rows,
     - validates save payload when adding eligible students.
   - Added legacy fallback regression test confirming full-list behavior plus compatibility message when no links exist.
-- `copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
+- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
   - Synced progress/validation notes to include new ClassDetail regression coverage.
 - `copilot/explanations/codebase/tests/unit/pages/institution-admin/ClassDetail.studentCourseEligibility.test.md`
   - Added codebase explanation mirror for the new test suite.
