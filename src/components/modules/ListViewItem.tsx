@@ -5,6 +5,7 @@ import SubjectListItem from './ListItems/SubjectListItem';
 import FolderListItem from './ListItems/FolderListItem';
 import { useGhostDrag } from '../../hooks/useGhostDrag'; // Adjust path if needed
 import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../utils/dragPayloadUtils';
+import { SHARED_SELECTION_RING_CLASS } from '../../utils/selectionVisualUtils';
 
 const ListViewItem = ({ 
     user,
@@ -112,7 +113,7 @@ const ListViewItem = ({
     // (including expanded children), making nested cards unfocusable.
     if (type === 'folder') {
         return (
-            <div className={`${visualClasses} ${isSelected ? 'ring-4 ring-indigo-500 dark:ring-indigo-300 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 rounded-xl' : ''}`}>
+            <div className={`${visualClasses} ${isSelected ? `${SHARED_SELECTION_RING_CLASS} rounded-xl` : ''}`}>
                 <FolderListItem
                     user={user}
                     item={item}
@@ -173,7 +174,7 @@ const ListViewItem = ({
     };
 
     return (
-        <div className={`select-none animate-in fade-in duration-200 ${visualClasses} ${isSelected ? 'ring-4 ring-indigo-500 dark:ring-indigo-300 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 rounded-xl' : ''}`}>
+        <div className={`select-none animate-in fade-in duration-200 ${visualClasses} ${isSelected ? `${SHARED_SELECTION_RING_CLASS} rounded-xl` : ''}`}>
             {/* ROW CONTAINER - Apply indentation here via margin */}
             <div 
                 ref={itemRef}

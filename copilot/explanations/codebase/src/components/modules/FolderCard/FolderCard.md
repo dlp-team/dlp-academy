@@ -1,5 +1,8 @@
 # FolderCard.jsx
 
+## Changelog
+- **2026-04-04:** Selection ring classes now resolve from shared utility constants so folder selection visuals match manual/bin parity rules.
+
 ## Purpose
 - **Source file:** `src/components/modules/FolderCard/FolderCard.jsx`
 - **Last documented:** 2026-02-24

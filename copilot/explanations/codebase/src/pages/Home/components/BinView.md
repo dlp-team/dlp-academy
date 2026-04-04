@@ -24,6 +24,10 @@
 - `../../../components/modules/ListViewItem`
 
 ## Changelog
+- **2026-04-04:** Phase 08 selection parity and bin-visual consistency updates:
+	- urgency sort labels renamed to `Urgencia: Ascendente` and `Urgencia: Descendente`,
+	- list-mode selected items now reuse shared selection ring visuals,
+	- unselected items dim with brightness/saturation classes (no opacity reduction) when any bin item is selected.
 - **2026-04-03:** Added shortcut-bin integration to the bin surface:
 	- loads trashed shortcut items via `useShortcuts.getTrashedShortcuts`,
 	- supports restore and permanent delete for `shortcut-subject` and `shortcut-folder`,

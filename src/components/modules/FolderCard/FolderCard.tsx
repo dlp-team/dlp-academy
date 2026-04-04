@@ -5,6 +5,7 @@ import FolderCardTab from './FolderCardTab';
 import FolderCardBody from './FolderCardBody';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
 import { isShortcutItem } from '../../../utils/permissionUtils';
+import { SHARED_SELECTION_RING_CLASS } from '../../../utils/selectionVisualUtils';
 
 const FolderCard = (props: any) => {
 
@@ -58,7 +59,7 @@ const FolderCard = (props: any) => {
             } ${
                 state.isOver && canDrop ? 'ring-4 ring-indigo-400 rounded-2xl dark:ring-indigo-500' : ''
             } ${
-                isSelected ? 'ring-4 ring-indigo-500 dark:ring-indigo-300 ring-offset-2 ring-offset-white dark:ring-offset-slate-950 rounded-2xl' : ''
+                isSelected ? `${SHARED_SELECTION_RING_CLASS} rounded-2xl` : ''
             }`}
             style={{ aspectRatio: '16 / 10' }}
             onClick={() => {

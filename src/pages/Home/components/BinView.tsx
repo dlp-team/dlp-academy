@@ -17,6 +17,7 @@ import {
 } from '../utils/binViewUtils';
 import { isTrashRetentionExpired } from '../../../utils/trashRetentionUtils';
 import { getActiveRole } from '../../../utils/permissionUtils';
+import { getBinUnselectedDimmingClass } from '../../../utils/selectionVisualUtils';
 
 import BinGridItem          from './bin/BinGridItem';
 import BinSelectionOverlay  from './bin/BinSelectionOverlay';
@@ -32,8 +33,8 @@ const isTopLevelTrashedFolderEntry = (folderEntry: any) => {
 };
 
 const BIN_SORT_OPTIONS = [
-    { id: BIN_SORT_MODES.URGENCY_ASC, label: 'Urgencia: primero vence' },
-    { id: BIN_SORT_MODES.URGENCY_DESC, label: 'Urgencia: más margen' },
+    { id: BIN_SORT_MODES.URGENCY_ASC, label: 'Urgencia: Ascendente' },
+    { id: BIN_SORT_MODES.URGENCY_DESC, label: 'Urgencia: Descendente' },
     { id: BIN_SORT_MODES.ALPHA_ASC, label: 'Nombre: A-Z' },
     { id: BIN_SORT_MODES.ALPHA_DESC, label: 'Nombre: Z-A' }
 ];
@@ -892,14 +893,22 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                         const isSelected = selectionMode
                             ? selectedBulkKeys.has(buildActionKey(item.id, item.itemType))
                             : (selectedItemId === item.id && selectedItemType === item.itemType);
+                        const hasSelection = selectionMode
+                            ? selectedBulkCount > 0
+                            : Boolean(selectedItemId && selectedItemType);
                         const daysRemaining = getDaysRemaining(item);
                         const trashedDate = toJsDate(item.trashedAt);
                         const isFolderItem = isFolderItemType(item.itemType);
+                        const dimmingClass = getBinUnselectedDimmingClass({
+                            hasSelection,
+                            isSelected,
+                            isFolderLike: isFolderItem,
+                        });
 
                         return (
                             <div
                                 key={`${item.itemType}-${item.id}`}
-                                className={`rounded-xl transition-all ${isSelected ? 'ring-2 ring-blue-400 bg-blue-50/40 dark:bg-blue-900/10' : ''}`}
+                                className={`rounded-xl transition-all ${!isSelected ? dimmingClass : ''}`}
                             >
                                 <ListViewItemComponent
                                     user={user}
@@ -916,6 +925,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                     allFolders={activeFolderBinId ? nestedFolderItems : topLevelTrashedFolders}
                                     allSubjects={activeFolderBinId ? nestedFolderSubjectItems : topLevelTrashedSubjects}
                                     disableAllActions={true}
+                                    isSelected={isSelected}
                                 />
                                 <div className="px-3 pb-2">
                                     <p className={`text-xs font-semibold ${getDaysRemainingTextClass(daysRemaining)}`}>

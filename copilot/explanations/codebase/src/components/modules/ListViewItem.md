@@ -1,6 +1,9 @@
 # ListViewItem.jsx
 
 ## Changelog
+### 2026-04-04: Shared selection ring parity
+- List rows now consume shared selection ring constants used across manual and bin surfaces for visual consistency.
+
 ### 2026-04-01: Completion state passthrough for list rows
 - Added subject-row passthrough props `isCompleted` and `onToggleCompletion` to support completion toggles in list layout.
 

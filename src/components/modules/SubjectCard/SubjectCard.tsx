@@ -7,6 +7,7 @@ import { buildDragPayload, writeDragPayloadToDataTransfer } from '../../../utils
 import { withDarkGradientVariant } from '../../../utils/subjectConstants';
 import { getNormalizedRole } from '../../../utils/permissionUtils';
 import { getEndedSubjectBadge } from '../../../utils/academicYearLifecycleUtils';
+import { SHARED_SELECTION_RING_CLASS } from '../../../utils/selectionVisualUtils';
 
 const SubjectCard = (props: any) => {
 
@@ -86,7 +87,7 @@ const SubjectCard = (props: any) => {
                     ? `${modernShellClass} p-[4px]` 
                     : ''
             } ${
-                isSelected ? 'ring-4 ring-indigo-500 dark:ring-indigo-300 ring-offset-2 ring-offset-white dark:ring-offset-slate-950' : ''
+                isSelected ? SHARED_SELECTION_RING_CLASS : ''
             }`}
             style={{ aspectRatio: '16 / 10' }}
             draggable={draggable}

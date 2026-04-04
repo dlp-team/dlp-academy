@@ -12,6 +12,7 @@
 - Shows urgency and deletion countdown metadata for both item types.
 
 ## Changelog
+- **2026-04-04:** Updated grid-card selection visuals to reuse shared Home selection ring classes and replaced opacity-based dimming with brightness/saturation dimming for unselected items.
 - **2026-04-03:** Added shortcut-aware rendering:
 	- supports `shortcut-subject` and `shortcut-folder` item types,
 	- adds explicit shortcut badges/labels while preserving existing folder/subject visual styles.

@@ -3,26 +3,33 @@ import React from 'react';
 import { Folder, Link2 } from 'lucide-react';
 import SubjectCard from '../../../../components/modules/SubjectCard/SubjectCard';
 import { getDaysRemaining, getDaysRemainingTextClass, toJsDate } from '../../utils/binViewUtils';
+import { SHARED_SELECTION_RING_CLASS, getBinUnselectedDimmingClass } from '../../../../utils/selectionVisualUtils';
 
 const BinGridItem = React.forwardRef<any, any>(({ item, itemType = 'subject', user, cardScale, isSelected, hasSelection, selectionMode = false, onSelect }, ref: any) => {
     const daysRemaining = getDaysRemaining(item);
     const trashedDate   = toJsDate(item.trashedAt);
     const isShortcutItem = itemType === 'shortcut-subject' || itemType === 'shortcut-folder';
     const isFolderItem = itemType === 'folder' || itemType === 'shortcut-folder';
+    const dimmingClass = getBinUnselectedDimmingClass({
+        hasSelection,
+        isSelected,
+        isFolderLike: isFolderItem,
+    });
 
     return (
         <div
             ref={ref}
+            data-testid={`bin-grid-wrapper-${itemType}-${item.id}`}
             className={`transition-all duration-200 ${
                 isSelected    ? 'relative'
-                : hasSelection && !selectionMode ? 'opacity-30 pointer-events-none'
+                : hasSelection ? dimmingClass
                 : 'hover:scale-[1.02]'
             }`}
         >
             <div
                 data-testid={`bin-${itemType}-card-${item.id}`}
                 className={`rounded-2xl cursor-pointer transition-shadow ${
-                    isSelected ? 'ring-2 ring-sky-500/70 shadow-[0_0_0_3px_rgba(14,165,233,0.15)]' : ''
+                    isSelected ? `${SHARED_SELECTION_RING_CLASS} shadow-[0_0_0_3px_rgba(99,102,241,0.14)]` : ''
                 }`}
                 onClick={onSelect}
             >
