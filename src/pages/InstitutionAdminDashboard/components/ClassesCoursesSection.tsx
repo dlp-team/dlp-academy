@@ -123,6 +123,7 @@ const ClassesCoursesSection = ({
   // ── Data ────────────────────────────────────────────────────────────────────
   const {
     courses, classes, trashedCourses, trashedClasses, loading,
+    institutionPeriodConfig,
     createCourse, updateCourse, deleteCourse,
     createClass,  updateClass,  deleteClass,
     restoreCourse, restoreClass,
@@ -845,6 +846,7 @@ const ClassesCoursesSection = ({
           onSubmit={handleCreateCourse}
           submitting={courseSubmitting}
           error={courseModalErr}
+          periodConfig={institutionPeriodConfig}
         />
       )}
 

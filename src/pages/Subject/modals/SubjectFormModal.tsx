@@ -187,7 +187,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             periodIndex: Number.isFinite(normalizedPeriodIndex)
                 ? Math.max(1, Math.floor(normalizedPeriodIndex))
                 : null,
-            academicCalendar: subjectCalendarSettings
+            academicCalendar: subjectCalendarSettings,
+            coursePeriodSchedule: selectedCourseEntry?.coursePeriodSchedule || selectedCourseEntry?.periodSchedule || null,
         });
 
         return {

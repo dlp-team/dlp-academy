@@ -52,6 +52,12 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Added rollback execution path to Institution Admin transfer modal (`Ejecutar rollback`) and hook/service callable wiring.
 - Added deterministic rollback-handler tests and expanded transfer service/UI wiring coverage for rollback delegation.
 - Added deterministic apply->rollback roundtrip validation to assert class/course eligibility restoration after transfer execution.
+- Wired per-course period schedule fields into organization/settings-adjacent flows:
+  - added shared `coursePeriodScheduleUtils` for period-definition building, default schedule derivation, and persistence normalization,
+  - `useClassesCourses` now loads institution period configuration and normalizes `coursePeriodSchedule` on course create/update writes,
+  - `CreateCourseModal` now supports optional per-period date overrides (including extraordinary end date) using institution periodization as baseline,
+  - `SubjectFormModal` now passes selected course schedule overrides into `buildSubjectPeriodTimeline(...)`.
+- Added deterministic tests for schedule utility normalization/defaulting, create-modal payload wiring, and subject-modal timeline override propagation.
 
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
@@ -67,10 +73,12 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
 - `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-rollback-handler.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
 - `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-rollback-handler.test.js tests/unit/functions/transfer-promotion-roundtrip.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
+- `npm run test -- tests/unit/utils/coursePeriodScheduleUtils.test.js tests/unit/utils/subjectPeriodLifecycleUtils.test.js tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx tests/unit/pages/subject/SubjectFormModal.coursePeriodSchedule.test.jsx`
 - `get_errors` clean for all touched source and test files in this slice.
 
 ## Remaining in Phase 05
 - Extend transfer/promotion validation into browser-level e2e scenarios once emulator fixtures are finalized.
+- Execute inReview readiness sequence for Phase 05 (optimization pass, then deep risk analysis with out-of-scope logging when needed).
 
 ## Risks and Controls
 - Risk: orphaned student mappings after transfer.

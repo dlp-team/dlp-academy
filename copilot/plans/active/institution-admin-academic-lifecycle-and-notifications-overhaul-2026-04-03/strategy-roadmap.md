@@ -22,9 +22,9 @@
 - Final validation and docs sync remain explicit to prevent lifecycle drift.
 
 ## Immediate Next Actions
-- Wire per-course period schedule fields into course/settings flows and pass them to subject timeline generation.
 - Extend transfer/promotion validation from deterministic roundtrip tests into browser-level e2e scenarios once emulator fixtures are finalized.
-- Begin inReview readiness work for Phase 05: optimization pass followed by deep risk analysis and out-of-scope risk logging.
+- Execute Phase 05 optimization/consolidation review pass across transfer + course-periodization touched files.
+- Run Phase 05 deep risk analysis review and log any out-of-scope findings in `copilot/plans/out-of-scope-risk-log.md`.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.

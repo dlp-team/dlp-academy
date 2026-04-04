@@ -29,10 +29,25 @@ import {
   normalizeAcademicYear,
 } from '../components/classes-courses/academicYearUtils';
 import {
+  DEFAULT_COURSE_PERIOD_MODE,
+  normalizeCoursePeriodMode,
+  normalizeCoursePeriodSchedule,
+} from '../../../utils/coursePeriodScheduleUtils';
+import {
   buildTransferPromotionDryRunPayload,
   buildTransferRollbackMetadata,
   validateTransferPromotionPayload,
 } from '../utils/transferPromotionPlanUtils';
+
+const DEFAULT_INSTITUTION_PERIOD_CONFIG = {
+  periodMode: DEFAULT_COURSE_PERIOD_MODE,
+  customPeriodLabel: '',
+  academicCalendar: {
+    startDate: '',
+    ordinaryEndDate: '',
+    extraordinaryEndDate: '',
+  },
+};
 
 const normalizeEntityStatus = (entity: any) => String(entity?.status || 'active').trim().toLowerCase();
 const isTrashedEntity = (entity: any) => normalizeEntityStatus(entity) === 'trashed';
@@ -72,6 +87,7 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
   const [classes, setClasses] = useState<any[]>([]);
   const [trashedCourses, setTrashedCourses] = useState<any[]>([]);
   const [trashedClasses, setTrashedClasses] = useState<any[]>([]);
+  const [institutionPeriodConfig, setInstitutionPeriodConfig] = useState<any>(DEFAULT_INSTITUTION_PERIOD_CONFIG);
   const [loading, setLoading] = useState(true);
 
   // ── Fetch ─────────────────────────────────────────────────────────────────
@@ -80,21 +96,36 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
     setLoading(true);
     try {
       const readInstitutionCollections = async () => {
-        const [cSnap, clSnap] = await Promise.all([
+        const [cSnap, clSnap, institutionSnap] = await Promise.all([
           getDocs(query(collection(db, 'courses'), where('institutionId', '==', effectiveInstitutionId))),
           getDocs(query(collection(db, 'classes'), where('institutionId', '==', effectiveInstitutionId))),
+          getDoc(doc(db, 'institutions', effectiveInstitutionId)),
         ]);
 
         const allCourses: any[] = cSnap.docs.map(d => ({ id: d.id, ...d.data() }));
         const allClasses: any[] = clSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+        const institutionData = institutionSnap.exists() ? institutionSnap.data() : {};
+        const academicCalendar = institutionData?.academicCalendar || {};
+        const periodization = academicCalendar?.periodization || {};
+        const nextInstitutionPeriodConfig = {
+          periodMode: normalizeCoursePeriodMode(periodization?.mode),
+          customPeriodLabel: String(periodization?.customLabel || '').trim(),
+          academicCalendar: {
+            startDate: String(academicCalendar?.startDate || '').trim(),
+            ordinaryEndDate: String(academicCalendar?.ordinaryEndDate || '').trim(),
+            extraordinaryEndDate: String(academicCalendar?.extraordinaryEndDate || '').trim(),
+          },
+        };
 
         return {
           allCourses,
           allClasses,
+          nextInstitutionPeriodConfig,
         };
       };
 
-      let { allCourses, allClasses } = await readInstitutionCollections();
+      let { allCourses, allClasses, nextInstitutionPeriodConfig } = await readInstitutionCollections();
+      setInstitutionPeriodConfig(nextInstitutionPeriodConfig || DEFAULT_INSTITUTION_PERIOD_CONFIG);
 
       const nowMs = Date.now();
       const expiredCourseIds = new Set(
@@ -124,7 +155,8 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
           ];
 
           await applyDeleteBatchInChunks(deleteRefs);
-          ({ allCourses, allClasses } = await readInstitutionCollections());
+          ({ allCourses, allClasses, nextInstitutionPeriodConfig } = await readInstitutionCollections());
+          setInstitutionPeriodConfig(nextInstitutionPeriodConfig || DEFAULT_INSTITUTION_PERIOD_CONFIG);
         } catch (purgeError) {
           console.error('useClassesCourses purgeExpired:', purgeError);
         }
@@ -146,10 +178,16 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
   // ── Course CRUD ───────────────────────────────────────────────────────────
   const createCourse = async (form: any) => {
     const normalizedAcademicYear = normalizeAcademicYear(form?.academicYear) || getDefaultAcademicYear();
+    const normalizedCoursePeriodSchedule = normalizeCoursePeriodSchedule({
+      coursePeriodSchedule: form?.coursePeriodSchedule,
+      periodMode: institutionPeriodConfig?.periodMode,
+      customPeriodLabel: institutionPeriodConfig?.customPeriodLabel,
+    });
 
     const clientCourseDraft = {
       ...form,
       academicYear: normalizedAcademicYear,
+      coursePeriodSchedule: normalizedCoursePeriodSchedule,
       institutionId: effectiveInstitutionId,
       status: 'active',
       createdBy: user.uid,
@@ -170,12 +208,21 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
 
   const updateCourse = async (id, patch: any) => {
     const hasAcademicYearPatch = Object.prototype.hasOwnProperty.call(patch || {}, 'academicYear');
+    const hasCoursePeriodSchedulePatch = Object.prototype.hasOwnProperty.call(patch || {}, 'coursePeriodSchedule');
     const normalizedPatch = { ...patch };
     let normalizedAcademicYear = '';
 
     if (hasAcademicYearPatch) {
       normalizedAcademicYear = normalizeAcademicYear(patch?.academicYear) || getDefaultAcademicYear();
       normalizedPatch.academicYear = normalizedAcademicYear;
+    }
+
+    if (hasCoursePeriodSchedulePatch) {
+      normalizedPatch.coursePeriodSchedule = normalizeCoursePeriodSchedule({
+        coursePeriodSchedule: patch?.coursePeriodSchedule,
+        periodMode: institutionPeriodConfig?.periodMode,
+        customPeriodLabel: institutionPeriodConfig?.customPeriodLabel,
+      });
     }
 
     const nextUpdatedAt = new Date();
@@ -651,6 +698,7 @@ export const useClassesCourses = (user, institutionIdOverride = null) => {
 
   return {
     courses, classes, trashedCourses, trashedClasses, loading, fetchAll,
+    institutionPeriodConfig,
     createCourse, updateCourse, deleteCourse,
     createClass, updateClass, deleteClass,
     restoreCourse, restoreClass,

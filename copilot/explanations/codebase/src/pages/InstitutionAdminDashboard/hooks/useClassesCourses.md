@@ -3,7 +3,7 @@
 
 ## Overview
 - **Source file:** `src/pages/InstitutionAdminDashboard/hooks/useClassesCourses.ts`
-- **Last documented:** 2026-04-02
+- **Last documented:** 2026-04-04
 - **Role:** Data hook for Institution Admin courses/classes lifecycle with active vs trashed partitioning and restoration/permanent-deletion handlers.
 
 ## Responsibilities
@@ -13,6 +13,8 @@
 - Cascades course soft-delete/restore to linked classes.
 - Executes permanent deletion for course/class records (including linked class cleanup for courses).
 - Enforces 15-day trash retention by purging expired trashed courses/classes during fetch cycles.
+- Loads institution periodization/calendar defaults so course creation flows can derive per-course period schedules.
+- Normalizes `coursePeriodSchedule` payloads on create/update writes before persistence.
 - Provides transfer/promote dry-run orchestration API that validates payloads, calls backend preview callable, and normalizes rollback metadata.
 - Provides transfer/promote apply API to execute backend write orchestration and refresh local course/class state.
 - Provides transfer/promote rollback API (`rollbackId`) and refreshes organization state after rollback execution.
@@ -26,6 +28,8 @@
 - `../../../firebase/config`
 
 ## Changelog
+- 2026-04-04: Added institution-level period config hydration (`periodMode`, `customPeriodLabel`, calendar bounds) and exposed it as `institutionPeriodConfig` for organization UI flows.
+- 2026-04-04: Added `coursePeriodSchedule` normalization on course create/update paths to keep per-period overrides deterministic before Firestore writes.
 - 2026-04-04: Added `rollbackTransferPromotionPlanById(...)` hook API wired to callable rollback path and post-execution `fetchAll()` refresh.
 - 2026-04-04: Added `applyTransferPromotionDryRunPlan(...)` hook API that sends dry-run outputs (`dryRunPayload`, `mappings`, `rollbackMetadata`) to backend apply callable and refetches organization data.
 - 2026-04-04: Added `runTransferPromotionDryRunPreview(...)` integration, delegating to callable `runTransferPromotionDryRun` with frontend payload validation + rollback metadata normalization.

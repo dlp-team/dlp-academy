@@ -1,3 +1,15 @@
+## [2026-04-04] Course-Level Period Schedule Propagation
+### Context & Architecture
+Institution calendar dates are now the global baseline, but selected courses can define period-window overrides that should drive subject lifecycle timeline generation.
+
+### Change
+- Updated subject payload normalization so `buildSubjectPeriodTimeline(...)` receives `selectedCourseEntry.coursePeriodSchedule` (fallback `periodSchedule`) when available.
+- Keeps existing institution-calendar fallback behavior intact when a course has no override schedule.
+
+### Validation
+- `get_errors` clean for `src/pages/Subject/modals/SubjectFormModal.tsx`.
+- `npm run test -- tests/unit/pages/subject/SubjectFormModal.coursePeriodSchedule.test.jsx` passed.
+
 ## [2026-04-03] Phase 04 Lifecycle Bounds: Subject Period Timeline Metadata
 ### Context & Architecture
 Phase 04 lifecycle behavior requires explicit subject-level period windows so Home visibility can differentiate ordinary vs extraordinary timelines.
