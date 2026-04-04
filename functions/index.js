@@ -15,6 +15,10 @@ import { createApplyTransferPromotionPlanHandler } from './security/transferProm
 import { createRunTransferPromotionDryRunHandler } from './security/transferPromotionDryRunHandler.js';
 import { createRollbackTransferPromotionPlanHandler } from './security/transferPromotionRollbackHandler.js';
 import { evaluateSubjectLifecycleAutomationRun } from './security/subjectLifecycleAutomation.js';
+import {
+  shouldQueueShortcutMoveOwnerMail,
+  shouldQueueShortcutMoveRequesterMail,
+} from './security/shortcutMoveRequestEmailUtils.js';
 
 initializeApp();
 
@@ -687,7 +691,7 @@ export const createShortcutMoveRequest = onCall(
       createdAt: FieldValue.serverTimestamp(),
     });
 
-    if (ownerEmail) {
+    if (shouldQueueShortcutMoveOwnerMail({ ownerEmail, ownerData })) {
       const ownerMailRef = db.collection('mail').doc(`shortcut_move_request_owner_mail_${requestId}`);
       batch.set(ownerMailRef, createMailQueuePayload({
         to: ownerEmail,
@@ -932,8 +936,19 @@ export const resolveShortcutMoveRequest = onCall(
       }, { merge: true });
     });
 
-    const requesterEmail = normalizeEmail(moveRequest.requesterEmail);
-    if (requesterEmail) {
+    let requesterEmail = normalizeEmail(moveRequest.requesterEmail);
+    let requesterProfileData = null;
+
+    const requesterProfileSnapshot = await db.collection('users').doc(requesterUid).get();
+    if (requesterProfileSnapshot.exists) {
+      requesterProfileData = requesterProfileSnapshot.data() || {};
+      requesterEmail = normalizeEmail(requesterProfileData.email) || requesterEmail;
+    }
+
+    if (shouldQueueShortcutMoveRequesterMail({
+      requesterEmail,
+      requesterData: requesterProfileData,
+    })) {
       const requesterMailRef = db.collection('mail').doc(`shortcut_move_request_requester_mail_${requestId}_${resolution}`);
       operations.push((batch) => {
         batch.set(requesterMailRef, createMailQueuePayload({

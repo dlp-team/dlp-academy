@@ -13,6 +13,7 @@ import Profile from './pages/Profile/Profile';
 import OnboardingWizard from './pages/Onboarding/components/OnboardingWizard';
 import AdminPasswordWizard from './pages/Auth/components/AdminPasswordWizard';
 import Settings from './pages/Settings/Settings';
+import Notifications from './pages/Notifications/Notifications';
 
 // Main app pages
 import Home from './pages/Home/Home';
@@ -105,6 +106,7 @@ const FormulaPage: any = Formula;
 const ExamPage: any = Exam;
 const ProfilePage: any = Profile;
 const SettingsPage: any = Settings;
+const NotificationsPage: any = Notifications;
 const AdminDashboardPage: any = AdminDashboard;
 const InstitutionAdminDashboardPage: any = InstitutionAdminDashboard;
 const TeacherDetailViewPage: any = TeacherDetailView;
@@ -413,6 +415,15 @@ function App() {
               <SettingsPage user={user} />
             </ProtectedRoute>
           } 
+        />
+
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <NotificationsPage user={user} />
+            </ProtectedRoute>
+          }
         />
         
         {/* --- ADMIN DASHBOARD --- */}

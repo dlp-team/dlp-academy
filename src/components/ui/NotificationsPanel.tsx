@@ -9,6 +9,8 @@ const NotificationsPanel = ({
     onMarkAllAsRead,
     onResolveMoveRequest,
     isResolvingMoveRequest,
+    triggerRef,
+    onOpenAll,
     onClose
 }: any) => {
     const navigate = useNavigate();
@@ -16,13 +18,15 @@ const NotificationsPanel = ({
 
     useEffect(() => {
         const handleClickOutside = (e: any) => {
-            if (panelRef.current && !panelRef.current.contains(e.target)) {
-                onClose();
-            }
+            const eventTarget = e?.target;
+            const clickedInsidePanel = panelRef.current?.contains?.(eventTarget);
+            const clickedInsideTrigger = triggerRef?.current?.contains?.(eventTarget);
+            if (clickedInsidePanel || clickedInsideTrigger) return;
+            onClose();
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, [onClose]);
+    }, [onClose, triggerRef]);
 
     const handleNotificationClick = (notification: any) => {
         if (!notification.read) {
@@ -30,7 +34,7 @@ const NotificationsPanel = ({
         }
 
         if (notification?.subjectId) {
-            navigate(`/subject/${notification.subjectId}`);
+            navigate(`/home/subject/${notification.subjectId}`);
             onClose();
         }
     };
@@ -78,15 +82,24 @@ const NotificationsPanel = ({
                         </span>
                     )}
                 </span>
-                {unreadCount > 0 && (
+                <div className="flex items-center gap-3">
                     <button
-                        onClick={onMarkAllAsRead}
-                        className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium transition-colors"
+                        type="button"
+                        onClick={() => onOpenAll?.()}
+                        className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium transition-colors"
                     >
-                        <CheckCheck size={13} />
-                        Marcar todo
+                        Ver todas
                     </button>
-                )}
+                    {unreadCount > 0 && (
+                        <button
+                            onClick={onMarkAllAsRead}
+                            className="flex items-center gap-1 text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-medium transition-colors"
+                        >
+                            <CheckCheck size={13} />
+                            Marcar todo
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* List */}

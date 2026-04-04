@@ -1,7 +1,7 @@
-# Header.jsx
+# Header.tsx
 
 ## Purpose
-- **Source file:** `src/components/layout/Header.jsx`
+- **Source file:** `src/components/layout/Header.tsx`
 - **Last documented:** 2026-02-24
 - **Role:** Global app header (navigation bar) with user profile, theme toggle, and dashboard shortcuts.
 
@@ -127,6 +127,11 @@ function ExampleScreen() {
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
 
 ## Changelog
+### 2026-04-04
+- Added notification trigger boundary ref (`notificationsTriggerRef`) and passed it to notification panel as `triggerRef`.
+- Wired panel `Ver todas` action (`onOpenAll`) to close dropdown and navigate to `/notifications`.
+- This avoids bell toggle race conditions when outside-click listeners and trigger clicks fire in the same interaction.
+
 ### 2026-04-02
 - Added active-role selector in header actions for dual-role users.
 - Dashboard shortcut route and label now resolve from active role context instead of raw `user.role`.

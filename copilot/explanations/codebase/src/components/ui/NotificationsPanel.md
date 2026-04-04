@@ -2,6 +2,11 @@
 # NotificationsPanel.tsx
 
 ## Changelog
+### 2026-04-04
+- Added trigger-boundary aware outside-click handling (`triggerRef`) so bell-trigger clicks do not race against outside-close logic.
+- Added `Ver todas` action (`onOpenAll`) to open dedicated notifications history route.
+- Corrected subject navigation path to `/home/subject/:subjectId` when notifications include `subjectId`.
+
 ### 2026-04-02
 - Added explicit owner actions for pending shortcut move requests:
   - `Aprobar`
@@ -21,6 +26,8 @@
 - `onMarkAllAsRead`
 - `onResolveMoveRequest`
 - `isResolvingMoveRequest`
+- `triggerRef`
+- `onOpenAll`
 - `onClose`
 
 ## Notes

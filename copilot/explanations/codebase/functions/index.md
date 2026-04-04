@@ -8,6 +8,11 @@
 
 ## Changelog
 ### 2026-04-04
+- Added email opt-in gating for shortcut move request mail queue writes:
+  - owner mail is only enqueued when target owner profile has `notifications.email !== false`,
+  - requester resolution mail is only enqueued when requester profile has `notifications.email !== false`.
+- Centralized shortcut move request email policy checks through `functions/security/shortcutMoveRequestEmailUtils.js` so create/resolve callable paths share deterministic opt-in behavior.
+- Preserved requester fallback behavior: when requester profile is missing, fallback requester email keeps mail queue writes enabled.
 - Added callable function `rollbackTransferPromotionPlan`.
 - `rollbackTransferPromotionPlan` behavior:
   - requires authenticated admin/institution-admin caller scoped to institution,

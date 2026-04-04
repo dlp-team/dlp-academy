@@ -1,4 +1,4 @@
-// src/hooks/useNotifications.js
+// src/hooks/useNotifications.tsx
 import { useState, useEffect, useRef } from 'react';
 import {
     collection, query, where, onSnapshot,
@@ -7,6 +7,7 @@ import {
 import { db } from '../firebase/config';
 import { getActiveRole } from '../utils/permissionUtils';
 import { resolveShortcutMoveRequest } from '../services/shortcutMoveRequestService';
+import { isNotificationExpired } from '../utils/notificationRetentionUtils';
 
 const NEW_ASSIGNMENT_LOOKBACK_MS = 7 * 24 * 60 * 60 * 1000;
 const DUE_SOON_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -31,6 +32,7 @@ export const useNotifications = (user: any) => {
     const [notifications, setNotifications] = useState<any[]>([]);
     const [resolvingMoveRequestIds, setResolvingMoveRequestIds] = useState<any>({});
     const existingNotificationIdsRef = useRef(new Set());
+    const cleanupInFlightIdsRef = useRef(new Set());
 
     useEffect(() => {
         if (!uid) return;
@@ -50,7 +52,42 @@ export const useNotifications = (user: any) => {
                         const bMs = b?.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
                         return bMs - aMs;
                     });
-                setNotifications(data);
+
+                const activeNotifications: any[] = [];
+                const expiredNotificationIds: string[] = [];
+
+                data.forEach((notification) => {
+                    if (isNotificationExpired(notification)) {
+                        expiredNotificationIds.push(String(notification.id || '').trim());
+                        return;
+                    }
+                    activeNotifications.push(notification);
+                });
+
+                setNotifications(activeNotifications);
+
+                const cleanupIds = Array.from(new Set(expiredNotificationIds.filter(Boolean))).filter((notificationId) => {
+                    if (cleanupInFlightIdsRef.current.has(notificationId)) {
+                        return false;
+                    }
+                    cleanupInFlightIdsRef.current.add(notificationId);
+                    return true;
+                });
+
+                if (cleanupIds.length > 0) {
+                    const cleanupBatch = writeBatch(db);
+                    cleanupIds.forEach((notificationId) => {
+                        cleanupBatch.delete(doc(db, 'notifications', notificationId));
+                    });
+
+                    cleanupBatch.commit().catch((error: any) => {
+                        console.error('Error cleaning up expired notifications:', error);
+                    }).finally(() => {
+                        cleanupIds.forEach((notificationId) => {
+                            cleanupInFlightIdsRef.current.delete(notificationId);
+                        });
+                    });
+                }
             },
             (error: any) => {
                 console.error('Error listening to notifications:', error);

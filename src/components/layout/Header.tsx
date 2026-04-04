@@ -181,6 +181,7 @@ const Header = ({ user }: any) => {
   const [toast, setToast] = useState({ show: false, message: '' });
   const prevCountRef = useRef<any>(null);
   const isFirstLoadRef = useRef(true);
+  const notificationsTriggerRef = useRef<any>(null);
 
   const handleResolveMoveRequest = async (notification: any, resolution: any) => {
     try {
@@ -326,7 +327,7 @@ const Header = ({ user }: any) => {
             </div>
 
             {/* 6. MAILBOX ICON - PLACED RIGHT OF AVATAR */}
-            <div className="border-l pl-4 border-gray-200 dark:border-slate-700 relative">
+            <div ref={notificationsTriggerRef} className="border-l pl-4 border-gray-200 dark:border-slate-700 relative">
                 <MailboxIcon
                     mailCount={unreadCount}
                     onClick={() => setShowPanel(prev => !prev)}
@@ -337,6 +338,11 @@ const Header = ({ user }: any) => {
                         notifications={notifications}
                         onMarkAsRead={markAsRead}
                         onMarkAllAsRead={markAllAsRead}
+                      triggerRef={notificationsTriggerRef}
+                      onOpenAll={() => {
+                        setShowPanel(false);
+                        navigate('/notifications');
+                      }}
                       onResolveMoveRequest={handleResolveMoveRequest}
                       isResolvingMoveRequest={isResolvingMoveRequest}
                         onClose={() => setShowPanel(false)}

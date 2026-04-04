@@ -1,4 +1,15 @@
-# useNotifications.js
+# useNotifications.tsx
+
+## [2026-04-04] Type-Based TTL Retention and Cleanup
+
+### Change
+- Added type-based notification retention filtering through [src/utils/notificationRetentionUtils.ts](src/utils/notificationRetentionUtils.ts).
+- Snapshot listener now separates active vs expired notifications and performs bounded cleanup deletes for expired notification ids.
+- Added in-flight cleanup guard to prevent duplicate delete attempts for the same notification id during rapid snapshot refreshes.
+
+### Impact
+- Notification panel/page renders a retention-aware view instead of unbounded historical growth.
+- Expired notifications are cleaned up progressively per-user without requiring manual actions.
 
 ## [2026-03-29] Snapshot Error Hardening
 
@@ -36,14 +47,15 @@
 - Action buttons can reflect in-flight state deterministically while avoiding duplicate submissions.
 
 ## Overview
-- **Source file:** `src/hooks/useNotifications.js`
-- **Last documented:** 2026-03-29
+- **Source file:** `src/hooks/useNotifications.tsx`
+- **Last documented:** 2026-04-04
 - **Role:** Custom hook for real-time notification retrieval and read-state updates.
 
 ## Responsibilities
 - Subscribe to user notifications in Firestore.
 - Maintain unread counter.
 - Expose APIs to mark one/all notifications as read.
+- Enforce type-based retention filtering and cleanup for expired notifications.
 
 ## Exports
 - `const useNotifications`

@@ -2,6 +2,11 @@
 # NotificationsPanel.test.jsx
 
 ## Changelog
+### 2026-04-04
+- Added coverage for `Ver todas` action dispatch (`onOpenAll`).
+- Added coverage for trigger-boundary outside click behavior (trigger click does not close panel via outside handler).
+- Updated subject navigation expectation to `/home/subject/:subjectId`.
+
 ### 2026-04-02
 - Added unit coverage for notification panel behavior:
   - empty-state rendering,
