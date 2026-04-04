@@ -16,9 +16,14 @@ Branch-level credential checks currently report repeated false positives caused 
 - Broad refactors outside security-scan workflow files.
 
 ## Lifecycle Status
-- Lifecycle: active
-- Current phase: Phase 04 optimization and deep risk review (IN_PROGRESS)
-- Last updated: 2026-04-04
+- Lifecycle: `inReview` (ready for final closure → `finished`)
+- Current phase: `Phase 04 optimization and deep risk review (COMPLETE)`
+- Last updated: 2026-04-05
+
+## Closure Status
+✅ **All phases complete. Ready for finished transition.**
+- Phase 01-03: Completed and validated (2026-04-04)
+- Phase 04: Subphases 1-2 complete, risk analysis documented (2026-04-05)
 
 ## Key Decisions
 - Prefer high-confidence secret signatures over broad keyword matching.

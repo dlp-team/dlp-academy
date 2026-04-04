@@ -15,7 +15,7 @@
 - [x] Utility branch-range scan check verified.
 
 ## Review Subphases
-- [ ] Subphase 1 optimization/consolidation complete.
-- [ ] Subphase 2 deep risk analysis complete.
+- [x] Subphase 1 optimization/consolidation complete.
+- [x] Subphase 2 deep risk analysis complete.
 - [ ] Plan transition to inReview executed.
 - [ ] Plan transition to finished executed.

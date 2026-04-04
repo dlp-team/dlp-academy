@@ -5,7 +5,7 @@
 1. COMPLETED - Baseline scan-signal audit and detection-rule definition.
 2. COMPLETED - High-confidence scan utility implementation and protocol wiring.
 3. COMPLETED - Validation pass and docs migration consistency sweep.
-4. IN_PROGRESS - Final optimization and deep risk review.
+4. COMPLETED - Final optimization and deep risk review.
 
 ## Immediate Next Actions
 - Complete optimization/consolidation pass for remediation docs and utility references.
