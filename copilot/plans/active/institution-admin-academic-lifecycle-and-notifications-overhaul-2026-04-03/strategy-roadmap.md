@@ -1,11 +1,11 @@
-<!-- copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md -->
+<!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md -->
 # Strategy Roadmap
 
 ## Phase Sequence and Status
 1. COMPLETED - Audits, source normalization, and dependency mapping.
 2. COMPLETED - Institution settings domain model and calendar foundation.
 3. COMPLETED - Courses/classes academic-year UX and linkage hardening.
-4. COMPLETED - Subject period metadata and lifecycle automation.
+4. IN_REVIEW - Subject period metadata and lifecycle automation.
 5. COMPLETED - Student-course linking, transfer/promote architecture, and enrollment flow hardening.
 6. COMPLETED - Notifications behavior fixes, dedicated page, TTL, and email sync.
 7. COMPLETED - Institution customization preview full-screen fix and parity improvements.
@@ -23,7 +23,7 @@
 
 ## Immediate Next Actions
 - Optional environment follow-up: re-run transfer execution-path evidence against deployed callables (without mock mode) once callable environment readiness is restored.
-- Keep out-of-scope risk log entries monitored and close them in dedicated follow-up plans.
+- Complete final plan-level review sweep and prepare lifecycle transition from `inReview` to `finished`.
 - Log any manual user setup requirements in `[copilot/user-action-notes.md](copilot/user-action-notes.md)` as `OPEN` until confirmed.
 
 ## Validation Gates

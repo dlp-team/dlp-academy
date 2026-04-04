@@ -40,9 +40,9 @@ GitGuardian detects ALL API keys (AIza...), regardless of status or age.
 Before `git commit`:
 1. **Scan for secrets in staged changes**:
    ```bash
-   git diff --cached | grep -iE "AIza|private_key|password|secret|token"
+   npm run security:scan:staged
    ```
-   - MUST return ZERO matches
+   - MUST pass with no findings
    - If matches found: `git reset` and DO NOT COMMIT
 
 2. **Verify `.env` protection**: `git check-ignore -v .env` (must be ignored)
@@ -50,8 +50,8 @@ Before `git commit`:
 3. **Check build artifacts**: No `*-lint-*.json`, `*serviceAccount*.json` files
 
 Before `git push`:
-1. Final scan: `git diff origin/main..HEAD | grep -iE "AIza|private_key|password"`
-   - MUST return ZERO matches
+1. Final scan: `npm run security:scan:branch`
+   - MUST pass with no findings
 
 ## Verification before EVERY push
 - `git status` - Confirm clean working directory or staged changes are intentional

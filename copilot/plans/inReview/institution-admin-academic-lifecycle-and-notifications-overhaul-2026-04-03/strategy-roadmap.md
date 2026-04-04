@@ -1,4 +1,4 @@
-<!-- copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md -->
+<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md -->
 # Strategy Roadmap
 
 ## Phase Sequence and Status
@@ -24,7 +24,6 @@
 ## Immediate Next Actions
 - Optional environment follow-up: re-run transfer execution-path evidence against deployed callables (without mock mode) once callable environment readiness is restored.
 - Keep out-of-scope risk log entries monitored and close them in dedicated follow-up plans.
-- Log any manual user setup requirements in `[copilot/user-action-notes.md](copilot/user-action-notes.md)` as `OPEN` until confirmed.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.

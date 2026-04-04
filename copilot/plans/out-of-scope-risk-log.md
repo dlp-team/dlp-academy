@@ -41,4 +41,4 @@ Track risks discovered during implementation/review that are important but outsi
 	Risk Summary: Branch-wide credential scan (`git diff origin/main..HEAD`) reports historical credential-like strings from legacy docs/examples, producing repeated false-positive scan failures despite clean current commits.
 	Why Out of Scope: Resolving historical branch content and sanitizing legacy documentation spans prior unrelated work blocks and requires coordinated cleanup policy.
 	Recommended Follow-up: Perform dedicated branch-history/docs sanitization pass, then enforce stricter regexes for scans that differentiate real secrets from policy/example text.
-	Owner/Status: OPEN - requires dedicated security-hardening cleanup task
+	Owner/Status: IN_PROGRESS - remediation plan started at [copilot/plans/active/credential-scan-false-positive-remediation-2026-04-04/README.md](copilot/plans/active/credential-scan-false-positive-remediation-2026-04-04/README.md)

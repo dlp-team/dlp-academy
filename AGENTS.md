@@ -10,10 +10,24 @@
 
 **INCIDENT**: April 2, 2026 - Firebase API key leaked via build artifact.  
 **ACTION**: Before EVERY `git add`, `git commit`, or `git push`:
-1. Run `git diff --cached | grep -iE "AIza|private_key|password|secret|token"` and verify ZERO matches
+1. Run `npm run security:scan:staged` and verify PASS (no findings)
 2. Verify `.env` is ignored: `git check-ignore -v .env`
 3. If ANY credentials found → **ABORT** and notify user immediately
 4. NEVER commit: `.env*`, `*serviceAccount*.json`, `*credentials*.json`, `phase*-lint*.json`
+
+## USER ACTION NOTES CHANNEL (MANDATORY)
+
+When implementation requires any manual user task, Copilot MUST log it in:
+
+- `[copilot/user-action-notes.md](copilot/user-action-notes.md)`
+
+Required fields per entry:
+1. Date and related task/plan.
+2. Exact action the user must perform.
+3. Reason/impact if skipped.
+4. Status (`OPEN` until user confirms completion).
+
+Never include real secrets in this file. Use safe placeholders for `.env` guidance.
 
 ---
 
@@ -65,19 +79,20 @@ When operating in Autopilot mode, follow this exact loop until the task is compl
 3. **Context & Plan**: Read `copilot-instructions.md` and relevant files in `copilot/explanations/`.
 4. **Execute**: Make surgical code changes (following the Lossless Change Protocol).
 5. **Commit & Push** (PERIODIC) - WITH CREDENTIAL SECURITY SCAN:
-   - **MANDATORY**: Before `git commit`, scan for credentials: `git diff --cached | grep -iE "AIza|private_key|password|secret|token"` (MUST return zero matches)
+   - **MANDATORY**: Before `git commit`, scan for credentials: `npm run security:scan:staged` (MUST pass)
    - **MANDATORY**: Verify `.env` is ignored: `git check-ignore -v .env` (must show it's ignored)
    - After each logical work unit, commit with proper message format
    - **CADENCE GATE (NON-NEGOTIABLE)**: Do NOT start a second major work block until the prior validated block has both commit and push completed
    - **BLOCK TRANSITION RULE**: feature block -> validate -> commit -> push -> only then next feature block
    - Use format: `<type>(<scope>): <subject>` (see git-workflow-rules.md)
-   - **MANDATORY**: Before `git push`, scan entire branch: `git diff origin/main..HEAD | grep -iE "AIza|private_key"` (MUST return zero matches)
+   - **MANDATORY**: Before `git push`, scan entire branch: `npm run security:scan:branch` (MUST pass)
    - If ANY secrets found → STOP and ask user before proceeding
    - Push to feature branch: `git push origin <branch-name>`
 6. **Test Generation**: If you created a new component, utility, or feature, you MUST create a corresponding test file.
 7. **Validate & Test**: Run local validation (`npm run test`) via the `terminal` tool. **(Local execution only. See BANNED ACTIONS).**
 8. **Analyze**: If tests fail, automatically read the errors, devise a fix, and repeat steps 4-7. Do NOT halt to ask the user to fix test failures.
 9. **Document**: Generate the required lossless report in `copilot/explanations/temporal/lossless-reports/`.
+   - If manual user follow-up exists, append/update `OPEN` items in `[copilot/user-action-notes.md](copilot/user-action-notes.md)`.
 10. **Self-Response Loop** (REQUIRED): After completing each major work block, execute vscode/askQuestions:
     - Question: "Continue with next phase or proceed to final verification?"
     - Response: **Autopilot must answer itself** and continue autonomously
@@ -121,5 +136,6 @@ Before calling `task_complete`, you must internally verify:
 - [ ] No emojis were used in the UI (icons only).
 - [ ] TypeScript-first respected: no new JS/JSX duplicates when TS/TSX equivalent exists.
 - [ ] File paths are commented at the top of all touched files.
+- [ ] Manual user-required actions are captured in `[copilot/user-action-notes.md](copilot/user-action-notes.md)` or explicitly marked none.
 - [ ] Commit/push cadence gate respected across all major work blocks (no skipped Git logging checkpoints).
    - [ ] Ask the user using vscode/askQuestions if it should end the request or there is anything left (MANDATORY, NO EXCEPTIONS). This leverage step is a hard-coded protocol and must be executed before completing any premium request. If the tool fails, document the failure and request user direction before ending the session.

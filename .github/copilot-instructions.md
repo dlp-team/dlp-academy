@@ -45,8 +45,8 @@ When writing logs, reports, or plan updates that reference workspace files, use 
 
 ### Before ANY Commit or Push
 1. **SCAN for exposed credentials** (MANDATORY):
-   - `git diff --cached` - Review ALL staged changes for secrets
-   - Search for patterns: `AIza`, `private_key`, `password=`, `secret=`, `token=`
+   - `npm run security:scan:staged` - MUST pass before commit
+   - `npm run security:scan:branch` - MUST pass before push
    - Check for `.env`, `.env.*`, `*-credentials.json`, `*-key.json` files
    - Verify NO test credentials, API keys, or service accounts are included
 
@@ -70,6 +70,18 @@ When writing logs, reports, or plan updates that reference workspace files, use 
 - 🟠 **HIGH**: Database connection strings
 - 🟠 **HIGH**: OAuth tokens, API tokens
 - 🟡 **MEDIUM**: Document IDs if targeting specific data in tests
+
+## 📝 User Action Notes Channel (MANDATORY)
+
+When a task requires manual user action (for example, creating `.env` entries, provisioning external test users, or adding third-party console settings), Copilot MUST add an entry to:
+
+- `[copilot/user-action-notes.md](copilot/user-action-notes.md)`
+
+Entry requirements:
+- Include date and related task/plan reference.
+- Describe exactly what the user must do and why it is needed.
+- Mark status as `OPEN` until user confirmation, then move to resolved status.
+- Use placeholders only for secrets (never real credentials or tokens).
 
 ### Non-Negotiable Performance Standards:
 1. **Read ALL relevant context BEFORE acting** - Use parallel tool calls to gather comprehensive context upfront
@@ -491,6 +503,7 @@ Before completing ANY interaction, verify:
 - [ ] All required protocols followed
 - [ ] All validation steps completed
 - [ ] All documentation updated
+- [ ] Manual user-required actions are logged in `[copilot/user-action-notes.md](copilot/user-action-notes.md)` when applicable
 - [ ] No errors remain (`get_errors` clean)
 - [ ] Lossless report created (if code changed)
 - [ ] User can immediately continue their work without asking follow-ups

@@ -8,8 +8,8 @@ GitGuardian will detect them. Everything must use environment variables.
 ## Before EVERY Commit
 ```bash
 # 1. Scan for secrets in staged changes
-git diff --cached | grep -iE "AIza|private_key|password|secret|token"
-# Result: MUST be empty (no output)
+npm run security:scan:staged
+# Result: MUST pass (no findings)
 
 # 2. Verify .env is protected
 git check-ignore -v .env
@@ -23,8 +23,8 @@ git reset  # Unstage changes
 ## Before EVERY Push
 ```bash
 # Final security scan on entire branch
-git diff origin/main..HEAD | grep -iE "AIza|private_key|password|secret|token"
-# Result: MUST be empty (no output)
+npm run security:scan:branch
+# Result: MUST pass (no findings)
 
 # If secrets found: STOP and notify developer
 ```

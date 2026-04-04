@@ -14,7 +14,9 @@
     "test:rules": "firebase emulators:exec --only firestore,storage \"npm run test:rules:unit\"",
     "test:rules:unit": "vitest run --config vitest.rules.config.js",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "security:scan:staged": "node scripts/security/high-confidence-diff-scan.cjs --staged",
+    "security:scan:branch": "node scripts/security/high-confidence-diff-scan.cjs --range origin/main..HEAD"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.18",
