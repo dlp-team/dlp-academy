@@ -2,6 +2,10 @@
 import { HttpsError } from 'firebase-functions/v2/https';
 import { assertNonEmptyString, requireAuthUid } from './guards.js';
 import { toUniqueIds } from './transferPromotionPlanUtils.js';
+import {
+  buildExecutionSnapshotChecksum,
+  rebuildExecutionSnapshotFromChunks,
+} from './transferPromotionSnapshotUtils.js';
 
 const BATCH_CHUNK_SIZE = 350;
 
@@ -18,14 +22,47 @@ const normalizeRoleClaim = (value) => {
   return 'student';
 };
 
-const applyBatchOperationsInChunks = async ({ dbInstance, operations, chunkSize = BATCH_CHUNK_SIZE }) => {
+const applyBatchOperationsInChunks = async ({
+  dbInstance,
+  operations,
+  chunkSize = BATCH_CHUNK_SIZE,
+  onBeforeChunk,
+  onAfterChunk,
+}) => {
   for (let index = 0; index < operations.length; index += chunkSize) {
     const batch = dbInstance.batch();
     const chunk = operations.slice(index, index + chunkSize);
+    const chunkIndex = Math.floor(index / chunkSize);
+    const chunkCount = Math.ceil(operations.length / chunkSize);
+
+    if (onBeforeChunk) {
+      await onBeforeChunk({
+        chunk,
+        chunkIndex,
+        chunkCount,
+      });
+    }
+
     chunk.forEach((operation) => operation(batch));
     await batch.commit();
+
+    if (onAfterChunk) {
+      await onAfterChunk({
+        chunk,
+        chunkIndex,
+        chunkCount,
+      });
+    }
   }
 };
+
+const writeMergeDocument = async ({ dbInstance, docRef, data }) => {
+  const batch = dbInstance.batch();
+  batch.set(docRef, data, { merge: true });
+  await batch.commit();
+};
+
+const toChunkCheckpointId = (chunkIndex) => String(chunkIndex).padStart(4, '0');
 
 const assertTenantMatch = ({ docData, institutionId, label }) => {
   const docInstitutionId = normalizeInstitutionClaim(docData?.institutionId);
@@ -47,6 +84,74 @@ const fetchDocMapById = async ({ dbInstance, collectionName, ids = [] }) => {
   });
 
   return byId;
+};
+
+const resolveExecutionSnapshot = async ({
+  dbInstance,
+  rollbackId,
+  rollbackData,
+}) => {
+  const inlineSnapshot = rollbackData?.executionSnapshot && typeof rollbackData.executionSnapshot === 'object'
+    ? rollbackData.executionSnapshot
+    : null;
+
+  if (inlineSnapshot) {
+    return inlineSnapshot;
+  }
+
+  const snapshotStorageMode = String(rollbackData?.snapshotStorageMode || '').trim().toLowerCase();
+  if (snapshotStorageMode !== 'chunked') {
+    return null;
+  }
+
+  const snapshotChunkIds = Array.isArray(rollbackData?.snapshotChunkIds)
+    ? toUniqueIds(rollbackData.snapshotChunkIds)
+    : [];
+
+  if (snapshotChunkIds.length === 0) {
+    return null;
+  }
+
+  const collectionName = `transferPromotionRollbacks/${rollbackId}/snapshotChunks`;
+  const chunkDocsById = await fetchDocMapById({
+    dbInstance,
+    collectionName,
+    ids: snapshotChunkIds,
+  });
+
+  const chunkDocs = snapshotChunkIds
+    .map((chunkId) => {
+      const chunkData = chunkDocsById.get(chunkId);
+      if (!chunkData) return null;
+      return {
+        chunkId,
+        ...chunkData,
+      };
+    })
+    .filter(Boolean);
+
+  if (chunkDocs.length !== snapshotChunkIds.length) {
+    throw new HttpsError('failed-precondition', 'Rollback snapshot chunks are incomplete.');
+  }
+
+  const rebuiltSnapshot = rebuildExecutionSnapshotFromChunks({
+    baseSnapshot: {
+      mode: rollbackData?.mode,
+      institutionId: rollbackData?.institutionId,
+      requestId: rollbackData?.requestId,
+    },
+    chunkDocs,
+  });
+
+  const expectedChecksum = String(rollbackData?.snapshotChecksum || '').trim();
+  if (expectedChecksum) {
+    const rebuiltChecksum = buildExecutionSnapshotChecksum(rebuiltSnapshot);
+    if (rebuiltChecksum !== expectedChecksum) {
+      throw new HttpsError('failed-precondition', 'Rollback snapshot checksum mismatch.');
+    }
+  }
+
+  return rebuiltSnapshot;
 };
 
 export const createRollbackTransferPromotionPlanHandler = ({
@@ -107,9 +212,11 @@ export const createRollbackTransferPromotionPlanHandler = ({
     throw new HttpsError('failed-precondition', 'Rollback metadata is not ready for execution.');
   }
 
-  const executionSnapshot = rollbackData.executionSnapshot && typeof rollbackData.executionSnapshot === 'object'
-    ? rollbackData.executionSnapshot
-    : null;
+  const executionSnapshot = await resolveExecutionSnapshot({
+    dbInstance,
+    rollbackId,
+    rollbackData,
+  });
 
   if (!executionSnapshot) {
     throw new HttpsError('failed-precondition', 'Rollback execution snapshot is missing.');
@@ -225,12 +332,39 @@ export const createRollbackTransferPromotionPlanHandler = ({
   });
 
   const runRef = dbInstance.collection('transferPromotionRuns').doc(requestId);
+  const rollbackCheckpointCollectionName = `transferPromotionRuns/${requestId}/rollbackCheckpoints`;
   const rollbackSummary = {
     restoredStudents,
     restoredClassMemberships,
     deletedCreatedClasses,
     deletedCreatedCourses,
   };
+
+  await writeMergeDocument({
+    dbInstance,
+    docRef: runRef,
+    data: {
+      status: 'rolling_back',
+      rollbackId,
+      rollbackStartedByUid: actorUid,
+      rollbackStartedAt: serverTimestampProvider(),
+      lastRollbackChunkIndex: -1,
+      failureCode: null,
+      failureMessage: null,
+      updatedAt: serverTimestampProvider(),
+    },
+  });
+
+  await writeMergeDocument({
+    dbInstance,
+    docRef: rollbackRef,
+    data: {
+      status: 'rolling_back',
+      rollbackStartedByUid: actorUid,
+      rollbackStartedAt: serverTimestampProvider(),
+      updatedAt: serverTimestampProvider(),
+    },
+  });
 
   operations.push((batch) => {
     batch.set(rollbackRef, {
@@ -252,10 +386,88 @@ export const createRollbackTransferPromotionPlanHandler = ({
     }, { merge: true });
   });
 
-  await applyBatchOperationsInChunks({
-    dbInstance,
-    operations,
-  });
+  let lastRollbackChunkIndex = -1;
+
+  try {
+    await applyBatchOperationsInChunks({
+      dbInstance,
+      operations,
+      onBeforeChunk: async ({ chunk, chunkIndex, chunkCount }) => {
+        const checkpointRef = dbInstance.collection(rollbackCheckpointCollectionName).doc(toChunkCheckpointId(chunkIndex));
+        await writeMergeDocument({
+          dbInstance,
+          docRef: checkpointRef,
+          data: {
+            requestId,
+            institutionId,
+            rollbackId,
+            chunkIndex,
+            chunkCount,
+            operationCount: chunk.length,
+            status: 'rolling_back',
+            updatedAt: serverTimestampProvider(),
+          },
+        });
+      },
+      onAfterChunk: async ({ chunk, chunkIndex, chunkCount }) => {
+        lastRollbackChunkIndex = chunkIndex;
+        const checkpointRef = dbInstance.collection(rollbackCheckpointCollectionName).doc(toChunkCheckpointId(chunkIndex));
+
+        await writeMergeDocument({
+          dbInstance,
+          docRef: checkpointRef,
+          data: {
+            requestId,
+            institutionId,
+            rollbackId,
+            chunkIndex,
+            chunkCount,
+            operationCount: chunk.length,
+            status: 'completed',
+            completedAt: serverTimestampProvider(),
+            updatedAt: serverTimestampProvider(),
+          },
+        });
+
+        await writeMergeDocument({
+          dbInstance,
+          docRef: runRef,
+          data: {
+            lastRollbackChunkIndex: chunkIndex,
+            updatedAt: serverTimestampProvider(),
+          },
+        });
+      },
+    });
+  } catch (error) {
+    await writeMergeDocument({
+      dbInstance,
+      docRef: runRef,
+      data: {
+        status: 'failed',
+        rollbackId,
+        failureCode: 'ROLLBACK_EXECUTION_FAILED',
+        failureMessage: String(error?.message || 'Rollback execution failed.').slice(0, 500),
+        failedAt: serverTimestampProvider(),
+        lastRollbackChunkIndex,
+        updatedAt: serverTimestampProvider(),
+      },
+    });
+
+    await writeMergeDocument({
+      dbInstance,
+      docRef: rollbackRef,
+      data: {
+        status: 'failed',
+        failureCode: 'ROLLBACK_EXECUTION_FAILED',
+        failureMessage: String(error?.message || 'Rollback execution failed.').slice(0, 500),
+        failedAt: serverTimestampProvider(),
+        updatedAt: serverTimestampProvider(),
+      },
+    });
+
+    throw error;
+  }
 
   return {
     success: true,

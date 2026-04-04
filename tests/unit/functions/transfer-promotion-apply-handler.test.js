@@ -10,9 +10,10 @@ const createSnapshot = (docId, value) => ({
   data: () => (value ? { ...value } : null),
 });
 
-const createDbMock = (initialDocs = {}) => {
+const createDbMock = (initialDocs = {}, options = {}) => {
   const store = { ...initialDocs };
   const writes = [];
+  let commitCount = 0;
 
   const readDoc = (collectionName, docId) => store[buildDocPath(collectionName, docId)] || null;
 
@@ -58,6 +59,21 @@ const createDbMock = (initialDocs = {}) => {
           });
         },
         commit: async () => {
+          commitCount += 1;
+
+          const failOnCommit = Number.isInteger(options?.failOnCommit)
+            ? options.failOnCommit
+            : null;
+
+          if (failOnCommit !== null && commitCount === failOnCommit) {
+            throw new Error('Forced commit failure.');
+          }
+
+          const failOnPath = String(options?.failOnPath || '').trim();
+          if (failOnPath && pendingOperations.some((operation) => operation.path === failOnPath)) {
+            throw new Error('Forced commit failure.');
+          }
+
           pendingOperations.forEach(writeDoc);
           writes.push(...pendingOperations);
         },
@@ -236,5 +252,219 @@ describe('applyTransferPromotionPlan handler', () => {
       },
     });
     expect(dbMock.__writes).toHaveLength(0);
+  });
+
+  it('marks run as failed when apply operations throw mid-execution', async () => {
+    const dbMock = createDbMock({
+      'users/actor-1': {
+        institutionId: 'inst-1',
+        role: 'institutionadmin',
+      },
+      'courses/course-source-1': {
+        institutionId: 'inst-1',
+        name: '1 ESO',
+        academicYear: '2025-2026',
+      },
+      'classes/class-source-1': {
+        institutionId: 'inst-1',
+        name: '1 ESO A',
+        academicYear: '2025-2026',
+        courseId: 'course-source-1',
+        studentIds: ['student-1'],
+      },
+      'users/student-1': {
+        institutionId: 'inst-1',
+        role: 'student',
+        courseIds: ['course-source-1'],
+      },
+    }, {
+      failOnPath: 'users/student-1',
+    });
+
+    const handler = createApplyTransferPromotionPlanHandler({
+      dbInstance: dbMock,
+      serverTimestampProvider: () => 'SERVER_TIMESTAMP',
+    });
+
+    await expect(handler({
+      auth: { uid: 'actor-1' },
+      data: {
+        dryRunPayload: {
+          requestId: 'transfer-promote-inst-1-2025-2026-2026-2027-promote',
+          institutionId: 'inst-1',
+          sourceAcademicYear: '2025-2026',
+          targetAcademicYear: '2026-2027',
+          mode: 'promote',
+          options: {
+            copyStudentLinks: true,
+            includeClassMemberships: true,
+          },
+        },
+        mappings: {
+          courses: [
+            {
+              sourceCourseId: 'course-source-1',
+              targetCourseId: 'course-target-1',
+              sourceAcademicYear: '2025-2026',
+              targetAcademicYear: '2026-2027',
+              action: 'create',
+            },
+          ],
+          classes: [
+            {
+              sourceClassId: 'class-source-1',
+              targetClassId: 'class-target-1',
+              sourceCourseId: 'course-source-1',
+              targetCourseId: 'course-target-1',
+              sourceAcademicYear: '2025-2026',
+              targetAcademicYear: '2026-2027',
+              action: 'create',
+            },
+          ],
+          studentAssignments: [
+            {
+              studentId: 'student-1',
+              fromCourseIds: ['course-source-1'],
+              toCourseIds: ['course-target-1'],
+              resultingCourseIds: ['course-source-1', 'course-target-1'],
+              fromClassIds: ['class-source-1'],
+              toClassIds: ['class-target-1'],
+            },
+          ],
+        },
+        rollbackMetadata: {
+          rollbackId: 'rollback-transfer-promote-inst-1',
+          requestId: 'transfer-promote-inst-1-2025-2026-2026-2027-promote',
+          institutionId: 'inst-1',
+          sourceAcademicYear: '2025-2026',
+          targetAcademicYear: '2026-2027',
+          mode: 'promote',
+          summary: {
+            plannedCourses: 1,
+            plannedClasses: 1,
+            plannedStudentAssignments: 1,
+          },
+        },
+      },
+    })).rejects.toThrow('Forced commit failure.');
+
+    expect(dbMock.__store['transferPromotionRuns/transfer-promote-inst-1-2025-2026-2026-2027-promote']).toMatchObject({
+      status: 'failed',
+      failureCode: 'APPLY_EXECUTION_FAILED',
+    });
+
+    expect(dbMock.__store['transferPromotionRollbacks/rollback-transfer-promote-inst-1']).toMatchObject({
+      status: 'ready',
+    });
+  });
+
+  it('stores rollback snapshot in chunked mode when inline threshold is exceeded', async () => {
+    const dbMock = createDbMock({
+      'users/actor-1': {
+        institutionId: 'inst-1',
+        role: 'institutionadmin',
+      },
+      'courses/course-source-1': {
+        institutionId: 'inst-1',
+        name: '1 ESO',
+        academicYear: '2025-2026',
+      },
+      'classes/class-source-1': {
+        institutionId: 'inst-1',
+        name: '1 ESO A',
+        academicYear: '2025-2026',
+        courseId: 'course-source-1',
+        studentIds: ['student-1'],
+      },
+      'users/student-1': {
+        institutionId: 'inst-1',
+        role: 'student',
+        courseIds: ['course-source-1'],
+      },
+    });
+
+    const handler = createApplyTransferPromotionPlanHandler({
+      dbInstance: dbMock,
+      serverTimestampProvider: () => 'SERVER_TIMESTAMP',
+      snapshotInlineEntryLimit: 0,
+      snapshotChunkSize: 1,
+    });
+
+    const response = await handler({
+      auth: { uid: 'actor-1' },
+      data: {
+        dryRunPayload: {
+          requestId: 'transfer-promote-inst-1-2025-2026-2026-2027-promote',
+          institutionId: 'inst-1',
+          sourceAcademicYear: '2025-2026',
+          targetAcademicYear: '2026-2027',
+          mode: 'promote',
+          options: {
+            copyStudentLinks: true,
+            includeClassMemberships: true,
+          },
+        },
+        mappings: {
+          courses: [
+            {
+              sourceCourseId: 'course-source-1',
+              targetCourseId: 'course-target-1',
+              sourceAcademicYear: '2025-2026',
+              targetAcademicYear: '2026-2027',
+              action: 'create',
+            },
+          ],
+          classes: [
+            {
+              sourceClassId: 'class-source-1',
+              targetClassId: 'class-target-1',
+              sourceCourseId: 'course-source-1',
+              targetCourseId: 'course-target-1',
+              sourceAcademicYear: '2025-2026',
+              targetAcademicYear: '2026-2027',
+              action: 'create',
+            },
+          ],
+          studentAssignments: [
+            {
+              studentId: 'student-1',
+              fromCourseIds: ['course-source-1'],
+              toCourseIds: ['course-target-1'],
+              resultingCourseIds: ['course-source-1', 'course-target-1'],
+              fromClassIds: ['class-source-1'],
+              toClassIds: ['class-target-1'],
+            },
+          ],
+        },
+        rollbackMetadata: {
+          rollbackId: 'rollback-transfer-promote-inst-1',
+          requestId: 'transfer-promote-inst-1-2025-2026-2026-2027-promote',
+          institutionId: 'inst-1',
+          sourceAcademicYear: '2025-2026',
+          targetAcademicYear: '2026-2027',
+          mode: 'promote',
+          summary: {
+            plannedCourses: 1,
+            plannedClasses: 1,
+            plannedStudentAssignments: 1,
+          },
+        },
+      },
+    });
+
+    expect(response.success).toBe(true);
+
+    const rollbackDoc = dbMock.__store['transferPromotionRollbacks/rollback-transfer-promote-inst-1'];
+    expect(rollbackDoc.snapshotStorageMode).toBe('chunked');
+    expect(rollbackDoc.executionSnapshot).toBeNull();
+    expect(Array.isArray(rollbackDoc.snapshotChunkIds)).toBe(true);
+    expect(rollbackDoc.snapshotChunkIds.length).toBeGreaterThan(0);
+
+    const firstChunkPath = `transferPromotionRollbacks/rollback-transfer-promote-inst-1/snapshotChunks/${rollbackDoc.snapshotChunkIds[0]}`;
+    expect(dbMock.__store[firstChunkPath]).toMatchObject({
+      rollbackId: 'rollback-transfer-promote-inst-1',
+      requestId: 'transfer-promote-inst-1-2025-2026-2026-2027-promote',
+      institutionId: 'inst-1',
+    });
   });
 });

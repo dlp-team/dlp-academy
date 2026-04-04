@@ -6,6 +6,11 @@ import {
   toUniqueIds,
   validateTransferPromotionPayload,
 } from './transferPromotionPlanUtils.js';
+import {
+  buildSnapshotPersistencePlan,
+  TRANSFER_SNAPSHOT_CHUNK_SIZE,
+  TRANSFER_SNAPSHOT_INLINE_ENTRY_LIMIT,
+} from './transferPromotionSnapshotUtils.js';
 
 const BATCH_CHUNK_SIZE = 350;
 
@@ -37,14 +42,47 @@ const getStudentCourseIds = (student = {}) => (
   ])
 );
 
-const applyBatchOperationsInChunks = async ({ dbInstance, operations, chunkSize = BATCH_CHUNK_SIZE }) => {
+const applyBatchOperationsInChunks = async ({
+  dbInstance,
+  operations,
+  chunkSize = BATCH_CHUNK_SIZE,
+  onBeforeChunk,
+  onAfterChunk,
+}) => {
   for (let index = 0; index < operations.length; index += chunkSize) {
     const batch = dbInstance.batch();
     const chunk = operations.slice(index, index + chunkSize);
+    const chunkIndex = Math.floor(index / chunkSize);
+    const chunkCount = Math.ceil(operations.length / chunkSize);
+
+    if (onBeforeChunk) {
+      await onBeforeChunk({
+        chunk,
+        chunkIndex,
+        chunkCount,
+      });
+    }
+
     chunk.forEach((operation) => operation(batch));
     await batch.commit();
+
+    if (onAfterChunk) {
+      await onAfterChunk({
+        chunk,
+        chunkIndex,
+        chunkCount,
+      });
+    }
   }
 };
+
+const writeMergeDocument = async ({ dbInstance, docRef, data }) => {
+  const batch = dbInstance.batch();
+  batch.set(docRef, data, { merge: true });
+  await batch.commit();
+};
+
+const toChunkCheckpointId = (chunkIndex) => String(chunkIndex).padStart(4, '0');
 
 const fetchDocMapById = async ({ dbInstance, collectionName, ids = [] }) => {
   const normalizedIds = toUniqueIds(ids);
@@ -71,6 +109,8 @@ const assertTenantMatch = ({ docData, institutionId, label }) => {
 export const createApplyTransferPromotionPlanHandler = ({
   dbInstance,
   serverTimestampProvider,
+  snapshotInlineEntryLimit = TRANSFER_SNAPSHOT_INLINE_ENTRY_LIMIT,
+  snapshotChunkSize = TRANSFER_SNAPSHOT_CHUNK_SIZE,
 }) => async (request) => {
   const actorUid = requireAuthUid(request);
   const requestData = request?.data && typeof request.data === 'object' ? request.data : {};
@@ -481,6 +521,8 @@ export const createApplyTransferPromotionPlanHandler = ({
 
   const rollbackId = assertNonEmptyString(rollbackMetadata?.rollbackId, 'rollbackMetadata.rollbackId');
   const rollbackRef = dbInstance.collection('transferPromotionRollbacks').doc(rollbackId);
+  const runCheckpointCollectionName = `transferPromotionRuns/${requestId}/checkpoints`;
+
   const executionSnapshot = {
     mode,
     institutionId,
@@ -491,17 +533,10 @@ export const createApplyTransferPromotionPlanHandler = ({
     classMembershipStates: Array.from(classMembershipSnapshotsById.values()),
   };
 
-  operations.push((batch) => {
-    batch.set(rollbackRef, {
-      ...rollbackMetadata,
-      institutionId,
-      requestId,
-      executionSnapshot,
-      appliedByUid: actorUid,
-      appliedAt: serverTimestampProvider(),
-      status: 'ready',
-      updatedAt: serverTimestampProvider(),
-    }, { merge: true });
+  const snapshotPlan = buildSnapshotPersistencePlan({
+    executionSnapshot,
+    inlineEntryLimit: snapshotInlineEntryLimit,
+    chunkSize: snapshotChunkSize,
   });
 
   const summary = {
@@ -515,8 +550,154 @@ export const createApplyTransferPromotionPlanHandler = ({
     sourceClassMembershipUpdates,
   };
 
-  operations.push((batch) => {
-    batch.set(runRef, {
+  await writeMergeDocument({
+    dbInstance,
+    docRef: runRef,
+    data: {
+      requestId,
+      institutionId,
+      rollbackId,
+      status: 'pending',
+      dryRunPayload,
+      initiatedByUid: actorUid,
+      totalOperationChunks: Math.ceil(operations.length / BATCH_CHUNK_SIZE),
+      updatedAt: serverTimestampProvider(),
+    },
+  });
+
+  await writeMergeDocument({
+    dbInstance,
+    docRef: rollbackRef,
+    data: {
+      ...rollbackMetadata,
+      institutionId,
+      requestId,
+      executionSnapshot: snapshotPlan.executionSnapshot,
+      snapshotStorageMode: snapshotPlan.snapshotStorageMode,
+      snapshotSchemaVersion: snapshotPlan.snapshotSchemaVersion,
+      snapshotChecksum: snapshotPlan.snapshotChecksum,
+      snapshotEntryCount: snapshotPlan.snapshotEntryCount,
+      snapshotChunkCount: snapshotPlan.snapshotChunkCount,
+      snapshotChunkIds: snapshotPlan.snapshotChunkIds,
+      appliedByUid: actorUid,
+      appliedAt: serverTimestampProvider(),
+      status: 'ready',
+      updatedAt: serverTimestampProvider(),
+    },
+  });
+
+  if (snapshotPlan.snapshotChunks.length > 0) {
+    const snapshotChunkCollectionName = `transferPromotionRollbacks/${rollbackId}/snapshotChunks`;
+    const snapshotChunkOperations = snapshotPlan.snapshotChunks.map((snapshotChunk) => (
+      (batch) => {
+        const chunkRef = dbInstance.collection(snapshotChunkCollectionName).doc(snapshotChunk.chunkId);
+        batch.set(chunkRef, {
+          ...snapshotChunk,
+          rollbackId,
+          requestId,
+          institutionId,
+          snapshotSchemaVersion: snapshotPlan.snapshotSchemaVersion,
+          createdAt: serverTimestampProvider(),
+          updatedAt: serverTimestampProvider(),
+        }, { merge: true });
+      }
+    ));
+
+    await applyBatchOperationsInChunks({
+      dbInstance,
+      operations: snapshotChunkOperations,
+    });
+  }
+
+  await writeMergeDocument({
+    dbInstance,
+    docRef: runRef,
+    data: {
+      status: 'applying',
+      applyStartedAt: serverTimestampProvider(),
+      lastCompletedChunkIndex: -1,
+      failureCode: null,
+      failureMessage: null,
+      updatedAt: serverTimestampProvider(),
+    },
+  });
+
+  let lastCompletedChunkIndex = -1;
+
+  try {
+    await applyBatchOperationsInChunks({
+      dbInstance,
+      operations,
+      onBeforeChunk: async ({ chunk, chunkIndex, chunkCount }) => {
+        const checkpointRef = dbInstance.collection(runCheckpointCollectionName).doc(toChunkCheckpointId(chunkIndex));
+        await writeMergeDocument({
+          dbInstance,
+          docRef: checkpointRef,
+          data: {
+            requestId,
+            institutionId,
+            rollbackId,
+            chunkIndex,
+            chunkCount,
+            operationCount: chunk.length,
+            status: 'applying',
+            updatedAt: serverTimestampProvider(),
+          },
+        });
+      },
+      onAfterChunk: async ({ chunk, chunkIndex, chunkCount }) => {
+        lastCompletedChunkIndex = chunkIndex;
+        const checkpointRef = dbInstance.collection(runCheckpointCollectionName).doc(toChunkCheckpointId(chunkIndex));
+
+        await writeMergeDocument({
+          dbInstance,
+          docRef: checkpointRef,
+          data: {
+            requestId,
+            institutionId,
+            rollbackId,
+            chunkIndex,
+            chunkCount,
+            operationCount: chunk.length,
+            status: 'completed',
+            completedAt: serverTimestampProvider(),
+            updatedAt: serverTimestampProvider(),
+          },
+        });
+
+        await writeMergeDocument({
+          dbInstance,
+          docRef: runRef,
+          data: {
+            status: 'applying',
+            lastCompletedChunkIndex: chunkIndex,
+            updatedAt: serverTimestampProvider(),
+          },
+        });
+      },
+    });
+  } catch (error) {
+    await writeMergeDocument({
+      dbInstance,
+      docRef: runRef,
+      data: {
+        status: 'failed',
+        rollbackId,
+        failureCode: 'APPLY_EXECUTION_FAILED',
+        failureMessage: String(error?.message || 'Apply execution failed.').slice(0, 500),
+        failedAt: serverTimestampProvider(),
+        lastCompletedChunkIndex,
+        updatedAt: serverTimestampProvider(),
+      },
+    });
+
+    throw error;
+  }
+
+  await writeMergeDocument({
+    dbInstance,
+    docRef: runRef,
+    data: {
       requestId,
       institutionId,
       status: 'applied',
@@ -525,13 +706,11 @@ export const createApplyTransferPromotionPlanHandler = ({
       dryRunPayload,
       appliedByUid: actorUid,
       appliedAt: serverTimestampProvider(),
+      lastCompletedChunkIndex,
+      failureCode: null,
+      failureMessage: null,
       updatedAt: serverTimestampProvider(),
-    }, { merge: true });
-  });
-
-  await applyBatchOperationsInChunks({
-    dbInstance,
-    operations,
+    },
   });
 
   return {

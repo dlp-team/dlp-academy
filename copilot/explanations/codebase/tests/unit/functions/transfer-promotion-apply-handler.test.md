@@ -1,6 +1,11 @@
 <!-- copilot/explanations/codebase/tests/unit/functions/transfer-promotion-apply-handler.test.md -->
 # transfer-promotion-apply-handler.test.js
 
+## Changelog
+### 2026-04-04: Recoverability and chunked snapshot coverage
+- Added failure-path coverage that forces apply commit errors and verifies run status transitions to `failed` with failure code metadata.
+- Added chunked snapshot persistence coverage (`snapshotStorageMode = chunked`) with deterministic chunk-document assertions.
+
 ## Overview
 - Source file: `tests/unit/functions/transfer-promotion-apply-handler.test.js`
 - Last documented: 2026-04-04
@@ -9,3 +14,5 @@
 ## Coverage
 - Validates successful apply flow writes planned course/class/student updates plus rollback/run metadata.
 - Validates idempotent re-apply short-circuit when run record is already in `applied` status.
+- Validates apply failure-state persistence when a chunk commit throws.
+- Validates chunked rollback snapshot persistence path and chunk metadata writes.

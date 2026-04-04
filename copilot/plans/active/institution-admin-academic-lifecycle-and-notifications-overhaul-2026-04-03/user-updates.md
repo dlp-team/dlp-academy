@@ -8,11 +8,20 @@
 
 ## Pending User Updates
 
-- No pending updates.
+- Create a new file that will be used for copilot to leave notes for me, the user. For example, if you create a new e2e test and need a new E2E user and password set up on the .env, then you can use this so I can know and create it. Modify the copilot-instructions and AGENTS.md to do this.
 
 
 
 ## Processed Updates
+- 2026-04-04: Linked notifications email opt-in behavior to shortcut move request email queue writes.
+  - Synced in:
+    - `functions/index.js`
+    - `functions/security/shortcutMoveRequestEmailUtils.js`
+    - `tests/unit/functions/shortcut-move-request-email-optin.test.js`
+    - `phases/phase-06-notifications-and-email-sync-planned.md`
+  - Implementation completed:
+    - Owner/requester email notifications now honor `users/{uid}.notifications.email !== false` with deterministic fallback behavior when requester profile is missing.
+
 - 2026-04-04: Enforced clickable file-reference policy in instruction docs for operational logging and Ctrl+Click navigation.
   - Synced in:
     - `.github/copilot-instructions.md`
