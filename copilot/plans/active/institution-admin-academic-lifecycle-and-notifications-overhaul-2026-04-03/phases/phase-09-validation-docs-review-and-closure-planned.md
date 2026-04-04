@@ -1,5 +1,5 @@
 <!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-09-validation-docs-review-and-closure-planned.md -->
-# Phase 09 - Validation, Docs Sync, Review, and Closure (IN_PROGRESS)
+# Phase 09 - Validation, Docs Sync, Review, and Closure (FINISHED)
 
 ## Objective
 Execute full validation gates, synchronize required documentation, and prepare lifecycle transition to `inReview` then `finished`.
@@ -29,7 +29,7 @@ Execute full validation gates, synchronize required documentation, and prepare l
 - `get_errors` clean on touched files in this Phase 09 validation slice.
 
 ## Remaining in Phase 09
-- Execute lifecycle transition gate (`active` -> `inReview`) and complete required review subphases before final `finished` transition.
+- None. Validation gates, docs synchronization, and inReview transition artifacts are complete.
 
 ## Exit Criteria
 - All quality gates pass.

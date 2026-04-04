@@ -35,8 +35,8 @@ Execute the institutional roadmap described by the user in the original plan pro
 - Unrequested schema rewrites that are not directly tied to this roadmap.
 
 ## Lifecycle Status
-- Lifecycle: `active`
-- Current phase: `Phase 05 transfer block (FINISHED), Phase 06 closed (FINISHED), Phase 07 customization parity (FINISHED), Phase 08 bin parity (FINISHED), Phase 09 closure gates (IN_PROGRESS)`
+- Lifecycle: `inReview`
+- Current phase: `Phase 04 lifecycle review (IN_REVIEW), Phase 09 closure gates (FINISHED)`
 - Last updated: 2026-04-04
 
 ## Key Decisions

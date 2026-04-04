@@ -22,7 +22,7 @@
 - [x] `npm run test` clean.
 - [x] Lossless report created and linked.
 - [x] Relevant codebase explanation docs updated.
-- [ ] Lifecycle transition to `inReview` executed after implementation.
+- [x] Lifecycle transition to `inReview` executed after implementation.
 
 ## Current Evidence Snapshot (2026-04-04)
 - `npm run lint`: **PASS**.
