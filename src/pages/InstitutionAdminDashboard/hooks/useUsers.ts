@@ -22,6 +22,7 @@ import { getInstitutionalAccessCodePreview, rotateInstitutionalAccessCodeNow } f
 import { DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils/institutionPolicyUtils';
 import { usePersistentState } from '../../../hooks/usePersistentState';
 import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence';
+import { buildGoogleSheetCsvExportUrl } from '../utils/importSourceUtils';
 
 const USERS_PAGE_SIZE = 25;
 
@@ -102,6 +103,29 @@ const parseCsvWithHeader = (csvInput: any) => {
     headerIndexByKey,
     rows,
   };
+};
+
+const resolveImportCsvText = async (importPayload: any) => {
+  const inlineFileText = String(importPayload?.fileText || '');
+  if (inlineFileText.trim()) {
+    return inlineFileText;
+  }
+
+  const sourceType = String(importPayload?.sourceType || '').trim().toLowerCase();
+  const sourceUrl = String(importPayload?.sourceUrl || '').trim();
+  if (sourceType !== 'google-sheet' || !sourceUrl) {
+    return '';
+  }
+
+  const csvUrl = buildGoogleSheetCsvExportUrl(sourceUrl);
+  const response = await fetch(csvUrl, {
+    method: 'GET',
+  });
+  if (!response.ok) {
+    throw new Error(`GOOGLE_SHEET_FETCH_FAILED_${response.status}`);
+  }
+
+  return response.text();
 };
 
 const getMappedCsvValue = (row: any, headerIndexByKey: any, preferredColumnName: any) => {
@@ -515,7 +539,6 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
     }
 
     const {
-      fileText,
       mapping = {},
     } = importPayload || {};
 
@@ -523,7 +546,8 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
       requireCourseColumn = false,
     } = options || {};
 
-    const parsedCsv = parseCsvWithHeader(fileText);
+    const csvText = await resolveImportCsvText(importPayload);
+    const parsedCsv = parseCsvWithHeader(csvText);
     const { headerIndexByKey, rows } = parsedCsv;
 
     if (rows.length === 0) {
@@ -725,6 +749,8 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
         institutionId: effectiveInstitutionId,
         workflowType: importPayload?.workflowType,
         mapping: importPayload?.mapping || {},
+        sourceType: importPayload?.sourceType || 'file',
+        sourceUrl: importPayload?.sourceUrl || '',
         file: importPayload?.uploadedFile || null,
         source: 'institution-admin-users',
       }),
@@ -752,6 +778,10 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
       skippedRows: Array.isArray((payload as any)?.skippedRows) ? (payload as any).skippedRows : [],
       missingStudents: Array.isArray((payload as any)?.missingStudents) ? (payload as any).missingStudents : [],
       missingCourses: Array.isArray((payload as any)?.missingCourses) ? (payload as any).missingCourses : [],
+      warnings: Array.isArray((payload as any)?.warnings) ? (payload as any).warnings : [],
+      recommendations: Array.isArray((payload as any)?.recommendations) ? (payload as any).recommendations : [],
+      detectedColumns: Array.isArray((payload as any)?.detectedColumns) ? (payload as any).detectedColumns : [],
+      aiMapping: (payload as any)?.aiMapping || null,
     };
   }, [effectiveInstitutionId]);
 

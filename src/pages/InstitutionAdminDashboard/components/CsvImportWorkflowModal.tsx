@@ -1,5 +1,5 @@
 // src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, FileSpreadsheet, Loader2, Sparkles, UploadCloud, XCircle } from 'lucide-react';
 
 const DEFAULT_STUDENT_MAPPING = {
@@ -27,6 +27,8 @@ const CsvImportWorkflowModal = ({
   onRunN8nImport,
 }: any) => {
   const [mode, setMode] = useState('manual');
+  const [sourceType, setSourceType] = useState('file');
+  const [googleSheetUrl, setGoogleSheetUrl] = useState('');
   const [mapping, setMapping] = useState(
     workflowType === 'students' ? DEFAULT_STUDENT_MAPPING : DEFAULT_COURSE_LINK_MAPPING
   );
@@ -37,15 +39,30 @@ const CsvImportWorkflowModal = ({
   const [errorMessage, setErrorMessage] = useState('');
   const [summary, setSummary] = useState<any>(null);
 
+  useEffect(() => {
+    if (isOpen) return;
+
+    setMode('manual');
+    setSourceType('file');
+    setGoogleSheetUrl('');
+    setMapping(workflowType === 'students' ? DEFAULT_STUDENT_MAPPING : DEFAULT_COURSE_LINK_MAPPING);
+    setUploadedFile(null);
+    setUploadMessage('');
+    setErrorMessage('');
+    setSummary(null);
+  }, [isOpen, workflowType]);
+
   const hasUploadedFile = Boolean(uploadedFile?.file && uploadedFile?.storagePath);
+  const hasValidGoogleSheetUrl = String(googleSheetUrl || '').trim().startsWith('http');
+  const hasAnySource = sourceType === 'file' ? hasUploadedFile : hasValidGoogleSheetUrl;
   const manualRequiresCourseColumn = workflowType === 'course-links';
 
   const canRunManual = useMemo(() => {
-    if (!hasUploadedFile) return false;
+    if (!hasAnySource) return false;
     if (!mapping.emailColumn.trim() && !mapping.identifierColumn.trim()) return false;
     if (manualRequiresCourseColumn && !mapping.courseColumn.trim()) return false;
     return true;
-  }, [hasUploadedFile, mapping, manualRequiresCourseColumn]);
+  }, [hasAnySource, mapping, manualRequiresCourseColumn]);
 
   if (!isOpen) return null;
 
@@ -87,6 +104,13 @@ const CsvImportWorkflowModal = ({
     }
   };
 
+  const selectSourceType = (nextSourceType: any) => {
+    if (isUploading || isExecuting) return;
+    setSourceType(nextSourceType);
+    setSummary(null);
+    setErrorMessage('');
+  };
+
   const runManualImport = async () => {
     if (!onRunManualImport || !canRunManual || isExecuting) return;
 
@@ -95,29 +119,36 @@ const CsvImportWorkflowModal = ({
     setIsExecuting(true);
 
     try {
-      const selectedFileName = String(uploadedFile?.file?.name || '').toLowerCase();
-      const isCsvLikeFile = selectedFileName.endsWith('.csv') || selectedFileName.endsWith('.txt');
-      if (!isCsvLikeFile) {
-        throw new Error('MANUAL_ONLY_CSV');
+      let fileText = '';
+      if (sourceType === 'file') {
+        const selectedFileName = String(uploadedFile?.file?.name || '').toLowerCase();
+        const isCsvLikeFile = selectedFileName.endsWith('.csv') || selectedFileName.endsWith('.txt');
+        if (!isCsvLikeFile) {
+          throw new Error('MANUAL_ONLY_CSV');
+        }
+        fileText = await uploadedFile.file.text();
       }
 
-      const fileText = await uploadedFile.file.text();
       const importSummary = await onRunManualImport({
         workflowType,
         mapping,
+        sourceType,
+        sourceUrl: sourceType === 'google-sheet' ? googleSheetUrl.trim() : '',
         fileText,
-        uploadedFile: {
-          name: uploadedFile.name,
-          storagePath: uploadedFile.storagePath,
-          downloadUrl: uploadedFile.downloadUrl,
-          mimeType: uploadedFile.mimeType,
-          size: uploadedFile.size,
-        },
+        uploadedFile: sourceType === 'file'
+          ? {
+            name: uploadedFile.name,
+            storagePath: uploadedFile.storagePath,
+            downloadUrl: uploadedFile.downloadUrl,
+            mimeType: uploadedFile.mimeType,
+            size: uploadedFile.size,
+          }
+          : null,
       });
       setSummary(importSummary);
     } catch (error: any) {
       if (String(error?.message || '') === 'MANUAL_ONLY_CSV') {
-        setErrorMessage('Para el mapeo manual usa archivos CSV/TXT. Para Excel o Google Sheets usa la opción n8n.');
+        setErrorMessage('Para el mapeo manual con archivo usa CSV/TXT. Si subes Excel usa la opción n8n.');
       } else {
         console.error('Error running manual import:', error);
         setErrorMessage('No se pudo completar la importación manual. Revisa las columnas configuradas.');
@@ -128,7 +159,7 @@ const CsvImportWorkflowModal = ({
   };
 
   const runN8nImport = async () => {
-    if (!onRunN8nImport || !hasUploadedFile || isExecuting) return;
+    if (!onRunN8nImport || !hasAnySource || isExecuting) return;
 
     setErrorMessage('');
     setSummary(null);
@@ -138,13 +169,17 @@ const CsvImportWorkflowModal = ({
       const n8nSummary = await onRunN8nImport({
         workflowType,
         mapping,
-        uploadedFile: {
-          name: uploadedFile.name,
-          storagePath: uploadedFile.storagePath,
-          downloadUrl: uploadedFile.downloadUrl,
-          mimeType: uploadedFile.mimeType,
-          size: uploadedFile.size,
-        },
+        sourceType,
+        sourceUrl: sourceType === 'google-sheet' ? googleSheetUrl.trim() : '',
+        uploadedFile: sourceType === 'file'
+          ? {
+            name: uploadedFile.name,
+            storagePath: uploadedFile.storagePath,
+            downloadUrl: uploadedFile.downloadUrl,
+            mimeType: uploadedFile.mimeType,
+            size: uploadedFile.size,
+          }
+          : null,
       });
       setSummary(n8nSummary);
     } catch (error) {
@@ -169,25 +204,60 @@ const CsvImportWorkflowModal = ({
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{description}</p>
 
           <div className="mt-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/40 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300 mb-2">Archivo de entrada</p>
-            <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
-              <UploadCloud className="w-4 h-4" />
-              {isUploading ? 'Subiendo archivo...' : 'Subir archivo CSV / Excel / TXT'}
-              <input
-                type="file"
-                accept=".csv,.xlsx,.xls,.txt"
-                className="hidden"
-                onChange={handleSelectFile}
-                disabled={isUploading || isExecuting}
-              />
-            </label>
-            {uploadMessage && (
-              <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-300">{uploadMessage}</p>
-            )}
-            {uploadedFile?.storagePath && (
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                Ruta en Storage: {uploadedFile.storagePath}
-              </p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-300 mb-2">Fuente de datos</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <button
+                type="button"
+                onClick={() => selectSourceType('file')}
+                className={`rounded-xl border px-3 py-2 text-sm font-semibold text-left ${sourceType === 'file' ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-200' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300'}`}
+              >
+                Archivo en Firebase Storage
+              </button>
+              <button
+                type="button"
+                onClick={() => selectSourceType('google-sheet')}
+                className={`rounded-xl border px-3 py-2 text-sm font-semibold text-left ${sourceType === 'google-sheet' ? 'border-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-200' : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300'}`}
+              >
+                URL de Google Sheets
+              </button>
+            </div>
+
+            {sourceType === 'file' ? (
+              <>
+                <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-sm font-semibold text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+                  <UploadCloud className="w-4 h-4" />
+                  {isUploading ? 'Subiendo archivo...' : 'Subir archivo CSV / Excel / TXT'}
+                  <input
+                    type="file"
+                    accept=".csv,.xlsx,.xls,.txt"
+                    className="hidden"
+                    onChange={handleSelectFile}
+                    disabled={isUploading || isExecuting}
+                  />
+                </label>
+                {uploadMessage && (
+                  <p className="mt-2 text-sm text-emerald-600 dark:text-emerald-300">{uploadMessage}</p>
+                )}
+                {uploadedFile?.storagePath && (
+                  <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    Ruta en Storage: {uploadedFile.storagePath}
+                  </p>
+                )}
+              </>
+            ) : (
+              <label className="text-xs text-slate-600 dark:text-slate-300 block">
+                URL pública de Google Sheets
+                <input
+                  type="url"
+                  value={googleSheetUrl}
+                  onChange={(event) => setGoogleSheetUrl(event.target.value)}
+                  placeholder="https://docs.google.com/spreadsheets/d/..."
+                  className="mt-1 w-full rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-sm"
+                />
+                <span className="mt-1 block text-[11px] text-slate-500 dark:text-slate-400">
+                  Debe ser una hoja accesible por enlace para lectura CSV automática.
+                </span>
+              </label>
             )}
           </div>
 
@@ -295,6 +365,18 @@ const CsvImportWorkflowModal = ({
               {Array.isArray(summary.missingCourses) && summary.missingCourses.length > 0 && (
                 <p>Cursos no encontrados: <strong>{summary.missingCourses.join(', ')}</strong></p>
               )}
+              {Array.isArray(summary.detectedColumns) && summary.detectedColumns.length > 0 && (
+                <p>Columnas detectadas por IA: <strong>{summary.detectedColumns.join(', ')}</strong></p>
+              )}
+              {Array.isArray(summary.warnings) && summary.warnings.length > 0 && (
+                <p>Advertencias: <strong>{summary.warnings.join(' | ')}</strong></p>
+              )}
+              {Array.isArray(summary.recommendations) && summary.recommendations.length > 0 && (
+                <p>Recomendaciones: <strong>{summary.recommendations.join(' | ')}</strong></p>
+              )}
+              {summary.aiMapping && (
+                <p>Mapeo IA sugerido: <strong>{JSON.stringify(summary.aiMapping)}</strong></p>
+              )}
               {summary.queued && (
                 <p className="text-emerald-600 dark:text-emerald-300 font-medium flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4" /> {summary.message || 'Proceso enviado correctamente a n8n.'}
@@ -318,7 +400,7 @@ const CsvImportWorkflowModal = ({
               disabled={
                 isUploading
                 || isExecuting
-                || !hasUploadedFile
+                || !hasAnySource
                 || (mode === 'manual' ? !canRunManual : false)
               }
               className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 inline-flex items-center gap-2"

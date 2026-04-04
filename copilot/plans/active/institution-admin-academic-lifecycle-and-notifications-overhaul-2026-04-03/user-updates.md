@@ -7,9 +7,17 @@
 - Copilot must read this file before each implementation block and sync accepted items into roadmap/phase docs.
 
 ## Pending User Updates
-- CSV workflow follow-up: add direct Google Sheets ingestion and richer n8n AI response mapping/reporting on top of current storage + manual/n8n import foundation.
+- (No pending updates right now)
 
 ## Processed Updates
+- 2026-04-04: Completed CSV follow-up with direct Google Sheets ingestion and richer n8n AI response reporting.
+  - Synced in:
+    - `strategy-roadmap.md`
+    - `phases/phase-05-student-course-linking-and-transfer-planned.md`
+  - Implementation completed:
+    - Added Google Sheets public URL source mode in shared import modal.
+    - Added URL normalization to CSV export for manual processing.
+    - Extended n8n payload/response contract with source metadata and AI feedback (`warnings`, `recommendations`, `detectedColumns`, `aiMapping`).
 - 2026-04-04: Implemented immediate teacher/student access-code regeneration and preserved disable controls with versioned backend rotation.
   - Synced in:
     - `strategy-roadmap.md`

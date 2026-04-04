@@ -15,6 +15,7 @@
 - Lazily loads full teacher/student sets only when organization tab needs cross-list datasets.
 - Provides CSV import handlers for student enrichment and course-link assignment flows.
 - Uploads import files to institution-scoped Firebase Storage paths.
+- Supports manual import from direct Google Sheets public URLs via CSV export conversion.
 - Delegates optional automation runs to n8n webhook integration.
 - Exposes users tab state/actions to `InstitutionAdminDashboard`.
 
@@ -31,6 +32,7 @@
 - `../../../utils/pagePersistence`
 
 ## Changelog
+- 2026-04-04: Added Google Sheets source ingestion support for manual imports and enriched n8n response mapping fields (`warnings`, `recommendations`, `detectedColumns`, `aiMapping`).
 - 2026-04-04: Added `handleRotateLiveCode` flow with success/error messaging and live preview synchronization via role `codeVersion` updates.
 - 2026-04-04: Replaced legacy plain-text CSV linker with storage-backed import workflow handlers (`uploadUsersImportFile`, `runManualStudentsCsvImport`, `runManualCourseLinkCsvImport`, `triggerUsersImportN8n`) and kept compatibility wrapper for existing `handleBulkLinkStudentsCsv` call sites.
 - 2026-04-04: Added student CSV bulk-link handler that appends course links to student profile fields (`courseId`, `courseIds`, `enrolledCourseIds`) with per-run summary output.

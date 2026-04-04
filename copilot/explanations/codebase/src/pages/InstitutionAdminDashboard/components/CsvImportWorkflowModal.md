@@ -8,6 +8,7 @@
 
 ## Responsibilities
 - Allows file upload (`CSV/XLS/XLSX/TXT`) through parent-provided storage handler.
+- Allows source selection between uploaded file and direct Google Sheets URL.
 - Provides two execution modes: manual mapping in-app or external n8n automation.
 - Collects configurable column mappings (`email`, `identifier`, `name`, `course`) for import execution.
 - Surfaces inline status, validation errors, and import summary feedback.
@@ -21,4 +22,5 @@
 - `lucide-react`
 
 ## Changelog
+- 2026-04-04: Added direct Google Sheets source mode for manual/n8n flows and expanded summary rendering for AI feedback (`warnings`, `recommendations`, `detectedColumns`, `aiMapping`).
 - 2026-04-04: Added reusable import modal to unify CSV/Excel onboarding workflows across Users and Courses sections with manual + n8n paths.
