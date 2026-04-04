@@ -22,7 +22,7 @@
 - Final validation and docs sync remain explicit to prevent lifecycle drift.
 
 ## Immediate Next Actions
-- Extend transfer/promotion validation from deterministic roundtrip tests into browser-level e2e scenarios once emulator fixtures are finalized.
+- Expand transfer/promotion browser-level e2e from current modal guardrails into full execution-path coverage (dry-run/apply/rollback) once dedicated fixtures are finalized.
 - Execute Phase 05 optimization/consolidation review pass across transfer + course-periodization touched files.
 - Run Phase 05 deep risk analysis review and log any out-of-scope findings in `copilot/plans/out-of-scope-risk-log.md`.
 

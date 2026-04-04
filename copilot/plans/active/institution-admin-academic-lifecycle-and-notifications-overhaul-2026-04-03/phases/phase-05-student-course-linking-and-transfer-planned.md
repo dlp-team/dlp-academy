@@ -58,6 +58,9 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
   - `CreateCourseModal` now supports optional per-period date overrides (including extraordinary end date) using institution periodization as baseline,
   - `SubjectFormModal` now passes selected course schedule overrides into `buildSubjectPeriodTimeline(...)`.
 - Added deterministic tests for schedule utility normalization/defaulting, create-modal payload wiring, and subject-modal timeline override propagation.
+- Added browser-level transfer/promotion e2e modal guardrail coverage with explicit env-gated execution:
+  - `tests/e2e/transfer-promotion.spec.js` validates source/target academic-year distinctness before enabling `Ejecutar simulación`.
+  - optional dry-run execution assertion is gated behind `E2E_TRANSFER_PROMOTION_EXECUTION=1` so fixture-dependent verification remains deterministic.
 
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
@@ -74,10 +77,11 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-rollback-handler.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
 - `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-rollback-handler.test.js tests/unit/functions/transfer-promotion-roundtrip.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
 - `npm run test -- tests/unit/utils/coursePeriodScheduleUtils.test.js tests/unit/utils/subjectPeriodLifecycleUtils.test.js tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx tests/unit/pages/subject/SubjectFormModal.coursePeriodSchedule.test.jsx`
+- `npm run test:e2e -- tests/e2e/transfer-promotion.spec.js`
 - `get_errors` clean for all touched source and test files in this slice.
 
 ## Remaining in Phase 05
-- Extend transfer/promotion validation into browser-level e2e scenarios once emulator fixtures are finalized.
+- Expand transfer/promotion e2e from current modal guardrails into fixture-backed execution-path coverage (dry-run/apply/rollback).
 - Execute inReview readiness sequence for Phase 05 (optimization pass, then deep risk analysis with out-of-scope logging when needed).
 
 ## Risks and Controls
