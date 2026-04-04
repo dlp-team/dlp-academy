@@ -23,6 +23,8 @@
 - [x] Lossless report created and linked.
 - [x] Relevant codebase explanation docs updated.
 - [x] Lifecycle transition to `inReview` executed after implementation.
+- [x] InReview Subphase 1 (optimization/consolidation) completed with evidence.
+- [x] InReview Subphase 2 (deep risk analysis) completed with evidence.
 
 ## Current Evidence Snapshot (2026-04-04)
 - `npm run lint`: **PASS**.

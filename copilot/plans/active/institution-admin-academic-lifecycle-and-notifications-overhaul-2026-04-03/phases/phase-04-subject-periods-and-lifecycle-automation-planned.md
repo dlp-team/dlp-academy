@@ -1,5 +1,5 @@
 <!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md -->
-# Phase 04 - Subject Periods and Lifecycle Automation (IN_PROGRESS)
+# Phase 04 - Subject Periods and Lifecycle Automation (IN_REVIEW)
 
 ## Objective
 Model and enforce subject period windows and automatic lifecycle transitions with role-aware visibility.
@@ -96,6 +96,19 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
   - `buildSubjectPeriodTimeline(...)` now accepts optional `coursePeriodSchedule`.
   - Timeline precedence now supports course-level period boundaries with institution fallback when override data is missing/invalid.
 - Added deterministic coverage for override and fallback paths in `tests/unit/utils/subjectPeriodLifecycleUtils.test.js`.
+
+## InReview Notes (2026-04-04)
+- Phase 04 implementation scope is complete and now remains under inReview closure checks only.
+- Validation evidence covering lifecycle automation and related route guards is consolidated in global closure gates:
+  - `npm run lint` -> PASS
+  - `npx tsc --noEmit` -> PASS
+  - `npm run test` -> PASS (134 files, 606 tests)
+- InReview review artifacts created:
+  - `reviewing/subphase-1-optimization-consolidation-2026-04-04.md`
+  - `reviewing/subphase-2-deep-risk-analysis-2026-04-04.md`
+
+## Remaining in Phase 04
+- Complete final plan-level `inReview` closure transition after synchronized verification of all finished/in-review phases.
 
 ## Risks and Controls
 - Risk: incorrect hiding of active content.

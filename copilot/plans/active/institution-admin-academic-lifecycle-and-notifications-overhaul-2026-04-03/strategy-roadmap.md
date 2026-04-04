@@ -23,7 +23,7 @@
 
 ## Immediate Next Actions
 - Optional environment follow-up: re-run transfer execution-path evidence against deployed callables (without mock mode) once callable environment readiness is restored.
-- Continue active inReview work by closing remaining Phase 04 review items and preparing final plan-finished transition.
+- Complete final plan-level review sweep and prepare lifecycle transition from `inReview` to `finished`.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.
