@@ -34,6 +34,8 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Preserved disable behavior through existing `requireCode` policy toggle and blocked immediate rotation when codes are disabled.
 - Added direct Google Sheets source support in CSV workflows by converting shared sheet URLs into CSV export endpoints for manual imports.
 - Extended n8n flow payload/summary with source metadata and richer AI reporting fields (`warnings`, `recommendations`, `detectedColumns`, `aiMapping`).
+- Defined transfer/promote dry-run contract utilities with deterministic payload builder, payload validator, and rollback metadata snapshot builder.
+- Added dedicated utility tests to lock the new contract before wiring migration writes.
 
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
@@ -44,6 +46,7 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.deleteConfirm.test.jsx`
 - `npm run test -- tests/unit/functions/preview-handler.test.js tests/unit/functions/rotate-code-handler.test.js tests/unit/services/accessCodeService.test.js tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx`
 - `npm run test -- tests/unit/pages/institution-admin/importSourceUtils.test.js tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
+- `npm run test -- tests/unit/pages/institution-admin/transferPromotionPlanUtils.test.js`
 - `get_errors` clean for all touched source and test files in this slice.
 
 ## Remaining in Phase 05

@@ -23,7 +23,7 @@
 
 ## Immediate Next Actions
 - Wire per-course period schedule fields into course/settings flows and pass them to subject timeline generation.
-- Define transfer/promote dry-run payload shape and rollback metadata before implementing migration writes.
+- Wire transfer/promote dry-run utilities into callable execution path and institution-admin UI trigger.
 - Add end-to-end validation coverage for class/course eligibility after manual + CSV student linking rollout.
 
 ## Validation Gates
