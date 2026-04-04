@@ -51,6 +51,7 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Extended apply callable persistence with rollback execution snapshots (created entity ids + pre-apply student/class states) to support deterministic reverse operations.
 - Added rollback execution path to Institution Admin transfer modal (`Ejecutar rollback`) and hook/service callable wiring.
 - Added deterministic rollback-handler tests and expanded transfer service/UI wiring coverage for rollback delegation.
+- Added deterministic apply->rollback roundtrip validation to assert class/course eligibility restoration after transfer execution.
 
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
@@ -65,10 +66,11 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
 - `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
 - `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-rollback-handler.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
+- `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-rollback-handler.test.js tests/unit/functions/transfer-promotion-roundtrip.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
 - `get_errors` clean for all touched source and test files in this slice.
 
 ## Remaining in Phase 05
-- Add end-to-end validation for cross-course assignment constraints after linking rollout.
+- Extend transfer/promotion validation into browser-level e2e scenarios once emulator fixtures are finalized.
 
 ## Risks and Controls
 - Risk: orphaned student mappings after transfer.

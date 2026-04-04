@@ -23,7 +23,7 @@
 
 ## Immediate Next Actions
 - Wire per-course period schedule fields into course/settings flows and pass them to subject timeline generation.
-- Add end-to-end validation coverage for class/course eligibility after manual + CSV student linking rollout.
+- Extend transfer/promotion validation from deterministic roundtrip tests into browser-level e2e scenarios once emulator fixtures are finalized.
 - Begin inReview readiness work for Phase 05: optimization pass followed by deep risk analysis and out-of-scope risk logging.
 
 ## Validation Gates
