@@ -17,7 +17,10 @@ Execute closure-quality gates (lint/type/test), remediate discovered type blocke
   - [copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md](copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md)
   - [copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md](copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md)
 - Logged out-of-scope security-scan false-positive risk in [copilot/plans/out-of-scope-risk-log.md](copilot/plans/out-of-scope-risk-log.md).
+- Captured optional non-mock transfer execution evidence:
+  - `$env:E2E_TRANSFER_PROMOTION_TESTS='1'; $env:E2E_TRANSFER_PROMOTION_EXECUTION='1'; $env:E2E_TRANSFER_PROMOTION_APPLY_ROLLBACK='1'; npm run test:e2e -- tests/e2e/transfer-promotion.spec.js` -> `3 passed`
+  - Phase 05 status updated to `FINISHED` in [copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md](copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md).
 
 ## Current Phase Status
 - Phase 09 is set to `IN_PROGRESS`.
-- Remaining step: execute lifecycle transition gate after final decision on optional non-mock Phase 05 execution evidence.
+- Remaining step: execute lifecycle transition gate and complete mandatory `inReview` subphases before final closure.

@@ -1,5 +1,5 @@
 <!-- copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md -->
-# Phase 05 - Student-Course Linking and Transfer Flows (IN_PROGRESS)
+# Phase 05 - Student-Course Linking and Transfer Flows (FINISHED)
 
 ## Objective
 Implement safe pathways to link students to courses (CSV/manual), constrain class assignment by course, and support next-year transfer/promotion flows.
@@ -103,10 +103,11 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - `$env:E2E_TRANSFER_PROMOTION_TESTS='1'; $env:E2E_TRANSFER_PROMOTION_EXECUTION='1'; $env:E2E_TRANSFER_PROMOTION_APPLY_ROLLBACK='1'; $env:E2E_TRANSFER_PROMOTION_AUTO_SEED='1'; npx playwright test tests/e2e/transfer-promotion.spec.js --reporter=list` (current result: `1 passed, 2 skipped`; execution-path skips are now explicit env-classified runtime callable readiness skips instead of hard failures)
 - `npm run test -- tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx`
 - `$env:E2E_TRANSFER_PROMOTION_TESTS='1'; $env:E2E_TRANSFER_PROMOTION_EXECUTION='1'; $env:E2E_TRANSFER_PROMOTION_APPLY_ROLLBACK='1'; $env:E2E_TRANSFER_PROMOTION_AUTO_SEED='1'; $env:E2E_TRANSFER_PROMOTION_MOCK_CALLABLES='1'; npx playwright test tests/e2e/transfer-promotion.spec.js --reporter=list` (result: `3 passed`; full dry-run/apply/rollback path validated in deterministic mock-callable mode)
+- `$env:E2E_TRANSFER_PROMOTION_TESTS='1'; $env:E2E_TRANSFER_PROMOTION_EXECUTION='1'; $env:E2E_TRANSFER_PROMOTION_APPLY_ROLLBACK='1'; Remove-Item Env:E2E_TRANSFER_PROMOTION_MOCK -ErrorAction SilentlyContinue; Remove-Item Env:VITE_E2E_TRANSFER_PROMOTION_MOCK -ErrorAction SilentlyContinue; npm run test:e2e -- tests/e2e/transfer-promotion.spec.js` (result: `3 passed`; non-mock callable execution-path evidence validated)
 - `get_errors` clean for all touched source and test files in this slice.
 
 ## Remaining in Phase 05
-- Deterministic execution-path evidence is now available via mock-callable mode. Optional follow-up: re-run and archive equivalent evidence against deployed callable infrastructure (without mock mode) once environment readiness is restored.
+- None. Deterministic and non-mock callable execution-path evidence are both validated.
 
 ## Risks and Controls
 - Risk: orphaned student mappings after transfer.

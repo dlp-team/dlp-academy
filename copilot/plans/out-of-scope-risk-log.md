@@ -32,8 +32,8 @@ Track risks discovered during implementation/review that are important but outsi
 	Related Files: [functions/security/transferPromotionApplyHandler.js](functions/security/transferPromotionApplyHandler.js)
 	Risk Summary: Chunked apply execution can partially commit when an error occurs mid-run, before final run/rollback status metadata is written, leaving non-atomic state transitions.
 	Why Out of Scope: Initially deferred because it required explicit run-state transitions and checkpoint persistence across chunk execution.
-	Recommended Follow-up: Core mitigation implemented with run states (`pending`, `applying`, `applied`, `failed`) and per-chunk checkpoints in [functions/security/transferPromotionApplyHandler.js](functions/security/transferPromotionApplyHandler.js) and [functions/security/transferPromotionRollbackHandler.js](functions/security/transferPromotionRollbackHandler.js). Keep stress validation and retry-policy review as follow-up hardening.
-	Owner/Status: MITIGATED - core recovery controls delivered 2026-04-04; fixture-backed execution evidence pending
+	Recommended Follow-up: Core mitigation implemented with run states (`pending`, `applying`, `applied`, `failed`) and per-chunk checkpoints in [functions/security/transferPromotionApplyHandler.js](functions/security/transferPromotionApplyHandler.js) and [functions/security/transferPromotionRollbackHandler.js](functions/security/transferPromotionRollbackHandler.js). Non-mock transfer execution evidence is now validated via `tests/e2e/transfer-promotion.spec.js` (`3 passed`) and should be retained as closure artifact.
+	Owner/Status: CLOSED - mitigation and fixture-backed non-mock evidence both complete (2026-04-04)
 
 - Date: 2026-04-04
 	Plan/Phase: [copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-09-validation-docs-review-and-closure-planned.md](copilot/plans/active/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-09-validation-docs-review-and-closure-planned.md)

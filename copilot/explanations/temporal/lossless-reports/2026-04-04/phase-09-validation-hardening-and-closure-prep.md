@@ -32,6 +32,7 @@
 - `npm run lint` -> PASS.
 - `npx tsc --noEmit` -> PASS.
 - `npm run test` -> PASS (134 files, 606 tests).
+- `npm run test:e2e -- tests/e2e/transfer-promotion.spec.js` with non-mock callable path -> PASS (`3 passed`).
 - `get_errors` clean on touched source files.
 
 ## Risk Review

@@ -6,7 +6,7 @@
 2. COMPLETED - Institution settings domain model and calendar foundation.
 3. COMPLETED - Courses/classes academic-year UX and linkage hardening.
 4. IN_REVIEW - Subject period metadata and lifecycle automation.
-5. IN_PROGRESS - Student-course linking, transfer/promote architecture, and enrollment flow hardening.
+5. COMPLETED - Student-course linking, transfer/promote architecture, and enrollment flow hardening.
 6. COMPLETED - Notifications behavior fixes, dedicated page, TTL, and email sync.
 7. COMPLETED - Institution customization preview full-screen fix and parity improvements.
 8. COMPLETED - Bin selection mode parity, visual dimming, and urgency sort labels.
@@ -23,7 +23,7 @@
 
 ## Immediate Next Actions
 - Optional environment follow-up: re-run transfer execution-path evidence against deployed callables (without mock mode) once callable environment readiness is restored.
-- Decide closure path for optional non-mock transfer evidence and execute lifecycle transition gate to `inReview`.
+- Execute lifecycle transition gate to `inReview` and complete required review subphases (optimization, then deep risk analysis).
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.

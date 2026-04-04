@@ -28,6 +28,7 @@
 - `npm run lint`: **PASS**.
 - `npx tsc --noEmit`: **PASS**.
 - `npm run test`: **PASS** (134 files, 606 tests).
+- `npm run test:e2e -- tests/e2e/transfer-promotion.spec.js` (non-mock callable path): **PASS** (3 passed).
 - Full suite includes latest Phase 08 bin parity regressions and Phase 09 type-safety fixes.
 
 ## Current Evidence Snapshot (2026-04-03)
