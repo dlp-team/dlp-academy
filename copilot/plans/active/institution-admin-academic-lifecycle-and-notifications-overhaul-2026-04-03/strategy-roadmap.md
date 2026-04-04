@@ -23,8 +23,7 @@
 
 ## Immediate Next Actions
 - Expand transfer/promotion browser-level e2e from current modal guardrails into full execution-path coverage (dry-run/apply/rollback) once dedicated fixtures are finalized.
-- Execute Phase 05 optimization/consolidation review pass across transfer + course-periodization touched files.
-- Run Phase 05 deep risk analysis review and log any out-of-scope findings in `copilot/plans/out-of-scope-risk-log.md`.
+- Address Phase 05 out-of-scope risk-log items for transfer snapshot scaling and chunked-apply partial-failure recovery design in a dedicated follow-up block.
 
 ## Validation Gates
 - Per change set: `get_errors` on touched files.

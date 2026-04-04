@@ -61,6 +61,8 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - Added browser-level transfer/promotion e2e modal guardrail coverage with explicit env-gated execution:
   - `tests/e2e/transfer-promotion.spec.js` validates source/target academic-year distinctness before enabling `Ejecutar simulación`.
   - optional dry-run execution assertion is gated behind `E2E_TRANSFER_PROMOTION_EXECUTION=1` so fixture-dependent verification remains deterministic.
+- Completed Phase 05 optimization/consolidation pass for the new transfer/promotion e2e suite by centralizing repeated skip-gate reasons and academic-year fixture guards in helper functions.
+- Completed Phase 05 deep risk analysis review and logged out-of-scope items in `copilot/plans/out-of-scope-risk-log.md` (transfer snapshot size scaling and chunked-apply partial-failure recoverability).
 
 ## Validation Evidence
 - `npm run test:unit -- tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/studentCourseLinkUtils.test.js`
@@ -78,11 +80,12 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
 - `npm run test -- tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-rollback-handler.test.js tests/unit/functions/transfer-promotion-roundtrip.test.js tests/unit/services/transferPromotionService.test.js tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx`
 - `npm run test -- tests/unit/utils/coursePeriodScheduleUtils.test.js tests/unit/utils/subjectPeriodLifecycleUtils.test.js tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx tests/unit/pages/subject/SubjectFormModal.coursePeriodSchedule.test.jsx`
 - `npm run test:e2e -- tests/e2e/transfer-promotion.spec.js`
+- `npm run test:e2e -- tests/e2e/transfer-promotion.spec.js` (post-optimization rerun)
 - `get_errors` clean for all touched source and test files in this slice.
 
 ## Remaining in Phase 05
 - Expand transfer/promotion e2e from current modal guardrails into fixture-backed execution-path coverage (dry-run/apply/rollback).
-- Execute inReview readiness sequence for Phase 05 (optimization pass, then deep risk analysis with out-of-scope logging when needed).
+- Address out-of-scope risk-log follow-up design items for large rollback snapshots and chunked apply/rollback recoverability.
 
 ## Risks and Controls
 - Risk: orphaned student mappings after transfer.

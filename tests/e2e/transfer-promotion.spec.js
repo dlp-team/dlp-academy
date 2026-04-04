@@ -5,6 +5,9 @@ const E2E_INSTITUTION_ADMIN_EMAIL = process.env.E2E_INSTITUTION_ADMIN_EMAIL;
 const E2E_INSTITUTION_ADMIN_PASSWORD = process.env.E2E_INSTITUTION_ADMIN_PASSWORD;
 const RUN_TRANSFER_PROMOTION_E2E = process.env.E2E_TRANSFER_PROMOTION_TESTS === '1';
 const RUN_TRANSFER_PROMOTION_EXECUTION = process.env.E2E_TRANSFER_PROMOTION_EXECUTION === '1';
+const RUN_TRANSFER_PROMOTION_E2E_REASON = 'Set E2E_TRANSFER_PROMOTION_TESTS=1 to run transfer/promotion modal e2e guardrails.';
+const MISSING_ACADEMIC_YEAR_FIXTURE_REASON = 'No academic-year options found. Seed course/class fixtures before running transfer/promotion e2e tests.';
+const MISSING_DISTINCT_TARGET_REASON = 'No distinct target academic year is available for transfer/promotion e2e validation.';
 
 const loginAsInstitutionAdmin = async (page) => {
   test.skip(
@@ -52,21 +55,32 @@ const getSelectValues = async (selectLocator) => {
   return Array.from(new Set(values));
 };
 
+const ensureTransferPromotionSuiteEnabled = () => {
+  test.skip(!RUN_TRANSFER_PROMOTION_E2E, RUN_TRANSFER_PROMOTION_E2E_REASON);
+};
+
+const ensureAcademicYearOptionsExist = (values) => {
+  test.skip(values.length === 0, MISSING_ACADEMIC_YEAR_FIXTURE_REASON);
+};
+
+const resolveDistinctTargetAcademicYear = ({ sourceAcademicYear, targetValues }) => {
+  const targetAcademicYear = targetValues.find((value) => value !== sourceAcademicYear);
+  test.skip(!targetAcademicYear, MISSING_DISTINCT_TARGET_REASON);
+  return targetAcademicYear;
+};
+
 const ensureDistinctAcademicYears = async ({ sourceAcademicYearSelect, targetAcademicYearSelect }) => {
   const sourceValues = await getSelectValues(sourceAcademicYearSelect);
-  if (sourceValues.length === 0) {
-    test.skip(true, 'No academic-year options found. Seed course/class fixtures before running transfer/promotion e2e tests.');
-  }
+  ensureAcademicYearOptionsExist(sourceValues);
 
   const sourceAcademicYear = sourceValues[0];
   await sourceAcademicYearSelect.selectOption(sourceAcademicYear);
 
   const targetValues = await getSelectValues(targetAcademicYearSelect);
-  const targetAcademicYear = targetValues.find((value) => value !== sourceAcademicYear);
-
-  if (!targetAcademicYear) {
-    test.skip(true, 'No distinct target academic year is available for transfer/promotion e2e validation.');
-  }
+  const targetAcademicYear = resolveDistinctTargetAcademicYear({
+    sourceAcademicYear,
+    targetValues,
+  });
 
   await targetAcademicYearSelect.selectOption(targetAcademicYear);
 
@@ -78,10 +92,7 @@ const ensureDistinctAcademicYears = async ({ sourceAcademicYearSelect, targetAca
 
 test.describe('Transfer/Promotion modal guardrails', () => {
   test('enforces distinct source and target academic years before execution', async ({ page }) => {
-    test.skip(
-      !RUN_TRANSFER_PROMOTION_E2E,
-      'Set E2E_TRANSFER_PROMOTION_TESTS=1 to run transfer/promotion modal e2e guardrails.'
-    );
+    ensureTransferPromotionSuiteEnabled();
 
     await loginAsInstitutionAdmin(page);
 
@@ -92,9 +103,7 @@ test.describe('Transfer/Promotion modal guardrails', () => {
     } = await openTransferPromotionModal(page);
 
     const sourceValues = await getSelectValues(sourceAcademicYearSelect);
-    if (sourceValues.length === 0) {
-      test.skip(true, 'No academic-year options found. Seed course/class fixtures before running transfer/promotion e2e tests.');
-    }
+    ensureAcademicYearOptionsExist(sourceValues);
 
     const sourceAcademicYear = sourceValues[0];
     await sourceAcademicYearSelect.selectOption(sourceAcademicYear);
@@ -103,11 +112,10 @@ test.describe('Transfer/Promotion modal guardrails', () => {
     await expect(executeButton).toBeDisabled();
 
     const targetValues = await getSelectValues(targetAcademicYearSelect);
-    const distinctTargetAcademicYear = targetValues.find((value) => value !== sourceAcademicYear);
-
-    if (!distinctTargetAcademicYear) {
-      test.skip(true, 'No distinct target academic year is available for transfer/promotion e2e validation.');
-    }
+    const distinctTargetAcademicYear = resolveDistinctTargetAcademicYear({
+      sourceAcademicYear,
+      targetValues,
+    });
 
     await targetAcademicYearSelect.selectOption(distinctTargetAcademicYear);
 
@@ -115,10 +123,7 @@ test.describe('Transfer/Promotion modal guardrails', () => {
   });
 
   test('runs dry-run and renders summary when execution fixtures are available', async ({ page }) => {
-    test.skip(
-      !RUN_TRANSFER_PROMOTION_E2E,
-      'Set E2E_TRANSFER_PROMOTION_TESTS=1 to run transfer/promotion modal e2e guardrails.'
-    );
+    ensureTransferPromotionSuiteEnabled();
 
     test.skip(
       !RUN_TRANSFER_PROMOTION_EXECUTION,

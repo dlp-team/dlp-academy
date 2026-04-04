@@ -1,6 +1,10 @@
 // copilot/explanations/codebase/tests/e2e/transfer-promotion.spec.md
 
 ## Changelog
+### 2026-04-04: Optimization pass for guardrail helpers
+- Consolidated repeated environment-gate and missing-fixture skip reasons into shared helper constants/functions in [tests/e2e/transfer-promotion.spec.js](tests/e2e/transfer-promotion.spec.js).
+- Centralized distinct-target academic-year resolution to reduce duplicate branch logic across both scenarios.
+
 ### 2026-04-04: Transfer/promotion modal guardrails coverage
 - Added browser-level e2e guardrails in [tests/e2e/transfer-promotion.spec.js](tests/e2e/transfer-promotion.spec.js) for institution-admin transfer/promotion modal behavior.
 - Locked deterministic pre-execution validation that keeps `Ejecutar simulación` disabled when source and target academic years are equal.
