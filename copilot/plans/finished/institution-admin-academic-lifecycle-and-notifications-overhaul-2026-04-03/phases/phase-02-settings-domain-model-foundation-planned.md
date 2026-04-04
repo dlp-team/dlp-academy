@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-02-settings-domain-model-foundation-planned.md -->
+<!-- copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-02-settings-domain-model-foundation-planned.md -->
 # Phase 02 - Settings Domain Model Foundation (COMPLETED)
 
 ## Objective

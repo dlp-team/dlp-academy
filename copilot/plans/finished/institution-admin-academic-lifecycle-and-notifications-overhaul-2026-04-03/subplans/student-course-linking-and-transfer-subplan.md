@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md -->
+<!-- copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md -->
 # Student-Course Linking and Transfer Subplan
 
 ## Objective

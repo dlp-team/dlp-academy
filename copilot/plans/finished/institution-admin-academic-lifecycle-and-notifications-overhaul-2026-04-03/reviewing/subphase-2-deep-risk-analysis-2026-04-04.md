@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/subphase-2-deep-risk-analysis-2026-04-04.md -->
+<!-- copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/subphase-2-deep-risk-analysis-2026-04-04.md -->
 # InReview Subphase 2 - Deep Risk Analysis (2026-04-04)
 
 ## Objective

@@ -25,10 +25,10 @@
 - `AGENTS.md`
 - `.github/skills/create-plan/SKILL.md`
 - `copilot/plans/out-of-scope-risk-log.md` (new)
-- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/README.md`
-- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
-- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
-- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/user-updates.md`
+- `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/README.md`
+- `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
+- `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
+- `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/user-updates.md`
 - `functions/security/transferPromotionApplyHandler.js`
 - `functions/security/transferPromotionRollbackHandler.js` (new)
 - `functions/index.js`

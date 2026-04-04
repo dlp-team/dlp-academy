@@ -36,9 +36,9 @@
 
 ## Documentation Sync
 - Updated plan artifacts:
-  - `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md`
-  - `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
-  - `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/course-lifecycle-automation-subplan.md`
+  - `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md`
+  - `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
+  - `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/course-lifecycle-automation-subplan.md`
 - Updated codebase explanations:
   - `copilot/explanations/codebase/src/pages/Content/StudyGuide.md`
   - `copilot/explanations/codebase/src/pages/Content/Exam.md`

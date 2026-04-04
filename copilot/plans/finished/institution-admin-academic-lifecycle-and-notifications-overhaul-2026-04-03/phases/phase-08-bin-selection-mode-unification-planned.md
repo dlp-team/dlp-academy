@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-08-bin-selection-mode-unification-planned.md -->
+<!-- copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-08-bin-selection-mode-unification-planned.md -->
 # Phase 08 - Bin Selection Mode Unification (FINISHED)
 
 ## Objective

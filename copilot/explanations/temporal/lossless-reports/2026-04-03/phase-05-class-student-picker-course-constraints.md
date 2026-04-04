@@ -40,9 +40,9 @@
 
 ## Documentation Sync
 - Updated active plan docs:
-  - `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/README.md`
-  - `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
-  - `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
+  - `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/README.md`
+  - `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
+  - `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
 - Updated codebase explanations:
   - `copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/modals/CreateClassModal.md`
   - `copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/classes-courses/ClassDetail.md`

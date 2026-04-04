@@ -32,8 +32,8 @@
 - `tests/unit/functions/transfer-promotion-apply-handler.test.js` (new)
 - `tests/unit/services/transferPromotionService.test.js`
 - `tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx`
-- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
-- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
+- `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
+- `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
 - `copilot/explanations/codebase/functions/index.md`
 - `copilot/explanations/codebase/functions/security/transferPromotionApplyHandler.md` (new)
 - `copilot/explanations/codebase/src/services/transferPromotionService.md`

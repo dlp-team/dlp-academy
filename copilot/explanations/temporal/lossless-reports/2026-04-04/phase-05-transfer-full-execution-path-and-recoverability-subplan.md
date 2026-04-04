@@ -12,10 +12,10 @@
 
 ## Touched Files
 - Updated: [tests/e2e/transfer-promotion.spec.js](tests/e2e/transfer-promotion.spec.js)
-- Updated: [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md)
-- Updated: [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md)
-- Updated: [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/README.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/README.md)
-- Added: [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md)
+- Updated: [copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md](copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md)
+- Updated: [copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md](copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md)
+- Updated: [copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/README.md](copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/README.md)
+- Added: [copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md](copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md)
 - Updated: [copilot/plans/out-of-scope-risk-log.md](copilot/plans/out-of-scope-risk-log.md)
 - Updated: [copilot/explanations/codebase/tests/e2e/transfer-promotion.spec.md](copilot/explanations/codebase/tests/e2e/transfer-promotion.spec.md)
 
@@ -26,15 +26,15 @@
 - Added optional setup gate `E2E_TRANSFER_PROMOTION_AUTO_SEED=1` with service-account parsing fallbacks (raw/base64/path/multiline `.env`) for disposable fixture seeding attempts.
 - Preserved existing guardrail and dry-run-only scenarios.
 
-### [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md)
+### [copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md](copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md)
 - Added progress bullet entries for full execution-path e2e coverage and new transfer recoverability subplan creation.
 - Updated remaining-work bullets to focus on fixture execution evidence and implementation of the documented recoverability model.
 - Appended latest validation command evidence.
 
-### [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md)
+### [copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md](copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md)
 - Updated immediate-next-action text to reference the new mutation-path e2e gate and the recoverability subplan implementation follow-up.
 
-### [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md)
+### [copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md](copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md)
 - Added dedicated architecture plan for chunked rollback snapshots and checkpointed apply/rollback progression.
 - Defined backward-compatibility path, validation plan, and rollback notes.
 
@@ -65,8 +65,8 @@
 ### Additional Touched Files
 - Updated: [tests/e2e/transfer-promotion.spec.js](tests/e2e/transfer-promotion.spec.js)
 - Updated: [functions/security/transferPromotionDryRunHandler.js](functions/security/transferPromotionDryRunHandler.js)
-- Updated: [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md)
-- Updated: [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md)
+- Updated: [copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md](copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md)
+- Updated: [copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md](copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md)
 - Updated: [copilot/explanations/codebase/tests/e2e/transfer-promotion.spec.md](copilot/explanations/codebase/tests/e2e/transfer-promotion.spec.md)
 - Updated: [copilot/explanations/codebase/functions/security/transferPromotionDryRunHandler.md](copilot/explanations/codebase/functions/security/transferPromotionDryRunHandler.md)
 

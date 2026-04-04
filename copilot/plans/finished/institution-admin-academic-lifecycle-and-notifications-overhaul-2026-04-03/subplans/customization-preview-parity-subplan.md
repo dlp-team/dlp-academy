@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/customization-preview-parity-subplan.md -->
+<!-- copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/customization-preview-parity-subplan.md -->
 # Customization Preview Parity Subplan
 
 ## Objective

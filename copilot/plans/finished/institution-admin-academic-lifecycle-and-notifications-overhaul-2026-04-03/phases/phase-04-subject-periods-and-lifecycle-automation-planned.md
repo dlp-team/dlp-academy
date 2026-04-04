@@ -1,5 +1,5 @@
-<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md -->
-# Phase 04 - Subject Periods and Lifecycle Automation (IN_REVIEW)
+<!-- copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md -->
+# Phase 04 - Subject Periods and Lifecycle Automation (FINISHED)
 
 ## Objective
 Model and enforce subject period windows and automatic lifecycle transitions with role-aware visibility.
@@ -108,7 +108,7 @@ Model and enforce subject period windows and automatic lifecycle transitions wit
   - `reviewing/subphase-2-deep-risk-analysis-2026-04-04.md`
 
 ## Remaining in Phase 04
-- Complete final plan-level `inReview` closure transition after synchronized verification of all finished/in-review phases.
+- None. Phase implementation and review requirements are complete.
 
 ## Risks and Controls
 - Risk: incorrect hiding of active content.

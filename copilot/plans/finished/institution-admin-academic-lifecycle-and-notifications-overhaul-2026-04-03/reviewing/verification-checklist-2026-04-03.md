@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md -->
+<!-- copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/reviewing/verification-checklist-2026-04-03.md -->
 # Verification Checklist (Seed)
 
 ## Plan Integrity
@@ -25,6 +25,7 @@
 - [x] Lifecycle transition to `inReview` executed after implementation.
 - [x] InReview Subphase 1 (optimization/consolidation) completed with evidence.
 - [x] InReview Subphase 2 (deep risk analysis) completed with evidence.
+- [x] Final lifecycle transition to `finished` executed after review completion.
 
 ## Current Evidence Snapshot (2026-04-04)
 - `npm run lint`: **PASS**.

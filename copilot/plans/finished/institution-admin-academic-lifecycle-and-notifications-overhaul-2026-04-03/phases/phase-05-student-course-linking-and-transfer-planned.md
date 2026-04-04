@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md -->
+<!-- copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md -->
 # Phase 05 - Student-Course Linking and Transfer Flows (FINISHED)
 
 ## Objective
@@ -62,7 +62,7 @@ Implement safe pathways to link students to courses (CSV/manual), constrain clas
   - `tests/e2e/transfer-promotion.spec.js` validates source/target academic-year distinctness before enabling `Ejecutar simulación`.
   - optional dry-run execution assertion is gated behind `E2E_TRANSFER_PROMOTION_EXECUTION=1` so fixture-dependent verification remains deterministic.
 - Expanded transfer/promotion e2e suite with full execution-path coverage (`dry-run -> apply -> rollback`) behind explicit mutation gate `E2E_TRANSFER_PROMOTION_APPLY_ROLLBACK=1` so destructive fixtures stay opt-in.
-- Added Phase 05 follow-up architecture subplan [copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md](copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md) for chunked rollback snapshots and checkpointed apply/rollback recoverability.
+- Added Phase 05 follow-up architecture subplan [copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md](copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/subplans/student-course-linking-and-transfer-subplan.md) for chunked rollback snapshots and checkpointed apply/rollback recoverability.
 - Implemented `transferPromotionSnapshotUtils` to normalize transfer execution snapshots, compute integrity checksums, and switch between inline/chunked snapshot persistence plans.
 - Hardened `applyTransferPromotionPlan` run-state flow with staged statuses (`pending -> applying -> applied/failed`), per-chunk checkpoint writes, and failure markers.
 - Hardened `rollbackTransferPromotionPlan` flow with chunked snapshot reassembly (checksum-validated), rollback checkpoint writes, and failure markers for degraded execution paths.

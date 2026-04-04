@@ -17,8 +17,8 @@
 ## Touched Files
 - `src/pages/InstitutionAdminDashboard/utils/transferPromotionPlanUtils.ts` (new)
 - `tests/unit/pages/institution-admin/transferPromotionPlanUtils.test.js` (new)
-- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
-- `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
+- `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md`
+- `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
 - `copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/utils/transferPromotionPlanUtils.md` (new)
 - `copilot/explanations/codebase/tests/unit/pages/institution-admin/transferPromotionPlanUtils.test.md` (new)
 

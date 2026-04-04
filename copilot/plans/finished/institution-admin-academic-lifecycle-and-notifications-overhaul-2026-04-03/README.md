@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/README.md -->
+<!-- copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/README.md -->
 # Institution Admin Academic Lifecycle and Notifications Overhaul (2026-04-03)
 
 ## Problem Statement
@@ -35,8 +35,8 @@ Execute the institutional roadmap described by the user in the original plan pro
 - Unrequested schema rewrites that are not directly tied to this roadmap.
 
 ## Lifecycle Status
-- Lifecycle: `inReview`
-- Current phase: `Phase 04 lifecycle review (IN_REVIEW), Phase 09 closure gates (FINISHED)`
+- Lifecycle: `finished`
+- Current phase: `All roadmap phases completed and review checklist satisfied`
 - Last updated: 2026-04-04
 
 ## Key Decisions

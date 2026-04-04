@@ -31,8 +31,8 @@
 
 ## Documentation Sync
 - Updated:
-  - `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md`
-  - `copilot/plans/inReview/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
+  - `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-04-subject-periods-and-lifecycle-automation-planned.md`
+  - `copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/strategy-roadmap.md`
   - `copilot/explanations/codebase/src/utils/subjectAccessUtils.md`
   - `copilot/explanations/codebase/tests/unit/utils/subjectAccessUtils.test.md`
 
