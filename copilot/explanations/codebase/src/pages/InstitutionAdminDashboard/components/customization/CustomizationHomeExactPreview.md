@@ -30,6 +30,7 @@
 - Added layout-aware mock bin rendering so preview now reflects list/grid control state (`layoutMode`) instead of forcing grid-only cards.
 - Added stable test hooks (`data-testid`) for preview bin list/grid items to support deterministic parity assertions.
 - Added a role-transition parity guard so switching to `Vista estudiante` while in `Compartido` mode automatically falls back to manual mode, preventing stale shared-only preview surfaces.
+- Added a stable viewport-frame test hook (`customization-preview-viewport-frame`) to support deterministic desktop/tablet/mobile width parity assertions.
 
 ### 2026-04-04
 - Added `Archivos` as a first-class mock resource type in topic drilldown to better mirror production content structures.

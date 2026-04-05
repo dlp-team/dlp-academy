@@ -842,6 +842,7 @@ const CustomizationHomeExactPreview = ({
     <div className="home-page rounded-2xl border overflow-hidden transition-all" style={{ ...cssVariables, ...frameStyle }}>
       <div className="p-4 bg-slate-200 dark:bg-slate-950">
         <div
+          data-testid="customization-preview-viewport-frame"
           className="mx-auto rounded-2xl border border-[var(--home-card-border)] bg-slate-50 dark:bg-slate-900 transition-all duration-300"
           style={{ maxWidth: viewportWidth }}
         >

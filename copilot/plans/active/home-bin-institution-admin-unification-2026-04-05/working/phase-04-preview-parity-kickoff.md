@@ -87,6 +87,10 @@
 - Hardened temporary active-zone highlighting behavior in [src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx](src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx).
 - Added deterministic integration test in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx) to validate highlight appears on color-field focus and clears after focus leaves.
 
+## Block C Progress (Slice 14 Completed)
+- Added stable viewport-frame test hook in [src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx](src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx).
+- Added responsive parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx) for desktop/tablet/mobile viewport width transitions.
+
 ## Block C Validation Evidence (Slice 1)
 - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
 - `npm run lint` (PASS)
@@ -152,6 +156,11 @@
 - `npm run lint` (PASS)
 - `npx tsc --noEmit` (PASS)
 
-## Upcoming Block C Scope (Slice 14)
+## Block C Validation Evidence (Slice 14)
+- `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
+- `npm run lint` (PASS)
+- `npx tsc --noEmit` (PASS)
+
+## Upcoming Block C Scope (Slice 15)
 - Expand real-surface parity for topic/resources/bin rendering deltas.
 - Add focused parity assertions for requested preview behavior consistency.

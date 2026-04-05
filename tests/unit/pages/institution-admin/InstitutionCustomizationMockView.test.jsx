@@ -140,6 +140,22 @@ describe('InstitutionCustomizationMockView', () => {
     expect(screen.queryByText(/pulsa esc para salir de pantalla completa/i)).toBeNull();
   });
 
+  it('applies viewport width parity for desktop, tablet, and mobile toggles', () => {
+    renderCustomizationPreview();
+
+    const viewportFrame = screen.getByTestId('customization-preview-viewport-frame');
+    expect(viewportFrame.style.maxWidth).toBe('100%');
+
+    fireEvent.click(screen.getByTitle(/tablet/i));
+    expect(viewportFrame.style.maxWidth).toBe('768px');
+
+    fireEvent.click(screen.getByTitle(/m[oó]vil/i));
+    expect(viewportFrame.style.maxWidth).toBe('390px');
+
+    fireEvent.click(screen.getByTitle(/escritorio/i));
+    expect(viewportFrame.style.maxWidth).toBe('100%');
+  });
+
   it('switches preview tabs and supports subject topic drilldown', () => {
     renderCustomizationPreview();
 
