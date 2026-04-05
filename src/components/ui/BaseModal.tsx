@@ -2,11 +2,16 @@
 import React from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
+type ModalCloseReason = 'backdrop';
+
 type BaseModalProps = {
   isOpen: boolean;
   onClose?: () => void;
+  onBeforeClose?: (reason: ModalCloseReason) => boolean;
+  onBlockedCloseAttempt?: (reason: ModalCloseReason) => void;
   children: ReactNode;
   rootClassName?: string;
+  rootStyle?: CSSProperties;
   backdropClassName?: string;
   contentWrapperClassName?: string;
   contentClassName?: string;
@@ -22,8 +27,11 @@ type BaseModalProps = {
 const BaseModal = ({
   isOpen,
   onClose,
+  onBeforeClose,
+  onBlockedCloseAttempt,
   children,
   rootClassName = 'fixed inset-0 z-50',
+  rootStyle,
   backdropClassName = 'absolute inset-0 bg-black/50 dark:bg-black/70 transition-opacity',
   contentWrapperClassName = 'relative z-10 flex min-h-full items-center justify-center p-4',
   contentClassName = 'relative w-full max-w-md',
@@ -40,9 +48,17 @@ const BaseModal = ({
   }
 
   const handleBackdropClick = () => {
-    if (closeOnBackdropClick) {
-      onClose?.();
+    if (!closeOnBackdropClick) {
+      return;
     }
+
+    const canClose = onBeforeClose ? onBeforeClose('backdrop') : true;
+    if (!canClose) {
+      onBlockedCloseAttempt?.('backdrop');
+      return;
+    }
+
+    onClose?.();
   };
 
   const handleContentClick: React.MouseEventHandler<HTMLDivElement> = (event) => {
@@ -52,7 +68,7 @@ const BaseModal = ({
   };
 
   return (
-    <div className={rootClassName}>
+    <div className={rootClassName} style={rootStyle}>
       <div
         aria-hidden="true"
         className={backdropClassName}

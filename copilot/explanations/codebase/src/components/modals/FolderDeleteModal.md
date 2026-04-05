@@ -1,25 +1,22 @@
+## Changelog
+- **2026-04-05:** Migrated both FolderDeleteModal screens to shared `BaseModal` while preserving distinct close semantics (main screen closes modal, confirmation screen returns to previous step).
+
 # FolderDeleteModal.jsx
 
 ## Purpose
-- **Source file:** `src/components/modals/FolderDeleteModal.jsx`
+- **Source file:** `src/components/modals/FolderDeleteModal.tsx`
 - **Last documented:** 2026-02-24
 - **Role:** Modal component that encapsulates focused user actions and confirmations.
 
 ## File Flow (High Level)
 - Receives data/capabilities from imported modules and React ecosystem APIs.
-- Defines 4 function(s) that implement the module behavior.
+- Defines 3 function(s) that implement the module behavior.
 - Exposes behavior through the module exports consumed by pages and sibling shared modules.
 
 ## Functions Explained
 ### FolderDeleteModal
 - **Type:** const arrow
 - **Parameters:** `{ isOpen`, `onClose`, `onDeleteAll`, `onDeleteFolderOnly`, `folderName`, `itemCount }`
-- **What it does:** Encapsulates a focused part of this file's behavior and contributes to the module output.
-- **Internal relation:** Not explicitly re-invoked by name internally (likely entry/export function).
-
-### handleBackdropClick
-- **Type:** const arrow
-- **Parameters:** `e`
 - **What it does:** Encapsulates a focused part of this file's behavior and contributes to the module output.
 - **Internal relation:** Not explicitly re-invoked by name internally (likely entry/export function).
 
@@ -43,6 +40,7 @@
 ## Imports and Dependencies
 - `react`: `React`, `useState`
 - `lucide-react`: `AlertTriangle`, `Trash2`, `FolderOpen`, `X`, `ArrowLeft`
+- `../ui/BaseModal`: `BaseModal`
 
 ## Example
 ```jsx

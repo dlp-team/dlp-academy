@@ -29,6 +29,11 @@
   - first two low-risk delete-confirm modal migrations completed,
   - scrollbar left-gap compensation fix shipped,
   - targeted tests passing.
+- Progress (2026-04-05, Block B):
+  - close-guard hooks added to base modal for dirty-state interception wiring,
+  - FolderDeleteModal migrated to shared base modal shell,
+  - regression coverage added for folder modal screen-flow semantics,
+  - targeted tests + typecheck passing.
 
 ### Phase 02 - Selection Mode and Bin Unification
 - Status: PLANNED
@@ -97,6 +102,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Expand BaseModal adoption to higher-complexity modal flows (FolderDeleteModal, Sudo/admin modals) while preserving existing close semantics.
-2. Add dirty-state close interception support and adopt it in first form modal candidate.
+1. Adopt dirty-state close interception in the first form modal candidate (likely Home or Institution Admin form flow).
+2. Expand BaseModal adoption to admin-facing modals (for example Sudo/admin confirm surfaces) with lossless close behavior.
 3. Run wider Phase 01 validation sweep (typecheck/lint + targeted modal regression suite) and prepare closure checklist.

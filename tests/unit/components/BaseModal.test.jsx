@@ -47,6 +47,45 @@ describe('BaseModal', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it('blocks close when onBeforeClose returns false', () => {
+    const onClose = vi.fn();
+    const onBlockedCloseAttempt = vi.fn();
+
+    render(
+      <BaseModal
+        isOpen
+        onClose={onClose}
+        onBeforeClose={() => false}
+        onBlockedCloseAttempt={onBlockedCloseAttempt}
+      >
+        <p>Contenido modal</p>
+      </BaseModal>
+    );
+
+    fireEvent.click(screen.getByTestId('base-modal-backdrop'));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(onBlockedCloseAttempt).toHaveBeenCalledWith('backdrop');
+  });
+
+  it('allows close when onBeforeClose returns true', () => {
+    const onClose = vi.fn();
+
+    render(
+      <BaseModal
+        isOpen
+        onClose={onClose}
+        onBeforeClose={() => true}
+      >
+        <p>Contenido modal</p>
+      </BaseModal>
+    );
+
+    fireEvent.click(screen.getByTestId('base-modal-backdrop'));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('applies custom wrapper style values', () => {
     render(
       <BaseModal isOpen contentWrapperStyle={{ top: '84px' }}>

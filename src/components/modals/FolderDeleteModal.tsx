@@ -1,7 +1,8 @@
-// src/components/modals/FolderDeleteModal.jsx
+// src/components/modals/FolderDeleteModal.tsx
 import React, { useState } from 'react';
 import { AlertTriangle, Trash2, FolderOpen, X, ArrowLeft } from 'lucide-react';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../utils/layoutConstants';
+import BaseModal from '../ui/BaseModal';
 
 const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, folderName, itemCount }: any) => {
     const [confirmationType, setConfirmationType] = useState<any>(null);
@@ -24,10 +25,15 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
     // Confirmation Screen
     if (confirmationType) {
         return (
-            <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto transition-colors" style={OVERLAY_TOP_OFFSET_STYLE}>
-                <div className="flex min-h-full items-center justify-center p-4 text-center">
-                    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" onClick={handleCancel} />
-                    <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[calc(100vh-10rem)] overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200 text-left">
+            <BaseModal
+                isOpen={isOpen}
+                onClose={handleCancel}
+                rootClassName="fixed inset-x-0 bottom-0 z-50 overflow-y-auto transition-colors"
+                rootStyle={OVERLAY_TOP_OFFSET_STYLE}
+                backdropClassName="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity"
+                contentWrapperClassName="flex min-h-full items-center justify-center p-4 text-center"
+                contentClassName="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[calc(100vh-10rem)] overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200 text-left"
+            >
                     {/* Confirmation Header */}
                     <div className={`p-6 relative ${confirmationType === 'all' ? 'bg-gradient-to-r from-red-600 to-red-700' : 'bg-gradient-to-r from-blue-600 to-blue-700'}`}>
                         <div className="flex items-center gap-4">
@@ -109,18 +115,21 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
                             </button>
                         </div>
                     </div>
-                    </div>
-                </div>
-            </div>
+            </BaseModal>
         );
     }
 
     // Main Selection Screen
     return (
-        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto transition-colors" style={OVERLAY_TOP_OFFSET_STYLE}>
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" onClick={onClose} />
-                <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[calc(100vh-10rem)] overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200 text-left">
+        <BaseModal
+            isOpen={isOpen}
+            onClose={onClose}
+            rootClassName="fixed inset-x-0 bottom-0 z-50 overflow-y-auto transition-colors"
+            rootStyle={OVERLAY_TOP_OFFSET_STYLE}
+            backdropClassName="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity"
+            contentWrapperClassName="flex min-h-full items-center justify-center p-4 text-center"
+            contentClassName="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full max-h-[calc(100vh-10rem)] overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200 text-left"
+        >
                 {/* Header */}
                 <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 relative">
                     <div className="flex items-start gap-4">
@@ -207,9 +216,7 @@ const FolderDeleteModal = ({ isOpen, onClose, onDeleteAll, onDeleteFolderOnly, f
                         </button>
                     </div>
                 </div>
-                </div>
-            </div>
-        </div>
+        </BaseModal>
     );
 };
 

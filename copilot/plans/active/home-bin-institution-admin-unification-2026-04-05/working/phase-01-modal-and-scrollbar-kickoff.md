@@ -38,3 +38,8 @@
   - Migrated [src/components/modals/DeleteModal.tsx](src/components/modals/DeleteModal.tsx) and [src/pages/Home/components/HomeDeleteConfirmModal.tsx](src/pages/Home/components/HomeDeleteConfirmModal.tsx) to the shared base.
   - Fixed scrollbar left-gap artifact in [src/index.css](src/index.css) by switching to `scrollbar-gutter: stable`.
   - Added tests in [tests/unit/components/BaseModal.test.jsx](tests/unit/components/BaseModal.test.jsx) and re-ran nearby modal tests.
+- 2026-04-05: Block B implemented.
+  - Extended [src/components/ui/BaseModal.tsx](src/components/ui/BaseModal.tsx) with close interception hooks and root style support.
+  - Migrated [src/components/modals/FolderDeleteModal.tsx](src/components/modals/FolderDeleteModal.tsx) to `BaseModal` while preserving per-screen close semantics.
+  - Added [tests/unit/components/FolderDeleteModal.test.jsx](tests/unit/components/FolderDeleteModal.test.jsx).
+  - Expanded [tests/unit/components/BaseModal.test.jsx](tests/unit/components/BaseModal.test.jsx) for blocked-close coverage.

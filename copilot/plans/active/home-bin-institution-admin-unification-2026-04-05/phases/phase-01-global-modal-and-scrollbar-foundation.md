@@ -55,9 +55,26 @@ Create a reusable modal foundation and remove the left-side scrollbar compensati
   - `npm run test:unit -- tests/unit/components/BaseModal.test.jsx tests/unit/components/BinConfirmModals.test.jsx` (PASS)
   - `get_errors` on touched files (clean)
 
+## Implementation Progress - Block B (2026-04-05)
+- Base modal close-interception contract expanded:
+  - Added `onBeforeClose` and `onBlockedCloseAttempt` hooks in [src/components/ui/BaseModal.tsx](src/components/ui/BaseModal.tsx).
+  - Added `rootStyle` support for top-offset constrained overlays.
+- Higher-complexity modal migration completed:
+  - [src/components/modals/FolderDeleteModal.tsx](src/components/modals/FolderDeleteModal.tsx) now uses `BaseModal` on both main and confirmation screens.
+  - Preserved screen-specific close semantics:
+    - main screen backdrop closes modal,
+    - confirmation screen backdrop returns to the previous step.
+- Regression tests expanded:
+  - [tests/unit/components/BaseModal.test.jsx](tests/unit/components/BaseModal.test.jsx) now verifies close-block behavior.
+  - New [tests/unit/components/FolderDeleteModal.test.jsx](tests/unit/components/FolderDeleteModal.test.jsx) covers backdrop and action-flow semantics.
+- Validation evidence:
+  - `npm run test:unit -- tests/unit/components/BaseModal.test.jsx tests/unit/components/FolderDeleteModal.test.jsx tests/unit/components/BinConfirmModals.test.jsx` (PASS)
+  - `npx tsc --noEmit` (PASS)
+  - `get_errors` on touched files (clean)
+
 ## Remaining Work in Phase 01
-- Migrate higher-complexity modal surfaces (for example folder/action-flow and admin modals) onto the shared base.
-- Add dirty-state close interception path to the modal foundation once the first adopting form modal is selected.
+- Expand shared modal adoption to admin and form-heavy modal surfaces.
+- Adopt dirty-state interception in at least one form/modal flow with explicit unsaved-change handling.
 - Run broader validation pass (lint/typecheck + targeted modal regressions) before Phase 01 closure.
 
 ## Validation Gate
