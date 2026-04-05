@@ -1,3 +1,4 @@
+<!-- copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.md -->
 # CustomizationHomeExactPreview.tsx
 
 ## Overview
@@ -28,6 +29,7 @@
 - Integrated `CustomizationPreviewHeader` while preserving role-aware label behavior (`Panel docente` / `Panel estudiante`) and responsive preview width simulation.
 - Added layout-aware mock bin rendering so preview now reflects list/grid control state (`layoutMode`) instead of forcing grid-only cards.
 - Added stable test hooks (`data-testid`) for preview bin list/grid items to support deterministic parity assertions.
+- Added a role-transition parity guard so switching to `Vista estudiante` while in `Compartido` mode automatically falls back to manual mode, preventing stale shared-only preview surfaces.
 
 ### 2026-04-04
 - Added `Archivos` as a first-class mock resource type in topic drilldown to better mirror production content structures.

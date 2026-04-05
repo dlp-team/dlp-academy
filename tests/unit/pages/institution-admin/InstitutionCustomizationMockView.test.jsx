@@ -200,6 +200,21 @@ describe('InstitutionCustomizationMockView', () => {
     expect(screen.getByText(/asignaturas compartidas/i)).toBeTruthy();
   });
 
+  it('falls back to manual mode when switching to student from shared tab', async () => {
+    renderCustomizationPreview();
+
+    fireEvent.click(screen.getByRole('button', { name: /compartido/i }));
+    expect(screen.getByText(/asignaturas compartidas/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /vista estudiante/i }));
+
+    await waitFor(() => {
+      expect(screen.queryByText(/asignaturas compartidas/i)).toBeNull();
+      expect(screen.queryByRole('button', { name: /compartido/i })).toBeNull();
+      expect(screen.getByText(/mis asignaturas/i)).toBeTruthy();
+    });
+  });
+
   it('supports nested folder navigation before topic drilldown', () => {
     renderCustomizationPreview();
 

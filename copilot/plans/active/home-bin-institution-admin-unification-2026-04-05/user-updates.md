@@ -10,6 +10,15 @@
 - (none)
 
 ## Processed Updates
+- 2026-04-05: Continued Phase 04 Block C with student-role shared-tab fallback parity hardening.
+  - Trigger: user asked to continue active plan execution.
+  - Integrated files:
+    - [src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx](src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx)
+    - [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-04-customization-preview-parity.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-04-customization-preview-parity.md)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-04-preview-parity-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-04-preview-parity-kickoff.md)
+
 - 2026-04-05: Subject create-flow outside-close regression fixed in runtime modal path.
   - Trigger: user reported that create-subject modal closed immediately on outside click without unsaved confirmation after entering data.
   - Integrated files:

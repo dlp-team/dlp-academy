@@ -1,3 +1,4 @@
+<!-- copilot/explanations/codebase/tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.md -->
 # InstitutionCustomizationMockView.test.jsx
 
 ## Overview
@@ -24,6 +25,7 @@
 - Added `Uso`-mode current-subject filter parity coverage to validate `Alternar filtro de asignaturas vigentes` behavior against preview fixtures.
 - Added `Cursos`-mode current-subject filter parity coverage to validate removal of non-current academic-year wrappers while preserving current-year wrapper visibility.
 - Added `Cursos`-mode academic-year range parity coverage to validate `Año académico` filter removes out-of-range wrappers while keeping in-range wrappers visible.
+- Added student-role transition parity coverage to validate fallback from `Compartido` mode to manual preview when switching to `Vista estudiante`.
 - Extended fullscreen regression coverage with explicit stacking-context assertion (`z-[10050]`) to prevent overlap with global fixed header.
 
 ### 2026-04-04

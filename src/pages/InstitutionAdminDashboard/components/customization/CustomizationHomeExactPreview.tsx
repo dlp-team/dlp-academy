@@ -387,6 +387,12 @@ const CustomizationHomeExactPreview = ({
     setCollapsedGroups({});
   }, [viewMode]);
 
+  useEffect(() => {
+    if (isStudentRole && viewMode === 'shared') {
+      setViewMode('grid');
+    }
+  }, [isStudentRole, viewMode]);
+
   const cssVariables = useMemo(() => buildHomeThemeCssVariables({
     primary: form?.primary,
     secondary: form?.secondary,
