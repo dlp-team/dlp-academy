@@ -133,6 +133,20 @@ describe('InstitutionCustomizationMockView', () => {
     expect(screen.queryByDisplayValue('#zzzzzz')).toBeNull();
   });
 
+  it('reflects primary color edits in preview header avatar styling', async () => {
+    renderCustomizationPreview();
+
+    const previewAvatar = screen.getByLabelText(/avatar de vista previa/i);
+    const normalizeColor = (value) => String(value || '').replace(/\s+/g, '').toLowerCase();
+
+    const [primaryColorInput] = screen.getAllByPlaceholderText('#000000');
+    fireEvent.change(primaryColorInput, { target: { value: '#123456' } });
+
+    await waitFor(() => {
+      expect(normalizeColor(previewAvatar.style.backgroundColor)).toContain('18,52,86');
+    });
+  });
+
   it('toggles fullscreen mode and collapses controls panel', () => {
     renderCustomizationPreview();
 

@@ -29,6 +29,7 @@
 - Added temporary active-zone highlight parity coverage to validate color-focus highlight appears and clears when focus leaves the color field.
 - Added responsive viewport parity coverage to validate desktop/tablet/mobile toggles update preview frame width deterministically.
 - Added invalid-hex fallback parity coverage to validate color input preserves last valid value when invalid hex text is entered.
+- Added live-color reflection parity coverage to validate primary color edits update preview header avatar styling immediately.
 - Extended fullscreen regression coverage with explicit stacking-context assertion (`z-[10050]`) to prevent overlap with global fixed header.
 
 ### 2026-04-04
