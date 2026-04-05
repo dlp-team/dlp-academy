@@ -91,6 +91,11 @@ describe('applyTransferPromotionPlan handler', () => {
         institutionId: 'inst-1',
         role: 'institutionadmin',
       },
+      'institutions/inst-1': {
+        automationSettings: {
+          transferPromotionEnabled: true,
+        },
+      },
       'courses/course-source-1': {
         institutionId: 'inst-1',
         name: '1 ESO',
@@ -204,6 +209,56 @@ describe('applyTransferPromotionPlan handler', () => {
     });
   });
 
+  it('denies apply when transfer promotion automation is disabled for institution', async () => {
+    const dbMock = createDbMock({
+      'users/actor-1': {
+        institutionId: 'inst-1',
+        role: 'institutionadmin',
+      },
+      'institutions/inst-1': {
+        automationSettings: {
+          transferPromotionEnabled: false,
+        },
+      },
+      'courses/course-source-1': {
+        institutionId: 'inst-1',
+        name: '1 ESO',
+        academicYear: '2025-2026',
+      },
+    });
+
+    const handler = createApplyTransferPromotionPlanHandler({
+      dbInstance: dbMock,
+      serverTimestampProvider: () => 'SERVER_TIMESTAMP',
+    });
+
+    await expect(handler({
+      auth: { uid: 'actor-1' },
+      data: {
+        dryRunPayload: {
+          requestId: 'transfer-promote-inst-1-2025-2026-2026-2027-promote',
+          institutionId: 'inst-1',
+          sourceAcademicYear: '2025-2026',
+          targetAcademicYear: '2026-2027',
+          mode: 'promote',
+        },
+        mappings: {
+          courses: [
+            {
+              sourceCourseId: 'course-source-1',
+              targetCourseId: 'course-target-1',
+              sourceAcademicYear: '2025-2026',
+              targetAcademicYear: '2026-2027',
+              action: 'create',
+            },
+          ],
+          classes: [],
+          studentAssignments: [],
+        },
+      },
+    })).rejects.toThrow('Transfer promotion tool is disabled for institution inst-1.');
+  });
+
   it('returns alreadyApplied when request run was previously applied', async () => {
     const dbMock = createDbMock({
       'users/actor-1': {
@@ -259,6 +314,11 @@ describe('applyTransferPromotionPlan handler', () => {
       'users/actor-1': {
         institutionId: 'inst-1',
         role: 'institutionadmin',
+      },
+      'institutions/inst-1': {
+        automationSettings: {
+          transferPromotionEnabled: true,
+        },
       },
       'courses/course-source-1': {
         institutionId: 'inst-1',
@@ -363,6 +423,11 @@ describe('applyTransferPromotionPlan handler', () => {
       'users/actor-1': {
         institutionId: 'inst-1',
         role: 'institutionadmin',
+      },
+      'institutions/inst-1': {
+        automationSettings: {
+          transferPromotionEnabled: true,
+        },
       },
       'courses/course-source-1': {
         institutionId: 'inst-1',

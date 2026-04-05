@@ -3,8 +3,8 @@
 
 ## Overview
 - Source file: `src/pages/InstitutionAdminDashboard/hooks/useInstitutionSettings.ts`
-- Last documented: 2026-04-03
-- Role: Hook for loading and saving institution academic settings and relocated teacher-governance policy flags.
+- Last documented: 2026-04-05
+- Role: Hook for loading and saving institution academic settings, institution-level automation toggles, and relocated teacher-governance policy flags.
 
 ## Responsibilities
 - Loads current institution settings from Firestore document `institutions/{institutionId}`.
@@ -16,8 +16,12 @@
   - `academicCalendar.periodization.mode`
   - `academicCalendar.periodization.customLabel`
   - `courseLifecycle.postCoursePolicy`
+- Persists institution automation settings:
+  - `automationSettings.transferPromotionEnabled`
+  - `automationSettings.subjectLifecycleAutomationEnabled`
 - Persists teacher governance policy flags inside `accessPolicies.teachers`.
 - Provides save-state and validation state for UI consumption.
+- Exposes normalized `automationSettings` to downstream tabs so organization tooling can apply institution-level gating.
 
 ## Exports
 - `useInstitutionSettings`
@@ -29,4 +33,5 @@
 - `../../../utils/institutionPolicyUtils`
 
 ## Changelog
+- 2026-04-05: Added normalized automation settings read/write flow with backward-compatible defaults (`true` when missing) and exposed `automationSettings` in hook return payload.
 - 2026-04-03: Added initial hook implementation for the new Institution Admin configuration tab.

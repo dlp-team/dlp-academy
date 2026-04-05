@@ -69,6 +69,46 @@ const createDbMock = ({ actorData, institutions = [], courses = [], classes = []
 };
 
 describe('runTransferPromotionDryRun handler', () => {
+  it('denies dry-run when transfer promotion automation is disabled for institution', async () => {
+    const handler = createRunTransferPromotionDryRunHandler({
+      dbInstance: createDbMock({
+        actorData: {
+          id: 'actor-admin',
+          role: 'institutionadmin',
+          institutionId: 'inst-1',
+        },
+        institutions: [
+          {
+            id: 'inst-1',
+            automationSettings: {
+              transferPromotionEnabled: false,
+            },
+          },
+        ],
+      }),
+    });
+
+    await expect(handler({
+      auth: { uid: 'actor-admin' },
+      data: {
+        institutionId: 'inst-1',
+        sourceAcademicYear: '2025-2026',
+        targetAcademicYear: '2026-2027',
+        mode: 'promote',
+      },
+    })).rejects.toThrow(HttpsError);
+
+    await expect(handler({
+      auth: { uid: 'actor-admin' },
+      data: {
+        institutionId: 'inst-1',
+        sourceAcademicYear: '2025-2026',
+        targetAcademicYear: '2026-2027',
+        mode: 'promote',
+      },
+    })).rejects.toThrow('Transfer promotion tool is disabled for institution inst-1.');
+  });
+
   it('denies institution admins trying to run dry-run for another institution', async () => {
     const handler = createRunTransferPromotionDryRunHandler({
       dbInstance: createDbMock({

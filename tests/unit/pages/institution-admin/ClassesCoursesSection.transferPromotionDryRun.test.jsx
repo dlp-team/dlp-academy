@@ -188,4 +188,27 @@ describe('ClassesCoursesSection transfer/promotion dry-run trigger', () => {
       rollbackId: 'rollback-1',
     });
   });
+
+  it('disables transfer/promotion entry point when institution automation toggle is off', () => {
+    render(
+      <ClassesCoursesSection
+        user={{ uid: 'institution-admin-1', institutionId: 'inst-1' }}
+        institutionId="inst-1"
+        automationSettings={{ transferPromotionEnabled: false }}
+        allStudents={[]}
+        allTeachers={[]}
+        onUploadUsersImportFile={vi.fn()}
+        onRunManualCourseLinkCsvImport={vi.fn()}
+        onRunUsersImportN8n={vi.fn()}
+      />
+    );
+
+    const disabledButton = screen.getByRole('button', { name: /traslado\/promoción deshabilitado/i });
+    expect(disabledButton.hasAttribute('disabled')).toBe(true);
+
+    fireEvent.click(disabledButton);
+
+    expect(screen.queryByRole('button', { name: /ejecutar simulación mock/i })).toBeNull();
+    expect(screen.getByText(/la simulación de traslado\/promoción está deshabilitada/i)).toBeTruthy();
+  });
 });

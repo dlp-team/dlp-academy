@@ -8,6 +8,7 @@ import {
   toUniqueIds,
   validateTransferPromotionPayload,
 } from './transferPromotionPlanUtils.js';
+import { assertTransferPromotionAutomationEnabled } from './institutionAutomationSettings.js';
 
 const PREVIEW_LIMIT = 500;
 
@@ -110,6 +111,8 @@ export const createRunTransferPromotionDryRunHandler = ({
   if (!institutionSnapshot.exists) {
     throw new HttpsError('not-found', 'Institution not found.');
   }
+  const institutionData = institutionSnapshot.data() || {};
+  assertTransferPromotionAutomationEnabled({ institutionData, institutionId });
 
   const [coursesSnapshot, classesSnapshot, studentsSnapshot] = await Promise.all([
     dbInstance.collection('courses').where('institutionId', '==', institutionId).get(),

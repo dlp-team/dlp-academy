@@ -11,6 +11,7 @@ import {
   TRANSFER_SNAPSHOT_CHUNK_SIZE,
   TRANSFER_SNAPSHOT_INLINE_ENTRY_LIMIT,
 } from './transferPromotionSnapshotUtils.js';
+import { assertTransferPromotionAutomationEnabled } from './institutionAutomationSettings.js';
 
 const BATCH_CHUNK_SIZE = 350;
 
@@ -166,6 +167,13 @@ export const createApplyTransferPromotionPlanHandler = ({
       summary: existingRunData?.summary || null,
     };
   }
+
+  const institutionSnapshot = await dbInstance.collection('institutions').doc(institutionId).get();
+  if (!institutionSnapshot.exists) {
+    throw new HttpsError('not-found', 'Institution not found.');
+  }
+  const institutionData = institutionSnapshot.data() || {};
+  assertTransferPromotionAutomationEnabled({ institutionData, institutionId });
 
   const plannedCourses = Array.isArray(mappings?.courses) ? mappings.courses : [];
   const plannedClasses = Array.isArray(mappings?.classes) ? mappings.classes : [];

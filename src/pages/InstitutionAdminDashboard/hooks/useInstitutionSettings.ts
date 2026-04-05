@@ -6,6 +6,10 @@ import { DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils
 
 const DEFAULT_PERIOD_MODE = 'trimester';
 const DEFAULT_POST_COURSE_POLICY = 'retain_all_no_join';
+const DEFAULT_AUTOMATION_SETTINGS = {
+  transferPromotionEnabled: true,
+  subjectLifecycleAutomationEnabled: true,
+};
 
 const DEFAULT_SETTINGS_FORM = {
   academicYearStartDate: '',
@@ -14,6 +18,8 @@ const DEFAULT_SETTINGS_FORM = {
   periodMode: DEFAULT_PERIOD_MODE,
   customPeriodLabel: '',
   postCoursePolicy: DEFAULT_POST_COURSE_POLICY,
+  transferPromotionEnabled: true,
+  subjectLifecycleAutomationEnabled: true,
   allowTeacherAutonomousSubjectCreation: true,
   canAssignClassesAndStudents: true,
   canDeleteSubjectsWithStudents: false,
@@ -29,6 +35,11 @@ const normalizePostCoursePolicy = (value: any) => {
   return DEFAULT_POST_COURSE_POLICY;
 };
 
+const normalizeAutomationSettings = (value: any = null) => ({
+  transferPromotionEnabled: value?.transferPromotionEnabled !== false,
+  subjectLifecycleAutomationEnabled: value?.subjectLifecycleAutomationEnabled !== false,
+});
+
 export const useInstitutionSettings = (user: any, institutionIdOverride: any = null) => {
   const effectiveInstitutionId = institutionIdOverride || user?.institutionId || null;
   const [loading, setLoading] = useState(false);
@@ -37,6 +48,7 @@ export const useInstitutionSettings = (user: any, institutionIdOverride: any = n
   const [settingsForm, setSettingsForm] = useState(DEFAULT_SETTINGS_FORM);
   const [baseAccessPolicies, setBaseAccessPolicies] = useState<any>(DEFAULT_ACCESS_POLICIES);
   const [baseCourseLifecycle, setBaseCourseLifecycle] = useState<any>({});
+  const [baseAutomationSettings, setBaseAutomationSettings] = useState<any>(DEFAULT_AUTOMATION_SETTINGS);
 
   const fetchSettings = useCallback(async () => {
     if (!effectiveInstitutionId) return;
@@ -48,6 +60,7 @@ export const useInstitutionSettings = (user: any, institutionIdOverride: any = n
         setSettingsForm(DEFAULT_SETTINGS_FORM);
         setBaseAccessPolicies(DEFAULT_ACCESS_POLICIES);
         setBaseCourseLifecycle({});
+        setBaseAutomationSettings(DEFAULT_AUTOMATION_SETTINGS);
         return;
       }
 
@@ -56,9 +69,11 @@ export const useInstitutionSettings = (user: any, institutionIdOverride: any = n
       const periodization = academicCalendar.periodization || {};
       const normalizedPolicies = normalizeAccessPolicies(institutionData.accessPolicies);
       const teacherPolicy = normalizedPolicies?.teachers || DEFAULT_ACCESS_POLICIES.teachers;
+      const normalizedAutomationSettings = normalizeAutomationSettings(institutionData.automationSettings);
 
       setBaseAccessPolicies(normalizedPolicies);
       setBaseCourseLifecycle(institutionData.courseLifecycle || {});
+      setBaseAutomationSettings(normalizedAutomationSettings);
 
       setSettingsForm({
         academicYearStartDate: academicCalendar.startDate || '',
@@ -67,6 +82,8 @@ export const useInstitutionSettings = (user: any, institutionIdOverride: any = n
         periodMode: normalizePeriodMode(periodization.mode),
         customPeriodLabel: periodization.customLabel || '',
         postCoursePolicy: normalizePostCoursePolicy((institutionData.courseLifecycle || {}).postCoursePolicy),
+        transferPromotionEnabled: normalizedAutomationSettings.transferPromotionEnabled,
+        subjectLifecycleAutomationEnabled: normalizedAutomationSettings.subjectLifecycleAutomationEnabled,
         allowTeacherAutonomousSubjectCreation: teacherPolicy.allowTeacherAutonomousSubjectCreation !== false,
         canAssignClassesAndStudents: teacherPolicy.canAssignClassesAndStudents !== false,
         canDeleteSubjectsWithStudents: teacherPolicy.canDeleteSubjectsWithStudents === true,
@@ -120,6 +137,12 @@ export const useInstitutionSettings = (user: any, institutionIdOverride: any = n
         postCoursePolicy: normalizePostCoursePolicy(settingsForm.postCoursePolicy),
       };
 
+      const nextAutomationSettings = normalizeAutomationSettings({
+        ...(baseAutomationSettings || DEFAULT_AUTOMATION_SETTINGS),
+        transferPromotionEnabled: settingsForm.transferPromotionEnabled,
+        subjectLifecycleAutomationEnabled: settingsForm.subjectLifecycleAutomationEnabled,
+      });
+
       await updateDoc(doc(db, 'institutions', effectiveInstitutionId), {
         academicCalendar: {
           startDate: settingsForm.academicYearStartDate,
@@ -131,12 +154,14 @@ export const useInstitutionSettings = (user: any, institutionIdOverride: any = n
           },
         },
         courseLifecycle: nextCourseLifecycle,
+        automationSettings: nextAutomationSettings,
         accessPolicies: nextAccessPolicies,
         updatedAt: serverTimestamp(),
       });
 
       setBaseAccessPolicies(nextAccessPolicies);
       setBaseCourseLifecycle(nextCourseLifecycle);
+      setBaseAutomationSettings(nextAutomationSettings);
       setSettingsMessage({ type: 'success', text: 'Configuración guardada correctamente.' });
     } catch (error) {
       console.error('Error saving institution settings:', error);
@@ -144,12 +169,18 @@ export const useInstitutionSettings = (user: any, institutionIdOverride: any = n
     } finally {
       setSaving(false);
     }
-  }, [baseAccessPolicies, baseCourseLifecycle, canSave, effectiveInstitutionId, saving, settingsForm]);
+  }, [baseAccessPolicies, baseAutomationSettings, baseCourseLifecycle, canSave, effectiveInstitutionId, saving, settingsForm]);
+
+  const automationSettings = useMemo(() => ({
+    transferPromotionEnabled: settingsForm.transferPromotionEnabled !== false,
+    subjectLifecycleAutomationEnabled: settingsForm.subjectLifecycleAutomationEnabled !== false,
+  }), [settingsForm.subjectLifecycleAutomationEnabled, settingsForm.transferPromotionEnabled]);
 
   return {
     loading,
     saving,
     canSave,
+    automationSettings,
     settingsMessage,
     settingsForm,
     setSettingsForm,

@@ -3,10 +3,11 @@
 
 ## Overview
 - Source file: [tests/unit/functions/transfer-promotion-roundtrip.test.js](tests/unit/functions/transfer-promotion-roundtrip.test.js)
-- Last documented: 2026-04-04
+- Last documented: 2026-04-05
 - Role: Deterministic roundtrip validation for transfer apply + rollback consistency.
 
 ## Coverage
+- Seeds institution automation settings with transfer tool enabled so apply/rollback roundtrip remains representative after server-side toggle enforcement.
 - Executes `applyTransferPromotionPlan` and `rollbackTransferPromotionPlan` handlers against the same in-memory store.
 - Verifies student profile course links (`courseId`, `courseIds`, `enrolledCourseIds`) return to pre-transfer state after rollback.
 - Verifies source class membership is restored and transfer-created class/course artifacts are removed.

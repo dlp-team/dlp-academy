@@ -2,8 +2,8 @@
 # ClassesCoursesSection.jsx
 
 ## Overview
-- **Source file:** `src/pages/InstitutionAdminDashboard/components/ClassesCoursesSection.jsx`
-- **Last documented:** 2026-04-02
+- **Source file:** `src/pages/InstitutionAdminDashboard/components/ClassesCoursesSection.tsx`
+- **Last documented:** 2026-04-05
 - **Role:** Institution Admin organization orchestrator for course/class navigation, CRUD wiring, bin lifecycle actions, and modal coordination.
 
 ## Responsibilities
@@ -17,6 +17,7 @@
 - Requires typed-name confirmation only for permanent delete actions.
 - Displays retention countdown messaging for trashed courses/classes.
 - Adds course-tab entrypoint (`Vincular cursos por CSV`) using shared import workflow modal.
+- Applies institution-level transfer/promotion automation gating (disabled entrypoint + warning copy + modal mount guard).
 
 ## Exports
 - `default ClassesCoursesSection`
@@ -36,6 +37,7 @@
 - `../../../utils/courseLabelUtils`
 
 ## Changelog
+- 2026-04-05: Added organization-tab transfer/promotion gating using `automationSettings.transferPromotionEnabled`, including disabled action state and contextual warning copy.
 - 2026-04-04: Wired `institutionPeriodConfig` from `useClassesCourses` into `CreateCourseModal` so course-level period schedule inputs align with institution defaults.
 - 2026-04-04: Wired rollback callback (`rollbackTransferPromotionPlanById`) into transfer modal so applied transfer runs can be reversed from organization tab.
 - 2026-04-04: Extended transfer/promotion modal wiring with apply callback (`applyTransferPromotionDryRunPlan`) so dry-run plans can be executed from the same UI flow.

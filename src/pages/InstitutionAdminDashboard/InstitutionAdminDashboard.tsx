@@ -148,6 +148,7 @@ const InstitutionAdminDashboard = ({ user }: any) => {
           <ClassesCoursesSection
             user={user}
             institutionId={effectiveInstitutionId}
+            automationSettings={institutionSettings.automationSettings}
             allStudents={users.allStudents}
             allTeachers={users.allTeachers}
             onUploadUsersImportFile={users.uploadUsersImportFile}

@@ -88,12 +88,14 @@ const isAcademicYearWithinRange = (academicYear: any, startYear: any, endYear: a
 const ClassesCoursesSection = ({
   user,
   institutionId,
+  automationSettings,
   allStudents,
   allTeachers,
   onUploadUsersImportFile,
   onRunManualCourseLinkCsvImport,
   onRunUsersImportN8n,
 }: any) => {
+  const transferPromotionEnabled = automationSettings?.transferPromotionEnabled !== false;
   const tabKey = buildInstitutionScopedPersistenceKey('institution-admin-organization', institutionId, 'tab');
   // ── Navigation ─────────────────────────────────────────────────────────────
   const [tab,            setTab]            = usePersistentState(tabKey, TAB_COURSES);
@@ -511,11 +513,19 @@ const ClassesCoursesSection = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowTransferPromotionModal(true)}
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-xs font-semibold"
+                  onClick={() => {
+                    if (!transferPromotionEnabled) return;
+                    setShowTransferPromotionModal(true);
+                  }}
+                  disabled={!transferPromotionEnabled}
+                  className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold border ${
+                    transferPromotionEnabled
+                      ? 'border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-900/20 hover:bg-emerald-100 dark:hover:bg-emerald-900/30'
+                      : 'border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 cursor-not-allowed'
+                  }`}
                 >
                   <ArrowRightLeft className="w-4 h-4" />
-                  Simular traslado/promoción
+                  {transferPromotionEnabled ? 'Simular traslado/promoción' : 'Traslado/promoción deshabilitado'}
                 </button>
               </>
             )}
@@ -532,6 +542,12 @@ const ClassesCoursesSection = ({
           </div>
         )}
       </div>
+
+      {tab === TAB_COURSES && !showingDetail && !transferPromotionEnabled && (
+        <div className="mb-6 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-xs text-amber-700 dark:text-amber-300">
+          La simulación de traslado/promoción está deshabilitada para esta institución desde la pestaña de Configuración.
+        </div>
+      )}
 
       {/* ── Content ── */}
       {loading ? (
@@ -874,14 +890,16 @@ const ClassesCoursesSection = ({
         onRunN8nImport={onRunUsersImportN8n}
       />
 
-      <TransferPromotionDryRunModal
-        isOpen={showTransferPromotionModal}
-        onClose={() => setShowTransferPromotionModal(false)}
-        availableAcademicYears={availableAcademicYears}
-        onRunDryRun={runTransferPromotionDryRunPreview}
-        onApplyPlan={applyTransferPromotionDryRunPlan}
-        onRollbackPlan={rollbackTransferPromotionPlanById}
-      />
+      {transferPromotionEnabled && (
+        <TransferPromotionDryRunModal
+          isOpen={showTransferPromotionModal}
+          onClose={() => setShowTransferPromotionModal(false)}
+          availableAcademicYears={availableAcademicYears}
+          onRunDryRun={runTransferPromotionDryRunPreview}
+          onApplyPlan={applyTransferPromotionDryRunPlan}
+          onRollbackPlan={rollbackTransferPromotionPlanById}
+        />
+      )}
     </div>
   );
 };

@@ -89,13 +89,27 @@
   - Phase 02 exit criteria satisfied.
 
 ### Phase 03 - Institution Admin Settings and Automation Controls
-- Status: PLANNED
+- Status: IN_PROGRESS
 - Goal: expand settings for academic periods, course order, and automatic feature toggles.
 - Outputs:
   - ordinary/extraordinary period defaults,
   - drag-and-drop non-duplicated course ordering,
   - institution-level tool toggles,
   - secure tenant-scoped writes and reads.
+- Progress (2026-04-05, Block A):
+  - added institution-level automation toggles (`transferPromotionEnabled`, `subjectLifecycleAutomationEnabled`) in [src/pages/InstitutionAdminDashboard/hooks/useInstitutionSettings.ts](src/pages/InstitutionAdminDashboard/hooks/useInstitutionSettings.ts) and [src/pages/InstitutionAdminDashboard/components/SettingsTabContent.tsx](src/pages/InstitutionAdminDashboard/components/SettingsTabContent.tsx),
+  - passed automation settings into organization tab from [src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx](src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx) and enforced transfer-tool UI gating in [src/pages/InstitutionAdminDashboard/components/ClassesCoursesSection.tsx](src/pages/InstitutionAdminDashboard/components/ClassesCoursesSection.tsx),
+  - enforced transfer toggle server-side in [functions/security/transferPromotionDryRunHandler.js](functions/security/transferPromotionDryRunHandler.js) and [functions/security/transferPromotionApplyHandler.js](functions/security/transferPromotionApplyHandler.js) via [functions/security/institutionAutomationSettings.js](functions/security/institutionAutomationSettings.js),
+  - added deterministic frontend/backend coverage:
+    - [tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx](tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx),
+    - [tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx](tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx),
+    - [tests/unit/functions/transfer-promotion-dry-run-handler.test.js](tests/unit/functions/transfer-promotion-dry-run-handler.test.js),
+    - [tests/unit/functions/transfer-promotion-apply-handler.test.js](tests/unit/functions/transfer-promotion-apply-handler.test.js),
+    - [tests/unit/functions/transfer-promotion-roundtrip.test.js](tests/unit/functions/transfer-promotion-roundtrip.test.js),
+  - validation gate evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-roundtrip.test.js` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
 
 ### Phase 04 - Customization Preview Parity
 - Status: PLANNED
@@ -146,6 +160,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Start Phase 03 kickoff slice for Institution Admin settings and automation controls.
-2. Build a dependency-safe Phase 03 working note with first-file candidates and guardrails.
+1. Continue Phase 03 Block B with institution period-default propagation into course setup/edit surfaces.
+2. Continue Phase 03 Block C with deterministic course-order normalization and persistence work.
 3. Keep cadence discipline (validate -> commit -> push) for each new Phase 03 block.

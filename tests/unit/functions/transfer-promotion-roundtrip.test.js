@@ -87,6 +87,11 @@ describe('transfer promotion apply/rollback roundtrip', () => {
         institutionId: 'inst-1',
         role: 'institutionadmin',
       },
+      'institutions/inst-1': {
+        automationSettings: {
+          transferPromotionEnabled: true,
+        },
+      },
       'courses/course-source-1': {
         institutionId: 'inst-1',
         academicYear: '2025-2026',

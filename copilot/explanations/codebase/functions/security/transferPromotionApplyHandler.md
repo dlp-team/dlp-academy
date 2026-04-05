@@ -2,6 +2,9 @@
 # transferPromotionApplyHandler.js
 
 ## Changelog
+### 2026-04-05: Institution automation-toggle enforcement
+- Added institution automation-setting guard (`assertTransferPromotionAutomationEnabled`) before apply execution so transfer plans are rejected when institution-level transfer tooling is disabled.
+
 ### 2026-04-04: Checkpointed apply-state and chunked snapshot persistence
 - Added staged run-state transitions (`pending -> applying -> applied/failed`) with deterministic failure metadata.
 - Added per-chunk checkpoint writes under `transferPromotionRuns/{requestId}/checkpoints/{chunkIndex}`.
@@ -9,11 +12,12 @@
 
 ## Overview
 - Source file: `functions/security/transferPromotionApplyHandler.js`
-- Last documented: 2026-04-04
+- Last documented: 2026-04-05
 - Role: Callable handler factory that applies transfer/promote writes from dry-run payload outputs.
 
 ## Responsibilities
 - Validates caller auth/role and tenant boundaries before applying writes.
+- Enforces institution-level transfer automation toggle before constructing apply operations.
 - Validates dry-run payload contract and request/rollback id consistency.
 - Applies planned course/class creation and student link updates in chunked batched writes.
 - Applies optional class membership updates based on transfer mode/options.

@@ -3,7 +3,7 @@
 
 ## Overview
 - Source file: `tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx`
-- Last documented: 2026-04-04
+- Last documented: 2026-04-05
 - Role: Regression coverage for transfer/promotion dry-run trigger wiring in organization tab.
 
 ## Coverage
@@ -11,3 +11,4 @@
 - Verifies modal dry-run execution delegates to `runTransferPromotionDryRunPreview` from `useClassesCourses`.
 - Verifies modal apply action delegates to `applyTransferPromotionDryRunPlan` from `useClassesCourses`.
 - Verifies modal rollback action delegates to `rollbackTransferPromotionPlanById` from `useClassesCourses`.
+- Verifies transfer/promotion trigger is disabled and modal path is blocked when institution automation toggle is off.

@@ -1,6 +1,6 @@
 // src/pages/InstitutionAdminDashboard/components/SettingsTabContent.tsx
 import React from 'react';
-import { AlertCircle, CalendarDays, CheckCircle2, Loader2, Settings2, ShieldCheck } from 'lucide-react';
+import { AlertCircle, CalendarDays, CheckCircle2, Loader2, Settings2, ShieldCheck, Sparkles } from 'lucide-react';
 
 const SettingsTabContent = ({
   loading,
@@ -165,6 +165,50 @@ const SettingsTabContent = ({
             <div>
               <p className="font-medium text-slate-700 dark:text-slate-300">Permitir eliminar asignaturas con alumnado vinculado</p>
               <p className="text-sm text-slate-500 dark:text-slate-400">Si está desactivado, no podrán eliminarse asignaturas con clases o alumnos asociados.</p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+        <div className="flex items-start gap-3 mb-5">
+          <Sparkles className="w-5 h-5 text-indigo-500 mt-0.5" />
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">Automatizaciones institucionales</h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Activa o desactiva herramientas globales para todo el equipo de la institución.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40">
+            <input
+              type="checkbox"
+              checked={settingsForm.transferPromotionEnabled}
+              onChange={(e) => setField('transferPromotionEnabled', e.target.checked)}
+              className="mt-1 rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+            />
+            <div>
+              <p className="font-medium text-slate-700 dark:text-slate-300">Habilitar simulación y aplicación de traslados/promociones</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Controla el acceso a la herramienta de simulación en la pestaña de Cursos y Clases.
+              </p>
+            </div>
+          </label>
+
+          <label className="flex items-start gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40">
+            <input
+              type="checkbox"
+              checked={settingsForm.subjectLifecycleAutomationEnabled}
+              onChange={(e) => setField('subjectLifecycleAutomationEnabled', e.target.checked)}
+              className="mt-1 rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+            />
+            <div>
+              <p className="font-medium text-slate-700 dark:text-slate-300">Habilitar automatización de ciclo de vida de asignaturas</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Permite ejecuciones automáticas o manuales del motor de transición de estado académico.
+              </p>
             </div>
           </label>
         </div>
