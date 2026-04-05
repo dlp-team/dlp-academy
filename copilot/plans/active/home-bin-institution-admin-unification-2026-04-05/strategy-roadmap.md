@@ -78,6 +78,11 @@
   - expanded list inline-panel regression coverage for folder and shortcut entry types in [tests/unit/pages/home/BinView.listInlinePanel.test.jsx](tests/unit/pages/home/BinView.listInlinePanel.test.jsx),
   - validated type-specific action labels and suppression behavior,
   - targeted tests + lint + typecheck passing.
+- Progress (2026-04-05, Block D):
+  - propagated Home list-mode selection context through recursive list rendering in [src/components/modules/ListViewItem.tsx](src/components/modules/ListViewItem.tsx) and [src/components/modules/ListItems/FolderListItem.tsx](src/components/modules/ListItems/FolderListItem.tsx),
+  - wired Home list consumers in [src/pages/Home/components/HomeContent.tsx](src/pages/Home/components/HomeContent.tsx) to pass selection context for nested rows,
+  - added focused selection-dimming tests in [tests/unit/components/ListViewItem.selectionDimming.test.jsx](tests/unit/components/ListViewItem.selectionDimming.test.jsx),
+  - targeted tests + lint + typecheck passing.
 
 ### Phase 03 - Institution Admin Settings and Automation Controls
 - Status: PLANNED
@@ -137,6 +142,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Review remaining Home list-mode selection emphasis gaps for nested list structures.
-2. Decide whether nested list items require explicit dimming parity beyond current grid-first scope.
-3. Run broader impacted Home/Bin regression sweep and prepare next Phase 02 implementation checkpoint.
+1. Run broader impacted Home/Bin regression sweep for Phase 02 readiness.
+2. Validate list/grid visual parity manually for nested folder trees in Home.
+3. Prepare Phase 02 closure checklist draft once broader validation is complete.

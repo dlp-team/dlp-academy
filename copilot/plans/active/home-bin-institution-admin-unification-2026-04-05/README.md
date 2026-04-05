@@ -91,6 +91,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Revisit Home list-mode selection emphasis for nested list hierarchies.
-2. Decide whether nested list rows require explicit dimming parity beyond current grid focus.
-3. Run broader impacted Home/Bin tests and prepare next Phase 02 checkpoint.
+1. Run broader impacted Home/Bin tests to validate current Phase 02 scope end-to-end.
+2. Validate list/grid visual parity manually for nested folder trees in Home.
+3. Prepare a Phase 02 closure checklist draft if broader validation remains clean.

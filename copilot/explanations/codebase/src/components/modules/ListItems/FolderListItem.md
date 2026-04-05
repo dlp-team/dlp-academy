@@ -1,8 +1,14 @@
 # FolderListItem.jsx
 
+## Changelog
+### 2026-04-05: Recursive selection-context propagation
+- Added optional row `dimmingClass` prop so parent list wrappers can dim only the current row (not the entire subtree wrapper).
+- Propagates `selectMode`, `selectedItemKeys`, and `enableSelectionDimming` to recursive `ListViewItem` children.
+- Enables nested list rows to stay in sync with Home selection-mode emphasis behavior.
+
 ## Purpose
 - **Source file:** `src/components/modules/ListItems/FolderListItem.jsx`
-- **Last documented:** 2026-02-24
+- **Last documented:** 2026-04-05
 - **Role:** Feature module component composed by pages and higher-level views.
 
 ## File Flow (High Level)

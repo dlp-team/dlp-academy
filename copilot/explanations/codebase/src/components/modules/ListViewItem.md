@@ -1,6 +1,11 @@
 # ListViewItem.jsx
 
 ## Changelog
+### 2026-04-05: Home nested list selection-dimming parity
+- Added optional selection-context inputs (`selectMode`, `selectedItemKeys`, `enableSelectionDimming`).
+- Subject rows now compute selected state from shared selection keys and apply Home dimming helper classes when appropriate.
+- Folder rows now receive row-level dimming contract via `FolderListItem` props while preserving recursive rendering behavior.
+
 ### 2026-04-04: Shared selection ring parity
 - List rows now consume shared selection ring constants used across manual and bin surfaces for visual consistency.
 
@@ -13,7 +18,7 @@
 
 ## Purpose
 - **Source file:** `src/components/modules/ListViewItem.jsx`
-- **Last documented:** 2026-02-24
+- **Last documented:** 2026-04-05
 - **Role:** Feature module component composed by pages and higher-level views.
 
 ## File Flow (High Level)

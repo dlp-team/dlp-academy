@@ -33,6 +33,10 @@ const FolderListItem = ({
     onDropAction,
     draggable = true,
     path,
+    dimmingClass = '',
+    selectMode = false,
+    selectedItemKeys = new Set(),
+    enableSelectionDimming = false,
     onFocusItem = () => {},
     getCardVisualState = () => ({ isAnimating: false, isCutPending: false })
 }: any) => {
@@ -272,7 +276,7 @@ const FolderListItem = ({
                     isDragOver 
                         ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-400 dark:border-indigo-500 scale-[1.01] shadow-md'
                         : ''
-                } ${isDragging ? 'opacity-0 scale-95 transition-none' : ''}`}
+                } ${isDragging ? 'opacity-0 scale-95 transition-none' : ''} ${dimmingClass}`}
                 style={{ marginLeft: `${indent}px` }}
             >
                 <div 
@@ -550,6 +554,9 @@ const FolderListItem = ({
                                         onDropAction={onDropAction}
                                         draggable={draggable}
                                         path={path}
+                                        selectMode={selectMode}
+                                        selectedItemKeys={selectedItemKeys}
+                                        enableSelectionDimming={enableSelectionDimming}
                                         onFocusItem={onFocusItem}
                                         getCardVisualState={getCardVisualState}
                                     />
@@ -579,6 +586,9 @@ const FolderListItem = ({
                                         onDropAction={onDropAction}
                                         draggable={draggable}
                                         path={path}
+                                        selectMode={selectMode}
+                                        selectedItemKeys={selectedItemKeys}
+                                        enableSelectionDimming={enableSelectionDimming}
                                         onFocusItem={onFocusItem}
                                         getCardVisualState={getCardVisualState}
                                     />

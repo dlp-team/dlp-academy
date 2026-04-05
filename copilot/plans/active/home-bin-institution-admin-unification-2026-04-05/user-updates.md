@@ -113,3 +113,14 @@
     - [phases/phase-02-selection-mode-and-bin-unification.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md)
     - [strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
     - [working/phase-02-selection-and-bin-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md)
+
+- 2026-04-05: Continued execution into Phase 02 Block D with nested list selection parity.
+  - Trigger: leverage response requested continued execution.
+  - Integrated files:
+    - [src/components/modules/ListViewItem.tsx](src/components/modules/ListViewItem.tsx)
+    - [src/components/modules/ListItems/FolderListItem.tsx](src/components/modules/ListItems/FolderListItem.tsx)
+    - [src/pages/Home/components/HomeContent.tsx](src/pages/Home/components/HomeContent.tsx)
+    - [tests/unit/components/ListViewItem.selectionDimming.test.jsx](tests/unit/components/ListViewItem.selectionDimming.test.jsx)
+    - [phases/phase-02-selection-mode-and-bin-unification.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md)
+    - [strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+    - [working/phase-02-selection-and-bin-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md)

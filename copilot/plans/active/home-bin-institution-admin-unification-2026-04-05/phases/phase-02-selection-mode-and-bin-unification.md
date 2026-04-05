@@ -77,3 +77,15 @@ Unify selection-mode behavior between Home and Bin and implement requested Bin g
     - `npm run test -- tests/unit/pages/home/BinView.listInlinePanel.test.jsx tests/unit/components/BinSelectionOverlay.test.jsx tests/unit/components/BinGridItem.test.jsx tests/unit/utils/selectionVisualUtils.test.js` (PASS)
     - `npm run lint` (PASS)
     - `npx tsc --noEmit` (PASS)
+
+- 2026-04-05 - Block D completed
+  - Added Home list nested-selection parity plumbing across:
+    - [src/components/modules/ListViewItem.tsx](src/components/modules/ListViewItem.tsx)
+    - [src/components/modules/ListItems/FolderListItem.tsx](src/components/modules/ListItems/FolderListItem.tsx)
+    - [src/pages/Home/components/HomeContent.tsx](src/pages/Home/components/HomeContent.tsx)
+  - Selection/dimming now propagates via `selectMode` + `selectedItemKeys` in recursive list rendering for Home list mode.
+  - Added focused contract tests in [tests/unit/components/ListViewItem.selectionDimming.test.jsx](tests/unit/components/ListViewItem.selectionDimming.test.jsx).
+  - Validation evidence:
+    - `npm run test -- tests/unit/components/ListViewItem.selectionDimming.test.jsx tests/unit/pages/home/BinView.listInlinePanel.test.jsx tests/unit/components/BinSelectionOverlay.test.jsx tests/unit/components/BinGridItem.test.jsx tests/unit/utils/selectionVisualUtils.test.js tests/unit/pages/home/HomeMainContent.test.jsx` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)

@@ -1,6 +1,10 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-04-05: Nested list-mode selection parity wiring
+- Home list-mode now forwards selection context (`selectMode`, `selectedItemKeys`, `enableSelectionDimming`) to list-row renderers.
+- Enables recursive nested list rows to align with Home selection highlighting/dimming behavior.
+
 ### 2026-04-05: Selection-mode dimming emphasis for Home grid cards
 - Added `getHomeUnselectedDimmingClass(...)` integration for grid wrappers in selection mode.
 - Unselected cards now apply brightness/saturation dimming only when at least one selection exists.

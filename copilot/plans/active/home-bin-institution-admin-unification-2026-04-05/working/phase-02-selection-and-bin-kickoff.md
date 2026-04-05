@@ -43,3 +43,7 @@
   - Expanded inline-panel regression suite for folder and shortcut list entries.
   - Verified type-specific action labels and action availability remain correct.
   - Validation passed for targeted tests, lint, and typecheck.
+- 2026-04-05: Phase 02 Block D implemented.
+  - Propagated selection context through recursive Home list rendering to support nested-row selection/dimming parity.
+  - Added focused contract tests for ListViewItem selection-dimming behavior.
+  - Validation passed for targeted tests, lint, and typecheck.

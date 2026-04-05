@@ -5,7 +5,7 @@ import SubjectListItem from './ListItems/SubjectListItem';
 import FolderListItem from './ListItems/FolderListItem';
 import { useGhostDrag } from '../../hooks/useGhostDrag'; // Adjust path if needed
 import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../utils/dragPayloadUtils';
-import { SHARED_SELECTION_RING_CLASS } from '../../utils/selectionVisualUtils';
+import { SHARED_SELECTION_RING_CLASS, getHomeUnselectedDimmingClass } from '../../utils/selectionVisualUtils';
 
 const ListViewItem = ({ 
     user,
@@ -36,6 +36,9 @@ const ListViewItem = ({
     draggable = true,
     path = [],
     isSelected = false,
+    selectMode = false,
+    selectedItemKeys = new Set(),
+    enableSelectionDimming = false,
     onFocusItem = () => {},
     getCardVisualState = () => ({ isAnimating: false, isCutPending: false })
 }: any) => {
@@ -102,6 +105,12 @@ const ListViewItem = ({
         visualState?.isAnimating ? 'scale-95' : 'scale-100',
         visualState?.isCutPending ? 'opacity-60' : 'opacity-100'
     ].join(' ');
+    const selectionKey = `${type}:${item?.shortcutId || item?.id}`;
+    const hasSelection = enableSelectionDimming && selectMode && selectedItemKeys.size > 0;
+    const computedIsSelected = selectMode ? (selectedItemKeys.has(selectionKey) || isSelected) : isSelected;
+    const dimmingClass = enableSelectionDimming
+        ? getHomeUnselectedDimmingClass({ hasSelection, isSelected: computedIsSelected })
+        : '';
 
     if (path.includes(item.id)) {
         console.warn(`Cycle detected in List View for item: ${item.name}`);
@@ -113,7 +122,7 @@ const ListViewItem = ({
     // (including expanded children), making nested cards unfocusable.
     if (type === 'folder') {
         return (
-            <div className={`${visualClasses} ${isSelected ? `${SHARED_SELECTION_RING_CLASS} rounded-xl` : ''}`}>
+            <div className={`${visualClasses} ${computedIsSelected ? `${SHARED_SELECTION_RING_CLASS} rounded-xl` : ''}`}>
                 <FolderListItem
                     user={user}
                     item={item}
@@ -137,6 +146,10 @@ const ListViewItem = ({
                     onDropAction={onDropAction}
                     draggable={draggable}
                     path={currentPath}
+                    dimmingClass={dimmingClass}
+                    selectMode={selectMode}
+                    selectedItemKeys={selectedItemKeys}
+                    enableSelectionDimming={enableSelectionDimming}
                     onFocusItem={onFocusItem}
                     getCardVisualState={getCardVisualState}
                 />
@@ -174,7 +187,7 @@ const ListViewItem = ({
     };
 
     return (
-        <div className={`select-none animate-in fade-in duration-200 ${visualClasses} ${isSelected ? `${SHARED_SELECTION_RING_CLASS} rounded-xl` : ''}`}>
+        <div className={`select-none animate-in fade-in duration-200 ${visualClasses} ${computedIsSelected ? `${SHARED_SELECTION_RING_CLASS} rounded-xl` : ''} ${dimmingClass}`}>
             {/* ROW CONTAINER - Apply indentation here via margin */}
             <div 
                 ref={itemRef}
