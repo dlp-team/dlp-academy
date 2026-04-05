@@ -375,6 +375,12 @@
     - `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js tests/unit/pages/institution-admin/userDeletionFeedback.test.js` (PASS),
     - `npm run lint` (PASS),
     - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C):
+  - consolidated repeated access-delete confirm state reset, tab-switch handlers, and load-more button rendering in [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx),
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js tests/unit/pages/institution-admin/userDeletionFeedback.test.js` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
 
 ### Phase 07 - Validation, Deep Risk Review, and Lifecycle Transition
 - Status: PLANNED
@@ -399,6 +405,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Continue Phase 06 with Block C low-risk consolidation targets in Institution Admin user-management surfaces.
+1. Continue Phase 06 with Block D low-risk consolidation targets in Institution Admin user-management surfaces.
 2. Keep deterministic tests aligned with each extraction to preserve behavior parity.
 3. Keep cadence discipline (validate -> commit -> push) for every major block.

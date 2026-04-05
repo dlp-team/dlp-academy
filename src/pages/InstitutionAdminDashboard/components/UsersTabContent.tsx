@@ -30,6 +30,12 @@ const createClosedUserDeleteConfirmState = () => ({
   userLabel: '',
 });
 
+const createClosedAccessDeleteConfirmState = () => ({
+  isOpen: false,
+  inviteId: null,
+  inviteLabel: '',
+});
+
 const normalizeUserDeletionRole = (role: any) => (
   String(role || '').trim().toLowerCase() === 'student' ? 'student' : 'teacher'
 );
@@ -72,11 +78,7 @@ const UsersTabContent = ({
   const activeVisibleCount = userType === 'teachers' ? filteredTeachers.length : filteredStudents.length;
 
   const [copied, setCopied] = useState(false);
-  const [accessDeleteConfirm, setAccessDeleteConfirm] = useState({
-    isOpen: false,
-    inviteId: null,
-    inviteLabel: ''
-  });
+  const [accessDeleteConfirm, setAccessDeleteConfirm] = useState(createClosedAccessDeleteConfirmState);
   const [isRemovingAccess, setIsRemovingAccess] = useState(false);
   const [showStudentCsvModal, setShowStudentCsvModal] = useState(false);
   const [userDeleteConfirm, setUserDeleteConfirm] = useState(createClosedUserDeleteConfirmState);
@@ -128,11 +130,7 @@ const UsersTabContent = ({
   const closeAccessDeleteConfirm = () => {
     if (isRemovingAccess) return;
 
-    setAccessDeleteConfirm({
-      isOpen: false,
-      inviteId: null,
-      inviteLabel: ''
-    });
+    setAccessDeleteConfirm(createClosedAccessDeleteConfirmState());
   };
 
   const confirmRemoveAccess = async () => {
@@ -143,11 +141,7 @@ const UsersTabContent = ({
       await onRemoveAccess(accessDeleteConfirm.inviteId);
     } finally {
       setIsRemovingAccess(false);
-      setAccessDeleteConfirm({
-        isOpen: false,
-        inviteId: null,
-        inviteLabel: ''
-      });
+      setAccessDeleteConfirm(createClosedAccessDeleteConfirmState());
     }
   };
 
@@ -157,6 +151,11 @@ const UsersTabContent = ({
 
   const closeStudentCsvModal = () => {
     setShowStudentCsvModal(false);
+  };
+
+  const handleUserTypeChange = (nextUserType: any) => {
+    setUserType(nextUserType);
+    setSearchTerm('');
   };
 
   const requestDeleteUser = (targetUser: any, role: any) => {
@@ -227,15 +226,27 @@ const UsersTabContent = ({
     );
   };
 
+  const renderLoadMoreUsersButton = (label: any) => (
+    <button
+      onClick={onLoadMoreUsers}
+      disabled={isLoadingMoreUsers}
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60"
+    >
+      {isLoadingMoreUsers ? (
+        <>
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Cargando...
+        </>
+      ) : label}
+    </button>
+  );
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 mb-6 flex flex-col md:flex-row gap-4 justify-between">
         <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl w-fit">
           <button
-            onClick={() => {
-              setUserType('teachers');
-              setSearchTerm('');
-            }}
+            onClick={() => handleUserTypeChange('teachers')}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${
               userType === 'teachers' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
             }`}
@@ -243,10 +254,7 @@ const UsersTabContent = ({
             <BookOpen className="w-4 h-4" /> Profesores
           </button>
           <button
-            onClick={() => {
-              setUserType('students');
-              setSearchTerm('');
-            }}
+            onClick={() => handleUserTypeChange('students')}
             className={`px-4 py-1.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${
               userType === 'students' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
             }`}
@@ -460,18 +468,7 @@ const UsersTabContent = ({
                 </div>
                 {canLoadMoreUsers && (
                   <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-center">
-                    <button
-                      onClick={onLoadMoreUsers}
-                      disabled={isLoadingMoreUsers}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60"
-                    >
-                      {isLoadingMoreUsers ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Cargando...
-                        </>
-                      ) : 'Cargar más profesores'}
-                    </button>
+                    {renderLoadMoreUsersButton('Cargar más profesores')}
                   </div>
                 )}
               </div>
@@ -578,18 +575,7 @@ const UsersTabContent = ({
               </div>
               {canLoadMoreUsers && (
                 <div className="px-6 py-4 border-t border-slate-100 dark:border-slate-800 flex justify-center">
-                  <button
-                    onClick={onLoadMoreUsers}
-                    disabled={isLoadingMoreUsers}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60"
-                  >
-                    {isLoadingMoreUsers ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Cargando...
-                      </>
-                    ) : 'Cargar más alumnos'}
-                  </button>
+                  {renderLoadMoreUsersButton('Cargar más alumnos')}
                 </div>
               )}
             </div>

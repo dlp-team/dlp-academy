@@ -7,7 +7,8 @@
 ## Block Tracking
 - Block A (2026-04-05): COMPLETED
 - Block B (2026-04-05): COMPLETED
-- Block C (next): PLANNED
+- Block C (2026-04-05): COMPLETED
+- Block D (next): PLANNED
 
 ## Block A Scope (Completed)
 - Consolidate duplicated users-tab delete feedback logic into shared utility.
@@ -47,3 +48,20 @@
 ## Upcoming Block C Scope
 - Continue low-risk consolidation in Institution Admin user-management surfaces.
 - Keep existing delete-user behavior and tests unchanged while reducing duplication where safe.
+
+## Block C Delivery
+- Consolidated repeated access-delete closed-state factory in:
+  - [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx)
+- Consolidated repeated teachers/students tab switch handlers in:
+  - [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx)
+- Consolidated repeated load-more button rendering in:
+  - [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx)
+
+## Block C Validation Evidence
+- `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js tests/unit/pages/institution-admin/userDeletionFeedback.test.js` (PASS)
+- `npm run lint` (PASS)
+- `npx tsc --noEmit` (PASS)
+
+## Upcoming Block D Scope
+- Continue low-risk consolidation in Institution Admin user-management surfaces.
+- Keep behavior stable and preserve all existing users-tab regression contracts.
