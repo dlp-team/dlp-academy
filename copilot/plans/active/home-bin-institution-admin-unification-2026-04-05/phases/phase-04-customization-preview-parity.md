@@ -225,3 +225,12 @@ Convert Institution Admin customization preview into a true behavioral replica w
     - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
     - `npm run lint` (PASS)
     - `npx tsc --noEmit` (PASS)
+
+- 2026-04-05 - Block C in progress (slice 15)
+  - Added deterministic invalid-hex fallback parity assertions in:
+    - [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx)
+  - Coverage now verifies color input keeps the last valid hex value when an invalid hex token is entered.
+  - Validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)

@@ -91,6 +91,10 @@
 - Added stable viewport-frame test hook in [src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx](src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx).
 - Added responsive parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx) for desktop/tablet/mobile viewport width transitions.
 
+## Block C Progress (Slice 15 Completed)
+- Added deterministic invalid-hex fallback parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx).
+- Coverage now verifies color input preserves last valid hex value when an invalid hex token is entered.
+
 ## Block C Validation Evidence (Slice 1)
 - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
 - `npm run lint` (PASS)
@@ -161,6 +165,11 @@
 - `npm run lint` (PASS)
 - `npx tsc --noEmit` (PASS)
 
-## Upcoming Block C Scope (Slice 15)
+## Block C Validation Evidence (Slice 15)
+- `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
+- `npm run lint` (PASS)
+- `npx tsc --noEmit` (PASS)
+
+## Upcoming Block C Scope (Slice 16)
 - Expand real-surface parity for topic/resources/bin rendering deltas.
 - Add focused parity assertions for requested preview behavior consistency.

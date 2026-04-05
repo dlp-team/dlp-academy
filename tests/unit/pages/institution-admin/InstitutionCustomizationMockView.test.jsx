@@ -119,6 +119,20 @@ describe('InstitutionCustomizationMockView', () => {
     });
   });
 
+  it('preserves previous valid color when an invalid hex value is entered', () => {
+    renderCustomizationPreview();
+
+    const [primaryColorInput] = screen.getAllByPlaceholderText('#000000');
+
+    fireEvent.change(primaryColorInput, { target: { value: '#123456' } });
+    expect(screen.getAllByDisplayValue('#123456').length).toBeGreaterThan(0);
+
+    fireEvent.change(primaryColorInput, { target: { value: '#zzzzzz' } });
+
+    expect(screen.getAllByDisplayValue('#123456').length).toBeGreaterThan(0);
+    expect(screen.queryByDisplayValue('#zzzzzz')).toBeNull();
+  });
+
   it('toggles fullscreen mode and collapses controls panel', () => {
     renderCustomizationPreview();
 
