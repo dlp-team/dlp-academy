@@ -125,13 +125,22 @@
   - lint and typecheck passed.
 
 ### Phase 04 - Customization Preview Parity
-- Status: PLANNED
+- Status: IN_PROGRESS
 - Goal: enforce true fullscreen and exact functional parity in the customization preview.
 - Outputs:
   - fullscreen preview without header overlap,
   - preview powered by real app components for subjects/topics/resources/bin,
   - exact header presence in preview,
   - live color reflection and active-zone highlighting.
+- Progress (2026-04-05, Block A):
+  - fixed customization fullscreen overlap by raising preview overlay stacking context above global app header in:
+    - [src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx](src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx),
+    - [src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationView.tsx](src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationView.tsx),
+  - added regression assertion in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx) for fullscreen z-index contract,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
 
 ### Phase 05 - User Management, Profile Media, and Past Classes
 - Status: PLANNED
@@ -173,6 +182,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Kick off Phase 04 fullscreen preview parity fixes for Institution Admin customization tab.
-2. Audit preview component reuse gaps (subjects/topics/resources/bin) and define first low-risk parity block.
+1. Continue Phase 04 Block B with exact header parity integration in fullscreen preview mode.
+2. Continue Phase 04 Block C with topic/resource/bin surface parity hardening using existing Home components.
 3. Keep cadence discipline (validate -> commit -> push) for each new Phase 04 block.

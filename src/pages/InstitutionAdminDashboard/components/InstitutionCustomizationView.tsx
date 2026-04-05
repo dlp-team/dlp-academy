@@ -195,7 +195,7 @@ const InstitutionCustomizationView = ({
   const currentVP = VIEWPORTS.find(v => v.id === viewport) || VIEWPORTS[0];
 
   const rootCls = fullscreen
-    ? 'fixed inset-0 z-[9999] flex'
+    ? 'fixed inset-0 z-[10050] flex'
     : `flex h-full w-full overflow-hidden rounded-2xl ${className}`;
 
   return (

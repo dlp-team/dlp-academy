@@ -133,7 +133,7 @@ const InstitutionCustomizationMockView = ({
   const viewportConfig = VIEWPORTS.find((entry) => entry.id === viewport) || VIEWPORTS[0];
   const institutionLabel = form.institutionName?.trim() || 'Tu Institución';
   const containerClassName = fullscreen
-    ? 'fixed inset-0 z-[1100] flex h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-950'
+    ? 'fixed inset-0 z-[10050] flex h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-950'
     : `flex h-full w-full overflow-hidden bg-slate-100 dark:bg-slate-950 ${className}`;
 
   const roleButtons = [

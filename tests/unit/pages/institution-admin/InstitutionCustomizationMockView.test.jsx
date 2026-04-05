@@ -85,6 +85,7 @@ describe('InstitutionCustomizationMockView', () => {
     const previewRoot = screen.getByTestId('institution-customization-preview-root');
     expect(previewRoot.className).toContain('fixed');
     expect(previewRoot.className).toContain('flex');
+    expect(previewRoot.className).toContain('z-[10050]');
     expect(screen.getByText(/pulsa esc para salir de pantalla completa/i)).toBeTruthy();
     expect(screen.getByTitle(/salir de pantalla completa/i)).toBeTruthy();
 

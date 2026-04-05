@@ -23,6 +23,9 @@
 - `./customization/CustomizationHomeExactPreview`
 
 ## Changelog
+### 2026-04-05
+- Raised fullscreen overlay stacking context (`z-[10050]`) so the customization preview reliably renders above the global fixed header (`z-[9999]`) without overlap.
+
 ### 2026-04-04
 - Hardened fullscreen mode container to preserve `flex` stage layout in overlay mode, preventing preview panel stacking/blank-screen regressions.
 - Added explicit body scroll-lock while fullscreen is active and safe overflow restoration on exit.

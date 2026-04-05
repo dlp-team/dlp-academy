@@ -40,7 +40,7 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 
 ## Lifecycle Status
 - Lifecycle: active
-- Current phase: Phase 03 - Institution Admin Settings and Automation Controls (COMPLETED)
+- Current phase: Phase 04 - Customization Preview Parity (IN_PROGRESS)
 - Last updated: 2026-04-05
 
 ## Key Decisions and Assumptions
@@ -91,6 +91,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Start Phase 04 kickoff slice for customization preview fullscreen parity.
-2. Prioritize real-component reuse for preview surfaces (subjects/topics/resources/bin).
+1. Continue Phase 04 with first real-surface parity gap analysis (topics/resources/bin/header).
+2. Ship next preview parity block with deterministic tests focused on UI behavior equivalence.
 3. Keep block cadence discipline (validate -> commit -> push) after each Phase 04 increment.
