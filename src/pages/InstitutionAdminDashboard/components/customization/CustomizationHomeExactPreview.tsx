@@ -19,6 +19,7 @@ import HomeControls from '../../../Home/components/HomeControls';
 import HomeContent from '../../../Home/components/HomeContent';
 import BreadcrumbNav from '../../../Home/components/BreadcrumbNav';
 import SharedView from '../../../Home/components/SharedView';
+import CustomizationPreviewHeader from './CustomizationPreviewHeader';
 import { HOME_THEME_TOKENS, buildHomeThemeCssVariables } from '../../../../utils/themeTokens';
 import { hexToRgba } from './themePreviewUtils';
 
@@ -785,18 +786,17 @@ const CustomizationHomeExactPreview = ({
 
   return (
     <div className="home-page rounded-2xl border overflow-hidden transition-all" style={{ ...cssVariables, ...frameStyle }}>
-      <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-        <p className="text-sm font-bold text-slate-900 dark:text-white">Vista previa exacta</p>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          {isStudentRole ? 'Panel estudiante' : 'Panel docente'} · navegación simulada en Manual, Uso, Cursos, Compartido y Papelera.
-        </p>
-      </div>
-
       <div className="p-4 bg-slate-200 dark:bg-slate-950">
         <div
           className="mx-auto rounded-2xl border border-[var(--home-card-border)] bg-slate-50 dark:bg-slate-900 transition-all duration-300"
           style={{ maxWidth: viewportWidth }}
         >
+          <CustomizationPreviewHeader
+            institutionName={form?.institutionName}
+            previewRole={previewRole}
+            primaryColor={form?.primary || '#6366f1'}
+          />
+
           <div className="px-4 pt-4">
             <HomeControlsComponent
               viewMode={viewMode}

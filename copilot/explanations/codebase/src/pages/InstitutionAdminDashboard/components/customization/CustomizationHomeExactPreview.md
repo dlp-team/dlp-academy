@@ -2,7 +2,7 @@
 
 ## Overview
 - **Source file:** `src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx`
-- **Last documented:** 2026-04-02
+- **Last documented:** 2026-04-05
 - **Role:** Exact customization preview adapter that reuses Home page UI components with isolated deterministic mock data.
 
 ## Responsibilities
@@ -18,10 +18,15 @@
 - `react`
 - `src/pages/Home/components/HomeControls`
 - `src/pages/Home/components/HomeContent`
+- `src/pages/InstitutionAdminDashboard/components/customization/CustomizationPreviewHeader`
 - `src/utils/themeTokens`
 - `src/pages/InstitutionAdminDashboard/components/customization/themePreviewUtils`
 
 ## Changelog
+### 2026-04-05
+- Replaced the generic preview title strip with a dedicated header parity shell so the exact Home preview starts with production-like identity and top-action framing.
+- Integrated `CustomizationPreviewHeader` while preserving role-aware label behavior (`Panel docente` / `Panel estudiante`) and responsive preview width simulation.
+
 ### 2026-04-04
 - Added `Archivos` as a first-class mock resource type in topic drilldown to better mirror production content structures.
 - Localized remaining resource labels to Spanish (`Cuestionarios`, `Materiales`) for consistency with the live product language policy.

@@ -6,7 +6,7 @@
 
 ## Block Tracking
 - Block A (2026-04-05): COMPLETED
-- Block B: PLANNED
+- Block B (2026-04-05): COMPLETED
 - Block C: PLANNED
 
 ## Block A Scope (Completed)
@@ -18,9 +18,15 @@
 - `npm run lint` (PASS)
 - `npx tsc --noEmit` (PASS)
 
-## Upcoming Block B Scope
-- Integrate exact header parity inside fullscreen preview shell.
-- Verify top-toolbar/spacing behavior remains stable across desktop/tablet/mobile preview widths.
+## Block B Scope (Completed)
+- Integrated header parity shell inside exact Home preview surface.
+- Replaced generic preview title strip with header-like composition aligned with production layout intent.
+- Preserved role-aware preview identity text and responsive behavior.
+
+## Block B Validation Evidence
+- `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
+- `npm run lint` (PASS)
+- `npx tsc --noEmit` (PASS)
 
 ## Upcoming Block C Scope
 - Expand real-surface parity for topic/resources/bin rendering deltas.

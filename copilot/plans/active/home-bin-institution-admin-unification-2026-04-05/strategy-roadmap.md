@@ -141,6 +141,14 @@
     - `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
     - `npm run lint` (PASS),
     - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block B):
+  - added header parity component for preview shell in [src/pages/InstitutionAdminDashboard/components/customization/CustomizationPreviewHeader.tsx](src/pages/InstitutionAdminDashboard/components/customization/CustomizationPreviewHeader.tsx),
+  - integrated preview header into exact Home surface in [src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx](src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx),
+  - replaced generic preview title strip with header-like top shell while preserving role-aware text context,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
 
 ### Phase 05 - User Management, Profile Media, and Past Classes
 - Status: PLANNED
@@ -182,6 +190,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Continue Phase 04 Block B with exact header parity integration in fullscreen preview mode.
-2. Continue Phase 04 Block C with topic/resource/bin surface parity hardening using existing Home components.
+1. Continue Phase 04 Block C with topic/resource/bin surface parity hardening using existing Home components.
+2. Add focused parity assertions for header + content composition in customization preview tests.
 3. Keep cadence discipline (validate -> commit -> push) for each new Phase 04 block.

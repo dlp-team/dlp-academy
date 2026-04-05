@@ -50,3 +50,13 @@ Convert Institution Admin customization preview into a true behavioral replica w
     - `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
     - `npm run lint` (PASS)
     - `npx tsc --noEmit` (PASS)
+
+- 2026-04-05 - Block B completed
+  - Integrated header parity layer into exact Home preview surface:
+    - [src/pages/InstitutionAdminDashboard/components/customization/CustomizationPreviewHeader.tsx](src/pages/InstitutionAdminDashboard/components/customization/CustomizationPreviewHeader.tsx)
+    - [src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx](src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx)
+  - Replaced generic preview title strip with header-like shell aligned to production header visual language (institution identity, role indicator, top actions, avatar chip).
+  - Validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)
