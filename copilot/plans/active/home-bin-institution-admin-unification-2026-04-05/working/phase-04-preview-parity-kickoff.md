@@ -59,6 +59,10 @@
 - Added deterministic cross-tab drilldown parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx).
 - Coverage now validates topic drilldown from `Uso` and `Cursos` tabs, including the collapsed year/course expansion path required by courses-mode wrappers.
 
+## Block C Progress (Slice 7 Completed)
+- Added deterministic shared-tab drilldown parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx).
+- Coverage now validates shared-subject topic drilldown/resource rendering and return-to-shared-list behavior.
+
 ## Block C Validation Evidence (Slice 1)
 - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
 - `npm run lint` (PASS)
@@ -89,6 +93,11 @@
 - `npm run lint` (PASS)
 - `npx tsc --noEmit` (PASS)
 
-## Upcoming Block C Scope (Slice 7)
+## Block C Validation Evidence (Slice 7)
+- `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
+- `npm run lint` (PASS)
+- `npx tsc --noEmit` (PASS)
+
+## Upcoming Block C Scope (Slice 8)
 - Expand real-surface parity for topic/resources/bin rendering deltas.
 - Add focused parity assertions for requested preview behavior consistency.

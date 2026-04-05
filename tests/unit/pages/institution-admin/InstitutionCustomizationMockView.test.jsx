@@ -183,4 +183,20 @@ describe('InstitutionCustomizationMockView', () => {
 
     expect(screen.getByText(/temas de la asignatura/i)).toBeTruthy();
   });
+
+  it('supports shared-tab topic and resource drilldown parity', () => {
+    renderCustomizationPreview();
+
+    fireEvent.click(screen.getByRole('button', { name: /compartido/i }));
+    expect(screen.getByText(/asignaturas compartidas/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Geografía compartida'));
+    expect(screen.getByText(/temas de la asignatura/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /cartograf[ií]a básica/i }));
+    expect(screen.getByText(/gu[ií]as de estudio/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /volver a asignaturas/i }));
+    expect(screen.getByText(/asignaturas compartidas/i)).toBeTruthy();
+  });
 });
