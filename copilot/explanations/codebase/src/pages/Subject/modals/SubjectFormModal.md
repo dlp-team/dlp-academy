@@ -1,3 +1,22 @@
+## [2026-04-05] Bugfix: Create-Flow Outside Close Now Guards Unsaved Form Data
+### Context & Architecture
+Home subject creation routes through `SubjectFormModal`, but the previous close guard only evaluated pending changes in the `Compartir` tab. In create flow, outside-click could close immediately even when the general form had unsaved edits.
+
+### Change
+- Added create-flow close-guard snapshot tracking for the modal open state (`formData` + `selectedClassIds`).
+- Extended close evaluation to block close and show discard confirmation when create-flow form data changed and the user attempts outside-close/header-close/cancel close.
+- Preserved existing sharing-specific guard behavior (`canCloseSharingModal`) and now differentiate discard-confirm text by reason (`sharing` vs `general`).
+- Added focused regression coverage in `tests/unit/pages/subject/SubjectFormModal.closeGuard.test.jsx` for:
+	- direct outside-close when no edits were made,
+	- discard-confirm flow when create form was modified.
+
+### Validation
+- `get_errors` clean for `src/pages/Subject/modals/SubjectFormModal.tsx` and `tests/unit/pages/subject/SubjectFormModal.closeGuard.test.jsx`.
+- `npm run test -- tests/unit/pages/subject/SubjectFormModal.closeGuard.test.jsx tests/unit/pages/home/HomeSubjectModals.test.jsx` passed.
+- `npm run test -- tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx tests/unit/pages/subject/SubjectFormModal.coursePeriodSchedule.test.jsx` passed.
+- `npm run lint` passed.
+- `npx tsc --noEmit` passed.
+
 ## [2026-04-05] Feature Update: Shared Modal Shell + Unified Close Guard
 ### Context & Architecture
 `SubjectFormModal` had the same modal-shell and dirty-close guard pattern already migrated in `FolderManager`, but still implemented inline.

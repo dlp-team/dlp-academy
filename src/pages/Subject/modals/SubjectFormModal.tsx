@@ -64,6 +64,11 @@ const buildSubjectPeriodOptions = (mode: any, customLabel: any) => {
     ];
 };
 
+const buildCloseGuardSnapshot = ({ formData, selectedClassIds }: any = {}) => JSON.stringify({
+    formData: formData || {},
+    selectedClassIds: Array.isArray(selectedClassIds) ? selectedClassIds : [],
+});
+
 const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onShare, onUnshare, onTransferOwnership, onDeleteShortcut, user, allFolders = [], initialTab = 'general', studentShortcutTagOnlyMode = false }: any) => {
     const [formData, setFormData] = useState<any>({ 
         name: '', level: '', grade: '', course: '', courseId: '',
@@ -84,7 +89,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const [ownerEmailResolved, setOwnerEmailResolved] = useState('');
     const [pendingShareAction, setPendingShareAction] = useState<any>(null);
     const [showSelfUnshareConfirm, setShowSelfUnshareConfirm] = useState(false);
-    const [showDiscardPendingConfirm, setShowDiscardPendingConfirm] = useState(false);
+    const [discardPendingConfirmReason, setDiscardPendingConfirmReason] = useState<'sharing' | 'general' | null>(null);
     const [pendingPermissionChanges, setPendingPermissionChanges] = useState<any>({});
     const [pendingUnshares, setPendingUnshares] = useState<any[]>([]);
     const [shareLoading, setShareLoading] = useState(false);
@@ -121,6 +126,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
     const subjectNameInputRef = React.useRef<any>(null);
     const subjectCourseSelectRef = React.useRef<any>(null);
     const subjectPeriodSelectRef = React.useRef<any>(null);
+    const openCloseGuardSnapshotRef = React.useRef('');
 
     const isShortcutEditing = isEditing && formData?.isShortcut === true;
     const isTagOnlyShortcutEdit = studentShortcutTagOnlyMode && isShortcutEditing;
@@ -256,7 +262,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
             setOwnerEmailResolved('');
             setPendingShareAction(null);
             setShowSelfUnshareConfirm(false);
-            setShowDiscardPendingConfirm(false);
+            setDiscardPendingConfirmReason(null);
             setPendingPermissionChanges({});
             setPendingUnshares([]);
             setClassesActionError('');
@@ -271,7 +277,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 const fallbackCourse = (initialData.level && initialData.grade)
                     ? `${initialData.grade} ${initialData.level}`
                     : '';
-                setFormData({
+                const nextFormData = {
                     id: initialData.id,
                     ownerId: initialData.ownerId,
                     inviteCode: initialData.inviteCode || '',
@@ -302,8 +308,14 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     classIds: Array.isArray(initialData.classIds) ? initialData.classIds : [],
                     cardStyle: initialData.cardStyle || 'default',
                     modernFillColor: initialData.fillColor || initialData.modernFillColor || MODERN_FILL_COLORS[0].value
+                };
+                const nextSelectedClassIds = Array.isArray(initialData.classIds) ? initialData.classIds : [];
+                setFormData(nextFormData);
+                setSelectedClassIds(nextSelectedClassIds);
+                openCloseGuardSnapshotRef.current = buildCloseGuardSnapshot({
+                    formData: nextFormData,
+                    selectedClassIds: nextSelectedClassIds,
                 });
-                setSelectedClassIds(Array.isArray(initialData.classIds) ? initialData.classIds : []);
                 // Load shared list
                 setSharedList(initialData.sharedWith || []);
             } else {
@@ -313,8 +325,8 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                 const fallbackCourse = (prefilledLevel && prefilledGrade)
                     ? `${prefilledGrade} ${prefilledLevel}`
                     : '';
-                
-                setFormData({ 
+
+                const nextFormData = {
                     inviteCode: '',
                     inviteCodeEnabled: true,
                     inviteCodeRotationIntervalHours: 24,
@@ -341,10 +353,20 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                     classIds: [],
                     cardStyle: 'default',
                     modernFillColor: MODERN_FILL_COLORS[0].value
+                };
+                const nextSelectedClassIds: any[] = [];
+
+                setFormData(nextFormData);
+                setSelectedClassIds(nextSelectedClassIds);
+                openCloseGuardSnapshotRef.current = buildCloseGuardSnapshot({
+                    formData: nextFormData,
+                    selectedClassIds: nextSelectedClassIds,
                 });
-                setSelectedClassIds([]);
                 setSharedList([]);
             }
+        } else {
+            setDiscardPendingConfirmReason(null);
+            openCloseGuardSnapshotRef.current = '';
         }
     }, [isOpen, isEditing, initialData, initialTab, user?.uid]);
 
@@ -923,6 +945,18 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         hasPendingSharingChanges ||
         showSelfUnshareConfirm;
 
+    const serializedCloseGuardState = useMemo(() => buildCloseGuardSnapshot({
+        formData,
+        selectedClassIds,
+    }), [formData, selectedClassIds]);
+
+    const hasOpenCloseGuardSnapshot = openCloseGuardSnapshotRef.current.length > 0;
+    const hasUnsavedGeneralChanges =
+        !isEditing
+        && isOpen
+        && hasOpenCloseGuardSnapshot
+        && serializedCloseGuardState !== openCloseGuardSnapshotRef.current;
+
     const evaluateCloseRequest = () => {
         const closeDecision = canCloseSharingModal({
             pendingShareActionType: pendingShareAction?.type,
@@ -930,7 +964,13 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         });
 
         if (!closeDecision.allowClose && closeDecision.reason === 'unsaved-sharing-changes') {
-            setShowDiscardPendingConfirm(true);
+            setDiscardPendingConfirmReason('sharing');
+            return false;
+        }
+
+        if (closeDecision.allowClose && hasUnsavedGeneralChanges) {
+            setDiscardPendingConfirmReason('general');
+            return false;
         }
 
         return closeDecision.allowClose;
@@ -948,7 +988,7 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
         setPendingUnshares([]);
         setPendingShareAction(null);
         setShowSelfUnshareConfirm(false);
-        setShowDiscardPendingConfirm(false);
+        setDiscardPendingConfirmReason(null);
         setShareError('');
         setShareSuccess('');
         onClose();
@@ -1895,18 +1935,20 @@ const SubjectFormModal = ({ isOpen, onClose, onSave, initialData, isEditing, onS
                         </div>
                     )}
 
-                    {showDiscardPendingConfirm && (
+                    {discardPendingConfirmReason !== null && (
                         <div className="absolute inset-0 z-40 flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
-                            <div className="absolute inset-0 bg-black/55" onClick={(e: any) => { e.stopPropagation(); setShowDiscardPendingConfirm(false); }} />
+                            <div className="absolute inset-0 bg-black/55" onClick={(e: any) => { e.stopPropagation(); setDiscardPendingConfirmReason(null); }} />
                             <div className="relative w-full max-w-lg rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
                                 <h4 className="text-base font-semibold text-gray-900 dark:text-white">Descartar cambios sin guardar</h4>
                                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                                    Tienes cambios pendientes en Compartir. ¿Quieres descartarlos y cerrar la ventana?
+                                    {discardPendingConfirmReason === 'sharing'
+                                        ? 'Tienes cambios pendientes en Compartir. ¿Quieres descartarlos y cerrar la ventana?'
+                                        : 'Tienes cambios sin guardar en esta asignatura. ¿Quieres descartarlos y cerrar la ventana?'}
                                 </p>
                                 <div className="mt-5 flex justify-end gap-2">
                                     <button
                                         type="button"
-                                        onClick={() => setShowDiscardPendingConfirm(false)}
+                                        onClick={() => setDiscardPendingConfirmReason(null)}
                                         className="px-3 py-1.5 text-sm rounded-md bg-gray-100 dark:bg-slate-800 border border-gray-300 dark:border-slate-600 text-gray-700 dark:text-gray-300"
                                     >
                                         Cancelar

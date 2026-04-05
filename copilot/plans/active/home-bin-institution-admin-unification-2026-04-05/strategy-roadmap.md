@@ -53,6 +53,14 @@
       - `npm run test -- tests/unit/components/DashboardOverlayShell.test.jsx tests/unit/pages/home/HomeSubjectModals.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx` (PASS),
       - `npm run lint` (PASS),
       - `npx tsc --noEmit` (PASS).
+  - Progress (2026-04-05, regression hardening - subject create close path):
+    - Fixed Home create-subject runtime close guard in [src/pages/Subject/modals/SubjectFormModal.tsx](src/pages/Subject/modals/SubjectFormModal.tsx), ensuring outside close prompts for discard when general create-form data was modified.
+    - Added deterministic regression coverage in [tests/unit/pages/subject/SubjectFormModal.closeGuard.test.jsx](tests/unit/pages/subject/SubjectFormModal.closeGuard.test.jsx).
+    - Validation evidence:
+      - `npm run test -- tests/unit/pages/subject/SubjectFormModal.closeGuard.test.jsx tests/unit/pages/home/HomeSubjectModals.test.jsx` (PASS),
+      - `npm run test -- tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx tests/unit/pages/subject/SubjectFormModal.coursePeriodSchedule.test.jsx` (PASS),
+      - `npm run lint` (PASS),
+      - `npx tsc --noEmit` (PASS).
 
 ### Phase 00 - Codebase Audit and Dependency Mapping
 - Status: COMPLETED

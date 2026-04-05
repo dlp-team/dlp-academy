@@ -10,6 +10,13 @@
 - (none)
 
 ## Processed Updates
+- 2026-04-05: Subject create-flow outside-close regression fixed in runtime modal path.
+  - Trigger: user reported that create-subject modal closed immediately on outside click without unsaved confirmation after entering data.
+  - Integrated files:
+    - [src/pages/Subject/modals/SubjectFormModal.tsx](src/pages/Subject/modals/SubjectFormModal.tsx)
+    - [tests/unit/pages/subject/SubjectFormModal.closeGuard.test.jsx](tests/unit/pages/subject/SubjectFormModal.closeGuard.test.jsx)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+
 - 2026-04-05: Overlay phase redo executed for generalized create/edit overlay style and close safety.
   - Trigger: user requested full overlay unification pass with shared style, header-to-bottom bounds, outside-click close, unsaved-change confirmation, and centralized sizing controls.
   - Integrated files:
