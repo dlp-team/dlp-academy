@@ -10,7 +10,12 @@
 - Selected list item shows an inline action panel directly under that item.
 - Inline panel moves to the next selected item and clears from previous selection.
 - Inline panel stays hidden while bulk selection mode is active.
+- Folder entries expose folder-specific inline action (`Abrir contenido de carpeta`).
+- Shortcut entries expose shortcut-specific restore label (`Restaurar acceso directo`) without folder-only actions.
 
 ## Changelog
 ### 2026-04-05
 - Added focused list-mode parity tests for Phase 02 Block B.
+
+### 2026-04-05 (Block C)
+- Expanded the suite with folder and shortcut entry-type assertions for inline-panel action correctness.

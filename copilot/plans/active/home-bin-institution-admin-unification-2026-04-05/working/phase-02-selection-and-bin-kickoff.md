@@ -39,3 +39,7 @@
   - Removed bottom-of-list list-mode action aside.
   - Added focused inline-panel tests for selection changes and selection-mode suppression.
   - Validation passed for targeted tests, lint, and typecheck.
+- 2026-04-05: Phase 02 Block C implemented.
+  - Expanded inline-panel regression suite for folder and shortcut list entries.
+  - Verified type-specific action labels and action availability remain correct.
+  - Validation passed for targeted tests, lint, and typecheck.

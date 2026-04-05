@@ -74,6 +74,10 @@
   - preserved selection mode and bulk-action behavior,
   - added focused list-mode regression tests in [tests/unit/pages/home/BinView.listInlinePanel.test.jsx](tests/unit/pages/home/BinView.listInlinePanel.test.jsx),
   - targeted tests + lint + typecheck passing.
+- Progress (2026-04-05, Block C):
+  - expanded list inline-panel regression coverage for folder and shortcut entry types in [tests/unit/pages/home/BinView.listInlinePanel.test.jsx](tests/unit/pages/home/BinView.listInlinePanel.test.jsx),
+  - validated type-specific action labels and suppression behavior,
+  - targeted tests + lint + typecheck passing.
 
 ### Phase 03 - Institution Admin Settings and Automation Controls
 - Status: PLANNED
@@ -133,6 +137,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Expand Bin list inline-panel checks for folder and shortcut entries.
-2. Review remaining Home list-mode selection emphasis gaps for nested list structures.
-3. Run a broader impacted Home/Bin regression sweep and prepare next Phase 02 checkpoint.
+1. Review remaining Home list-mode selection emphasis gaps for nested list structures.
+2. Decide whether nested list items require explicit dimming parity beyond current grid-first scope.
+3. Run broader impacted Home/Bin regression sweep and prepare next Phase 02 implementation checkpoint.

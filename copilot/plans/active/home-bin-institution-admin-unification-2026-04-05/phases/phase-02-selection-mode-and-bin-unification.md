@@ -67,3 +67,13 @@ Unify selection-mode behavior between Home and Bin and implement requested Bin g
     - `npm run test -- tests/unit/pages/home/BinView.listInlinePanel.test.jsx tests/unit/components/BinSelectionOverlay.test.jsx tests/unit/components/BinGridItem.test.jsx tests/unit/utils/selectionVisualUtils.test.js` (PASS)
     - `npm run lint` (PASS)
     - `npx tsc --noEmit` (PASS)
+
+- 2026-04-05 - Block C completed
+  - Expanded [tests/unit/pages/home/BinView.listInlinePanel.test.jsx](tests/unit/pages/home/BinView.listInlinePanel.test.jsx) with folder and shortcut list-entry scenarios.
+  - Verified type-specific inline actions remain correct:
+    - folder entry shows "Abrir contenido de carpeta",
+    - shortcut entry shows "Restaurar acceso directo" and omits folder-only actions.
+  - Validation evidence:
+    - `npm run test -- tests/unit/pages/home/BinView.listInlinePanel.test.jsx tests/unit/components/BinSelectionOverlay.test.jsx tests/unit/components/BinGridItem.test.jsx tests/unit/utils/selectionVisualUtils.test.js` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)

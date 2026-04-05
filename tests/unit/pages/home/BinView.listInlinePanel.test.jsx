@@ -68,30 +68,56 @@ const buildSubject = (id, name) => ({
   },
 });
 
-beforeEach(() => {
-  vi.clearAllMocks();
+const buildFolder = (id, name) => ({
+  id,
+  name,
+  trashedAt: {
+    toDate: () => new Date('2026-04-05T00:00:00.000Z'),
+  },
+});
 
-  mocks.getActiveRole.mockReturnValue('teacher');
+const buildShortcutSubject = (id, name) => ({
+  id,
+  name,
+  targetType: 'subject',
+  itemType: 'shortcut-subject',
+  trashedAt: {
+    toDate: () => new Date('2026-04-05T00:00:00.000Z'),
+  },
+});
 
+const setTrashData = ({ subjects = [], folders = [], shortcuts = [] } = {}) => {
   mocks.useSubjects.mockReturnValue({
-    getTrashedSubjects: vi.fn().mockResolvedValue([
-      buildSubject('sub-1', 'Historia'),
-      buildSubject('sub-2', 'Quimica'),
-    ]),
+    getTrashedSubjects: vi.fn().mockResolvedValue(subjects),
     restoreSubject: vi.fn().mockResolvedValue(undefined),
     permanentlyDeleteSubject: vi.fn().mockResolvedValue(undefined),
   });
 
   mocks.useFolders.mockReturnValue({
-    getTrashedFolders: vi.fn().mockResolvedValue([]),
+    getTrashedFolders: vi.fn().mockResolvedValue(folders),
     restoreFolder: vi.fn().mockResolvedValue(undefined),
     permanentlyDeleteFolder: vi.fn().mockResolvedValue(undefined),
   });
 
   mocks.useShortcuts.mockReturnValue({
-    getTrashedShortcuts: vi.fn().mockResolvedValue([]),
+    getTrashedShortcuts: vi.fn().mockResolvedValue(shortcuts),
     restoreShortcut: vi.fn().mockResolvedValue(undefined),
     permanentlyDeleteShortcut: vi.fn().mockResolvedValue(undefined),
+  });
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+
+  mocks.getActiveRole.mockReturnValue('teacher');
+
+  setTrashData({
+    subjects: [
+      buildSubject('sub-1', 'Historia'),
+      buildSubject('sub-2', 'Quimica'),
+    ],
+    folders: [],
+    shortcuts: [],
   });
 });
 
@@ -126,5 +152,44 @@ describe('BinView list inline panel', () => {
     fireEvent.click(screen.getByTestId('bin-list-row-subject-sub-1'));
 
     expect(screen.queryByTestId('bin-list-inline-panel-subject-sub-1')).toBeNull();
+  });
+
+  it('shows folder-specific inline actions for selected folders in list mode', async () => {
+    setTrashData({
+      subjects: [],
+      folders: [buildFolder('folder-1', 'Carpeta principal')],
+      shortcuts: [],
+    });
+
+    render(<BinView user={{ uid: 'teacher-1', role: 'teacher' }} layoutMode="list" cardScale={100} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('bin-list-row-folder-folder-1')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId('bin-list-row-folder-folder-1'));
+
+    expect(screen.getByTestId('bin-list-inline-panel-folder-folder-1')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Abrir contenido de carpeta' })).toBeTruthy();
+  });
+
+  it('shows shortcut restore label when selecting shortcut entries in list mode', async () => {
+    setTrashData({
+      subjects: [],
+      folders: [],
+      shortcuts: [buildShortcutSubject('shortcut-1', 'Acceso directo historia')],
+    });
+
+    render(<BinView user={{ uid: 'teacher-1', role: 'teacher' }} layoutMode="list" cardScale={100} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('bin-list-row-shortcut-subject-shortcut-1')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId('bin-list-row-shortcut-subject-shortcut-1'));
+
+    expect(screen.getByTestId('bin-list-inline-panel-shortcut-subject-shortcut-1')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Restaurar acceso directo' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Abrir contenido de carpeta' })).toBeNull();
   });
 });
