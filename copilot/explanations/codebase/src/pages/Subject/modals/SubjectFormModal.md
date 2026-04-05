@@ -1,3 +1,17 @@
+## [2026-04-05] Feature Update: Shared Modal Shell + Unified Close Guard
+### Context & Architecture
+`SubjectFormModal` had the same modal-shell and dirty-close guard pattern already migrated in `FolderManager`, but still implemented inline.
+
+### Change
+- Migrated outer shell to `BaseModal`.
+- Replaced local backdrop-close branching with shared `canCloseSharingModal` decision utility.
+- Routed backdrop close, header close, and footer cancel through the same guarded close path.
+- Preserved existing discard-confirm overlay and pending-action behavior.
+
+### Validation
+- `get_errors` clean for `src/pages/Subject/modals/SubjectFormModal.tsx`.
+- `npm run test:unit -- tests/unit/pages/subject/SubjectFormModal.coursePeriodSchedule.test.jsx tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx tests/unit/utils/modalCloseGuardUtils.test.js tests/unit/components/BaseModal.test.jsx` passed.
+
 ## [2026-04-04] Course-Level Period Schedule Propagation
 ### Context & Architecture
 Institution calendar dates are now the global baseline, but selected courses can define period-window overrides that should drive subject lifecycle timeline generation.
@@ -355,10 +369,10 @@ Teachers with `viewer` shortcut permissions were still able to interact with cla
 ## Validation
 - Manual UI path validated in code: `activeTab === 'classes'` block now renders invite-code panel using `formData.inviteCode || initialData.inviteCode`.
 
-# SubjectFormModal.jsx
+# SubjectFormModal.tsx
 
 ## Overview
-- **Source file:** `src/pages/Subject/modals/SubjectFormModal.jsx`
+- **Source file:** `src/pages/Subject/modals/SubjectFormModal.tsx`
 - **Last documented:** 2026-02-24
 - **Role:** Modal/dialog UI used for create, edit, confirm, or detail flows.
 

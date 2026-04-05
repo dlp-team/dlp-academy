@@ -52,3 +52,8 @@
   - Migrated [src/components/modals/SudoModal.tsx](src/components/modals/SudoModal.tsx) to `BaseModal`.
   - Preserved submit-time close lock via guarded close logic.
   - Re-ran existing Sudo modal tests plus shared modal regression suite.
+- 2026-04-05: Block E implemented.
+  - Migrated [src/pages/Subject/modals/SubjectFormModal.tsx](src/pages/Subject/modals/SubjectFormModal.tsx) shell to `BaseModal`.
+  - Reused [src/utils/modalCloseGuardUtils.ts](src/utils/modalCloseGuardUtils.ts) for dirty-state close decisions.
+  - Routed SubjectFormModal backdrop/header/footer close actions through the same guarded close path.
+  - Re-ran SubjectForm modal tests and shared modal/utility regression tests.

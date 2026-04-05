@@ -18,6 +18,7 @@
 
 ## Current Consumers
 - `src/pages/Home/components/FolderManager.tsx`
+- `src/pages/Subject/modals/SubjectFormModal.tsx`
 
 ## Test Coverage
 - `tests/unit/utils/modalCloseGuardUtils.test.js`

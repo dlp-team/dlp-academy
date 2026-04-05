@@ -100,9 +100,20 @@ Create a reusable modal foundation and remove the left-side scrollbar compensati
   - `npx tsc --noEmit` (PASS)
   - `get_errors` on touched files (clean)
 
+## Implementation Progress - Block E (2026-04-05)
+- Additional form-heavy modal migrated to shared shell and close-guard flow:
+  - [src/pages/Subject/modals/SubjectFormModal.tsx](src/pages/Subject/modals/SubjectFormModal.tsx)
+- Dirty-state interception expansion:
+  - SubjectFormModal now uses [src/utils/modalCloseGuardUtils.ts](src/utils/modalCloseGuardUtils.ts) for close decisions.
+  - Backdrop close, header close, and footer cancel now route through the same guarded close request path.
+- Validation evidence:
+  - `npm run test:unit -- tests/unit/pages/subject/SubjectFormModal.coursePeriodSchedule.test.jsx tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx tests/unit/utils/modalCloseGuardUtils.test.js tests/unit/components/BaseModal.test.jsx` (PASS)
+  - `npx tsc --noEmit` (PASS)
+  - `get_errors` on touched files (clean)
+
 ## Remaining Work in Phase 01
 - Expand shared modal adoption to remaining admin/form-heavy modal surfaces.
-- Expand dirty-state interception to additional modal forms beyond FolderManager.
+- Expand dirty-state interception to remaining modal forms beyond FolderManager and SubjectFormModal.
 - Run broader validation pass (lint/typecheck + targeted modal regressions) before Phase 01 closure.
 
 ## Validation Gate

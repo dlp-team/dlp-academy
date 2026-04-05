@@ -42,6 +42,10 @@
   - admin-facing `SudoModal` migrated to shared modal shell,
   - submit-time close lock behavior preserved through guarded close handling,
   - existing Sudo tests plus modal regression suite and typecheck passing.
+- Progress (2026-04-05, Block E):
+  - `SubjectFormModal` migrated to shared modal shell,
+  - dirty-state close interception expanded to a second form-heavy modal using shared utility,
+  - existing SubjectForm tests plus shared modal/utility checks and typecheck passing.
 
 ### Phase 02 - Selection Mode and Bin Unification
 - Status: PLANNED
@@ -110,6 +114,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Expand dirty-state close interception to additional form modals (SubjectFormModal and/or Institution Admin create/edit modals).
+1. Expand dirty-state close interception to remaining modal forms (especially Institution Admin create/edit flows).
 2. Continue BaseModal adoption for remaining modal surfaces that still duplicate shell structure.
 3. Run wider Phase 01 validation sweep (typecheck/lint + targeted modal regression suite) and prepare closure checklist.

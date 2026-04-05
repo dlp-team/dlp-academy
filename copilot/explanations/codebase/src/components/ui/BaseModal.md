@@ -35,6 +35,7 @@
 - `src/components/modals/SudoModal.tsx`
 - `src/pages/Home/components/FolderManager.tsx`
 - `src/pages/Home/components/HomeDeleteConfirmModal.tsx`
+- `src/pages/Subject/modals/SubjectFormModal.tsx`
 
 ## Maintenance Notes
 - Keep this contract stable while migrating additional modal surfaces.
