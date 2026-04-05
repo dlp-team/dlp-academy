@@ -1,6 +1,7 @@
 # index.css
 
 ## Changelog
+- **2026-04-05:** Added mode-specific global scrollbar behavior classes (`custom-scrollbar-overlay`, `custom-scrollbar-stable`) and right-edge surface smoothing backgrounds for active scrollbar mode.
 - **2026-04-05:** Changed global custom scrollbar compensation from `scrollbar-gutter: stable both-edges` to `scrollbar-gutter: stable` to remove left-side reserved spacing artifact while preserving right-side scrollbar stability.
 
 ## Purpose
@@ -11,6 +12,10 @@
 ## Relevant Sections for Phase 01
 - `html.custom-scrollbar-active, body.custom-scrollbar-active`
   - Controls global scrollbar reservation and thumb/track appearance when Home-style scrollbar mode is active.
+- `html.custom-scrollbar-overlay, body.custom-scrollbar-overlay`
+  - Enables overlay-first scrollbar behavior where platform support exists.
+- `html.custom-scrollbar-stable, body.custom-scrollbar-stable`
+  - Preserves no-layout-jump fallback when overlay behavior is unavailable.
 - `.home-page` and `.home-page *` scrollbar blocks
   - Scoped Home surface scrollbar appearance.
 

@@ -128,6 +128,27 @@ Create a reusable modal foundation and remove the left-side scrollbar compensati
 - Expand dirty-state interception to remaining modal forms beyond FolderManager and SubjectFormModal.
 - Run broader validation pass (lint/typecheck + targeted modal regressions) before Phase 01 closure.
 
+## User-Update Carry-Over (2026-04-05)
+- Reopened follow-up A (scrollbar behavior refinement):
+  - ensure right-edge scrollbar zone blends with page surface,
+  - apply overlay-first scrollbar behavior where supported,
+  - preserve no-layout-jump fallback where overlay behavior is unavailable.
+- Reopened follow-up B (overlay scope correction):
+  - analyze non-modal overlay surfaces across pages (not only classic modal wrappers),
+  - prepare a shared header-to-bottom overlay shell migration queue for maintainability.
+
+## Post-Closure Follow-up Progress (2026-04-05)
+- Follow-up A completed:
+  - [src/components/ui/CustomScrollbar.tsx](src/components/ui/CustomScrollbar.tsx) now detects overlay scrollbar capability and applies explicit mode classes.
+  - [src/index.css](src/index.css) now uses overlay-first behavior when supported and a stable fallback mode when not supported.
+  - Added focused regression tests in [tests/unit/components/CustomScrollbar.test.jsx](tests/unit/components/CustomScrollbar.test.jsx).
+  - Validation evidence:
+    - `npm run test -- tests/unit/components/CustomScrollbar.test.jsx` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)
+- Follow-up B next:
+  - deep non-modal overlay audit and migration queue definition remains in progress.
+
 ## Phase 01 Closure Summary (2026-04-05)
 - Shared modal foundation established and reused across Home, Subject, and admin-facing modal surfaces.
 - Dirty-state close interception path implemented in reusable utility and adopted in multiple form-heavy flows.

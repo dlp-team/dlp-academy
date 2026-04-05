@@ -7,9 +7,34 @@
 - After syncing, move processed entries to Processed Updates with date and integration evidence.
 
 ## Pending User Updates
-- None.
+- (none)
 
 ## Processed Updates
+- 2026-04-05: Scrollbar right-edge smoothing block implemented and validated.
+  - Trigger: execute processed scrollbar directive as first user-update implementation block.
+  - Integrated files:
+    - [src/components/ui/CustomScrollbar.tsx](src/components/ui/CustomScrollbar.tsx)
+    - [src/index.css](src/index.css)
+    - [tests/unit/components/CustomScrollbar.test.jsx](tests/unit/components/CustomScrollbar.test.jsx)
+    - [strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+    - [phases/phase-01-global-modal-and-scrollbar-foundation.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md)
+
+- 2026-04-05: Scrollbar right-edge smoothing and overlay-first scrollbar behavior requested.
+  - Trigger: user requested scrollbar to sit over right side without page movement and visually smooth right edge.
+  - Integrated files:
+    - [README.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md)
+    - [strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+    - [phases/phase-01-global-modal-and-scrollbar-foundation.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md)
+    - [phases/phase-04-customization-preview-parity.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-04-customization-preview-parity.md)
+
+- 2026-04-05: Overlay unification scope corrected to include non-modal overlays across pages.
+  - Trigger: user clarified overlay unification targets include dashboard-style create/edit overlays, not only classic modals.
+  - Integrated files:
+    - [README.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md)
+    - [strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+    - [phases/phase-01-global-modal-and-scrollbar-foundation.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md)
+    - [phases/phase-04-customization-preview-parity.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-04-customization-preview-parity.md)
+
 - 2026-04-05: Initial plan bootstrapped from migrated dual sources.
   - Integrated files:
     - [README.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md)

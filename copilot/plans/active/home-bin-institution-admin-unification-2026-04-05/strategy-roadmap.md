@@ -9,6 +9,23 @@
 
 ## Ordered Phases
 
+## User-Update Priority Injection (2026-04-05)
+- Directive A (Scrollbar surface parity):
+  - Make the right-edge scrollbar zone visually continuous with page content and prefer scrollbar-over-content behavior where supported, avoiding page jump artifacts.
+  - Execution mapping: post-Phase-01 follow-up block under active plan.
+  - Progress (2026-04-05, block completed):
+    - Implemented overlay-support detection and mode class assignment in [src/components/ui/CustomScrollbar.tsx](src/components/ui/CustomScrollbar.tsx).
+    - Updated global scrollbar CSS in [src/index.css](src/index.css) to use overlay-first mode and stable fallback mode classes.
+    - Added deterministic regression coverage in [tests/unit/components/CustomScrollbar.test.jsx](tests/unit/components/CustomScrollbar.test.jsx).
+    - Validation evidence:
+      - `npm run test -- tests/unit/components/CustomScrollbar.test.jsx` (PASS),
+      - `npm run lint` (PASS),
+      - `npx tsc --noEmit` (PASS).
+- Directive B (Overlay unification scope correction):
+  - Perform deep analysis of non-modal overlays (for example, create/edit management overlays) across pages, not only classic modals.
+  - Target architecture: consistent overlay shell constrained between app header and screen bottom, maintainable under shared patterns.
+  - Execution mapping: dedicated overlay audit + prioritized migration queue before further large parity expansion.
+
 ### Phase 00 - Codebase Audit and Dependency Mapping
 - Status: COMPLETED
 - Goal: establish architecture map, affected files, coupling matrix, and preservation checklist.
@@ -225,6 +242,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Continue Phase 04 Block C slice 6 with targeted topic/resource/bin visual parity hardening where real-surface deltas remain.
-2. Add deterministic assertions for any newly hardened preview-surface deltas in customization tests.
-3. Keep cadence discipline (validate -> commit -> push) for each new Phase 04 block.
+1. Execute deep cross-page non-modal overlay audit and produce prioritized shared-shell migration list.
+2. Implement first low-risk non-modal overlay-shell unification slice from that audit.
+3. Resume Phase 04 customization parity slices after user-update blocks with standard validate -> commit -> push cadence.

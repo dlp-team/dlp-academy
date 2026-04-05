@@ -15,8 +15,10 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 ## Scope
 - Global modal unification with shared closing and dirty-state behavior.
 - Scrollbar compensation cleanup without introducing layout shifts.
+- Right-edge scrollbar surface smoothing with overlay-first behavior where supported and no layout jump fallback where overlay is unavailable.
 - Selection mode parity between Home and Bin sections.
 - Bin grid/list interaction and action-panel behavior consistency.
+- Cross-page non-modal overlay audit and unification for header-to-bottom overlay shells (create/edit/management overlays beyond classic confirm modals).
 - Institution Admin settings enhancements:
   - ordinary/extraordinary period defaults,
   - draggable course hierarchy order,
@@ -91,6 +93,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Continue Phase 04 Block C slice 6 with targeted topic/resource/bin real-surface parity hardening.
-2. Add deterministic preview assertions for any newly hardened topic/resource/bin deltas.
-3. Keep block cadence discipline (validate -> commit -> push) after each Phase 04 increment.
+1. Execute deep cross-page non-modal overlay audit and publish prioritized unification queue.
+2. Implement first low-risk non-modal overlay-shell unification slice from that queue.
+3. Continue Phase 04 customization parity after these user-update blocks with normal validate -> commit -> push cadence.

@@ -40,6 +40,12 @@ Convert Institution Admin customization preview into a true behavioral replica w
 - Phase 04 starts with a low-risk fullscreen layering correction before deeper parity rewiring.
 
 ## Progress Log
+- 2026-04-05 - Priority update sync before next parity slice
+  - Synced user-update directives into active execution order:
+    - scrollbar right-edge smoothing + overlay-first fallback-safe behavior,
+    - deep cross-page non-modal overlay audit for shared header-to-bottom overlay shell unification.
+  - Next customization parity slices resume after these user-update blocks.
+
 - 2026-04-05 - Block A completed
   - Fixed fullscreen preview layering so customization preview sits above the global app header:
     - [src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx](src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx)

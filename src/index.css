@@ -253,9 +253,29 @@ html.theme-switching *::after {
 
 html.custom-scrollbar-active, body.custom-scrollbar-active {
   overflow-y: auto;
-  scrollbar-gutter: stable;
+  scrollbar-gutter: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(99,102,241,0.24) transparent;
+  background-color: #f8fafc;
+}
+
+.dark html.custom-scrollbar-active,
+.dark body.custom-scrollbar-active {
+  background-color: #020617;
+}
+
+/* Prefer overlay scrollbars when the platform supports them. */
+html.custom-scrollbar-overlay,
+body.custom-scrollbar-overlay {
+  overflow-y: overlay;
+  scrollbar-gutter: auto;
+}
+
+/* Fallback mode for environments without overlay support. */
+html.custom-scrollbar-stable,
+body.custom-scrollbar-stable {
+  overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 html.custom-scrollbar-active::-webkit-scrollbar, body.custom-scrollbar-active::-webkit-scrollbar {
   width: 10px;
