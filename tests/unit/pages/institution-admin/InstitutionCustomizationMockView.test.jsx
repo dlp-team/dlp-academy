@@ -166,4 +166,21 @@ describe('InstitutionCustomizationMockView', () => {
 
     expect(screen.getByText(/tecnología/i)).toBeTruthy();
   });
+
+  it('supports topic drilldown from Uso and Cursos tabs', () => {
+    renderCustomizationPreview();
+
+    fireEvent.click(screen.getByRole('button', { name: /uso/i }));
+    fireEvent.click(screen.getByText('Matemáticas'));
+
+    expect(screen.getByText(/temas de la asignatura/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /volver a asignaturas/i }));
+
+    fireEvent.click(screen.getByRole('button', { name: /cursos/i }));
+    fireEvent.click(screen.getByRole('button', { name: /2025-2026/i }));
+    fireEvent.click(screen.getByRole('button', { name: /1º ESO \(2025-2026\)/i }));
+    fireEvent.click(screen.getByText('Lengua'));
+
+    expect(screen.getByText(/temas de la asignatura/i)).toBeTruthy();
+  });
 });

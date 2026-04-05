@@ -124,3 +124,14 @@ Convert Institution Admin customization preview into a true behavioral replica w
     - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
     - `npm run lint` (PASS)
     - `npx tsc --noEmit` (PASS)
+
+- 2026-04-05 - Block C in progress (slice 6)
+  - Added deterministic cross-tab topic drilldown parity assertions in:
+    - [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx)
+  - Coverage now verifies:
+    - `Uso` tab subject drilldown path,
+    - `Cursos` tab drilldown path after expanding year and course collapsible wrappers.
+  - Validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)
