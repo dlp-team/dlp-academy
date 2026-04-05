@@ -36,3 +36,13 @@ Execute mandatory final optimization across all touched files to reduce duplicat
 		- `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js tests/unit/pages/institution-admin/userDeletionFeedback.test.js` (PASS)
 		- `npm run lint` (PASS)
 		- `npx tsc --noEmit` (PASS)
+
+- 2026-04-05 - Block B completed
+	- Consolidated repeated user-delete button rendering and delete-confirm reset patterns in:
+		- [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx)
+	- Consolidated repeated local user-list cleanup callback after delete mutation in:
+		- [src/pages/InstitutionAdminDashboard/hooks/useUsers.ts](src/pages/InstitutionAdminDashboard/hooks/useUsers.ts)
+	- Validation evidence:
+		- `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js tests/unit/pages/institution-admin/userDeletionFeedback.test.js` (PASS)
+		- `npm run lint` (PASS)
+		- `npx tsc --noEmit` (PASS)

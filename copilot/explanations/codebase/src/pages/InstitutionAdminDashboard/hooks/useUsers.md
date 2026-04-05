@@ -32,6 +32,7 @@
 - `../../../utils/pagePersistence`
 
 ## Changelog
+- 2026-04-05: Phase 06 Block B consolidated repeated post-delete local-list filtering into a single callback used by all user collections (`teachers`, `students`, `allTeachers`, `allStudents`).
 - 2026-04-05: Added guarded `handleDeleteUser` mutation flow with institution/role/self/protected-role checks and active-class preconditions before deleting users.
 - 2026-04-05: Added dependency on `userDeletionGuard` utility to centralize guard-code decisions and keep UI error handling deterministic.
 - 2026-04-04: Added Google Sheets source ingestion support for manual imports and enriched n8n response mapping fields (`warnings`, `recommendations`, `detectedColumns`, `aiMapping`).

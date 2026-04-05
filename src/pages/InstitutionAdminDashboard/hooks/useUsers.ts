@@ -592,10 +592,14 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
 
     await deleteDoc(targetUserRef);
 
-    setTeachers((previous: any[]) => previous.filter((entry: any) => entry.id !== normalizedTargetUserId));
-    setStudents((previous: any[]) => previous.filter((entry: any) => entry.id !== normalizedTargetUserId));
-    setAllTeachers((previous: any[]) => previous.filter((entry: any) => entry.id !== normalizedTargetUserId));
-    setAllStudents((previous: any[]) => previous.filter((entry: any) => entry.id !== normalizedTargetUserId));
+    const removeDeletedUserFromList = (previous: any[]) => (
+      previous.filter((entry: any) => entry.id !== normalizedTargetUserId)
+    );
+
+    setTeachers(removeDeletedUserFromList);
+    setStudents(removeDeletedUserFromList);
+    setAllTeachers(removeDeletedUserFromList);
+    setAllStudents(removeDeletedUserFromList);
 
     await fetchData();
 

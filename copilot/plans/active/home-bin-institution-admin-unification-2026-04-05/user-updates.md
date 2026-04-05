@@ -10,6 +10,16 @@
 - (none)
 
 ## Processed Updates
+- 2026-04-05: Continued execution into Phase 06 Block B (users-tab/local-delete consolidation).
+  - Trigger: user requested continuation (`continue`).
+  - Integrated files:
+    - [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx)
+    - [src/pages/InstitutionAdminDashboard/hooks/useUsers.ts](src/pages/InstitutionAdminDashboard/hooks/useUsers.ts)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-06-cross-cutting-optimization-and-consolidation.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-06-cross-cutting-optimization-and-consolidation.md)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-06-optimization-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-06-optimization-kickoff.md)
+
 - 2026-04-05: Continued execution into Phase 06 Block A (delete-feedback consolidation).
   - Trigger: leverage-step continuation selected `Continue with Phase 06`.
   - Integrated files:

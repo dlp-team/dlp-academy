@@ -93,6 +93,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Continue Phase 06 with additional low-risk extraction targets in Institution Admin user-management surfaces.
+1. Continue Phase 06 with Block C low-risk extraction targets in Institution Admin user-management surfaces.
 2. Keep deterministic tests aligned with each optimization slice to ensure lossless behavior.
 3. Keep normal validate -> commit -> push cadence for each major block.

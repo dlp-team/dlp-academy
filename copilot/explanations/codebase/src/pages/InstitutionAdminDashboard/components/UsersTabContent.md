@@ -24,6 +24,7 @@
 - `../../../utils/institutionPolicyUtils`
 
 ## Changelog
+- 2026-04-05: Phase 06 Block B reduced repeated delete-action button and delete-confirm reset logic using local role-normalization/render helpers while preserving users-tab behavior.
 - 2026-04-05: Phase 06 consolidation extracted delete-user feedback message mapping into shared utility (`userDeletionFeedback.ts`) to reduce inline branching while preserving behavior.
 - 2026-04-05: Added users-tab delete action buttons for teacher/student rows with modal-first confirmation (`Eliminar usuario`) and inline success/error messaging.
 - 2026-04-05: Added guard-code-aware Spanish error mapping so blocked deletion attempts surface explicit reasons (cross-tenant, role mismatch, protected role, self-delete, active classes).

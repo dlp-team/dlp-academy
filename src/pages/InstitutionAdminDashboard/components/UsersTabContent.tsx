@@ -16,8 +16,23 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import { DEFAULT_ACCESS_POLICIES } from '../../../utils/institutionPolicyUtils';
-import { buildUserDeletionSuccessMessage, mapUserDeletionErrorMessage } from '../utils/userDeletionFeedback';
+import {
+  buildUserDeletionSuccessMessage,
+  getUserDeletionRoleLabel,
+  mapUserDeletionErrorMessage,
+} from '../utils/userDeletionFeedback';
 import CsvImportWorkflowModal from './CsvImportWorkflowModal';
+
+const createClosedUserDeleteConfirmState = () => ({
+  isOpen: false,
+  userId: null,
+  userRole: 'teacher',
+  userLabel: '',
+});
+
+const normalizeUserDeletionRole = (role: any) => (
+  String(role || '').trim().toLowerCase() === 'student' ? 'student' : 'teacher'
+);
 
 const UsersTabContent = ({
   userType,
@@ -64,12 +79,7 @@ const UsersTabContent = ({
   });
   const [isRemovingAccess, setIsRemovingAccess] = useState(false);
   const [showStudentCsvModal, setShowStudentCsvModal] = useState(false);
-  const [userDeleteConfirm, setUserDeleteConfirm] = useState({
-    isOpen: false,
-    userId: null,
-    userRole: 'teacher',
-    userLabel: '',
-  });
+  const [userDeleteConfirm, setUserDeleteConfirm] = useState(createClosedUserDeleteConfirmState);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
   const [userDeleteMessage, setUserDeleteMessage] = useState({ type: '', text: '' });
 
@@ -95,12 +105,7 @@ const UsersTabContent = ({
 
   React.useEffect(() => {
     setUserDeleteMessage({ type: '', text: '' });
-    setUserDeleteConfirm({
-      isOpen: false,
-      userId: null,
-      userRole: 'teacher',
-      userLabel: '',
-    });
+    setUserDeleteConfirm(createClosedUserDeleteConfirmState());
   }, [userType]);
 
   const handleCopyLiveCode = () => {
@@ -156,7 +161,7 @@ const UsersTabContent = ({
 
   const requestDeleteUser = (targetUser: any, role: any) => {
     if (isDeletingUser) return;
-    const normalizedRole = role === 'student' ? 'student' : 'teacher';
+    const normalizedRole = normalizeUserDeletionRole(role);
     const targetUserId = targetUser?.id || null;
     if (!targetUserId) return;
 
@@ -171,12 +176,7 @@ const UsersTabContent = ({
 
   const closeUserDeleteConfirm = () => {
     if (isDeletingUser) return;
-    setUserDeleteConfirm({
-      isOpen: false,
-      userId: null,
-      userRole: 'teacher',
-      userLabel: '',
-    });
+    setUserDeleteConfirm(createClosedUserDeleteConfirmState());
   };
 
   const confirmDeleteUser = async () => {
@@ -195,12 +195,7 @@ const UsersTabContent = ({
         type: 'success',
         text: buildUserDeletionSuccessMessage(userDeleteConfirm.userRole),
       });
-      setUserDeleteConfirm({
-        isOpen: false,
-        userId: null,
-        userRole: 'teacher',
-        userLabel: '',
-      });
+      setUserDeleteConfirm(createClosedUserDeleteConfirmState());
     } catch (error: any) {
       setUserDeleteMessage({
         type: 'error',
@@ -209,6 +204,27 @@ const UsersTabContent = ({
     } finally {
       setIsDeletingUser(false);
     }
+  };
+
+  const renderUserDeleteActionButton = (targetUser: any, role: any) => {
+    const normalizedRole = normalizeUserDeletionRole(role);
+    const roleLabel = getUserDeletionRoleLabel(normalizedRole);
+
+    return (
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          requestDeleteUser(targetUser, normalizedRole);
+        }}
+        disabled={isDeletingUser}
+        className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-60"
+        title={`Eliminar ${roleLabel}`}
+        aria-label={`Eliminar ${roleLabel} ${targetUser?.displayName || targetUser?.email || targetUser?.id}`}
+      >
+        <Trash2 className="w-4 h-4" />
+      </button>
+    );
   };
 
   return (
@@ -432,19 +448,7 @@ const UsersTabContent = ({
                           </td>
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-1">
-                              <button
-                                type="button"
-                                onClick={(event) => {
-                                  event.stopPropagation();
-                                  requestDeleteUser(u, 'teacher');
-                                }}
-                                disabled={isDeletingUser}
-                                className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-60"
-                                title="Eliminar profesor"
-                                aria-label={`Eliminar profesor ${u.displayName || u.email || u.id}`}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
+                              {renderUserDeleteActionButton(u, 'teacher')}
                               <ChevronRight className="w-4 h-4 text-slate-300 ml-auto" />
                             </div>
                           </td>
@@ -562,19 +566,7 @@ const UsersTabContent = ({
                         </td>
                         <td className="px-6 py-4 text-right">
                           <div className="flex items-center justify-end gap-1">
-                            <button
-                              type="button"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                requestDeleteUser(u, 'student');
-                              }}
-                              disabled={isDeletingUser}
-                              className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-60"
-                              title="Eliminar alumno"
-                              aria-label={`Eliminar alumno ${u.displayName || u.email || u.id}`}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            {renderUserDeleteActionButton(u, 'student')}
                             <ChevronRight className="w-4 h-4 text-slate-300 ml-auto" />
                           </div>
                         </td>
@@ -655,7 +647,7 @@ const UsersTabContent = ({
           >
             <div className="p-6">
               <h3 id="user-delete-confirm-title" className="text-lg font-black text-slate-900 dark:text-white">
-                Eliminar {userDeleteConfirm.userRole === 'student' ? 'alumno' : 'profesor'}
+                Eliminar {getUserDeletionRoleLabel(userDeleteConfirm.userRole)}
               </h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 Se eliminará la cuenta de "{userDeleteConfirm.userLabel || 'este usuario'}". Esta acción no se puede deshacer.
