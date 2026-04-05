@@ -1,3 +1,4 @@
+/* src/index.css */
 @import "tailwindcss";
 
 @property --tw-gradient-from {
@@ -252,7 +253,7 @@ html.theme-switching *::after {
 
 html.custom-scrollbar-active, body.custom-scrollbar-active {
   overflow-y: auto;
-  scrollbar-gutter: stable both-edges;
+  scrollbar-gutter: stable;
   scrollbar-width: thin;
   scrollbar-color: rgba(99,102,241,0.24) transparent;
 }

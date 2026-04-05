@@ -1,7 +1,10 @@
+## Changelog
+- **2026-04-05:** Migrated outer overlay/backdrop shell to shared `BaseModal` while preserving the existing confirmation copy, button actions, and visual hierarchy.
+
 # DeleteModal.jsx
 
 ## Purpose
-- **Source file:** `src/components/modals/DeleteModal.jsx`
+- **Source file:** `src/components/modals/DeleteModal.tsx`
 - **Last documented:** 2026-02-24
 - **Role:** Modal component that encapsulates focused user actions and confirmations.
 
@@ -23,7 +26,8 @@
 
 ## Imports and Dependencies
 - `react`: `React`
-- `lucide-react`: `AlertTriangle`, `X`
+- `lucide-react`: `AlertTriangle`
+- `../ui/BaseModal`: `BaseModal`
 
 ## Example
 ```jsx

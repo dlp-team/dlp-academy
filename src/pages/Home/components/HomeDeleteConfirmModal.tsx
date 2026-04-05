@@ -1,8 +1,9 @@
-// src/pages/Home/components/HomeDeleteConfirmModal.jsx
+// src/pages/Home/components/HomeDeleteConfirmModal.tsx
 import React from 'react';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
+import BaseModal from '../../../components/ui/BaseModal';
 
 const HomeDeleteConfirmModal = ({
     homeThemeTokens = HOME_THEME_TOKENS,
@@ -69,10 +70,14 @@ const HomeDeleteConfirmModal = ({
     const onClose = () => setDeleteConfig({ isOpen: false, type: null, item: null });
 
     return (
-        <div className="fixed inset-0 z-50" onClick={onClose}>
-            <div className={homeThemeTokens.modalBackdropClass} />
-            <div className="absolute inset-x-0 bottom-0 flex items-center justify-center p-4" style={OVERLAY_TOP_OFFSET_STYLE}>
-            <div className={homeThemeTokens.modalCardClass} onClick={(e) => e.stopPropagation()}>
+        <BaseModal
+            isOpen={deleteConfig.isOpen}
+            onClose={onClose}
+            backdropClassName={homeThemeTokens.modalBackdropClass}
+            contentWrapperClassName="absolute inset-x-0 bottom-0 flex items-center justify-center p-4"
+            contentWrapperStyle={OVERLAY_TOP_OFFSET_STYLE}
+            contentClassName={homeThemeTokens.modalCardClass}
+        >
                 <div className={`w-16 h-16 ${accent.circleBg} rounded-full flex items-center justify-center mx-auto mb-4 transition-colors`}>
                     <ActionIcon className={`w-8 h-8 ${accent.iconColor}`} />
                 </div>
@@ -101,9 +106,7 @@ const HomeDeleteConfirmModal = ({
                         <ActionIcon className="w-4 h-4" /> {confirmLabel}
                     </button>
                 </div>
-            </div>
-            </div>
-        </div>
+        </BaseModal>
     );
 };
 

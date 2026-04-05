@@ -1,13 +1,17 @@
-// src/components/modals/DeleteModal.jsx
+// src/components/modals/DeleteModal.tsx
 import React from 'react';
-import { AlertTriangle, X } from 'lucide-react';
+import { AlertTriangle } from 'lucide-react';
+import BaseModal from '../ui/BaseModal';
 
 const DeleteModal = ({ isOpen, onClose, onConfirm, itemName }: any) => {
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden transform transition-all scale-100">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      backdropClassName="absolute inset-0 bg-black/50 backdrop-blur-sm"
+      contentWrapperClassName="relative z-10 flex min-h-full items-center justify-center p-4"
+      contentClassName="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden transform transition-all scale-100"
+    >
         
         {/* Cabecera Roja */}
         <div className="bg-red-50 p-6 flex flex-col items-center text-center border-b border-red-100">
@@ -36,8 +40,7 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, itemName }: any) => {
             Sí, Eliminar
           </button>
         </div>
-      </div>
-    </div>
+    </BaseModal>
   );
 };
 
