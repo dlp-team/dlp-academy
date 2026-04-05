@@ -6,6 +6,7 @@
 
 import React from 'react';
 import { ArrowLeft, Edit3, Search, Trash2, X, XCircle } from 'lucide-react';
+import DashboardOverlayShell from '../../../../components/ui/DashboardOverlayShell';
 
 // ─── Color palette ────────────────────────────────────────────────────────────
 export const COLORS = [
@@ -57,12 +58,13 @@ export const ColorPicker = ({ value, onChange }: any) => (
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
 export const Modal = ({ title, onClose, children, wide = false }) => (
-  <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div
-      className={`bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full p-6
-        animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto
-        ${wide ? 'max-w-lg' : 'max-w-md'}`}
-    >
+  <DashboardOverlayShell
+    onClose={onClose}
+    maxWidth={wide ? 'lg' : 'md'}
+    backdropClassName="absolute inset-0 bg-black/50 backdrop-blur-sm"
+    contentClassName="p-6 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+  >
+    <div>
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h3>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -71,7 +73,7 @@ export const Modal = ({ title, onClose, children, wide = false }) => (
       </div>
       {children}
     </div>
-  </div>
+  </DashboardOverlayShell>
 );
 
 // ─── InputField wrapper ───────────────────────────────────────────────────────

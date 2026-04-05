@@ -4,6 +4,12 @@
 ## Status
 - IN_PROGRESS
 
+## Interruption Log
+- 2026-04-05: Two user-update priority blocks were executed between Block C slices:
+	- scrollbar right-edge behavior refinement,
+	- non-modal overlay audit + first shared-shell migration slice.
+- Phase 04 parity resumes from Block C slice 6.
+
 ## Block Tracking
 - Block A (2026-04-05): COMPLETED
 - Block B (2026-04-05): COMPLETED

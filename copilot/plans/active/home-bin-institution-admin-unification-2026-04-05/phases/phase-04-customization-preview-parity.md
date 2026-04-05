@@ -46,6 +46,11 @@ Convert Institution Admin customization preview into a true behavioral replica w
     - deep cross-page non-modal overlay audit for shared header-to-bottom overlay shell unification.
   - Next customization parity slices resume after these user-update blocks.
 
+- 2026-04-05 - User-update execution blocks completed
+  - Scrollbar directive completed (overlay-first + stable fallback behavior shipped).
+  - Overlay-scope directive advanced with deep audit + first shared-shell migration slice.
+  - Phase 04 parity slices can resume from Block C slice 6.
+
 - 2026-04-05 - Block A completed
   - Fixed fullscreen preview layering so customization preview sits above the global app header:
     - [src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx](src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx)

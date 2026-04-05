@@ -3,7 +3,7 @@
 
 ## Overview
 - Source file: `src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx`
-- Last documented: 2026-04-04
+- Last documented: 2026-04-05
 - Role: UI modal to configure and execute transfer/promote dry-run previews from Institution Admin organization tab.
 
 ## Responsibilities
@@ -15,6 +15,10 @@
 - Keeps all visible copy in Spanish and disables closure/actions during execution.
 
 ## Changelog
+### 2026-04-05
+- Migrated overlay wrapper to shared [src/components/ui/DashboardOverlayShell.tsx](src/components/ui/DashboardOverlayShell.tsx) for consistent header-to-bottom shell behavior with other Institution Admin overlays.
+- Preserved dry-run/apply/rollback business logic and execution lock close semantics.
+
 ### 2026-04-04
 - Fixed modal state-reset race by initializing default values only on open transitions (not on every `availableAcademicYears` refresh while open).
 - Preserves dry-run summary and apply/rollback feedback during post-apply `fetchAll()` refreshes, which is required for deterministic full execution-path e2e assertions.

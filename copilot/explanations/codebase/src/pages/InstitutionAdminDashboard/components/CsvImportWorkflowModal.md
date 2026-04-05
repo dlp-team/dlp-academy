@@ -3,7 +3,7 @@
 
 ## Overview
 - **Source file:** `src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx`
-- **Last documented:** 2026-04-04
+- **Last documented:** 2026-04-05
 - **Role:** Reusable import workflow modal for institution-admin CSV/Excel flows with Firebase Storage upload, manual mapping, and n8n dispatch paths.
 
 ## Responsibilities
@@ -22,5 +22,6 @@
 - `lucide-react`
 
 ## Changelog
+- 2026-04-05: Migrated overlay shell to shared [src/components/ui/DashboardOverlayShell.tsx](src/components/ui/DashboardOverlayShell.tsx) for consistent constrained-overlay behavior across Institution Admin create/import overlays.
 - 2026-04-04: Added direct Google Sheets source mode for manual/n8n flows and expanded summary rendering for AI feedback (`warnings`, `recommendations`, `detectedColumns`, `aiMapping`).
 - 2026-04-04: Added reusable import modal to unify CSV/Excel onboarding workflows across Users and Courses sections with manual + n8n paths.

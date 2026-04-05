@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowRightLeft, Loader2, ShieldCheck } from 'lucide-react';
 import { getAcademicYearStartYear } from './classes-courses/academicYearUtils';
+import DashboardOverlayShell from '../../../components/ui/DashboardOverlayShell';
 
 const buildNextAcademicYear = (academicYear: any) => {
   const startYear = getAcademicYearStartYear(academicYear);
@@ -223,11 +224,8 @@ const TransferPromotionDryRunModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-slate-950/60" onClick={closeModal} />
-
-      <div className="relative w-full max-w-3xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl">
-        <div className="p-6">
+    <DashboardOverlayShell isOpen={isOpen} onClose={closeModal} maxWidth="3xl">
+      <div className="p-6">
           <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
             <ArrowRightLeft className="w-5 h-5 text-indigo-500" />
             Simulación de traslado/promoción
@@ -402,9 +400,8 @@ const TransferPromotionDryRunModal = ({
               Ejecutar simulación
             </button>
           </div>
-        </div>
       </div>
-    </div>
+    </DashboardOverlayShell>
   );
 };
 

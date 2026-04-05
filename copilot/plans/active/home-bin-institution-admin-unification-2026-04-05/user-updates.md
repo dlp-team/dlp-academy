@@ -10,6 +10,18 @@
 - (none)
 
 ## Processed Updates
+- 2026-04-05: Overlay unification deep analysis executed and first migration slice delivered.
+  - Trigger: execute processed overlay-scope correction directive (non-modal overlays across pages).
+  - Integrated files:
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/non-modal-overlay-audit-2026-04-05.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/non-modal-overlay-audit-2026-04-05.md)
+    - [src/components/ui/DashboardOverlayShell.tsx](src/components/ui/DashboardOverlayShell.tsx)
+    - [src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx](src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx)
+    - [src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx](src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx)
+    - [src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx](src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx)
+    - [tests/unit/components/DashboardOverlayShell.test.jsx](tests/unit/components/DashboardOverlayShell.test.jsx)
+    - [strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+    - [phases/phase-01-global-modal-and-scrollbar-foundation.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md)
+
 - 2026-04-05: Scrollbar right-edge smoothing block implemented and validated.
   - Trigger: execute processed scrollbar directive as first user-update implementation block.
   - Integrated files:

@@ -25,6 +25,18 @@
   - Perform deep analysis of non-modal overlays (for example, create/edit management overlays) across pages, not only classic modals.
   - Target architecture: consistent overlay shell constrained between app header and screen bottom, maintainable under shared patterns.
   - Execution mapping: dedicated overlay audit + prioritized migration queue before further large parity expansion.
+  - Progress (2026-04-05, audit + slice 1 completed):
+    - Completed deep non-modal overlay audit and prioritized migration queue in [working/non-modal-overlay-audit-2026-04-05.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/non-modal-overlay-audit-2026-04-05.md).
+    - Implemented first low-risk shared-shell migration slice with [src/components/ui/DashboardOverlayShell.tsx](src/components/ui/DashboardOverlayShell.tsx).
+    - Migrated Institution Admin overlay consumers:
+      - [src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx](src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx),
+      - [src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx](src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx),
+      - [src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx](src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx).
+    - Added regression coverage in [tests/unit/components/DashboardOverlayShell.test.jsx](tests/unit/components/DashboardOverlayShell.test.jsx).
+    - Validation evidence:
+      - `npm run test -- tests/unit/components/DashboardOverlayShell.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx` (PASS),
+      - `npm run lint` (PASS),
+      - `npx tsc --noEmit` (PASS).
 
 ### Phase 00 - Codebase Audit and Dependency Mapping
 - Status: COMPLETED
@@ -242,6 +254,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Execute deep cross-page non-modal overlay audit and produce prioritized shared-shell migration list.
-2. Implement first low-risk non-modal overlay-shell unification slice from that audit.
-3. Resume Phase 04 customization parity slices after user-update blocks with standard validate -> commit -> push cadence.
+1. Resume Phase 04 Block C slice 6 with targeted topic/resource/bin parity hardening.
+2. Continue non-modal overlay-shell migration in additional low-risk consumers after each validated slice.
+3. Keep cadence discipline (validate -> commit -> push) for every major block.

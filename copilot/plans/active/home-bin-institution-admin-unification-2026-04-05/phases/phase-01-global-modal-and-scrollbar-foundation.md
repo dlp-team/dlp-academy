@@ -147,7 +147,16 @@ Create a reusable modal foundation and remove the left-side scrollbar compensati
     - `npm run lint` (PASS)
     - `npx tsc --noEmit` (PASS)
 - Follow-up B next:
-  - deep non-modal overlay audit and migration queue definition remains in progress.
+  - deep non-modal overlay audit completed in [working/non-modal-overlay-audit-2026-04-05.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/non-modal-overlay-audit-2026-04-05.md),
+  - first shared-shell migration slice completed with:
+    - [src/components/ui/DashboardOverlayShell.tsx](src/components/ui/DashboardOverlayShell.tsx),
+    - [src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx](src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx),
+    - [src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx](src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx),
+    - [src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx](src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx).
+  - Validation evidence:
+    - `npm run test -- tests/unit/components/DashboardOverlayShell.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)
 
 ## Phase 01 Closure Summary (2026-04-05)
 - Shared modal foundation established and reused across Home, Subject, and admin-facing modal surfaces.

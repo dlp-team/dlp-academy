@@ -93,6 +93,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Execute deep cross-page non-modal overlay audit and publish prioritized unification queue.
-2. Implement first low-risk non-modal overlay-shell unification slice from that queue.
-3. Continue Phase 04 customization parity after these user-update blocks with normal validate -> commit -> push cadence.
+1. Resume Phase 04 Block C slice 6 targeted preview parity hardening.
+2. Continue low-risk non-modal overlay-shell migrations from the audited priority queue.
+3. Keep normal validate -> commit -> push cadence for each major block.

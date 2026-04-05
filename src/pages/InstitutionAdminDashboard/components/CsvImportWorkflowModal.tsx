@@ -1,6 +1,7 @@
 // src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, FileSpreadsheet, Loader2, Sparkles, UploadCloud, XCircle } from 'lucide-react';
+import DashboardOverlayShell from '../../../components/ui/DashboardOverlayShell';
 
 const DEFAULT_STUDENT_MAPPING = {
   emailColumn: 'email',
@@ -193,10 +194,8 @@ const CsvImportWorkflowModal = ({
   const showManualCourseHelp = workflowType === 'course-links';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      <div className="absolute inset-0 bg-slate-950/60" onClick={closeModal} />
-      <div className="relative w-full max-w-3xl rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl">
-        <div className="p-6">
+    <DashboardOverlayShell isOpen={isOpen} onClose={closeModal} maxWidth="3xl">
+      <div className="p-6">
           <h3 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
             <FileSpreadsheet className="w-5 h-5 text-indigo-500" />
             {title}
@@ -411,9 +410,8 @@ const CsvImportWorkflowModal = ({
                 : 'Enviar a n8n'}
             </button>
           </div>
-        </div>
       </div>
-    </div>
+    </DashboardOverlayShell>
   );
 };
 
