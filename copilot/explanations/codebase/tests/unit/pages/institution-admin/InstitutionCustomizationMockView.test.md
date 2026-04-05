@@ -2,7 +2,7 @@
 
 ## Overview
 - **Source file:** `tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx`
-- **Last documented:** 2026-03-30
+- **Last documented:** 2026-04-05
 - **Role:** Unit coverage for the mock customization preview workflow.
 
 ## Coverage
@@ -15,6 +15,7 @@
 ## Changelog
 ### 2026-04-05
 - Added integration parity assertions to confirm exact preview header shell remains aligned with Home content controls across role switching.
+- Added deterministic topic/resource/bin transition checks covering bin actions, subject-detail back navigation, and return-to-list behavior after drilldown.
 - Extended fullscreen regression coverage with explicit stacking-context assertion (`z-[10050]`) to prevent overlap with global fixed header.
 
 ### 2026-04-04

@@ -163,6 +163,13 @@
     - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
     - `npm run lint` (PASS),
     - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 3):
+  - hardened topic/resource/bin composition transition assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - validated bin action labels, subject-detail back-navigation control, and return-to-list behavior after topic drilldown,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
 
 ### Phase 05 - User Management, Profile Media, and Past Classes
 - Status: PLANNED
@@ -204,6 +211,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Continue Phase 04 Block C slice 3 with topic/resource/bin surface parity hardening using existing Home components.
-2. Add deterministic parity assertions for topic/resource/bin composition transitions in customization preview.
+1. Continue Phase 04 Block C slice 4 with targeted topic/resource/bin visual parity hardening where real-surface deltas remain.
+2. Add deterministic assertions for any newly hardened preview-surface deltas in customization tests.
 3. Keep cadence discipline (validate -> commit -> push) for each new Phase 04 block.

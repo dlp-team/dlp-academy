@@ -113,6 +113,9 @@ describe('InstitutionCustomizationMockView', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /papelera/i }));
     expect(screen.getByText(/papelera de vista previa/i)).toBeTruthy();
+    expect(screen.getByText(/tecnología/i)).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /restaurar/i }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('button', { name: /eliminar/i }).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole('button', { name: /compartido/i }));
     expect(screen.getByText(/asignaturas compartidas/i)).toBeTruthy();
@@ -121,8 +124,12 @@ describe('InstitutionCustomizationMockView', () => {
     fireEvent.click(screen.getByText('Matemáticas'));
 
     expect(screen.getByText(/temas de la asignatura/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /volver a asignaturas/i })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /ecuaciones lineales/i }));
     expect(screen.getByText(/guías de estudio/i)).toBeTruthy();
     expect(screen.getByText(/^archivos$/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /volver a asignaturas/i }));
+    expect(screen.getByText(/mis asignaturas/i)).toBeTruthy();
   });
 });
