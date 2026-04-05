@@ -6,7 +6,8 @@
 
 ## Block Tracking
 - Block A (2026-04-05): COMPLETED
-- Block B (next): PLANNED
+- Block B (2026-04-05): COMPLETED
+- Block C (next): PLANNED
 
 ## Block A Scope (Completed)
 - Run full validation suite (`test`, `lint`, `tsc`).
@@ -31,3 +32,15 @@
 ## Upcoming Block B Scope
 - Prepare lifecycle transition package from `active` to `inReview` once all phase artifacts are finalized.
 - Confirm no additional out-of-scope risk entries are required.
+
+## Block B Delivery
+- Completed review log with failure/remediation trace in:
+  - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/reviewing/review-log-2026-04-05.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/reviewing/review-log-2026-04-05.md)
+- Completed verification checklist items for lifecycle readiness in:
+  - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/reviewing/verification-checklist-2026-04-05.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/reviewing/verification-checklist-2026-04-05.md)
+- Confirmed no new out-of-scope risks required additional entries in:
+  - [copilot/plans/out-of-scope-risk-log.md](copilot/plans/out-of-scope-risk-log.md)
+
+## Upcoming Block C Scope
+- Perform lifecycle folder transition from `active` to `inReview`.
+- Normalize lifecycle-path links after transition and prepare final inReview closure pass.
