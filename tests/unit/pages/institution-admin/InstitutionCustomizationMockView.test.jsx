@@ -28,6 +28,21 @@ describe('InstitutionCustomizationMockView', () => {
     expect(screen.getByText(/panel estudiante/i)).toBeTruthy();
   });
 
+  it('keeps exact preview header and content controls aligned', () => {
+    renderCustomizationPreview();
+
+    expect(screen.getByText(/panel docente/i)).toBeTruthy();
+    expect(screen.getByText(/^inicio$/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /manual/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /cursos/i })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /vista estudiante/i }));
+
+    expect(screen.getByText(/panel estudiante/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /manual/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /cursos/i })).toBeTruthy();
+  });
+
   it('calls onSave with updated form values', async () => {
     const onSave = vi.fn(async () => {});
 

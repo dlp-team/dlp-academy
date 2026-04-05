@@ -14,6 +14,7 @@
 
 ## Changelog
 ### 2026-04-05
+- Added integration parity assertions to confirm exact preview header shell remains aligned with Home content controls across role switching.
 - Extended fullscreen regression coverage with explicit stacking-context assertion (`z-[10050]`) to prevent overlap with global fixed header.
 
 ### 2026-04-04

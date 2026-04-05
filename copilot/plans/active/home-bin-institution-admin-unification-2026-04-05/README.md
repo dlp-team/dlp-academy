@@ -91,6 +91,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Continue Phase 04 Block C slice 2 with topic/resource/bin real-surface parity hardening.
-2. Expand deterministic preview parity assertions for header + content composition integration behavior.
+1. Continue Phase 04 Block C slice 3 with topic/resource/bin real-surface parity hardening.
+2. Add deterministic preview assertions for topic/resource/bin composition transitions.
 3. Keep block cadence discipline (validate -> commit -> push) after each Phase 04 increment.

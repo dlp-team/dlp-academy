@@ -33,11 +33,20 @@
 - New test file: [tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx](tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx).
 - Deterministic assertions now cover fallback institution text, role-aware subtitle, and avatar marker output.
 
+## Block C Progress (Slice 2 Completed)
+- Extended integration-level parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx).
+- Verified exact preview header shell (`Panel docente/estudiante`, `Inicio`) remains aligned with Home controls (`Manual`, `Cursos`) across role toggles.
+
 ## Block C Validation Evidence (Slice 1)
 - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
 - `npm run lint` (PASS)
 - `npx tsc --noEmit` (PASS)
 
-## Upcoming Block C Scope (Slice 2)
+## Block C Validation Evidence (Slice 2)
+- `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
+- `npm run lint` (PASS)
+- `npx tsc --noEmit` (PASS)
+
+## Upcoming Block C Scope (Slice 3)
 - Expand real-surface parity for topic/resources/bin rendering deltas.
-- Extend focused parity assertions for requested preview behavior consistency.
+- Add focused parity assertions for requested preview behavior consistency.
