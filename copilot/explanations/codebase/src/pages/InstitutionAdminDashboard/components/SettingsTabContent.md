@@ -10,6 +10,7 @@
 - Displays editable calendar dates (inicio, fin ordinario, fin extraordinario).
 - Displays periodization mode selector (trimestres, cuatrimestres, personalizado).
 - Displays post-course subject policy selector.
+- Displays draggable institution course hierarchy ordering used by automatic promotion mapping.
 - Displays institution automation toggles for transfer/promotion tooling and subject lifecycle automation.
 - Displays teacher-governance toggles moved from users tab.
 - Surfaces validation feedback and save status from the settings hook.
@@ -23,6 +24,7 @@
 - `lucide-react`
 
 ## Changelog
+- 2026-04-05: Added course-hierarchy settings section with drag-and-drop order editor and explanatory promotion-order guidance.
 - 2026-04-05: Added "Automatizaciones institucionales" panel with two persisted toggles for transfer/promotion tooling and subject lifecycle automation.
 - 2026-04-04: Added explicit baseline/override guidance so admins understand course-level period schedules do not overwrite institution defaults.
 - 2026-04-03: Added initial implementation as part of Phase 02 settings foundation.

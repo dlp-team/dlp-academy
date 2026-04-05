@@ -150,11 +150,17 @@ describe('runTransferPromotionDryRun handler', () => {
           role: 'institutionadmin',
           institutionId: 'inst-1',
         },
-        institutions: [{ id: 'inst-1' }],
+        institutions: [{
+          id: 'inst-1',
+          courseLifecycle: {
+            coursePromotionOrder: ['3 ESO', '2 ESO', '1 ESO'],
+          },
+        }],
         courses: [
           { id: 'course-source-1', institutionId: 'inst-1', academicYear: '2025-2026', name: '1 ESO', status: 'active' },
           { id: 'course-source-2', institutionId: 'inst-1', academicYear: '2025-2026', name: '2 ESO', status: 'active' },
-          { id: 'course-target-1', institutionId: 'inst-1', academicYear: '2026-2027', name: '1 ESO', status: 'active' },
+          { id: 'course-target-1', institutionId: 'inst-1', academicYear: '2026-2027', name: '2 ESO', status: 'active' },
+          { id: 'course-order-3', institutionId: 'inst-1', academicYear: '2024-2025', name: '3 ESO', status: 'active' },
         ],
         classes: [
           {
@@ -227,6 +233,19 @@ describe('runTransferPromotionDryRun handler', () => {
       plannedStudentAssignments: 2,
       reusedTargetCourses: 1,
       createdTargetCourses: 1,
+    });
+
+    const mappedCourseBySourceId = new Map(
+      response.mappings.courses.map((entry) => [entry.sourceCourseId, entry])
+    );
+
+    expect(mappedCourseBySourceId.get('course-source-1')).toMatchObject({
+      targetCourseName: '2 ESO',
+      action: 'reuse-existing',
+    });
+    expect(mappedCourseBySourceId.get('course-source-2')).toMatchObject({
+      targetCourseName: '3 ESO',
+      action: 'create',
     });
 
     expect(response.rollbackMetadata).toBeTruthy();

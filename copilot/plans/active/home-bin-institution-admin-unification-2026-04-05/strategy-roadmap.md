@@ -89,7 +89,7 @@
   - Phase 02 exit criteria satisfied.
 
 ### Phase 03 - Institution Admin Settings and Automation Controls
-- Status: IN_PROGRESS
+- Status: COMPLETED
 - Goal: expand settings for academic periods, course order, and automatic feature toggles.
 - Outputs:
   - ordinary/extraordinary period defaults,
@@ -110,6 +110,19 @@
     - `npm run test -- tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-roundtrip.test.js` (PASS),
     - `npm run lint` (PASS),
     - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block B):
+  - shipped settings-side draggable course hierarchy editor in [src/pages/InstitutionAdminDashboard/components/settings/CoursePromotionOrderEditor.tsx](src/pages/InstitutionAdminDashboard/components/settings/CoursePromotionOrderEditor.tsx),
+  - integrated non-duplicated order normalization + persistence in [src/utils/coursePromotionOrderUtils.ts](src/utils/coursePromotionOrderUtils.ts) and [src/pages/InstitutionAdminDashboard/hooks/useInstitutionSettings.ts](src/pages/InstitutionAdminDashboard/hooks/useInstitutionSettings.ts),
+  - wired transfer dry-run promote mapping to configured course hierarchy via [functions/security/coursePromotionOrderUtils.js](functions/security/coursePromotionOrderUtils.js) and [functions/security/transferPromotionDryRunHandler.js](functions/security/transferPromotionDryRunHandler.js),
+  - validated existing period-default course-creation behavior with [tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx](tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx) and [tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx](tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx),
+  - added deterministic coverage for ordering logic and save/read integration:
+    - [tests/unit/utils/coursePromotionOrderUtils.test.js](tests/unit/utils/coursePromotionOrderUtils.test.js),
+    - [tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx](tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx),
+    - [tests/unit/functions/transfer-promotion-dry-run-handler.test.js](tests/unit/functions/transfer-promotion-dry-run-handler.test.js).
+- Closure (2026-04-05):
+  - Phase 03 deliverables satisfied (period defaults, course hierarchy ordering, automation toggles, transfer mapping integration),
+  - targeted and broader impacted suites passed,
+  - lint and typecheck passed.
 
 ### Phase 04 - Customization Preview Parity
 - Status: PLANNED
@@ -160,6 +173,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Continue Phase 03 Block B with institution period-default propagation into course setup/edit surfaces.
-2. Continue Phase 03 Block C with deterministic course-order normalization and persistence work.
-3. Keep cadence discipline (validate -> commit -> push) for each new Phase 03 block.
+1. Kick off Phase 04 fullscreen preview parity fixes for Institution Admin customization tab.
+2. Audit preview component reuse gaps (subjects/topics/resources/bin) and define first low-risk parity block.
+3. Keep cadence discipline (validate -> commit -> push) for each new Phase 04 block.

@@ -2,12 +2,11 @@
 # Phase 03 Working Note - Settings and Automation Kickoff
 
 ## Status
-- IN_PROGRESS
+- COMPLETED
 
 ## Block Tracking
 - Block A (2026-04-05): COMPLETED
-- Block B: PLANNED
-- Block C: PLANNED
+- Block B (2026-04-05): COMPLETED
 
 ## Block A Scope
 - Institution-level automation toggles in settings hook + UI.
@@ -19,12 +18,15 @@
 - `npm run lint` (PASS)
 - `npx tsc --noEmit` (PASS)
 
-## Upcoming Block B Scope
-- Propagate institution period defaults deeper into course create/edit flows.
-- Preserve backward compatibility for institutions missing periodized settings data.
-- Add deterministic tests for default propagation and save/read consistency.
+## Block B Scope (Completed)
+- Added settings-side drag-and-drop course hierarchy editor with non-duplicated labels.
+- Added deterministic default ordering heuristics aligned to Spanish academic naming patterns.
+- Persisted hierarchy in `courseLifecycle.coursePromotionOrder` through institution settings save flow.
+- Wired transfer dry-run promote mode to resolve destination course names using configured hierarchy.
 
-## Upcoming Block C Scope
-- Add deterministic course-order normalization and persistence flow.
-- Validate Spanish naming heuristics for default ordering where explicit order is absent.
-- Add edge coverage for duplicate labels and unknown course naming patterns.
+## Block B Validation Evidence
+- `npm run test -- tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/utils/coursePromotionOrderUtils.test.js` (PASS)
+- `npm run test -- tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-roundtrip.test.js tests/unit/utils/coursePromotionOrderUtils.test.js` (PASS)
+- `npm run test -- tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx` (PASS)
+- `npm run lint` (PASS)
+- `npx tsc --noEmit` (PASS)

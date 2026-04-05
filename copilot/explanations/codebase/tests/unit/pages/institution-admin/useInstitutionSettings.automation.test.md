@@ -9,7 +9,8 @@
 ## Coverage
 - Verifies institution automation settings are loaded from Firestore with backward-compatible defaults when fields are missing.
 - Verifies save flow persists `automationSettings.transferPromotionEnabled` and `automationSettings.subjectLifecycleAutomationEnabled` in `updateDoc` payload.
+- Verifies course hierarchy order is de-duplicated, merged with active course names, and persisted under `courseLifecycle.coursePromotionOrder`.
 - Keeps test setup deterministic by mocking Firestore document reads/writes and `serverTimestamp`.
 
 ## Changelog
-- 2026-04-05: Added new test suite for automation settings read/write behavior introduced in Phase 03 Block A.
+- 2026-04-05: Expanded suite with course-promotion-order merge and persistence coverage for Phase 03 course hierarchy controls.

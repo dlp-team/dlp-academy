@@ -9,6 +9,10 @@ import {
   validateTransferPromotionPayload,
 } from './transferPromotionPlanUtils.js';
 import { assertTransferPromotionAutomationEnabled } from './institutionAutomationSettings.js';
+import {
+  mergeCoursePromotionOrderWithCourseNames,
+  resolvePromotedCourseName,
+} from './coursePromotionOrderUtils.js';
 
 const PREVIEW_LIMIT = 500;
 
@@ -134,6 +138,12 @@ export const createRunTransferPromotionDryRunHandler = ({
 
   const sourceCourses = activeCourses.filter((course) => normalizeAcademicYear(course?.academicYear) === sourceAcademicYear);
   const targetCourses = activeCourses.filter((course) => normalizeAcademicYear(course?.academicYear) === targetAcademicYear);
+  const warningSet = new Set();
+
+  const promotionOrder = mergeCoursePromotionOrderWithCourseNames({
+    courseNames: activeCourses.map((course) => String(course?.name || '').trim()),
+    persistedOrder: institutionData?.courseLifecycle?.coursePromotionOrder,
+  });
 
   const targetCoursesByMatchKey = new Map();
   targetCourses.forEach((course) => {
@@ -145,13 +155,29 @@ export const createRunTransferPromotionDryRunHandler = ({
   });
 
   const plannedCourses = sourceCourses.map((course) => {
-    const matchKey = buildCourseMatchKey(course);
+    const sourceCourseName = String(course?.name || '').trim();
+    const promotedCourseName = mode === 'promote'
+      ? resolvePromotedCourseName({
+        sourceCourseName,
+        promotionOrder,
+      })
+      : null;
+
+    const targetCourseName = mode === 'promote'
+      ? promotedCourseName || sourceCourseName
+      : sourceCourseName;
+
+    if (mode === 'promote' && !promotedCourseName && sourceCourseName) {
+      warningSet.add(`No promotion target was found for course "${sourceCourseName}" in configured course order; using same course name.`);
+    }
+
+    const matchKey = buildCourseMatchKey({ name: targetCourseName });
     const matchingTargets = targetCoursesByMatchKey.get(matchKey) || [];
     const reusedCourse = matchingTargets[0] || null;
 
     return {
       sourceCourseId: String(course.id || '').trim(),
-      sourceCourseName: String(course?.name || '').trim(),
+      sourceCourseName,
       targetCourseId: reusedCourse
         ? String(reusedCourse.id || '').trim()
         : buildPlannedEntityId({
@@ -160,7 +186,7 @@ export const createRunTransferPromotionDryRunHandler = ({
           sourceId: course.id,
           targetAcademicYear,
         }),
-      targetCourseName: String(course?.name || '').trim(),
+      targetCourseName,
       sourceAcademicYear,
       targetAcademicYear,
       action: reusedCourse ? 'reuse-existing' : 'create',
@@ -192,7 +218,7 @@ export const createRunTransferPromotionDryRunHandler = ({
       targetClassesByMatchKey.set(key, previous);
     });
 
-  const warnings = [];
+  const warnings = Array.from(warningSet);
 
   const plannedClasses = sourceClasses
     .map((cls) => {

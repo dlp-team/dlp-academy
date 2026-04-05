@@ -40,7 +40,7 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 
 ## Lifecycle Status
 - Lifecycle: active
-- Current phase: Phase 03 - Institution Admin Settings and Automation Controls (IN_PROGRESS)
+- Current phase: Phase 03 - Institution Admin Settings and Automation Controls (COMPLETED)
 - Last updated: 2026-04-05
 
 ## Key Decisions and Assumptions
@@ -91,6 +91,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Continue Phase 03 with period-default propagation into course-creation flows.
-2. Implement deterministic course-order normalization and persistence logic.
-3. Keep block cadence discipline (validate -> commit -> push) after each Phase 03 increment.
+1. Start Phase 04 kickoff slice for customization preview fullscreen parity.
+2. Prioritize real-component reuse for preview surfaces (subjects/topics/resources/bin).
+3. Keep block cadence discipline (validate -> commit -> push) after each Phase 04 increment.

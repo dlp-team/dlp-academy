@@ -1,7 +1,8 @@
 // src/pages/InstitutionAdminDashboard/hooks/useInstitutionSettings.ts
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
+import { mergeCoursePromotionOrderWithCourseNames, normalizeCoursePromotionOrder } from '../../../utils/coursePromotionOrderUtils';
 import { DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils/institutionPolicyUtils';
 
 const DEFAULT_PERIOD_MODE = 'trimester';
@@ -18,6 +19,7 @@ const DEFAULT_SETTINGS_FORM = {
   periodMode: DEFAULT_PERIOD_MODE,
   customPeriodLabel: '',
   postCoursePolicy: DEFAULT_POST_COURSE_POLICY,
+  coursePromotionOrder: [] as string[],
   transferPromotionEnabled: true,
   subjectLifecycleAutomationEnabled: true,
   allowTeacherAutonomousSubjectCreation: true,
@@ -40,6 +42,9 @@ const normalizeAutomationSettings = (value: any = null) => ({
   subjectLifecycleAutomationEnabled: value?.subjectLifecycleAutomationEnabled !== false,
 });
 
+const normalizeEntityStatus = (value: any) => String(value || 'active').trim().toLowerCase();
+const isActiveCourse = (course: any) => normalizeEntityStatus(course?.status) !== 'trashed';
+
 export const useInstitutionSettings = (user: any, institutionIdOverride: any = null) => {
   const effectiveInstitutionId = institutionIdOverride || user?.institutionId || null;
   const [loading, setLoading] = useState(false);
@@ -55,11 +60,36 @@ export const useInstitutionSettings = (user: any, institutionIdOverride: any = n
     setLoading(true);
     try {
       const institutionRef = doc(db, 'institutions', effectiveInstitutionId);
-      const institutionSnap = await getDoc(institutionRef);
+      const [institutionSnap, coursesSnap] = await Promise.all([
+        getDoc(institutionRef),
+        getDocs(
+          query(
+            collection(db, 'courses'),
+            where('institutionId', '==', effectiveInstitutionId)
+          )
+        ),
+      ]);
+
+      const allCourses = coursesSnap.docs.map((courseDoc: any) => ({ id: courseDoc.id, ...courseDoc.data() }));
+      const activeCourseNames = allCourses
+        .filter((course: any) => isActiveCourse(course))
+        .map((course: any) => String(course?.name || '').trim())
+        .filter(Boolean);
+
       if (!institutionSnap.exists()) {
-        setSettingsForm(DEFAULT_SETTINGS_FORM);
+        const fallbackCoursePromotionOrder = mergeCoursePromotionOrderWithCourseNames({
+          courseNames: activeCourseNames,
+          persistedOrder: [],
+        });
+
+        setSettingsForm({
+          ...DEFAULT_SETTINGS_FORM,
+          coursePromotionOrder: fallbackCoursePromotionOrder,
+        });
         setBaseAccessPolicies(DEFAULT_ACCESS_POLICIES);
-        setBaseCourseLifecycle({});
+        setBaseCourseLifecycle({
+          coursePromotionOrder: fallbackCoursePromotionOrder,
+        });
         setBaseAutomationSettings(DEFAULT_AUTOMATION_SETTINGS);
         return;
       }
@@ -70,9 +100,19 @@ export const useInstitutionSettings = (user: any, institutionIdOverride: any = n
       const normalizedPolicies = normalizeAccessPolicies(institutionData.accessPolicies);
       const teacherPolicy = normalizedPolicies?.teachers || DEFAULT_ACCESS_POLICIES.teachers;
       const normalizedAutomationSettings = normalizeAutomationSettings(institutionData.automationSettings);
+      const courseLifecycle = institutionData.courseLifecycle || {};
+      const coursePromotionOrder = mergeCoursePromotionOrderWithCourseNames({
+        courseNames: activeCourseNames,
+        persistedOrder: courseLifecycle.coursePromotionOrder,
+      });
+
+      const nextBaseCourseLifecycle = {
+        ...courseLifecycle,
+        coursePromotionOrder,
+      };
 
       setBaseAccessPolicies(normalizedPolicies);
-      setBaseCourseLifecycle(institutionData.courseLifecycle || {});
+      setBaseCourseLifecycle(nextBaseCourseLifecycle);
       setBaseAutomationSettings(normalizedAutomationSettings);
 
       setSettingsForm({
@@ -81,7 +121,8 @@ export const useInstitutionSettings = (user: any, institutionIdOverride: any = n
         extraordinaryEndDate: academicCalendar.extraordinaryEndDate || '',
         periodMode: normalizePeriodMode(periodization.mode),
         customPeriodLabel: periodization.customLabel || '',
-        postCoursePolicy: normalizePostCoursePolicy((institutionData.courseLifecycle || {}).postCoursePolicy),
+        postCoursePolicy: normalizePostCoursePolicy(courseLifecycle.postCoursePolicy),
+        coursePromotionOrder,
         transferPromotionEnabled: normalizedAutomationSettings.transferPromotionEnabled,
         subjectLifecycleAutomationEnabled: normalizedAutomationSettings.subjectLifecycleAutomationEnabled,
         allowTeacherAutonomousSubjectCreation: teacherPolicy.allowTeacherAutonomousSubjectCreation !== false,
@@ -135,6 +176,7 @@ export const useInstitutionSettings = (user: any, institutionIdOverride: any = n
       const nextCourseLifecycle = {
         ...(baseCourseLifecycle || {}),
         postCoursePolicy: normalizePostCoursePolicy(settingsForm.postCoursePolicy),
+        coursePromotionOrder: normalizeCoursePromotionOrder(settingsForm.coursePromotionOrder),
       };
 
       const nextAutomationSettings = normalizeAutomationSettings({

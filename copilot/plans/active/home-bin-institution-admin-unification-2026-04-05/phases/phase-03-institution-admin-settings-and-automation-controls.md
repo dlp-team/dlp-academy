@@ -2,7 +2,7 @@
 # Phase 03 - Institution Admin Settings and Automation Controls
 
 ## Status
-- IN_PROGRESS
+- COMPLETED
 
 ## Objective
 Expand Institution Admin settings to manage academic periods, course-order progression, and automation feature toggles.
@@ -60,3 +60,35 @@ Expand Institution Admin settings to manage academic periods, course-order progr
     - `npm run test -- tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-roundtrip.test.js` (PASS)
     - `npm run lint` (PASS)
     - `npx tsc --noEmit` (PASS)
+
+- 2026-04-05 - Block B completed
+  - Added non-duplicated, drag-and-drop course hierarchy ordering in settings:
+    - [src/pages/InstitutionAdminDashboard/components/settings/CoursePromotionOrderEditor.tsx](src/pages/InstitutionAdminDashboard/components/settings/CoursePromotionOrderEditor.tsx)
+    - [src/pages/InstitutionAdminDashboard/components/SettingsTabContent.tsx](src/pages/InstitutionAdminDashboard/components/SettingsTabContent.tsx)
+  - Added deterministic course-order utilities and persistence integration:
+    - [src/utils/coursePromotionOrderUtils.ts](src/utils/coursePromotionOrderUtils.ts)
+    - [src/pages/InstitutionAdminDashboard/hooks/useInstitutionSettings.ts](src/pages/InstitutionAdminDashboard/hooks/useInstitutionSettings.ts)
+  - Added transfer dry-run promotion mapping support based on configured course hierarchy:
+    - [functions/security/coursePromotionOrderUtils.js](functions/security/coursePromotionOrderUtils.js)
+    - [functions/security/transferPromotionDryRunHandler.js](functions/security/transferPromotionDryRunHandler.js)
+  - Revalidated period-default course creation integration in:
+    - [tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx](tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx)
+    - [tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx](tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx)
+  - Added/updated deterministic coverage:
+    - [tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx](tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx)
+    - [tests/unit/functions/transfer-promotion-dry-run-handler.test.js](tests/unit/functions/transfer-promotion-dry-run-handler.test.js)
+    - [tests/unit/utils/coursePromotionOrderUtils.test.js](tests/unit/utils/coursePromotionOrderUtils.test.js)
+  - Validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/utils/coursePromotionOrderUtils.test.js` (PASS)
+    - `npm run test -- tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-roundtrip.test.js tests/unit/utils/coursePromotionOrderUtils.test.js` (PASS)
+    - `npm run test -- tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)
+
+## Phase 03 Closure Summary (2026-04-05)
+- Deliverables achieved:
+  - institution default period controls are active and validated in course-creation flow,
+  - institution course hierarchy ordering is non-duplicated, draggable, and persisted,
+  - promotion dry-run now resolves destination course names using configured hierarchy order,
+  - automation toggles and server-side enforcement for transfer tooling remain active.
+- Exit criteria satisfied with deterministic test coverage and static checks passing.

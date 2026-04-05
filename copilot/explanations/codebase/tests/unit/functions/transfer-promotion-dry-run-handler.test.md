@@ -9,4 +9,5 @@
 ## Coverage
 - Denies dry-run attempts when institution-level transfer/promotion automation is disabled.
 - Denies institution-admin dry-run attempts outside owned institution.
+- Validates `mode = promote` course mappings use configured hierarchy order to resolve destination course names.
 - Validates successful promote dry-run mapping output and rollback metadata generation.
