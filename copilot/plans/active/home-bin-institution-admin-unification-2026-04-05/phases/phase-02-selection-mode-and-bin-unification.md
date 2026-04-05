@@ -2,7 +2,7 @@
 # Phase 02 - Selection Mode and Bin Unification
 
 ## Status
-- IN_PROGRESS
+- COMPLETED
 
 ## Objective
 Unify selection-mode behavior between Home and Bin and implement requested Bin grid/list interaction refinements.
@@ -89,3 +89,14 @@ Unify selection-mode behavior between Home and Bin and implement requested Bin g
     - `npm run test -- tests/unit/components/ListViewItem.selectionDimming.test.jsx tests/unit/pages/home/BinView.listInlinePanel.test.jsx tests/unit/components/BinSelectionOverlay.test.jsx tests/unit/components/BinGridItem.test.jsx tests/unit/utils/selectionVisualUtils.test.js tests/unit/pages/home/HomeMainContent.test.jsx` (PASS)
     - `npm run lint` (PASS)
     - `npx tsc --noEmit` (PASS)
+
+## Phase 02 Closure Summary (2026-04-05)
+- Deliverables achieved:
+  - Home selection dimming parity implemented for grid and recursive list rows.
+  - Bin grid overlay refined (blur removed, focus transition + staged action reveal).
+  - Bin list selected-item actions moved inline under selected rows.
+  - Focused coverage added for overlay timing, utility contracts, inline panel behavior, and list-row dimming.
+- Broader impacted validation evidence:
+  - `npm run test -- tests/unit/pages/home tests/unit/components/BinGridItem.test.jsx tests/unit/components/BinSelectionOverlay.test.jsx tests/unit/components/ListViewItem.selectionDimming.test.jsx tests/unit/utils/selectionVisualUtils.test.js` (PASS: 13 files, 41 tests)
+  - `npm run lint` (PASS)
+  - `npx tsc --noEmit` (PASS)

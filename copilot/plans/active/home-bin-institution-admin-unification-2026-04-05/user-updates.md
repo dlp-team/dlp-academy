@@ -124,3 +124,11 @@
     - [phases/phase-02-selection-mode-and-bin-unification.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md)
     - [strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
     - [working/phase-02-selection-and-bin-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md)
+
+- 2026-04-05: Phase 02 closure completed after broader impacted validation sweep.
+  - Trigger: broadened Home/Bin regression suite remained clean.
+  - Integrated files:
+    - [README.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md)
+    - [phases/phase-02-selection-mode-and-bin-unification.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md)
+    - [strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+    - [working/phase-02-selection-and-bin-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md)

@@ -40,7 +40,7 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 
 ## Lifecycle Status
 - Lifecycle: active
-- Current phase: Phase 02 - Selection Mode and Bin Unification (IN_PROGRESS)
+- Current phase: Phase 02 - Selection Mode and Bin Unification (COMPLETED)
 - Last updated: 2026-04-05
 
 ## Key Decisions and Assumptions
@@ -91,6 +91,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Run broader impacted Home/Bin tests to validate current Phase 02 scope end-to-end.
-2. Validate list/grid visual parity manually for nested folder trees in Home.
-3. Prepare a Phase 02 closure checklist draft if broader validation remains clean.
+1. Start Phase 03 kickoff slice for Institution Admin settings and automation controls.
+2. Define first Phase 03 implementation block (lowest-risk settings surface first).
+3. Continue block cadence with validation + commit/push checkpoints.

@@ -47,3 +47,7 @@
   - Propagated selection context through recursive Home list rendering to support nested-row selection/dimming parity.
   - Added focused contract tests for ListViewItem selection-dimming behavior.
   - Validation passed for targeted tests, lint, and typecheck.
+- 2026-04-05: Phase 02 closure validation completed.
+  - Broader impacted Home/Bin suite passed (13 files, 41 tests).
+  - `npm run lint` passed.
+  - `npx tsc --noEmit` passed.

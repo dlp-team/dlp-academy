@@ -56,7 +56,7 @@
   - `npm run test` passed (138 files, 621 tests).
 
 ### Phase 02 - Selection Mode and Bin Unification
-- Status: IN_PROGRESS
+- Status: COMPLETED
 - Goal: unify selection UX logic and align Bin grid/list interactions with requested behavior.
 - Outputs:
   - shared selection behavior between Home and Bin,
@@ -83,6 +83,10 @@
   - wired Home list consumers in [src/pages/Home/components/HomeContent.tsx](src/pages/Home/components/HomeContent.tsx) to pass selection context for nested rows,
   - added focused selection-dimming tests in [tests/unit/components/ListViewItem.selectionDimming.test.jsx](tests/unit/components/ListViewItem.selectionDimming.test.jsx),
   - targeted tests + lint + typecheck passing.
+- Closure (2026-04-05):
+  - broader impacted Home/Bin suite passed (`tests/unit/pages/home` + focused component/utility suites),
+  - lint and typecheck passed,
+  - Phase 02 exit criteria satisfied.
 
 ### Phase 03 - Institution Admin Settings and Automation Controls
 - Status: PLANNED
@@ -142,6 +146,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Run broader impacted Home/Bin regression sweep for Phase 02 readiness.
-2. Validate list/grid visual parity manually for nested folder trees in Home.
-3. Prepare Phase 02 closure checklist draft once broader validation is complete.
+1. Start Phase 03 kickoff slice for Institution Admin settings and automation controls.
+2. Build a dependency-safe Phase 03 working note with first-file candidates and guardrails.
+3. Keep cadence discipline (validate -> commit -> push) for each new Phase 03 block.
