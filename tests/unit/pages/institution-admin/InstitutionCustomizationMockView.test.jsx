@@ -213,4 +213,16 @@ describe('InstitutionCustomizationMockView', () => {
     expect(screen.getByText(/temas de la asignatura/i)).toBeTruthy();
     expect(screen.getByRole('button', { name: /volver a asignaturas/i })).toBeTruthy();
   });
+
+  it('applies current-subject toggle filtering in Uso mode', () => {
+    renderCustomizationPreview();
+
+    fireEvent.click(screen.getByRole('button', { name: /uso/i }));
+    expect(screen.getByText('Historia')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /alternar filtro de asignaturas vigentes/i }));
+
+    expect(screen.queryByText('Historia')).toBeNull();
+    expect(screen.getByText('Matemáticas')).toBeTruthy();
+  });
 });
