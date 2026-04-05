@@ -2,7 +2,7 @@
 # Phase 06 - Cross-Cutting Optimization and Consolidation
 
 ## Status
-- PLANNED
+- IN_PROGRESS
 
 ## Objective
 Execute mandatory final optimization across all touched files to reduce duplication, improve maintainability, and preserve behavior.
@@ -23,3 +23,16 @@ Execute mandatory final optimization across all touched files to reduce duplicat
 
 ## Exit Criteria
 - Optimization evidence is documented and implementation remains behaviorally stable.
+
+## Progress Log
+- 2026-04-05 - Block A completed
+	- Extracted users-tab delete-feedback message mapping into shared utility:
+		- [src/pages/InstitutionAdminDashboard/utils/userDeletionFeedback.ts](src/pages/InstitutionAdminDashboard/utils/userDeletionFeedback.ts)
+	- Simplified users-tab component by delegating success/error message generation to shared utility:
+		- [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx)
+	- Added deterministic unit coverage for centralized feedback contract:
+		- [tests/unit/pages/institution-admin/userDeletionFeedback.test.js](tests/unit/pages/institution-admin/userDeletionFeedback.test.js)
+	- Validation evidence:
+		- `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js tests/unit/pages/institution-admin/userDeletionFeedback.test.js` (PASS)
+		- `npm run lint` (PASS)
+		- `npx tsc --noEmit` (PASS)

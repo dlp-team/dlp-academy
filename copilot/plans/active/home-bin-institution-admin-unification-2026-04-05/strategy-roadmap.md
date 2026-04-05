@@ -354,12 +354,20 @@
   - execution is ready to transition into Phase 06 optimization and consolidation.
 
 ### Phase 06 - Cross-Cutting Optimization and Consolidation (Mandatory)
-- Status: PLANNED
+- Status: IN_PROGRESS
 - Goal: centralize repeated logic, split oversized files, and optimize readability/maintainability.
 - Outputs:
   - extracted shared hooks/utils/components where justified,
   - reduced duplication,
   - lint + impacted tests revalidated after optimization.
+- Progress (2026-04-05, Block A):
+  - centralized users-tab delete feedback logic in [src/pages/InstitutionAdminDashboard/utils/userDeletionFeedback.ts](src/pages/InstitutionAdminDashboard/utils/userDeletionFeedback.ts),
+  - removed inline error/success message branching from [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx),
+  - added deterministic utility coverage in [tests/unit/pages/institution-admin/userDeletionFeedback.test.js](tests/unit/pages/institution-admin/userDeletionFeedback.test.js),
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js tests/unit/pages/institution-admin/userDeletionFeedback.test.js` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
 
 ### Phase 07 - Validation, Deep Risk Review, and Lifecycle Transition
 - Status: PLANNED
@@ -384,6 +392,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Advance Phase 05 Block B with safe delete-user capability in Users tab and tenant guardrails.
-2. Add deterministic deletion-path regression coverage (authorized and protected flows).
+1. Continue Phase 06 with additional low-risk consolidation targets in Institution Admin user-management surfaces.
+2. Keep deterministic tests aligned with each extraction to preserve behavior parity.
 3. Keep cadence discipline (validate -> commit -> push) for every major block.

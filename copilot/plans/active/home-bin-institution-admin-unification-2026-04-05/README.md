@@ -42,7 +42,7 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 
 ## Lifecycle Status
 - Lifecycle: active
-- Current phase: Phase 06 - Cross-Cutting Optimization and Consolidation (PLANNED)
+- Current phase: Phase 06 - Cross-Cutting Optimization and Consolidation (IN_PROGRESS)
 - Last updated: 2026-04-05
 
 ## Key Decisions and Assumptions
@@ -93,6 +93,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Kick off Phase 06 with focused duplication audit across Institution Admin user-management surfaces.
-2. Identify extraction candidates (guard/message mappers and repetitive table actions) without behavior drift.
+1. Continue Phase 06 with additional low-risk extraction targets in Institution Admin user-management surfaces.
+2. Keep deterministic tests aligned with each optimization slice to ensure lossless behavior.
 3. Keep normal validate -> commit -> push cadence for each major block.

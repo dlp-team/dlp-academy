@@ -16,6 +16,7 @@ import {
   FileSpreadsheet
 } from 'lucide-react';
 import { DEFAULT_ACCESS_POLICIES } from '../../../utils/institutionPolicyUtils';
+import { buildUserDeletionSuccessMessage, mapUserDeletionErrorMessage } from '../utils/userDeletionFeedback';
 import CsvImportWorkflowModal from './CsvImportWorkflowModal';
 
 const UsersTabContent = ({
@@ -101,35 +102,6 @@ const UsersTabContent = ({
       userLabel: '',
     });
   }, [userType]);
-
-  const mapDeleteUserErrorMessage = (error: any, roleLabel: any) => {
-    const normalizedCode = String(error?.message || '').trim();
-    const normalizedRoleLabel = roleLabel === 'student' ? 'alumno' : 'profesor';
-
-    if (normalizedCode === 'USER_DELETE_CROSS_TENANT') {
-      return 'No puedes eliminar usuarios de otra institución.';
-    }
-    if (normalizedCode === 'USER_DELETE_ROLE_MISMATCH') {
-      return `El usuario seleccionado no coincide con el tipo actual (${normalizedRoleLabel}).`;
-    }
-    if (normalizedCode === 'USER_DELETE_PROTECTED_ROLE') {
-      return 'Este rol está protegido y no se puede eliminar desde esta vista.';
-    }
-    if (normalizedCode === 'USER_DELETE_SELF_FORBIDDEN') {
-      return 'No puedes eliminar tu propia cuenta desde este panel.';
-    }
-    if (normalizedCode === 'USER_DELETE_TEACHER_HAS_ACTIVE_CLASSES') {
-      return 'No se puede eliminar el profesor mientras tenga clases activas asignadas.';
-    }
-    if (normalizedCode === 'USER_DELETE_STUDENT_HAS_ACTIVE_CLASSES') {
-      return 'No se puede eliminar el alumno mientras tenga clases activas asignadas.';
-    }
-    if (normalizedCode === 'USER_DELETE_NOT_FOUND') {
-      return 'El usuario ya no existe o fue eliminado previamente.';
-    }
-
-    return `No se pudo eliminar el ${normalizedRoleLabel}. Inténtalo de nuevo.`;
-  };
 
   const handleCopyLiveCode = () => {
     if (liveCode === 'DESACTIVADO') return;
@@ -219,10 +191,9 @@ const UsersTabContent = ({
         userRole: userDeleteConfirm.userRole,
       });
 
-      const roleLabel = userDeleteConfirm.userRole === 'student' ? 'alumno' : 'profesor';
       setUserDeleteMessage({
         type: 'success',
-        text: `Se eliminó el ${roleLabel} correctamente.`,
+        text: buildUserDeletionSuccessMessage(userDeleteConfirm.userRole),
       });
       setUserDeleteConfirm({
         isOpen: false,
@@ -233,7 +204,7 @@ const UsersTabContent = ({
     } catch (error: any) {
       setUserDeleteMessage({
         type: 'error',
-        text: mapDeleteUserErrorMessage(error, userDeleteConfirm.userRole),
+        text: mapUserDeletionErrorMessage(error, userDeleteConfirm.userRole),
       });
     } finally {
       setIsDeletingUser(false);
