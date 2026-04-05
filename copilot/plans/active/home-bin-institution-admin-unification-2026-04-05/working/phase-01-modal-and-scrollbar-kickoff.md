@@ -43,3 +43,8 @@
   - Migrated [src/components/modals/FolderDeleteModal.tsx](src/components/modals/FolderDeleteModal.tsx) to `BaseModal` while preserving per-screen close semantics.
   - Added [tests/unit/components/FolderDeleteModal.test.jsx](tests/unit/components/FolderDeleteModal.test.jsx).
   - Expanded [tests/unit/components/BaseModal.test.jsx](tests/unit/components/BaseModal.test.jsx) for blocked-close coverage.
+- 2026-04-05: Block C implemented.
+  - Migrated [src/pages/Home/components/FolderManager.tsx](src/pages/Home/components/FolderManager.tsx) modal shell to `BaseModal`.
+  - Adopted dirty-state close interception in FolderManager using [src/utils/modalCloseGuardUtils.ts](src/utils/modalCloseGuardUtils.ts).
+  - Routed backdrop/header/footer close triggers through the same guard path.
+  - Added [tests/unit/utils/modalCloseGuardUtils.test.js](tests/unit/utils/modalCloseGuardUtils.test.js).

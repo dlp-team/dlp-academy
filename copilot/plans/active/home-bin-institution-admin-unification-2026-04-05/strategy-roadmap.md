@@ -34,6 +34,10 @@
   - FolderDeleteModal migrated to shared base modal shell,
   - regression coverage added for folder modal screen-flow semantics,
   - targeted tests + typecheck passing.
+- Progress (2026-04-05, Block C):
+  - first form-heavy flow (`FolderManager`) now uses `BaseModal` + guarded close interception,
+  - close-guard decision utility extracted for deterministic behavior,
+  - targeted utility + modal tests and typecheck passing.
 
 ### Phase 02 - Selection Mode and Bin Unification
 - Status: PLANNED
@@ -102,6 +106,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Adopt dirty-state close interception in the first form modal candidate (likely Home or Institution Admin form flow).
+1. Expand dirty-state close interception to additional form modals (SubjectFormModal and/or Institution Admin create/edit modals).
 2. Expand BaseModal adoption to admin-facing modals (for example Sudo/admin confirm surfaces) with lossless close behavior.
 3. Run wider Phase 01 validation sweep (typecheck/lint + targeted modal regression suite) and prepare closure checklist.

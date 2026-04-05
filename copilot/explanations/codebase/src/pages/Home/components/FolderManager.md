@@ -1,3 +1,17 @@
+## [2026-04-05] Feature Update: BaseModal Adoption + Guarded Close Flow
+### Context & Architecture
+`FolderManager` is a form-like modal with pending sharing mutations and discard-confirm logic. It now uses shared modal infrastructure and explicit close-guard evaluation.
+
+### Previous State
+- Modal shell was implemented inline with local backdrop wiring.
+- Backdrop close used unsaved-change guard, but shell behavior was not centralized.
+
+### New State & Logic
+- Replaced inline shell with `BaseModal`.
+- Added close-guard evaluation using `canCloseSharingModal` from `src/utils/modalCloseGuardUtils.ts`.
+- Routed header close and footer cancel through the same guarded close request path.
+- Preserved existing discard-confirm overlay and apply-all pending behavior.
+
 ## [2026-03-13] Shared User Avatar Source Normalization
 ### Context & Architecture
 Folder sharing rows could render initials fallback even when user profile image fields existed under alternate key names.
@@ -111,10 +125,10 @@ Folder sharing rows could render initials fallback even when user profile image 
 
 ---
 
-# FolderManager.jsx
+# FolderManager.tsx
 
 ## Overview
-- **Source file:** `src/pages/Home/components/FolderManager.jsx`
+- **Source file:** `src/pages/Home/components/FolderManager.tsx`
 - **Last documented:** 2026-02-24
 - **Role:** Reusable UI component consumed by the parent page/module.
 

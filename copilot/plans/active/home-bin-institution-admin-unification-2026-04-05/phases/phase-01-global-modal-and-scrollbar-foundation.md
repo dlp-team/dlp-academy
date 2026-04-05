@@ -72,9 +72,25 @@ Create a reusable modal foundation and remove the left-side scrollbar compensati
   - `npx tsc --noEmit` (PASS)
   - `get_errors` on touched files (clean)
 
+## Implementation Progress - Block C (2026-04-05)
+- First form/modal flow adopted dirty-state close interception:
+  - [src/pages/Home/components/FolderManager.tsx](src/pages/Home/components/FolderManager.tsx)
+  - Backdrop, header close, and footer cancel now share one guarded close evaluation path.
+- Shared close guard utility extracted for deterministic behavior and reuse:
+  - [src/utils/modalCloseGuardUtils.ts](src/utils/modalCloseGuardUtils.ts)
+- FolderManager shell migrated to shared modal primitive:
+  - Uses [src/components/ui/BaseModal.tsx](src/components/ui/BaseModal.tsx) with `onBeforeClose`.
+- Regression coverage added/expanded:
+  - [tests/unit/utils/modalCloseGuardUtils.test.js](tests/unit/utils/modalCloseGuardUtils.test.js)
+  - [tests/unit/components/BaseModal.test.jsx](tests/unit/components/BaseModal.test.jsx)
+- Validation evidence:
+  - `npm run test:unit -- tests/unit/utils/modalCloseGuardUtils.test.js tests/unit/components/BaseModal.test.jsx tests/unit/components/FolderDeleteModal.test.jsx tests/unit/components/BinConfirmModals.test.jsx` (PASS)
+  - `npx tsc --noEmit` (PASS)
+  - `get_errors` on touched files (clean)
+
 ## Remaining Work in Phase 01
 - Expand shared modal adoption to admin and form-heavy modal surfaces.
-- Adopt dirty-state interception in at least one form/modal flow with explicit unsaved-change handling.
+- Expand dirty-state interception to additional modal forms beyond FolderManager.
 - Run broader validation pass (lint/typecheck + targeted modal regressions) before Phase 01 closure.
 
 ## Validation Gate

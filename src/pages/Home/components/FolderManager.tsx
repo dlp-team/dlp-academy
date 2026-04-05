@@ -1,4 +1,4 @@
-// src/pages/Home/components/FolderManager.jsx
+// src/pages/Home/components/FolderManager.tsx
 import React, { useState, useEffect } from 'react';
 import { X, Save, Plus, Trash2, Share2, Users, Loader2, CheckCircle, AlertCircle, RotateCcw } from 'lucide-react';
 import { COLORS, MODERN_FILL_COLORS } from '../../../utils/subjectConstants';
@@ -6,6 +6,8 @@ import { getPermissionLevel } from '../../../utils/permissionUtils';
 import { collection, getDocs, query, where, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
+import BaseModal from '../../../components/ui/BaseModal';
+import { canCloseSharingModal } from '../../../utils/modalCloseGuardUtils';
 
 const FolderManager = ({
     isOpen, onClose, onSave, initialData, isEditing,
@@ -394,17 +396,23 @@ const FolderManager = ({
         hasPendingSharingChanges ||
         showSelfUnshareConfirm;
 
-    const handleBackdropCloseRequest = () => {
-        if (pendingShareAction?.type === 'apply-all') {
-            return;
-        }
+    const evaluateCloseRequest = () => {
+        const closeDecision = canCloseSharingModal({
+            pendingShareActionType: pendingShareAction?.type,
+            hasUnsavedSharingChanges
+        });
 
-        if (hasUnsavedSharingChanges) {
+        if (!closeDecision.allowClose && closeDecision.reason === 'unsaved-sharing-changes') {
             setShowDiscardPendingConfirm(true);
-            return;
         }
 
-        onClose();
+        return closeDecision.allowClose;
+    };
+
+    const handleCloseRequest = () => {
+        if (evaluateCloseRequest()) {
+            onClose();
+        }
     };
 
     const discardPendingAndClose = () => {
@@ -655,15 +663,21 @@ const FolderManager = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto" style={OVERLAY_TOP_OFFSET_STYLE}>
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity" onClick={handleBackdropCloseRequest} />
-                <div className="relative transform overflow-hidden bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[calc(100vh-10rem)] shadow-xl text-left animate-in fade-in zoom-in duration-200 border border-transparent dark:border-slate-800 transition-colors">
+        <BaseModal
+            isOpen={isOpen}
+            onClose={onClose}
+            onBeforeClose={() => evaluateCloseRequest()}
+            rootClassName="fixed inset-x-0 bottom-0 z-50 overflow-y-auto"
+            rootStyle={OVERLAY_TOP_OFFSET_STYLE}
+            backdropClassName="fixed inset-0 bg-black/50 dark:bg-black/70 transition-opacity"
+            contentWrapperClassName="flex min-h-full items-center justify-center p-4 text-center"
+            contentClassName="relative transform overflow-hidden bg-white dark:bg-slate-900 rounded-2xl w-full max-w-2xl max-h-[calc(100vh-10rem)] shadow-xl text-left animate-in fade-in zoom-in duration-200 border border-transparent dark:border-slate-800 transition-colors"
+        >
 
                     <div className="relative px-6 py-4 border-b border-gray-100 dark:border-slate-800 flex justify-between items-center transition-colors overflow-hidden">
                         <div className={`absolute inset-0 bg-gradient-to-r ${formData.color || 'from-amber-400 to-amber-600'} opacity-15 dark:opacity-20`} />
                         <h3 className="relative text-lg font-bold text-gray-900 dark:text-white">{isEditing ? 'Editar Carpeta' : 'Nueva Carpeta'}</h3>
-                        <button onClick={onClose} className="relative p-1 hover:bg-gray-200/80 dark:hover:bg-slate-700/80 rounded-full text-gray-600 dark:text-gray-300 transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
+                        <button onClick={handleCloseRequest} className="relative p-1 hover:bg-gray-200/80 dark:hover:bg-slate-700/80 rounded-full text-gray-600 dark:text-gray-300 transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
                     </div>
 
                     {isEditing && (
@@ -1125,7 +1139,7 @@ const FolderManager = ({
                         )}
 
                         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-slate-800">
-                            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-colors cursor-pointer">Cancelar</button>
+                            <button type="button" onClick={handleCloseRequest} className="px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 rounded-xl font-medium transition-colors cursor-pointer">Cancelar</button>
                             {activeTab === 'general' && (
                                 <button type="submit" className="px-6 py-2 bg-indigo-600 dark:bg-indigo-500 hover:bg-indigo-700 dark:hover:bg-indigo-600 text-white rounded-xl font-medium shadow-lg shadow-indigo-200 dark:shadow-indigo-900/50 flex items-center gap-2 cursor-pointer transition-colors">
                                     <Save className="w-4 h-4" /> {isEditing ? 'Guardar' : 'Crear'}
@@ -1246,9 +1260,7 @@ const FolderManager = ({
                             </div>
                         </div>
                     )}
-                </div>
-            </div>
-        </div>
+        </BaseModal>
     );
 };
 
