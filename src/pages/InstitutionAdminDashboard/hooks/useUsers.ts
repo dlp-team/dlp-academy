@@ -23,6 +23,7 @@ import { DEFAULT_ACCESS_POLICIES, normalizeAccessPolicies } from '../../../utils
 import { usePersistentState } from '../../../hooks/usePersistentState';
 import { buildInstitutionScopedPersistenceKey } from '../../../utils/pagePersistence';
 import { buildGoogleSheetCsvExportUrl } from '../utils/importSourceUtils';
+import { evaluateUserDeletionGuard, USER_DELETION_GUARD_CODES } from '../utils/userDeletionGuard';
 
 const USERS_PAGE_SIZE = 25;
 
@@ -37,6 +38,12 @@ const sanitizeUploadFileName = (fileName: any) => String(fileName || 'import.csv
   .replace(/-+/g, '-')
   .replace(/^-|-$/g, '')
   || 'import.csv';
+
+const isClassActive = (cls: any = {}) => String(cls?.status || '').trim().toLowerCase() !== 'archived';
+
+const resolveExpectedDeletionRole = (selectedUserType: any = 'teachers') => (
+  String(selectedUserType || '').trim().toLowerCase() === 'students' ? 'student' : 'teacher'
+);
 
 const parseCsvLine = (line: any) => {
   const cells: string[] = [];
@@ -509,6 +516,95 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
     }
   };
 
+  const hasActiveClassAssignments = useCallback(async ({ targetUserId, targetRole }: any) => {
+    const normalizedTargetUserId = normalizeId(targetUserId);
+    const normalizedRole = String(targetRole || '').trim().toLowerCase();
+
+    if (!normalizedTargetUserId || !effectiveInstitutionId) return false;
+
+    if (normalizedRole === 'teacher') {
+      const teacherClassesSnap = await getDocs(
+        query(
+          collection(db, 'classes'),
+          where('institutionId', '==', effectiveInstitutionId),
+          where('teacherId', '==', normalizedTargetUserId),
+        ),
+      );
+
+      return teacherClassesSnap.docs.some((classDoc: any) => isClassActive(classDoc.data()));
+    }
+
+    if (normalizedRole === 'student') {
+      const classesSnap = await getDocs(
+        query(collection(db, 'classes'), where('institutionId', '==', effectiveInstitutionId)),
+      );
+
+      return classesSnap.docs.some((classDoc: any) => {
+        const classData: any = classDoc.data();
+        return Array.isArray(classData?.studentIds)
+          && classData.studentIds.includes(normalizedTargetUserId)
+          && isClassActive(classData);
+      });
+    }
+
+    return false;
+  }, [effectiveInstitutionId]);
+
+  const handleDeleteUser = useCallback(async ({ userId: rawTargetUserId, userRole }: any = {}) => {
+    const normalizedTargetUserId = normalizeId(rawTargetUserId);
+    if (!normalizedTargetUserId) {
+      throw new Error(USER_DELETION_GUARD_CODES.MISSING_ID);
+    }
+
+    if (!effectiveInstitutionId) {
+      throw new Error(USER_DELETION_GUARD_CODES.MISSING_INSTITUTION);
+    }
+
+    const expectedRoleCandidate = String(userRole || '').trim().toLowerCase();
+    const expectedRole = ['teacher', 'student'].includes(expectedRoleCandidate)
+      ? expectedRoleCandidate
+      : resolveExpectedDeletionRole(userType);
+
+    const targetUserRef = doc(db, 'users', normalizedTargetUserId);
+    const targetUserSnap = await getDoc(targetUserRef);
+
+    if (!targetUserSnap.exists()) {
+      throw new Error(USER_DELETION_GUARD_CODES.NOT_FOUND);
+    }
+
+    const targetUser: any = { id: targetUserSnap.id, ...(targetUserSnap.data() as any) };
+    const activeClassAssignments = await hasActiveClassAssignments({
+      targetUserId: normalizedTargetUserId,
+      targetRole: targetUser?.role,
+    });
+
+    const deletionGuardCode = evaluateUserDeletionGuard({
+      targetUser,
+      effectiveInstitutionId,
+      expectedRole,
+      requesterUid: user?.uid,
+      hasActiveClasses: activeClassAssignments,
+    });
+
+    if (deletionGuardCode !== USER_DELETION_GUARD_CODES.ALLOWED) {
+      throw new Error(deletionGuardCode);
+    }
+
+    await deleteDoc(targetUserRef);
+
+    setTeachers((previous: any[]) => previous.filter((entry: any) => entry.id !== normalizedTargetUserId));
+    setStudents((previous: any[]) => previous.filter((entry: any) => entry.id !== normalizedTargetUserId));
+    setAllTeachers((previous: any[]) => previous.filter((entry: any) => entry.id !== normalizedTargetUserId));
+    setAllStudents((previous: any[]) => previous.filter((entry: any) => entry.id !== normalizedTargetUserId));
+
+    await fetchData();
+
+    return {
+      deletedUserId: normalizedTargetUserId,
+      role: expectedRole,
+    };
+  }, [effectiveInstitutionId, fetchData, hasActiveClassAssignments, user?.uid, userType]);
+
   const uploadUsersImportFile = useCallback(async (file: any, workflowType: any = 'students') => {
     if (!effectiveInstitutionId) {
       throw new Error('MISSING_INSTITUTION');
@@ -821,6 +917,7 @@ export const useUsers = (user, institutionIdOverride = null, options: any = {}) 
     handleSavePolicies,
     handleConfirmSavePolicies,
     handleRemoveAccess,
+    handleDeleteUser,
     handleLoadMoreUsers,
     uploadUsersImportFile,
     runManualStudentsCsvImport,

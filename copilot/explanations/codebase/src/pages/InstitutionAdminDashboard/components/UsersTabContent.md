@@ -24,6 +24,8 @@
 - `../../../utils/institutionPolicyUtils`
 
 ## Changelog
+- 2026-04-05: Added users-tab delete action buttons for teacher/student rows with modal-first confirmation (`Eliminar usuario`) and inline success/error messaging.
+- 2026-04-05: Added guard-code-aware Spanish error mapping so blocked deletion attempts surface explicit reasons (cross-tenant, role mismatch, protected role, self-delete, active classes).
 - 2026-04-04: Added immediate code regeneration control in security card with inline success/error feedback and loading state.
 - 2026-04-04: Renamed students action to `Vincular alumnos por CSV` and switched to shared `CsvImportWorkflowModal` so students import now supports file upload, manual column mapping, and n8n dispatch.
 - 2026-04-04: Added student-side CSV bulk-link modal (`email,courseId`) with summary rendering, error handling, and async delegation via `onBulkLinkStudentsCsv`.

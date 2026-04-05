@@ -42,7 +42,7 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 
 ## Lifecycle Status
 - Lifecycle: active
-- Current phase: Phase 05 - User Management, Profile Media, and Past Classes (IN_PROGRESS)
+- Current phase: Phase 06 - Cross-Cutting Optimization and Consolidation (PLANNED)
 - Last updated: 2026-04-05
 
 ## Key Decisions and Assumptions
@@ -93,6 +93,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Advance Phase 05 Block B with safe delete-user capability in Users tab and tenant guardrails.
-2. Add deterministic deletion-flow regression coverage (authorized and protected paths).
+1. Kick off Phase 06 with focused duplication audit across Institution Admin user-management surfaces.
+2. Identify extraction candidates (guard/message mappers and repetitive table actions) without behavior drift.
 3. Keep normal validate -> commit -> push cadence for each major block.

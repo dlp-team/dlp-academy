@@ -37,6 +37,7 @@ const UsersTabContent = ({
   onNavigateTeacher,
   onNavigateStudent,
   onRemoveAccess,
+  onDeleteUser,
   liveAccessCode,
   liveCodeLoading,
   liveCodeError,
@@ -62,6 +63,14 @@ const UsersTabContent = ({
   });
   const [isRemovingAccess, setIsRemovingAccess] = useState(false);
   const [showStudentCsvModal, setShowStudentCsvModal] = useState(false);
+  const [userDeleteConfirm, setUserDeleteConfirm] = useState({
+    isOpen: false,
+    userId: null,
+    userRole: 'teacher',
+    userLabel: '',
+  });
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
+  const [userDeleteMessage, setUserDeleteMessage] = useState({ type: '', text: '' });
 
   // 1. Safe policy handling and local state
   const defaultPolicy = userType === 'teachers'
@@ -82,6 +91,45 @@ const UsersTabContent = ({
   const liveCode = editPolicy.requireCode
     ? (liveAccessCode || '------')
     : 'DESACTIVADO';
+
+  React.useEffect(() => {
+    setUserDeleteMessage({ type: '', text: '' });
+    setUserDeleteConfirm({
+      isOpen: false,
+      userId: null,
+      userRole: 'teacher',
+      userLabel: '',
+    });
+  }, [userType]);
+
+  const mapDeleteUserErrorMessage = (error: any, roleLabel: any) => {
+    const normalizedCode = String(error?.message || '').trim();
+    const normalizedRoleLabel = roleLabel === 'student' ? 'alumno' : 'profesor';
+
+    if (normalizedCode === 'USER_DELETE_CROSS_TENANT') {
+      return 'No puedes eliminar usuarios de otra institución.';
+    }
+    if (normalizedCode === 'USER_DELETE_ROLE_MISMATCH') {
+      return `El usuario seleccionado no coincide con el tipo actual (${normalizedRoleLabel}).`;
+    }
+    if (normalizedCode === 'USER_DELETE_PROTECTED_ROLE') {
+      return 'Este rol está protegido y no se puede eliminar desde esta vista.';
+    }
+    if (normalizedCode === 'USER_DELETE_SELF_FORBIDDEN') {
+      return 'No puedes eliminar tu propia cuenta desde este panel.';
+    }
+    if (normalizedCode === 'USER_DELETE_TEACHER_HAS_ACTIVE_CLASSES') {
+      return 'No se puede eliminar el profesor mientras tenga clases activas asignadas.';
+    }
+    if (normalizedCode === 'USER_DELETE_STUDENT_HAS_ACTIVE_CLASSES') {
+      return 'No se puede eliminar el alumno mientras tenga clases activas asignadas.';
+    }
+    if (normalizedCode === 'USER_DELETE_NOT_FOUND') {
+      return 'El usuario ya no existe o fue eliminado previamente.';
+    }
+
+    return `No se pudo eliminar el ${normalizedRoleLabel}. Inténtalo de nuevo.`;
+  };
 
   const handleCopyLiveCode = () => {
     if (liveCode === 'DESACTIVADO') return;
@@ -132,6 +180,64 @@ const UsersTabContent = ({
 
   const closeStudentCsvModal = () => {
     setShowStudentCsvModal(false);
+  };
+
+  const requestDeleteUser = (targetUser: any, role: any) => {
+    if (isDeletingUser) return;
+    const normalizedRole = role === 'student' ? 'student' : 'teacher';
+    const targetUserId = targetUser?.id || null;
+    if (!targetUserId) return;
+
+    setUserDeleteMessage({ type: '', text: '' });
+    setUserDeleteConfirm({
+      isOpen: true,
+      userId: targetUserId,
+      userRole: normalizedRole,
+      userLabel: targetUser?.displayName || targetUser?.email || targetUserId,
+    });
+  };
+
+  const closeUserDeleteConfirm = () => {
+    if (isDeletingUser) return;
+    setUserDeleteConfirm({
+      isOpen: false,
+      userId: null,
+      userRole: 'teacher',
+      userLabel: '',
+    });
+  };
+
+  const confirmDeleteUser = async () => {
+    if (!userDeleteConfirm.userId || isDeletingUser) return;
+
+    setIsDeletingUser(true);
+    setUserDeleteMessage({ type: '', text: '' });
+
+    try {
+      await onDeleteUser?.({
+        userId: userDeleteConfirm.userId,
+        userRole: userDeleteConfirm.userRole,
+      });
+
+      const roleLabel = userDeleteConfirm.userRole === 'student' ? 'alumno' : 'profesor';
+      setUserDeleteMessage({
+        type: 'success',
+        text: `Se eliminó el ${roleLabel} correctamente.`,
+      });
+      setUserDeleteConfirm({
+        isOpen: false,
+        userId: null,
+        userRole: 'teacher',
+        userLabel: '',
+      });
+    } catch (error: any) {
+      setUserDeleteMessage({
+        type: 'error',
+        text: mapDeleteUserErrorMessage(error, userDeleteConfirm.userRole),
+      });
+    } finally {
+      setIsDeletingUser(false);
+    }
   };
 
   return (
@@ -312,6 +418,19 @@ const UsersTabContent = ({
             </span>
           </div>
 
+          {userDeleteMessage.text && (
+            <div className={`-mt-3 mb-3 px-4 py-3 rounded-xl border text-sm font-medium flex items-center gap-2 ${
+              userDeleteMessage.type === 'success'
+                ? 'border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300'
+                : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+            }`}>
+              {userDeleteMessage.type === 'success'
+                ? <CheckCircle2 className="w-4 h-4" />
+                : <XCircle className="w-4 h-4" />}
+              {userDeleteMessage.text}
+            </div>
+          )}
+
           {userType === 'teachers' && (
             <>
               <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
@@ -340,7 +459,24 @@ const UsersTabContent = ({
                               {u.enabled !== false ? 'Activo' : 'Deshabilitado'}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-right"><ChevronRight className="w-4 h-4 text-slate-300 ml-auto" /></td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  requestDeleteUser(u, 'teacher');
+                                }}
+                                disabled={isDeletingUser}
+                                className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-60"
+                                title="Eliminar profesor"
+                                aria-label={`Eliminar profesor ${u.displayName || u.email || u.id}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                              <ChevronRight className="w-4 h-4 text-slate-300 ml-auto" />
+                            </div>
+                          </td>
                         </tr>
                       ))}
                       {filteredTeachers.length === 0 && <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">No hay profesores registrados aún.</td></tr>}
@@ -453,7 +589,24 @@ const UsersTabContent = ({
                         <td className="px-6 py-4">
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">Activo</span>
                         </td>
-                        <td className="px-6 py-4 text-right"><ChevronRight className="w-4 h-4 text-slate-300 ml-auto" /></td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                requestDeleteUser(u, 'student');
+                              }}
+                              disabled={isDeletingUser}
+                              className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-60"
+                              title="Eliminar alumno"
+                              aria-label={`Eliminar alumno ${u.displayName || u.email || u.id}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                            <ChevronRight className="w-4 h-4 text-slate-300 ml-auto" />
+                          </div>
+                        </td>
                       </tr>
                     ))}
                     {filteredStudents.length === 0 && <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">No hay alumnos registrados aún.</td></tr>}
@@ -513,6 +666,45 @@ const UsersTabContent = ({
                   className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60"
                 >
                   {isRemovingAccess ? 'Eliminando...' : 'Eliminar acceso'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {userDeleteConfirm.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          <div className="absolute inset-0 bg-slate-950/60" onClick={closeUserDeleteConfirm} />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="user-delete-confirm-title"
+            className="relative w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl"
+          >
+            <div className="p-6">
+              <h3 id="user-delete-confirm-title" className="text-lg font-black text-slate-900 dark:text-white">
+                Eliminar {userDeleteConfirm.userRole === 'student' ? 'alumno' : 'profesor'}
+              </h3>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+                Se eliminará la cuenta de "{userDeleteConfirm.userLabel || 'este usuario'}". Esta acción no se puede deshacer.
+              </p>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={closeUserDeleteConfirm}
+                  disabled={isDeletingUser}
+                  className="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-semibold text-slate-600 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-60"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDeleteUser}
+                  disabled={isDeletingUser}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-60"
+                >
+                  {isDeletingUser ? 'Eliminando...' : 'Eliminar usuario'}
                 </button>
               </div>
             </div>

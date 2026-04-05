@@ -321,7 +321,7 @@
   - phase transitioned to COMPLETED and execution moved to Phase 05.
 
 ### Phase 05 - User Management, Profile Media, and Past Classes
-- Status: IN_PROGRESS
+- Status: COMPLETED
 - Goal: improve user governance and user-view fidelity for institution admins.
 - Outputs:
   - delete-user capability from users tab,
@@ -337,6 +337,21 @@
     - `npm run test -- tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx` (PASS),
     - `npm run lint` (PASS),
     - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block B):
+  - added tenant-safe delete-user guard evaluation in [src/pages/InstitutionAdminDashboard/utils/userDeletionGuard.ts](src/pages/InstitutionAdminDashboard/utils/userDeletionGuard.ts),
+  - integrated guarded delete execution and active-class checks in [src/pages/InstitutionAdminDashboard/hooks/useUsers.ts](src/pages/InstitutionAdminDashboard/hooks/useUsers.ts),
+  - wired users-tab delete action, explicit confirmation modal, and inline guard feedback in [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx),
+  - passed delete-user handler into users-tab surface in [src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx](src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx),
+  - added deterministic regression coverage in:
+    - [tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx](tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx),
+    - [tests/unit/pages/institution-admin/userDeletionGuard.test.js](tests/unit/pages/institution-admin/userDeletionGuard.test.js),
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Closure (2026-04-05):
+  - Phase 05 exit criteria met with guarded users-tab deletion and deterministic regression coverage,
+  - execution is ready to transition into Phase 06 optimization and consolidation.
 
 ### Phase 06 - Cross-Cutting Optimization and Consolidation (Mandatory)
 - Status: PLANNED

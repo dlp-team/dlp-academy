@@ -2,7 +2,7 @@
 # Phase 05 - User Management, Profile Media, and Past Classes
 
 ## Status
-- IN_PROGRESS
+- COMPLETED
 
 ## Objective
 Strengthen institution-admin user governance and fidelity of user-detail surfaces.
@@ -47,3 +47,26 @@ Strengthen institution-admin user governance and fidelity of user-detail surface
     - `npm run test -- tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx` (PASS)
     - `npm run lint` (PASS)
     - `npx tsc --noEmit` (PASS)
+
+- 2026-04-05 - Block B completed
+  - Added tenant-safe delete-user handler and active-class safeguards in:
+    - [src/pages/InstitutionAdminDashboard/hooks/useUsers.ts](src/pages/InstitutionAdminDashboard/hooks/useUsers.ts)
+    - [src/pages/InstitutionAdminDashboard/utils/userDeletionGuard.ts](src/pages/InstitutionAdminDashboard/utils/userDeletionGuard.ts)
+  - Wired users-tab delete action with in-page confirmation and guard-aware feedback in:
+    - [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx)
+    - [src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx](src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx)
+  - Added deterministic regression coverage for UI and guard-code paths in:
+    - [tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx](tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx)
+    - [tests/unit/pages/institution-admin/userDeletionGuard.test.js](tests/unit/pages/institution-admin/userDeletionGuard.test.js)
+  - Validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)
+
+## Closure Notes
+- Phase 05 deliverables are complete:
+  - delete-user capability with guardrails,
+  - profile media fallback,
+  - iconized role labels,
+  - dedicated past-class sections.
+- Ready to transition execution focus into Phase 06 optimization/consolidation.

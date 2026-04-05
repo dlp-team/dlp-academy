@@ -126,6 +126,7 @@ const InstitutionAdminDashboard = ({ user }: any) => {
             onNavigateTeacher={(id) => navigate(`/institution-admin-dashboard/teacher/${id}`)}
             onNavigateStudent={(id) => navigate(`/institution-admin-dashboard/student/${id}`)}
             onRemoveAccess={users.handleRemoveAccess}
+              onDeleteUser={users.handleDeleteUser}
             institutionalCode={users.institutionalCode}
             onUpdateInstitutionalCode={users.handleUpdateInstitutionalCode}
             isUpdatingCode={users.isUpdatingCode}
