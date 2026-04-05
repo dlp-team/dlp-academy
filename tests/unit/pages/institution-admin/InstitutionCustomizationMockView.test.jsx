@@ -1,7 +1,7 @@
 // tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import InstitutionCustomizationMockView from '../../../../src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView';
 
@@ -234,6 +234,27 @@ describe('InstitutionCustomizationMockView', () => {
     expect(screen.getAllByRole('button', { name: /2025-2026/i }).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole('button', { name: /alternar filtro de asignaturas vigentes/i }));
+
+    expect(screen.queryByRole('button', { name: /2024-2025/i })).toBeNull();
+    expect(screen.getAllByRole('button', { name: /2025-2026/i }).length).toBeGreaterThan(0);
+  });
+
+  it('applies academic-year range filtering in Cursos mode', () => {
+    renderCustomizationPreview();
+
+    fireEvent.click(screen.getByRole('button', { name: /cursos/i }));
+    expect(screen.getByRole('button', { name: /2024-2025/i })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /año académico/i }));
+
+    const yearFilterPanel = screen.getByText(/rango de año académico/i).closest('div.fixed');
+    expect(yearFilterPanel).toBeTruthy();
+    if (!yearFilterPanel) {
+      throw new Error('No se encontró el panel de filtro por año académico.');
+    }
+
+    fireEvent.click(within(yearFilterPanel).getByRole('button', { name: /^2025-2026$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /año académico/i }));
 
     expect(screen.queryByRole('button', { name: /2024-2025/i })).toBeNull();
     expect(screen.getAllByRole('button', { name: /2025-2026/i }).length).toBeGreaterThan(0);

@@ -23,6 +23,7 @@
 - Added nested-folder navigation parity coverage in manual mode, verifying parent/child folder traversal before topic drilldown.
 - Added `Uso`-mode current-subject filter parity coverage to validate `Alternar filtro de asignaturas vigentes` behavior against preview fixtures.
 - Added `Cursos`-mode current-subject filter parity coverage to validate removal of non-current academic-year wrappers while preserving current-year wrapper visibility.
+- Added `Cursos`-mode academic-year range parity coverage to validate `Año académico` filter removes out-of-range wrappers while keeping in-range wrappers visible.
 - Extended fullscreen regression coverage with explicit stacking-context assertion (`z-[10050]`) to prevent overlap with global fixed header.
 
 ### 2026-04-04

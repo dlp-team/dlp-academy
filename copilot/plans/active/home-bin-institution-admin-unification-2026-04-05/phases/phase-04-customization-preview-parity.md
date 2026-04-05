@@ -181,3 +181,15 @@ Convert Institution Admin customization preview into a true behavioral replica w
     - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
     - `npm run lint` (PASS)
     - `npx tsc --noEmit` (PASS)
+
+- 2026-04-05 - Block C in progress (slice 11)
+  - Added deterministic academic-year range filter parity assertions in:
+    - [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx)
+  - Coverage now verifies:
+    - baseline visibility of `2024-2025` wrappers in `Cursos` mode,
+    - selecting `2025-2026` in `Año académico` range filter removes `2024-2025` wrappers,
+    - `2025-2026` wrappers remain visible after range filter application.
+  - Validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)
