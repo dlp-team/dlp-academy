@@ -720,6 +720,8 @@ const CustomizationHomeExactPreview = ({
   };
 
   const renderMockBin = () => {
+    const isListLayout = layoutMode === 'list';
+
     return (
       <section className="space-y-3">
         <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3">
@@ -736,6 +738,51 @@ const CustomizationHomeExactPreview = ({
           <div className="rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
             No hay elementos simulados en papelera para esta búsqueda.
           </div>
+        ) : isListLayout ? (
+          <div className="space-y-2">
+            {previewBinItems.map((item: any) => {
+              const isFolder = item.itemType === 'folder';
+              const isShortcut = item.itemType.startsWith('shortcut');
+
+              return (
+                <article
+                  key={item.id}
+                  data-testid={`preview-bin-list-item-${item.id}`}
+                  className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3"
+                >
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2 truncate">
+                        {isFolder ? <FolderOpen size={15} className="text-amber-500" /> : isShortcut ? <Link2 size={15} className="text-sky-500" /> : <BookOpen size={15} className="text-indigo-500" />}
+                        {item.name}
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Eliminado {item.trashedAtLabel}. {item.daysRemaining} días restantes.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] uppercase tracking-wide font-semibold px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                        {item.itemType}
+                      </span>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300"
+                      >
+                        <RotateCcw size={13} /> Restaurar
+                      </button>
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300"
+                      >
+                        <Trash2 size={13} /> Eliminar
+                      </button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {previewBinItems.map((item: any) => {
@@ -745,6 +792,7 @@ const CustomizationHomeExactPreview = ({
               return (
                 <article
                   key={item.id}
+                  data-testid={`preview-bin-grid-item-${item.id}`}
                   className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3"
                 >
                   <div className="flex items-start justify-between gap-3">

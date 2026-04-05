@@ -132,4 +132,19 @@ describe('InstitutionCustomizationMockView', () => {
     fireEvent.click(screen.getByRole('button', { name: /volver a asignaturas/i }));
     expect(screen.getByText(/mis asignaturas/i)).toBeTruthy();
   });
+
+  it('matches bin layout with list and grid controls', () => {
+    renderCustomizationPreview();
+
+    fireEvent.click(screen.getByRole('button', { name: /papelera/i }));
+
+    expect(screen.getByTestId('preview-bin-grid-item-preview-bin-folder-1')).toBeTruthy();
+
+    fireEvent.click(screen.getByTitle(/lista/i));
+    expect(screen.getByTestId('preview-bin-list-item-preview-bin-folder-1')).toBeTruthy();
+    expect(screen.queryByTestId('preview-bin-grid-item-preview-bin-folder-1')).toBeNull();
+
+    fireEvent.click(screen.getByTitle(/cuadr[ií]cula/i));
+    expect(screen.getByTestId('preview-bin-grid-item-preview-bin-folder-1')).toBeTruthy();
+  });
 });
