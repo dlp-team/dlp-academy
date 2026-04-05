@@ -225,4 +225,17 @@ describe('InstitutionCustomizationMockView', () => {
     expect(screen.queryByText('Historia')).toBeNull();
     expect(screen.getByText('Matemáticas')).toBeTruthy();
   });
+
+  it('applies current-subject toggle filtering in Cursos mode', () => {
+    renderCustomizationPreview();
+
+    fireEvent.click(screen.getByRole('button', { name: /cursos/i }));
+    expect(screen.getByRole('button', { name: /2024-2025/i })).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /2025-2026/i }).length).toBeGreaterThan(0);
+
+    fireEvent.click(screen.getByRole('button', { name: /alternar filtro de asignaturas vigentes/i }));
+
+    expect(screen.queryByRole('button', { name: /2024-2025/i })).toBeNull();
+    expect(screen.getAllByRole('button', { name: /2025-2026/i }).length).toBeGreaterThan(0);
+  });
 });

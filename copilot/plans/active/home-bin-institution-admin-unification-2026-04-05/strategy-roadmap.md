@@ -265,6 +265,13 @@
     - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
     - `npm run lint` (PASS),
     - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 10):
+  - added deterministic courses-mode current-filter parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - validated that `Alternar filtro de asignaturas vigentes` removes non-current academic-year groups in `Cursos` mode while preserving current-year group visibility,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
 
 ### Phase 05 - User Management, Profile Media, and Past Classes
 - Status: PLANNED
@@ -306,6 +313,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Advance Phase 04 Block C slice 10 with targeted topic/resource/bin parity hardening.
+1. Advance Phase 04 Block C slice 11 with targeted topic/resource/bin parity hardening.
 2. Continue non-modal overlay-shell migration in additional low-risk consumers after each validated slice.
 3. Keep cadence discipline (validate -> commit -> push) for every major block.

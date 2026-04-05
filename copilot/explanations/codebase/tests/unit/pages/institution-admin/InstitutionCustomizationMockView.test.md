@@ -22,6 +22,7 @@
 - Added shared-tab topic/resource drilldown parity coverage for shared subjects, including resource-panel assertions and return-to-shared-list navigation.
 - Added nested-folder navigation parity coverage in manual mode, verifying parent/child folder traversal before topic drilldown.
 - Added `Uso`-mode current-subject filter parity coverage to validate `Alternar filtro de asignaturas vigentes` behavior against preview fixtures.
+- Added `Cursos`-mode current-subject filter parity coverage to validate removal of non-current academic-year wrappers while preserving current-year wrapper visibility.
 - Extended fullscreen regression coverage with explicit stacking-context assertion (`z-[10050]`) to prevent overlap with global fixed header.
 
 ### 2026-04-04
