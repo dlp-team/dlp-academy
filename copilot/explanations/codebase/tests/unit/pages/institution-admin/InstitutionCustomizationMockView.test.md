@@ -17,6 +17,7 @@
 - Added integration parity assertions to confirm exact preview header shell remains aligned with Home content controls across role switching.
 - Added deterministic topic/resource/bin transition checks covering bin actions, subject-detail back navigation, and return-to-list behavior after drilldown.
 - Added bin layout parity assertions validating list/grid control toggles against preview bin rendering.
+- Added deterministic bin search empty-state parity assertions for no-match and reset flows.
 - Extended fullscreen regression coverage with explicit stacking-context assertion (`z-[10050]`) to prevent overlap with global fixed header.
 
 ### 2026-04-04

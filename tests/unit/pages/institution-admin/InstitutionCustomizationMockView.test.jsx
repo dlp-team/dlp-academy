@@ -147,4 +147,23 @@ describe('InstitutionCustomizationMockView', () => {
     fireEvent.click(screen.getByTitle(/cuadr[ií]cula/i));
     expect(screen.getByTestId('preview-bin-grid-item-preview-bin-folder-1')).toBeTruthy();
   });
+
+  it('shows deterministic empty state in bin when search has no matches', () => {
+    renderCustomizationPreview();
+
+    fireEvent.click(screen.getByRole('button', { name: /papelera/i }));
+    expect(screen.getByText(/tecnología/i)).toBeTruthy();
+
+    fireEvent.change(screen.getByPlaceholderText(/buscar/i), {
+      target: { value: 'sin-coincidencias-preview' },
+    });
+
+    expect(screen.getByText(/no hay elementos simulados en papelera para esta búsqueda/i)).toBeTruthy();
+
+    fireEvent.change(screen.getByPlaceholderText(/buscar/i), {
+      target: { value: '' },
+    });
+
+    expect(screen.getByText(/tecnología/i)).toBeTruthy();
+  });
 });

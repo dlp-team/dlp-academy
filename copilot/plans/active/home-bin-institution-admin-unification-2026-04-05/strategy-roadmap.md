@@ -177,6 +177,13 @@
     - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
     - `npm run lint` (PASS),
     - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 5):
+  - added deterministic preview-bin empty-state parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - verified no-match search fallback and reset-to-results behavior in bin preview mode,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
 
 ### Phase 05 - User Management, Profile Media, and Past Classes
 - Status: PLANNED
@@ -218,6 +225,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Continue Phase 04 Block C slice 5 with targeted topic/resource/bin visual parity hardening where real-surface deltas remain.
+1. Continue Phase 04 Block C slice 6 with targeted topic/resource/bin visual parity hardening where real-surface deltas remain.
 2. Add deterministic assertions for any newly hardened preview-surface deltas in customization tests.
 3. Keep cadence discipline (validate -> commit -> push) for each new Phase 04 block.
