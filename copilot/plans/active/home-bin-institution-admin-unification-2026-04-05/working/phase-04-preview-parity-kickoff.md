@@ -83,6 +83,10 @@
 - Added student-role transition guard in [src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx](src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx) to force exit from shared-only preview mode.
 - Added deterministic integration test in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx) validating fallback from `Compartido` to manual view when switching to `Vista estudiante`.
 
+## Block C Progress (Slice 13 Completed)
+- Hardened temporary active-zone highlighting behavior in [src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx](src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx).
+- Added deterministic integration test in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx) to validate highlight appears on color-field focus and clears after focus leaves.
+
 ## Block C Validation Evidence (Slice 1)
 - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
 - `npm run lint` (PASS)
@@ -143,6 +147,11 @@
 - `npm run lint` (PASS)
 - `npx tsc --noEmit` (PASS)
 
-## Upcoming Block C Scope (Slice 13)
+## Block C Validation Evidence (Slice 13)
+- `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
+- `npm run lint` (PASS)
+- `npx tsc --noEmit` (PASS)
+
+## Upcoming Block C Scope (Slice 14)
 - Expand real-surface parity for topic/resources/bin rendering deltas.
 - Add focused parity assertions for requested preview behavior consistency.

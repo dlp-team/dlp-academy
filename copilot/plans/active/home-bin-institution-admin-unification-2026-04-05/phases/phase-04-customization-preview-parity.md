@@ -204,3 +204,14 @@ Convert Institution Admin customization preview into a true behavioral replica w
     - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
     - `npm run lint` (PASS)
     - `npx tsc --noEmit` (PASS)
+
+- 2026-04-05 - Block C in progress (slice 13)
+  - Hardened temporary active-zone highlight behavior in:
+    - [src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx](src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx)
+  - Preview now clears active token highlight when focus leaves color-field controls, preserving temporary zone highlighting semantics.
+  - Added deterministic integration coverage in:
+    - [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx)
+  - Validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)

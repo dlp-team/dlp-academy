@@ -110,7 +110,10 @@ const InstitutionCustomizationMockView = ({
     setActiveToken(token);
   }, []);
 
-  const handleBlur = useCallback(() => {}, []);
+  const handleBlur = useCallback((event: any) => {
+    if (event?.currentTarget?.contains(event?.relatedTarget)) return;
+    setActiveToken(null);
+  }, []);
 
   const handleReset = () => {
     const next = buildSafeForm({ ...DEFAULTS, ...(initialValues || {}) });

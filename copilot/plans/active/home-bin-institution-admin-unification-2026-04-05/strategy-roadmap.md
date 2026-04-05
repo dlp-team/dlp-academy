@@ -287,6 +287,13 @@
     - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
     - `npm run lint` (PASS),
     - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 13):
+  - hardened temporary active-zone highlight behavior in [src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx](src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx) by clearing active token when focus leaves the active color field,
+  - added deterministic regression coverage in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx) to verify highlight appears on focus and clears after blur,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
 
 ### Phase 05 - User Management, Profile Media, and Past Classes
 - Status: PLANNED
@@ -328,6 +335,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Advance Phase 04 Block C slice 13 with targeted topic/resource/bin parity hardening.
+1. Advance Phase 04 Block C slice 14 with targeted topic/resource/bin parity hardening.
 2. Continue non-modal overlay-shell migration in additional low-risk consumers after each validated slice.
 3. Keep cadence discipline (validate -> commit -> push) for every major block.

@@ -87,6 +87,38 @@ describe('InstitutionCustomizationMockView', () => {
     expect(screen.getAllByDisplayValue('#123456').length).toBeGreaterThan(0);
   });
 
+  it('keeps active-zone highlight temporary after color focus leaves', async () => {
+    renderCustomizationPreview();
+
+    const previewRoot = screen.getByTestId('institution-customization-preview-root');
+    const previewFrame = previewRoot.querySelector('.home-page');
+    expect(previewFrame).toBeTruthy();
+    if (!previewFrame) {
+      throw new Error('No se encontró el contenedor de vista previa para validar resaltado activo.');
+    }
+
+    const expectNoShadow = () => {
+      expect(['', 'none'].includes(previewFrame.style.boxShadow)).toBe(true);
+    };
+
+    expectNoShadow();
+
+    const [primaryColorInput] = screen.getAllByPlaceholderText('#000000');
+    fireEvent.focus(primaryColorInput);
+
+    await waitFor(() => {
+      expect(previewFrame.style.boxShadow).toMatch(/0 0 0 2px/i);
+    });
+
+    const institutionNameInput = screen.getByPlaceholderText(/nombre visible/i);
+    fireEvent.blur(primaryColorInput, { relatedTarget: institutionNameInput });
+    fireEvent.focus(institutionNameInput);
+
+    await waitFor(() => {
+      expectNoShadow();
+    });
+  });
+
   it('toggles fullscreen mode and collapses controls panel', () => {
     renderCustomizationPreview();
 

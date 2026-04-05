@@ -1,3 +1,4 @@
+<!-- copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.md -->
 # InstitutionCustomizationMockView.tsx
 
 ## Overview
@@ -25,6 +26,7 @@
 ## Changelog
 ### 2026-04-05
 - Raised fullscreen overlay stacking context (`z-[10050]`) so the customization preview reliably renders above the global fixed header (`z-[9999]`) without overlap.
+- Updated color-field blur handling so active preview zone highlighting is temporary: highlight now clears when focus leaves the active color control.
 
 ### 2026-04-04
 - Hardened fullscreen mode container to preserve `flex` stage layout in overlay mode, preventing preview panel stacking/blank-screen regressions.

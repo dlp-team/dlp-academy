@@ -93,6 +93,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Advance Phase 04 Block C slice 13 with targeted topic/resource/bin parity hardening.
+1. Advance Phase 04 Block C slice 14 with targeted topic/resource/bin parity hardening.
 2. Continue low-risk non-modal overlay-shell migrations from the audited priority queue.
 3. Keep normal validate -> commit -> push cadence for each major block.
