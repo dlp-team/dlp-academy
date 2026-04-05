@@ -40,7 +40,7 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 
 ## Lifecycle Status
 - Lifecycle: active
-- Current phase: Phase 01 - Global Modal and Scrollbar Foundation (IN_PROGRESS)
+- Current phase: Phase 02 - Selection Mode and Bin Unification (IN_PROGRESS)
 - Last updated: 2026-04-05
 
 ## Key Decisions and Assumptions
@@ -91,6 +91,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Implement the first Phase 01 modal foundation slice (base wrapper contract + adoption order).
-2. Patch and validate scrollbar compensation behavior to remove visible left-side artifact safely.
-3. Keep roadmap, phase files, and working notes synchronized with every Phase 01 decision.
+1. Implement Bin list-mode inline action area directly below the selected row/card.
+2. Keep Bin list action styling aligned with grid action-panel language.
+3. Add focused list-mode regression tests and continue Phase 02 block cadence.

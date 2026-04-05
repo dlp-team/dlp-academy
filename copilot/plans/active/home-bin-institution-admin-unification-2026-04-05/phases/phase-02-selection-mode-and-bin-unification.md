@@ -2,7 +2,7 @@
 # Phase 02 - Selection Mode and Bin Unification
 
 ## Status
-- PLANNED
+- IN_PROGRESS
 
 ## Objective
 Unify selection-mode behavior between Home and Bin and implement requested Bin grid/list interaction refinements.
@@ -33,3 +33,27 @@ Unify selection-mode behavior between Home and Bin and implement requested Bin g
 
 ## Exit Criteria
 - Selection and Bin behaviors are visually and functionally consistent with requested UX.
+
+## Kickoff Notes (2026-04-05)
+- Phase 01 closure completed with stable modal and validation foundations.
+- Phase 02 starts with a dependency-safe slice:
+  1. audit current selection dimming logic across Home and Bin,
+  2. align shared selection emphasis behavior,
+  3. implement first Bin interaction refinement with focused tests.
+
+## Progress Log
+- 2026-04-05 - Block A completed
+  - Added Home unselected-dimming helper in [src/utils/selectionVisualUtils.ts](src/utils/selectionVisualUtils.ts).
+  - Applied selection-mode dimming to Home grid cards in [src/pages/Home/components/HomeContent.tsx](src/pages/Home/components/HomeContent.tsx).
+  - Refined Bin grid overlay focus in [src/pages/Home/components/bin/BinSelectionOverlay.tsx](src/pages/Home/components/bin/BinSelectionOverlay.tsx):
+    - removed blur backdrop,
+    - added selected-card focus transition,
+    - delayed action panel reveal to follow the focus transition.
+  - Added/updated focused tests:
+    - [tests/unit/utils/selectionVisualUtils.test.js](tests/unit/utils/selectionVisualUtils.test.js)
+    - [tests/unit/components/BinSelectionOverlay.test.jsx](tests/unit/components/BinSelectionOverlay.test.jsx)
+  - Validation evidence:
+    - `npm run test -- tests/unit/utils/selectionVisualUtils.test.js tests/unit/components/BinSelectionOverlay.test.jsx tests/unit/components/BinGridItem.test.jsx tests/unit/pages/home/HomeMainContent.test.jsx` (PASS)
+    - `npm run test -- tests/unit/components/BinSelectionOverlay.test.jsx tests/unit/utils/selectionVisualUtils.test.js` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)

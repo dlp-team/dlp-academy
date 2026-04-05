@@ -2,7 +2,7 @@
 # Phase 01 - Global Modal and Scrollbar Foundation
 
 ## Status
-- IN_PROGRESS
+- COMPLETED
 
 ## Objective
 Create a reusable modal foundation and remove the left-side scrollbar compensation artifact without introducing layout regressions.
@@ -123,10 +123,20 @@ Create a reusable modal foundation and remove the left-side scrollbar compensati
   - `npx tsc --noEmit` (PASS)
   - `get_errors` on touched files (clean)
 
-## Remaining Work in Phase 01
+## Residual Follow-ups for Later Phases
 - Expand shared modal adoption to remaining admin/form-heavy modal surfaces.
 - Expand dirty-state interception to remaining modal forms beyond FolderManager and SubjectFormModal.
 - Run broader validation pass (lint/typecheck + targeted modal regressions) before Phase 01 closure.
+
+## Phase 01 Closure Summary (2026-04-05)
+- Shared modal foundation established and reused across Home, Subject, and admin-facing modal surfaces.
+- Dirty-state close interception path implemented in reusable utility and adopted in multiple form-heavy flows.
+- Scrollbar left-side compensation artifact removed.
+- Validation closure evidence:
+  - `npm run lint` (PASS)
+  - `npx tsc --noEmit` (PASS)
+  - `npm run test` (PASS: 138 files, 621 tests)
+- Phase 02 handoff: selection mode and Bin unification can proceed with Phase 01 foundation stable.
 
 ## Validation Gate
 - Unit coverage for new modal close and dirty-state interception behavior.

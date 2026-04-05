@@ -1,6 +1,11 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-04-05: Selection-mode dimming emphasis for Home grid cards
+- Added `getHomeUnselectedDimmingClass(...)` integration for grid wrappers in selection mode.
+- Unselected cards now apply brightness/saturation dimming only when at least one selection exists.
+- Preserved existing selection semantics and ring highlighting for selected cards.
+
 ### 2026-04-02: Nested academic-year wrappers for multi-year courses view
 - Added outer academic-year collapsible wrappers in `courses` mode when multiple academic years are present.
 - Year wrappers default to collapsed and contain the existing per-course collapsible groups.
@@ -36,7 +41,7 @@
 
 ## Overview
 - **Source file:** `src/pages/Home/components/HomeContent.tsx`
-- **Last documented:** 2026-04-02
+- **Last documented:** 2026-04-05
 - **Role:** Reusable UI component consumed by the parent page/module.
 
 ## Responsibilities

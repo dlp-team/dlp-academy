@@ -61,3 +61,7 @@
   - Migrated [src/pages/Home/modals/SubjectModal.tsx](src/pages/Home/modals/SubjectModal.tsx) and [src/pages/Home/modals/EditSubjectModal.tsx](src/pages/Home/modals/EditSubjectModal.tsx) to `BaseModal`.
   - Added [tests/unit/pages/home/HomeSubjectModals.test.jsx](tests/unit/pages/home/HomeSubjectModals.test.jsx) for backdrop close behavior.
   - Re-ran Home/Subject modal regression targets and typecheck.
+- 2026-04-05: Phase 01 closure validation completed.
+  - `npm run lint` passed.
+  - `npx tsc --noEmit` passed.
+  - `npm run test` passed (138 files, 621 tests).

@@ -1,9 +1,10 @@
 // src/pages/Home/components/bin/BinSelectionOverlay.jsx
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import BinSelectionPanel from './BinSelectionPanel';
 
 const PANEL_WIDTH = 360;  // must match w-[360px] in BinSelectionPanel
 const GAP        = 12;    // px gap between card and panel
+const FOCUS_TRANSITION_MS = 180;
 
 /**
  * Full-screen dimmed backdrop.
@@ -30,6 +31,26 @@ const BinSelectionOverlay = ({
     const [rect, setRect] = useState<any>(null);
     const [panelTop, setPanelTop] = useState(0);
     const [panelLeft, setPanelLeft] = useState(0);
+    const [isCardFocused, setIsCardFocused] = useState(false);
+    const [showPanel, setShowPanel] = useState(false);
+
+    useEffect(() => {
+        setIsCardFocused(false);
+        setShowPanel(false);
+
+        const rafId = window.requestAnimationFrame(() => {
+            setIsCardFocused(true);
+        });
+
+        const panelTimer = window.setTimeout(() => {
+            setShowPanel(true);
+        }, FOCUS_TRANSITION_MS);
+
+        return () => {
+            window.cancelAnimationFrame(rafId);
+            window.clearTimeout(panelTimer);
+        };
+    }, [item?.id, itemType]);
 
     useLayoutEffect(() => {
         if (!selectedCardRef?.current) return;
@@ -70,7 +91,7 @@ const BinSelectionOverlay = ({
             window.removeEventListener('resize', measure);
             window.removeEventListener('scroll', measure, true);
         };
-    }, [selectedCardRef]);
+    }, [selectedCardRef, item?.id, itemType]);
 
     if (!rect) return null;
 
@@ -78,45 +99,48 @@ const BinSelectionOverlay = ({
         <>
             {/* ── Fondo oscuro (Backdrop) ── */}
             <div
-                className="fixed inset-0 z-40 bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-sm transition-opacity"
+                data-testid="bin-selection-overlay-backdrop"
+                className="fixed inset-0 z-40 bg-slate-900/55 dark:bg-slate-950/80 transition-opacity"
                 onClick={onClose}
             />
 
             {/* ── Tarjeta seleccionada sobre el fondo ── */}
             <div
-                className="fixed z-50"
+                data-testid="bin-selection-overlay-card"
+                className={`fixed z-50 transition-transform duration-200 ease-out ${
+                    isCardFocused ? 'scale-[1.02]' : 'scale-[0.985]'
+                }`}
                 style={{
                     top:    rect.top,
                     left:   rect.left,
                     width:  rect.width,
                     height: rect.height,
+                    transformOrigin: 'center center',
                 }}
             >
-                {/* Anillo de selección adaptable a light/dark mode con Tailwind */}
-                <div
-                    className="absolute inset-0 rounded-2xl pointer-events-none z-10 ring-4 ring-blue-500/50 dark:ring-blue-400/50 shadow-[0_8px_32px_rgba(0,0,0,0.35)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)]"
-                />
-                
                 <div className="relative w-full h-full">
                     {children}
                 </div>
             </div>
 
             {/* ── Panel de opciones al lado ── */}
-            <div
-                className="fixed z-50 animate-in fade-in zoom-in-95 duration-200"
-                style={{ top: panelTop, left: panelLeft }}
-            >
-                <BinSelectionPanel
-                    item={item}
-                    itemType={itemType}
-                    actionLoading={actionLoading}
-                    onClose={onClose}
-                    onShowDescription={onShowDescription}
-                    onRestore={onRestore}
-                    onDeleteConfirm={onDeleteConfirm}
-                />
-            </div>
+            {showPanel && (
+                <div
+                    data-testid="bin-selection-overlay-panel"
+                    className="fixed z-50 animate-in fade-in slide-in-from-right-1 zoom-in-95 duration-200"
+                    style={{ top: panelTop, left: panelLeft }}
+                >
+                    <BinSelectionPanel
+                        item={item}
+                        itemType={itemType}
+                        actionLoading={actionLoading}
+                        onClose={onClose}
+                        onShowDescription={onShowDescription}
+                        onRestore={onRestore}
+                        onDeleteConfirm={onDeleteConfirm}
+                    />
+                </div>
+            )}
         </>
     );
 };

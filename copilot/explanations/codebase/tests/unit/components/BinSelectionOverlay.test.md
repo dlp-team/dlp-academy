@@ -1,0 +1,18 @@
+<!-- copilot/explanations/codebase/tests/unit/components/BinSelectionOverlay.test.md -->
+# BinSelectionOverlay.test.jsx
+
+## Overview
+- **Source file:** `tests/unit/components/BinSelectionOverlay.test.jsx`
+- **Last documented:** 2026-04-05
+- **Role:** Verifies deterministic overlay behavior for Bin selected-card focus and action panel timing.
+
+## Coverage
+- Returns `null` when the selected-card reference is missing.
+- Ensures the overlay backdrop renders without blur classes and still closes on click.
+- Verifies panel reveal is timer-driven (delayed until focus transition window).
+- Confirms panel placement top-clamping near viewport bottom edge.
+
+## Changelog
+### 2026-04-05
+- Updated tests for the typed `item` overlay contract and staged panel reveal.
+- Added fake-timer + `act(...)` cleanup for deterministic, warning-free assertions.

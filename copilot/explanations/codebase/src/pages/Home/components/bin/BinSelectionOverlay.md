@@ -3,13 +3,15 @@
 
 ## Overview
 - **Source file:** `src/pages/Home/components/bin/BinSelectionOverlay.jsx`
-- **Last documented:** 2026-04-02
+- **Last documented:** 2026-04-05
 - **Role:** Full-screen overlay that anchors selected bin card and side panel to viewport coordinates.
 
 ## Responsibilities
 - Measures selected card bounds and re-renders focused content over backdrop.
 - Positions action panel left/right/below based on viewport space.
 - Routes typed item props into `BinSelectionPanel`.
+- Applies staged focus UX: selected card focus transition first, action panel reveal immediately after.
 
 ## Changelog
+- **2026-04-05:** Removed backdrop blur, introduced selected-card focus transform transition, and delayed action panel reveal to align with focus transition timing.
 - **2026-04-02:** Extended overlay contract from `subject` to typed `item`/`itemType` so folder selections share the same anchored UX path.

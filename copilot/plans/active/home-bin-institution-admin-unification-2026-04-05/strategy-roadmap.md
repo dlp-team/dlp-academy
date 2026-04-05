@@ -18,7 +18,7 @@
   - risk register and phase sequencing confirmation.
 
 ### Phase 01 - Global Modal and Scrollbar Foundation
-- Status: IN_PROGRESS
+- Status: COMPLETED
 - Goal: standardize modal wrapper behavior and remove left-side scrollbar compensation artifact.
 - Outputs:
   - reusable modal base component API,
@@ -50,15 +50,25 @@
   - Home `SubjectModal` and `EditSubjectModal` migrated to shared modal shell,
   - dedicated Home modal regression tests added,
   - targeted modal tests and typecheck passing.
+- Closure (2026-04-05):
+  - `npm run lint` passed,
+  - `npx tsc --noEmit` passed,
+  - `npm run test` passed (138 files, 621 tests).
 
 ### Phase 02 - Selection Mode and Bin Unification
-- Status: PLANNED
+- Status: IN_PROGRESS
 - Goal: unify selection UX logic and align Bin grid/list interactions with requested behavior.
 - Outputs:
   - shared selection behavior between Home and Bin,
   - dimming of unselected Home items when selection exists,
   - Bin grid scale-focus transition,
   - Bin list inline action panel with consistent styling.
+- Progress (2026-04-05, Block A):
+  - introduced shared Home dimming helper in [src/utils/selectionVisualUtils.ts](src/utils/selectionVisualUtils.ts),
+  - applied grid-card dimming in [src/pages/Home/components/HomeContent.tsx](src/pages/Home/components/HomeContent.tsx),
+  - refined Bin overlay focus transition and delayed action-panel reveal in [src/pages/Home/components/bin/BinSelectionOverlay.tsx](src/pages/Home/components/bin/BinSelectionOverlay.tsx),
+  - added focused tests in [tests/unit/components/BinSelectionOverlay.test.jsx](tests/unit/components/BinSelectionOverlay.test.jsx) and [tests/unit/utils/selectionVisualUtils.test.js](tests/unit/utils/selectionVisualUtils.test.js),
+  - targeted tests + lint + typecheck passing.
 
 ### Phase 03 - Institution Admin Settings and Automation Controls
 - Status: PLANNED
@@ -118,6 +128,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Expand dirty-state close interception to remaining modal forms (especially Institution Admin create/edit flows).
-2. Continue BaseModal adoption for remaining modal surfaces that still duplicate shell structure.
-3. Run wider Phase 01 validation sweep (typecheck/lint + targeted modal regression suite) and prepare closure checklist.
+1. Implement Bin list-mode inline action area directly under selected item with smooth push-down behavior.
+2. Align Bin list action styling with grid panel language while preserving current permissions and bulk flows.
+3. Add focused regression tests for Bin list inline panel behavior and run impacted Home/Bin suite.

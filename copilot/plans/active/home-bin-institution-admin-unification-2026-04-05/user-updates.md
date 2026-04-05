@@ -76,3 +76,23 @@
     - [phases/phase-01-global-modal-and-scrollbar-foundation.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md)
     - [strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
     - [working/phase-01-modal-and-scrollbar-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-01-modal-and-scrollbar-kickoff.md)
+
+- 2026-04-05: Phase 01 closed and Phase 02 started.
+  - Trigger: full lint/typecheck/unit-test validation sweep completed successfully.
+  - Integrated files:
+    - [README.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md)
+    - [strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+    - [phases/phase-01-global-modal-and-scrollbar-foundation.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md)
+    - [phases/phase-02-selection-mode-and-bin-unification.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md)
+
+- 2026-04-05: Continued execution into Phase 02 Block A with validated selection/overlay refinements.
+  - Trigger: continue directive with periodic commit/push cadence.
+  - Integrated files:
+    - [src/utils/selectionVisualUtils.ts](src/utils/selectionVisualUtils.ts)
+    - [src/pages/Home/components/HomeContent.tsx](src/pages/Home/components/HomeContent.tsx)
+    - [src/pages/Home/components/bin/BinSelectionOverlay.tsx](src/pages/Home/components/bin/BinSelectionOverlay.tsx)
+    - [tests/unit/components/BinSelectionOverlay.test.jsx](tests/unit/components/BinSelectionOverlay.test.jsx)
+    - [tests/unit/utils/selectionVisualUtils.test.js](tests/unit/utils/selectionVisualUtils.test.js)
+    - [phases/phase-02-selection-mode-and-bin-unification.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md)
+    - [strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+    - [working/phase-02-selection-and-bin-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md)

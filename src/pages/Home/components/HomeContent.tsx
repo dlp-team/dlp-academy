@@ -14,6 +14,7 @@ import useAutoScrollOnDrag from '../../../hooks/useAutoScrollOnDrag';
 import { isShortcutItem, getPermissionLevel, isSharedForCurrentUser as isSharedForCurrentUserUtil } from '../../../utils/permissionUtils';
 import { mergeSourceAndShortcutItems } from '../../../utils/mergeUtils';
 import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
+import { getHomeUnselectedDimmingClass } from '../../../utils/selectionVisualUtils';
 
 const FolderCardComponent: any = FolderCard;
 const SubjectCardComponent: any = SubjectCard;
@@ -147,6 +148,7 @@ const HomeContent = ({
     };
 
     const getSelectionKey = (item, type) => `${type}:${item?.shortcutId || item?.id}`;
+    const hasActiveSelection = selectMode && selectedItemKeys.size > 0;
 
     const matchesTagFilter = (item: any) => {
         if (!Array.isArray(selectedTags) || selectedTags.length === 0) return true;
@@ -493,12 +495,16 @@ const HomeContent = ({
                                             {!studentMode && viewMode === 'grid' && activeFilter !== 'subjects' && filteredFolders.map((folder, index: any) => {
                                                 const selectionKey = getSelectionKey(folder, 'folder');
                                                 const isSelected = selectMode && selectedItemKeys.has(selectionKey);
+                                                const dimmingClass = getHomeUnselectedDimmingClass({
+                                                    hasSelection: hasActiveSelection,
+                                                    isSelected,
+                                                });
                                                 return (
                                                 <div
                                                     key={`folder-${folder.id}`}
                                                     onMouseDown={() => onCardFocus(folder, 'folder')}
                                                     onMouseEnter={() => onCardFocus(folder, 'folder')}
-                                                    className={`${getShortcutVisualClasses(folder.id, 'folder')} cursor-pointer`}
+                                                    className={`${getShortcutVisualClasses(folder.id, 'folder')} cursor-pointer ${dimmingClass}`}
                                                 >
                                                     <FolderCardComponent
                                                         folder={folder}
@@ -567,12 +573,16 @@ const HomeContent = ({
                                             {activeFilter !== 'folders' && displayedGroupSubjects.map((subject, index: any) => {
                                                 const selectionKey = getSelectionKey(subject, 'subject');
                                                 const isSelected = selectMode && selectedItemKeys.has(selectionKey);
+                                                const dimmingClass = getHomeUnselectedDimmingClass({
+                                                    hasSelection: hasActiveSelection,
+                                                    isSelected,
+                                                });
                                                 return (
                                                 <div
                                                     key={`${groupName}-${subject.id}`}
                                                     onMouseDown={() => onCardFocus(subject, 'subject')}
                                                     onMouseEnter={() => onCardFocus(subject, 'subject')}
-                                                    className={`${getShortcutVisualClasses(subject.id, 'subject')} cursor-pointer`}
+                                                    className={`${getShortcutVisualClasses(subject.id, 'subject')} cursor-pointer ${dimmingClass}`}
                                                 >
                                                     <SubjectCardComponent
                                                         subject={subject}

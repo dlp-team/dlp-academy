@@ -1,25 +1,36 @@
 // tests/unit/components/BinSelectionOverlay.test.jsx
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import BinSelectionOverlay from '../../../src/pages/Home/components/bin/BinSelectionOverlay';
 
 vi.mock('../../../src/pages/Home/components/bin/BinSelectionPanel', () => ({
-  default: ({ subject, onClose, onRestore, onDeleteConfirm }) => (
+  default: ({ item, itemType, onClose, onRestore, onDeleteConfirm }) => (
     <div data-testid="bin-selection-panel">
-      <span>{subject?.name || 'Sin nombre'}</span>
+      <span>{item?.name || 'Sin nombre'}</span>
       <button onClick={onClose}>Cerrar panel</button>
-      <button onClick={() => onRestore(subject?.id)}>Restaurar</button>
-      <button onClick={() => onDeleteConfirm(subject?.id)}>Eliminar</button>
+      <button onClick={() => onRestore(item?.id, itemType)}>Restaurar</button>
+      <button onClick={() => onDeleteConfirm(item?.id, itemType)}>Eliminar</button>
     </div>
   ),
 }));
 
 describe('BinSelectionOverlay', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    act(() => {
+      vi.runOnlyPendingTimers();
+    });
+    vi.useRealTimers();
+  });
+
   it('returns null when selected card ref is missing', () => {
     const { container } = render(
       <BinSelectionOverlay
-        subject={{ id: 'subject-1', name: 'Historia' }}
+        item={{ id: 'subject-1', name: 'Historia' }}
         selectedCardRef={{ current: null }}
         actionLoading={null}
         onClose={vi.fn()}
@@ -49,9 +60,9 @@ describe('BinSelectionOverlay', () => {
       },
     };
 
-    const { container } = render(
+    render(
       <BinSelectionOverlay
-        subject={{ id: 'subject-1', name: 'Historia' }}
+        item={{ id: 'subject-1', name: 'Historia' }}
         selectedCardRef={selectedCardRef}
         actionLoading={null}
         onClose={onClose}
@@ -64,10 +75,15 @@ describe('BinSelectionOverlay', () => {
     );
 
     expect(screen.getByTestId('selected-card-clone')).toBeTruthy();
-    expect(screen.getByTestId('bin-selection-panel')).toBeTruthy();
+    const backdrop = screen.getByTestId('bin-selection-overlay-backdrop');
+    expect(backdrop.className).not.toContain('backdrop-blur');
+    expect(screen.queryByTestId('bin-selection-overlay-panel')).toBeNull();
 
-    const backdrop = container.querySelector('.fixed.inset-0.z-40');
-    expect(backdrop).toBeTruthy();
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
+    expect(screen.getByTestId('bin-selection-panel')).toBeTruthy();
     fireEvent.click(backdrop);
 
     expect(onClose).toHaveBeenCalledTimes(1);
@@ -87,9 +103,9 @@ describe('BinSelectionOverlay', () => {
       },
     };
 
-    const { container } = render(
+    render(
       <BinSelectionOverlay
-        subject={{ id: 'subject-9', name: 'Quimica' }}
+        item={{ id: 'subject-9', name: 'Quimica' }}
         selectedCardRef={selectedCardRef}
         actionLoading={null}
         onClose={vi.fn()}
@@ -101,7 +117,11 @@ describe('BinSelectionOverlay', () => {
       </BinSelectionOverlay>
     );
 
-    const panelWrapper = container.querySelector('.fixed.z-50.animate-in');
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+
+    const panelWrapper = screen.getByTestId('bin-selection-overlay-panel');
     expect(panelWrapper).toBeTruthy();
 
     const top = Number.parseFloat(panelWrapper.style.top || '0');
