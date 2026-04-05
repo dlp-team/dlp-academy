@@ -111,6 +111,18 @@ Create a reusable modal foundation and remove the left-side scrollbar compensati
   - `npx tsc --noEmit` (PASS)
   - `get_errors` on touched files (clean)
 
+## Implementation Progress - Block F (2026-04-05)
+- Additional Home modal shell migrations completed:
+  - [src/pages/Home/modals/SubjectModal.tsx](src/pages/Home/modals/SubjectModal.tsx)
+  - [src/pages/Home/modals/EditSubjectModal.tsx](src/pages/Home/modals/EditSubjectModal.tsx)
+- Both now use [src/components/ui/BaseModal.tsx](src/components/ui/BaseModal.tsx) while preserving existing create/edit form behavior.
+- Regression tests added for migrated Home subject modals:
+  - [tests/unit/pages/home/HomeSubjectModals.test.jsx](tests/unit/pages/home/HomeSubjectModals.test.jsx)
+- Validation evidence:
+  - `npm run test:unit -- tests/unit/pages/home/HomeSubjectModals.test.jsx tests/unit/components/BaseModal.test.jsx tests/unit/pages/subject/SubjectFormModal.coursePeriodSchedule.test.jsx tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx` (PASS)
+  - `npx tsc --noEmit` (PASS)
+  - `get_errors` on touched files (clean)
+
 ## Remaining Work in Phase 01
 - Expand shared modal adoption to remaining admin/form-heavy modal surfaces.
 - Expand dirty-state interception to remaining modal forms beyond FolderManager and SubjectFormModal.

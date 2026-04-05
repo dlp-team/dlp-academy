@@ -1,7 +1,10 @@
-# EditSubjectModal.jsx
+## Changelog
+- **2026-04-05:** Migrated modal shell to `BaseModal` while preserving edit form state, icon/color selectors, and submit behavior.
+
+# EditSubjectModal.tsx
 
 ## Overview
-- **Source file:** `src/pages/Home/modals/EditSubjectModal.jsx`
+- **Source file:** `src/pages/Home/modals/EditSubjectModal.tsx`
 - **Last documented:** 2026-02-24
 - **Role:** Modal/dialog UI used for create, edit, confirm, or detail flows.
 
@@ -16,6 +19,7 @@
 - `react`
 - `lucide-react`
 - `../../../utils/subjectConstants`
+- `src/components/ui/BaseModal.tsx`
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.

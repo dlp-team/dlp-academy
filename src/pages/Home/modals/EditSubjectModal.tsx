@@ -1,13 +1,12 @@
-// src/components/modals/EditSubjectModal.jsx
+// src/pages/Home/modals/EditSubjectModal.tsx
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { ICON_MAP, ICON_KEYS, COLORS } from '../../../utils/subjectConstants';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
+import BaseModal from '../../../components/ui/BaseModal';
 
 const EditSubjectModal = ({ isOpen, onClose, initialData, onSave }: any) => {
     const [formData, setFormData] = useState(initialData);
-
-    if (!isOpen) return null;
 
     const handleSubmit = (e: any) => {
         e.preventDefault();
@@ -15,10 +14,15 @@ const EditSubjectModal = ({ isOpen, onClose, initialData, onSave }: any) => {
     };
 
     return (
-        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto" style={OVERLAY_TOP_OFFSET_STYLE}>
-            <div className="flex min-h-full items-center justify-center p-4">
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={onClose} />
-                <div className="relative bg-white rounded-2xl w-full max-w-md shadow-xl animate-in fade-in zoom-in duration-200">
+        <BaseModal
+            isOpen={isOpen}
+            onClose={onClose}
+            rootClassName="fixed inset-x-0 bottom-0 z-50 overflow-y-auto"
+            rootStyle={OVERLAY_TOP_OFFSET_STYLE}
+            backdropClassName="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
+            contentWrapperClassName="flex min-h-full items-center justify-center p-4"
+            contentClassName="relative bg-white rounded-2xl w-full max-w-md shadow-xl animate-in fade-in zoom-in duration-200"
+        >
                     <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                         <h3 className="text-lg font-bold text-gray-900">Editar Asignatura</h3>
                         <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full text-gray-500"><X className="w-5 h-5" /></button>
@@ -72,9 +76,7 @@ const EditSubjectModal = ({ isOpen, onClose, initialData, onSave }: any) => {
                             <button type="submit" className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-lg shadow-indigo-200">Guardar Cambios</button>
                         </div>
                     </form>
-                </div>
-            </div>
-        </div>
+        </BaseModal>
     );
 };
 

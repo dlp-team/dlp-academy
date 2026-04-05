@@ -35,6 +35,8 @@
 - `src/components/modals/SudoModal.tsx`
 - `src/pages/Home/components/FolderManager.tsx`
 - `src/pages/Home/components/HomeDeleteConfirmModal.tsx`
+- `src/pages/Home/modals/EditSubjectModal.tsx`
+- `src/pages/Home/modals/SubjectModal.tsx`
 - `src/pages/Subject/modals/SubjectFormModal.tsx`
 
 ## Maintenance Notes

@@ -46,6 +46,10 @@
   - `SubjectFormModal` migrated to shared modal shell,
   - dirty-state close interception expanded to a second form-heavy modal using shared utility,
   - existing SubjectForm tests plus shared modal/utility checks and typecheck passing.
+- Progress (2026-04-05, Block F):
+  - Home `SubjectModal` and `EditSubjectModal` migrated to shared modal shell,
+  - dedicated Home modal regression tests added,
+  - targeted modal tests and typecheck passing.
 
 ### Phase 02 - Selection Mode and Bin Unification
 - Status: PLANNED

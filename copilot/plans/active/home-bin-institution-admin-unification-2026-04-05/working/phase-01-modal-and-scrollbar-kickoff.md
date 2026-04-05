@@ -57,3 +57,7 @@
   - Reused [src/utils/modalCloseGuardUtils.ts](src/utils/modalCloseGuardUtils.ts) for dirty-state close decisions.
   - Routed SubjectFormModal backdrop/header/footer close actions through the same guarded close path.
   - Re-ran SubjectForm modal tests and shared modal/utility regression tests.
+- 2026-04-05: Block F implemented.
+  - Migrated [src/pages/Home/modals/SubjectModal.tsx](src/pages/Home/modals/SubjectModal.tsx) and [src/pages/Home/modals/EditSubjectModal.tsx](src/pages/Home/modals/EditSubjectModal.tsx) to `BaseModal`.
+  - Added [tests/unit/pages/home/HomeSubjectModals.test.jsx](tests/unit/pages/home/HomeSubjectModals.test.jsx) for backdrop close behavior.
+  - Re-ran Home/Subject modal regression targets and typecheck.

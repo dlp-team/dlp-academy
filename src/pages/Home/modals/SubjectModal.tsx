@@ -1,7 +1,8 @@
-// src/components/modals/SubjectModal.jsx
+// src/pages/Home/modals/SubjectModal.tsx
 import React from 'react';
 import { X, Check } from 'lucide-react';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
+import BaseModal from '../../../components/ui/BaseModal';
 
 const SubjectModal = ({ 
     isOpen, 
@@ -13,13 +14,16 @@ const SubjectModal = ({
     iconOptions, // Receive icon options
     isEditing    // Receive edit state
 }) => {
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto" style={OVERLAY_TOP_OFFSET_STYLE}>
-            <div className="flex min-h-full items-center justify-center p-4" onClick={onClose}>
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm animate-fadeIn" />
-                <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <BaseModal
+            isOpen={isOpen}
+            onClose={onClose}
+            rootClassName="fixed inset-x-0 bottom-0 z-50 overflow-y-auto"
+            rootStyle={OVERLAY_TOP_OFFSET_STYLE}
+            backdropClassName="fixed inset-0 bg-black/50 backdrop-blur-sm animate-fadeIn"
+            contentWrapperClassName="flex min-h-full items-center justify-center p-4"
+            contentClassName="relative bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+        >
                 
                 {/* Header */}
                 <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
@@ -111,9 +115,7 @@ const SubjectModal = ({
                         {isEditing ? 'Guardar Cambios' : 'Crear Asignatura'}
                     </button>
                 </div>
-                </div>
-            </div>
-        </div>
+        </BaseModal>
     );
 };
 
