@@ -7,7 +7,7 @@
 ## Block Tracking
 - Block A (2026-04-05): COMPLETED
 - Block B (2026-04-05): COMPLETED
-- Block C: PLANNED
+- Block C (2026-04-05): IN_PROGRESS
 
 ## Block A Scope (Completed)
 - Fix fullscreen customization preview overlap with global fixed header.
@@ -28,6 +28,16 @@
 - `npm run lint` (PASS)
 - `npx tsc --noEmit` (PASS)
 
-## Upcoming Block C Scope
+## Block C Progress (Slice 1 Completed)
+- Added focused unit coverage for preview header parity behavior.
+- New test file: [tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx](tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx).
+- Deterministic assertions now cover fallback institution text, role-aware subtitle, and avatar marker output.
+
+## Block C Validation Evidence (Slice 1)
+- `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS)
+- `npm run lint` (PASS)
+- `npx tsc --noEmit` (PASS)
+
+## Upcoming Block C Scope (Slice 2)
 - Expand real-surface parity for topic/resources/bin rendering deltas.
-- Add focused parity tests for requested preview behavior consistency.
+- Extend focused parity assertions for requested preview behavior consistency.
