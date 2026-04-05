@@ -178,7 +178,7 @@
   - lint and typecheck passed.
 
 ### Phase 04 - Customization Preview Parity
-- Status: IN_PROGRESS
+- Status: COMPLETED
 - Goal: enforce true fullscreen and exact functional parity in the customization preview.
 - Outputs:
   - fullscreen preview without header overlap,
@@ -315,15 +315,28 @@
     - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
     - `npm run lint` (PASS),
     - `npx tsc --noEmit` (PASS).
+- Closure (2026-04-05):
+  - deterministic parity suite expanded through Block C slice 16,
+  - live preview behavior validated for fullscreen layering, header parity, topic/resource/bin transitions, role constraints, viewport controls, and live color reflection,
+  - phase transitioned to COMPLETED and execution moved to Phase 05.
 
 ### Phase 05 - User Management, Profile Media, and Past Classes
-- Status: PLANNED
+- Status: IN_PROGRESS
 - Goal: improve user governance and user-view fidelity for institution admins.
 - Outputs:
   - delete-user capability from users tab,
   - Firebase Storage profile image reliability,
   - icon-only visual language (no emojis in UI),
   - past-classes sections for teachers and students.
+- Progress (2026-04-05, Block A):
+  - implemented profile-media reliability fallback in [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx) by rendering photo when available and falling back to initials on load failure,
+  - replaced emoji role badge labels with icon-based labels in [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx),
+  - added dedicated `Clases pasadas` rendering for archived class rows (teacher and student detail contexts) in [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx),
+  - expanded deterministic regression coverage in [tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx](tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx) for photo fallback, archived-class separation, and emoji-free role badge rendering,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
 
 ### Phase 06 - Cross-Cutting Optimization and Consolidation (Mandatory)
 - Status: PLANNED
@@ -356,6 +369,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Advance Phase 04 Block C slice 17 with targeted topic/resource/bin parity hardening.
-2. Continue non-modal overlay-shell migration in additional low-risk consumers after each validated slice.
+1. Advance Phase 05 Block B with safe delete-user capability in Users tab and tenant guardrails.
+2. Add deterministic deletion-path regression coverage (authorized and protected flows).
 3. Keep cadence discipline (validate -> commit -> push) for every major block.

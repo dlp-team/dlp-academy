@@ -38,6 +38,34 @@ const formatDate = (timestampValue: any) => {
   }
 };
 
+const getProfilePhotoUrl = (profile: any = {}) => {
+  const candidateUrls = [
+    profile?.profilePhotoUrl,
+    profile?.photoURL,
+    profile?.avatarUrl,
+    profile?.avatarURL,
+    profile?.photoUrl,
+  ];
+
+  return candidateUrls
+    .map((entry) => String(entry || '').trim())
+    .find(Boolean) || '';
+};
+
+const getUserInitials = (profile: any = {}) => {
+  const displayName = String(profile?.displayName || '').trim();
+  if (displayName) {
+    const tokens = displayName.split(/\s+/).filter(Boolean);
+    const initials = tokens.slice(0, 2).map((token) => token[0]?.toUpperCase() || '').join('');
+    if (initials) return initials;
+  }
+
+  const email = String(profile?.email || '').trim();
+  return (email[0] || '?').toUpperCase();
+};
+
+const isArchivedClass = (row: any = {}) => String(row?.status || '').trim().toLowerCase() === 'archived';
+
 const UserDetailView = ({ user, userType }: any) => {
   const { teacherId, studentId } = useParams();
   const navigate = useNavigate();
@@ -51,11 +79,13 @@ const UserDetailView = ({ user, userType }: any) => {
     subjectCount: 0,
   });
   const [relatedRows, setRelatedRows] = useState<any[]>([]);
+  const [pastRelatedRows, setPastRelatedRows] = useState<any[]>([]);
   const [institutionCourses, setInstitutionCourses] = useState<any[]>([]);
   const [linkedCourseIds, setLinkedCourseIds] = useState<any[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [isUpdatingCourseLinks, setIsUpdatingCourseLinks] = useState(false);
   const [courseLinkMessage, setCourseLinkMessage] = useState({ type: '', text: '' });
+  const [profilePhotoLoadFailed, setProfilePhotoLoadFailed] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const userId = userType === 'teacher' ? teacherId : studentId;
@@ -88,6 +118,8 @@ const UserDetailView = ({ user, userType }: any) => {
 
         if (!viewedUserSnap.exists()) {
           setViewedUser(null);
+          setRelatedRows([]);
+          setPastRelatedRows([]);
           return;
         }
 
@@ -111,6 +143,18 @@ const UserDetailView = ({ user, userType }: any) => {
           const uniqueStudentIds = new Set();
           assignedClasses.forEach((cl: any) => (cl.studentIds || []).forEach((id) => uniqueStudentIds.add(id)));
 
+          const assignedClassRows = assignedClasses.map((cl: any) => ({
+            id: cl.id,
+            name: cl.name || 'Clase sin nombre',
+            courseId: cl.courseId || null,
+            subtitle: getCourseLabelById(cl.courseId),
+            meta: `${(cl.studentIds || []).length} alumno(s)`,
+            status: cl.status || '',
+          }));
+
+          const activeAssignedClassRows = assignedClassRows.filter((row: any) => !isArchivedClass(row));
+          const archivedAssignedClassRows = assignedClassRows.filter((row: any) => isArchivedClass(row));
+
           setMetrics({
             classCount: assignedClasses.length,
             courseCount: uniqueCourseIds.size,
@@ -119,15 +163,8 @@ const UserDetailView = ({ user, userType }: any) => {
             subjectCount: Array.isArray(fetchedUser.subjects) ? fetchedUser.subjects.length : uniqueCourseIds.size,
           });
 
-          setRelatedRows(
-            assignedClasses.map((cl: any) => ({
-              id: cl.id,
-              name: cl.name || 'Clase sin nombre',
-              courseId: cl.courseId || null,
-              subtitle: getCourseLabelById(cl.courseId),
-              meta: `${(cl.studentIds || []).length} alumno(s)`,
-            })),
-          );
+          setRelatedRows(activeAssignedClassRows);
+          setPastRelatedRows(archivedAssignedClassRows);
 
           setLinkedCourseIds([]);
           setSelectedCourseId('');
@@ -148,18 +185,23 @@ const UserDetailView = ({ user, userType }: any) => {
             subjectCount: Array.isArray(fetchedUser.enrolledSubjects) ? fetchedUser.enrolledSubjects.length : uniqueCourseIds.size,
           });
 
-          setRelatedRows(
-            studentClasses.map((cl: any) => {
-              const teacher: any = teachersById.get(cl.teacherId);
-              return {
-                id: cl.id,
-                name: cl.name || 'Clase sin nombre',
-                courseId: cl.courseId || null,
-                subtitle: getCourseLabelById(cl.courseId),
-                meta: teacher ? (teacher.displayName || teacher.email || 'Profesor asignado') : 'Sin profesor asignado',
-              };
-            }),
-          );
+          const studentClassRows = studentClasses.map((cl: any) => {
+            const teacher: any = teachersById.get(cl.teacherId);
+            return {
+              id: cl.id,
+              name: cl.name || 'Clase sin nombre',
+              courseId: cl.courseId || null,
+              subtitle: getCourseLabelById(cl.courseId),
+              meta: teacher ? (teacher.displayName || teacher.email || 'Profesor asignado') : 'Sin profesor asignado',
+              status: cl.status || '',
+            };
+          });
+
+          const activeStudentClassRows = studentClassRows.filter((row: any) => !isArchivedClass(row));
+          const archivedStudentClassRows = studentClassRows.filter((row: any) => isArchivedClass(row));
+
+          setRelatedRows(activeStudentClassRows);
+          setPastRelatedRows(archivedStudentClassRows);
 
           setLinkedCourseIds(getStudentProfileLinkedCourseIds(fetchedUser));
           setCourseLinkMessage({ type: '', text: '' });
@@ -175,10 +217,20 @@ const UserDetailView = ({ user, userType }: any) => {
     fetchUserDetails();
   }, [userId, user?.institutionId, userType]);
 
-  const roleBadgeLabel = useMemo(
-    () => (userType === 'teacher' ? '👨‍🏫 Profesor' : '👨‍🎓 Alumno'),
+  useEffect(() => {
+    setProfilePhotoLoadFailed(false);
+  }, [viewedUser?.id, viewedUser?.profilePhotoUrl, viewedUser?.photoURL, viewedUser?.avatarUrl]);
+
+  const roleBadge = useMemo(
+    () => (userType === 'teacher'
+      ? { label: 'Profesor', Icon: BookOpen }
+      : { label: 'Alumno', Icon: GraduationCap }),
     [userType],
   );
+
+  const profilePhotoUrl = useMemo(() => getProfilePhotoUrl(viewedUser), [viewedUser]);
+
+  const profileInitials = useMemo(() => getUserInitials(viewedUser), [viewedUser]);
 
   const coursesById = useMemo(
     () => new Map(institutionCourses.map((course: any) => [course.id, course])),
@@ -313,8 +365,17 @@ const UserDetailView = ({ user, userType }: any) => {
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-800 p-8 mb-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-6">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg">
-                {viewedUser.displayName?.[0] || viewedUser.email?.[0] || '?'}
+              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg overflow-hidden">
+                {profilePhotoUrl && !profilePhotoLoadFailed ? (
+                  <img
+                    src={profilePhotoUrl}
+                    alt={`Foto de perfil de ${viewedUser.displayName || viewedUser.email || 'usuario'}`}
+                    className="h-full w-full object-cover"
+                    onError={() => setProfilePhotoLoadFailed(true)}
+                  />
+                ) : (
+                  <span>{profileInitials}</span>
+                )}
               </div>
 
               <div>
@@ -343,8 +404,9 @@ const UserDetailView = ({ user, userType }: any) => {
               </div>
             </div>
 
-            <div className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl font-semibold">
-              {roleBadgeLabel}
+            <div className="px-4 py-2 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl font-semibold inline-flex items-center gap-2">
+              <roleBadge.Icon size={16} />
+              {roleBadge.label}
             </div>
           </div>
         </div>
@@ -460,7 +522,7 @@ const UserDetailView = ({ user, userType }: any) => {
           {relatedRows.length === 0 ? (
             <div className="text-center py-14">
               <GraduationCap className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
-              <p className="text-gray-500">No hay datos de clases relacionadas para este usuario.</p>
+              <p className="text-gray-500">No hay clases activas relacionadas para este usuario.</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -472,6 +534,34 @@ const UserDetailView = ({ user, userType }: any) => {
                   <div className="flex flex-wrap justify-between gap-2">
                     <p className="font-semibold text-slate-900 dark:text-slate-100">{row.name}</p>
                     <span className="text-xs px-2 py-1 rounded-full bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-300">
+                      {row.meta}
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">{row.subtitle}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-gray-200 dark:border-slate-800 p-8 mt-6">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Clases pasadas</h2>
+
+          {pastRelatedRows.length === 0 ? (
+            <div className="text-center py-14">
+              <Calendar className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-3" />
+              <p className="text-gray-500">No hay clases pasadas registradas para este usuario.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {pastRelatedRows.map((row: any) => (
+                <div
+                  key={`past-${row.id}`}
+                  className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/30"
+                >
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{row.name}</p>
+                    <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
                       {row.meta}
                     </span>
                   </div>

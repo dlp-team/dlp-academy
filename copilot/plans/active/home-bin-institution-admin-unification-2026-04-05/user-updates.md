@@ -10,6 +10,17 @@
 - (none)
 
 ## Processed Updates
+- 2026-04-05: Phase transition to Phase 05 and Block A completion (user-detail fidelity).
+  - Trigger: execution choice selected `Move to Phase 05` in leverage step.
+  - Integrated files:
+    - [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx)
+    - [tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx](tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-04-customization-preview-parity.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-04-customization-preview-parity.md)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-05-user-management-profile-media-and-past-classes.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-05-user-management-profile-media-and-past-classes.md)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-05-users-profile-history-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-05-users-profile-history-kickoff.md)
+
 - 2026-04-05: Continued Phase 04 Block C with live-color reflection parity hardening.
   - Trigger: user asked to continue active plan execution.
   - Integrated files:

@@ -2,7 +2,7 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { StudentDetailView } from '../../../../src/pages/InstitutionAdminDashboard/components/UserDetailView';
+import { StudentDetailView, TeacherDetailView } from '../../../../src/pages/InstitutionAdminDashboard/components/UserDetailView';
 
 const routeMocks = vi.hoisted(() => ({
   navigate: vi.fn(),
@@ -59,13 +59,19 @@ const buildSnap = (rows = []) => ({
   })),
 });
 
-const setupFirestoreMocks = ({ studentProfile, courses }) => {
+const setupFirestoreMocks = ({
+  viewedUserId = 'student-1',
+  viewedUserProfile = {},
+  courses = [],
+  classesRows,
+  teacherRows,
+} = {}) => {
   firestoreMocks.getDoc.mockImplementation(async (ref) => {
-    if (ref.collectionName === 'users' && ref.id === 'student-1') {
+    if (ref.collectionName === 'users' && ref.id === viewedUserId) {
       return {
-        id: 'student-1',
+        id: viewedUserId,
         exists: () => true,
-        data: () => studentProfile,
+        data: () => viewedUserProfile,
       };
     }
 
@@ -78,7 +84,7 @@ const setupFirestoreMocks = ({ studentProfile, courses }) => {
 
   firestoreMocks.getDocs.mockImplementation(async (queryObject) => {
     if (queryObject.collectionName === 'classes') {
-      return buildSnap([
+      return buildSnap(classesRows || [
         {
           id: 'class-1',
           courseId: 'course-1',
@@ -94,7 +100,7 @@ const setupFirestoreMocks = ({ studentProfile, courses }) => {
     }
 
     if (queryObject.collectionName === 'users') {
-      return buildSnap([
+      return buildSnap(teacherRows || [
         { id: 'teacher-1', displayName: 'Docente Uno', email: 'docente@colegio.com' },
       ]);
     }
@@ -106,11 +112,12 @@ const setupFirestoreMocks = ({ studentProfile, courses }) => {
 describe('UserDetailView student course linking', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    routeMocks.params = { studentId: 'student-1', teacherId: null };
   });
 
   it('adds a new linked course from the student detail panel', async () => {
     setupFirestoreMocks({
-      studentProfile: {
+      viewedUserProfile: {
         institutionId: 'inst-1',
         displayName: 'Alumno Uno',
         email: 'alumno1@colegio.com',
@@ -151,7 +158,7 @@ describe('UserDetailView student course linking', () => {
 
   it('removes an existing linked course from the student detail panel', async () => {
     setupFirestoreMocks({
-      studentProfile: {
+      viewedUserProfile: {
         institutionId: 'inst-1',
         displayName: 'Alumno Dos',
         email: 'alumno2@colegio.com',
@@ -185,5 +192,118 @@ describe('UserDetailView student course linking', () => {
         enrolledCourseIds: ['course-2'],
       }),
     );
+  });
+
+  it('falls back to initials when profile photo fails to load', async () => {
+    setupFirestoreMocks({
+      viewedUserProfile: {
+        institutionId: 'inst-1',
+        displayName: 'Alumno Uno',
+        email: 'alumno1@colegio.com',
+        photoURL: 'https://example.com/avatar.png',
+      },
+      courses: [
+        { id: 'course-1', name: '1 ESO', academicYear: '2026-2027' },
+      ],
+    });
+
+    render(<StudentDetailView user={{ uid: 'admin-1', institutionId: 'inst-1' }} />);
+
+    const profilePhoto = await screen.findByRole('img', { name: /foto de perfil de alumno uno/i });
+    fireEvent.error(profilePhoto);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('img', { name: /foto de perfil de alumno uno/i })).toBeNull();
+    });
+
+    expect(screen.getByText('AU')).toBeTruthy();
+  });
+
+  it('renders archived classes in a dedicated past classes section for students', async () => {
+    setupFirestoreMocks({
+      viewedUserProfile: {
+        institutionId: 'inst-1',
+        displayName: 'Alumno Historial',
+        email: 'historial@colegio.com',
+      },
+      courses: [
+        { id: 'course-1', name: '1 ESO', academicYear: '2026-2027' },
+      ],
+      classesRows: [
+        {
+          id: 'class-active',
+          courseId: 'course-1',
+          teacherId: 'teacher-1',
+          studentIds: ['student-1'],
+          name: 'Clase Activa',
+          status: 'active',
+        },
+        {
+          id: 'class-archived',
+          courseId: 'course-1',
+          teacherId: 'teacher-1',
+          studentIds: ['student-1'],
+          name: 'Clase Archivada',
+          status: 'archived',
+        },
+      ],
+    });
+
+    render(<StudentDetailView user={{ uid: 'admin-1', institutionId: 'inst-1' }} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Clase Activa')).toBeTruthy();
+    });
+
+    expect(screen.getByRole('heading', { name: /clases pasadas/i })).toBeTruthy();
+    expect(screen.getByText('Clase Archivada')).toBeTruthy();
+  });
+
+  it('renders teacher role badge without emojis and separates archived classes', async () => {
+    routeMocks.params = { studentId: null, teacherId: 'teacher-1' };
+
+    setupFirestoreMocks({
+      viewedUserId: 'teacher-1',
+      viewedUserProfile: {
+        institutionId: 'inst-1',
+        displayName: 'Docente Uno',
+        email: 'docente@colegio.com',
+      },
+      courses: [
+        { id: 'course-1', name: '1 ESO', academicYear: '2026-2027' },
+      ],
+      classesRows: [
+        {
+          id: 'teacher-active',
+          courseId: 'course-1',
+          teacherId: 'teacher-1',
+          studentIds: ['student-1'],
+          name: 'Clase Docente Activa',
+          status: 'active',
+        },
+        {
+          id: 'teacher-archived',
+          courseId: 'course-1',
+          teacherId: 'teacher-1',
+          studentIds: ['student-1'],
+          name: 'Clase Docente Archivada',
+          status: 'archived',
+        },
+      ],
+      teacherRows: [
+        { id: 'teacher-1', displayName: 'Docente Uno', email: 'docente@colegio.com' },
+      ],
+    });
+
+    render(<TeacherDetailView user={{ uid: 'admin-1', institutionId: 'inst-1' }} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: /clases asignadas/i })).toBeTruthy();
+    });
+
+    expect(screen.getByText(/^profesor$/i)).toBeTruthy();
+    expect(screen.queryByText(/👨‍🏫|👨‍🎓/)).toBeNull();
+    expect(screen.getByRole('heading', { name: /clases pasadas/i })).toBeTruthy();
+    expect(screen.getByText('Clase Docente Archivada')).toBeTruthy();
   });
 });

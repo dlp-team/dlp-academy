@@ -2,7 +2,7 @@
 # Phase 05 - User Management, Profile Media, and Past Classes
 
 ## Status
-- PLANNED
+- IN_PROGRESS
 
 ## Objective
 Strengthen institution-admin user governance and fidelity of user-detail surfaces.
@@ -28,3 +28,22 @@ Strengthen institution-admin user governance and fidelity of user-detail surface
 
 ## Exit Criteria
 - Institution admins can safely manage users and user views display complete expected profile/history details.
+
+## Kickoff Notes (2026-04-05)
+- Phase 04 closed after validated preview parity slices.
+- Phase 05 starts with user-detail fidelity hardening before destructive user-management operations.
+
+## Progress Log
+- 2026-04-05 - Block A completed
+  - Implemented profile-photo reliability fallback in:
+    - [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx)
+  - Replaced emoji role labels with icon-based role badge rendering in:
+    - [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx)
+  - Added dedicated archived-class rendering section (`Clases pasadas`) for teacher and student detail contexts in:
+    - [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx)
+  - Expanded deterministic regression coverage in:
+    - [tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx](tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx)
+  - Validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)
