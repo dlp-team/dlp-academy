@@ -13,11 +13,11 @@
 
 ## 3. Touched Files
 - [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx)
-- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/README.md)
-- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
-- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-06-cross-cutting-optimization-and-consolidation.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-06-cross-cutting-optimization-and-consolidation.md)
-- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-06-optimization-kickoff.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-06-optimization-kickoff.md)
-- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
+- [copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/README.md)
+- [copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+- [copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/phases/phase-06-cross-cutting-optimization-and-consolidation.md](copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/phases/phase-06-cross-cutting-optimization-and-consolidation.md)
+- [copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/working/phase-06-optimization-kickoff.md](copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/working/phase-06-optimization-kickoff.md)
+- [copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
 - [copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/UsersTabContent.md](copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/UsersTabContent.md)
 
 ## 4. Per-File Verification
@@ -40,4 +40,5 @@
 - Static gates:
   - `npm run lint` -> PASS.
   - `npx tsc --noEmit` -> PASS.
+
 

@@ -16,7 +16,7 @@
 - [src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx](src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx)
 - [src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx](src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx)
 - [tests/unit/components/DashboardOverlayShell.test.jsx](tests/unit/components/DashboardOverlayShell.test.jsx)
-- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/non-modal-overlay-audit-2026-04-05.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/non-modal-overlay-audit-2026-04-05.md)
+- [copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/working/non-modal-overlay-audit-2026-04-05.md](copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/working/non-modal-overlay-audit-2026-04-05.md)
 
 ## 4. Per-File Verification
 - `DashboardOverlayShell.tsx`
@@ -48,4 +48,5 @@
   - `npx tsc --noEmit` -> PASS.
 - Diagnostics:
   - `get_errors` for touched source/test files -> No errors found.
+
 

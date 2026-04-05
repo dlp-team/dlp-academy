@@ -16,11 +16,11 @@
 - [src/components/modules/ListItems/FolderListItem.tsx](src/components/modules/ListItems/FolderListItem.tsx)
 - [src/pages/Home/components/HomeContent.tsx](src/pages/Home/components/HomeContent.tsx)
 - [tests/unit/components/ListViewItem.selectionDimming.test.jsx](tests/unit/components/ListViewItem.selectionDimming.test.jsx)
-- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/README.md)
-- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md)
-- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
-- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
-- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md)
+- [copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/README.md)
+- [copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md](copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md)
+- [copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+- [copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
+- [copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md](copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md)
 - [copilot/explanations/codebase/src/components/modules/ListViewItem.md](copilot/explanations/codebase/src/components/modules/ListViewItem.md)
 - [copilot/explanations/codebase/src/components/modules/ListItems/FolderListItem.md](copilot/explanations/codebase/src/components/modules/ListItems/FolderListItem.md)
 - [copilot/explanations/codebase/src/pages/Home/components/HomeContent.md](copilot/explanations/codebase/src/pages/Home/components/HomeContent.md)
@@ -53,4 +53,5 @@
 - Static checks:
   - `npm run lint` -> PASS.
   - `npx tsc --noEmit` -> PASS.
+
 

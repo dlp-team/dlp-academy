@@ -16,8 +16,8 @@
 - [tests/unit/pages/subject/SubjectFormModal.closeGuard.test.jsx](tests/unit/pages/subject/SubjectFormModal.closeGuard.test.jsx)
 - [copilot/explanations/codebase/src/pages/Subject/modals/SubjectFormModal.md](copilot/explanations/codebase/src/pages/Subject/modals/SubjectFormModal.md)
 - [copilot/explanations/codebase/tests/unit/pages/subject/SubjectFormModal.closeGuard.test.md](copilot/explanations/codebase/tests/unit/pages/subject/SubjectFormModal.closeGuard.test.md)
-- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
-- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
+- [copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+- [copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/finished/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
 
 ## 4. Per-File Verification
 - [src/pages/Subject/modals/SubjectFormModal.tsx](src/pages/Subject/modals/SubjectFormModal.tsx)
@@ -43,4 +43,5 @@
 - Static gates:
   - `npm run lint` -> PASS.
   - `npx tsc --noEmit` -> PASS.
+
 
