@@ -85,7 +85,7 @@ const UserDetailView = ({ user, userType }: any) => {
   const [selectedCourseId, setSelectedCourseId] = useState('');
   const [isUpdatingCourseLinks, setIsUpdatingCourseLinks] = useState(false);
   const [courseLinkMessage, setCourseLinkMessage] = useState({ type: '', text: '' });
-  const [profilePhotoLoadFailed, setProfilePhotoLoadFailed] = useState(false);
+  const [failedProfilePhotoUrl, setFailedProfilePhotoUrl] = useState('');
   const [loading, setLoading] = useState(true);
 
   const userId = userType === 'teacher' ? teacherId : studentId;
@@ -217,10 +217,6 @@ const UserDetailView = ({ user, userType }: any) => {
     fetchUserDetails();
   }, [userId, user?.institutionId, userType]);
 
-  useEffect(() => {
-    setProfilePhotoLoadFailed(false);
-  }, [viewedUser?.id, viewedUser?.profilePhotoUrl, viewedUser?.photoURL, viewedUser?.avatarUrl]);
-
   const roleBadge = useMemo(
     () => (userType === 'teacher'
       ? { label: 'Profesor', Icon: BookOpen }
@@ -229,6 +225,11 @@ const UserDetailView = ({ user, userType }: any) => {
   );
 
   const profilePhotoUrl = useMemo(() => getProfilePhotoUrl(viewedUser), [viewedUser]);
+
+  useEffect(() => {
+    // Only clear the failed marker when the actual URL changes.
+    setFailedProfilePhotoUrl('');
+  }, [profilePhotoUrl]);
 
   const profileInitials = useMemo(() => getUserInitials(viewedUser), [viewedUser]);
 
@@ -366,12 +367,12 @@ const UserDetailView = ({ user, userType }: any) => {
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-6">
               <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold shadow-lg overflow-hidden">
-                {profilePhotoUrl && !profilePhotoLoadFailed ? (
+                {profilePhotoUrl && failedProfilePhotoUrl !== profilePhotoUrl ? (
                   <img
                     src={profilePhotoUrl}
                     alt={`Foto de perfil de ${viewedUser.displayName || viewedUser.email || 'usuario'}`}
                     className="h-full w-full object-cover"
-                    onError={() => setProfilePhotoLoadFailed(true)}
+                    onError={() => setFailedProfilePhotoUrl(profilePhotoUrl)}
                   />
                 ) : (
                   <span>{profileInitials}</span>

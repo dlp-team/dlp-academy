@@ -42,7 +42,7 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 
 ## Lifecycle Status
 - Lifecycle: active
-- Current phase: Phase 06 - Cross-Cutting Optimization and Consolidation (IN_PROGRESS)
+- Current phase: Phase 07 - Validation, Deep Risk Review, and Lifecycle Transition (IN_PROGRESS)
 - Last updated: 2026-04-05
 
 ## Key Decisions and Assumptions
@@ -93,6 +93,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Continue Phase 06 with Block D low-risk extraction targets in Institution Admin user-management surfaces.
-2. Keep deterministic tests aligned with each optimization slice to ensure lossless behavior.
+1. Complete Phase 07 inReview two-step gate evidence (optimization review + deep-risk review).
+2. Finalize lifecycle transition package for active -> inReview handoff.
 3. Keep normal validate -> commit -> push cadence for each major block.

@@ -26,6 +26,7 @@
 - `../../../utils/courseLabelUtils`
 
 ## Changelog
+- 2026-04-05: Stabilized profile-photo fallback state by tracking failed URL instead of a generic boolean, preventing image reappearance during async re-fetch races.
 - 2026-04-05: Added resilient profile-photo rendering with fallback to initials when image loading fails.
 - 2026-04-05: Split user class rendering into active and archived (`Clases pasadas`) sections for both teacher and student detail views.
 - 2026-04-05: Replaced emoji role badge labels with icon-based role labels (`Profesor` / `Alumno`).

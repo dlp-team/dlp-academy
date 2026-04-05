@@ -2,7 +2,7 @@
 # Phase 07 - Validation, Deep Risk Review, and Lifecycle Transition
 
 ## Status
-- PLANNED
+- IN_PROGRESS
 
 ## Objective
 Close implementation with full validation evidence, inReview two-step gate completion, and lifecycle-ready documentation.
@@ -32,3 +32,29 @@ Close implementation with full validation evidence, inReview two-step gate compl
 ## Exit Criteria
 - Plan is eligible for transition from active to inReview once all checks pass.
 - Plan is eligible for transition to finished only after inReview checklist completion.
+
+## Progress Log
+- 2026-04-05 - Block A completed (validation baseline + deterministic remediation)
+  - Validation commands executed:
+    - `npm run test` (initial run surfaced 1 failure in [tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx](tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx))
+    - `npm run test -- tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx` (PASS after fix)
+    - `npm run test` (PASS, 150 files / 682 tests)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)
+  - Deterministic fix applied in:
+    - [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx)
+  - Failure mode addressed:
+    - profile-photo fallback state race during async re-fetches could repopulate image after an error event.
+  - Review artifacts updated:
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/reviewing/review-log-2026-04-05.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/reviewing/review-log-2026-04-05.md)
+    - [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/reviewing/verification-checklist-2026-04-05.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/reviewing/verification-checklist-2026-04-05.md)
+
+## Deep Risk Snapshot (Current)
+- Security and permission boundaries:
+  - No new privilege surface was introduced in this block; fix is UI-state-only.
+- Data integrity and rollback safety:
+  - No persistence schema or write contract changes; rollback scope remains confined to `UserDetailView` rendering state.
+- Runtime failure/degradation paths:
+  - Image load failure now degrades deterministically to initials and does not oscillate when profile object is re-fetched.
+- Edge-condition behavior:
+  - Repeated fetches with unchanged profile-photo URL no longer clear fallback state prematurely.

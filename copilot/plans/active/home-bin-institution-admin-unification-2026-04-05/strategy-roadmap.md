@@ -354,7 +354,7 @@
   - execution is ready to transition into Phase 06 optimization and consolidation.
 
 ### Phase 06 - Cross-Cutting Optimization and Consolidation (Mandatory)
-- Status: IN_PROGRESS
+- Status: COMPLETED
 - Goal: centralize repeated logic, split oversized files, and optimize readability/maintainability.
 - Outputs:
   - extracted shared hooks/utils/components where justified,
@@ -381,15 +381,24 @@
     - `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js tests/unit/pages/institution-admin/userDeletionFeedback.test.js` (PASS),
     - `npm run lint` (PASS),
     - `npx tsc --noEmit` (PASS).
+- Closure (2026-04-05):
+  - Phase 06 optimization gate completed for touched user-management scope.
 
 ### Phase 07 - Validation, Deep Risk Review, and Lifecycle Transition
-- Status: PLANNED
+- Status: IN_PROGRESS
 - Goal: complete final validation evidence and prepare transition to inReview/finished lifecycle states.
 - Outputs:
   - validation command evidence,
   - lossless report and explanation sync,
   - two-step inReview gate documentation,
   - out-of-scope risks logged when applicable.
+- Progress (2026-04-05, Block A):
+  - full validation initially surfaced one failure in [tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx](tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx),
+  - stabilized profile-photo fallback behavior in [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx),
+  - re-ran full validation successfully:
+    - `npm run test` (PASS, 150 files / 682 tests),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
 
 ## InReview Two-Step Gate (Mandatory)
 1. Optimization and Consolidation Review.
@@ -405,6 +414,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Continue Phase 06 with Block D low-risk consolidation targets in Institution Admin user-management surfaces.
-2. Keep deterministic tests aligned with each extraction to preserve behavior parity.
+1. Continue Phase 07 with inReview two-step gate documentation completion.
+2. Prepare lifecycle transition evidence from `active` to `inReview` once review gates are fully recorded.
 3. Keep cadence discipline (validate -> commit -> push) for every major block.
