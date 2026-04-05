@@ -39,14 +39,40 @@ describe('DashboardOverlayShell', () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
-  it('applies top-constrained wrapper and width presets', () => {
+  it('applies constrained viewport root and width presets', () => {
     render(
       <DashboardOverlayShell isOpen onClose={() => {}} maxWidth="md">
         <p>Ancho controlado</p>
       </DashboardOverlayShell>
     );
 
-    expect(screen.getByTestId('base-modal-wrapper').className).toContain('pt-24');
+    const rootNode = screen.getByTestId('base-modal-backdrop').parentElement;
+    expect(rootNode?.className).toContain('inset-x-0');
+    expect(screen.getByTestId('base-modal-wrapper').className).toContain('py-6');
     expect(screen.getByTestId('base-modal-content').className).toContain('max-w-md');
+  });
+
+  it('shows discard confirmation before closing when unsaved changes exist', () => {
+    const onClose = vi.fn();
+
+    render(
+      <DashboardOverlayShell
+        isOpen
+        onClose={onClose}
+        hasUnsavedChanges
+        confirmOnUnsavedClose
+      >
+        <p>Cambios pendientes</p>
+      </DashboardOverlayShell>
+    );
+
+    fireEvent.click(screen.getByTestId('base-modal-backdrop'));
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(screen.getByText(/hay cambios sin guardar/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /salir sin guardar/i }));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

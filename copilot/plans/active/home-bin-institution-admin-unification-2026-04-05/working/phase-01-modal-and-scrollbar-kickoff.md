@@ -65,3 +65,22 @@
   - `npm run lint` passed.
   - `npx tsc --noEmit` passed.
   - `npm run test` passed (138 files, 621 tests).
+- 2026-04-05: Follow-up B slice 2 (generalized overlay phase redo) completed.
+  - Expanded [src/components/ui/DashboardOverlayShell.tsx](src/components/ui/DashboardOverlayShell.tsx) with:
+    - shared request-close API,
+    - built-in unsaved-close confirmation,
+    - configurable width/height constraint defaults under header-to-bottom viewport bounds.
+  - Migrated create/edit overlays for subject/course/class and teacher authorization:
+    - [src/pages/Home/modals/SubjectModal.tsx](src/pages/Home/modals/SubjectModal.tsx)
+    - [src/pages/Home/modals/EditSubjectModal.tsx](src/pages/Home/modals/EditSubjectModal.tsx)
+    - [src/pages/InstitutionAdminDashboard/components/AddTeacherModal.tsx](src/pages/InstitutionAdminDashboard/components/AddTeacherModal.tsx)
+    - [src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx](src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx)
+    - [src/pages/InstitutionAdminDashboard/modals/CreateCourseModal.tsx](src/pages/InstitutionAdminDashboard/modals/CreateCourseModal.tsx)
+    - [src/pages/InstitutionAdminDashboard/modals/CreateClassModal.tsx](src/pages/InstitutionAdminDashboard/modals/CreateClassModal.tsx)
+  - Added/updated regression coverage:
+    - [tests/unit/components/DashboardOverlayShell.test.jsx](tests/unit/components/DashboardOverlayShell.test.jsx)
+    - [tests/unit/pages/home/HomeSubjectModals.test.jsx](tests/unit/pages/home/HomeSubjectModals.test.jsx)
+  - Validation evidence:
+    - `npm run test -- tests/unit/components/DashboardOverlayShell.test.jsx tests/unit/pages/home/HomeSubjectModals.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)

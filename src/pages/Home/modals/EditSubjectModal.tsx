@@ -1,12 +1,25 @@
 // src/pages/Home/modals/EditSubjectModal.tsx
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { ICON_MAP, ICON_KEYS, COLORS } from '../../../utils/subjectConstants';
-import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
-import BaseModal from '../../../components/ui/BaseModal';
+import DashboardOverlayShell from '../../../components/ui/DashboardOverlayShell';
 
 const EditSubjectModal = ({ isOpen, onClose, initialData, onSave }: any) => {
     const [formData, setFormData] = useState(initialData);
+    const openFormSnapshotRef = useRef('');
+
+    useEffect(() => {
+        if (!isOpen) {
+            return;
+        }
+
+        setFormData(initialData);
+        openFormSnapshotRef.current = JSON.stringify(initialData || {});
+    }, [isOpen, initialData]);
+
+    const serializedFormData = useMemo(() => JSON.stringify(formData || {}), [formData]);
+    const hasOpenSnapshot = openFormSnapshotRef.current.length > 0;
+    const hasUnsavedChanges = isOpen && hasOpenSnapshot && serializedFormData !== openFormSnapshotRef.current;
 
     const handleSubmit = (e: any) => {
         e.preventDefault();
@@ -14,18 +27,20 @@ const EditSubjectModal = ({ isOpen, onClose, initialData, onSave }: any) => {
     };
 
     return (
-        <BaseModal
+        <DashboardOverlayShell
             isOpen={isOpen}
             onClose={onClose}
-            rootClassName="fixed inset-x-0 bottom-0 z-50 overflow-y-auto"
-            rootStyle={OVERLAY_TOP_OFFSET_STYLE}
-            backdropClassName="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-            contentWrapperClassName="flex min-h-full items-center justify-center p-4"
+            hasUnsavedChanges={hasUnsavedChanges}
+            confirmOnUnsavedClose
+            maxWidth="md"
+            backdropClassName="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
             contentClassName="relative bg-white rounded-2xl w-full max-w-md shadow-xl animate-in fade-in zoom-in duration-200"
         >
+            {({ requestClose }: any) => (
+                <>
                     <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                         <h3 className="text-lg font-bold text-gray-900">Editar Asignatura</h3>
-                        <button onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full text-gray-500"><X className="w-5 h-5" /></button>
+                        <button onClick={requestClose} className="p-1 hover:bg-gray-200 rounded-full text-gray-500"><X className="w-5 h-5" /></button>
                     </div>
                     
                     <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -72,11 +87,13 @@ const EditSubjectModal = ({ isOpen, onClose, initialData, onSave }: any) => {
                         </div>
 
                         <div className="flex justify-end gap-3 pt-4">
-                            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl font-medium">Cancelar</button>
+                            <button type="button" onClick={requestClose} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-xl font-medium">Cancelar</button>
                             <button type="submit" className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-lg shadow-indigo-200">Guardar Cambios</button>
                         </div>
                     </form>
-        </BaseModal>
+                </>
+            )}
+        </DashboardOverlayShell>
     );
 };
 

@@ -15,3 +15,4 @@
 ### 2026-04-05
 - Migrated shared `Modal` wrapper to use [src/components/ui/DashboardOverlayShell.tsx](src/components/ui/DashboardOverlayShell.tsx).
 - Preserved existing API (`title`, `onClose`, `children`, `wide`) while standardizing header-to-bottom overlay shell behavior.
+- Extended shared `Modal` wrapper with optional dirty-close confirmation controls (`hasUnsavedChanges`, `confirmOnUnsavedClose`) and render-prop close request routing for consistent cancel/header-close behavior.

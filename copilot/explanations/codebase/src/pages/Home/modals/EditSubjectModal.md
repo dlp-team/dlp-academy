@@ -1,4 +1,5 @@
 ## Changelog
+- **2026-04-05:** Migrated from direct `BaseModal` usage to generalized `DashboardOverlayShell`, added open-snapshot reset on modal open, and enabled unsaved-close confirmation for outside/header/cancel exits.
 - **2026-04-05:** Migrated modal shell to `BaseModal` while preserving edit form state, icon/color selectors, and submit behavior.
 
 # EditSubjectModal.tsx
@@ -19,7 +20,7 @@
 - `react`
 - `lucide-react`
 - `../../../utils/subjectConstants`
-- `src/components/ui/BaseModal.tsx`
+- `src/components/ui/DashboardOverlayShell.tsx`
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.

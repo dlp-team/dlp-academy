@@ -17,6 +17,7 @@
 - `default CreateClassModal`
 
 ## Changelog
+- 2026-04-05: Integrated shared overlay dirty-close interception for class creation by enabling shell-level unsaved-change confirmation and guarded cancel/header dismiss actions.
 - 2026-04-03: Added course-constrained student picker filtering with compatibility fallback and stale-selection cleanup on course change.
 - 2026-04-03: Updated course selector labels to use shared `Nombre (AAAA-AAAA)` formatting for cross-year name disambiguation.
 - 2026-04-02: Switched class creation to course-derived academic year with fallback handling and warning copy.

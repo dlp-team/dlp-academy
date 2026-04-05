@@ -18,6 +18,7 @@
 - `default CreateCourseModal`
 
 ## Changelog
+- 2026-04-05: Integrated shared overlay dirty-close interception by routing cancel/header-dismiss actions through the shell-level close guard and enabling unsaved-change confirmation.
 - 2026-04-04: Added optional per-course period schedule section with baseline defaults derived from institution calendar + periodization mode.
 - 2026-04-04: Added schedule validation feedback for incomplete/overlapping period ranges before submit.
 - 2026-04-02: Added mandatory academic-year field with strict validation and picker integration.

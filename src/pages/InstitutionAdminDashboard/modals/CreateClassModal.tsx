@@ -175,10 +175,23 @@ const CreateClassModal = ({
   };
 
   const isValid = Boolean(courseId) && identifier.trim().length > 0;
+  const hasUnsavedChanges = Boolean(
+    courseId
+    || identifier.trim().length > 0
+    || teacherIds.length > 0
+    || studentIds.length > 0
+  );
 
   return (
-    <Modal title="Nueva Clase" onClose={onClose} wide>
-      <form onSubmit={handleSubmit} className="space-y-5">
+    <Modal
+      title="Nueva Clase"
+      onClose={onClose}
+      wide
+      hasUnsavedChanges={hasUnsavedChanges}
+      confirmOnUnsavedClose
+    >
+      {({ requestClose }: any) => (
+        <form onSubmit={handleSubmit} className="space-y-5">
         <InputField label="Curso" required hint="(debe existir previamente)">
           <select
             value={courseId}
@@ -289,7 +302,7 @@ const CreateClassModal = ({
         )}
 
         <div className="flex gap-3 pt-1">
-          <button type="button" onClick={onClose} className={ghostBtnCls}>
+          <button type="button" onClick={requestClose} className={ghostBtnCls}>
             Cancelar
           </button>
           <button type="submit" disabled={submitting || !isValid} className={primaryBtnCls}>
@@ -298,7 +311,8 @@ const CreateClassModal = ({
               : <><Save className="w-4 h-4" /> Crear clase</>}
           </button>
         </div>
-      </form>
+        </form>
+      )}
     </Modal>
   );
 };

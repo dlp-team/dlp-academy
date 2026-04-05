@@ -138,6 +138,16 @@ const CreateCourseModal = ({ onClose, onSubmit, submitting, error, periodConfig 
 
   const isAcademicYearValid = isValidAcademicYear(academicYear);
   const isValid = preview.trim().length > 0 && isAcademicYearValid;
+  const hasUnsavedChanges = Boolean(
+    courseNumber.trim().length > 0
+    || courseName.trim().length > 0
+    || description.trim().length > 0
+    || academicYear !== getDefaultAcademicYear()
+    || color !== '#6366f1'
+    || enableCoursePeriodSchedule
+    || extraordinaryEndDate.trim().length > 0
+    || resolvedPeriodRows.some((entry: any) => entry.periodStartAt || entry.periodEndAt)
+  );
 
   const validateCoursePeriodSchedule = () => {
     if (!enableCoursePeriodSchedule) {
@@ -208,8 +218,14 @@ const CreateCourseModal = ({ onClose, onSubmit, submitting, error, periodConfig 
   };
 
   return (
-    <Modal title="Nuevo Curso" onClose={onClose}>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <Modal
+      title="Nuevo Curso"
+      onClose={onClose}
+      hasUnsavedChanges={hasUnsavedChanges}
+      confirmOnUnsavedClose
+    >
+      {({ requestClose }: any) => (
+        <form onSubmit={handleSubmit} className="space-y-4">
 
         {/* ── Number + Name row ── */}
         <div className="flex gap-3 items-end">
@@ -383,7 +399,7 @@ const CreateCourseModal = ({ onClose, onSubmit, submitting, error, periodConfig 
         )}
 
         <div className="flex gap-3 pt-2">
-          <button type="button" onClick={onClose} className={ghostBtnCls}>
+          <button type="button" onClick={requestClose} className={ghostBtnCls}>
             Cancelar
           </button>
           <button type="submit" disabled={submitting || !isValid} className={primaryBtnCls}>
@@ -392,7 +408,8 @@ const CreateCourseModal = ({ onClose, onSubmit, submitting, error, periodConfig 
               : <><Save className="w-4 h-4" /> Crear curso</>}
           </button>
         </div>
-      </form>
+        </form>
+      )}
     </Modal>
   );
 };

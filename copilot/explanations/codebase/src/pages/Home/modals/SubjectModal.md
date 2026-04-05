@@ -1,4 +1,5 @@
 ## Changelog
+- **2026-04-05:** Migrated from direct `BaseModal` usage to generalized `DashboardOverlayShell` and added snapshot-based unsaved-close confirmation for outside/header dismiss actions.
 - **2026-04-05:** Migrated modal shell to `BaseModal` while preserving create/edit subject fields, selection controls, and submit flow.
 
 # SubjectModal.tsx
@@ -17,7 +18,7 @@
 ## Main Dependencies
 - `react`
 - `lucide-react`
-- `src/components/ui/BaseModal.tsx`
+- `src/components/ui/DashboardOverlayShell.tsx`
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.

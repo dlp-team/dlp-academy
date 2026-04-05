@@ -1,4 +1,4 @@
-// src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.jsx
+// src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx
 /* eslint-disable react-refresh/only-export-components */
 // ─────────────────────────────────────────────────────────────────────────────
 // Reusable primitives, constants and tiny components used across the
@@ -57,22 +57,35 @@ export const ColorPicker = ({ value, onChange }: any) => (
 );
 
 // ─── Modal ────────────────────────────────────────────────────────────────────
-export const Modal = ({ title, onClose, children, wide = false }) => (
+export const Modal = ({
+  title,
+  onClose,
+  children,
+  wide = false,
+  hasUnsavedChanges = false,
+  confirmOnUnsavedClose = false,
+  closeOnBackdropClick = true,
+}: any) => (
   <DashboardOverlayShell
     onClose={onClose}
     maxWidth={wide ? 'lg' : 'md'}
+    closeOnBackdropClick={closeOnBackdropClick}
+    hasUnsavedChanges={hasUnsavedChanges}
+    confirmOnUnsavedClose={confirmOnUnsavedClose}
     backdropClassName="absolute inset-0 bg-black/50 backdrop-blur-sm"
-    contentClassName="p-6 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto"
+    contentClassName="animate-in fade-in zoom-in-95 duration-200"
   >
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h3>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-          <XCircle className="w-6 h-6" />
-        </button>
+    {({ requestClose }: any) => (
+      <div className="p-6 max-h-[calc(100vh-8rem)] overflow-y-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h3>
+          <button onClick={requestClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <XCircle className="w-6 h-6" />
+          </button>
+        </div>
+        {typeof children === 'function' ? children({ requestClose }) : children}
       </div>
-      {children}
-    </div>
+    )}
   </DashboardOverlayShell>
 );
 

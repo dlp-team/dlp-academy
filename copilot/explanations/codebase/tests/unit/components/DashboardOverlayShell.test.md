@@ -9,8 +9,10 @@
 ## Coverage
 - Backdrop-close behavior when enabled.
 - Backdrop-close blocking when `closeOnBackdropClick` is false.
-- Width preset application and top-constrained wrapper contract.
+- Width preset application and constrained root/wrapper layout contract.
+- Unsaved-change discard confirmation flow before close.
 
 ## Changelog
 ### 2026-04-05
 - Added initial coverage for non-modal overlay-shell unification slice 1.
+- Expanded coverage for generalized shell behavior, including dirty-close confirmation and updated constrained viewport defaults.

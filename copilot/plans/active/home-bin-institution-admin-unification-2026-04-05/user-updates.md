@@ -10,6 +10,19 @@
 - (none)
 
 ## Processed Updates
+- 2026-04-05: Overlay phase redo executed for generalized create/edit overlay style and close safety.
+  - Trigger: user requested full overlay unification pass with shared style, header-to-bottom bounds, outside-click close, unsaved-change confirmation, and centralized sizing controls.
+  - Integrated files:
+    - [src/components/ui/DashboardOverlayShell.tsx](src/components/ui/DashboardOverlayShell.tsx)
+    - [src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx](src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx)
+    - [src/pages/InstitutionAdminDashboard/modals/CreateCourseModal.tsx](src/pages/InstitutionAdminDashboard/modals/CreateCourseModal.tsx)
+    - [src/pages/InstitutionAdminDashboard/modals/CreateClassModal.tsx](src/pages/InstitutionAdminDashboard/modals/CreateClassModal.tsx)
+    - [src/pages/InstitutionAdminDashboard/components/AddTeacherModal.tsx](src/pages/InstitutionAdminDashboard/components/AddTeacherModal.tsx)
+    - [src/pages/Home/modals/SubjectModal.tsx](src/pages/Home/modals/SubjectModal.tsx)
+    - [src/pages/Home/modals/EditSubjectModal.tsx](src/pages/Home/modals/EditSubjectModal.tsx)
+    - [tests/unit/components/DashboardOverlayShell.test.jsx](tests/unit/components/DashboardOverlayShell.test.jsx)
+    - [tests/unit/pages/home/HomeSubjectModals.test.jsx](tests/unit/pages/home/HomeSubjectModals.test.jsx)
+
 - 2026-04-05: Overlay unification deep analysis executed and first migration slice delivered.
   - Trigger: execute processed overlay-scope correction directive (non-modal overlays across pages).
   - Integrated files:
