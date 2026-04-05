@@ -2,7 +2,7 @@
 
 ## Overview
 - **Source file:** `src/pages/Home/components/BinView.tsx`
-- **Last documented:** 2026-04-02
+- **Last documented:** 2026-04-05
 - **Role:** Renders trash contents (paper bin) with restore/permanent-delete actions and content preview.
 
 ## Responsibilities
@@ -24,6 +24,10 @@
 - `../../../components/modules/ListViewItem`
 
 ## Changelog
+- **2026-04-05:** Phase 02 list-interaction parity updates:
+	- list-mode selected-item action area now renders inline directly under the selected item,
+	- removed bottom-of-list selected-item aside in list mode,
+	- preserved selection mode and bulk-action behavior while adding smooth inline transition classes.
 - **2026-04-04:** Phase 08 selection parity and bin-visual consistency updates:
 	- urgency sort labels renamed to `Urgencia: Ascendente` and `Urgencia: Descendente`,
 	- list-mode selected items now reuse shared selection ring visuals,

@@ -34,3 +34,8 @@
   - Bin overlay now removes blur backdrop, adds card focus transition, and reveals panel after transition start.
   - Added deterministic utility and overlay tests with timer-driven assertions.
   - Validation passed for targeted tests, lint, and typecheck.
+- 2026-04-05: Phase 02 Block B implemented.
+  - Bin list selected-item actions now render inline under the selected row.
+  - Removed bottom-of-list list-mode action aside.
+  - Added focused inline-panel tests for selection changes and selection-mode suppression.
+  - Validation passed for targeted tests, lint, and typecheck.

@@ -904,11 +904,12 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                             isSelected,
                             isFolderLike: isFolderItem,
                         });
+                        const actionKey = buildActionKey(item.id, item.itemType);
 
                         return (
                             <div
                                 key={`${item.itemType}-${item.id}`}
-                                className={`rounded-xl transition-all ${!isSelected ? dimmingClass : ''}`}
+                                className={`rounded-xl transition-all duration-200 ease-out ${!isSelected ? dimmingClass : ''}`}
                             >
                                 <ListViewItemComponent
                                     user={user}
@@ -935,6 +936,48 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                         Eliminada: {trashedDate ? trashedDate.toLocaleDateString() : 'Fecha no disponible'}
                                     </p>
                                 </div>
+
+                                {!selectionMode && isSelected && (
+                                    <div
+                                        data-testid={`bin-list-inline-panel-${item.itemType}-${item.id}`}
+                                        className="mt-3 rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-4 animate-in fade-in slide-in-from-top-1 duration-200"
+                                    >
+                                        <div className="space-y-4">
+                                            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Elemento seleccionado</p>
+                                            <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{item.name}</h4>
+                                            <div className="space-y-2">
+                                                {item.itemType === 'folder' && (
+                                                    <button onClick={() => handleOpenFolderTrashView(item)}
+                                                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all">
+                                                        Abrir contenido de carpeta
+                                                    </button>
+                                                )}
+                                                {item.itemType === 'subject' && (
+                                                    <button onClick={() => handleShowDescription(item)}
+                                                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all">
+                                                        Ver contenido
+                                                    </button>
+                                                )}
+                                                <button onClick={() => handleRestore(item.id, item.itemType)}
+                                                    disabled={actionLoading === actionKey}
+                                                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-xl font-semibold transition-all">
+                                                    {actionLoading === actionKey
+                                                        ? <Loader2 className="animate-spin" size={18} />
+                                                        : (item.itemType === 'folder'
+                                                            ? 'Restaurar carpeta completa'
+                                                            : isShortcutItemType(item.itemType)
+                                                                ? 'Restaurar acceso directo'
+                                                                : 'Restaurar')}
+                                                </button>
+                                                <button onClick={() => setDeleteConfirm({ id: item.id, itemType: item.itemType })}
+                                                    disabled={actionLoading === actionKey}
+                                                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-xl font-semibold transition-all">
+                                                    Eliminar permanentemente
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
@@ -975,46 +1018,6 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                         }}
                     />
                 </BinSelectionOverlay>
-            )}
-
-            {/* List-mode inline panel (below the list, unchanged) */}
-            {selectedItem && layoutMode !== 'grid' && !selectionMode && (
-                <aside className="mt-4 h-fit rounded-2xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-4">
-                    <div className="space-y-4">
-                        <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">Elemento seleccionado</p>
-                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{selectedItem.name}</h4>
-                        <div className="space-y-2">
-                            {selectedItem.itemType === 'folder' && (
-                                <button onClick={() => handleOpenFolderTrashView(selectedItem)}
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all">
-                                    Abrir contenido de carpeta
-                                </button>
-                            )}
-                            {selectedItem.itemType === 'subject' && (
-                                <button onClick={() => handleShowDescription(selectedItem)}
-                                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold transition-all">
-                                    Ver contenido
-                                </button>
-                            )}
-                            <button onClick={() => handleRestore(selectedItem.id, selectedItem.itemType)}
-                                disabled={actionLoading === buildActionKey(selectedItem.id, selectedItem.itemType)}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white rounded-xl font-semibold transition-all">
-                                {actionLoading === buildActionKey(selectedItem.id, selectedItem.itemType)
-                                    ? <Loader2 className="animate-spin" size={18} />
-                                    : (selectedItem.itemType === 'folder'
-                                        ? 'Restaurar carpeta completa'
-                                        : isShortcutItemType(selectedItem.itemType)
-                                            ? 'Restaurar acceso directo'
-                                            : 'Restaurar')}
-                            </button>
-                            <button onClick={() => setDeleteConfirm({ id: selectedItem.id, itemType: selectedItem.itemType })}
-                                disabled={actionLoading === buildActionKey(selectedItem.id, selectedItem.itemType)}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 text-white rounded-xl font-semibold transition-all">
-                                Eliminar permanentemente
-                            </button>
-                        </div>
-                    </div>
-                </aside>
             )}
 
             {/* ── Modals ──────────────────────────────────────────────────────── */}

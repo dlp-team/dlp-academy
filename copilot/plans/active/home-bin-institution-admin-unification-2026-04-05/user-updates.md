@@ -96,3 +96,12 @@
     - [phases/phase-02-selection-mode-and-bin-unification.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md)
     - [strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
     - [working/phase-02-selection-and-bin-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md)
+
+- 2026-04-05: Continued execution into Phase 02 Block B with Bin list inline action panel parity.
+  - Trigger: continue directive after Block A commit/push checkpoint.
+  - Integrated files:
+    - [src/pages/Home/components/BinView.tsx](src/pages/Home/components/BinView.tsx)
+    - [tests/unit/pages/home/BinView.listInlinePanel.test.jsx](tests/unit/pages/home/BinView.listInlinePanel.test.jsx)
+    - [phases/phase-02-selection-mode-and-bin-unification.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md)
+    - [strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+    - [working/phase-02-selection-and-bin-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md)

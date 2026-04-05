@@ -57,3 +57,13 @@ Unify selection-mode behavior between Home and Bin and implement requested Bin g
     - `npm run test -- tests/unit/components/BinSelectionOverlay.test.jsx tests/unit/utils/selectionVisualUtils.test.js` (PASS)
     - `npm run lint` (PASS)
     - `npx tsc --noEmit` (PASS)
+
+- 2026-04-05 - Block B completed
+  - Updated [src/pages/Home/components/BinView.tsx](src/pages/Home/components/BinView.tsx) list mode so the selected-item action panel renders directly under the selected row.
+  - Removed the old bottom-of-list action aside in list mode.
+  - Added smooth inline transition classes for row/panel movement.
+  - Added focused coverage in [tests/unit/pages/home/BinView.listInlinePanel.test.jsx](tests/unit/pages/home/BinView.listInlinePanel.test.jsx).
+  - Validation evidence:
+    - `npm run test -- tests/unit/pages/home/BinView.listInlinePanel.test.jsx tests/unit/components/BinSelectionOverlay.test.jsx tests/unit/components/BinGridItem.test.jsx tests/unit/utils/selectionVisualUtils.test.js` (PASS)
+    - `npm run lint` (PASS)
+    - `npx tsc --noEmit` (PASS)

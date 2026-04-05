@@ -91,6 +91,6 @@ Deliver a lossless, phased implementation that unifies modal architecture and se
 - Validation gates pass and plan can transition to active/inReview without unresolved critical risks.
 
 ## Immediate Next Actions
-1. Implement Bin list-mode inline action area directly below the selected row/card.
-2. Keep Bin list action styling aligned with grid action-panel language.
-3. Add focused list-mode regression tests and continue Phase 02 block cadence.
+1. Expand inline-panel regression checks for Bin folder/shortcut list entries.
+2. Revisit Home list-mode selection emphasis for nested list hierarchies.
+3. Run broader impacted Home/Bin tests and prepare next Phase 02 checkpoint.

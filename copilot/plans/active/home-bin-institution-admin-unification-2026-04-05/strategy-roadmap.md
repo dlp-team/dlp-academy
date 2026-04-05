@@ -69,6 +69,11 @@
   - refined Bin overlay focus transition and delayed action-panel reveal in [src/pages/Home/components/bin/BinSelectionOverlay.tsx](src/pages/Home/components/bin/BinSelectionOverlay.tsx),
   - added focused tests in [tests/unit/components/BinSelectionOverlay.test.jsx](tests/unit/components/BinSelectionOverlay.test.jsx) and [tests/unit/utils/selectionVisualUtils.test.js](tests/unit/utils/selectionVisualUtils.test.js),
   - targeted tests + lint + typecheck passing.
+- Progress (2026-04-05, Block B):
+  - moved Bin list selected-item actions from bottom aside to inline panel placement directly beneath selected row in [src/pages/Home/components/BinView.tsx](src/pages/Home/components/BinView.tsx),
+  - preserved selection mode and bulk-action behavior,
+  - added focused list-mode regression tests in [tests/unit/pages/home/BinView.listInlinePanel.test.jsx](tests/unit/pages/home/BinView.listInlinePanel.test.jsx),
+  - targeted tests + lint + typecheck passing.
 
 ### Phase 03 - Institution Admin Settings and Automation Controls
 - Status: PLANNED
@@ -128,6 +133,6 @@
 - Revert latest phase commit if validation gates fail.
 
 ## Immediate Next Actions
-1. Implement Bin list-mode inline action area directly under selected item with smooth push-down behavior.
-2. Align Bin list action styling with grid panel language while preserving current permissions and bulk flows.
-3. Add focused regression tests for Bin list inline panel behavior and run impacted Home/Bin suite.
+1. Expand Bin list inline-panel checks for folder and shortcut entries.
+2. Review remaining Home list-mode selection emphasis gaps for nested list structures.
+3. Run a broader impacted Home/Bin regression sweep and prepare next Phase 02 checkpoint.
