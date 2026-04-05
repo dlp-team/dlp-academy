@@ -88,8 +88,20 @@ Create a reusable modal foundation and remove the left-side scrollbar compensati
   - `npx tsc --noEmit` (PASS)
   - `get_errors` on touched files (clean)
 
+## Implementation Progress - Block D (2026-04-05)
+- Admin-facing modal migration completed:
+  - [src/components/modals/SudoModal.tsx](src/components/modals/SudoModal.tsx) now uses [src/components/ui/BaseModal.tsx](src/components/ui/BaseModal.tsx).
+- Preserved security flow semantics:
+  - reauthentication logic unchanged,
+  - close remains blocked while submit is in progress,
+  - existing cancel/close reset behavior preserved.
+- Validation evidence:
+  - `npm run test:unit -- tests/unit/components/SudoModal.test.jsx tests/unit/components/BaseModal.test.jsx tests/unit/components/FolderDeleteModal.test.jsx tests/unit/components/BinConfirmModals.test.jsx` (PASS)
+  - `npx tsc --noEmit` (PASS)
+  - `get_errors` on touched files (clean)
+
 ## Remaining Work in Phase 01
-- Expand shared modal adoption to admin and form-heavy modal surfaces.
+- Expand shared modal adoption to remaining admin/form-heavy modal surfaces.
 - Expand dirty-state interception to additional modal forms beyond FolderManager.
 - Run broader validation pass (lint/typecheck + targeted modal regressions) before Phase 01 closure.
 

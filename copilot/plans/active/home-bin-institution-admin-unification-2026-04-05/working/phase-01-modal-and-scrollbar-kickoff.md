@@ -48,3 +48,7 @@
   - Adopted dirty-state close interception in FolderManager using [src/utils/modalCloseGuardUtils.ts](src/utils/modalCloseGuardUtils.ts).
   - Routed backdrop/header/footer close triggers through the same guard path.
   - Added [tests/unit/utils/modalCloseGuardUtils.test.js](tests/unit/utils/modalCloseGuardUtils.test.js).
+- 2026-04-05: Block D implemented.
+  - Migrated [src/components/modals/SudoModal.tsx](src/components/modals/SudoModal.tsx) to `BaseModal`.
+  - Preserved submit-time close lock via guarded close logic.
+  - Re-ran existing Sudo modal tests plus shared modal regression suite.

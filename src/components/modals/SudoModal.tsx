@@ -1,3 +1,4 @@
+// src/components/modals/SudoModal.tsx
 import React, { useState } from 'react';
 import { AlertTriangle, Key, Loader2, X } from 'lucide-react';
 import {
@@ -5,6 +6,7 @@ import {
   reauthenticateWithCredential,
 } from 'firebase/auth';
 import { auth } from '../../firebase/config';
+import BaseModal from '../ui/BaseModal';
 
 const SudoModal = ({
   isOpen,
@@ -15,8 +17,6 @@ const SudoModal = ({
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  if (!isOpen) return null;
 
   const handleClose = () => {
     if (isSubmitting) return;
@@ -67,8 +67,14 @@ const SudoModal = ({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md overflow-hidden">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={handleClose}
+      onBeforeClose={() => !isSubmitting}
+      backdropClassName="absolute inset-0 bg-black/60 backdrop-blur-sm"
+      contentWrapperClassName="relative z-10 flex min-h-full items-center justify-center p-4"
+      contentClassName="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-md overflow-hidden"
+    >
         <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between gap-3 bg-amber-50/70 dark:bg-amber-900/10">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
@@ -131,8 +137,7 @@ const SudoModal = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>
+    </BaseModal>
   );
 };
 

@@ -38,6 +38,10 @@
   - first form-heavy flow (`FolderManager`) now uses `BaseModal` + guarded close interception,
   - close-guard decision utility extracted for deterministic behavior,
   - targeted utility + modal tests and typecheck passing.
+- Progress (2026-04-05, Block D):
+  - admin-facing `SudoModal` migrated to shared modal shell,
+  - submit-time close lock behavior preserved through guarded close handling,
+  - existing Sudo tests plus modal regression suite and typecheck passing.
 
 ### Phase 02 - Selection Mode and Bin Unification
 - Status: PLANNED
@@ -107,5 +111,5 @@
 
 ## Immediate Next Actions
 1. Expand dirty-state close interception to additional form modals (SubjectFormModal and/or Institution Admin create/edit modals).
-2. Expand BaseModal adoption to admin-facing modals (for example Sudo/admin confirm surfaces) with lossless close behavior.
+2. Continue BaseModal adoption for remaining modal surfaces that still duplicate shell structure.
 3. Run wider Phase 01 validation sweep (typecheck/lint + targeted modal regression suite) and prepare closure checklist.

@@ -32,6 +32,7 @@
 ## Current Adopters
 - `src/components/modals/DeleteModal.tsx`
 - `src/components/modals/FolderDeleteModal.tsx`
+- `src/components/modals/SudoModal.tsx`
 - `src/pages/Home/components/FolderManager.tsx`
 - `src/pages/Home/components/HomeDeleteConfirmModal.tsx`
 
