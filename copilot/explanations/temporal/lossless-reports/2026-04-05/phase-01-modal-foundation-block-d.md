@@ -14,10 +14,10 @@
 
 ## 3. Touched Files
 - [src/components/modals/SudoModal.tsx](src/components/modals/SudoModal.tsx)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-01-modal-and-scrollbar-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-01-modal-and-scrollbar-kickoff.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-01-modal-and-scrollbar-kickoff.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-01-modal-and-scrollbar-kickoff.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
 - [copilot/explanations/codebase/src/components/ui/BaseModal.md](copilot/explanations/codebase/src/components/ui/BaseModal.md)
 - [copilot/explanations/codebase/src/components/modals/SudoModal.md](copilot/explanations/codebase/src/components/modals/SudoModal.md)
 
@@ -41,3 +41,4 @@
   - `npm run test:unit -- tests/unit/components/SudoModal.test.jsx tests/unit/components/BaseModal.test.jsx tests/unit/components/FolderDeleteModal.test.jsx tests/unit/components/BinConfirmModals.test.jsx` -> PASS.
 - Typecheck:
   - `npx tsc --noEmit` -> PASS.
+

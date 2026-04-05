@@ -21,10 +21,10 @@
 - [src/index.css](src/index.css)
 - [src/components/ui/CustomScrollbar.tsx](src/components/ui/CustomScrollbar.tsx)
 - [tests/unit/components/BaseModal.test.jsx](tests/unit/components/BaseModal.test.jsx)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-01-modal-and-scrollbar-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-01-modal-and-scrollbar-kickoff.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-01-modal-and-scrollbar-kickoff.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-01-modal-and-scrollbar-kickoff.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
 - [copilot/explanations/codebase/src/components/modals/DeleteModal.md](copilot/explanations/codebase/src/components/modals/DeleteModal.md)
 - [copilot/explanations/codebase/src/pages/Home/components/HomeDeleteConfirmModal.md](copilot/explanations/codebase/src/pages/Home/components/HomeDeleteConfirmModal.md)
 - [copilot/explanations/codebase/src/components/ui/BaseModal.md](copilot/explanations/codebase/src/components/ui/BaseModal.md)
@@ -65,3 +65,4 @@
 - Lint:
   - `npm run lint -- src/components/ui/BaseModal.tsx src/components/modals/DeleteModal.tsx src/pages/Home/components/HomeDeleteConfirmModal.tsx tests/unit/components/BaseModal.test.jsx`
   - Result: no errors; warnings indicate those specific files are ignored by current ESLint matching configuration.
+

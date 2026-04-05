@@ -12,14 +12,14 @@
 
 ## 3. Touched Files
 - [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-06-cross-cutting-optimization-and-consolidation.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-06-cross-cutting-optimization-and-consolidation.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-07-validation-deep-risk-review-and-lifecycle-transition.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-07-validation-deep-risk-review-and-lifecycle-transition.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-07-validation-and-risk-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-07-validation-and-risk-kickoff.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/reviewing/review-log-2026-04-05.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/reviewing/review-log-2026-04-05.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/reviewing/verification-checklist-2026-04-05.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/reviewing/verification-checklist-2026-04-05.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/README.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-06-cross-cutting-optimization-and-consolidation.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-06-cross-cutting-optimization-and-consolidation.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-07-validation-deep-risk-review-and-lifecycle-transition.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-07-validation-deep-risk-review-and-lifecycle-transition.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-07-validation-and-risk-kickoff.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-07-validation-and-risk-kickoff.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/reviewing/review-log-2026-04-05.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/reviewing/review-log-2026-04-05.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/reviewing/verification-checklist-2026-04-05.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/reviewing/verification-checklist-2026-04-05.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
 - [copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/UserDetailView.md](copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/UserDetailView.md)
 
 ## 4. Per-File Verification
@@ -42,3 +42,4 @@
   - `npm run test` -> PASS (150 files / 682 tests).
   - `npm run lint` -> PASS.
   - `npx tsc --noEmit` -> PASS.
+

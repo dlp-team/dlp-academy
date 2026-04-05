@@ -19,11 +19,11 @@
 - [src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx](src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx)
 - [tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx](tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx)
 - [tests/unit/pages/institution-admin/userDeletionGuard.test.js](tests/unit/pages/institution-admin/userDeletionGuard.test.js)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-05-user-management-profile-media-and-past-classes.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-05-user-management-profile-media-and-past-classes.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-05-users-profile-history-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-05-users-profile-history-kickoff.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/README.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-05-user-management-profile-media-and-past-classes.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-05-user-management-profile-media-and-past-classes.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-05-users-profile-history-kickoff.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-05-users-profile-history-kickoff.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
 - [copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/UsersTabContent.md](copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/UsersTabContent.md)
 - [copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/hooks/useUsers.md](copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/hooks/useUsers.md)
 - [copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.md](copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.md)
@@ -62,3 +62,4 @@
 - Static gates:
   - `npm run lint` -> PASS.
   - `npx tsc --noEmit` -> PASS.
+

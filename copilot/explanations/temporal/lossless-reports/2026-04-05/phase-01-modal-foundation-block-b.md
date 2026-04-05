@@ -18,10 +18,10 @@
 - [src/components/modals/FolderDeleteModal.tsx](src/components/modals/FolderDeleteModal.tsx)
 - [tests/unit/components/BaseModal.test.jsx](tests/unit/components/BaseModal.test.jsx)
 - [tests/unit/components/FolderDeleteModal.test.jsx](tests/unit/components/FolderDeleteModal.test.jsx)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-01-modal-and-scrollbar-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-01-modal-and-scrollbar-kickoff.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-01-global-modal-and-scrollbar-foundation.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-01-modal-and-scrollbar-kickoff.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-01-modal-and-scrollbar-kickoff.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
 - [copilot/explanations/codebase/src/components/ui/BaseModal.md](copilot/explanations/codebase/src/components/ui/BaseModal.md)
 - [copilot/explanations/codebase/src/components/modals/FolderDeleteModal.md](copilot/explanations/codebase/src/components/modals/FolderDeleteModal.md)
 
@@ -52,3 +52,4 @@
   - `npm run test:unit -- tests/unit/components/BaseModal.test.jsx tests/unit/components/FolderDeleteModal.test.jsx tests/unit/components/BinConfirmModals.test.jsx` -> PASS.
 - Typecheck:
   - `npx tsc --noEmit` -> PASS.
+

@@ -11,11 +11,11 @@
 - No test logic weakening; only broader validation and lifecycle synchronization.
 
 ## 3. Touched Files
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/README.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-02-selection-mode-and-bin-unification.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-02-selection-and-bin-kickoff.md)
 
 ## 4. Per-File Verification
 - Phase and roadmap statuses are now synchronized to `COMPLETED` for Phase 02.
@@ -32,3 +32,4 @@
 - Static checks:
   - `npm run lint` -> PASS.
   - `npx tsc --noEmit` -> PASS.
+

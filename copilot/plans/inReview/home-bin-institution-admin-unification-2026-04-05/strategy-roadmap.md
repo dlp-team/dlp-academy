@@ -1,0 +1,428 @@
+<!-- copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md -->
+# Strategy Roadmap - Home, Bin, and Institution Admin Unification
+
+## Phase Status Legend
+- PLANNED
+- IN_PROGRESS
+- COMPLETED
+- BLOCKED
+
+## Ordered Phases
+
+## User-Update Priority Injection (2026-04-05)
+- Directive A (Scrollbar surface parity):
+  - Make the right-edge scrollbar zone visually continuous with page content and prefer scrollbar-over-content behavior where supported, avoiding page jump artifacts.
+  - Execution mapping: post-Phase-01 follow-up block under active plan.
+  - Progress (2026-04-05, block completed):
+    - Implemented overlay-support detection and mode class assignment in [src/components/ui/CustomScrollbar.tsx](src/components/ui/CustomScrollbar.tsx).
+    - Updated global scrollbar CSS in [src/index.css](src/index.css) to use overlay-first mode and stable fallback mode classes.
+    - Added deterministic regression coverage in [tests/unit/components/CustomScrollbar.test.jsx](tests/unit/components/CustomScrollbar.test.jsx).
+    - Validation evidence:
+      - `npm run test -- tests/unit/components/CustomScrollbar.test.jsx` (PASS),
+      - `npm run lint` (PASS),
+      - `npx tsc --noEmit` (PASS).
+- Directive B (Overlay unification scope correction):
+  - Perform deep analysis of non-modal overlays (for example, create/edit management overlays) across pages, not only classic modals.
+  - Target architecture: consistent overlay shell constrained between app header and screen bottom, maintainable under shared patterns.
+  - Execution mapping: dedicated overlay audit + prioritized migration queue before further large parity expansion.
+  - Progress (2026-04-05, audit + slice 1 completed):
+    - Completed deep non-modal overlay audit and prioritized migration queue in [working/non-modal-overlay-audit-2026-04-05.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/non-modal-overlay-audit-2026-04-05.md).
+    - Implemented first low-risk shared-shell migration slice with [src/components/ui/DashboardOverlayShell.tsx](src/components/ui/DashboardOverlayShell.tsx).
+    - Migrated Institution Admin overlay consumers:
+      - [src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx](src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx),
+      - [src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx](src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx),
+      - [src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx](src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx).
+    - Added regression coverage in [tests/unit/components/DashboardOverlayShell.test.jsx](tests/unit/components/DashboardOverlayShell.test.jsx).
+    - Validation evidence:
+      - `npm run test -- tests/unit/components/DashboardOverlayShell.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/ClassesCoursesSection.courseCsvWorkflow.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx` (PASS),
+      - `npm run lint` (PASS),
+      - `npx tsc --noEmit` (PASS).
+  - Progress (2026-04-05, slice 2 generalized shell + create overlays):
+    - Expanded [src/components/ui/DashboardOverlayShell.tsx](src/components/ui/DashboardOverlayShell.tsx) with:
+      - request-close API for modal internals,
+      - built-in unsaved-close confirmation flow,
+      - centralized width/height constraints under header-to-bottom overlay bounds.
+    - Migrated core create/edit overlays to shared shell:
+      - [src/pages/Home/modals/SubjectModal.tsx](src/pages/Home/modals/SubjectModal.tsx),
+      - [src/pages/Home/modals/EditSubjectModal.tsx](src/pages/Home/modals/EditSubjectModal.tsx),
+      - [src/pages/InstitutionAdminDashboard/components/AddTeacherModal.tsx](src/pages/InstitutionAdminDashboard/components/AddTeacherModal.tsx),
+      - [src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx](src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx),
+      - [src/pages/InstitutionAdminDashboard/modals/CreateCourseModal.tsx](src/pages/InstitutionAdminDashboard/modals/CreateCourseModal.tsx),
+      - [src/pages/InstitutionAdminDashboard/modals/CreateClassModal.tsx](src/pages/InstitutionAdminDashboard/modals/CreateClassModal.tsx).
+    - Validation evidence:
+      - `npm run test -- tests/unit/components/DashboardOverlayShell.test.jsx tests/unit/pages/home/HomeSubjectModals.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx tests/unit/pages/institution-admin/CreateClassModal.academicYear.test.jsx` (PASS),
+      - `npm run lint` (PASS),
+      - `npx tsc --noEmit` (PASS).
+  - Progress (2026-04-05, regression hardening - subject create close path):
+    - Fixed Home create-subject runtime close guard in [src/pages/Subject/modals/SubjectFormModal.tsx](src/pages/Subject/modals/SubjectFormModal.tsx), ensuring outside close prompts for discard when general create-form data was modified.
+    - Added deterministic regression coverage in [tests/unit/pages/subject/SubjectFormModal.closeGuard.test.jsx](tests/unit/pages/subject/SubjectFormModal.closeGuard.test.jsx).
+    - Validation evidence:
+      - `npm run test -- tests/unit/pages/subject/SubjectFormModal.closeGuard.test.jsx tests/unit/pages/home/HomeSubjectModals.test.jsx` (PASS),
+      - `npm run test -- tests/unit/pages/subject/SubjectFormModal.classesLoadError.test.jsx tests/unit/pages/subject/SubjectFormModal.coursePeriodSchedule.test.jsx` (PASS),
+      - `npm run lint` (PASS),
+      - `npx tsc --noEmit` (PASS).
+
+### Phase 00 - Codebase Audit and Dependency Mapping
+- Status: COMPLETED
+- Goal: establish architecture map, affected files, coupling matrix, and preservation checklist.
+- Outputs:
+  - dependency map for Home/Bin/Admin surfaces,
+  - lossless-preservation checklist,
+  - risk register and phase sequencing confirmation.
+
+### Phase 01 - Global Modal and Scrollbar Foundation
+- Status: COMPLETED
+- Goal: standardize modal wrapper behavior and remove left-side scrollbar compensation artifact.
+- Outputs:
+  - reusable modal base component API,
+  - dirty-state close interception behavior,
+  - corrected scrollbar compensation strategy.
+- Progress (2026-04-05, Block A):
+  - base modal API shipped,
+  - first two low-risk delete-confirm modal migrations completed,
+  - scrollbar left-gap compensation fix shipped,
+  - targeted tests passing.
+- Progress (2026-04-05, Block B):
+  - close-guard hooks added to base modal for dirty-state interception wiring,
+  - FolderDeleteModal migrated to shared base modal shell,
+  - regression coverage added for folder modal screen-flow semantics,
+  - targeted tests + typecheck passing.
+- Progress (2026-04-05, Block C):
+  - first form-heavy flow (`FolderManager`) now uses `BaseModal` + guarded close interception,
+  - close-guard decision utility extracted for deterministic behavior,
+  - targeted utility + modal tests and typecheck passing.
+- Progress (2026-04-05, Block D):
+  - admin-facing `SudoModal` migrated to shared modal shell,
+  - submit-time close lock behavior preserved through guarded close handling,
+  - existing Sudo tests plus modal regression suite and typecheck passing.
+- Progress (2026-04-05, Block E):
+  - `SubjectFormModal` migrated to shared modal shell,
+  - dirty-state close interception expanded to a second form-heavy modal using shared utility,
+  - existing SubjectForm tests plus shared modal/utility checks and typecheck passing.
+- Progress (2026-04-05, Block F):
+  - Home `SubjectModal` and `EditSubjectModal` migrated to shared modal shell,
+  - dedicated Home modal regression tests added,
+  - targeted modal tests and typecheck passing.
+- Closure (2026-04-05):
+  - `npm run lint` passed,
+  - `npx tsc --noEmit` passed,
+  - `npm run test` passed (138 files, 621 tests).
+
+### Phase 02 - Selection Mode and Bin Unification
+- Status: COMPLETED
+- Goal: unify selection UX logic and align Bin grid/list interactions with requested behavior.
+- Outputs:
+  - shared selection behavior between Home and Bin,
+  - dimming of unselected Home items when selection exists,
+  - Bin grid scale-focus transition,
+  - Bin list inline action panel with consistent styling.
+- Progress (2026-04-05, Block A):
+  - introduced shared Home dimming helper in [src/utils/selectionVisualUtils.ts](src/utils/selectionVisualUtils.ts),
+  - applied grid-card dimming in [src/pages/Home/components/HomeContent.tsx](src/pages/Home/components/HomeContent.tsx),
+  - refined Bin overlay focus transition and delayed action-panel reveal in [src/pages/Home/components/bin/BinSelectionOverlay.tsx](src/pages/Home/components/bin/BinSelectionOverlay.tsx),
+  - added focused tests in [tests/unit/components/BinSelectionOverlay.test.jsx](tests/unit/components/BinSelectionOverlay.test.jsx) and [tests/unit/utils/selectionVisualUtils.test.js](tests/unit/utils/selectionVisualUtils.test.js),
+  - targeted tests + lint + typecheck passing.
+- Progress (2026-04-05, Block B):
+  - moved Bin list selected-item actions from bottom aside to inline panel placement directly beneath selected row in [src/pages/Home/components/BinView.tsx](src/pages/Home/components/BinView.tsx),
+  - preserved selection mode and bulk-action behavior,
+  - added focused list-mode regression tests in [tests/unit/pages/home/BinView.listInlinePanel.test.jsx](tests/unit/pages/home/BinView.listInlinePanel.test.jsx),
+  - targeted tests + lint + typecheck passing.
+- Progress (2026-04-05, Block C):
+  - expanded list inline-panel regression coverage for folder and shortcut entry types in [tests/unit/pages/home/BinView.listInlinePanel.test.jsx](tests/unit/pages/home/BinView.listInlinePanel.test.jsx),
+  - validated type-specific action labels and suppression behavior,
+  - targeted tests + lint + typecheck passing.
+- Progress (2026-04-05, Block D):
+  - propagated Home list-mode selection context through recursive list rendering in [src/components/modules/ListViewItem.tsx](src/components/modules/ListViewItem.tsx) and [src/components/modules/ListItems/FolderListItem.tsx](src/components/modules/ListItems/FolderListItem.tsx),
+  - wired Home list consumers in [src/pages/Home/components/HomeContent.tsx](src/pages/Home/components/HomeContent.tsx) to pass selection context for nested rows,
+  - added focused selection-dimming tests in [tests/unit/components/ListViewItem.selectionDimming.test.jsx](tests/unit/components/ListViewItem.selectionDimming.test.jsx),
+  - targeted tests + lint + typecheck passing.
+- Closure (2026-04-05):
+  - broader impacted Home/Bin suite passed (`tests/unit/pages/home` + focused component/utility suites),
+  - lint and typecheck passed,
+  - Phase 02 exit criteria satisfied.
+
+### Phase 03 - Institution Admin Settings and Automation Controls
+- Status: COMPLETED
+- Goal: expand settings for academic periods, course order, and automatic feature toggles.
+- Outputs:
+  - ordinary/extraordinary period defaults,
+  - drag-and-drop non-duplicated course ordering,
+  - institution-level tool toggles,
+  - secure tenant-scoped writes and reads.
+- Progress (2026-04-05, Block A):
+  - added institution-level automation toggles (`transferPromotionEnabled`, `subjectLifecycleAutomationEnabled`) in [src/pages/InstitutionAdminDashboard/hooks/useInstitutionSettings.ts](src/pages/InstitutionAdminDashboard/hooks/useInstitutionSettings.ts) and [src/pages/InstitutionAdminDashboard/components/SettingsTabContent.tsx](src/pages/InstitutionAdminDashboard/components/SettingsTabContent.tsx),
+  - passed automation settings into organization tab from [src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx](src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx) and enforced transfer-tool UI gating in [src/pages/InstitutionAdminDashboard/components/ClassesCoursesSection.tsx](src/pages/InstitutionAdminDashboard/components/ClassesCoursesSection.tsx),
+  - enforced transfer toggle server-side in [functions/security/transferPromotionDryRunHandler.js](functions/security/transferPromotionDryRunHandler.js) and [functions/security/transferPromotionApplyHandler.js](functions/security/transferPromotionApplyHandler.js) via [functions/security/institutionAutomationSettings.js](functions/security/institutionAutomationSettings.js),
+  - added deterministic frontend/backend coverage:
+    - [tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx](tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx),
+    - [tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx](tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx),
+    - [tests/unit/functions/transfer-promotion-dry-run-handler.test.js](tests/unit/functions/transfer-promotion-dry-run-handler.test.js),
+    - [tests/unit/functions/transfer-promotion-apply-handler.test.js](tests/unit/functions/transfer-promotion-apply-handler.test.js),
+    - [tests/unit/functions/transfer-promotion-roundtrip.test.js](tests/unit/functions/transfer-promotion-roundtrip.test.js),
+  - validation gate evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/ClassesCoursesSection.transferPromotionDryRun.test.jsx tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx tests/unit/functions/transfer-promotion-dry-run-handler.test.js tests/unit/functions/transfer-promotion-apply-handler.test.js tests/unit/functions/transfer-promotion-roundtrip.test.js` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block B):
+  - shipped settings-side draggable course hierarchy editor in [src/pages/InstitutionAdminDashboard/components/settings/CoursePromotionOrderEditor.tsx](src/pages/InstitutionAdminDashboard/components/settings/CoursePromotionOrderEditor.tsx),
+  - integrated non-duplicated order normalization + persistence in [src/utils/coursePromotionOrderUtils.ts](src/utils/coursePromotionOrderUtils.ts) and [src/pages/InstitutionAdminDashboard/hooks/useInstitutionSettings.ts](src/pages/InstitutionAdminDashboard/hooks/useInstitutionSettings.ts),
+  - wired transfer dry-run promote mapping to configured course hierarchy via [functions/security/coursePromotionOrderUtils.js](functions/security/coursePromotionOrderUtils.js) and [functions/security/transferPromotionDryRunHandler.js](functions/security/transferPromotionDryRunHandler.js),
+  - validated existing period-default course-creation behavior with [tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx](tests/unit/pages/institution-admin/CreateCourseModal.periodSchedule.test.jsx) and [tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx](tests/unit/pages/institution-admin/CreateCourseModal.academicYear.test.jsx),
+  - added deterministic coverage for ordering logic and save/read integration:
+    - [tests/unit/utils/coursePromotionOrderUtils.test.js](tests/unit/utils/coursePromotionOrderUtils.test.js),
+    - [tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx](tests/unit/pages/institution-admin/useInstitutionSettings.automation.test.jsx),
+    - [tests/unit/functions/transfer-promotion-dry-run-handler.test.js](tests/unit/functions/transfer-promotion-dry-run-handler.test.js).
+- Closure (2026-04-05):
+  - Phase 03 deliverables satisfied (period defaults, course hierarchy ordering, automation toggles, transfer mapping integration),
+  - targeted and broader impacted suites passed,
+  - lint and typecheck passed.
+
+### Phase 04 - Customization Preview Parity
+- Status: COMPLETED
+- Goal: enforce true fullscreen and exact functional parity in the customization preview.
+- Outputs:
+  - fullscreen preview without header overlap,
+  - preview powered by real app components for subjects/topics/resources/bin,
+  - exact header presence in preview,
+  - live color reflection and active-zone highlighting.
+- Progress (2026-04-05, Block A):
+  - fixed customization fullscreen overlap by raising preview overlay stacking context above global app header in:
+    - [src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx](src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx),
+    - [src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationView.tsx](src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationView.tsx),
+  - added regression assertion in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx) for fullscreen z-index contract,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block B):
+  - added header parity component for preview shell in [src/pages/InstitutionAdminDashboard/components/customization/CustomizationPreviewHeader.tsx](src/pages/InstitutionAdminDashboard/components/customization/CustomizationPreviewHeader.tsx),
+  - integrated preview header into exact Home surface in [src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx](src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx),
+  - replaced generic preview title strip with header-like top shell while preserving role-aware text context,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 1):
+  - added focused preview-header parity assertions in [tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx](tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx),
+  - validated role-aware subtitle/fallback identity/avatar marker behavior for deterministic preview-shell checks,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 2):
+  - extended integration parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - verified preview-header shell and Home content controls remain co-rendered and stable across role toggle,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 3):
+  - hardened topic/resource/bin composition transition assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - validated bin action labels, subject-detail back-navigation control, and return-to-list behavior after topic drilldown,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 4):
+  - implemented mock bin layout parity in [src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx](src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx) so preview follows list/grid controls,
+  - extended integration coverage in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx) for list/grid bin mode switching,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 5):
+  - added deterministic preview-bin empty-state parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - verified no-match search fallback and reset-to-results behavior in bin preview mode,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 6):
+  - added deterministic cross-tab topic drilldown parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - validated `Uso` and `Cursos` drilldown paths, including courses-mode year/course wrapper expansion,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 7):
+  - added deterministic shared-tab topic/resource drilldown parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - validated shared-subject selection, shared-topic resource rendering, and return-to-shared-list path,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 8):
+  - added deterministic nested-folder navigation parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - validated manual-mode parent-folder and child-folder traversal before topic drilldown,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 9):
+  - added deterministic usage-filter parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - validated current-subject filter toggle behavior for `Uso` mode,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 10):
+  - added deterministic courses-mode current-filter parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - validated that `Alternar filtro de asignaturas vigentes` removes non-current academic-year groups in `Cursos` mode while preserving current-year group visibility,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 11):
+  - added deterministic courses-mode academic-year range parity assertions in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - validated that selecting `2025-2026` in `Año académico` range filter removes `2024-2025` wrappers from `Cursos` mode while preserving `2025-2026` wrappers,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 12):
+  - added student-role shared-tab fallback parity guard in [src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx](src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx),
+  - ensured preview exits `Compartido` mode when switching to `Vista estudiante`, preserving role constraints and avoiding stale shared-only surface rendering,
+  - added deterministic regression coverage in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 13):
+  - hardened temporary active-zone highlight behavior in [src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx](src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx) by clearing active token when focus leaves the active color field,
+  - added deterministic regression coverage in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx) to verify highlight appears on focus and clears after blur,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 14):
+  - added deterministic viewport-frame test hook in [src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx](src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx),
+  - added responsive parity regression coverage in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx) validating desktop/tablet/mobile width transitions,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 15):
+  - added deterministic invalid-hex fallback parity coverage in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - validated that color inputs preserve last valid value when an invalid hex token is entered,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C - slice 16):
+  - added deterministic live-color reflection parity coverage in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx),
+  - validated that editing primary color updates preview header avatar styling immediately,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Closure (2026-04-05):
+  - deterministic parity suite expanded through Block C slice 16,
+  - live preview behavior validated for fullscreen layering, header parity, topic/resource/bin transitions, role constraints, viewport controls, and live color reflection,
+  - phase transitioned to COMPLETED and execution moved to Phase 05.
+
+### Phase 05 - User Management, Profile Media, and Past Classes
+- Status: COMPLETED
+- Goal: improve user governance and user-view fidelity for institution admins.
+- Outputs:
+  - delete-user capability from users tab,
+  - Firebase Storage profile image reliability,
+  - icon-only visual language (no emojis in UI),
+  - past-classes sections for teachers and students.
+- Progress (2026-04-05, Block A):
+  - implemented profile-media reliability fallback in [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx) by rendering photo when available and falling back to initials on load failure,
+  - replaced emoji role badge labels with icon-based labels in [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx),
+  - added dedicated `Clases pasadas` rendering for archived class rows (teacher and student detail contexts) in [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx),
+  - expanded deterministic regression coverage in [tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx](tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx) for photo fallback, archived-class separation, and emoji-free role badge rendering,
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block B):
+  - added tenant-safe delete-user guard evaluation in [src/pages/InstitutionAdminDashboard/utils/userDeletionGuard.ts](src/pages/InstitutionAdminDashboard/utils/userDeletionGuard.ts),
+  - integrated guarded delete execution and active-class checks in [src/pages/InstitutionAdminDashboard/hooks/useUsers.ts](src/pages/InstitutionAdminDashboard/hooks/useUsers.ts),
+  - wired users-tab delete action, explicit confirmation modal, and inline guard feedback in [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx),
+  - passed delete-user handler into users-tab surface in [src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx](src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx),
+  - added deterministic regression coverage in:
+    - [tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx](tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx),
+    - [tests/unit/pages/institution-admin/userDeletionGuard.test.js](tests/unit/pages/institution-admin/userDeletionGuard.test.js),
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Closure (2026-04-05):
+  - Phase 05 exit criteria met with guarded users-tab deletion and deterministic regression coverage,
+  - execution is ready to transition into Phase 06 optimization and consolidation.
+
+### Phase 06 - Cross-Cutting Optimization and Consolidation (Mandatory)
+- Status: COMPLETED
+- Goal: centralize repeated logic, split oversized files, and optimize readability/maintainability.
+- Outputs:
+  - extracted shared hooks/utils/components where justified,
+  - reduced duplication,
+  - lint + impacted tests revalidated after optimization.
+- Progress (2026-04-05, Block A):
+  - centralized users-tab delete feedback logic in [src/pages/InstitutionAdminDashboard/utils/userDeletionFeedback.ts](src/pages/InstitutionAdminDashboard/utils/userDeletionFeedback.ts),
+  - removed inline error/success message branching from [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx),
+  - added deterministic utility coverage in [tests/unit/pages/institution-admin/userDeletionFeedback.test.js](tests/unit/pages/institution-admin/userDeletionFeedback.test.js),
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js tests/unit/pages/institution-admin/userDeletionFeedback.test.js` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block B):
+  - consolidated repeated delete-action button and delete-confirm reset patterns in [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx),
+  - consolidated repeated post-delete local-list cleanup callback in [src/pages/InstitutionAdminDashboard/hooks/useUsers.ts](src/pages/InstitutionAdminDashboard/hooks/useUsers.ts),
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js tests/unit/pages/institution-admin/userDeletionFeedback.test.js` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block C):
+  - consolidated repeated access-delete confirm state reset, tab-switch handlers, and load-more button rendering in [src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx](src/pages/InstitutionAdminDashboard/components/UsersTabContent.tsx),
+  - validation evidence:
+    - `npm run test -- tests/unit/pages/institution-admin/UsersTabContent.removeAccessConfirm.test.jsx tests/unit/pages/institution-admin/UsersTabContent.bulkCourseCsv.test.jsx tests/unit/pages/institution-admin/UsersTabContent.deleteUserGuard.test.jsx tests/unit/pages/institution-admin/userDeletionGuard.test.js tests/unit/pages/institution-admin/userDeletionFeedback.test.js` (PASS),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Closure (2026-04-05):
+  - Phase 06 optimization gate completed for touched user-management scope.
+
+### Phase 07 - Validation, Deep Risk Review, and Lifecycle Transition
+- Status: COMPLETED
+- Goal: complete final validation evidence and prepare transition to inReview/finished lifecycle states.
+- Outputs:
+  - validation command evidence,
+  - lossless report and explanation sync,
+  - two-step inReview gate documentation,
+  - out-of-scope risks logged when applicable.
+- Progress (2026-04-05, Block A):
+  - full validation initially surfaced one failure in [tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx](tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx),
+  - stabilized profile-photo fallback behavior in [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx),
+  - re-ran full validation successfully:
+    - `npm run test` (PASS, 150 files / 682 tests),
+    - `npm run lint` (PASS),
+    - `npx tsc --noEmit` (PASS).
+- Progress (2026-04-05, Block B):
+  - completed review-gate artifacts in:
+    - [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/reviewing/verification-checklist-2026-04-05.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/reviewing/verification-checklist-2026-04-05.md),
+    - [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/reviewing/review-log-2026-04-05.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/reviewing/review-log-2026-04-05.md).
+- Closure (2026-04-05):
+  - Phase 07 deliverables are complete,
+  - plan is ready for `active` -> `inReview` transition.
+  - lifecycle transition to `inReview` executed.
+
+## InReview Two-Step Gate (Mandatory)
+1. Optimization and Consolidation Review.
+2. Deep Risk Analysis Review (security, data integrity, failure modes, edge behavior).
+
+## Commit and Push Cadence Gate
+- No second major work block starts before the previous validated block is committed and pushed.
+- Expected commit granularity: phase-scoped or subphase-scoped validated increments.
+
+## Rollback Strategy
+- Maintain reversible, scoped commits aligned with phase boundaries.
+- Keep feature flags/guards where needed for risky UI transitions.
+- Revert latest phase commit if validation gates fail.
+
+## Immediate Next Actions
+1. Perform final inReview pass and prepare `inReview` -> `finished` closure package.
+2. Confirm no additional out-of-scope risks remain before final closure transition.
+3. Keep cadence discipline (validate -> commit -> push) for every major block.
+

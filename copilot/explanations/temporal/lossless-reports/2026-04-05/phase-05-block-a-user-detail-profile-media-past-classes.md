@@ -17,13 +17,13 @@
 ## 3. Touched Files
 - [src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx](src/pages/InstitutionAdminDashboard/components/UserDetailView.tsx)
 - [tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx](tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.jsx)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/README.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-04-customization-preview-parity.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-04-customization-preview-parity.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-05-user-management-profile-media-and-past-classes.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/phases/phase-05-user-management-profile-media-and-past-classes.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-04-preview-parity-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-04-preview-parity-kickoff.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-05-users-profile-history-kickoff.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/working/phase-05-users-profile-history-kickoff.md)
-- [copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/active/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/README.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/README.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/strategy-roadmap.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-04-customization-preview-parity.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-04-customization-preview-parity.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-05-user-management-profile-media-and-past-classes.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/phases/phase-05-user-management-profile-media-and-past-classes.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-04-preview-parity-kickoff.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-04-preview-parity-kickoff.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-05-users-profile-history-kickoff.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/working/phase-05-users-profile-history-kickoff.md)
+- [copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md](copilot/plans/inReview/home-bin-institution-admin-unification-2026-04-05/user-updates.md)
 - [copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/UserDetailView.md](copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/UserDetailView.md)
 - [copilot/explanations/codebase/tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.md](copilot/explanations/codebase/tests/unit/pages/institution-admin/UserDetailView.studentCourseLinks.test.md)
 
@@ -55,3 +55,4 @@
 - Static gates:
   - `npm run lint` -> PASS.
   - `npx tsc --noEmit` -> PASS.
+
