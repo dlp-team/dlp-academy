@@ -20,6 +20,7 @@
 - Added deterministic bin search empty-state parity assertions for no-match and reset flows.
 - Added cross-tab topic drilldown parity coverage for `Uso` and `Cursos`, including courses-mode year/course wrapper expansion before subject selection.
 - Added shared-tab topic/resource drilldown parity coverage for shared subjects, including resource-panel assertions and return-to-shared-list navigation.
+- Added nested-folder navigation parity coverage in manual mode, verifying parent/child folder traversal before topic drilldown.
 - Extended fullscreen regression coverage with explicit stacking-context assertion (`z-[10050]`) to prevent overlap with global fixed header.
 
 ### 2026-04-04

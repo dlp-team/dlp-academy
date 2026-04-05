@@ -199,4 +199,18 @@ describe('InstitutionCustomizationMockView', () => {
     fireEvent.click(screen.getByRole('button', { name: /volver a asignaturas/i }));
     expect(screen.getByText(/asignaturas compartidas/i)).toBeTruthy();
   });
+
+  it('supports nested folder navigation before topic drilldown', () => {
+    renderCustomizationPreview();
+
+    fireEvent.click(screen.getByText('Planificación semanal'));
+    expect(screen.getByText('Laboratorio')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Laboratorio'));
+    expect(screen.getByText('Ciencias')).toBeTruthy();
+
+    fireEvent.click(screen.getByText('Ciencias'));
+    expect(screen.getByText(/temas de la asignatura/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /volver a asignaturas/i })).toBeTruthy();
+  });
 });
