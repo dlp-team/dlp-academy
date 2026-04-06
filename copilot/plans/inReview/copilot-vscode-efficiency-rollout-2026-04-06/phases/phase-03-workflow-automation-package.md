@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-03-workflow-automation-package.md -->
+<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-03-workflow-automation-package.md -->
 # Phase 03 - Workflow Automation Package
 
 ## Status
@@ -30,3 +30,4 @@ Create a repeatable operating workflow for high-efficiency Copilot runs in VS Co
 
 ## Exit Criteria
 - Team has one clear, repeatable workflow document for efficient execution.
+

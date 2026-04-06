@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-02-context-architecture-hardening.md -->
+<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-02-context-architecture-hardening.md -->
 # Phase 02 - Context Architecture Hardening
 
 ## Status
@@ -23,3 +23,4 @@ Reduce token waste and rule skipping by enforcing low-noise context patterns in 
 - Added concise efficiency operating model to `.github/copilot-instructions.md`.
 - Added explicit `.env.example` and updated PC ID setup in `.github/skills/multi-agent-workflow/SKILL.md`.
 - Recorded required manual local setup in `copilot/user-action-notes.md`.
+

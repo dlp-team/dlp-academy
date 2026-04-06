@@ -1,10 +1,10 @@
-<!-- copilot/plans/active/copilot-vscode-efficiency-rollout-2026-04-06/README.md -->
+<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/README.md -->
 # Copilot VS Code Efficiency Rollout Plan (2026-04-06)
 
 ## Status
-- Lifecycle: active
-- Overall status: IN_PROGRESS
-- Current phase: Phase 01 - Research and baseline
+- Lifecycle: inReview
+- Overall status: IN_REVIEW
+- Current phase: Review gates and closure checks
 - Owner: Copilot (autopilot branch)
 
 ## Problem Statement
@@ -48,3 +48,9 @@ The repository already contains strong workflows, but the user requested a deepe
 - Phases: [phases/](phases)
 - Working notes: [working/execution-log.md](working/execution-log.md)
 - Review gate: [reviewing/verification-checklist-2026-04-06.md](reviewing/verification-checklist-2026-04-06.md)
+
+## InReview Notes
+- Implementation phases 01-05 are completed.
+- Deep risk analysis documented in `reviewing/deep-risk-analysis-2026-04-06.md`.
+- Final closure depends on user confirmation of OPEN action in `copilot/user-action-notes.md`.
+

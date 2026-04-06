@@ -12,7 +12,7 @@ Track manual actions that must be completed by the user outside automated code e
 
 ## OPEN
 - Date: 2026-04-06
-- Related Task/Plan: copilot/plans/active/copilot-vscode-efficiency-rollout-2026-04-06
+- Related Task/Plan: copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06
 - Status: OPEN
 - Required Action:
   - Copy `.env.example` to `.env` at repo root.
@@ -38,3 +38,4 @@ Track manual actions that must be completed by the user outside automated code e
 - Safe Placeholder Example (if applicable):
   - `E2E_TEST_USER_EMAIL=<set-by-user>`
   - `E2E_TEST_USER_PASSWORD=<set-by-user>`
+

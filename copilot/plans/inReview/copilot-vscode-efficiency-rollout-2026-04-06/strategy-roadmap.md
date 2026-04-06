@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/copilot-vscode-efficiency-rollout-2026-04-06/strategy-roadmap.md -->
+<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/strategy-roadmap.md -->
 # Strategy Roadmap
 
 ## Source of Truth
@@ -11,7 +11,7 @@ This roadmap is the authoritative sequencing reference for this plan.
 | 02 | Context architecture hardening | COMPLETED | Updated instructions enforce low-noise context loading |
 | 03 | Workflow automation package | COMPLETED | Reusable prompt/agent or documented runbook operational |
 | 04 | Measurement and diagnostics | COMPLETED | Token/reliability troubleshooting workflow documented |
-| 05 | Final optimization and deep risk review | PLANNED | Optimization + inReview risk analysis complete |
+| 05 | Final optimization and deep risk review | COMPLETED | Optimization + inReview risk analysis complete |
 
 ## Execution Sequence
 1. Complete research synthesis from GitHub and VS Code documentation.
@@ -31,6 +31,7 @@ This roadmap is the authoritative sequencing reference for this plan.
 - Preserve existing multi-agent branch rules and templates as-is.
 
 ## Immediate Next Actions
-1. Execute Phase 05 optimization and risk-review pass.
-2. Generate lossless report and run diagnostics on all touched files.
-3. Prepare commit/push package for validated block.
+1. Keep plan in `inReview` until user confirms OPEN manual action.
+2. Once confirmed, transition plan to `finished`.
+3. Archive only if superseded by a newer efficiency plan.
+

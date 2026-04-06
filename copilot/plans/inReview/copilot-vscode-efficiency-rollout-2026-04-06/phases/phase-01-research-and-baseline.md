@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-01-research-and-baseline.md -->
+<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-01-research-and-baseline.md -->
 # Phase 01 - Research and Baseline
 
 ## Status
@@ -25,3 +25,4 @@ Build an evidence-based baseline for high-efficiency Copilot operation in VS Cod
 ## Completion Notes
 - Completed on 2026-04-06.
 - Findings converted into implementation changes in Phase 02 and Phase 03 outputs.
+

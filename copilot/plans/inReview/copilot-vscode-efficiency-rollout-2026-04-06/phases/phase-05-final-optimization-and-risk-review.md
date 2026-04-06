@@ -1,8 +1,8 @@
-<!-- copilot/plans/active/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-05-final-optimization-and-risk-review.md -->
+<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-05-final-optimization-and-risk-review.md -->
 # Phase 05 - Final Optimization and Risk Review
 
 ## Status
-PLANNED
+COMPLETED
 
 ## Objective
 Execute mandatory final optimization and deep risk analysis before plan closure.
@@ -24,3 +24,10 @@ Execute mandatory final optimization and deep risk analysis before plan closure.
 
 ## Exit Criteria
 - Plan ready to transition to `inReview` with complete evidence.
+
+## Completion Notes
+- Completed on 2026-04-06.
+- Consolidated guidance into a compact always-on section plus specialized runbooks.
+- Deep risk analysis documented in `reviewing/deep-risk-analysis-2026-04-06.md`.
+- No out-of-scope risk entries required for this scope.
+

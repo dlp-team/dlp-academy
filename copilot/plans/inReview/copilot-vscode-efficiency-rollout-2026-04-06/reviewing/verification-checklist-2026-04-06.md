@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/copilot-vscode-efficiency-rollout-2026-04-06/reviewing/verification-checklist-2026-04-06.md -->
+<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/reviewing/verification-checklist-2026-04-06.md -->
 # Verification Checklist (2026-04-06)
 
 ## Plan Integrity
@@ -17,6 +17,7 @@
 - [x] User action note logged for any required manual step.
 
 ## Final Review Gates (InReview)
-- [ ] Optimization and consolidation review complete.
-- [ ] Deep risk analysis documented.
-- [ ] Out-of-scope risks logged in `copilot/plans/out-of-scope-risk-log.md` if any.
+- [x] Optimization and consolidation review complete.
+- [x] Deep risk analysis documented.
+- [x] Out-of-scope risks logged in `copilot/plans/out-of-scope-risk-log.md` if any.
+

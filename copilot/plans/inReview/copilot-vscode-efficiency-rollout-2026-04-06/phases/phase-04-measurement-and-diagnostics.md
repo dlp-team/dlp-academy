@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-04-measurement-and-diagnostics.md -->
+<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-04-measurement-and-diagnostics.md -->
 # Phase 04 - Measurement and Diagnostics
 
 ## Status
@@ -22,3 +22,4 @@ Add measurable controls so efficiency and reliability can be monitored instead o
 - Added diagnostics matrix: `copilot/COPILOT_VSCODE_DIAGNOSTICS_MATRIX_2026-04-06.md`.
 - Added scorecard template: `copilot/COPILOT_EFFICIENCY_SCORECARD_TEMPLATE.md`.
 - Added triage sequence and issue-to-fix mapping for practical incident response.
+
