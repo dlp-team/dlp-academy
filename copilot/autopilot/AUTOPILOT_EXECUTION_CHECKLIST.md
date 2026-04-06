@@ -1,6 +1,6 @@
-# Autopilot Execution Checklist
+# Autopilot Execution Checklist - Multi-Agent Workflow
 
-**Purpose:** Step-by-step checklist ensuring autopilot follows ALL required steps in correct order. Nothing is skipped.
+**Purpose:** Step-by-step checklist for autopilot following ALL required steps in correct sequence for multi-agent collaboration. Nothing is skipped.
 
 **Start here before every autopilot task.** Follow in sequence. Do NOT skip steps.
 
@@ -8,250 +8,360 @@
 
 ## ✅ PRE-EXECUTION PHASE
 
-### Step 0: Task Clarification
+### Step 0: Task Assessment & Analysis
 
-- [ ] **IF ambiguous:** Use `vscode/askQuestions` to clarify scope, constraints, expected outcomes
-- [ ] **Document clarifications** in session memory `/memories/session/`
-- [ ] **DO NOT proceed** until task scope is 100% clear
-- [ ] Scope confirmed? → Continue to Step 1
+- [ ] **Assess the work assigned**
+  - [ ] What features/fixes/tasks are being requested?
+  - [ ] What is the scope and expected outcomes?
+  - [ ] What files/areas will be affected?
+  - [ ] Is this a new feature, bug fix, refactor, or chore?
+  - [ ] Are there any dependencies or prerequisites?
+- [ ] **Document assessment** in session memory `/memories/session/`
+- [ ] **Assessment complete** → Continue to Step 1
 
 ---
 
-## ✅ SETUP PHASE (BEFORE ANY CODE CHANGES)
+## ✅ BRANCH STRATEGY PHASE
 
-### Step 1: Read Framework Documents
+### Step 1: Check Global Branch Registry (BRANCHES_STATUS.md)
 
-- [ ] Read: `copilot/autopilot/README.md` (command authorization overview)
-- [ ] Read: `copilot/autopilot/git-workflow-rules.md` (git discipline)
-- [ ] Read: `.github/copilot-instructions.md` (premium request standards)
-- [ ] Read: `copilot/protocols/lossless-change-protocol.md` (zero regression)
-- [ ] Skim: `.github/instructions/` (any domain-specific rules for this task)
+- [ ] Run: `git fetch origin && git checkout development && git pull origin development`
+- [ ] Read: `copilot/BRANCHES_STATUS.md` (lives on development branch)
+- [ ] Analyze existing branches:
+  - [ ] Which branches are active, paused, or complete?
+  - [ ] What work is each branch doing?
+  - [ ] Are any branches related to the current task?
+  - [ ] Who owns each branch (pc_id)?
+  - [ ] What is the current status of each?
 
-### Step 2: Git Branch Status Check
+### Step 2: Decide on Branch Strategy
 
-- [ ] Run: `git branch --show-current`
-- [ ] IF on `main`: **STOP** → Create new branch (see Step 3a)
-- [ ] IF on feature branch: Continue to Step 4 (Step 3b)
+**Decision tree:**
 
-### Step 3a: CREATE NEW FEATURE BRANCH (if on main)
+**Option A: Use Existing Related Branch**
+- [ ] IF a branch exists that is:
+  - [ ] Related to the current task scope
+  - [ ] Owned by this pc_id OR has empty Status
+  - [ ] NOT currently locked by another copilot
+- [ ] Then: Git checkout that branch, pull latest, continue to Step 3b
+- [ ] Otherwise: Continue to Option B
 
-- [ ] Run: `git checkout -b feature/<task-name-with-date>`
-- [ ] Example format: `feature/firestore-migration-2026-0406`
+**Option B: Create New Branch from Development**
+- [ ] IF task is independent and not related to any existing work
+- [ ] Then: Create new feature branch:
+  - [ ] Run: `git checkout -b feature/<this-pc-id>/<task-name>`
+  - [ ] Example: `feature/pc1/create-overlay-component-2026-0406`
+  - [ ] Continue to Step 3a
+
+**Option C: Create New Branch from Existing Branch**
+- [ ] IF task is a subtask or extension of related work on another branch
+- [ ] AND that branch is not being worked by another copilot
+- [ ] Then: Create new branch from that branch:
+  - [ ] Run: `git checkout <parent-branch> && git pull origin <parent-branch>`
+  - [ ] Run: `git checkout -b feature/<this-pc-id>/<subtask-name>`
+  - [ ] Continue to Step 3a
+
+### Step 3a: REGISTER NEW BRANCH IN BRANCHES_STATUS.md
+
+- [ ] Return to development: `git checkout development && git pull origin development`
+- [ ] Edit: `copilot/BRANCHES_STATUS.md`
+- [ ] Add new row with:
+  - [ ] Branch Name: `feature/<pc-id>/<task-name>`
+  - [ ] Owner: `<pc-id>`
+  - [ ] Type: `feature|fix|chore|experiment`
+  - [ ] Status: `active`
+  - [ ] Summary: Brief description of work
+  - [ ] Plan Path: (will fill in after creating plan)
+  - [ ] Files: (will fill in after implementation)
+  - [ ] Date: Today's date
+  - [ ] Notes: Any blockers or dependencies
+- [ ] Commit & push:
+  - [ ] `git add copilot/BRANCHES_STATUS.md`
+  - [ ] `git commit -m "chore(branches): register feature/<pc-id>/<task-name>"`
+  - [ ] `git push origin development`
+- [ ] Return to feature branch: `git checkout feature/<pc-id>/<task-name>`
 - [ ] Continue to Step 3b
 
-### Step 3b: REGISTER BRANCH IN BRANCHES_STATUS.md (MANDATORY FOR NEW BRANCHES)
+### Step 3b: READ EXISTING BRANCH CONTEXT (if using existing branch)
 
-- [ ] Run: `git fetch origin && git checkout development`
-- [ ] Edit: `copilot/BRANCHES_STATUS.md`
-- [ ] Add new row: Branch Name | Owner | Type | Status | Summary | Plan | Files | Date | Notes
-- [ ] Run: `git add copilot/BRANCHES_STATUS.md`
-- [ ] Run: `git commit -m "chore(branches): register feature/pc<id>/<name>"`
-- [ ] Run: `git push origin development`
-- [ ] Run: `git checkout feature/<task-name>` (return to feature branch)
+- [ ] IF using an existing branch (from Option A), read branch-level context:
+  - [ ] File: `BRANCH_LOG.md` at root of branch (or `copilot/branch-logs/BRANCH_LOG.md`)
+  - [ ] Which plans are associated with this branch?
+  - [ ] What work has already been completed?
+  - [ ] What is the current status?
+  - [ ] Are there any external comments or notes?
+  - [ ] What files have been touched?
+- [ ] Understand the existing work before proceeding
 - [ ] Continue to Step 4
 
-### Step 4: Load Task-Specific Context
+### Step 4: LOCK BRANCH & CREATE BRANCH_LOG.md
 
-- [ ] Check: `copilot/plans/active/` for related plans
-- [ ] Check: `copilot/explanations/codebase/` for relevant context
-- [ ] Search: Codebase for similar patterns (use semantic_search if needed)
-- [ ] Identify: All files that will be touched
-- [ ] Document: Behaviors that MUST be preserved
-- [ ] Ready to implement? → Continue to Step 5
+- [ ] Ensure on feature branch: `git branch --show-current` (must NOT be main or development)
+- [ ] Create/update: `BRANCH_LOG.md` at root of branch
+  - [ ] Metadata section:
+    - [ ] Created/Updated: Today's date
+    - [ ] Owner: `<this-pc-id>`
+    - [ ] Status: `active`
+    - [ ] Current Work: Brief summary of what will be done
+  - [ ] Add section: "Related Plans" (will link to plans after creating them)
+  - [ ] Add section: "Touched Files" (will fill in during implementation)
+  - [ ] Add section: "External Comments" (for other copilots to leave notes)
+  - [ ] Add section: "Merge Status" (empty for now)
+- [ ] Commit & push the BRANCH_LOG.md immediately:
+  - [ ] `git add BRANCH_LOG.md`
+  - [ ] `git commit -m "chore(branch-log): lock ${BRANCH_NAME} for pc<id> - ${SUMMARY}"`
+  - [ ] `git push origin <feature-branch>`
+- [ ] **Branch is now locked** - other copilots will see the pc_id and not touch it
+- [ ] Continue to Step 5
 
 ---
 
 ## ✅ IMPLEMENTATION PHASE (FOR EACH MAJOR FEATURE BLOCK)
 
-### Step 5: Implement Core Changes
+### Step 5: Load Framework Documents & Task Context
+
+- [ ] Read: `.github/copilot-instructions.md` (premium request standards)
+- [ ] Read: `copilot/protocols/lossless-change-protocol.md` (zero regression)
+- [ ] Read: `copilot/plans/active/` for any related plans
+- [ ] Read: `copilot/explanations/codebase/` for relevant component patterns
+- [ ] **Pre-flight sync check:**
+  - [ ] `git fetch origin && git pull origin development` (get latest framework changes)
+  - [ ] IF framework changes exist in `.github/`: Rebase or merge them into feature branch before coding
+- [ ] Task context loaded? → Continue to Step 6
+
+### Step 6: Create or Reference Plan
+
+- [ ] IF multi-step feature: Create comprehensive plan
+  - [ ] File: `copilot/plans/active/feature-name/README.md`
+  - [ ] Include: Scope, roadmap, phases, validation gates
+  - [ ] Set status: `active`
+- [ ] IF single-step task: Create lightweight plan OR reference existing plan
+- [ ] Update BRANCH_LOG.md:
+  - [ ] Add plan path/reference under "Related Plans"
+  - [ ] Commit: `git add BRANCH_LOG.md && git commit -m "docs(branch-log): link plan references"`
+  - [ ] Push: `git push origin <feature-branch>`
+
+### Step 7: Implement Core Changes
 
 - [ ] Make **surgical, minimal changes only** (lossless protocol)
 - [ ] Preserve all props, handlers, states not explicitly mentioned
 - [ ] No scope drift or "while we're here" improvements
 - [ ] Apply code organization standards:
-  - [ ] Check if any file exceeds 500 lines (if yes, document in review report why)
-  - [ ] Extract reusable utilities to `src/utils/` (don't duplicate)
-  - [ ] Place custom hooks in `src/hooks/` (don't inline)
-  - [ ] No parallel JS/JSX and TS/TSX files (TypeScript-first only)
-- [ ] Features implemented? → Continue to Step 6
+  - [ ] Check if any file exceeds 500 lines (document in review report why)
+  - [ ] Extract reusable utilities to `src/utils/`
+  - [ ] Place custom hooks in `src/hooks/`
+  - [ ] NO parallel JS/JSX and TS/TSX files
+- [ ] Features implemented? → Continue to Step 8
 
-### Step 6: Validation with get_errors
+### Step 8: Validation with get_errors
 
 - [ ] Run: `get_errors` on all touched files
 - [ ] Fix any errors found
 - [ ] Verify: Requested behavior works
-- [ ] Verify: Adjacent behaviors still work (grid/list/tree/shared modes)
+- [ ] Verify: Adjacent behaviors still work
 - [ ] Verify: Empty/loading/error states render correctly
 - [ ] Verify: Permission/visibility rules unchanged
-- [ ] All adjacent behaviors verified? → Continue to Step 7
+- [ ] All validations passed? → Continue to Step 9
 
-### Step 7: Create Lossless Review Report
+### Step 9: Create Lossless Review Report
 
-- [ ] Create file: `copilot/explanations/temporal/lossless-reports/$(date +%Y-%m-%d)/<task-name>.md`
-- [ ] Include sections:
-  - [ ] Requested scope (exactly what was asked)
-  - [ ] Out-of-scope behaviors explicitly preserved
-  - [ ] Touched files list (full paths)
-  - [ ] Per-file verification (concrete checks done for each file)
-  - [ ] File organization reasoning (file size decisions, extraction rationale)
+- [ ] File: `copilot/explanations/temporal/lossless-reports/$(date +%Y-%m-%d)/<task-name>.md`
+- [ ] Sections:
+  - [ ] Requested scope
+  - [ ] Out-of-scope behaviors preserved
+  - [ ] Touched files list
+  - [ ] Per-file verification (concrete checks)
+  - [ ] File organization reasoning
   - [ ] Risks found + how checked
-  - [ ] Validation summary (get_errors results + runtime checks)
-- [ ] Report created? → Continue to Step 8
+  - [ ] Validation summary
+- [ ] Update BRANCH_LOG.md: Link lossless report
+  - [ ] Commit & push immediately
 
-### Step 8: Security Scan (MANDATORY BEFORE COMMIT)
+### Step 10: Security Scan (MANDATORY BEFORE COMMIT)
 
 - [ ] Run: `npm run security:scan:staged`
 - [ ] **MUST see:** "Credential scan passed"
-- [ ] Run: `git check-ignore -v .env`
-- [ ] **MUST see:** `.env` is ignored
-- [ ] Scans passed? → Continue to Step 9
-- [ ] If ANY credentials found: **STOP** → Notify user immediately
+- [ ] Run: `git check-ignore -v .env` (must be ignored)
+- [ ] Scans passed? → Continue to Step 11
+- [ ] Credentials found? → **STOP** & notify user
 
-### Step 9: Stage & Commit (SCOPED)
+### Step 11: Atomic Commit
 
 - [ ] Run: `git add <file1> <file2> <file3>` (SCOPED, NOT `git add .`)
 - [ ] Run: `git commit -m "<type>(<scope>): <subject>"`
-  - [ ] Format: `feat(scope): add xyz feature`
-  - [ ] No period at end, imperative mood, max 50 chars
-- [ ] Commit created? → Continue to Step 10
+  - [ ] Format: `feat(overlay): Add create subject overlay`
+  - [ ] No period, imperative mood, max 50 chars
+  - [ ] Include body answering: What? Why? Watch-outs?
+- [ ] Commit created? → Continue to Step 12
 
-### Step 10: Security Scan Branch (MANDATORY BEFORE PUSH)
+### Step 12: Security Scan Branch (MANDATORY BEFORE PUSH)
 
 - [ ] Run: `npm run security:scan:branch`
 - [ ] **MUST see:** "Credential scan passed"
-- [ ] If ANY credentials found: **STOP** → Notify user immediately
+- [ ] If credentials found: **STOP** & notify
+- [ ] Scans passed? → Continue to Step 13
 
-### Step 11: Push to Feature Branch
+### Step 13: Push to Feature Branch
 
 - [ ] Run: `git push origin <branch-name>`
-- [ ] Verify pushed successfully
-- [ ] Branch pushed? → Continue to Step 12
+- [ ] Branch pushed? → Continue to Step 14
 
-### Step 12: Run Full Validation Suite
+### Step 14: Run Full Validation Suite
 
 - [ ] Run: `npm run test` (all tests must pass)
-- [ ] Run: `npm run lint` (0 errors in changed files)
+- [ ] Run: `npm run lint` (0 errors)
 - [ ] Run: `npm run build` (if modifying configs)
-- [ ] All tests pass? → Continue to Step 13
-- [ ] Tests fail? → Fix and repeat Steps 5-12 for that fix
-  - [ ] Failed 3x on same issue? → **STOP** → Ask user for direction
+- [ ] All tests pass? → Continue to Step 15
+- [ ] Tests fail? → Fix and repeat Steps 7-14
+  - [ ] Failed 3x on same issue? → **STOP** & log issue
 
-### Step 13: Update Explanation Files
+### Step 15: Update Documentation & Branch Log
 
-- [ ] Update: `copilot/explanations/codebase/` matching docs (append changelog entries)
-- [ ] Create: Temporal explanation if session-specific
-- [ ] Log manual user actions if applicable in: `copilot/user-action-notes.md`
+- [ ] Update: `copilot/explanations/codebase/` (append changelogs, no overwrites)
+- [ ] Update: BRANCH_LOG.md with touched files and completion notes
+- [ ] Log: `copilot/user-action-notes.md` if user action needed
+- [ ] Commit: `git add BRANCH_LOG.md` & push
 
-### Step 14: Self-Response Loop - Continue or Verify?
+### Step 16: Self-Response Loop - Continue or Finalize?
 
-- [ ] Execute: `vscode/askQuestions`
-  - Header: `task-progress`
-  - Question: "Continue with next feature block or run final verification?"
-  - Options: ["Continue working", "Run final verification"]
-- [ ] On "Continue working": → Go back to Step 5 (next feature block)
-- [ ] On "Run final verification": → Go to Step 15
-- [ ] **Loop repeats until 100% task complete**
+- [ ] Ask internally: "Is there more work for this task?"
+  - [ ] If YES: Go back to Step 7 (next feature block)
+  - [ ] If NO: Continue to Step 17 (finalization)
 
 ---
 
-## ✅ FINAL VERIFICATION PHASE
+## ✅ FINALIZATION PHASE
 
-### Step 15: Test Generation (If New Components/Features Created)
+### Step 17: Pre-Merge Synchronization
 
-- [ ] IF created new component/utility/feature:
-  - [ ] Create test file in `tests/` matching structure
-  - [ ] Run: `npm run test -- <new-test-file>`
-  - [ ] Tests must pass
-- [ ] Skip if no new components created
+- [ ] Run: `git fetch origin`
+- [ ] Run: `git pull origin development` (into feature branch)
+- [ ] Check for merge conflicts locally:
+  - [ ] IF conflicts detected: Go to Step 18 (autonomous resolution)
+  - [ ] IF no conflicts: Skip to Step 19
 
-### Step 16: Final Verification via vscode/askQuestions
+### Step 18: Autonomous Conflict Resolution
 
-- [ ] Execute: `vscode/askQuestions` with comprehensive checklist
-  - [ ] Confirm ALL items below:
-    - [ ] All requested features implemented and working
-    - [ ] All existing functionality preserved (lossless)
-    - [ ] All tests passing (`npm run test` ✅)
-    - [ ] All linting passing (`npm run lint` ✅)
-    - [ ] All documentation updated
-    - [ ] All Git commits pushed to branch
-    - [ ] Code review ready (clean history, messages)
-    - [ ] No console.log debug statements
-    - [ ] All Spanish text verified for proper grammar
-    - [ ] File path comments added to new files
-- [ ] UI displays all checkboxes → **User confirms all checked** → Continue to Step 17
+- [ ] Run: `git diff --name-only --diff-filter=U` (find conflicted files)
+- [ ] For each conflicted file:
+  - [ ] Read and analyze the conflict markers
+  - [ ] Resolve logically based on code structure and intent
+  - [ ] Choose the version that makes semantic sense
+  - [ ] If unclear: Keep BOTH changes combined strategically
+- [ ] After resolving all conflicts:
+  - [ ] `git add <conflicted-files>`
+  - [ ] `git commit -m "chore(merge): resolve conflicts with development"`
+  - [ ] `git push origin <feature-branch>`
 
-### Step 17: Definition of Done Verification
+### Step 19: Create Pull Request (Autonomous)
 
-- [ ] ✅ All tests passing (`npm run test` clean)
-- [ ] ✅ New features have test coverage
-- [ ] ✅ No console.log statements remain
-- [ ] ✅ All Spanish text verified for grammar
-- [ ] ✅ No emojis in UI (icons only)
-- [ ] ✅ TypeScript-first respected (no JS/JSX duplicates)
-- [ ] ✅ File paths commented at top of all touched files
-- [ ] ✅ Manual user actions in user-action-notes.md or marked none
-- [ ] ✅ Commit/push cadence gate respected (all work committed and pushed)
-- [ ] ✅ Lossless report created and contains all required sections
+- [ ] Use GitHub CLI:
+  - [ ] `gh pr create --base development --title "feat: <brief description>" --body "$(cat BRANCH_LOG.md)"`
+  - [ ] PR body includes BRANCH_LOG.md content (what was done, plans, references)
+- [ ] PR created? → Continue to Step 20
 
-### Step 18: Leverage Step (MANDATORY - NO EXCEPTIONS)
+### Step 20: Validate PR (Tests & Checks)
 
-- [ ] Execute: `vscode/askQuestions` (final gate before closure)
-- [ ] Question: Concise confirmation of task completion status
-- [ ] Options: ["Yes, close task" / "Hold for review" / "Continue"]
-- [ ] **MANDATORY:** This step is CRITICAL and has NO EXCEPTIONS
-- [ ] See protocol: `copilot/protocols/vscode-askQuestions-leverage-step.md`
-- [ ] User confirms? → Continue to Step 19
-- [ ] Tool fails? → Document failure, request user direction, DO NOT proceed
+- [ ] Wait for Github Actions / automated tests to complete on PR
+- [ ] IF tests pass: Continue to Step 21
+- [ ] IF tests fail:
+  - [ ] Analyze failure
+  - [ ] Fix issue on feature branch
+  - [ ] Push fix
+  - [ ] Checks re-run
+  - [ ] Repeat until green
+
+### Step 21: Autonomous Merge Decision
+
+- [ ] Check PR status:
+  - [ ] IF all checks green AND no merge conflicts: Proceed with merge
+  - [ ] IF merge conflicts exist: Go back to Step 18 (resolve manually)
+- [ ] Run: `gh pr merge --squash --delete-branch` (merge and clean up)
+- [ ] Branch merged & deleted automatically
+
+### Step 22: Update BRANCHES_STATUS.md
+
+- [ ] Checkout development: `git checkout development && git pull origin development`
+- [ ] Edit: `copilot/BRANCHES_STATUS.md`
+- [ ] Find row for the merged branch, update:
+  - [ ] Status: `merged`
+  - [ ] Date: Today's date
+  - [ ] Notes: "Merged into development on [date]"
+- [ ] Commit & push:
+  - [ ] `git add copilot/BRANCHES_STATUS.md`
+  - [ ] `git commit -m "chore(branches): mark feature/<pc-id>/<task> as merged"`
+  - [ ] `git push origin development`
+- [ ] Continue to Step 23
+
+### Step 23: Final Verification & Leverage Question
+
+- [ ] Execute: `vscode/askQuestions` (FINAL GATE - MANDATORY)
+- [ ] Question: "All work complete, tests passing, PR merged. Close task?"
+- [ ] Options:  - [ ] "Yes, close" → Continue to Step 24
+  - [ ] "Hold for review" → Document and wait for user
+  - [ ] "Continue" → Ask what else needs doing
+- [ ] User confirms closure? → Continue to Step 24
+- [ ] Tool fails? → Document failure, request user direction
+
+### Step 24: Task Closure
+
+- [ ] Final status check:
+  - [ ] All features implemented & working
+  - [ ] All tests passing
+  - [ ] All documentation updated
+  - [ ] All commits pushed
+  - [ ] Branch merged into development
+  - [ ] BRANCHES_STATUS.md updated
+  - [ ] Leverage question answered affirmatively
+- [ ] **CALL task_complete()**
 
 ---
 
-## ✅ CLOSURE PHASE
+## 🚫 ABORT CONDITIONS (STOP IMMEDIATELY)
 
-### Step 19: Task Closure
-
-- [ ] All verification steps completed
-- [ ] All checklists confirmed
-- [ ] All tests passing
-- [ ] All documentation updated
-- [ ] All commits pushed
-- [ ] Final leverage question answered affirmatively
-- [ ] **CALL task_complete() with summary**
-
----
-
-## 🚫 ABORT CONDITIONS (STOP IMMEDIATELY IF ENCOUNTERED)
-
-1. **Branch detection:** ON `main` before creating feature branch → **STOP & CREATE BRANCH**
-2. **Security breach:** ANY credentials found → **STOP & NOTIFY USER**
-3. **Test failure 3x:** Same test failure on 3rd attempt → **STOP & ASK USER**
-4. **Tool failure:** `vscode/askQuestions` fails → **DOCUMENT & REQUEST DIRECTION**
-5. **Missing scope:** Task unclear after initial attempt → **STOP & CLARIFY**
+1. **Wrong branch:** On `main` before feature branch created → CREATE FEATURE BRANCH
+2. **Security breach:** Credentials found → STOP & NOTIFY USER
+3. **Test failure 3x:** Same failure on 3rd attempt → STOP & LOG ISSUE
+4. **Merge conflict unresolvable:** Cannot logically resolve → LOG & REQUEST DIRECTION
+5. **Framework mismatch:** `.github/` differs from development → REBASE/MERGE before coding
 
 ---
 
 ## 📋 QUICK REFERENCE
 
-| Phase | Steps | Duration | Gate |
+| Phase | Steps | Purpose | Gate |
 |---|---|---|---|
-| Pre-Execution | 0 | Quick | Scope clear? |
-| Setup | 1-4 | 5 min | Branch ready, context loaded |
-| Implementation | 5-14 | Variable | Self-response loop until complete |
-| Final Verification | 15-18 | 10 min | All checklists passed |
-| Closure | 19 | Instant | task_complete() called |
+| Pre-Execution | 0 | Assess task scope and work | Assessment complete |
+| Branch Strategy | 1-4 | Decide branch, lock it | Branch locked with pc_id |
+| Load Context | 5-6 | Load frameworks, create plan | Context ready |
+| Implementation | 7-16 | Implement, validate, commit, push | Tests green |
+| Finalization | 17-22 | Merge, sync status | Merged into development |
+| Closure | 23-24 | Final question, task_complete() | User confirms |
+
+---
+
+## 🔑 KEY FILES
+
+- **Global registry:** `copilot/BRANCHES_STATUS.md` (on development branch)
+- **Branch memory:** `BRANCH_LOG.md` (at root of feature branch)
+- **Plans:** `copilot/plans/active/<plan-name>/`
+- **Lossless reports:** `copilot/explanations/temporal/lossless-reports/`
+- **Framework:** `.github/copilot-instructions.md`, `.github/instructions/*`
 
 ---
 
 ## 🔗 RELATED DOCUMENTS
 
-- **Lossless Protocol:** [copilot/protocols/lossless-change-protocol.md](../protocols/lossless-change-protocol.md)
-- **Git Workflow:** [copilot/autopilot/git-workflow-rules.md](../autopilot/git-workflow-rules.md)
-- **Leverage Step Protocol:** [copilot/protocols/vscode-askQuestions-leverage-step.md](../protocols/vscode-askQuestions-leverage-step.md)
-- **Command Authorization:** [copilot/autopilot/README.md](../autopilot/README.md)
-- **Premium Standards:** [.github/copilot-instructions.md](../../.github/copilot-instructions.md)
+- **Multi-Agent Workflow Skill:** `.github/skills/multi-agent-workflow/SKILL.md`
+- **Lossless Protocol:** `copilot/protocols/lossless-change-protocol.md`
+- **Git Workflow:** `copilot/autopilot/git-workflow-rules.md`
+- **Leverage Step Protocol:** `copilot/protocols/vscode-askQuestions-leverage-step.md`
+- **Command Authorization:** `copilot/autopilot/README.md`
+- **Premium Standards:** `.github/copilot-instructions.md`
 
 ---
 
-**Version:** 1.0  
-**Date Created:** April 6, 2026  
+**Version:** 2.0 (Multi-Agent Workflow)  
+**Date Updated:** April 6, 2026  
 **Status:** ACTIVE  
-**Use Cases:** All autopilot tasks, multi-agent work, complex features
+**Use Cases:** All autopilot tasks in multi-agent environments
