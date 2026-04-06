@@ -39,11 +39,58 @@ git checkout -b feature/<task-name>
   - `feature/firestore-migration-2026-0331`
   - `feature/bug-fix-modal-closing`
 
+### Step 2b: Register Branch in BRANCHES_STATUS.md (MANDATORY FOR NEW BRANCHES)
+
+**CRITICAL:** After creating a new branch, immediately register it in the global branch registry for multi-agent coordination.
+
+**Procedure**:
+```bash
+# 1. Check out the branch that hosts BRANCHES_STATUS.md (usually development or main)
+git fetch origin
+git checkout development  # or main, depending on your setup
+
+# 2. Edit the global registry
+# File: copilot/BRANCHES_STATUS.md
+
+# 3. Add a new row with these columns:
+#    Branch Name | Owner (pc<id>) | Type (feature|fix|chore) | Status (active) | 
+#    Summary | Related Plan URL | Key Files | Date Created | Notes
+
+# 4. Commit ONLY the registry update
+git add copilot/BRANCHES_STATUS.md
+git commit -m "chore(branches): register feature/pc<id>/<descriptive-name>"
+
+# 5. Push to development (or target branch)
+git push origin development
+
+# 6. Return to your feature branch
+git checkout feature/<task-name>
+```
+
+**Why This Matters:**
+- Prevents branch name collisions in multi-agent environments
+- Enables coordination on overlapping work
+- Maintains visibility of all active branches
+- Supports intelligent task routing
+
+**Example BRANCHES_STATUS.md Entry:**
+```
+| feature/pc001/firestore-migration | pc001 | feature | active | Migrating Firestore collections to camelCase | copilot/plans/active/firestore-migration/ | src/firebase/**, functions/** | 2026-04-06 | On track for Phase 2 |
+```
+
+**Note on Ownership:**
+- Only modify rows containing your `owner_id/`
+- Other agents' branches remain locked (informational only)
+- Update "Last Updated" timestamp before pushing status changes
+
+---
+
 ### Step 3: Updating Existing Branch (Small Tasks on Non-Main Branch)
 **When to use**:
 - Already on a feature branch
 - Task is small or related to existing branch
 - Continuing work on same branch
+- Branch was already registered in BRANCHES_STATUS.md
 
 **Procedure**:
 ```bash
@@ -51,6 +98,9 @@ git add <file1> <file2>
 git commit -m "<properly-formatted-commit-message>"
 git push origin <current-branch-name>
 ```
+
+**Before Returning to Work:**
+If you created a new branch in this session, ensure you completed Step 2b (register in BRANCHES_STATUS.md) first.
 
 ---
 

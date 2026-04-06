@@ -33,6 +33,21 @@ After edits, verify:
 - Permission and visibility rules remain unchanged unless requested.
 - Empty/loading/error states still render correctly.
 
+**File Organization Post-Check (MANDATORY):**
+Before finalizing review, verify code organization standards:
+- [ ] No single file exceeds 500 lines of code (comments/blanks excluded)
+- [ ] All reusable utilities extracted to `src/utils/` (not duplicated across files)
+- [ ] All custom React hooks placed in `src/hooks/` (not inlined in components)
+- [ ] Complex logic > 100 lines considered for extraction to separate module
+- [ ] Complex components considered for module-level extraction
+- [ ] No parallel JS/JSX and TS/TSX files created for same feature (TypeScript-first)
+- [ ] Any file organization decisions documented in lossless report (section: "File Organization Reasoning")
+
+**Guidance:**
+- If a file hits 500 lines during this change, document decision to split it (separate task) or rationale to keep (temporary exception)
+- If new reusable logic created, extract to utils first (then import where needed)
+- If custom hook needed, create in `src/hooks/` not in component file
+
 ### 5) Validate with tools
 - Run diagnostics (`get_errors`) for all touched files.
 - If any doubt exists that something may be broken, perform targeted runtime checks immediately.
@@ -45,8 +60,9 @@ For every change set, create a **lossless review report** in temporal:
 	2. Out-of-scope behavior explicitly preserved
 	3. Touched files list (full relative paths)
 	4. **Per-file verification list** (exact checks done for each file)
-	5. Risks found + how they were checked
-	6. Validation summary (`get_errors` + runtime checks if applicable)
+	5. **File Organization Reasoning** (whether files exceed size limits, extraction decisions, and rationale for any exceptions)
+	6. Risks found + how they were checked
+	7. Validation summary (`get_errors` + runtime checks if applicable)
 
 ### 7) File-by-file review depth (required)
 When using `lossless-change-review-checklist.md`, do not keep it generic.

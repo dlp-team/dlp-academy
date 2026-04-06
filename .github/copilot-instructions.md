@@ -167,7 +167,7 @@ Entry requirements:
 14. **No artificial stopping** - Do not stop after a small change if additional requested work remains; continue autonomously until all requested outcomes are completed.
 15. **Commit/Push Cadence Gate (MANDATORY)** - Commit and push after every major validated work block (feature, bug fix, test block, or docs-sync block) BEFORE starting the next major block. This is a hard execution gate, not a recommendation.
 
-16. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)** - The agent MUST ALWAYS execute the `vscode/askQuestions` leverage step before completing any premium request. This protocol supersedes all other completion logic and is enforced in every completion flow, for all agent modes and workflows. If the tool fails, the agent must document the failure and request user direction before ending the session. No exceptions.
+16. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)** - Before completing ANY premium request, execute the `vscode/askQuestions` leverage step to confirm closure with user. See canonical protocol: [copilot/protocols/vscode-askQuestions-leverage-step.md](copilot/protocols/vscode-askQuestions-leverage-step.md). This protocol supersedes all other completion logic. If the tool fails, document the failure and request user direction before ending the session. No exceptions.
 ---
 
 ## Project Context
@@ -332,6 +332,16 @@ Contains **strict, non-negotiable protocols** that MUST be followed for all chan
 #### 4. **code-explanation.md**
 - **When**: Creating or updating documentation for code changes
 - **Where**: Update files in `copilot/explanations/codebase/` or `temporal/`
+
+#### 5. **vscode-askQuestions-leverage-step.md** (MANDATORY GATE)
+- **When**: Before completing ANY premium request
+- **Purpose**: Final user confirmation gate before task closure
+- **Enforcement**: Supersedes all other completion logic; no exceptions allowed
+
+#### 6. **temporal-cleanup-protocol.md**
+- **When**: Temporal explanation folder requires hygiene or session ends
+- **Purpose**: Archive stale temporal files while respecting 48-hour retention rule
+- **Triggers**: Folder size > 50 files or > 5 MB; files > 48 hours old in new session
 
 ### 📁 copilot/plans/ (PROJECT PLANNING)
 Structured planning system with clear lifecycle:
