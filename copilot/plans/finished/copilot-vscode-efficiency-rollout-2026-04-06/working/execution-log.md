@@ -20,6 +20,7 @@
 - Captured user confirmation for local `.env` setup with `COPILOT_PC_ID`.
 - Moved plan lifecycle folder from `inReview` to `finished`.
 - Synchronized moved-path references and updated user action note from OPEN to RESOLVED.
+- Archived non-operational root-level `copilot/*.md` log docs under `working/root-level-log-archive/`.
 
 ## Research Sources Queried
 - https://code.visualstudio.com/docs/copilot/best-practices
