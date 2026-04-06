@@ -21,6 +21,24 @@ This workspace also uses scoped file instructions in `.github/instructions/` to 
    - Branching/commit/push discipline: `git-workflow`
    - Final closure leverage: `askquestions-leverage`
 
+## Prompts Routing (Reusable Instruction Templates)
+
+This workspace uses on-demand prompts in `copilot/prompts/` for structured templates and checklists.
+
+**Skills vs. Prompts:** See [.github/SKILLS_vs_PROMPTS.md](.github/SKILLS_vs_PROMPTS.md) for detailed distinction.
+- **Skills**: Protocol-heavy workflows with validation gates and best practices (use when a skill applies)
+- **Prompts**: Reusable instruction templates for checklists and structured approaches (reference for context)
+
+Available prompts:
+   - Code reviews: `code-review-checklist.prompt.md`
+   - Feature implementation: `feature-implementation-checklist.prompt.md`
+   - Bug triage: `bug-triage-checklist.prompt.md`
+   - Security audits: `security-audit-checklist.prompt.md`
+   - Performance optimization: `performance-optimization-checklist.prompt.md`
+   - API design review: `api-design-review-checklist.prompt.md`
+   - Migration readiness: `migration-readiness-checklist.prompt.md`
+   - Finding missing tests: `find-missing-tests.prompt.md`
+
 ## Copilot Efficiency Operating Model (MANDATORY)
 
 Use this compact operating model to reduce context waste and improve reliability.
