@@ -19,14 +19,27 @@ Abstract all Git complexity away from the user. Prevent merge conflicts on statu
 Set environment variable `COPILOT_PC_ID`:
 
 ```bash
-# In .env file:
+# In .env file (recommended):
 COPILOT_PC_ID=pc1
+
+# Bootstrap from template:
+cp .env.example .env
 
 # Or in shell:
 export COPILOT_PC_ID=pc1
 
 # Verify:
 echo $COPILOT_PC_ID  # Should print: pc1
+```
+
+PowerShell alternative:
+
+```powershell
+# Session-only assignment:
+$env:COPILOT_PC_ID = "pc1"
+
+# Verify:
+Write-Output $env:COPILOT_PC_ID
 ```
 
 **Supported PC ID formats:**

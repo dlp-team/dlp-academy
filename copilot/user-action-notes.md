@@ -11,7 +11,18 @@ Track manual actions that must be completed by the user outside automated code e
 - Move an item from `OPEN` to `RESOLVED` only after user confirmation.
 
 ## OPEN
-- None.
+- Date: 2026-04-06
+- Related Task/Plan: copilot/plans/active/copilot-vscode-efficiency-rollout-2026-04-06
+- Status: OPEN
+- Required Action:
+  - Copy `.env.example` to `.env` at repo root.
+  - Set `COPILOT_PC_ID` with your machine identity (example: `you`, `fellow`, `pc1`).
+  - Keep `.env` local and never commit it.
+- Why Needed:
+  - Multi-agent branch ownership, branch claiming, and shared-session coordination depend on a unique local `COPILOT_PC_ID`.
+  - If skipped, Copilot branch coordination can become ambiguous.
+- Safe Placeholder Example (if applicable):
+  - `COPILOT_PC_ID=<set-by-user>`
 
 ## RESOLVED
 - None.

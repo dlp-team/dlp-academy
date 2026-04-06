@@ -21,6 +21,50 @@ This workspace also uses scoped file instructions in `.github/instructions/` to 
    - Branching/commit/push discipline: `git-workflow`
    - Final closure leverage: `askquestions-leverage`
 
+## Copilot Efficiency Operating Model (MANDATORY)
+
+Use this compact operating model to reduce context waste and improve reliability.
+
+1. **Session discipline**
+   - Start a new chat session for unrelated tasks.
+   - Use `/compact` when context starts drifting.
+   - Keep one objective per active session.
+
+2. **Context budget discipline**
+   - Do not load large files end-to-end by default.
+   - Load only relevant sections and targeted files.
+   - Prefer `#` context mentions for exact files/symbols.
+
+3. **Instruction layering discipline**
+   - Keep `.github/copilot-instructions.md` concise and always-on.
+   - Put specific rules in scoped `.github/instructions/*.instructions.md` files.
+   - Avoid duplicate or conflicting rules across instruction layers.
+
+4. **Tooling discipline**
+   - Use read-only/search tools first, edit tools second, execution tools last.
+   - Keep terminal and network usage minimal and purposeful.
+   - Use subagents for isolated research so main context stays clean.
+
+5. **Mode and model routing**
+   - Use Ask mode for exploration, Plan mode for complex design, Agent mode for execution.
+   - Use faster models for small edits and higher-reasoning models for planning/debugging.
+   - Prefer Auto model selection when availability/latency is unstable.
+
+6. **Observability loop**
+   - If quality drops: inspect Agent Debug Logs and Chat Debug View.
+   - Use `/troubleshoot` with session context for token and tool diagnostics.
+   - Fix missing-instruction issues before continuing implementation.
+
+7. **Prompt quality floor**
+   - State goal, constraints, expected output, and validation in one prompt.
+   - Ask for clarifying questions only when ambiguity affects architecture/risk.
+   - Break large tasks into phased deliverables with explicit gates.
+
+8. **Large skill handling**
+   - For large skills (for example long SKILL.md files), use section-specific reads.
+   - Keep quick-reference files for frequent operations.
+   - Persist stable facts in memory notes to avoid repeated re-loading.
+
 ## File Reference Linkification (MANDATORY)
 
 When writing logs, reports, or plan updates that reference workspace files, use clickable Markdown links so Ctrl+Click navigates directly to the file.
