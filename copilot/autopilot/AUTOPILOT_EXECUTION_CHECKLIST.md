@@ -105,6 +105,11 @@
 
 - [ ] Ensure on feature branch: `git branch --show-current` (must NOT be main or development)
 - [ ] Create/update: `BRANCH_LOG.md` at root of branch
+  - [ ] **CRITICAL REFERENCE SECTION (TOP OF FILE):**
+    - [ ] Workflow Guide: `copilot/autopilot/AUTOPILOT_EXECUTION_CHECKLIST.md`
+    - [ ] Current Step: `4` (UPDATE THIS AFTER EACH PHASE)
+    - [ ] Last Opened: Today's date + time
+    - [ ] NOTE: Any copilot working on this branch MUST follow the checklist and track current step
   - [ ] Metadata section:
     - [ ] Created/Updated: Today's date
     - [ ] Owner: `<this-pc-id>`
@@ -119,6 +124,10 @@
   - [ ] `git commit -m "chore(branch-log): lock ${BRANCH_NAME} for pc<id> - ${SUMMARY} [${LOCK_STATUS}]"`
   - [ ] `git push origin <feature-branch>`
 - [ ] **Branch is now locked** (based on lock status) - other copilots will follow access rules
+- [ ] **UPDATE BRANCH_LOG.md After each major phase:**
+  - [ ] Set "Current Step" to the phase you just completed
+  - [ ] Example: After Step 6, update to "Current Step: 6"
+  - [ ] This helps next copilot know where work left off
 - [ ] Continue to Step 5
 
 ---
