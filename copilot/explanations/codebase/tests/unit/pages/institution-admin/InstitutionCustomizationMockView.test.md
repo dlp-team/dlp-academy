@@ -14,6 +14,11 @@
 - Preview tab switching across `Papelera`, `Compartido`, and `Manual` plus topic/resource drilldown assertions.
 
 ## Changelog
+### 2026-04-06
+- Stabilized two heavy drilldown tests that were intermittently timing out in full-suite runs.
+- Converted the affected scenarios to async assertions using `findBy*` checkpoints after tab/drilldown transitions.
+- Added explicit per-test timeout (`12000ms`) only to the two high-interaction cases to avoid full-suite timeout flake under load.
+
 ### 2026-04-05
 - Added integration parity assertions to confirm exact preview header shell remains aligned with Home content controls across role switching.
 - Added deterministic topic/resource/bin transition checks covering bin actions, subject-detail back navigation, and return-to-list behavior after drilldown.

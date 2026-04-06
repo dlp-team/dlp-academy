@@ -184,30 +184,30 @@ describe('InstitutionCustomizationMockView', () => {
     expect(viewportFrame.style.maxWidth).toBe('100%');
   });
 
-  it('switches preview tabs and supports subject topic drilldown', () => {
+  it('switches preview tabs and supports subject topic drilldown', async () => {
     renderCustomizationPreview();
 
     fireEvent.click(screen.getByRole('button', { name: /papelera/i }));
-    expect(screen.getByText(/papelera de vista previa/i)).toBeTruthy();
+    expect(await screen.findByText(/papelera de vista previa/i)).toBeTruthy();
     expect(screen.getByText(/tecnología/i)).toBeTruthy();
     expect(screen.getAllByRole('button', { name: /restaurar/i }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: /eliminar/i }).length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole('button', { name: /compartido/i }));
-    expect(screen.getByText(/asignaturas compartidas/i)).toBeTruthy();
+    expect(await screen.findByText(/asignaturas compartidas/i)).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /manual/i }));
     fireEvent.click(screen.getByText('Matemáticas'));
 
-    expect(screen.getByText(/temas de la asignatura/i)).toBeTruthy();
+    expect(await screen.findByText(/temas de la asignatura/i)).toBeTruthy();
     expect(screen.getByRole('button', { name: /volver a asignaturas/i })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /ecuaciones lineales/i }));
-    expect(screen.getByText(/guías de estudio/i)).toBeTruthy();
+    expect(await screen.findByText(/guías de estudio/i)).toBeTruthy();
     expect(screen.getByText(/^archivos$/i)).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /volver a asignaturas/i }));
-    expect(screen.getByText(/mis asignaturas/i)).toBeTruthy();
-  });
+    expect(await screen.findByText(/mis asignaturas/i)).toBeTruthy();
+  }, 12000);
 
   it('matches bin layout with list and grid controls', () => {
     renderCustomizationPreview();
@@ -243,13 +243,13 @@ describe('InstitutionCustomizationMockView', () => {
     expect(screen.getByText(/tecnología/i)).toBeTruthy();
   });
 
-  it('supports topic drilldown from Uso and Cursos tabs', () => {
+  it('supports topic drilldown from Uso and Cursos tabs', async () => {
     renderCustomizationPreview();
 
     fireEvent.click(screen.getByRole('button', { name: /uso/i }));
     fireEvent.click(screen.getByText('Matemáticas'));
 
-    expect(screen.getByText(/temas de la asignatura/i)).toBeTruthy();
+    expect(await screen.findByText(/temas de la asignatura/i)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /volver a asignaturas/i }));
 
     fireEvent.click(screen.getByRole('button', { name: /cursos/i }));
@@ -257,8 +257,8 @@ describe('InstitutionCustomizationMockView', () => {
     fireEvent.click(screen.getByRole('button', { name: /1º ESO \(2025-2026\)/i }));
     fireEvent.click(screen.getByText('Lengua'));
 
-    expect(screen.getByText(/temas de la asignatura/i)).toBeTruthy();
-  });
+    expect(await screen.findByText(/temas de la asignatura/i)).toBeTruthy();
+  }, 12000);
 
   it('supports shared-tab topic and resource drilldown parity', () => {
     renderCustomizationPreview();
