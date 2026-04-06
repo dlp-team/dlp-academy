@@ -86,6 +86,18 @@ Strict rules for Git workflow in autopilot:
 
 ---
 
+### 🧭 COMMAND_APPROVAL_MATRIX.md
+**Risk Tier Governance**
+
+Central command taxonomy for trust-by-default-deny execution:
+- Category mapping (read-only, QA, local mutation, git mutation, destructive, deploy)
+- Risk tier and default approval policy
+- Escalation rules for unknown and semantic-conflict scenarios
+
+**Use this as first reference** before deciding whether a command should be auto-approved, forbidden, or queued.
+
+---
+
 ## How Copilot Uses This System
 
 ```
@@ -107,6 +119,14 @@ Copilot Continues Execution Based on Approvals
     ↓
 Work Completes → Commit and Push to Feature Branch
 ```
+
+## Command Decision Priority (Operational)
+
+1. Check [FORBIDDEN_COMMANDS.md](FORBIDDEN_COMMANDS.md) first.
+2. Check [ALLOWED_COMMANDS.md](ALLOWED_COMMANDS.md).
+3. If unknown, classify using [COMMAND_APPROVAL_MATRIX.md](COMMAND_APPROVAL_MATRIX.md).
+4. Log in [PENDING_COMMANDS.md](PENDING_COMMANDS.md) and request user decision.
+5. Do not execute until decision is recorded.
 
 ---
 

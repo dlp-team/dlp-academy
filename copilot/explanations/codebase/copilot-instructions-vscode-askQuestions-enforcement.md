@@ -19,3 +19,4 @@ March 12, 2026
 ## Changelog
 - 2026-03-12: Enforcement protocol added to copilot-instructions.md.
 - 2026-04-06: Added a concise Copilot Efficiency Operating Model covering session discipline, context budget controls, instruction layering, model/task routing, and observability loop.
+- 2026-04-06: Compacted duplicate leverage-enforcement line and added deterministic routing references to `copilot/COPILOT_AGENTIC_EXECUTION_ROUTING_2026-04-06.md` and `copilot/autopilot/COMMAND_APPROVAL_MATRIX.md`.

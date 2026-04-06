@@ -21,3 +21,9 @@ Rapidly diagnose response-quality or efficiency regressions.
 3. Verify whether the prompt had explicit files/symbols.
 4. Decide: compact current session or start a new clean session.
 5. Re-run with constrained prompt and acceptance criteria.
+
+## Escalation Thresholds
+- If the same failure pattern repeats 3 times, stop and switch to `debug-in-depth` flow.
+- If context overload appears in 2 consecutive turns, force session reset.
+- If instruction mismatch persists after one reset, audit instruction discovery paths before coding.
+- If command category is ambiguous, send to pending command queue before execution.

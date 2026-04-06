@@ -47,7 +47,7 @@ git checkout -b feature/<task-name>
 
 **Procedure**:
 ```bash
-git add .
+git add <file1> <file2>
 git commit -m "<properly-formatted-commit-message>"
 git push origin <current-branch-name>
 ```
@@ -194,12 +194,12 @@ git cherry-pick <commit-hash>
 | Check current branch | `git branch --show-current` |
 | Create & switch to new branch | `git checkout -b feature/<name>` |
 | View branch list | `git branch -a` |
-| Stage changes | `git add .` |
+| Stage changes (scoped) | `git add <file1> <file2>` |
 | Commit with message | `git commit -m "<message>"` |
 | Push to remote | `git push origin <branch-name>` |
 | View recent commits | `git log --oneline -5` |
-| Reset uncommitted changes | `git checkout .` |
-| Abort current operation | `git reset --hard HEAD` (use with caution) |
+| View unstaged changes | `git diff` |
+| View staged changes | `git diff --staged` |
 
 ---
 
@@ -224,6 +224,10 @@ git cherry-pick <commit-hash>
 4. **Push before major refactors**:
    - Ensure current work is backed up
    - Create safety checkpoint
+
+5. **Never use destructive revert shortcuts**:
+   - Do not use `git checkout -- <file>`, `git checkout .`, or `git reset --hard`
+   - If rollback is required, create a normal revert commit or ask for explicit user direction
 
 ---
 

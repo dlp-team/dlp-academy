@@ -83,6 +83,11 @@ Use this compact operating model to reduce context waste and improve reliability
    - Keep quick-reference files for frequent operations.
    - Persist stable facts in memory notes to avoid repeated re-loading.
 
+9. **Deterministic routing and command boundaries**
+   - Use `copilot/COPILOT_AGENTIC_EXECUTION_ROUTING_2026-04-06.md` for mode/skill routing.
+   - Use `copilot/autopilot/COMMAND_APPROVAL_MATRIX.md` for command risk tiers.
+   - Unknown commands must go to pending review; never assume safe execution.
+
 ## File Reference Linkification (MANDATORY)
 
 When writing logs, reports, or plan updates that reference workspace files, use clickable Markdown links so Ctrl+Click navigates directly to the file.
@@ -163,8 +168,6 @@ Entry requirements:
 15. **Commit/Push Cadence Gate (MANDATORY)** - Commit and push after every major validated work block (feature, bug fix, test block, or docs-sync block) BEFORE starting the next major block. This is a hard execution gate, not a recommendation.
 
 16. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)** - The agent MUST ALWAYS execute the `vscode/askQuestions` leverage step before completing any premium request. This protocol supersedes all other completion logic and is enforced in every completion flow, for all agent modes and workflows. If the tool fails, the agent must document the failure and request user direction before ending the session. No exceptions.
-17. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)** - The agent MUST ALWAYS execute the `vscode/askQuestions` leverage step before completing any premium request, using a concise prompt (<200 characters). This protocol supersedes all other completion logic and is enforced in every completion flow, for all agent modes and workflows. If the tool fails (e.g., input too long, tool unavailable), the agent must document the failure and request user direction before ending the session. No exceptions.
-
 ---
 
 ## Project Context

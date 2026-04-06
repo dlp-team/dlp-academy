@@ -2,24 +2,39 @@
 
 # Forbidden Commands for Copilot Autopilot Mode
 
-This file lists all shell commands that Copilot is strictly forbidden from executing in Autopilot mode, with descriptions and reasons.
-
 ## Forbidden Commands
 
-- `firebase deploy --only firestore:rules` (Deploys Firestore rules, risk of overwriting and lockout)
-- `firebase deploy --only firestore:indexes` (Deploys Firestore indexes, risk of overwriting)
-- `firebase deploy` (General deploy, risk of production changes)
-- `npm run deploy` (General deploy, risk of production changes)
-- `git push origin main` (Direct push to main branch)
-- `git commit --amend` (Risk of rewriting history without proper review)
-- `git push -f` or `git push --force` (Force push, risk of data loss)
-- `git reset --hard` (Destructive history rewrite, risk of data loss)
-- `git rebase -i` (Interactive rebase without explicit user permission)
-- `rm -rf /` or any destructive root/system command
-- Any command that modifies system-level files or directories
-- Any npm/node commands that interact with system-level resources
+### Deployment and External State Mutation
+- `firebase deploy`
+- `firebase deploy --only firestore:rules`
+- `firebase deploy --only firestore:indexes`
+- `npm run deploy`
+- Any infrastructure apply command against shared environments
+
+### Main Branch and History Rewrite
+- `git push origin main`
+- `git commit --amend`
+- `git push -f`
+- `git push --force`
+- `git reset --hard`
+- `git rebase -i`
+
+### Unsafe Revert and Cleanup Commands
+- `git checkout -- <file>`
+- `git checkout .`
+- `git restore --source=<rev> -- <path>`
+- `git clean -fd`
+- `git clean -fdx`
+
+### High-Risk File System Commands
+- `rm -rf /`
+- `rm -rf *` (or equivalent wildcard destructive deletes)
+- Any command that modifies system-level directories
+
+### Other Banned Patterns
+- `git add .` (broad staging)
+- Any command with unknown production impact executed without pending review
 
 ## Notes
-- Any command not explicitly allowed or forbidden must be logged in PENDING_COMMANDS.md for review.
-- **Special Case: `git reset --hard`** - Listed as forbidden by default, but if Copilot needs to reset feature branch state during rollback scenarios, user must explicitly approve in PENDING_COMMANDS.md
-- **Special Case: Migration scripts** - Allowed by pattern `node scripts/migrate*.cjs`, but each script should be understood before first execution
+- Unknown commands are not implicitly allowed; they must be reviewed via `PENDING_COMMANDS.md`.
+- If emergency override is required, user must explicitly approve and decision must be logged.

@@ -66,4 +66,6 @@ If quality drops:
 - Validation executed and summarized.
 - Required docs/plan/lossless artifacts updated.
 - Manual user actions logged in `copilot/user-action-notes.md` when needed.
+- Command approvals resolved (`allowed`, `forbidden`, or `pending`) for any new command class.
+- Scorecard entry captured in `copilot/COPILOT_EFFICIENCY_SCORECARD_TEMPLATE.md`.
 - Final leverage step asked before closure.
