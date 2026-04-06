@@ -63,6 +63,8 @@ When operating in Bypass Approvals or Autopilot mode, you have terminal access. 
 
 
 ## 🔄 Autopilot Execution Loop
+**CRITICAL: [`copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md`](copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md) is MANDATORY for all autopilot work. Follow it 100% of the time. All 24 steps, in order, no exceptions.**
+
 When operating in Autopilot mode, follow this exact loop until the task is complete:
 
 1. **Pre-Execution Clarification**: Before any code or documentation changes, ensure the task is fully understood. If there is any ambiguity, missing detail, or uncertainty about requirements, use `vscode/askQuestions` to clarify with the user before proceeding. Do not proceed until the scope, constraints, and expected outcomes are clear.

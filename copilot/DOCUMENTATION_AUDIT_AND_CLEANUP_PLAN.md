@@ -164,7 +164,7 @@ If full reorganization is too disruptive:
    # Copilot Framework
 
    ## ⚡ START HERE
-   - [Autopilot Execution Checklist](./autopilot/AUTOPILOT_EXECUTION_CHECKLIST.md) - Main workflow
+   - [Autopilot Execution Checklist](./ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md) - Main workflow
    - [Quick Start Guide](./MULTI_AGENT_QUICK_START.md) - 5-minute intro
 
    ## 📋 ACTIVE GOVERNANCE

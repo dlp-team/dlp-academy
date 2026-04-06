@@ -88,7 +88,41 @@ Use this compact operating model to reduce context waste and improve reliability
    - Use `copilot/REFERENCE/COMMAND_APPROVAL_MATRIX.md` for command risk tiers.
    - Unknown commands must go to pending review; never assume safe execution.
 
-## File Reference Linkification (MANDATORY)
+## 🤖 AUTOPILOT WORKFLOW ENFORCEMENT (MANDATORY - 100% COMPLIANCE)
+
+**THIS SECTION IS CRITICAL FOR AUTONOMOUS EXECUTION**
+
+### When Autopilot is Active
+ANY time you are operating in autopilot mode, you MUST follow these rules with ZERO exceptions:
+
+1. **MANDATORY CHECKLIST COMPLIANCE**
+   - ✅ **ALWAYS** read and follow: [`copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md`](copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md)
+   - ✅ This is NOT optional - it is your ONLY execution path
+   - ✅ All 24 steps MUST be followed in sequential order
+   - ✅ No variations, shortcuts, or alternatives allowed
+   - ✅ If you deviate from the checklist, you violate this directive
+
+2. **ENTRY POINT**
+   - Before ANYTHING else: Read [`copilot/README.md`](copilot/README.md) (master navigation hub)
+   - Then: Follow the "🤖 Running Autopilot?" section
+   - Then: Open and follow [`copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md`](copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md) (24 steps, start-to-finish)
+
+3. **COMMAND AUTHORIZATION**
+   - Check [`copilot/ACTIVE-GOVERNANCE/ALLOWED_COMMANDS.md`](copilot/ACTIVE-GOVERNANCE/ALLOWED_COMMANDS.md) - execute immediately if listed
+   - Check [`copilot/ACTIVE-GOVERNANCE/FORBIDDEN_COMMANDS.md`](copilot/ACTIVE-GOVERNANCE/FORBIDDEN_COMMANDS.md) - NEVER execute if listed
+   - Unknown? Log in [`copilot/ACTIVE-GOVERNANCE/PENDING_COMMANDS.md`](copilot/ACTIVE-GOVERNANCE/PENDING_COMMANDS.md) and ask user
+
+4. **FINAL LEVERAGE GATE**
+   - Step 23 of the checklist: Execute `vscode/askQuestions` leverage step (protocol: [`copilot/protocols/vscode-askQuestions-leverage-step.md`](copilot/protocols/vscode-askQuestions-leverage-step.md))
+   - NEVER skip this gate - it is mandatory before task closure
+   - This is your user confirmation mechanism before ending autopilot
+
+5. **VERIFICATION REQUIREMENT**
+   - At task completion, user confirms: "Task 100% complete"
+   - Only THEN mark autopilot as finished
+   - No partial work, no "started", only DONE
+
+---
 
 When writing logs, reports, or plan updates that reference workspace files, use clickable Markdown links so Ctrl+Click navigates directly to the file.
 

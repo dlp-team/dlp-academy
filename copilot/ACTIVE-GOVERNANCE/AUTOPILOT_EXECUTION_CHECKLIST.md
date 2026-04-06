@@ -106,7 +106,7 @@
 - [ ] Ensure on feature branch: `git branch --show-current` (must NOT be main or development)
 - [ ] Create/update: `BRANCH_LOG.md` at root of branch
   - [ ] **CRITICAL REFERENCE SECTION (TOP OF FILE):**
-    - [ ] Workflow Guide: `copilot/autopilot/AUTOPILOT_EXECUTION_CHECKLIST.md`
+    - [ ] Workflow Guide: `copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md`
     - [ ] Current Step: `4` (UPDATE THIS AFTER EACH PHASE)
     - [ ] Last Opened: Today's date + time
     - [ ] NOTE: Any copilot working on this branch MUST follow the checklist and track current step

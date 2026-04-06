@@ -9,14 +9,14 @@
 ## ⚡ QUICK START (Pick Your Path)
 
 ### 🤖 Running Autopilot?
-→ **READ FIRST:** [Autopilot Execution Checklist](./autopilot/AUTOPILOT_EXECUTION_CHECKLIST.md)  
-→ Then: [Git Workflow Rules](./autopilot/git-workflow-rules.md)  
-→ Reference: [Branch Strategy Guide](./PC_ID_AND_SHARED_BRANCHES.md)  
+→ **READ FIRST:** [Autopilot Execution Checklist](./ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md)  
+→ Then: [Git Workflow Rules](./ACTIVE-GOVERNANCE/git-workflow-rules.md)  
+→ Reference: [Branch Strategy Guide](./REFERENCE/PC_ID_AND_SHARED_BRANCHES.md)  
 
 ### 📋 Need Command Authorization?
-→ [Allowed Commands](./autopilot/ALLOWED_COMMANDS.md) (Go do this)  
-→ [Forbidden Commands](./autopilot/FORBIDDEN_COMMANDS.md) (Never do this)  
-→ [Pending Commands Review Queue](./autopilot/PENDING_COMMANDS.md) (In limbo?)  
+→ [Allowed Commands](./ACTIVE-GOVERNANCE/ALLOWED_COMMANDS.md) (Go do this)  
+→ [Forbidden Commands](./ACTIVE-GOVERNANCE/FORBIDDEN_COMMANDS.md) (Never do this)  
+→ [Pending Commands Review Queue](./ACTIVE-GOVERNANCE/PENDING_COMMANDS.md) (In limbo?)  
 
 ### 💼 Managing Branches & Operations?
 → [Branch Status Registry](./BRANCHES_STATUS.md) (Check current branches)  
@@ -37,11 +37,11 @@
 
 | File | Purpose | Scope |
 |------|---------|-------|
-| [Autopilot Execution Checklist](./autopilot/AUTOPILOT_EXECUTION_CHECKLIST.md) | 24-step workflow for autonomous agents | ALL AUTOPILOT |
-| [Git Workflow Rules](./autopilot/git-workflow-rules.md) | Branch, commit, push discipline | ALL GIT OPS |
-| [Allowed Commands](./autopilot/ALLOWED_COMMANDS.md) | Whitelist of safe commands | AUTOPILOT ON |
-| [Forbidden Commands](./autopilot/FORBIDDEN_COMMANDS.md) | Blacklist of dangerous commands | AUTOPILOT ON |
-| [Pending Commands](./autopilot/PENDING_COMMANDS.md) | Commands awaiting user decision | AUTOPILOT ON |
+| [Autopilot Execution Checklist](./ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md) | 24-step workflow for autonomous agents | ALL AUTOPILOT |
+| [Git Workflow Rules](./ACTIVE-GOVERNANCE/git-workflow-rules.md) | Branch, commit, push discipline | ALL GIT OPS |
+| [Allowed Commands](./ACTIVE-GOVERNANCE/ALLOWED_COMMANDS.md) | Whitelist of safe commands | AUTOPILOT ON |
+| [Forbidden Commands](./ACTIVE-GOVERNANCE/FORBIDDEN_COMMANDS.md) | Blacklist of dangerous commands | AUTOPILOT ON |
+| [Pending Commands](./ACTIVE-GOVERNANCE/PENDING_COMMANDS.md) | Commands awaiting user decision | AUTOPILOT ON |
 | [Branch Status Registry](./BRANCHES_STATUS.md) | Global branch ledger (on development) | ALL AGENTS |
 | [User Action Notes](./user-action-notes.md) | Manual follow-up tasks | ALL AGENTS |
 
@@ -50,9 +50,9 @@
 
 | File | Purpose |
 |------|---------|
-| [Quick Start Guide](./MULTI_AGENT_QUICK_START.md) | 5-minute intro to multi-agent workflows |
-| [Branch Strategy Reference](./PC_ID_AND_SHARED_BRANCHES.md) | How PC_IDs and branch ownership works |
-| [Command Approval Matrix](./autopilot/COMMAND_APPROVAL_MATRIX.md) | Decision matrix for command safety |
+| [Quick Start Guide](./REFERENCE/MULTI_AGENT_QUICK_START.md) | 5-minute intro to multi-agent workflows |
+| [Branch Strategy Reference](./REFERENCE/PC_ID_AND_SHARED_BRANCHES.md) | How PC_IDs and branch ownership works |
+| [Command Approval Matrix](./REFERENCE/COMMAND_APPROVAL_MATRIX.md) | Decision matrix for command safety |
 | [Audit Plan](./DOCUMENTATION_AUDIT_AND_CLEANUP_PLAN.md) | Documentation reorganization roadmap |
 
 ### PROTOCOLS (Step-by-Step Procedures)
@@ -106,9 +106,9 @@ Located in `./archived/`:
 ## 🔄 KEY WORKFLOWS
 
 ### Starting an Autopilot Task
-1. Read: [Autopilot Execution Checklist](./autopilot/AUTOPILOT_EXECUTION_CHECKLIST.md) (THIS is the complete workflow)
+1. Read: [Autopilot Execution Checklist](./ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md) (THIS is the complete workflow)
 2. Check: [Branch Status Registry](./BRANCHES_STATUS.md) (see active branches)
-3. Check: [Allowed Commands](./autopilot/ALLOWED_COMMANDS.md) (verify your commands are safe)
+3. Check: [Allowed Commands](./ACTIVE-GOVERNANCE/ALLOWED_COMMANDS.md) (verify your commands are safe)
 4. Execute: Step by step per checklist (with git discipline from `git-workflow-rules.md`)
 5. Gate: Use [leverage question](./protocols/vscode-askQuestions-leverage-step.md) at closure
 
