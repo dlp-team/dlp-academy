@@ -8,6 +8,23 @@ This folder contains the command authorization framework for Copilot Autopilot m
 
 ## Files in This Folder
 
+### 🎯 AUTOPILOT_EXECUTION_CHECKLIST.md
+**START HERE BEFORE EVERY AUTOPILOT TASK**
+
+Step-by-step checklist ensuring autopilot follows ALL required steps in correct order:
+- Pre-execution setup (task clarification, branch creation)
+- Framework document reading requirements
+- BRANCHES_STATUS.md registration (mandatory for new branches)
+- Implementation phase (lossless changes, validation)
+- Testing and verification gates
+- Documentation requirements
+- Final verification and leverage step
+- Abort conditions (when to stop immediately)
+
+**Use this for:** Every autopilot task to ensure nothing is skipped. Follow in sequence.
+
+---
+
 ### 📋 ALLOWED_COMMANDS.md
 **When to use:** Copilot checks this before executing any shell command.
 
