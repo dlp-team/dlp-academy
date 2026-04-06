@@ -14,7 +14,7 @@
 
 | Branch Name | Owner | Type | Status | Summary | Related Plan | Key Files | Last Updated | Notes |
 |---|---|---|---|---|---|---|---|---|
-| (none yet — add rows as branches are created) |  |  |  |  |  |  |  |  |
+| gemini-opt | copilot-autopilot | feature | active | Copilot agentic trust & governance plan execution | [copilot/plans/finished/copilot-agentic-trust-and-git-lifecycle-2026-04-06/README.md](copilot/plans/finished/copilot-agentic-trust-and-git-lifecycle-2026-04-06/README.md) | .github/copilot-instructions.md, copilot/autopilot/ALLOWED_COMMANDS.md | 2026-04-06 | Created by autopilot after branch creation and push |
 
 ---
 
