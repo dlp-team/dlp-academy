@@ -25,6 +25,10 @@
 
 ### Step 1: Check Global Branch Registry (BRANCHES_STATUS.md)
 
+- [ ] **Establish agent identity:**
+  - [ ] Read local environment variable: `COPILOT_PC_ID`
+  - [ ] Confirm value (e.g., `pc1`, `pc2`, etc.)
+  - [ ] Use this value throughout workflow for branch ownership
 - [ ] Run: `git fetch origin && git checkout development && git pull origin development`
 - [ ] Read: `copilot/BRANCHES_STATUS.md` (lives on development branch)
 - [ ] Analyze existing branches:
@@ -44,7 +48,7 @@
   - [ ] Owned by this pc_id OR has empty Status
   - [ ] NOT currently locked by another copilot
 - [ ] Then: Git checkout that branch, pull latest, continue to Step 3b
-- [ ] Otherwise: Continue to Option B
+- [ ] Otherwise: Continue to Option B or C
 
 **Option B: Create New Branch from Development**
 - [ ] IF task is independent and not related to any existing work
@@ -69,7 +73,10 @@
   - [ ] Branch Name: `feature/<pc-id>/<task-name>`
   - [ ] Owner: `<pc-id>`
   - [ ] Type: `feature|fix|chore|experiment`
-  - [ ] Status: `active`
+  - [ ] Lock Status: Choose ONE:
+    - [ ] `locked-private` - Strictly isolated, only owner can modify (single-person work)
+    - [ ] `locked-active` - Shared branch, actively being modified now (owner working, others blocked)
+    - [ ] `unlocked-idle` - Shared branch at rest (any agent can claim by changing to locked-active)
   - [ ] Summary: Brief description of work
   - [ ] Plan Path: (will fill in after creating plan)
   - [ ] Files: (will fill in after implementation)
@@ -101,7 +108,7 @@
   - [ ] Metadata section:
     - [ ] Created/Updated: Today's date
     - [ ] Owner: `<this-pc-id>`
-    - [ ] Status: `active`
+    - [ ] Lock Status: Match the value from Step 3a (locked-private, locked-active, or unlocked-idle)
     - [ ] Current Work: Brief summary of what will be done
   - [ ] Add section: "Related Plans" (will link to plans after creating them)
   - [ ] Add section: "Touched Files" (will fill in during implementation)
@@ -109,9 +116,9 @@
   - [ ] Add section: "Merge Status" (empty for now)
 - [ ] Commit & push the BRANCH_LOG.md immediately:
   - [ ] `git add BRANCH_LOG.md`
-  - [ ] `git commit -m "chore(branch-log): lock ${BRANCH_NAME} for pc<id> - ${SUMMARY}"`
+  - [ ] `git commit -m "chore(branch-log): lock ${BRANCH_NAME} for pc<id> - ${SUMMARY} [${LOCK_STATUS}]"`
   - [ ] `git push origin <feature-branch>`
-- [ ] **Branch is now locked** - other copilots will see the pc_id and not touch it
+- [ ] **Branch is now locked** (based on lock status) - other copilots will follow access rules
 - [ ] Continue to Step 5
 
 ---
@@ -187,11 +194,14 @@
 
 ### Step 11: Atomic Commit
 
+- [ ] **Read Git Workflow Standards:**
+  - [ ] Read: `.github/skills/git-workflow/SKILL.md` (ensures strict adherence to commit standards)
 - [ ] Run: `git add <file1> <file2> <file3>` (SCOPED, NOT `git add .`)
 - [ ] Run: `git commit -m "<type>(<scope>): <subject>"`
   - [ ] Format: `feat(overlay): Add create subject overlay`
   - [ ] No period, imperative mood, max 50 chars
   - [ ] Include body answering: What? Why? Watch-outs?
+  - [ ] Reference git-workflow SKILL for domain-specific examples
 - [ ] Commit created? → Continue to Step 12
 
 ### Step 12: Security Scan Branch (MANDATORY BEFORE PUSH)
@@ -212,8 +222,12 @@
 - [ ] Run: `npm run lint` (0 errors)
 - [ ] Run: `npm run build` (if modifying configs)
 - [ ] All tests pass? → Continue to Step 15
-- [ ] Tests fail? → Fix and repeat Steps 7-14
-  - [ ] Failed 3x on same issue? → **STOP** & log issue
+- [ ] Tests fail? → **READ ERROR OUTPUT FIRST**
+  - [ ] Use `@terminal` context to read full error messages
+  - [ ] Analyze the failure point (line numbers, assertion, stack trace)
+  - [ ] Fix issue on feature branch
+  - [ ] Repeat Steps 7-14
+  - [ ] Failed 3x on same issue? → **STOP** & log issue for user review
 
 ### Step 15: Update Documentation & Branch Log
 
@@ -277,19 +291,26 @@
   - [ ] IF all checks green AND no merge conflicts: Proceed with merge
   - [ ] IF merge conflicts exist: Go back to Step 18 (resolve manually)
 - [ ] Run: `gh pr merge --squash --delete-branch` (merge and clean up)
+- [ ] **After merge, return to development branch:**
+  - [ ] `git checkout development`
+  - [ ] (Feature branch deleted by GitHub; local checkout prevents being in deleted branch)
 - [ ] Branch merged & deleted automatically
 
 ### Step 22: Update BRANCHES_STATUS.md
 
 - [ ] Checkout development: `git checkout development && git pull origin development`
 - [ ] Edit: `copilot/BRANCHES_STATUS.md`
-- [ ] Find row for the merged branch, update:
+- [ ] Find row for the merged branch and update:
   - [ ] Status: `merged`
+  - [ ] Lock Status: `unlocked-idle` (branch is available for reuse if needed)
   - [ ] Date: Today's date
   - [ ] Notes: "Merged into development on [date]"
+  - [ ] **Decision:** Keep row in BRANCHES_STATUS.md for historical reference OR delete if repo prefers clean registry
+    - [ ] If KEEPING: Mark as merged with date
+    - [ ] If DELETING: Remove row entirely (preferred for active branches only)
 - [ ] Commit & push:
   - [ ] `git add copilot/BRANCHES_STATUS.md`
-  - [ ] `git commit -m "chore(branches): mark feature/<pc-id>/<task> as merged"`
+  - [ ] `git commit -m "chore(branches): mark/remove feature/<pc-id>/<task> as merged"`
   - [ ] `git push origin development`
 - [ ] Continue to Step 23
 
