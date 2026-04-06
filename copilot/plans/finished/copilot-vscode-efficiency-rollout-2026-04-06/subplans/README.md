@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/subplans/README.md -->
+<!-- copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/subplans/README.md -->
 # Subplans
 
 No subplans are required at this time.

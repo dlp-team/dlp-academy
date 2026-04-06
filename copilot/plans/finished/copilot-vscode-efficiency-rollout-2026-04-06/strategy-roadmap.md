@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/strategy-roadmap.md -->
+<!-- copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/strategy-roadmap.md -->
 # Strategy Roadmap
 
 ## Source of Truth
@@ -12,6 +12,10 @@ This roadmap is the authoritative sequencing reference for this plan.
 | 03 | Workflow automation package | COMPLETED | Reusable prompt/agent or documented runbook operational |
 | 04 | Measurement and diagnostics | COMPLETED | Token/reliability troubleshooting workflow documented |
 | 05 | Final optimization and deep risk review | COMPLETED | Optimization + inReview risk analysis complete |
+
+## Lifecycle Outcome
+- User confirmed OPEN manual setup action in `copilot/user-action-notes.md`.
+- Plan lifecycle transitioned from `inReview` to `finished`.
 
 ## Execution Sequence
 1. Complete research synthesis from GitHub and VS Code documentation.
@@ -30,8 +34,8 @@ This roadmap is the authoritative sequencing reference for this plan.
 - Keep `.env.example` (safe additive file) unless user requests removal.
 - Preserve existing multi-agent branch rules and templates as-is.
 
-## Immediate Next Actions
-1. Keep plan in `inReview` until user confirms OPEN manual action.
-2. Once confirmed, transition plan to `finished`.
+## Post-Closure Actions
+1. Keep plan in `finished` as the current reference baseline.
+2. Reuse diagnostics matrix and scorecard in future efficiency cycles.
 3. Archive only if superseded by a newer efficiency plan.
 

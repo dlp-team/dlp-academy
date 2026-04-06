@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/working/research-evidence.md -->
+<!-- copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/working/research-evidence.md -->
 # Research Evidence and High-Value Findings
 
 ## Context and Session Efficiency

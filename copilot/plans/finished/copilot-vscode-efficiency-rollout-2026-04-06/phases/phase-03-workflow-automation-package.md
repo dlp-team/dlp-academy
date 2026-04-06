@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-03-workflow-automation-package.md -->
+<!-- copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-03-workflow-automation-package.md -->
 # Phase 03 - Workflow Automation Package
 
 ## Status

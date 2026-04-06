@@ -12,12 +12,12 @@
 - No unrelated deleted workspace files were restored or modified.
 
 ## 3) Touched Files
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/README.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/strategy-roadmap.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-05-final-optimization-and-risk-review.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/reviewing/deep-risk-analysis-2026-04-06.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/reviewing/verification-checklist-2026-04-06.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/working/execution-log.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/README.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/strategy-roadmap.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-05-final-optimization-and-risk-review.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/reviewing/deep-risk-analysis-2026-04-06.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/reviewing/verification-checklist-2026-04-06.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/working/execution-log.md`
 - `copilot/user-action-notes.md`
 - `copilot/explanations/temporal/lossless-reports/2026-04-06/copilot-vscode-efficiency-rollout-phase1-4.md`
 
@@ -44,4 +44,4 @@
 
 ## 7) Outcome
 - Phase 5 is complete and documented.
-- Plan lifecycle is now accurately in `inReview` and ready for final closure after user confirms OPEN manual action.
+- At report time, plan lifecycle was accurately in `inReview` pending final user confirmation.

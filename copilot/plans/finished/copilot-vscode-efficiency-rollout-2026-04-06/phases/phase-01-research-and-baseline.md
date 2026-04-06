@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-01-research-and-baseline.md -->
+<!-- copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-01-research-and-baseline.md -->
 # Phase 01 - Research and Baseline
 
 ## Status

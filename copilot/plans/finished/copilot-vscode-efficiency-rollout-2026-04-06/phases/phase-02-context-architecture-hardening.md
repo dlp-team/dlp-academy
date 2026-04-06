@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-02-context-architecture-hardening.md -->
+<!-- copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-02-context-architecture-hardening.md -->
 # Phase 02 - Context Architecture Hardening
 
 ## Status

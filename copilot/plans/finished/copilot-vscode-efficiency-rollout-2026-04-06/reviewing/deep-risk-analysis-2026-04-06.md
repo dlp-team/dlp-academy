@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/reviewing/deep-risk-analysis-2026-04-06.md -->
+<!-- copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/reviewing/deep-risk-analysis-2026-04-06.md -->
 # Deep Risk Analysis (2026-04-06)
 
 ## Scope Reviewed
@@ -35,12 +35,12 @@ Low. Changes are documentation/config oriented and additive.
 Missing `COPILOT_PC_ID` causes ambiguous branch ownership.
 
 ### Assessment
-Mitigated with explicit setup path and OPEN user action note.
+Resolved for this rollout after explicit setup and user confirmation.
 
 ### Evidence
 - `.env.example` introduced.
 - Skill setup expanded with shell and PowerShell examples.
-- `copilot/user-action-notes.md` includes required OPEN action.
+- `copilot/user-action-notes.md` includes required action in RESOLVED state.
 
 ## Risk Domain 4: Dependency and Workflow Drift
 ### Risk
@@ -57,5 +57,5 @@ Partially mitigated. Requires ongoing governance.
 No immediate out-of-scope risk requiring `copilot/plans/out-of-scope-risk-log.md` entry was identified in this work block.
 
 ## Final Risk Position
-Acceptable for inReview transition.
+Acceptable for finished transition and operational use.
 

@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-04-measurement-and-diagnostics.md -->
+<!-- copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-04-measurement-and-diagnostics.md -->
 # Phase 04 - Measurement and Diagnostics
 
 ## Status

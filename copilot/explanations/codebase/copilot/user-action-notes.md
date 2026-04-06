@@ -13,3 +13,7 @@
 ### 2026-04-06
 - Added OPEN action for local `.env` setup with `COPILOT_PC_ID`.
 - Documented deployment impact if the setup is skipped.
+
+### 2026-04-06 (closure update)
+- Marked `COPILOT_PC_ID` setup action as RESOLVED after user confirmation.
+- Updated related plan path from `inReview` to `finished`.

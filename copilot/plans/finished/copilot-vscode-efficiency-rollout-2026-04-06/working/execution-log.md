@@ -1,4 +1,4 @@
-<!-- copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/working/execution-log.md -->
+<!-- copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/working/execution-log.md -->
 # Execution Log
 
 ## 2026-04-06
@@ -17,6 +17,9 @@
 - Added metrics scorecard template: `copilot/COPILOT_EFFICIENCY_SCORECARD_TEMPLATE.md`.
 - Completed phase 05 optimization/risk review and documented deep risk analysis.
 - Updated roadmap/checklist for inReview readiness.
+- Captured user confirmation for local `.env` setup with `COPILOT_PC_ID`.
+- Moved plan lifecycle folder from `inReview` to `finished`.
+- Synchronized moved-path references and updated user action note from OPEN to RESOLVED.
 
 ## Research Sources Queried
 - https://code.visualstudio.com/docs/copilot/best-practices

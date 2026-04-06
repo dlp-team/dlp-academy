@@ -22,18 +22,18 @@
 - `copilot/COPILOT_VSCODE_EFFICIENCY_DAILY_PLAYBOOK.md`
 - `copilot/COPILOT_VSCODE_DIAGNOSTICS_MATRIX_2026-04-06.md`
 - `copilot/COPILOT_EFFICIENCY_SCORECARD_TEMPLATE.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/README.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/strategy-roadmap.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/user-updates.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-01-research-and-baseline.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-02-context-architecture-hardening.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-03-workflow-automation-package.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-04-measurement-and-diagnostics.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-05-final-optimization-and-risk-review.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/reviewing/verification-checklist-2026-04-06.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/subplans/README.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/working/execution-log.md`
-- `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/working/research-evidence.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/README.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/strategy-roadmap.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/user-updates.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-01-research-and-baseline.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-02-context-architecture-hardening.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-03-workflow-automation-package.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-04-measurement-and-diagnostics.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/phases/phase-05-final-optimization-and-risk-review.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/reviewing/verification-checklist-2026-04-06.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/subplans/README.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/working/execution-log.md`
+- `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/working/research-evidence.md`
 - `copilot/explanations/codebase/env-example.md`
 - `copilot/explanations/codebase/.gitignore.md`
 - `copilot/explanations/codebase/.github/skills/multi-agent-workflow/SKILL.md`
@@ -62,7 +62,7 @@
   - Verified symptom-to-action troubleshooting mapping is present.
 - `copilot/COPILOT_EFFICIENCY_SCORECARD_TEMPLATE.md`
   - Verified measurable fields exist for trend tracking.
-- Plan package files under `copilot/plans/inReview/copilot-vscode-efficiency-rollout-2026-04-06/**`
+- Plan package files under `copilot/plans/finished/copilot-vscode-efficiency-rollout-2026-04-06/**`
   - Verified roadmap/phase/status synchronization.
   - Verified user updates moved from pending to processed.
 - Codebase explanation files under `copilot/explanations/codebase/**`
