@@ -124,6 +124,7 @@ ANY time you are operating in autopilot mode, you MUST follow these rules with Z
 
 ---
 
+## File Reference Linkification (MANDATORY)
 When writing logs, reports, or plan updates that reference workspace files, use clickable Markdown links so Ctrl+Click navigates directly to the file.
 
 - File path format: `[path/to/file.ext](path/to/file.ext)`
