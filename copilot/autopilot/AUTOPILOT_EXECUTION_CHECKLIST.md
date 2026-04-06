@@ -134,6 +134,18 @@
 
 ## ✅ IMPLEMENTATION PHASE (FOR EACH MAJOR FEATURE BLOCK)
 
+**CRITICAL REMINDER:** Update BRANCH_LOG.md "Current Step" field regularly to track progress:
+- After Phase 0 (pre-execution): Update to `0`
+- After Phase 1-4 (branch strategy): Update to `4`
+- After Phase 5-6 (context loading): Update to `6`
+- After Phase 7-16 (implementation): Update to `16`
+- After Phase 17-22 (finalization): Update to `22`
+- At Step 23 (final verification): Update to `23`
+
+**Why?** If another copilot picks up this branch, they'll know exactly where work left off and can resume seamlessly.
+
+---
+
 ### Step 5: Load Framework Documents & Task Context
 
 - [ ] Read: `.github/copilot-instructions.md` (premium request standards)
@@ -154,7 +166,8 @@
 - [ ] IF single-step task: Create lightweight plan OR reference existing plan
 - [ ] Update BRANCH_LOG.md:
   - [ ] Add plan path/reference under "Related Plans"
-  - [ ] Commit: `git add BRANCH_LOG.md && git commit -m "docs(branch-log): link plan references"`
+  - [ ] **Update Current Step: `6`** (for next copilot)
+  - [ ] Commit: `git add BRANCH_LOG.md && git commit -m "docs(branch-log): link plan references + step 6"`
   - [ ] Push: `git push origin <feature-branch>`
 
 ### Step 7: Implement Core Changes
@@ -249,7 +262,11 @@
 
 - [ ] Ask internally: "Is there more work for this task?"
   - [ ] If YES: Go back to Step 7 (next feature block)
-  - [ ] If NO: Continue to Step 17 (finalization)
+  - [ ] If NO: Update BRANCH_LOG.md:
+    - [ ] **Update Current Step: `16`** (implementation complete, ready for finalization)
+    - [ ] Update status to "ready-for-merge"
+    - [ ] Commit & push: `git add BRANCH_LOG.md && git commit -m "docs(branch-log): implementation complete - step 16"`
+  - [ ] Continue to Step 17 (finalization)
 
 ---
 
@@ -325,9 +342,15 @@
 
 ### Step 23: Final Verification & Leverage Question
 
+- [ ] Update BRANCH_LOG.md:
+  - [ ] **Update Current Step: `23`** (final closure gate)
+  - [ ] Update status to "completed"
+  - [ ] Add final notes on what was accomplished
+  - [ ] Commit & push: `git add BRANCH_LOG.md && git commit -m "docs(branch-log): final step 23 - ready for closure"`
 - [ ] Execute: `vscode/askQuestions` (FINAL GATE - MANDATORY)
 - [ ] Question: "All work complete, tests passing, PR merged. Close task?"
-- [ ] Options:  - [ ] "Yes, close" → Continue to Step 24
+- [ ] Options:
+  - [ ] "Yes, close" → Continue to Step 24
   - [ ] "Hold for review" → Document and wait for user
   - [ ] "Continue" → Ask what else needs doing
 - [ ] User confirms closure? → Continue to Step 24
