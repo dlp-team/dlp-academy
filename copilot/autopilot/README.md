@@ -2,11 +2,25 @@
 
 # Autopilot Command Control System
 
-This folder contains the command authorization framework for Copilot Autopilot mode, ensuring safe, auditable command execution while maintaining development velocity.
+**⚠️ REORGANIZED:** As of April 7, 2026, autopilot framework files have been reorganized for clarity. See `../README.md` for navigation hub.
+
+**NEW LOCATIONS:**
+- AUTOPILOT_EXECUTION_CHECKLIST.md → `../ACTIVE-GOVERNANCE/`
+- ALLOWED_COMMANDS.md → `../ACTIVE-GOVERNANCE/`
+- FORBIDDEN_COMMANDS.md → `../ACTIVE-GOVERNANCE/`
+- PENDING_COMMANDS.md → `../ACTIVE-GOVERNANCE/`
+- git-workflow-rules.md → `../ACTIVE-GOVERNANCE/`
 
 ---
 
-## Files in This Folder
+This folder now contains the command authorization framework legacy structure. For current documentation, start with:
+- **Master Hub:** `../README.md` (navigation for all frameworks)
+- **Active Governance:** `../ACTIVE-GOVERNANCE/` (runtime rules)
+- **References:** `../REFERENCE/` (supporting guides)
+
+---
+
+## 📚 Deprecated References (See Master README)
 
 ### 🎯 AUTOPILOT_EXECUTION_CHECKLIST.md
 **START HERE BEFORE EVERY AUTOPILOT TASK**

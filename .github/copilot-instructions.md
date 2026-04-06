@@ -84,8 +84,8 @@ Use this compact operating model to reduce context waste and improve reliability
    - Persist stable facts in memory notes to avoid repeated re-loading.
 
 9. **Deterministic routing and command boundaries**
-   - Use `copilot/COPILOT_AGENTIC_EXECUTION_ROUTING_2026-04-06.md` for mode/skill routing.
-   - Use `copilot/autopilot/COMMAND_APPROVAL_MATRIX.md` for command risk tiers.
+   - Use `copilot/README.md` for navigation and routing decisions.
+   - Use `copilot/REFERENCE/COMMAND_APPROVAL_MATRIX.md` for command risk tiers.
    - Unknown commands must go to pending review; never assume safe execution.
 
 ## File Reference Linkification (MANDATORY)
@@ -142,7 +142,7 @@ When writing logs, reports, or plan updates that reference workspace files, use 
 
 When a task requires manual user action (for example, creating `.env` entries, provisioning external test users, or adding third-party console settings), Copilot MUST add an entry to:
 
-- `[copilot/user-action-notes.md](copilot/user-action-notes.md)`
+- `[copilot/ACTIVE-GOVERNANCE/user-action-notes.md](copilot/ACTIVE-GOVERNANCE/user-action-notes.md)`
 
 Entry requirements:
 - Include date and related task/plan reference.
@@ -396,7 +396,7 @@ Workflow documentation and task-specific guides (e.g., `shortcut-move-request-wo
 ✅ Check copilot/plans/active/ for related work
 ✅ Search for similar patterns in the codebase
 ✅ Read protocol files if unfamiliar
-✅ For AUTOPILOT ONLY: Read copilot/autopilot/git-workflow-rules.md
+✅ For AUTOPILOT ONLY: Read copilot/ACTIVE-GOVERNANCE/git-workflow-rules.md
 ✅ Before making any changes, ensure the task is fully understood. If there is any ambiguity, missing detail, or uncertainty about requirements, use `vscode/askQuestions` to clarify with the user before proceeding. Do not proceed until the scope, constraints, and expected outcomes are clear.
 ```
 
@@ -405,7 +405,7 @@ Workflow documentation and task-specific guides (e.g., `shortcut-move-request-wo
 ✅ Check current branch: git branch --show-current
 ✅ If on main: Create new feature branch (git checkout -b feature/<task-name>)
 ✅ If on feature branch: Continue on existing branch
-✅ Read copilot/autopilot/git-workflow-rules.md for commit message format
+✅ Read copilot/ACTIVE-GOVERNANCE/git-workflow-rules.md for commit message format
 ✅ Plan periodic Git commits (every logical work unit)
 ✅ Enforce cadence gate: no second major work block may start until prior validated block is committed and pushed
 ```
@@ -578,7 +578,7 @@ Before completing ANY interaction, verify:
 - [ ] All required protocols followed
 - [ ] All validation steps completed
 - [ ] All documentation updated
-- [ ] Manual user-required actions are logged in `[copilot/user-action-notes.md](copilot/user-action-notes.md)` when applicable
+- [ ] Manual user-required actions are logged in `[copilot/ACTIVE-GOVERNANCE/user-action-notes.md](copilot/ACTIVE-GOVERNANCE/user-action-notes.md)` when applicable
 - [ ] No errors remain (`get_errors` clean)
 - [ ] Lossless report created (if code changed)
 - [ ] User can immediately continue their work without asking follow-ups
@@ -611,7 +611,7 @@ Before completing ANY interaction, verify:
 
 ## ⚡ Autopilot Command Authorization Control (MANDATORY)
 
-**Reference:** `copilot/autopilot/README.md` and related command files
+**Reference:** `copilot/README.md` for navigation, then `copilot/ACTIVE-GOVERNANCE/` for command files
 
 In Autopilot mode, Copilot operates under strict command authorization framework ensuring safe, auditable autonomous execution:
 
@@ -675,10 +675,10 @@ Command authorization works **in conjunction with** Git workflow rules:
 ### First-Time Setup
 
 Before first autopilot task:
-1. Read `copilot/autopilot/README.md` (overview)
-2. Review `copilot/autopilot/ALLOWED_COMMANDS.md` (whitelist)
-3. Review `copilot/autopilot/FORBIDDEN_COMMANDS.md` (blacklist)
-4. Ensure `copilot/autopilot/PENDING_COMMANDS.md` is empty
+1. Read `copilot/README.md` (master navigation hub)
+2. Review `copilot/ACTIVE-GOVERNANCE/ALLOWED_COMMANDS.md` (whitelist)
+3. Review `copilot/ACTIVE-GOVERNANCE/FORBIDDEN_COMMANDS.md` (blacklist)
+4. Ensure `copilot/ACTIVE-GOVERNANCE/PENDING_COMMANDS.md` is empty
 5. Proceed with autopilot task
 
 During autopilot execution:
@@ -694,7 +694,7 @@ Command control system built from analysis of **25+ commands** across **15+ exec
 
 ## 🔀 Autopilot Git Workflow (MANDATORY)
 
-**Applies to ALL autopilot tasks. Reference: `copilot/autopilot/git-workflow-rules.md`**
+**Applies to ALL autopilot tasks. Reference: `copilot/ACTIVE-GOVERNANCE/git-workflow-rules.md`**
 
 ### Git Branch Rules (REQUIRED)
 
