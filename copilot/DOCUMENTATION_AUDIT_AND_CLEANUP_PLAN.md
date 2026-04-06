@@ -223,5 +223,178 @@ Once cleanup is done:
 
 ---
 
-**Status:** AWAITING DECISION  
-**Next:** User approval to proceed with Lightweight Approach
+---
+
+## 🔹 ADDITIONAL AUDIT: prompts/ & protocols/ & skills/
+
+### prompts/ Directory (9 files)
+- api-design-review-checklist.prompt.md
+- bug-triage-checklist.prompt.md
+- code-review-checklist.prompt.md
+- feature-implementation-checklist.prompt.md
+- find-missing-tests.prompt.md
+- migration-readiness-checklist.prompt.md
+- performance-optimization-checklist.prompt.md
+- security-audit-checklist.prompt.md
+- README.md
+
+**Assessment:** Healthy. Each prompt serves a distinct use case. No redundancy detected. Good organization with README index.  
+**Recommendation:** KEEP AS-IS. Consider adding links to prompts/README in master copilot/README.md.
+
+### protocols/ Directory (7 files)
+- code-explanation.md
+- debug-in-depth-protocol.md
+- lossless-change-protocol.md
+- plan-creation-protocol.md
+- temporal-cleanup-protocol.md
+- `vscode-askQuestions-enforcement.md` ⚠️
+- `vscode-askQuestions-leverage-step.md` ⚠️
+
+**Redundancy Issue:** Last 2 files are DUPLICATES with slight variations:
+- vscode-askQuestions-enforcement.md: Meta-rule ("this MUST be enforced") 
+- vscode-askQuestions-leverage-step.md: Operational guide ("HOW to execute it")
+
+**Problem:** Copilot might get conflicting directives. Both are referenced in .github/copilot-instructions.md.
+
+**Recommended Action:**
+1. **Keep:** vscode-askQuestions-leverage-step.md (*newer, more detailed, better format*)
+2. **Archive:** vscode-askQuestions-enforcement.md (*move to archived/obsolete/*)
+3. **Update:** All references in .github/copilot-instructions.md and AGENTS.md to point ONLY to leverage-step version
+4. **Consolidate:** Meta-enforcement rules into the leverage-step document as opening section
+
+**Result:** Single source of truth for leverage step rule instead of two conflicting files.
+
+### skills/ Directory (10 SKILL.md files)
+Available skills:
+1. askquestions-leverage - Enforces leverage step (OK - distinct)
+2. create-plan - Plan creation (OK - distinct)
+3. debug-in-depth - Debugging (OK - distinct)
+4. docs-sync - Documentation sync (OK - distinct)
+5. explain-code - Code explanation (OK - distinct)
+6. find-missing-tests - Test gaps (OK - distinct)
+7. git-workflow - Git operations (OK - distinct)
+8. lossless-change - Surgical changes (OK - distinct)
+9. multi-agent-workflow - Multi-agent coordination (OK - distinct)
+10. test-stabilization - Test fixes (OK - distinct)
+
+**Assessment:** Healthy. Each skill serves a well-defined domain. No redundancy.  
+**Recommendation:** KEEP ALL. Well-organized.
+
+### instructions/ Directory (.github/instructions/)
+Known files:
+- copilot-context-efficiency.instructions.md
+- firebase-multitenancy.instructions.md
+- frontend-spanish-ui.instructions.md
+- git-commits.instructions.md
+- plans-and-docs.instructions.md
+- test-stability.instructions.md
+
+**Assessment:** Specialized to domains (Firebase, UI, Git, etc.). Each has distinct scope.  
+**Recommendation:** KEEP ALL. Well-organized by domain.
+
+---
+
+## ✅ FINAL REDUNDANCY SUMMARY
+
+| Category | Redundancy Found? | Action |
+|----------|-------------------|--------|
+| copilot/ root | **YES (7 research docs)** | Archive → archive/research/ |
+| copilot/autopilot/ | Minor (analysis docs) | Archive → archive/analysis/ |
+| copilot/prompts/ | NO | Keep as-is + link from README |
+| copilot/protocols/ | **YES (vscode-askQuestions x2)** | Keep leverage-step, archive enforcement |
+| .github/skills/ | NO | Keep all 10 skills |
+| .github/instructions/ | NO | Keep by domain |
+
+**Total files to archive:** ~11  
+**Total files causing confusion:** 2 (leverage-step duplicates)  
+**Storage savings:** ~35% reduction from copilot/ cleanup
+
+---
+
+## 📋 REVISED FULL REORGANIZATION PLAN
+
+### Phase 1: Restructure copilot/ Root
+
+```
+copilot/
+├─ README.md (MASTER INDEX - Start here)
+├─ ACTIVE-GOVERNANCE/
+│  ├─ AUTOPILOT_EXECUTION_CHECKLIST.md (CRITICAL)
+│  ├─ BRANCHES_STATUS.md
+│  ├─ ALLOWED_COMMANDS.md
+│  ├─ FORBIDDEN_COMMANDS.md
+│  ├─ PENDING_COMMANDS.md
+│  └─ user-action-notes.md
+├─ REFERENCE/
+│  ├─ COMMAND_APPROVAL_MATRIX.md
+│  ├─ PC_ID_AND_SHARED_BRANCHES.md
+│  ├─ MULTI_AGENT_QUICK_START.md
+│  └─ BRANCH_STRATEGY_REFERENCE.md
+├─ autopilot/
+│  ├─ README.md (rewrite: link AUTOPILOT_EXECUTION_CHECKLIST)
+│  └─ git-workflow-rules.md
+├─ protocols/ (keep as-is)
+├─ prompts/ (keep as-is)
+├─ plans/ (keep as-is)
+├─ explanations/ (keep as-is)
+├─ templates/ (keep as-is)
+├─ agents/ (keep as-is)
+├─ archived/
+│  ├─ research/ (COPILOT_VSCODE_*, COMMAND_ANALYSIS_*, etc.)
+│  ├─ obsolete/ (vscode-askQuestions-enforcement.md)
+│  └─ sessions/ (SESSION_COMPLETION_SUMMARY.md)
+└─ .gitkeep (in archived subdirs)
+```
+
+### Phase 2: Update Protocol Duplicates
+
+In copilot/protocols/:
+1. **Keep:** vscode-askQuestions-leverage-step.md (add enforcement meta section at top)
+2. **Archive:** vscode-askQuestions-enforcement.md (explain why in commit)
+
+### Phase 3: Master Index
+
+Create/enhance copilot/README.md with navigation:
+```markdown
+# Copilot Framework Index
+
+## 🚀 START HERE
+- [Autopilot Workflow](./ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md)
+- [Quick Start](./REFERENCE/MULTI_AGENT_QUICK_START.md)
+
+## 📊 ACTIVE GOVERNANCE (Required for Autopilot)
+- [Branch Status Registry](./ACTIVE-GOVERNANCE/BRANCHES_STATUS.md)
+- [Command Whitelist](./ACTIVE-GOVERNANCE/ALLOWED_COMMANDS.md)
+- [Command Blacklist](./ACTIVE-GOVERNANCE/FORBIDDEN_COMMANDS.md)
+- [Pending Commands Review](./ACTIVE-GOVERNANCE/PENDING_COMMANDS.md)
+- [User Action Notes](./ACTIVE-GOVERNANCE/user-action-notes.md)
+
+## 📚 REFERENCE DOCS
+- [Branch Strategy & PC_ID](./REFERENCE/PC_ID_AND_SHARED_BRANCHES.md)
+- [Command Governance Matrix](./REFERENCE/COMMAND_APPROVAL_MATRIX.md)
+
+## 🛠️ PROTOCOLS & WORKFLOWS
+- [Protocols](./protocols/) - Step-by-step procedures
+- [Prompts](./prompts/) - Reusable checklists and templates
+- [Skills](../.github/skills/) - Domain-specific workflows
+
+## 📈 PLANNING & EXPLANATION
+- [Plans](./plans/) - Multi-step work planning
+- [Explanations](./explanations/) - Code pattern documentation
+
+## 🗂️ ARCHIVED
+- [Research Papers](./archived/research/) - Historic analysis documents
+- [Session Records](./archived/sessions/) - Ephemeral session logs
+```
+
+### Phase 4: Update References
+
+Update in `.github/copilot-instructions.md` and AGENTS.md:
+- Change links from `copilot/BRANCHES_STATUS.md` → `copilot/ACTIVE-GOVERNANCE/BRANCHES_STATUS.md`
+- Remove all references to archived research files
+- Remove reference to vscode-askQuestions-enforcement.md (keep only leverage-step)
+- Add link to copilot/README.md as "Start here"
+
+---
+
+## 🎯 EXPECTED OUTCOME
