@@ -1,6 +1,7 @@
-// src/pages/Topic/components/CategorizFileModal.jsx
+// src/pages/Topic/components/CategorizFileModal.tsx
 import React, { useState } from 'react';
 import { X, BookMarked, Dumbbell, FlaskConical } from 'lucide-react';
+import BaseModal from '../../../components/ui/BaseModal';
 
 const CategorizFileModal = ({
     isOpen,
@@ -17,32 +18,37 @@ const CategorizFileModal = ({
         setCategory('material-teorico');
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full animate-in fade-in scale-in duration-200">
-                <div className="p-8">
-                    {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                            Categorizar Archivo
-                        </h3>
-                        <button
-                            onClick={onClose}
-                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                        >
-                            <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
-                        </button>
-                    </div>
+        <BaseModal
+            isOpen={isOpen}
+            onClose={onClose}
+            closeOnBackdropClick={false}
+            rootClassName="fixed inset-0 z-50"
+            backdropClassName="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            contentWrapperClassName="relative z-10 flex min-h-full items-center justify-center p-4"
+            contentClassName="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl max-w-md w-full animate-in fade-in scale-in duration-200"
+        >
+            <div className="p-8">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                        Categorizar Archivo
+                    </h3>
+                    <button
+                        onClick={onClose}
+                        className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                    >
+                        <X className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+                    </button>
+                </div>
 
-                    {/* File Name */}
-                    <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 truncate">
-                        <span className="font-medium text-slate-900 dark:text-white">{fileName}</span>
-                    </p>
+                {/* File Name */}
+                <p className="text-sm text-slate-600 dark:text-slate-400 mb-6 truncate">
+                    <span className="font-medium text-slate-900 dark:text-white">{fileName}</span>
+                </p>
 
-                    {/* Category Options */}
-                    <div className="space-y-3 mb-8">
+                {/* Category Options */}
+                <div className="space-y-3 mb-8">
                         {/* Material teórico */}
                         <button
                             onClick={() => setCategory('material-teorico')}
@@ -120,28 +126,27 @@ const CategorizFileModal = ({
                                 </p>
                             </div>
                         </button>
-                    </div>
+                </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex gap-3">
-                        <button
-                            onClick={onClose}
-                            disabled={isLoading}
-                            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            onClick={handleSubmit}
-                            disabled={isLoading || !category}
-                            className="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors disabled:opacity-50"
-                        >
-                            {isLoading ? 'Guardando...' : 'Confirmar'}
-                        </button>
-                    </div>
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                    <button
+                        onClick={onClose}
+                        disabled={isLoading}
+                        className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isLoading || !category}
+                        className="flex-1 px-4 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition-colors disabled:opacity-50"
+                    >
+                        {isLoading ? 'Guardando...' : 'Confirmar'}
+                    </button>
                 </div>
             </div>
-        </div>
+        </BaseModal>
     );
 };
 

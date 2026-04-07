@@ -23,6 +23,8 @@ CRITICAL COPILOT DIRECTIVE: before creating any new UI element (modal, overlay, 
   - src/components/modals/DeleteModal.tsx
   - src/components/modals/FolderDeleteModal.tsx
   - src/components/modals/SudoModal.tsx
+  - src/pages/Topic/components/CategorizFileModal.tsx
+  - src/pages/Profile/modals/EditProfileModal.tsx
   - src/pages/Home/components/FolderManager.tsx
   - src/pages/Subject/modals/SubjectFormModal.tsx
 
@@ -93,8 +95,7 @@ Rule: do not assume these exist. Create and register only when implemented.
 
 ## Priority Migration Queue
 1. Modal wrapper migration to BaseModal or DashboardOverlayShell:
-   - src/pages/Topic/components/CategorizFileModal.tsx
-   - src/pages/Profile/modals/EditProfileModal.tsx
+  - Completed for priority targets (2026-04-07)
 2. Three-dots menu portal extraction:
   - Completed for list/card modules (2026-04-07)
 3. Broad button/form primitive extraction after modal/menu waves stabilize.

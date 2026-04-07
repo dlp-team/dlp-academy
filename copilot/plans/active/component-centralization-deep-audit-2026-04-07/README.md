@@ -4,7 +4,7 @@
 ## Status
 - Lifecycle: active
 - Overall status: IN_PROGRESS
-- Current phase: Phase 03 (in progress)
+- Current phase: Phase 05 (next execution block)
 - Owner: Copilot + human reviewer
 
 ## Problem Statement
@@ -70,12 +70,18 @@ The repository now has a Component Registry, but the codebase still contains rep
     - [src/components/modules/FolderCard/FolderCardBody.tsx](../../../../src/components/modules/FolderCard/FolderCardBody.tsx)
   - Added unit tests: [tests/unit/utils/menuPositionUtils.test.js](../../../../tests/unit/utils/menuPositionUtils.test.js)
   - Added component tests: [tests/unit/components/ContextActionMenuPortal.test.jsx](../../../../tests/unit/components/ContextActionMenuPortal.test.jsx)
-- In progress: Phase 03 modal centralization wave.
+- Completed: Phase 03 modal centralization wave.
   - Added shared shell: [src/components/modals/shared/AIGenerationModalShell.tsx](../../../../src/components/modals/shared/AIGenerationModalShell.tsx)
-  - Migrated wrappers in:
+  - Migrated AI modal wrappers in:
     - [src/components/modals/CreateContentModal.tsx](../../../../src/components/modals/CreateContentModal.tsx)
     - [src/components/modals/QuizModal.tsx](../../../../src/components/modals/QuizModal.tsx)
-  - Added tests: [tests/unit/components/AIGenerationModalShell.test.jsx](../../../../tests/unit/components/AIGenerationModalShell.test.jsx)
+  - Migrated remaining priority wrappers to BaseModal:
+    - [src/pages/Topic/components/CategorizFileModal.tsx](../../../../src/pages/Topic/components/CategorizFileModal.tsx)
+    - [src/pages/Profile/modals/EditProfileModal.tsx](../../../../src/pages/Profile/modals/EditProfileModal.tsx)
+  - Added/updated tests:
+    - [tests/unit/components/AIGenerationModalShell.test.jsx](../../../../tests/unit/components/AIGenerationModalShell.test.jsx)
+    - [tests/unit/pages/topic/CategorizFileModal.test.jsx](../../../../tests/unit/pages/topic/CategorizFileModal.test.jsx)
+    - [tests/unit/pages/profile/EditProfileModal.test.jsx](../../../../tests/unit/pages/profile/EditProfileModal.test.jsx)
 
 ## Validation Strategy
 - Each implementation wave:

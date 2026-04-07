@@ -20,7 +20,7 @@ Migrate high-impact custom modal wrappers to shared modal shells while preservin
 - Target modals use shared shell abstractions and pass regression checks.
 
 ## Status
-IN_PROGRESS
+COMPLETED
 
 ## Progress (2026-04-07)
 - Added shared shell: [src/components/modals/shared/AIGenerationModalShell.tsx](../../../../../src/components/modals/shared/AIGenerationModalShell.tsx)
@@ -33,6 +33,17 @@ IN_PROGRESS
   - `npm run lint`
   - `npx tsc --noEmit`
 
+## Progress (2026-04-07 - completion checkpoint)
+- Migrated remaining priority targets to [BaseModal](../../../../../src/components/ui/BaseModal.tsx):
+  - [src/pages/Topic/components/CategorizFileModal.tsx](../../../../../src/pages/Topic/components/CategorizFileModal.tsx)
+  - [src/pages/Profile/modals/EditProfileModal.tsx](../../../../../src/pages/Profile/modals/EditProfileModal.tsx)
+- Added and updated tests:
+  - [tests/unit/pages/topic/CategorizFileModal.test.jsx](../../../../../tests/unit/pages/topic/CategorizFileModal.test.jsx)
+  - [tests/unit/pages/profile/EditProfileModal.test.jsx](../../../../../tests/unit/pages/profile/EditProfileModal.test.jsx)
+- Validation checkpoint passed:
+  - `npm run test -- tests/unit/pages/topic/CategorizFileModal.test.jsx tests/unit/pages/profile/EditProfileModal.test.jsx tests/unit/components/AIGenerationModalShell.test.jsx`
+  - `npm run lint`
+  - `npx tsc --noEmit`
+
 ## Remaining Targets for Phase Exit
-- [src/pages/Topic/components/CategorizFileModal.tsx](../../../../../src/pages/Topic/components/CategorizFileModal.tsx)
-- [src/pages/Profile/modals/EditProfileModal.tsx](../../../../../src/pages/Profile/modals/EditProfileModal.tsx)
+- None (phase exit gate met).

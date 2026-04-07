@@ -38,6 +38,24 @@ describe('EditProfileModal', () => {
     global.URL.createObjectURL = vi.fn(() => 'blob:preview-image');
   });
 
+  it('does not close when the backdrop is clicked', () => {
+    const onClose = vi.fn();
+    const onSave = vi.fn();
+
+    render(
+      <EditProfileModal
+        isOpen
+        onClose={onClose}
+        initialData={baseInitialData}
+        onSave={onSave}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('base-modal-backdrop'));
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('closes on cancel without saving', () => {
     const onClose = vi.fn();
     const onSave = vi.fn();
