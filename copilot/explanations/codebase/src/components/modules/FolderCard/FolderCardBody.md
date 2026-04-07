@@ -1,5 +1,8 @@
 # FolderCardBody.jsx
 
+## Changelog
+- 2026-04-07: Replaced direct `createPortal` menu shell duplication with shared [ContextActionMenuPortal](../../shared/ContextActionMenuPortal.md) and centralized menu position calculations with [menuPositionUtils](../../shared/menuPositionUtils.md).
+
 ## Purpose
 - **Source file:** `src/components/modules/FolderCard/FolderCardBody.jsx`
 - **Last documented:** 2026-02-24
@@ -24,7 +27,7 @@
   - `useRef()` from `react` is called 1 time(s).
   - `useLayoutEffect()` from `react` is called 1 time(s).
   - `useState()` from `react` is called 1 time(s).
-  - `createPortal()` from `react-dom` is called 1 time(s).
+  - `computeMenuPosition()` from `../shared/menuPositionUtils` is called 1 time(s).
   - `getIconColor()` from `../../ui/SubjectIcon` is called 1 time(s).
   - `shouldShowEditUI()` from `../../../utils/permissionUtils` is called 1 time(s).
   - `shouldShowDeleteUI()` from `../../../utils/permissionUtils` is called 1 time(s).
@@ -33,10 +36,11 @@
 
 ## Imports and Dependencies
 - `react`: `React`, `useRef`, `useLayoutEffect`, `useState`
-- `react-dom`: `createPortal`
 - `lucide-react`: `Folder`, `MoreVertical`, `Edit2`, `Trash2`, `Share2`, `Users`, `ListTree`
 - `../../ui/SubjectIcon`: `SubjectIcon`, `getIconColor`
 - `../../../utils/permissionUtils`: `shouldShowEditUI`, `shouldShowDeleteUI`, `canEditItem`
+- `../shared/menuPositionUtils`: `computeMenuPosition`
+- `../shared/ContextActionMenuPortal`: `ContextActionMenuPortal`
 
 ## Example
 ```jsx

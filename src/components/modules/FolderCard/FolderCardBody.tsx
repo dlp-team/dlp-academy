@@ -1,11 +1,12 @@
 // src/components/modules/FolderCard/FolderCardBody.jsx
 import React, { useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { Folder, MoreVertical, Edit2, Trash2, Share2, Users, ListTree, RotateCcw } from 'lucide-react';
 import SubjectIcon from '../../ui/SubjectIcon';
 import { getIconColor } from '../../../utils/subjectColorUtils';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
 import { SHORTCUT_CARD_MENU_WIDTH } from '../shared/shortcutMenuConfig';
+import { computeMenuPosition } from '../shared/menuPositionUtils';
+import ContextActionMenuPortal from '../shared/ContextActionMenuPortal';
 
 const FolderCardBody = ({
     folder,
@@ -66,30 +67,18 @@ const FolderCardBody = ({
         if (!menuBtnRef.current || typeof window === 'undefined') return;
         const rect = menuBtnRef.current.getBoundingClientRect();
         const menuWidth = SHORTCUT_CARD_MENU_WIDTH * menuScale;
-        const estimatedMenuHeight = 48 * 3 * menuScale;
+        const menuHeight = 48 * 3 * menuScale;
 
-        const defaultLeft = rect.left;
-        const oppositeLeft = rect.right - menuWidth;
-        let left = defaultLeft;
-        if (left + menuWidth > window.innerWidth - MENU_MARGIN) {
-            left = oppositeLeft;
-        }
-        left = Math.min(
-            Math.max(left, MENU_MARGIN),
-            Math.max(MENU_MARGIN, window.innerWidth - menuWidth - MENU_MARGIN)
+        setMenuPos(
+            computeMenuPosition({
+                triggerRect: rect,
+                menuWidth,
+                menuHeight,
+                headerSafeTop: HEADER_SAFE_TOP,
+                menuMargin: MENU_MARGIN,
+                mode: 'card'
+            })
         );
-
-        const defaultTop = rect.bottom + 4;
-        const oppositeTop = rect.top - estimatedMenuHeight - 4;
-        let top = defaultTop;
-        if (top + estimatedMenuHeight > window.innerHeight - MENU_MARGIN) {
-            top = oppositeTop;
-        }
-        const maxTop = Math.max(HEADER_SAFE_TOP + MENU_MARGIN, window.innerHeight - estimatedMenuHeight - MENU_MARGIN);
-        setMenuPos({
-            top: Math.min(Math.max(top, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
-            left,
-        });
     };
     
     return (
@@ -210,20 +199,20 @@ const FolderCardBody = ({
                                 </button>
                             )}
 
-                            {/* Dropdown Menu rendered in a portal */}
-                            {activeMenu === folder.id && typeof window !== 'undefined' && createPortal(
-                                <div
-                                    className="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-colors"
-                                    style={{
-                                        position: 'fixed',
-                                        top: menuPos.top,
-                                        left: menuPos.left,
-                                        zIndex: 9999,
-                                        width: `${SHORTCUT_CARD_MENU_WIDTH * menuScale}px`,
-                                        transform: `scale(${menuScale})`,
-                                        transformOrigin: 'top left'
-                                    }}
-                                >
+                            {/* Dropdown Menu rendered via shared portal shell */}
+                            <ContextActionMenuPortal
+                                isOpen={activeMenu === folder.id}
+                                menuClassName="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-colors"
+                                menuStyle={{
+                                    position: 'fixed',
+                                    top: menuPos.top,
+                                    left: menuPos.left,
+                                    zIndex: 9999,
+                                    width: `${SHORTCUT_CARD_MENU_WIDTH * menuScale}px`,
+                                    transform: `scale(${menuScale})`,
+                                    transformOrigin: 'top left'
+                                }}
+                            >
                                     {(effectiveShowEditUI || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete || effectiveCanShareFromMenu) ? (
                                         <>
                                             {effectiveShowEditUI && (
@@ -259,9 +248,7 @@ const FolderCardBody = ({
                                     ) : (
                                         <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
                                     )}
-                                </div>,
-                                document.body
-                            )}
+                            </ContextActionMenuPortal>
                         </div>
                     )}
                 </div>

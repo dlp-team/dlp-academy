@@ -1,6 +1,7 @@
 # SubjectCardFront.jsx
 
 ## Changelog
+- **2026-04-07:** Replaced direct `createPortal` menu shell duplication with shared [ContextActionMenuPortal](../../shared/ContextActionMenuPortal.md) and centralized menu position calculations with [menuPositionUtils](../../shared/menuPositionUtils.md).
 - **2026-04-02:** Added top-left ended lifecycle bookmark badge rendering (`endedBadge`) for role-aware Home subject status visibility.
 - **2026-04-01:** Added subject completion menu action (`Marcar como completada` / `Marcar como activa`) and close-menu-on-toggle behavior.
 - **2026-03-12:** Added subject-menu action `Ir a Clases` (hidden for students) to open the subject modal directly on the classes tab.
@@ -30,7 +31,7 @@
   - `useState()` from `react` is called 1 time(s).
   - `useRef()` from `react` is called 1 time(s).
   - `useLayoutEffect()` from `react` is called 1 time(s).
-  - `createPortal()` from `react-dom` is called 1 time(s).
+  - `computeMenuPosition()` from `../shared/menuPositionUtils` is called 1 time(s).
   - `getIconColor()` from `../../ui/SubjectIcon` is called 2 time(s).
   - `shouldShowEditUI()` from `../../../utils/permissionUtils` is called 1 time(s).
   - `shouldShowDeleteUI()` from `../../../utils/permissionUtils` is called 1 time(s).
@@ -39,10 +40,11 @@
 
 ## Imports and Dependencies
 - `react`: `React`, `useState`, `useRef`, `useLayoutEffect`
-- `react-dom`: `createPortal`
 - `lucide-react`: `ChevronRight`, `MoreVertical`, `Edit2`, `Trash2`, `Share2`, `Users`
 - `../../ui/SubjectIcon`: `SubjectIcon`, `getIconColor`
 - `../../../utils/permissionUtils`: `shouldShowEditUI`, `shouldShowDeleteUI`, `canEditItem`
+- `../shared/menuPositionUtils`: `computeMenuPosition`
+- `../shared/ContextActionMenuPortal`: `ContextActionMenuPortal`
 
 ## Example
 ```jsx

@@ -1,6 +1,10 @@
 # SubjectListItem.jsx
 
 ## Changelog
+### 2026-04-07: Centralized menu portal and positioning logic
+- Replaced in-file `createPortal` shell and close-layer duplication with shared [ContextActionMenuPortal](../../shared/ContextActionMenuPortal.md).
+- Replaced in-file menu position calculations with shared [menuPositionUtils](../../shared/menuPositionUtils.md).
+
 ### 2026-04-02: Added role-aware ended lifecycle badges in list rows
 - Integrated shared lifecycle badge mapping for ended subjects directly in list title rows.
 - Keeps existing pass-shortcut badge precedence so shortcut completion status does not duplicate ended-state chips.
@@ -33,7 +37,7 @@
 ## Function Relations
 - **External calls used by this file:**
   - `useState()` from `react` is called 2 time(s).
-  - `createPortal()` from `react-dom` is called 1 time(s).
+  - `computeMenuPosition()` from `../shared/menuPositionUtils` is called 1 time(s).
   - `getIconColor()` from `../../ui/SubjectIcon` is called 1 time(s).
   - `shouldShowEditUI()` from `../../../utils/permissionUtils` is called 1 time(s).
   - `shouldShowDeleteUI()` from `../../../utils/permissionUtils` is called 1 time(s).
@@ -42,10 +46,11 @@
 
 ## Imports and Dependencies
 - `react`: `React`, `useState`
-- `react-dom`: `createPortal`
 - `lucide-react`: `ChevronRight`, `Edit2`, `Trash2`, `MoreVertical`, `Users`, `Share2`
 - `../../ui/SubjectIcon`: `SubjectIcon`, `getIconColor`
 - `../../../utils/permissionUtils`: `shouldShowEditUI`, `shouldShowDeleteUI`, `canEditItem`
+- `../shared/menuPositionUtils`: `computeMenuPosition`
+- `../shared/ContextActionMenuPortal`: `ContextActionMenuPortal`
 
 ## Example
 ```jsx

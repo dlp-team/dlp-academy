@@ -1,13 +1,14 @@
 // src/components/modules/ListItems/FolderListItem.jsx
 import React, { useState, useMemo, useRef } from 'react';
 import { ChevronRight, Folder, GripVertical, Users, MoreVertical, Edit2, Trash2, Share2, RotateCcw } from 'lucide-react';
-import { createPortal } from 'react-dom';
 import SubjectIcon from '../../ui/SubjectIcon';
 import ListViewItem from '../ListViewItem';
 import { useGhostDrag } from '../../../hooks/useGhostDrag';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem } from '../../../utils/permissionUtils';
 import { buildDragPayload, writeDragPayloadToDataTransfer, readDragPayloadFromDataTransfer } from '../../../utils/dragPayloadUtils';
 import { SHORTCUT_LIST_MENU_WIDTH } from '../shared/shortcutMenuConfig';
+import { computeMenuPosition } from '../shared/menuPositionUtils';
+import ContextActionMenuPortal from '../shared/ContextActionMenuPortal';
 import { withDarkGradientVariant } from '../../../utils/subjectConstants';
 
 const FolderListItem = ({ 
@@ -101,29 +102,19 @@ const FolderListItem = ({
     React.useEffect(() => {
         if (showMenu && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
-            const menu = { width: SHORTCUT_LIST_MENU_WIDTH * menuScale, height: 48 * 3 * menuScale };
-            const defaultLeft = rect.right - menu.width;
-            const oppositeLeft = rect.left;
-            let left = defaultLeft;
-            if (left < MENU_MARGIN) {
-                left = oppositeLeft;
-            }
-            left = Math.min(
-                Math.max(left, MENU_MARGIN),
-                Math.max(MENU_MARGIN, window.innerWidth - menu.width - MENU_MARGIN)
-            );
+            const menuWidth = SHORTCUT_LIST_MENU_WIDTH * menuScale;
+            const menuHeight = 48 * 3 * menuScale;
 
-            const defaultTop = rect.bottom - menu.height;
-            const oppositeTop = rect.bottom + 4;
-            let top = defaultTop;
-            if (top < HEADER_SAFE_TOP + MENU_MARGIN) {
-                top = oppositeTop;
-            }
-            const maxTop = Math.max(HEADER_SAFE_TOP + MENU_MARGIN, window.innerHeight - menu.height - MENU_MARGIN);
-            setMenuPos({
-                top: Math.min(Math.max(top, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
-                left
-            });
+            setMenuPos(
+                computeMenuPosition({
+                    triggerRect: rect,
+                    menuWidth,
+                    menuHeight,
+                    headerSafeTop: HEADER_SAFE_TOP,
+                    menuMargin: MENU_MARGIN,
+                    mode: 'list'
+                })
+            );
         }
     }, [showMenu, menuScale]);
 
@@ -393,25 +384,21 @@ const FolderListItem = ({
                             </button>
                         )}
                         {showMenu && (
-                            <>
-                                {typeof window !== 'undefined' && window.document && createPortal(
-                                    <>
-                                        <div 
-                                            className="fixed inset-x-0 bottom-0 z-[100]" 
-                                            style={{ top: `${HEADER_SAFE_TOP}px` }}
-                                            onClick={e => { e.stopPropagation(); setShowMenu(false); }}
-                                        />
-                                        <div
-                                            className="fixed z-[101] bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-none"
-                                            style={{
-                                                top: menuPos.top + 'px',
-                                                left: menuPos.left + 'px',
-                                                width: `${SHORTCUT_LIST_MENU_WIDTH * menuScale}px`,
-                                                transform: `scale(${menuScale})`,
-                                                transformOrigin: 'bottom right',
-                                                pointerEvents: 'auto'
-                                            }}
-                                        >
+                            <ContextActionMenuPortal
+                                isOpen={showMenu}
+                                showCloseLayer={true}
+                                closeLayerTop={HEADER_SAFE_TOP}
+                                onRequestClose={() => setShowMenu(false)}
+                                menuClassName="fixed z-[101] bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-none"
+                                menuStyle={{
+                                    top: menuPos.top + 'px',
+                                    left: menuPos.left + 'px',
+                                    width: `${SHORTCUT_LIST_MENU_WIDTH * menuScale}px`,
+                                    transform: `scale(${menuScale})`,
+                                    transformOrigin: 'bottom right',
+                                    pointerEvents: 'auto'
+                                }}
+                            >
                                             {(effectiveShowEditUI || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete || effectiveCanShareFromMenu) ? (
                                                 <>
                                                     {effectiveShowEditUI && (
@@ -466,11 +453,7 @@ const FolderListItem = ({
                                             ) : (
                                                 <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
                                             )}
-                                        </div>
-                                    </>,
-                                    window.document.body
-                                )}
-                            </>
+                            </ContextActionMenuPortal>
                         )}
                     </div>
                     

@@ -1,6 +1,10 @@
 # FolderListItem.jsx
 
 ## Changelog
+### 2026-04-07: Centralized menu portal and positioning logic
+- Replaced in-file `createPortal` shell and close-layer duplication with shared [ContextActionMenuPortal](../../shared/ContextActionMenuPortal.md).
+- Replaced in-file menu position calculations with shared [menuPositionUtils](../../shared/menuPositionUtils.md).
+
 ### 2026-04-05: Recursive selection-context propagation
 - Added optional row `dimmingClass` prop so parent list wrappers can dim only the current row (not the entire subtree wrapper).
 - Propagates `selectMode`, `selectedItemKeys`, and `enableSelectionDimming` to recursive `ListViewItem` children.
@@ -59,17 +63,17 @@
   - `useState()` from `react` is called 5 time(s).
   - `useMemo()` from `react` is called 1 time(s).
   - `useRef()` from `react` is called 1 time(s).
-  - `createPortal()` from `react-dom` is called 1 time(s).
   - `useGhostDrag()` from `../../../hooks/useGhostDrag` is called 1 time(s).
 - Internal function-to-function calls are minimal or implicit through JSX/event handlers.
 
 ## Imports and Dependencies
 - `react`: `React`, `useState`, `useMemo`, `useRef`, `useLayoutEffect`
 - `lucide-react`: `ChevronRight`, `Folder`, `GripVertical`, `Users`, `MoreVertical`, `Edit2`, `Trash2`, `Share2`
-- `react-dom`: `createPortal`
 - `../../ui/SubjectIcon`: `SubjectIcon`
 - `../ListViewItem`: `ListViewItem`
 - `../../../hooks/useGhostDrag`: `useGhostDrag`
+- `../shared/menuPositionUtils`: `computeMenuPosition`
+- `../shared/ContextActionMenuPortal`: `ContextActionMenuPortal`
 
 ## Example
 ```jsx

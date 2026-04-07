@@ -15,31 +15,26 @@
 ### 2. No Duplicate Components
 - Never create a new component if one exists that does the same thing
 - "Same thing" includes:
-  - All overlays → Use `BaseOverlay`
-  - Primary actions → Use `PrimaryButton`
-  - Secondary actions → Use `SecondaryButton`
-  - Destructive actions → Use `DangerButton`
-  - Text inputs → Use `TextInput`
+  - Dashboard/page overlays → Use `DashboardOverlayShell` when possible
+  - Low-level modal wrapping → Use `BaseModal`
+  - Menu positioning logic → Use `menuPositionUtils`
 
 ### 3. No Custom Overlay HTML
 - **BANNED:** Creating custom `<div className="fixed inset-0 bg-black/50">` overlays
-- **REQUIRED:** Use `BaseOverlay` component
+- **REQUIRED:** Use `BaseModal` or `DashboardOverlayShell` (depending on abstraction level)
 - **Benefit:** Consistent styling, accessibility, keyboard handling, close behavior
 
 ### 4. Overlay Props Standardization
-When using `BaseOverlay`:
+When using `DashboardOverlayShell` (or `BaseModal` for low-level cases):
 ```jsx
 // ✅ GOOD - Correct props
-<BaseOverlay
+<DashboardOverlayShell
   isOpen={isOpen}
   onClose={handleClose}
-  title="Crear Asignatura"           // Spanish only
-  icon={Plus}                         // Lucide icon
-  showFooter={true}
-  onSubmit={handleSave}
+  maxWidth="lg"
 >
   <YourForm />
-</BaseOverlay>
+</DashboardOverlayShell>
 
 // ❌ BAD - Custom HTML
 <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
@@ -50,15 +45,15 @@ When using `BaseOverlay`:
 ```
 
 ### 5. Button Component Standardization
-Use the appropriate button for each action type:
+Current state:
 ```jsx
-// ✅ GOOD
-<PrimaryButton onClick={handleSave}>Guardar</PrimaryButton>
-<SecondaryButton onClick={handleCancel}>Cancelar</SecondaryButton>
-<DangerButton onClick={handleDelete}>Eliminar</DangerButton>
+// ✅ GOOD (current codebase)
+// Reuse existing shared modal/menu primitives first.
+// For buttons, keep behavior and style consistent with local feature patterns
+// until dedicated shared button primitives are implemented and registered.
 
 // ❌ BAD - Custom button styles
-<button className="bg-blue-600 text-white px-4 py-2 rounded">Guardar</button>
+<button className="...">Guardar</button> // duplicated across many files without a migration plan
 ```
 
 ### 6. Text-Only, No Emojis
@@ -160,18 +155,16 @@ function CreateSubject() {
   );
 }
 
-// ✅ GOOD - Use BaseOverlay
+// ✅ GOOD - Use existing shared shell
 function CreateSubject() {
   return (
-    <BaseOverlay
+    <DashboardOverlayShell
       isOpen={isOpen}
       onClose={handleClose}
-      title="Crear Asignatura"
-      showFooter={true}
-      onSubmit={handleSave}
+      maxWidth="lg"
     >
       <SubjectForm />
-    </BaseOverlay>
+    </DashboardOverlayShell>
   );
 }
 ```

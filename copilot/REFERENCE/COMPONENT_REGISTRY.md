@@ -1,194 +1,110 @@
-# 📚 UI Component Registry
+<!-- copilot/REFERENCE/COMPONENT_REGISTRY.md -->
+# UI Component Registry
 
-**CRITICAL COPILOT DIRECTIVE:** BEFORE creating any new UI element (modal, overlay, button, dropdown, card, form), you MUST check this registry. If a base component exists, you MUST use it or extend it. If you create a new highly reusable component, you MUST add it to this file immediately after creation.
+CRITICAL COPILOT DIRECTIVE: before creating any new UI element (modal, overlay, button, dropdown, card, form), check this registry first. If a base component exists, use or extend it. If you create a new reusable component, document it here immediately.
 
----
+## Registry Rules
+1. Centralization first: check this file before writing new UI code.
+2. Reuse over rebuild: do not duplicate modal/menu wrappers that already exist.
+3. Active vs planned status is strict:
+   - Active: safe to import and use now.
+   - Planned: do not import yet; implement first.
+4. Keep props and usage examples aligned with real code.
+5. All visible UI text must be in Spanish.
+6. Use icons, never emojis.
 
-## 🎯 Registry Rules
-1. **Centralization First** - Check this registry before writing ANY new UI code.
-2. **Reuse Over Rebuild** - Use existing components instead of creating custom HTML/Tailwind wrappers.
-3. **Immediate Documentation** - When you create a new generic UI component, document it here immediately.
-4. **Props Accuracy** - Keep all props lists current and remove deprecated props immediately.
-5. **Spanish Text Only** - All visible text in components must be in Spanish.
-6. **Icons Over Emojis** - Use Lucide React or similar icon libraries; NEVER use emojis in UI.
+## Overlays and Modals
 
----
+### BaseModal
+- File: src/components/ui/BaseModal.tsx
+- Status: Active
+- Purpose: low-level modal primitive (backdrop, content wrapper, close guard hooks).
+- Current adopters:
+  - src/components/modals/DeleteModal.tsx
+  - src/components/modals/FolderDeleteModal.tsx
+  - src/components/modals/SudoModal.tsx
+  - src/pages/Home/components/FolderManager.tsx
+  - src/pages/Subject/modals/SubjectFormModal.tsx
 
-## 🔲 Overlays & Modals
+### DashboardOverlayShell
+- File: src/components/ui/DashboardOverlayShell.tsx
+- Status: Active
+- Purpose: higher-level dashboard overlay shell on top of BaseModal with width presets and unsaved-changes guard.
+- Current adopters:
+  - src/pages/Home/modals/SubjectModal.tsx
+  - src/pages/Home/modals/EditSubjectModal.tsx
+  - src/pages/InstitutionAdminDashboard/components/AddTeacherModal.tsx
+  - src/pages/InstitutionAdminDashboard/components/CsvImportWorkflowModal.tsx
+  - src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx
+  - src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx
 
-### `BaseOverlay`
-- **File:** `src/components/ui/BaseOverlay.jsx`
-- **Status:** ✅ Active (foundational component)
-- **Purpose:** Unified wrapper for ALL overlays (Create, Edit, Delete, Options menus)
-- **Features:**
-  - Dark semi-transparent backdrop (click-outside-to-close)
-  - Centered white container with rounded corners
-  - Header with optional icon and title
-  - Close button (X icon) in top-right
-  - Optional footer for action buttons
-  - ESC key to close
-  - ENTER key to submit (configurable)
-- **Props:**
-  - `isOpen` (boolean, required) - Controls visibility
-  - `onClose` (function, required) - Triggered when clicking outside, hitting ESC, or clicking X
-  - `title` (string, required) - Header text (Spanish)
-  - `children` (ReactNode, required) - Main content/form
-  - `icon` (Lucide React Icon, optional) - Icon displayed next to title
-  - `onSubmit` (function, optional) - Callback for ENTER key or submit action
-  - `submitText` (string, optional) - Custom submit button text (default: "Guardar")
-  - `cancelText` (string, optional) - Custom cancel button text (default: "Cancelar")
-  - `showFooter` (boolean, optional) - Show action buttons footer (default: false)
-  - `isLoading` (boolean, optional) - Disable buttons during submission (default: false)
-- **Example Usage:**
-  ```jsx
-  <BaseOverlay
-    isOpen={isCreateOpen}
-    onClose={() => setIsCreateOpen(false)}
-    title="Crear Asignatura"
-    icon={Plus}
-    showFooter={true}
-    onSubmit={handleCreateSubject}
-  >
-    <SubjectForm />
-  </BaseOverlay>
-  ```
-- **DO USE FOR:**
-  - Create forms (subjects, courses, classes)
-  - Edit/modify dialogs
-  - Three-dot menu overlays
-  - Delete confirmation dialogs
-  - Detail view modals
-- **DON'T USE FOR:**
-  - Alerts/toasts (use a dedicated Alert component)
-  - Dropdowns (use Menu component)
-  - Inline forms on pages
+### BaseOverlay
+- File: planned (not implemented)
+- Status: Planned
+- Purpose: optional future unified API alias for modal wrappers.
+- Note: do not import until implementation exists.
 
----
+## Menus and Action Overlays
 
-## 🔘 Buttons & Inputs
+### shortcutMenuConfig
+- File: src/components/modules/shared/shortcutMenuConfig.ts
+- Status: Active
+- Purpose: shared width constants for card/list shortcut menus.
 
-### `PrimaryButton`
-- **File:** `src/components/ui/PrimaryButton.jsx`
-- **Status:** ✅ Active
-- **Purpose:** Main action button (create, save, submit)
-- **Props:**
-  - `children` (ReactNode, required) - Button text
-  - `onClick` (function, required) - Click handler
-  - `disabled` (boolean, optional) - Disable state
-  - `isLoading` (boolean, optional) - Show loading spinner
-  - `className` (string, optional) - Additional Tailwind classes
-- **Example:** `<PrimaryButton onClick={handleSave}>Guardar</PrimaryButton>`
+### menuPositionUtils
+- File: src/components/modules/shared/menuPositionUtils.ts
+- Status: Active
+- Purpose: shared menu positioning logic for list/card context menus.
+- Current adopters:
+  - src/components/modules/ListItems/SubjectListItem.tsx
+  - src/components/modules/ListItems/FolderListItem.tsx
 
-### `SecondaryButton`
-- **File:** `src/components/ui/SecondaryButton.jsx`
-- **Status:** ✅ Active
-- **Purpose:** Secondary action button (cancel, close, back)
-- **Props:** Same as PrimaryButton
-- **Example:** `<SecondaryButton onClick={handleCancel}>Cancelar</SecondaryButton>`
+### ContextActionMenuPortal
+- File: planned (not implemented)
+- Status: Planned
+- Purpose: future shared portal shell for three-dots menus.
 
-### `DangerButton`
-- **File:** `src/components/ui/DangerButton.jsx`
-- **Status:** ✅ Active
-- **Purpose:** Destructive action (delete, remove)
-- **Props:** Same as PrimaryButton
-- **Example:** `<DangerButton onClick={handleDelete}>Eliminar</DangerButton>`
+## Buttons and Inputs
 
----
+No generic button primitives are active yet in src/components/ui.
 
-## 📋 Forms & Inputs
+### Planned primitives
+- PrimaryButton (planned)
+- SecondaryButton (planned)
+- DangerButton (planned)
+- FormField (planned)
 
-### `FormField`
-- **File:** `src/components/ui/FormField.jsx`
-- **Status:** ✅ Active
-- **Purpose:** Wrapper for form inputs with label and error message
-- **Props:**
-  - `label` (string, optional) - Field label (Spanish)
-  - `error` (string, optional) - Error message (Spanish)
-  - `children` (ReactNode, required) - Input element
-  - `required` (boolean, optional) - Show required indicator
-- **Example:**
-  ```jsx
-  <FormField label="Nombre de Asignatura" error={errors.name}>
-    <input type="text" ... />
-  </FormField>
-  ```
+Rule: do not assume these exist. Create and register only when implemented.
 
-### `TextInput`
-- **File:** `src/components/ui/TextInput.jsx`
-- **Status:** ✅ Active
-- **Purpose:** Standardized text input field
-- **Props:**
-  - `label` (string, optional) - Field label (Spanish)
-  - `placeholder` (string, optional) - Placeholder text (Spanish)
-  - `value` (string, required)
-  - `onChange` (function, required)
-  - `error` (string, optional) - Error message
-  - `required` (boolean, optional)
-  - `disabled` (boolean, optional)
+## Priority Migration Queue
+1. Modal wrapper migration to BaseModal or DashboardOverlayShell:
+   - src/components/modals/CreateContentModal.tsx
+   - src/components/modals/QuizModal.tsx
+   - src/pages/Topic/components/CategorizFileModal.tsx
+   - src/pages/Profile/modals/EditProfileModal.tsx
+2. Three-dots menu portal extraction:
+   - src/components/modules/SubjectCard/SubjectCardFront.tsx
+   - src/components/modules/FolderCard/FolderCardBody.tsx
+3. Broad button/form primitive extraction after modal/menu waves stabilize.
 
----
+## Adding New Components
+When creating a reusable component:
+1. Place it in the correct shared location (usually src/components/ui or src/components/modules/shared).
+2. Add deterministic tests under tests/unit.
+3. Register it here with status, purpose, props, and adopters.
+4. Update related instruction files if adoption must be mandatory.
 
-## 📄 Cards & Layouts
+## Quick Lookup
+| Feature | Use this now | Status |
+|---|---|---|
+| Generic modal primitive | BaseModal | Active |
+| Dashboard modal shell | DashboardOverlayShell | Active |
+| Menu positioning | menuPositionUtils | Active |
+| Unified three-dots portal shell | ContextActionMenuPortal | Planned |
+| Generic primary/secondary/danger buttons | Not implemented yet | Planned |
 
-### `CardContainer`
-- **File:** `src/components/ui/CardContainer.jsx`
-- **Status:** ✅ Active
-- **Purpose:** Standard card wrapper for content grouping
-- **Props:**
-  - `children` (ReactNode, required) - Card content
-  - `title` (string, optional) - Card header
-  - `icon` (Lucide React Icon, optional) - Header icon
-  - `className` (string, optional) - Additional classes
-- **Example:**
-  ```jsx
-  <CardContainer title="Detalles" icon={Info}>
-    {content}
-  </CardContainer>
-  ```
-
----
-
-## ⚠️ Deprecated / Do Not Use
-
-*None currently. Deprecated components will be listed here with migration paths.*
-
----
-
-## 🚀 Adding New Components
-
-When creating a new reusable UI component:
-
-1. **Create the component** in `src/components/ui/` (or appropriate category)
-2. **Add it to this registry** with:
-   - File path
-   - Status (✅ Active)
-   - Purpose (one sentence)
-   - List of props with types
-   - Usage example
-   - DO/DON'T usage guidelines
-3. **Update the rule in copilot-instructions.md** if this is a game-changing component
-4. **Add test coverage** in `tests/unit/components/`
-
----
-
-## 📌 Quick Lookup by Feature
-
-| Feature | Component | Use Case |
-|---------|-----------|----------|
-| Create/Edit Dialog | `BaseOverlay` | All forms |
-| Primary Action | `PrimaryButton` | Save, Submit, Create |
-| Secondary Action | `SecondaryButton` | Cancel, Back, Close |
-| Destructive Action | `DangerButton` | Delete, Remove |
-| Text Input | `TextInput` | Form fields |
-| Form Grouping | `FormField` | Label + Input + Error |
-| Content Card | `CardContainer` | Grouping related content |
-
----
-
-## 🔄 Registry Maintenance
-
-- **Last Updated:** 2026-04-07
-- **Maintainer:** GitHub Copilot
-- **Review Cycle:** Every month or after major refactors
-- **Deprecation Policy:** Components marked deprecated get 2 sprint cycles before removal
+## Registry Maintenance
+- Last Updated: 2026-04-07
+- Maintainer: GitHub Copilot
+- Review Trigger: after every UI centralization wave
 

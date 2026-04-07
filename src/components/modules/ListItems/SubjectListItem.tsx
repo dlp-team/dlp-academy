@@ -1,11 +1,12 @@
 // src/components/modules/ListItems/SubjectListItem.jsx
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
 import { ChevronRight, Edit2, Trash2, MoreVertical, Users , Share2, School, CircleCheckBig } from 'lucide-react';
 import SubjectIcon from '../../ui/SubjectIcon';
 import { getIconColor } from '../../../utils/subjectColorUtils';
 import { shouldShowEditUI, shouldShowDeleteUI, canEdit as canEditItem, getPermissionLevel, isShortcutItem, getNormalizedRole } from '../../../utils/permissionUtils';
 import { SHORTCUT_LIST_MENU_WIDTH } from '../shared/shortcutMenuConfig';
+import { computeMenuPosition } from '../shared/menuPositionUtils';
+import ContextActionMenuPortal from '../shared/ContextActionMenuPortal';
 import { withDarkGradientVariant } from '../../../utils/subjectConstants';
 import { getEndedSubjectBadge } from '../../../utils/academicYearLifecycleUtils';
 
@@ -75,29 +76,19 @@ const SubjectListItem = ({
     React.useEffect(() => {
         if (showMenu && menuBtnRef.current) {
             const rect = menuBtnRef.current.getBoundingClientRect();
-            const menu = { width: SHORTCUT_LIST_MENU_WIDTH * menuScale, height: 48 * 3 * menuScale };
-            const defaultLeft = rect.right - menu.width;
-            const oppositeLeft = rect.left;
-            let left = defaultLeft;
-            if (left < MENU_MARGIN) {
-                left = oppositeLeft;
-            }
-            left = Math.min(
-                Math.max(left, MENU_MARGIN),
-                Math.max(MENU_MARGIN, window.innerWidth - menu.width - MENU_MARGIN)
-            );
+            const menuWidth = SHORTCUT_LIST_MENU_WIDTH * menuScale;
+            const menuHeight = 48 * 3 * menuScale;
 
-            const defaultTop = rect.bottom - menu.height;
-            const oppositeTop = rect.bottom + 4;
-            let top = defaultTop;
-            if (top < HEADER_SAFE_TOP + MENU_MARGIN) {
-                top = oppositeTop;
-            }
-            const maxTop = Math.max(HEADER_SAFE_TOP + MENU_MARGIN, window.innerHeight - menu.height - MENU_MARGIN);
-            setMenuPos({
-                top: Math.min(Math.max(top, HEADER_SAFE_TOP + MENU_MARGIN), maxTop),
-                left
-            });
+            setMenuPos(
+                computeMenuPosition({
+                    triggerRect: rect,
+                    menuWidth,
+                    menuHeight,
+                    headerSafeTop: HEADER_SAFE_TOP,
+                    menuMargin: MENU_MARGIN,
+                    mode: 'list'
+                })
+            );
         }
     }, [showMenu, menuScale]);
 
@@ -229,25 +220,21 @@ const SubjectListItem = ({
                     )}
 
                     {showMenu && (
-                        <>
-                        {typeof window !== 'undefined' && window.document && createPortal(
-                            <>
-                                <div 
-                                    className="fixed inset-x-0 bottom-0 z-[100]" 
-                                    style={{ top: `${HEADER_SAFE_TOP}px` }}
-                                    onClick={(e: any) => { e.stopPropagation(); setShowMenu(false); }}
-                                />
-                                <div
-                                    className="fixed z-[101] bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-none"
-                                    style={{
-                                        top: menuPos.top + 'px',
-                                        left: menuPos.left + 'px',
-                                        width: `${SHORTCUT_LIST_MENU_WIDTH * menuScale}px`,
-                                        transform: `scale(${menuScale})`,
-                                        transformOrigin: 'bottom right',
-                                        pointerEvents: 'auto'
-                                    }}
-                                >
+                        <ContextActionMenuPortal
+                            isOpen={showMenu}
+                            showCloseLayer={true}
+                            closeLayerTop={HEADER_SAFE_TOP}
+                            onRequestClose={() => setShowMenu(false)}
+                            menuClassName="fixed z-[101] bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-1 animate-in fade-in zoom-in-95 duration-100 transition-none"
+                            menuStyle={{
+                                top: menuPos.top + 'px',
+                                left: menuPos.left + 'px',
+                                width: `${SHORTCUT_LIST_MENU_WIDTH * menuScale}px`,
+                                transform: `scale(${menuScale})`,
+                                transformOrigin: 'bottom right',
+                                pointerEvents: 'auto'
+                            }}
+                        >
                                     <button 
                                         onClick={(e: any) => { e.stopPropagation(); onEdit(subject); setShowMenu(false); }}
                                         disabled={!effectiveShowEditUI}
@@ -310,11 +297,7 @@ const SubjectListItem = ({
                                     {!effectiveShowEditUI && !effectiveCanShareFromMenu && !canOpenClassesFromMenu && !canToggleCompletion && !effectiveShowDeleteUI && !canShowShortcutVisibility && !canShowShortcutDelete && (
                                         <div className="p-2 text-xs text-center text-gray-500 dark:text-gray-400">Solo lectura</div>
                                     )}
-                                </div>
-                            </>,
-                            window.document.body
-                        )}
-                        </>
+                        </ContextActionMenuPortal>
                     )}
                 </div>
             </div>
