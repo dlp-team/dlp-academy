@@ -19,6 +19,7 @@
 | Branch Name | Owner | Type | Status | Pending-Delete Date | Summary | Related Plan | Key Files | Last Updated | Notes |
 |---|---|---|---|---|---|---|---|---|---|
 | feature/hector/original-plan-execution-2026-0407 | hector | feature | pending-delete | 2026-04-07 | Execute ORIGINAL_PLAN autopilot backlog with phased lossless delivery | copilot/plans/active/original-plan-autopilot-2026-04-07/ | src/pages/Home/**, src/pages/InstitutionAdminDashboard/**, src/pages/Topic/**, src/components/**, src/styles/** | 2026-04-07 | Merged into development on 2026-04-07; will be auto-deleted on 2026-04-14 |
+| gemini-opt | hector | feature | pending-delete | 2026-04-07 | Gemini optimization and documentation reorganization | N/A | copilot/** | 2026-04-07 | Legacy branch, pre-BRANCHES_STATUS; scheduled for auto-deletion on 2026-04-14 |
 
 ---
 
