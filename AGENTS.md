@@ -135,8 +135,14 @@ When operating in Autopilot mode, follow this exact loop until the task is compl
     - Question: "Continue with next phase or proceed to final verification?"
     - Response: **Autopilot must answer itself** and continue autonomously
     - **Repeat this loop until 100% of task is complete**
-11. **Final Verification**: When all work is done, run final verification via vscode/askQuestions with full checklist
-12. **Terminate**: Only call the `task_complete` tool when ALL above steps are 100% finished, all tests pass, and final verification confirms completion.
+11. **Branch Lifecycle Management** (REQUIRED DURING MERGE): When merging a feature branch into development:
+    - See: [`copilot/ACTIVE-GOVERNANCE/BRANCH_RETENTION_POLICY.md`](copilot/ACTIVE-GOVERNANCE/BRANCH_RETENTION_POLICY.md)
+    - After merge: Mark branch as `pending-delete` in BRANCHES_STATUS.md with today's date
+    - Merged branches are scheduled for auto-deletion after 7-day grace period
+    - If retention needed for audit/compliance, set Status to `retained` with documented reason
+    - Check for expired branches (> 7 days pending-delete) and delete them from both GitHub and local
+12. **Final Verification**: When all work is done, run final verification via vscode/askQuestions with full checklist
+13. **Terminate**: Only call the `task_complete` tool when ALL above steps are 100% finished, all tests pass, and final verification confirms completion.
 
 ### Premium Anti-Waste Enforcement (MANDATORY)
 1. **No micro-delivery responses**: If the user requested a complete plan or full implementation, do not stop after tiny edits.
