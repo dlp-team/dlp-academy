@@ -2,7 +2,7 @@
 # Phase 05 - Scrollbar Theme and Overlay Behavior
 
 ## Status
-- inReview
+- finished
 
 ## Objectives
 - Make global scrollbar colors theme-aware (light/dark/system).
@@ -16,3 +16,4 @@
 - Scrollbar colors now derive from theme-aware CSS variables in both Home-scoped and global scrollbar selectors.
 - Global scrollbar mode now uses deterministic stable-gutter handling to avoid layout shift when scrollbar state changes.
 - Updated stable-mode unit coverage for class lifecycle behavior in `CustomScrollbar`.
+- Commit/push gate completed on branch `feature/hector/original-plan-execution-2026-0407`.
