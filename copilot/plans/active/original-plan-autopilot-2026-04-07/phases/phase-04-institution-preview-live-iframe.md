@@ -2,7 +2,7 @@
 # Phase 04 - Institution Preview Live Iframe
 
 ## Status
-- inReview
+- finished
 
 ## Objectives
 - Replace static preview behavior with live iframe rendering of app context.
@@ -24,3 +24,4 @@
 - Added iframe-side highlight messaging and runtime role toggle handoff (`teacher`/`student`) for mock preview account context.
 - Added save-confirmation gate using `DashboardOverlayShell` before persistence.
 - Targeted diagnostics and tests passed for live preview, payload builder, and interaction split paths.
+- Commit/push gate completed on branch `feature/hector/original-plan-execution-2026-0407`.
