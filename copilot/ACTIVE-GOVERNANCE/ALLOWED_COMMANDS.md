@@ -22,6 +22,7 @@ Allow only low-to-medium risk commands that are reversible, auditable, and scope
 - `grep -r <pattern> <dir>`
 - `find <dir> -name <pattern>`
 - `cat <file>`
+- `gh pr view --json statusCheckRollup,state,number`
 
 ### QA and Validation Commands
 - `npm run lint`
@@ -43,9 +44,13 @@ Allow only low-to-medium risk commands that are reversible, auditable, and scope
 ### Controlled Git Mutation (Feature Branches Only)
 - `git checkout <branch>`
 - `git checkout -b feature/<task-name>`
+- `git fetch origin`
+- `git pull origin <branch>`
 - `git add <file>`
 - `git commit -m "<msg>"`
 - `git push origin <branch>`
+- `gh pr create --base development --title "<title>" --body "<body>"`
+- `gh pr merge --squash --delete-branch`
 
 ### Controlled File Mutation (Workspace Scope Only)
 - `mkdir <dir>`
