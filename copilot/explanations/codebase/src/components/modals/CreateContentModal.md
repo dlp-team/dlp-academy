@@ -1,7 +1,12 @@
-# CreateContentModal.jsx
+# CreateContentModal.tsx
+
+## Changelog
+### 2026-04-07: Adopted shared AI modal shell
+- Replaced duplicated overlay/backdrop/container wrapper markup with shared [AIGenerationModalShell](shared/AIGenerationModalShell.md).
+- Preserved existing step flow, form behavior, and `isGenerating` close guard.
 
 ## Purpose
-- **Source file:** `src/components/modals/CreateContentModal.jsx`
+- **Source file:** `src/components/modals/CreateContentModal.tsx`
 - **Last documented:** 2026-02-24
 - **Role:** Modal component that encapsulates focused user actions and confirmations.
 

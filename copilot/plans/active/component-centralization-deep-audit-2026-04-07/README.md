@@ -4,7 +4,7 @@
 ## Status
 - Lifecycle: active
 - Overall status: IN_PROGRESS
-- Current phase: Phase 03 (next execution block)
+- Current phase: Phase 03 (in progress)
 - Owner: Copilot + human reviewer
 
 ## Problem Statement
@@ -70,6 +70,12 @@ The repository now has a Component Registry, but the codebase still contains rep
     - [src/components/modules/FolderCard/FolderCardBody.tsx](../../../../src/components/modules/FolderCard/FolderCardBody.tsx)
   - Added unit tests: [tests/unit/utils/menuPositionUtils.test.js](../../../../tests/unit/utils/menuPositionUtils.test.js)
   - Added component tests: [tests/unit/components/ContextActionMenuPortal.test.jsx](../../../../tests/unit/components/ContextActionMenuPortal.test.jsx)
+- In progress: Phase 03 modal centralization wave.
+  - Added shared shell: [src/components/modals/shared/AIGenerationModalShell.tsx](../../../../src/components/modals/shared/AIGenerationModalShell.tsx)
+  - Migrated wrappers in:
+    - [src/components/modals/CreateContentModal.tsx](../../../../src/components/modals/CreateContentModal.tsx)
+    - [src/components/modals/QuizModal.tsx](../../../../src/components/modals/QuizModal.tsx)
+  - Added tests: [tests/unit/components/AIGenerationModalShell.test.jsx](../../../../tests/unit/components/AIGenerationModalShell.test.jsx)
 
 ## Validation Strategy
 - Each implementation wave:

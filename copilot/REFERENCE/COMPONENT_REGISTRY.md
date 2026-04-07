@@ -38,6 +38,14 @@ CRITICAL COPILOT DIRECTIVE: before creating any new UI element (modal, overlay, 
   - src/pages/InstitutionAdminDashboard/components/TransferPromotionDryRunModal.tsx
   - src/pages/InstitutionAdminDashboard/components/classes-courses/Shared.tsx
 
+### AIGenerationModalShell
+- File: src/components/modals/shared/AIGenerationModalShell.tsx
+- Status: Active
+- Purpose: shared animated shell for AI generation modals with standardized wrapper/backdrop/container transitions.
+- Current adopters:
+  - src/components/modals/CreateContentModal.tsx
+  - src/components/modals/QuizModal.tsx
+
 ### BaseOverlay
 - File: planned (not implemented)
 - Status: Planned
@@ -58,11 +66,18 @@ CRITICAL COPILOT DIRECTIVE: before creating any new UI element (modal, overlay, 
 - Current adopters:
   - src/components/modules/ListItems/SubjectListItem.tsx
   - src/components/modules/ListItems/FolderListItem.tsx
+  - src/components/modules/SubjectCard/SubjectCardFront.tsx
+  - src/components/modules/FolderCard/FolderCardBody.tsx
 
 ### ContextActionMenuPortal
-- File: planned (not implemented)
-- Status: Planned
-- Purpose: future shared portal shell for three-dots menus.
+- File: src/components/modules/shared/ContextActionMenuPortal.tsx
+- Status: Active
+- Purpose: shared portal shell for three-dots/context menus with optional close layer.
+- Current adopters:
+  - src/components/modules/ListItems/SubjectListItem.tsx
+  - src/components/modules/ListItems/FolderListItem.tsx
+  - src/components/modules/SubjectCard/SubjectCardFront.tsx
+  - src/components/modules/FolderCard/FolderCardBody.tsx
 
 ## Buttons and Inputs
 
@@ -78,13 +93,10 @@ Rule: do not assume these exist. Create and register only when implemented.
 
 ## Priority Migration Queue
 1. Modal wrapper migration to BaseModal or DashboardOverlayShell:
-   - src/components/modals/CreateContentModal.tsx
-   - src/components/modals/QuizModal.tsx
    - src/pages/Topic/components/CategorizFileModal.tsx
    - src/pages/Profile/modals/EditProfileModal.tsx
 2. Three-dots menu portal extraction:
-   - src/components/modules/SubjectCard/SubjectCardFront.tsx
-   - src/components/modules/FolderCard/FolderCardBody.tsx
+  - Completed for list/card modules (2026-04-07)
 3. Broad button/form primitive extraction after modal/menu waves stabilize.
 
 ## Adding New Components
@@ -99,8 +111,9 @@ When creating a reusable component:
 |---|---|---|
 | Generic modal primitive | BaseModal | Active |
 | Dashboard modal shell | DashboardOverlayShell | Active |
+| AI generation modal shell | AIGenerationModalShell | Active |
 | Menu positioning | menuPositionUtils | Active |
-| Unified three-dots portal shell | ContextActionMenuPortal | Planned |
+| Unified three-dots portal shell | ContextActionMenuPortal | Active |
 | Generic primary/secondary/danger buttons | Not implemented yet | Planned |
 
 ## Registry Maintenance

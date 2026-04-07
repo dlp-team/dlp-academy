@@ -1,6 +1,7 @@
-// src/components/modals/QuizModal.jsx
+// src/components/modals/QuizModal.tsx
 import React, { useEffect, useState } from 'react';
 import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Wand2, Upload, FileText, Trash2 } from 'lucide-react';
+import AIGenerationModalShell from './shared/AIGenerationModalShell';
 
 const QuizModal = ({
     isOpen,
@@ -85,8 +86,6 @@ const QuizModal = ({
         }
     };
 
-    if (!shouldRender) return null;
-
     const gradientClass = themeColor || 'from-indigo-600 to-violet-700';
 
     const handleClose = () => {
@@ -104,21 +103,14 @@ const QuizModal = ({
     };
 
     return (
-        <div className={`fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 transition-all duration-500 ${isVisible ? 'visible' : 'invisible'}`}>
-            
-            <div 
-                className={`fixed inset-0 bg-slate-950/60 backdrop-blur-md transition-opacity duration-500 ease-out 
-                ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-                onClick={handleClose} 
-            />
-            
-            <div className={`relative bg-white dark:bg-slate-900 rounded-t-[2rem] sm:rounded-[2rem] w-full max-w-lg shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] 
-                transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] 
-                transform origin-bottom
-                ${isVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8 pointer-events-none'}`}
-            >
-                {/* HEADER */}
-                <div className={`px-8 py-7 shrink-0 bg-gradient-to-br ${gradientClass} relative overflow-hidden group rounded-t-[2rem]`}>
+        <AIGenerationModalShell
+            shouldRender={shouldRender}
+            isVisible={isVisible}
+            onRequestClose={handleClose}
+            maxWidthClassName="max-w-lg"
+        >
+            {/* HEADER */}
+            <div className={`px-8 py-7 shrink-0 bg-gradient-to-br ${gradientClass} relative overflow-hidden group rounded-t-[2rem]`}>
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none transition-transform duration-[2000ms] group-hover:scale-110"></div>
                     <div className="absolute bottom-0 left-0 w-40 h-40 bg-black/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/3 pointer-events-none"></div>
 
@@ -142,10 +134,10 @@ const QuizModal = ({
                     >
                         <X className="w-5 h-5" />
                     </button>
-                </div>
+            </div>
 
-                {/* FORM CONTENT */}
-                <div className="overflow-y-auto flex-1 p-8 space-y-5 bg-white dark:bg-slate-900 custom-scrollbar">
+            {/* FORM CONTENT */}
+            <div className="overflow-y-auto flex-1 p-8 space-y-5 bg-white dark:bg-slate-900 custom-scrollbar">
                     <form id="quiz-form" onSubmit={handleInternalSubmit} className="space-y-5">
                         
                         <div className="space-y-2 group">
@@ -266,10 +258,10 @@ const QuizModal = ({
                             </div>
                         </div>
                     </form>
-                </div>
+            </div>
 
-                {/* FOOTER */}
-                <div className="p-6 pt-2 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 rounded-b-[2rem] shrink-0">
+            {/* FOOTER */}
+            <div className="p-6 pt-2 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 rounded-b-[2rem] shrink-0">
                     <div className="flex gap-3">
                         <button
                             type="button"
@@ -289,8 +281,7 @@ const QuizModal = ({
                     </div>
                 </div>
 
-            </div>
-        </div>
+        </AIGenerationModalShell>
     );
 };
 

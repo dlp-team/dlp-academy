@@ -9,7 +9,7 @@ This roadmap is the authoritative sequencing and status reference for this plan.
 |---|---|---|---|
 | 01 | Deep inventory and duplication map | COMPLETED | Duplicates grouped by pattern, impact, and migration complexity |
 | 02 | Registry reconciliation and target architecture | COMPLETED | Registry aligned to real reusable components and target architecture approved |
-| 03 | Modal centralization wave | PLANNED | High-priority custom modals migrated to shared shell with parity checks |
+| 03 | Modal centralization wave | IN_PROGRESS | High-priority custom modals migrated to shared shell with parity checks |
 | 04 | Three-dots menu centralization wave | COMPLETED | Shared menu portal/position logic adopted by priority card/list surfaces |
 | 05 | Button and form primitive centralization | PLANNED | Repeated action and input patterns replaced with reusable primitives where safe |
 | 06 | Final optimization and deep risk review | PLANNED | Mandatory optimization + deep risk analysis completed |
@@ -59,3 +59,4 @@ This roadmap is the authoritative sequencing and status reference for this plan.
 - Phase 01 completed with baseline audit artifact and prioritized duplicate clusters.
 - Phase 02 completed with registry and instruction alignment to real active components.
 - Phase 04 completed with shared menu-position utility plus shared portal shell adopted by all four duplicated card/list menu surfaces.
+- Phase 03 in progress with shared AI modal shell extraction and first adopter migrations (CreateContentModal and QuizModal).

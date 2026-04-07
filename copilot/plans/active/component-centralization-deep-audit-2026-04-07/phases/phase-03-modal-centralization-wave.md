@@ -20,4 +20,19 @@ Migrate high-impact custom modal wrappers to shared modal shells while preservin
 - Target modals use shared shell abstractions and pass regression checks.
 
 ## Status
-PLANNED
+IN_PROGRESS
+
+## Progress (2026-04-07)
+- Added shared shell: [src/components/modals/shared/AIGenerationModalShell.tsx](../../../../../src/components/modals/shared/AIGenerationModalShell.tsx)
+- Migrated adopters:
+  - [src/components/modals/CreateContentModal.tsx](../../../../../src/components/modals/CreateContentModal.tsx)
+  - [src/components/modals/QuizModal.tsx](../../../../../src/components/modals/QuizModal.tsx)
+- Added tests: [tests/unit/components/AIGenerationModalShell.test.jsx](../../../../../tests/unit/components/AIGenerationModalShell.test.jsx)
+- Validation checkpoint passed:
+  - `npm run test -- tests/unit/components/AIGenerationModalShell.test.jsx tests/unit/components/ContextActionMenuPortal.test.jsx tests/unit/utils/menuPositionUtils.test.js`
+  - `npm run lint`
+  - `npx tsc --noEmit`
+
+## Remaining Targets for Phase Exit
+- [src/pages/Topic/components/CategorizFileModal.tsx](../../../../../src/pages/Topic/components/CategorizFileModal.tsx)
+- [src/pages/Profile/modals/EditProfileModal.tsx](../../../../../src/pages/Profile/modals/EditProfileModal.tsx)
