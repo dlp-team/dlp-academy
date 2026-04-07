@@ -678,14 +678,46 @@ export const useTopicLogic = (user: any) => {
     };
 
     // --- HANDLERS PARA ABRIR MODALES ---
-    const handleCreateCustomPDF = () => {
+    const openContentModalByType = (type: 'summary' | 'exam') => {
+        if (type === 'exam') {
+            setContentFormData({
+                title: '',
+                type: 'exam',
+                prompt: '',
+                file: null,
+                difficulty: 'intermedio',
+                numQuestions: 10,
+                examFormat: 'test',
+                includeAnswerKey: true,
+                examDuration: 60,
+                examMode: 'practice',
+                showResultsToStudents: true
+            });
+            setShowContentModal(true);
+            return;
+        }
+
         setContentFormData({
             title: '',
             type: 'summary',
             prompt: '',
-            file: null
+            file: null,
+            includeExamples: true,
+            includeFormulas: false
         });
         setShowContentModal(true);
+    };
+
+    const handleCreateCustomStudyGuide = () => {
+        openContentModalByType('summary');
+    };
+
+    const handleCreateCustomExam = () => {
+        openContentModalByType('exam');
+    };
+
+    const handleCreateCustomPDF = () => {
+        handleCreateCustomStudyGuide();
     };
 
     const handleCreateCustomQuiz = () => {
@@ -799,6 +831,8 @@ export const useTopicLogic = (user: any) => {
         handleGenerateQuizSubmit,
         handleGenerateContentSubmit,
         handleCreateCustomPDF,
+        handleCreateCustomStudyGuide,
+        handleCreateCustomExam,
         handleCreateCustomQuiz,
         handleFileCategorized,
         subjectId,

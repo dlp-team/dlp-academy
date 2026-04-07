@@ -1,4 +1,19 @@
 <!-- copilot/explanations/codebase/src/pages/Topic/hooks/useTopicLogic.md -->
+## [2026-04-07] Topic Create Handlers Restored for Study Guide and Exam
+### Context
+- Topic page create controls needed explicit handler paths for quizzes, exams, and study guides.
+- Existing logic only exposed a generic material-open path, which reduced direct exam/study-guide action clarity.
+
+### Change
+- Added explicit content-open helper in `useTopicLogic` for typed generation paths.
+- Added dedicated handlers:
+	- `handleCreateCustomStudyGuide`
+	- `handleCreateCustomExam`
+- Preserved backward compatibility by keeping `handleCreateCustomPDF` as an alias to the study-guide path.
+
+### Validation
+- Added focused create-action coverage in `tests/unit/pages/topic/TopicTabs.createActions.test.jsx`.
+
 ## [2026-03-31] Topic Child Listener Re-subscribe Teardown Hardening
 ### Context
 - `useTopicLogic` re-attached `documents`, `resumen`, and `quizzes` listeners every time the topic snapshot emitted.
@@ -148,6 +163,7 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-04-07: Restored explicit topic create handlers for study-guide and exam generation, and preserved existing `handleCreateCustomPDF` compatibility as study-guide alias.
 - 2026-04-02: Role-sensitive topic logic now resolves student/viewer context via `getActiveRole(user)` for exam-load and permission-branch checks, keeping switched role sessions deterministic.
 - 2026-03-31: Added deterministic teardown for nested topic child listeners before re-subscribing on topic snapshot updates; not-found/error branches now clear child listeners to avoid duplicate subscriptions.
 - 2026-03-30: Replaced `window.confirm(...)` destructive prompts with in-page modal-confirmed delete flow (`confirmDialog` + `confirmDeleteAction`) for file, quiz, and topic actions.

@@ -92,6 +92,14 @@
 - copilot/explanations/codebase/tests/unit/components/CustomScrollbar.test.md
 - copilot/plans/active/original-plan-autopilot-2026-04-07/phases/phase-05-scrollbar-theme-overlay.md
 - copilot/explanations/temporal/lossless-reports/2026-04-07/scrollbar-phase5-theme-aware-stable-gutter.md
+- src/pages/Topic/hooks/useTopicLogic.ts
+- src/pages/Topic/components/TopicTabs.tsx
+- tests/unit/pages/topic/TopicTabs.createActions.test.jsx
+- copilot/explanations/codebase/src/pages/Topic/hooks/useTopicLogic.md
+- copilot/explanations/codebase/src/pages/Topic/components/TopicTabs.md
+- copilot/explanations/codebase/tests/unit/pages/topic/TopicTabs.createActions.test.md
+- copilot/plans/active/original-plan-autopilot-2026-04-07/phases/phase-06-topic-create-actions-restore.md
+- copilot/explanations/temporal/lossless-reports/2026-04-07/topic-create-actions-phase6-quizzes-exams-study-guides.md
 
 ## External Comments
 - (none)

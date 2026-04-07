@@ -7,7 +7,7 @@
 - [x] Settings header toggle option and system theme consistency verified.
 - [x] Institution customization live iframe preview and save confirmation verified.
 - [x] Scrollbar theme + layout stability verified.
-- [ ] Topic create actions restored and verified.
+- [x] Topic create actions restored and verified.
 
 ## Regression Verification
 - [ ] Adjacent modes/tabs maintain original behavior.
