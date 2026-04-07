@@ -2,7 +2,7 @@
 # Phase 06 - Topic Create Actions Restore
 
 ## Status
-- inReview
+- finished
 
 ## Objectives
 - Restore create-action controls for quizzes, exams, and study guides on topic page.
@@ -13,7 +13,7 @@
 - Targeted tests for button visibility conditions and action handlers.
 - Manual verification in relevant roles/views.
 
-## Outcome (In Review)
+## Outcome
 - Restored explicit create controls for `materials` tab through a compact plus-menu exposing:
 	- `Crear guía de estudio`
 	- `Crear examen`
