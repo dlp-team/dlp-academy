@@ -3,8 +3,8 @@
 
 ## Status
 - Lifecycle: active
-- Overall status: IN_PROGRESS
-- Current phase: Phase 05 (in progress)
+- Overall status: COMPLETED_READY_FOR_INREVIEW
+- Current phase: Phase 06 (completed)
 - Owner: Copilot + human reviewer
 
 ## Problem Statement
@@ -82,12 +82,22 @@ The repository now has a Component Registry, but the codebase still contains rep
     - [tests/unit/components/AIGenerationModalShell.test.jsx](../../../../tests/unit/components/AIGenerationModalShell.test.jsx)
     - [tests/unit/pages/topic/CategorizFileModal.test.jsx](../../../../tests/unit/pages/topic/CategorizFileModal.test.jsx)
     - [tests/unit/pages/profile/EditProfileModal.test.jsx](../../../../tests/unit/pages/profile/EditProfileModal.test.jsx)
-- In progress: Phase 05 button/form primitive centralization.
+- Completed: Phase 05 button/form primitive centralization.
   - Added shared form primitive: [src/components/modals/shared/ReferencePdfUploadField.tsx](../../../../src/components/modals/shared/ReferencePdfUploadField.tsx)
+  - Added shared button primitive: [src/components/modals/shared/ModalGradientSubmitButton.tsx](../../../../src/components/modals/shared/ModalGradientSubmitButton.tsx)
   - Migrated first adopter pair:
     - [src/components/modals/CreateContentModal.tsx](../../../../src/components/modals/CreateContentModal.tsx)
     - [src/components/modals/QuizModal.tsx](../../../../src/components/modals/QuizModal.tsx)
-  - Added tests: [tests/unit/components/ReferencePdfUploadField.test.jsx](../../../../tests/unit/components/ReferencePdfUploadField.test.jsx)
+  - Added tests:
+    - [tests/unit/components/ReferencePdfUploadField.test.jsx](../../../../tests/unit/components/ReferencePdfUploadField.test.jsx)
+    - [tests/unit/components/ModalGradientSubmitButton.test.jsx](../../../../tests/unit/components/ModalGradientSubmitButton.test.jsx)
+- Completed: Phase 06 final optimization and deep risk review.
+  - Full validation passed:
+    - `npm run test` (`156` files, `703` tests)
+    - `npm run lint`
+    - `npx tsc --noEmit`
+  - Review checklist fully completed in [reviewing/review-checklist.md](reviewing/review-checklist.md).
+  - No new out-of-scope risks were identified.
 
 ## Validation Strategy
 - Each implementation wave:

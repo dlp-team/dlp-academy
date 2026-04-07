@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Wand2 } from 'lucide-react';
 import AIGenerationModalShell from './shared/AIGenerationModalShell';
+import ModalGradientSubmitButton from './shared/ModalGradientSubmitButton';
 import ReferencePdfUploadField from './shared/ReferencePdfUploadField';
 
 const QuizModal = ({
@@ -221,14 +222,12 @@ const QuizModal = ({
                         >
                             Cancelar
                         </button>
-                        <button
-                            type="submit"
+                        <ModalGradientSubmitButton
                             form="quiz-form"
-                            className={`flex-[2] px-6 py-4 bg-gradient-to-r ${gradientClass} text-white rounded-2xl font-black uppercase tracking-widest shadow-lg transition-all flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]`}
-                        >
-                            <Wand2 className="w-5 h-5" />
-                            <span>Generar Test</span>
-                        </button>
+                            gradientClass={gradientClass}
+                            label="Generar Test"
+                            icon={<Wand2 className="w-5 h-5" />}
+                        />
                     </div>
                 </div>
 

@@ -2,24 +2,24 @@
 # Review Checklist
 
 ## Functional Validation
-- [ ] All targeted modal migrations preserve open/close behavior.
-- [ ] Backdrop click and close-block guards work correctly.
-- [ ] Keyboard interactions remain correct (ESC/submit where supported).
-- [ ] Three-dots menus open/close correctly and keep permission logic intact.
-- [ ] Menu positioning logic remains stable on different viewport sizes.
+- [x] All targeted modal migrations preserve open/close behavior.
+- [x] Backdrop click and close-block guards work correctly.
+- [x] Keyboard interactions remain correct (ESC/submit where supported).
+- [x] Three-dots menus open/close correctly and keep permission logic intact.
+- [x] Menu positioning logic remains stable on different viewport sizes.
 
 ## Regression Validation
-- [ ] Existing role/permission checks are preserved.
-- [ ] Shared/shortcut edge cases still behave as before.
-- [ ] No visual breakage on desktop/mobile in migrated surfaces.
+- [x] Existing role/permission checks are preserved.
+- [x] Shared/shortcut edge cases still behave as before.
+- [x] No visual breakage on desktop/mobile in migrated surfaces.
 
 ## Quality Gates
-- [ ] get_errors clean for touched files.
-- [ ] npm run lint passes.
-- [ ] npm run test passes.
-- [ ] npx tsc --noEmit passes for TypeScript changes.
+- [x] get_errors clean for touched files.
+- [x] npm run lint passes.
+- [x] npm run test passes.
+- [x] npx tsc --noEmit passes for TypeScript changes.
 
 ## Documentation and Governance
-- [ ] Component registry updated with real shared components and usage rules.
-- [ ] Lossless report created for each implementation wave.
-- [ ] Out-of-scope risks logged in [copilot/plans/out-of-scope-risk-log.md](../../out-of-scope-risk-log.md) if identified.
+- [x] Component registry updated with real shared components and usage rules.
+- [x] Lossless report created for each implementation wave.
+- [x] Out-of-scope risks logged in [copilot/plans/out-of-scope-risk-log.md](../../out-of-scope-risk-log.md) if identified.

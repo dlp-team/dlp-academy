@@ -1,13 +1,14 @@
 // src/components/modals/CreateContentModal.tsx
 import React, { useEffect, useState } from 'react';
 import {
-    X, Sparkles, Loader2,
+    X, Sparkles,
     BookOpen, Calculator, PenTool, ClipboardCheck,
     MessageSquarePlus, Layers, BarChart3, Hash,
     CheckCircle2, Lightbulb, ListChecks, Clock,
     ChevronDown, Zap, Eye
 } from 'lucide-react';
 import AIGenerationModalShell from './shared/AIGenerationModalShell';
+import ModalGradientSubmitButton from './shared/ModalGradientSubmitButton';
 import ReferencePdfUploadField from './shared/ReferencePdfUploadField';
 
 // ==================== CONTENT TYPE DEFINITIONS ====================
@@ -582,24 +583,15 @@ const CreateContentModal = ({
                             >
                                 Atrás
                             </button>
-                            <button
-                                type="submit"
+                            <ModalGradientSubmitButton
                                 form="content-form"
+                                gradientClass={gradientClass}
+                                label="Generar"
+                                icon={<Zap className="w-5 h-5" />}
                                 disabled={isGenerating}
-                                className={`flex-[2] px-6 py-4 bg-gradient-to-r ${gradientClass} text-white rounded-2xl font-black uppercase tracking-widest shadow-lg transition-all flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed`}
-                            >
-                                {isGenerating ? (
-                                    <>
-                                        <Loader2 className="w-5 h-5 animate-spin text-white/80" />
-                                        <span className="animate-pulse">Generando...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <Zap className="w-5 h-5" />
-                                        <span>Generar</span>
-                                    </>
-                                )}
-                            </button>
+                                isLoading={isGenerating}
+                                loadingLabel="Generando..."
+                            />
                         </div>
                     )}
             </div>

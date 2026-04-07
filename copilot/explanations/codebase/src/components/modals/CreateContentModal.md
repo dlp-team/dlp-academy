@@ -1,6 +1,9 @@
 # CreateContentModal.tsx
 
 ## Changelog
+### 2026-04-07: Centralized footer submit CTA
+- Replaced inline gradient submit button block with shared [ModalGradientSubmitButton](shared/ModalGradientSubmitButton.md).
+
 ### 2026-04-07: Centralized PDF upload field
 - Replaced inline PDF upload UI block with shared [ReferencePdfUploadField](shared/ReferencePdfUploadField.md).
 
