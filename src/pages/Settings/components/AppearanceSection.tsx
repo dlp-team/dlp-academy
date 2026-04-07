@@ -1,8 +1,9 @@
 // src/pages/Settings/components/AppearanceSection.jsx
 import React from 'react';
 import { Sun, Moon, Monitor } from 'lucide-react';
+import Toggle from '../../../components/ui/Toggle';
 
-const AppearanceSection = ({ theme, onUpdate }: any) => {
+const AppearanceSection = ({ theme, headerThemeSliderEnabled = true, onUpdate }: any) => {
   const modes = [
     { id: 'light', label: 'Claro', icon: Sun },
     { id: 'dark', label: 'Oscuro', icon: Moon },
@@ -38,6 +39,21 @@ const AppearanceSection = ({ theme, onUpdate }: any) => {
               <span className="text-sm font-medium">{label}</span>
             </button>
           ))}
+        </div>
+
+        <div className="mt-6 pt-5 border-t border-gray-100 dark:border-slate-800">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Mostrar selector de tema en el encabezado</h4>
+              <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
+                Activa o desactiva el control rápido de tema en la barra superior.
+              </p>
+            </div>
+            <Toggle
+              enabled={headerThemeSliderEnabled}
+              onChange={(nextValue: any) => onUpdate('headerThemeSliderEnabled', nextValue)}
+            />
+          </div>
         </div>
       </div>
     </section>

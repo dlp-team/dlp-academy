@@ -37,6 +37,7 @@ import TeacherDashboard from './pages/TeacherDashboard/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard/StudentDashboard';
 import TeacherStudentDetailView from './pages/TeacherDashboard/components/TeacherStudentDetailView';
 import { getActiveRole, getAssignedRoles, hasRequiredRoleAccess } from './utils/permissionUtils';
+import { applyThemeToDom } from './utils/themeMode';
 
 const ACTIVE_ROLE_STORAGE_KEY_PREFIX = 'dlp_active_role_';
 const ACTIVE_ROLE_CHANGE_EVENT = 'dlp-active-role-change';
@@ -165,6 +166,30 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 function App() {
   const [user, setUser] = useState<AppUser | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const selectedTheme = user?.theme || user?.settings?.theme || localStorage.getItem('theme') || 'system';
+    applyThemeToDom(selectedTheme, { animate: false, persist: true });
+
+    if (selectedTheme !== 'system' || typeof window.matchMedia !== 'function') {
+      return undefined;
+    }
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleSystemThemeChange = () => {
+      applyThemeToDom('system', { animate: false, persist: false });
+    };
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', handleSystemThemeChange);
+      return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+    }
+
+    mediaQuery.addListener(handleSystemThemeChange);
+    return () => mediaQuery.removeListener(handleSystemThemeChange);
+  }, [user?.theme, user?.settings?.theme]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;

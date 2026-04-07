@@ -54,6 +54,20 @@
 - copilot/explanations/codebase/tests/unit/pages/home/BinView.listInlinePanel.test.md
 - copilot/plans/active/original-plan-autopilot-2026-04-07/phases/phase-02-bin-ui-improvements.md
 - copilot/explanations/temporal/lossless-reports/2026-04-07/bin-ui-parity-phase2-focus-dimming-and-list-panel-alignment.md
+- src/pages/Settings/hooks/useSettingsPageState.ts
+- src/pages/Settings/components/AppearanceSection.tsx
+- src/pages/Settings/Settings.tsx
+- src/components/layout/Header.tsx
+- src/App.tsx
+- tests/unit/hooks/useSettingsPageState.test.js
+- copilot/explanations/codebase/src/App.md
+- copilot/explanations/codebase/src/components/layout/Header.md
+- copilot/explanations/codebase/src/pages/Settings/hooks/useSettingsPageState.md
+- copilot/explanations/codebase/src/pages/Settings/components/AppearanceSection.md
+- copilot/explanations/codebase/src/pages/Settings/Settings.md
+- copilot/explanations/codebase/tests/unit/hooks/useSettingsPageState.test.md
+- copilot/plans/active/original-plan-autopilot-2026-04-07/phases/phase-03-settings-theme-controls.md
+- copilot/explanations/temporal/lossless-reports/2026-04-07/settings-theme-controls-phase3-header-slider-and-system-mode-consistency.md
 
 ## External Comments
 - (none)

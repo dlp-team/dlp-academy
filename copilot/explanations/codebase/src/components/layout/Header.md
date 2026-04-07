@@ -127,6 +127,11 @@ function ExampleScreen() {
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
 
 ## Changelog
+### 2026-04-07
+- Added user preference support for header theme slider visibility (`headerThemeSliderEnabled`) with safe default fallback.
+- Updated header theme state logic to resolve `system` preference correctly and keep icon/toggle state aligned with OS theme changes.
+- Removed implicit theme write side effect tied only to local boolean changes to prevent system-mode drift.
+
 ### 2026-04-04
 - Added notification trigger boundary ref (`notificationsTriggerRef`) and passed it to notification panel as `triggerRef`.
 - Wired panel `Ver todas` action (`onOpenAll`) to close dropdown and navigate to `/notifications`.

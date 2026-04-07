@@ -17,6 +17,7 @@ export default function useSettingsPageState({ user, db }: any) {
 
   const [settings, setSettings] = useState({
     theme: 'system',
+    headerThemeSliderEnabled: true,
     language: 'es',
     viewMode: 'grid',
     rememberSort: true,
@@ -34,12 +35,19 @@ export default function useSettingsPageState({ user, db }: any) {
     const unsubscribe = onSnapshot(userRef, (docSnap: any) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
-        const nextTheme = data.theme || 'system';
+        const dataSettings = data.settings || {};
+        const nextTheme = data.theme || dataSettings.theme || 'system';
+        const nextHeaderThemeSliderEnabled = data.headerThemeSliderEnabled !== undefined
+          ? data.headerThemeSliderEnabled
+          : dataSettings.headerThemeSliderEnabled !== undefined
+            ? dataSettings.headerThemeSliderEnabled
+            : true;
         setSettings(prev => ({
           ...prev,
           theme: nextTheme,
-          language: data.language || 'es',
-          viewMode: data.viewMode || 'grid',
+          headerThemeSliderEnabled: nextHeaderThemeSliderEnabled,
+          language: data.language || dataSettings.language || 'es',
+          viewMode: data.viewMode || dataSettings.viewMode || 'grid',
           rememberSort: data.rememberSort !== undefined ? data.rememberSort : true,
           notifications: {
             ...prev.notifications,

@@ -23,5 +23,9 @@
 - `./components/NotificationSection`
 - `./components/GeneralSection`
 
+## Changelog
+### 2026-04-07
+- Wired `headerThemeSliderEnabled` from `useSettingsPageState` into `AppearanceSection` so users can control Header theme slider visibility.
+
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.

@@ -2,7 +2,7 @@
 # Phase 03 - Settings Theme Controls
 
 ## Status
-- todo
+- inReview
 
 ## Objectives
 - Add setting to enable/disable header theme slider.
@@ -11,3 +11,9 @@
 ## Validation
 - get_errors on settings/theme files.
 - Manual verification for light/dark/system mode across pages.
+
+## Outcome (In Review)
+- Added `headerThemeSliderEnabled` setting support in Settings state and UI.
+- Header now conditionally renders theme slider based on stored preference.
+- App-level theme synchronization now enforces selected mode globally and listens to OS theme changes when `system` is active.
+- Targeted diagnostics and tests passed for settings/theme integration paths.

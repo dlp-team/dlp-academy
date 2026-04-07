@@ -18,5 +18,10 @@
 - `react`
 - `firebase/firestore`
 
+## Changelog
+### 2026-04-07
+- Added `headerThemeSliderEnabled` to settings state and snapshot synchronization.
+- Added compatibility fallback reads from `settings.*` fields for theme and slider preference values.
+
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.

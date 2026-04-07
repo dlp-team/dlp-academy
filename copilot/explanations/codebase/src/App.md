@@ -1,5 +1,15 @@
 # App.tsx
 
+## [2026-04-07] Global Theme Consistency Enforcement
+
+### Change
+- Added app-level theme synchronization effect in `src/App.tsx` that applies the user-selected theme (`light`/`dark`/`system`) across all routes.
+- Added a system-theme media-query listener that reapplies `system` mode when OS theme preference changes.
+
+### Impact
+- Theme mode now stays consistent outside Settings page surfaces.
+- `system` theme preference no longer drifts between pages after navigation.
+
 ## [2026-04-04] Dedicated Notifications Route
 
 ### Change

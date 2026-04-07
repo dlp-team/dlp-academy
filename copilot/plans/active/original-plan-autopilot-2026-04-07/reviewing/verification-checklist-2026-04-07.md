@@ -4,7 +4,7 @@
 ## Functional Verification
 - [x] Selection mode move/filter/share/undo behaviors verified.
 - [x] Bin grid/list style and option behavior parity verified.
-- [ ] Settings header toggle option and system theme consistency verified.
+- [x] Settings header toggle option and system theme consistency verified.
 - [ ] Institution customization live iframe preview and save confirmation verified.
 - [ ] Scrollbar theme + layout stability verified.
 - [ ] Topic create actions restored and verified.

@@ -5,7 +5,7 @@ import { GraduationCap, Settings, Moon, Sun, LayoutDashboard } from 'lucide-reac
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config'; 
 import useInstitutionBranding from '../../hooks/useInstitutionBranding';
-import { applyThemeToDom } from '../../utils/themeMode';
+import { applyThemeToDom, resolveThemeMode } from '../../utils/themeMode';
 import { getActiveRole, getAssignedRoles } from '../../utils/permissionUtils';
 
 // Import UI Helpers
@@ -36,17 +36,15 @@ const Header = ({ user }: any) => {
     }
     return false;
   });
-
-  // Apply theme to DOM and LocalStorage whenever state changes
-  useEffect(() => {
-    applyThemeToDom(darkMode ? 'dark' : 'light', { animate: false, persist: true });
-  }, [darkMode]);
+  const [themePreference, setThemePreference] = useState('system');
+  const [headerThemeSliderEnabled, setHeaderThemeSliderEnabled] = useState(true);
 
   // --- NEW: Handle Toggle Click (Updates State + Firestore) ---
   const handleThemeToggle = async (isDark: any) => {
     // 1. Update UI immediately
     applyThemeToDom(isDark ? 'dark' : 'light', { animate: true, persist: true });
     setDarkMode(isDark);
+    setThemePreference(isDark ? 'dark' : 'light');
 
     // 2. Update Firestore in background
     if (user?.uid) {
@@ -66,6 +64,14 @@ const Header = ({ user }: any) => {
     if (!user?.uid) return;
 
     const cacheKey = `user_profile_${user.uid}`;
+    const getUserThemePreference = (profileData: any) => profileData?.theme || profileData?.settings?.theme || 'system';
+    const getHeaderThemeSliderSetting = (profileData: any) => (
+      profileData?.headerThemeSliderEnabled !== undefined
+        ? profileData.headerThemeSliderEnabled
+        : profileData?.settings?.headerThemeSliderEnabled !== undefined
+          ? profileData.settings.headerThemeSliderEnabled
+          : true
+    );
 
     const fetchUserData = async () => {
       // A. INSTANT: Load from LocalStorage
@@ -74,11 +80,11 @@ const Header = ({ user }: any) => {
         if (cached) {
             const parsed = JSON.parse(cached);
             setFirestoreUser((prev) => prev || parsed);
-            
-            // Sync theme from cache if available
-            if (parsed.theme) {
-                setDarkMode(parsed.theme === 'dark');
-            }
+
+            const cachedTheme = getUserThemePreference(parsed);
+            setThemePreference(cachedTheme);
+            setDarkMode(resolveThemeMode(cachedTheme) === 'dark');
+            setHeaderThemeSliderEnabled(getHeaderThemeSliderSetting(parsed));
         }
       } catch (e) {
         console.error("Cache read error", e);
@@ -93,11 +99,11 @@ const Header = ({ user }: any) => {
           const freshData = userDoc.data();
           setFirestoreUser(freshData);
           localStorage.setItem(cacheKey, JSON.stringify(freshData));
-          
-          // Ensure header state matches database state
-          if (freshData.theme) {
-            setDarkMode(freshData.theme === 'dark');
-          }
+
+          const freshTheme = getUserThemePreference(freshData);
+          setThemePreference(freshTheme);
+          setDarkMode(resolveThemeMode(freshTheme) === 'dark');
+          setHeaderThemeSliderEnabled(getHeaderThemeSliderSetting(freshData));
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
@@ -106,6 +112,28 @@ const Header = ({ user }: any) => {
 
     fetchUserData();
   }, [user?.uid]);
+
+  useEffect(() => {
+    if (themePreference !== 'system' || typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const syncModeFromSystem = (event?: MediaQueryListEvent) => {
+      const nextIsDark = typeof event?.matches === 'boolean' ? event.matches : mediaQuery.matches;
+      setDarkMode(nextIsDark);
+    };
+
+    syncModeFromSystem();
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', syncModeFromSystem);
+      return () => mediaQuery.removeEventListener('change', syncModeFromSystem);
+    }
+
+    mediaQuery.addListener(syncModeFromSystem);
+    return () => mediaQuery.removeListener(syncModeFromSystem);
+  }, [themePreference]);
 
   // Determine which data to show
   const userData = { ...(user || {}), ...(firestoreUser || {}) };
@@ -252,14 +280,16 @@ const Header = ({ user }: any) => {
         <div className="flex items-center gap-2 sm:gap-4">
 
             {/* 1. THEME TOGGLE */}
-            <div className="hidden sm:flex items-center gap-1 sm:gap-2 px-1 sm:px-2 border-r border-gray-200 dark:border-slate-700 mr-1">
+            {headerThemeSliderEnabled && (
+              <div className="hidden sm:flex items-center gap-1 sm:gap-2 px-1 sm:px-2 border-r border-gray-200 dark:border-slate-700 mr-1">
                 <Sun size={14} className={`hidden sm:block transition-colors ${!darkMode ? 'text-amber-500' : 'text-gray-400'}`} />
                 <Toggle
-                    enabled={darkMode}
-                    onChange={handleThemeToggle}
+                  enabled={darkMode}
+                  onChange={handleThemeToggle}
                 />
                 <Moon size={14} className={`hidden sm:block transition-colors ${darkMode ? 'text-indigo-400' : 'text-gray-400'}`} />
-            </div>
+              </div>
+            )}
 
             {/* 2. ROLE SWITCHER */}
             {canSwitchRole && (

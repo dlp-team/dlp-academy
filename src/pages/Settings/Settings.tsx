@@ -64,6 +64,7 @@ const Settings = ({ user }: any) => {
         )}
         <AppearanceSection 
           theme={settings.theme} 
+          headerThemeSliderEnabled={settings.headerThemeSliderEnabled}
           onUpdate={updateSetting} 
         />
         <OrganizationSection 

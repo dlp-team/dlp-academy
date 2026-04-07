@@ -35,6 +35,7 @@ describe('useSettingsPageState', () => {
         exists: () => true,
         data: () => ({
           theme: 'system',
+          headerThemeSliderEnabled: true,
           language: 'es',
           viewMode: 'grid',
           rememberSort: true,
@@ -55,6 +56,7 @@ describe('useSettingsPageState', () => {
     });
 
     expect(result.current.settings.theme).toBe('system');
+    expect(result.current.settings.headerThemeSliderEnabled).toBe(true);
     expect(mocks.applyThemeToDom).toHaveBeenCalledWith('system');
   });
 
@@ -91,5 +93,20 @@ describe('useSettingsPageState', () => {
     expect(result.current.settings.notifications.email).toBe(false);
     expect(mocks.updateDoc).toHaveBeenCalledWith(expect.any(Object), { 'notifications.email': false });
     expect(result.current.savingStatus).toBe('error');
+  });
+
+  it('updates header theme slider setting and persists change', async () => {
+    const { result } = renderHook(() => useSettingsPageState({ user, db }));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    await act(async () => {
+      await result.current.updateSetting('headerThemeSliderEnabled', false);
+    });
+
+    expect(result.current.settings.headerThemeSliderEnabled).toBe(false);
+    expect(mocks.updateDoc).toHaveBeenCalledWith(expect.any(Object), { headerThemeSliderEnabled: false });
   });
 });
