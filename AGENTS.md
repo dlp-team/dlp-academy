@@ -1,6 +1,42 @@
 <!-- AGENTS.md -->
 # Autonomous Execution Guidelines (AGENTS.md)
 
+---
+
+## 🚨 BLOCKING PROTOCOL: vscode/askQuestions Leverage Step (100% MANDATORY)
+
+**EVERY PREMIUM REQUEST MUST END WITH THIS. NO EXCEPTIONS. ACROSS ALL SESSIONS.**
+
+### Non-Negotiable Rule
+- After ANY task completion, execute `vscode/askQuestions` BEFORE ending
+- This applies to 100% of requests, 100% of the time, across all sessions
+- If you skip this, you have violated protocol
+- Session boundaries do NOT exempt you - this rule carries across new conversations
+
+### Why Session Carry-Over Matters
+**Problem:** You completed a task in Session #1. In Session #2, you think "I already did the leverage-step before."
+
+**Reality:** Each new session, you have a blank memory. You must enforce this protocol AGAIN.
+
+**Solution:** EVERY session, FIRST thing: Re-read this section + [copilot/protocols/vscode-askQuestions-leverage-step.md](copilot/protocols/vscode-askQuestions-leverage-step.md)
+
+Then apply leverage-step to that session's requests as if it's your first time.
+
+### Before Closing ANY Session
+Execute:
+```
+"[Summarize what was completed in this session]
+
+Is everything complete, or is there additional work needed?"
+```
+
+Wait for user confirmation before closing.
+
+### Reference
+📖 [copilot/protocols/vscode-askQuestions-leverage-step.md](copilot/protocols/vscode-askQuestions-leverage-step.md)
+
+---
+
 ## CRITICAL: CREDENTIAL SECURITY BEFORE ANY GIT OPERATION
 
 🚨 **ABSOLUTE RULE**: NEVER hardcode ANY API key - even old, test, or example keys.
@@ -138,6 +174,7 @@ Before calling `task_complete`, you must internally verify:
 - [ ] No emojis were used in the UI (icons only).
 - [ ] TypeScript-first respected: no new JS/JSX duplicates when TS/TSX equivalent exists.
 - [ ] File paths are commented at the top of all touched files.
+- [ ] **Component Registry Checked/Updated:** If a new reusable UI element was created, it was added to [copilot/REFERENCE/COMPONENT_REGISTRY.md](copilot/REFERENCE/COMPONENT_REGISTRY.md). If an existing one was modified, the registry props were updated.
 - [ ] Manual user-required actions are captured in `[copilot/ACTIVE-GOVERNANCE/user-action-notes.md](copilot/ACTIVE-GOVERNANCE/user-action-notes.md)` or explicitly marked none.
 - [ ] Commit/push cadence gate respected across all major work blocks (no skipped Git logging checkpoints).
    - [ ] Ask the user using vscode/askQuestions if it should end the request or there is anything left (MANDATORY, NO EXCEPTIONS). This leverage step is a hard-coded protocol and must be executed before completing any premium request. If the tool fails, document the failure and request user direction before ending the session.

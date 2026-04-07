@@ -1,6 +1,50 @@
 <!-- .github/copilot-instructions.md -->
 # GitHub Copilot Instructions - DLP Academy
 
+---
+
+## 🚨 BLOCKING PROTOCOL: vscode/askQuestions Leverage Step (100% MANDATORY)
+
+**THIS IS YOUR ONLY COMPLETION GATE. DO NOT SKIP. EVER.**
+
+### The Rule
+- **Before ending ANY premium request**, you MUST execute `vscode/askQuestions` to confirm closure with the user
+- **This is not optional** - it is a hard-coded, non-negotiable protocol
+- **No exceptions** - applies to 100% of requests, every session, every interaction
+- **Non-compliance = protocol violation** - if you skip this, you have violated core instructions
+
+### When to Execute
+✅ **Execute after EVERY task that involved:**
+- Creating files or making code changes
+- Planning work or creating documentation
+- Implementing features, fixes, or refactors
+- Any work that consumed a premium request token
+
+### How to Execute
+```
+vscode_askQuestions([
+  {
+    header: "task_completion_gate",
+    question: "[Describe what was completed]. Is there anything else you need?",
+    options: [
+      { label: "✅ All complete" },
+      { label: "🔧 More work needed" }
+    ]
+  }
+])
+```
+
+### Session Carry-Over (CRITICAL)
+**If you start a new chat session:**
+1. Re-read this section immediately
+2. Apply the leverage-step to EVERY request without exception
+3. Do NOT assume "I did this before, I'll skip it now"
+4. Your memory does not persist. The protocol does.
+
+**Reference:** [copilot/protocols/vscode-askQuestions-leverage-step.md](copilot/protocols/vscode-askQuestions-leverage-step.md)
+
+---
+
 ## ⚠️ CRITICAL: Premium Request Optimization
 
 ## Skills Routing (VS Code Agent Skills)
@@ -201,8 +245,9 @@ Entry requirements:
 13. **Minimum completion payload** - For plan requests, you MUST deliver a fully executable plan package (scope, phased steps, validation gates, rollback, and testing strategy), not just brief bullet additions.
 14. **No artificial stopping** - Do not stop after a small change if additional requested work remains; continue autonomously until all requested outcomes are completed.
 15. **Commit/Push Cadence Gate (MANDATORY)** - Commit and push after every major validated work block (feature, bug fix, test block, or docs-sync block) BEFORE starting the next major block. This is a hard execution gate, not a recommendation.
+16. **UI Component Consistency (MANDATORY)** - BEFORE creating any new UI element (modal, overlay, button, dropdown, card, form), you MUST read [copilot/REFERENCE/COMPONENT_REGISTRY.md](copilot/REFERENCE/COMPONENT_REGISTRY.md). If a reusable component exists, you MUST use or extend it instead of creating custom HTML/Tailwind. If you create a new generic UI component, you MUST document it in the registry immediately after creation.
 
-16. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)** - Before completing ANY premium request, execute the `vscode/askQuestions` leverage step to confirm closure with user. See canonical protocol: [copilot/protocols/vscode-askQuestions-leverage-step.md](copilot/protocols/vscode-askQuestions-leverage-step.md). This protocol supersedes all other completion logic. If the tool fails, document the failure and request user direction before ending the session. No exceptions.
+17. **vscode/askQuestions Leverage Step Enforcement (CRITICAL, NO EXCEPTIONS)** - Before completing ANY premium request, execute the `vscode/askQuestions` leverage step to confirm closure with user. See canonical protocol: [copilot/protocols/vscode-askQuestions-leverage-step.md](copilot/protocols/vscode-askQuestions-leverage-step.md). This protocol supersedes all other completion logic. If the tool fails, document the failure and request user direction before ending the session. No exceptions.
 ---
 
 ## Project Context
