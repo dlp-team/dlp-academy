@@ -322,21 +322,41 @@
   - [ ] (Feature branch deleted by GitHub; local checkout prevents being in deleted branch)
 - [ ] Branch merged & deleted automatically
 
-### Step 22: Update BRANCHES_STATUS.md
+### Step 22: Update BRANCHES_STATUS.md & Mark for Deletion
 
 - [ ] Checkout development: `git checkout development && git pull origin development`
 - [ ] Edit: `copilot/BRANCHES_STATUS.md`
 - [ ] Find row for the merged branch and update:
-  - [ ] Status: `merged`
-  - [ ] Lock Status: `unlocked-idle` (branch is available for reuse if needed)
-  - [ ] Date: Today's date
-  - [ ] Notes: "Merged into development on [date]"
-  - [ ] **Decision:** Keep row in BRANCHES_STATUS.md for historical reference OR delete if repo prefers clean registry
-    - [ ] If KEEPING: Mark as merged with date
-    - [ ] If DELETING: Remove row entirely (preferred for active branches only)
+  - [ ] Status: `pending-delete` (NOT ~~merged~~ or ~~archived~~)
+  - [ ] Pending-Delete Date: Today's date (YYYY-MM-DD format)
+  - [ ] Notes: Append "Merged into development on [date]; will be auto-deleted on [date+7days]"
+- [ ] **Important:** Only delete the row if the branch will absolutely never be needed (rare case)
+  - [ ] Normally: Keep row visible with `pending-delete` status for 7-day grace period
+  - [ ] If retention needed: Set Status to `retained` and document reason instead
 - [ ] Commit & push:
   - [ ] `git add copilot/BRANCHES_STATUS.md`
-  - [ ] `git commit -m "chore(branches): mark/remove feature/<pc-id>/<task> as merged"`
+  - [ ] `git commit -m "chore(branches): mark feature/<pc-id>/<task> as pending-delete"`
+  - [ ] `git push origin development`
+- [ ] Continue to Step 22.5
+
+### Step 22.5: Cleanup Expired Branches (AUTOMATED)
+
+- [ ] **Check for expired pending-delete branches:**
+  - [ ] Read: `copilot/BRANCHES_STATUS.md`
+  - [ ] Read: `copilot/ACTIVE-GOVERNANCE/BRANCH_RETENTION_POLICY.md` (get retention days)
+  - [ ] For each row with Status = `pending-delete`:
+    - [ ] Check Pending-Delete Date field
+    - [ ] Calculate: `days_elapsed = today - pending_delete_date`
+    - [ ] IF `days_elapsed >= retention_days` (default 7):
+      - [ ] Delete remote branch: `git push origin --delete <branch-name>`
+      - [ ] Delete local if exists: `git branch -D <branch-name>` (if still local)
+      - [ ] Remove row from BRANCHES_STATUS.md
+      - [ ] Log deletion to: `copilot/ACTIVE-GOVERNANCE/branch-deletion-audit.log`
+      - [ ] Format: `[DATE] DELETED: <branch-name> (pending since DATE, N days elapsed)`
+    - [ ] ELSE: Skip (still within grace period)
+- [ ] Commit cleanup:
+  - [ ] `git add copilot/BRANCHES_STATUS.md copilot/ACTIVE-GOVERNANCE/branch-deletion-audit.log`
+  - [ ] `git commit -m "chore(branches): cleanup expired pending-delete branches"`
   - [ ] `git push origin development`
 - [ ] Continue to Step 23
 
@@ -377,6 +397,7 @@
 3. **Test failure 3x:** Same failure on 3rd attempt → STOP & LOG ISSUE
 4. **Merge conflict unresolvable:** Cannot logically resolve → LOG & REQUEST DIRECTION
 5. **Framework mismatch:** `.github/` differs from development → REBASE/MERGE before coding
+6. **Deletion failure:** Cannot delete expired branch → LOG WITH BRANCH NAME & REASON, continue
 
 ---
 
@@ -388,7 +409,8 @@
 | Branch Strategy | 1-4 | Decide branch, lock it | Branch locked with pc_id |
 | Load Context | 5-6 | Load frameworks, create plan | Context ready |
 | Implementation | 7-16 | Implement, validate, commit, push | Tests green |
-| Finalization | 17-22 | Merge, sync status | Merged into development |
+| Finalization | 17-22 | Merge, sync status, mark for deletion | Merged into development |
+| Cleanup | 22.5 | Auto-delete expired branches | Expired branches removed |
 | Closure | 23-24 | Final question, task_complete() | User confirms |
 
 ---
@@ -396,6 +418,8 @@
 ## 🔑 KEY FILES
 
 - **Global registry:** `copilot/BRANCHES_STATUS.md` (on development branch)
+- **Retention policy:** `copilot/ACTIVE-GOVERNANCE/BRANCH_RETENTION_POLICY.md` (defines grace period and auto-delete logic)
+- **Deletion audit trail:** `copilot/ACTIVE-GOVERNANCE/branch-deletion-audit.log` (logs all automated deletions)
 - **Branch memory:** `BRANCH_LOG.md` (at root of feature branch)
 - **Plans:** `copilot/plans/active/<plan-name>/`
 - **Lossless reports:** `copilot/explanations/temporal/lossless-reports/`
@@ -406,6 +430,7 @@
 ## 🔗 RELATED DOCUMENTS
 
 - **Multi-Agent Workflow Skill:** `.github/skills/multi-agent-workflow/SKILL.md`
+- **Branch Retention Policy:** `copilot/ACTIVE-GOVERNANCE/BRANCH_RETENTION_POLICY.md`
 - **Lossless Protocol:** `copilot/protocols/lossless-change-protocol.md`
 - **Git Workflow:** `copilot/autopilot/git-workflow-rules.md`
 - **Leverage Step Protocol:** `copilot/protocols/vscode-askQuestions-leverage-step.md`
@@ -414,7 +439,7 @@
 
 ---
 
-**Version:** 2.0 (Multi-Agent Workflow)  
-**Date Updated:** April 6, 2026  
+**Version:** 2.1 (Multi-Agent Workflow + Branch Lifecycle Automation)  
+**Date Updated:** April 7, 2026  
 **Status:** ACTIVE  
 **Use Cases:** All autopilot tasks in multi-agent environments

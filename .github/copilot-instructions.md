@@ -805,6 +805,35 @@ Command control system built from analysis of **25+ commands** across **15+ exec
    - Command: `git push origin <branch-name>`
    - Always verify branch before pushing
 
+### Branch Lifecycle Management (REQUIRED FOR MERGED BRANCHES)
+
+**Reference:** `copilot/ACTIVE-GOVERNANCE/BRANCH_RETENTION_POLICY.md`
+
+After merging a feature branch into development:
+1. Update branch status in `BRANCHES_STATUS.md`:
+   - Set Status: `pending-delete` (NOT ~~merged~~ or ~~archived~~)
+   - Record Pending-Delete Date: Today's date (YYYY-MM-DD)
+   - Document in Notes: "Merged on [date]; will be auto-deleted on [date+7days]"
+
+2. **7-Day Grace Period:**
+   - Branch is retained for 7 consecutive days after pending-delete-date
+   - Allows rollback window and audit time
+   - Can be extended by changing Status to `retained` with documented reason
+
+3. **Automatic Cleanup:**
+   - After retention period expires, branch is automatically:
+     - Deleted from remote GitHub
+     - Deleted locally if still exists
+     - Removed from BRANCHES_STATUS.md
+     - Logged to `branch-deletion-audit.log` for audit trail
+
+4. **Special Cases:**
+   - Security-sensitive branches: Extend retention to 30 days
+   - Production hotfixes: Mark as `retained` with indefinite retention
+   - Compliance/audit branches: Mark as `retained` with documented end-date
+
+See Step 22-22.5 in `AUTOPILOT_EXECUTION_CHECKLIST.md` for implementation details.
+
 ### Autopilot vscode/askQuestions Self-Response Loop (REQUIRED)
 
 **After completing each major work block:**
