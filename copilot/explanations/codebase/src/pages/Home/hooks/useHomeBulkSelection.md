@@ -22,6 +22,7 @@
 - `../../../utils/permissionUtils`
 
 ## Changelog
+- **2026-04-07:** Selection-mode move orchestration now filters invalid destination folders (selected folders and descendants), routes batch move entries through centralized share-rule flow, and adds undo support via Ctrl+Z plus a 5-second floating undo action.
 - **2026-04-03:** Bulk delete now routes orphan shortcuts through shortcut bin soft-delete (`moveToBin`) while preserving direct hard-delete behavior for non-orphan shortcuts and non-shortcut items.
 
 ## Notes

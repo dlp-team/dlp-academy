@@ -239,7 +239,13 @@ const FolderListItem = ({
         if (!isExpanded) setIsExpanded(true);
     };
 
-    const handleClickFolder = (e: any) => { e.stopPropagation(); setIsExpanded(!isExpanded); };
+    const handleClickFolder = (e: any) => {
+        e.stopPropagation();
+        if (selectMode) {
+            onNavigate(item);
+        }
+        setIsExpanded(!isExpanded);
+    };
 
     // --- STYLES & INDENTATION ---
     const indent = depth * (100 * scale); // 32px per level, scaled

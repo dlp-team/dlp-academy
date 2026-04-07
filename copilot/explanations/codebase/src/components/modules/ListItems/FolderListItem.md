@@ -1,6 +1,10 @@
 # FolderListItem.jsx
 
 ## Changelog
+### 2026-04-07: Selection-mode row click behavior parity
+- Folder row click now toggles selection when Home selection mode is active.
+- Preserves expand/collapse interactions and non-selection navigation paths.
+
 ### 2026-04-07: Centralized menu portal and positioning logic
 - Replaced in-file `createPortal` shell and close-layer duplication with shared [ContextActionMenuPortal](../../shared/ContextActionMenuPortal.md).
 - Replaced in-file menu position calculations with shared [menuPositionUtils](../../shared/menuPositionUtils.md).

@@ -1,3 +1,9 @@
+## [2026-04-07] Selection-Mode Batch Move Rules Parity
+### Context & Behavior
+- Added `moveSelectionEntryWithShareRules` to expose per-entry move orchestration for selection-mode batch moves.
+- Reused the same share/unshare/deferred confirmation path previously used in single-item move flows.
+- Move handlers now return explicit status markers (`moved`, `deferred`, `blocked`, `noop`) to support deterministic bulk feedback and follow-up actions.
+
 ## [2026-04-02] Shortcut Move Request Callable Wiring
 ### Context & Behavior
 - Replaced shortcut move-request placeholder logging with real callable submission flow.

@@ -19,6 +19,7 @@
 - `lucide-react`
 
 ## Changelog
+- **2026-04-07:** Added primary-theme border emphasis to the active `Salir de la seleccion` action and switched destination options to the filtered move target list supplied by `Home.tsx`.
 - **2026-04-02:** Selection-mode toolbar refined for safer UX:
 	- grouped creation/move/delete actions for faster scanning,
 	- added explicit safety copy that delete action moves items to paper bin (not permanent delete),

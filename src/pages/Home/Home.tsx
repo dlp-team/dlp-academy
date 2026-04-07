@@ -65,23 +65,6 @@ const Home = ({ user }: any) => {
     }, []);
 
     const logic: any = useHomeLogic(user, searchQuery, rememberOrganization, publishHomeFeedback);
-    const {
-        selectMode,
-        setSelectMode,
-        selectedItems,
-        selectedItemKeys,
-        bulkMoveTargetFolderId,
-        setBulkMoveTargetFolderId,
-        clearSelection,
-        toggleSelectItem,
-        runBulkMoveToFolder,
-        handleBulkDelete,
-        handleCreateFolderFromSelection
-    } = useHomeBulkSelection({
-        logic,
-        isStudentRole,
-        onHomeFeedback: publishHomeFeedback
-    });
     const { moveSubjectToParent, moveFolderToParent, moveSubjectBetweenFolders, updateFolder } = useFolders(user);
     const {
         isFilterOpen,
@@ -157,6 +140,7 @@ const Home = ({ user }: any) => {
         handleBreadcrumbDrop,
         handleOpenTopics,
         handleDropOnFolderWrapper,
+        moveSelectionEntryWithShareRules,
         handleNestFolder,
         handlePromoteSubjectWrapper,
         handlePromoteFolderWrapper,
@@ -178,6 +162,29 @@ const Home = ({ user }: any) => {
         setFolderContentsModalConfig,
         rememberOrganization,
         onHomeFeedback: publishHomeFeedback
+    });
+
+    const {
+        selectMode,
+        setSelectMode,
+        selectedItems,
+        selectedItemKeys,
+        bulkMoveTargetFolderId,
+        availableMoveFolders,
+        setBulkMoveTargetFolderId,
+        clearSelection,
+        undoToast,
+        undoLastSelectionAction,
+        clearUndoToast,
+        toggleSelectItem,
+        runBulkMoveToFolder,
+        handleBulkDelete,
+        handleCreateFolderFromSelection
+    } = useHomeBulkSelection({
+        logic,
+        isStudentRole,
+        onHomeFeedback: publishHomeFeedback,
+        moveSelectionEntryWithShareRules
     });
 
     const { handleCardFocus, shortcutFeedback, getCardVisualState } = useHomeKeyboardCoordination({
@@ -312,12 +319,15 @@ const Home = ({ user }: any) => {
                     selectMode={selectMode}
                     selectedCount={selectedItems.length}
                     bulkMoveTargetFolderId={bulkMoveTargetFolderId}
-                    folders={logic.folders || []}
+                    folders={availableMoveFolders}
                     onToggleSelectMode={() => {
                         setSelectMode((prev) => !prev);
                         setBulkActionMessage('');
                         setBulkActionTone('success');
-                        if (selectMode) clearSelection();
+                        if (selectMode) {
+                            clearSelection();
+                            clearUndoToast();
+                        }
                     }}
                     onDeleteSelected={handleBulkDelete}
                     onCreateFolderFromSelection={handleCreateFolderFromSelection}
@@ -327,6 +337,14 @@ const Home = ({ user }: any) => {
                 />
 
                 <HomeBulkActionFeedback message={bulkActionMessage} tone={bulkActionTone} />
+                <HomeBulkActionFeedback
+                    message={undoToast?.message || ''}
+                    tone="warning"
+                    floating={true}
+                    actionLabel={undoToast?.actionLabel || 'Deshacer'}
+                    onAction={undoLastSelectionAction}
+                    onClose={clearUndoToast}
+                />
 
                 <HomeMainContent
                     user={user}

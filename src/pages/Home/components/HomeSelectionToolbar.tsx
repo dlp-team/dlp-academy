@@ -26,6 +26,9 @@ const HomeSelectionToolbar = ({
     const toggleTone = selectMode && hasSelection
         ? 'bg-sky-600 hover:bg-sky-700 text-white border border-sky-600'
         : 'bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800';
+    const activeSelectionBorderTone = selectMode
+        ? 'border-2 border-[var(--color-primary-600)] dark:border-[var(--color-primary-400)]'
+        : '';
 
     return (
         <div className={`mt-4 mb-6 rounded-xl border p-3 flex flex-col gap-3 ${containerTone}`}>
@@ -34,7 +37,7 @@ const HomeSelectionToolbar = ({
                     <button
                         type="button"
                         onClick={onToggleSelectMode}
-                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${toggleTone}`}
+                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${toggleTone} ${activeSelectionBorderTone}`}
                         title={selectMode ? 'Salir de la selección' : 'Modo selección'}
                     >
                         {selectMode ? <CheckSquare size={16} /> : <Square size={16} />}

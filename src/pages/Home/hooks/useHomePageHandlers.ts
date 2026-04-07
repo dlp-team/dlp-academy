@@ -275,11 +275,11 @@ export const useHomePageHandlers = ({
         if (!shortcutId || !logic?.moveShortcut) return false;
 
         if (requestOwnerMoveForShortcut({ shortcutId, targetFolderId, targetType, targetId })) {
-            return true;
+            return 'deferred';
         }
 
         await logic.moveShortcut(shortcutId, targetFolderId || null);
-        return true;
+        return 'moved';
     };
 
     const handleSaveFolderWrapper = folderData => {
@@ -324,7 +324,7 @@ export const useHomePageHandlers = ({
 
     const handleDropOnFolderWrapper = (targetFolderId, subjectId, typeOrSourceFolderId, sourceFolderIdMaybe, shortcutIdMaybe: any) => {
         if (isViewerInsideSharedFolder) {
-            return true;
+            return 'blocked';
         }
 
         const isKnownType = typeOrSourceFolderId === 'subject' || typeOrSourceFolderId === 'folder';
@@ -341,23 +341,23 @@ export const useHomePageHandlers = ({
                 targetType: type,
                 targetId: subjectId
             })) {
-                return true;
+                return 'deferred';
             }
             if (logic?.moveShortcut) {
                 logic.moveShortcut(draggedShortcutId, targetFolderId || null);
-                return true;
+                return 'moved';
             }
         }
 
         if (!canWriteIntoTargetFolder(targetFolderId)) {
-            return true;
+            return 'blocked';
         }
 
         if (type === 'folder') {
             const sourceParentId = explicitSourceFolderId !== undefined ? explicitSourceFolderId : (logic.currentFolder ? logic.currentFolder.id : null);
             draggedShortcutId = draggedShortcutId || resolveFolderShortcutId(subjectId, sourceParentId || null);
             handleNestFolder(targetFolderId, subjectId, draggedShortcutId || null);
-            return true;
+            return 'moved';
         }
 
         const subject = (logic.subjects || []).find(s => s.id === subjectId);
@@ -367,23 +367,23 @@ export const useHomePageHandlers = ({
                 : subject?.folderId || (logic.currentFolder ? logic.currentFolder.id : null);
 
         if (!canWriteFromSourceFolder(currentFolderId)) {
-            return true;
+            return 'blocked';
         }
 
         if (isEditorLeavingRootSharedBoundary(currentFolderId, targetFolderId || null)) {
-            return true;
+            return 'blocked';
         }
 
 
         if (targetFolderId === currentFolderId) {
-            return;
+            return 'noop';
         }
         const sourceFolder = ((logic.folders || []) as any[]).find(f => f.id === currentFolderId);
         const userId = currentUserId;
 
         if (!sourceFolder && (!targetFolder || targetFolder.isShared !== true)) {
             moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-            return true;
+            return 'moved';
         }
 
         if (!draggedShortcutId && logic?.shortcuts) {
@@ -400,7 +400,7 @@ export const useHomePageHandlers = ({
             const userCanEdit = userId ? canEdit(subject, userId) : false;
             const userCanEditFromContext = canWriteFromSourceFolder(currentFolderId);
             if (!userCanEdit && !userCanEditFromContext) {
-                return true;
+                return 'blocked';
             }
         }
 
@@ -439,7 +439,7 @@ export const useHomePageHandlers = ({
                     closeShareConfirm();
                 }
             });
-            return true;
+            return 'deferred';
         }
 
         const removedUsers = baselineSharedWithUids.filter(uid => !targetFolderSharedWithUids.includes(uid));
@@ -458,7 +458,7 @@ export const useHomePageHandlers = ({
                     closeUnshareConfirm();
                 },
             });
-            return true;
+            return 'deferred';
         }
 
         if (targetFolder && targetFolder.isShared) {
@@ -475,12 +475,48 @@ export const useHomePageHandlers = ({
                         setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
                     }
                 });
-                return true;
+                    return 'deferred';
             }
         }
         
         moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-        return true;
+        return 'moved';
+    };
+
+    const moveSelectionEntryWithShareRules = async (entry: any, targetFolderId: any) => {
+        const type = entry?.type;
+        const item = entry?.item;
+        if (!item?.id || !type) {
+            return { status: 'skipped' };
+        }
+
+        if (type === 'folder') {
+            const sourceParentId = item?.shortcutParentId ?? item?.parentId ?? (logic.currentFolder ? logic.currentFolder.id : null);
+            const resolvedShortcutId = item?.shortcutId || resolveFolderShortcutId(item.id, sourceParentId || null);
+            const folderStatus = await handleNestFolder(targetFolderId, item.id, resolvedShortcutId || null);
+            if (typeof folderStatus === 'string') {
+                return { status: folderStatus };
+            }
+            return { status: 'moved' };
+        }
+
+        const sourceFolderId = type === 'subject'
+            ? (item?.shortcutParentId ?? item?.folderId ?? item?.parentId ?? (logic.currentFolder ? logic.currentFolder.id : null))
+            : (item?.shortcutParentId ?? item?.parentId ?? (logic.currentFolder ? logic.currentFolder.id : null));
+
+        const status = await Promise.resolve(handleDropOnFolderWrapper(
+            targetFolderId,
+            item.id,
+            type,
+            sourceFolderId,
+            item?.shortcutId || null
+        ));
+
+        if (typeof status === 'string') {
+            return { status };
+        }
+
+        return { status: 'moved' };
     };
 
     const handleBreadcrumbDrop = (targetFolderId, subjectId, droppedFolderId, droppedFolderShortcutId = null, subjectShortcutId = null) => {
@@ -495,8 +531,7 @@ export const useHomePageHandlers = ({
         let resolvedFolderShortcutId = droppedFolderShortcutId;
         resolvedFolderShortcutId = resolvedFolderShortcutId || resolveFolderShortcutId(droppedFolderId, currentFolderId || null);
         if (resolvedFolderShortcutId && logic?.moveShortcut) {
-            moveShortcutOrRequest(resolvedFolderShortcutId, targetFolderId || null, 'folder', droppedFolderId || null);
-            return true;
+            return moveShortcutOrRequest(resolvedFolderShortcutId, targetFolderId || null, 'folder', droppedFolderId || null);
         }
 
         if (!canWriteIntoTargetFolder(targetFolderId)) {
@@ -604,38 +639,37 @@ export const useHomePageHandlers = ({
 
     const handleNestFolder = async (targetFolderId, droppedFolderId, droppedFolderShortcutId = null) => {
         if (isViewerInsideSharedFolder) {
-            return;
+            return 'blocked';
         }
 
         const inferredShortcutId = droppedFolderShortcutId || resolveFolderShortcutId(droppedFolderId, logic.currentFolder?.id || null);
 
         if (inferredShortcutId && logic?.moveShortcut) {
-            await moveShortcutOrRequest(inferredShortcutId, targetFolderId || null, 'folder', droppedFolderId);
-            return;
+            return await moveShortcutOrRequest(inferredShortcutId, targetFolderId || null, 'folder', droppedFolderId);
         }
 
         if (!canWriteIntoTargetFolder(targetFolderId)) {
-            return;
+            return 'blocked';
         }
-        if (targetFolderId === droppedFolderId) return;
+        if (targetFolderId === droppedFolderId) return 'noop';
 
         const droppedFolderSource = ((logic.folders || []) as any[]).find(f => f.id === droppedFolderId);
         const userCanEditSource = droppedFolderSource && currentUserId ? canEdit(droppedFolderSource, currentUserId) : false;
         if (!userCanEditSource) {
-            return;
+            return 'blocked';
         }
 
         if (isInvalidFolderMove(droppedFolderId, targetFolderId, logic.folders || [])) {
             console.warn('🚫 BLOCKED: Circular dependency detected.');
-            return;
+            return 'blocked';
         }
 
         const droppedFolder = ((logic.folders || []) as any[]).find(f => f.id === droppedFolderId);
-        if (!droppedFolder) return;
+        if (!droppedFolder) return 'blocked';
         const currentParentId = droppedFolder.parentId || null;
 
         if (isEditorLeavingRootSharedBoundary(currentParentId || droppedFolder.id, targetFolderId || null)) {
-            return;
+            return 'blocked';
         }
 
         const targetFolder = ((logic.folders || []) as any[]).find(f => f.id === targetFolderId);
@@ -675,7 +709,7 @@ export const useHomePageHandlers = ({
                         closeUnshareConfirm();
                     }
                 });
-                return;
+                return 'deferred';
             }
         }
 
@@ -701,7 +735,7 @@ export const useHomePageHandlers = ({
                         closeShareConfirm();
                     }
                 });
-                return;
+                return 'deferred';
             }
 
             const droppedShared = new Set(droppedSharedUids);
@@ -716,10 +750,11 @@ export const useHomePageHandlers = ({
                         setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
                     }
                 });
-                return;
+                    return 'deferred';
             }
         }
         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId, { preserveSharing: true });
+        return 'moved';
     };
 
     const handlePromoteSubjectWrapper = async (subjectId: any, subjectShortcutId: any = null) => {
@@ -905,6 +940,7 @@ export const useHomePageHandlers = ({
         handleBreadcrumbDrop,
         handleOpenTopics,
         handleDropOnFolderWrapper,
+        moveSelectionEntryWithShareRules,
         handleNestFolder,
         handlePromoteSubjectWrapper,
         handlePromoteFolderWrapper,

@@ -738,7 +738,16 @@ const HomeContent = ({
                                                     }
                                                     handleOpenFolder(targetFolder);
                                                 }}
-                                                onNavigateSubject={handleSelectSubject}
+                                                onNavigateSubject={(subjectId: any) => {
+                                                    if (selectMode) {
+                                                        const selectedSubject = (allSubjectsForTree || []).find((entry: any) => entry?.id === subjectId);
+                                                        if (selectedSubject) {
+                                                            onToggleSelectItem(selectedSubject, 'subject');
+                                                        }
+                                                        return;
+                                                    }
+                                                    handleSelectSubject(subjectId);
+                                                }}
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                 onDelete={(f, action = 'delete') => {
                                                     if (disableAllActionsInShared || disableFolderDeleteActionsInShared) return;

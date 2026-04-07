@@ -1,6 +1,10 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-04-07: List-mode selection click behavior alignment
+- Nested subject rows now toggle selection in selection mode instead of navigating.
+- Preserves normal navigation behavior when selection mode is inactive.
+
 ### 2026-04-05: Nested list-mode selection parity wiring
 - Home list-mode now forwards selection context (`selectMode`, `selectedItemKeys`, `enableSelectionDimming`) to list-row renderers.
 - Enables recursive nested list rows to align with Home selection highlighting/dimming behavior.

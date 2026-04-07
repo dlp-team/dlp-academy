@@ -17,4 +17,5 @@
 - `react`
 
 ## Changelog
+- 2026-04-07: Added optional floating-bottom presentation with action and close callbacks so selection-mode undo can reuse this component without replacing the main bulk banner path.
 - 2026-04-01: Created component by extracting inline bulk-action feedback JSX from `Home.tsx` to keep coordinator orchestration focused and reduce duplicated tone class logic.
