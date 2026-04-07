@@ -42,8 +42,8 @@ describe('BinGridItem', () => {
     );
 
     const wrapper = screen.getByTestId('bin-grid-wrapper-subject-item-1');
-    expect(wrapper.className).toContain('brightness-[0.88]');
-    expect(wrapper.className).toContain('saturate-[0.58]');
+    expect(wrapper.className).toContain('brightness-[0.91]');
+    expect(wrapper.className).toContain('saturate-[0.66]');
     expect(wrapper.className).not.toContain('opacity-30');
   });
 

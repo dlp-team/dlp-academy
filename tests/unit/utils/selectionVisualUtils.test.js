@@ -40,7 +40,7 @@ describe('selectionVisualUtils', () => {
         isSelected: false,
         isFolderLike: false,
       })
-    ).toBe('brightness-[0.88] saturate-[0.58]');
+    ).toBe('brightness-[0.91] saturate-[0.66]');
 
     expect(
       getBinUnselectedDimmingClass({

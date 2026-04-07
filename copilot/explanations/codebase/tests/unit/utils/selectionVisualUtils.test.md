@@ -13,5 +13,8 @@
 - Bin helper preserves distinct folder vs. subject dimming intensity values.
 
 ## Changelog
+### 2026-04-07
+- Updated bin subject dimming expectation to the softened class contract (`brightness-[0.91] saturate-[0.66]`) introduced in Phase 02 visual-parity tuning.
+
 ### 2026-04-05
 - Added new focused suite to lock down Home and Bin dimming utility contracts for Phase 02 Block A.

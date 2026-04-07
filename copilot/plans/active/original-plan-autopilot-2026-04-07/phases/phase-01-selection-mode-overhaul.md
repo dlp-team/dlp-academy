@@ -2,7 +2,7 @@
 # Phase 01 - Selection Mode Overhaul
 
 ## Status
-- inReview
+- finished
 
 ## Objectives
 - Exclude selected folders (and their nested disallowed destinations) from move-to destination options.
@@ -22,4 +22,4 @@
 - Fixed list-mode selection-mode click behavior for nested subject and folder rows.
 - Added primary token border styling to the selection-exit action.
 - Added Ctrl+Z undo recovery with floating 5-second action feedback.
-- Validation completed for targeted tests and `get_errors`; phase is pending commit/push gate completion.
+- Validation completed for targeted tests and `get_errors`; commit/push gate completed on branch `feature/hector/original-plan-execution-2026-0407`.

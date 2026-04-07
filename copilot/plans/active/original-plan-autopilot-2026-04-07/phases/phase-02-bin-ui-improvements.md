@@ -2,7 +2,7 @@
 # Phase 02 - Bin UI Improvements
 
 ## Status
-- todo
+- inReview
 
 ## Objectives
 - Reduce excessive background dimming in grid mode focus state.
@@ -12,3 +12,9 @@
 ## Validation
 - get_errors on bin/list card components and styles.
 - Manual pass in grid/list bins for focus, transitions, and option menus.
+
+## Outcome (In Review)
+- Softened grid focus fade by reducing backdrop opacity and bin subject dimming intensity.
+- Synchronized focused-card transition and options reveal cadence in grid overlay.
+- Updated list inline panel shell/action visuals to align with grid interaction language while preserving existing action behavior.
+- Targeted diagnostics and unit test suite passed for touched bin and dimming paths.

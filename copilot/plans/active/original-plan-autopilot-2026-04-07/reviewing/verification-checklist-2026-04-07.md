@@ -3,7 +3,7 @@
 
 ## Functional Verification
 - [x] Selection mode move/filter/share/undo behaviors verified.
-- [ ] Bin grid/list style and option behavior parity verified.
+- [x] Bin grid/list style and option behavior parity verified.
 - [ ] Settings header toggle option and system theme consistency verified.
 - [ ] Institution customization live iframe preview and save confirmation verified.
 - [ ] Scrollbar theme + layout stability verified.
@@ -17,7 +17,7 @@
 ## Tooling Verification
 - [x] `get_errors` clean for touched files.
 - [x] Targeted tests pass.
-- [ ] `npm run lint` passes.
+- [x] `npm run lint` passes.
 - [ ] `npm run test` passes.
 - [ ] `npm run build` passes (if required by touched areas).
 
@@ -27,6 +27,6 @@
 - [x] Plan lifecycle and phase statuses synchronized.
 
 ## Git Verification
-- [ ] Commits are atomic with conventional messages.
-- [ ] Security scans passed before commit and push.
-- [ ] Push completed after each major block.
+- [x] Commits are atomic with conventional messages.
+- [x] Security scans passed before commit and push.
+- [x] Push completed after each major block.

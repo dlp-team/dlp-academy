@@ -40,6 +40,20 @@
 - copilot/plans/active/original-plan-autopilot-2026-04-07/reviewing/verification-checklist-2026-04-07.md
 - copilot/plans/active/original-plan-autopilot-2026-04-07/working/execution-log.md
 - copilot/explanations/temporal/lossless-reports/2026-04-07/selection-mode-overhaul-phase1-bulk-shared-rules-and-undo.md
+- src/utils/selectionVisualUtils.ts
+- src/pages/Home/components/bin/BinSelectionOverlay.tsx
+- src/pages/Home/components/BinView.tsx
+- tests/unit/utils/selectionVisualUtils.test.js
+- tests/unit/components/BinGridItem.test.jsx
+- tests/unit/pages/home/BinView.listInlinePanel.test.jsx
+- copilot/explanations/codebase/src/utils/selectionVisualUtils.md
+- copilot/explanations/codebase/src/pages/Home/components/bin/BinSelectionOverlay.md
+- copilot/explanations/codebase/src/pages/Home/components/BinView.md
+- copilot/explanations/codebase/tests/unit/utils/selectionVisualUtils.test.md
+- copilot/explanations/codebase/tests/unit/components/BinGridItem.test.md
+- copilot/explanations/codebase/tests/unit/pages/home/BinView.listInlinePanel.test.md
+- copilot/plans/active/original-plan-autopilot-2026-04-07/phases/phase-02-bin-ui-improvements.md
+- copilot/explanations/temporal/lossless-reports/2026-04-07/bin-ui-parity-phase2-focus-dimming-and-list-panel-alignment.md
 
 ## External Comments
 - (none)

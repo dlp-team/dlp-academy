@@ -12,3 +12,7 @@
 - Phase 01 implementation complete: selection-mode destination filtering, centralized batch move rule reuse, list-mode click-selection fixes, exit-button border styling, and Ctrl+Z undo with floating feedback.
 - Phase 01 validation complete (targeted): `get_errors` clean on touched files and targeted Home selection suites passing.
 - Phase 01 docs-sync complete: lossless report created and codebase explanation changelogs updated for all touched modules.
+- Phase 01 git gate complete: `npm run lint`, security scans (`staged` + `branch`), atomic commit `c257b17`, and push to `origin/feature/hector/original-plan-execution-2026-0407`.
+- Phase 02 implementation complete: softened bin grid focus fade, synchronized overlay focus/panel cadence, and list inline panel visual/reveal alignment with grid mode.
+- Phase 02 validation complete (targeted): `get_errors` clean and Bin-focused suites passing (`selectionVisualUtils`, `BinGridItem`, `BinSelectionOverlay`, `BinView.listInlinePanel`).
+- Phase 02 docs-sync complete: lossless report and codebase explanation changelogs updated for source/test files touched in this block.

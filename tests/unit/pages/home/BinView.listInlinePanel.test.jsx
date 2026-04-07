@@ -131,7 +131,9 @@ describe('BinView list inline panel', () => {
     });
 
     fireEvent.click(screen.getByTestId('bin-list-row-subject-sub-1'));
-    expect(screen.getByTestId('bin-list-inline-panel-subject-sub-1')).toBeTruthy();
+    const firstInlinePanel = screen.getByTestId('bin-list-inline-panel-subject-sub-1');
+    expect(firstInlinePanel).toBeTruthy();
+    expect(firstInlinePanel.className).toContain('zoom-in-95');
 
     fireEvent.click(screen.getByTestId('bin-list-row-subject-sub-2'));
 

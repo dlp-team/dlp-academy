@@ -14,6 +14,9 @@
 - Shortcut entries expose shortcut-specific restore label (`Restaurar acceso directo`) without folder-only actions.
 
 ## Changelog
+### 2026-04-07
+- Added reveal-style assertion (`zoom-in-95`) to verify list inline panel animation parity with grid-focused interaction language.
+
 ### 2026-04-05
 - Added focused list-mode parity tests for Phase 02 Block B.
 

@@ -17,5 +17,5 @@ export const getBinUnselectedDimmingClass = ({
   if (!hasSelection || isSelected) return '';
   return isFolderLike
     ? 'brightness-[0.93] saturate-[0.76]'
-    : 'brightness-[0.88] saturate-[0.58]';
+    : 'brightness-[0.91] saturate-[0.66]';
 };

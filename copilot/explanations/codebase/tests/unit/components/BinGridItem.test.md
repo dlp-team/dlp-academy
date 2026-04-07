@@ -12,5 +12,8 @@
 - Folder cards use softer dimming values to preserve readability (no opacity fallback).
 
 ## Changelog
+### 2026-04-07
+- Updated subject dimming assertions to match softened bin selection fade values while keeping folder-legibility checks unchanged.
+
 ### 2026-04-04
 - Added initial focused suite for `BinGridItem` selection/dimming semantics.

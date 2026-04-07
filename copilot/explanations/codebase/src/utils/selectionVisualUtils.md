@@ -25,6 +25,9 @@
 - `src/pages/Home/components/HomeContent.tsx`
 
 ## Changelog
+### 2026-04-07
+- Softened bin subject dimming token from `brightness-[0.88] saturate-[0.58]` to `brightness-[0.91] saturate-[0.66]` for less aggressive background fade while preserving folder-specific dimming values.
+
 ### 2026-04-05
 - Added `getHomeUnselectedDimmingClass` and integrated it into Home grid selection rendering for Phase 02 Block A.
 

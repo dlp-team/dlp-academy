@@ -4,7 +4,7 @@ import BinSelectionPanel from './BinSelectionPanel';
 
 const PANEL_WIDTH = 360;  // must match w-[360px] in BinSelectionPanel
 const GAP        = 12;    // px gap between card and panel
-const FOCUS_TRANSITION_MS = 180;
+const FOCUS_TRANSITION_MS = 200;
 
 /**
  * Full-screen dimmed backdrop.
@@ -100,14 +100,14 @@ const BinSelectionOverlay = ({
             {/* ── Fondo oscuro (Backdrop) ── */}
             <div
                 data-testid="bin-selection-overlay-backdrop"
-                className="fixed inset-0 z-40 bg-slate-900/55 dark:bg-slate-950/80 transition-opacity"
+                className="fixed inset-0 z-40 bg-slate-900/45 dark:bg-slate-950/70 transition-opacity"
                 onClick={onClose}
             />
 
             {/* ── Tarjeta seleccionada sobre el fondo ── */}
             <div
                 data-testid="bin-selection-overlay-card"
-                className={`fixed z-50 transition-transform duration-200 ease-out ${
+                className={`fixed z-50 transform-gpu transition-transform duration-200 ease-out ${
                     isCardFocused ? 'scale-[1.02]' : 'scale-[0.985]'
                 }`}
                 style={{

@@ -24,6 +24,10 @@
 - `../../../components/modules/ListViewItem`
 
 ## Changelog
+- **2026-04-07:** Phase 02 bin visual-parity pass:
+	- list inline selected-item panel now uses grid-aligned reveal styling (`fade + slide + zoom`) and elevated shell treatment,
+	- list inline action buttons now mirror grid-panel visual semantics (contextual neutral action + urgency-themed restore + soft-danger delete),
+	- preserved selection contracts and existing action labels.
 - **2026-04-05:** Phase 02 list-interaction parity updates:
 	- list-mode selected-item action area now renders inline directly under the selected item,
 	- removed bottom-of-list selected-item aside in list mode,

@@ -13,5 +13,9 @@
 - Applies staged focus UX: selected card focus transition first, action panel reveal immediately after.
 
 ## Changelog
+- **2026-04-07:** Bin focus overlay refined for visual parity:
+	- softened backdrop opacity in light/dark modes,
+	- synchronized focus and panel reveal timing at 200ms,
+	- added GPU transform hint for smoother focused-card scale.
 - **2026-04-05:** Removed backdrop blur, introduced selected-card focus transform transition, and delayed action panel reveal to align with focus transition timing.
 - **2026-04-02:** Extended overlay contract from `subject` to typed `item`/`itemType` so folder selections share the same anchored UX path.
