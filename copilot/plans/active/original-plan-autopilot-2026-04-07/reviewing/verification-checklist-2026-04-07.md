@@ -6,7 +6,7 @@
 - [x] Bin grid/list style and option behavior parity verified.
 - [x] Settings header toggle option and system theme consistency verified.
 - [x] Institution customization live iframe preview and save confirmation verified.
-- [ ] Scrollbar theme + layout stability verified.
+- [x] Scrollbar theme + layout stability verified.
 - [ ] Topic create actions restored and verified.
 
 ## Regression Verification

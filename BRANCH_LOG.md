@@ -84,6 +84,14 @@
 - copilot/explanations/codebase/tests/unit/pages/institution-admin/themePreviewUtils.messagePayload.test.md
 - copilot/plans/active/original-plan-autopilot-2026-04-07/phases/phase-04-institution-preview-live-iframe.md
 - copilot/explanations/temporal/lossless-reports/2026-04-07/institution-live-iframe-phase4-postmessage-and-save-gate.md
+- src/components/ui/CustomScrollbar.tsx
+- src/index.css
+- tests/unit/components/CustomScrollbar.test.jsx
+- copilot/explanations/codebase/src/components/ui/CustomScrollbar.md
+- copilot/explanations/codebase/src/index.css.md
+- copilot/explanations/codebase/tests/unit/components/CustomScrollbar.test.md
+- copilot/plans/active/original-plan-autopilot-2026-04-07/phases/phase-05-scrollbar-theme-overlay.md
+- copilot/explanations/temporal/lossless-reports/2026-04-07/scrollbar-phase5-theme-aware-stable-gutter.md
 
 ## External Comments
 - (none)

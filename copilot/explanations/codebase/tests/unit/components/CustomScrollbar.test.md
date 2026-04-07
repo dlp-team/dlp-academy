@@ -7,13 +7,14 @@
 - **Role:** Deterministic unit coverage for global scrollbar mode class behavior in `CustomScrollbar`.
 
 ## Coverage
-- Overlay-support path:
-  - adds `custom-scrollbar-active` + `custom-scrollbar-overlay` to `html` and `body`.
-  - removes both classes on unmount.
-- Stable-fallback path:
+- Stable mode path:
   - adds `custom-scrollbar-active` + `custom-scrollbar-stable` to `html` and `body`.
-  - removes both classes on unmount.
+  - confirms overlay class is not applied.
+  - removes classes on unmount.
 
 ## Changelog
+### 2026-04-07
+- Refactored suite to validate stable-only scrollbar mode behavior after overlay-detection removal.
+
 ### 2026-04-05
 - Added initial regression suite for scrollbar mode detection and class lifecycle behavior.
