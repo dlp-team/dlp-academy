@@ -1,7 +1,8 @@
 // src/components/modals/QuizModal.tsx
 import React, { useEffect, useState } from 'react';
-import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Wand2, Upload, FileText, Trash2 } from 'lucide-react';
+import { X, Sparkles, BarChart3, Award, ListOrdered, MessageSquarePlus, Wand2 } from 'lucide-react';
 import AIGenerationModalShell from './shared/AIGenerationModalShell';
+import ReferencePdfUploadField from './shared/ReferencePdfUploadField';
 
 const QuizModal = ({
     isOpen,
@@ -91,15 +92,6 @@ const QuizModal = ({
     const handleClose = () => {
         setIsVisible(false);
         onClose();
-    };
-
-    const handleFileChange = (e: any) => {
-        const file = e.target.files[0];
-        if (file) setFormData({ ...formData, file: file });
-    };
-
-    const removeFile = () => {
-        setFormData({ ...formData, file: null });
     };
 
     return (
@@ -207,56 +199,15 @@ const QuizModal = ({
                             ></textarea>
                         </div>
 
-                        <div className="space-y-2 group">
-                            <label className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest ml-1 transition-colors">
-                                <Upload className="w-3.5 h-3.5" /> Material de Apoyo (PDF)
-                            </label>
-                            
-                            <div className="relative">
-                                <input 
-                                    type="file" 
-                                    id="quiz-pdf-upload"
-                                    accept=".pdf" 
-                                    className="hidden" 
-                                    onChange={handleFileChange}
-    
-                                />
-                                
-                                {!formData.file ? (
-                                    <label 
-                                        htmlFor="quiz-pdf-upload"
-                                        className="flex items-center gap-4 w-full px-5 py-3.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 border-dashed rounded-2xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-all group"
-                                    >
-                                        <div className="p-2 bg-white dark:bg-slate-700 rounded-xl border border-slate-200 dark:border-slate-600 shadow-sm group-hover:scale-110 transition-transform">
-                                            <Upload className="w-4 h-4 text-slate-400 dark:text-slate-500 group-hover:text-indigo-500 transition-colors" />
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-slate-600 dark:text-slate-300 font-bold text-sm">Subir PDF de referencia</span>
-                                            <span className="text-slate-400 dark:text-slate-500 text-xs">Opcional - Máx 5MB</span>
-                                        </div>
-                                    </label>
-                                ) : (
-                                    <div className="flex items-center justify-between w-full px-5 py-3.5 bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900 rounded-2xl transition-all animate-in fade-in zoom-in-95">
-                                        <div className="flex items-center gap-3 overflow-hidden">
-                                            <div className="p-2 bg-white dark:bg-slate-800 rounded-xl border border-indigo-100 dark:border-indigo-800 shadow-sm shrink-0">
-                                                <FileText className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                                            </div>
-                                            <span className="text-indigo-900 dark:text-indigo-200 font-bold text-sm truncate max-w-[200px]" title={formData.file.name}>
-                                                {formData.file.name}
-                                            </span>
-                                        </div>
-                                        <button 
-                                            type="button"
-                                            onClick={removeFile}
-            
-                                            className="p-2 hover:bg-white dark:hover:bg-slate-800 rounded-full text-indigo-400 dark:text-indigo-500 hover:text-red-500 transition-colors hover:shadow-sm"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+                        <ReferencePdfUploadField
+                            uploadId="quiz-pdf-upload"
+                            file={formData.file || null}
+                            onFileSelect={(file) => setFormData({ ...formData, file })}
+                            onRemoveFile={() => setFormData({ ...formData, file: null })}
+                            label="Material de Apoyo (PDF)"
+                            emptyTitle="Subir PDF de referencia"
+                            emptyDescription="Opcional - Máx 5MB"
+                        />
                     </form>
             </div>
 

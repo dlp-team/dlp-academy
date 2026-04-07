@@ -14,4 +14,16 @@ Reduce repeated action and form control styling by introducing reusable primitiv
 - Repeated class-pattern clusters are reduced with practical shared primitives.
 
 ## Status
-PLANNED
+IN_PROGRESS
+
+## Progress (2026-04-07)
+- Added shared form primitive: [src/components/modals/shared/ReferencePdfUploadField.tsx](../../../../../src/components/modals/shared/ReferencePdfUploadField.tsx)
+- Migrated adopters:
+	- [src/components/modals/CreateContentModal.tsx](../../../../../src/components/modals/CreateContentModal.tsx)
+	- [src/components/modals/QuizModal.tsx](../../../../../src/components/modals/QuizModal.tsx)
+- Added tests:
+	- [tests/unit/components/ReferencePdfUploadField.test.jsx](../../../../../tests/unit/components/ReferencePdfUploadField.test.jsx)
+- Validation checkpoint passed:
+	- `npm run test -- tests/unit/components/ReferencePdfUploadField.test.jsx tests/unit/components/AIGenerationModalShell.test.jsx tests/unit/pages/topic/CategorizFileModal.test.jsx tests/unit/pages/profile/EditProfileModal.test.jsx`
+	- `npm run lint`
+	- `npx tsc --noEmit`

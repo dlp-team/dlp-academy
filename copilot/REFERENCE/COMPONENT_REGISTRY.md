@@ -85,6 +85,14 @@ CRITICAL COPILOT DIRECTIVE: before creating any new UI element (modal, overlay, 
 
 No generic button primitives are active yet in src/components/ui.
 
+### ReferencePdfUploadField
+- File: src/components/modals/shared/ReferencePdfUploadField.tsx
+- Status: Active
+- Purpose: shared PDF upload form field with empty/selected states and remove action.
+- Current adopters:
+  - src/components/modals/CreateContentModal.tsx
+  - src/components/modals/QuizModal.tsx
+
 ### Planned primitives
 - PrimaryButton (planned)
 - SecondaryButton (planned)
@@ -99,6 +107,7 @@ Rule: do not assume these exist. Create and register only when implemented.
 2. Three-dots menu portal extraction:
   - Completed for list/card modules (2026-04-07)
 3. Broad button/form primitive extraction after modal/menu waves stabilize.
+  - In progress: ReferencePdfUploadField extracted and adopted in AI modals (2026-04-07)
 
 ## Adding New Components
 When creating a reusable component:
@@ -113,6 +122,7 @@ When creating a reusable component:
 | Generic modal primitive | BaseModal | Active |
 | Dashboard modal shell | DashboardOverlayShell | Active |
 | AI generation modal shell | AIGenerationModalShell | Active |
+| Shared PDF upload field | ReferencePdfUploadField | Active |
 | Menu positioning | menuPositionUtils | Active |
 | Unified three-dots portal shell | ContextActionMenuPortal | Active |
 | Generic primary/secondary/danger buttons | Not implemented yet | Planned |

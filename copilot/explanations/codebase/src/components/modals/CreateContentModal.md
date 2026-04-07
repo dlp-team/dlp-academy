@@ -1,6 +1,9 @@
 # CreateContentModal.tsx
 
 ## Changelog
+### 2026-04-07: Centralized PDF upload field
+- Replaced inline PDF upload UI block with shared [ReferencePdfUploadField](shared/ReferencePdfUploadField.md).
+
 ### 2026-04-07: Adopted shared AI modal shell
 - Replaced duplicated overlay/backdrop/container wrapper markup with shared [AIGenerationModalShell](shared/AIGenerationModalShell.md).
 - Preserved existing step flow, form behavior, and `isGenerating` close guard.

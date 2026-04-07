@@ -4,7 +4,7 @@
 ## Status
 - Lifecycle: active
 - Overall status: IN_PROGRESS
-- Current phase: Phase 05 (next execution block)
+- Current phase: Phase 05 (in progress)
 - Owner: Copilot + human reviewer
 
 ## Problem Statement
@@ -82,6 +82,12 @@ The repository now has a Component Registry, but the codebase still contains rep
     - [tests/unit/components/AIGenerationModalShell.test.jsx](../../../../tests/unit/components/AIGenerationModalShell.test.jsx)
     - [tests/unit/pages/topic/CategorizFileModal.test.jsx](../../../../tests/unit/pages/topic/CategorizFileModal.test.jsx)
     - [tests/unit/pages/profile/EditProfileModal.test.jsx](../../../../tests/unit/pages/profile/EditProfileModal.test.jsx)
+- In progress: Phase 05 button/form primitive centralization.
+  - Added shared form primitive: [src/components/modals/shared/ReferencePdfUploadField.tsx](../../../../src/components/modals/shared/ReferencePdfUploadField.tsx)
+  - Migrated first adopter pair:
+    - [src/components/modals/CreateContentModal.tsx](../../../../src/components/modals/CreateContentModal.tsx)
+    - [src/components/modals/QuizModal.tsx](../../../../src/components/modals/QuizModal.tsx)
+  - Added tests: [tests/unit/components/ReferencePdfUploadField.test.jsx](../../../../tests/unit/components/ReferencePdfUploadField.test.jsx)
 
 ## Validation Strategy
 - Each implementation wave:
