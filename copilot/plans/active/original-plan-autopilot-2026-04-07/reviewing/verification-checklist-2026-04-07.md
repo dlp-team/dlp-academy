@@ -1,0 +1,32 @@
+<!-- copilot/plans/active/original-plan-autopilot-2026-04-07/reviewing/verification-checklist-2026-04-07.md -->
+# Verification Checklist (2026-04-07)
+
+## Functional Verification
+- [ ] Selection mode move/filter/share/undo behaviors verified.
+- [ ] Bin grid/list style and option behavior parity verified.
+- [ ] Settings header toggle option and system theme consistency verified.
+- [ ] Institution customization live iframe preview and save confirmation verified.
+- [ ] Scrollbar theme + layout stability verified.
+- [ ] Topic create actions restored and verified.
+
+## Regression Verification
+- [ ] Adjacent modes/tabs maintain original behavior.
+- [ ] Role/permission visibility rules unchanged unless explicitly requested.
+- [ ] Empty/loading/error states still render correctly.
+
+## Tooling Verification
+- [ ] `get_errors` clean for touched files.
+- [ ] Targeted tests pass.
+- [ ] `npm run lint` passes.
+- [ ] `npm run test` passes.
+- [ ] `npm run build` passes (if required by touched areas).
+
+## Documentation Verification
+- [ ] Lossless report created/updated.
+- [ ] Codebase explanation docs updated for touched files.
+- [ ] Plan lifecycle and phase statuses synchronized.
+
+## Git Verification
+- [ ] Commits are atomic with conventional messages.
+- [ ] Security scans passed before commit and push.
+- [ ] Push completed after each major block.
