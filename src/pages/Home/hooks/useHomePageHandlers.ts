@@ -531,7 +531,17 @@ export const useHomePageHandlers = ({
         let resolvedFolderShortcutId = droppedFolderShortcutId;
         resolvedFolderShortcutId = resolvedFolderShortcutId || resolveFolderShortcutId(droppedFolderId, currentFolderId || null);
         if (resolvedFolderShortcutId && logic?.moveShortcut) {
-            return moveShortcutOrRequest(resolvedFolderShortcutId, targetFolderId || null, 'folder', droppedFolderId || null);
+            if (requestOwnerMoveForShortcut({
+                shortcutId: resolvedFolderShortcutId,
+                targetFolderId: targetFolderId || null,
+                targetType: 'folder',
+                targetId: droppedFolderId || null
+            })) {
+                return 'deferred';
+            }
+
+            logic.moveShortcut(resolvedFolderShortcutId, targetFolderId || null);
+            return 'moved';
         }
 
         if (!canWriteIntoTargetFolder(targetFolderId)) {

@@ -1,6 +1,11 @@
 // copilot/explanations/codebase/tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.md
 
 ## Changelog
+### 2026-04-07: Status-token contract alignment for drop handlers
+- Updated shortcut-role assertions to match current handler status contract:
+  - `deferred`, `blocked`, `moved`.
+- Added regression safety for breadcrumb folder-shortcut drops now returning deterministic status tokens instead of unresolved Promise values.
+
 ### 2026-04-02: Shortcut move request callable submission coverage
 - Added integration assertion for `shortcut-move-request` confirmation callback in `useHomePageHandlers`.
 - New test validates that confirmation:

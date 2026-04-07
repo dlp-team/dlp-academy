@@ -98,7 +98,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     const handlers = useHomePageHandlers(config);
     const result = handlers.handleDropOnFolderWrapper('shared-target', 'subject-1', 'subject', null, 'shortcut-1');
 
-    expect(result).toBe(true);
+    expect(result).toBe('deferred');
     expect(config.setShareConfirm).toHaveBeenCalledWith(
       expect.objectContaining({
         open: true,
@@ -155,7 +155,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     const handlers = useHomePageHandlers(config);
     const result = handlers.handleDropOnFolderWrapper('shared-target', 'subject-1', 'subject', 'source-folder', null);
 
-    expect(result).toBe(true);
+    expect(result).toBe('blocked');
     expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
   });
 
@@ -189,7 +189,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     const handlers = useHomePageHandlers(config);
     const result = handlers.handleDropOnFolderWrapper('shared-target', 'subject-1', 'subject', 'source-folder', null);
 
-    expect(result).toBe(true);
+    expect(result).toBe('moved');
     expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith('subject-1', 'source-folder', 'shared-target');
   });
 
@@ -230,7 +230,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     const handlers = useHomePageHandlers(config);
     const result = handlers.handleDropOnFolderWrapper('shared-target', 'subject-1', 'subject', 'source-folder', null);
 
-    expect(result).toBe(true);
+    expect(result).toBe('deferred');
     expect(config.setShareConfirm).toHaveBeenCalledWith(
       expect.objectContaining({
         open: true,
@@ -293,7 +293,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     const handlers = useHomePageHandlers(config);
     const result = handlers.handleDropOnFolderWrapper('target-private', 'subject-1', 'subject', 'source-folder', null);
 
-    expect(result).toBe(true);
+    expect(result).toBe('deferred');
     expect(config.setUnshareConfirm).toHaveBeenCalledWith(
       expect.objectContaining({
         open: true,
@@ -372,7 +372,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     const handlers = useHomePageHandlers(config);
     const result = handlers.handleBreadcrumbDrop('shared-target', null, 'folder-source', 'shortcut-folder-1', null);
 
-    expect(result).toBe(true);
+    expect(result).toBe('deferred');
     expect(config.setShareConfirm).toHaveBeenCalledWith(
       expect.objectContaining({
         open: true,
@@ -541,7 +541,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     const handlers = useHomePageHandlers(config);
     const result = handlers.handleDropOnFolderWrapper('shared-target', 'subject-1', 'subject', null, null);
 
-    expect(result).toBe(true);
+    expect(result).toBe('blocked');
     expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
     expect(config.logic.moveShortcut).not.toHaveBeenCalled();
   });
@@ -580,7 +580,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     const handlers = useHomePageHandlers(config);
     const result = handlers.handleDropOnFolderWrapper('target-private', 'subject-1', 'subject', 'source-shared', null);
 
-    expect(result).toBe(true);
+    expect(result).toBe('blocked');
     expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
     expect(config.logic.moveShortcut).not.toHaveBeenCalled();
   });
@@ -625,7 +625,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     const handlers = useHomePageHandlers(config);
     const result = handlers.handleDropOnFolderWrapper('outside-target', 'subject-1', 'subject', 'child-source', null);
 
-    expect(result).toBe(true);
+    expect(result).toBe('blocked');
     expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
   });
 
@@ -1018,7 +1018,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     const handlers = useHomePageHandlers(config);
     const result = handlers.handleDropOnFolderWrapper('target-private', 'subject-private-1', 'subject', 'source-private', null);
 
-    expect(result).toBe(true);
+    expect(result).toBe('moved');
     expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith('subject-private-1', 'source-private', 'target-private');
     expect(config.setShareConfirm).not.toHaveBeenCalled();
     expect(config.setUnshareConfirm).not.toHaveBeenCalled();
@@ -1052,7 +1052,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
       null
     );
 
-    expect(result).toBe(true);
+    expect(result).toBe('moved');
     expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith(
       'subject-orphan-source',
       'missing-source-folder',
@@ -1125,7 +1125,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     const handlers = useHomePageHandlers(config);
     const result = handlers.handleBreadcrumbDrop(null, 'subject-breadcrumb-root', null, null, null);
 
-    expect(result).toBe(true);
+    expect(result).toBe('moved');
     expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith(
       'subject-breadcrumb-root',
       'source-folder',
@@ -1160,7 +1160,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
       'shortcut-subject-1'
     );
 
-    expect(result).toBe(true);
+    expect(result).toBe('moved');
     expect(config.logic.moveShortcut).toHaveBeenCalledWith('shortcut-subject-1', 'target-private');
     expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
     expect(config.moveSubjectToParent).not.toHaveBeenCalled();
@@ -1206,7 +1206,7 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
       null
     );
 
-    expect(result).toBe(true);
+    expect(result).toBe('blocked');
     expect(config.moveSubjectBetweenFolders).not.toHaveBeenCalled();
     expect(config.logic.moveShortcut).not.toHaveBeenCalled();
   });

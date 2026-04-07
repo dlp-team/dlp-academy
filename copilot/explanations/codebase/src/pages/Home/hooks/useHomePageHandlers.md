@@ -1,3 +1,14 @@
+## [2026-04-07] Breadcrumb Shortcut Drop Status Contract Normalization
+### Context & Behavior
+- `handleDropOnFolderWrapper` and selection-mode orchestration already used status tokens (`moved`, `blocked`, `deferred`, `noop`).
+- `handleBreadcrumbDrop` shortcut path could return an unresolved Promise through `moveShortcutOrRequest`, creating mixed return shapes in downstream tests.
+
+### Change
+- Normalized breadcrumb shortcut drop branch to return explicit status tokens synchronously:
+	- `deferred` when owner-approval overlay is opened,
+	- `moved` when shortcut move is dispatched.
+- Preserved existing shortcut request overlay behavior and direct shortcut move behavior.
+
 ## [2026-04-07] Selection-Mode Batch Move Rules Parity
 ### Context & Behavior
 - Added `moveSelectionEntryWithShareRules` to expose per-entry move orchestration for selection-mode batch moves.

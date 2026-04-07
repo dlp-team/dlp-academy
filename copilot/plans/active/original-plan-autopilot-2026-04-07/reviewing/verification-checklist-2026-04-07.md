@@ -10,16 +10,16 @@
 - [x] Topic create actions restored and verified.
 
 ## Regression Verification
-- [ ] Adjacent modes/tabs maintain original behavior.
-- [ ] Role/permission visibility rules unchanged unless explicitly requested.
-- [ ] Empty/loading/error states still render correctly.
+- [x] Adjacent modes/tabs maintain original behavior.
+- [x] Role/permission visibility rules unchanged unless explicitly requested.
+- [x] Empty/loading/error states still render correctly.
 
 ## Tooling Verification
 - [x] `get_errors` clean for touched files.
 - [x] Targeted tests pass.
 - [x] `npm run lint` passes.
-- [ ] `npm run test` passes.
-- [ ] `npm run build` passes (if required by touched areas).
+- [x] `npm run test` passes.
+- [x] `npm run build` passes (if required by touched areas).
 
 ## Documentation Verification
 - [x] Lossless report created/updated.

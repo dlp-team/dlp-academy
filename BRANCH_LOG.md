@@ -100,6 +100,14 @@
 - copilot/explanations/codebase/tests/unit/pages/topic/TopicTabs.createActions.test.md
 - copilot/plans/active/original-plan-autopilot-2026-04-07/phases/phase-06-topic-create-actions-restore.md
 - copilot/explanations/temporal/lossless-reports/2026-04-07/topic-create-actions-phase6-quizzes-exams-study-guides.md
+- src/pages/Home/hooks/useHomePageHandlers.ts
+- tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js
+- copilot/explanations/codebase/src/pages/Home/hooks/useHomePageHandlers.md
+- copilot/explanations/codebase/tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.md
+- copilot/plans/active/original-plan-autopilot-2026-04-07/phases/phase-07-final-optimization-and-risk-review.md
+- copilot/plans/active/original-plan-autopilot-2026-04-07/README.md
+- copilot/plans/active/original-plan-autopilot-2026-04-07/reviewing/deep-risk-analysis-2026-04-07.md
+- copilot/explanations/temporal/lossless-reports/2026-04-07/final-optimization-phase7-shortcut-status-contract-and-global-gates.md
 
 ## External Comments
 - (none)

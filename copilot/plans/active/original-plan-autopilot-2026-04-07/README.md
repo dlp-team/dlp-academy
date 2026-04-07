@@ -2,7 +2,7 @@
 # Original Plan Autopilot Execution (2026-04-07)
 
 ## Status
-- Lifecycle: active
+- Lifecycle: inReview
 - Branch: feature/hector/original-plan-execution-2026-0407
 - Owner: hector
 
