@@ -38,6 +38,7 @@ import StudentDashboard from './pages/StudentDashboard/StudentDashboard';
 import TeacherStudentDetailView from './pages/TeacherDashboard/components/TeacherStudentDetailView';
 import { getActiveRole, getAssignedRoles, hasRequiredRoleAccess } from './utils/permissionUtils';
 import { applyThemeToDom } from './utils/themeMode';
+import { isInstitutionPreviewThemeMessage } from './utils/institutionPreviewProtocol';
 
 const ACTIVE_ROLE_STORAGE_KEY_PREFIX = 'dlp_active_role_';
 const ACTIVE_ROLE_CHANGE_EVENT = 'dlp-active-role-change';
@@ -190,6 +191,90 @@ function App() {
     mediaQuery.addListener(handleSystemThemeChange);
     return () => mediaQuery.removeListener(handleSystemThemeChange);
   }, [user?.theme, user?.settings?.theme]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return undefined;
+    }
+
+    const upsertStyleTag = (id: string, cssText: string) => {
+      let styleTag = document.getElementById(id) as HTMLStyleElement | null;
+      if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = id;
+        document.head.appendChild(styleTag);
+      }
+      styleTag.textContent = cssText || '';
+    };
+
+    upsertStyleTag(
+      '__dlp_preview_highlight_hint_base',
+      `
+body[data-dlp-preview-highlight]::after {
+  content: attr(data-dlp-preview-highlight);
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  max-width: min(380px, calc(100vw - 24px));
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  background: rgba(15, 23, 42, 0.86);
+  color: #e2e8f0;
+  font-size: 12px;
+  line-height: 1.35;
+  box-shadow: 0 10px 30px rgba(2, 6, 23, 0.35);
+  pointer-events: none;
+}
+`
+    );
+
+    const handlePreviewThemeMessage = (event: MessageEvent) => {
+      if (!event || event.origin !== window.location.origin) return;
+
+      const message = event.data;
+      if (!isInstitutionPreviewThemeMessage(message)) return;
+
+      const payload = message.payload || {};
+      if (typeof payload.themeCss === 'string') {
+        upsertStyleTag('__dlp_preview_theme_runtime', payload.themeCss);
+      }
+      if (typeof payload.highlightCss === 'string') {
+        upsertStyleTag('__dlp_preview_highlight_runtime', payload.highlightCss);
+      }
+
+      const highlightMessage = typeof payload.highlightMessage === 'string'
+        ? payload.highlightMessage.trim()
+        : '';
+
+      if (highlightMessage) {
+        document.body.setAttribute('data-dlp-preview-highlight', highlightMessage);
+      } else {
+        document.body.removeAttribute('data-dlp-preview-highlight');
+      }
+
+      const previewRole = typeof payload.previewRole === 'string'
+        ? payload.previewRole.trim().toLowerCase()
+        : '';
+
+      if (user?.uid && (previewRole === 'teacher' || previewRole === 'student')) {
+        window.dispatchEvent(new CustomEvent(ACTIVE_ROLE_CHANGE_EVENT, {
+          detail: {
+            uid: user.uid,
+            activeRole: previewRole,
+          },
+        }));
+      }
+    };
+
+    window.addEventListener('message', handlePreviewThemeMessage as EventListener);
+
+    return () => {
+      window.removeEventListener('message', handlePreviewThemeMessage as EventListener);
+      document.body.removeAttribute('data-dlp-preview-highlight');
+    };
+  }, [user?.uid]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;

@@ -14,6 +14,11 @@
 - Preview tab switching across `Papelera`, `Compartido`, and `Manual` plus topic/resource drilldown assertions.
 
 ## Changelog
+### 2026-04-07
+- Updated suite harness to force `previewMode='mock'` for deterministic deep-interaction parity assertions.
+- Updated save-path assertion to pass through the new save-confirmation gate.
+- Added live-mode postMessage payload assertion covering iframe load dispatch and role-toggle payload updates.
+
 ### 2026-04-06
 - Stabilized two heavy drilldown tests that were intermittently timing out in full-suite runs.
 - Converted the affected scenarios to async assertions using `findBy*` checkpoints after tab/drilldown transitions.

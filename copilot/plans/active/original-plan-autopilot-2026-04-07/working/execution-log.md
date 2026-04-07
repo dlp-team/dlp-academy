@@ -21,3 +21,6 @@
 - Phase 03 validation complete (targeted): `get_errors` clean and targeted settings/theme suites passing.
 - Phase 03 docs-sync complete: lossless report plus codebase explanation updates for App, Header, and Settings modules.
 - Phase 03 git gate complete: lint + security scans passed, atomic commit `7b7ac1d`, and push to `origin/feature/hector/original-plan-execution-2026-0407`.
+- Phase 04 implementation complete: live iframe customization preview with postMessage theme/highlight payloads, role handoff, color-field interaction split, and save confirmation gate.
+- Phase 04 validation complete (targeted): `get_errors` clean plus institution-preview targeted suite pass (`InstitutionCustomizationMockView`, `ColorField`, `themePreviewUtils.messagePayload`, `App.authListener`).
+- Phase 04 docs-sync complete: lossless report created and codebase explanation mirrors updated/created for source and test files touched.

@@ -10,7 +10,8 @@
 - Maintains editable customization form with safe color normalization.
 - Applies palette suggestions from branding extraction (`previewPaletteApply`) in preview-only mode.
 - Provides role toggle (`docente` / `estudiante`) and viewport toggle (`desktop` / `tablet` / `móvil`).
-- Delegates preview rendering to `CustomizationHomeExactPreview` to reuse Home components (`HomeControls`, `HomeContent`) with isolated mock data.
+- Supports live iframe preview mode with postMessage theme/highlight synchronization.
+- Keeps deterministic mock preview mode for deep UI tests and fallback execution.
 - Persists final customization payload only when save action is explicitly triggered.
 
 ## Exports
@@ -24,6 +25,11 @@
 - `./customization/CustomizationHomeExactPreview`
 
 ## Changelog
+### 2026-04-07
+- Switched default preview path to live iframe rendering (`previewMode='live'`) with postMessage dispatch for theme CSS, highlight CSS, and role payload.
+- Added save confirmation gate using `DashboardOverlayShell` before persisting customization.
+- Kept `previewMode='mock'` for deterministic test scenarios and long interaction parity coverage.
+
 ### 2026-04-05
 - Raised fullscreen overlay stacking context (`z-[10050]`) so the customization preview reliably renders above the global fixed header (`z-[9999]`) without overlap.
 - Updated color-field blur handling so active preview zone highlighting is temporary: highlight now clears when focus leaves the active color control.

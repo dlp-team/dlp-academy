@@ -11,6 +11,20 @@ const renderCustomizationPreview = (props = {}) => {
       <InstitutionCustomizationMockView
         initialValues={{ institutionName: 'Academia Demo' }}
         onSave={vi.fn(async () => {})}
+        previewMode="mock"
+        {...props}
+      />
+    </MemoryRouter>
+  );
+};
+
+const renderCustomizationLivePreview = (props = {}) => {
+  return render(
+    <MemoryRouter>
+      <InstitutionCustomizationMockView
+        initialValues={{ institutionName: 'Academia Demo' }}
+        onSave={vi.fn(async () => {})}
+        previewMode="live"
         {...props}
       />
     </MemoryRouter>
@@ -53,6 +67,7 @@ describe('InstitutionCustomizationMockView', () => {
     });
 
     fireEvent.click(screen.getByRole('button', { name: /^guardar$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /guardar cambios/i }));
 
     await waitFor(() => {
       expect(onSave).toHaveBeenCalledTimes(1);
@@ -60,6 +75,41 @@ describe('InstitutionCustomizationMockView', () => {
 
     expect(onSave.mock.calls[0][0]).toMatchObject({
       institutionName: 'Colegio Horizonte',
+    });
+  });
+
+  it('dispatches live preview message payload to iframe and updates role payload', async () => {
+    renderCustomizationLivePreview();
+
+    const iframe = screen.getByTitle(/vista previa en vivo de la aplicación/i);
+    const postMessage = vi.fn();
+
+    Object.defineProperty(iframe, 'contentWindow', {
+      value: { postMessage },
+      configurable: true,
+    });
+
+    fireEvent.load(iframe);
+
+    await waitFor(() => {
+      expect(postMessage).toHaveBeenCalled();
+    });
+
+    const firstPayload = postMessage.mock.calls[0][0];
+    expect(firstPayload).toMatchObject({
+      source: 'dlp-institution-customization',
+      type: 'dlp-preview-theme-update',
+      payload: expect.objectContaining({
+        previewRole: 'teacher',
+      }),
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /vista estudiante/i }));
+
+    await waitFor(() => {
+      const lastPayload = postMessage.mock.calls[postMessage.mock.calls.length - 1][0];
+      expect(lastPayload.payload.previewRole).toBe('student');
+      expect(postMessage.mock.calls[postMessage.mock.calls.length - 1][1]).toBe(window.location.origin);
     });
   });
 

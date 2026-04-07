@@ -1,4 +1,9 @@
+// src/pages/InstitutionAdminDashboard/components/customization/themePreviewUtils.ts
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
+import {
+  INSTITUTION_PREVIEW_MESSAGE_SOURCE,
+  INSTITUTION_PREVIEW_THEME_MESSAGE_TYPE,
+} from '../../../../utils/institutionPreviewProtocol';
 
 const TOKEN_SELECTORS = {
   primary: [
@@ -193,4 +198,33 @@ export const injectHighlight = (iframe, token, color: any) => {
   } catch {
     // cross-origin
   }
+};
+
+const TOKEN_HIGHLIGHT_MESSAGES = {
+  primary: 'Resaltando botones principales y controles activos.',
+  secondary: 'Resaltando superficies y acciones secundarias.',
+  accent: 'Resaltando insignias, etiquetas y elementos de acento.',
+  cardBorder: 'Resaltando bordes de tarjetas y paneles.',
+};
+
+export const buildInstitutionPreviewThemeMessage = ({
+  colors,
+  activeToken = null,
+  previewRole = 'teacher',
+}: any) => {
+  const safeColors = { ...DEFAULTS, ...(colors || {}) };
+  const safeRole = previewRole === 'student' ? 'student' : 'teacher';
+  const highlightToken = TOKEN_HIGHLIGHT_MESSAGES[activeToken] ? activeToken : null;
+
+  return {
+    source: INSTITUTION_PREVIEW_MESSAGE_SOURCE,
+    type: INSTITUTION_PREVIEW_THEME_MESSAGE_TYPE,
+    payload: {
+      previewRole: safeRole,
+      activeToken: highlightToken,
+      themeCss: buildThemeCss(safeColors),
+      highlightCss: highlightToken ? buildHighlightCss(highlightToken, safeColors[highlightToken]) : '',
+      highlightMessage: highlightToken ? TOKEN_HIGHLIGHT_MESSAGES[highlightToken] : '',
+    },
+  };
 };

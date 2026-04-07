@@ -1,3 +1,4 @@
+// src/pages/InstitutionAdminDashboard/components/customization/ColorField.tsx
 import React, { useRef } from 'react';
 import { hexToRgba } from './themePreviewUtils';
 
@@ -6,6 +7,7 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
 
   return (
     <div
+      data-testid={`color-field-${token}`}
       className={`
         rounded-xl border transition-all duration-200 cursor-pointer
         ${isActive
@@ -15,13 +17,20 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
         bg-white dark:bg-slate-800/60
       `}
       style={isActive ? { borderColor: value, boxShadow: `0 0 0 3px ${hexToRgba(value, 0.18)}` } : {}}
-      onClick={() => inputRef.current?.click()}
+      onClick={() => onFocus(token)}
       onFocusCapture={() => onFocus(token)}
       onBlurCapture={onBlur}
     >
       <div className="flex items-center gap-3 p-3">
         <div className="relative shrink-0">
-          <div
+          <button
+            type="button"
+            data-testid={`color-field-swatch-${token}`}
+            aria-label={`Abrir selector de color para ${label}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              inputRef.current?.click();
+            }}
             className="w-11 h-11 rounded-xl shadow-md border-2 border-white dark:border-slate-700 transition-all duration-200"
             style={{ backgroundColor: value }}
           />
@@ -36,7 +45,7 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
             type="color"
             value={value}
             onChange={(e) => onChange(token, e.target.value)}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            className="sr-only"
           />
         </div>
 

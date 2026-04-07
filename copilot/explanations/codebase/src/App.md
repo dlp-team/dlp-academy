@@ -1,5 +1,16 @@
 # App.tsx
 
+## [2026-04-07] Institution Live Preview Message Listener
+
+### Change
+- Added app-level `message` listener for institution customization live-preview payloads (`dlp-preview-theme-update`).
+- Runtime listener now injects preview theme/highlight style tags and optional highlight hint text inside iframe app context.
+- Added preview-role handoff in iframe context by dispatching active-role change events (`teacher` / `student`) for mock account preview behavior.
+
+### Impact
+- Institution admin color edits now preview on real Home UI in iframe without persisting changes.
+- Highlight instructions and affected region emphasis now render inside iframe runtime context.
+
 ## [2026-04-07] Global Theme Consistency Enforcement
 
 ### Change

@@ -68,6 +68,22 @@
 - copilot/explanations/codebase/tests/unit/hooks/useSettingsPageState.test.md
 - copilot/plans/active/original-plan-autopilot-2026-04-07/phases/phase-03-settings-theme-controls.md
 - copilot/explanations/temporal/lossless-reports/2026-04-07/settings-theme-controls-phase3-header-slider-and-system-mode-consistency.md
+- src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx
+- src/pages/InstitutionAdminDashboard/components/customization/ColorField.tsx
+- src/pages/InstitutionAdminDashboard/components/customization/themePreviewUtils.ts
+- src/utils/institutionPreviewProtocol.ts
+- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx
+- tests/unit/pages/institution-admin/ColorField.test.jsx
+- tests/unit/pages/institution-admin/themePreviewUtils.messagePayload.test.js
+- copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.md
+- copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/customization/ColorField.md
+- copilot/explanations/codebase/src/pages/InstitutionAdminDashboard/components/customization/themePreviewUtils.md
+- copilot/explanations/codebase/src/utils/institutionPreviewProtocol.md
+- copilot/explanations/codebase/tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.md
+- copilot/explanations/codebase/tests/unit/pages/institution-admin/ColorField.test.md
+- copilot/explanations/codebase/tests/unit/pages/institution-admin/themePreviewUtils.messagePayload.test.md
+- copilot/plans/active/original-plan-autopilot-2026-04-07/phases/phase-04-institution-preview-live-iframe.md
+- copilot/explanations/temporal/lossless-reports/2026-04-07/institution-live-iframe-phase4-postmessage-and-save-gate.md
 
 ## External Comments
 - (none)

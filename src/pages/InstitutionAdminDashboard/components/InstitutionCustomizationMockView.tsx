@@ -1,5 +1,5 @@
 // src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -18,8 +18,14 @@ import {
 } from 'lucide-react';
 
 import ColorField from './customization/ColorField';
-import { COLOR_TOKENS, DEFAULTS, VIEWPORTS } from './customization/themePreviewUtils';
+import {
+  COLOR_TOKENS,
+  DEFAULTS,
+  VIEWPORTS,
+  buildInstitutionPreviewThemeMessage,
+} from './customization/themePreviewUtils';
 import CustomizationHomeExactPreview from './customization/CustomizationHomeExactPreview';
+import DashboardOverlayShell from '../../../components/ui/DashboardOverlayShell';
 
 const COLOR_FIELDS = ['primary', 'secondary', 'accent', 'cardBorder'];
 
@@ -51,6 +57,8 @@ const InstitutionCustomizationMockView = ({
   onSave,
   className = '',
   previewPaletteApply = null,
+  previewMode = 'live',
+  homeUrl = '/home',
 }: any) => {
   const [form, setForm] = useState(buildSafeForm({ ...DEFAULTS, ...(initialValues || {}) }));
   const [saving, setSaving] = useState(false);
@@ -60,6 +68,9 @@ const InstitutionCustomizationMockView = ({
   const [viewport, setViewport] = useState('desktop');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
+  const [iframeReady, setIframeReady] = useState(false);
+  const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
+  const iframeRef = useRef<any>(null);
 
   const initialValuesKey = useMemo(() => JSON.stringify(initialValues || {}), [initialValues]);
 
@@ -120,6 +131,7 @@ const InstitutionCustomizationMockView = ({
     setForm(next);
     setSaved(false);
     setActiveToken(null);
+    setShowSaveConfirmation(false);
   };
 
   const handleSave = async () => {
@@ -127,14 +139,41 @@ const InstitutionCustomizationMockView = ({
     try {
       await onSave?.(form);
       setSaved(true);
+      setShowSaveConfirmation(false);
       window.setTimeout(() => setSaved(false), 2800);
     } finally {
       setSaving(false);
     }
   };
 
+  const dispatchLivePreviewMessage = useCallback(() => {
+    if (previewMode !== 'live' || !iframeReady) return;
+
+    const iframeWindow = iframeRef.current?.contentWindow;
+    if (!iframeWindow || typeof iframeWindow.postMessage !== 'function') return;
+
+    const message = buildInstitutionPreviewThemeMessage({
+      colors: buildSafeForm(form, DEFAULTS),
+      activeToken,
+      previewRole,
+    });
+
+    iframeWindow.postMessage(message, window.location.origin);
+  }, [previewMode, iframeReady, form, activeToken, previewRole]);
+
+  useEffect(() => {
+    dispatchLivePreviewMessage();
+  }, [dispatchLivePreviewMessage]);
+
+  useEffect(() => {
+    if (previewMode !== 'live') {
+      setIframeReady(false);
+    }
+  }, [previewMode]);
+
   const viewportConfig = VIEWPORTS.find((entry) => entry.id === viewport) || VIEWPORTS[0];
   const institutionLabel = form.institutionName?.trim() || 'Tu Institución';
+  const previewRoleLabel = previewRole === 'student' ? 'Cuenta simulada: Estudiante' : 'Cuenta simulada: Docente';
   const containerClassName = fullscreen
     ? 'fixed inset-0 z-[10050] flex h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-950'
     : `flex h-full w-full overflow-hidden bg-slate-100 dark:bg-slate-950 ${className}`;
@@ -145,6 +184,7 @@ const InstitutionCustomizationMockView = ({
   ];
 
   return (
+    <>
     <div className={containerClassName} data-testid="institution-customization-preview-root">
       <aside
         className={`relative h-full shrink-0 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col transition-[width] duration-300 ease-in-out ${
@@ -159,7 +199,7 @@ const InstitutionCustomizationMockView = ({
             {sidebarOpen && (
               <div>
                 <p className="text-sm font-bold text-slate-900 dark:text-white">Editor de tema</p>
-                <p className="text-[11px] text-slate-400">Vista exacta de Home (docente/estudiante)</p>
+                <p className="text-[11px] text-slate-400">{previewMode === 'live' ? 'Vista en vivo con iframe' : 'Vista simulada local'}</p>
               </div>
             )}
           </div>
@@ -203,7 +243,7 @@ const InstitutionCustomizationMockView = ({
             <div className="flex flex-col items-center gap-2 pt-1">
               <button
                 type="button"
-                onClick={handleSave}
+                onClick={() => setShowSaveConfirmation(true)}
                 disabled={saving}
                 title="Guardar cambios"
                 className="w-10 h-10 rounded-xl text-white inline-flex items-center justify-center disabled:opacity-70"
@@ -234,7 +274,7 @@ const InstitutionCustomizationMockView = ({
             </button>
             <button
               type="button"
-              onClick={handleSave}
+              onClick={() => setShowSaveConfirmation(true)}
               disabled={saving}
               className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-70"
               style={{ backgroundColor: saved ? '#10b981' : form.primary }}
@@ -258,8 +298,9 @@ const InstitutionCustomizationMockView = ({
       <div className="flex-1 min-w-0 h-full flex flex-col">
         <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-bold text-slate-900 dark:text-white">Vista previa exacta de Home</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white">{previewMode === 'live' ? 'Vista previa en vivo de Home' : 'Vista previa exacta de Home'}</p>
             <p className="text-xs text-slate-400">{institutionLabel}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">{previewRoleLabel}</p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -304,12 +345,34 @@ const InstitutionCustomizationMockView = ({
         </div>
 
         <div className="flex-1 overflow-auto p-5 bg-slate-200 dark:bg-slate-950">
-          <CustomizationHomeExactPreview
-            form={form}
-            previewRole={previewRole}
-            viewportWidth={viewportConfig.width}
-            activeToken={activeToken}
-          />
+          {previewMode === 'mock' ? (
+            <CustomizationHomeExactPreview
+              form={form}
+              previewRole={previewRole}
+              viewportWidth={viewportConfig.width}
+              activeToken={activeToken}
+            />
+          ) : (
+            <div
+              className="relative mx-auto h-full min-h-[620px] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-white shadow-[0_20px_45px_rgba(15,23,42,0.25)]"
+              style={{ width: viewportConfig.width, maxWidth: '100%' }}
+              data-testid="institution-customization-live-preview-shell"
+            >
+              {!iframeReady && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-white/95 dark:bg-slate-900/95">
+                  <Loader2 size={22} className="animate-spin text-indigo-500" />
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Cargando vista previa en vivo...</p>
+                </div>
+              )}
+              <iframe
+                ref={iframeRef}
+                src={homeUrl}
+                title="Vista previa en vivo de la aplicación"
+                onLoad={() => setIframeReady(true)}
+                className="w-full h-full border-0"
+              />
+            </div>
+          )}
         </div>
 
         {fullscreen && (
@@ -319,6 +382,41 @@ const InstitutionCustomizationMockView = ({
         )}
       </div>
     </div>
+    <DashboardOverlayShell
+      isOpen={showSaveConfirmation}
+      onClose={() => setShowSaveConfirmation(false)}
+      closeOnBackdropClick={!saving}
+      maxWidth="md"
+      contentClassName="p-0"
+    >
+      <div className="p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Confirmar guardado</h3>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          Estos cambios actualizarán la personalización institucional para todos los usuarios del centro.
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setShowSaveConfirmation(false)}
+            disabled={saving}
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-60"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-70"
+            style={{ backgroundColor: form.primary }}
+          >
+            {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+        </div>
+      </div>
+    </DashboardOverlayShell>
+    </>
   );
 };
 
