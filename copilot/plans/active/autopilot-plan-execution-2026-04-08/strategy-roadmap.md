@@ -42,5 +42,5 @@ Execute the AUTOPILOT request with lossless behavior preservation, deterministic
 
 ## Immediate Next Actions
 1. Finish remaining Phase 02 undo edge-path wiring and regression checks.
-2. Continue Phase 01 selection-mode parity and shared-confirmation batch move validation.
+2. Complete Phase 01 remaining gate: batch move confirmation parity for all selected entries.
 3. Perform manual in-app parity check for Phase 08 create-button visibility across owner/editor and mixed-role contexts, then mark Phase 08 complete.

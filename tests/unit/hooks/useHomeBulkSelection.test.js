@@ -50,4 +50,65 @@ describe('useHomeBulkSelection', () => {
     expect(result.current.selectedItems).toHaveLength(0);
     expect(result.current.selectedItemKeys.size).toBe(0);
   });
+
+  it('drops selected ancestor folder when selecting a child subject', () => {
+    const onHomeFeedback = vi.fn();
+    const logic = createLogic({
+      folders: [
+        { id: 'folder-parent', parentId: null },
+        { id: 'folder-child', parentId: 'folder-parent' },
+      ],
+    });
+
+    const { result } = renderHook(() =>
+      useHomeBulkSelection({
+        logic,
+        isStudentRole: false,
+        onHomeFeedback,
+      })
+    );
+
+    act(() => {
+      result.current.toggleSelectItem({ id: 'folder-parent' }, 'folder');
+      result.current.toggleSelectItem({ id: 'subject-1', folderId: 'folder-child' }, 'subject');
+    });
+
+    expect(result.current.selectedItems).toHaveLength(1);
+    expect(result.current.selectedItems[0]).toEqual(
+      expect.objectContaining({
+        type: 'subject',
+      })
+    );
+  });
+
+  it('drops selected descendant entries when selecting a parent folder', () => {
+    const onHomeFeedback = vi.fn();
+    const logic = createLogic({
+      folders: [
+        { id: 'folder-parent', parentId: null },
+        { id: 'folder-child', parentId: 'folder-parent' },
+      ],
+    });
+
+    const { result } = renderHook(() =>
+      useHomeBulkSelection({
+        logic,
+        isStudentRole: false,
+        onHomeFeedback,
+      })
+    );
+
+    act(() => {
+      result.current.toggleSelectItem({ id: 'subject-1', folderId: 'folder-child' }, 'subject');
+      result.current.toggleSelectItem({ id: 'folder-parent' }, 'folder');
+    });
+
+    expect(result.current.selectedItems).toHaveLength(1);
+    expect(result.current.selectedItems[0]).toEqual(
+      expect.objectContaining({
+        type: 'folder',
+        item: expect.objectContaining({ id: 'folder-parent' }),
+      })
+    );
+  });
 });

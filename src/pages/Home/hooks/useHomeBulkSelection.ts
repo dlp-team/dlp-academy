@@ -84,6 +84,14 @@ export const useHomeBulkSelection = ({
 
     const selectedItems = useMemo(() => Object.values(selectedItemsByKey), [selectedItemsByKey]);
     const selectedItemKeys = useMemo(() => new Set(Object.keys(selectedItemsByKey)), [selectedItemsByKey]);
+    const folderById = useMemo(() => {
+        const sourceFolders = Array.isArray(logic?.folders) ? logic.folders : [];
+        return sourceFolders.reduce((map: Map<string, any>, folder: any) => {
+            if (!folder?.id) return map;
+            map.set(folder.id, folder);
+            return map;
+        }, new Map<string, any>());
+    }, [logic?.folders]);
 
     const availableMoveFolders = useMemo(() => {
         const allFolders = Array.isArray(logic?.folders) ? logic.folders : [];
@@ -94,6 +102,34 @@ export const useHomeBulkSelection = ({
     }, [logic?.folders, selectedItems]);
 
     const buildSelectionKey = React.useCallback((item, type) => `${type}:${item?.shortcutId || item?.id}`, []);
+
+    const getFolderAncestorChain = React.useCallback((folderId: any) => {
+        const ancestors: any[] = [];
+        let cursor = folderId || null;
+        const visited = new Set<any>();
+
+        while (cursor && !visited.has(cursor)) {
+            ancestors.push(cursor);
+            visited.add(cursor);
+            const folder = folderById.get(cursor);
+            cursor = folder?.parentId ?? null;
+        }
+
+        return ancestors;
+    }, [folderById]);
+
+    const getEntryAncestorFolders = React.useCallback((entry: any) => {
+        const item = entry?.item;
+        if (!item) return [];
+
+        if (entry?.type === 'folder') {
+            const parentFolderId = item?.shortcutParentId ?? item?.parentId ?? folderById.get(item?.id)?.parentId ?? null;
+            return getFolderAncestorChain(parentFolderId);
+        }
+
+        const parentFolderId = item?.shortcutParentId ?? item?.folderId ?? item?.parentId ?? null;
+        return getFolderAncestorChain(parentFolderId);
+    }, [folderById, getFolderAncestorChain]);
 
     const clearSelection = React.useCallback(() => {
         setSelectedItemsByKey({});
@@ -156,12 +192,38 @@ export const useHomeBulkSelection = ({
                 delete next[key];
                 return next;
             }
-            return {
+            const next = {
                 ...prev,
                 [key]: { key, type, item }
             };
+
+            const selectedEntry = next[key];
+            const selectedFolderId = type === 'folder' ? item?.id : null;
+            const selectedAncestors = getEntryAncestorFolders(selectedEntry);
+            const keysToRemove = new Set<string>();
+
+            Object.entries(next).forEach(([entryKey, entryValue]: any) => {
+                if (entryKey === key) return;
+
+                if (entryValue?.type === 'folder' && selectedAncestors.includes(entryValue?.item?.id)) {
+                    keysToRemove.add(entryKey);
+                    return;
+                }
+
+                if (!selectedFolderId) return;
+                const entryAncestors = getEntryAncestorFolders(entryValue);
+                if (entryAncestors.includes(selectedFolderId)) {
+                    keysToRemove.add(entryKey);
+                }
+            });
+
+            keysToRemove.forEach((entryKey: string) => {
+                delete next[entryKey];
+            });
+
+            return next;
         });
-    }, [buildSelectionKey]);
+    }, [buildSelectionKey, getEntryAncestorFolders]);
 
     const runDefaultMoveForEntry = React.useCallback(async (entry: any, destination: any) => {
         const item = entry?.item;
