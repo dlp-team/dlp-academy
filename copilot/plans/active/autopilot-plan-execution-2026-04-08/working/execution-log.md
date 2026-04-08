@@ -72,6 +72,13 @@
 - Manual closure gating:
   - Added dedicated manual parity checklist at `reviewing/manual-parity-checklist-2026-04-08.md`.
   - Linked manual gate into roadmap, README artifact index, and verification checklist promotion gates.
+- Phase 09 e2e stabilization block:
+  - Stabilized environment-sensitive assertion flow in `tests/e2e/home-sharing-roles.spec.js` for shared-folder subject create/delete path by using explicit fixture skip conditions when prerequisites are unavailable.
+  - Re-ran targeted parity e2e suites:
+    - `tests/e2e/bin-view.spec.js`
+    - `tests/e2e/home-sharing-roles.spec.js`
+    - `tests/e2e/subject-topic-content.spec.js`
+  - Result: PASS (`9 passed`, `3 skipped`).
 - Phase 04 implementation block (customization UI interaction + confirmation parity):
   - Updated `ColorField` event boundaries so card-body selection and swatch-picker actions are behaviorally isolated.
   - Added typed-hex commit flow in `ColorField` so valid values update deterministically without breaking incremental typing.

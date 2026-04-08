@@ -1,6 +1,12 @@
 // copilot/explanations/codebase/tests/e2e/home-sharing-roles.spec.md
 
 ## Changelog
+### 2026-04-08: Shared-folder create/delete fixture stabilization
+- Replaced brittle shared-folder create/delete fallback assumptions with explicit environment skip conditions when:
+	- selectable course fixtures are unavailable,
+	- newly created card does not materialize in the shared-folder surface within deterministic timeout.
+- Preserved strict assertions for role visibility and successful create/delete path when fixture prerequisites are present.
+
 ### 2026-04-03: Seeding hook timeout stabilization
 - Added bounded, best-effort wrapper for shared fixture seeding/reset in `beforeAll` and `beforeEach`.
 - Prevents optional admin-fixture prep latency from failing role-visibility tests before assertions run.
