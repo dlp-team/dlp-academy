@@ -1,15 +1,15 @@
 <!-- copilot/explanations/codebase/src/pages/Topic/hooks/useTopicLogic.md -->
-## [2026-04-08] Topic Role Gating Recovery for Create-Action Visibility
+## [2026-04-08] Topic Role and Permission Recovery for Create-Action Visibility
 ### Context
-- Topic create controls could disappear when fallback role resolution returned `student` even for teacher accounts.
-- This mismatch caused topic edit/create permission paths to be forced into viewer mode.
+- Topic create controls could disappear in mixed-role sessions and in legacy topics missing owner/share metadata.
+- These gaps forced topic edit/create permission paths into viewer mode despite valid teacher ownership/edit context.
 
 ### Change
-- Updated role resolution inside `useTopicLogic` to prioritize explicit `user.role` when present.
-- Student-only gates now use this explicit-role-first resolution for exam loading and permission short-circuit logic.
+- Updated student gating to require both normalized profile role and active role to resolve as `student`.
+- Added topic permission-target enrichment that inherits missing `ownerId` and sharing metadata from loaded subject context before `canEdit`/`canView` checks.
 
 ### Validation
-- Added regression assertion in `tests/unit/hooks/useTopicLogic.test.js` that preserves teacher edit permissions when fallback role resolution reports `student`.
+- Added regression assertions in `tests/unit/hooks/useTopicLogic.test.js` for mixed-role teacher precedence and subject-owner inheritance when topic owner metadata is missing.
 
 ## [2026-04-07] Topic Create Handlers Restored for Study Guide and Exam
 ### Context
@@ -175,7 +175,7 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
-- 2026-04-08: Topic student-role short-circuiting now prioritizes explicit `user.role` before fallback role resolution to prevent teacher create/edit controls from disappearing.
+- 2026-04-08: Topic student-role short-circuiting now requires both profile role and active role to be `student`, and permission checks inherit missing topic ownership/share metadata from subject context.
 - 2026-04-07: Restored explicit topic create handlers for study-guide and exam generation, and preserved existing `handleCreateCustomPDF` compatibility as study-guide alias.
 - 2026-04-02: Role-sensitive topic logic now resolves student/viewer context via `getActiveRole(user)` for exam-load and permission-branch checks, keeping switched role sessions deterministic.
 - 2026-03-31: Added deterministic teardown for nested topic child listeners before re-subscribing on topic snapshot updates; not-found/error branches now clear child listeners to avoid duplicate subscriptions.

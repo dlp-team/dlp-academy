@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { collection, doc, getDoc, getDocs, onSnapshot, updateDoc, deleteDoc, addDoc, serverTimestamp, query, where } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
-import { canEdit, canView, canDelete, getActiveRole, shouldShowEditUI, shouldShowDeleteUI } from '../../../utils/permissionUtils';
+import { canEdit, canView, canDelete, getActiveRole, getNormalizedRole, shouldShowEditUI, shouldShowDeleteUI } from '../../../utils/permissionUtils';
 import { canUserAccessSubject } from '../../../utils/subjectAccessUtils';
 import {
     DEFAULT_TOPIC_CASCADE_COLLECTIONS,
@@ -45,9 +45,9 @@ export const useTopicLogic = (user: any) => {
     const [uploading] = useState(false);
     const activeTabKey = buildUserScopedPersistenceKey('topic-page', user, `${subjectId || 'no-subject'}:${topicId || 'no-topic'}:active-tab`);
     const [activeTab, setActiveTab] = usePersistentState(activeTabKey, 'materials');
-    const explicitUserRole = typeof user?.role === 'string' ? user.role.trim().toLowerCase() : '';
-    const resolvedRole = explicitUserRole || getActiveRole(user);
-    const isStudentRole = resolvedRole === 'student';
+    const normalizedProfileRole = getNormalizedRole(user);
+    const activeRole = getActiveRole(user);
+    const isStudentRole = normalizedProfileRole === 'student' && activeRole === 'student';
     
     // Notificaciones
     const [toast, setToast] = useState({ show: false, message: '' });
@@ -743,6 +743,26 @@ export const useTopicLogic = (user: any) => {
             isViewer: false
         };
 
+        const topicPermissionTarget = {
+            ...topic,
+            ownerId: topic?.ownerId || subject?.ownerId || null,
+            editorUids: Array.isArray(topic?.editorUids) && topic.editorUids.length > 0
+                ? topic.editorUids
+                : Array.isArray(subject?.editorUids)
+                    ? subject.editorUids
+                    : [],
+            sharedWithUids: Array.isArray(topic?.sharedWithUids) && topic.sharedWithUids.length > 0
+                ? topic.sharedWithUids
+                : Array.isArray(subject?.sharedWithUids)
+                    ? subject.sharedWithUids
+                    : [],
+            sharedWith: Array.isArray(topic?.sharedWith) && topic.sharedWith.length > 0
+                ? topic.sharedWith
+                : Array.isArray(subject?.sharedWith)
+                    ? subject.sharedWith
+                    : [],
+        };
+
         // Students never get edit/delete permissions
         if (isStudentRole) {
             return {
@@ -756,20 +776,20 @@ export const useTopicLogic = (user: any) => {
         }
 
         // Teachers: use resource-level checks
-        const hasEditPermission = canEdit(topic, user.uid);
-        const hasViewPermission = canView(topic, user.uid);
-        const hasDeletePermission = canDelete(topic, user.uid);
+        const hasEditPermission = canEdit(topicPermissionTarget, user.uid);
+        const hasViewPermission = canView(topicPermissionTarget, user.uid);
+        const hasDeletePermission = canDelete(topicPermissionTarget, user.uid);
         const isViewerOnly = hasViewPermission && !hasEditPermission;
 
         return {
             canEdit: hasEditPermission,
             canView: hasViewPermission,
             canDelete: hasDeletePermission,
-            showEditUI: shouldShowEditUI(topic, user.uid),
-            showDeleteUI: shouldShowDeleteUI(topic, user.uid),
+            showEditUI: shouldShowEditUI(topicPermissionTarget, user.uid),
+            showDeleteUI: shouldShowDeleteUI(topicPermissionTarget, user.uid),
             isViewer: isViewerOnly
         };
-    }, [topic, user, isStudentRole]);
+    }, [topic, subject, user, isStudentRole]);
 
     return {
         // Data

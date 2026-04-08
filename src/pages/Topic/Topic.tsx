@@ -19,7 +19,7 @@ import TopicTabs from './components/TopicTabs';
 import TopicContent from './components/TopicContent';
 import TopicModals from './components/TopicModals';
 import CategorizFileModal from './components/CategorizFileModal';
-import { getActiveRole } from '../../utils/permissionUtils';
+import { getActiveRole, getNormalizedRole } from '../../utils/permissionUtils';
 
 // CONFIGURACIÓN N8N
 const N8N_WEBHOOK_URL = 'TU_URL_DE_N8N_AQUI'; 
@@ -29,8 +29,9 @@ const Topic = ({ user }: any) => {
     const logic = useTopicLogic(user);
     useDarkMode();
     const { activeTab, setActiveTab } = logic;
-    const explicitUserRole = typeof user?.role === 'string' ? user.role.trim().toLowerCase() : '';
-    const resolvedRole = explicitUserRole || getActiveRole(user);
+    const normalizedProfileRole = getNormalizedRole(user);
+    const activeRole = getActiveRole(user);
+    const isStudentRole = normalizedProfileRole === 'student' && activeRole === 'student';
 
     // 2. ESTADOS LOCALES
     const [quizResults, setQuizResults] = useState<any[]>([]);
@@ -40,8 +41,8 @@ const Topic = ({ user }: any) => {
     const [reviewsFeedback, setReviewsFeedback] = useState('');
     const [assignmentsFeedback, setAssignmentsFeedback] = useState('');
     const [previewAsStudent, setPreviewAsStudent] = useState(false);
-    const canUsePreview = resolvedRole !== 'student';
-    const isStudentView = resolvedRole === 'student' || previewAsStudent;
+    const canUsePreview = !isStudentRole;
+    const isStudentView = isStudentRole || previewAsStudent;
     const { failedQuestions } = useTopicFailedQuestions(user, logic.topicId);
     const { members: classMembers = [] } = useClassMembers(logic.subject);
     const topicRealtimeFeedback = assignmentsFeedback || reviewsFeedback || scoresFeedback;
@@ -173,7 +174,7 @@ const Topic = ({ user }: any) => {
                     return aDate - bDate;
                 });
 
-            if (resolvedRole === 'student') {
+            if (isStudentRole) {
                 setTopicAssignments(allAssignments.filter((assignment) => assignment.visibleToStudents !== false));
                 setAssignmentsFeedback('');
                 return;
@@ -193,7 +194,7 @@ const Topic = ({ user }: any) => {
         });
 
         return () => unsubscribe();
-    }, [logic.subjectId, logic.topicId, resolvedRole]);
+    }, [logic.subjectId, logic.topicId, isStudentRole]);
 
     const quizAnalyticsByQuiz = useMemo(() => {
         const byQuiz: any = {};

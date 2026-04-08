@@ -10,6 +10,11 @@ const mocks = vi.hoisted(() => ({
   canView: vi.fn(() => true),
   canDelete: vi.fn(() => false),
   getActiveRole: vi.fn((user) => user?.activeRole || user?.role || 'student'),
+  getNormalizedRole: vi.fn((user) => {
+    const role = typeof user === 'string' ? user : user?.role;
+    const normalized = typeof role === 'string' ? role.trim().toLowerCase() : 'student';
+    return ['student', 'teacher', 'institutionadmin', 'admin'].includes(normalized) ? normalized : 'student';
+  }),
   shouldShowEditUI: vi.fn(() => true),
   shouldShowDeleteUI: vi.fn(() => false),
   collection: vi.fn((db, name) => ({ __kind: 'collection', db, name })),
@@ -43,6 +48,7 @@ vi.mock('../../../src/utils/permissionUtils', () => ({
   canView: (...args) => mocks.canView(...args),
   canDelete: (...args) => mocks.canDelete(...args),
   getActiveRole: (...args) => mocks.getActiveRole(...args),
+  getNormalizedRole: (...args) => mocks.getNormalizedRole(...args),
   shouldShowEditUI: (...args) => mocks.shouldShowEditUI(...args),
   shouldShowDeleteUI: (...args) => mocks.shouldShowDeleteUI(...args),
 }));
@@ -168,6 +174,7 @@ describe('useTopicLogic', () => {
   it('keeps teacher edit permissions when role resolver falls back to student', async () => {
     const user = { uid: 'teacher-1', role: 'teacher' };
     mocks.getActiveRole.mockReturnValue('student');
+    mocks.getNormalizedRole.mockReturnValue('teacher');
     mocks.canEdit.mockReturnValue(true);
     mocks.canView.mockReturnValue(true);
     mocks.canDelete.mockReturnValue(true);
@@ -185,6 +192,67 @@ describe('useTopicLogic', () => {
         canDelete: true,
         isViewer: false,
       })
+    );
+  });
+
+  it('inherits subject ownership when topic owner metadata is missing', async () => {
+    const user = { uid: 'teacher-1', role: 'teacher' };
+    mocks.getNormalizedRole.mockReturnValue('teacher');
+    mocks.getActiveRole.mockReturnValue('teacher');
+
+    mocks.getDoc.mockResolvedValue({
+      exists: () => true,
+      id: 'subject-1',
+      data: () => ({ id: 'subject-1', name: 'Math', ownerId: 'teacher-1', color: 'from-blue-400 to-blue-600' }),
+    });
+
+    mocks.canEdit.mockImplementation((item, userId) => item?.ownerId === userId);
+    mocks.canView.mockImplementation((item, userId) => item?.ownerId === userId);
+    mocks.canDelete.mockImplementation((item, userId) => item?.ownerId === userId);
+    mocks.shouldShowEditUI.mockImplementation((item, userId) => item?.ownerId === userId);
+    mocks.shouldShowDeleteUI.mockImplementation((item, userId) => item?.ownerId === userId);
+
+    mocks.onSnapshot.mockImplementation((ref, callback) => {
+      const isTopicDoc = ref?.__kind === 'doc' && ref?.name === 'topics';
+      const isDocumentsQuery = ref?.__kind === 'query' && ref?.base?.name === 'documents';
+      const isResumenQuery = ref?.__kind === 'query' && ref?.base?.name === 'resumen';
+      const isQuizzesQuery = ref?.__kind === 'query' && ref?.base?.name === 'quizzes';
+
+      if (isTopicDoc) {
+        callback({
+          exists: () => true,
+          id: 'topic-1',
+          data: () => ({ id: 'topic-1', name: 'Algebra', status: 'completed' }),
+        });
+        return vi.fn();
+      }
+
+      if (isDocumentsQuery || isResumenQuery || isQuizzesQuery) {
+        callback({ docs: [] });
+        return vi.fn();
+      }
+
+      callback({ docs: [] });
+      return vi.fn();
+    });
+
+    const { result } = renderHook(() => useTopicLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.permissions).toEqual(
+      expect.objectContaining({
+        canEdit: true,
+        canView: true,
+        canDelete: true,
+        isViewer: false,
+      })
+    );
+    expect(mocks.canEdit).toHaveBeenCalledWith(
+      expect.objectContaining({ ownerId: 'teacher-1' }),
+      'teacher-1'
     );
   });
 

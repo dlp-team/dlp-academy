@@ -3,10 +3,11 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TopicTabs from '../../../../src/pages/Topic/components/TopicTabs';
-import { getActiveRole } from '../../../../src/utils/permissionUtils';
+import { getActiveRole, getNormalizedRole } from '../../../../src/utils/permissionUtils';
 
 vi.mock('../../../../src/utils/permissionUtils', () => ({
   getActiveRole: vi.fn(),
+  getNormalizedRole: vi.fn(),
 }));
 
 const buildProps = (overrides = {}) => ({
@@ -36,6 +37,7 @@ describe('TopicTabs create actions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     getActiveRole.mockReturnValue('teacher');
+    getNormalizedRole.mockReturnValue('teacher');
   });
 
   it('shows materials create actions and triggers study guide handler', () => {
@@ -89,10 +91,27 @@ describe('TopicTabs create actions', () => {
 
   it('keeps teacher create controls when explicit role is teacher', () => {
     getActiveRole.mockReturnValue('student');
+    getNormalizedRole.mockReturnValue('teacher');
     const props = buildProps({
       user: {
         uid: 'teacher-1',
         role: 'teacher',
+      },
+    });
+
+    render(<TopicTabs {...props} />);
+
+    expect(screen.queryByLabelText('Crear guía o examen')).not.toBeNull();
+  });
+
+  it('keeps teacher create controls when active role is teacher', () => {
+    getNormalizedRole.mockReturnValue('student');
+    getActiveRole.mockReturnValue('teacher');
+    const props = buildProps({
+      user: {
+        uid: 'teacher-1',
+        role: 'student',
+        activeRole: 'teacher',
       },
     });
 

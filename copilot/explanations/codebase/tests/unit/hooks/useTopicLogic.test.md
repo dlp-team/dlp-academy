@@ -20,6 +20,7 @@
 ## Changelog
 ### 2026-04-08
 - Added regression coverage that preserves teacher edit permissions when fallback role resolution returns `student` but explicit `user.role` is `teacher`.
+- Added regression coverage for legacy topic docs without `ownerId`, verifying topic permissions inherit subject owner metadata before `canEdit` checks.
 
 ### 2026-04-02
 - Updated `permissionUtils` mocked surface to include `getActiveRole(...)` after Phase 07 Slice 03 topic-hook role-context migration.

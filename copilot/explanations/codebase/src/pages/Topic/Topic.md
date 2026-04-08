@@ -117,3 +117,11 @@
 **Reason**: Recover create-action visibility regressions where fallback role ordering could incorrectly classify teacher sessions as student view.
 
 **Impact**: Teacher Topic sessions retain baseline create controls while preview-as-student behavior remains read-only.
+
+### 2026-04-08 - Mixed-Role Student Gating Hardening
+
+**Change**: Topic student-view decisions now require both normalized profile role and active role to resolve as `student`.
+
+**Reason**: Prevent false student-mode locking in mixed-role sessions and keep create controls visible when teacher context is active.
+
+**Impact**: Create controls and assignment visibility now align with active teacher context while preserving explicit preview-as-student read-only behavior.

@@ -19,9 +19,15 @@ Restore missing topic create controls for quizzes, exams, and study guides using
 
 ## Implementation Update (2026-04-08)
 - Compared `Topic`, `TopicTabs`, and `useTopicLogic` create-control gating against `origin/main` baseline.
-- Recovered create-action visibility by prioritizing explicit `user.role` before fallback role resolution in Topic module surfaces.
-- Preserved existing preview mode read-only behavior and `permissions.canEdit` gating.
-- Added regression coverage for explicit teacher-role precedence in:
+- Re-opened Phase 08 after user verification reported create button still missing at runtime.
+- Root cause refinement:
+	- Mixed-role contexts could still collapse to student-view gating.
+	- Topic permission checks were too strict for legacy topic docs missing owner/share metadata.
+- Final recovery implementation:
+	- Student-view gating now requires both normalized profile role and active role to resolve as `student`.
+	- Topic permission checks now inherit missing ownership/share metadata from loaded subject context before `canEdit`/`canView` evaluation.
+- Preserved existing preview mode read-only behavior and `permissions.canEdit` gate semantics.
+- Added regression coverage for mixed-role precedence and legacy topic permission inheritance in:
 	- `tests/unit/pages/topic/TopicTabs.createActions.test.jsx`
 	- `tests/unit/hooks/useTopicLogic.test.js`
 

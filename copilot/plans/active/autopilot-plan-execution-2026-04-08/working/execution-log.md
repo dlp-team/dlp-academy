@@ -37,3 +37,15 @@
   - `npm run test -- tests/unit/pages/topic/TopicTabs.createActions.test.jsx tests/unit/hooks/useTopicLogic.test.js` -> PASS
   - `npm run lint` -> PASS
   - `npx tsc --noEmit` -> PASS
+- Phase 08 re-opened block (user-reported runtime create-button still missing):
+  - Performed main-baseline comparison on Topic role/permission gating path.
+  - Updated Topic role gating to require both normalized profile role and active role to be `student` before forcing read-only student mode.
+  - Added legacy metadata fallback for topic permission checks by inheriting `ownerId`/sharing fields from loaded subject context when missing on topic docs.
+  - Expanded regression coverage:
+    - mixed-role create-button visibility in `TopicTabs.createActions.test.jsx`
+    - missing-topic-ownerId inheritance in `useTopicLogic.test.js`
+- Validation executed:
+  - `get_errors` on touched files -> PASS
+  - `npm run test -- tests/unit/pages/topic/TopicTabs.createActions.test.jsx tests/unit/hooks/useTopicLogic.test.js` -> PASS
+  - `npm run lint` -> PASS
+  - `npx tsc --noEmit` -> PASS
