@@ -67,6 +67,8 @@
 - Phase 09 build gate:
   - Executed `npm run build` to validate structural route/theme/layout changes under production bundling.
   - Result: PASS with existing non-blocking chunk-size warning.
+- Plan synchronization correction:
+  - Resolved phase lifecycle drift by updating Phase 00 (`COMPLETED`) and Phase 02 (`IN_REVIEW`) markers to match existing implementation/validation evidence.
 - Phase 04 implementation block (customization UI interaction + confirmation parity):
   - Updated `ColorField` event boundaries so card-body selection and swatch-picker actions are behaviorally isolated.
   - Added typed-hex commit flow in `ColorField` so valid values update deterministically without breaking incremental typing.

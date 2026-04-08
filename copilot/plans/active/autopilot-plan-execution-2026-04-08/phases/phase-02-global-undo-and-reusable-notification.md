@@ -2,7 +2,7 @@
 # Phase 02 - Global Undo and Reusable Notification
 
 ## Status
-- IN_PROGRESS
+- IN_REVIEW
 
 ## Objective
 Implement a centralized undo framework for element actions (except creation) with keyboard and toast parity.
@@ -24,3 +24,9 @@ Implement a centralized undo framework for element actions (except creation) wit
 - Extended keyboard shortcut coordination to expose undo registration and toast controls.
 - Wired page-level move handlers to register undo payloads for subject, folder, and shortcut moves across drag/drop and confirmation callbacks.
 - Added focused unit coverage for reusable undo component behavior.
+
+## Validation Evidence (2026-04-08)
+- `get_errors` on touched files -> PASS.
+- `npm run test:unit -- tests/unit/hooks/useSubjects.test.js tests/unit/components/UndoActionToast.test.jsx` -> PASS.
+- `npm run lint` -> PASS.
+- `npx tsc --noEmit` -> PASS.
