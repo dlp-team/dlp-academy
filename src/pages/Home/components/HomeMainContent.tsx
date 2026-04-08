@@ -286,7 +286,7 @@ const HomeMainContent = ({
                             setSubjectModalConfig={logic.setSubjectModalConfig}
                             viewMode={logic.viewMode}
                             layoutMode={logic.layoutMode}
-                            canCreateSubject={canCreateInManualContext}
+                            canCreateSubject={canCreateInManualContext && !selectMode}
                             cardScale={logic.cardScale || 100}
                             currentFolder={logic.currentFolder}
                         />

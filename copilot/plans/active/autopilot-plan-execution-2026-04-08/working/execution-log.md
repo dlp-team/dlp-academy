@@ -37,6 +37,15 @@
   - `npm run test -- tests/unit/pages/topic/TopicTabs.createActions.test.jsx tests/unit/hooks/useTopicLogic.test.js` -> PASS
   - `npm run lint` -> PASS
   - `npx tsc --noEmit` -> PASS
+- Phase 01 continuation block (selection-mode create guard):
+  - Updated `HomeContent` create-entry gating to disable create-subject actions while selection mode is active.
+  - Updated `HomeMainContent` empty-state create passthrough to disable create-subject action while selection mode is active.
+  - Added regression assertion in `tests/unit/pages/home/HomeMainContent.test.jsx` validating disabled create passthrough in selection mode.
+- Validation executed:
+  - `get_errors` on touched files -> PASS
+  - `npm run test -- tests/unit/pages/home/HomeMainContent.test.jsx tests/unit/pages/topic/TopicTabs.createActions.test.jsx tests/unit/hooks/useTopicLogic.test.js` -> PASS
+  - `npm run lint` -> PASS
+  - `npx tsc --noEmit` -> PASS
 - Phase 08 re-opened block (user-reported runtime create-button still missing):
   - Performed main-baseline comparison on Topic role/permission gating path.
   - Updated Topic role gating to require both normalized profile role and active role to be `student` before forcing read-only student mode.

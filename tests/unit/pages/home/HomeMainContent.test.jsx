@@ -4,6 +4,8 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import HomeMainContent from '../../../../src/pages/Home/components/HomeMainContent';
 
+const homeEmptyStateSpy = vi.fn();
+
 vi.mock('../../../../src/pages/Home/components/BinView', () => ({
   default: () => <div>BinViewMock</div>,
 }));
@@ -29,7 +31,10 @@ vi.mock('../../../../src/pages/Home/components/HomeContent', () => ({
 }));
 
 vi.mock('../../../../src/pages/Home/components/HomeEmptyState', () => ({
-  default: () => <div>HomeEmptyStateMock</div>,
+  default: (props) => {
+    homeEmptyStateSpy(props);
+    return <div>HomeEmptyStateMock</div>;
+  },
 }));
 
 const baseLogic = {
@@ -108,6 +113,24 @@ const baseProps = {
 };
 
 describe('HomeMainContent', () => {
+  it('disables empty-state create action while selection mode is active', () => {
+    homeEmptyStateSpy.mockClear();
+
+    render(
+      <HomeMainContent
+        {...baseProps}
+        logic={{ ...baseLogic, viewMode: 'grid' }}
+        effectiveHasContent={false}
+        selectMode
+      />
+    );
+
+    expect(homeEmptyStateSpy).not.toHaveBeenCalledTimes(0);
+    const lastCall = homeEmptyStateSpy.mock.calls[homeEmptyStateSpy.mock.calls.length - 1] || [];
+    const passedProps = lastCall[0] || {};
+    expect(passedProps.canCreateSubject).toBe(false);
+  });
+
   it('renders bin branch when view mode is bin', () => {
     render(<HomeMainContent {...baseProps} logic={{ ...baseLogic, viewMode: 'bin' }} />);
     expect(screen.getByText('BinViewMock')).not.toBeNull();

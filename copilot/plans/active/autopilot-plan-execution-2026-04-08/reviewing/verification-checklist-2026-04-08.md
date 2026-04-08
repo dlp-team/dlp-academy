@@ -4,7 +4,7 @@
 ## Core Functional Gates
 - [ ] Selection mode supports drag-drop parity for selected batches.
 - [ ] Folder/child selection de-duplication behaves as specified.
-- [ ] Selection mode disables create-subject button and styles exit button border with primary-related color.
+- [x] Selection mode disables create-subject button and styles exit button border with primary-related color.
 - [ ] Batch move confirmation applies to all selected items (no single-item regression).
 - [x] Global undo supports actions except creation.
 - [x] Undo toast appears for 5 seconds and Ctrl+Z remains valid until replaced by newer action.

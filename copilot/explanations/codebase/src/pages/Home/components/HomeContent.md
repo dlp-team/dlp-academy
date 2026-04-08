@@ -1,6 +1,10 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-04-08: Selection-mode create-subject guard
+- Updated `canCreateInCurrentContext` to include `!selectMode`.
+- Create-subject entries in Home content views are now suppressed while selection mode is active.
+
 ### 2026-04-07: List-mode selection click behavior alignment
 - Nested subject rows now toggle selection in selection mode instead of navigating.
 - Preserves normal navigation behavior when selection mode is inactive.

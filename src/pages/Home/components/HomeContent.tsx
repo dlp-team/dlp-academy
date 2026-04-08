@@ -90,7 +90,7 @@ const HomeContent = ({
     const disableFolderDeleteActionsInShared = isViewerInSharedFolder || isEditorInSharedFolder || studentMode;
     const disableSubjectDeleteActionsInShared = isViewerInSharedFolder || studentMode;
     const dndEnabledInContext = isDragAndDropEnabled && !disableAllActionsInShared && !selectMode;
-    const canCreateInCurrentContext = !disableAllActionsInShared && !studentMode;
+    const canCreateInCurrentContext = !disableAllActionsInShared && !studentMode && !selectMode;
 
     // Auto-scroll is always enabled for both grid and list modes
     (useAutoScrollOnDrag as any)({
