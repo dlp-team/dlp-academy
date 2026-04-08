@@ -2,7 +2,7 @@
 # Phase 07 - Share and Assignment Notifications
 
 ## Status
-- IN_PROGRESS
+- IN_REVIEW
 
 ## Objective
 Ensure users receive notifications when subjects are shared or assigned through class/enrollment flows.
@@ -24,3 +24,9 @@ Ensure users receive notifications when subjects are shared or assigned through 
 	- `subject_assigned_student`
 - Added tenant-safe recipient filtering and student-role gating before notification writes.
 - Added focused unit coverage for share notifications, assignment fan-out, and unchanged-recipient no-op behavior.
+
+## Validation Evidence (2026-04-08)
+- `get_errors` on `src/hooks/useSubjects.ts` and `tests/unit/hooks/useSubjects.test.js` -> PASS.
+- `npm run test -- tests/unit/hooks/useSubjects.test.js` -> PASS.
+- `npm run lint` -> PASS.
+- `npx tsc --noEmit` -> PASS.

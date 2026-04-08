@@ -27,3 +27,20 @@
 
 ## Out-of-Scope Risks Log Requirement
 - Any risk not addressed within this plan must be documented in [copilot/plans/out-of-scope-risk-log.md](../../../out-of-scope-risk-log.md) before closure.
+
+## 2026-04-08 Delta Review
+
+### Selection-Mode Batch Drag/Drop
+- Risk: Routing selected-item drops through batch handlers could unintentionally bypass single-item move protections.
+- Mitigation: `useHomeContentDnd` only redirects when the dragged card key exists in active selection set; unselected drags continue through existing single-item paths.
+- Evidence: `tests/unit/hooks/useHomeContentDnd.test.js` includes select-mode batch routing and legacy single-item branch coverage.
+
+### Theme Preview Public Route
+- Risk: Public `/theme-preview` route could accept untrusted cross-origin preview messages.
+- Mitigation: Listener enforces strict same-origin check before applying payload updates.
+- Evidence: `tests/unit/pages/theme-preview/ThemePreview.test.jsx` verifies foreign-origin message rejection.
+
+### Scrollbar Overlay Adaptation
+- Risk: Removing gutter reservation may produce perceived clipping in specific viewport/browser combinations.
+- Mitigation: Active classes use deterministic `overflow-y: scroll`, preserving width stability while avoiding dual-edge gutter compensation artifacts.
+- Residual: Manual cross-browser visual pass remains recommended before final lifecycle closure.

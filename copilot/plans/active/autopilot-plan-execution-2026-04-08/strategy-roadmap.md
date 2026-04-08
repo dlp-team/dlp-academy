@@ -24,9 +24,9 @@ Execute the AUTOPILOT request with lossless behavior preservation, deterministic
 - Phase 04: IN_REVIEW
 - Phase 05: IN_REVIEW
 - Phase 06: IN_REVIEW
-- Phase 07: IN_PROGRESS
+- Phase 07: IN_REVIEW
 - Phase 08: IN_REVIEW
-- Phase 09: PLANNED
+- Phase 09: IN_PROGRESS
 
 ## Dependency Order
 - Phase 02 depends on baseline action handlers identified in Phase 00.
@@ -42,5 +42,5 @@ Execute the AUTOPILOT request with lossless behavior preservation, deterministic
 
 ## Immediate Next Actions
 1. Execute manual in-app parity validation for Phases 01, 03, 05, 06, and 08, then promote completed phases from `IN_REVIEW` to `COMPLETED`.
-2. Complete remaining Phase 07 closure checks and transition status from `IN_PROGRESS` to `IN_REVIEW`.
-3. Begin Phase 09 optimization/review prep by consolidating repeated preview/scrollbar behavior notes and validating residual risk scope.
+2. Complete Phase 09 optimization/review documentation: finalize deep risk analysis deltas and update out-of-scope risk log only if new residuals are discovered.
+3. Run final lifecycle promotion checks for moving the active plan to `inReview` after manual parity confirmation.

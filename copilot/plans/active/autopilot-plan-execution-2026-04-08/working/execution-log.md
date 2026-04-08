@@ -49,6 +49,21 @@
   - `npm run test -- tests/unit/hooks/useHomeContentDnd.test.js tests/unit/components/CustomScrollbar.test.jsx tests/unit/pages/theme-preview/ThemePreview.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` -> PASS
   - `npm run lint` -> PASS
   - `npx tsc --noEmit` -> PASS
+- Phase 07 closure block (notifications):
+  - Revalidated notification flow coverage in `tests/unit/hooks/useSubjects.test.js`.
+  - Updated Phase 07 lifecycle status from `IN_PROGRESS` to `IN_REVIEW` and added explicit validation evidence.
+- Validation executed:
+  - `get_errors` on `src/hooks/useSubjects.ts` and `tests/unit/hooks/useSubjects.test.js` -> PASS
+  - `npm run test -- tests/unit/hooks/useSubjects.test.js` -> PASS
+  - `npm run lint` -> PASS
+  - `npx tsc --noEmit` -> PASS
+- Phase 09 prep block (optimization + risk review):
+  - Ran closure-grade global validation (`lint`, `tsc`, full `test`) on current branch state.
+  - Updated Phase 09 status from `PLANNED` to `IN_PROGRESS` and expanded deep-risk analysis deltas for selection batch DnD, theme-preview route boundaries, and scrollbar adaptation residuals.
+- Validation executed:
+  - `npm run lint` -> PASS
+  - `npx tsc --noEmit` -> PASS
+  - `npm run test` -> PASS (exit code 0)
 - Phase 04 implementation block (customization UI interaction + confirmation parity):
   - Updated `ColorField` event boundaries so card-body selection and swatch-picker actions are behaviorally isolated.
   - Added typed-hex commit flow in `ColorField` so valid values update deterministically without breaking incremental typing.
