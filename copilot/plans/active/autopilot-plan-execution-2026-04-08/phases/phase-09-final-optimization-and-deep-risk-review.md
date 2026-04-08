@@ -17,6 +17,7 @@ Finalize with optimization, consolidation, and deep risk review before transitio
 - `npm run lint`
 - `npx tsc --noEmit`
 - `npm run test`
+- `npm run build`
 - Review checklist completion in `reviewing/verification-checklist-2026-04-08.md`
 
 ## Implementation Update (2026-04-08)
@@ -28,3 +29,4 @@ Finalize with optimization, consolidation, and deep risk review before transitio
 - `npm run lint` -> PASS.
 - `npx tsc --noEmit` -> PASS.
 - `npm run test` -> PASS (exit code `0`).
+- `npm run build` -> PASS (non-blocking chunk-size warning only).
