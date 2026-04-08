@@ -45,11 +45,16 @@
     - `npx tsc --noEmit` -> PASS
     - `npm run test` -> PASS (`161` files, `736` tests)
     - `npm run build` -> PASS (existing non-blocking chunk-size warning)
-  - Attempted Step 19 PR flow via `gh pr view` but command is unavailable in this environment (`gh` not installed).
-  - Branch lifecycle/state synchronized for manual handoff:
-    - `BRANCH_LOG.md` moved to Current Step `19` and marked local ready-for-merge.
-    - `copilot/ACTIVE-GOVERNANCE/BRANCHES_STATUS.md` set to `ready-for-merge`.
-    - `copilot/ACTIVE-GOVERNANCE/user-action-notes.md` updated with OPEN manual PR/merge action.
+  - Step 19 PR flow issue handling:
+    - `gh` from shell PATH was unavailable.
+    - Direct executable invocation worked, but CLI was unauthenticated.
+  - User-approved merge continuation executed via fast-forward:
+    - `git push origin feature/hector/autopilot-plan-execution-2026-0408:development` -> PASS.
+  - Post-merge lifecycle updates:
+    - `BRANCH_LOG.md` advanced to Step `23` with completed merge notes.
+    - `copilot/ACTIVE-GOVERNANCE/BRANCHES_STATUS.md` moved to `pending-delete` (date `2026-04-08`).
+    - `copilot/ACTIVE-GOVERNANCE/user-action-notes.md` moved from OPEN to RESOLVED for this plan.
+  - Retention cleanup check executed (Step 22.5): no branches met 7-day expiry threshold.
 - Phase 01 continuation block (selection-mode batch drag/drop parity + batch confirmation parity):
   - Updated `src/pages/Home/components/HomeContent.tsx` to keep drag/drop enabled in selection mode when write permissions allow it.
   - Updated `src/pages/Home/hooks/useHomeContentDnd.ts` to route selected-item drops through bulk selection movement (`onDropSelectedItems`) in root/list drop paths for subjects and folders.
