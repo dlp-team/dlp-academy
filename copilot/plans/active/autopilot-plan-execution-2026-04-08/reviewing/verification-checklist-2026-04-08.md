@@ -34,3 +34,8 @@
 - [x] `npx tsc --noEmit` passes.
 - [x] `npm run test` passes for impacted suite.
 - [x] Lossless report generated for each major block.
+
+## Manual Promotion Gates
+- [ ] In-app parity checklist completed: [reviewing/manual-parity-checklist-2026-04-08.md](./manual-parity-checklist-2026-04-08.md).
+- [ ] Eligible phases promoted from `IN_REVIEW` to `COMPLETED` after manual confirmation.
+- [ ] Active plan lifecycle ready for transition to `inReview`.

@@ -22,3 +22,4 @@
 - 2026-04-08: Continued plan closure by transitioning Phase 07 to `IN_REVIEW`, starting Phase 09 `IN_PROGRESS`, and adding fresh full-suite validation + deep-risk delta evidence.
 - 2026-04-08: Continued Phase 09 closure prep by passing `npm run build` production gate and recording structural validation evidence.
 - 2026-04-08: Corrected lifecycle drift by synchronizing Phase 00/02 status markers with recorded implementation and validation evidence.
+- 2026-04-08: Added explicit manual parity checklist and linked it as a required promotion gate for final lifecycle transition.

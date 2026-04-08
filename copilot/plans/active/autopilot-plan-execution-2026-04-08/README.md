@@ -61,5 +61,6 @@
 - Subplans index: [subplans/README.md](./subplans/README.md)
 - Working log: [working/execution-log.md](./working/execution-log.md)
 - Review gate: [reviewing/verification-checklist-2026-04-08.md](./reviewing/verification-checklist-2026-04-08.md)
+- Manual parity gate: [reviewing/manual-parity-checklist-2026-04-08.md](./reviewing/manual-parity-checklist-2026-04-08.md)
 - Deep risk review: [reviewing/deep-risk-analysis-2026-04-08.md](./reviewing/deep-risk-analysis-2026-04-08.md)
 - User updates: [user-updates.md](./user-updates.md)

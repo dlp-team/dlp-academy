@@ -41,6 +41,6 @@ Execute the AUTOPILOT request with lossless behavior preservation, deterministic
 - Final phase requires full `npm run test` and `npx tsc --noEmit` before closure.
 
 ## Immediate Next Actions
-1. Execute manual in-app parity validation for Phases 01, 03, 05, 06, and 08, then promote completed phases from `IN_REVIEW` to `COMPLETED`.
+1. Execute manual in-app parity validation using [reviewing/manual-parity-checklist-2026-04-08.md](./reviewing/manual-parity-checklist-2026-04-08.md), then promote completed phases from `IN_REVIEW` to `COMPLETED`.
 2. Complete Phase 09 optimization/review documentation: finalize deep risk analysis deltas and update out-of-scope risk log only if new residuals are discovered.
 3. Run final lifecycle promotion checks for moving the active plan to `inReview` after manual parity confirmation.
