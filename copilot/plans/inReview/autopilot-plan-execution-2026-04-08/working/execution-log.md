@@ -83,6 +83,10 @@
   - Captured user-approved automation-first promotion decision and applied phase promotion updates (Phases 01-08 -> `COMPLETED`, Phase 09 -> `IN_REVIEW`).
   - Closed manual parity checklist by explicit promotion decision and synchronized verification checklist gates.
   - Prepared plan metadata for lifecycle transition from `active` to `inReview`.
+- InReview completion and finished prep:
+  - Promoted Phase 09 from `IN_REVIEW` to `COMPLETED` after final evidence consolidation.
+  - Updated roadmap/README lifecycle markers for `finished` transition readiness.
+  - Prepared lifecycle move from `inReview` to `finished` as the next package state.
 - Phase 04 implementation block (customization UI interaction + confirmation parity):
   - Updated `ColorField` event boundaries so card-body selection and swatch-picker actions are behaviorally isolated.
   - Added typed-hex commit flow in `ColorField` so valid values update deterministically without breaking incremental typing.
