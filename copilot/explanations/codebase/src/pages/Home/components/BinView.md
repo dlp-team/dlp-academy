@@ -18,12 +18,16 @@
 ## Main Dependencies
 - `react`
 - `lucide-react`
-- `firebase/firestore`
+- `react-router-dom`
 - `../../../hooks/useSubjects`
 - `../../../components/modules/SubjectCard/SubjectCard`
 - `../../../components/modules/ListViewItem`
 
 ## Changelog
+- **2026-04-08:** Phase 03 bin interaction parity and read-only route pass:
+	- `Ver contenido` now routes to subject read-only flow (`/home/subject/:id?mode=readonly&source=bin`) instead of opening the old modal payload path,
+	- list-mode selected cards now use pressed-scale parity with grid mode,
+	- list item ring highlight is limited to explicit selection mode, matching grid semantics.
 - **2026-04-07:** Phase 02 bin visual-parity pass:
 	- list inline selected-item panel now uses grid-aligned reveal styling (`fade + slide + zoom`) and elevated shell treatment,
 	- list inline action buttons now mirror grid-panel visual semantics (contextual neutral action + urgency-themed restore + soft-danger delete),

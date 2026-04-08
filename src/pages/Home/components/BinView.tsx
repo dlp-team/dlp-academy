@@ -1,9 +1,8 @@
 // src/pages/Home/components/BinView.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Trash2, Loader2, XCircle, ArrowLeft, CheckSquare, Square, RotateCcw } from 'lucide-react';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
 import ListViewItem from '../../../components/modules/ListViewItem';
-import { db } from '../../../firebase/config';
 import { useSubjects } from '../../../hooks/useSubjects';
 import { useFolders } from '../../../hooks/useFolders';
 import { useShortcuts } from '../../../hooks/useShortcuts';
@@ -21,7 +20,6 @@ import { getBinUnselectedDimmingClass } from '../../../utils/selectionVisualUtil
 
 import BinGridItem          from './bin/BinGridItem';
 import BinSelectionOverlay  from './bin/BinSelectionOverlay';
-import BinDescriptionModal  from './bin/BinDescriptionModal';
 import { DeleteConfirmModal, EmptyBinConfirmModal } from './bin/BinConfirmModals';
 
 const ListViewItemComponent: any = ListViewItem;
@@ -49,6 +47,7 @@ const BIN_SORT_DESCRIPTIONS = {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
+    const navigate = useNavigate();
     const isStudent = getActiveRole(user) === 'student';
 
     const [trashedItems, setTrashedItems] = useState<any[]>([]);
@@ -62,9 +61,6 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
     const [selectedItemId, setSelectedItemId] = useState<any>(null);
     const [selectedItemType, setSelectedItemType] = useState<any>(null);
     const [folderBinTrail, setFolderBinTrail] = useState<any[]>([]);
-    const [descriptionModal, setDescriptionModal] = useState<any>(null);
-    const [loadingDescription, setLoadingDescription] = useState(false);
-    const [expandedTopics, setExpandedTopics] = useState<any>({});
     const [sortMode, setSortMode] = useState<string>(DEFAULT_BIN_SORT_MODE);
     const [selectionMode, setSelectionMode] = useState(false);
     const [bulkSelection, setBulkSelection] = useState<any>({});
@@ -571,40 +567,10 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
         }
     };
 
-    const handleShowDescription = async (subject: any) => {
-        setLoadingDescription(true);
-        setDescriptionModal({ subject, topics: [] });
-        try {
-            const topicsSnap = await getDocs(
-                query(collection(db, 'topics'), where('subjectId', '==', subject.id))
-            );
-            const topicsWithDetails = await Promise.all(
-                topicsSnap.docs.map(async (topicDoc: any) => {
-                    const topicData = { id: topicDoc.id, ...topicDoc.data() };
-
-                    const [docsSnap, quizzesSnap] = await Promise.all([
-                        getDocs(query(collection(db, 'documents'), where('topicId', '==', topicDoc.id))),
-                        getDocs(query(collection(db, 'quizzes'),   where('topicId', '==', topicDoc.id))),
-                    ]);
-
-                    topicData.documents = docsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    topicData.quizzes   = quizzesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    return topicData;
-                })
-            );
-            topicsWithDetails.sort((a, b: any) => (a.order || 0) - (b.order || 0));
-            setDescriptionModal({ subject, topics: topicsWithDetails });
-        } catch (err: any) {
-            console.error('Error loading description:', err);
-            setErrorMessage('Error al cargar la descripcion del elemento.');
-            setDescriptionModal(null);
-        } finally {
-            setLoadingDescription(false);
-        }
+    const handleOpenReadOnlySubject = (subjectId: any) => {
+        if (!subjectId) return;
+        navigate(`/home/subject/${subjectId}?mode=readonly&source=bin`);
     };
-
-    const toggleTopic = (topicId: any) =>
-        setExpandedTopics(prev => ({ ...prev, [topicId]: !prev[topicId] }));
 
     const handleSelectItem = (itemId: any, itemType: any) => {
         if (selectionMode) {
@@ -916,7 +882,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                         return (
                             <div
                                 key={`${item.itemType}-${item.id}`}
-                                className={`rounded-xl transition-all duration-200 ease-out ${!isSelected ? dimmingClass : ''}`}
+                                className={`rounded-xl transition-all duration-200 ease-out ${!isSelected ? dimmingClass : ''} ${isSelected && !selectionMode ? 'scale-[1.01]' : ''}`}
                             >
                                 <ListViewItemComponent
                                     user={user}
@@ -933,7 +899,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                     allFolders={activeFolderBinId ? nestedFolderItems : topLevelTrashedFolders}
                                     allSubjects={activeFolderBinId ? nestedFolderSubjectItems : topLevelTrashedSubjects}
                                     disableAllActions={true}
-                                    isSelected={isSelected}
+                                    isSelected={selectionMode ? isSelected : false}
                                 />
                                 <div className="px-3 pb-2">
                                     <p className={`text-xs font-semibold ${getDaysRemainingTextClass(daysRemaining)}`}>
@@ -960,7 +926,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                                     </button>
                                                 )}
                                                 {item.itemType === 'subject' && (
-                                                    <button onClick={() => handleShowDescription(item)}
+                                                    <button onClick={() => handleOpenReadOnlySubject(item.id)}
                                                         className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-700 font-semibold transition-colors">
                                                         Ver contenido
                                                     </button>
@@ -1003,7 +969,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                         setSelectedItemType(null);
                     }}
                     onShowDescription={selectedItem.itemType === 'subject'
-                        ? () => handleShowDescription(selectedItem)
+                        ? () => handleOpenReadOnlySubject(selectedItem.id)
                         : selectedItem.itemType === 'folder'
                             ? () => handleOpenFolderTrashView(selectedItem)
                             : undefined}
@@ -1028,13 +994,6 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
             )}
 
             {/* ── Modals ──────────────────────────────────────────────────────── */}
-            <BinDescriptionModal
-                descriptionModal={descriptionModal}
-                loadingDescription={loadingDescription}
-                expandedTopics={expandedTopics}
-                onClose={() => setDescriptionModal(null)}
-                onToggleTopic={toggleTopic}
-            />
 
             {deleteConfirm && (
                 <DeleteConfirmModal

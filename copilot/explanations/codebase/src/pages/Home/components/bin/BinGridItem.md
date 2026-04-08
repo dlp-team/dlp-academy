@@ -12,6 +12,10 @@
 - Shows urgency and deletion countdown metadata for both item types.
 
 ## Changelog
+- **2026-04-08:** Refined selected-card semantics for bin interaction parity:
+	- shared ring highlight now appears only when bin selection mode is active,
+	- non-selection focused card uses pressed-scale and elevated shadow treatment,
+	- unselected dimming path remains unchanged.
 - **2026-04-04:** Updated grid-card selection visuals to reuse shared Home selection ring classes and replaced opacity-based dimming with brightness/saturation dimming for unselected items.
 - **2026-04-03:** Added shortcut-aware rendering:
 	- supports `shortcut-subject` and `shortcut-folder` item types,

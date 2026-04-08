@@ -10,10 +10,10 @@
 - [x] Undo toast appears for 5 seconds and Ctrl+Z remains valid until replaced by newer action.
 
 ## Bin UX Gates
-- [ ] Grid press opacity is softened and options reveal has no delay.
-- [ ] Grid/list press styling parity is preserved.
-- [ ] Border highlight appears only in bin selection mode.
-- [ ] "Ver contenido" routes to read-only content view without mutation capability.
+- [x] Grid press opacity is softened and options reveal has no delay.
+- [x] Grid/list press styling parity is preserved.
+- [x] Border highlight appears only in bin selection mode.
+- [x] "Ver contenido" routes to read-only content view without mutation capability.
 
 ## Institution Customization Gates
 - [ ] Color card click selects card only.

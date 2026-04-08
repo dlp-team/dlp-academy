@@ -125,3 +125,11 @@
 **Reason**: Prevent false student-mode locking in mixed-role sessions and keep create controls visible when teacher context is active.
 
 **Impact**: Create controls and assignment visibility now align with active teacher context while preserving explicit preview-as-student read-only behavior.
+
+### 2026-04-08 - Bin-Origin Read-Only Topic Guard
+
+**Change**: Topic page now parses URL read-only mode (`?mode=readonly`) and applies a hard non-mutating permission overlay.
+
+**Reason**: Phase 03 requires `Ver contenido` from bin to route into content inspection without mutation capability.
+
+**Impact**: Topic create/edit/delete actions and mutating modals are suppressed in bin-origin read-only mode while preserving content visibility and realtime feedback paths.

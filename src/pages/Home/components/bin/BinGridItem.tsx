@@ -10,6 +10,8 @@ const BinGridItem = React.forwardRef<any, any>(({ item, itemType = 'subject', us
     const trashedDate   = toJsDate(item.trashedAt);
     const isShortcutItem = itemType === 'shortcut-subject' || itemType === 'shortcut-folder';
     const isFolderItem = itemType === 'folder' || itemType === 'shortcut-folder';
+    const showSelectionRing = selectionMode && isSelected;
+    const showPressedState = !selectionMode && isSelected;
     const dimmingClass = getBinUnselectedDimmingClass({
         hasSelection,
         isSelected,
@@ -21,7 +23,8 @@ const BinGridItem = React.forwardRef<any, any>(({ item, itemType = 'subject', us
             ref={ref}
             data-testid={`bin-grid-wrapper-${itemType}-${item.id}`}
             className={`transition-all duration-200 ${
-                isSelected    ? 'relative'
+                showPressedState ? 'relative scale-[1.01]'
+                : isSelected ? 'relative'
                 : hasSelection ? dimmingClass
                 : 'hover:scale-[1.02]'
             }`}
@@ -29,8 +32,8 @@ const BinGridItem = React.forwardRef<any, any>(({ item, itemType = 'subject', us
             <div
                 data-testid={`bin-${itemType}-card-${item.id}`}
                 className={`rounded-2xl cursor-pointer transition-shadow ${
-                    isSelected ? `${SHARED_SELECTION_RING_CLASS} shadow-[0_0_0_3px_rgba(99,102,241,0.14)]` : ''
-                }`}
+                    showSelectionRing ? `${SHARED_SELECTION_RING_CLASS} shadow-[0_0_0_3px_rgba(99,102,241,0.14)]` : ''
+                } ${showPressedState ? 'shadow-[0_14px_30px_rgba(15,23,42,0.18)]' : ''}`}
                 onClick={onSelect}
             >
                 {isFolderItem ? (

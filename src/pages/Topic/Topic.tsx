@@ -1,5 +1,6 @@
 // src/pages/Topic/Topic.tsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { Eye, GraduationCap, Loader2, AlertCircle } from 'lucide-react';
 import Header from '../../components/layout/Header';
@@ -28,10 +29,15 @@ const Topic = ({ user }: any) => {
     // 1. Lógica base
     const logic = useTopicLogic(user);
     useDarkMode();
+    const location = useLocation();
     const { activeTab, setActiveTab } = logic;
     const normalizedProfileRole = getNormalizedRole(user);
     const activeRole = getActiveRole(user);
     const isStudentRole = normalizedProfileRole === 'student' && activeRole === 'student';
+    const isBinReadOnlyView = useMemo(() => {
+        const searchParams = new URLSearchParams(location.search || '');
+        return searchParams.get('mode') === 'readonly' || searchParams.get('readonly') === '1';
+    }, [location.search]);
 
     // 2. ESTADOS LOCALES
     const [quizResults, setQuizResults] = useState<any[]>([]);
@@ -41,11 +47,17 @@ const Topic = ({ user }: any) => {
     const [reviewsFeedback, setReviewsFeedback] = useState('');
     const [assignmentsFeedback, setAssignmentsFeedback] = useState('');
     const [previewAsStudent, setPreviewAsStudent] = useState(false);
-    const canUsePreview = !isStudentRole;
+    const canUsePreview = !isStudentRole && !isBinReadOnlyView;
     const isStudentView = isStudentRole || previewAsStudent;
     const { failedQuestions } = useTopicFailedQuestions(user, logic.topicId);
     const { members: classMembers = [] } = useClassMembers(logic.subject);
     const topicRealtimeFeedback = assignmentsFeedback || reviewsFeedback || scoresFeedback;
+
+    useEffect(() => {
+        if (!isBinReadOnlyView) return;
+        setPreviewAsStudent(false);
+        sessionStorage.removeItem('dlpPreviewAsStudent');
+    }, [isBinReadOnlyView]);
 
     useEffect(() => {
         if (!canUsePreview) {
@@ -375,7 +387,7 @@ const Topic = ({ user }: any) => {
     }, [enrichedTopic]);
 
     const effectivePermissions = useMemo(() => {
-        if (!previewAsStudent) return logic.permissions;
+        if (!previewAsStudent && !isBinReadOnlyView) return logic.permissions;
         return {
             ...logic.permissions,
             canEdit: false,
@@ -384,7 +396,7 @@ const Topic = ({ user }: any) => {
             showDeleteUI: false,
             isViewer: true
         };
-    }, [logic.permissions, previewAsStudent]);
+    }, [logic.permissions, previewAsStudent, isBinReadOnlyView]);
 
     if (!user || logic.loading || !logic.topic || !logic.subject) {
         return (
@@ -398,6 +410,12 @@ const Topic = ({ user }: any) => {
         <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100">
             <Header user={user} />
             <main className="pt-20 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                {isBinReadOnlyView && (
+                    <div className="mb-4 rounded-2xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm font-medium text-amber-800 dark:text-amber-300">
+                        Vista de papelera en modo solo lectura. Puedes revisar contenido sin modificar recursos ni evaluaciones.
+                    </div>
+                )}
+
                 {canUsePreview && (
                     <div className="mb-4 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/80 backdrop-blur-sm p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-200">
@@ -456,7 +474,7 @@ const Topic = ({ user }: any) => {
                 </div>
             </main>
 
-            {!previewAsStudent && (
+            {!previewAsStudent && !isBinReadOnlyView && (
                 <CategorizFileModal
                     isOpen={logic.showCategorizationModal}
                     onClose={() => {
@@ -471,12 +489,14 @@ const Topic = ({ user }: any) => {
                 />
             )}
 
-            <TopicModals 
-                {...logic}
-                topic={enrichedTopic}
-                subject={logic.subject}
-                handleGenerateQuizSubmit={logic.handleGenerateQuizSubmit}
-            />
+            {!isBinReadOnlyView && (
+                <TopicModals 
+                    {...logic}
+                    topic={enrichedTopic}
+                    subject={logic.subject}
+                    handleGenerateQuizSubmit={logic.handleGenerateQuizSubmit}
+                />
+            )}
         </div>
     );
 };

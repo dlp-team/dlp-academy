@@ -9,7 +9,16 @@ const mocks = vi.hoisted(() => ({
   useFolders: vi.fn(),
   useShortcuts: vi.fn(),
   getActiveRole: vi.fn(),
+  navigate: vi.fn(),
 }));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mocks.navigate,
+  };
+});
 
 vi.mock('../../../../src/hooks/useSubjects', () => ({
   useSubjects: mocks.useSubjects,
@@ -154,6 +163,19 @@ describe('BinView list inline panel', () => {
     fireEvent.click(screen.getByTestId('bin-list-row-subject-sub-1'));
 
     expect(screen.queryByTestId('bin-list-inline-panel-subject-sub-1')).toBeNull();
+  });
+
+  it('routes to read-only subject content from list inline panel', async () => {
+    render(<BinView user={{ uid: 'teacher-1', role: 'teacher' }} layoutMode="list" cardScale={100} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('bin-list-row-subject-sub-1')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByTestId('bin-list-row-subject-sub-1'));
+    fireEvent.click(screen.getByRole('button', { name: 'Ver contenido' }));
+
+    expect(mocks.navigate).toHaveBeenCalledWith('/home/subject/sub-1?mode=readonly&source=bin');
   });
 
   it('shows folder-specific inline actions for selected folders in list mode', async () => {

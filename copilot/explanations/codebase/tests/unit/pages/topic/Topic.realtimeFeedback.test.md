@@ -12,5 +12,8 @@
 - Verifies snapshot failure logging path for assignments stream.
 
 ## Changelog
+### 2026-04-08
+- Added router `useLocation` test mock to keep realtime feedback suite deterministic after Topic page introduced URL-based read-only mode parsing.
+
 ### 2026-03-30
 - Added initial page-level regression coverage for Topic realtime listener feedback banner behavior.

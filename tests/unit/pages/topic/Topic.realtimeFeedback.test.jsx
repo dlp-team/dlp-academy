@@ -65,6 +65,18 @@ const topicLogicMock = vi.hoisted(() => ({
   categorizingFile: false,
 }));
 
+const routerMocks = vi.hoisted(() => ({
+  locationSearch: '',
+}));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useLocation: () => ({ search: routerMocks.locationSearch }),
+  };
+});
+
 vi.mock('../../../../src/hooks/useDarkMode', () => ({
   useDarkMode: () => ({ isDark: false, toggleDarkMode: vi.fn() }),
 }));
@@ -136,6 +148,7 @@ describe('Topic realtime feedback', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    routerMocks.locationSearch = '';
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 

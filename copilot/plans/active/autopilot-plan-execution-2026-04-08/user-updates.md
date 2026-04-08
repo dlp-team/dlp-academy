@@ -15,3 +15,4 @@
 - 2026-04-08: User-reported runtime miss on Topic create button addressed with deeper main-baseline analysis, mixed-role gating fix, and legacy topic-permission fallback.
 - 2026-04-08: Continued plan execution post-Phase 08 by implementing Phase 01 selection-mode create-subject disable guard and regression check.
 - 2026-04-08: Continued Phase 01 by implementing folder-child selection de-dup behavior and focused hook regression coverage.
+- 2026-04-08: Continued Phase 03 by implementing bin interaction parity (no-delay overlay panel, softened backdrop, selection-mode-only ring highlight, list/grid pressed-state parity) and bin-origin read-only navigation guards in Subject/Topic routes.

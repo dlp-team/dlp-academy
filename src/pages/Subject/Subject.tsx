@@ -1,6 +1,6 @@
 // src/pages/Subject/Subject.jsx
-import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useMemo, useState } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
 // Hooks
@@ -24,7 +24,12 @@ const Subject = ({ user }: any) => {
     const params = useParams();
     const subjectId = params.subjectId || params.id; 
     const navigate = useNavigate();
+    const location = useLocation();
     const activeRole = getActiveRole(user);
+    const isBinReadOnlyView = useMemo(() => {
+        const searchParams = new URLSearchParams(location.search || '');
+        return searchParams.get('mode') === 'readonly' || searchParams.get('readonly') === '1';
+    }, [location.search]);
     
     // Data Logic
     const { 
@@ -59,7 +64,7 @@ const Subject = ({ user }: any) => {
     } = useSubjectPageState(topics);
 
     const isTeacherUser = activeRole !== 'student';
-    const effectiveIsTeacher = isTeacherUser;
+    const effectiveIsTeacher = isTeacherUser && !isBinReadOnlyView;
     const [topicDeleteConfirm, setTopicDeleteConfirm] = useState({
         isOpen: false,
         topicId: null,
@@ -167,17 +172,23 @@ const Subject = ({ user }: any) => {
                     topicCount={effectiveIsTeacher ? topics.length : topics.filter(t => t.isVisible !== false).length}
                 />
 
+                {isBinReadOnlyView && (
+                    <div className="mt-4 mb-6 rounded-2xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm font-medium text-amber-800 dark:text-amber-300">
+                        Vista de papelera en modo solo lectura. Puedes revisar contenido, pero no modificar asignatura ni temas.
+                    </div>
+                )}
+
                 <TopicGrid
                     topics={isTeacherUser ? filteredTopics : filteredTopics.filter(t => t.isVisible !== false)}
                     subjectColor={subject.color}
-                    isReordering={isTeacherUser ? isReordering : false}
-                    onOpenCreateModal={isTeacherUser ? () => { setRetryTopicData(null); setShowTopicModal(true); } : null}
-                    onSelectTopic={(t) => navigate(`/home/subject/${subjectId}/topic/${t.id}`)}
-                    onDeleteTopic={isTeacherUser ? onDeleteTopicConfirm : null}
-                    onRetryTopic={isTeacherUser ? onRetryTopic : null}
-                    onReorderTopics={isTeacherUser ? handleReorderTopics : null}
-                    onEditTopic={isTeacherUser ? handleEditTopicClick : null}
-                    onToggleVisibility={isTeacherUser ? handleToggleVisibility : null}
+                    isReordering={effectiveIsTeacher ? isReordering : false}
+                    onOpenCreateModal={effectiveIsTeacher ? () => { setRetryTopicData(null); setShowTopicModal(true); } : null}
+                    onSelectTopic={(t) => navigate(`/home/subject/${subjectId}/topic/${t.id}${isBinReadOnlyView ? '?mode=readonly&source=bin' : ''}`)}
+                    onDeleteTopic={effectiveIsTeacher ? onDeleteTopicConfirm : null}
+                    onRetryTopic={effectiveIsTeacher ? onRetryTopic : null}
+                    onReorderTopics={effectiveIsTeacher ? handleReorderTopics : null}
+                    onEditTopic={effectiveIsTeacher ? handleEditTopicClick : null}
+                    onToggleVisibility={effectiveIsTeacher ? handleToggleVisibility : null}
                 />
             </main>
 

@@ -9,10 +9,14 @@
 ## Coverage
 - Returns `null` when the selected-card reference is missing.
 - Ensures the overlay backdrop renders without blur classes and still closes on click.
-- Verifies panel reveal is timer-driven (delayed until focus transition window).
+- Verifies panel renders immediately with softened backdrop opacity classes.
 - Confirms panel placement top-clamping near viewport bottom edge.
 
 ## Changelog
+### 2026-04-08
+- Updated overlay assertions to the no-delay panel behavior introduced in Phase 03.
+- Added explicit backdrop class checks for softened light/dark opacity tokens.
+
 ### 2026-04-05
 - Updated tests for the typed `item` overlay contract and staged panel reveal.
 - Added fake-timer + `act(...)` cleanup for deterministic, warning-free assertions.

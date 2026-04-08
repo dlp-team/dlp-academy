@@ -20,7 +20,7 @@ Execute the AUTOPILOT request with lossless behavior preservation, deterministic
 - Phase 00: COMPLETED
 - Phase 01: IN_PROGRESS
 - Phase 02: IN_PROGRESS
-- Phase 03: PLANNED
+- Phase 03: IN_REVIEW
 - Phase 04: PLANNED
 - Phase 05: PLANNED
 - Phase 06: PLANNED
@@ -41,6 +41,6 @@ Execute the AUTOPILOT request with lossless behavior preservation, deterministic
 - Final phase requires full `npm run test` and `npx tsc --noEmit` before closure.
 
 ## Immediate Next Actions
-1. Finish remaining Phase 02 undo edge-path wiring and regression checks.
-2. Complete Phase 01 remaining gate: batch move confirmation parity for all selected entries.
+1. Complete Phase 01 remaining gates: batch move confirmation parity and selected-batch drag/drop parity.
+2. Execute manual in-app validation for Phase 03 bin parity (grid/list press behavior + read-only navigation flow), then mark Phase 03 complete.
 3. Perform manual in-app parity check for Phase 08 create-button visibility across owner/editor and mixed-role contexts, then mark Phase 08 complete.

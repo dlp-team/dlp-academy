@@ -27,6 +27,11 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+### 2026-04-08
+- Added bin-origin read-only mode parsing (`?mode=readonly`) in `Subject.jsx`.
+- In read-only mode, subject-level mutating actions are disabled while topic navigation remains available.
+- Topic navigation now propagates read-only query context (`?mode=readonly&source=bin`) to preserve mutation guard on Topic page.
+
 ### 2026-04-02
 - Subject page teacher-vs-student UI gating now resolves from `getActiveRole(user)` for dual-role switched sessions.
 

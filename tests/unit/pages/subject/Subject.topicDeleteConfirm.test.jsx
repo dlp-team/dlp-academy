@@ -6,6 +6,7 @@ import Subject from '../../../../src/pages/Subject/Subject';
 
 const mocks = vi.hoisted(() => ({
   navigate: vi.fn(),
+  locationSearch: '',
   deleteTopic: vi.fn(async () => {}),
   updateSubject: vi.fn(),
   deleteSubject: vi.fn(async () => {}),
@@ -20,6 +21,7 @@ vi.mock('react-router-dom', async () => {
     ...actual,
     useParams: () => ({ subjectId: 'subject-1' }),
     useNavigate: () => mocks.navigate,
+    useLocation: () => ({ search: mocks.locationSearch }),
   };
 });
 
@@ -82,10 +84,17 @@ vi.mock('../../../../src/pages/Subject/components/SubjectHeader', () => ({
 }));
 
 vi.mock('../../../../src/pages/Subject/components/TopicGrid', () => ({
-  default: ({ onDeleteTopic }) => (
-    <button type="button" onClick={() => onDeleteTopic?.('topic-1')}>
-      trigger-topic-delete
-    </button>
+  default: ({ onDeleteTopic, onSelectTopic, topics = [] }) => (
+    <div>
+      {onDeleteTopic && (
+        <button type="button" onClick={() => onDeleteTopic('topic-1')}>
+          trigger-topic-delete
+        </button>
+      )}
+      <button type="button" onClick={() => onSelectTopic?.(topics[0] || { id: 'topic-1' })}>
+        open-topic
+      </button>
+    </div>
   ),
 }));
 
@@ -108,6 +117,7 @@ vi.mock('../../../../src/pages/Subject/modals/EditTopicModal', () => ({
 describe('Subject topic deletion confirmation', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.locationSearch = '';
   });
 
   it('opens in-page confirmation and deletes topic only after explicit confirm', async () => {
@@ -134,5 +144,18 @@ describe('Subject topic deletion confirmation', () => {
 
     expect(mocks.deleteTopic).not.toHaveBeenCalled();
     expect(screen.queryByRole('heading', { name: /eliminar tema/i })).toBeNull();
+  });
+
+  it('disables mutating actions and preserves read-only topic navigation from bin mode', () => {
+    mocks.locationSearch = '?mode=readonly&source=bin';
+
+    render(<Subject user={{ uid: 'teacher-1', role: 'teacher' }} />);
+
+    expect(screen.getByText(/modo solo lectura/i)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /trigger-topic-delete/i })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /open-topic/i }));
+
+    expect(mocks.navigate).toHaveBeenCalledWith('/home/subject/subject-1/topic/topic-1?mode=readonly&source=bin');
   });
 });

@@ -16,19 +16,39 @@ describe('BinGridItem', () => {
     onSelect: vi.fn(),
   };
 
-  it('applies shared selected ring visuals', () => {
+  it('applies shared selected ring visuals only in selection mode', () => {
     render(
       <BinGridItem
         {...baseProps}
         itemType="subject"
         isSelected
         hasSelection
+        selectionMode
       />
     );
 
     const card = screen.getByTestId('bin-subject-card-item-1');
     expect(card.className).toContain('ring-4');
     expect(card.className).toContain('ring-indigo-500');
+  });
+
+  it('uses pressed-state scale without ring when selected outside selection mode', () => {
+    render(
+      <BinGridItem
+        {...baseProps}
+        itemType="subject"
+        isSelected
+        hasSelection
+        selectionMode={false}
+      />
+    );
+
+    const wrapper = screen.getByTestId('bin-grid-wrapper-subject-item-1');
+    const card = screen.getByTestId('bin-subject-card-item-1');
+
+    expect(wrapper.className).toContain('scale-[1.01]');
+    expect(card.className).not.toContain('ring-4');
+    expect(card.className).toContain('shadow-[0_14px_30px_rgba(15,23,42,0.18)]');
   });
 
   it('dims unselected subject cards without opacity changes when a selection exists', () => {

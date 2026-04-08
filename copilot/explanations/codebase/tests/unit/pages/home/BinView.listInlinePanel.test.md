@@ -10,10 +10,14 @@
 - Selected list item shows an inline action panel directly under that item.
 - Inline panel moves to the next selected item and clears from previous selection.
 - Inline panel stays hidden while bulk selection mode is active.
+- Subject inline action `Ver contenido` routes to bin read-only subject URL.
 - Folder entries expose folder-specific inline action (`Abrir contenido de carpeta`).
 - Shortcut entries expose shortcut-specific restore label (`Restaurar acceso directo`) without folder-only actions.
 
 ## Changelog
+### 2026-04-08
+- Added route assertion for `Ver contenido` to ensure navigation goes to `/home/subject/:id?mode=readonly&source=bin`.
+
 ### 2026-04-07
 - Added reveal-style assertion (`zoom-in-95`) to verify list inline panel animation parity with grid-focused interaction language.
 

@@ -37,6 +37,24 @@
   - `npm run test -- tests/unit/pages/topic/TopicTabs.createActions.test.jsx tests/unit/hooks/useTopicLogic.test.js` -> PASS
   - `npm run lint` -> PASS
   - `npx tsc --noEmit` -> PASS
+- Phase 03 implementation block (bin interaction parity + read-only view routing):
+  - Updated `BinSelectionOverlay` to remove delayed side-panel reveal and apply softened backdrop opacity.
+  - Updated `BinGridItem` selection visuals so ring highlight appears only in selection mode; non-selection focus now uses pressed scale/shadow styling.
+  - Updated `BinView` list/grid parity path and routed `Ver contenido` to read-only subject route (`?mode=readonly&source=bin`).
+  - Added read-only guards in:
+    - `src/pages/Subject/Subject.tsx`
+    - `src/pages/Topic/Topic.tsx`
+  - Expanded regression coverage:
+    - `tests/unit/components/BinSelectionOverlay.test.jsx`
+    - `tests/unit/components/BinGridItem.test.jsx`
+    - `tests/unit/pages/home/BinView.listInlinePanel.test.jsx`
+    - `tests/unit/pages/subject/Subject.topicDeleteConfirm.test.jsx`
+    - `tests/unit/pages/topic/Topic.realtimeFeedback.test.jsx`
+- Validation executed:
+  - `get_errors` on touched files -> PASS
+  - `npm run test -- tests/unit/components/BinSelectionOverlay.test.jsx tests/unit/components/BinGridItem.test.jsx tests/unit/pages/home/BinView.listInlinePanel.test.jsx tests/unit/pages/subject/Subject.topicDeleteConfirm.test.jsx tests/unit/pages/topic/Topic.realtimeFeedback.test.jsx` -> PASS
+  - `npm run lint` -> PASS
+  - `npx tsc --noEmit` -> PASS
 - Phase 01 continuation block (selection-mode create guard):
   - Updated `HomeContent` create-entry gating to disable create-subject actions while selection mode is active.
   - Updated `HomeMainContent` empty-state create passthrough to disable create-subject action while selection mode is active.
