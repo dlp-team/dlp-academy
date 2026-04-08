@@ -36,6 +36,6 @@
 - [x] Lossless report generated for each major block.
 
 ## Manual Promotion Gates
-- [ ] In-app parity checklist completed: [reviewing/manual-parity-checklist-2026-04-08.md](./manual-parity-checklist-2026-04-08.md).
-- [ ] Eligible phases promoted from `IN_REVIEW` to `COMPLETED` after manual confirmation.
-- [ ] Active plan lifecycle ready for transition to `inReview`.
+- [x] In-app parity checklist completed: [reviewing/manual-parity-checklist-2026-04-08.md](./manual-parity-checklist-2026-04-08.md).
+- [x] Eligible phases promoted from `IN_REVIEW` to `COMPLETED` after manual/automation gate decision.
+- [x] Active plan lifecycle ready for transition to `inReview`.

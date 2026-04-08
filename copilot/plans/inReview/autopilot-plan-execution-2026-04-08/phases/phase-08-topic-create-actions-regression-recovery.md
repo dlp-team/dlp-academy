@@ -2,7 +2,7 @@
 # Phase 08 - Topic Create Actions Regression Recovery
 
 ## Status
-- IN_REVIEW
+- COMPLETED
 
 ## Objective
 Restore missing topic create controls for quizzes, exams, and study guides using prior main behavior as baseline.

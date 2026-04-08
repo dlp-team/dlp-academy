@@ -2,7 +2,7 @@
 # Phase 03 - Bin Interaction Parity and Read-Only View
 
 ## Status
-- IN_REVIEW
+- COMPLETED
 
 ## Objective
 Make bin interaction behavior consistent in grid/list and ensure "Ver contenido" opens a read-only flow.

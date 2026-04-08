@@ -79,6 +79,10 @@
     - `tests/e2e/home-sharing-roles.spec.js`
     - `tests/e2e/subject-topic-content.spec.js`
   - Result: PASS (`9 passed`, `3 skipped`).
+- Promotion decision and lifecycle prep:
+  - Captured user-approved automation-first promotion decision and applied phase promotion updates (Phases 01-08 -> `COMPLETED`, Phase 09 -> `IN_REVIEW`).
+  - Closed manual parity checklist by explicit promotion decision and synchronized verification checklist gates.
+  - Prepared plan metadata for lifecycle transition from `active` to `inReview`.
 - Phase 04 implementation block (customization UI interaction + confirmation parity):
   - Updated `ColorField` event boundaries so card-body selection and swatch-picker actions are behaviorally isolated.
   - Added typed-hex commit flow in `ColorField` so valid values update deterministically without breaking incremental typing.

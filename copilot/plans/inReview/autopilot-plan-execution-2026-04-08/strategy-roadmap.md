@@ -18,15 +18,15 @@ Execute the AUTOPILOT request with lossless behavior preservation, deterministic
 
 ## Current Progress
 - Phase 00: COMPLETED
-- Phase 01: IN_REVIEW
-- Phase 02: IN_REVIEW
-- Phase 03: IN_REVIEW
-- Phase 04: IN_REVIEW
-- Phase 05: IN_REVIEW
-- Phase 06: IN_REVIEW
-- Phase 07: IN_REVIEW
-- Phase 08: IN_REVIEW
-- Phase 09: IN_PROGRESS
+- Phase 01: COMPLETED
+- Phase 02: COMPLETED
+- Phase 03: COMPLETED
+- Phase 04: COMPLETED
+- Phase 05: COMPLETED
+- Phase 06: COMPLETED
+- Phase 07: COMPLETED
+- Phase 08: COMPLETED
+- Phase 09: IN_REVIEW
 
 ## Dependency Order
 - Phase 02 depends on baseline action handlers identified in Phase 00.
@@ -41,6 +41,6 @@ Execute the AUTOPILOT request with lossless behavior preservation, deterministic
 - Final phase requires full `npm run test` and `npx tsc --noEmit` before closure.
 
 ## Immediate Next Actions
-1. Execute manual in-app parity validation using [reviewing/manual-parity-checklist-2026-04-08.md](./reviewing/manual-parity-checklist-2026-04-08.md), then promote completed phases from `IN_REVIEW` to `COMPLETED`.
-2. Complete Phase 09 optimization/review documentation: finalize deep risk analysis deltas and update out-of-scope risk log only if new residuals are discovered.
-3. Run final lifecycle promotion checks for moving the active plan to `inReview` after manual parity confirmation.
+1. Transition this plan package from `active` to `inReview` with lifecycle metadata synchronized.
+2. Run final inReview checklist sweep and close any remaining residual-risk logging tasks.
+3. Prepare `inReview` -> `finished` promotion package once reviewer confirmation is complete.

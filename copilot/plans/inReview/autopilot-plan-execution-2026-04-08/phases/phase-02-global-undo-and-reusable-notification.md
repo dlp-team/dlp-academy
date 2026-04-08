@@ -2,7 +2,7 @@
 # Phase 02 - Global Undo and Reusable Notification
 
 ## Status
-- IN_REVIEW
+- COMPLETED
 
 ## Objective
 Implement a centralized undo framework for element actions (except creation) with keyboard and toast parity.

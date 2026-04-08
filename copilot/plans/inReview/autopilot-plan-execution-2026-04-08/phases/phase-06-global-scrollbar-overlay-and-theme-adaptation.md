@@ -2,7 +2,7 @@
 # Phase 06 - Global Scrollbar Overlay and Theme Adaptation
 
 ## Status
-- IN_REVIEW
+- COMPLETED
 
 ## Objective
 Restore full-width centered layout and implement non-cutting overlay-like scrollbar styling with proper dark/light adaptation.

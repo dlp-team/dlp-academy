@@ -2,7 +2,7 @@
 # Phase 01 - Selection Mode Drag/Drop and De-dup
 
 ## Status
-- IN_REVIEW
+- COMPLETED
 
 ## Objective
 Align selection-mode interaction model with individual drag/drop behavior and fix folder-child selection conflicts.
