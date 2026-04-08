@@ -13,6 +13,12 @@
 - Emits controlled color changes through `onChange(token, value)`.
 
 ## Changelog
+### 2026-04-08
+- Hardened interaction boundaries for customization parity:
+  - card-body click selects/activates token,
+  - swatch click opens native color picker only,
+  - hex field supports incremental typing and commits valid values on enter/blur.
+
 ### 2026-04-07
 - Split interaction semantics:
   - card click selects/focuses token,

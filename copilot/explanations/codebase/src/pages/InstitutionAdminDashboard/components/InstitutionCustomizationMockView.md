@@ -25,6 +25,11 @@
 - `./customization/CustomizationHomeExactPreview`
 
 ## Changelog
+### 2026-04-08
+- Added reset confirmation parity using `DashboardOverlayShell` so both save and reset actions are confirmation-gated.
+- Updated live iframe default route source from authenticated Home flow to `/theme-preview?role=teacher`.
+- Preserved `previewMode='mock'` deterministic path for deep interaction tests.
+
 ### 2026-04-07
 - Switched default preview path to live iframe rendering (`previewMode='live'`) with postMessage dispatch for theme CSS, highlight CSS, and role payload.
 - Added save confirmation gate using `DashboardOverlayShell` before persisting customization.

@@ -1,9 +1,42 @@
 // src/pages/InstitutionAdminDashboard/components/customization/ColorField.tsx
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { hexToRgba } from './themePreviewUtils';
+
+const normalizeHexColorInput = (value: any) => (typeof value === 'string' ? value.trim() : '');
+
+const isValidHexColor = (value: any) => /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(normalizeHexColorInput(value));
 
 const ColorField = ({ token, label, description, icon, value, onChange, onFocus, onBlur, isActive }: any) => {
   const inputRef = useRef<any>(null);
+  const [hexInputValue, setHexInputValue] = useState(() => normalizeHexColorInput(value));
+
+  useEffect(() => {
+    setHexInputValue(normalizeHexColorInput(value));
+  }, [value]);
+
+  const commitHexInputValue = () => {
+    const normalized = normalizeHexColorInput(hexInputValue);
+
+    if (isValidHexColor(normalized)) {
+      onChange(token, normalized);
+      return;
+    }
+
+    setHexInputValue(normalizeHexColorInput(value));
+  };
+
+  const handleContainerClick = (event: any) => {
+    const target = event?.target;
+
+    if (
+      target?.closest?.('[data-color-field-swatch="true"]')
+      || target?.closest?.('[data-color-field-hex-input="true"]')
+    ) {
+      return;
+    }
+
+    onFocus(token);
+  };
 
   return (
     <div
@@ -17,8 +50,7 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
         bg-white dark:bg-slate-800/60
       `}
       style={isActive ? { borderColor: value, boxShadow: `0 0 0 3px ${hexToRgba(value, 0.18)}` } : {}}
-      onClick={() => onFocus(token)}
-      onFocusCapture={() => onFocus(token)}
+      onClick={handleContainerClick}
       onBlurCapture={onBlur}
     >
       <div className="flex items-center gap-3 p-3">
@@ -26,11 +58,18 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
           <button
             type="button"
             data-testid={`color-field-swatch-${token}`}
+            data-color-field-swatch="true"
             aria-label={`Abrir selector de color para ${label}`}
             onClick={(event) => {
               event.stopPropagation();
+              if (typeof inputRef.current?.showPicker === 'function') {
+                inputRef.current.showPicker();
+                return;
+              }
+
               inputRef.current?.click();
             }}
+            onMouseDown={(event) => event.stopPropagation()}
             className="w-11 h-11 rounded-xl shadow-md border-2 border-white dark:border-slate-700 transition-all duration-200"
             style={{ backgroundColor: value }}
           />
@@ -44,7 +83,13 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
             ref={inputRef}
             type="color"
             value={value}
-            onChange={(e) => onChange(token, e.target.value)}
+            onChange={(event) => {
+              const nextColor = normalizeHexColorInput(event.target.value);
+              setHexInputValue(nextColor);
+              onChange(token, nextColor);
+            }}
+            onClick={(event) => event.stopPropagation()}
+            data-color-field-swatch="true"
             className="sr-only"
           />
         </div>
@@ -67,9 +112,33 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
 
         <input
           type="text"
-          value={value}
-          onChange={(e) => onChange(token, e.target.value)}
-          onClick={(e) => e.stopPropagation()}
+          value={hexInputValue}
+          onChange={(event) => {
+            const nextValue = event.target.value;
+            setHexInputValue(nextValue);
+
+            if (isValidHexColor(nextValue)) {
+              onChange(token, normalizeHexColorInput(nextValue));
+            }
+          }}
+          onFocus={() => onFocus(token)}
+          onBlur={commitHexInputValue}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              commitHexInputValue();
+              event.currentTarget.blur();
+              return;
+            }
+
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              setHexInputValue(normalizeHexColorInput(value));
+              event.currentTarget.blur();
+            }
+          }}
+          data-color-field-hex-input="true"
           className="w-20 text-[11px] font-mono bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-lg px-2 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 transition shrink-0"
           placeholder="#000000"
           maxLength={7}

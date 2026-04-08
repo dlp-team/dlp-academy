@@ -58,7 +58,7 @@ const InstitutionCustomizationMockView = ({
   className = '',
   previewPaletteApply = null,
   previewMode = 'live',
-  homeUrl = '/home',
+  homeUrl = '/theme-preview?role=teacher',
 }: any) => {
   const [form, setForm] = useState(buildSafeForm({ ...DEFAULTS, ...(initialValues || {}) }));
   const [saving, setSaving] = useState(false);
@@ -70,6 +70,7 @@ const InstitutionCustomizationMockView = ({
   const [fullscreen, setFullscreen] = useState(false);
   const [iframeReady, setIframeReady] = useState(false);
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
+  const [showResetConfirmation, setShowResetConfirmation] = useState(false);
   const iframeRef = useRef<any>(null);
 
   const initialValuesKey = useMemo(() => JSON.stringify(initialValues || {}), [initialValues]);
@@ -132,6 +133,18 @@ const InstitutionCustomizationMockView = ({
     setSaved(false);
     setActiveToken(null);
     setShowSaveConfirmation(false);
+    setShowResetConfirmation(false);
+  };
+
+  const openSaveConfirmation = () => {
+    setShowResetConfirmation(false);
+    setShowSaveConfirmation(true);
+  };
+
+  const openResetConfirmation = () => {
+    if (saving) return;
+    setShowSaveConfirmation(false);
+    setShowResetConfirmation(true);
   };
 
   const handleSave = async () => {
@@ -243,7 +256,7 @@ const InstitutionCustomizationMockView = ({
             <div className="flex flex-col items-center gap-2 pt-1">
               <button
                 type="button"
-                onClick={() => setShowSaveConfirmation(true)}
+                onClick={openSaveConfirmation}
                 disabled={saving}
                 title="Guardar cambios"
                 className="w-10 h-10 rounded-xl text-white inline-flex items-center justify-center disabled:opacity-70"
@@ -253,9 +266,10 @@ const InstitutionCustomizationMockView = ({
               </button>
               <button
                 type="button"
-                onClick={handleReset}
+                onClick={openResetConfirmation}
+                disabled={saving}
                 title="Restablecer colores"
-                className="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 inline-flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800"
+                className="w-10 h-10 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 inline-flex items-center justify-center hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-70"
               >
                 <RotateCcw size={14} />
               </button>
@@ -267,14 +281,15 @@ const InstitutionCustomizationMockView = ({
           <div className="px-3 py-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
             <button
               type="button"
-              onClick={handleReset}
-              className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800"
+              onClick={openResetConfirmation}
+              disabled={saving}
+              className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-semibold hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-70"
             >
               <RotateCcw size={14} /> Restablecer
             </button>
             <button
               type="button"
-              onClick={() => setShowSaveConfirmation(true)}
+              onClick={openSaveConfirmation}
               disabled={saving}
               className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-white text-sm font-semibold disabled:opacity-70"
               style={{ backgroundColor: saved ? '#10b981' : form.primary }}
@@ -412,6 +427,40 @@ const InstitutionCustomizationMockView = ({
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
             {saving ? 'Guardando...' : 'Guardar cambios'}
+          </button>
+        </div>
+      </div>
+    </DashboardOverlayShell>
+    <DashboardOverlayShell
+      isOpen={showResetConfirmation}
+      onClose={() => setShowResetConfirmation(false)}
+      closeOnBackdropClick={!saving}
+      maxWidth="md"
+      contentClassName="p-0"
+    >
+      <div className="p-6">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Confirmar restablecimiento</h3>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          Se descartarán los cambios sin guardar y se restaurarán los valores iniciales de personalización.
+        </p>
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setShowResetConfirmation(false)}
+            disabled={saving}
+            className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-60"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-white disabled:opacity-70"
+            style={{ backgroundColor: form.secondary }}
+          >
+            <RotateCcw size={14} />
+            Restablecer
           </button>
         </div>
       </div>

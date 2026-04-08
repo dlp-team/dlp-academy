@@ -14,6 +14,13 @@
 - Preview tab switching across `Papelera`, `Compartido`, and `Manual` plus topic/resource drilldown assertions.
 
 ## Changelog
+### 2026-04-08
+- Added coverage for color-card interaction contract:
+	- swatch click opens picker without forcing active state,
+	- card-body click activates token highlight.
+- Added typed-hex completion coverage to ensure incremental text entry commits valid color values.
+- Added reset-confirmation coverage for cancel/accept behavior and value restoration semantics.
+
 ### 2026-04-07
 - Updated suite harness to force `previewMode='mock'` for deterministic deep-interaction parity assertions.
 - Updated save-path assertion to pass through the new save-confirmation gate.

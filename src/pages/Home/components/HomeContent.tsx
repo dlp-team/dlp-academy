@@ -78,6 +78,7 @@ const HomeContent = ({
     selectMode = false,
     selectedItemKeys = new Set(),
     onToggleSelectItem = () => {},
+    onDropSelectedItems = null,
 }: any) => {
     const contentRef = useRef<any>(null);
 
@@ -89,7 +90,7 @@ const HomeContent = ({
     const disableAllActionsInShared = isViewerInSharedFolder;
     const disableFolderDeleteActionsInShared = isViewerInSharedFolder || isEditorInSharedFolder || studentMode;
     const disableSubjectDeleteActionsInShared = isViewerInSharedFolder || studentMode;
-    const dndEnabledInContext = isDragAndDropEnabled && !disableAllActionsInShared && !selectMode;
+    const dndEnabledInContext = isDragAndDropEnabled && !disableAllActionsInShared;
     const canCreateInCurrentContext = !disableAllActionsInShared && !studentMode && !selectMode;
 
     // Auto-scroll is always enabled for both grid and list modes
@@ -121,7 +122,10 @@ const HomeContent = ({
         handleMoveFolderWithSource,
         handleDropReorderSubject,
         handleDropReorderFolder,
-        handleDragEnd
+        handleDragEnd,
+        selectMode,
+        selectedItemKeys,
+        onDropSelectedItems
     });
 
     const showCollapsibleGroups = ['courses', 'tags', 'shared'].includes(viewMode);

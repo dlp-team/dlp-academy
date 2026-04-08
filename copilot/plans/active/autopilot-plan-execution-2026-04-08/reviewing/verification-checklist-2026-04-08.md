@@ -2,10 +2,10 @@
 # Verification Checklist
 
 ## Core Functional Gates
-- [ ] Selection mode supports drag-drop parity for selected batches.
+- [x] Selection mode supports drag-drop parity for selected batches.
 - [x] Folder/child selection de-duplication behaves as specified.
 - [x] Selection mode disables create-subject button and styles exit button border with primary-related color.
-- [ ] Batch move confirmation applies to all selected items (no single-item regression).
+- [x] Batch move confirmation applies to all selected items (no single-item regression).
 - [x] Global undo supports actions except creation.
 - [x] Undo toast appears for 5 seconds and Ctrl+Z remains valid until replaced by newer action.
 
@@ -16,15 +16,15 @@
 - [x] "Ver contenido" routes to read-only content view without mutation capability.
 
 ## Institution Customization Gates
-- [ ] Color card click selects card only.
-- [ ] Swatch click opens color picker with propagation guard.
-- [ ] Hex input can update color.
-- [ ] Save and reset actions use confirmation overlays.
-- [ ] Preview uses `theme-preview` mock route and does not use real secondary auth account.
-- [ ] Unsaved colors update preview via iframe `postMessage`.
+- [x] Color card click selects card only.
+- [x] Swatch click opens color picker with propagation guard.
+- [x] Hex input can update color.
+- [x] Save and reset actions use confirmation overlays.
+- [x] Preview uses `theme-preview` mock route and does not use real secondary auth account.
+- [x] Unsaved colors update preview via iframe `postMessage`.
 
 ## Platform Gates
-- [ ] Global scrollbar is theme-adaptive and overlay-like without layout cut-offs.
+- [x] Global scrollbar is theme-adaptive and overlay-like without layout cut-offs.
 - [x] Notification events fire for share/assignment/enrollment paths.
 - [x] Topic create actions (quizzes/exams/study guides) are restored to prior baseline behavior.
 

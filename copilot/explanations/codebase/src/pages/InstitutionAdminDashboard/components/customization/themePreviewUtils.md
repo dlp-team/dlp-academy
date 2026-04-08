@@ -13,6 +13,10 @@
 - Exposes helpers for iframe/theme injection and postMessage payload construction.
 
 ## Changelog
+### 2026-04-08
+- Extended `buildInstitutionPreviewThemeMessage(...)` payload with normalized `colors` object for `theme-preview` route consumers.
+- Preserved existing `themeCss`/`highlightCss` payload structure for backward-compatible iframe preview listeners.
+
 ### 2026-04-07
 - Added `buildInstitutionPreviewThemeMessage(...)` for live iframe postMessage dispatch.
 - Added highlight-message mapping per token for iframe feedback text.

@@ -12,10 +12,54 @@ const useHomeContentDnd = ({
     handleNestFolder,
     handleMoveFolderWithSource,
     handleDropReorderSubject,
-    handleDragEnd
+    handleDragEnd,
+    selectMode = false,
+    selectedItemKeys = new Set(),
+    onDropSelectedItems = null
 }: any) => {
     const [isPromoteZoneHovered, setIsPromoteZoneHovered] = useState(false);
     const [isRootZoneHovered, setIsRootZoneHovered] = useState(false);
+
+    const parseDraggedDropMeta = (subjectId, typeOrSourceFolderId, sourceFolderIdMaybe, shortcutIdMaybe) => {
+        const isKnownType = typeOrSourceFolderId === 'subject' || typeOrSourceFolderId === 'folder';
+        const draggedType = isKnownType ? typeOrSourceFolderId : 'subject';
+        const draggedShortcutId = isKnownType ? shortcutIdMaybe : sourceFolderIdMaybe;
+
+        return {
+            draggedType,
+            draggedKey: `${draggedType}:${draggedShortcutId || subjectId}`
+        };
+    };
+
+    const handleSelectedEntriesDrop = (
+        targetFolderId,
+        subjectId,
+        typeOrSourceFolderId,
+        sourceFolderIdMaybe,
+        shortcutIdMaybe
+    ) => {
+        if (!selectMode || !(selectedItemKeys instanceof Set) || selectedItemKeys.size === 0) {
+            return false;
+        }
+
+        if (typeof onDropSelectedItems !== 'function') {
+            return false;
+        }
+
+        const { draggedKey } = parseDraggedDropMeta(
+            subjectId,
+            typeOrSourceFolderId,
+            sourceFolderIdMaybe,
+            shortcutIdMaybe
+        );
+
+        if (!selectedItemKeys.has(draggedKey)) {
+            return false;
+        }
+
+        onDropSelectedItems(targetFolderId || null);
+        return true;
+    };
 
     const handlePromoteZoneDragOver = (e: any) => {
         if (currentFolder && (draggedItemType === 'subject' || draggedItemType === 'folder')) {
@@ -76,6 +120,18 @@ const useHomeContentDnd = ({
         if (draggedData.parentId === targetId) return;
 
         if (draggedData.type === 'subject') {
+            const selectionHandled = handleSelectedEntriesDrop(
+                targetId,
+                draggedData.id,
+                draggedData.type,
+                draggedData.parentId,
+                draggedData.shortcutId
+            );
+            if (selectionHandled) {
+                if (handleDragEnd) handleDragEnd();
+                return;
+            }
+
             let overlayShown = false;
             if (handleDropOnFolder) {
                 console.log('[DND] handleDropOnFolder call from handleRootZoneDrop:', {
@@ -91,6 +147,18 @@ const useHomeContentDnd = ({
                 handleMoveSubjectWithSource(draggedData.id, targetId, draggedData.parentId);
             }
         } else if (draggedData.type === 'folder' && handleNestFolder) {
+            const selectionHandled = handleSelectedEntriesDrop(
+                targetId,
+                draggedData.id,
+                draggedData.type,
+                draggedData.parentId,
+                draggedData.shortcutId
+            );
+            if (selectionHandled) {
+                if (handleDragEnd) handleDragEnd();
+                return;
+            }
+
             handleNestFolder(targetId, draggedData.id, draggedData.shortcutId || null);
         }
 
@@ -102,9 +170,15 @@ const useHomeContentDnd = ({
         if (target.type === 'folder') {
             if (dragged.id === target.id) return;
             if (dragged.type === 'subject') {
+                const sourceFolderId = dragged.folderId || dragged.parentId;
+
+                if (handleSelectedEntriesDrop(target.id, dragged.id, dragged.type, sourceFolderId, dragged.shortcutId)) {
+                    if (handleDragEnd) handleDragEnd();
+                    return;
+                }
+
                 let overlayShown = false;
                 if (handleDropOnFolder) {
-                    const sourceFolderId = dragged.folderId || dragged.parentId;
                     console.log('[DND] handleDropOnFolder call from handleListDrop:', {
                         targetId: target.id,
                         draggedId: dragged.id,
@@ -118,10 +192,14 @@ const useHomeContentDnd = ({
                     if (result === true) overlayShown = true;
                 }
                 if (!overlayShown && !handleDropOnFolder && handleMoveSubjectWithSource) {
-                    const sourceFolderId = dragged.folderId || dragged.parentId;
                     handleMoveSubjectWithSource(dragged.id, target.id, sourceFolderId);
                 }
             } else if (dragged.type === 'folder') {
+                if (handleSelectedEntriesDrop(target.id, dragged.id, dragged.type, dragged.parentId, dragged.shortcutId)) {
+                    if (handleDragEnd) handleDragEnd();
+                    return;
+                }
+
                 if (dragged.shortcutId && handleNestFolder) {
                     handleNestFolder(target.id, dragged.id, dragged.shortcutId);
                     if (handleDragEnd) handleDragEnd();
@@ -144,9 +222,15 @@ const useHomeContentDnd = ({
                     return;
                 }
                 if (dragged.parentId !== targetParentId) {
+                    const sourceFolderId = dragged.folderId || dragged.parentId;
+
+                    if (handleSelectedEntriesDrop(targetParentId, dragged.id, dragged.type, sourceFolderId, dragged.shortcutId)) {
+                        if (handleDragEnd) handleDragEnd();
+                        return;
+                    }
+
                     let overlayShown = false;
                     if (handleDropOnFolder) {
-                        const sourceFolderId = dragged.folderId || dragged.parentId;
                         console.log('[DND] handleDropOnFolder call from handleListDrop (subject):', {
                             targetParentId,
                             draggedId: dragged.id,
@@ -160,11 +244,15 @@ const useHomeContentDnd = ({
                         if (result === true) overlayShown = true;
                     }
                     if (!overlayShown && !handleDropOnFolder && handleMoveSubjectWithSource) {
-                        const sourceFolderId = dragged.folderId || dragged.parentId;
                         handleMoveSubjectWithSource(dragged.id, targetParentId, sourceFolderId);
                     }
                 }
             } else if (dragged.type === 'folder') {
+                if (handleSelectedEntriesDrop(targetParentId, dragged.id, dragged.type, dragged.parentId, dragged.shortcutId)) {
+                    if (handleDragEnd) handleDragEnd();
+                    return;
+                }
+
                 if (dragged.shortcutId && handleNestFolder) {
                     handleNestFolder(targetParentId, dragged.id, dragged.shortcutId);
                     if (handleDragEnd) handleDragEnd();

@@ -78,6 +78,62 @@ describe('InstitutionCustomizationMockView', () => {
     });
   });
 
+  it('activates token from card body click while swatch click only opens picker', () => {
+    renderCustomizationPreview();
+
+    const primaryField = screen.getByTestId('color-field-primary');
+    const swatch = screen.getByTestId('color-field-swatch-primary');
+
+    fireEvent.click(swatch);
+    expect(within(primaryField).queryByText(/activo/i)).toBeNull();
+
+    fireEvent.click(within(primaryField).getByText(/color primario/i));
+    expect(within(primaryField).getByText(/activo/i)).toBeTruthy();
+  });
+
+  it('accepts typed hex updates once a valid value is completed', () => {
+    renderCustomizationPreview();
+
+    const [primaryColorInput] = screen.getAllByPlaceholderText('#000000');
+
+    fireEvent.change(primaryColorInput, { target: { value: '#1' } });
+    fireEvent.change(primaryColorInput, { target: { value: '#12' } });
+    fireEvent.change(primaryColorInput, { target: { value: '#123' } });
+    fireEvent.change(primaryColorInput, { target: { value: '#1234' } });
+    fireEvent.change(primaryColorInput, { target: { value: '#12345' } });
+    fireEvent.change(primaryColorInput, { target: { value: '#123456' } });
+
+    expect(screen.getAllByDisplayValue('#123456').length).toBeGreaterThan(0);
+  });
+
+  it('routes reset action through confirmation before applying changes', async () => {
+    renderCustomizationPreview();
+
+    fireEvent.change(screen.getByPlaceholderText(/nombre visible/i), {
+      target: { value: 'Colegio Horizonte' },
+    });
+
+    const [primaryColorInput] = screen.getAllByPlaceholderText('#000000');
+    fireEvent.change(primaryColorInput, { target: { value: '#123456' } });
+
+    fireEvent.click(screen.getByRole('button', { name: /^restablecer$/i }));
+    expect(screen.getByText(/confirmar restablecimiento/i)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /^cancelar$/i }));
+    expect(screen.queryByText(/confirmar restablecimiento/i)).toBeNull();
+    expect(screen.getByDisplayValue('Colegio Horizonte')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /^restablecer$/i }));
+    const confirmResetButtons = screen.getAllByRole('button', { name: /^restablecer$/i });
+    fireEvent.click(confirmResetButtons[confirmResetButtons.length - 1]);
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Academia Demo')).toBeTruthy();
+      expect(screen.queryByDisplayValue('Colegio Horizonte')).toBeNull();
+      expect(screen.queryByDisplayValue('#123456')).toBeNull();
+    });
+  });
+
   it('dispatches live preview message payload to iframe and updates role payload', async () => {
     renderCustomizationLivePreview();
 
@@ -178,6 +234,8 @@ describe('InstitutionCustomizationMockView', () => {
     expect(screen.getAllByDisplayValue('#123456').length).toBeGreaterThan(0);
 
     fireEvent.change(primaryColorInput, { target: { value: '#zzzzzz' } });
+    expect(screen.getAllByDisplayValue('#zzzzzz').length).toBeGreaterThan(0);
+    fireEvent.blur(primaryColorInput);
 
     expect(screen.getAllByDisplayValue('#123456').length).toBeGreaterThan(0);
     expect(screen.queryByDisplayValue('#zzzzzz')).toBeNull();

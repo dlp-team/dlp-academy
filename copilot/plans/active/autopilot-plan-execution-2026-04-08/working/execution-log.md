@@ -37,6 +37,51 @@
   - `npm run test -- tests/unit/pages/topic/TopicTabs.createActions.test.jsx tests/unit/hooks/useTopicLogic.test.js` -> PASS
   - `npm run lint` -> PASS
   - `npx tsc --noEmit` -> PASS
+- Phase 01 continuation block (selection-mode batch drag/drop parity + batch confirmation parity):
+  - Updated `src/pages/Home/components/HomeContent.tsx` to keep drag/drop enabled in selection mode when write permissions allow it.
+  - Updated `src/pages/Home/hooks/useHomeContentDnd.ts` to route selected-item drops through bulk selection movement (`onDropSelectedItems`) in root/list drop paths for subjects and folders.
+  - Updated Home composition wiring:
+    - `src/pages/Home/Home.tsx`
+    - `src/pages/Home/components/HomeMainContent.tsx`
+  - Added regression coverage in `tests/unit/hooks/useHomeContentDnd.test.js` for selection-mode batch drop routing.
+- Validation executed:
+  - `get_errors` on touched files -> PASS
+  - `npm run test -- tests/unit/hooks/useHomeContentDnd.test.js tests/unit/components/CustomScrollbar.test.jsx tests/unit/pages/theme-preview/ThemePreview.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` -> PASS
+  - `npm run lint` -> PASS
+  - `npx tsc --noEmit` -> PASS
+- Phase 04 implementation block (customization UI interaction + confirmation parity):
+  - Updated `ColorField` event boundaries so card-body selection and swatch-picker actions are behaviorally isolated.
+  - Added typed-hex commit flow in `ColorField` so valid values update deterministically without breaking incremental typing.
+  - Added reset confirmation overlay in `InstitutionCustomizationMockView` for save/reset parity using `DashboardOverlayShell`.
+  - Expanded regression coverage in `tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` for:
+    - card/swatch interaction separation,
+    - typed-hex update flow,
+    - reset confirmation cancel/accept behavior.
+- Validation executed:
+  - `get_errors` on touched files -> PASS
+  - `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` -> PASS
+  - `npm run lint` -> PASS
+  - `npx tsc --noEmit` -> PASS
+- Phase 05 implementation block (theme-preview route + live color injection):
+  - Added public route page `src/pages/ThemePreview/ThemePreview.tsx`.
+  - Registered `/theme-preview` in `src/App.tsx` outside protected-route auth flow.
+  - Updated customization live iframe default source to `/theme-preview?role=teacher`.
+  - Extended preview message payload in `themePreviewUtils` with normalized color values (`payload.colors`) for route-level live updates.
+  - Added focused tests in `tests/unit/pages/theme-preview/ThemePreview.test.jsx` for role-param init, postMessage updates, and foreign-origin rejection.
+- Validation executed:
+  - `get_errors` on touched files -> PASS
+  - `npm run test -- tests/unit/pages/theme-preview/ThemePreview.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` -> PASS
+  - `npm run lint` -> PASS
+  - `npx tsc --noEmit` -> PASS
+- Phase 06 implementation block (global scrollbar overlay adaptation):
+  - Removed `scrollbar-gutter` reservation from active/stable/overlay global scrollbar classes in `src/index.css`.
+  - Switched active global scrollbar behavior to `overflow-y: scroll` to prevent layout shifts without left/right gutter clipping artifacts.
+  - Preserved theme-token scrollbar thumb and transparent track styling.
+- Validation executed:
+  - `get_errors` on touched files -> PASS
+  - `npm run test -- tests/unit/components/CustomScrollbar.test.jsx tests/unit/pages/theme-preview/ThemePreview.test.jsx tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` -> PASS
+  - `npm run lint` -> PASS
+  - `npx tsc --noEmit` -> PASS
 - Phase 03 implementation block (bin interaction parity + read-only view routing):
   - Updated `BinSelectionOverlay` to remove delayed side-panel reveal and apply softened backdrop opacity.
   - Updated `BinGridItem` selection visuals so ring highlight appears only in selection mode; non-selection focus now uses pressed scale/shadow styling.

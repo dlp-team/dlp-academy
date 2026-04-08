@@ -1,6 +1,11 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-04-08: Selection-mode drag/drop batch parity
+- Re-enabled drag/drop affordances while selection mode is active (write-capable contexts only).
+- Forwarded selection context (`selectMode`, `selectedItemKeys`) and batch-drop callback (`onDropSelectedItems`) into `useHomeContentDnd`.
+- Selected-item drops now trigger the same bulk move confirmation/share-rule pipeline used by toolbar move actions.
+
 ### 2026-04-08: Selection-mode create-subject guard
 - Updated `canCreateInCurrentContext` to include `!selectMode`.
 - Create-subject entries in Home content views are now suppressed while selection mode is active.

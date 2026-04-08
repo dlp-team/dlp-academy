@@ -1,3 +1,4 @@
+// tests/unit/hooks/useHomeContentDnd.test.js
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import useHomeContentDnd from '../../../src/pages/Home/hooks/useHomeContentDnd';
@@ -195,6 +196,81 @@ describe('useHomeContentDnd', () => {
     });
 
     expect(handleMoveSubjectWithSource).toHaveBeenCalledWith('subject-a', 'folder-target', 'folder-source');
+    expect(handleDragEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('routes selected subject drops through bulk move handler in select mode', () => {
+    const handleDropOnFolder = vi.fn(() => false);
+    const handleDragEnd = vi.fn();
+    const onDropSelectedItems = vi.fn();
+
+    const { result } = renderHook(() =>
+      useHomeContentDnd({
+        currentFolder: { id: 'folder-current' },
+        draggedItem: null,
+        draggedItemType: null,
+        handleDropOnFolder,
+        handleDragEnd,
+        selectMode: true,
+        selectedItemKeys: new Set(['subject:shortcut-a']),
+        onDropSelectedItems,
+      })
+    );
+
+    act(() => {
+      result.current.handleListDrop(
+        {
+          id: 'subject-a',
+          type: 'subject',
+          parentId: 'folder-source',
+          folderId: 'folder-source',
+          shortcutId: 'shortcut-a',
+        },
+        {
+          id: 'folder-target',
+          type: 'folder',
+        }
+      );
+    });
+
+    expect(onDropSelectedItems).toHaveBeenCalledWith('folder-target');
+    expect(handleDropOnFolder).not.toHaveBeenCalled();
+    expect(handleDragEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('routes selected folder root drops through bulk move handler in select mode', () => {
+    const handleNestFolder = vi.fn();
+    const handleDragEnd = vi.fn();
+    const onDropSelectedItems = vi.fn();
+
+    const { result } = renderHook(() =>
+      useHomeContentDnd({
+        currentFolder: { id: 'folder-target' },
+        draggedItem: null,
+        draggedItemType: null,
+        handleNestFolder,
+        handleDragEnd,
+        selectMode: true,
+        selectedItemKeys: new Set(['folder:shortcut-folder-1']),
+        onDropSelectedItems,
+      })
+    );
+
+    const dropEvent = createEvent({
+      treeItem: JSON.stringify({
+        id: 'folder-source',
+        type: 'folder',
+        parentId: 'folder-parent',
+        shortcutId: 'shortcut-folder-1',
+      }),
+    });
+
+    act(() => {
+      result.current.handleRootZoneDrop(dropEvent);
+    });
+
+    expect(onDropSelectedItems).toHaveBeenCalledWith('folder-target');
+    expect(handleNestFolder).not.toHaveBeenCalled();
     expect(handleDragEnd).toHaveBeenCalledTimes(1);
   });
 

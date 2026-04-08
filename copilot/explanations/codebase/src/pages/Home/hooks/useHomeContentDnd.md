@@ -1,3 +1,14 @@
+## [2026-04-08] Selection-Mode Batch Drag/Drop Parity
+### Behavior Updates
+- Added selection-aware drop routing (`onDropSelectedItems`) to root and list drop handlers.
+- When selection mode is active and the dragged card belongs to the selected batch, drops now execute the bulk move pipeline instead of single-item move handlers.
+- Preserved legacy single-item drop behavior for unselected drags and non-selection contexts.
+
+### Validation Additions
+- Extended `tests/unit/hooks/useHomeContentDnd.test.js` with:
+	- selected-subject list drop -> bulk move route,
+	- selected-folder root drop -> bulk move route.
+
 ## [2026-03-06] Test Hardening: Additional DnD Branch Paths
 ### Context & Validation Additions
 - Extended `tests/unit/hooks/useHomeContentDnd.test.js` with branch-level checks for:

@@ -33,6 +33,7 @@ type HomeMainContentProps = {
     selectMode: boolean;
     selectedItemKeys: Set<string>;
     toggleSelectItem: (item: any, type: any) => void;
+    runBulkMoveToFolder: (targetFolderId: any) => void;
     handleSetCurrentFolder: (folder: any) => void;
     handleBreadcrumbDrop: any;
     handleOpenSubjectSharing: (subject: any) => void;
@@ -71,6 +72,7 @@ const HomeMainContent = ({
     selectMode,
     selectedItemKeys,
     toggleSelectItem,
+    runBulkMoveToFolder,
     handleSetCurrentFolder,
     handleBreadcrumbDrop,
     handleOpenSubjectSharing,
@@ -262,6 +264,7 @@ const HomeMainContent = ({
                             selectMode={selectMode}
                             selectedItemKeys={selectedItemKeys}
                             onToggleSelectItem={toggleSelectItem}
+                            onDropSelectedItems={runBulkMoveToFolder}
                             navigate={logic.navigate}
                         />
                     ) : searchQuery ? (

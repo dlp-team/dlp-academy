@@ -18,12 +18,12 @@ Execute the AUTOPILOT request with lossless behavior preservation, deterministic
 
 ## Current Progress
 - Phase 00: COMPLETED
-- Phase 01: IN_PROGRESS
+- Phase 01: IN_REVIEW
 - Phase 02: IN_PROGRESS
 - Phase 03: IN_REVIEW
-- Phase 04: PLANNED
-- Phase 05: PLANNED
-- Phase 06: PLANNED
+- Phase 04: IN_REVIEW
+- Phase 05: IN_REVIEW
+- Phase 06: IN_REVIEW
 - Phase 07: IN_PROGRESS
 - Phase 08: IN_REVIEW
 - Phase 09: PLANNED
@@ -41,6 +41,6 @@ Execute the AUTOPILOT request with lossless behavior preservation, deterministic
 - Final phase requires full `npm run test` and `npx tsc --noEmit` before closure.
 
 ## Immediate Next Actions
-1. Complete Phase 01 remaining gates: batch move confirmation parity and selected-batch drag/drop parity.
-2. Execute manual in-app validation for Phase 03 bin parity (grid/list press behavior + read-only navigation flow), then mark Phase 03 complete.
-3. Perform manual in-app parity check for Phase 08 create-button visibility across owner/editor and mixed-role contexts, then mark Phase 08 complete.
+1. Execute manual in-app parity validation for Phases 01, 03, 05, 06, and 08, then promote completed phases from `IN_REVIEW` to `COMPLETED`.
+2. Complete remaining Phase 07 closure checks and transition status from `IN_PROGRESS` to `IN_REVIEW`.
+3. Begin Phase 09 optimization/review prep by consolidating repeated preview/scrollbar behavior notes and validating residual risk scope.

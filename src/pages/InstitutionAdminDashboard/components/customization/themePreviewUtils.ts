@@ -220,6 +220,7 @@ export const buildInstitutionPreviewThemeMessage = ({
     source: INSTITUTION_PREVIEW_MESSAGE_SOURCE,
     type: INSTITUTION_PREVIEW_THEME_MESSAGE_TYPE,
     payload: {
+      colors: safeColors,
       previewRole: safeRole,
       activeToken: highlightToken,
       themeCss: buildThemeCss(safeColors),

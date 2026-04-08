@@ -383,6 +383,7 @@ const Home = ({ user }: any) => {
                     selectMode={selectMode}
                     selectedItemKeys={selectedItemKeys}
                     toggleSelectItem={toggleSelectItem}
+                    runBulkMoveToFolder={runBulkMoveToFolder}
                     handleSetCurrentFolder={handleSetCurrentFolder}
                     handleBreadcrumbDrop={handleBreadcrumbDrop}
                     handleOpenSubjectSharing={handleOpenSubjectSharing}

@@ -1,5 +1,15 @@
 # App.tsx
 
+## [2026-04-08] Public Theme Preview Route
+
+### Change
+- Added public route `/theme-preview` mapped to `src/pages/ThemePreview/ThemePreview.tsx`.
+- Kept route outside `ProtectedRoute` so iframe preview no longer depends on authenticated Home route/session state.
+
+### Impact
+- Institution customization preview can now render through a local mock route with no secondary auth account behavior.
+- Theme-preview iframe becomes deterministic and isolated from Home route authorization constraints.
+
 ## [2026-04-07] Institution Live Preview Message Listener
 
 ### Change

@@ -1,6 +1,7 @@
 # index.css
 
 ## Changelog
+- **2026-04-08:** Removed global `scrollbar-gutter` reservation in active scrollbar modes and switched to `overflow-y: scroll` to avoid centered-layout cut-off artifacts while keeping no-layout-shift behavior.
 - **2026-04-07:** Added theme-driven scrollbar variables and switched global/home scrollbar gradients to CSS variable tokens for light/dark/system parity.
 - **2026-04-07:** Enforced `scrollbar-gutter: stable both-edges` in active scrollbar modes to prevent layout shift when scrollbars appear/disappear while preserving centered composition.
 - **2026-04-05:** Added mode-specific global scrollbar behavior classes (`custom-scrollbar-overlay`, `custom-scrollbar-stable`) and right-edge surface smoothing backgrounds for active scrollbar mode.
@@ -22,5 +23,5 @@
   - Scoped Home surface scrollbar appearance using shared scrollbar color variables.
 
 ## Maintenance Notes
-- Keep compensation strategy deterministic (`stable both-edges`) unless product requirements explicitly prefer edge-only reservation.
+- Keep compensation strategy deterministic (`overflow-y: scroll` in active global mode) to avoid both-edge gutter artifacts while preventing visible layout jumps.
 - Validate desktop/mobile modal and centered layout behavior when changing global scrollbar-gutter settings.

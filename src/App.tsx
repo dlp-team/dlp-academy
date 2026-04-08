@@ -36,6 +36,7 @@ import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
 import TeacherDashboard from './pages/TeacherDashboard/TeacherDashboard';
 import StudentDashboard from './pages/StudentDashboard/StudentDashboard';
 import TeacherStudentDetailView from './pages/TeacherDashboard/components/TeacherStudentDetailView';
+import ThemePreview from './pages/ThemePreview/ThemePreview';
 import { getActiveRole, getAssignedRoles, hasRequiredRoleAccess } from './utils/permissionUtils';
 import { applyThemeToDom } from './utils/themeMode';
 import { isInstitutionPreviewThemeMessage } from './utils/institutionPreviewProtocol';
@@ -116,6 +117,7 @@ const StudentDetailViewPage: any = StudentDetailView;
 const TeacherDashboardPage: any = TeacherDashboard;
 const TeacherStudentDetailViewPage: any = TeacherStudentDetailView;
 const StudentDashboardPage: any = StudentDashboard;
+const ThemePreviewPage: any = ThemePreview;
 
 // Updated ProtectedRoute to handle Role Checks
 interface ProtectedRouteProps {
@@ -433,6 +435,7 @@ body[data-dlp-preview-highlight]::after {
         {/* Public Routes */}
         <Route path="/login" element={!user ? <Login /> : <Navigate to="/home" />} />
         <Route path="/register" element={!user ? <Register /> : <Navigate to="/home" />} />
+        <Route path="/theme-preview" element={<ThemePreviewPage />} />
         <Route path="/" element={<Navigate to={user ? "/home" : "/login"} />} />
 
         {/* Protected Routes */}
