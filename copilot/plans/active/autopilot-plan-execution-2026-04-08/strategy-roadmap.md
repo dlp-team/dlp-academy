@@ -25,7 +25,7 @@ Execute the AUTOPILOT request with lossless behavior preservation, deterministic
 - Phase 05: PLANNED
 - Phase 06: PLANNED
 - Phase 07: IN_PROGRESS
-- Phase 08: PLANNED
+- Phase 08: IN_REVIEW
 - Phase 09: PLANNED
 
 ## Dependency Order
@@ -43,4 +43,4 @@ Execute the AUTOPILOT request with lossless behavior preservation, deterministic
 ## Immediate Next Actions
 1. Finish remaining Phase 02 undo edge-path wiring and regression checks.
 2. Continue Phase 01 selection-mode parity and shared-confirmation batch move validation.
-3. Start Phase 08 topic create-action baseline recovery from `main`.
+3. Close Phase 08 with final manual parity spot-check and mark it complete.

@@ -14,5 +14,8 @@
 - Create controls are hidden when edit permissions are not granted.
 
 ## Changelog
+### 2026-04-08
+- Added regression coverage for explicit teacher-role precedence when fallback role resolver reports `student`, ensuring create controls remain visible for editable teacher sessions.
+
 ### 2026-04-07
 - Added deterministic regression coverage for Phase 06 Topic create-action restoration.

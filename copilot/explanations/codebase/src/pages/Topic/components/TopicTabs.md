@@ -1,7 +1,7 @@
-# TopicTabs.jsx
+# TopicTabs.tsx
 
 ## Overview
-- **Source file:** `src/pages/Topic/components/TopicTabs.jsx`
+- **Source file:** `src/pages/Topic/components/TopicTabs.tsx`
 - **Last documented:** 2026-02-24
 - **Role:** Reusable UI component consumed by the parent page/module.
 
@@ -19,6 +19,7 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-04-08: Topic tab student/teacher layout now prioritizes explicit `user.role` before fallback role resolution, preventing teacher create controls from being hidden by fallback `student` role ordering.
 - 2026-04-07: Restored explicit Topic create actions for study guides and exams in `materials` via a compact plus-menu, while preserving existing quiz/assignment quick-create behavior and permission guards.
 - 2026-04-02: Student-tab mode detection now uses `getActiveRole(user)` so tab layout stays consistent with switched role context.
 - 2026-03-29: Student `materiales` badge counter updated to include new upload categories (`material-teorico`, `ejercicios`, `examenes`) while preserving legacy compatibility (`resumen`, `examen`).

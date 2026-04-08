@@ -86,4 +86,18 @@ describe('TopicTabs create actions', () => {
     expect(screen.queryByTitle('Crear test')).toBeNull();
     expect(screen.queryByTitle('Crear tarea')).toBeNull();
   });
+
+  it('keeps teacher create controls when explicit role is teacher', () => {
+    getActiveRole.mockReturnValue('student');
+    const props = buildProps({
+      user: {
+        uid: 'teacher-1',
+        role: 'teacher',
+      },
+    });
+
+    render(<TopicTabs {...props} />);
+
+    expect(screen.queryByLabelText('Crear guía o examen')).not.toBeNull();
+  });
 });

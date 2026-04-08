@@ -165,6 +165,29 @@ describe('useTopicLogic', () => {
     );
   });
 
+  it('keeps teacher edit permissions when role resolver falls back to student', async () => {
+    const user = { uid: 'teacher-1', role: 'teacher' };
+    mocks.getActiveRole.mockReturnValue('student');
+    mocks.canEdit.mockReturnValue(true);
+    mocks.canView.mockReturnValue(true);
+    mocks.canDelete.mockReturnValue(true);
+
+    const { result } = renderHook(() => useTopicLogic(user));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
+
+    expect(result.current.permissions).toEqual(
+      expect.objectContaining({
+        canEdit: true,
+        canView: true,
+        canDelete: true,
+        isViewer: false,
+      })
+    );
+  });
+
   it('deletes topic and navigates back to subject route after in-app confirmation', async () => {
     const user = { uid: 'teacher-1', role: 'teacher' };
     allowTopicDeletion();

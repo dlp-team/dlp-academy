@@ -4,7 +4,7 @@
 ## Status
 - Lifecycle: active
 - Execution Mode: autopilot (mandatory checklist-driven)
-- Branch: development (pending feature-branch switch for implementation blocks)
+- Branch: feature/hector/autopilot-plan-execution-2026-0408
 - Owner: hector
 
 ## Source Priority

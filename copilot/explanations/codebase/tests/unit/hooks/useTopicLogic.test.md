@@ -18,6 +18,9 @@
 - Topic listener lifecycle regression coverage for child listener teardown before re-subscription on topic snapshot re-emits.
 
 ## Changelog
+### 2026-04-08
+- Added regression coverage that preserves teacher edit permissions when fallback role resolution returns `student` but explicit `user.role` is `teacher`.
+
 ### 2026-04-02
 - Updated `permissionUtils` mocked surface to include `getActiveRole(...)` after Phase 07 Slice 03 topic-hook role-context migration.
 - Preserved existing permission and destructive-flow assertions while removing missing-export failures.

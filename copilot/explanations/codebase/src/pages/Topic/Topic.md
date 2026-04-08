@@ -1,8 +1,8 @@
 <!-- copilot/explanations/codebase/src/pages/Topic/Topic.md -->
-# Topic.jsx
+# Topic.tsx
 
 ## Overview
-- **Source file:** `src/pages/Topic/Topic.jsx`
+- **Source file:** `src/pages/Topic/Topic.tsx`
 - **Last documented:** 2026-03-30
 - **Role:** Page-level or feature-level module that orchestrates UI and logic.
 
@@ -109,3 +109,11 @@
 **Change**: Topic-level student/preview gating now resolves from `getActiveRole(user)` instead of raw `user.role`.
 
 **Impact**: Assignment visibility and preview-mode behavior stay consistent with switched role context in dual-role sessions.
+
+### 2026-04-08 - Explicit Role Priority for Topic Student Gating
+
+**Change**: Topic student-view decisions now prioritize explicit `user.role` when present before fallback role resolution.
+
+**Reason**: Recover create-action visibility regressions where fallback role ordering could incorrectly classify teacher sessions as student view.
+
+**Impact**: Teacher Topic sessions retain baseline create controls while preview-as-student behavior remains read-only.

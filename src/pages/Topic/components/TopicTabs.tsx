@@ -1,4 +1,4 @@
-// src/pages/Topic/components/TopicTabs.jsx
+// src/pages/Topic/components/TopicTabs.tsx
 import React, { useEffect, useState } from 'react';
 import { FileText, Upload, CheckCircle2, Plus, ClipboardList, BookOpen, ClipboardCheck } from 'lucide-react';
 import { getActiveRole } from '../../../utils/permissionUtils';
@@ -14,7 +14,8 @@ const TopicTabs = ({
     user
 }: any) => {
     const [showMaterialsCreateMenu, setShowMaterialsCreateMenu] = useState(false);
-    const activeRole = getActiveRole(user);
+    const explicitUserRole = typeof user?.role === 'string' ? user.role.trim().toLowerCase() : '';
+    const resolvedRole = explicitUserRole || getActiveRole(user);
 
     const handleAssignmentsCreate = (event: any) => {
         event.stopPropagation();
@@ -47,7 +48,7 @@ const TopicTabs = ({
 
     // Estudiantes reales o en preview ven: Materiales, Quizzes, Tareas
     // Profesores ven: Generados por IA, Mis Archivos, Tests Prácticos, Tareas
-    const isStudent = activeRole === 'student' || permissions?.isViewer;
+    const isStudent = resolvedRole === 'student' || permissions?.isViewer;
     const tabs = isStudent 
         ? ['materiales', 'quizzes', 'assignments']
         : ['materials', 'uploads', 'quizzes', 'assignments'];

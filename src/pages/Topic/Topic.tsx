@@ -1,4 +1,4 @@
-// src/pages/Topic/Topic.jsx
+// src/pages/Topic/Topic.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { Eye, GraduationCap, Loader2, AlertCircle } from 'lucide-react';
@@ -29,7 +29,8 @@ const Topic = ({ user }: any) => {
     const logic = useTopicLogic(user);
     useDarkMode();
     const { activeTab, setActiveTab } = logic;
-    const activeRole = getActiveRole(user);
+    const explicitUserRole = typeof user?.role === 'string' ? user.role.trim().toLowerCase() : '';
+    const resolvedRole = explicitUserRole || getActiveRole(user);
 
     // 2. ESTADOS LOCALES
     const [quizResults, setQuizResults] = useState<any[]>([]);
@@ -39,8 +40,8 @@ const Topic = ({ user }: any) => {
     const [reviewsFeedback, setReviewsFeedback] = useState('');
     const [assignmentsFeedback, setAssignmentsFeedback] = useState('');
     const [previewAsStudent, setPreviewAsStudent] = useState(false);
-    const canUsePreview = activeRole !== 'student';
-    const isStudentView = activeRole === 'student' || previewAsStudent;
+    const canUsePreview = resolvedRole !== 'student';
+    const isStudentView = resolvedRole === 'student' || previewAsStudent;
     const { failedQuestions } = useTopicFailedQuestions(user, logic.topicId);
     const { members: classMembers = [] } = useClassMembers(logic.subject);
     const topicRealtimeFeedback = assignmentsFeedback || reviewsFeedback || scoresFeedback;
@@ -172,7 +173,7 @@ const Topic = ({ user }: any) => {
                     return aDate - bDate;
                 });
 
-            if (activeRole === 'student') {
+            if (resolvedRole === 'student') {
                 setTopicAssignments(allAssignments.filter((assignment) => assignment.visibleToStudents !== false));
                 setAssignmentsFeedback('');
                 return;
@@ -192,7 +193,7 @@ const Topic = ({ user }: any) => {
         });
 
         return () => unsubscribe();
-    }, [logic.subjectId, logic.topicId, activeRole]);
+    }, [logic.subjectId, logic.topicId, resolvedRole]);
 
     const quizAnalyticsByQuiz = useMemo(() => {
         const byQuiz: any = {};

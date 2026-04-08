@@ -24,3 +24,16 @@
   - `npm run test:unit -- tests/unit/hooks/useSubjects.test.js tests/unit/components/UndoActionToast.test.jsx` -> PASS
   - `npm run lint` -> PASS
   - `npx tsc --noEmit` -> PASS
+- Phase 08 implementation block (Topic create-action regression recovery):
+  - Updated explicit-role-first student gating in:
+    - `src/pages/Topic/hooks/useTopicLogic.ts`
+    - `src/pages/Topic/components/TopicTabs.tsx`
+    - `src/pages/Topic/Topic.tsx`
+  - Added regression tests for teacher-role precedence when fallback role resolution is `student`:
+    - `tests/unit/pages/topic/TopicTabs.createActions.test.jsx`
+    - `tests/unit/hooks/useTopicLogic.test.js`
+- Validation executed:
+  - `get_errors` on touched files -> PASS
+  - `npm run test -- tests/unit/pages/topic/TopicTabs.createActions.test.jsx tests/unit/hooks/useTopicLogic.test.js` -> PASS
+  - `npm run lint` -> PASS
+  - `npx tsc --noEmit` -> PASS

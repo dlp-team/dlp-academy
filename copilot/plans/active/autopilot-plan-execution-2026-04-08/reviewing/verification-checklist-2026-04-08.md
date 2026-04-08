@@ -26,7 +26,7 @@
 ## Platform Gates
 - [ ] Global scrollbar is theme-adaptive and overlay-like without layout cut-offs.
 - [x] Notification events fire for share/assignment/enrollment paths.
-- [ ] Topic create actions (quizzes/exams/study guides) are restored to prior baseline behavior.
+- [x] Topic create actions (quizzes/exams/study guides) are restored to prior baseline behavior.
 
 ## Quality Gates
 - [x] `get_errors` clean for touched files.

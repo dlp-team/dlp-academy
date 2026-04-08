@@ -1,4 +1,4 @@
-// src/pages/Topic/hooks/useTopicLogic.js
+// src/pages/Topic/hooks/useTopicLogic.ts
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { 
@@ -45,7 +45,9 @@ export const useTopicLogic = (user: any) => {
     const [uploading] = useState(false);
     const activeTabKey = buildUserScopedPersistenceKey('topic-page', user, `${subjectId || 'no-subject'}:${topicId || 'no-topic'}:active-tab`);
     const [activeTab, setActiveTab] = usePersistentState(activeTabKey, 'materials');
-    const activeRole = getActiveRole(user);
+    const explicitUserRole = typeof user?.role === 'string' ? user.role.trim().toLowerCase() : '';
+    const resolvedRole = explicitUserRole || getActiveRole(user);
+    const isStudentRole = resolvedRole === 'student';
     
     // Notificaciones
     const [toast, setToast] = useState({ show: false, message: '' });
@@ -301,7 +303,7 @@ export const useTopicLogic = (user: any) => {
 
         // Carga de exams/examns por lectura puntual para evitar ruido de watch
         // cuando las reglas bloquean listeners en algunos roles.
-        if (user && topicId && activeRole !== 'student') {
+        if (user && topicId && !isStudentRole) {
             const loadExams = async () => {
                 try {
                     const examsQ = query(collection(db, "exams"), where("topicId", "==", topicId));
@@ -338,7 +340,7 @@ export const useTopicLogic = (user: any) => {
             if (unsubscribeExamns) unsubscribeExamns();
             if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
         };
-    }, [user, subjectId, topicId, navigate, activeRole]);
+    }, [user, subjectId, topicId, navigate, isStudentRole]);
 
     // --- HELPERS VISUALES ---
     const getFileVisuals = (type: any) => {
@@ -742,7 +744,7 @@ export const useTopicLogic = (user: any) => {
         };
 
         // Students never get edit/delete permissions
-        if (activeRole === 'student') {
+        if (isStudentRole) {
             return {
                 canEdit: false,
                 canView: true,
@@ -767,7 +769,7 @@ export const useTopicLogic = (user: any) => {
             showDeleteUI: shouldShowDeleteUI(topic, user.uid),
             isViewer: isViewerOnly
         };
-    }, [topic, user, activeRole]);
+    }, [topic, user, isStudentRole]);
 
     return {
         // Data
