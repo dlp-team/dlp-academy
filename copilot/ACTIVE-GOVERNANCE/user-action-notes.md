@@ -11,7 +11,16 @@ Track manual actions that must be completed by the user outside automated code e
 - Move an item from `OPEN` to `RESOLVED` only after user confirmation.
 
 ## OPEN
-- None.
+- Date: 2026-04-08
+- Related Task/Plan: copilot/plans/finished/autopilot-plan-execution-2026-04-08
+- Status: OPEN
+- Required Action:
+  - Create a pull request from `feature/hector/autopilot-plan-execution-2026-0408` into `development`.
+  - Merge the PR (squash preferred) after final review and delete the feature branch.
+  - Confirm completion so lifecycle can move to pending-delete in branch registry.
+- Why Needed:
+  - Checklist Step 19-21 requires PR creation/merge, but local GitHub CLI (`gh`) is unavailable in this environment.
+  - If skipped, branch lifecycle cannot advance to merged/pending-delete state.
 
 ## RESOLVED
 - Date: 2026-04-06
