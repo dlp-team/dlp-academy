@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/phases/phase-00-intake-and-baseline-mapping.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/phases/phase-00-intake-and-baseline-mapping.md -->
 # Phase 00 - Intake and Baseline Mapping
 
 ## Status

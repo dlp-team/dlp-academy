@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/subplans/subplan-global-scrollbar-overlay.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/subplans/subplan-global-scrollbar-overlay.md -->
 # Subplan: Global Scrollbar Overlay
 
 ## Objective

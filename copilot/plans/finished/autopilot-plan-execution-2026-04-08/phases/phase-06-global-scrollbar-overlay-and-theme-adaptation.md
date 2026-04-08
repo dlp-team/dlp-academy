@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/phases/phase-06-global-scrollbar-overlay-and-theme-adaptation.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/phases/phase-06-global-scrollbar-overlay-and-theme-adaptation.md -->
 # Phase 06 - Global Scrollbar Overlay and Theme Adaptation
 
 ## Status

@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/phases/phase-01-selection-mode-drag-drop-and-dedup.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/phases/phase-01-selection-mode-drag-drop-and-dedup.md -->
 # Phase 01 - Selection Mode Drag/Drop and De-dup
 
 ## Status

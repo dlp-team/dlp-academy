@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/reviewing/deep-risk-analysis-2026-04-08.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/reviewing/deep-risk-analysis-2026-04-08.md -->
 # Deep Risk Analysis
 
 ## Security and Permission Boundaries

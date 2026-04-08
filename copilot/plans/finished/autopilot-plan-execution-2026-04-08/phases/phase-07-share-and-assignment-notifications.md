@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/phases/phase-07-share-and-assignment-notifications.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/phases/phase-07-share-and-assignment-notifications.md -->
 # Phase 07 - Share and Assignment Notifications
 
 ## Status

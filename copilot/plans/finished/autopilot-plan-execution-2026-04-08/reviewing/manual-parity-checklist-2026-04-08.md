@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/reviewing/manual-parity-checklist-2026-04-08.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/reviewing/manual-parity-checklist-2026-04-08.md -->
 # Manual Parity Checklist (2026-04-08)
 
 ## Purpose

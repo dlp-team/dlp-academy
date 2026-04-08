@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/phases/phase-05-theme-preview-route-and-live-color-injection.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/phases/phase-05-theme-preview-route-and-live-color-injection.md -->
 # Phase 05 - Theme Preview Route and Live Color Injection
 
 ## Status

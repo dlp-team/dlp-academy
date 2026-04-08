@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/subplans/subplan-selection-mode-and-undo.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/subplans/subplan-selection-mode-and-undo.md -->
 # Subplan: Selection Mode and Undo
 
 ## Objective

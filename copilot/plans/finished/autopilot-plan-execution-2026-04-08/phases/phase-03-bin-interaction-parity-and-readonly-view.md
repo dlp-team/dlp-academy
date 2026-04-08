@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/phases/phase-03-bin-interaction-parity-and-readonly-view.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/phases/phase-03-bin-interaction-parity-and-readonly-view.md -->
 # Phase 03 - Bin Interaction Parity and Read-Only View
 
 ## Status

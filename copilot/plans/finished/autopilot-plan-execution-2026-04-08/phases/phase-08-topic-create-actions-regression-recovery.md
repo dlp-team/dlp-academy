@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/phases/phase-08-topic-create-actions-regression-recovery.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/phases/phase-08-topic-create-actions-regression-recovery.md -->
 # Phase 08 - Topic Create Actions Regression Recovery
 
 ## Status

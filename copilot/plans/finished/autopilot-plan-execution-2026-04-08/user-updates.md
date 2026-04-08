@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/user-updates.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/user-updates.md -->
 # User Updates
 
 ## How to Use
@@ -26,3 +26,4 @@
 - 2026-04-08: Continued Phase 09 with targeted e2e stabilization for shared-folder create/delete flow and passed parity e2e subset (`9 passed`, `3 skipped`).
 - 2026-04-08: Applied automation-first promotion decision to complete Phases 01-08, move Phase 09 to in-review, and prepare active->inReview lifecycle transition.
 - 2026-04-08: Completed Phase 09 and prepared inReview->finished lifecycle transition package.
+- 2026-04-08: Transitioned plan package to `finished` and synchronized closure metadata.

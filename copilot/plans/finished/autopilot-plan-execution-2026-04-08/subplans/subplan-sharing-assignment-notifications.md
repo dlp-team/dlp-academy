@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/subplans/subplan-sharing-assignment-notifications.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/subplans/subplan-sharing-assignment-notifications.md -->
 # Subplan: Sharing and Assignment Notifications
 
 ## Objective

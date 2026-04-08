@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/subplans/subplan-theme-preview-route-architecture.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/subplans/subplan-theme-preview-route-architecture.md -->
 # Subplan: Theme Preview Route Architecture
 
 ## Objective

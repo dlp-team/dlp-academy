@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/phases/phase-09-final-optimization-and-deep-risk-review.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/phases/phase-09-final-optimization-and-deep-risk-review.md -->
 # Phase 09 - Final Optimization and Deep Risk Review
 
 ## Status

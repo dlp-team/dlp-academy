@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/reviewing/verification-checklist-2026-04-08.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/reviewing/verification-checklist-2026-04-08.md -->
 # Verification Checklist
 
 ## Core Functional Gates
@@ -38,4 +38,4 @@
 ## Manual Promotion Gates
 - [x] In-app parity checklist completed: [reviewing/manual-parity-checklist-2026-04-08.md](./manual-parity-checklist-2026-04-08.md).
 - [x] Eligible phases promoted from `IN_REVIEW` to `COMPLETED` after manual/automation gate decision.
-- [x] Active plan lifecycle ready for transition to `inReview`.
+- [x] Plan lifecycle transitioned through `inReview` to `finished`.

@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/subplans/subplan-institution-customization-ui.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/subplans/subplan-institution-customization-ui.md -->
 # Subplan: Institution Customization UI
 
 ## Objective

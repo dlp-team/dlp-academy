@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/working/execution-log.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/working/execution-log.md -->
 # Execution Log
 
 ## 2026-04-08
@@ -87,6 +87,9 @@
   - Promoted Phase 09 from `IN_REVIEW` to `COMPLETED` after final evidence consolidation.
   - Updated roadmap/README lifecycle markers for `finished` transition readiness.
   - Prepared lifecycle move from `inReview` to `finished` as the next package state.
+- Finished lifecycle transition block:
+  - Moved plan package from `copilot/plans/inReview/` to `copilot/plans/finished/`.
+  - Confirmed single-location lifecycle ownership under `finished`.
 - Phase 04 implementation block (customization UI interaction + confirmation parity):
   - Updated `ColorField` event boundaries so card-body selection and swatch-picker actions are behaviorally isolated.
   - Added typed-hex commit flow in `ColorField` so valid values update deterministically without breaking incremental typing.

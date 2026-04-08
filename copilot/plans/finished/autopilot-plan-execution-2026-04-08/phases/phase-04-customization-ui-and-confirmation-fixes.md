@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/phases/phase-04-customization-ui-and-confirmation-fixes.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/phases/phase-04-customization-ui-and-confirmation-fixes.md -->
 # Phase 04 - Customization UI and Confirmation Fixes
 
 ## Status

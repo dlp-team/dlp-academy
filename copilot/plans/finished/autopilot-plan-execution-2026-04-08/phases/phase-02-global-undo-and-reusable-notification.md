@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/phases/phase-02-global-undo-and-reusable-notification.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/phases/phase-02-global-undo-and-reusable-notification.md -->
 # Phase 02 - Global Undo and Reusable Notification
 
 ## Status

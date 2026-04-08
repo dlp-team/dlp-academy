@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/subplans/subplan-topic-create-actions-recovery.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/subplans/subplan-topic-create-actions-recovery.md -->
 # Subplan: Topic Create Actions Recovery
 
 ## Objective

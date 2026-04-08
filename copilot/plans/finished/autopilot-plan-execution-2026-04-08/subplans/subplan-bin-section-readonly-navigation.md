@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/subplans/subplan-bin-section-readonly-navigation.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/subplans/subplan-bin-section-readonly-navigation.md -->
 # Subplan: Bin Section Read-Only Navigation
 
 ## Objective

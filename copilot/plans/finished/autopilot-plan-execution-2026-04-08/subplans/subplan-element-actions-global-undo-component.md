@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-execution-2026-04-08/subplans/subplan-element-actions-global-undo-component.md -->
+<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-08/subplans/subplan-element-actions-global-undo-component.md -->
 # Subplan: Global Element Action Undo Component
 
 ## Objective
