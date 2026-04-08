@@ -7,7 +7,15 @@ type HomeKeyboardCoordinationParams = {
 };
 
 export const useHomeKeyboardCoordination = ({ user, logic }: HomeKeyboardCoordinationParams) => {
-    const { handleCardFocus, shortcutFeedback, getCardVisualState } = useHomeKeyboardShortcuts({
+    const {
+        handleCardFocus,
+        shortcutFeedback,
+        getCardVisualState,
+        registerUndoAction,
+        undoToast,
+        undoLatestActionFromToast,
+        clearUndoToast
+    } = useHomeKeyboardShortcuts({
         user,
         logic
     });
@@ -15,6 +23,10 @@ export const useHomeKeyboardCoordination = ({ user, logic }: HomeKeyboardCoordin
     return {
         handleCardFocus,
         shortcutFeedback,
-        getCardVisualState
+        getCardVisualState,
+        registerUndoAction,
+        shortcutUndoToast: undoToast,
+        undoLatestShortcutAction: undoLatestActionFromToast,
+        clearShortcutUndoToast: clearUndoToast
     };
 };

@@ -1,5 +1,14 @@
 <!-- copilot/explanations/codebase/src/pages/Home/hooks/useHomeKeyboardCoordination.md -->
 
+## [2026-04-08] Undo Registration and Toast API Surface Expansion
+### Change
+- `useHomeKeyboardCoordination` now forwards undo orchestration primitives from `useHomeKeyboardShortcuts`:
+	- `registerUndoAction`
+	- `shortcutUndoToast`
+	- `undoLatestShortcutAction`
+	- `clearShortcutUndoToast`
+- This keeps `Home.tsx` integration focused while allowing drag/drop handlers and keyboard flows to share a single undo-notification surface.
+
 # useHomeKeyboardCoordination.ts
 
 ## Overview

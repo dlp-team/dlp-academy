@@ -1,6 +1,12 @@
 // copilot/explanations/codebase/src/pages/Home/hooks/useHomeKeyboardShortcuts.md
 
 ## Changelog
+### 2026-04-08: Shared undo registration + toast lifecycle for keyboard flows
+- Added `registerUndoAction(...)` API that stores normalized action payloads in keyboard undo stack and emits a 5-second undo toast.
+- Added `undoToast`, `undoLatestActionFromToast`, and `clearUndoToast` outputs for shared page-level undo UI integration.
+- Extended Ctrl+Z action handling to support `move-shortcut` payloads through `logic.moveShortcut(...)`.
+- Removed creation-action undo registration from copy/paste clone paths so creation remains excluded from global undo policy.
+
 ### 2026-03-09: Dedicated edge-case unit coverage
 - Added a dedicated unit suite for this hook in `tests/unit/hooks/useHomeKeyboardShortcuts.test.js`.
 - Coverage focuses on cut/copy/paste/undo reliability edges:

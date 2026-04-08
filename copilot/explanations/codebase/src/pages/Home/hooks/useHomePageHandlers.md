@@ -1,3 +1,15 @@
+## [2026-04-08] Drag/Drop and Confirmation Move Paths Register Undo Payloads
+### Context & Behavior
+- Phase 02 required non-creation element actions to become undoable via shared keyboard/toast infrastructure.
+
+### Change
+- `useHomePageHandlers` now accepts optional `registerUndoAction` callback.
+- Added normalized move undo helpers for:
+	- subjects (`move-subject`),
+	- folders (`move-folder`),
+	- shortcuts (`move-shortcut`).
+- Wired undo registration across upward drop, breadcrumb drops, nested moves, promote flows, tree moves, and shared confirmation callbacks.
+
 ## [2026-04-07] Breadcrumb Shortcut Drop Status Contract Normalization
 ### Context & Behavior
 - `handleDropOnFolderWrapper` and selection-mode orchestration already used status tokens (`moved`, `blocked`, `deferred`, `noop`).

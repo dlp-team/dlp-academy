@@ -1,6 +1,7 @@
 # Home.jsx
 
 ## Changelog
+- **2026-04-08:** Integrated keyboard/page undo convergence in `Home.tsx` by wiring `registerUndoAction` from keyboard coordination into page handlers and replacing floating undo feedback rendering with shared `UndoActionToast` surface.
 - **2026-04-07:** Selection-mode flow now delegates batch move entries to centralized share-rule handlers, uses filtered move destinations from `useHomeBulkSelection`, and renders a floating undo feedback surface for Ctrl+Z-based action recovery.
 - **2026-04-03:** Wired `subjectPeriodFilter`, `setSubjectPeriodFilter`, and `availableSubjectPeriods` from `useHomeLogic` into `HomeControls` to expose persisted period filtering in `usage`/`courses` modes.
 - **2026-04-02:** Passed `publishHomeFeedback` into `useHomePageHandlers` so shortcut move-request callable outcomes are shown in the existing Home feedback banner.

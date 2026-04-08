@@ -1257,3 +1257,183 @@ describe('useSubjects student access vectors', () => {
     ]);
   });
 });
+
+describe('useSubjects notifications for sharing and assignment updates', () => {
+  const teacherUser = {
+    uid: 'teacher-1',
+    email: 'teacher@test.com',
+    displayName: 'Teacher One',
+    role: 'teacher',
+    institutionId: 'inst-1',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    firestoreMocks.state.resetAutoId();
+    firestoreMocks.mockOnSnapshot.mockImplementation(() => vi.fn());
+    firestoreMocks.mockGetDocs.mockResolvedValue({ docs: [], empty: true });
+    firestoreMocks.mockGetDoc.mockResolvedValue({ exists: () => false, data: () => ({}) });
+    firestoreMocks.mockSetDoc.mockResolvedValue(undefined);
+    firestoreMocks.mockUpdateDoc.mockResolvedValue(undefined);
+  });
+
+  it('creates a recipient notification when a subject is newly shared', async () => {
+    firestoreMocks.mockGetDocs.mockImplementation(async (queryObject) => {
+      const emailFilter = (queryObject?.parts || []).find((part) => part?.field === 'email');
+      if (emailFilter?.value === 'target@test.com') {
+        return {
+          empty: false,
+          docs: [
+            {
+              id: 'target-1',
+              data: () => ({ institutionId: 'inst-1', role: 'teacher' }),
+            },
+          ],
+        };
+      }
+
+      return { empty: true, docs: [] };
+    });
+
+    firestoreMocks.mockGetDoc.mockImplementation(async (ref) => {
+      if (ref?.name === 'subjects' && ref?.id === 'subject-1') {
+        return {
+          exists: () => true,
+          data: () => ({
+            ownerId: 'teacher-1',
+            institutionId: 'inst-1',
+            name: 'Historia',
+            sharedWith: [],
+            sharedWithUids: [],
+          }),
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    const { result } = renderHook(() => useSubjects(teacherUser));
+
+    await act(async () => {
+      await result.current.shareSubject('subject-1', 'target@test.com', 'editor');
+    });
+
+    const notificationCall = firestoreMocks.mockSetDoc.mock.calls.find(([ref]) => ref?.name === 'notifications');
+    expect(notificationCall).toBeTruthy();
+
+    const [notificationRef, notificationPayload, notificationOptions] = notificationCall;
+    expect(notificationRef).toMatchObject({
+      name: 'notifications',
+      id: 'subject_shared_subject-1_target-1',
+    });
+    expect(notificationPayload).toMatchObject({
+      userId: 'target-1',
+      institutionId: 'inst-1',
+      subjectId: 'subject-1',
+      type: 'subject_shared',
+      read: false,
+      shareRole: 'editor',
+    });
+    expect(notificationOptions).toEqual({ merge: true });
+  });
+
+  it('notifies class and direct student recipients on new assignment links', async () => {
+    firestoreMocks.mockGetDoc.mockImplementation(async (ref) => {
+      if (ref?.name === 'subjects' && ref?.id === 'subject-2') {
+        return {
+          exists: () => true,
+          data: () => ({
+            name: 'Fisica',
+            institutionId: 'inst-1',
+            classIds: [],
+            classId: null,
+            enrolledStudentUids: [],
+          }),
+        };
+      }
+
+      if (ref?.name === 'classes' && ref?.id === 'class-1') {
+        return {
+          exists: () => true,
+          data: () => ({
+            institutionId: 'inst-1',
+            studentIds: ['student-class', 'student-direct', 'teacher-helper'],
+          }),
+        };
+      }
+
+      if (ref?.name === 'users' && ref?.id === 'student-class') {
+        return {
+          exists: () => true,
+          data: () => ({ institutionId: 'inst-1', role: 'student' }),
+        };
+      }
+
+      if (ref?.name === 'users' && ref?.id === 'student-direct') {
+        return {
+          exists: () => true,
+          data: () => ({ institutionId: 'inst-1', role: 'student' }),
+        };
+      }
+
+      if (ref?.name === 'users' && ref?.id === 'teacher-helper') {
+        return {
+          exists: () => true,
+          data: () => ({ institutionId: 'inst-1', role: 'teacher' }),
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    const { result } = renderHook(() => useSubjects(teacherUser));
+
+    await act(async () => {
+      await result.current.updateSubject('subject-2', {
+        classIds: ['class-1'],
+        enrolledStudentUids: ['student-direct'],
+      });
+    });
+
+    const notificationCalls = firestoreMocks.mockSetDoc.mock.calls
+      .filter(([ref]) => ref?.name === 'notifications');
+    const notificationIds = notificationCalls.map(([ref]) => ref.id).sort();
+
+    expect(notificationIds).toEqual([
+      'subject_assigned_class_subject-2_student-class',
+      'subject_assigned_student_subject-2_student-direct',
+    ]);
+  });
+
+  it('does not create assignment notifications when recipients are unchanged', async () => {
+    firestoreMocks.mockGetDoc.mockImplementation(async (ref) => {
+      if (ref?.name === 'subjects' && ref?.id === 'subject-3') {
+        return {
+          exists: () => true,
+          data: () => ({
+            name: 'Quimica',
+            institutionId: 'inst-1',
+            classIds: ['class-1'],
+            classId: 'class-1',
+            enrolledStudentUids: ['student-direct'],
+          }),
+        };
+      }
+
+      return { exists: () => false, data: () => ({}) };
+    });
+
+    const { result } = renderHook(() => useSubjects(teacherUser));
+
+    await act(async () => {
+      await result.current.updateSubject('subject-3', {
+        classIds: ['class-1'],
+        enrolledStudentUids: ['student-direct'],
+      });
+    });
+
+    const notificationCalls = firestoreMocks.mockSetDoc.mock.calls
+      .filter(([ref]) => ref?.name === 'notifications');
+    expect(notificationCalls).toHaveLength(0);
+  });
+});

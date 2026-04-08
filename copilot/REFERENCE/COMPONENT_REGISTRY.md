@@ -81,6 +81,13 @@ CRITICAL COPILOT DIRECTIVE: before creating any new UI element (modal, overlay, 
   - src/components/modules/SubjectCard/SubjectCardFront.tsx
   - src/components/modules/FolderCard/FolderCardBody.tsx
 
+### UndoActionToast
+- File: src/components/ui/UndoActionToast.tsx
+- Status: Active
+- Purpose: shared floating undo notification with action and close controls for reversible operations.
+- Current adopters:
+  - src/pages/Home/Home.tsx
+
 ## Buttons and Inputs
 
 No generic button primitives are active yet in src/components/ui.

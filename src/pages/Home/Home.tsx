@@ -29,6 +29,7 @@ import HomeBulkActionFeedback from './components/HomeBulkActionFeedback';
 import HomeLoader from './components/HomeLoader';
 import HomeMainContent from './components/HomeMainContent';
 import HomeModals from './components/HomeModals';
+import UndoActionToast from '../../components/ui/UndoActionToast';
 import FolderTreeModal from '../../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../Subject/modals/SubjectTopicModal';
 
@@ -135,6 +136,19 @@ const Home = ({ user }: any) => {
     });
 
     const {
+        handleCardFocus,
+        shortcutFeedback,
+        getCardVisualState,
+        registerUndoAction,
+        shortcutUndoToast,
+        undoLatestShortcutAction,
+        clearShortcutUndoToast
+    } = useHomeKeyboardCoordination({
+        user,
+        logic
+    });
+
+    const {
         handleSaveFolderWrapper,
         handleUpwardDrop,
         handleBreadcrumbDrop,
@@ -161,7 +175,8 @@ const Home = ({ user }: any) => {
         setTopicsModalConfig,
         setFolderContentsModalConfig,
         rememberOrganization,
-        onHomeFeedback: publishHomeFeedback
+        onHomeFeedback: publishHomeFeedback,
+        registerUndoAction
     });
 
     const {
@@ -187,10 +202,9 @@ const Home = ({ user }: any) => {
         moveSelectionEntryWithShareRules
     });
 
-    const { handleCardFocus, shortcutFeedback, getCardVisualState } = useHomeKeyboardCoordination({
-        user,
-        logic
-    });
+    const activeUndoToast = shortcutUndoToast || undoToast;
+    const activeUndoAction = shortcutUndoToast ? undoLatestShortcutAction : undoLastSelectionAction;
+    const activeUndoClose = shortcutUndoToast ? clearShortcutUndoToast : clearUndoToast;
 
     const { treeFolders, treeSubjects } = useHomeTreeData(logic);
 
@@ -337,13 +351,12 @@ const Home = ({ user }: any) => {
                 />
 
                 <HomeBulkActionFeedback message={bulkActionMessage} tone={bulkActionTone} />
-                <HomeBulkActionFeedback
-                    message={undoToast?.message || ''}
+                <UndoActionToast
+                    message={activeUndoToast?.message || ''}
                     tone="warning"
-                    floating={true}
-                    actionLabel={undoToast?.actionLabel || 'Deshacer'}
-                    onAction={undoLastSelectionAction}
-                    onClose={clearUndoToast}
+                    actionLabel={activeUndoToast?.actionLabel || 'Deshacer'}
+                    onAction={activeUndoAction}
+                    onClose={activeUndoClose}
                 />
 
                 <HomeMainContent

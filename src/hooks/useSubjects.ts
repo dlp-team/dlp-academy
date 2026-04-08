@@ -17,6 +17,23 @@ import { DEFAULT_TOPIC_CASCADE_COLLECTIONS, cascadeDeleteTopicResources } from '
 const ISO_DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const DEFAULT_POST_COURSE_POLICY = 'retain_all_no_join';
 
+const normalizeStringArray = (value: any) => {
+    if (!Array.isArray(value)) return [];
+
+    return Array.from(new Set(
+        value
+            .map((entry: any) => String(entry || '').trim())
+            .filter(Boolean)
+    ));
+};
+
+const buildSubjectNotificationId = ({ type, subjectId, userId }: any) => {
+    const safeType = String(type || '').trim();
+    const safeSubjectId = String(subjectId || '').trim();
+    const safeUserId = String(userId || '').trim();
+    return `${safeType}_${safeSubjectId}_${safeUserId}`;
+};
+
 const normalizeDateOnlyValue = (value: any) => {
     const normalizedValue = String(value || '').trim();
     return ISO_DATE_ONLY_PATTERN.test(normalizedValue) ? normalizedValue : null;
@@ -67,6 +84,202 @@ export const useSubjects = (user: any) => {
         } catch {
             return DEFAULT_ACCESS_POLICIES;
         }
+    };
+
+    const resolveEligibleRecipientUids = async (candidateUids: any[] = [], options: any = {}) => {
+        const { institutionId = null, requireStudent = false } = options;
+        const normalizedCandidates = normalizeStringArray(candidateUids).filter(uid => uid !== user?.uid);
+
+        if (normalizedCandidates.length === 0) {
+            return [];
+        }
+
+        const eligibilityChecks = await Promise.all(normalizedCandidates.map(async (candidateUid: any) => {
+            try {
+                const userSnapshot = await getDoc(doc(db, 'users', candidateUid));
+                if (!userSnapshot.exists()) {
+                    return null;
+                }
+
+                const userData = userSnapshot.data() || {};
+                const candidateInstitutionId = String(userData?.institutionId || '').trim() || null;
+
+                if (institutionId && candidateInstitutionId !== institutionId) {
+                    return null;
+                }
+
+                if (requireStudent) {
+                    const candidateRole = String(userData?.role || '').trim().toLowerCase();
+                    if (candidateRole !== 'student') {
+                        return null;
+                    }
+                }
+
+                return candidateUid;
+            } catch {
+                return null;
+            }
+        }));
+
+        return normalizeStringArray(eligibilityChecks);
+    };
+
+    const upsertSubjectNotifications = async (entries: any[] = []) => {
+        if (!Array.isArray(entries) || entries.length === 0) {
+            return;
+        }
+
+        await Promise.all(entries.map((entry: any) => {
+            const notificationId = String(entry?.id || '').trim();
+            const payload = entry?.payload;
+            if (!notificationId || !payload) {
+                return Promise.resolve();
+            }
+
+            return setDoc(doc(db, 'notifications', notificationId), payload, { merge: true });
+        }));
+    };
+
+    const notifySubjectShareRecipient = async ({
+        subjectId,
+        subjectName,
+        institutionId,
+        recipientUid,
+        recipientEmail,
+        shareRole = 'viewer'
+    }: any) => {
+        const normalizedRecipientUid = String(recipientUid || '').trim();
+        if (!normalizedRecipientUid || normalizedRecipientUid === user?.uid) {
+            return;
+        }
+
+        const normalizedInstitutionId = String(institutionId || currentInstitutionId || '').trim() || null;
+        const notificationId = buildSubjectNotificationId({
+            type: 'subject_shared',
+            subjectId,
+            userId: normalizedRecipientUid
+        });
+        const actorLabel = String(user?.displayName || user?.email || 'Un usuario').trim();
+        const subjectLabel = String(subjectName || 'Asignatura').trim() || 'Asignatura';
+        const roleLabel = shareRole === 'editor' ? ' con permiso de edición' : '';
+
+        await upsertSubjectNotifications([
+            {
+                id: notificationId,
+                payload: {
+                    userId: normalizedRecipientUid,
+                    institutionId: normalizedInstitutionId,
+                    subjectId,
+                    read: false,
+                    type: 'subject_shared',
+                    title: 'Asignatura compartida',
+                    message: `${actorLabel} compartió la asignatura "${subjectLabel}" contigo${roleLabel}.`,
+                    shareRole: shareRole === 'editor' ? 'editor' : 'viewer',
+                    sharedByUid: user?.uid || null,
+                    sharedByEmail: String(user?.email || '').toLowerCase() || null,
+                    recipientEmail: String(recipientEmail || '').toLowerCase() || null,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                }
+            }
+        ]);
+    };
+
+    const notifySubjectAssignmentRecipients = async ({
+        subjectId,
+        subjectName,
+        institutionId,
+        addedClassIds = [],
+        addedDirectStudentUids = []
+    }: any) => {
+        const normalizedSubjectId = String(subjectId || '').trim();
+        if (!normalizedSubjectId) return;
+
+        const normalizedInstitutionId = String(institutionId || currentInstitutionId || '').trim() || null;
+        const normalizedClassIds = normalizeStringArray(addedClassIds);
+        const normalizedDirectStudentUids = normalizeStringArray(addedDirectStudentUids);
+        const classRecipientCandidateSet = new Set<string>();
+
+        for (const classId of normalizedClassIds) {
+            try {
+                const classSnapshot = await getDoc(doc(db, 'classes', classId));
+                if (!classSnapshot.exists()) continue;
+
+                const classData = classSnapshot.data() || {};
+                const classInstitutionId = String(classData?.institutionId || '').trim() || null;
+
+                if (normalizedInstitutionId && classInstitutionId !== normalizedInstitutionId) {
+                    continue;
+                }
+
+                const studentIds = normalizeStringArray(classData?.studentIds);
+                studentIds.forEach((studentUid: any) => {
+                    classRecipientCandidateSet.add(studentUid);
+                });
+            } catch {
+                // Class read failures are non-blocking for assignment updates.
+            }
+        }
+
+        const classRecipients = await resolveEligibleRecipientUids(
+            Array.from(classRecipientCandidateSet),
+            { institutionId: normalizedInstitutionId, requireStudent: true }
+        );
+        const directRecipients = await resolveEligibleRecipientUids(
+            normalizedDirectStudentUids,
+            { institutionId: normalizedInstitutionId, requireStudent: true }
+        );
+
+        const directRecipientSet = new Set(directRecipients);
+        const classOnlyRecipients = classRecipients.filter((recipientUid: any) => !directRecipientSet.has(recipientUid));
+        const subjectLabel = String(subjectName || 'Asignatura').trim() || 'Asignatura';
+        const notificationEntries: any[] = [];
+
+        classOnlyRecipients.forEach((recipientUid: any) => {
+            notificationEntries.push({
+                id: buildSubjectNotificationId({
+                    type: 'subject_assigned_class',
+                    subjectId: normalizedSubjectId,
+                    userId: recipientUid
+                }),
+                payload: {
+                    userId: recipientUid,
+                    institutionId: normalizedInstitutionId,
+                    subjectId: normalizedSubjectId,
+                    read: false,
+                    type: 'subject_assigned_class',
+                    title: 'Nueva asignatura asignada',
+                    message: `Se te asignó la asignatura "${subjectLabel}" a través de una clase vinculada.`,
+                    assignedByUid: user?.uid || null,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                }
+            });
+        });
+
+        directRecipients.forEach((recipientUid: any) => {
+            notificationEntries.push({
+                id: buildSubjectNotificationId({
+                    type: 'subject_assigned_student',
+                    subjectId: normalizedSubjectId,
+                    userId: recipientUid
+                }),
+                payload: {
+                    userId: recipientUid,
+                    institutionId: normalizedInstitutionId,
+                    subjectId: normalizedSubjectId,
+                    read: false,
+                    type: 'subject_assigned_student',
+                    title: 'Nueva asignatura asignada',
+                    message: `Se te asignó la asignatura "${subjectLabel}" directamente.`,
+                    assignedByUid: user?.uid || null,
+                    createdAt: serverTimestamp(),
+                    updatedAt: serverTimestamp()
+                }
+            });
+        });
+
+        await upsertSubjectNotifications(notificationEntries);
     };
 
     const ensureTeacherCanDeleteSubject = async (subjectData: any) => {
@@ -619,7 +832,56 @@ export const useSubjects = (user: any) => {
                 : 24;
         }
 
+        const assignmentFieldsTouched =
+            Object.prototype.hasOwnProperty.call(updatePayload, 'classIds')
+            || Object.prototype.hasOwnProperty.call(updatePayload, 'classId')
+            || Object.prototype.hasOwnProperty.call(updatePayload, 'enrolledStudentUids');
+
+        const previousClassIds = normalizeStringArray([
+            ...(Array.isArray(currentData?.classIds) ? currentData.classIds : []),
+            currentData?.classId
+        ]);
+        const previousEnrolledStudentUids = normalizeStringArray(currentData?.enrolledStudentUids);
+
+        const nextClassIds = Object.prototype.hasOwnProperty.call(updatePayload, 'classIds')
+            ? normalizeStringArray(updatePayload.classIds)
+            : (Object.prototype.hasOwnProperty.call(updatePayload, 'classId')
+                ? normalizeStringArray([updatePayload.classId])
+                : previousClassIds);
+
+        const nextEnrolledStudentUids = Object.prototype.hasOwnProperty.call(updatePayload, 'enrolledStudentUids')
+            ? normalizeStringArray(updatePayload.enrolledStudentUids)
+            : previousEnrolledStudentUids;
+
+        const addedClassIds = assignmentFieldsTouched
+            ? nextClassIds.filter(classId => !previousClassIds.includes(classId))
+            : [];
+        const addedDirectStudentUids = assignmentFieldsTouched
+            ? nextEnrolledStudentUids.filter(uid => !previousEnrolledStudentUids.includes(uid))
+            : [];
+        const subjectNameForNotifications = String(updatePayload?.name || currentData?.name || 'Asignatura').trim() || 'Asignatura';
+        const subjectInstitutionIdForNotifications = String(
+            updatePayload?.institutionId
+            || currentData?.institutionId
+            || currentInstitutionId
+            || ''
+        ).trim() || null;
+
         await updateDoc(subjectRef, updatePayload);
+
+        if (assignmentFieldsTouched && (addedClassIds.length > 0 || addedDirectStudentUids.length > 0)) {
+            try {
+                await notifySubjectAssignmentRecipients({
+                    subjectId: id,
+                    subjectName: subjectNameForNotifications,
+                    institutionId: subjectInstitutionIdForNotifications,
+                    addedClassIds,
+                    addedDirectStudentUids
+                });
+            } catch (notificationError: any) {
+                console.warn('Subject assignment notification dispatch failed:', notificationError);
+            }
+        }
 
         const didChangeInviteCode = Object.prototype.hasOwnProperty.call(updatePayload, 'inviteCode')
             && String(updatePayload.inviteCode || '').trim().length > 0;
@@ -911,6 +1173,22 @@ export const useSubjects = (user: any) => {
                 }
                 throw shortcutError;
             }
+
+            if (!alreadyShared) {
+                try {
+                    await notifySubjectShareRecipient({
+                        subjectId,
+                        subjectName: subjectData?.name || 'Asignatura',
+                        institutionId: subjectData?.institutionId || currentInstitutionId || null,
+                        recipientUid: targetUid,
+                        recipientEmail: emailLower,
+                        shareRole: normalizedRole
+                    });
+                } catch (notificationError: any) {
+                    console.warn('Subject share notification dispatch failed:', notificationError);
+                }
+            }
+
             debugShare('success', { subjectId, targetUid, alreadyShared });
             return {
                 ...shareData,

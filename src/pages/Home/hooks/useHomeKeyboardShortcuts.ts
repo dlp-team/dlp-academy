@@ -12,10 +12,12 @@ export const useHomeKeyboardShortcuts = ({
     const [selectedCard, setSelectedCard] = useState<any>(null);
     const [clipboard, setClipboard] = useState<any>(null);
     const [undoStack, setUndoStack] = useState<any[]>([]);
+    const [undoToast, setUndoToast] = useState<any>(null);
     const [shortcutFeedback, setShortcutFeedback] = useState('');
     const [animatedCard, setAnimatedCard] = useState<any>(null);
     const [cutPendingCard, setCutPendingCard] = useState<any>(null);
     const animationTimeoutRef = useRef<any>(null);
+    const undoToastTimeoutRef = useRef<any>(null);
 
     const isTypingTarget = useCallback((event: any) => {
         const target = event?.target;
@@ -31,6 +33,43 @@ export const useHomeKeyboardShortcuts = ({
         setShortcutFeedback(message || '');
     }, []);
 
+    const clearUndoToast = useCallback(() => {
+        if (undoToastTimeoutRef.current) {
+            window.clearTimeout(undoToastTimeoutRef.current);
+            undoToastTimeoutRef.current = null;
+        }
+        setUndoToast(null);
+    }, []);
+
+    const pushUndoToast = useCallback((message: any) => {
+        const normalizedMessage = String(message || '').trim();
+        if (!normalizedMessage) return;
+
+        if (undoToastTimeoutRef.current) {
+            window.clearTimeout(undoToastTimeoutRef.current);
+        }
+
+        setUndoToast({
+            message: normalizedMessage,
+            actionLabel: 'Deshacer',
+        });
+
+        undoToastTimeoutRef.current = window.setTimeout(() => {
+            setUndoToast(null);
+            undoToastTimeoutRef.current = null;
+        }, 5000);
+    }, []);
+
+    const registerUndoAction = useCallback((actionRecord: any, options: any = {}) => {
+        if (!actionRecord || typeof actionRecord !== 'object') return;
+
+        setUndoStack(prev => [...prev.slice(-19), actionRecord]);
+
+        const nextLabel = actionRecord?.label || 'el elemento';
+        const toastMessage = String(options?.message || '').trim() || `Accion aplicada en ${nextLabel}.`;
+        pushUndoToast(toastMessage);
+    }, [pushUndoToast]);
+
     useEffect(() => {
         if (!shortcutFeedback) return;
         const timeoutId = window.setTimeout(() => setShortcutFeedback(''), 3200);
@@ -41,6 +80,9 @@ export const useHomeKeyboardShortcuts = ({
         return () => {
             if (animationTimeoutRef.current) {
                 window.clearTimeout(animationTimeoutRef.current);
+            }
+            if (undoToastTimeoutRef.current) {
+                window.clearTimeout(undoToastTimeoutRef.current);
             }
         };
     }, []);
@@ -187,12 +229,7 @@ export const useHomeKeyboardShortcuts = ({
                     }
 
                     const clonePayload = buildSubjectClonePayload(source, targetFolderId, user);
-                    const newSubjectId = await logic.addSubject(clonePayload);
-
-                    setUndoStack(prev => [
-                        ...prev.slice(-19),
-                        { action: 'create-subject', id: newSubjectId, label: source.name || 'Asignatura' }
-                    ]);
+                    await logic.addSubject(clonePayload);
 
                     showFeedback(`Asignatura creada: ${source.name || 'Copia de asignatura'}.`);
                     return true;
@@ -212,11 +249,6 @@ export const useHomeKeyboardShortcuts = ({
                         sharedWith: [],
                         sharedWithUids: []
                     });
-
-                    setUndoStack(prev => [
-                        ...prev.slice(-19),
-                        { action: 'create-folder', id: createdFolder.id, label: sourceFolder.name || 'Carpeta' }
-                    ]);
                 }
 
                 showFeedback(`Carpeta creada: ${sourceFolder.name || 'Copia de carpeta'}.`);
@@ -225,16 +257,18 @@ export const useHomeKeyboardShortcuts = ({
 
             if (clipboard.type === 'subject') {
                 await logic.updateSubject(clipboard.id, { folderId: targetFolderId || null });
-                setUndoStack(prev => [
-                    ...prev.slice(-19),
+                registerUndoAction(
                     {
                         action: 'move-subject',
                         id: clipboard.id,
                         fromParentId: clipboard.parentId || null,
                         toParentId: targetFolderId,
                         label: clipboard.label || 'Asignatura'
+                    },
+                    {
+                        message: `Movimiento aplicado: ${clipboard.label || 'Asignatura'}.`
                     }
-                ]);
+                );
                 setClipboard(null);
                 setCutPendingCard(null);
                 showFeedback(`Asignatura movida: ${clipboard.label || 'Asignatura'}.`);
@@ -252,16 +286,18 @@ export const useHomeKeyboardShortcuts = ({
             }
 
             await logic.updateFolder(clipboard.id, { parentId: targetFolderId || null });
-            setUndoStack(prev => [
-                ...prev.slice(-19),
+            registerUndoAction(
                 {
                     action: 'move-folder',
                     id: clipboard.id,
                     fromParentId: clipboard.parentId || null,
                     toParentId: targetFolderId,
                     label: clipboard.label || 'Carpeta'
+                },
+                {
+                    message: `Movimiento aplicado: ${clipboard.label || 'Carpeta'}.`
                 }
-            ]);
+            );
             setClipboard(null);
             setCutPendingCard(null);
             showFeedback(`Carpeta movida: ${clipboard.label || 'Carpeta'}.`);
@@ -331,9 +367,12 @@ export const useHomeKeyboardShortcuts = ({
                 await logic.updateSubject(lastAction.id, { folderId: lastAction.fromParentId || null });
             } else if (lastAction.action === 'move-folder') {
                 await logic.updateFolder(lastAction.id, { parentId: lastAction.fromParentId || null });
+            } else if (lastAction.action === 'move-shortcut' && lastAction.shortcutId && typeof logic?.moveShortcut === 'function') {
+                await logic.moveShortcut(lastAction.shortcutId, lastAction.fromParentId || null);
             }
 
             setUndoStack(prev => prev.slice(0, -1));
+            clearUndoToast();
             showFeedback(`Se deshizo la ultima accion sobre ${lastAction.label || 'el elemento'}.`);
             return true;
         } catch (error: any) {
@@ -341,13 +380,21 @@ export const useHomeKeyboardShortcuts = ({
             showFeedback('No se pudo deshacer la ultima accion.');
             return true;
         }
-    }, [isTypingTarget, logic, showFeedback, undoStack]);
+    }, [isTypingTarget, logic, showFeedback, undoStack, clearUndoToast]);
+
+    const undoLatestActionFromToast = useCallback(async () => {
+        await onUndo({ target: null });
+    }, [onUndo]);
 
     useKeyShortcuts({ onCopy, onCut, onPaste, onUndo });
 
     return {
         handleCardFocus,
         shortcutFeedback,
-        getCardVisualState
+        getCardVisualState,
+        registerUndoAction,
+        undoToast,
+        undoLatestActionFromToast,
+        clearUndoToast
     };
 };

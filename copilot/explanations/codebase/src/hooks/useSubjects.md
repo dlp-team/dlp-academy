@@ -1,4 +1,23 @@
 <!-- copilot/explanations/codebase/src/hooks/useSubjects.md -->
+## [2026-04-08] Subject Share and Assignment Notification Dispatch
+### Context
+- Phase 07 requires user-facing notifications when subjects are shared and when student access is assigned through class or direct enrollment flows.
+
+### Change
+- Added recipient-filtering and notification upsert helpers inside `useSubjects`:
+  - recipient eligibility filtering enforces tenant match and optional student-role requirement,
+  - deterministic notification IDs avoid duplicate fan-out drift,
+  - writes use merged `setDoc` upserts into `notifications`.
+- `shareSubject(...)` now dispatches `subject_shared` notifications for newly shared recipients.
+- `updateSubject(...)` now computes assignment deltas and dispatches:
+  - `subject_assigned_class` for new class-linked student recipients,
+  - `subject_assigned_student` for newly enrolled direct student recipients.
+- Assignment notifications are best-effort and do not block subject persistence when notification writes fail.
+
+### Validation
+- Focused suite passed:
+  - `npm run test:unit -- tests/unit/hooks/useSubjects.test.js`
+
 ## [2026-04-03] Subject Update Payload Normalizes Period Lifecycle Boundaries
 ### Context
 - Phase 04 introduces subject-level period timeline metadata to support role-aware lifecycle transitions.

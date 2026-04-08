@@ -1,6 +1,12 @@
 // copilot/explanations/codebase/tests/unit/hooks/useSubjects.test.md
 
 ## Changelog
+### 2026-04-08: Share and assignment notification coverage
+- Added notification-focused unit coverage for `useSubjects`:
+  - verifies `subject_shared` notification upsert on new direct share,
+  - verifies class-assignment and direct-enrollment recipient notification fan-out,
+  - verifies no assignment notification writes when recipient sets are unchanged.
+
 ### 2026-04-01: Invite enrollment assertion and access-vector coverage
 - Expanded invite join test to assert student enrollment payload includes:
   - `sharedWithUids` self-addition,

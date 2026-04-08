@@ -18,7 +18,8 @@ export const useHomePageHandlers = ({
     setTopicsModalConfig,
     setFolderContentsModalConfig,
     rememberOrganization = true,
-    onHomeFeedback = null
+    onHomeFeedback = null,
+    registerUndoAction = null
 }: any): any => {
     const publishHomeFeedback = (message: any, tone = 'success') => {
         if (typeof onHomeFeedback === 'function') {
@@ -71,6 +72,64 @@ export const useHomePageHandlers = ({
     const getFolderById = (folderId: any) => {
         if (!folderId) return null;
         return ((logic.folders || []) as any[]).find(f => f.id === folderId) || null;
+    };
+
+    const getSubjectById = (subjectId: any) => {
+        if (!subjectId) return null;
+        return ((logic.subjects || []) as any[]).find(s => s.id === subjectId) || null;
+    };
+
+    const registerUndoMove = (payload: any, message = '') => {
+        if (typeof registerUndoAction !== 'function' || !payload) return;
+        registerUndoAction(payload, { message });
+    };
+
+    const registerSubjectMoveUndo = (subjectId: any, fromParentId: any, toParentId: any) => {
+        const subjectName = getSubjectById(subjectId)?.name || 'Asignatura';
+        registerUndoMove(
+            {
+                action: 'move-subject',
+                id: subjectId,
+                fromParentId: fromParentId || null,
+                toParentId: toParentId || null,
+                label: subjectName
+            },
+            `Movimiento aplicado: ${subjectName}.`
+        );
+    };
+
+    const registerFolderMoveUndo = (folderId: any, fromParentId: any, toParentId: any) => {
+        const folderName = getFolderById(folderId)?.name || 'Carpeta';
+        registerUndoMove(
+            {
+                action: 'move-folder',
+                id: folderId,
+                fromParentId: fromParentId || null,
+                toParentId: toParentId || null,
+                label: folderName
+            },
+            `Movimiento aplicado: ${folderName}.`
+        );
+    };
+
+    const registerShortcutMoveUndo = (shortcutId: any, targetType: any, targetId: any, fromParentId: any, toParentId: any) => {
+        const fallbackLabel = targetType === 'folder' ? 'Carpeta' : 'Asignatura';
+        const label = targetType === 'folder'
+            ? (getFolderById(targetId)?.name || fallbackLabel)
+            : (getSubjectById(targetId)?.name || fallbackLabel);
+
+        registerUndoMove(
+            {
+                action: 'move-shortcut',
+                shortcutId,
+                targetType,
+                targetId,
+                fromParentId: fromParentId || null,
+                toParentId: toParentId || null,
+                label
+            },
+            `Movimiento aplicado: ${label}.`
+        );
     };
 
     const getSharedUids = (item: any): any[] => (item && Array.isArray(item.sharedWithUids) ? item.sharedWithUids : []);
@@ -271,7 +330,7 @@ export const useHomePageHandlers = ({
         return true;
     };
 
-    const moveShortcutOrRequest = async (shortcutId, targetFolderId, targetType, targetId: any) => {
+    const moveShortcutOrRequest = async (shortcutId, targetFolderId, targetType, targetId: any, sourceParentId: any = null) => {
         if (!shortcutId || !logic?.moveShortcut) return false;
 
         if (requestOwnerMoveForShortcut({ shortcutId, targetFolderId, targetType, targetId })) {
@@ -279,6 +338,7 @@ export const useHomePageHandlers = ({
         }
 
         await logic.moveShortcut(shortcutId, targetFolderId || null);
+        registerShortcutMoveUndo(shortcutId, targetType, targetId, sourceParentId, targetFolderId || null);
         return 'moved';
     };
 
@@ -305,19 +365,21 @@ export const useHomePageHandlers = ({
 
             if (subjectId) {
                 if (subjectShortcutId && logic?.moveShortcut) {
-                    await moveShortcutOrRequest(subjectShortcutId, parentId || null, 'subject', subjectId);
+                    await moveShortcutOrRequest(subjectShortcutId, parentId || null, 'subject', subjectId, currentId || null);
                 } else {
                     await moveSubjectToParent(subjectId, currentId, parentId);
+                    registerSubjectMoveUndo(subjectId, currentId, parentId || null);
                 }
             } else if (folderShortcutId && logic?.moveShortcut) {
-                await moveShortcutOrRequest(folderShortcutId, parentId || null, 'folder', folderId || null);
+                await moveShortcutOrRequest(folderShortcutId, parentId || null, 'folder', folderId || null, currentId || null);
             } else if (folderId && folderId !== currentId) {
                 folderShortcutId = folderShortcutId || resolveFolderShortcutId(folderId, currentId || null);
                 if (folderShortcutId && logic?.moveShortcut) {
-                    await moveShortcutOrRequest(folderShortcutId, parentId || null, 'folder', folderId);
+                    await moveShortcutOrRequest(folderShortcutId, parentId || null, 'folder', folderId, currentId || null);
                     return;
                 }
                 await moveFolderToParent(folderId, currentId, parentId);
+                registerFolderMoveUndo(folderId, currentId, parentId || null);
             }
         }
     };
@@ -345,6 +407,13 @@ export const useHomePageHandlers = ({
             }
             if (logic?.moveShortcut) {
                 logic.moveShortcut(draggedShortcutId, targetFolderId || null);
+                registerShortcutMoveUndo(
+                    draggedShortcutId,
+                    type,
+                    subjectId,
+                    explicitSourceFolderId || null,
+                    targetFolderId || null
+                );
                 return 'moved';
             }
         }
@@ -430,12 +499,14 @@ export const useHomePageHandlers = ({
                         alignToTargetFolder: true,
                         forceRefreshSharing: true
                     });
+                    registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
                     closeShareConfirm();
                 },
                 onMergeConfirm: async () => {
                     const { mergedUids, mergedSharedWith } = await mergeTargetFolderShares(targetFolderId, effectiveSourceSharedWithUids, baselineSharedWith);
                     await syncSharedStateToFolderTree(targetFolderId, mergedUids, mergedSharedWith);
                     await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, { forceRefreshSharing: true });
+                    registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
                     closeShareConfirm();
                 }
             });
@@ -451,10 +522,12 @@ export const useHomePageHandlers = ({
                 folder: sourceFolder,
                 onConfirm: async () => {
                     await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+                    registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
                     closeUnshareConfirm();
                 },
                 onPreserveConfirm: async () => {
                     await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, { preserveSharing: true });
+                    registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
                     closeUnshareConfirm();
                 },
             });
@@ -472,6 +545,7 @@ export const useHomePageHandlers = ({
                     folder: targetFolder,
                     onConfirm: async () => {
                         await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+                        registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
                         setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
                     }
                 });
@@ -480,6 +554,7 @@ export const useHomePageHandlers = ({
         }
         
         moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+        registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
         return 'moved';
     };
 
@@ -541,6 +616,13 @@ export const useHomePageHandlers = ({
             }
 
             logic.moveShortcut(resolvedFolderShortcutId, targetFolderId || null);
+            registerShortcutMoveUndo(
+                resolvedFolderShortcutId,
+                'folder',
+                droppedFolderId || null,
+                currentFolderId || null,
+                targetFolderId || null
+            );
             return 'moved';
         }
 
@@ -595,6 +677,7 @@ export const useHomePageHandlers = ({
                                     });
                                 }
                                 await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                                registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
                                 closeUnshareConfirm();
                             }
                         });
@@ -615,12 +698,14 @@ export const useHomePageHandlers = ({
                         sourceName: droppedFolder?.name || '',
                         onConfirm: async () => {
                             await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                            registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
                             closeShareConfirm();
                         },
                         onMergeConfirm: async () => {
                             const { mergedUids, mergedSharedWith } = await mergeTargetFolderShares(targetFolderId, droppedSharedUids, getSharedWithEntries(droppedFolder));
                             await syncSharedStateToFolderTree(targetFolderId, mergedUids, mergedSharedWith);
                             await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                            registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
                             closeShareConfirm();
                         }
                     });
@@ -636,6 +721,7 @@ export const useHomePageHandlers = ({
                         subjectId: null,
                         onConfirm: async () => {
                             await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                            registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
                             setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
                         }
                     });
@@ -643,6 +729,7 @@ export const useHomePageHandlers = ({
                 }
             }
             moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+            registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
             return true;
         }
     };
@@ -655,7 +742,13 @@ export const useHomePageHandlers = ({
         const inferredShortcutId = droppedFolderShortcutId || resolveFolderShortcutId(droppedFolderId, logic.currentFolder?.id || null);
 
         if (inferredShortcutId && logic?.moveShortcut) {
-            return await moveShortcutOrRequest(inferredShortcutId, targetFolderId || null, 'folder', droppedFolderId);
+            return await moveShortcutOrRequest(
+                inferredShortcutId,
+                targetFolderId || null,
+                'folder',
+                droppedFolderId,
+                logic.currentFolder?.id || null
+            );
         }
 
         if (!canWriteIntoTargetFolder(targetFolderId)) {
@@ -716,6 +809,7 @@ export const useHomePageHandlers = ({
                             });
                         }
                         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                        registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
                         closeUnshareConfirm();
                     }
                 });
@@ -736,12 +830,14 @@ export const useHomePageHandlers = ({
                     sourceName: droppedFolder?.name || '',
                     onConfirm: async () => {
                         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                        registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
                         closeShareConfirm();
                     },
                     onMergeConfirm: async () => {
                         const { mergedUids, mergedSharedWith } = await mergeTargetFolderShares(targetFolderId, droppedSharedUids, getSharedWithEntries(droppedFolder));
                         await syncSharedStateToFolderTree(targetFolderId, mergedUids, mergedSharedWith);
                         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                        registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
                         closeShareConfirm();
                     }
                 });
@@ -757,6 +853,7 @@ export const useHomePageHandlers = ({
                     subjectId: null,
                     onConfirm: async () => {
                         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+                        registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
                         setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
                     }
                 });
@@ -764,6 +861,7 @@ export const useHomePageHandlers = ({
             }
         }
         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId, { preserveSharing: true });
+        registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
         return 'moved';
     };
 
@@ -774,7 +872,7 @@ export const useHomePageHandlers = ({
         const parentId = currentFolder ? currentFolder.parentId : null;
 
         if (subjectShortcutId && logic?.moveShortcut) {
-            await moveShortcutOrRequest(subjectShortcutId, parentId || null, 'subject', subjectId);
+            await moveShortcutOrRequest(subjectShortcutId, parentId || null, 'subject', subjectId, currentFolder?.id || null);
             return;
         }
 
@@ -795,17 +893,22 @@ export const useHomePageHandlers = ({
                 folder: sourceFolder,
                 onConfirm: async () => {
                     await moveSubjectToParent(subjectId, currentFolder.id, parentId);
+                    registerSubjectMoveUndo(subjectId, currentFolder.id, parentId || null);
                     closeUnshareConfirm();
                 },
                 onPreserveConfirm: async () => {
                     await moveSubjectBetweenFolders(subjectId, currentFolder.id, parentId, { preserveSharing: true });
+                    registerSubjectMoveUndo(subjectId, currentFolder.id, parentId || null);
                     closeUnshareConfirm();
                 },
             });
             return;
         }
 
-        if (currentFolder) await moveSubjectToParent(subjectId, currentFolder.id, parentId);
+        if (currentFolder) {
+            await moveSubjectToParent(subjectId, currentFolder.id, parentId);
+            registerSubjectMoveUndo(subjectId, currentFolder.id, parentId || null);
+        }
     };
 
     const handlePromoteFolderWrapper = async (folderId: any, folderShortcutId: any = null) => {
@@ -815,7 +918,13 @@ export const useHomePageHandlers = ({
 
         if (resolvedShortcutId && logic?.moveShortcut) {
             const parentId = logic.currentFolder ? logic.currentFolder.parentId : null;
-            await moveShortcutOrRequest(resolvedShortcutId, parentId || null, 'folder', folderId);
+            await moveShortcutOrRequest(
+                resolvedShortcutId,
+                parentId || null,
+                'folder',
+                folderId,
+                logic.currentFolder?.id || null
+            );
             return;
         }
 
@@ -866,12 +975,14 @@ export const useHomePageHandlers = ({
                             });
                         }
                         await moveFolderToParent(folderId, currentFolder.id, parentId);
+                        registerFolderMoveUndo(folderId, currentFolder.id, parentId || null);
                         closeUnshareConfirm();
                     }
                 });
                 return;
             }
             await moveFolderToParent(folderId, currentFolder.id, parentId);
+            registerFolderMoveUndo(folderId, currentFolder.id, parentId || null);
         }
     };
 
@@ -918,7 +1029,7 @@ export const useHomePageHandlers = ({
             );
 
             if (shortcut?.id) {
-                await moveShortcutOrRequest(shortcut.id, targetFolderId || null, 'subject', subjectId);
+                await moveShortcutOrRequest(shortcut.id, targetFolderId || null, 'subject', subjectId, sourceFolderId || null);
                 return;
             }
 
@@ -932,6 +1043,7 @@ export const useHomePageHandlers = ({
         }
 
         await moveSubjectBetweenFolders(subjectId, sourceFolderId, targetFolderId);
+        registerSubjectMoveUndo(subjectId, sourceFolderId || null, targetFolderId || null);
     };
 
     const handleTreeReorderSubject = async (folderId, subjectId, newIndex: any) => {

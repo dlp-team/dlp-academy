@@ -146,22 +146,28 @@ ANY time you are operating in autopilot mode, you MUST follow these rules with Z
    - ✅ No variations, shortcuts, or alternatives allowed
    - ✅ If you deviate from the checklist, you violate this directive
 
-2. **ENTRY POINT**
+2. **AUTOPILOT_PLAN INTAKE RULE (MANDATORY)**
+   - ✅ If the request references `AUTOPILOT_PLAN.md` (including `#file:AUTOPILOT_PLAN.md`), you MUST execute using [`copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md`](copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md)
+   - ✅ After creating the plan package (`README.md`, `strategy-roadmap.md`, `phases/`, `reviewing/`, `working/`, `subplans/`, `user-updates.md`), move `copilot/plans/AUTOPILOT_PLAN.md` into that plan folder
+   - ✅ Rename the moved source file using the same source-traceability style as ORIGINAL/GEMINI sources, with a task-specific name (example: `source-autopilot-user-spec-<plan-topic>.md`)
+   - ✅ Do not leave duplicate source files at `copilot/plans/AUTOPILOT_PLAN.md` after intake completion
+
+3. **ENTRY POINT**
    - Before ANYTHING else: Read [`copilot/README.md`](copilot/README.md) (master navigation hub)
    - Then: Follow the "🤖 Running Autopilot?" section
    - Then: Open and follow [`copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md`](copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md) (24 steps, start-to-finish)
 
-3. **COMMAND AUTHORIZATION**
+4. **COMMAND AUTHORIZATION**
    - Check [`copilot/ACTIVE-GOVERNANCE/ALLOWED_COMMANDS.md`](copilot/ACTIVE-GOVERNANCE/ALLOWED_COMMANDS.md) - execute immediately if listed
    - Check [`copilot/ACTIVE-GOVERNANCE/FORBIDDEN_COMMANDS.md`](copilot/ACTIVE-GOVERNANCE/FORBIDDEN_COMMANDS.md) - NEVER execute if listed
    - Unknown? Log in [`copilot/ACTIVE-GOVERNANCE/PENDING_COMMANDS.md`](copilot/ACTIVE-GOVERNANCE/PENDING_COMMANDS.md) and ask user
 
-4. **FINAL LEVERAGE GATE**
+5. **FINAL LEVERAGE GATE**
    - Step 23 of the checklist: Execute `vscode/askQuestions` leverage step (protocol: [`copilot/protocols/vscode-askQuestions-leverage-step.md`](copilot/protocols/vscode-askQuestions-leverage-step.md))
    - NEVER skip this gate - it is mandatory before task closure
    - This is your user confirmation mechanism before ending autopilot
 
-5. **VERIFICATION REQUIREMENT**
+6. **VERIFICATION REQUIREMENT**
    - At task completion, user confirms: "Task 100% complete"
    - Only THEN mark autopilot as finished
    - No partial work, no "started", only DONE
