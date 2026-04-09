@@ -30,7 +30,11 @@ Restore full batch drag/drop parity for selected elements and eliminate clipped 
 ## Implementation Update (2026-04-09)
 - Applied first border-clipping remediation for nested folder list rows by adding horizontal breathing room to expanded children container in `FolderListItem`.
 - This prevents shared selection ring highlights from being visually cropped at left/right edges when selecting nested entries in selection mode.
+- Added selection-aware batch drop routing for previously uncovered drop targets in `Home.tsx`:
+	- upward drop zone now routes to `runBulkMoveToFolder(parentId)` when dragging an item that belongs to the active multi-selection,
+	- breadcrumb drop now routes to `runBulkMoveToFolder(targetFolderId)` under the same selection match condition.
+- Added shared drop-key utility helpers in `homeSelectionDropUtils` to keep grouped-drop detection deterministic across event-based and argument-based drop paths.
 
 ## Pending in Phase 01
-- Validate grouped selection drag/drop semantics against all list/grid nesting scenarios.
+- Run manual parity pass for grouped drag/drop across list/grid/root/upward/breadcrumb paths and confirm no single-item regressions.
 - Verify create-subject inert behavior and promote phase when all criteria pass.

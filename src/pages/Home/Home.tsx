@@ -44,6 +44,11 @@ import {
     clearLastHomeFolderId,
     saveLastHomeViewMode
 } from './utils/homePersistence';
+import {
+    getDraggedSelectionKeyFromDropArgs,
+    getDraggedSelectionKeyFromDropEvent,
+    shouldHandleSelectionDrop
+} from './utils/homeSelectionDropUtils';
 
 const HomeControlsComponent: any = HomeControls;
 
@@ -202,6 +207,47 @@ const Home = ({ user }: any) => {
         moveSelectionEntryWithShareRules
     });
 
+    const handleSelectionAwareUpwardDrop = React.useCallback((event: any) => {
+        const draggedSelectionKey = getDraggedSelectionKeyFromDropEvent(event);
+        if (!shouldHandleSelectionDrop({ selectMode, selectedItemKeys, draggedSelectionKey })) {
+            return false;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        const parentFolderId = logic.currentFolder?.parentId || null;
+        void runBulkMoveToFolder(parentFolderId);
+        return true;
+    }, [logic.currentFolder?.parentId, runBulkMoveToFolder, selectMode, selectedItemKeys]);
+
+    const handleSelectionAwareBreadcrumbDrop = React.useCallback((
+        targetFolderId: any,
+        subjectId: any,
+        droppedFolderId: any,
+        droppedFolderShortcutId: any = null,
+        subjectShortcutId: any = null
+    ) => {
+        const draggedSelectionKey = getDraggedSelectionKeyFromDropArgs({
+            subjectId,
+            subjectShortcutId,
+            folderId: droppedFolderId,
+            folderShortcutId: droppedFolderShortcutId
+        });
+
+        if (shouldHandleSelectionDrop({ selectMode, selectedItemKeys, draggedSelectionKey })) {
+            void runBulkMoveToFolder(targetFolderId || null);
+            return 'moved';
+        }
+
+        return handleBreadcrumbDrop(
+            targetFolderId,
+            subjectId,
+            droppedFolderId,
+            droppedFolderShortcutId,
+            subjectShortcutId
+        );
+    }, [handleBreadcrumbDrop, runBulkMoveToFolder, selectMode, selectedItemKeys]);
+
     const activeUndoToast = shortcutUndoToast || undoToast;
     const activeUndoAction = shortcutUndoToast ? undoLatestShortcutAction : undoLastSelectionAction;
     const activeUndoClose = shortcutUndoToast ? clearShortcutUndoToast : clearUndoToast;
@@ -271,7 +317,9 @@ const Home = ({ user }: any) => {
                         if (logic.currentFolder) e.preventDefault();
                     }}
                     onDrop={(e: any) => {
-
+                        if (handleSelectionAwareUpwardDrop(e)) {
+                            return;
+                        }
                         handleUpwardDrop(e);
                     }}
                 >
@@ -385,7 +433,7 @@ const Home = ({ user }: any) => {
                     toggleSelectItem={toggleSelectItem}
                     runBulkMoveToFolder={runBulkMoveToFolder}
                     handleSetCurrentFolder={handleSetCurrentFolder}
-                    handleBreadcrumbDrop={handleBreadcrumbDrop}
+                    handleBreadcrumbDrop={handleSelectionAwareBreadcrumbDrop}
                     handleOpenSubjectSharing={handleOpenSubjectSharing}
                     handlePromoteSubjectWrapper={handlePromoteSubjectWrapper}
                     handlePromoteFolderWrapper={handlePromoteFolderWrapper}

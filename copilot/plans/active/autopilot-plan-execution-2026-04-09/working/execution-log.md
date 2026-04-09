@@ -46,4 +46,11 @@
 	- `npx vitest run tests/unit/hooks/useHomeKeyboardShortcuts.test.js` -> PASS (17 tests).
 	- `npm run lint` -> PASS.
 	- `npx tsc --noEmit` -> PASS.
+- Phase 01 grouped-drop continuation block:
+	- Added selection-aware drop wrappers in `Home.tsx` so upward-zone and breadcrumb drops trigger batch move when the dragged card belongs to the active selection.
+	- Added shared drop-key utility module (`homeSelectionDropUtils`) to normalize dragged selection key extraction from both native drop events and breadcrumb drop arguments.
+	- Added dedicated utility tests and re-ran `useHomeContentDnd` suite to confirm grouped-drop routing remains stable.
+- Validation updates for grouped-drop continuation block:
+	- `get_errors` on touched runtime/test files -> PASS.
+	- `npx vitest run tests/unit/utils/homeSelectionDropUtils.test.js tests/unit/hooks/useHomeContentDnd.test.js` -> PASS (15 tests).
 - Pending: continue checklist Step 7+ execution with phases 01 and 05, then run manual verification promotion for phases currently in review.
