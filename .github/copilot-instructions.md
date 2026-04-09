@@ -147,10 +147,13 @@ ANY time you are operating in autopilot mode, you MUST follow these rules with Z
    - ✅ If you deviate from the checklist, you violate this directive
 
 2. **AUTOPILOT_PLAN INTAKE RULE (MANDATORY)**
+   - ✅ **AUTO-DETECT in Step 0.5:** The checklist automatically checks for `copilot/plans/AUTOPILOT_PLAN.md` if no plan exists
    - ✅ If the request references `AUTOPILOT_PLAN.md` (including `#file:AUTOPILOT_PLAN.md`), you MUST execute using [`copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md`](copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md)
-   - ✅ After creating the plan package (`README.md`, `strategy-roadmap.md`, `phases/`, `reviewing/`, `working/`, `subplans/`, `user-updates.md`), move `copilot/plans/AUTOPILOT_PLAN.md` into that plan folder
-   - ✅ Rename the moved source file using the same source-traceability style as ORIGINAL/GEMINI sources, with a task-specific name (example: `source-autopilot-user-spec-<plan-topic>.md`)
-   - ✅ Do not leave duplicate source files at `copilot/plans/AUTOPILOT_PLAN.md` after intake completion
+   - ✅ **PLAN CREATION (Step 6):** After detecting AUTOPILOT_PLAN.md, create the full plan package (`README.md`, `strategy-roadmap.md`, `phases/`, `reviewing/`, `working/`, `subplans/`, `user-updates.md`)
+   - ✅ **MOVE & RENAME (Step 6):** Move `copilot/plans/AUTOPILOT_PLAN.md` into the new plan folder's `sources/` subdirectory
+   - ✅ **RENAME:** Rename to `source-autopilot-user-spec-<plan-topic>.md` (matching ORIGINAL/GEMINI source-traceability style)
+   - ✅ **DELETE ORIGINAL:** Do not leave duplicate source files at `copilot/plans/AUTOPILOT_PLAN.md` after intake completion
+   - ✅ **CONTINUATION:** The plan includes a final phase to continue with remaining AUTOPILOT_EXECUTION_CHECKLIST steps (Step 7 onwards)
 
 3. **ENTRY POINT**
    - Before ANYTHING else: Read [`copilot/README.md`](copilot/README.md) (master navigation hub)

@@ -122,14 +122,44 @@ Closure gate:
 4. Move to `inReview/` after implementation + validation.
 5. Move to `finished/` after reviewer closure.
 
+## Final Phase: Continue Autopilot Execution (WHEN PLAN COMES FROM AUTOPILOT)
+
+When a plan is created from an AUTOPILOT_PLAN.md source:
+
+- [ ] After creating the plan package and moving source files to `sources/` folder:
+  - [ ] Add a final phase to the plan: `phases/final-phase-continue-autopilot-execution.md`
+  - [ ] This phase references: `copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md`
+  - [ ] Phase objective: "Continue with remaining autopilot execution steps (Step 7 onwards)"
+  - [ ] Include:
+    - [ ] Link to AUTOPILOT_EXECUTION_CHECKLIST for implementation guidance
+    - [ ] Remind to update BRANCH_LOG with current step after each major block
+    - [ ] Reminder: Commits and pushes must occur on feature branches (not main)
+    - [ ] After plan execution completes, return to checklist Step 16+ for finalization
+- [ ] Document in plan README: "This plan was created from user-provided AUTOPILOT_PLAN.md and will be executed via AUTOPILOT_EXECUTION_CHECKLIST workflow"
+- [ ] Update BRANCH_LOG/BRANCHES_STATUS with plan path reference
+- [ ] Commit: `git add copilot/plans/active/<plan-name>/` && `git commit -m "docs(plan): add autopilot continuation phase"`
+- [ ] Push: `git push origin <branch-name>`
+
 ### ⚠️ CRITICAL: Single Location Rule (NO DUPLICATES)
 **Plans must ONLY exist in ONE lifecycle folder at a time.** When transitioning between lifecycle states:
 
 - ✅ Copy plan folder to new lifecycle location
 - ✅ Update status markers (README.md, strategy-roadmap.md) to reflect new state
 - ✅ Commit and push changes
-- ✅ DELETE the plan folder from the previous lifecycle location
+- ✅ **DELETE the plan folder from the previous lifecycle location IMMEDIATELY**
 - ❌ NEVER keep the same plan in multiple lifecycle folders simultaneously
+
+**MANDATORY CLEANUP STEPS WHEN MOVING PLANS:**
+
+1. **After moving from active → inReview:**
+   - [ ] Delete the old plan from `copilot/plans/active/<plan-name>/`
+   - [ ] Commit: `git add copilot/plans/active/` && `git commit -m "chore(plan-cleanup): remove plan from active after transition to inReview"`
+   - [ ] Push: `git push origin development`
+
+2. **After moving from inReview → finished:**
+   - [ ] Delete the old plan from `copilot/plans/inReview/<plan-name>/`
+   - [ ] Commit: `git add copilot/plans/inReview/` && `git commit -m "chore(plan-cleanup): remove plan from inReview after transition to finished"`
+   - [ ] Push: `git push origin development`
 
 Example transition workflow:
 ```
@@ -138,15 +168,19 @@ Example transition workflow:
 3. Update inReview copy status to "inReview"
 4. Commit: "docs(plan): transition my-plan-name to inReview"
 5. Delete active/my-plan-name/
-6. Commit: "docs(plan): remove my-plan-name from active after inReview transition"
+6. Commit: "chore(plan-cleanup): remove my-plan-name from active after inReview transition"
 7. Push
+8. ... later, when inReview complete ...
+9. Copy to finished/my-plan-name/
+10. Delete inReview/my-plan-name/
+11. Commit & push cleanup
 ```
 
 Violation consequences:
 - Duplicate plans cause confusion about current state
 - Multiple "authoritative" copies lead to sync divergence
 - Review/closure gates become ambiguous
-- Do not proceed with other work when duplicates exist—remediate first
+- **Do NOT proceed with other work when duplicates exist—remediate immediately**
 
 ## Dual-Source Intake Rule (ORIGINAL_PLAN + GEMINI_PLAN)
 When both source files exist for the same request (`copilot/plans/ORIGINAL_PLAN.md` and `copilot/plans/GEMINI_PLAN.md`), apply this flow without exception:

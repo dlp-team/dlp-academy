@@ -17,7 +17,20 @@
   - [ ] Is this a new feature, bug fix, refactor, or chore?
   - [ ] Are there any dependencies or prerequisites?
 - [ ] **Document assessment** in session memory `/memories/session/`
-- [ ] **Assessment complete** → Continue to Step 1
+- [ ] **Assessment complete** → Continue to Step 0.5
+
+### Step 0.5: Check for AUTOPILOT_PLAN (Plan Auto-Detection)
+
+- [ ] **IF no plan has been assigned to this task:**
+  - [ ] Check for file named exactly: `copilot/plans/AUTOPILOT_PLAN.md` or with the exact final file name: `AUTOPILOT_PLAN.md`.
+  - [ ] IF file exists:
+    - [ ] Read the plan to understand scope and approach
+    - [ ] Plan structure will be processed in Step 6 (Create or Reference Plan)
+    - [ ] Mark for plan intake: This plan will be moved and renamed when creating the plan package
+    - [ ] Continue to Step 1
+  - [ ] IF file does NOT exist:
+    - [ ] Proceed normally to Step 1 (plan creation in Step 6)
+- [ ] Continue to Step 1
 
 ---
 
@@ -159,11 +172,21 @@
 
 ### Step 6: Create or Reference Plan
 
-- [ ] IF multi-step feature: Create comprehensive plan
+- [ ] **IF AUTOPILOT_PLAN.md was found in Step 0.5:**
+  - [ ] Use create-plan skill with AUTOPILOT_PLAN.md as source
+  - [ ] Create comprehensive plan package
+  - [ ] Move AUTOPILOT_PLAN.md into plan sources folder with rename:
+    - [ ] New location: `copilot/plans/active/plan-name/sources/source-autopilot-user-spec-<plan-topic>.md`
+    - [ ] Delete original: `copilot/plans/AUTOPILOT_PLAN.md`
+    - [ ] Document in plan `README.md`: "Created from user-provided AUTOPILOT_PLAN.md"
+  - [ ] Commit: `git add BRANCH_LOG.md && git commit -m "docs(plan): intake AUTOPILOT_PLAN and create plan package"`
+  - [ ] Push: `git push origin <feature-branch>`
+  - [ ] Continue to implementation
+- [ ] **IF multi-step feature (no AUTOPILOT_PLAN):** Create comprehensive plan
   - [ ] File: `copilot/plans/active/feature-name/README.md`
   - [ ] Include: Scope, roadmap, phases, validation gates
   - [ ] Set status: `active`
-- [ ] IF single-step task: Create lightweight plan OR reference existing plan
+- [ ] **IF single-step task:** Create lightweight plan OR reference existing plan
 - [ ] Update BRANCH_LOG.md:
   - [ ] Add plan path/reference under "Related Plans"
   - [ ] **Update Current Step: `6`** (for next copilot)
@@ -320,6 +343,10 @@
 - [ ] **After merge, return to development branch:**
   - [ ] `git checkout development`
   - [ ] (Feature branch deleted by GitHub; local checkout prevents being in deleted branch)
+  - [ ] **DELETE BRANCH_LOG.md if it exists on development:**
+    - [ ] Run: `rm BRANCH_LOG.md` (if file exists in root)
+    - [ ] Commit: `git add -A && git commit -m "chore(cleanup): remove BRANCH_LOG after merge to development"`
+    - [ ] Push: `git push origin development`
 - [ ] Branch merged & deleted automatically
 
 ### Step 22: Update BRANCHES_STATUS.md & Mark for Deletion
@@ -330,6 +357,9 @@
   - [ ] Status: `pending-delete` (NOT ~~merged~~ or ~~archived~~)
   - [ ] Pending-Delete Date: Today's date (YYYY-MM-DD format)
   - [ ] Notes: Append "Merged into development on [date]; will be auto-deleted on [date+7days]"
+- [ ] **IF new tasks were performed on this branch:**
+  - [ ] Update: Related `BRANCH_LOG` or `BRANCHES_STATUS` with new task logs
+  - [ ] Document progress in notes for audit trail
 - [ ] **Important:** Only delete the row if the branch will absolutely never be needed (rare case)
   - [ ] Normally: Keep row visible with `pending-delete` status for 7-day grace period
   - [ ] If retention needed: Set Status to `retained` and document reason instead
