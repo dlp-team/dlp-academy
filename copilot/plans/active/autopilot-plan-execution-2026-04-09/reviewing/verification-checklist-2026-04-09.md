@@ -10,7 +10,7 @@
 ## Bin UX Gates
 - [x] Grid press scales card and text without visual duplication artifacts.
 - [x] Grid press does not apply background opacity reduction.
-- [ ] List mode press-state styling is visually consistent with grid behavior.
+- [x] List mode press-state styling is visually consistent with grid behavior.
 
 ## Shortcut & Ownership Gates
 - [x] `Ctrl+C`/`Ctrl+V` copy creates owner-scoped non-shared duplicate.

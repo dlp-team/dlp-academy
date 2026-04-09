@@ -24,6 +24,7 @@
 - `../../../components/modules/ListViewItem`
 
 ## Changelog
+- **2026-04-09:** Completed list pressed-state shell parity by applying grid-matching selected-card scale + elevation shadow in list mode (outside selection mode) and introduced `bin-list-wrapper-*` test ids for deterministic regression checks.
 - **2026-04-09:** Updated grid pressed-state behavior so selecting an item no longer dims the rest of the grid background and avoids perceived duplicate-card rendering by hiding the original selected card while overlay clone is active.
 - **2026-04-08:** Phase 03 bin interaction parity and read-only route pass:
 	- `Ver contenido` now routes to subject read-only flow (`/home/subject/:id?mode=readonly&source=bin`) instead of opening the old modal payload path,

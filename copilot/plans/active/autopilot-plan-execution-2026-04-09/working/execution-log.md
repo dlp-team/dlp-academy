@@ -53,4 +53,11 @@
 - Validation updates for grouped-drop continuation block:
 	- `get_errors` on touched runtime/test files -> PASS.
 	- `npx vitest run tests/unit/utils/homeSelectionDropUtils.test.js tests/unit/hooks/useHomeContentDnd.test.js` -> PASS (15 tests).
+- Phase 03 list pressed-state parity closure block:
+	- Added list wrapper pressed-state parity in `BinView` to align selected card visual feedback with grid behavior (`scale + elevated shadow` in non-selection mode).
+	- Added dedicated unit coverage for list pressed-state class application in `BinView.listPressState.test.jsx`.
+	- Closed the remaining bin list press-state gate in verification checklist.
+- Validation updates for phase-03 closure block:
+	- `get_errors` on touched runtime/test files -> PASS.
+	- `npx vitest run tests/unit/components/BinView.listPressState.test.jsx tests/unit/components/BinGridItem.test.jsx` -> PASS (5 tests).
 - Pending: continue checklist Step 7+ execution with phases 01 and 05, then run manual verification promotion for phases currently in review.

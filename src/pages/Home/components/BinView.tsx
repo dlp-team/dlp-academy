@@ -881,12 +881,14 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                             isSelected,
                             isFolderLike: isFolderItem,
                         });
+                        const showPressedState = !selectionMode && isSelected;
                         const actionKey = buildActionKey(item.id, item.itemType);
 
                         return (
                             <div
                                 key={`${item.itemType}-${item.id}`}
-                                className={`rounded-xl transition-all duration-200 ease-out ${!isSelected ? dimmingClass : ''} ${isSelected && !selectionMode ? 'scale-[1.01]' : ''}`}
+                                data-testid={`bin-list-wrapper-${item.itemType}-${item.id}`}
+                                className={`rounded-xl transition-all duration-200 ease-out ${!isSelected ? dimmingClass : ''} ${showPressedState ? 'relative scale-[1.01] shadow-[0_14px_30px_rgba(15,23,42,0.18)]' : ''}`}
                             >
                                 <ListViewItemComponent
                                     user={user}

@@ -31,9 +31,11 @@ Refine bin-tab press interactions so grid/list behavior is visually clean, consi
 - Eliminated grid press background dimming by bypassing non-selection-mode bin dimming on grid cards.
 - Removed darkened overlay backdrop (`bg-transparent`) while preserving outside-click close behavior.
 - Added selected-card hide mode behind overlay clone to avoid perceived duplicate-card rendering.
+- Added list-mode pressed-state shell parity in `BinView` (selected non-selection-mode list cards now apply grid-matching scale + elevated shadow).
 
 ## Validation Evidence (2026-04-09)
 - `get_errors` on touched bin files -> PASS.
 - `npm run test -- tests/unit/components/BinGridItem.test.jsx tests/unit/components/BinSelectionOverlay.test.jsx` -> PASS.
+- `npx vitest run tests/unit/components/BinView.listPressState.test.jsx tests/unit/components/BinGridItem.test.jsx` -> PASS.
 - `npm run lint` -> PASS.
 - `npx tsc --noEmit` -> PASS.
