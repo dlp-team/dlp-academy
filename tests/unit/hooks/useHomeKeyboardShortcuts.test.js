@@ -123,6 +123,85 @@ describe('useHomeKeyboardShortcuts edge cases', () => {
     expect(logic.deleteSubject).toHaveBeenCalledWith('subject-copy-1');
   });
 
+  it('preserves subject lifecycle metadata on Ctrl+C then Ctrl+V copy payload', async () => {
+    const subject = {
+      id: 'subject-1',
+      name: 'Historia',
+      ownerId: 'user-1',
+      institutionId: 'inst-9',
+      folderId: 'folder-a',
+      topics: [],
+      course: '1 ESO',
+      courseId: 'course-1',
+      academicYear: '2025-2026',
+      periodType: 'trimester',
+      periodLabel: 'Trimestre 2',
+      periodIndex: 2,
+      periodStartAt: '2025-12-01',
+      periodEndAt: '2026-02-28',
+      periodExtraordinaryEndAt: '2026-03-15',
+      postCoursePolicy: 'retain_teacher_only',
+      level: 'ESO',
+      grade: '1',
+      classId: 'class-a',
+      classIds: ['class-a', 'class-b'],
+      enrolledStudentUids: ['student-1'],
+      sharedWith: [{ uid: 'teacher-2' }],
+      sharedWithUids: ['teacher-2'],
+      editorUids: ['teacher-2'],
+      viewerUids: ['student-4'],
+    };
+
+    const logic = createLogic({
+      subjects: [subject],
+      currentFolder: { id: 'target-folder' },
+      addSubject: vi.fn(async () => 'subject-copy-2'),
+    });
+
+    const { result } = renderHook(() => useHomeKeyboardShortcuts({ user, logic }));
+
+    await act(async () => {
+      result.current.handleCardFocus(subject, 'subject');
+    });
+
+    await act(async () => {
+      await getHandlers().onCopy({});
+    });
+
+    await act(async () => {
+      await getHandlers().onPaste({});
+    });
+
+    expect(logic.addSubject).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'Historia',
+      course: '1 ESO',
+      courseId: 'course-1',
+      academicYear: '2025-2026',
+      periodType: 'trimester',
+      periodLabel: 'Trimestre 2',
+      periodIndex: 2,
+      periodStartAt: '2025-12-01',
+      periodEndAt: '2026-02-28',
+      periodExtraordinaryEndAt: '2026-03-15',
+      postCoursePolicy: 'retain_teacher_only',
+      level: 'ESO',
+      grade: '1',
+      folderId: 'target-folder',
+      ownerId: 'user-1',
+      institutionId: 'inst-9',
+      classId: null,
+      classIds: [],
+      enrolledStudentUids: [],
+      isShared: false,
+      sharedWith: [],
+      sharedWithUids: [],
+      editorUids: [],
+      viewerUids: [],
+      createdAt: expect.any(Date),
+      updatedAt: expect.any(Date),
+    }));
+  });
+
   it('undoes copied folder created through Ctrl+C then Ctrl+V', async () => {
     const folder = { id: 'folder-source', name: 'Proyecto', ownerId: 'user-1', parentId: null };
     const logic = createLogic({

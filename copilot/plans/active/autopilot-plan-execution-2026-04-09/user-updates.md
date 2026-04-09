@@ -15,3 +15,4 @@
 - 2026-04-09: Continued Phase 01 with nested list selection-border clipping fix in `FolderListItem` expanded children container.
 - 2026-04-09: Implemented Phase 02 batch move hardening with reusable single-confirmation decisions, deferred auto-continuation, and aggregated undo payload/session behavior for selection-mode bulk moves.
 - 2026-04-09: Started Phase 04 continuation by adding copy/paste undo parity (`create-subject` / `create-folder`) and deep subject nested-content cloning for topics + topic-linked resources during keyboard copy workflows.
+- 2026-04-09: Continued Phase 04 by adding deterministic metadata carry-over for keyboard subject copy payloads (course/academic-year/period lifecycle/policy references), plus new shortcut test coverage; promoted Phase 04 to IN_REVIEW and closed the verification checklist metadata gate.

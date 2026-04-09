@@ -1,6 +1,9 @@
 // copilot/explanations/codebase/tests/unit/hooks/useHomeKeyboardShortcuts.test.md
 
 ## Changelog
+### 2026-04-09: Metadata carry-over assertion for keyboard subject copy
+- Added a dedicated test that validates `Ctrl+C` + `Ctrl+V` subject copy preserves lifecycle metadata (`courseId`, `academicYear`, period fields, and `postCoursePolicy`) while still enforcing owner-scoped, non-shared, class-reset defaults.
+
 ### 2026-03-09: Phase 02 closure additions
 - Added assertions for read-only/lecture-mode mutation blocking in keyboard action paths.
 - Added UI feedback checks to ensure message-driven behavior remains intact (no browser alerts).

@@ -37,4 +37,13 @@
 	- `npx vitest run tests/unit/hooks/useHomeKeyboardShortcuts.test.js tests/unit/hooks/useHomeBulkSelection.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js tests/unit/hooks/useHomePageHandlers.dndMatrix.test.js` -> PASS.
 	- `npm run lint` -> PASS.
 	- `npx tsc --noEmit` -> PASS.
-- Pending: continue checklist Step 7+ execution with phases 01 and 05, finalize remaining Phase 04 deep-copy parity cases, and run manual verification promotion for phases in review.
+- Phase 04 metadata carry-over hardening block:
+	- Extended keyboard subject copy payload builder to preserve dependency-sensitive metadata (`courseId`, `academicYear`, period lifecycle fields, `postCoursePolicy`, `level`, `grade`) while keeping owner/share/class reset safety guarantees.
+	- Added targeted unit coverage in shortcut tests to verify copied payload metadata preservation plus non-shared ownership-safe defaults.
+	- Promoted Phase 04 status to IN_REVIEW and checked the shortcut metadata gate in verification checklist.
+- Validation updates for metadata hardening block:
+	- `get_errors` on touched runtime/test files -> PASS.
+	- `npx vitest run tests/unit/hooks/useHomeKeyboardShortcuts.test.js` -> PASS (17 tests).
+	- `npm run lint` -> PASS.
+	- `npx tsc --noEmit` -> PASS.
+- Pending: continue checklist Step 7+ execution with phases 01 and 05, then run manual verification promotion for phases currently in review.

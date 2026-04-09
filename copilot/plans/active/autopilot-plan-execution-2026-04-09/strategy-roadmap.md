@@ -21,7 +21,7 @@ Execute the new AUTOPILOT request with strict lossless behavior preservation, me
 - Phase 01: IN_PROGRESS
 - Phase 02: IN_REVIEW
 - Phase 03: IN_REVIEW
-- Phase 04: IN_PROGRESS
+- Phase 04: IN_REVIEW
 - Phase 05: PLANNED
 - Phase 06: IN_REVIEW
 - Phase 07: IN_REVIEW
@@ -42,6 +42,6 @@ Execute the new AUTOPILOT request with strict lossless behavior preservation, me
 - Final phase requires full `npm run test` and `npm run build` before closure gate.
 
 ## Immediate Next Actions
-1. Complete pending core interaction phases (01, 04, 05).
+1. Complete pending core interaction phases (01, 05).
 2. Run manual parity checks for Phase 02/03/06/07 and promote statuses when all criteria pass.
 3. Continue checklist-driven execution and keep branch/plan evidence synchronized.

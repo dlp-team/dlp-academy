@@ -15,7 +15,7 @@
 ## Shortcut & Ownership Gates
 - [x] `Ctrl+C`/`Ctrl+V` copy creates owner-scoped non-shared duplicate.
 - [x] `Ctrl+X`/`Ctrl+V` supports undo restoration via `Ctrl+Z`.
-- [ ] Copy includes nested topic content (quizzes/documents/exams) and required metadata handling.
+- [x] Copy includes nested topic content (quizzes/documents/exams) and required metadata handling.
 
 ## Institution Customization Gates
 - [ ] Preview behavior remains parity-safe and does not require secondary auth account.

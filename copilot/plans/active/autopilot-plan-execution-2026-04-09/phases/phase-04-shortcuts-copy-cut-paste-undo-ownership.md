@@ -2,7 +2,7 @@
 # Phase 04 - Shortcuts Copy/Cut/Paste Undo Ownership
 
 ## Status
-- IN_PROGRESS
+- IN_REVIEW
 
 ## Objective
 Enforce shortcut behavior for copy/cut/paste with owner-safe metadata, nested-content duplication, and undo consistency.
@@ -35,9 +35,13 @@ Enforce shortcut behavior for copy/cut/paste with owner-safe metadata, nested-co
 	- topic documents,
 	- topic-linked resources from `documents`, `resumen`, `quizzes`, `exams`, and `examns`.
 - Added dynamic Firestore loading in keyboard paste flow to avoid always-on runtime coupling while enabling deep-copy on demand.
+- Added deterministic metadata carry-over in keyboard subject copy payloads for dependency-sensitive fields:
+	- `courseId`, `academicYear`, `periodType`, `periodLabel`, `periodIndex`, `periodStartAt`, `periodEndAt`, `periodExtraordinaryEndAt`, `postCoursePolicy`, `level`, and `grade`.
+	- Ownership, sharing, and assignment fields remain safely reset (`ownerId` reassigned to current user; sharing arrays and class assignment metadata cleared).
 
 ## Validation Evidence (2026-04-09)
 - `get_errors` on touched runtime and test files -> PASS.
 - `npx vitest run tests/unit/hooks/useHomeKeyboardShortcuts.test.js tests/unit/hooks/useHomeBulkSelection.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js tests/unit/hooks/useHomePageHandlers.dndMatrix.test.js` -> PASS (63 tests).
+- `npx vitest run tests/unit/hooks/useHomeKeyboardShortcuts.test.js` -> PASS (17 tests, includes metadata carry-over coverage).
 - `npm run lint` -> PASS.
 - `npx tsc --noEmit` -> PASS.
