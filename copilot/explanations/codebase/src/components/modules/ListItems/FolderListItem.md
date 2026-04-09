@@ -1,6 +1,9 @@
 # FolderListItem.jsx
 
 ## Changelog
+### 2026-04-09: Nested selection-ring clipping remediation
+- Added horizontal spacing (`px-2`) to the expanded children container to prevent selected-row ring visuals from being cropped in nested list mode.
+
 ### 2026-04-07: Selection-mode row click behavior parity
 - Folder row click now toggles selection when Home selection mode is active.
 - Preserves expand/collapse interactions and non-selection navigation paths.
@@ -15,7 +18,7 @@
 - Enables nested list rows to stay in sync with Home selection-mode emphasis behavior.
 
 ## Purpose
-- **Source file:** `src/components/modules/ListItems/FolderListItem.jsx`
+- **Source file:** `src/components/modules/ListItems/FolderListItem.tsx`
 - **Last documented:** 2026-04-05
 - **Role:** Feature module component composed by pages and higher-level views.
 

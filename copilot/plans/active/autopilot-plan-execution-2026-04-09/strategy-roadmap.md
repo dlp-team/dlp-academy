@@ -18,7 +18,7 @@ Execute the new AUTOPILOT request with strict lossless behavior preservation, me
 
 ## Current Progress
 - Phase 00: COMPLETED
-- Phase 01: PLANNED
+- Phase 01: IN_PROGRESS
 - Phase 02: PLANNED
 - Phase 03: IN_REVIEW
 - Phase 04: PLANNED

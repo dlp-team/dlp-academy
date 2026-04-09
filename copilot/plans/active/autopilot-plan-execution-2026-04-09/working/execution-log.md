@@ -17,4 +17,6 @@
 	- `npm run lint` -> PASS.
 	- `npx tsc --noEmit` -> PASS.
 	- `npm run build` -> PASS.
+- Phase 01 continuation block:
+	- Updated `src/components/modules/ListItems/FolderListItem.tsx` expanded-children container spacing (`overflow-hidden px-2`) to prevent nested selection ring clipping in list mode.
 - Pending: continue checklist Step 7+ execution with phases 01, 02, 04, and 05.

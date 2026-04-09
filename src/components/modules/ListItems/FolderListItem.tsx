@@ -514,7 +514,7 @@ const FolderListItem = ({
                     isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                 }`}
             >
-                <div className="overflow-hidden">
+                <div className="overflow-hidden px-2">
                     <div className="mt-2 flex flex-col gap-2">
                         {hasChildren ? (
                             <>

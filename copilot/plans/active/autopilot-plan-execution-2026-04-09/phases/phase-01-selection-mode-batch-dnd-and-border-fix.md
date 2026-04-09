@@ -2,7 +2,7 @@
 # Phase 01 - Selection Mode Batch DnD and Border Fix
 
 ## Status
-- PLANNED
+- IN_PROGRESS
 
 ## Objective
 Restore full batch drag/drop parity for selected elements and eliminate clipped selection borders in list-mode nested selections.
@@ -26,3 +26,11 @@ Restore full batch drag/drop parity for selected elements and eliminate clipped 
 - Batch drag/drop works for multi-selection without single-item regressions.
 - List-mode selection borders render fully and consistently.
 - Create-subject click is inert only while selection mode is active.
+
+## Implementation Update (2026-04-09)
+- Applied first border-clipping remediation for nested folder list rows by adding horizontal breathing room to expanded children container in `FolderListItem`.
+- This prevents shared selection ring highlights from being visually cropped at left/right edges when selecting nested entries in selection mode.
+
+## Pending in Phase 01
+- Validate grouped selection drag/drop semantics against all list/grid nesting scenarios.
+- Verify create-subject inert behavior and promote phase when all criteria pass.
