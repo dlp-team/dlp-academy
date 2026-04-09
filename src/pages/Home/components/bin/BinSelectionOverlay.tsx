@@ -1,4 +1,4 @@
-// src/pages/Home/components/bin/BinSelectionOverlay.jsx
+// src/pages/Home/components/bin/BinSelectionOverlay.tsx
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import BinSelectionPanel from './BinSelectionPanel';
 
@@ -92,7 +92,7 @@ const BinSelectionOverlay = ({
             {/* ── Fondo oscuro (Backdrop) ── */}
             <div
                 data-testid="bin-selection-overlay-backdrop"
-                className="fixed inset-0 z-40 bg-slate-900/30 dark:bg-slate-950/55 transition-opacity"
+                className="fixed inset-0 z-40 bg-transparent"
                 onClick={onClose}
             />
 

@@ -12,6 +12,7 @@
 - Shows urgency and deletion countdown metadata for both item types.
 
 ## Changelog
+- **2026-04-09:** Added `overlayHidden` rendering mode used by bin overlay flows to suppress duplicate-looking selected cards while preserving measured layout coordinates.
 - **2026-04-08:** Refined selected-card semantics for bin interaction parity:
 	- shared ring highlight now appears only when bin selection mode is active,
 	- non-selection focused card uses pressed-scale and elevated shadow treatment,

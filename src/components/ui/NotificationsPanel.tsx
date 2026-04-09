@@ -1,7 +1,32 @@
 // src/components/ui/NotificationsPanel.tsx
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, CheckCheck, BellOff, FlaskConical, FolderSync, Loader2, X } from 'lucide-react';
+import {
+    Bell,
+    BellOff,
+    BookOpen,
+    Check,
+    CheckCheck,
+    FolderSync,
+    Loader2,
+    Share2,
+    Users,
+    X,
+} from 'lucide-react';
+import {
+    getNotificationVisualClasses,
+    resolveNotificationVisualKind,
+} from '../../utils/notificationVisualUtils';
+
+const ICON_BY_VISUAL_KIND: Record<string, any> = {
+    info: Bell,
+    share: Share2,
+    assignment: Users,
+    shortcut: FolderSync,
+    success: Check,
+    warning: Bell,
+    error: X,
+};
 
 const NotificationsPanel = ({
     notifications,
@@ -110,7 +135,12 @@ const NotificationsPanel = ({
                         <p className="text-sm text-gray-500 dark:text-slate-400">Sin notificaciones</p>
                     </div>
                 ) : (
-                    notifications.map(n => (
+                    notifications.map(n => {
+                        const visualKind = resolveNotificationVisualKind({ type: n?.type });
+                        const visualClasses = getNotificationVisualClasses(visualKind);
+                        const NotificationIcon = ICON_BY_VISUAL_KIND[visualKind] || BookOpen;
+
+                        return (
                         <div
                             key={n.id}
                             onClick={() => handleNotificationClick(n)}
@@ -122,17 +152,13 @@ const NotificationsPanel = ({
                             }}
                             role="button"
                             tabIndex={0}
-                            className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-slate-800/60 transition-colors flex items-start gap-3 ${
-                                !n.read ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''
+                            className={`w-full text-left px-4 py-3 transition-colors flex items-start gap-3 hover:bg-slate-100/85 dark:hover:bg-slate-800/70 ${
+                                !n.read ? `${visualClasses.unreadBackground}` : ''
                             }`}
                         >
                             {/* Icon */}
-                            <div className="shrink-0 mt-0.5 bg-gradient-to-br from-indigo-500 to-purple-600 p-1.5 rounded-lg">
-                                {isPendingShortcutMoveRequest(n) ? (
-                                    <FolderSync className="w-4 h-4 text-white" />
-                                ) : (
-                                    <FlaskConical className="w-4 h-4 text-white" />
-                                )}
+                            <div className={`shrink-0 mt-0.5 rounded-lg p-1.5 ${visualClasses.iconContainer}`}>
+                                <NotificationIcon className={`w-4 h-4 ${visualClasses.iconColor}`} />
                             </div>
 
                             {/* Content */}
@@ -180,10 +206,11 @@ const NotificationsPanel = ({
 
                             {/* Unread dot */}
                             {!n.read && (
-                                <span className="shrink-0 mt-1.5 w-2 h-2 rounded-full bg-indigo-500" />
+                                <span className="shrink-0 mt-1.5 w-2 h-2 rounded-full bg-slate-500 dark:bg-slate-400" />
                             )}
                         </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
         </div>

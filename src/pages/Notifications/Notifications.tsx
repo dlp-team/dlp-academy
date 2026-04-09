@@ -1,9 +1,34 @@
 // src/pages/Notifications/Notifications.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BellOff, Check, CheckCheck, FlaskConical, FolderSync, Loader2, X } from 'lucide-react';
+import {
+  Bell,
+  BellOff,
+  BookOpen,
+  Check,
+  CheckCheck,
+  FolderSync,
+  Loader2,
+  Share2,
+  Users,
+  X,
+} from 'lucide-react';
 import Header from '../../components/layout/Header';
 import { useNotifications } from '../../hooks/useNotifications';
+import {
+  getNotificationVisualClasses,
+  resolveNotificationVisualKind,
+} from '../../utils/notificationVisualUtils';
+
+const ICON_BY_VISUAL_KIND: Record<string, any> = {
+  info: Bell,
+  share: Share2,
+  assignment: Users,
+  shortcut: FolderSync,
+  success: Check,
+  warning: Bell,
+  error: X,
+};
 
 const Notifications = ({ user }: any) => {
   const navigate = useNavigate();
@@ -92,28 +117,29 @@ const Notifications = ({ user }: any) => {
                 </p>
               </div>
             ) : (
-              notifications.map((notification) => (
+              notifications.map((notification) => {
+                const visualKind = resolveNotificationVisualKind({ type: notification?.type });
+                const visualClasses = getNotificationVisualClasses(visualKind);
+                const NotificationIcon = ICON_BY_VISUAL_KIND[visualKind] || BookOpen;
+
+                return (
                 <button
                   key={notification.id}
                   type="button"
                   onClick={() => handleNotificationClick(notification)}
-                  className={`w-full text-left px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
-                    !notification.read ? 'bg-indigo-50/40 dark:bg-indigo-900/10' : ''
+                  className={`w-full text-left px-5 py-4 transition-colors hover:bg-slate-100/85 dark:hover:bg-slate-800/70 ${
+                    !notification.read ? `${visualClasses.unreadBackground}` : ''
                   }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="shrink-0 mt-0.5 bg-gradient-to-br from-indigo-500 to-purple-600 p-1.5 rounded-lg">
-                      {isPendingShortcutMoveRequest(notification) ? (
-                        <FolderSync className="w-4 h-4 text-white" />
-                      ) : (
-                        <FlaskConical className="w-4 h-4 text-white" />
-                      )}
+                    <div className={`shrink-0 mt-0.5 rounded-lg p-1.5 ${visualClasses.iconContainer}`}>
+                      <NotificationIcon className={`w-4 h-4 ${visualClasses.iconColor}`} />
                     </div>
 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{notification.title}</p>
-                        {!notification.read && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
+                        {!notification.read && <span className="w-2 h-2 rounded-full bg-slate-500 dark:bg-slate-400" />}
                       </div>
                       <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{notification.message}</p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{formatTime(notification.createdAt)}</p>
@@ -152,7 +178,8 @@ const Notifications = ({ user }: any) => {
                     </div>
                   </div>
                 </button>
-              ))
+                );
+              })
             )}
           </div>
         </section>

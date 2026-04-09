@@ -5,7 +5,7 @@ import SubjectCard from '../../../../components/modules/SubjectCard/SubjectCard'
 import { getDaysRemaining, getDaysRemainingTextClass, toJsDate } from '../../utils/binViewUtils';
 import { SHARED_SELECTION_RING_CLASS, getBinUnselectedDimmingClass } from '../../../../utils/selectionVisualUtils';
 
-const BinGridItem = React.forwardRef<any, any>(({ item, itemType = 'subject', user, cardScale, isSelected, hasSelection, selectionMode = false, onSelect }, ref: any) => {
+const BinGridItem = React.forwardRef<any, any>(({ item, itemType = 'subject', user, cardScale, isSelected, hasSelection, selectionMode = false, overlayHidden = false, onSelect }, ref: any) => {
     const daysRemaining = getDaysRemaining(item);
     const trashedDate   = toJsDate(item.trashedAt);
     const isShortcutItem = itemType === 'shortcut-subject' || itemType === 'shortcut-folder';
@@ -23,6 +23,8 @@ const BinGridItem = React.forwardRef<any, any>(({ item, itemType = 'subject', us
             ref={ref}
             data-testid={`bin-grid-wrapper-${itemType}-${item.id}`}
             className={`transition-all duration-200 ${
+                overlayHidden ? 'opacity-0 pointer-events-none'
+                :
                 showPressedState ? 'relative scale-[1.01]'
                 : isSelected ? 'relative'
                 : hasSelection ? dimmingClass

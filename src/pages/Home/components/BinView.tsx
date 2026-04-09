@@ -835,7 +835,10 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                             : (selectedItemId === item.id && selectedItemType === item.itemType);
                         const hasSelection = selectionMode
                             ? selectedBulkCount > 0
-                            : Boolean(selectedItemId);
+                            : false;
+                        const hideCardBehindOverlay = !selectionMode
+                            && selectedItemId === item.id
+                            && selectedItemType === item.itemType;
 
                         return (
                             <BinGridItem
@@ -848,6 +851,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                                 isSelected={isSelected}
                                 hasSelection={hasSelection}
                                 selectionMode={selectionMode}
+                                overlayHidden={hideCardBehindOverlay}
                                 onSelect={() => handleSelectItem(item.id, item.itemType)}
                             />
                         );
