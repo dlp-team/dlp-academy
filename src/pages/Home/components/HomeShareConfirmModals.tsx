@@ -11,8 +11,19 @@ const HomeShareConfirmModals = ({
     setUnshareConfirm,
     subjects
 }) => {
-    const closeShareConfirm = () => setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null, onMergeConfirm: null });
-    const closeUnshareConfirm = () => setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
+    const closeShareConfirm = () => {
+        if (typeof shareConfirm?.onCancel === 'function') {
+            shareConfirm.onCancel();
+        }
+        setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null, onMergeConfirm: null });
+    };
+
+    const closeUnshareConfirm = () => {
+        if (typeof unshareConfirm?.onCancel === 'function') {
+            unshareConfirm.onCancel();
+        }
+        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
+    };
 
     return (
         <>

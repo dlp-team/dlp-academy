@@ -6,7 +6,7 @@ type HomeBulkSelectionParams = {
     logic: any;
     isStudentRole: boolean;
     onHomeFeedback: (message: string, tone?: string) => void;
-    moveSelectionEntryWithShareRules?: (entry: any, targetFolderId: any) => Promise<any>;
+    moveSelectionEntryWithShareRules?: (entry: any, targetFolderId: any, moveOptions?: any) => Promise<any>;
 };
 
 const getEntrySourceParentId = (entry: any) => {
@@ -81,6 +81,7 @@ export const useHomeBulkSelection = ({
     const [bulkMoveTargetFolderId, setBulkMoveTargetFolderId] = useState('');
     const [undoToast, setUndoToast] = useState<any>(null);
     const undoTimeoutRef = useRef<any>(null);
+    const bulkMoveStateRef = useRef<any>(null);
 
     const selectedItems = useMemo(() => Object.values(selectedItemsByKey), [selectedItemsByKey]);
     const selectedItemKeys = useMemo(() => new Set(Object.keys(selectedItemsByKey)), [selectedItemsByKey]);
@@ -259,75 +260,45 @@ export const useHomeBulkSelection = ({
         return { status: 'skipped' };
     }, [logic]);
 
-    const runBulkMoveToFolder = React.useCallback(async (targetFolderId: any) => {
-        const destination = targetFolderId || null;
-        const itemsToMove = Object.values(selectedItemsByKey);
-        if (itemsToMove.length === 0) return;
+    const finalizeBulkMoveSession = React.useCallback((options: any = {}) => {
+        const state = bulkMoveStateRef.current;
+        if (!state) return;
 
-        const moveSnapshots = itemsToMove.map((entry: any) => ({
-            key: entry?.key,
-            type: entry?.type,
-            id: entry?.item?.id,
-            shortcutId: entry?.item?.shortcutId || null,
-            previousParentId: getEntrySourceParentId(entry),
-            entry
-        }));
+        const preserveSelection = options?.preserveSelection === true;
+        const undoSnapshots: any[] = (Array.from(state.snapshotsByKey.values()) as any[]).filter(
+            (snapshot: any) => state.movedKeys.has(snapshot?.key)
+        );
+        const failedEntries: any[] = (Array.from(state.failedEntriesByKey.values()) as any[]).filter(
+            (entry: any) => entry?.key && !state.movedKeys.has(entry.key)
+        );
+        const movedCount = undoSnapshots.length;
 
-        let moved = 0;
-        const movedKeys = new Set<string>();
-        const failedEntries: any[] = [];
-        let deferredEntries: any[] = [];
-
-        for (let index = 0; index < itemsToMove.length; index += 1) {
-            const entry: any = itemsToMove[index];
-
-            try {
-                const moveResult = moveSelectionEntryWithShareRules
-                    ? await moveSelectionEntryWithShareRules(entry, destination)
-                    : await runDefaultMoveForEntry(entry, destination);
-                const status = normalizeMoveStatus(moveResult);
-
-                if (status === 'deferred') {
-                    deferredEntries = itemsToMove.slice(index);
-                    break;
-                }
-
-                if (status === 'moved') {
-                    moved += 1;
-                    if (entry?.key) movedKeys.add(entry.key);
-                    continue;
-                }
-
-                failedEntries.push(entry);
-            } catch {
-                failedEntries.push(entry);
+        if (!preserveSelection) {
+            if (failedEntries.length > 0) {
+                setSelectionFromEntries(failedEntries);
+                setSelectMode(true);
+            } else {
+                clearSelection();
+                setSelectMode(false);
             }
         }
 
-        if (deferredEntries.length > 0) {
-            setSelectionFromEntries(deferredEntries);
-            setSelectMode(true);
-            const pendingCount = deferredEntries.length;
-            if (moved > 0) {
-                onHomeFeedback(`Se movieron ${moved} elemento(s). Continua con la confirmacion para completar ${pendingCount} pendiente(s).`, 'warning');
+        if (preserveSelection) {
+            if (movedCount > 0) {
+                onHomeFeedback(`Se movieron ${movedCount} elemento(s). Se canceló la confirmacion para los pendientes.`, 'warning');
             } else {
-                onHomeFeedback(`Revisa la confirmacion de compartidos para continuar con ${pendingCount} elemento(s).`, 'warning');
+                onHomeFeedback('Se canceló la confirmacion de movimiento por lotes.', 'warning');
             }
         } else if (failedEntries.length > 0) {
-            setSelectionFromEntries(failedEntries);
-            setSelectMode(true);
-            if (moved === 0) {
+            if (movedCount === 0) {
                 onHomeFeedback('No se pudieron mover los elementos seleccionados por permisos o conflictos.', 'error');
             } else {
-                onHomeFeedback(`Se movieron ${moved} elemento(s) y ${failedEntries.length} no se pudieron mover.`, 'warning');
+                onHomeFeedback(`Se movieron ${movedCount} elemento(s) y ${failedEntries.length} no se pudieron mover.`, 'warning');
             }
         } else {
-            clearSelection();
-            setSelectMode(false);
-            onHomeFeedback(`Se movieron ${moved} elemento(s).`, 'success');
+            onHomeFeedback(`Se movieron ${movedCount} elemento(s).`, 'success');
         }
 
-        const undoSnapshots = moveSnapshots.filter((snapshot: any) => movedKeys.has(snapshot?.key));
         if (undoSnapshots.length > 0) {
             pushUndoToast({
                 message: `Movimiento aplicado en ${undoSnapshots.length} elemento(s).`,
@@ -355,7 +326,121 @@ export const useHomeBulkSelection = ({
                 }
             });
         }
-    }, [selectedItemsByKey, moveSelectionEntryWithShareRules, runDefaultMoveForEntry, setSelectionFromEntries, clearSelection, onHomeFeedback, pushUndoToast, logic]);
+
+        bulkMoveStateRef.current = null;
+    }, [clearSelection, onHomeFeedback, pushUndoToast, setSelectionFromEntries, logic]);
+
+    const runBulkMoveToFolder = React.useCallback(async function runBulkMoveToFolderInternal(targetFolderId: any, options: any = {}) {
+        const destination = targetFolderId || null;
+        const itemsToMove = Array.isArray(options?.entriesOverride)
+            ? options.entriesOverride
+            : Object.values(selectedItemsByKey);
+
+        if (itemsToMove.length === 0) {
+            if (options?.isContinuation && bulkMoveStateRef.current) {
+                finalizeBulkMoveSession();
+            }
+            return;
+        }
+
+        let state = bulkMoveStateRef.current;
+        const isContinuation = options?.isContinuation === true;
+        if (!isContinuation || !state || state.destination !== destination) {
+            state = {
+                destination,
+                batchDecisions: {},
+                snapshotsByKey: new Map<string, any>(),
+                movedKeys: new Set<string>(),
+                failedEntriesByKey: new Map<string, any>(),
+                deferredNoticeShown: false
+            };
+            bulkMoveStateRef.current = state;
+        }
+
+        for (let index = 0; index < itemsToMove.length; index += 1) {
+            const entry: any = itemsToMove[index];
+            if (!entry?.key) continue;
+
+            if (!state.snapshotsByKey.has(entry.key)) {
+                state.snapshotsByKey.set(entry.key, {
+                    key: entry.key,
+                    type: entry?.type,
+                    id: entry?.item?.id,
+                    shortcutId: entry?.item?.shortcutId || null,
+                    previousParentId: getEntrySourceParentId(entry),
+                    entry
+                });
+            }
+
+            try {
+                const moveResult = moveSelectionEntryWithShareRules
+                    ? await moveSelectionEntryWithShareRules(entry, destination, {
+                        batchDecisions: state.batchDecisions,
+                        setBatchDecision: (key: any, value: any) => {
+                            state.batchDecisions[key] = value;
+                        },
+                        entryKey: entry.key,
+                        onDeferredResolved: async (payload: any = {}) => {
+                            const resolvedKey = payload?.key || entry.key;
+                            if (payload?.moved === true && resolvedKey && state.snapshotsByKey.has(resolvedKey)) {
+                                state.movedKeys.add(resolvedKey);
+                                state.failedEntriesByKey.delete(resolvedKey);
+                            }
+
+                            const pendingEntries = itemsToMove.slice(index);
+                            const remainingEntries = pendingEntries.filter((candidate: any) => candidate?.key !== resolvedKey);
+
+                            setSelectionFromEntries(remainingEntries);
+                            setSelectMode(true);
+
+                            if (remainingEntries.length === 0) {
+                                finalizeBulkMoveSession();
+                                return;
+                            }
+
+                            await runBulkMoveToFolderInternal(destination, {
+                                isContinuation: true,
+                                entriesOverride: remainingEntries
+                            });
+                        },
+                        onDeferredCancelled: () => {
+                            finalizeBulkMoveSession({ preserveSelection: true });
+                        }
+                    })
+                    : await runDefaultMoveForEntry(entry, destination);
+
+                const status = normalizeMoveStatus(moveResult);
+
+                if (status === 'deferred') {
+                    const deferredEntries = itemsToMove.slice(index);
+                    setSelectionFromEntries(deferredEntries);
+                    setSelectMode(true);
+
+                    if (!state.deferredNoticeShown) {
+                        onHomeFeedback(
+                            `Revisa la confirmacion para completar ${deferredEntries.length} elemento(s) pendiente(s).`,
+                            'warning'
+                        );
+                        state.deferredNoticeShown = true;
+                    }
+
+                    return;
+                }
+
+                if (status === 'moved') {
+                    state.movedKeys.add(entry.key);
+                    state.failedEntriesByKey.delete(entry.key);
+                    continue;
+                }
+
+                state.failedEntriesByKey.set(entry.key, entry);
+            } catch {
+                state.failedEntriesByKey.set(entry.key, entry);
+            }
+        }
+
+        finalizeBulkMoveSession();
+    }, [selectedItemsByKey, moveSelectionEntryWithShareRules, runDefaultMoveForEntry, setSelectionFromEntries, finalizeBulkMoveSession, onHomeFeedback]);
 
     const handleBulkDelete = React.useCallback(async () => {
         const itemsToDelete = Object.values(selectedItemsByKey);
@@ -445,6 +530,7 @@ export const useHomeBulkSelection = ({
 
     React.useEffect(() => {
         if (logic.viewMode === 'shared' || logic.viewMode === 'bin' || isStudentRole) {
+            bulkMoveStateRef.current = null;
             setSelectMode(false);
             clearSelection();
             clearUndoToast();

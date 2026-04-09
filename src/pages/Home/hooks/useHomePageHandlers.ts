@@ -293,7 +293,35 @@ export const useHomePageHandlers = ({
         return fallback?.id || null;
     };
 
-    const requestOwnerMoveForShortcut = ({ shortcutId, targetFolderId, targetType, targetId }: any) => {
+    const getBatchDecision = (moveOptions: any, key: any) => {
+        if (!moveOptions || !moveOptions.batchDecisions) return null;
+        return moveOptions.batchDecisions[key] ?? null;
+    };
+
+    const setBatchDecision = (moveOptions: any, key: any, value: any) => {
+        if (typeof moveOptions?.setBatchDecision === 'function') {
+            moveOptions.setBatchDecision(key, value);
+        }
+    };
+
+    const notifyDeferredResolved = async (moveOptions: any, payload: any = {}) => {
+        if (typeof moveOptions?.onDeferredResolved === 'function') {
+            await moveOptions.onDeferredResolved({
+                key: moveOptions?.entryKey || null,
+                ...payload
+            });
+        }
+    };
+
+    const notifyDeferredCancelled = (moveOptions: any) => {
+        if (typeof moveOptions?.onDeferredCancelled === 'function') {
+            moveOptions.onDeferredCancelled({
+                key: moveOptions?.entryKey || null
+            });
+        }
+    };
+
+    const requestOwnerMoveForShortcut = ({ shortcutId, targetFolderId, targetType, targetId, moveOptions = null }: any) => {
         const targetFolder = targetFolderId ? getFolderById(targetFolderId) : null;
         if (!targetFolder || targetFolder.isShared !== true) return false;
 
@@ -315,25 +343,28 @@ export const useHomePageHandlers = ({
                     });
                     publishHomeFeedback('Solicitud enviada al propietario de la carpeta compartida.', 'success');
                     closeShareConfirm();
+                    await notifyDeferredResolved(moveOptions, { moved: false });
                 } catch (error: any) {
                     const errorCode = String(error?.code || '').toLowerCase();
                     if (errorCode.includes('already-exists')) {
                         publishHomeFeedback('Ya existe una solicitud pendiente para este acceso directo.', 'warning');
                         closeShareConfirm();
+                        await notifyDeferredResolved(moveOptions, { moved: false });
                         return;
                     }
                     publishHomeFeedback('No se pudo enviar la solicitud de movimiento. Intentalo de nuevo.', 'error');
                 }
-            }
+            },
+            onCancel: () => notifyDeferredCancelled(moveOptions)
         });
 
         return true;
     };
 
-    const moveShortcutOrRequest = async (shortcutId, targetFolderId, targetType, targetId: any, sourceParentId: any = null) => {
+    const moveShortcutOrRequest = async (shortcutId, targetFolderId, targetType, targetId: any, sourceParentId: any = null, moveOptions: any = null) => {
         if (!shortcutId || !logic?.moveShortcut) return false;
 
-        if (requestOwnerMoveForShortcut({ shortcutId, targetFolderId, targetType, targetId })) {
+        if (requestOwnerMoveForShortcut({ shortcutId, targetFolderId, targetType, targetId, moveOptions })) {
             return 'deferred';
         }
 
@@ -384,7 +415,14 @@ export const useHomePageHandlers = ({
         }
     };
 
-    const handleDropOnFolderWrapper = (targetFolderId, subjectId, typeOrSourceFolderId, sourceFolderIdMaybe, shortcutIdMaybe: any) => {
+    const handleDropOnFolderWrapper = (
+        targetFolderId,
+        subjectId,
+        typeOrSourceFolderId,
+        sourceFolderIdMaybe,
+        shortcutIdMaybe: any,
+        moveOptions: any = null
+    ) => {
         if (isViewerInsideSharedFolder) {
             return 'blocked';
         }
@@ -401,7 +439,8 @@ export const useHomePageHandlers = ({
                 shortcutId: draggedShortcutId,
                 targetFolderId,
                 targetType: type,
-                targetId: subjectId
+                targetId: subjectId,
+                moveOptions
             })) {
                 return 'deferred';
             }
@@ -425,7 +464,7 @@ export const useHomePageHandlers = ({
         if (type === 'folder') {
             const sourceParentId = explicitSourceFolderId !== undefined ? explicitSourceFolderId : (logic.currentFolder ? logic.currentFolder.id : null);
             draggedShortcutId = draggedShortcutId || resolveFolderShortcutId(subjectId, sourceParentId || null);
-            handleNestFolder(targetFolderId, subjectId, draggedShortcutId || null);
+            handleNestFolder(targetFolderId, subjectId, draggedShortcutId || null, moveOptions);
             return 'moved';
         }
 
@@ -486,7 +525,47 @@ export const useHomePageHandlers = ({
             ...subjectSharedWithUids
         ]));
 
+        const executeSubjectSharedMismatchAlign = async () => {
+            await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, {
+                alignToTargetFolder: true,
+                forceRefreshSharing: true
+            });
+            registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+        };
+
+        const executeSubjectSharedMismatchMerge = async () => {
+            const { mergedUids, mergedSharedWith } = await mergeTargetFolderShares(targetFolderId, effectiveSourceSharedWithUids, baselineSharedWith);
+            await syncSharedStateToFolderTree(targetFolderId, mergedUids, mergedSharedWith);
+            await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, { forceRefreshSharing: true });
+            registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+        };
+
+        const executeSubjectUnshareMove = async (preserveSharing = false) => {
+            if (preserveSharing) {
+                await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, { preserveSharing: true });
+            } else {
+                await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+            }
+            registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+        };
+
+        const executeSubjectShareToTarget = async () => {
+            await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
+            registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+        };
+
         if (targetFolder && targetFolder.isShared && effectiveSourceSharedWithUids.length > 0 && !areSharedSetsEqual(effectiveSourceSharedWithUids, targetFolderSharedWithUids)) {
+            const sharedMismatchDecision = getBatchDecision(moveOptions, 'subjectSharedMismatch');
+            if (sharedMismatchDecision === 'align') {
+                executeSubjectSharedMismatchAlign();
+                return 'moved';
+            }
+
+            if (sharedMismatchDecision === 'merge') {
+                executeSubjectSharedMismatchMerge();
+                return 'moved';
+            }
+
             setShareConfirm({
                 open: true,
                 type: 'shared-mismatch-move',
@@ -495,20 +574,18 @@ export const useHomePageHandlers = ({
                 sourceType: 'subject',
                 sourceName: subject?.name || '',
                 onConfirm: async () => {
-                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, {
-                        alignToTargetFolder: true,
-                        forceRefreshSharing: true
-                    });
-                    registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+                    await executeSubjectSharedMismatchAlign();
+                    setBatchDecision(moveOptions, 'subjectSharedMismatch', 'align');
                     closeShareConfirm();
+                    await notifyDeferredResolved(moveOptions, { moved: true });
                 },
                 onMergeConfirm: async () => {
-                    const { mergedUids, mergedSharedWith } = await mergeTargetFolderShares(targetFolderId, effectiveSourceSharedWithUids, baselineSharedWith);
-                    await syncSharedStateToFolderTree(targetFolderId, mergedUids, mergedSharedWith);
-                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, { forceRefreshSharing: true });
-                    registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+                    await executeSubjectSharedMismatchMerge();
+                    setBatchDecision(moveOptions, 'subjectSharedMismatch', 'merge');
                     closeShareConfirm();
-                }
+                    await notifyDeferredResolved(moveOptions, { moved: true });
+                },
+                onCancel: () => notifyDeferredCancelled(moveOptions)
             });
             return 'deferred';
         }
@@ -516,20 +593,34 @@ export const useHomePageHandlers = ({
         const removedUsers = baselineSharedWithUids.filter(uid => !targetFolderSharedWithUids.includes(uid));
 
         if (removedUsers.length > 0) {
+            const unshareDecision = getBatchDecision(moveOptions, 'subjectUnshareMove');
+            if (unshareDecision === 'remove') {
+                executeSubjectUnshareMove(false);
+                return 'moved';
+            }
+
+            if (unshareDecision === 'preserve') {
+                executeSubjectUnshareMove(true);
+                return 'moved';
+            }
+
             setUnshareConfirm({
                 open: true,
                 subjectId,
                 folder: sourceFolder,
                 onConfirm: async () => {
-                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-                    registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+                    await executeSubjectUnshareMove(false);
+                    setBatchDecision(moveOptions, 'subjectUnshareMove', 'remove');
                     closeUnshareConfirm();
+                    await notifyDeferredResolved(moveOptions, { moved: true });
                 },
                 onPreserveConfirm: async () => {
-                    await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, { preserveSharing: true });
-                    registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+                    await executeSubjectUnshareMove(true);
+                    setBatchDecision(moveOptions, 'subjectUnshareMove', 'preserve');
                     closeUnshareConfirm();
+                    await notifyDeferredResolved(moveOptions, { moved: true });
                 },
+                onCancel: () => notifyDeferredCancelled(moveOptions)
             });
             return 'deferred';
         }
@@ -539,36 +630,47 @@ export const useHomePageHandlers = ({
             const folderShared = targetFolderSharedWithUids;
             const newUsers = folderShared.filter(uid => !subjectShared.has(uid));
             if (newUsers.length > 0) {
+                const shareDecision = getBatchDecision(moveOptions, 'subjectShareToTarget');
+                if (shareDecision === 'confirm') {
+                    executeSubjectShareToTarget();
+                    return 'moved';
+                }
+
                 setShareConfirm({
                     open: true,
                     subjectId,
                     folder: targetFolder,
                     onConfirm: async () => {
-                        await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-                        registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+                        await executeSubjectShareToTarget();
+                        setBatchDecision(moveOptions, 'subjectShareToTarget', 'confirm');
                         setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                        await notifyDeferredResolved(moveOptions, { moved: true });
                     }
                 });
-                    return 'deferred';
+                return 'deferred';
             }
         }
         
-        moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-        registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+        executeSubjectShareToTarget();
         return 'moved';
     };
 
-    const moveSelectionEntryWithShareRules = async (entry: any, targetFolderId: any) => {
+    const moveSelectionEntryWithShareRules = async (entry: any, targetFolderId: any, moveOptions: any = null) => {
         const type = entry?.type;
         const item = entry?.item;
         if (!item?.id || !type) {
             return { status: 'skipped' };
         }
 
+        const scopedMoveOptions = {
+            ...(moveOptions || {}),
+            entryKey: moveOptions?.entryKey || entry?.key || null
+        };
+
         if (type === 'folder') {
             const sourceParentId = item?.shortcutParentId ?? item?.parentId ?? (logic.currentFolder ? logic.currentFolder.id : null);
             const resolvedShortcutId = item?.shortcutId || resolveFolderShortcutId(item.id, sourceParentId || null);
-            const folderStatus = await handleNestFolder(targetFolderId, item.id, resolvedShortcutId || null);
+            const folderStatus = await handleNestFolder(targetFolderId, item.id, resolvedShortcutId || null, scopedMoveOptions);
             if (typeof folderStatus === 'string') {
                 return { status: folderStatus };
             }
@@ -584,7 +686,8 @@ export const useHomePageHandlers = ({
             item.id,
             type,
             sourceFolderId,
-            item?.shortcutId || null
+            item?.shortcutId || null,
+            scopedMoveOptions
         ));
 
         if (typeof status === 'string') {
@@ -734,7 +837,7 @@ export const useHomePageHandlers = ({
         }
     };
 
-    const handleNestFolder = async (targetFolderId, droppedFolderId, droppedFolderShortcutId = null) => {
+    const handleNestFolder = async (targetFolderId, droppedFolderId, droppedFolderShortcutId = null, moveOptions: any = null) => {
         if (isViewerInsideSharedFolder) {
             return 'blocked';
         }
@@ -747,7 +850,8 @@ export const useHomePageHandlers = ({
                 targetFolderId || null,
                 'folder',
                 droppedFolderId,
-                logic.currentFolder?.id || null
+                logic.currentFolder?.id || null,
+                moveOptions
             );
         }
 
@@ -779,39 +883,69 @@ export const useHomePageHandlers = ({
 
         const getSharedUids = item => (item && Array.isArray(item.sharedWithUids) ? item.sharedWithUids : []);
 
+        const executeFolderUnshareMove = async () => {
+            const oldSharedWithUids = Array.isArray(droppedFolder.sharedWithUids) ? droppedFolder.sharedWithUids : [];
+            await updateFolder(droppedFolderId, {
+                sharedWith: [],
+                sharedWithUids: [],
+                isShared: false
+            });
+            const subjectsInFolder2 = (logic.subjects || []).filter(s => s.folderId === droppedFolderId);
+            for (const subject of subjectsInFolder2) {
+                const newSharedWith = (subject.sharedWith || []).filter(
+                    u => !oldSharedWithUids.includes(u.uid)
+                );
+                const newSharedWithUids = (subject.sharedWithUids || []).filter(
+                    uid => !oldSharedWithUids.includes(uid)
+                );
+                await updateDoc(doc(db, 'subjects', subject.id), {
+                    sharedWith: newSharedWith,
+                    sharedWithUids: newSharedWithUids,
+                    isShared: newSharedWithUids.length > 0
+                });
+            }
+            await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+            registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+        };
+
+        const executeFolderSharedMismatchAlign = async () => {
+            await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+            registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+        };
+
+        const executeFolderSharedMismatchMerge = async () => {
+            const droppedSharedUids = getSharedUids(droppedFolder);
+            const { mergedUids, mergedSharedWith } = await mergeTargetFolderShares(targetFolderId, droppedSharedUids, getSharedWithEntries(droppedFolder));
+            await syncSharedStateToFolderTree(targetFolderId, mergedUids, mergedSharedWith);
+            await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+            registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+        };
+
+        const executeFolderShareToTarget = async () => {
+            await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
+            registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+        };
+
         if (droppedFolder && droppedFolder.isShared && (!targetFolder || !targetFolder.isShared) && droppedFolder.parentId) {
             const parentFolder = ((logic.folders || []) as any[]).find(f => f.id === droppedFolder.parentId);
             if (parentFolder && parentFolder.isShared) {
+                const unshareDecision = getBatchDecision(moveOptions, 'folderUnshareMove');
+                if (unshareDecision === 'remove') {
+                    await executeFolderUnshareMove();
+                    return 'moved';
+                }
+
                 setUnshareConfirm({
                     open: true,
                     subjectId: null,
                     folder: droppedFolder,
                     onConfirm: async () => {
-                        const oldSharedWithUids = Array.isArray(droppedFolder.sharedWithUids) ? droppedFolder.sharedWithUids : [];
-                        await updateFolder(droppedFolderId, {
-                            sharedWith: [],
-                            sharedWithUids: [],
-                            isShared: false
-                        });
-                        // Update all subjects in this folder (query by folderId)
-                        const subjectsInFolder2 = (logic.subjects || []).filter(s => s.folderId === droppedFolderId);
-                        for (const subject of subjectsInFolder2) {
-                            const newSharedWith = (subject.sharedWith || []).filter(
-                                u => !oldSharedWithUids.includes(u.uid)
-                            );
-                            const newSharedWithUids = (subject.sharedWithUids || []).filter(
-                                uid => !oldSharedWithUids.includes(uid)
-                            );
-                            await updateDoc(doc(db, 'subjects', subject.id), {
-                                sharedWith: newSharedWith,
-                                sharedWithUids: newSharedWithUids,
-                                isShared: newSharedWithUids.length > 0
-                            });
-                        }
-                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-                        registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+                        await executeFolderUnshareMove();
+                        setBatchDecision(moveOptions, 'folderUnshareMove', 'remove');
                         closeUnshareConfirm();
-                    }
+                        await notifyDeferredResolved(moveOptions, { moved: true });
+                    },
+                    onCancel: () => notifyDeferredCancelled(moveOptions)
                 });
                 return 'deferred';
             }
@@ -821,6 +955,17 @@ export const useHomePageHandlers = ({
             const droppedSharedUids = getSharedUids(droppedFolder);
             const targetShared = getSharedUids(targetFolder);
             if (droppedSharedUids.length > 0 && !areSharedSetsEqual(droppedSharedUids, targetShared)) {
+                const sharedMismatchDecision = getBatchDecision(moveOptions, 'folderSharedMismatch');
+                if (sharedMismatchDecision === 'align') {
+                    await executeFolderSharedMismatchAlign();
+                    return 'moved';
+                }
+
+                if (sharedMismatchDecision === 'merge') {
+                    await executeFolderSharedMismatchMerge();
+                    return 'moved';
+                }
+
                 setShareConfirm({
                     open: true,
                     type: 'shared-mismatch-move',
@@ -829,17 +974,18 @@ export const useHomePageHandlers = ({
                     sourceType: 'folder',
                     sourceName: droppedFolder?.name || '',
                     onConfirm: async () => {
-                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-                        registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+                        await executeFolderSharedMismatchAlign();
+                        setBatchDecision(moveOptions, 'folderSharedMismatch', 'align');
                         closeShareConfirm();
+                        await notifyDeferredResolved(moveOptions, { moved: true });
                     },
                     onMergeConfirm: async () => {
-                        const { mergedUids, mergedSharedWith } = await mergeTargetFolderShares(targetFolderId, droppedSharedUids, getSharedWithEntries(droppedFolder));
-                        await syncSharedStateToFolderTree(targetFolderId, mergedUids, mergedSharedWith);
-                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-                        registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+                        await executeFolderSharedMismatchMerge();
+                        setBatchDecision(moveOptions, 'folderSharedMismatch', 'merge');
                         closeShareConfirm();
-                    }
+                        await notifyDeferredResolved(moveOptions, { moved: true });
+                    },
+                    onCancel: () => notifyDeferredCancelled(moveOptions)
                 });
                 return 'deferred';
             }
@@ -847,17 +993,25 @@ export const useHomePageHandlers = ({
             const droppedShared = new Set(droppedSharedUids);
             const newUsers = targetShared.filter(uid => !droppedShared.has(uid));
             if (newUsers.length > 0) {
+                const shareDecision = getBatchDecision(moveOptions, 'folderShareToTarget');
+                if (shareDecision === 'confirm') {
+                    await executeFolderShareToTarget();
+                    return 'moved';
+                }
+
                 setShareConfirm({
                     open: true,
                     folder: targetFolder,
                     subjectId: null,
                     onConfirm: async () => {
-                        await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-                        registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+                        await executeFolderShareToTarget();
+                        setBatchDecision(moveOptions, 'folderShareToTarget', 'confirm');
                         setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
-                    }
+                        await notifyDeferredResolved(moveOptions, { moved: true });
+                    },
+                    onCancel: () => notifyDeferredCancelled(moveOptions)
                 });
-                    return 'deferred';
+                return 'deferred';
             }
         }
         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId, { preserveSharing: true });

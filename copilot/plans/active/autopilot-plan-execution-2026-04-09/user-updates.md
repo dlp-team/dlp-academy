@@ -13,3 +13,4 @@
 - 2026-04-09: Initial intake synchronized from root AUTOPILOT_PLAN.md into [sources/source-autopilot-user-spec-autopilot-plan-execution-2026-04-09.md](./sources/source-autopilot-user-spec-autopilot-plan-execution-2026-04-09.md).
 - 2026-04-09: Continued active-plan execution with major Phase 03/06/07 delivery block (bin grid duplicate/no-opacity fix, scrollbar + undo-card visual refinement, bottom-left 10s notification toast dedupe, and notification history style/icon parity).
 - 2026-04-09: Continued Phase 01 with nested list selection-border clipping fix in `FolderListItem` expanded children container.
+- 2026-04-09: Implemented Phase 02 batch move hardening with reusable single-confirmation decisions, deferred auto-continuation, and aggregated undo payload/session behavior for selection-mode bulk moves.

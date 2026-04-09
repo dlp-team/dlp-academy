@@ -193,6 +193,103 @@ describe('useHomePageHandlers shortcut sharing + role gates', () => {
     expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith('subject-1', 'source-folder', 'shared-target');
   });
 
+  it('reuses subject share confirmation decision for subsequent batch entries', async () => {
+    const config = createBaseConfig({
+      currentUserId: 'owner-1',
+      logic: {
+        folders: [
+          {
+            id: 'source-folder',
+            isShared: false,
+            ownerId: 'owner-1',
+            parentId: null,
+            sharedWithUids: [],
+            sharedWith: [],
+          },
+          {
+            id: 'shared-target',
+            isShared: true,
+            ownerId: 'owner-1',
+            parentId: null,
+            sharedWithUids: ['u-target'],
+            sharedWith: [{ uid: 'u-target', email: 'target@test.com' }],
+          },
+        ],
+        subjects: [
+          {
+            id: 'subject-1',
+            ownerId: 'owner-1',
+            folderId: 'source-folder',
+            sharedWithUids: [],
+            sharedWith: [],
+          },
+          {
+            id: 'subject-2',
+            ownerId: 'owner-1',
+            folderId: 'source-folder',
+            sharedWithUids: [],
+            sharedWith: [],
+          },
+        ],
+      },
+    });
+
+    const handlers = useHomePageHandlers(config);
+    const batchDecisions = {};
+    const setBatchDecision = vi.fn((key, value) => {
+      batchDecisions[key] = value;
+    });
+    const onDeferredResolved = vi.fn();
+
+    const firstResult = await handlers.moveSelectionEntryWithShareRules(
+      {
+        key: 'subject:subject-1',
+        type: 'subject',
+        item: { id: 'subject-1', folderId: 'source-folder' },
+      },
+      'shared-target',
+      {
+        batchDecisions,
+        setBatchDecision,
+        onDeferredResolved,
+      }
+    );
+
+    expect(firstResult).toEqual({ status: 'deferred' });
+    expect(config.setShareConfirm).toHaveBeenCalledTimes(1);
+
+    const confirmPayload = config.setShareConfirm.mock.calls[0][0];
+    await confirmPayload.onConfirm();
+
+    expect(setBatchDecision).toHaveBeenCalledWith('subjectShareToTarget', 'confirm');
+    expect(onDeferredResolved).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: 'subject:subject-1',
+        moved: true,
+      })
+    );
+
+    const secondResult = await handlers.moveSelectionEntryWithShareRules(
+      {
+        key: 'subject:subject-2',
+        type: 'subject',
+        item: { id: 'subject-2', folderId: 'source-folder' },
+      },
+      'shared-target',
+      {
+        batchDecisions,
+        setBatchDecision,
+      }
+    );
+
+    expect(secondResult).toEqual({ status: 'moved' });
+    const openedShareConfirmCalls = config.setShareConfirm.mock.calls.filter(
+      (call) => call?.[0]?.open === true
+    );
+    expect(openedShareConfirmCalls).toHaveLength(1);
+    expect(config.moveSubjectBetweenFolders).toHaveBeenCalledWith('subject-2', 'source-folder', 'shared-target');
+  });
+
   it('executes merge callback for shared mismatch move into shared target', async () => {
     const config = createBaseConfig({
       currentUserId: 'owner-1',

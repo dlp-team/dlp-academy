@@ -111,4 +111,56 @@ describe('useHomeBulkSelection', () => {
       })
     );
   });
+
+  it('aggregates undo payload across deferred batch confirmation continuations', async () => {
+    vi.useFakeTimers();
+
+    const onHomeFeedback = vi.fn();
+    const logic = createLogic();
+    const moveSelectionEntryWithShareRules = vi.fn(async (entry, _targetFolderId, moveOptions) => {
+      if (entry?.item?.id === 'subject-1' && !moveOptions?.batchDecisions?.subjectShareToTarget) {
+        moveOptions?.setBatchDecision?.('subjectShareToTarget', 'confirm');
+        window.setTimeout(() => {
+          moveOptions?.onDeferredResolved?.({ key: entry?.key, moved: true });
+        }, 0);
+        return { status: 'deferred' };
+      }
+
+      return { status: 'moved' };
+    });
+
+    const { result } = renderHook(() =>
+      useHomeBulkSelection({
+        logic,
+        isStudentRole: false,
+        onHomeFeedback,
+        moveSelectionEntryWithShareRules,
+      })
+    );
+
+    act(() => {
+      result.current.setSelectMode(true);
+      result.current.toggleSelectItem({ id: 'subject-1', folderId: null }, 'subject');
+      result.current.toggleSelectItem({ id: 'subject-2', folderId: null }, 'subject');
+    });
+
+    await act(async () => {
+      await result.current.runBulkMoveToFolder('folder-target');
+    });
+
+    await act(async () => {
+      vi.runAllTimers();
+      await Promise.resolve();
+    });
+
+    expect(moveSelectionEntryWithShareRules).toHaveBeenCalled();
+    expect(result.current.undoToast).toEqual(
+      expect.objectContaining({
+        message: 'Movimiento aplicado en 2 elemento(s).',
+      })
+    );
+    expect(result.current.selectedItems).toHaveLength(0);
+
+    vi.useRealTimers();
+  });
 });

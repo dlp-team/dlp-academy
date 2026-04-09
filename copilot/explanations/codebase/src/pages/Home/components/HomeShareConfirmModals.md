@@ -16,3 +16,11 @@
 
 ## Notes
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+
+## [2026-04-09] Deferred Batch Cancel Hook Wiring
+### Context & Behavior
+- Batch selection move continuation now relies on modal close events to know when a deferred confirmation flow was canceled.
+
+### Change
+- `closeShareConfirm` and `closeUnshareConfirm` now invoke optional `onCancel` callbacks from modal payloads before resetting modal state.
+- This keeps existing close behavior while enabling bulk move session finalization when users cancel share/unshare confirmation mid-batch.

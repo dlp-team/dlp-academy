@@ -4,8 +4,8 @@
 ## Core Functional Gates
 - [ ] Selection mode supports grouped drag/drop behavior for all selected entries.
 - [ ] Nested list selection no longer renders clipped/cropped border visuals.
-- [ ] Batch move confirmation applies a single confirmation action to all selected entries.
-- [ ] Ctrl+Z can undo most recent supported action until replaced by a new action.
+- [x] Batch move confirmation applies a single confirmation action to all selected entries.
+- [x] Ctrl+Z can undo most recent supported action until replaced by a new action.
 
 ## Bin UX Gates
 - [x] Grid press scales card and text without visual duplication artifacts.

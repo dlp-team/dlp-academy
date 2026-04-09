@@ -2,7 +2,7 @@
 # Phase 02 - Batch Confirmation and Undo Pipeline
 
 ## Status
-- PLANNED
+- IN_REVIEW
 
 ## Objective
 Guarantee single-confirmation batch move behavior and consistent Ctrl+Z undo flow for affected actions.
@@ -26,3 +26,15 @@ Guarantee single-confirmation batch move behavior and consistent Ctrl+Z undo flo
 - One confirmation controls full batch action path.
 - Undo fully restores entire affected batch where supported.
 - Ctrl+Z behavior matches replacement-policy expectations.
+
+## Implementation Update (2026-04-09)
+- Added batch-decision propagation in Home move handlers so shared/unshare confirmations can be reused for remaining entries in the same bulk session.
+- Added deferred-resolution callbacks from confirmation modals to bulk-selection orchestration so batch execution resumes automatically after confirmation.
+- Updated bulk selection move orchestration to keep a single session state (snapshots, moved keys, decision cache, failures) across deferred confirmations.
+- Consolidated undo toast payload to represent all moved entries in the batch session instead of partial pre-confirm subsets.
+
+## Validation Evidence (2026-04-09)
+- `get_errors` on touched runtime and test files -> PASS.
+- `npx vitest run tests/unit/hooks/useHomeBulkSelection.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js tests/unit/hooks/useHomePageHandlers.dndMatrix.test.js` -> PASS (47 tests).
+- `npm run lint` -> PASS.
+- `npx tsc --noEmit` -> PASS.
