@@ -20,7 +20,7 @@
 ## Institution Customization Gates
 - [ ] Preview behavior remains parity-safe and does not require secondary auth account.
 - [ ] Reset action restores to last saved colors, not hardcoded defaults.
-- [ ] Saved theme sets can be persisted and reapplied.
+- [x] Saved theme sets can be persisted and reapplied.
 
 ## Visual System Gates
 - [x] Global scrollbar has transparent track and neutral theme-adaptive thumb colors.

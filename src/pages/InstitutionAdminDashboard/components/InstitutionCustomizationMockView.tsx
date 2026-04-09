@@ -52,9 +52,21 @@ const buildSafeForm = (candidate: any, fallback: any = DEFAULTS) => {
   return safe;
 };
 
+const buildThemeSetColorsFromForm = (source: any = {}) => {
+  const safe = buildSafeForm(source, DEFAULTS);
+  return {
+    primary: safe.primary,
+    secondary: safe.secondary,
+    accent: safe.accent,
+    cardBorder: safe.cardBorder,
+  };
+};
+
 const InstitutionCustomizationMockView = ({
   initialValues,
+  themeSets = [],
   onSave,
+  onSaveThemeSet,
   className = '',
   previewPaletteApply = null,
   previewMode = 'live',
@@ -71,9 +83,13 @@ const InstitutionCustomizationMockView = ({
   const [iframeReady, setIframeReady] = useState(false);
   const [showSaveConfirmation, setShowSaveConfirmation] = useState(false);
   const [showResetConfirmation, setShowResetConfirmation] = useState(false);
+  const [themeSetName, setThemeSetName] = useState('');
+  const [themeSetError, setThemeSetError] = useState('');
+  const [themeSetSaving, setThemeSetSaving] = useState(false);
   const iframeRef = useRef<any>(null);
 
   const initialValuesKey = useMemo(() => JSON.stringify(initialValues || {}), [initialValues]);
+  const resolvedThemeSets = useMemo(() => (Array.isArray(themeSets) ? themeSets : []), [themeSets]);
 
   useEffect(() => {
     const next = buildSafeForm({ ...DEFAULTS, ...(initialValues || {}) });
@@ -117,6 +133,39 @@ const InstitutionCustomizationMockView = ({
     setForm((previous: any) => buildSafeForm({ ...previous, [field]: value }, previous));
     setSaved(false);
   }, []);
+
+  const handleApplyThemeSet = useCallback((themeSet: any) => {
+    const nextColors = buildThemeSetColorsFromForm(themeSet?.colors || {});
+    setForm((previous: any) => buildSafeForm({ ...previous, ...nextColors }, previous));
+    setSaved(false);
+    setActiveToken(null);
+  }, []);
+
+  const handleSaveThemeSet = useCallback(async () => {
+    if (typeof onSaveThemeSet !== 'function') return;
+
+    const normalizedName = themeSetName.trim();
+    if (!normalizedName) {
+      setThemeSetError('Escribe un nombre para guardar el tema.');
+      return;
+    }
+
+    setThemeSetSaving(true);
+    setThemeSetError('');
+
+    try {
+      await onSaveThemeSet({
+        name: normalizedName,
+        colors: buildThemeSetColorsFromForm(form),
+      });
+      setThemeSetName('');
+    } catch (error) {
+      console.error('Error saving theme set from customization editor:', error);
+      setThemeSetError('No se pudo guardar el tema personalizado.');
+    } finally {
+      setThemeSetSaving(false);
+    }
+  }, [onSaveThemeSet, themeSetName, form]);
 
   const handleFocus = useCallback((token: any) => {
     setActiveToken(token);
@@ -249,6 +298,76 @@ const InstitutionCustomizationMockView = ({
                       isActive={activeToken === token.id}
                     />
                   ))}
+                </div>
+              </section>
+
+              <section>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Temas guardados</label>
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={themeSetName}
+                    onChange={(event) => setThemeSetName(event.target.value)}
+                    className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-700 dark:text-slate-200 outline-none focus:ring-2 focus:ring-indigo-500"
+                    placeholder="Nombre del tema"
+                    data-testid="theme-set-name-input"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveThemeSet}
+                    disabled={themeSetSaving || saving}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white disabled:opacity-70"
+                    style={{ backgroundColor: form.primary }}
+                    data-testid="theme-set-save-button"
+                  >
+                    {themeSetSaving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+                    {themeSetSaving ? 'Guardando...' : 'Guardar tema'}
+                  </button>
+                </div>
+                {themeSetError && (
+                  <p className="mt-2 text-[11px] font-medium text-red-600 dark:text-red-300">{themeSetError}</p>
+                )}
+
+                <div className="mt-3 space-y-2 max-h-40 overflow-y-auto pr-1" data-testid="theme-set-list">
+                  {resolvedThemeSets.length === 0 ? (
+                    <p className="text-[11px] text-slate-400">Aún no hay temas guardados.</p>
+                  ) : (
+                    resolvedThemeSets.map((themeSet: any) => {
+                      const safeColors = buildThemeSetColorsFromForm(themeSet?.colors || {});
+
+                      return (
+                        <div
+                          key={themeSet.id}
+                          className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/90 dark:bg-slate-800/60 p-2.5"
+                          data-testid={`theme-set-item-${themeSet.id}`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 truncate" title={themeSet.name}>
+                              {themeSet.name}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => handleApplyThemeSet(themeSet)}
+                              className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-600 text-[11px] font-semibold text-slate-600 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700"
+                              data-testid={`theme-set-apply-${themeSet.id}`}
+                            >
+                              Aplicar
+                            </button>
+                          </div>
+                          <div className="mt-2 flex items-center gap-1.5">
+                            {COLOR_FIELDS.map((token: any) => (
+                              <span
+                                key={token}
+                                className="w-4 h-4 rounded border border-slate-200 dark:border-slate-700"
+                                style={{ backgroundColor: safeColors[token] }}
+                                title={`${token}: ${safeColors[token]}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </section>
             </div>

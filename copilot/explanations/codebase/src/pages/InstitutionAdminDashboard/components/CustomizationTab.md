@@ -20,6 +20,11 @@
 - `./InstitutionCustomizationMockView`
 
 ## Changelog
+### 2026-04-09
+- Added saved-theme plumbing into the editor surface:
+	- receives `savedThemeSets` from dashboard customization state,
+	- forwards `savedThemeSets` and `onSaveThemeSet` into `InstitutionCustomizationMockView`.
+
 ### 2026-04-02
 - Retained palette suggestion bridge and editor wiring while preview internals moved to exact Home-surface rendering in `InstitutionCustomizationMockView`.
 

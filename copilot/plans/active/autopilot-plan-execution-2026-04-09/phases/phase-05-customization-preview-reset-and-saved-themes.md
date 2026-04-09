@@ -2,7 +2,7 @@
 # Phase 05 - Customization Preview, Reset, and Saved Themes
 
 ## Status
-- PLANNED
+- IN_PROGRESS
 
 ## Objective
 Stabilize institution customization behavior for preview fidelity, reset-to-saved behavior, and reusable saved theme sets.
@@ -26,3 +26,23 @@ Stabilize institution customization behavior for preview fidelity, reset-to-save
 - Preview path remains real-component based and stable.
 - Reset returns to saved snapshot.
 - Saved themes can be stored and reapplied reliably.
+
+## Implementation Updates
+### 2026-04-09 - Saved Theme Sets Persistence + Apply Flow
+- Added persisted saved-theme support in [src/pages/InstitutionAdminDashboard/hooks/useCustomization.ts](../../../../../src/pages/InstitutionAdminDashboard/hooks/useCustomization.ts):
+	- normalize + hydrate `customization.themeSets` into hook state,
+	- persist named theme sets with Firestore nested path updates,
+	- expose saved-theme collection and save callback to dashboard customization flow.
+- Wired saved-theme props across:
+	- [src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx](../../../../../src/pages/InstitutionAdminDashboard/InstitutionAdminDashboard.tsx)
+	- [src/pages/InstitutionAdminDashboard/components/CustomizationTab.tsx](../../../../../src/pages/InstitutionAdminDashboard/components/CustomizationTab.tsx)
+	- [src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx](../../../../../src/pages/InstitutionAdminDashboard/components/InstitutionCustomizationMockView.tsx)
+- Added editor-side controls to save current palette and reapply stored theme sets.
+- Added focused coverage in [tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx](../../../../../tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx) for:
+	- save current palette as named theme set,
+	- apply persisted theme set colors to the active form.
+- Validation:
+	- `get_errors` on touched files -> PASS
+	- `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` -> PASS (25 tests)
+	- `npm run lint` -> PASS
+	- `npx tsc --noEmit` -> PASS

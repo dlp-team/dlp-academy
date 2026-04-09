@@ -1,4 +1,4 @@
-// src/pages/InstitutionAdminDashboard/hooks/useCustomization.js
+// src/pages/InstitutionAdminDashboard/hooks/useCustomization.ts
 import { useState, useEffect } from 'react';
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { httpsCallable } from 'firebase/functions';
@@ -24,10 +24,42 @@ export const DEFAULT_CUSTOMIZATION_FORM = {
   homeThemeColors: { ...HOME_THEME_DEFAULT_COLORS },
 };
 
+const normalizeThemeSetColors = (colors: any = {}) => ({
+  primary: normalizeHexColor(colors?.primary) || GLOBAL_BRAND_DEFAULTS.primaryColor,
+  secondary: normalizeHexColor(colors?.secondary) || GLOBAL_BRAND_DEFAULTS.secondaryColor,
+  accent: normalizeHexColor(colors?.accent) || GLOBAL_BRAND_DEFAULTS.tertiaryColor,
+  cardBorder: normalizeHexColor(colors?.cardBorder) || HOME_THEME_DEFAULT_COLORS.cardBorder,
+});
+
+const normalizeSavedThemeSets = (themeSetsSource: any) => {
+  const source = themeSetsSource || {};
+  const entries = Array.isArray(source)
+    ? source.map((entry: any) => [entry?.id, entry])
+    : Object.entries(source);
+
+  return entries
+    .map(([fallbackId, entry]: any) => {
+      const id = String(entry?.id || fallbackId || '').trim();
+      const name = String(entry?.name || '').trim();
+      if (!id || !name) return null;
+
+      return {
+        id,
+        name,
+        colors: normalizeThemeSetColors(entry?.colors || entry),
+        createdAt: entry?.createdAt || null,
+        updatedAt: entry?.updatedAt || null,
+      };
+    })
+    .filter(Boolean)
+    .sort((left: any, right: any) => String(left?.name || '').localeCompare(String(right?.name || ''), 'es', { sensitivity: 'base' }));
+};
+
 export const useCustomization = (user, institutionIdOverride = null) => {
   const effectiveInstitutionId = institutionIdOverride || user?.institutionId || null;
   const [institutionName, setInstitutionName] = useState('');
   const [customizationForm, setCustomizationForm] = useState(DEFAULT_CUSTOMIZATION_FORM);
+  const [savedThemeSets, setSavedThemeSets] = useState<any[]>([]);
   const [customizationLoading, setCustomizationLoading] = useState(false);
   const [customizationSaving, setCustomizationSaving] = useState(false);
   const [customizationError, setCustomizationError] = useState('');
@@ -76,6 +108,7 @@ export const useCustomization = (user, institutionIdOverride = null) => {
           tertiaryBrandColor: branding.tertiaryColor || GLOBAL_BRAND_DEFAULTS.tertiaryColor,
           homeThemeColors: resolvedColors,
         });
+        setSavedThemeSets(normalizeSavedThemeSets(customizationData.themeSets));
       } catch (error) {
         console.error('Error loading institution customization:', error);
         if (active) setCustomizationError('No se pudo cargar la personalización de la institución.');
@@ -272,6 +305,54 @@ export const useCustomization = (user, institutionIdOverride = null) => {
     }
   };
 
+  const handleSaveThemeSet = async ({ name, colors }: any = {}) => {
+    if (!effectiveInstitutionId) return null;
+
+    const normalizedName = String(name || '').trim();
+    if (!normalizedName) {
+      throw new Error('El nombre del tema es obligatorio.');
+    }
+
+    const normalizedColors = normalizeThemeSetColors(colors || {});
+    const themeSetId = `theme_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    setCustomizationError('');
+    setCustomizationSuccess('');
+
+    try {
+      const institutionRef = doc(db, 'institutions', effectiveInstitutionId);
+      await updateDoc(institutionRef, {
+        [`customization.themeSets.${themeSetId}`]: {
+          id: themeSetId,
+          name: normalizedName,
+          colors: normalizedColors,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        },
+        updatedAt: serverTimestamp(),
+      });
+
+      const localThemeSet = {
+        id: themeSetId,
+        name: normalizedName,
+        colors: normalizedColors,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setSavedThemeSets((previous: any[]) => (
+        [...previous, localThemeSet]
+          .sort((left: any, right: any) => String(left?.name || '').localeCompare(String(right?.name || ''), 'es', { sensitivity: 'base' }))
+      ));
+      setCustomizationSuccess(`Tema "${normalizedName}" guardado correctamente.`);
+      return localThemeSet;
+    } catch (error) {
+      console.error('Error saving customization theme set:', error);
+      setCustomizationError('No se pudo guardar el tema personalizado. Inténtalo de nuevo.');
+      throw error;
+    }
+  };
+
   const customizationInitialValues = {
     institutionName: customizationForm.institutionDisplayName || institutionName || '',
     logoUrl: customizationForm.logoUrl || '',
@@ -287,6 +368,7 @@ export const useCustomization = (user, institutionIdOverride = null) => {
     institutionName,
     customizationForm,
     setCustomizationForm,
+    savedThemeSets,
     customizationLoading,
     customizationSaving,
     customizationError,
@@ -297,6 +379,7 @@ export const useCustomization = (user, institutionIdOverride = null) => {
     handleLogoUpload,
     handleLogoUrlSave,
     handleSaveCustomization,
+    handleSaveThemeSet,
     customizationInitialValues,
   };
 };

@@ -1,4 +1,4 @@
-// src/pages/InstitutionAdminDashboard/components/CustomizationTab.jsx
+// src/pages/InstitutionAdminDashboard/components/CustomizationTab.tsx
 //
 // Self-contained tab content for the Personalización tab.
 // Wires BrandingSection (icon/logo + palette extraction) with
@@ -24,6 +24,7 @@ const CustomizationTab = ({
   customizationError,
   customizationSuccess,
   customizationForm,
+  savedThemeSets,
   institutionName,
   iconUploading,
   iconUploadError,
@@ -32,6 +33,7 @@ const CustomizationTab = ({
   onLogoUpload,
   onLogoUrlSave,
   onSaveCustomization,
+  onSaveThemeSet,
 }: any) => {
   // Holds the last swatch the user clicked in BrandingSection.
   // Passed to InstitutionCustomizationMockView as a prop so it can apply the
@@ -84,7 +86,9 @@ const CustomizationTab = ({
         <InstitutionCustomizationMockView
           className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
           initialValues={customizationInitialValues}
+          themeSets={savedThemeSets}
           onSave={onSaveCustomization}
+          onSaveThemeSet={onSaveThemeSet}
           previewPaletteApply={previewPaletteApply}
         />
       </div>

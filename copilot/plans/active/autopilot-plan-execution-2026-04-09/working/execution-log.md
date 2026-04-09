@@ -60,4 +60,14 @@
 - Validation updates for phase-03 closure block:
 	- `get_errors` on touched runtime/test files -> PASS.
 	- `npx vitest run tests/unit/components/BinView.listPressState.test.jsx tests/unit/components/BinGridItem.test.jsx` -> PASS (5 tests).
+- Phase 05 saved-theme persistence + reapply block:
+	- Added saved-theme collection normalization/hydration and Firestore persistence callback in `useCustomization`.
+	- Wired saved-theme state and save callback through dashboard -> customization tab -> customization editor.
+	- Added theme-set controls in customization editor to save current palette by name and reapply saved sets deterministically.
+	- Added focused unit coverage for saved-theme save and apply flows.
+- Validation updates for phase-05 block:
+	- `get_errors` on touched runtime/test files -> PASS.
+	- `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx` -> PASS (25 tests).
+	- `npm run lint` -> PASS.
+	- `npx tsc --noEmit` -> PASS.
 - Pending: continue checklist Step 7+ execution with phases 01 and 05, then run manual verification promotion for phases currently in review.

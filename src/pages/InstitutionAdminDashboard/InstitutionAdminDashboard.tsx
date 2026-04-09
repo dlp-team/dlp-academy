@@ -179,6 +179,7 @@ const InstitutionAdminDashboard = ({ user }: any) => {
             customizationError={customization.customizationError}
             customizationSuccess={customization.customizationSuccess}
             customizationForm={customization.customizationForm}
+            savedThemeSets={customization.savedThemeSets}
             institutionName={customization.institutionName}
             iconUploading={customization.iconUploading}
             iconUploadError={customization.iconUploadError}
@@ -187,6 +188,7 @@ const InstitutionAdminDashboard = ({ user }: any) => {
             onLogoUpload={customization.handleLogoUpload}
             onLogoUrlSave={customization.handleLogoUrlSave}
             onSaveCustomization={customization.handleSaveCustomization}
+            onSaveThemeSet={customization.handleSaveThemeSet}
           />
         )}
       </main>

@@ -25,6 +25,13 @@
 - `./customization/CustomizationHomeExactPreview`
 
 ## Changelog
+### 2026-04-09
+- Added saved-theme-set controls in the editor sidebar:
+	- save current palette as a named theme set,
+	- list hydrated saved themes,
+	- reapply saved colors into the live form without implicit persistence.
+- Added inline validation/error feedback for missing theme name and persistence failures.
+
 ### 2026-04-08
 - Added reset confirmation parity using `DashboardOverlayShell` so both save and reset actions are confirmation-gated.
 - Updated live iframe default route source from authenticated Home flow to `/theme-preview?role=teacher`.

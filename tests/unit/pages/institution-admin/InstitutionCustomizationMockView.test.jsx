@@ -134,6 +134,57 @@ describe('InstitutionCustomizationMockView', () => {
     });
   });
 
+  it('saves the current palette as a named theme set', async () => {
+    const onSaveThemeSet = vi.fn(async () => {});
+    renderCustomizationPreview({ onSaveThemeSet });
+
+    const [primaryColorInput] = screen.getAllByPlaceholderText('#000000');
+    fireEvent.change(primaryColorInput, { target: { value: '#123456' } });
+
+    fireEvent.change(screen.getByTestId('theme-set-name-input'), {
+      target: { value: 'Tema oceánico' },
+    });
+
+    fireEvent.click(screen.getByTestId('theme-set-save-button'));
+
+    await waitFor(() => {
+      expect(onSaveThemeSet).toHaveBeenCalledTimes(1);
+    });
+
+    expect(onSaveThemeSet.mock.calls[0][0]).toMatchObject({
+      name: 'Tema oceánico',
+      colors: expect.objectContaining({
+        primary: '#123456',
+      }),
+    });
+  });
+
+  it('applies a saved theme set into the current form colors', async () => {
+    renderCustomizationPreview({
+      themeSets: [
+        {
+          id: 'theme-coral',
+          name: 'Coral vivo',
+          colors: {
+            primary: '#e76f51',
+            secondary: '#264653',
+            accent: '#f4a261',
+            cardBorder: '#2a9d8f',
+          },
+        },
+      ],
+    });
+
+    fireEvent.click(screen.getByTestId('theme-set-apply-theme-coral'));
+
+    await waitFor(() => {
+      expect(screen.getAllByDisplayValue('#e76f51').length).toBeGreaterThan(0);
+      expect(screen.getAllByDisplayValue('#264653').length).toBeGreaterThan(0);
+      expect(screen.getAllByDisplayValue('#f4a261').length).toBeGreaterThan(0);
+      expect(screen.getAllByDisplayValue('#2a9d8f').length).toBeGreaterThan(0);
+    });
+  });
+
   it('dispatches live preview message payload to iframe and updates role payload', async () => {
     renderCustomizationLivePreview();
 
