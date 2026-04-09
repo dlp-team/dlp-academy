@@ -94,6 +94,64 @@ describe('useHomeKeyboardShortcuts edge cases', () => {
     expect(logic.updateSubject).not.toHaveBeenCalled();
   });
 
+  it('undoes copied subject created through Ctrl+C then Ctrl+V', async () => {
+    const subject = { id: 'subject-1', name: 'Biologia', ownerId: 'user-1', folderId: null, topics: [] };
+    const logic = createLogic({
+      subjects: [subject],
+      currentFolder: { id: 'target-folder' },
+      addSubject: vi.fn(async () => 'subject-copy-1'),
+    });
+
+    const { result } = renderHook(() => useHomeKeyboardShortcuts({ user, logic }));
+    await act(async () => {
+      result.current.handleCardFocus(subject, 'subject');
+    });
+
+    await act(async () => {
+      await getHandlers().onCopy({});
+    });
+
+    await act(async () => {
+      await getHandlers().onPaste({});
+    });
+
+    await act(async () => {
+      await getHandlers().onUndo({});
+    });
+
+    expect(logic.addSubject).toHaveBeenCalled();
+    expect(logic.deleteSubject).toHaveBeenCalledWith('subject-copy-1');
+  });
+
+  it('undoes copied folder created through Ctrl+C then Ctrl+V', async () => {
+    const folder = { id: 'folder-source', name: 'Proyecto', ownerId: 'user-1', parentId: null };
+    const logic = createLogic({
+      folders: [folder],
+      currentFolder: { id: 'target-parent' },
+      addFolder: vi.fn(async () => ({ id: 'folder-copy-1' })),
+    });
+
+    const { result } = renderHook(() => useHomeKeyboardShortcuts({ user, logic }));
+    await act(async () => {
+      result.current.handleCardFocus(folder, 'folder');
+    });
+
+    await act(async () => {
+      await getHandlers().onCopy({});
+    });
+
+    await act(async () => {
+      await getHandlers().onPaste({});
+    });
+
+    await act(async () => {
+      await getHandlers().onUndo({});
+    });
+
+    expect(logic.addFolder).toHaveBeenCalled();
+    expect(logic.deleteFolder).toHaveBeenCalledWith('folder-copy-1');
+  });
+
   it('blocks folder self-move and descendant moves', async () => {
     const folder = { id: 'folder-1', name: 'Raiz', ownerId: 'user-1', parentId: null };
     const logicSelf = createLogic({

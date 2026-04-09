@@ -4,6 +4,7 @@ import { useKeyShortcuts } from '../../../hooks/useKeyShortcuts';
 import { canEdit, isShortcutItem } from '../../../utils/permissionUtils';
 import { isInvalidFolderMove } from '../../../utils/folderUtils';
 import { buildFolderClonePayload, buildSubjectClonePayload } from '../utils/homeKeyboardClipboardUtils';
+import { cloneSubjectTopicsAndResources } from '../utils/homeKeyboardDeepCopyUtils';
 
 export const useHomeKeyboardShortcuts = ({
     user,
@@ -31,6 +32,11 @@ export const useHomeKeyboardShortcuts = ({
 
     const showFeedback = useCallback((message: any) => {
         setShortcutFeedback(message || '');
+    }, []);
+
+    const loadFirestoreDb = useCallback(async () => {
+        const firebaseModule: any = await import('../../../firebase/config');
+        return firebaseModule?.db;
     }, []);
 
     const clearUndoToast = useCallback(() => {
@@ -229,7 +235,47 @@ export const useHomeKeyboardShortcuts = ({
                     }
 
                     const clonePayload = buildSubjectClonePayload(source, targetFolderId, user);
-                    await logic.addSubject(clonePayload);
+                    const createdSubjectId = await logic.addSubject(clonePayload);
+
+                    registerUndoAction(
+                        {
+                            action: 'create-subject',
+                            id: createdSubjectId,
+                            label: source.name || 'Asignatura'
+                        },
+                        {
+                            message: `Copia creada: ${source.name || 'Asignatura'}.`
+                        }
+                    );
+
+                    const hasTopicsToCopy = Array.isArray(source?.topics) && source.topics.length > 0;
+                    if (createdSubjectId && hasTopicsToCopy) {
+                        try {
+                            const db = await loadFirestoreDb();
+                            const deepCopySummary = await cloneSubjectTopicsAndResources({
+                                db,
+                                sourceSubjectId: source.id,
+                                targetSubjectId: createdSubjectId,
+                                user,
+                                institutionId: clonePayload?.institutionId || source?.institutionId || user?.institutionId || null
+                            });
+
+                            if (deepCopySummary.topicsCopied > 0 && typeof logic?.updateSubject === 'function') {
+                                await logic.updateSubject(createdSubjectId, { topicCount: deepCopySummary.topicsCopied });
+                            }
+
+                            if (deepCopySummary.topicsCopied > 0 || deepCopySummary.resourcesCopied > 0) {
+                                showFeedback(
+                                    `Asignatura creada: ${source.name || 'Copia de asignatura'} (${deepCopySummary.topicsCopied} tema(s), ${deepCopySummary.resourcesCopied} recurso(s) copiados).`
+                                );
+                                return true;
+                            }
+                        } catch (deepCopyError: any) {
+                            console.error('Error copying nested subject content with Ctrl+V:', deepCopyError);
+                            showFeedback(`Asignatura creada: ${source.name || 'Copia de asignatura'} (sin copiar todo el contenido relacionado).`);
+                            return true;
+                        }
+                    }
 
                     showFeedback(`Asignatura creada: ${source.name || 'Copia de asignatura'}.`);
                     return true;
@@ -249,6 +295,17 @@ export const useHomeKeyboardShortcuts = ({
                         sharedWith: [],
                         sharedWithUids: []
                     });
+
+                    registerUndoAction(
+                        {
+                            action: 'create-folder',
+                            id: createdFolder.id,
+                            label: sourceFolder.name || 'Carpeta'
+                        },
+                        {
+                            message: `Copia creada: ${sourceFolder.name || 'Carpeta'}.`
+                        }
+                    );
                 }
 
                 showFeedback(`Carpeta creada: ${sourceFolder.name || 'Copia de carpeta'}.`);
@@ -307,7 +364,7 @@ export const useHomeKeyboardShortcuts = ({
             showFeedback('No se pudo completar el pegado.');
             return true;
         }
-    }, [clipboard, isTypingTarget, logic, showFeedback, user]);
+    }, [clipboard, isTypingTarget, logic, showFeedback, user, registerUndoAction, loadFirestoreDb]);
 
     const onUndo = useCallback(async (event: any) => {
         if (isTypingTarget(event)) return false;

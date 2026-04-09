@@ -13,8 +13,8 @@
 - [ ] List mode press-state styling is visually consistent with grid behavior.
 
 ## Shortcut & Ownership Gates
-- [ ] `Ctrl+C`/`Ctrl+V` copy creates owner-scoped non-shared duplicate.
-- [ ] `Ctrl+X`/`Ctrl+V` supports undo restoration via `Ctrl+Z`.
+- [x] `Ctrl+C`/`Ctrl+V` copy creates owner-scoped non-shared duplicate.
+- [x] `Ctrl+X`/`Ctrl+V` supports undo restoration via `Ctrl+Z`.
 - [ ] Copy includes nested topic content (quizzes/documents/exams) and required metadata handling.
 
 ## Institution Customization Gates

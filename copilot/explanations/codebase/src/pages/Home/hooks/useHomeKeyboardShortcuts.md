@@ -1,6 +1,15 @@
 // copilot/explanations/codebase/src/pages/Home/hooks/useHomeKeyboardShortcuts.md
 
 ## Changelog
+### 2026-04-09: Copy/paste undo parity + deep subject content clone
+- Added copy-flow undo registration for Ctrl+C/Ctrl+V:
+	- subject copy registers `create-subject`,
+	- folder copy registers `create-folder`.
+- Added deep subject copy continuation when source has topics:
+	- clones topic tree into the new subject,
+	- clones topic-linked resources in `documents`, `resumen`, `quizzes`, `exams`, and `examns`.
+- Added lazy Firebase DB loading inside paste flow so deep-copy logic only initializes when needed.
+
 ### 2026-04-08: Shared undo registration + toast lifecycle for keyboard flows
 - Added `registerUndoAction(...)` API that stores normalized action payloads in keyboard undo stack and emits a 5-second undo toast.
 - Added `undoToast`, `undoLatestActionFromToast`, and `clearUndoToast` outputs for shared page-level undo UI integration.

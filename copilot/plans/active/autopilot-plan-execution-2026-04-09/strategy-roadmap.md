@@ -21,7 +21,7 @@ Execute the new AUTOPILOT request with strict lossless behavior preservation, me
 - Phase 01: IN_PROGRESS
 - Phase 02: IN_REVIEW
 - Phase 03: IN_REVIEW
-- Phase 04: PLANNED
+- Phase 04: IN_PROGRESS
 - Phase 05: PLANNED
 - Phase 06: IN_REVIEW
 - Phase 07: IN_REVIEW

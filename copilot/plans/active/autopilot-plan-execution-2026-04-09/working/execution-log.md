@@ -28,4 +28,13 @@
 	- `npx vitest run tests/unit/hooks/useHomeBulkSelection.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js tests/unit/hooks/useHomePageHandlers.dndMatrix.test.js` -> PASS.
 	- `npm run lint` -> PASS.
 	- `npx tsc --noEmit` -> PASS.
-- Pending: continue checklist Step 7+ execution with phases 01, 04, and 05, plus manual verification promotion for phases in review.
+- Phase 04 continuation block:
+	- Added deep subject nested-content copy helper (`homeKeyboardDeepCopyUtils`) for keyboard copy/paste workflows.
+	- Subject copy now clones associated topic tree and topic-linked resources (`documents`, `resumen`, `quizzes`, `exams`, `examns`) when source topics exist.
+	- Added keyboard copy undo parity by registering `create-subject` / `create-folder` actions for Ctrl+C/Ctrl+V flows.
+	- Added dedicated shortcut unit tests proving copy-created subject/folder entities can be undone with Ctrl+Z.
+- Validation updates for Phase 04 continuation block:
+	- `npx vitest run tests/unit/hooks/useHomeKeyboardShortcuts.test.js tests/unit/hooks/useHomeBulkSelection.test.js tests/unit/hooks/useHomePageHandlers.shortcutsRoles.test.js tests/unit/hooks/useHomePageHandlers.dndMatrix.test.js` -> PASS.
+	- `npm run lint` -> PASS.
+	- `npx tsc --noEmit` -> PASS.
+- Pending: continue checklist Step 7+ execution with phases 01 and 05, finalize remaining Phase 04 deep-copy parity cases, and run manual verification promotion for phases in review.

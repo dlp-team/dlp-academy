@@ -14,3 +14,4 @@
 - 2026-04-09: Continued active-plan execution with major Phase 03/06/07 delivery block (bin grid duplicate/no-opacity fix, scrollbar + undo-card visual refinement, bottom-left 10s notification toast dedupe, and notification history style/icon parity).
 - 2026-04-09: Continued Phase 01 with nested list selection-border clipping fix in `FolderListItem` expanded children container.
 - 2026-04-09: Implemented Phase 02 batch move hardening with reusable single-confirmation decisions, deferred auto-continuation, and aggregated undo payload/session behavior for selection-mode bulk moves.
+- 2026-04-09: Started Phase 04 continuation by adding copy/paste undo parity (`create-subject` / `create-folder`) and deep subject nested-content cloning for topics + topic-linked resources during keyboard copy workflows.
