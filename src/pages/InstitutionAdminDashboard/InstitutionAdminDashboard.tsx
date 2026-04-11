@@ -174,6 +174,7 @@ const InstitutionAdminDashboard = ({ user }: any) => {
         {/* ── Customization tab ── */}
         {activeTab === 'customization' && (
           <CustomizationTab
+            previewUser={user}
             customizationLoading={customization.customizationLoading}
             customizationSaving={customization.customizationSaving}
             customizationError={customization.customizationError}

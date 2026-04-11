@@ -33,6 +33,7 @@ const AppToast = ({
     type,
     variant,
     durationMs = 10000,
+    positionClassName = 'bottom-5 left-5',
     onClose,
 }: any) => {
     useEffect(() => {
@@ -62,7 +63,7 @@ const AppToast = ({
     return (
         <div
             data-testid="app-toast"
-            className="fixed bottom-5 left-5 z-[100] w-[min(92vw,420px)] animate-in slide-in-from-bottom-4 fade-in duration-300"
+            className={`fixed z-[100] w-[min(92vw,420px)] animate-in slide-in-from-bottom-4 fade-in duration-300 ${positionClassName}`}
         >
             <div
                 className={`rounded-xl border px-4 py-3 shadow-lg backdrop-blur-sm ${visualClasses.toastSurface} ${visualClasses.toastBorder}`}
@@ -81,14 +82,16 @@ const AppToast = ({
                         </p>
                     </div>
 
-                    <button
-                        type="button"
-                        onClick={onClose}
-                        className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
-                        aria-label="Cerrar notificacion"
-                    >
-                        <X className="h-4 w-4" />
-                    </button>
+                    {typeof onClose === 'function' && (
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                            aria-label="Cerrar notificacion"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

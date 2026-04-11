@@ -22,8 +22,8 @@ const BinGridItem = React.forwardRef<any, any>(({ item, itemType = 'subject', us
         <div
             ref={ref}
             data-testid={`bin-grid-wrapper-${itemType}-${item.id}`}
-            className={`transition-all duration-200 ${
-                overlayHidden ? 'opacity-0 pointer-events-none'
+            className={`transition-[transform,filter,box-shadow] duration-200 ${
+                overlayHidden ? 'invisible pointer-events-none'
                 :
                 showPressedState ? 'relative scale-[1.01]'
                 : isSelected ? 'relative'

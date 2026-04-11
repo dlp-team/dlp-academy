@@ -312,17 +312,49 @@ export const useHomeBulkSelection = ({
                         }
 
                         if (snapshot?.type === 'subject') {
-                            await logic.updateSubject(snapshot.id, { folderId: snapshot.previousParentId || null });
+                            const subjectUndoPayload: any = {
+                                folderId: snapshot.previousParentId || null,
+                            };
+
+                            if (Array.isArray(snapshot.previousSharedWithUids)) {
+                                subjectUndoPayload.sharedWithUids = [...snapshot.previousSharedWithUids];
+                            }
+
+                            if (Array.isArray(snapshot.previousSharedWith)) {
+                                subjectUndoPayload.sharedWith = [...snapshot.previousSharedWith];
+                            }
+
+                            if (typeof snapshot.previousIsShared === 'boolean') {
+                                subjectUndoPayload.isShared = snapshot.previousIsShared;
+                            }
+
+                            await logic.updateSubject(snapshot.id, subjectUndoPayload);
                             continue;
                         }
 
                         if (snapshot?.type === 'folder') {
-                            await logic.updateFolder(snapshot.id, { parentId: snapshot.previousParentId || null });
+                            const folderUndoPayload: any = {
+                                parentId: snapshot.previousParentId || null,
+                            };
+
+                            if (Array.isArray(snapshot.previousSharedWithUids)) {
+                                folderUndoPayload.sharedWithUids = [...snapshot.previousSharedWithUids];
+                            }
+
+                            if (Array.isArray(snapshot.previousSharedWith)) {
+                                folderUndoPayload.sharedWith = [...snapshot.previousSharedWith];
+                            }
+
+                            if (typeof snapshot.previousIsShared === 'boolean') {
+                                folderUndoPayload.isShared = snapshot.previousIsShared;
+                            }
+
+                            await logic.updateFolder(snapshot.id, folderUndoPayload);
                         }
                     }
 
-                    setSelectionFromEntries(undoSnapshots.map((snapshot: any) => snapshot.entry));
-                    setSelectMode(true);
+                    clearSelection();
+                    setSelectMode(false);
                 }
             });
         }
@@ -368,6 +400,15 @@ export const useHomeBulkSelection = ({
                     id: entry?.item?.id,
                     shortcutId: entry?.item?.shortcutId || null,
                     previousParentId: getEntrySourceParentId(entry),
+                    previousSharedWithUids: Array.isArray(entry?.item?.sharedWithUids)
+                        ? [...entry.item.sharedWithUids]
+                        : null,
+                    previousSharedWith: Array.isArray(entry?.item?.sharedWith)
+                        ? [...entry.item.sharedWith]
+                        : null,
+                    previousIsShared: typeof entry?.item?.isShared === 'boolean'
+                        ? entry.item.isShared
+                        : null,
                     entry
                 });
             }

@@ -1,4 +1,5 @@
 // src/pages/InstitutionAdminDashboard/components/customization/themePreviewUtils.ts
+// src/pages/InstitutionAdminDashboard/components/customization/themePreviewUtils.ts
 import { Monitor, Smartphone, Tablet } from 'lucide-react';
 import {
   INSTITUTION_PREVIEW_MESSAGE_SOURCE,
@@ -207,10 +208,46 @@ const TOKEN_HIGHLIGHT_MESSAGES = {
   cardBorder: 'Resaltando bordes de tarjetas y paneles.',
 };
 
+const sanitizePreviewUserForMessage = (previewUser: any) => {
+  if (!previewUser || typeof previewUser !== 'object') {
+    return null;
+  }
+
+  const normalizedRoles = Array.from(new Set(
+    [
+      previewUser?.activeRole,
+      previewUser?.role,
+      ...(Array.isArray(previewUser?.roles) ? previewUser.roles : []),
+      ...(Array.isArray(previewUser?.availableRoles) ? previewUser.availableRoles : []),
+    ]
+      .map((roleEntry: any) => String(roleEntry || '').trim().toLowerCase())
+      .filter(Boolean)
+  ));
+
+  return {
+    uid: String(previewUser?.uid || '').trim(),
+    email: String(previewUser?.email || '').trim(),
+    displayName: String(previewUser?.displayName || '').trim(),
+    photoURL: String(previewUser?.photoURL || '').trim(),
+    institutionId: String(previewUser?.institutionId || '').trim(),
+    activeRole: String(previewUser?.activeRole || previewUser?.role || '').trim().toLowerCase(),
+    role: String(previewUser?.role || previewUser?.activeRole || '').trim().toLowerCase(),
+    roles: normalizedRoles,
+    availableRoles: normalizedRoles,
+    classId: previewUser?.classId || null,
+    classIds: Array.isArray(previewUser?.classIds) ? previewUser.classIds : [],
+    completedSubjects: Array.isArray(previewUser?.completedSubjects) ? previewUser.completedSubjects : [],
+    settings: previewUser?.settings && typeof previewUser.settings === 'object'
+      ? previewUser.settings
+      : {},
+  };
+};
+
 export const buildInstitutionPreviewThemeMessage = ({
   colors,
   activeToken = null,
   previewRole = 'teacher',
+  previewUser = null,
 }: any) => {
   const safeColors = { ...DEFAULTS, ...(colors || {}) };
   const safeRole = previewRole === 'student' ? 'student' : 'teacher';
@@ -223,6 +260,7 @@ export const buildInstitutionPreviewThemeMessage = ({
       colors: safeColors,
       previewRole: safeRole,
       activeToken: highlightToken,
+      previewUser: sanitizePreviewUserForMessage(previewUser),
       themeCss: buildThemeCss(safeColors),
       highlightCss: highlightToken ? buildHighlightCss(highlightToken, safeColors[highlightToken]) : '',
       highlightMessage: highlightToken ? TOKEN_HIGHLIGHT_MESSAGES[highlightToken] : '',

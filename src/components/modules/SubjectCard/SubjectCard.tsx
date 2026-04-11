@@ -33,10 +33,21 @@ const SubjectCard = (props: any) => {
         onOpenTopics,
         filterOverlayOpen = false,
         isSelected = false,
+        selectMode = false,
+        selectedItemKeys = new Set(),
         disableAllActions = false,
         disableDeleteActions = false,
         disableUnshareActions = false
     } = props;
+
+    const selectionKey = `subject:${subject?.shortcutId || subject?.id}`;
+    const hasMultiSelectionDrag = Boolean(
+        selectMode
+        && isSelected
+        && selectedItemKeys instanceof Set
+        && selectedItemKeys.size > 1
+    );
+    const multiDragCount = hasMultiSelectionDrag ? selectedItemKeys.size : 1;
 
     const gradientClass = withDarkGradientVariant(subject?.color || 'from-slate-500 to-slate-700');
     const normalizedRole = getNormalizedRole(user);
@@ -72,6 +83,7 @@ const SubjectCard = (props: any) => {
         item: subject,
         type: 'subject',
         cardScale: cardScale,
+        multiDragCount,
         onDragStart: handleLocalDragStart,
         onDragEnd: props.onDragEnd
     });
@@ -80,6 +92,7 @@ const SubjectCard = (props: any) => {
     return (
         <div 
             ref={itemRef}
+            data-selection-key={selectionKey}
             className={`group relative w-full rounded-2xl shadow-lg dark:shadow-slate-900/50 transition-transform ${
                 (isDragging || isGhostDragging) ? 'opacity-0 scale-95' : (!filterOverlayOpen ? 'hover:scale-105' : '')
             } ${

@@ -60,17 +60,17 @@
   --color-tertiary-900: #581c87;
 
   --scrollbar-track-color: transparent;
-  --scrollbar-thumb-start: color-mix(in srgb, #6b7280 44%, transparent);
-  --scrollbar-thumb-end: color-mix(in srgb, #6b7280 44%, transparent);
-  --scrollbar-thumb-hover-start: color-mix(in srgb, #4b5563 62%, transparent);
-  --scrollbar-thumb-hover-end: color-mix(in srgb, #4b5563 62%, transparent);
+  --scrollbar-thumb-start: rgba(107, 114, 128, 0.44);
+  --scrollbar-thumb-end: rgba(107, 114, 128, 0.44);
+  --scrollbar-thumb-hover-start: rgba(75, 85, 99, 0.62);
+  --scrollbar-thumb-hover-end: rgba(75, 85, 99, 0.62);
 }
 
 .dark {
-  --scrollbar-thumb-start: color-mix(in srgb, #94a3b8 46%, transparent);
-  --scrollbar-thumb-end: color-mix(in srgb, #94a3b8 46%, transparent);
-  --scrollbar-thumb-hover-start: color-mix(in srgb, #cbd5e1 68%, transparent);
-  --scrollbar-thumb-hover-end: color-mix(in srgb, #cbd5e1 68%, transparent);
+  --scrollbar-thumb-start: rgba(148, 163, 184, 0.48);
+  --scrollbar-thumb-end: rgba(148, 163, 184, 0.48);
+  --scrollbar-thumb-hover-start: rgba(203, 213, 225, 0.68);
+  --scrollbar-thumb-hover-end: rgba(203, 213, 225, 0.68);
 }
 
 html.theme-switching,
@@ -222,13 +222,18 @@ html.theme-switching *::after {
   scrollbar-color: var(--scrollbar-thumb-start) var(--scrollbar-track-color);
 }
 .home-page::-webkit-scrollbar, .home-page *::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
   background: transparent;
 }
 .home-page::-webkit-scrollbar-track, .home-page *::-webkit-scrollbar-track {
-  background: transparent;
+  background: transparent !important;
+  box-shadow: none;
+  border: 0;
   border-radius: 8px;
   transition: background 0.3s ease;
+}
+.home-page::-webkit-scrollbar-track-piece, .home-page *::-webkit-scrollbar-track-piece {
+  background: transparent !important;
 }
 .home-page::-webkit-scrollbar-button, .home-page *::-webkit-scrollbar-button {
   display: none;
@@ -253,36 +258,43 @@ html.theme-switching *::after {
 /* Force custom scrollbar on html/body when Home page is active */
 
 html.custom-scrollbar-active, body.custom-scrollbar-active {
-  overflow-y: scroll;
+  overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--scrollbar-thumb-start) var(--scrollbar-track-color);
-  background-color: #f8fafc;
+  background-color: transparent;
+  scrollbar-gutter: auto;
 }
 
-.dark html.custom-scrollbar-active,
-.dark body.custom-scrollbar-active {
-  background-color: #020617;
+html.dark.custom-scrollbar-active,
+body.dark.custom-scrollbar-active,
+html.dark body.custom-scrollbar-active {
+  background-color: transparent;
 }
 
 /* Prefer overlay scrollbars when the platform supports them. */
 html.custom-scrollbar-overlay,
 body.custom-scrollbar-overlay {
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 /* Fallback mode for environments without overlay support. */
 html.custom-scrollbar-stable,
 body.custom-scrollbar-stable {
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 html.custom-scrollbar-active::-webkit-scrollbar, body.custom-scrollbar-active::-webkit-scrollbar {
-  width: 10px;
+  width: 8px;
   background: transparent;
 }
 html.custom-scrollbar-active::-webkit-scrollbar-track, body.custom-scrollbar-active::-webkit-scrollbar-track {
-  background: transparent;
+  background: transparent !important;
+  box-shadow: none;
+  border: 0;
   border-radius: 8px;
   transition: background 0.3s ease;
+}
+html.custom-scrollbar-active::-webkit-scrollbar-track-piece, body.custom-scrollbar-active::-webkit-scrollbar-track-piece {
+  background: transparent !important;
 }
 html.custom-scrollbar-active::-webkit-scrollbar-button, body.custom-scrollbar-active::-webkit-scrollbar-button {
   display: none;
@@ -290,6 +302,9 @@ html.custom-scrollbar-active::-webkit-scrollbar-button, body.custom-scrollbar-ac
   height: 0;
 }
 html.custom-scrollbar-active::-webkit-scrollbar-corner, body.custom-scrollbar-active::-webkit-scrollbar-corner {
+  background: transparent;
+}
+html.custom-scrollbar-active::-webkit-resizer, body.custom-scrollbar-active::-webkit-resizer {
   background: transparent;
 }
 html.custom-scrollbar-active::-webkit-scrollbar-thumb, body.custom-scrollbar-active::-webkit-scrollbar-thumb {

@@ -19,6 +19,7 @@ import BrandingSection from './customization/BrandingSection';
 import InstitutionCustomizationMockView from './InstitutionCustomizationMockView';
 
 const CustomizationTab = ({
+  previewUser,
   customizationLoading,
   customizationSaving,
   customizationError,
@@ -85,6 +86,7 @@ const CustomizationTab = ({
       <div className="h-[calc(100vh-13rem)] min-h-[720px]">
         <InstitutionCustomizationMockView
           className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+          previewUser={previewUser}
           initialValues={customizationInitialValues}
           themeSets={savedThemeSets}
           onSave={onSaveCustomization}

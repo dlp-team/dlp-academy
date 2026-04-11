@@ -63,6 +63,7 @@ const buildThemeSetColorsFromForm = (source: any = {}) => {
 };
 
 const InstitutionCustomizationMockView = ({
+  previewUser = null,
   initialValues,
   themeSets = [],
   onSave,
@@ -218,10 +219,11 @@ const InstitutionCustomizationMockView = ({
       colors: buildSafeForm(form, DEFAULTS),
       activeToken,
       previewRole,
+      previewUser,
     });
 
     iframeWindow.postMessage(message, window.location.origin);
-  }, [previewMode, iframeReady, form, activeToken, previewRole]);
+  }, [previewMode, iframeReady, form, activeToken, previewRole, previewUser]);
 
   useEffect(() => {
     dispatchLivePreviewMessage();
@@ -478,7 +480,7 @@ const InstitutionCustomizationMockView = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-auto p-5 bg-slate-200 dark:bg-slate-950">
+        <div className="flex-1 overflow-hidden p-5 bg-slate-200 dark:bg-slate-950">
           {previewMode === 'mock' ? (
             <CustomizationHomeExactPreview
               form={form}

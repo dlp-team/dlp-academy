@@ -1,39 +1,99 @@
 // src/pages/ThemePreview/ThemePreview.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import CustomizationHomeExactPreview from '../InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview';
-import { DEFAULTS } from '../InstitutionAdminDashboard/components/customization/themePreviewUtils';
+import Home from '../Home/Home';
 import { isInstitutionPreviewThemeMessage } from '../../utils/institutionPreviewProtocol';
 
-const COLOR_KEYS = ['primary', 'secondary', 'accent', 'cardBorder'];
-
-const isHexColor = (value: any) => (
-  typeof value === 'string' && /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(value.trim())
-);
+const PREVIEW_ROLE_KEYS = new Set(['teacher', 'student']);
+const USER_ROLE_KEYS = new Set(['teacher', 'student', 'institutionadmin', 'admin']);
 
 const normalizePreviewRole = (value: any) => {
   const normalized = String(value || '').trim().toLowerCase();
   return normalized === 'student' ? 'student' : 'teacher';
 };
 
-const coercePreviewColors = (candidate: any, fallback: any) => {
-  const safeFallback = fallback || DEFAULTS;
-  const source = candidate && typeof candidate === 'object' ? candidate : {};
-  const next = { ...safeFallback };
+const normalizeKnownRole = (value: any) => {
+  const normalized = String(value || '').trim().toLowerCase();
+  return USER_ROLE_KEYS.has(normalized) ? normalized : null;
+};
 
-  COLOR_KEYS.forEach((key) => {
-    const candidateValue = source[key];
-    next[key] = isHexColor(candidateValue) ? candidateValue : safeFallback[key];
-  });
+const buildUniqueRoles = (candidate: any) => {
+  const roleCandidates = [
+    candidate?.activeRole,
+    candidate?.role,
+    ...(Array.isArray(candidate?.roles) ? candidate.roles : []),
+    ...(Array.isArray(candidate?.availableRoles) ? candidate.availableRoles : []),
+  ];
 
-  return next;
+  return Array.from(new Set(
+    roleCandidates
+      .map((entry: any) => normalizeKnownRole(entry))
+      .filter(Boolean)
+  ));
+};
+
+const sanitizePreviewUser = (candidate: any) => {
+  if (!candidate || typeof candidate !== 'object') return null;
+
+  const uid = String(candidate?.uid || '').trim();
+  if (!uid) return null;
+
+  const email = String(candidate?.email || '').trim();
+  const displayName = String(candidate?.displayName || '').trim()
+    || (email.includes('@') ? email.split('@')[0] : 'Vista previa');
+  const institutionId = String(candidate?.institutionId || '').trim() || null;
+  const roles = buildUniqueRoles(candidate);
+  const fallbackRole = normalizeKnownRole(candidate?.activeRole || candidate?.role) || 'teacher';
+
+  if (!roles.includes(fallbackRole)) {
+    roles.push(fallbackRole);
+  }
+
+  return {
+    uid,
+    email,
+    displayName,
+    photoURL: String(candidate?.photoURL || '').trim(),
+    institutionId,
+    role: fallbackRole,
+    activeRole: fallbackRole,
+    roles,
+    availableRoles: [...roles],
+    classId: candidate?.classId || null,
+    classIds: Array.isArray(candidate?.classIds) ? candidate.classIds : [],
+    completedSubjects: Array.isArray(candidate?.completedSubjects) ? candidate.completedSubjects : [],
+    settings: candidate?.settings && typeof candidate.settings === 'object' ? candidate.settings : {},
+  };
+};
+
+const buildPreviewUserWithRole = (baseUser: any, previewRole: any) => {
+  if (!baseUser) return null;
+
+  const safePreviewRole = PREVIEW_ROLE_KEYS.has(String(previewRole || '').trim().toLowerCase())
+    ? String(previewRole || '').trim().toLowerCase()
+    : 'teacher';
+
+  const mergedRoles = Array.from(new Set([
+    safePreviewRole,
+    ...(Array.isArray(baseUser?.roles) ? baseUser.roles : []),
+    ...(Array.isArray(baseUser?.availableRoles) ? baseUser.availableRoles : []),
+  ]));
+
+  return {
+    ...baseUser,
+    role: safePreviewRole,
+    activeRole: safePreviewRole,
+    roles: mergedRoles,
+    availableRoles: mergedRoles,
+    rememberSort: false,
+  };
 };
 
 const ThemePreview = () => {
   const [searchParams] = useSearchParams();
   const [previewRole, setPreviewRole] = useState(() => normalizePreviewRole(searchParams.get('role')));
-  const [activeToken, setActiveToken] = useState<any>(null);
-  const [form, setForm] = useState(() => ({ ...DEFAULTS }));
+  const [previewUser, setPreviewUser] = useState<any>(null);
+  const [waitingForContext, setWaitingForContext] = useState(true);
 
   useEffect(() => {
     setPreviewRole(normalizePreviewRole(searchParams.get('role')));
@@ -63,6 +123,7 @@ const ThemePreview = () => {
       if (!isInstitutionPreviewThemeMessage(message)) return;
 
       const payload = message.payload || {};
+      setWaitingForContext(false);
 
       if (typeof payload.themeCss === 'string') {
         upsertStyleTag('__dlp_theme_preview_runtime_theme', payload.themeCss);
@@ -72,9 +133,14 @@ const ThemePreview = () => {
         upsertStyleTag('__dlp_theme_preview_runtime_highlight', payload.highlightCss);
       }
 
-      setForm((previous: any) => coercePreviewColors(payload.colors, previous));
-      setPreviewRole(normalizePreviewRole(payload.previewRole));
-      setActiveToken(COLOR_KEYS.includes(payload.activeToken) ? payload.activeToken : null);
+      if (typeof payload.previewRole === 'string') {
+        setPreviewRole(normalizePreviewRole(payload.previewRole));
+      }
+
+      const nextPreviewUser = sanitizePreviewUser(payload.previewUser);
+      if (nextPreviewUser) {
+        setPreviewUser(nextPreviewUser);
+      }
 
       const highlightMessage = typeof payload.highlightMessage === 'string'
         ? payload.highlightMessage.trim()
@@ -95,17 +161,30 @@ const ThemePreview = () => {
     };
   }, []);
 
-  return (
-    <div className="min-h-screen bg-slate-200 dark:bg-slate-950 p-3 sm:p-4">
-      <div className="mx-auto h-[calc(100vh-1.5rem)] sm:h-[calc(100vh-2rem)] max-w-[1440px] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.24)]">
-        <CustomizationHomeExactPreview
-          form={form}
-          previewRole={previewRole}
-          viewportWidth="100%"
-          activeToken={activeToken}
-        />
+  const resolvedPreviewUser = useMemo(
+    () => buildPreviewUserWithRole(previewUser, previewRole),
+    [previewUser, previewRole]
+  );
+
+  if (!resolvedPreviewUser) {
+    return (
+      <div className="min-h-screen bg-slate-100 dark:bg-slate-950 flex items-center justify-center p-4">
+        <div className="max-w-md w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 text-center">
+          <p className="text-sm font-semibold text-slate-900 dark:text-white">
+            {waitingForContext ? 'Cargando vista previa...' : 'No hay contexto de usuario para la vista previa.'}
+          </p>
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+            {waitingForContext
+              ? 'Esperando configuracion enviada desde el panel de personalizacion.'
+              : 'Vuelve a abrir la vista previa desde Personalizacion para continuar.'}
+          </p>
+        </div>
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <Home user={resolvedPreviewUser} />
   );
 };
 

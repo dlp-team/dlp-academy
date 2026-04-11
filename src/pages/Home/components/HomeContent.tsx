@@ -15,6 +15,7 @@ import { isShortcutItem, getPermissionLevel, isSharedForCurrentUser as isSharedF
 import { mergeSourceAndShortcutItems } from '../../../utils/mergeUtils';
 import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
 import { getHomeUnselectedDimmingClass } from '../../../utils/selectionVisualUtils';
+import { getDraggedSelectionKeyFromDropArgs, shouldHandleSelectionDrop } from '../utils/homeSelectionDropUtils';
 
 const FolderCardComponent: any = FolderCard;
 const SubjectCardComponent: any = SubjectCard;
@@ -91,7 +92,7 @@ const HomeContent = ({
     const disableFolderDeleteActionsInShared = isViewerInSharedFolder || isEditorInSharedFolder || studentMode;
     const disableSubjectDeleteActionsInShared = isViewerInSharedFolder || studentMode;
     const dndEnabledInContext = isDragAndDropEnabled && !disableAllActionsInShared;
-    const canCreateInCurrentContext = !disableAllActionsInShared && !studentMode && !selectMode;
+    const canCreateInCurrentContext = !disableAllActionsInShared && !studentMode;
 
     // Auto-scroll is always enabled for both grid and list modes
     (useAutoScrollOnDrag as any)({
@@ -301,6 +302,59 @@ const HomeContent = ({
         return Boolean(collapsedGroups[groupKey]);
     };
 
+    const handleSelectionAwareDropOnFolder = (
+        targetFolderId: any,
+        subjectId: any,
+        typeOrSourceFolderId: any,
+        sourceFolderIdMaybe: any,
+        shortcutIdMaybe: any
+    ) => {
+        const draggedType = typeOrSourceFolderId === 'folder' ? 'folder' : 'subject';
+        const draggedSelectionKey = getDraggedSelectionKeyFromDropArgs(
+            draggedType === 'folder'
+                ? {
+                    folderId: subjectId,
+                    folderShortcutId: shortcutIdMaybe,
+                }
+                : {
+                    subjectId,
+                    subjectShortcutId: shortcutIdMaybe,
+                }
+        );
+
+        if (
+            shouldHandleSelectionDrop({ selectMode, selectedItemKeys, draggedSelectionKey })
+            && typeof onDropSelectedItems === 'function'
+        ) {
+            onDropSelectedItems(targetFolderId || null);
+            return 'moved';
+        }
+
+        return handleDropOnFolder(targetFolderId, subjectId, typeOrSourceFolderId, sourceFolderIdMaybe, shortcutIdMaybe);
+    };
+
+    const handleSelectionAwareNestFolder = (
+        targetFolderId: any,
+        droppedFolderId: any,
+        droppedFolderShortcutId: any,
+        ...rest: any[]
+    ) => {
+        const draggedSelectionKey = getDraggedSelectionKeyFromDropArgs({
+            folderId: droppedFolderId,
+            folderShortcutId: droppedFolderShortcutId,
+        });
+
+        if (
+            shouldHandleSelectionDrop({ selectMode, selectedItemKeys, draggedSelectionKey })
+            && typeof onDropSelectedItems === 'function'
+        ) {
+            onDropSelectedItems(targetFolderId || null);
+            return 'moved';
+        }
+
+        return handleNestFolder(targetFolderId, droppedFolderId, droppedFolderShortcutId, ...rest);
+    };
+
     const getCourseLabelForCreation = (groupLabel: any) => {
         const normalizedLabel = String(groupLabel || '').trim();
         return normalizedLabel.replace(/\s\((\d{4}-\d{4}|Sin año académico)\)$/i, '').trim();
@@ -423,6 +477,7 @@ const HomeContent = ({
                                             {(viewMode === 'courses' || viewMode === 'tags') && canCreateInCurrentContext && (
                                                 <button
                                                     onClick={() => {
+                                                        if (selectMode) return;
                                                         let data: any = null;
                                                         if (viewMode === 'courses') {
                                                             data = { course: getCourseLabelForCreation(groupName) };
@@ -478,7 +533,10 @@ const HomeContent = ({
                                                         </div>
                                                     ) : (
                                                         <button
-                                                            onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder: currentFolder })}
+                                                            onClick={() => {
+                                                                if (selectMode) return;
+                                                                setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder: currentFolder });
+                                                            }}
                                                             className={homeThemeTokens.dashedCreateCardIndigoClass}
                                                             style={{ aspectRatio: '16 / 10', gap: `${16 * (cardScale / 100)}px` }}
                                                         >
@@ -553,8 +611,8 @@ const HomeContent = ({
                                                         onShowContents={handleShowFolderContents}
                                                         onGoToFolder={handleGoToFolderFromGhost}
                                                         cardScale={cardScale}
-                                                        onDrop={handleDropOnFolder}
-                                                        onDropFolder={handleNestFolder}
+                                                        onDrop={handleSelectionAwareDropOnFolder}
+                                                        onDropFolder={handleSelectionAwareNestFolder}
                                                         canDrop={dndEnabledInContext}
                                                         draggable={dndEnabledInContext}
                                                         onDragStart={handleDragStartFolder}
@@ -568,6 +626,8 @@ const HomeContent = ({
                                                         disableAllActions={disableAllActionsInShared}
                                                         disableDeleteActions={disableFolderDeleteActionsInShared}
                                                         disableUnshareActions={isInsideSharedFolderForItem(folder, 'folder')}
+                                                        selectMode={selectMode}
+                                                        selectedItemKeys={selectedItemKeys}
                                                     />
                                                 </div>
                                             );
@@ -650,6 +710,8 @@ const HomeContent = ({
                                                         disableDeleteActions={disableSubjectDeleteActionsInShared}
                                                         disableUnshareActions={isInsideSharedFolderForItem(subject, 'subject')}
                                                         hideSharedIndicator={studentMode}
+                                                        selectMode={selectMode}
+                                                        selectedItemKeys={selectedItemKeys}
                                                     />
                                                 </div>
                                             );
@@ -669,6 +731,9 @@ const HomeContent = ({
                                                 onDragLeave={() => setIsRootZoneHovered(false)}
                                                 onDrop={handleRootZoneDrop}
                                                 onClick={() => { 
+                                                    if (selectMode || draggedItem) {
+                                                        return;
+                                                    }
                                                     if (!draggedItem) {
                                                         let data: any = null;
                                                         if (viewMode === 'courses') {

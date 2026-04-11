@@ -8,8 +8,10 @@ import { clearLastHomeFolderId, loadLastHomeFolderId } from '../pages/Home/utils
 import { EDUCATION_LEVELS } from '../utils/subjectConstants';
 import { usePersistentState } from './usePersistentState';
 import { buildUserScopedPersistenceKey } from '../utils/pagePersistence';
-import { getAcademicYearStartYear, normalizeAcademicYear } from '../utils/academicYearLifecycleUtils';
-import { isSubjectActiveInPeriodLifecycle, isSubjectVisibleByPostCoursePolicy } from '../utils/subjectPeriodLifecycleUtils';
+import { getAcademicYearStartYear, getCurrentAcademicYear, normalizeAcademicYear } from '../utils/academicYearLifecycleUtils';
+import { buildSubjectPeriodTimeline, isSubjectActiveInPeriodLifecycle, isSubjectVisibleByPostCoursePolicy } from '../utils/subjectPeriodLifecycleUtils';
+
+const PERIOD_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 const EMPTY_MANUAL_ORDER: { subjects: any[], folders: any[] } = { subjects: [], folders: [] };
 
@@ -157,6 +159,78 @@ const doesSubjectMatchPeriodFilter = (subject: any, periodFilterValue: any) => {
     }
 
     return getSubjectPeriodFilterValue(subject) === normalizedFilterValue;
+};
+
+const parsePeriodBoundaryUtcDate = (value: any, endOfDay = false) => {
+    const normalizedValue = String(value || '').trim();
+    const match = normalizedValue.match(PERIOD_DATE_PATTERN);
+    if (!match) return null;
+
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+
+    if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+        return null;
+    }
+
+    if (month < 1 || month > 12 || day < 1 || day > 31) {
+        return null;
+    }
+
+    return new Date(Date.UTC(
+        year,
+        month - 1,
+        day,
+        endOfDay ? 23 : 0,
+        endOfDay ? 59 : 0,
+        endOfDay ? 59 : 0,
+        endOfDay ? 999 : 0
+    ));
+};
+
+const isSubjectInActivePeriodWindow = (subject: any, referenceDate = new Date()) => {
+    const normalizedPeriodType = normalizeSubjectPeriodType(subject?.periodType);
+    const normalizedPeriodIndex = normalizeSubjectPeriodIndex(subject?.periodIndex);
+
+    if (!normalizedPeriodType || normalizedPeriodIndex === null) {
+        return true;
+    }
+
+    const periodTimeline = buildSubjectPeriodTimeline({
+        academicYear: subject?.academicYear,
+        periodType: normalizedPeriodType,
+        periodIndex: normalizedPeriodIndex,
+        academicCalendar: subject?.academicCalendar || {},
+        coursePeriodSchedule: subject?.coursePeriodSchedule || null,
+    });
+
+    const periodStartDate = parsePeriodBoundaryUtcDate(subject?.periodStartAt || periodTimeline?.periodStartAt, false);
+    const periodEndDate = parsePeriodBoundaryUtcDate(subject?.periodEndAt || periodTimeline?.periodEndAt, true);
+
+    if (!periodStartDate || !periodEndDate || periodEndDate.getTime() < periodStartDate.getTime()) {
+        return false;
+    }
+
+    const nowMs = referenceDate.getTime();
+    return nowMs >= periodStartDate.getTime() && nowMs <= periodEndDate.getTime();
+};
+
+const isSubjectCurrentAndEligibleForCurrentOnlyFilter = ({ subject, user, referenceDate = new Date() }: any) => {
+    const normalizedAcademicYear = normalizeAcademicYear(subject?.academicYear);
+    if (!normalizedAcademicYear) {
+        return false;
+    }
+
+    if (normalizedAcademicYear !== getCurrentAcademicYear(referenceDate)) {
+        return false;
+    }
+
+    if (!isSubjectActiveInPeriodLifecycle({ subject, user, referenceDate })) {
+        return false;
+    }
+
+    return isSubjectInActivePeriodWindow(subject, referenceDate);
 };
 
 const normalizeCourseAcademicYearFilter = (value: any, availableAcademicYears: any[] = []) => {
@@ -589,7 +663,7 @@ export const useHomeState = ({
 
         const lifecycleVisibleSubjects = showOnlyCurrentSubjects
             ? policyVisibleSubjects.filter((subject: any) =>
-                isSubjectActiveInPeriodLifecycle({ subject, user })
+                isSubjectCurrentAndEligibleForCurrentOnlyFilter({ subject, user })
             )
             : policyVisibleSubjects;
 
