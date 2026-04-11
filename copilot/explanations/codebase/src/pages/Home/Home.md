@@ -1,6 +1,7 @@
 # Home.jsx
 
 ## Changelog
+- **2026-04-10:** Replaced in-flow Home feedback banners (`HomeShortcutFeedback` / `HomeBulkActionFeedback` render path) with fixed reusable `AppToast` notifications positioned above undo toasts, preventing content layout shifts when feedback messages appear.
 - **2026-04-09:** Added selection-aware grouped-drop wrappers for upward and breadcrumb drop targets so dragging a selected card routes to `runBulkMoveToFolder(...)` instead of single-item move handlers.
 - **2026-04-08:** Forwarded `runBulkMoveToFolder` into `HomeMainContent` so selected drag/drop operations route through the same batch move confirmation/share-rule flow as toolbar-triggered bulk moves.
 - **2026-04-08:** Integrated keyboard/page undo convergence in `Home.tsx` by wiring `registerUndoAction` from keyboard coordination into page handlers and replacing floating undo feedback rendering with shared `UndoActionToast` surface.

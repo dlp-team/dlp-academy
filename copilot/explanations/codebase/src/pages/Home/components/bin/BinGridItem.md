@@ -12,6 +12,7 @@
 - Shows urgency and deletion countdown metadata for both item types.
 
 ## Changelog
+- **2026-04-10:** Updated selected-overlay hide semantics from opacity fade to `invisible` and limited wrapper transitions to transform/filter/shadow so re-pressing a selected grid card no longer shows transient invisibility flicker.
 - **2026-04-09:** Added `overlayHidden` rendering mode used by bin overlay flows to suppress duplicate-looking selected cards while preserving measured layout coordinates.
 - **2026-04-08:** Refined selected-card semantics for bin interaction parity:
 	- shared ring highlight now appears only when bin selection mode is active,

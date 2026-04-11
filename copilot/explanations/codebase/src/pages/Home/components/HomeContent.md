@@ -1,6 +1,11 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-04-10: Selection-mode create-card visibility and grid batch-drop parity
+- Create-subject cards remain visible in selection mode but are now inert on click.
+- Added selection-aware grid folder drop routing so dragging a selected item to a folder triggers batch move (`onDropSelectedItems`) instead of single-item move.
+- Passed selection context into Subject/Folder cards to support multi-selection drag ghost rendering.
+
 ### 2026-04-08: Selection-mode drag/drop batch parity
 - Re-enabled drag/drop affordances while selection mode is active (write-capable contexts only).
 - Forwarded selection context (`selectMode`, `selectedItemKeys`) and batch-drop callback (`onDropSelectedItems`) into `useHomeContentDnd`.

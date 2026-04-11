@@ -7,6 +7,11 @@ This suite validates courses-tab academic-year filtering behavior in `useHomeSta
 - single-year range filtering returns only matching course buckets.
 
 ## Changelog
+### 2026-04-10: Strict current-year Solo Vigentes coverage
+- Updated `showOnlyCurrentSubjects` courses-mode expectation to exclude legacy records without academic year.
+- Added deterministic coverage asserting only currently active period-window subjects remain visible when current-only mode is enabled.
+- Updated extraordinary-window fixtures to current academic year so role-based visibility checks remain valid under strict current-year policy.
+
 ### 2026-04-03: Added backend lifecycle snapshot visibility assertions
 - Added usage-mode student test to verify Home visibility decisions consume backend lifecycle snapshot fields:
   - `lifecyclePhase`,
@@ -37,7 +42,7 @@ This suite validates courses-tab academic-year filtering behavior in `useHomeSta
 
 ### 2026-04-02: Added active/current lifecycle filtering assertions
 - Added deterministic coverage for `showOnlyCurrentSubjects` in:
-  - `courses` mode (current-year + legacy subjects remain, ended-year subjects excluded),
+  - `courses` mode (current-year subjects remain, ended-year subjects excluded),
   - `usage` mode (ended subjects removed from recent list).
 
 ### 2026-04-02: Initial coverage for courses academic-year range filtering

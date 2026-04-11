@@ -22,6 +22,7 @@
 - `../../../utils/permissionUtils`
 
 ## Changelog
+- **2026-04-10:** Bulk undo snapshots now persist pre-move sharing metadata (`sharedWith`, `sharedWithUids`, `isShared`) and undo replay restores this state; bulk undo no longer re-enters selection mode after completion.
 - **2026-04-09:** Added phase-02 batch move session orchestration with decision-cache propagation for deferred confirmations, automatic continuation after confirm, cancellation-safe session finalization, and single aggregated undo payload across all moved entries in the batch run.
 - **2026-04-08:** Added folder-child selection de-dup orchestration so child selection clears selected ancestor folders and folder selection clears selected descendants.
 - **2026-04-07:** Selection-mode move orchestration now filters invalid destination folders (selected folders and descendants), routes batch move entries through centralized share-rule flow, and adds undo support via Ctrl+Z plus a 5-second floating undo action.

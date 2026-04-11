@@ -3,24 +3,29 @@
 
 ## Overview
 - **Source file:** `src/pages/ThemePreview/ThemePreview.tsx`
-- **Last documented:** 2026-04-08
-- **Role:** Public, auth-independent route that renders Home mock preview and consumes live customization updates via `postMessage`.
+- **Last documented:** 2026-04-10
+- **Role:** Public preview route that renders the real `Home` surface using same-origin postMessage user context from institution customization.
 
 ## Responsibilities
 - Resolves initial preview role from URL query (`/theme-preview?role=teacher|student`).
 - Listens for institution-preview messages and ignores foreign origins.
-- Applies incoming unsaved color updates to preview state without persistence.
 - Applies runtime theme/highlight CSS payloads for live visual parity.
-- Renders `CustomizationHomeExactPreview` with route-local role/color/active-token state.
+- Accepts sanitized preview-user context from customization payload and resolves a Home-compatible preview user.
+- Forces preview role context (`teacher`/`student`) on top of received user data for deterministic role-surface parity.
+- Renders real `Home` route composition (no hardcoded preview dataset markup).
 
 ## Main Dependencies
 - `react`
 - `react-router-dom`
-- `src/pages/InstitutionAdminDashboard/components/customization/CustomizationHomeExactPreview.tsx`
-- `src/pages/InstitutionAdminDashboard/components/customization/themePreviewUtils.ts`
+- `src/pages/Home/Home.tsx`
 - `src/utils/institutionPreviewProtocol.ts`
 
 ## Changelog
+### 2026-04-10
+- Replaced hardcoded preview rendering with real `Home` route composition.
+- Added preview-user context consumption from same-origin customization postMessage payload.
+- Added route-level fallback state while waiting for preview user context.
+
 ### 2026-04-08
 - Added new public `ThemePreview` page for iframe-based institution customization preview.
 - Added secure same-origin message listener for preview payload updates.

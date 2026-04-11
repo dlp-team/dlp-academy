@@ -39,6 +39,10 @@ function ExampleScreen() {
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
 
 ## Changelog
+### 2026-04-10
+- Added optional `positionClassName` support so pages can stack toasts without layout shifts or overlap with other fixed notification surfaces.
+- Close button now renders only when `onClose` is provided, enabling passive informational toasts that auto-expire via upstream state.
+
 ### 2026-04-09
 - Reworked toast surface to appear at lower-left with cleaner neutral styling.
 - Added 10-second auto-dismiss support via `durationMs` prop.

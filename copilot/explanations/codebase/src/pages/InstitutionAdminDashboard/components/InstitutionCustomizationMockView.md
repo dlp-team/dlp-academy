@@ -25,6 +25,10 @@
 - `./customization/CustomizationHomeExactPreview`
 
 ## Changelog
+### 2026-04-10
+- Added preview-user context passthrough to live preview message payloads so `theme-preview` can render real `Home` composition without hardcoded preview markup.
+- Updated right preview pane container to `overflow-hidden` so iframe content owns scrolling and nested preview scrollbars are avoided.
+
 ### 2026-04-09
 - Added saved-theme-set controls in the editor sidebar:
 	- save current palette as a named theme set,

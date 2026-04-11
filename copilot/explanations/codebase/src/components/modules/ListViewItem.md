@@ -1,6 +1,10 @@
 # ListViewItem.jsx
 
 ## Changelog
+### 2026-04-10: Multi-selection list-row drag ghost support
+- Subject list rows now pass selection-aware `multiDragCount` to `useGhostDrag`.
+- Added `data-selection-key` on draggable row containers to keep selection identity explicit during grouped drags.
+
 ### 2026-04-05: Home nested list selection-dimming parity
 - Added optional selection-context inputs (`selectMode`, `selectedItemKeys`, `enableSelectionDimming`).
 - Subject rows now compute selected state from shared selection keys and apply Home dimming helper classes when appropriate.

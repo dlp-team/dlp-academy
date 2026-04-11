@@ -31,6 +31,7 @@
 - `../../components/layout/Header`
 
 ## Changelog
+- 2026-04-10: Wired dashboard `user` into `CustomizationTab` as `previewUser` so live customization preview can deliver Home-compatible user context to `theme-preview` route.
 - 2026-04-09: Wired customization saved-theme props into `CustomizationTab` (`savedThemeSets`, `handleSaveThemeSet`) to enable persisted theme-set creation and reapply flows in the institution customization editor.
 - 2026-04-05: Wired `users.handleDeleteUser` into `UsersTabContent` so users-tab delete controls can execute the new guarded delete-user flow.
 - 2026-04-05: Wired `institutionSettings.automationSettings` into `ClassesCoursesSection` so organization-tab transfer tooling can be gated by institution-level configuration.

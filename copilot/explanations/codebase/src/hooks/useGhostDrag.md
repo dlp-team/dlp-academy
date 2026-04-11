@@ -59,6 +59,7 @@ function ExampleComponent() {
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
 
 ## Changelog
+- 2026-04-10: Added multi-selection drag ghost mode with stacked cloned layers and a total-count badge while preserving previous single-card ghost behavior and breadcrumb ghost scaling compatibility.
 - 2026-03-08: Added dedicated unit coverage in `tests/unit/hooks/useGhostDrag.test.js` validating:
   - ghost creation/removal lifecycle from `onDragStart` and `onDragEnd`
   - live position updates in `handleDrag` and no-op behavior for zeroed pointer events
