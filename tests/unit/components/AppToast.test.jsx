@@ -69,4 +69,20 @@ describe('AppToast', () => {
     });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('supports custom positioning and hides close button when onClose is not provided', () => {
+    render(
+      <AppToast
+        show
+        title="Atajo de teclado"
+        message="Selecciona una tarjeta para continuar."
+        positionClassName="bottom-24 left-5"
+      />
+    );
+
+    const toast = screen.getByTestId('app-toast');
+    expect(toast.className).toContain('bottom-24');
+    expect(toast.className).toContain('left-5');
+    expect(screen.queryByLabelText('Cerrar notificacion')).toBeNull();
+  });
 });

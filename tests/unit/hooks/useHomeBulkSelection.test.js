@@ -163,4 +163,146 @@ describe('useHomeBulkSelection', () => {
 
     vi.useRealTimers();
   });
+
+  it('keeps selection mode disabled and restores sharing metadata after undo', async () => {
+    const onHomeFeedback = vi.fn();
+    const logic = createLogic({
+      updateSubject: vi.fn(async () => {}),
+    });
+
+    const { result } = renderHook(() =>
+      useHomeBulkSelection({
+        logic,
+        isStudentRole: false,
+        onHomeFeedback,
+      })
+    );
+
+    act(() => {
+      result.current.setSelectMode(true);
+      result.current.toggleSelectItem(
+        {
+          id: 'subject-1',
+          folderId: 'folder-source',
+          isShared: true,
+          sharedWithUids: ['u-1'],
+          sharedWith: [{ uid: 'u-1', email: 'u1@test.com' }],
+        },
+        'subject'
+      );
+    });
+
+    await act(async () => {
+      await result.current.runBulkMoveToFolder('folder-target');
+    });
+
+    expect(result.current.undoToast).toEqual(
+      expect.objectContaining({
+        message: 'Movimiento aplicado en 1 elemento(s).',
+      })
+    );
+
+    await act(async () => {
+      await result.current.undoLastSelectionAction();
+    });
+
+    expect(logic.updateSubject).toHaveBeenNthCalledWith(1, 'subject-1', {
+      folderId: 'folder-target',
+    });
+    expect(logic.updateSubject).toHaveBeenNthCalledWith(
+      2,
+      'subject-1',
+      expect.objectContaining({
+        folderId: 'folder-source',
+        isShared: true,
+        sharedWithUids: ['u-1'],
+      })
+    );
+    expect(result.current.selectMode).toBe(false);
+    expect(result.current.selectedItems).toHaveLength(0);
+  });
+
+  it('undoes mixed subject and folder batch moves with full metadata restoration', async () => {
+    const onHomeFeedback = vi.fn();
+    const logic = createLogic({
+      updateSubject: vi.fn(async () => {}),
+      updateFolder: vi.fn(async () => {}),
+    });
+
+    const { result } = renderHook(() =>
+      useHomeBulkSelection({
+        logic,
+        isStudentRole: false,
+        onHomeFeedback,
+      })
+    );
+
+    act(() => {
+      result.current.setSelectMode(true);
+      result.current.toggleSelectItem(
+        {
+          id: 'subject-1',
+          folderId: 'folder-source-a',
+          isShared: true,
+          sharedWithUids: ['u-1'],
+          sharedWith: [{ uid: 'u-1', email: 'u1@test.com' }],
+        },
+        'subject'
+      );
+
+      result.current.toggleSelectItem(
+        {
+          id: 'folder-1',
+          parentId: 'folder-source-b',
+          isShared: true,
+          sharedWithUids: ['u-2'],
+          sharedWith: [{ uid: 'u-2', email: 'u2@test.com' }],
+        },
+        'folder'
+      );
+    });
+
+    await act(async () => {
+      await result.current.runBulkMoveToFolder('folder-target');
+    });
+
+    expect(result.current.undoToast).toEqual(
+      expect.objectContaining({
+        message: 'Movimiento aplicado en 2 elemento(s).',
+      })
+    );
+
+    await act(async () => {
+      await result.current.undoLastSelectionAction();
+    });
+
+    expect(logic.updateSubject).toHaveBeenNthCalledWith(1, 'subject-1', {
+      folderId: 'folder-target',
+    });
+    expect(logic.updateSubject).toHaveBeenNthCalledWith(
+      2,
+      'subject-1',
+      expect.objectContaining({
+        folderId: 'folder-source-a',
+        isShared: true,
+        sharedWithUids: ['u-1'],
+      })
+    );
+
+    expect(logic.updateFolder).toHaveBeenNthCalledWith(1, 'folder-1', {
+      parentId: 'folder-target',
+    });
+    expect(logic.updateFolder).toHaveBeenNthCalledWith(
+      2,
+      'folder-1',
+      expect.objectContaining({
+        parentId: 'folder-source-b',
+        isShared: true,
+        sharedWithUids: ['u-2'],
+      })
+    );
+
+    expect(result.current.selectMode).toBe(false);
+    expect(result.current.selectedItems).toHaveLength(0);
+  });
 });

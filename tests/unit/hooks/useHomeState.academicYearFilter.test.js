@@ -212,7 +212,69 @@ describe('useHomeState academic-year range filter for courses mode', () => {
       .map((subject) => subject.id)
       .sort();
 
-    expect(groupedIds).toEqual(['subject-current', 'subject-legacy']);
+    expect(groupedIds).toEqual(['subject-current']);
+  });
+
+  it('keeps only current subjects active in the current period window', () => {
+    const currentAcademicYear = resolveCurrentAcademicYear();
+
+    const { result } = renderHook(() =>
+      useHomeState({
+        user: baseUser,
+        searchQuery: '',
+        subjects: [
+          {
+            id: 'subject-active-period',
+            name: 'Fisica Activa',
+            ownerId: 'teacher-1',
+            course: 'ESO 2º',
+            academicYear: currentAcademicYear,
+            periodType: 'trimester',
+            periodIndex: 2,
+            periodStartAt: resolveRelativeIsoDate(-3),
+            periodEndAt: resolveRelativeIsoDate(3),
+          },
+          {
+            id: 'subject-finished-period',
+            name: 'Historia Finalizada',
+            ownerId: 'teacher-1',
+            course: 'ESO 2º',
+            academicYear: currentAcademicYear,
+            periodType: 'trimester',
+            periodIndex: 1,
+            periodStartAt: resolveRelativeIsoDate(-40),
+            periodEndAt: resolveRelativeIsoDate(-10),
+          },
+          {
+            id: 'subject-future-period',
+            name: 'Quimica Futura',
+            ownerId: 'teacher-1',
+            course: 'ESO 2º',
+            academicYear: currentAcademicYear,
+            periodType: 'trimester',
+            periodIndex: 3,
+            periodStartAt: resolveRelativeIsoDate(10),
+            periodEndAt: resolveRelativeIsoDate(40),
+          },
+        ],
+        folders: [],
+        preferences: {
+          ...basePreferences,
+          viewMode: 'courses',
+          showOnlyCurrentSubjects: true,
+        },
+        loadingPreferences: false,
+        updatePreference: vi.fn(),
+        rememberOrganization: true,
+      })
+    );
+
+    const groupedIds = Object.values(result.current.groupedContent)
+      .flat()
+      .map((subject) => subject.id)
+      .sort();
+
+    expect(groupedIds).toEqual(['subject-active-period']);
   });
 
   it('applies active-only lifecycle filtering in usage mode', () => {
@@ -243,7 +305,7 @@ describe('useHomeState academic-year range filter for courses mode', () => {
   });
 
   it('hides passed student subjects after ordinary period but before extraordinary close', () => {
-    const previousAcademicYear = resolvePreviousAcademicYear();
+    const currentAcademicYear = resolveCurrentAcademicYear();
 
     const { result } = renderHook(() =>
       useHomeState({
@@ -258,7 +320,7 @@ describe('useHomeState academic-year range filter for courses mode', () => {
             id: 'subject-passed',
             name: 'Algebra',
             ownerId: 'student-1',
-            academicYear: previousAcademicYear,
+            academicYear: currentAcademicYear,
             periodEndAt: resolveRelativeIsoDate(-1),
             periodExtraordinaryEndAt: resolveRelativeIsoDate(10),
             passed: true,
@@ -268,7 +330,7 @@ describe('useHomeState academic-year range filter for courses mode', () => {
             id: 'subject-failed',
             name: 'Historia',
             ownerId: 'student-1',
-            academicYear: previousAcademicYear,
+            academicYear: currentAcademicYear,
             periodEndAt: resolveRelativeIsoDate(-1),
             periodExtraordinaryEndAt: resolveRelativeIsoDate(10),
             passed: false,
@@ -278,7 +340,7 @@ describe('useHomeState academic-year range filter for courses mode', () => {
             id: 'subject-unknown',
             name: 'Quimica',
             ownerId: 'student-1',
-            academicYear: previousAcademicYear,
+            academicYear: currentAcademicYear,
             periodEndAt: resolveRelativeIsoDate(-1),
             periodExtraordinaryEndAt: resolveRelativeIsoDate(10),
             updatedAt: { seconds: 15 },
@@ -303,7 +365,7 @@ describe('useHomeState academic-year range filter for courses mode', () => {
   });
 
   it('keeps teacher subjects visible during extraordinary window', () => {
-    const previousAcademicYear = resolvePreviousAcademicYear();
+    const currentAcademicYear = resolveCurrentAcademicYear();
 
     const { result } = renderHook(() =>
       useHomeState({
@@ -317,7 +379,7 @@ describe('useHomeState academic-year range filter for courses mode', () => {
             id: 'subject-passed',
             name: 'Algebra',
             ownerId: 'teacher-1',
-            academicYear: previousAcademicYear,
+            academicYear: currentAcademicYear,
             periodEndAt: resolveRelativeIsoDate(-1),
             periodExtraordinaryEndAt: resolveRelativeIsoDate(10),
             passed: true,
@@ -327,7 +389,7 @@ describe('useHomeState academic-year range filter for courses mode', () => {
             id: 'subject-failed',
             name: 'Historia',
             ownerId: 'teacher-1',
-            academicYear: previousAcademicYear,
+            academicYear: currentAcademicYear,
             periodEndAt: resolveRelativeIsoDate(-1),
             periodExtraordinaryEndAt: resolveRelativeIsoDate(10),
             passed: false,

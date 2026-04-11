@@ -70,5 +70,6 @@ describe('BinView list pressed-state parity', () => {
     const wrapper = screen.getByTestId('bin-list-wrapper-subject-subject-1');
     expect(wrapper.className).toContain('scale-[1.01]');
     expect(wrapper.className).toContain('shadow-[0_14px_30px_rgba(15,23,42,0.18)]');
+    expect(wrapper.className).not.toContain('opacity-');
   });
 });
