@@ -1,0 +1,31 @@
+<!-- copilot/plans/active/autopilot-plan-execution-2026-04-10/phases/phase-02-batch-undo-and-shared-state-restoration.md -->
+# Phase 02 - Batch Undo and Shared-State Restoration
+
+## Status
+- IN_PROGRESS
+
+## Objective
+Guarantee undo correctness for all affected entities in batch actions and prevent selection-mode side effects after Ctrl+Z.
+
+## Scope
+- Undo reverts full batch action (move/delete/etc), not first/last-only behavior.
+- Ctrl+Z undo does not auto-reactivate selection mode.
+- Undo card action restores all affected entities consistently.
+- Shared-folder boundary undo restores expected sharing state when returning to shared folders.
+
+## Risks
+- Undo stack payload shape drift across action types.
+- Shared metadata restoration can regress permission/share visibility.
+
+## Exit Criteria
+- [ ] Batch undo restores every affected element deterministically.
+- [x] Selection mode remains off after undo when expected.
+- [x] Shared-state restoration verified for shared-folder exit/return cases.
+- [ ] Undo card and Ctrl+Z parity confirmed.
+
+## Implementation Update (2026-04-10)
+- Extended bulk-move undo snapshots to persist pre-move sharing metadata (`sharedWith`, `sharedWithUids`, `isShared`) for subjects/folders.
+- Updated undo replay to restore both parent/folder placement and prior sharing metadata, fixing shared-folder boundary restoration regressions.
+- Adjusted bulk undo completion flow to keep selection mode disabled after undo (no automatic re-entry).
+- Added regression coverage in `tests/unit/hooks/useHomeBulkSelection.test.js` validating selection-mode non-reactivation and sharing metadata restoration.
+- Added mixed subject+folder batch undo coverage in [tests/unit/hooks/useHomeBulkSelection.test.js](../../../../../tests/unit/hooks/useHomeBulkSelection.test.js) to verify deterministic restoration of both `folderId` (subjects) and `parentId` (folders) plus sharing metadata parity.

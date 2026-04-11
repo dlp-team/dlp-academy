@@ -107,6 +107,7 @@ When operating in Autopilot mode, follow this exact loop until the task is compl
 2. **Setup & Authorization** (REQUIRED): 
    - Read `copilot/README.md` (Master navigation hub)
    - Read `copilot/ACTIVE-GOVERNANCE/git-workflow-rules.md` (Git discipline rules)
+   - If prompt/chat references `AUTOPILOT_PLAN.md` or says "autopilot plan", immediately execute checklist Step 0.5 intake detection against `AUTOPILOT_PLAN.md` and `copilot/plans/AUTOPILOT_PLAN.md`
    - Check current branch: `git branch --show-current`
    - If on `main`: Create new feature branch (`git checkout -b feature/<task-name>`)
    - If on feature branch: Continue on existing branch
@@ -141,6 +142,11 @@ When operating in Autopilot mode, follow this exact loop until the task is compl
     - Merged branches are scheduled for auto-deletion after 7-day grace period
     - If retention needed for audit/compliance, set Status to `retained` with documented reason
     - Check for expired branches (> 7 days pending-delete) and delete them from both GitHub and local
+11.5 **Human Merge Approval Gate** (REQUIRED):
+   - Read `BRANCH_LOG.md` and verify both `Autopilot Status` and `Merge Status`
+   - If `Autopilot Status` is `true`, merge is forbidden until `Merge Status` is explicitly `approved` by a real human
+   - Do NOT use `vscode/askQuestions` to ask whether to merge in autopilot mode
+   - If status is `pending-human-approval` or `denied`, stop before merge and wait for human branch-log update
 12. **Final Verification**: When all work is done, run final verification via vscode/askQuestions with full checklist
 13. **Terminate**: Only call the `task_complete` tool when ALL above steps are 100% finished, all tests pass, and final verification confirms completion.
 

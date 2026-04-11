@@ -147,12 +147,13 @@ ANY time you are operating in autopilot mode, you MUST follow these rules with Z
    - ✅ If you deviate from the checklist, you violate this directive
 
 2. **AUTOPILOT_PLAN INTAKE RULE (MANDATORY)**
-   - ✅ **AUTO-DETECT in Step 0.5:** The checklist automatically checks for `copilot/plans/AUTOPILOT_PLAN.md` if no plan exists
+   - ✅ **AUTO-DETECT in Step 0.5:** The checklist automatically checks for `copilot/plans/AUTOPILOT_PLAN.md` and `AUTOPILOT_PLAN.md` if no plan exists
+   - ✅ If prompt/chat mentions "autopilot plan" or references `AUTOPILOT_PLAN.md`, treat it as an explicit intake trigger and execute via checklist
    - ✅ If the request references `AUTOPILOT_PLAN.md` (including `#file:AUTOPILOT_PLAN.md`), you MUST execute using [`copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md`](copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md)
    - ✅ **PLAN CREATION (Step 6):** After detecting AUTOPILOT_PLAN.md, create the full plan package (`README.md`, `strategy-roadmap.md`, `phases/`, `reviewing/`, `working/`, `subplans/`, `user-updates.md`)
-   - ✅ **MOVE & RENAME (Step 6):** Move `copilot/plans/AUTOPILOT_PLAN.md` into the new plan folder's `sources/` subdirectory
-   - ✅ **RENAME:** Rename to `source-autopilot-user-spec-<plan-topic>.md` (matching ORIGINAL/GEMINI source-traceability style)
-   - ✅ **DELETE ORIGINAL:** Do not leave duplicate source files at `copilot/plans/AUTOPILOT_PLAN.md` after intake completion
+   - ✅ **MOVE & RENAME (Step 6):** Move source (`copilot/plans/AUTOPILOT_PLAN.md` or `AUTOPILOT_PLAN.md`) into the new plan folder's `sources/` subdirectory
+   - ✅ **RENAME:** Rename to `source-autopilot-user-spec-<plan-topic>.md` (matching ORIGINAL/GEMINI source-traceability sºtyle)
+   - ✅ **DELETE ORIGINAL:** Do not leave duplicate source files at original source location after intake completion
    - ✅ **CONTINUATION:** The plan includes a final phase to continue with remaining AUTOPILOT_EXECUTION_CHECKLIST steps (Step 7 onwards)
 
 3. **ENTRY POINT**
@@ -165,12 +166,18 @@ ANY time you are operating in autopilot mode, you MUST follow these rules with Z
    - Check [`copilot/ACTIVE-GOVERNANCE/FORBIDDEN_COMMANDS.md`](copilot/ACTIVE-GOVERNANCE/FORBIDDEN_COMMANDS.md) - NEVER execute if listed
    - Unknown? Log in [`copilot/ACTIVE-GOVERNANCE/PENDING_COMMANDS.md`](copilot/ACTIVE-GOVERNANCE/PENDING_COMMANDS.md) and ask user
 
-5. **FINAL LEVERAGE GATE**
+5. **HUMAN MERGE AUTHORIZATION GATE**
+   - Before any merge action in autopilot, read `BRANCH_LOG.md` merge metadata
+   - If `Autopilot Status` is `true`, merge is blocked until `Merge Status` is explicitly marked approved by a real human
+   - Autopilot must NOT use `vscode/askQuestions` to request merge permission when it is on autopilot mode
+   - If approval is missing/pending/denied, pause merge and wait for human update in branch log
+
+6. **FINAL LEVERAGE GATE**
    - Step 23 of the checklist: Execute `vscode/askQuestions` leverage step (protocol: [`copilot/protocols/vscode-askQuestions-leverage-step.md`](copilot/protocols/vscode-askQuestions-leverage-step.md))
    - NEVER skip this gate - it is mandatory before task closure
    - This is your user confirmation mechanism before ending autopilot
 
-6. **VERIFICATION REQUIREMENT**
+7. **VERIFICATION REQUIREMENT**
    - At task completion, user confirms: "Task 100% complete"
    - Only THEN mark autopilot as finished
    - No partial work, no "started", only DONE
