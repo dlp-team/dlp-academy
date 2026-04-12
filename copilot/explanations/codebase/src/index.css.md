@@ -1,6 +1,7 @@
 # index.css
 
 ## Changelog
+- **2026-04-12:** Added global `.custom-scrollbar` token-driven rules and removed dependency on page-local scrollbar overrides so content routes inherit live dark/light scrollbar updates from shared CSS variables.
 - **2026-04-10:** Added scrollbar-box artifact suppression follow-up: transparent `::-webkit-scrollbar-track-piece`, hidden scrollbar buttons, transparent resizer/corner surfaces, and active-mode `overflow-y: auto` + `scrollbar-gutter: auto` to keep only thumb visuals visible.
 - **2026-04-10:** Replaced scrollbar token `color-mix(...)` values with deterministic gray RGBA values, removed fixed active-mode scrollbar gutter backgrounds, and corrected dark-mode active scrollbar selector coverage so thumb colors update live on theme switch without page refresh.
 - **2026-04-08:** Removed global `scrollbar-gutter` reservation in active scrollbar modes and switched to `overflow-y: scroll` to avoid centered-layout cut-off artifacts while keeping no-layout-shift behavior.
@@ -11,7 +12,7 @@
 
 ## Purpose
 - **Source file:** `src/index.css`
-- **Last documented:** 2026-04-10
+- **Last documented:** 2026-04-12
 - **Role:** Global stylesheet for theme tokens, home page scrollbar variants, and app-wide baseline visual behavior.
 
 ## Relevant Sections for Phase 01
@@ -23,6 +24,8 @@
   - Enforces no-layout-jump gutter behavior as primary strategy.
 - `.home-page` and `.home-page *` scrollbar blocks
   - Scoped Home surface scrollbar appearance using shared scrollbar color variables and transparent track-piece suppression.
+- `.custom-scrollbar`
+  - Global reusable scrollbar contract for content/modals and any scroll surface using the `custom-scrollbar` utility class.
 
 ## Maintenance Notes
 - Keep active-mode scrollbar behavior on `overflow-y: auto` and `scrollbar-gutter: auto` to avoid forced gutter strips while preserving thumb-only visuals.

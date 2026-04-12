@@ -15,3 +15,4 @@
 - 2026-04-12: User confirmed continuation after leverage gate (`More work needed`); Phase 02 batch confirmation/undo pipeline implementation completed with focused test validation.
 - 2026-04-12: User requested to continue with the plan; Phase 03 bin interaction press-state polish completed with targeted regression tests.
 - 2026-04-12: User requested to continue with the plan; Phase 04 customization preview parity completed with admin/teacher/student mock role coverage and swatch interaction hardening.
+- 2026-04-12: User selected "Start Phase 05 now" via leverage gate; Phase 05 global scrollbar stabilization completed with content-page scrollbar centralization and validation gates.

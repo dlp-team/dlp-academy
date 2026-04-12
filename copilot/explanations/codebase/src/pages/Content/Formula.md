@@ -22,4 +22,5 @@
 - `katex/dist/katex.min.css`
 
 ## Changelog
+- 2026-04-12: Removed page-level `.custom-scrollbar` style block and delegated scrollbar visuals to centralized token-driven rules in `src/index.css`.
 - 2026-04-03: Added lifecycle-aware subject access gate via `canUserAccessSubject(...)` during subject context load so direct formula-route access honors post-course visibility policy.

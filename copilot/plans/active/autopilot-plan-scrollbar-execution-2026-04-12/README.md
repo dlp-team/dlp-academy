@@ -7,7 +7,7 @@
 - Branch: feature/autopilot-plan-scrollbar-2026-04-12
 - Parent Branch: feature/autopilot-workflow-updates-2026-04-09
 - Owner: hector
-- Current Checklist Step: phase-04-completed
+- Current Checklist Step: phase-05-completed
 
 ## Activation Note
 - This plan was promoted from `todo` to `active` on 2026-04-12.
@@ -16,7 +16,8 @@
 - Phase 02 batch confirmation and undo pipeline is complete with focused unit validation.
 - Phase 03 bin interaction visual polish is complete with focused unit validation.
 - Phase 04 customization preview parity is complete with focused unit validation.
-- Phase 05 global scrollbar stabilization is next.
+- Phase 05 global scrollbar stabilization is complete with focused + gate validation.
+- Phase 06 final optimization and deep risk review is next.
 
 ## Source Priority
 - Primary source of truth: [sources/source-autopilot-user-spec-autopilot-plan-scrollbar-execution-2026-04-12.md](./sources/source-autopilot-user-spec-autopilot-plan-scrollbar-execution-2026-04-12.md)

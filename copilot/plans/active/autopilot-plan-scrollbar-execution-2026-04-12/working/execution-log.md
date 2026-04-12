@@ -59,3 +59,14 @@
 - Committed and pushed Phase 04 atomic block:
 	- Commit: `2ecc0b7` (`feat(customization): Complete phase-04 preview parity`)
 	- Push: `origin/feature/autopilot-plan-scrollbar-2026-04-12`
+- Completed Phase 05 global scrollbar stabilization implementation:
+	- added global token-driven `.custom-scrollbar` contract in `src/index.css`;
+	- removed page-local `.custom-scrollbar` WebKit overrides from `Exam`, `Formula`, and `StudyGuide` so content views inherit centralized live theme tokens.
+- Passed focused Phase 05 validation:
+	- `npm run test:unit -- tests/unit/components/CustomScrollbar.test.jsx tests/unit/pages/content/Exam.test.jsx tests/unit/pages/content/StudyGuide.fallback.test.jsx tests/unit/pages/content/StudyGuide.navigation.test.jsx`
+	- `npm run lint`
+	- `npm run build`
+	- `get_errors` clean on touched source files (baseline `@theme`/`@variant` diagnostics unchanged)
+- Phase 05 gate caveats captured:
+	- `npx tsc --noEmit` failed due unrelated pre-existing type errors in `src/pages/Home/components/HomeContent.tsx`.
+	- `npm run test` full-suite run had one intermittent `StudyGuide.navigation` failure; isolated rerun passed.

@@ -263,11 +263,6 @@ const Formula = ({ user }: any) => {
             </main>
 
             <style>{`
-                .custom-scrollbar::-webkit-scrollbar { width: 8px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: rgba(241,245,249,0.5); border-radius: 10px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: linear-gradient(to bottom, #6366f1, #8b5cf6); border-radius: 10px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: linear-gradient(to bottom, #4f46e5, #7c3aed); }
-                .dark .custom-scrollbar::-webkit-scrollbar-track { background: rgba(30,41,59,0.5); }
                 .katex { color: #1e293b; }
                 .dark .katex { color: #e2e8f0; }
             `}</style>

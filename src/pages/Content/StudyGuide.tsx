@@ -1364,28 +1364,6 @@ const StudyGuide = ({ user }: any) => {
                 .delay-100 { animation-delay: 100ms; }
                 .delay-200 { animation-delay: 200ms; }
                 .delay-700 { animation-delay: 700ms; }
-                
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 8px;
-                }
-
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: rgba(241, 245, 249, 0.5);
-                    border-radius: 10px;
-                }
-
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background: linear-gradient(to bottom, #6366f1, #8b5cf6);
-                    border-radius: 10px;
-                }
-
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-                    background: linear-gradient(to bottom, #4f46e5, #7c3aed);
-                }
-
-                .dark .custom-scrollbar::-webkit-scrollbar-track {
-                    background: rgba(30, 41, 59, 0.5);
-                }
 
                 .katex {
                     color: #1e293b;

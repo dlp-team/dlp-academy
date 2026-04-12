@@ -924,10 +924,6 @@ const Exam = ({ user }) => {
                 .animate-float-delayed {
                     animation: float-delayed 25s ease-in-out infinite;
                 }
-                .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; border-radius: 10px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: linear-gradient(to bottom, #6366f1, #8b5cf6); border-radius: 10px; }
-                .dark .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 .katex { color: #1e293b; font-size: 1.05em; }
                 .dark .katex { color: #e2e8f0; }
                 .katex-display { margin: 0.75em 0; }

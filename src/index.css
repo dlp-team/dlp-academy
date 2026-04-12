@@ -216,6 +216,43 @@ html.theme-switching *::after {
   display: none;
 }
 
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb-start) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track,
+.custom-scrollbar::-webkit-scrollbar-track-piece,
+.custom-scrollbar::-webkit-scrollbar-corner,
+.custom-scrollbar::-webkit-resizer {
+  background: transparent !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--scrollbar-thumb-start) 0%, var(--scrollbar-thumb-end) 100%);
+  border-radius: 10px;
+  opacity: 0.72;
+  transition: background 0.3s ease, opacity 0.3s ease;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+.custom-scrollbar::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, var(--scrollbar-thumb-hover-start) 0%, var(--scrollbar-thumb-hover-end) 100%);
+  opacity: 1;
+}
+
 /* Custom elegant scrollbar for Home page */
 .home-page, .home-page * {
   scrollbar-width: thin;

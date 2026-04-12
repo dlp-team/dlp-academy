@@ -15,14 +15,18 @@
 - [x] Teacher/student preview routes show role-specific mock dashboards.
 - [x] Color swatch interaction opens picker in active and inactive states.
 - [x] Preview updates color live before save and persists only on save.
-- [ ] Global scrollbar style is stable and updates live on theme switch.
+- [x] Global scrollbar style is stable and updates live on theme switch.
 
 ## Non-Functional
 - [x] `get_errors` clean on touched files.
-- [ ] `npm run lint` clean for touched scope.
+- [x] `npm run lint` clean for touched scope.
 - [ ] `npx tsc --noEmit` passes.
 - [x] `npm run test` passes for impacted scope.
-- [ ] `npm run build` succeeds.
+- [x] `npm run build` succeeds.
+
+## Validation Notes
+- `npx tsc --noEmit` remains blocked by unrelated pre-existing type errors in `src/pages/Home/components/HomeContent.tsx`.
+- `npm run test` full-suite run reported one intermittent `StudyGuide.navigation` assertion failure; isolated rerun passed.
 
 ## Governance
 - [x] Commit/push branch rule verified in protocol, skill, and checklist sources.
