@@ -1,5 +1,5 @@
 // src/pages/Home/components/bin/BinSelectionOverlay.tsx
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import BinSelectionPanel from './BinSelectionPanel';
 
 const PANEL_WIDTH = 360;  // must match w-[360px] in BinSelectionPanel
@@ -25,12 +25,26 @@ const BinSelectionOverlay = ({
     onShowDescription,
     onRestore,
     onDeleteConfirm,
-    children,           
+    children,
+    onOverlayReady,
 }: any) => {
     const [rect, setRect] = useState<any>(null);
     const [panelTop, setPanelTop] = useState(0);
     const [panelLeft, setPanelLeft] = useState(0);
     const [isCardFocused, setIsCardFocused] = useState(false);
+    const hasNotifiedReadyRef = useRef(false);
+
+    useEffect(() => {
+        hasNotifiedReadyRef.current = false;
+    }, [item?.id, itemType]);
+
+    useEffect(() => {
+        if (!rect || hasNotifiedReadyRef.current) return;
+        if (typeof onOverlayReady === 'function') {
+            onOverlayReady();
+        }
+        hasNotifiedReadyRef.current = true;
+    }, [rect, onOverlayReady]);
 
     useEffect(() => {
         setIsCardFocused(false);

@@ -9,8 +9,8 @@
 - [x] Ctrl+Shift+click selects contiguous range between anchor and target.
 - [x] Batch action confirmation copy lists names up to 5 and then summarizes overflow.
 - [x] Batch undo restores all affected elements, not only first/last item.
-- [ ] Bin grid second-click no longer causes badge flicker/invisibility.
-- [ ] Bin list mode no longer dims/saturates non-selected siblings on press.
+- [x] Bin grid second-click no longer causes badge flicker/invisibility.
+- [x] Bin list mode no longer dims/saturates non-selected siblings on press.
 - [ ] Customization preview header no longer shows internal teacher selector.
 - [ ] Teacher/student preview routes show role-specific mock dashboards.
 - [ ] Color swatch interaction opens picker in active and inactive states.

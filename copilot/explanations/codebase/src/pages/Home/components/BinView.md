@@ -24,6 +24,9 @@
 - `../../../components/modules/ListViewItem`
 
 ## Changelog
+- **2026-04-12:** Phase 03 polish pass:
+	- added grid overlay readiness gating so selected base cards hide only after overlay coordinates are measured,
+	- removed non-selection-mode list sibling dimming/saturation while keeping selection-mode dimming and selected pressed-state shell styles.
 - **2026-04-09:** Completed list pressed-state shell parity by applying grid-matching selected-card scale + elevation shadow in list mode (outside selection mode) and introduced `bin-list-wrapper-*` test ids for deterministic regression checks.
 - **2026-04-09:** Updated grid pressed-state behavior so selecting an item no longer dims the rest of the grid background and avoids perceived duplicate-card rendering by hiding the original selected card while overlay clone is active.
 - **2026-04-08:** Phase 03 bin interaction parity and read-only route pass:

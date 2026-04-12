@@ -31,3 +31,9 @@
 - Committed and pushed Phase 02 atomic block:
 	- Commit: `81017f9` (`feat(home): Add phase-02 batch previews`)
 	- Push: `origin/feature/autopilot-plan-scrollbar-2026-04-12`
+- Completed Phase 03 bin press-state polish implementation:
+	- Added grid overlay readiness callback contract (`BinSelectionOverlay` -> `BinView`) to prevent selected-card hide flicker before overlay positioning is ready.
+	- Removed list-mode non-selection sibling dimming while preserving selection-mode dimming and selected pressed shell styles.
+- Passed focused Phase 03 validation:
+	- `npm run test -- tests/unit/components/BinView.listPressState.test.jsx tests/unit/components/BinSelectionOverlay.test.jsx tests/unit/pages/home/BinView.listInlinePanel.test.jsx tests/unit/components/BinGridItem.test.jsx tests/unit/utils/selectionVisualUtils.test.js`
+	- `get_errors` clean on touched source/test files.

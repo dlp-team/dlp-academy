@@ -66,6 +66,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
     const [bulkSelection, setBulkSelection] = useState<any>({});
     const [bulkDeleteConfirmOpen, setBulkDeleteConfirmOpen] = useState(false);
     const [bulkActionLoading, setBulkActionLoading] = useState(false);
+    const [gridOverlayReady, setGridOverlayReady] = useState(false);
 
     const selectedCardRef = useRef<any>(null);
 
@@ -310,6 +311,10 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
         setSelectedItemId(null);
         setSelectedItemType(null);
     }, [selectionMode]);
+
+    useEffect(() => {
+        setGridOverlayReady(false);
+    }, [selectedItemId, selectedItemType, selectionMode, layoutMode]);
 
     useEffect(() => {
         setSelectionMode(false);
@@ -837,6 +842,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                             ? selectedBulkCount > 0
                             : false;
                         const hideCardBehindOverlay = !selectionMode
+                            && gridOverlayReady
                             && selectedItemId === item.id
                             && selectedItemType === item.itemType;
 
@@ -865,7 +871,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                             : (selectedItemId === item.id && selectedItemType === item.itemType);
                         const hasSelection = selectionMode
                             ? selectedBulkCount > 0
-                            : Boolean(selectedItemId && selectedItemType);
+                            : false;
                         const daysRemaining = getDaysRemaining(item);
                         const trashedDate = toJsDate(item.trashedAt);
                         const isFolderItem = isFolderItemType(item.itemType);
@@ -969,6 +975,7 @@ const BinView = ({ user, cardScale = 100, layoutMode = 'grid' }: any) => {
                     item={selectedItem}
                     itemType={selectedItem.itemType}
                     selectedCardRef={selectedCardRef}
+                    onOverlayReady={() => setGridOverlayReady(true)}
                     actionLoading={actionLoading}
                     onClose={() => {
                         setSelectedItemId(null);
