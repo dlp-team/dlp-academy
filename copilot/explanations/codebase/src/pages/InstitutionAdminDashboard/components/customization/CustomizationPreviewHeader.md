@@ -8,7 +8,7 @@
 
 ## Responsibilities
 - Render institution identity with icon, title, and role-specific subtitle.
-- Expose a compact top action chip (`Inicio`) to emulate header navigation context.
+- Expose a compact top action chip (`Inicio` / `Administración`) to emulate role-aware header navigation context.
 - Render role-aware theme toggle icon and avatar indicator for deterministic preview parity.
 - Apply color-token reflection through the primary color prop without coupling to backend state.
 
@@ -21,9 +21,12 @@
 
 ## Props
 - `institutionName`: visible identity label; fallback `Tu Institución`.
-- `previewRole`: determines subtitle and icon/avatar state (`student` vs teacher-like roles).
+- `previewRole`: determines subtitle and icon/avatar state (`admin`, `student`, and teacher-like roles).
 - `primaryColor`: drives icon badge and avatar fill color in preview.
 
 ## Changelog
+### 2026-04-12
+- Added explicit admin parity state (`Panel de administración`) including role-specific avatar marker (`A`) and action-chip label (`Administración`).
+
 ### 2026-04-05
 - Added new header parity component for Phase 04 Block B and integrated it into exact Home preview composition.

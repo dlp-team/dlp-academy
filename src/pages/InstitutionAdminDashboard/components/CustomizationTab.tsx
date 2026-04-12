@@ -87,6 +87,7 @@ const CustomizationTab = ({
         <InstitutionCustomizationMockView
           className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden"
           previewUser={previewUser}
+          previewMode="mock"
           initialValues={customizationInitialValues}
           themeSets={savedThemeSets}
           onSave={onSaveCustomization}

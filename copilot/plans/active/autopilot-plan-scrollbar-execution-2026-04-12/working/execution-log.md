@@ -44,3 +44,11 @@
 - Committed and pushed Phase 03 atomic block:
 	- Commit: `ad4a639` (`fix(home-bin): Polish phase-03 press states`)
 	- Push: `origin/feature/autopilot-plan-scrollbar-2026-04-12`
+- Completed Phase 04 customization preview parity implementation:
+	- switched customization tab to dedicated mock preview mode,
+	- expanded preview role switch/header parity for admin + teacher + student,
+	- added dedicated admin dashboard mock surface,
+	- fixed swatch interaction while active by preventing ping-overlay pointer interception.
+- Passed focused Phase 04 validation:
+	- `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/ColorField.test.jsx tests/unit/pages/theme-preview/ThemePreview.test.jsx`
+	- `get_errors` clean on touched source/test files.

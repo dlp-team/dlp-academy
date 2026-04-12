@@ -75,7 +75,7 @@ const ColorField = ({ token, label, description, icon, value, onChange, onFocus,
           />
           {isActive && (
             <div
-              className="absolute -inset-1 rounded-2xl animate-ping opacity-40"
+              className="absolute -inset-1 rounded-2xl animate-ping opacity-40 pointer-events-none"
               style={{ backgroundColor: value }}
             />
           )}

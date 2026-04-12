@@ -2,7 +2,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
+  BarChart3,
   BookOpen,
+  Building2,
   CalendarRange,
   ClipboardCheck,
   FileText,
@@ -12,8 +14,11 @@ import {
   Paperclip,
   RotateCcw,
   Sigma,
+  ShieldCheck,
   TestTube2,
   Trash2,
+  UserCheck,
+  Users,
 } from 'lucide-react';
 import HomeControls from '../../../Home/components/HomeControls';
 import HomeContent from '../../../Home/components/HomeContent';
@@ -213,6 +218,58 @@ const PREVIEW_BIN_ITEMS = [
   },
 ];
 
+const PREVIEW_ADMIN_METRICS = [
+  {
+    id: 'admin-metric-users',
+    label: 'Usuarios activos',
+    value: '1.284',
+    delta: '+4.8% este mes',
+    Icon: Users,
+  },
+  {
+    id: 'admin-metric-institutions',
+    label: 'Instituciones habilitadas',
+    value: '18',
+    delta: '2 pendientes de revisión',
+    Icon: Building2,
+  },
+  {
+    id: 'admin-metric-teachers',
+    label: 'Docentes verificados',
+    value: '312',
+    delta: '14 por aprobar',
+    Icon: UserCheck,
+  },
+  {
+    id: 'admin-metric-retention',
+    label: 'Retención semanal',
+    value: '91%',
+    delta: '+1.3% vs semana anterior',
+    Icon: BarChart3,
+  },
+];
+
+const PREVIEW_ADMIN_ALERTS = [
+  {
+    id: 'admin-alert-1',
+    title: 'Solicitud pendiente de nuevo docente',
+    subtitle: 'Instituto Horizonte · Hace 12 minutos',
+    severity: 'warning',
+  },
+  {
+    id: 'admin-alert-2',
+    title: 'Sincronización de matrícula completada',
+    subtitle: 'Colegio Atlántico · Hace 28 minutos',
+    severity: 'success',
+  },
+  {
+    id: 'admin-alert-3',
+    title: 'Error de importación CSV detectado',
+    subtitle: 'Campus Norte · Hace 46 minutos',
+    severity: 'danger',
+  },
+];
+
 const PREVIEW_TOPICS_BY_SUBJECT = {
   'preview-subject-1': [
     {
@@ -377,6 +434,7 @@ const CustomizationHomeExactPreview = ({
   const [selectedSubjectId, setSelectedSubjectId] = useState('');
   const [selectedTopicId, setSelectedTopicId] = useState('');
 
+  const isAdminRole = previewRole === 'admin';
   const isStudentRole = previewRole === 'student';
   const normalizedSearch = normalizeText(searchQuery);
 
@@ -403,12 +461,13 @@ const CustomizationHomeExactPreview = ({
   }), [form?.primary, form?.secondary, form?.accent, form?.cardBorder]);
 
   const previewUser = useMemo(() => ({
-    uid: isStudentRole ? 'preview-student' : 'preview-teacher',
-    role: isStudentRole ? 'student' : 'teacher',
-    displayName: isStudentRole ? 'Estudiante demo' : 'Docente demo',
-    email: isStudentRole ? 'estudiante@demo.es' : 'docente@demo.es',
+    uid: isAdminRole ? 'preview-admin' : isStudentRole ? 'preview-student' : 'preview-teacher',
+    role: isAdminRole ? 'admin' : isStudentRole ? 'student' : 'teacher',
+    activeRole: isAdminRole ? 'admin' : isStudentRole ? 'student' : 'teacher',
+    displayName: isAdminRole ? 'Administrador demo' : isStudentRole ? 'Estudiante demo' : 'Docente demo',
+    email: isAdminRole ? 'admin@demo.es' : isStudentRole ? 'estudiante@demo.es' : 'docente@demo.es',
     institutionId: 'preview-institution',
-  }), [isStudentRole]);
+  }), [isAdminRole, isStudentRole]);
 
   const allTags = useMemo(() => {
     const uniqueTags = new Set<string>();
@@ -725,6 +784,99 @@ const CustomizationHomeExactPreview = ({
     );
   };
 
+  const renderAdminDashboardPreview = () => {
+    const filteredAlerts = PREVIEW_ADMIN_ALERTS.filter((alert: any) => matchesSearchTerm(alert, normalizedSearch));
+
+    const severityClassMap: Record<string, string> = {
+      warning: 'border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300',
+      success: 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300',
+      danger: 'border-rose-200 dark:border-rose-900/50 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-300',
+    };
+
+    return (
+      <section data-testid="customization-preview-admin-dashboard" className="space-y-4">
+        <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3">
+          <p className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4" style={{ color: form?.primary || '#6366f1' }} />
+            Vista de administración institucional
+          </p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Panel simulado para supervisión global, aprobaciones y estado operativo.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+          {PREVIEW_ADMIN_METRICS.map((metric: any) => {
+            const MetricIcon = metric.Icon;
+            return (
+              <article
+                key={metric.id}
+                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3"
+              >
+                <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                  <MetricIcon size={13} style={{ color: form?.secondary || '#475569' }} />
+                  {metric.label}
+                </p>
+                <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{metric.value}</p>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{metric.delta}</p>
+              </article>
+            );
+          })}
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-4">
+          <article className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3">
+            <p className="text-xs uppercase tracking-wide font-semibold text-slate-500 dark:text-slate-400 mb-2">
+              Alertas de operación
+            </p>
+            <div className="space-y-2">
+              {filteredAlerts.length === 0 ? (
+                <p className="text-xs text-slate-500 dark:text-slate-400">No hay alertas para la búsqueda actual.</p>
+              ) : (
+                filteredAlerts.map((alert: any) => (
+                  <div
+                    key={alert.id}
+                    className={`rounded-lg border px-3 py-2 ${severityClassMap[alert.severity] || severityClassMap.warning}`}
+                  >
+                    <p className="text-xs font-semibold">{alert.title}</p>
+                    <p className="text-[11px] mt-0.5 opacity-90">{alert.subtitle}</p>
+                  </div>
+                ))
+              )}
+            </div>
+          </article>
+
+          <article className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-4 py-3">
+            <p className="text-xs uppercase tracking-wide font-semibold text-slate-500 dark:text-slate-400 mb-2">
+              Acciones rápidas
+            </p>
+            <div className="space-y-2">
+              <button
+                type="button"
+                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold text-white"
+                style={{ backgroundColor: form?.primary || '#6366f1' }}
+              >
+                <UserCheck size={14} /> Revisar aprobaciones docentes
+              </button>
+              <button
+                type="button"
+                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >
+                <Building2 size={14} /> Gestionar instituciones
+              </button>
+              <button
+                type="button"
+                className="w-full inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >
+                <BarChart3 size={14} /> Ver métricas avanzadas
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+    );
+  };
+
   const renderMockBin = () => {
     const isListLayout = layoutMode === 'list';
 
@@ -852,153 +1004,161 @@ const CustomizationHomeExactPreview = ({
             primaryColor={form?.primary || '#6366f1'}
           />
 
-          <div className="px-4 pt-4">
-            <HomeControlsComponent
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              layoutMode={layoutMode}
-              setLayoutMode={setLayoutMode}
-              cardScale={cardScale}
-              setCardScale={setCardScale}
-              allTags={allTags}
-              selectedTags={activeTagSelection}
-              setSelectedTags={handleTagSelectionChange}
-              currentFolder={currentFolder}
-              setFolderModalConfig={noop}
-              setCollapsedGroups={setCollapsedGroups}
-              setCurrentFolder={setCurrentFolder}
-              isDragAndDropEnabled={false}
-              draggedItem={null}
-              draggedItemType={null}
-              onPreferenceChange={noop}
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery as any}
-              activeFilter="all"
-              onFilterOverlayChange={noop}
-              onScaleOverlayChange={noop}
-              sharedScopeSelected={sharedScopeSelected}
-              onSharedScopeChange={setSharedScopeSelected}
-              canCreateFolder={!isStudentRole}
-              showSharedTab={!isStudentRole}
-              hideSharedScopeToggle={isStudentRole || isSharedView}
-              studentMode={isStudentRole}
-              showOnlyCurrentSubjects={showOnlyCurrentSubjects}
-              setShowOnlyCurrentSubjects={setShowOnlyCurrentSubjects}
-              coursesAcademicYearFilter={coursesAcademicYearFilter}
-              setCoursesAcademicYearFilter={setCoursesAcademicYearFilter}
-              availableCourseAcademicYears={availableCourseAcademicYears}
-            />
-          </div>
-
-          <div className="px-4 pb-4 space-y-4">
-            {canShowBreadcrumbs && (
-              <BreadcrumbNavComponent
-                currentFolder={currentFolder}
-                onNavigate={handleOpenFolder}
-                allFolders={activeFoldersForBreadcrumbs}
-                onDropOnBreadcrumb={noop}
-                draggedItem={null}
-                draggedItemType={null}
-              />
-            )}
-
-            {currentFolderLineage.length > 0 && (
-              <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                <CalendarRange size={13} className="text-slate-400" />
-                {currentFolderLineage.map((entry: any, index: any) => (
-                  <React.Fragment key={entry.id}>
-                    {index > 0 && <span>/</span>}
-                    <span className="font-medium text-slate-700 dark:text-slate-300">{entry.name}</span>
-                  </React.Fragment>
-                ))}
+          {isAdminRole ? (
+            <div className="px-4 py-4">
+              {renderAdminDashboardPreview()}
+            </div>
+          ) : (
+            <>
+              <div className="px-4 pt-4">
+                <HomeControlsComponent
+                  viewMode={viewMode}
+                  setViewMode={setViewMode}
+                  layoutMode={layoutMode}
+                  setLayoutMode={setLayoutMode}
+                  cardScale={cardScale}
+                  setCardScale={setCardScale}
+                  allTags={allTags}
+                  selectedTags={activeTagSelection}
+                  setSelectedTags={handleTagSelectionChange}
+                  currentFolder={currentFolder}
+                  setFolderModalConfig={noop}
+                  setCollapsedGroups={setCollapsedGroups}
+                  setCurrentFolder={setCurrentFolder}
+                  isDragAndDropEnabled={false}
+                  draggedItem={null}
+                  draggedItemType={null}
+                  onPreferenceChange={noop}
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery as any}
+                  activeFilter="all"
+                  onFilterOverlayChange={noop}
+                  onScaleOverlayChange={noop}
+                  sharedScopeSelected={sharedScopeSelected}
+                  onSharedScopeChange={setSharedScopeSelected}
+                  canCreateFolder={!isStudentRole}
+                  showSharedTab={!isStudentRole}
+                  hideSharedScopeToggle={isStudentRole || isSharedView}
+                  studentMode={isStudentRole}
+                  showOnlyCurrentSubjects={showOnlyCurrentSubjects}
+                  setShowOnlyCurrentSubjects={setShowOnlyCurrentSubjects}
+                  coursesAcademicYearFilter={coursesAcademicYearFilter}
+                  setCoursesAcademicYearFilter={setCoursesAcademicYearFilter}
+                  availableCourseAcademicYears={availableCourseAcademicYears}
+                />
               </div>
-            )}
 
-            {renderSubjectPreviewDetail()}
+              <div className="px-4 pb-4 space-y-4">
+                {canShowBreadcrumbs && (
+                  <BreadcrumbNavComponent
+                    currentFolder={currentFolder}
+                    onNavigate={handleOpenFolder}
+                    allFolders={activeFoldersForBreadcrumbs}
+                    onDropOnBreadcrumb={noop}
+                    draggedItem={null}
+                    draggedItemType={null}
+                  />
+                )}
 
-            {isSharedView ? (
-              <SharedViewComponent
-                user={previewUser}
-                homeThemeTokens={HOME_THEME_TOKENS}
-                sharedFolders={sharedFolders}
-                sharedSubjects={sharedSubjects}
-                layoutMode={layoutMode}
-                cardScale={cardScale}
-                currentFolder={currentFolder}
-                onOpenFolder={handleOpenFolder}
-                onSelectSubject={(subject: any) => handleSelectSubject(subject.id)}
-                activeMenu={activeMenu}
-                onToggleMenu={setActiveMenu}
-                flippedSubjectId={null}
-                onFlipSubject={noop}
-                allFolders={sharedFolders}
-                allSubjects={sharedSubjects}
-                onEditFolder={noop}
-                onDeleteFolder={noop}
-                onShareFolder={noop}
-                onEditSubject={noop}
-                onDeleteSubject={noop}
-                onShareSubject={noop}
-                onOpenSubjectClasses={noop}
-              />
-            ) : isBinView ? (
-              renderMockBin()
-            ) : (
-              <HomeContentComponent
-                user={previewUser}
-                homeThemeTokens={HOME_THEME_TOKENS}
-                viewMode={viewMode}
-                layoutMode={layoutMode}
-                cardScale={cardScale}
-                groupedContent={groupedContent}
-                collapsedGroups={collapsedGroups}
-                toggleGroup={toggleGroup}
-                currentFolder={viewMode === 'grid' ? currentFolder : null}
-                orderedFolders={viewMode === 'grid' && !isStudentRole ? manualFolders : []}
-                activeMenu={activeMenu}
-                setActiveMenu={setActiveMenu}
-                setSubjectModalConfig={noop}
-                setFolderModalConfig={noop}
-                setDeleteConfig={noop}
-                setSubjectCompletion={noop}
-                completedSubjectIds={[]}
-                handleSelectSubject={handleSelectSubject}
-                handleOpenFolder={handleOpenFolder}
-                handleDropOnFolder={noop}
-                handleNestFolder={noop}
-                handlePromoteSubject={noop}
-                handlePromoteFolder={noop}
-                handleShowFolderContents={noop}
-                handleMoveSubjectWithSource={noop}
-                handleMoveFolderWithSource={noop}
-                onOpenTopics={noop}
-                isDragAndDropEnabled={false}
-                draggedItem={null}
-                draggedItemType={null}
-                handleDragStartSubject={noop}
-                handleDragStartFolder={noop}
-                handleDragEnd={noop}
-                handleDragOverSubject={noop}
-                handleDragOverFolder={noop}
-                handleDropReorderSubject={noop}
-                handleDropReorderFolder={noop}
-                subjects={PREVIEW_SUBJECTS}
-                folders={PREVIEW_FOLDERS}
-                resolvedShortcuts={[]}
-                navigate={noop}
-                onCardFocus={noop}
-                getCardVisualState={() => ({ isAnimating: false, isCutPending: false })}
-                activeFilter="all"
-                selectedTags={selectedTags}
-                sharedScopeSelected={sharedScopeSelected}
-                filterOverlayOpen={false}
-                studentMode={isStudentRole}
-                selectMode={false}
-                selectedItemKeys={new Set()}
-                onToggleSelectItem={noop}
-              />
-            )}
-          </div>
+                {currentFolderLineage.length > 0 && (
+                  <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                    <CalendarRange size={13} className="text-slate-400" />
+                    {currentFolderLineage.map((entry: any, index: any) => (
+                      <React.Fragment key={entry.id}>
+                        {index > 0 && <span>/</span>}
+                        <span className="font-medium text-slate-700 dark:text-slate-300">{entry.name}</span>
+                      </React.Fragment>
+                    ))}
+                  </div>
+                )}
+
+                {renderSubjectPreviewDetail()}
+
+                {isSharedView ? (
+                  <SharedViewComponent
+                    user={previewUser}
+                    homeThemeTokens={HOME_THEME_TOKENS}
+                    sharedFolders={sharedFolders}
+                    sharedSubjects={sharedSubjects}
+                    layoutMode={layoutMode}
+                    cardScale={cardScale}
+                    currentFolder={currentFolder}
+                    onOpenFolder={handleOpenFolder}
+                    onSelectSubject={(subject: any) => handleSelectSubject(subject.id)}
+                    activeMenu={activeMenu}
+                    onToggleMenu={setActiveMenu}
+                    flippedSubjectId={null}
+                    onFlipSubject={noop}
+                    allFolders={sharedFolders}
+                    allSubjects={sharedSubjects}
+                    onEditFolder={noop}
+                    onDeleteFolder={noop}
+                    onShareFolder={noop}
+                    onEditSubject={noop}
+                    onDeleteSubject={noop}
+                    onShareSubject={noop}
+                    onOpenSubjectClasses={noop}
+                  />
+                ) : isBinView ? (
+                  renderMockBin()
+                ) : (
+                  <HomeContentComponent
+                    user={previewUser}
+                    homeThemeTokens={HOME_THEME_TOKENS}
+                    viewMode={viewMode}
+                    layoutMode={layoutMode}
+                    cardScale={cardScale}
+                    groupedContent={groupedContent}
+                    collapsedGroups={collapsedGroups}
+                    toggleGroup={toggleGroup}
+                    currentFolder={viewMode === 'grid' ? currentFolder : null}
+                    orderedFolders={viewMode === 'grid' && !isStudentRole ? manualFolders : []}
+                    activeMenu={activeMenu}
+                    setActiveMenu={setActiveMenu}
+                    setSubjectModalConfig={noop}
+                    setFolderModalConfig={noop}
+                    setDeleteConfig={noop}
+                    setSubjectCompletion={noop}
+                    completedSubjectIds={[]}
+                    handleSelectSubject={handleSelectSubject}
+                    handleOpenFolder={handleOpenFolder}
+                    handleDropOnFolder={noop}
+                    handleNestFolder={noop}
+                    handlePromoteSubject={noop}
+                    handlePromoteFolder={noop}
+                    handleShowFolderContents={noop}
+                    handleMoveSubjectWithSource={noop}
+                    handleMoveFolderWithSource={noop}
+                    onOpenTopics={noop}
+                    isDragAndDropEnabled={false}
+                    draggedItem={null}
+                    draggedItemType={null}
+                    handleDragStartSubject={noop}
+                    handleDragStartFolder={noop}
+                    handleDragEnd={noop}
+                    handleDragOverSubject={noop}
+                    handleDragOverFolder={noop}
+                    handleDropReorderSubject={noop}
+                    handleDropReorderFolder={noop}
+                    subjects={PREVIEW_SUBJECTS}
+                    folders={PREVIEW_FOLDERS}
+                    resolvedShortcuts={[]}
+                    navigate={noop}
+                    onCardFocus={noop}
+                    getCardVisualState={() => ({ isAnimating: false, isCutPending: false })}
+                    activeFilter="all"
+                    selectedTags={selectedTags}
+                    sharedScopeSelected={sharedScopeSelected}
+                    filterOverlayOpen={false}
+                    studentMode={isStudentRole}
+                    selectMode={false}
+                    selectedItemKeys={new Set()}
+                    onToggleSelectItem={noop}
+                  />
+                )}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

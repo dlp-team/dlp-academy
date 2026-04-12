@@ -32,14 +32,30 @@ const renderCustomizationLivePreview = (props = {}) => {
 };
 
 describe('InstitutionCustomizationMockView', () => {
-  it('switches preview role between docente and estudiante', () => {
+  it('switches preview role between administración, docente y estudiante', () => {
     renderCustomizationPreview();
 
     expect(screen.getByText(/panel docente/i)).toBeTruthy();
 
+    fireEvent.click(screen.getByRole('button', { name: /vista administración/i }));
+
+    expect(screen.getByText(/panel de administración/i)).toBeTruthy();
+    expect(screen.getByTestId('customization-preview-admin-dashboard')).toBeTruthy();
+
     fireEvent.click(screen.getByRole('button', { name: /vista estudiante/i }));
 
     expect(screen.getByText(/panel estudiante/i)).toBeTruthy();
+  });
+
+  it('renders dedicated admin mock dashboard instead of Home controls', () => {
+    renderCustomizationPreview();
+
+    fireEvent.click(screen.getByRole('button', { name: /vista administración/i }));
+
+    expect(screen.getByTestId('customization-preview-admin-dashboard')).toBeTruthy();
+    expect(screen.getByText(/vista de administración institucional/i)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /manual/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /cursos/i })).toBeNull();
   });
 
   it('keeps exact preview header and content controls aligned', () => {

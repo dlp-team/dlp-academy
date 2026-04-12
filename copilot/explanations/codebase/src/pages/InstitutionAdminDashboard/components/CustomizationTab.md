@@ -20,6 +20,9 @@
 - `./InstitutionCustomizationMockView`
 
 ## Changelog
+### 2026-04-12
+- Forced `InstitutionCustomizationMockView` into `previewMode='mock'` for the active customization tab flow so role switching always uses dedicated mock dashboard surfaces instead of live Home iframe fallback.
+
 ### 2026-04-10
 - Added `previewUser` passthrough from dashboard scope into `InstitutionCustomizationMockView` so live preview route can resolve real Home user context.
 

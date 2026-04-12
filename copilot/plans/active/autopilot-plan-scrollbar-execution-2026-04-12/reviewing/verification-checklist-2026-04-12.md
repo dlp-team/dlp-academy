@@ -11,10 +11,10 @@
 - [x] Batch undo restores all affected elements, not only first/last item.
 - [x] Bin grid second-click no longer causes badge flicker/invisibility.
 - [x] Bin list mode no longer dims/saturates non-selected siblings on press.
-- [ ] Customization preview header no longer shows internal teacher selector.
-- [ ] Teacher/student preview routes show role-specific mock dashboards.
-- [ ] Color swatch interaction opens picker in active and inactive states.
-- [ ] Preview updates color live before save and persists only on save.
+- [x] Customization preview header no longer shows internal teacher selector.
+- [x] Teacher/student preview routes show role-specific mock dashboards.
+- [x] Color swatch interaction opens picker in active and inactive states.
+- [x] Preview updates color live before save and persists only on save.
 - [ ] Global scrollbar style is stable and updates live on theme switch.
 
 ## Non-Functional

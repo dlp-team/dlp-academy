@@ -19,7 +19,7 @@ Deliver the requested AUTOPILOT and scrollbar work as a lossless, branch-safe, f
 - Phase 01: COMPLETED
 - Phase 02: COMPLETED
 - Phase 03: COMPLETED
-- Phase 04: NOT_STARTED
+- Phase 04: COMPLETED
 - Phase 05: NOT_STARTED
 - Phase 06: NOT_STARTED
 - Final Phase: NOT_STARTED
@@ -39,6 +39,6 @@ Deliver the requested AUTOPILOT and scrollbar work as a lossless, branch-safe, f
 - Final phase (06): lint + type-check + tests + build + deep risk review.
 
 ## Immediate Next Actions
-1. Start Phase 04 customization preview parity and role mock views.
+1. Start Phase 05 global scrollbar stabilization and theme-live parity checks.
 2. Keep `user-updates.md` synchronized before each implementation block.
 3. Log phase-level validation and lossless evidence before each commit/push block.
