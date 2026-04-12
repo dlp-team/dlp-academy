@@ -1,10 +1,11 @@
-// src/pages/Home/hooks/useHomePageHandlers.js
+// src/pages/Home/hooks/useHomePageHandlers.ts
 import { updateDoc, doc } from 'firebase/firestore';
 import { db } from '../../../firebase/config';
 import { isInvalidFolderMove } from '../../../utils/folderUtils';
 import { canEdit, getPermissionLevel } from '../../../utils/permissionUtils';
 import { createShortcutMoveRequest } from '../../../services/shortcutMoveRequestService';
 import { clearLastHomeFolderId, saveLastHomeFolderId } from '../utils/homePersistence';
+import { buildBatchConfirmationPreview } from '../utils/homeBatchConfirmationUtils';
 
 export const useHomePageHandlers = ({
     logic,
@@ -28,11 +29,11 @@ export const useHomePageHandlers = ({
     };
 
     const closeShareConfirm = () => {
-        setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null, onMergeConfirm: null });
+        setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null, onMergeConfirm: null, batchPreview: null });
     };
 
     const closeUnshareConfirm = () => {
-        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
+        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null, batchPreview: null });
     };
 
     const isViewerInsideSharedFolder = Boolean(
@@ -321,15 +322,34 @@ export const useHomePageHandlers = ({
         }
     };
 
+    const resolveBatchPreview = (moveOptions: any, fallbackEntries: any[] = []) => {
+        const previewFromOptions = moveOptions?.batchPreview;
+        if (previewFromOptions && Number(previewFromOptions.totalCount || 0) > 0) {
+            return previewFromOptions;
+        }
+
+        const fallbackPreview = buildBatchConfirmationPreview(fallbackEntries || []);
+        return Number(fallbackPreview.totalCount || 0) > 1 ? fallbackPreview : null;
+    };
+
     const requestOwnerMoveForShortcut = ({ shortcutId, targetFolderId, targetType, targetId, moveOptions = null }: any) => {
         const targetFolder = targetFolderId ? getFolderById(targetFolderId) : null;
         if (!targetFolder || targetFolder.isShared !== true) return false;
+
+        const targetItem = targetType === 'folder'
+            ? getFolderById(targetId)
+            : getSubjectById(targetId);
+        const batchPreview = resolveBatchPreview(moveOptions, [{
+            type: targetType,
+            item: targetItem || { id: targetId, name: targetItem?.name || '' }
+        }]);
 
         setShareConfirm({
             open: true,
             type: 'shortcut-move-request',
             subjectId: targetType === 'subject' ? targetId : null,
             folder: targetFolder,
+            batchPreview,
             requestedShortcutType: targetType,
             requestedShortcutId: shortcutId,
             requestedTargetId: targetId,
@@ -571,6 +591,10 @@ export const useHomePageHandlers = ({
                 type: 'shared-mismatch-move',
                 subjectId,
                 folder: targetFolder,
+                batchPreview: resolveBatchPreview(moveOptions, [{
+                    type: 'subject',
+                    item: subject || { id: subjectId, name: subject?.name || '' }
+                }]),
                 sourceType: 'subject',
                 sourceName: subject?.name || '',
                 onConfirm: async () => {
@@ -608,6 +632,10 @@ export const useHomePageHandlers = ({
                 open: true,
                 subjectId,
                 folder: sourceFolder,
+                batchPreview: resolveBatchPreview(moveOptions, [{
+                    type: 'subject',
+                    item: subject || { id: subjectId, name: subject?.name || '' }
+                }]),
                 onConfirm: async () => {
                     await executeSubjectUnshareMove(false);
                     setBatchDecision(moveOptions, 'subjectUnshareMove', 'remove');
@@ -640,10 +668,14 @@ export const useHomePageHandlers = ({
                     open: true,
                     subjectId,
                     folder: targetFolder,
+                    batchPreview: resolveBatchPreview(moveOptions, [{
+                        type: 'subject',
+                        item: subject || { id: subjectId, name: subject?.name || '' }
+                    }]),
                     onConfirm: async () => {
                         await executeSubjectShareToTarget();
                         setBatchDecision(moveOptions, 'subjectShareToTarget', 'confirm');
-                        setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                        setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, batchPreview: null });
                         await notifyDeferredResolved(moveOptions, { moved: true });
                     }
                 });
@@ -825,7 +857,7 @@ export const useHomePageHandlers = ({
                         onConfirm: async () => {
                             await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
                             registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
-                            setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                            setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, batchPreview: null });
                         }
                     });
                     return true;
@@ -939,6 +971,10 @@ export const useHomePageHandlers = ({
                     open: true,
                     subjectId: null,
                     folder: droppedFolder,
+                    batchPreview: resolveBatchPreview(moveOptions, [{
+                        type: 'folder',
+                        item: droppedFolder || { id: droppedFolderId, name: droppedFolder?.name || '' }
+                    }]),
                     onConfirm: async () => {
                         await executeFolderUnshareMove();
                         setBatchDecision(moveOptions, 'folderUnshareMove', 'remove');
@@ -971,6 +1007,10 @@ export const useHomePageHandlers = ({
                     type: 'shared-mismatch-move',
                     folder: targetFolder,
                     subjectId: null,
+                    batchPreview: resolveBatchPreview(moveOptions, [{
+                        type: 'folder',
+                        item: droppedFolder || { id: droppedFolderId, name: droppedFolder?.name || '' }
+                    }]),
                     sourceType: 'folder',
                     sourceName: droppedFolder?.name || '',
                     onConfirm: async () => {
@@ -1003,10 +1043,14 @@ export const useHomePageHandlers = ({
                     open: true,
                     folder: targetFolder,
                     subjectId: null,
+                    batchPreview: resolveBatchPreview(moveOptions, [{
+                        type: 'folder',
+                        item: droppedFolder || { id: droppedFolderId, name: droppedFolder?.name || '' }
+                    }]),
                     onConfirm: async () => {
                         await executeFolderShareToTarget();
                         setBatchDecision(moveOptions, 'folderShareToTarget', 'confirm');
-                        setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null });
+                        setShareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, batchPreview: null });
                         await notifyDeferredResolved(moveOptions, { moved: true });
                     },
                     onCancel: () => notifyDeferredCancelled(moveOptions)

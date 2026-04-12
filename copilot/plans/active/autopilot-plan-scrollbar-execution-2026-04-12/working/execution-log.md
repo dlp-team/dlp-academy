@@ -14,3 +14,13 @@
 	- `tests/unit/hooks/useHomeContentDnd.test.js`
 	- `tests/unit/hooks/useHomeBulkSelection.test.js`
 	- `tests/unit/hooks/useGhostDrag.test.js`
+- Completed Phase 02 batch confirmation preview wiring and deterministic modal copy integration.
+- Added utility + test coverage for batch preview payload shaping:
+	- `src/pages/Home/utils/homeBatchConfirmationUtils.ts`
+	- `tests/unit/utils/homeBatchConfirmationUtils.test.js`
+- Added share/unshare modal preview rendering coverage:
+	- `tests/unit/pages/home/HomeShareConfirmModals.test.jsx`
+- Passed targeted validation for Phase 02:
+	- `npm run test -- tests/unit/utils/homeBatchConfirmationUtils.test.js tests/unit/pages/home/HomeShareConfirmModals.test.jsx tests/unit/hooks/useHomeBulkSelection.test.js`
+	- `npm run test -- tests/unit/pages/home tests/unit/utils/homeBatchConfirmationUtils.test.js`
+	- `get_errors` clean on touched Home phase-02 files

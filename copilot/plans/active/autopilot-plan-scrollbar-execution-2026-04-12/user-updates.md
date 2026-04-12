@@ -12,3 +12,4 @@
 ## Processed Updates
 - 2026-04-12: Initial intake of `AUTOPILOT_PLAN.md` and `SCROLLBAR_FIX.md` into this plan package.
 - 2026-04-12: User requested to start the new todo plan; plan was promoted to active, Phase 00 completed, and Phase 01 interaction parity implementation executed.
+- 2026-04-12: User confirmed continuation after leverage gate (`More work needed`); Phase 02 batch confirmation/undo pipeline implementation completed with focused test validation.

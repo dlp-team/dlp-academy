@@ -22,6 +22,7 @@
 - `../../../utils/permissionUtils`
 
 ## Changelog
+- **2026-04-12:** Added batch preview payload generation via `homeBatchConfirmationUtils` and propagated `batchPreview` through per-entry move options so deferred confirmation dialogs can show deterministic multi-item names/overflow context.
 - **2026-04-10:** Bulk undo snapshots now persist pre-move sharing metadata (`sharedWith`, `sharedWithUids`, `isShared`) and undo replay restores this state; bulk undo no longer re-enters selection mode after completion.
 - **2026-04-09:** Added phase-02 batch move session orchestration with decision-cache propagation for deferred confirmations, automatic continuation after confirm, cancellation-safe session finalization, and single aggregated undo payload across all moved entries in the batch run.
 - **2026-04-08:** Added folder-child selection de-dup orchestration so child selection clears selected ancestor folders and folder selection clears selected descendants.

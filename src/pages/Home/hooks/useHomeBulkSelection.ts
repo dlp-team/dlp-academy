@@ -1,6 +1,7 @@
 // src/pages/Home/hooks/useHomeBulkSelection.ts
 import React, { useMemo, useRef, useState } from 'react';
 import { isShortcutItem } from '../../../utils/permissionUtils';
+import { buildBatchConfirmationPreview } from '../utils/homeBatchConfirmationUtils';
 
 type HomeBulkSelectionParams = {
     logic: any;
@@ -378,13 +379,15 @@ export const useHomeBulkSelection = ({
         let state = bulkMoveStateRef.current;
         const isContinuation = options?.isContinuation === true;
         if (!isContinuation || !state || state.destination !== destination) {
+            const batchPreview = buildBatchConfirmationPreview(itemsToMove);
             state = {
                 destination,
                 batchDecisions: {},
                 snapshotsByKey: new Map<string, any>(),
                 movedKeys: new Set<string>(),
                 failedEntriesByKey: new Map<string, any>(),
-                deferredNoticeShown: false
+                deferredNoticeShown: false,
+                batchPreview
             };
             bulkMoveStateRef.current = state;
         }
@@ -417,6 +420,7 @@ export const useHomeBulkSelection = ({
                 const moveResult = moveSelectionEntryWithShareRules
                     ? await moveSelectionEntryWithShareRules(entry, destination, {
                         batchDecisions: state.batchDecisions,
+                        batchPreview: state.batchPreview,
                         setBatchDecision: (key: any, value: any) => {
                             state.batchDecisions[key] = value;
                         },

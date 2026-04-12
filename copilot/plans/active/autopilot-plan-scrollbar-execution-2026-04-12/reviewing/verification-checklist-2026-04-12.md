@@ -7,8 +7,8 @@
 - [x] Ctrl+click starts selection mode and selects current item when mode is off.
 - [x] Ctrl+click in selection mode navigates into folder/subject while preserving selection mode.
 - [x] Ctrl+Shift+click selects contiguous range between anchor and target.
-- [ ] Batch action confirmation copy lists names up to 5 and then summarizes overflow.
-- [ ] Batch undo restores all affected elements, not only first/last item.
+- [x] Batch action confirmation copy lists names up to 5 and then summarizes overflow.
+- [x] Batch undo restores all affected elements, not only first/last item.
 - [ ] Bin grid second-click no longer causes badge flicker/invisibility.
 - [ ] Bin list mode no longer dims/saturates non-selected siblings on press.
 - [ ] Customization preview header no longer shows internal teacher selector.
