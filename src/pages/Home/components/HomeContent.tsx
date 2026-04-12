@@ -1,6 +1,6 @@
 // src/pages/Home/components/HomeContent.jsx
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp, ArrowUpCircle, CalendarRange
 } from 'lucide-react';
@@ -77,6 +77,7 @@ const HomeContent = ({
     onCloseFilterOverlay = () => {},
     studentMode = false,
     selectMode = false,
+    setSelectMode = () => {},
     selectedItemKeys = new Set(),
     onToggleSelectItem = () => {},
     onDropSelectedItems = null,
@@ -199,6 +200,152 @@ const HomeContent = ({
 
         return merged.filter(subject => matchesSharedFilter(subject));
     }, [subjects, allShortcutSubjects, sharedScopeSelected, user?.uid, user?.email]);
+
+    const selectionAnchorKeyRef = useRef<string | null>(null);
+
+    const selectionEntryByKey = useMemo(() => {
+        const entries = new Map<string, any>();
+
+        (allFoldersForTree || []).forEach((folder: any) => {
+            const key = getSelectionKey(folder, 'folder');
+            entries.set(key, { key, type: 'folder', item: folder });
+        });
+
+        (allSubjectsForTree || []).forEach((subject: any) => {
+            const key = getSelectionKey(subject, 'subject');
+            entries.set(key, { key, type: 'subject', item: subject });
+        });
+
+        return entries;
+    }, [allFoldersForTree, allSubjectsForTree]);
+
+    useEffect(() => {
+        if (!selectMode || selectedItemKeys.size === 0) {
+            selectionAnchorKeyRef.current = null;
+            return;
+        }
+
+        if (
+            selectionAnchorKeyRef.current
+            && !selectedItemKeys.has(selectionAnchorKeyRef.current)
+        ) {
+            selectionAnchorKeyRef.current = Array.from(selectedItemKeys)[0] || null;
+        }
+    }, [selectMode, selectedItemKeys]);
+
+    const getVisibleSelectionEntries = useCallback(() => {
+        const container = contentRef.current;
+        if (!container) return [];
+
+        const nodes = Array.from(container.querySelectorAll('[data-selection-key]')) as any[];
+        const seen = new Set<string>();
+        const orderedEntries: any[] = [];
+
+        nodes.forEach((node: any) => {
+            const key = node?.dataset?.selectionKey;
+            if (!key || seen.has(key)) return;
+
+            seen.add(key);
+            const entry = selectionEntryByKey.get(key);
+            if (entry) {
+                orderedEntries.push(entry);
+            }
+        });
+
+        return orderedEntries;
+    }, [selectionEntryByKey]);
+
+    const handleRangeSelection = useCallback((item: any, type: any) => {
+        const targetKey = getSelectionKey(item, type);
+        const orderedEntries = getVisibleSelectionEntries();
+        if (orderedEntries.length === 0) {
+            if (!selectedItemKeys.has(targetKey)) {
+                onToggleSelectItem(item, type);
+            }
+            selectionAnchorKeyRef.current = targetKey;
+            return;
+        }
+
+        let anchorKey = selectionAnchorKeyRef.current;
+        if (!anchorKey || !orderedEntries.some((entry: any) => entry.key === anchorKey)) {
+            anchorKey = Array.from(selectedItemKeys)[0] || targetKey;
+        }
+
+        const anchorIndex = orderedEntries.findIndex((entry: any) => entry.key === anchorKey);
+        const targetIndex = orderedEntries.findIndex((entry: any) => entry.key === targetKey);
+
+        if (anchorIndex === -1 || targetIndex === -1) {
+            if (!selectedItemKeys.has(targetKey)) {
+                onToggleSelectItem(item, type);
+            }
+            selectionAnchorKeyRef.current = targetKey;
+            return;
+        }
+
+        const start = Math.min(anchorIndex, targetIndex);
+        const end = Math.max(anchorIndex, targetIndex);
+        orderedEntries.slice(start, end + 1).forEach((entry: any) => {
+            if (!selectedItemKeys.has(entry.key)) {
+                onToggleSelectItem(entry.item, entry.type);
+            }
+        });
+
+        selectionAnchorKeyRef.current = anchorKey;
+    }, [getSelectionKey, getVisibleSelectionEntries, onToggleSelectItem, selectedItemKeys]);
+
+    const handleItemInteraction = useCallback(({
+        item,
+        type,
+        event,
+        navigateAction
+    }: {
+        item: any;
+        type: 'folder' | 'subject';
+        event?: any;
+        navigateAction: () => void;
+    }) => {
+        if (!item?.id) return;
+
+        const selectionKey = getSelectionKey(item, type);
+        const hasModifier = Boolean(event && (event.ctrlKey || event.metaKey));
+        const isRangeSelection = hasModifier && Boolean(event?.shiftKey);
+
+        if (!hasModifier) {
+            if (selectMode) {
+                onToggleSelectItem(item, type);
+                selectionAnchorKeyRef.current = selectionKey;
+                return;
+            }
+
+            navigateAction();
+            return;
+        }
+
+        if (event?.preventDefault) event.preventDefault();
+        if (event?.stopPropagation) event.stopPropagation();
+
+        if (!selectMode) {
+            setSelectMode(true);
+            if (!selectedItemKeys.has(selectionKey)) {
+                onToggleSelectItem(item, type);
+            }
+            selectionAnchorKeyRef.current = selectionKey;
+            return;
+        }
+
+        if (isRangeSelection) {
+            handleRangeSelection(item, type);
+            return;
+        }
+
+        if (selectedItemKeys.has(selectionKey)) {
+            navigateAction();
+            return;
+        }
+
+        onToggleSelectItem(item, type);
+        selectionAnchorKeyRef.current = selectionKey;
+    }, [getSelectionKey, handleRangeSelection, onToggleSelectItem, selectMode, selectedItemKeys, setSelectMode]);
 
     const handleGoToFolderFromGhost = (folderId: any) => {
         if (!folderId) return;
@@ -574,12 +721,13 @@ const HomeContent = ({
                                                         isSelected={isSelected}
                                                         allFolders={allFoldersForTree}
                                                         allSubjects={allSubjectsForTree}
-                                                        onOpen={(targetFolder: any) => {
-                                                            if (selectMode) {
-                                                                onToggleSelectItem(targetFolder, 'folder');
-                                                                return;
-                                                            }
-                                                            handleOpenFolder(targetFolder);
+                                                        onOpen={(targetFolder: any, event: any) => {
+                                                            handleItemInteraction({
+                                                                item: targetFolder,
+                                                                type: 'folder',
+                                                                event,
+                                                                navigateAction: () => handleOpenFolder(targetFolder)
+                                                            });
                                                         }}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
@@ -654,12 +802,13 @@ const HomeContent = ({
                                                         isSelected={isSelected}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
-                                                        onSelect={(subjectId: any) => {
-                                                            if (selectMode) {
-                                                                onToggleSelectItem(subject, 'subject');
-                                                                return;
-                                                            }
-                                                            handleSelectSubject(subjectId);
+                                                        onSelect={(subjectId: any, event: any) => {
+                                                            handleItemInteraction({
+                                                                item: subject,
+                                                                type: 'subject',
+                                                                event,
+                                                                navigateAction: () => handleSelectSubject(subjectId)
+                                                            });
                                                         }}
                                                         onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
                                                         onEdit={(e, s: any) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
@@ -800,22 +949,30 @@ const HomeContent = ({
                                                 parentId={currentFolder ? currentFolder.id : null}
                                                 allFolders={allFoldersForTree}
                                                 allSubjects={allSubjectsForTree}
-                                                onNavigate={(targetFolder: any) => {
-                                                    if (selectMode) {
-                                                        onToggleSelectItem(targetFolder, 'folder');
-                                                        return;
-                                                    }
-                                                    handleOpenFolder(targetFolder);
+                                                onNavigate={(targetFolder: any, event: any) => {
+                                                    handleItemInteraction({
+                                                        item: targetFolder,
+                                                        type: 'folder',
+                                                        event,
+                                                        navigateAction: () => handleOpenFolder(targetFolder)
+                                                    });
                                                 }}
-                                                onNavigateSubject={(subjectId: any) => {
-                                                    if (selectMode) {
-                                                        const selectedSubject = (allSubjectsForTree || []).find((entry: any) => entry?.id === subjectId);
-                                                        if (selectedSubject) {
-                                                            onToggleSelectItem(selectedSubject, 'subject');
+                                                onNavigateSubject={(subjectId: any, event: any) => {
+                                                    const selectedSubject = (allSubjectsForTree || []).find((entry: any) => entry?.id === subjectId);
+
+                                                    if (!selectedSubject) {
+                                                        if (!selectMode) {
+                                                            handleSelectSubject(subjectId);
                                                         }
                                                         return;
                                                     }
-                                                    handleSelectSubject(subjectId);
+
+                                                    handleItemInteraction({
+                                                        item: selectedSubject,
+                                                        type: 'subject',
+                                                        event,
+                                                        navigateAction: () => handleSelectSubject(subjectId)
+                                                    });
                                                 }}
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                 onDelete={(f, action = 'delete') => {
@@ -874,12 +1031,13 @@ const HomeContent = ({
                                                     parentId={currentFolder ? currentFolder.id : null}
                                                     allFolders={allFoldersForTree}
                                                     allSubjects={allSubjectsForTree}
-                                                    onNavigateSubject={(subjectId: any) => {
-                                                        if (selectMode) {
-                                                            onToggleSelectItem(subject, 'subject');
-                                                            return;
-                                                        }
-                                                        handleSelectSubject(subjectId);
+                                                    onNavigateSubject={(subjectId: any, event: any) => {
+                                                        handleItemInteraction({
+                                                            item: subject,
+                                                            type: 'subject',
+                                                            event,
+                                                            navigateAction: () => handleSelectSubject(subjectId)
+                                                        });
                                                     }}
                                                     onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                     onDelete={(s, action = 'delete') => {

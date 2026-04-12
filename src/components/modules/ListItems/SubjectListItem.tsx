@@ -104,9 +104,9 @@ const SubjectListItem = ({
                     : ` bg-gradient-to-br ${subjectGradientClass} hover:border-indigo-300 `
             } ${isOrphan ? 'saturate-[0.22] grayscale-[0.38] brightness-95' : ''} ${className}`} // Apply external className
             style={{ padding: `${paddingPx}px` }}
-            onClick={() => {
+            onClick={(event: any) => {
                 if (isOrphan && isShortcut) return;
-                onSelect(subject.id);
+                onSelect(subject.id, event);
             }}
             onMouseEnter={() => onFocusItem(subject, 'subject')}
             onMouseDown={() => onFocusItem(subject, 'subject')}

@@ -1,6 +1,11 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-04-12: Ctrl/Cmd modifier parity and range selection anchor support
+- Added centralized interaction routing for Home cards/rows to support modifier-aware behavior without changing plain-click flows.
+- Ctrl/Cmd+click now enters selection mode when off, navigates selected entries when on, and preserves existing toggle behavior for plain clicks.
+- Ctrl/Cmd+Shift+click now applies contiguous range selection using rendered `data-selection-key` DOM order.
+
 ### 2026-04-10: Selection-mode create-card visibility and grid batch-drop parity
 - Create-subject cards remain visible in selection mode but are now inert on click.
 - Added selection-aware grid folder drop routing so dragging a selected item to a folder triggers batch move (`onDropSelectedItems`) instead of single-item move.

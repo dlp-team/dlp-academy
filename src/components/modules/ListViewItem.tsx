@@ -226,7 +226,7 @@ const ListViewItem = ({
                             user={user}
                             subject={item} 
                             isCompleted={isCompleted}
-                            onSelect={() => onNavigateSubject(item.id)} 
+                            onSelect={(_: any, event: any) => onNavigateSubject(item.id, event)} 
                             onEdit={onEdit} 
                             onDelete={onDelete} 
                             onShare={onShare}

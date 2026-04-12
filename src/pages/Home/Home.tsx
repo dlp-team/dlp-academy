@@ -458,6 +458,7 @@ const Home = ({ user }: any) => {
                     setSearchQuery={setSearchQuery}
                     canCreateInManualContext={canCreateInManualContext}
                     selectMode={selectMode}
+                    setSelectMode={setSelectMode}
                     selectedItemKeys={selectedItemKeys}
                     toggleSelectItem={toggleSelectItem}
                     runBulkMoveToFolder={runBulkMoveToFolder}

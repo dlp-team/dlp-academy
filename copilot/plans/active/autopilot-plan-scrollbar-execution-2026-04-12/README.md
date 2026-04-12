@@ -7,11 +7,13 @@
 - Branch: feature/autopilot-plan-scrollbar-2026-04-12
 - Parent Branch: feature/autopilot-workflow-updates-2026-04-09
 - Owner: hector
-- Current Checklist Step: phase-00-completed
+- Current Checklist Step: phase-01-completed
 
 ## Activation Note
 - This plan was promoted from `todo` to `active` on 2026-04-12.
-- Phase 00 governance verification is complete; Phase 01 is next.
+- Phase 00 governance verification is complete.
+- Phase 01 selection shortcut parity is complete with focused unit validation.
+- Phase 02 batch confirmation and undo pipeline is next.
 
 ## Source Priority
 - Primary source of truth: [sources/source-autopilot-user-spec-autopilot-plan-scrollbar-execution-2026-04-12.md](./sources/source-autopilot-user-spec-autopilot-plan-scrollbar-execution-2026-04-12.md)

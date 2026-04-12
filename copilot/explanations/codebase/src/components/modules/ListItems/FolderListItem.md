@@ -1,6 +1,9 @@
 # FolderListItem.tsx
 
 ## Changelog
+### 2026-04-12: Modifier-event forwarding for Home selection parity
+- Folder row navigate callbacks now forward click event metadata so Home can distinguish plain click vs Ctrl/Cmd and Ctrl/Cmd+Shift interactions.
+
 ### 2026-04-10: Collapsed children spacing regression fix
 - Added children wrapper test hooks (`folder-list-children-shell-*` and `folder-list-children-content-*`) to make expanded/collapsed spacing behavior verifiable.
 - Updated nested children wrapper classes to clip collapsed state (`overflow-hidden pb-0`) while preserving expanded selection-ring safety (`overflow-visible pb-1`).

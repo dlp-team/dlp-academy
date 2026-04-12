@@ -75,9 +75,9 @@ const FolderCard = (props: any) => {
                 isSelected ? `${SHARED_SELECTION_RING_CLASS} rounded-2xl` : ''
             }`}
             style={{ aspectRatio: '16 / 10' }}
-            onClick={() => {
+            onClick={(e: any) => {
                 if (folder?.isOrphan === true && isShortcutItem(folder)) return;
-                onOpen(folder);
+                onOpen(folder, e);
             }}
             // Drag Events
             draggable={draggable}

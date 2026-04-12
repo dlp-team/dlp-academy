@@ -16,7 +16,7 @@ Deliver the requested AUTOPILOT and scrollbar work as a lossless, branch-safe, f
 
 ## Current Progress
 - Phase 00: COMPLETED
-- Phase 01: NOT_STARTED
+- Phase 01: COMPLETED
 - Phase 02: NOT_STARTED
 - Phase 03: NOT_STARTED
 - Phase 04: NOT_STARTED
@@ -39,6 +39,6 @@ Deliver the requested AUTOPILOT and scrollbar work as a lossless, branch-safe, f
 - Final phase (06): lint + type-check + tests + build + deep risk review.
 
 ## Immediate Next Actions
-1. Start Phase 01 grouped DnD and shortcut parity implementation.
+1. Start Phase 02 batch confirmation copy and full-batch undo reliability implementation.
 2. Keep `user-updates.md` synchronized before each implementation block.
 3. Log phase-level validation and lossless evidence before each commit/push block.

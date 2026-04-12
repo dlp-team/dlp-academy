@@ -1,6 +1,9 @@
 # SubjectListItem.jsx
 
 ## Changelog
+### 2026-04-12: Subject-row selection callback now forwards click event
+- List subject rows now call `onSelect(subjectId, event)` so Home can enforce Ctrl/Cmd and Ctrl/Cmd+Shift selection-mode rules.
+
 ### 2026-04-07: Centralized menu portal and positioning logic
 - Replaced in-file `createPortal` shell and close-layer duplication with shared [ContextActionMenuPortal](../../shared/ContextActionMenuPortal.md).
 - Replaced in-file menu position calculations with shared [menuPositionUtils](../../shared/menuPositionUtils.md).
