@@ -1,4 +1,15 @@
 <!-- copilot/explanations/codebase/src/pages/Topic/hooks/useTopicLogic.md -->
+## [2026-04-12] Teacher Topic Viewer Flag Correction
+### Context
+- Non-student teachers with restricted edit rights were being marked as `isViewer`, causing student-style tab fallbacks and hiding intended teacher interactions.
+
+### Change
+- Updated non-student permission return path so `isViewer` remains `false` for teacher/institution roles.
+- Preserved `canEdit`, `canView`, `canDelete`, and `show*UI` checks without widening destructive permissions.
+
+### Impact
+- Teachers keep teacher tab surfaces and study-guide interaction entrypoints even when edit rights are limited.
+
 ## [2026-04-08] Topic Role and Permission Recovery for Create-Action Visibility
 ### Context
 - Topic create controls could disappear in mixed-role sessions and in legacy topics missing owner/share metadata.

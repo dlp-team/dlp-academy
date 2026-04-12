@@ -1,6 +1,17 @@
 // copilot/explanations/codebase/firestore.rules.md
 
 ## Changelog
+### 2026-04-12: Direct messages same-institution policy and controlled peer notification creates
+- Added `match /directMessages/{messageId}` with least-privilege constraints:
+  - reads limited to participants in same institution, global admins, and same-institution institution admins,
+  - creates require sender self-write, same-institution recipient, recipient existence check, and bounded message length,
+  - updates limited to recipient read-ack fields,
+  - deletes limited to global admin.
+- Extended `notifications` create rule to allow controlled same-institution peer notification creation for supported types only:
+  - `subject_shared`
+  - `direct_message`
+- Preserved existing self-write/institution-admin/global-admin notification paths.
+
 ### 2026-04-02: Shortcut move request least-privilege policy
 - Added explicit `match /shortcutMoveRequests/{requestId}` block.
 - Read access limited to:

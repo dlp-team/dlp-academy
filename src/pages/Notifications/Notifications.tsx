@@ -1,9 +1,10 @@
 // src/pages/Notifications/Notifications.tsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BellOff, Check, CheckCheck, FlaskConical, FolderSync, Loader2, X } from 'lucide-react';
+import { BellOff, CheckCheck } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import { useNotifications } from '../../hooks/useNotifications';
+import NotificationItemCard from '../../components/ui/NotificationItemCard';
 
 const Notifications = ({ user }: any) => {
   const navigate = useNavigate();
@@ -16,27 +17,6 @@ const Notifications = ({ user }: any) => {
     isResolvingMoveRequest,
   } = useNotifications(user);
 
-  const formatTime = (timestamp: any) => {
-    if (!timestamp) return '';
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return 'ahora';
-    if (diffMins < 60) return `hace ${diffMins}m`;
-    if (diffHours < 24) return `hace ${diffHours}h`;
-    return `hace ${diffDays}d`;
-  };
-
-  const isPendingShortcutMoveRequest = (notification: any) => {
-    const type = String(notification?.type || '').trim().toLowerCase();
-    const status = String(notification?.shortcutMoveRequestStatus || '').trim().toLowerCase();
-    return type === 'shortcut_move_request' && status === 'pending' && Boolean(notification?.shortcutMoveRequestId);
-  };
-
   const handleNotificationClick = async (notification: any) => {
     if (!notification?.read) {
       await markAsRead(notification.id);
@@ -47,8 +27,7 @@ const Notifications = ({ user }: any) => {
     }
   };
 
-  const handleResolveMoveRequest = async (event: any, notification: any, resolution: any) => {
-    event.stopPropagation();
+  const handleResolveMoveRequest = async (notification: any, resolution: any) => {
     await resolveMoveRequestFromNotification(notification, resolution);
   };
 
@@ -93,65 +72,13 @@ const Notifications = ({ user }: any) => {
               </div>
             ) : (
               notifications.map((notification) => (
-                <button
+                <NotificationItemCard
                   key={notification.id}
-                  type="button"
-                  onClick={() => handleNotificationClick(notification)}
-                  className={`w-full text-left px-5 py-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${
-                    !notification.read ? 'bg-indigo-50/40 dark:bg-indigo-900/10' : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="shrink-0 mt-0.5 bg-gradient-to-br from-indigo-500 to-purple-600 p-1.5 rounded-lg">
-                      {isPendingShortcutMoveRequest(notification) ? (
-                        <FolderSync className="w-4 h-4 text-white" />
-                      ) : (
-                        <FlaskConical className="w-4 h-4 text-white" />
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{notification.title}</p>
-                        {!notification.read && <span className="w-2 h-2 rounded-full bg-indigo-500" />}
-                      </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-300 mt-1">{notification.message}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">{formatTime(notification.createdAt)}</p>
-
-                      {isPendingShortcutMoveRequest(notification) && (
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <button
-                            type="button"
-                            disabled={Boolean(isResolvingMoveRequest?.(notification.shortcutMoveRequestId))}
-                            onClick={(event) => handleResolveMoveRequest(event, notification, 'approved')}
-                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70"
-                          >
-                            {isResolvingMoveRequest?.(notification.shortcutMoveRequestId) ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <Check className="h-3.5 w-3.5" />
-                            )}
-                            Aprobar
-                          </button>
-
-                          <button
-                            type="button"
-                            disabled={Boolean(isResolvingMoveRequest?.(notification.shortcutMoveRequestId))}
-                            onClick={(event) => handleResolveMoveRequest(event, notification, 'rejected')}
-                            className="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-70"
-                          >
-                            {isResolvingMoveRequest?.(notification.shortcutMoveRequestId) ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <X className="h-3.5 w-3.5" />
-                            )}
-                            Rechazar
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </button>
+                  notification={notification}
+                  onActivate={handleNotificationClick}
+                  onResolveMoveRequest={handleResolveMoveRequest}
+                  isResolvingMoveRequest={isResolvingMoveRequest}
+                />
               ))
             )}
           </div>

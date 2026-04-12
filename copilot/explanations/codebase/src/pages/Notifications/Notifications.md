@@ -11,6 +11,7 @@
 - Reuses shortcut move request approve/reject flows from `useNotifications`.
 - Deep-links to subject page (`/home/subject/:subjectId`) when notification payload includes `subjectId`.
 - Uses shared header shell for consistent navigation and role context behavior.
+- Uses shared notification row renderer (`NotificationItemCard`) for consistency with Header panel visual behavior.
 
 ## Main Dependencies
 - `src/components/layout/Header.tsx`
@@ -20,3 +21,6 @@
 
 ## Exports
 - `default Notifications`
+
+## Changelog
+- 2026-04-12: Migrated notification row UI to shared `NotificationItemCard`, preserving mark-read navigation and shortcut move request actions.

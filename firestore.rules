@@ -1422,6 +1422,50 @@ service cloud.firestore {
       }
 
       // -----------------------------------------
+      // DIRECT MESSAGES
+      // -----------------------------------------
+      match /directMessages/{messageId} {
+        allow read: if isSignedIn()
+          && (
+            isGlobalAdmin()
+            || (
+              resource.data.keys().hasAll(['institutionId', 'senderUid', 'recipientUid'])
+              && resource.data.institutionId == currentUserInstitutionId()
+              && (
+                resource.data.senderUid == request.auth.uid
+                || resource.data.recipientUid == request.auth.uid
+              )
+            )
+            || (
+              isInstitutionAdmin()
+              && resource.data.keys().hasAny(['institutionId'])
+              && resource.data.institutionId == currentUserInstitutionId()
+            )
+          );
+
+        allow create: if isSignedIn()
+          && request.resource.data.keys().hasAll(['institutionId', 'senderUid', 'recipientUid', 'content'])
+          && request.resource.data.senderUid == request.auth.uid
+          && request.resource.data.recipientUid is string
+          && request.resource.data.recipientUid != request.auth.uid
+          && request.resource.data.content is string
+          && request.resource.data.content.size() > 0
+          && request.resource.data.content.size() <= 700
+          && request.resource.data.institutionId == currentUserInstitutionId()
+          && exists(/databases/$(database)/documents/users/$(request.resource.data.recipientUid))
+          && get(/databases/$(database)/documents/users/$(request.resource.data.recipientUid)).data.institutionId == currentUserInstitutionId();
+
+        allow update: if isSignedIn()
+          && resource.data.keys().hasAny(['institutionId'])
+          && resource.data.institutionId == currentUserInstitutionId()
+          && resource.data.recipientUid == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readByRecipient', 'readAt', 'updatedAt'])
+          && request.resource.data.readByRecipient == true;
+
+        allow delete: if isSignedIn() && isGlobalAdmin();
+      }
+
+      // -----------------------------------------
       // NOTIFICATIONS
       // -----------------------------------------
       match /notifications/{notificationId} {
@@ -1444,6 +1488,14 @@ service cloud.firestore {
               isInstitutionAdmin()
               && request.resource.data.keys().hasAny(['institutionId'])
               && request.resource.data.institutionId == currentUserInstitutionId()
+            )
+            || (
+              request.resource.data.keys().hasAll(['institutionId', 'userId', 'type'])
+              && request.resource.data.institutionId == currentUserInstitutionId()
+              && (request.resource.data.type == 'subject_shared' || request.resource.data.type == 'direct_message')
+              && request.resource.data.userId is string
+              && exists(/databases/$(database)/documents/users/$(request.resource.data.userId))
+              && get(/databases/$(database)/documents/users/$(request.resource.data.userId)).data.institutionId == currentUserInstitutionId()
             )
           );
 

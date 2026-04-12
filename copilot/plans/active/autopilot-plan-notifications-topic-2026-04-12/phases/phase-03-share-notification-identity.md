@@ -14,4 +14,4 @@ Ensure share notifications include and render sharer identity details (name + ph
 - Ensure previous notifications without new fields still render.
 
 ## Status
-- `PLANNED`
+- `COMPLETED`

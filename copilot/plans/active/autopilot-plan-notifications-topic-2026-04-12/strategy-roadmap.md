@@ -3,12 +3,12 @@
 
 ## Execution Order
 1. `phase-01-intake-governance` - COMPLETED
-2. `phase-02-notification-centralization` - IN_PROGRESS
-3. `phase-03-share-notification-identity` - PLANNED
-4. `phase-04-direct-messages-same-institution` - PLANNED
-5. `phase-05-subject-class-student-to-teacher` - PLANNED
-6. `phase-06-topic-study-guide-teacher-access` - PLANNED
-7. `phase-07-validation-docs-closure` - PLANNED
+2. `phase-02-notification-centralization` - COMPLETED
+3. `phase-03-share-notification-identity` - COMPLETED
+4. `phase-04-direct-messages-same-institution` - COMPLETED
+5. `phase-05-subject-class-student-to-teacher` - COMPLETED
+6. `phase-06-topic-study-guide-teacher-access` - COMPLETED
+7. `phase-07-validation-docs-closure` - IN_PROGRESS
 
 ## Why This Order
 - Notification centralization first creates stable primitives reused by later feature blocks.
@@ -24,4 +24,4 @@
 - Review checklist in [reviewing/verification-checklist-2026-04-12.md](reviewing/verification-checklist-2026-04-12.md)
 
 ## Immediate Next Action
-- Execute `phase-02-notification-centralization`: extract/align shared notification primitives and unify Home/Header/Topic usage.
+- Complete `phase-07-validation-docs-closure`: finalize reports/docs synchronization, branch log update, and leverage-step closure.

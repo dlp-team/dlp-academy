@@ -29,4 +29,5 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-04-12: Expanded edit permission gating so authorized non-student roles with validated subject access (teacher/institution admin/admin) can interact with study-guide editor flows, while preserving student restriction and subject access checks.
 - 2026-04-03: Added lifecycle-aware subject access gate via `canUserAccessSubject(...)` after topic edit-permission check so direct editor entry respects post-course visibility policy.

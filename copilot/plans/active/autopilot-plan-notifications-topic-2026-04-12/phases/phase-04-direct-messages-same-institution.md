@@ -15,4 +15,4 @@ Introduce direct messaging constrained to users within the same institution.
 - Negative cross-institution access denial.
 
 ## Status
-- `PLANNED`
+- `COMPLETED`

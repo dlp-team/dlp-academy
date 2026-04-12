@@ -779,7 +779,6 @@ export const useTopicLogic = (user: any) => {
         const hasEditPermission = canEdit(topicPermissionTarget, user.uid);
         const hasViewPermission = canView(topicPermissionTarget, user.uid);
         const hasDeletePermission = canDelete(topicPermissionTarget, user.uid);
-        const isViewerOnly = hasViewPermission && !hasEditPermission;
 
         return {
             canEdit: hasEditPermission,
@@ -787,7 +786,8 @@ export const useTopicLogic = (user: any) => {
             canDelete: hasDeletePermission,
             showEditUI: shouldShowEditUI(topicPermissionTarget, user.uid),
             showDeleteUI: shouldShowDeleteUI(topicPermissionTarget, user.uid),
-            isViewer: isViewerOnly
+            // Non-student teacher/institution roles keep teacher tabs even when edit is restricted.
+            isViewer: false
         };
     }, [topic, subject, user, isStudentRole]);
 

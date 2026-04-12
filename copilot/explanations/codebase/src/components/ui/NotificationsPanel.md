@@ -2,6 +2,11 @@
 # NotificationsPanel.tsx
 
 ## Changelog
+### 2026-04-12
+- Migrated per-notification row rendering to shared `NotificationItemCard`.
+- Removed duplicated icon/time/action rendering logic from panel.
+- Preserved unread counts, mark-read behavior, shortcut move request actions, and trigger-boundary outside-click handling.
+
 ### 2026-04-04
 - Added trigger-boundary aware outside-click handling (`triggerRef`) so bell-trigger clicks do not race against outside-close logic.
 - Added `Ver todas` action (`onOpenAll`) to open dedicated notifications history route.

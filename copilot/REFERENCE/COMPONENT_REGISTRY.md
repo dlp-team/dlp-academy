@@ -88,6 +88,23 @@ CRITICAL COPILOT DIRECTIVE: before creating any new UI element (modal, overlay, 
 - Current adopters:
   - src/pages/Home/Home.tsx
 
+### NotificationToast
+- File: src/components/ui/NotificationToast.tsx
+- Status: Active
+- Purpose: shared floating toast shell with unified light/dark styles, bottom positioning, icon slot, and optional action area.
+- Current adopters:
+  - src/components/ui/AppToast.tsx
+  - src/components/ui/UndoActionToast.tsx
+  - src/pages/Home/components/HomeShortcutFeedback.tsx
+
+### NotificationItemCard
+- File: src/components/ui/NotificationItemCard.tsx
+- Status: Active
+- Purpose: shared notification row/card renderer for panel and full-history views, including shortcut move request actions and actor avatar metadata.
+- Current adopters:
+  - src/components/ui/NotificationsPanel.tsx
+  - src/pages/Notifications/Notifications.tsx
+
 ## Buttons and Inputs
 
 No generic button primitives are active yet in src/components/ui.
@@ -146,7 +163,7 @@ When creating a reusable component:
 | Generic primary/secondary/danger buttons | Not implemented yet | Planned |
 
 ## Registry Maintenance
-- Last Updated: 2026-04-07
+- Last Updated: 2026-04-12
 - Maintainer: GitHub Copilot
 - Review Trigger: after every UI centralization wave
 

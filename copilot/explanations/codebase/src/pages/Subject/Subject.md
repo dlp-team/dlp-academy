@@ -27,6 +27,10 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+### 2026-04-12
+- Added class-scope direct-message send handler wiring via `sendDirectMessage` service.
+- `SubjectHeader` now receives `currentUser` and `onSendDirectMessage` props to enable student-to-teacher messaging in class panel.
+
 ### 2026-04-08
 - Added bin-origin read-only mode parsing (`?mode=readonly`) in `Subject.jsx`.
 - In read-only mode, subject-level mutating actions are disabled while topic navigation remains available.

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
-import { canEdit } from '../../utils/permissionUtils';
+import { canEdit, getActiveRole } from '../../utils/permissionUtils';
 import { canUserAccessSubject } from '../../utils/subjectAccessUtils';
 
 import 'katex/dist/katex.min.css';
@@ -193,21 +193,15 @@ const StudyGuideEditor = ({ user }: any) => {
                 }
                 
                 const topicData = { id: topicSnap.id, ...topicSnap.data() };
-                const hasPermission = canEdit(topicData, user?.uid);
-                setHasEditPermission(hasPermission);
-                
-                if (!hasPermission) {
-                    setLoading(false);
-                    return;
-                }
-                
-                // 2. Load subject color (Priority)
+                let hasSubjectAccess = false;
+
+                // 2. Load subject context (color + access scope)
                 const subjectSnap = await getDoc(doc(db, 'subjects', subjectId));
                 if (subjectSnap.exists()) {
                     const subjectData: any = { id: subjectSnap.id, ...(subjectSnap.data() as any) };
 
                     if (user?.uid) {
-                        const hasSubjectAccess = await canUserAccessSubject({ subject: subjectData, user });
+                        hasSubjectAccess = await canUserAccessSubject({ subject: subjectData, user });
                         if (!hasSubjectAccess) {
                             navigate('/home');
                             return;
@@ -217,6 +211,19 @@ const StudyGuideEditor = ({ user }: any) => {
                     if (subjectData.color) {
                         setTopicGradient(subjectData.color);
                     }
+                } else {
+                    navigate('/home');
+                    return;
+                }
+
+                const activeRole = getActiveRole(user);
+                const roleCanEditGuides = activeRole === 'teacher' || activeRole === 'institutionadmin' || activeRole === 'admin';
+                const hasPermission = canEdit(topicData, user?.uid) || (roleCanEditGuides && hasSubjectAccess);
+                setHasEditPermission(hasPermission);
+
+                if (!hasPermission) {
+                    setLoading(false);
+                    return;
                 }
 
                 // 3. Load study guide

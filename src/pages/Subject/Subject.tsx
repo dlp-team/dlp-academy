@@ -1,4 +1,4 @@
-// src/pages/Subject/Subject.jsx
+// src/pages/Subject/Subject.tsx
 import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Loader2, AlertTriangle } from 'lucide-react';
@@ -19,6 +19,7 @@ import EditSubjectModal from '../Home/modals/EditSubjectModal';
 import TopicFormModal from './modals/TopicFormModal';
 import EditTopicModal from './modals/EditTopicModal';
 import { getActiveRole } from '../../utils/permissionUtils';
+import { sendDirectMessage } from '../../services/directMessageService';
 
 const Subject = ({ user }: any) => {
     const params = useParams();
@@ -142,6 +143,20 @@ const Subject = ({ user }: any) => {
         await updateTopic(topicId, { isVisible: makeVisible });
     };
 
+    const handleSendClassDirectMessage = async ({ recipient, content }: any) => {
+        if (!recipient?.uid || !content) {
+            throw new Error('Faltan datos para enviar el mensaje.');
+        }
+
+        await sendDirectMessage({
+            sender: user,
+            recipientUid: recipient.uid,
+            content,
+            subjectId: subject?.id || subjectId,
+            subjectName: subject?.name || null,
+        });
+    };
+
     if (!user || loading || !subject) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
@@ -170,6 +185,8 @@ const Subject = ({ user }: any) => {
                     classMembers={classMembers}
                     membersLoading={membersLoading}
                     topicCount={effectiveIsTeacher ? topics.length : topics.filter(t => t.isVisible !== false).length}
+                    currentUser={user}
+                    onSendDirectMessage={handleSendClassDirectMessage}
                 />
 
                 {isBinReadOnlyView && (

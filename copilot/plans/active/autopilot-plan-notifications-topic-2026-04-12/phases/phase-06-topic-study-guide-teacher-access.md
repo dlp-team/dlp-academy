@@ -14,4 +14,4 @@ Remove unintended admin-only gating so teachers can access/interact with study g
 - Student/admin behaviors remain correct.
 
 ## Status
-- `PLANNED`
+- `COMPLETED`

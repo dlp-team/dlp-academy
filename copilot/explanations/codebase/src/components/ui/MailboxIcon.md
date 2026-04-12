@@ -1,7 +1,7 @@
-# MailboxIcon.jsx
+# MailboxIcon.tsx
 
 ## Purpose
-- **Source file:** `src/components/ui/MailboxIcon.jsx`
+- **Source file:** `src/components/ui/MailboxIcon.tsx`
 - **Last documented:** 2026-02-24
 - **Role:** UI primitive/reusable presentational component.
 
@@ -23,9 +23,10 @@
 
 ## Imports and Dependencies
 - `react`: `React`
+- `lucide-react`: `Bell`, `BellRing`
 
 ## Example
-```jsx
+```tsx
 import MailboxIcon from '../components/ui/MailboxIcon';
 
 function ExampleScreen() {
@@ -36,3 +37,9 @@ function ExampleScreen() {
 ## Maintenance Notes
 - Keep this explanation updated when adding, renaming, or deleting functions in the source file.
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
+
+## Changelog
+### 2026-04-12
+- Replaced mailbox/letter visual metaphor with bell-based notification iconography.
+- Preserved unread badge counting and button interaction API (`mailCount`, `onClick`, `dark`).
+- Updated accessible labels/title to notification semantics.

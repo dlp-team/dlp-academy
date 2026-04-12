@@ -9,7 +9,7 @@
 
 ## Responsibilities
 - Renders nothing when there is no feedback.
-- Renders a styled feedback banner using provided tone-compatible text class.
+- Renders bottom-left floating shortcut feedback using shared `NotificationToast` styles.
 - Keeps feedback markup outside `Home.tsx` to reduce coordinator complexity.
 
 ## Exports
@@ -17,3 +17,8 @@
 
 ## Main Dependencies
 - `react`
+- `lucide-react`
+- `src/components/ui/NotificationToast.tsx`
+
+## Changelog
+- 2026-04-12: Migrated shortcut feedback from inline page banner to unified floating toast surface (bottom-left), aligned with centralized notification design system.

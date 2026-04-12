@@ -15,4 +15,4 @@ Create/extend shared notification primitives and route Home/Header/Topic notific
 - Verify no regressions in undo actions and notification close behavior.
 
 ## Status
-- `IN_PROGRESS`
+- `COMPLETED`

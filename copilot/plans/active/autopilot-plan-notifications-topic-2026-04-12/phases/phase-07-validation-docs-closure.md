@@ -13,4 +13,4 @@ Run deterministic validation, generate documentation, and close plan via mandato
 - Execute mandatory `vscode/askQuestions` closure gate.
 
 ## Status
-- `PLANNED`
+- `IN_PROGRESS`

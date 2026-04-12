@@ -14,4 +14,4 @@ Expose student-to-teacher messaging action in Subject class area while preservin
 - Teacher/admin display behavior unchanged except intended entrypoints.
 
 ## Status
-- `PLANNED`
+- `COMPLETED`

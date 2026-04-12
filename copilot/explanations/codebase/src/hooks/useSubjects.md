@@ -1,4 +1,17 @@
 <!-- copilot/explanations/codebase/src/hooks/useSubjects.md -->
+## [2026-04-12] Shared Notification Identity Metadata
+### Context
+- Shared-subject notifications needed explicit sharer identity rendering in centralized notification cards.
+
+### Change
+- Extended `notifySubjectShareRecipient(...)` payload with:
+  - `sharedByDisplayName`
+  - `sharedByPhotoURL`
+- Preserved existing fields (`sharedByUid`, `sharedByEmail`) and deterministic notification ID behavior.
+
+### Impact
+- Notification surfaces can now render sharer avatar/name directly for `subject_shared` events.
+
 ## [2026-04-08] Subject Share and Assignment Notification Dispatch
 ### Context
 - Phase 07 requires user-facing notifications when subjects are shared and when student access is assigned through class or direct enrollment flows.

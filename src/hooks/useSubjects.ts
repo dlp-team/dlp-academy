@@ -160,6 +160,7 @@ export const useSubjects = (user: any) => {
             userId: normalizedRecipientUid
         });
         const actorLabel = String(user?.displayName || user?.email || 'Un usuario').trim();
+        const actorPhotoURL = String(user?.photoURL || '').trim() || null;
         const subjectLabel = String(subjectName || 'Asignatura').trim() || 'Asignatura';
         const roleLabel = shareRole === 'editor' ? ' con permiso de edición' : '';
 
@@ -176,6 +177,8 @@ export const useSubjects = (user: any) => {
                     message: `${actorLabel} compartió la asignatura "${subjectLabel}" contigo${roleLabel}.`,
                     shareRole: shareRole === 'editor' ? 'editor' : 'viewer',
                     sharedByUid: user?.uid || null,
+                    sharedByDisplayName: actorLabel,
+                    sharedByPhotoURL: actorPhotoURL,
                     sharedByEmail: String(user?.email || '').toLowerCase() || null,
                     recipientEmail: String(recipientEmail || '').toLowerCase() || null,
                     createdAt: serverTimestamp(),

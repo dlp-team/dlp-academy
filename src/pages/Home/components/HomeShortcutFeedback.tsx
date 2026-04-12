@@ -1,5 +1,7 @@
 // src/pages/Home/components/HomeShortcutFeedback.tsx
 import React from 'react';
+import { Copy } from 'lucide-react';
+import NotificationToast from '../../../components/ui/NotificationToast';
 
 type HomeShortcutFeedbackProps = {
     message: string;
@@ -7,14 +9,18 @@ type HomeShortcutFeedbackProps = {
 };
 
 const HomeShortcutFeedback = ({ message, mutedTextClass }: HomeShortcutFeedbackProps) => {
-    if (!message) {
-        return null;
-    }
+    void mutedTextClass;
 
     return (
-        <p className={`${mutedTextClass} mt-4 rounded-lg border border-slate-200/70 bg-white/70 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-900/60`}>
-            {message}
-        </p>
+        <NotificationToast
+            show={Boolean(message)}
+            title="Atajo de teclado"
+            message={message}
+            tone="info"
+            position="bottom-left"
+            icon={<Copy className="h-4 w-4" />}
+            offset={0}
+        />
     );
 };
 
