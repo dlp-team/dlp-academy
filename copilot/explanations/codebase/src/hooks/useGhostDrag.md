@@ -1,8 +1,8 @@
-# useGhostDrag.js
+# useGhostDrag.ts
 
 ## Purpose
-- **Source file:** `src/hooks/useGhostDrag.js`
-- **Last documented:** 2026-02-24
+- **Source file:** `src/hooks/useGhostDrag.ts`
+- **Last documented:** 2026-04-11
 - **Role:** Custom hook providing shared state and business logic.
 
 ## File Flow (High Level)
@@ -59,6 +59,7 @@ function ExampleComponent() {
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
 
 ## Changelog
+- 2026-04-11: Fixed TypeScript compatibility in multi-ghost path by storing drag scale dataset metadata as strings (`dataset.originalScale`, `dataset.scale`) and aligned file header path comment to `.ts`.
 - 2026-04-10: Added multi-selection drag ghost mode with stacked cloned layers and a total-count badge while preserving previous single-card ghost behavior and breadcrumb ghost scaling compatibility.
 - 2026-03-08: Added dedicated unit coverage in `tests/unit/hooks/useGhostDrag.test.js` validating:
   - ghost creation/removal lifecycle from `onDragStart` and `onDragEnd`

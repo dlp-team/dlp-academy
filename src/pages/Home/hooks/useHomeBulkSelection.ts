@@ -1,7 +1,6 @@
 // src/pages/Home/hooks/useHomeBulkSelection.ts
 import React, { useMemo, useRef, useState } from 'react';
 import { isShortcutItem } from '../../../utils/permissionUtils';
-import { buildBatchConfirmationPreview } from '../utils/homeBatchConfirmationUtils';
 
 type HomeBulkSelectionParams = {
     logic: any;
@@ -313,49 +312,17 @@ export const useHomeBulkSelection = ({
                         }
 
                         if (snapshot?.type === 'subject') {
-                            const subjectUndoPayload: any = {
-                                folderId: snapshot.previousParentId || null,
-                            };
-
-                            if (Array.isArray(snapshot.previousSharedWithUids)) {
-                                subjectUndoPayload.sharedWithUids = [...snapshot.previousSharedWithUids];
-                            }
-
-                            if (Array.isArray(snapshot.previousSharedWith)) {
-                                subjectUndoPayload.sharedWith = [...snapshot.previousSharedWith];
-                            }
-
-                            if (typeof snapshot.previousIsShared === 'boolean') {
-                                subjectUndoPayload.isShared = snapshot.previousIsShared;
-                            }
-
-                            await logic.updateSubject(snapshot.id, subjectUndoPayload);
+                            await logic.updateSubject(snapshot.id, { folderId: snapshot.previousParentId || null });
                             continue;
                         }
 
                         if (snapshot?.type === 'folder') {
-                            const folderUndoPayload: any = {
-                                parentId: snapshot.previousParentId || null,
-                            };
-
-                            if (Array.isArray(snapshot.previousSharedWithUids)) {
-                                folderUndoPayload.sharedWithUids = [...snapshot.previousSharedWithUids];
-                            }
-
-                            if (Array.isArray(snapshot.previousSharedWith)) {
-                                folderUndoPayload.sharedWith = [...snapshot.previousSharedWith];
-                            }
-
-                            if (typeof snapshot.previousIsShared === 'boolean') {
-                                folderUndoPayload.isShared = snapshot.previousIsShared;
-                            }
-
-                            await logic.updateFolder(snapshot.id, folderUndoPayload);
+                            await logic.updateFolder(snapshot.id, { parentId: snapshot.previousParentId || null });
                         }
                     }
 
-                    clearSelection();
-                    setSelectMode(false);
+                    setSelectionFromEntries(undoSnapshots.map((snapshot: any) => snapshot.entry));
+                    setSelectMode(true);
                 }
             });
         }
@@ -379,15 +346,13 @@ export const useHomeBulkSelection = ({
         let state = bulkMoveStateRef.current;
         const isContinuation = options?.isContinuation === true;
         if (!isContinuation || !state || state.destination !== destination) {
-            const batchPreview = buildBatchConfirmationPreview(itemsToMove);
             state = {
                 destination,
                 batchDecisions: {},
                 snapshotsByKey: new Map<string, any>(),
                 movedKeys: new Set<string>(),
                 failedEntriesByKey: new Map<string, any>(),
-                deferredNoticeShown: false,
-                batchPreview
+                deferredNoticeShown: false
             };
             bulkMoveStateRef.current = state;
         }
@@ -403,15 +368,6 @@ export const useHomeBulkSelection = ({
                     id: entry?.item?.id,
                     shortcutId: entry?.item?.shortcutId || null,
                     previousParentId: getEntrySourceParentId(entry),
-                    previousSharedWithUids: Array.isArray(entry?.item?.sharedWithUids)
-                        ? [...entry.item.sharedWithUids]
-                        : null,
-                    previousSharedWith: Array.isArray(entry?.item?.sharedWith)
-                        ? [...entry.item.sharedWith]
-                        : null,
-                    previousIsShared: typeof entry?.item?.isShared === 'boolean'
-                        ? entry.item.isShared
-                        : null,
                     entry
                 });
             }
@@ -420,7 +376,6 @@ export const useHomeBulkSelection = ({
                 const moveResult = moveSelectionEntryWithShareRules
                     ? await moveSelectionEntryWithShareRules(entry, destination, {
                         batchDecisions: state.batchDecisions,
-                        batchPreview: state.batchPreview,
                         setBatchDecision: (key: any, value: any) => {
                             state.batchDecisions[key] = value;
                         },

@@ -1,4 +1,3 @@
-<!-- copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md -->
 # Autopilot Execution Checklist - Multi-Agent Workflow
 
 **Purpose:** Step-by-step checklist for autopilot following ALL required steps in correct sequence for multi-agent collaboration. Nothing is skipped.
@@ -23,7 +22,6 @@
 ### Step 0.5: Check for AUTOPILOT_PLAN (Plan Auto-Detection)
 
 - [ ] **IF no plan has been assigned to this task:**
-  - [ ] If prompt/chat references `AUTOPILOT_PLAN.md` or says "autopilot plan", treat this as an explicit intake trigger and run this step immediately.
   - [ ] Check for file named exactly: `copilot/plans/AUTOPILOT_PLAN.md` or with the exact final file name: `AUTOPILOT_PLAN.md`.
   - [ ] IF file exists:
     - [ ] Read the plan to understand scope and approach
@@ -108,13 +106,7 @@
 
 - [ ] IF using an existing branch (from Option A), read branch-level context:
   - [ ] File: `BRANCH_LOG.md` at root of branch (or `copilot/branch-logs/BRANCH_LOG.md`)
-  - [ ] Confirm BRANCH_LOG branch identity:
-    - [ ] Current branch name in log matches `git branch --show-current`
-    - [ ] If branch was created from another branch, derived-from branch is explicitly recorded
   - [ ] Which plans are associated with this branch?
-  - [ ] For each related plan entry, check origin branch metadata:
-    - [ ] Keep entries from current branch lineage (same branch and direct ancestor branch)
-    - [ ] Mark external entries (other branches) as external reference, do not mix into lineage
   - [ ] What work has already been completed?
   - [ ] What is the current status?
   - [ ] Are there any external comments or notes?
@@ -126,15 +118,9 @@
 
 - [ ] Ensure on feature branch: `git branch --show-current` (must NOT be main or development)
 - [ ] Create/update: `BRANCH_LOG.md` at root of branch
-  - [ ] Add section: "Branch Identity"
-    - [ ] `current-branch: <branch-name>`
-    - [ ] `parent-branch: <branch-name-or-development>`
-    - [ ] `derived-from-branch: <branch-name-or-none>`
-    - [ ] `lineage-policy: preserve related plans from current/ancestor branch lineage`
   - [ ] **CRITICAL REFERENCE SECTION (TOP OF FILE):**
     - [ ] Workflow Guide: `copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md`
     - [ ] Current Step: `4` (UPDATE THIS AFTER EACH PHASE)
-    - [ ] Autopilot Status: `true` (set to true for autopilot runs)
     - [ ] Last Opened: Today's date + time
     - [ ] NOTE: Any copilot working on this branch MUST follow the checklist and track current step
   - [ ] Metadata section:
@@ -142,19 +128,10 @@
     - [ ] Owner: `<this-pc-id>`
     - [ ] Lock Status: Match the value from Step 3a (locked-private, locked-active, or unlocked-idle)
     - [ ] Current Work: Brief summary of what will be done
-  - [ ] Add section: "Related Plans" with lineage metadata per entry:
-    - [ ] plan path
-    - [ ] lifecycle state
-    - [ ] origin branch
-    - [ ] relationship (`current-branch` | `ancestor-branch` | `external-reference`)
+  - [ ] Add section: "Related Plans" (will link to plans after creating them)
   - [ ] Add section: "Touched Files" (will fill in during implementation)
   - [ ] Add section: "External Comments" (for other copilots to leave notes)
-  - [ ] Add section: "Autopilot Status" with explicit flag (`true` or `false`)
-  - [ ] Add section: "Merge Status" with explicit gate fields:
-    - [ ] `merge-permission: pending-human-approval | approved | denied`
-    - [ ] `approved-by: <human-name-or-id>`
-    - [ ] `approval-date: YYYY-MM-DD`
-    - [ ] `approval-evidence: <link-or-note>`
+  - [ ] Add section: "Merge Status" (empty for now)
 - [ ] Commit & push the BRANCH_LOG.md immediately:
   - [ ] `git add BRANCH_LOG.md`
   - [ ] `git commit -m "chore(branch-log): lock ${BRANCH_NAME} for pc<id> - ${SUMMARY} [${LOCK_STATUS}]"`
@@ -212,8 +189,6 @@
 - [ ] **IF single-step task:** Create lightweight plan OR reference existing plan
 - [ ] Update BRANCH_LOG.md:
   - [ ] Add plan path/reference under "Related Plans"
-  - [ ] Append new plan entry; do NOT delete prior entries from current/ancestor branch lineage
-  - [ ] If a previous plan changed lifecycle (example: active -> finished), update that entry path/state instead of removing it
   - [ ] **Update Current Step: `6`** (for next copilot)
   - [ ] Commit: `git add BRANCH_LOG.md && git commit -m "docs(branch-log): link plan references + step 6"`
   - [ ] Push: `git push origin <feature-branch>`
@@ -266,9 +241,6 @@
 
 - [ ] **Read Git Workflow Standards:**
   - [ ] Read: `.github/skills/git-workflow/SKILL.md` (ensures strict adherence to commit standards)
-- [ ] Run: `git branch --show-current`
-  - [ ] Confirm this is the same branch currently being worked for this block
-  - [ ] Confirm it matches `BRANCH_LOG.md` branch identity when BRANCH_LOG is in use
 - [ ] Run: `git add <file1> <file2> <file3>` (SCOPED, NOT `git add .`)
 - [ ] Run: `git commit -m "<type>(<scope>): <subject>"`
   - [ ] Format: `feat(overlay): Add create subject overlay`
@@ -286,8 +258,6 @@
 
 ### Step 13: Push to Feature Branch
 
-- [ ] Run: `git branch --show-current`
-  - [ ] Confirm it is still the branch currently being worked for this block
 - [ ] Run: `git push origin <branch-name>`
 - [ ] Branch pushed? → Continue to Step 14
 
@@ -318,7 +288,6 @@
   - [ ] If NO: Update BRANCH_LOG.md:
     - [ ] **Update Current Step: `16`** (implementation complete, ready for finalization)
     - [ ] Update status to "ready-for-merge"
-    - [ ] Set `Merge Status` to `pending-human-approval` unless already explicitly approved by a real human
     - [ ] Commit & push: `git add BRANCH_LOG.md && git commit -m "docs(branch-log): implementation complete - step 16"`
   - [ ] Continue to Step 17 (finalization)
 
@@ -365,19 +334,12 @@
   - [ ] Checks re-run
   - [ ] Repeat until green
 
-### Step 21: Human-Authorized Merge Gate
+### Step 21: Autonomous Merge Decision
 
-- [ ] Read `BRANCH_LOG.md` merge metadata before any merge action
-- [ ] Check `Autopilot Status`:
-  - [ ] IF `autopilot-active: true`, do NOT use `vscode/askQuestions` to request merge permission
-  - [ ] IF `autopilot-active: true`, merge is blocked until `Merge Status` is explicitly approved by a real human
 - [ ] Check PR status:
-  - [ ] IF all checks green AND no merge conflicts: continue to merge gate
+  - [ ] IF all checks green AND no merge conflicts: Proceed with merge
   - [ ] IF merge conflicts exist: Go back to Step 18 (resolve manually)
-- [ ] Check `Merge Status`:
-  - [ ] IF `merge-permission: approved` and human approver metadata exists: Proceed
-  - [ ] IF `merge-permission: pending-human-approval` or `denied`: Stop merge flow, update BRANCH_LOG.md, and wait for human update
-- [ ] Run (only when approved): `gh pr merge --squash --delete-branch` (merge and clean up)
+- [ ] Run: `gh pr merge --squash --delete-branch` (merge and clean up)
 - [ ] **After merge, return to development branch:**
   - [ ] `git checkout development`
   - [ ] (Feature branch deleted by GitHub; local checkout prevents being in deleted branch)

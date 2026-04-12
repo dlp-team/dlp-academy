@@ -1,4 +1,3 @@
-<!-- copilot/protocols/plan-creation-protocol.md -->
 # Plan Creation Protocol
 
 ## Purpose
@@ -6,28 +5,6 @@
 Define a consistent process for creating, executing, reviewing, and closing plans in `copilot/plans`.
 
 **CRITICAL PHILOSOPHY**: Quality and thoroughness are more important than speed. Every phase must be fully validated before marking complete.
-
-## AUTOPILOT_PLAN Intake Trigger (MANDATORY)
-
-When a prompt/chat references `AUTOPILOT_PLAN.md` or explicitly says "autopilot plan", this protocol must route execution to `copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md` immediately.
-
-Required behavior:
-
-1. Check both source paths:
-  - `AUTOPILOT_PLAN.md`
-  - `copilot/plans/AUTOPILOT_PLAN.md`
-2. Intake the first existing source into:
-  - `copilot/plans/active/<plan-name>/sources/source-autopilot-user-spec-<plan-topic>.md`
-3. Remove the original source from its prior location (no duplicate source files).
-4. Include a final plan phase to continue checklist execution from Step 7 onward.
-5. Update `BRANCH_LOG.md` with:
-  - `Autopilot Status` set to active (`true`)
-  - `Merge Status` set to `pending-human-approval`
-6. During autopilot merge flow, authorization must come from human-updated `BRANCH_LOG.md` merge status (not from `vscode/askQuestions`).
-7. Preserve plan lineage in `BRANCH_LOG.md` related plans:
-  - Keep prior plans from the same branch lineage (current branch and ancestor branch).
-  - Do not delete prior same-lineage plan entries when adding a new plan.
-  - If a prior plan changes lifecycle (for example `active` to `finished`), update its path/state entry instead of removing it.
 
 ## When to Create a New Plan
 
@@ -88,10 +65,6 @@ Each plan folder should contain:
    - [ ] Developer did not rush or skip validation steps
    - [ ] Lossless report documents all changes and validations
    - [ ] 3-5 commits exist for that phase (showing incremental, validated progress)
-6. **Branch Integrity Rule (MANDATORY)**:
-  - [ ] Before every commit and push, run `git branch --show-current`.
-  - [ ] Commit and push must happen on the same branch currently being worked for that plan block.
-  - [ ] If branch identity does not match the intended working branch, stop and correct branch context before committing.
 
 ## Review Gate (Before Finished)
 

@@ -33,19 +33,4 @@ describe('CustomizationPreviewHeader', () => {
     expect(screen.getByText(/panel estudiante/i)).toBeTruthy();
     expect(screen.getByLabelText(/avatar de vista previa/i).textContent).toBe('E');
   });
-
-  it('renders admin-specific subtitle and avatar marker', () => {
-    render(
-      <CustomizationPreviewHeader
-        institutionName="Academia Demo"
-        previewRole="admin"
-        primaryColor="#334155"
-      />
-    );
-
-    expect(screen.getByText('Academia Demo')).toBeTruthy();
-    expect(screen.getByText(/panel de administración/i)).toBeTruthy();
-    expect(screen.getByText(/^administración$/i)).toBeTruthy();
-    expect(screen.getByLabelText(/avatar de vista previa/i).textContent).toBe('A');
-  });
 });

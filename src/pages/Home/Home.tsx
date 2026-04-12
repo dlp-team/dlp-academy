@@ -24,11 +24,12 @@ import Header from '../../components/layout/Header';
 // Sub-Components
 import HomeControls from './components/HomeControls';
 import HomeSelectionToolbar from './components/HomeSelectionToolbar';
+import HomeShortcutFeedback from './components/HomeShortcutFeedback';
+import HomeBulkActionFeedback from './components/HomeBulkActionFeedback';
 import HomeLoader from './components/HomeLoader';
 import HomeMainContent from './components/HomeMainContent';
 import HomeModals from './components/HomeModals';
 import UndoActionToast from '../../components/ui/UndoActionToast';
-import AppToast from '../../components/ui/AppToast';
 import FolderTreeModal from '../../components/modals/FolderTreeModal'; 
 import SubjectTopicsModal from '../Subject/modals/SubjectTopicModal';
 
@@ -297,24 +298,6 @@ const Home = ({ user }: any) => {
         return () => window.clearTimeout(timer);
     }, [bulkActionMessage]);
 
-    const showBulkToast = Boolean(bulkActionMessage);
-    const showShortcutToast = !showBulkToast && Boolean(shortcutFeedback);
-    const activeHomeToastMessage = showBulkToast ? bulkActionMessage : (showShortcutToast ? shortcutFeedback : '');
-
-    const activeHomeToastVariant = showBulkToast
-        ? (['success', 'warning', 'error'].includes(String(bulkActionTone || '').trim())
-            ? bulkActionTone
-            : 'info')
-        : 'info';
-
-    const activeHomeToastTitle = showBulkToast
-        ? (activeHomeToastVariant === 'error'
-            ? 'Error'
-            : activeHomeToastVariant === 'warning'
-                ? 'Atencion'
-                : 'Accion completada')
-        : 'Atajo de teclado';
-
     if (!user || (!hasInitialDataLoaded && (logic.loading || logic.loadingFolders))) {
         return <HomeLoader fullPage />;
     }
@@ -391,6 +374,8 @@ const Home = ({ user }: any) => {
 
                 </div>
 
+                <HomeShortcutFeedback message={shortcutFeedback} mutedTextClass={homeThemeTokens.mutedTextClass} />
+
                 <HomeSelectionToolbar
                     visible={logic.viewMode !== 'shared' && logic.viewMode !== 'bin' && !isStudentRole}
                     selectMode={selectMode}
@@ -413,27 +398,13 @@ const Home = ({ user }: any) => {
                     onClearSelection={clearSelection}
                 />
 
+                <HomeBulkActionFeedback message={bulkActionMessage} tone={bulkActionTone} />
                 <UndoActionToast
                     message={activeUndoToast?.message || ''}
                     tone="warning"
                     actionLabel={activeUndoToast?.actionLabel || 'Deshacer'}
                     onAction={activeUndoAction}
                     onClose={activeUndoClose}
-                />
-
-                <AppToast
-                    show={Boolean(activeHomeToastMessage)}
-                    title={activeHomeToastTitle}
-                    message={activeHomeToastMessage}
-                    variant={activeHomeToastVariant}
-                    durationMs={showBulkToast ? 3000 : 3200}
-                    positionClassName="bottom-24 left-5"
-                    onClose={showBulkToast
-                        ? () => {
-                            setBulkActionMessage('');
-                            setBulkActionTone('success');
-                        }
-                        : undefined}
                 />
 
                 <HomeMainContent
@@ -458,7 +429,6 @@ const Home = ({ user }: any) => {
                     setSearchQuery={setSearchQuery}
                     canCreateInManualContext={canCreateInManualContext}
                     selectMode={selectMode}
-                    setSelectMode={setSelectMode}
                     selectedItemKeys={selectedItemKeys}
                     toggleSelectItem={toggleSelectItem}
                     runBulkMoveToFolder={runBulkMoveToFolder}

@@ -13,9 +13,6 @@
 - Emits controlled color changes through `onChange(token, value)`.
 
 ## Changelog
-### 2026-04-12
-- Added `pointer-events-none` to the active-state ping overlay so swatch clicks always reach the picker trigger in both active and inactive states.
-
 ### 2026-04-08
 - Hardened interaction boundaries for customization parity:
   - card-body click selects/activates token,

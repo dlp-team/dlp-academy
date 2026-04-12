@@ -96,9 +96,9 @@ const SubjectCardFront = ({
     return (
         <div 
             className="absolute inset-0 cursor-pointer" 
-            onClick={(event: any) => {
+            onClick={() => {
                 if (isOrphan && isShortcut) return;
-                onSelect(subject.id, event);
+                onSelect(subject.id);
             }}
         >
             

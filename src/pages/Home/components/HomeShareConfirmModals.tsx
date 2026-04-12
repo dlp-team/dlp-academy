@@ -1,4 +1,4 @@
-// src/pages/Home/components/HomeShareConfirmModals.tsx
+// src/pages/Home/components/HomeShareConfirmModals.jsx
 import React from 'react';
 import { OVERLAY_TOP_OFFSET_STYLE } from '../../../utils/layoutConstants';
 import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
@@ -15,44 +15,14 @@ const HomeShareConfirmModals = ({
         if (typeof shareConfirm?.onCancel === 'function') {
             shareConfirm.onCancel();
         }
-        setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null, onMergeConfirm: null, batchPreview: null });
+        setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null, onMergeConfirm: null });
     };
 
     const closeUnshareConfirm = () => {
         if (typeof unshareConfirm?.onCancel === 'function') {
             unshareConfirm.onCancel();
         }
-        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null, batchPreview: null });
-    };
-
-    const renderBatchPreview = (batchPreview: any) => {
-        const totalCount = Number(batchPreview?.totalCount || 0);
-        if (!batchPreview || totalCount <= 1) return null;
-
-        const previewNames = Array.isArray(batchPreview?.previewNames)
-            ? batchPreview.previewNames.slice(0, 5)
-            : [];
-        const overflowCount = Number(batchPreview?.overflowCount || 0);
-
-        return (
-            <div className="mb-6 rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/70 dark:bg-indigo-900/20 p-4">
-                <p className="text-sm font-semibold text-indigo-800 dark:text-indigo-200 mb-2">
-                    Elementos afectados ({totalCount}):
-                </p>
-                {previewNames.length > 0 && (
-                    <ul className="list-disc list-inside space-y-1 text-sm text-indigo-700 dark:text-indigo-300">
-                        {previewNames.map((name: string, index: number) => (
-                            <li key={`${name}-${index}`}>{name}</li>
-                        ))}
-                    </ul>
-                )}
-                {overflowCount > 0 && (
-                    <p className="mt-2 text-xs font-medium text-indigo-700 dark:text-indigo-300">
-                        ... y {overflowCount} más.
-                    </p>
-                )}
-            </div>
-        );
+        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
     };
 
     return (
@@ -115,7 +85,6 @@ const HomeShareConfirmModals = ({
                                 </>
                             );
                         })()}
-                        {renderBatchPreview(shareConfirm?.batchPreview)}
                         <div className="flex justify-center gap-3 flex-wrap">
                             <button
                                 className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
@@ -189,7 +158,6 @@ const HomeShareConfirmModals = ({
                                 </>
                             );
                         })()}
-                        {renderBatchPreview(unshareConfirm?.batchPreview)}
                         <div className="flex justify-center gap-3 flex-wrap">
                             <button
                                 className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"

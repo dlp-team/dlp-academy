@@ -28,18 +28,12 @@ import CustomizationHomeExactPreview from './customization/CustomizationHomeExac
 import DashboardOverlayShell from '../../../components/ui/DashboardOverlayShell';
 
 const COLOR_FIELDS = ['primary', 'secondary', 'accent', 'cardBorder'];
-const PREVIEW_ROLE_KEYS = new Set(['admin', 'teacher', 'student']);
 
 const TOKEN_ICON_MAP = {
   primary: <Palette size={12} />,
   secondary: <ShieldCheck size={12} />,
   accent: <Sparkles size={12} />,
   cardBorder: <Eye size={12} />,
-};
-
-const normalizePreviewRole = (value: any) => {
-  const normalized = String(value || '').trim().toLowerCase();
-  return PREVIEW_ROLE_KEYS.has(normalized) ? normalized : 'teacher';
 };
 
 const isValidHexColor = (value: any) => (
@@ -69,21 +63,20 @@ const buildThemeSetColorsFromForm = (source: any = {}) => {
 };
 
 const InstitutionCustomizationMockView = ({
-  previewUser = null,
   initialValues,
   themeSets = [],
   onSave,
   onSaveThemeSet,
   className = '',
   previewPaletteApply = null,
-  previewMode = 'mock',
+  previewMode = 'live',
   homeUrl = '/theme-preview?role=teacher',
 }: any) => {
   const [form, setForm] = useState(buildSafeForm({ ...DEFAULTS, ...(initialValues || {}) }));
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [activeToken, setActiveToken] = useState<any>(null);
-  const [previewRole, setPreviewRole] = useState(() => normalizePreviewRole(previewUser?.activeRole || previewUser?.role));
+  const [previewRole, setPreviewRole] = useState('teacher');
   const [viewport, setViewport] = useState('desktop');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
@@ -97,10 +90,6 @@ const InstitutionCustomizationMockView = ({
 
   const initialValuesKey = useMemo(() => JSON.stringify(initialValues || {}), [initialValues]);
   const resolvedThemeSets = useMemo(() => (Array.isArray(themeSets) ? themeSets : []), [themeSets]);
-
-  useEffect(() => {
-    setPreviewRole(normalizePreviewRole(previewUser?.activeRole || previewUser?.role));
-  }, [previewUser?.activeRole, previewUser?.role]);
 
   useEffect(() => {
     const next = buildSafeForm({ ...DEFAULTS, ...(initialValues || {}) });
@@ -229,11 +218,10 @@ const InstitutionCustomizationMockView = ({
       colors: buildSafeForm(form, DEFAULTS),
       activeToken,
       previewRole,
-      previewUser,
     });
 
     iframeWindow.postMessage(message, window.location.origin);
-  }, [previewMode, iframeReady, form, activeToken, previewRole, previewUser]);
+  }, [previewMode, iframeReady, form, activeToken, previewRole]);
 
   useEffect(() => {
     dispatchLivePreviewMessage();
@@ -247,17 +235,12 @@ const InstitutionCustomizationMockView = ({
 
   const viewportConfig = VIEWPORTS.find((entry) => entry.id === viewport) || VIEWPORTS[0];
   const institutionLabel = form.institutionName?.trim() || 'Tu Institución';
-  const previewRoleLabel = previewRole === 'admin'
-    ? 'Cuenta simulada: Administrador'
-    : previewRole === 'student'
-      ? 'Cuenta simulada: Estudiante'
-      : 'Cuenta simulada: Docente';
+  const previewRoleLabel = previewRole === 'student' ? 'Cuenta simulada: Estudiante' : 'Cuenta simulada: Docente';
   const containerClassName = fullscreen
     ? 'fixed inset-0 z-[10050] flex h-screen w-screen overflow-hidden bg-slate-100 dark:bg-slate-950'
     : `flex h-full w-full overflow-hidden bg-slate-100 dark:bg-slate-950 ${className}`;
 
   const roleButtons = [
-    { id: 'admin', label: 'Vista administración', Icon: ShieldCheck },
     { id: 'teacher', label: 'Vista docente', Icon: GraduationCap },
     { id: 'student', label: 'Vista estudiante', Icon: Users },
   ];
@@ -449,7 +432,7 @@ const InstitutionCustomizationMockView = ({
       <div className="flex-1 min-w-0 h-full flex flex-col">
         <div className="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-bold text-slate-900 dark:text-white">{previewMode === 'live' ? 'Vista previa en vivo por rol' : 'Vista previa exacta por rol'}</p>
+            <p className="text-sm font-bold text-slate-900 dark:text-white">{previewMode === 'live' ? 'Vista previa en vivo de Home' : 'Vista previa exacta de Home'}</p>
             <p className="text-xs text-slate-400">{institutionLabel}</p>
             <p className="text-[11px] text-slate-400 mt-0.5">{previewRoleLabel}</p>
           </div>
@@ -495,7 +478,7 @@ const InstitutionCustomizationMockView = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-hidden p-5 bg-slate-200 dark:bg-slate-950">
+        <div className="flex-1 overflow-auto p-5 bg-slate-200 dark:bg-slate-950">
           {previewMode === 'mock' ? (
             <CustomizationHomeExactPreview
               form={form}

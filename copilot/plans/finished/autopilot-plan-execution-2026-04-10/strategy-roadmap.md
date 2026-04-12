@@ -1,4 +1,4 @@
-<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-10/strategy-roadmap.md -->
+<!-- copilot/plans/active/autopilot-plan-execution-2026-04-10/strategy-roadmap.md -->
 # Strategy Roadmap
 
 ## Objective
@@ -16,13 +16,13 @@ Execute the new AUTOPILOT source plan with strict lossless behavior preservation
 
 ## Current Progress
 - Phase 00: COMPLETED
-- Phase 01: COMPLETED
-- Phase 02: COMPLETED
-- Phase 03: COMPLETED
-- Phase 04: COMPLETED
-- Phase 05: COMPLETED
-- Phase 06: COMPLETED
-- Final Phase: COMPLETED
+- Phase 01: IN_REVIEW
+- Phase 02: IN_REVIEW
+- Phase 03: IN_REVIEW
+- Phase 04: IN_REVIEW
+- Phase 05: IN_REVIEW
+- Phase 06: IN_REVIEW
+- Final Phase: IN_PROGRESS
 
 ## Dependency Order
 - Phase 02 depends on stable grouped-selection action contracts from Phase 01.
@@ -38,5 +38,6 @@ Execute the new AUTOPILOT source plan with strict lossless behavior preservation
 - Final phase: full lint + type-check + tests + build.
 
 ## Immediate Next Actions
-1. Preserve this roadmap as finished execution history.
-2. Route new work to a new plan folder and branch.
+1. Keep [reviewing/verification-checklist-2026-04-10.md](./reviewing/verification-checklist-2026-04-10.md) synchronized with Step 16 readiness evidence.
+2. Continue final phase checklist flow from Step 17 onward when merge/finalization gates are unblocked.
+3. Hold merge action until explicit human approval is recorded in [BRANCH_LOG.md](../../../../BRANCH_LOG.md).

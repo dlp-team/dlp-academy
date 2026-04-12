@@ -7,17 +7,13 @@
 - **Role:** Unit coverage for the mock customization preview workflow.
 
 ## Coverage
-- Role preview switching (`vista administración` / `vista docente` / `vista estudiante`).
+- Role preview switching (`vista docente` <-> `vista estudiante`).
 - Save callback payload correctness after form edits.
 - Palette swatch application path (`previewPaletteApply`) without implicit save.
 - Fullscreen toggle + collapsible controls panel interaction.
 - Preview tab switching across `Papelera`, `Compartido`, and `Manual` plus topic/resource drilldown assertions.
-- Dedicated admin mock-surface rendering without Home controls.
 
 ## Changelog
-### 2026-04-12
-- Added admin-role switch assertions and dedicated admin mock-surface regression checks.
-
 ### 2026-04-09
 - Added saved-theme-set coverage:
 	- save current color palette as named theme set through editor callback,

@@ -32,23 +32,12 @@ const FolderCard = (props: any) => {
         draggable,
         cardScale = 100,
         isSelected = false,
-        selectMode = false,
-        selectedItemKeys = new Set(),
         disableAllActions = false,
         disableDeleteActions = false,
         disableUnshareActions = false,
         filterOverlayOpen = false,
         onCloseFilterOverlay
     } = props;
-
-    const selectionKey = `folder:${folder?.shortcutId || folder?.id}`;
-    const hasMultiSelectionDrag = Boolean(
-        selectMode
-        && isSelected
-        && selectedItemKeys instanceof Set
-        && selectedItemKeys.size > 1
-    );
-    const multiDragCount = hasMultiSelectionDrag ? selectedItemKeys.size : 1;
 
     // --- CUSTOM DRAG LOGIC START ---
     
@@ -57,7 +46,6 @@ const FolderCard = (props: any) => {
         item: folder,
         type: 'folder',
         cardScale: cardScale,
-        multiDragCount,
         onDragStart: handlers.handleDragStart,
         onDragEnd: handlers.handleDragEnd
     });
@@ -66,7 +54,6 @@ const FolderCard = (props: any) => {
     return (
         <div 
             ref={itemRef}
-            data-selection-key={selectionKey}
             className={`group relative w-full pt-3 transition-transform cursor-pointer ${
                 (isDragging || isGhostDragging) ? 'opacity-0 scale-95' : (!filterOverlayOpen ? 'hover:scale-105' : '')
             } ${
@@ -75,9 +62,9 @@ const FolderCard = (props: any) => {
                 isSelected ? `${SHARED_SELECTION_RING_CLASS} rounded-2xl` : ''
             }`}
             style={{ aspectRatio: '16 / 10' }}
-            onClick={(e: any) => {
+            onClick={() => {
                 if (folder?.isOrphan === true && isShortcutItem(folder)) return;
-                onOpen(folder, e);
+                onOpen(folder);
             }}
             // Drag Events
             draggable={draggable}

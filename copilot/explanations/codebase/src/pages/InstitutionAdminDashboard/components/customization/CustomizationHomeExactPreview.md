@@ -8,7 +8,7 @@
 
 ## Responsibilities
 - Builds live Home theme CSS variables from customization form colors.
-- Renders role-aware mock context (`administración` / `docente` / `estudiante`) with viewport width simulation.
+- Renders Home preview with role-aware mock context (`docente` / `estudiante`) and viewport width simulation.
 - Reuses `HomeControls` and `HomeContent` directly instead of bespoke mock cards.
 - Keeps preview deterministic and backend-isolated by using local static mock folders/subjects and no-op handlers.
 
@@ -24,10 +24,6 @@
 - `src/pages/InstitutionAdminDashboard/components/customization/themePreviewUtils`
 
 ## Changelog
-### 2026-04-12
-- Added dedicated admin dashboard mock surface (`customization-preview-admin-dashboard`) with deterministic metrics, alerts, and quick actions.
-- Preserved exact Home-surface rendering path for teacher/student roles while branching admin to its own mock dashboard composition.
-
 ### 2026-04-05
 - Replaced the generic preview title strip with a dedicated header parity shell so the exact Home preview starts with production-like identity and top-action framing.
 - Integrated `CustomizationPreviewHeader` while preserving role-aware label behavior (`Panel docente` / `Panel estudiante`) and responsive preview width simulation.

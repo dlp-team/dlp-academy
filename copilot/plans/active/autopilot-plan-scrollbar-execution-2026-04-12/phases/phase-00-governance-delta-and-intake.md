@@ -20,10 +20,3 @@ Confirm governance rules are explicit about commit/push happening on the branch 
 ## Validation
 - `get_errors` on touched governance docs.
 - `git diff` audit confirms scope-limited changes.
-
-## Completion Notes (2026-04-12)
-- Activated plan lifecycle (`todo` -> `active`) and normalized active-path references.
-- Added explicit branch identity commit/push guardrails in:
-  - `copilot/protocols/plan-creation-protocol.md`
-  - `.github/skills/create-plan/SKILL.md`
-  - `copilot/ACTIVE-GOVERNANCE/AUTOPILOT_EXECUTION_CHECKLIST.md`

@@ -15,12 +15,12 @@ Deliver the requested AUTOPILOT and scrollbar work as a lossless, branch-safe, f
 8. Final Phase: Continue AUTOPILOT checklist-driven execution through closure gates
 
 ## Current Progress
-- Phase 00: COMPLETED
-- Phase 01: COMPLETED
-- Phase 02: COMPLETED
-- Phase 03: COMPLETED
-- Phase 04: COMPLETED
-- Phase 05: COMPLETED
+- Phase 00: NOT_STARTED
+- Phase 01: NOT_STARTED
+- Phase 02: NOT_STARTED
+- Phase 03: NOT_STARTED
+- Phase 04: NOT_STARTED
+- Phase 05: NOT_STARTED
 - Phase 06: NOT_STARTED
 - Final Phase: NOT_STARTED
 
@@ -39,6 +39,6 @@ Deliver the requested AUTOPILOT and scrollbar work as a lossless, branch-safe, f
 - Final phase (06): lint + type-check + tests + build + deep risk review.
 
 ## Immediate Next Actions
-1. Start Phase 06 final optimization and deep risk review.
-2. Keep `user-updates.md` synchronized before each implementation block.
-3. Log phase-level validation and lossless evidence before each commit/push block.
+1. Promote this plan from `todo` to `active` when implementation starts.
+2. Execute Phase 00 first and document governance verification evidence.
+3. Keep `user-updates.md` synchronized before each implementation block.

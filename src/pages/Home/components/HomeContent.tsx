@@ -1,6 +1,6 @@
 // src/pages/Home/components/HomeContent.jsx
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp, ArrowUpCircle, CalendarRange
 } from 'lucide-react';
@@ -15,7 +15,6 @@ import { isShortcutItem, getPermissionLevel, isSharedForCurrentUser as isSharedF
 import { mergeSourceAndShortcutItems } from '../../../utils/mergeUtils';
 import { HOME_THEME_TOKENS } from '../../../utils/themeTokens';
 import { getHomeUnselectedDimmingClass } from '../../../utils/selectionVisualUtils';
-import { getDraggedSelectionKeyFromDropArgs, shouldHandleSelectionDrop } from '../utils/homeSelectionDropUtils';
 
 const FolderCardComponent: any = FolderCard;
 const SubjectCardComponent: any = SubjectCard;
@@ -77,7 +76,6 @@ const HomeContent = ({
     onCloseFilterOverlay = () => {},
     studentMode = false,
     selectMode = false,
-    setSelectMode = () => {},
     selectedItemKeys = new Set(),
     onToggleSelectItem = () => {},
     onDropSelectedItems = null,
@@ -93,7 +91,7 @@ const HomeContent = ({
     const disableFolderDeleteActionsInShared = isViewerInSharedFolder || isEditorInSharedFolder || studentMode;
     const disableSubjectDeleteActionsInShared = isViewerInSharedFolder || studentMode;
     const dndEnabledInContext = isDragAndDropEnabled && !disableAllActionsInShared;
-    const canCreateInCurrentContext = !disableAllActionsInShared && !studentMode;
+    const canCreateInCurrentContext = !disableAllActionsInShared && !studentMode && !selectMode;
 
     // Auto-scroll is always enabled for both grid and list modes
     (useAutoScrollOnDrag as any)({
@@ -201,152 +199,6 @@ const HomeContent = ({
         return merged.filter(subject => matchesSharedFilter(subject));
     }, [subjects, allShortcutSubjects, sharedScopeSelected, user?.uid, user?.email]);
 
-    const selectionAnchorKeyRef = useRef<string | null>(null);
-
-    const selectionEntryByKey = useMemo(() => {
-        const entries = new Map<string, any>();
-
-        (allFoldersForTree || []).forEach((folder: any) => {
-            const key = getSelectionKey(folder, 'folder');
-            entries.set(key, { key, type: 'folder', item: folder });
-        });
-
-        (allSubjectsForTree || []).forEach((subject: any) => {
-            const key = getSelectionKey(subject, 'subject');
-            entries.set(key, { key, type: 'subject', item: subject });
-        });
-
-        return entries;
-    }, [allFoldersForTree, allSubjectsForTree]);
-
-    useEffect(() => {
-        if (!selectMode || selectedItemKeys.size === 0) {
-            selectionAnchorKeyRef.current = null;
-            return;
-        }
-
-        if (
-            selectionAnchorKeyRef.current
-            && !selectedItemKeys.has(selectionAnchorKeyRef.current)
-        ) {
-            selectionAnchorKeyRef.current = Array.from(selectedItemKeys)[0] || null;
-        }
-    }, [selectMode, selectedItemKeys]);
-
-    const getVisibleSelectionEntries = useCallback(() => {
-        const container = contentRef.current;
-        if (!container) return [];
-
-        const nodes = Array.from(container.querySelectorAll('[data-selection-key]')) as any[];
-        const seen = new Set<string>();
-        const orderedEntries: any[] = [];
-
-        nodes.forEach((node: any) => {
-            const key = node?.dataset?.selectionKey;
-            if (!key || seen.has(key)) return;
-
-            seen.add(key);
-            const entry = selectionEntryByKey.get(key);
-            if (entry) {
-                orderedEntries.push(entry);
-            }
-        });
-
-        return orderedEntries;
-    }, [selectionEntryByKey]);
-
-    const handleRangeSelection = useCallback((item: any, type: any) => {
-        const targetKey = getSelectionKey(item, type);
-        const orderedEntries = getVisibleSelectionEntries();
-        if (orderedEntries.length === 0) {
-            if (!selectedItemKeys.has(targetKey)) {
-                onToggleSelectItem(item, type);
-            }
-            selectionAnchorKeyRef.current = targetKey;
-            return;
-        }
-
-        let anchorKey = selectionAnchorKeyRef.current;
-        if (!anchorKey || !orderedEntries.some((entry: any) => entry.key === anchorKey)) {
-            anchorKey = Array.from(selectedItemKeys)[0] || targetKey;
-        }
-
-        const anchorIndex = orderedEntries.findIndex((entry: any) => entry.key === anchorKey);
-        const targetIndex = orderedEntries.findIndex((entry: any) => entry.key === targetKey);
-
-        if (anchorIndex === -1 || targetIndex === -1) {
-            if (!selectedItemKeys.has(targetKey)) {
-                onToggleSelectItem(item, type);
-            }
-            selectionAnchorKeyRef.current = targetKey;
-            return;
-        }
-
-        const start = Math.min(anchorIndex, targetIndex);
-        const end = Math.max(anchorIndex, targetIndex);
-        orderedEntries.slice(start, end + 1).forEach((entry: any) => {
-            if (!selectedItemKeys.has(entry.key)) {
-                onToggleSelectItem(entry.item, entry.type);
-            }
-        });
-
-        selectionAnchorKeyRef.current = anchorKey;
-    }, [getSelectionKey, getVisibleSelectionEntries, onToggleSelectItem, selectedItemKeys]);
-
-    const handleItemInteraction = useCallback(({
-        item,
-        type,
-        event,
-        navigateAction
-    }: {
-        item: any;
-        type: 'folder' | 'subject';
-        event?: any;
-        navigateAction: () => void;
-    }) => {
-        if (!item?.id) return;
-
-        const selectionKey = getSelectionKey(item, type);
-        const hasModifier = Boolean(event && (event.ctrlKey || event.metaKey));
-        const isRangeSelection = hasModifier && Boolean(event?.shiftKey);
-
-        if (!hasModifier) {
-            if (selectMode) {
-                onToggleSelectItem(item, type);
-                selectionAnchorKeyRef.current = selectionKey;
-                return;
-            }
-
-            navigateAction();
-            return;
-        }
-
-        if (event?.preventDefault) event.preventDefault();
-        if (event?.stopPropagation) event.stopPropagation();
-
-        if (!selectMode) {
-            setSelectMode(true);
-            if (!selectedItemKeys.has(selectionKey)) {
-                onToggleSelectItem(item, type);
-            }
-            selectionAnchorKeyRef.current = selectionKey;
-            return;
-        }
-
-        if (isRangeSelection) {
-            handleRangeSelection(item, type);
-            return;
-        }
-
-        if (selectedItemKeys.has(selectionKey)) {
-            navigateAction();
-            return;
-        }
-
-        onToggleSelectItem(item, type);
-        selectionAnchorKeyRef.current = selectionKey;
-    }, [getSelectionKey, handleRangeSelection, onToggleSelectItem, selectMode, selectedItemKeys, setSelectMode]);
-
     const handleGoToFolderFromGhost = (folderId: any) => {
         if (!folderId) return;
 
@@ -447,59 +299,6 @@ const HomeContent = ({
             return collapsedGroups[groupKey] !== false;
         }
         return Boolean(collapsedGroups[groupKey]);
-    };
-
-    const handleSelectionAwareDropOnFolder = (
-        targetFolderId: any,
-        subjectId: any,
-        typeOrSourceFolderId: any,
-        sourceFolderIdMaybe: any,
-        shortcutIdMaybe: any
-    ) => {
-        const draggedType = typeOrSourceFolderId === 'folder' ? 'folder' : 'subject';
-        const draggedSelectionKey = getDraggedSelectionKeyFromDropArgs(
-            draggedType === 'folder'
-                ? {
-                    folderId: subjectId,
-                    folderShortcutId: shortcutIdMaybe,
-                }
-                : {
-                    subjectId,
-                    subjectShortcutId: shortcutIdMaybe,
-                }
-        );
-
-        if (
-            shouldHandleSelectionDrop({ selectMode, selectedItemKeys, draggedSelectionKey })
-            && typeof onDropSelectedItems === 'function'
-        ) {
-            onDropSelectedItems(targetFolderId || null);
-            return 'moved';
-        }
-
-        return handleDropOnFolder(targetFolderId, subjectId, typeOrSourceFolderId, sourceFolderIdMaybe, shortcutIdMaybe);
-    };
-
-    const handleSelectionAwareNestFolder = (
-        targetFolderId: any,
-        droppedFolderId: any,
-        droppedFolderShortcutId: any,
-        ...rest: any[]
-    ) => {
-        const draggedSelectionKey = getDraggedSelectionKeyFromDropArgs({
-            folderId: droppedFolderId,
-            folderShortcutId: droppedFolderShortcutId,
-        });
-
-        if (
-            shouldHandleSelectionDrop({ selectMode, selectedItemKeys, draggedSelectionKey })
-            && typeof onDropSelectedItems === 'function'
-        ) {
-            onDropSelectedItems(targetFolderId || null);
-            return 'moved';
-        }
-
-        return handleNestFolder(targetFolderId, droppedFolderId, droppedFolderShortcutId, ...rest);
     };
 
     const getCourseLabelForCreation = (groupLabel: any) => {
@@ -624,7 +423,6 @@ const HomeContent = ({
                                             {(viewMode === 'courses' || viewMode === 'tags') && canCreateInCurrentContext && (
                                                 <button
                                                     onClick={() => {
-                                                        if (selectMode) return;
                                                         let data: any = null;
                                                         if (viewMode === 'courses') {
                                                             data = { course: getCourseLabelForCreation(groupName) };
@@ -680,10 +478,7 @@ const HomeContent = ({
                                                         </div>
                                                     ) : (
                                                         <button
-                                                            onClick={() => {
-                                                                if (selectMode) return;
-                                                                setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder: currentFolder });
-                                                            }}
+                                                            onClick={() => setSubjectModalConfig({ isOpen: true, isEditing: false, data: null, currentFolder: currentFolder })}
                                                             className={homeThemeTokens.dashedCreateCardIndigoClass}
                                                             style={{ aspectRatio: '16 / 10', gap: `${16 * (cardScale / 100)}px` }}
                                                         >
@@ -721,13 +516,12 @@ const HomeContent = ({
                                                         isSelected={isSelected}
                                                         allFolders={allFoldersForTree}
                                                         allSubjects={allSubjectsForTree}
-                                                        onOpen={(targetFolder: any, event: any) => {
-                                                            handleItemInteraction({
-                                                                item: targetFolder,
-                                                                type: 'folder',
-                                                                event,
-                                                                navigateAction: () => handleOpenFolder(targetFolder)
-                                                            });
+                                                        onOpen={(targetFolder: any) => {
+                                                            if (selectMode) {
+                                                                onToggleSelectItem(targetFolder, 'folder');
+                                                                return;
+                                                            }
+                                                            handleOpenFolder(targetFolder);
                                                         }}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
@@ -759,8 +553,8 @@ const HomeContent = ({
                                                         onShowContents={handleShowFolderContents}
                                                         onGoToFolder={handleGoToFolderFromGhost}
                                                         cardScale={cardScale}
-                                                        onDrop={handleSelectionAwareDropOnFolder}
-                                                        onDropFolder={handleSelectionAwareNestFolder}
+                                                        onDrop={handleDropOnFolder}
+                                                        onDropFolder={handleNestFolder}
                                                         canDrop={dndEnabledInContext}
                                                         draggable={dndEnabledInContext}
                                                         onDragStart={handleDragStartFolder}
@@ -774,8 +568,6 @@ const HomeContent = ({
                                                         disableAllActions={disableAllActionsInShared}
                                                         disableDeleteActions={disableFolderDeleteActionsInShared}
                                                         disableUnshareActions={isInsideSharedFolderForItem(folder, 'folder')}
-                                                        selectMode={selectMode}
-                                                        selectedItemKeys={selectedItemKeys}
                                                     />
                                                 </div>
                                             );
@@ -802,13 +594,12 @@ const HomeContent = ({
                                                         isSelected={isSelected}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
-                                                        onSelect={(subjectId: any, event: any) => {
-                                                            handleItemInteraction({
-                                                                item: subject,
-                                                                type: 'subject',
-                                                                event,
-                                                                navigateAction: () => handleSelectSubject(subjectId)
-                                                            });
+                                                        onSelect={(subjectId: any) => {
+                                                            if (selectMode) {
+                                                                onToggleSelectItem(subject, 'subject');
+                                                                return;
+                                                            }
+                                                            handleSelectSubject(subjectId);
                                                         }}
                                                         onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
                                                         onEdit={(e, s: any) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
@@ -859,8 +650,6 @@ const HomeContent = ({
                                                         disableDeleteActions={disableSubjectDeleteActionsInShared}
                                                         disableUnshareActions={isInsideSharedFolderForItem(subject, 'subject')}
                                                         hideSharedIndicator={studentMode}
-                                                        selectMode={selectMode}
-                                                        selectedItemKeys={selectedItemKeys}
                                                     />
                                                 </div>
                                             );
@@ -880,9 +669,6 @@ const HomeContent = ({
                                                 onDragLeave={() => setIsRootZoneHovered(false)}
                                                 onDrop={handleRootZoneDrop}
                                                 onClick={() => { 
-                                                    if (selectMode || draggedItem) {
-                                                        return;
-                                                    }
                                                     if (!draggedItem) {
                                                         let data: any = null;
                                                         if (viewMode === 'courses') {
@@ -949,30 +735,22 @@ const HomeContent = ({
                                                 parentId={currentFolder ? currentFolder.id : null}
                                                 allFolders={allFoldersForTree}
                                                 allSubjects={allSubjectsForTree}
-                                                onNavigate={(targetFolder: any, event: any) => {
-                                                    handleItemInteraction({
-                                                        item: targetFolder,
-                                                        type: 'folder',
-                                                        event,
-                                                        navigateAction: () => handleOpenFolder(targetFolder)
-                                                    });
+                                                onNavigate={(targetFolder: any) => {
+                                                    if (selectMode) {
+                                                        onToggleSelectItem(targetFolder, 'folder');
+                                                        return;
+                                                    }
+                                                    handleOpenFolder(targetFolder);
                                                 }}
-                                                onNavigateSubject={(subjectId: any, event: any) => {
-                                                    const selectedSubject = (allSubjectsForTree || []).find((entry: any) => entry?.id === subjectId);
-
-                                                    if (!selectedSubject) {
-                                                        if (!selectMode) {
-                                                            handleSelectSubject(subjectId);
+                                                onNavigateSubject={(subjectId: any) => {
+                                                    if (selectMode) {
+                                                        const selectedSubject = (allSubjectsForTree || []).find((entry: any) => entry?.id === subjectId);
+                                                        if (selectedSubject) {
+                                                            onToggleSelectItem(selectedSubject, 'subject');
                                                         }
                                                         return;
                                                     }
-
-                                                    handleItemInteraction({
-                                                        item: selectedSubject,
-                                                        type: 'subject',
-                                                        event,
-                                                        navigateAction: () => handleSelectSubject(subjectId)
-                                                    });
+                                                    handleSelectSubject(subjectId);
                                                 }}
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                 onDelete={(f, action = 'delete') => {
@@ -1031,13 +809,12 @@ const HomeContent = ({
                                                     parentId={currentFolder ? currentFolder.id : null}
                                                     allFolders={allFoldersForTree}
                                                     allSubjects={allSubjectsForTree}
-                                                    onNavigateSubject={(subjectId: any, event: any) => {
-                                                        handleItemInteraction({
-                                                            item: subject,
-                                                            type: 'subject',
-                                                            event,
-                                                            navigateAction: () => handleSelectSubject(subjectId)
-                                                        });
+                                                    onNavigateSubject={(subjectId: any) => {
+                                                        if (selectMode) {
+                                                            onToggleSelectItem(subject, 'subject');
+                                                            return;
+                                                        }
+                                                        handleSelectSubject(subjectId);
                                                     }}
                                                     onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                     onDelete={(s, action = 'delete') => {

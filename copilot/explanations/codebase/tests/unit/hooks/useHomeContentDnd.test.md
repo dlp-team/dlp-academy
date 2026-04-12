@@ -2,6 +2,9 @@
 # useHomeContentDnd.test.js
 
 ## Changelog
+- **2026-04-11:** Extended Phase 01 parity coverage with:
+  - selected subject root-drop routing through batch-selection handler (tree-path),
+  - non-selected subject drop in select mode continuing through normal single-item move path.
 - **2026-04-08:** Added select-mode batch drag/drop parity coverage:
   - selected subject list-drop routes through bulk move callback,
   - selected folder root-drop routes through bulk move callback,
@@ -9,6 +12,7 @@
 
 ## Overview
 - **Source file:** `tests/unit/hooks/useHomeContentDnd.test.js`
+- **Last documented:** 2026-04-11
 - **Role:** Regression-focused unit tests for Home content DnD hook behavior.
 
 ## Responsibilities

@@ -71,14 +71,6 @@ const ListViewItem = ({
     const disableUnshareForItem = disableUnshareActions || (type === 'folder'
         ? hasSharedAncestorFolder(getFolderParentId(item))
         : hasSharedAncestorFolder(parentFolderId));
-    const selectionKey = `${type}:${item?.shortcutId || item?.id}`;
-    const hasMultiSelectionDrag = Boolean(
-        selectMode
-        && selectedItemKeys instanceof Set
-        && selectedItemKeys.size > 1
-        && selectedItemKeys.has(selectionKey)
-    );
-    const multiDragCount = hasMultiSelectionDrag ? selectedItemKeys.size : 1;
     const {
         isDragging,
         itemRef,
@@ -87,7 +79,6 @@ const ListViewItem = ({
         item,
         type: 'subject',
         cardScale,
-        multiDragCount,
         onDragStart: (e: any) => {
             if (!draggable) {
                 e.preventDefault();
@@ -114,6 +105,7 @@ const ListViewItem = ({
         visualState?.isAnimating ? 'scale-95' : 'scale-100',
         visualState?.isCutPending ? 'opacity-60' : 'opacity-100'
     ].join(' ');
+    const selectionKey = `${type}:${item?.shortcutId || item?.id}`;
     const hasSelection = enableSelectionDimming && selectMode && selectedItemKeys.size > 0;
     const computedIsSelected = selectMode ? (selectedItemKeys.has(selectionKey) || isSelected) : isSelected;
     const dimmingClass = enableSelectionDimming
@@ -199,7 +191,6 @@ const ListViewItem = ({
             {/* ROW CONTAINER - Apply indentation here via margin */}
             <div 
                 ref={itemRef}
-                data-selection-key={selectionKey}
                 draggable={draggable}
                 onDragStart={dragHandlers.onDragStart}
                 onDrag={dragHandlers.onDrag}
@@ -226,7 +217,7 @@ const ListViewItem = ({
                             user={user}
                             subject={item} 
                             isCompleted={isCompleted}
-                            onSelect={(_: any, event: any) => onNavigateSubject(item.id, event)} 
+                            onSelect={() => onNavigateSubject(item.id)} 
                             onEdit={onEdit} 
                             onDelete={onDelete} 
                             onShare={onShare}

@@ -305,4 +305,71 @@ describe('useHomeBulkSelection', () => {
     expect(result.current.selectMode).toBe(false);
     expect(result.current.selectedItems).toHaveLength(0);
   });
+
+  it('triggers the same undo callback when Ctrl+Z is pressed', async () => {
+    const onHomeFeedback = vi.fn();
+    const logic = createLogic({
+      updateSubject: vi.fn(async () => {}),
+    });
+
+    const { result } = renderHook(() =>
+      useHomeBulkSelection({
+        logic,
+        isStudentRole: false,
+        onHomeFeedback,
+      })
+    );
+
+    act(() => {
+      result.current.setSelectMode(true);
+      result.current.toggleSelectItem(
+        {
+          id: 'subject-ctrl-z',
+          folderId: 'folder-source',
+          isShared: false,
+        },
+        'subject'
+      );
+    });
+
+    await act(async () => {
+      await result.current.runBulkMoveToFolder('folder-target');
+    });
+
+    const undoSpy = vi.spyOn(result.current.undoToast, 'undo');
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true }));
+      await Promise.resolve();
+    });
+
+    expect(undoSpy).toHaveBeenCalledTimes(1);
+    expect(result.current.undoToast).toBeNull();
+    expect(result.current.selectMode).toBe(false);
+    expect(onHomeFeedback).toHaveBeenCalledWith('Movimiento deshecho correctamente.', 'success');
+  });
+
+  it('ignores Ctrl+Z undo shortcut when there is no undo toast', async () => {
+    const onHomeFeedback = vi.fn();
+    const logic = createLogic({
+      updateSubject: vi.fn(async () => {}),
+    });
+
+    const { result } = renderHook(() =>
+      useHomeBulkSelection({
+        logic,
+        isStudentRole: false,
+        onHomeFeedback,
+      })
+    );
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', ctrlKey: true }));
+      await Promise.resolve();
+    });
+
+    expect(result.current.undoToast).toBeNull();
+    expect(logic.updateSubject).not.toHaveBeenCalled();
+    expect(onHomeFeedback).not.toHaveBeenCalled();
+  });
 });

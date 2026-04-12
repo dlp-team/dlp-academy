@@ -1,4 +1,4 @@
-// src/pages/Home/hooks/useHomePageState.tsx
+// src/pages/Home/hooks/useHomePageState.js
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useMemo, useRef, useState } from 'react';
 import { updateDoc, doc } from 'firebase/firestore';
@@ -26,8 +26,8 @@ export const useHomePageState = ({
     const [sharedActiveFilter, setSharedActiveFilter] = useState('all');
 
     const [folderContentsModalConfig, setFolderContentsModalConfig] = useState<any>({ isOpen: false, folder: null });
-    const [shareConfirm, setShareConfirm] = useState<any>({ open: false, subjectId: null, folder: null, onConfirm: null, batchPreview: null });
-    const [unshareConfirm, setUnshareConfirm] = useState<any>({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null, batchPreview: null });
+    const [shareConfirm, setShareConfirm] = useState<any>({ open: false, subjectId: null, folder: null, onConfirm: null });
+    const [unshareConfirm, setUnshareConfirm] = useState<any>({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
     const [topicsModalConfig, setTopicsModalConfig] = useState<any>({
         isOpen: false,
         subject: null

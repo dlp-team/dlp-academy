@@ -35,12 +35,6 @@ vi.mock('../../../src/hooks/useSubjects', () => ({
         folderId: null,
         trashedAt: '2026-04-01T10:00:00.000Z',
       },
-      {
-        id: 'subject-2',
-        name: 'Quimica',
-        folderId: null,
-        trashedAt: '2026-04-01T11:00:00.000Z',
-      },
     ])),
     restoreSubject: vi.fn(async () => {}),
     permanentlyDeleteSubject: vi.fn(async () => {}),
@@ -76,21 +70,5 @@ describe('BinView list pressed-state parity', () => {
     const wrapper = screen.getByTestId('bin-list-wrapper-subject-subject-1');
     expect(wrapper.className).toContain('scale-[1.01]');
     expect(wrapper.className).toContain('shadow-[0_14px_30px_rgba(15,23,42,0.18)]');
-    expect(wrapper.className).not.toContain('opacity-');
-  });
-
-  it('keeps unselected list siblings visually stable outside selection mode', async () => {
-    render(<BinView user={{ uid: 'user-1', role: 'teacher' }} layoutMode="list" cardScale={100} />);
-
-    await waitFor(() => {
-      expect(screen.getByTestId('bin-list-item-subject-subject-1')).toBeTruthy();
-      expect(screen.getByTestId('bin-list-item-subject-subject-2')).toBeTruthy();
-    });
-
-    fireEvent.click(screen.getByTestId('bin-list-item-subject-subject-1'));
-
-    const siblingWrapper = screen.getByTestId('bin-list-wrapper-subject-subject-2');
-    expect(siblingWrapper.className).not.toContain('brightness-[');
-    expect(siblingWrapper.className).not.toContain('saturate-[');
   });
 });

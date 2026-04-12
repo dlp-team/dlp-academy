@@ -1,16 +1,12 @@
-<!-- copilot/plans/finished/autopilot-plan-execution-2026-04-10/README.md -->
+<!-- copilot/plans/active/autopilot-plan-execution-2026-04-10/README.md -->
 # AUTOPILOT Plan Execution (2026-04-10)
 
 ## Status
-- Lifecycle: finished
+- Lifecycle: active
 - Execution Mode: autopilot (checklist-driven)
 - Branch: feature/autopilot-workflow-updates-2026-04-09
 - Owner: hector
-- Current Checklist Step: closure-complete (moved to finished on 2026-04-12)
-
-## Closure Note
-- Plan transitioned from `active` to `finished` per user request after execution logging and review evidence were already present.
-- This finished artifact is the authoritative lifecycle location for the 2026-04-10 execution run.
+- Current Checklist Step: 16 (implementation complete; finalization flow pending human merge approval)
 
 ## Source Priority
 - Primary source of truth: [sources/source-autopilot-user-spec-autopilot-plan-execution-2026-04-10.md](./sources/source-autopilot-user-spec-autopilot-plan-execution-2026-04-10.md)

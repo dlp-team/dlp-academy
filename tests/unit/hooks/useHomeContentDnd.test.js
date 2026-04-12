@@ -274,6 +274,81 @@ describe('useHomeContentDnd', () => {
     expect(handleDragEnd).toHaveBeenCalledTimes(1);
   });
 
+  it('routes selected subject root drops through bulk move handler in select mode', () => {
+    const handleDropOnFolder = vi.fn(() => false);
+    const handleDragEnd = vi.fn();
+    const onDropSelectedItems = vi.fn();
+
+    const { result } = renderHook(() =>
+      useHomeContentDnd({
+        currentFolder: { id: 'folder-target' },
+        draggedItem: null,
+        draggedItemType: null,
+        handleDropOnFolder,
+        handleDragEnd,
+        selectMode: true,
+        selectedItemKeys: new Set(['subject:shortcut-subject-1']),
+        onDropSelectedItems,
+      })
+    );
+
+    const dropEvent = createEvent({
+      treeItem: JSON.stringify({
+        id: 'subject-1',
+        type: 'subject',
+        parentId: 'folder-source',
+        shortcutId: 'shortcut-subject-1',
+      }),
+    });
+
+    act(() => {
+      result.current.handleRootZoneDrop(dropEvent);
+    });
+
+    expect(onDropSelectedItems).toHaveBeenCalledWith('folder-target');
+    expect(handleDropOnFolder).not.toHaveBeenCalled();
+    expect(handleDragEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps non-selected subject drops on normal path while selection mode is active', () => {
+    const handleDropOnFolder = vi.fn(() => false);
+    const handleDragEnd = vi.fn();
+    const onDropSelectedItems = vi.fn();
+
+    const { result } = renderHook(() =>
+      useHomeContentDnd({
+        currentFolder: { id: 'folder-current' },
+        draggedItem: null,
+        draggedItemType: null,
+        handleDropOnFolder,
+        handleDragEnd,
+        selectMode: true,
+        selectedItemKeys: new Set(['subject:shortcut-selected-other']),
+        onDropSelectedItems,
+      })
+    );
+
+    act(() => {
+      result.current.handleListDrop(
+        {
+          id: 'subject-a',
+          type: 'subject',
+          parentId: 'folder-source',
+          folderId: 'folder-source',
+          shortcutId: 'shortcut-a',
+        },
+        {
+          id: 'folder-target',
+          type: 'folder',
+        }
+      );
+    });
+
+    expect(onDropSelectedItems).not.toHaveBeenCalled();
+    expect(handleDropOnFolder).toHaveBeenCalledWith('folder-target', 'subject-a', 'folder-source', 'shortcut-a');
+    expect(handleDragEnd).toHaveBeenCalledTimes(1);
+  });
+
   it('nests folder shortcut directly when dropped on subject target parent', () => {
     const handleNestFolder = vi.fn();
     const handleDragEnd = vi.fn();

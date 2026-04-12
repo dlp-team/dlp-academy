@@ -1,4 +1,4 @@
-// src/hooks/useGhostDrag.js
+// src/hooks/useGhostDrag.ts
 import { useState, useRef } from 'react';
 
 const GHOST_STACK_OFFSET = 8;
@@ -77,8 +77,8 @@ export const useGhostDrag = ({ item, type, onDragStart, onDragEnd, multiDragCoun
         });
 
         ghostContainer.id = 'active-drag-ghost';
-        ghostContainer.dataset.originalScale = DRAG_SCALE;
-        ghostContainer.dataset.scale = DRAG_SCALE;
+        ghostContainer.dataset.originalScale = String(DRAG_SCALE);
+        ghostContainer.dataset.scale = String(DRAG_SCALE);
 
         for (let layer = layerCount - 1; layer >= 1; layer -= 1) {
             const stackedClone = cloneCardForGhost(cardNode, rect, offsetX, offsetY);

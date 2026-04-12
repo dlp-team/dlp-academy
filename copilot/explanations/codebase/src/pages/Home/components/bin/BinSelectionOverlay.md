@@ -13,7 +13,6 @@
 - Applies staged focus UX with immediate panel availability and focused-card transition.
 
 ## Changelog
-- **2026-04-12:** Added optional `onOverlayReady` callback, fired once per selected item after bounds measurement, so parent surfaces can delay base-card hiding until overlay positioning is ready.
 - **2026-04-09:** Removed backdrop color dimming (`bg-transparent`) while preserving outside-click close behavior so grid selection no longer darkens background on press.
 - **2026-04-08:** Removed delayed panel reveal and kept panel rendering immediate after overlay mount; backdrop opacity was reduced to preserve card legibility while selected.
 - **2026-04-07:** Bin focus overlay refined for visual parity:

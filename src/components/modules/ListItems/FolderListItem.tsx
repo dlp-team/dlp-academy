@@ -1,4 +1,4 @@
-// src/components/modules/ListItems/FolderListItem.tsx
+// src/components/modules/ListItems/FolderListItem.jsx
 import React, { useState, useMemo, useRef } from 'react';
 import { ChevronRight, Folder, GripVertical, Users, MoreVertical, Edit2, Trash2, Share2, RotateCcw } from 'lucide-react';
 import SubjectIcon from '../../ui/SubjectIcon';
@@ -91,14 +91,6 @@ const FolderListItem = ({
     const canShowShortcutDelete = !disableAllActions && !disableDeleteActions && isShortcut && (isOrphan || (!isSourceOwner && !unshareBlocked));
     const canShowShortcutVisibility = !disableAllActions && isShortcut;
     const hasMenuActions = effectiveShowEditUI || effectiveCanShareFromMenu || effectiveShowDeleteUI || canShowShortcutVisibility || canShowShortcutDelete;
-    const selectionKey = `folder:${item?.shortcutId || item?.id}`;
-    const hasMultiSelectionDrag = Boolean(
-        selectMode
-        && selectedItemKeys instanceof Set
-        && selectedItemKeys.size > 1
-        && selectedItemKeys.has(selectionKey)
-    );
-    const multiDragCount = hasMultiSelectionDrag ? selectedItemKeys.size : 1;
 
 
     const scale = cardScale / 100;
@@ -219,7 +211,6 @@ const FolderListItem = ({
         item, 
         type: 'folder', 
         cardScale, 
-        multiDragCount,
         onDragStart: handleLocalDragStart,
         onDragEnd 
     });
@@ -251,7 +242,7 @@ const FolderListItem = ({
     const handleClickFolder = (e: any) => {
         e.stopPropagation();
         if (selectMode) {
-            onNavigate(item, e);
+            onNavigate(item);
         }
         setIsExpanded(!isExpanded);
     };
@@ -268,7 +259,6 @@ const FolderListItem = ({
             {/* ROW CONTAINER */}
             <div 
                 ref={itemRef}
-                data-selection-key={selectionKey}
                 draggable={draggable}
                 onDragStart={dragHandlers.onDragStart}
                 onDrag={dragHandlers.onDrag}
@@ -382,7 +372,7 @@ const FolderListItem = ({
                             {orphanMessage}
                         </span>
                     )}
-                    <button onClick={(e: any) => { e.stopPropagation(); if (isOrphan && isShortcut) return; onNavigate(item, e); }} className="text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors" style={{ padding: `${8 * scale}px` }}>
+                    <button onClick={(e: any) => { e.stopPropagation(); if (isOrphan && isShortcut) return; onNavigate(item); }} className="text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors" style={{ padding: `${8 * scale}px` }}>
                         <Folder style={{ width: `${20 * scale}px`, height: `${20 * scale}px` }} />
                     </button>
                     {/* Three Dots Menu Button */}
@@ -520,15 +510,11 @@ const FolderListItem = ({
 
             {/* CHILDREN (Recursive) */}
             <div 
-                data-testid={`folder-list-children-shell-${item?.id}`}
                 className={`grid transition-[grid-template-rows] duration-300 ease-in-out ${
                     isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                 }`}
             >
-                <div
-                    data-testid={`folder-list-children-content-${item?.id}`}
-                    className={`px-2 ${isExpanded ? 'overflow-visible pb-1' : 'overflow-hidden pb-0'}`}
-                >
+                <div className="overflow-hidden px-2">
                     <div className="mt-2 flex flex-col gap-2">
                         {hasChildren ? (
                             <>

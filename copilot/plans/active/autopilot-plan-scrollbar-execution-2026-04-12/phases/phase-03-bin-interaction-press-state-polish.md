@@ -15,27 +15,9 @@ Remove bin interaction visual regressions while preserving selection and overlay
 - `src/pages/Home/components/bin/BinSelectionOverlay.tsx`
 - `src/utils/selectionVisualUtils.ts`
 
-## Execution Status
-- Status: COMPLETED (2026-04-12)
-- Added overlay readiness handshake so selected grid cards are hidden only after overlay coordinates are measured and rendered.
-- Removed non-selection-mode sibling dimming in list mode so pressing one item keeps other rows visually stable.
-- Preserved selection-mode dimming and pressed-state visuals for selected rows/cards.
-
-## Implemented File Surfaces
-- `src/pages/Home/components/BinView.tsx`
-- `src/pages/Home/components/bin/BinSelectionOverlay.tsx`
-- `tests/unit/components/BinView.listPressState.test.jsx`
-- `tests/unit/components/BinSelectionOverlay.test.jsx`
-
 ## Acceptance Criteria
 - No transient badge invisibility on repeated grid item press.
 - List siblings remain visually stable when one item is pressed.
 
 ## Validation
 - Targeted Bin tests and manual grid/list parity checks.
-- Executed and passed:
-	- `tests/unit/components/BinView.listPressState.test.jsx`
-	- `tests/unit/components/BinSelectionOverlay.test.jsx`
-	- `tests/unit/pages/home/BinView.listInlinePanel.test.jsx`
-	- `tests/unit/components/BinGridItem.test.jsx`
-	- `tests/unit/utils/selectionVisualUtils.test.js`

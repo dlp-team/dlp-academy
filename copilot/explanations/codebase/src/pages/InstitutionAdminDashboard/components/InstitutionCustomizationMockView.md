@@ -9,7 +9,7 @@
 ## Responsibilities
 - Maintains editable customization form with safe color normalization.
 - Applies palette suggestions from branding extraction (`previewPaletteApply`) in preview-only mode.
-- Provides role toggle (`administración` / `docente` / `estudiante`) and viewport toggle (`desktop` / `tablet` / `móvil`).
+- Provides role toggle (`docente` / `estudiante`) and viewport toggle (`desktop` / `tablet` / `móvil`).
 - Supports live iframe preview mode with postMessage theme/highlight synchronization.
 - Keeps deterministic mock preview mode for deep UI tests and fallback execution.
 - Persists final customization payload only when save action is explicitly triggered.
@@ -25,15 +25,6 @@
 - `./customization/CustomizationHomeExactPreview`
 
 ## Changelog
-### 2026-04-12
-- Expanded role model to include `admin` in top-level preview switch and payload dispatch.
-- Updated default `previewMode` to `mock` for customization tab parity so role navigation stays on dedicated mock surfaces.
-- Updated preview header copy to role-agnostic `por rol` wording and added admin-specific account label.
-
-### 2026-04-10
-- Added preview-user context passthrough to live preview message payloads so `theme-preview` can render real `Home` composition without hardcoded preview markup.
-- Updated right preview pane container to `overflow-hidden` so iframe content owns scrolling and nested preview scrollbars are avoided.
-
 ### 2026-04-09
 - Added saved-theme-set controls in the editor sidebar:
 	- save current palette as a named theme set,

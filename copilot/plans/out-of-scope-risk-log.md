@@ -19,6 +19,14 @@ Track risks discovered during implementation/review that are important but outsi
 - Owner/Status:
 
 ## Entries
+- Date: 2026-04-11
+	Plan/Phase: [copilot/plans/active/autopilot-plan-execution-2026-04-10/phases/phase-06-final-optimization-and-deep-risk-review.md](copilot/plans/active/autopilot-plan-execution-2026-04-10/phases/phase-06-final-optimization-and-deep-risk-review.md)
+	Related Files: [vite.config.js](vite.config.js), [src/App.tsx](src/App.tsx), [src/firebase/config.ts](src/firebase/config.ts)
+	Risk Summary: Production build still reports oversized chunks (>500 kB post-minification), increasing first-load latency and cache invalidation impact.
+	Why Out of Scope: Resolving this requires route-level/code-splitting architecture changes that exceed the current interaction/scrollbar/undo plan scope.
+	Recommended Follow-up: Create a dedicated performance optimization plan to introduce dynamic imports and manual chunk strategy for large surfaces (Home, dashboards, content pages).
+	Owner/Status: OPEN - requires dedicated performance workstream
+
 - Date: 2026-04-04
 	Plan/Phase: [copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md](copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md)
 	Related Files: [functions/security/transferPromotionApplyHandler.js](functions/security/transferPromotionApplyHandler.js), [functions/security/transferPromotionRollbackHandler.js](functions/security/transferPromotionRollbackHandler.js)

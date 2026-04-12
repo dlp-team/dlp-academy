@@ -1,12 +1,3 @@
-## [2026-04-12] Batch Confirmation Preview Payload Propagation
-### Context & Behavior
-- Phase 02 required share/unshare deferred confirmations to display deterministic multi-item context in modal copy.
-
-### Change
-- Added `resolveBatchPreview(moveOptions, fallbackEntries)` helper to normalize preview resolution from bulk options or single-entry fallback.
-- Share/unshare confirmation payload builders now include `batchPreview` in all deferred branches that can be triggered during batch move sessions.
-- Modal close/reset paths now clear `batchPreview` to avoid stale carry-over between unrelated confirmations.
-
 ## [2026-04-09] Batch Confirmation Decision Reuse and Deferred Continuation Hooks
 ### Context & Behavior
 - Phase 02 required shared/unshare confirmation decisions to apply to all remaining selected items instead of forcing repeated per-item prompts.
@@ -139,10 +130,10 @@
 
 ---
 
-# useHomePageHandlers.ts
+# useHomePageHandlers.js
 
 ## Overview
-- **Source file:** `src/pages/Home/hooks/useHomePageHandlers.ts`
+- **Source file:** `src/pages/Home/hooks/useHomePageHandlers.js`
 - **Last documented:** 2026-02-24
 - **Role:** Custom hook with stateful/business logic for this page area.
 

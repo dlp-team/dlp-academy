@@ -1,4 +1,4 @@
-// src/pages/Home/hooks/useHomeContentDnd.js
+// src/pages/Home/hooks/useHomeContentDnd.ts
 import { useState } from 'react';
 
 const useHomeContentDnd = ({
@@ -112,8 +112,6 @@ const useHomeContentDnd = ({
             }
             else if (folderId) draggedData = { id: folderId, type: 'folder', parentId: undefined, shortcutId: folderShortcutId || undefined };
         }
-        console.log('[DND] handleRootZoneDrop:', { draggedData, currentFolder });
-
         if (!draggedData) return;
 
         const targetId = currentFolder ? currentFolder.id : null;
@@ -134,12 +132,6 @@ const useHomeContentDnd = ({
 
             let overlayShown = false;
             if (handleDropOnFolder) {
-                console.log('[DND] handleDropOnFolder call from handleRootZoneDrop:', {
-                    targetId,
-                    draggedId: draggedData.id,
-                    draggedParentId: draggedData.parentId,
-                    draggedType: draggedData.type
-                });
                 const result = handleDropOnFolder(targetId, draggedData.id, draggedData.parentId, draggedData.shortcutId);
                 if (result === true) overlayShown = true;
             }
@@ -166,7 +158,6 @@ const useHomeContentDnd = ({
     };
 
     const handleListDrop = (dragged, target: any) => {
-        console.log('[DND] handleListDrop:', { dragged, target, currentFolder });
         if (target.type === 'folder') {
             if (dragged.id === target.id) return;
             if (dragged.type === 'subject') {
@@ -179,15 +170,6 @@ const useHomeContentDnd = ({
 
                 let overlayShown = false;
                 if (handleDropOnFolder) {
-                    console.log('[DND] handleDropOnFolder call from handleListDrop:', {
-                        targetId: target.id,
-                        draggedId: dragged.id,
-                        draggedParentId: dragged.parentId,
-                        draggedFolderId: dragged.folderId,
-                        sourceFolderId,
-                        draggedType: dragged.type,
-                        targetType: target.type
-                    });
                     const result = handleDropOnFolder(target.id, dragged.id, sourceFolderId, dragged.shortcutId);
                     if (result === true) overlayShown = true;
                 }
@@ -231,15 +213,6 @@ const useHomeContentDnd = ({
 
                     let overlayShown = false;
                     if (handleDropOnFolder) {
-                        console.log('[DND] handleDropOnFolder call from handleListDrop (subject):', {
-                            targetParentId,
-                            draggedId: dragged.id,
-                            draggedParentId: dragged.parentId,
-                            draggedFolderId: dragged.folderId,
-                            sourceFolderId,
-                            draggedType: dragged.type,
-                            targetType: target.type
-                        });
                         const result = handleDropOnFolder(targetParentId, dragged.id, sourceFolderId, dragged.shortcutId);
                         if (result === true) overlayShown = true;
                     }

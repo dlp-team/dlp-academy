@@ -1,8 +1,8 @@
 <!-- copilot/explanations/codebase/src/pages/Home/hooks/useHomePageState.md -->
-# useHomePageState.tsx
+# useHomePageState.js
 
 ## Overview
-- **Source file:** `src/pages/Home/hooks/useHomePageState.tsx`
+- **Source file:** `src/pages/Home/hooks/useHomePageState.js`
 - **Last documented:** 2026-02-24
 - **Role:** Custom hook with stateful/business logic for this page area.
 
@@ -24,7 +24,6 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
-- **2026-04-12:** Extended `shareConfirm` and `unshareConfirm` default state shape with `batchPreview` to keep modal payload contracts stable for Phase 02 batch confirmation copy.
 - **2026-04-02:** Removed `history` from restored/persisted allowed Home modes so stale saved preferences now fall back safely to supported modes.
 - **2026-04-01:** Added `history` to allowed persisted view modes so the new `Historial` tab restores correctly after reload/navigation.
 - **2026-03-30:** Removed browser alert from folder auto-cleaner side effect and switched to optional `onHomeFeedback` callback so the page can display inline success/error text.

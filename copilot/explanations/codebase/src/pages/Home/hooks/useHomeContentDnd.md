@@ -1,37 +1,33 @@
-## [2026-04-08] Selection-Mode Batch Drag/Drop Parity
-### Behavior Updates
-- Added selection-aware drop routing (`onDropSelectedItems`) to root and list drop handlers.
-- When selection mode is active and the dragged card belongs to the selected batch, drops now execute the bulk move pipeline instead of single-item move handlers.
-- Preserved legacy single-item drop behavior for unselected drags and non-selection contexts.
-
-### Validation Additions
-- Extended `tests/unit/hooks/useHomeContentDnd.test.js` with:
-	- selected-subject list drop -> bulk move route,
-	- selected-folder root drop -> bulk move route.
-
-## [2026-03-06] Test Hardening: Additional DnD Branch Paths
-### Context & Validation Additions
-- Extended `tests/unit/hooks/useHomeContentDnd.test.js` with branch-level checks for:
-	- root drop with empty payload (no-op),
-	- fallback `handleMoveSubjectWithSource` path when no folder-drop handler is provided,
-	- folder-shortcut drop onto subject-target parent resolution.
-
-# useHomeContentDnd.js
+<!-- copilot/explanations/codebase/src/pages/Home/hooks/useHomeContentDnd.md -->
+# useHomeContentDnd.ts
 
 ## Overview
-- **Source file:** `src/pages/Home/hooks/useHomeContentDnd.js`
-- **Last documented:** 2026-02-24
-- **Role:** Custom hook with stateful/business logic for this page area.
+- **Source file:** `src/pages/Home/hooks/useHomeContentDnd.ts`
+- **Last documented:** 2026-04-11
+- **Role:** Home drag-and-drop routing hook for root/list drop zones, selection-aware bulk drops, and hover-state UI signals.
 
 ## Responsibilities
-- Manages local UI state and interaction flow.
-- Handles user events and triggers updates/actions.
+- Parses drag metadata across tree/list/native payload variants.
+- Routes selection-mode drops through bulk handler when dragged item belongs to selected set.
+- Preserves standard single-item drop handlers for non-selected drags and non-selection contexts.
+- Manages root/promote hover booleans used by drop-zone UI feedback.
 
 ## Exports
 - `default useHomeContentDnd`
 
 ## Main Dependencies
-- `react`
+- `react` (`useState`)
 
-## Notes
-- This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
+## Changelog
+### 2026-04-11
+- Removed transient debug `console.log` statements from root/list drop paths to reduce production console noise without changing behavior.
+- Extended parity coverage in `tests/unit/hooks/useHomeContentDnd.test.js` for:
+	- selected subject root-drop routing through bulk move handler,
+	- non-selected subject drop path preservation while selection mode is active.
+
+### 2026-04-08
+- Added selection-aware drop routing (`onDropSelectedItems`) to root and list drop handlers.
+- Added tests for selected-subject list-drop and selected-folder root-drop bulk routing.
+
+### 2026-03-06
+- Added branch hardening tests for empty root payload no-op, fallback move-subject routing, and folder-shortcut nesting onto subject-parent targets.

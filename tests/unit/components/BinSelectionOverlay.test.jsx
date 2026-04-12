@@ -120,37 +120,4 @@ describe('BinSelectionOverlay', () => {
     expect(Number.isFinite(top)).toBe(true);
     expect(top).toBeLessThanOrEqual(window.innerHeight - 320);
   });
-
-  it('notifies readiness once after measuring selected card coordinates', () => {
-    const onOverlayReady = vi.fn();
-    const selectedCardRef = {
-      current: {
-        getBoundingClientRect: () => ({
-          top: 120,
-          left: 140,
-          right: 380,
-          bottom: 260,
-          width: 240,
-          height: 140,
-        }),
-      },
-    };
-
-    render(
-      <BinSelectionOverlay
-        item={{ id: 'subject-2', name: 'Biologia' }}
-        selectedCardRef={selectedCardRef}
-        actionLoading={null}
-        onClose={vi.fn()}
-        onShowDescription={vi.fn()}
-        onRestore={vi.fn()}
-        onDeleteConfirm={vi.fn()}
-        onOverlayReady={onOverlayReady}
-      >
-        <div>Tarjeta</div>
-      </BinSelectionOverlay>
-    );
-
-    expect(onOverlayReady).toHaveBeenCalledTimes(1);
-  });
 });

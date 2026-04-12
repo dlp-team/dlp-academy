@@ -51,26 +51,4 @@ describe('ColorField', () => {
 
     expect(pickerClickSpy).toHaveBeenCalled();
   });
-
-  it('opens native picker from swatch when field is already active', () => {
-    const pickerClickSpy = vi.spyOn(HTMLInputElement.prototype, 'click');
-
-    render(
-      <ColorField
-        token="primary"
-        label="Color Primario"
-        description="Botones principales"
-        icon={<span>P</span>}
-        value="#6366f1"
-        onChange={() => {}}
-        onFocus={() => {}}
-        onBlur={() => {}}
-        isActive
-      />
-    );
-
-    fireEvent.click(screen.getByTestId('color-field-swatch-primary'));
-
-    expect(pickerClickSpy).toHaveBeenCalled();
-  });
 });

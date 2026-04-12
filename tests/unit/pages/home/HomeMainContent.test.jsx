@@ -96,7 +96,6 @@ const baseProps = {
   setSearchQuery: vi.fn(),
   canCreateInManualContext: true,
   selectMode: false,
-  setSelectMode: vi.fn(),
   selectedItemKeys: new Set(),
   toggleSelectItem: vi.fn(),
   handleSetCurrentFolder: vi.fn(),
@@ -114,7 +113,7 @@ const baseProps = {
 };
 
 describe('HomeMainContent', () => {
-  it('keeps empty-state create action visible but inert while selection mode is active', () => {
+  it('disables empty-state create action while selection mode is active', () => {
     homeEmptyStateSpy.mockClear();
 
     render(
@@ -129,8 +128,7 @@ describe('HomeMainContent', () => {
     expect(homeEmptyStateSpy).not.toHaveBeenCalledTimes(0);
     const lastCall = homeEmptyStateSpy.mock.calls[homeEmptyStateSpy.mock.calls.length - 1] || [];
     const passedProps = lastCall[0] || {};
-    expect(passedProps.canCreateSubject).toBe(true);
-    expect(passedProps.selectMode).toBe(true);
+    expect(passedProps.canCreateSubject).toBe(false);
   });
 
   it('renders bin branch when view mode is bin', () => {

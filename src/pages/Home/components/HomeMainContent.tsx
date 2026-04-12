@@ -31,7 +31,6 @@ type HomeMainContentProps = {
     setSearchQuery: (value: string) => void;
     canCreateInManualContext: boolean;
     selectMode: boolean;
-    setSelectMode: (nextValue: any) => void;
     selectedItemKeys: Set<string>;
     toggleSelectItem: (item: any, type: any) => void;
     runBulkMoveToFolder: (targetFolderId: any) => void;
@@ -71,7 +70,6 @@ const HomeMainContent = ({
     setSearchQuery,
     canCreateInManualContext,
     selectMode,
-    setSelectMode,
     selectedItemKeys,
     toggleSelectItem,
     runBulkMoveToFolder,
@@ -264,7 +262,6 @@ const HomeMainContent = ({
                             sharedScopeSelected={effectiveSharedScopeSelected}
                             studentMode={isStudentRole}
                             selectMode={selectMode}
-                            setSelectMode={setSelectMode}
                             selectedItemKeys={selectedItemKeys}
                             onToggleSelectItem={toggleSelectItem}
                             onDropSelectedItems={runBulkMoveToFolder}
@@ -292,8 +289,7 @@ const HomeMainContent = ({
                             setSubjectModalConfig={logic.setSubjectModalConfig}
                             viewMode={logic.viewMode}
                             layoutMode={logic.layoutMode}
-                            canCreateSubject={canCreateInManualContext}
-                            selectMode={selectMode}
+                            canCreateSubject={canCreateInManualContext && !selectMode}
                             cardScale={logic.cardScale || 100}
                             currentFolder={logic.currentFolder}
                         />
