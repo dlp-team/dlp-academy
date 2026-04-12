@@ -28,11 +28,11 @@ export const useHomePageHandlers = ({
     };
 
     const closeShareConfirm = () => {
-        setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null, onMergeConfirm: null });
+        setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null, onMergeConfirm: null, selectionPreview: null });
     };
 
     const closeUnshareConfirm = () => {
-        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
+        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null, selectionPreview: null });
     };
 
     const isViewerInsideSharedFolder = Boolean(
@@ -298,6 +298,32 @@ export const useHomePageHandlers = ({
         return moveOptions.batchDecisions[key] ?? null;
     };
 
+    const getMoveConfirmationPreview = (moveOptions: any) => {
+        const preview = moveOptions?.confirmationPreview;
+        if (!preview || typeof preview !== 'object') return null;
+
+        const totalCount = Number(preview?.totalCount || 0);
+        if (!Number.isFinite(totalCount) || totalCount <= 1) {
+            return null;
+        }
+
+        const visibleNames = Array.isArray(preview?.visibleNames)
+            ? preview.visibleNames.filter(Boolean).map((name: any) => String(name))
+            : [];
+
+        const hiddenCount = Number.isFinite(Number(preview?.hiddenCount))
+            ? Math.max(0, Number(preview.hiddenCount))
+            : Math.max(0, totalCount - visibleNames.length);
+
+        return {
+            totalCount,
+            visibleNames: visibleNames.slice(0, 5),
+            hiddenCount,
+        };
+    };
+
+    const shouldSkipMoveUndo = (moveOptions: any) => moveOptions?.skipShortcutUndo === true;
+
     const setBatchDecision = (moveOptions: any, key: any, value: any) => {
         if (typeof moveOptions?.setBatchDecision === 'function') {
             moveOptions.setBatchDecision(key, value);
@@ -333,6 +359,7 @@ export const useHomePageHandlers = ({
             requestedShortcutType: targetType,
             requestedShortcutId: shortcutId,
             requestedTargetId: targetId,
+            selectionPreview: getMoveConfirmationPreview(moveOptions),
             onConfirm: async () => {
                 try {
                     await createShortcutMoveRequest({
@@ -369,7 +396,9 @@ export const useHomePageHandlers = ({
         }
 
         await logic.moveShortcut(shortcutId, targetFolderId || null);
-        registerShortcutMoveUndo(shortcutId, targetType, targetId, sourceParentId, targetFolderId || null);
+        if (!shouldSkipMoveUndo(moveOptions)) {
+            registerShortcutMoveUndo(shortcutId, targetType, targetId, sourceParentId, targetFolderId || null);
+        }
         return 'moved';
     };
 
@@ -524,20 +553,25 @@ export const useHomePageHandlers = ({
             ...baselineSharedWithUids,
             ...subjectSharedWithUids
         ]));
+        const skipInlineUndo = shouldSkipMoveUndo(moveOptions);
 
         const executeSubjectSharedMismatchAlign = async () => {
             await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, {
                 alignToTargetFolder: true,
                 forceRefreshSharing: true
             });
-            registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+            if (!skipInlineUndo) {
+                registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+            }
         };
 
         const executeSubjectSharedMismatchMerge = async () => {
             const { mergedUids, mergedSharedWith } = await mergeTargetFolderShares(targetFolderId, effectiveSourceSharedWithUids, baselineSharedWith);
             await syncSharedStateToFolderTree(targetFolderId, mergedUids, mergedSharedWith);
             await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId, { forceRefreshSharing: true });
-            registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+            if (!skipInlineUndo) {
+                registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+            }
         };
 
         const executeSubjectUnshareMove = async (preserveSharing = false) => {
@@ -546,12 +580,16 @@ export const useHomePageHandlers = ({
             } else {
                 await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
             }
-            registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+            if (!skipInlineUndo) {
+                registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+            }
         };
 
         const executeSubjectShareToTarget = async () => {
             await moveSubjectBetweenFolders(subjectId, currentFolderId, targetFolderId);
-            registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+            if (!skipInlineUndo) {
+                registerSubjectMoveUndo(subjectId, currentFolderId, targetFolderId || null);
+            }
         };
 
         if (targetFolder && targetFolder.isShared && effectiveSourceSharedWithUids.length > 0 && !areSharedSetsEqual(effectiveSourceSharedWithUids, targetFolderSharedWithUids)) {
@@ -573,6 +611,7 @@ export const useHomePageHandlers = ({
                 folder: targetFolder,
                 sourceType: 'subject',
                 sourceName: subject?.name || '',
+                selectionPreview: getMoveConfirmationPreview(moveOptions),
                 onConfirm: async () => {
                     await executeSubjectSharedMismatchAlign();
                     setBatchDecision(moveOptions, 'subjectSharedMismatch', 'align');
@@ -608,6 +647,7 @@ export const useHomePageHandlers = ({
                 open: true,
                 subjectId,
                 folder: sourceFolder,
+                selectionPreview: getMoveConfirmationPreview(moveOptions),
                 onConfirm: async () => {
                     await executeSubjectUnshareMove(false);
                     setBatchDecision(moveOptions, 'subjectUnshareMove', 'remove');
@@ -640,6 +680,7 @@ export const useHomePageHandlers = ({
                     open: true,
                     subjectId,
                     folder: targetFolder,
+                    selectionPreview: getMoveConfirmationPreview(moveOptions),
                     onConfirm: async () => {
                         await executeSubjectShareToTarget();
                         setBatchDecision(moveOptions, 'subjectShareToTarget', 'confirm');
@@ -880,6 +921,7 @@ export const useHomePageHandlers = ({
         }
 
         const targetFolder = ((logic.folders || []) as any[]).find(f => f.id === targetFolderId);
+        const skipInlineUndo = shouldSkipMoveUndo(moveOptions);
 
         const getSharedUids = item => (item && Array.isArray(item.sharedWithUids) ? item.sharedWithUids : []);
 
@@ -905,12 +947,16 @@ export const useHomePageHandlers = ({
                 });
             }
             await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-            registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+            if (!skipInlineUndo) {
+                registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+            }
         };
 
         const executeFolderSharedMismatchAlign = async () => {
             await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-            registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+            if (!skipInlineUndo) {
+                registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+            }
         };
 
         const executeFolderSharedMismatchMerge = async () => {
@@ -918,12 +964,16 @@ export const useHomePageHandlers = ({
             const { mergedUids, mergedSharedWith } = await mergeTargetFolderShares(targetFolderId, droppedSharedUids, getSharedWithEntries(droppedFolder));
             await syncSharedStateToFolderTree(targetFolderId, mergedUids, mergedSharedWith);
             await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-            registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+            if (!skipInlineUndo) {
+                registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+            }
         };
 
         const executeFolderShareToTarget = async () => {
             await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId);
-            registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+            if (!skipInlineUndo) {
+                registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+            }
         };
 
         if (droppedFolder && droppedFolder.isShared && (!targetFolder || !targetFolder.isShared) && droppedFolder.parentId) {
@@ -939,6 +989,7 @@ export const useHomePageHandlers = ({
                     open: true,
                     subjectId: null,
                     folder: droppedFolder,
+                    selectionPreview: getMoveConfirmationPreview(moveOptions),
                     onConfirm: async () => {
                         await executeFolderUnshareMove();
                         setBatchDecision(moveOptions, 'folderUnshareMove', 'remove');
@@ -973,6 +1024,7 @@ export const useHomePageHandlers = ({
                     subjectId: null,
                     sourceType: 'folder',
                     sourceName: droppedFolder?.name || '',
+                    selectionPreview: getMoveConfirmationPreview(moveOptions),
                     onConfirm: async () => {
                         await executeFolderSharedMismatchAlign();
                         setBatchDecision(moveOptions, 'folderSharedMismatch', 'align');
@@ -1003,6 +1055,7 @@ export const useHomePageHandlers = ({
                     open: true,
                     folder: targetFolder,
                     subjectId: null,
+                    selectionPreview: getMoveConfirmationPreview(moveOptions),
                     onConfirm: async () => {
                         await executeFolderShareToTarget();
                         setBatchDecision(moveOptions, 'folderShareToTarget', 'confirm');
@@ -1015,7 +1068,9 @@ export const useHomePageHandlers = ({
             }
         }
         await moveFolderToParent(droppedFolderId, currentParentId, targetFolderId, { preserveSharing: true });
-        registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+        if (!skipInlineUndo) {
+            registerFolderMoveUndo(droppedFolderId, currentParentId || null, targetFolderId || null);
+        }
         return 'moved';
     };
 

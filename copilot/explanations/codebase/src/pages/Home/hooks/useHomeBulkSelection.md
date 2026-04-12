@@ -22,6 +22,8 @@
 - `../../../utils/permissionUtils`
 
 ## Changelog
+- **2026-04-12 (follow-up):** Added safe parallel fast-path for non-shared, non-shortcut subject bulk moves to reduce latency on large selections. Batch move options now also set `skipShortcutUndo` to avoid per-item undo-toast overrides during bulk actions.
+- **2026-04-12:** Added selection-anchor helpers (`startSelectionWithItem`, `selectRangeToItem`) to support modifier-based Home selection flows, and now attaches `confirmationPreview` metadata (total + first five names + overflow count) to batch move options for confirmation modals.
 - **2026-04-10:** Bulk undo snapshots now persist pre-move sharing metadata (`sharedWith`, `sharedWithUids`, `isShared`) and undo replay restores this state; bulk undo no longer re-enters selection mode after completion.
 - **2026-04-09:** Added phase-02 batch move session orchestration with decision-cache propagation for deferred confirmations, automatic continuation after confirm, cancellation-safe session finalization, and single aggregated undo payload across all moved entries in the batch run.
 - **2026-04-08:** Added folder-child selection de-dup orchestration so child selection clears selected ancestor folders and folder selection clears selected descendants.

@@ -3,12 +3,34 @@ import { useState, useRef } from 'react';
 
 const GHOST_STACK_OFFSET = 8;
 const MAX_STACKED_LAYERS = 4;
+const MAX_MULTI_GHOST_PREVIEW = 6;
 
-export const useGhostDrag = ({ item, type, onDragStart, onDragEnd, multiDragCount = 1 }: any) => {
+const escapeSelectionKeyForQuery = (selectionKey: any) => {
+    const normalizedKey = String(selectionKey || '');
+    if (!normalizedKey) return '';
+
+    if (typeof window !== 'undefined' && window.CSS && typeof window.CSS.escape === 'function') {
+        return window.CSS.escape(normalizedKey);
+    }
+
+    return normalizedKey.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+};
+
+export const useGhostDrag = ({
+    item,
+    type,
+    onDragStart,
+    onDragEnd,
+    multiDragCount = 1,
+    selectionKey = null,
+    selectedItemKeys = null
+}: any) => {
     const [isDragging, setIsDragging] = useState(false);
     const itemRef = useRef<any>(null);
     const dragGhostRef = useRef<any>(null);
     const dragOffsetRef = useRef({ x: 0, y: 0 });
+    const stagedCompanionNodesRef = useRef<any[]>([]);
+    const stagedLeadNodeRef = useRef<any>(null);
 
     // CONSTANTS
     const DRAG_SCALE = 0.95; // The fixed scale for the ghost while dragging (slightly smaller than original)
@@ -41,6 +63,125 @@ export const useGhostDrag = ({ item, type, onDragStart, onDragEnd, multiDragCoun
         return cloned;
     };
 
+    const cleanupStagedCompanionNodes = () => {
+        if (!Array.isArray(stagedCompanionNodesRef.current) || stagedCompanionNodesRef.current.length === 0) {
+            stagedCompanionNodesRef.current = [];
+            return;
+        }
+
+        stagedCompanionNodesRef.current.forEach((entry: any) => {
+            const node = entry?.node;
+            if (!node?.style) return;
+
+            node.style.transform = entry.originalTransform || '';
+            node.style.opacity = entry.originalOpacity || '';
+            node.style.transition = entry.originalTransition || '';
+            node.style.pointerEvents = entry.originalPointerEvents || '';
+            node.style.zIndex = entry.originalZIndex || '';
+            node.style.willChange = entry.originalWillChange || '';
+            node.removeAttribute('data-home-multi-drag-companion');
+        });
+
+        stagedCompanionNodesRef.current = [];
+    };
+
+    const stageLeadNodeAsTopLayer = (leadNode: any) => {
+        if (!leadNode?.style) return;
+
+        stagedLeadNodeRef.current = {
+            node: leadNode,
+            originalPosition: leadNode.style.position,
+            originalZIndex: leadNode.style.zIndex,
+            originalWillChange: leadNode.style.willChange,
+        };
+
+        if (!leadNode.style.position) {
+            leadNode.style.position = 'relative';
+        }
+        leadNode.style.zIndex = '2';
+        leadNode.style.willChange = 'transform, opacity';
+    };
+
+    const cleanupStagedLeadNode = () => {
+        const stagedLead = stagedLeadNodeRef.current;
+        const node = stagedLead?.node;
+        if (!node?.style) {
+            stagedLeadNodeRef.current = null;
+            return;
+        }
+
+        node.style.position = stagedLead.originalPosition || '';
+        node.style.zIndex = stagedLead.originalZIndex || '';
+        node.style.willChange = stagedLead.originalWillChange || '';
+        stagedLeadNodeRef.current = null;
+    };
+
+    const resolveSelectedCompanionNodes = (leadSelectionKey: any) => {
+        if (!(selectedItemKeys instanceof Set) || selectedItemKeys.size === 0) {
+            return [];
+        }
+
+        const selectedKeys = Array.from(selectedItemKeys)
+            .filter((candidate: any) => typeof candidate === 'string' && candidate.trim().length > 0)
+            .filter((candidate: any) => candidate !== leadSelectionKey);
+
+        if (selectedKeys.length === 0) {
+            return [];
+        }
+
+        const companionNodes: any[] = [];
+        for (const selectedKey of selectedKeys) {
+            const escapedSelectionKey = escapeSelectionKeyForQuery(selectedKey);
+            if (!escapedSelectionKey) continue;
+
+            const targetNode = document.querySelector(`[data-selection-key="${escapedSelectionKey}"]`) as any;
+            if (!targetNode || companionNodes.includes(targetNode)) continue;
+
+            companionNodes.push(targetNode);
+            if (companionNodes.length >= MAX_MULTI_GHOST_PREVIEW - 1) break;
+        }
+
+        return companionNodes;
+    };
+
+    const stageCompanionNodesTowardLead = (leadNode: any, leadRect: any, companions: any[] = []) => {
+        if (!leadNode || !leadRect || !Array.isArray(companions) || companions.length === 0) {
+            stagedCompanionNodesRef.current = [];
+            return;
+        }
+
+        const stagedEntries: any[] = [];
+
+        companions.forEach((companionNode: any, index: any) => {
+            if (!companionNode?.getBoundingClientRect || companionNode === leadNode) return;
+
+            const companionRect = companionNode.getBoundingClientRect();
+            const layerOffset = Math.min(index + 1, MAX_STACKED_LAYERS) * GHOST_STACK_OFFSET;
+            const deltaX = leadRect.left - companionRect.left + layerOffset;
+            const deltaY = leadRect.top - companionRect.top + layerOffset;
+
+            stagedEntries.push({
+                node: companionNode,
+                originalTransform: companionNode.style.transform,
+                originalOpacity: companionNode.style.opacity,
+                originalTransition: companionNode.style.transition,
+                originalPointerEvents: companionNode.style.pointerEvents,
+                originalZIndex: companionNode.style.zIndex,
+                originalWillChange: companionNode.style.willChange,
+            });
+
+            companionNode.setAttribute('data-home-multi-drag-companion', 'true');
+            companionNode.style.transition = 'transform 170ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 170ms ease';
+            companionNode.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(${DRAG_SCALE})`;
+            companionNode.style.opacity = '0';
+            companionNode.style.pointerEvents = 'none';
+            companionNode.style.zIndex = '1';
+            companionNode.style.willChange = 'transform, opacity';
+        });
+
+        stagedCompanionNodesRef.current = stagedEntries;
+    };
+
     const createSingleGhost = (cardNode: any, rect: any, offsetX: any, offsetY: any) => {
         const ghost = cloneCardForGhost(cardNode, rect, offsetX, offsetY);
 
@@ -58,8 +199,18 @@ export const useGhostDrag = ({ item, type, onDragStart, onDragEnd, multiDragCoun
         return ghost;
     };
 
-    const createMultiGhost = (cardNode: any, rect: any, offsetX: any, offsetY: any, dragCount: any) => {
-        const layerCount = Math.max(2, Math.min(dragCount, MAX_STACKED_LAYERS));
+    const createMultiGhost = (
+        cardNode: any,
+        rect: any,
+        offsetX: any,
+        offsetY: any,
+        dragCount: any,
+        companionNodes: any[] = []
+    ) => {
+        const previewNodes = [cardNode, ...(Array.isArray(companionNodes) ? companionNodes : [])]
+            .filter(Boolean)
+            .slice(0, MAX_MULTI_GHOST_PREVIEW);
+        const layerCount = Math.max(2, Math.min(previewNodes.length, Math.max(MAX_STACKED_LAYERS, dragCount)));
         const stackOffset = GHOST_STACK_OFFSET;
         const stackedWidth = rect.width + (layerCount - 1) * stackOffset;
         const stackedHeight = rect.height + (layerCount - 1) * stackOffset;
@@ -77,11 +228,13 @@ export const useGhostDrag = ({ item, type, onDragStart, onDragEnd, multiDragCoun
         });
 
         ghostContainer.id = 'active-drag-ghost';
-        ghostContainer.dataset.originalScale = DRAG_SCALE;
-        ghostContainer.dataset.scale = DRAG_SCALE;
+        ghostContainer.dataset.originalScale = String(DRAG_SCALE);
+        ghostContainer.dataset.scale = String(DRAG_SCALE);
 
         for (let layer = layerCount - 1; layer >= 1; layer -= 1) {
-            const stackedClone = cloneCardForGhost(cardNode, rect, offsetX, offsetY);
+            const sourceNode = previewNodes[layer] || cardNode;
+            const sourceRect = sourceNode?.getBoundingClientRect ? sourceNode.getBoundingClientRect() : rect;
+            const stackedClone = cloneCardForGhost(sourceNode, sourceRect, offsetX, offsetY);
             Object.assign(stackedClone.style, {
                 top: `${layer * stackOffset}px`,
                 left: `${layer * stackOffset}px`,
@@ -90,7 +243,7 @@ export const useGhostDrag = ({ item, type, onDragStart, onDragEnd, multiDragCoun
             ghostContainer.appendChild(stackedClone);
         }
 
-        const leadClone = cloneCardForGhost(cardNode, rect, offsetX, offsetY);
+        const leadClone = cloneCardForGhost(previewNodes[0] || cardNode, rect, offsetX, offsetY);
         Object.assign(leadClone.style, {
             top: '0px',
             left: '0px',
@@ -125,6 +278,8 @@ export const useGhostDrag = ({ item, type, onDragStart, onDragEnd, multiDragCoun
     const handleDragStartWithCustomImage = (e: any) => {
         setIsDragging(true);
         const cardNode = itemRef.current; 
+        cleanupStagedCompanionNodes();
+        cleanupStagedLeadNode();
 
         if (cardNode) {
             // A. Calculate offset
@@ -141,9 +296,17 @@ export const useGhostDrag = ({ item, type, onDragStart, onDragEnd, multiDragCoun
                 ? Number(multiDragCount)
                 : 1;
             const normalizedMultiDragCount = Math.max(1, resolvedMultiDragCount);
+            const selectedCompanionNodes = normalizedMultiDragCount > 1
+                ? resolveSelectedCompanionNodes(selectionKey)
+                : [];
+
+            if (normalizedMultiDragCount > 1 && selectedCompanionNodes.length > 0) {
+                stageLeadNodeAsTopLayer(cardNode);
+                stageCompanionNodesTowardLead(cardNode, rect, selectedCompanionNodes);
+            }
 
             const ghost = normalizedMultiDragCount > 1
-                ? createMultiGhost(cardNode, rect, offsetX, offsetY, normalizedMultiDragCount)
+                ? createMultiGhost(cardNode, rect, offsetX, offsetY, normalizedMultiDragCount, selectedCompanionNodes)
                 : createSingleGhost(cardNode, rect, offsetX, offsetY);
 
             // D. Add to body
@@ -175,6 +338,9 @@ export const useGhostDrag = ({ item, type, onDragStart, onDragEnd, multiDragCoun
             dragGhostRef.current.parentNode.removeChild(dragGhostRef.current);
             dragGhostRef.current = null;
         }
+
+        cleanupStagedCompanionNodes();
+        cleanupStagedLeadNode();
         if (onDragEnd) onDragEnd(e);
     };
 

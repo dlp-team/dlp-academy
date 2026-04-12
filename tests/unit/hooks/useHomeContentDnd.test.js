@@ -44,6 +44,33 @@ describe('useHomeContentDnd', () => {
     expect(result.current.isPromoteZoneHovered).toBe(false);
   });
 
+  it('routes promote-zone drops through bulk handler when dragged subject is selected', () => {
+    const handlePromoteSubject = vi.fn();
+    const handleDragEnd = vi.fn();
+    const onDropSelectedItems = vi.fn();
+
+    const { result } = renderHook(() =>
+      useHomeContentDnd({
+        currentFolder: { id: 'folder-child', parentId: 'folder-parent' },
+        draggedItem: { id: 'subject-1', shortcutId: 'shortcut-1' },
+        draggedItemType: 'subject',
+        handlePromoteSubject,
+        handleDragEnd,
+        selectMode: true,
+        selectedItemKeys: new Set(['subject:shortcut-1']),
+        onDropSelectedItems,
+      })
+    );
+
+    act(() => {
+      result.current.handlePromoteZoneDrop(createEvent());
+    });
+
+    expect(onDropSelectedItems).toHaveBeenCalledWith('folder-parent');
+    expect(handlePromoteSubject).not.toHaveBeenCalled();
+    expect(handleDragEnd).toHaveBeenCalledTimes(1);
+  });
+
   it('drops tree subject into current folder via handleDropOnFolder', () => {
     const handleDropOnFolder = vi.fn(() => false);
     const handleDragEnd = vi.fn();

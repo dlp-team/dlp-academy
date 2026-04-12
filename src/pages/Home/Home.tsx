@@ -188,6 +188,8 @@ const Home = ({ user }: any) => {
         setSelectMode,
         selectedItems,
         selectedItemKeys,
+        startSelectionWithItem,
+        selectRangeToItem,
         bulkMoveTargetFolderId,
         availableMoveFolders,
         setBulkMoveTargetFolderId,
@@ -460,6 +462,8 @@ const Home = ({ user }: any) => {
                     selectMode={selectMode}
                     selectedItemKeys={selectedItemKeys}
                     toggleSelectItem={toggleSelectItem}
+                    startSelectionWithItem={startSelectionWithItem}
+                    selectRangeToItem={selectRangeToItem}
                     runBulkMoveToFolder={runBulkMoveToFolder}
                     handleSetCurrentFolder={handleSetCurrentFolder}
                     handleBreadcrumbDrop={handleSelectionAwareBreadcrumbDrop}

@@ -84,6 +84,8 @@ const SubjectCard = (props: any) => {
         type: 'subject',
         cardScale: cardScale,
         multiDragCount,
+        selectionKey,
+        selectedItemKeys,
         onDragStart: handleLocalDragStart,
         onDragEnd: props.onDragEnd
     });

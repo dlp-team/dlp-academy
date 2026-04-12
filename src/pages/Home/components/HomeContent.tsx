@@ -1,6 +1,6 @@
 // src/pages/Home/components/HomeContent.jsx
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, { useMemo, useRef } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { 
     Plus, ChevronDown, Folder as FolderIcon, Tag, ArrowUp, ArrowUpCircle, CalendarRange
 } from 'lucide-react';
@@ -79,6 +79,8 @@ const HomeContent = ({
     selectMode = false,
     selectedItemKeys = new Set(),
     onToggleSelectItem = () => {},
+    onStartSelectionWithItem = () => {},
+    onSelectRangeToItem = () => {},
     onDropSelectedItems = null,
 }: any) => {
     const contentRef = useRef<any>(null);
@@ -401,6 +403,105 @@ const HomeContent = ({
         };
     }, [groupedEntries, viewMode]);
 
+    const getOrderedSelectionEntries = useCallback(() => {
+        const orderedEntries: any[] = [];
+        const seenKeys = new Set<string>();
+
+        const appendEntry = (item: any, type: any) => {
+            if (!item?.id || !type) return;
+            const key = getSelectionKey(item, type);
+            if (seenKeys.has(key)) return;
+            seenKeys.add(key);
+            orderedEntries.push({ key, type, item });
+        };
+
+        groupedEntries.forEach(([groupName, groupSubjects]: any) => {
+            const isCollapsed = isGroupCollapsed(groupName);
+            const displayedGroupSubjects = getFilteredSubjectsForGroup(groupSubjects);
+            const yearLabel = coursesYearWrappers.yearByGroup.get(groupName) || '';
+            const yearWrapperKey = yearLabel ? `courses-year:${yearLabel}` : '';
+            const isYearCollapsed = coursesYearWrappers.enabled && yearWrapperKey
+                ? isGroupCollapsed(yearWrapperKey)
+                : false;
+
+            if (coursesYearWrappers.enabled && isYearCollapsed) {
+                return;
+            }
+
+            if (showCollapsibleGroups && isCollapsed) {
+                return;
+            }
+
+            if (layoutMode === 'grid') {
+                if (!studentMode && viewMode === 'grid' && activeFilter !== 'subjects') {
+                    filteredFolders.forEach((folder: any) => appendEntry(folder, 'folder'));
+                }
+
+                if (activeFilter !== 'folders') {
+                    displayedGroupSubjects.forEach((subject: any) => appendEntry(subject, 'subject'));
+                }
+                return;
+            }
+
+            if (!studentMode && viewMode === 'grid') {
+                filteredFolders.forEach((folder: any) => appendEntry(folder, 'folder'));
+            }
+            displayedGroupSubjects.forEach((subject: any) => appendEntry(subject, 'subject'));
+        });
+
+        return orderedEntries;
+    }, [
+        groupedEntries,
+        coursesYearWrappers,
+        showCollapsibleGroups,
+        layoutMode,
+        studentMode,
+        viewMode,
+        activeFilter,
+        filteredFolders,
+        getFilteredSubjectsForGroup,
+        getSelectionKey
+    ]);
+
+    const handleSelectionAwareInteraction = useCallback(({
+        item,
+        type,
+        event,
+        onOpen,
+    }: any) => {
+        if (!item?.id || !type) {
+            if (typeof onOpen === 'function') onOpen();
+            return;
+        }
+
+        const hasModifier = Boolean(event?.ctrlKey || event?.metaKey);
+        const isRangeSelection = hasModifier && Boolean(event?.shiftKey);
+
+        if (isRangeSelection) {
+            onSelectRangeToItem(item, type, getOrderedSelectionEntries(), { replaceSelection: !selectMode });
+            return;
+        }
+
+        if (selectMode) {
+            if (hasModifier) {
+                if (typeof onOpen === 'function') onOpen();
+                return;
+            }
+
+            onToggleSelectItem(item, type, { ensureSelectMode: true });
+            return;
+        }
+
+        if (hasModifier) {
+            onStartSelectionWithItem(item, type);
+            return;
+        }
+
+        if (typeof onOpen === 'function') {
+            onOpen();
+        }
+    }, [getOrderedSelectionEntries, onSelectRangeToItem, onStartSelectionWithItem, onToggleSelectItem, selectMode]);
+
     
     return (
         <div
@@ -574,12 +675,13 @@ const HomeContent = ({
                                                         isSelected={isSelected}
                                                         allFolders={allFoldersForTree}
                                                         allSubjects={allSubjectsForTree}
-                                                        onOpen={(targetFolder: any) => {
-                                                            if (selectMode) {
-                                                                onToggleSelectItem(targetFolder, 'folder');
-                                                                return;
-                                                            }
-                                                            handleOpenFolder(targetFolder);
+                                                        onOpen={(targetFolder: any, event: any) => {
+                                                            handleSelectionAwareInteraction({
+                                                                item: targetFolder,
+                                                                type: 'folder',
+                                                                event,
+                                                                onOpen: () => handleOpenFolder(targetFolder)
+                                                            });
                                                         }}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
@@ -654,12 +756,13 @@ const HomeContent = ({
                                                         isSelected={isSelected}
                                                         activeMenu={activeMenu}
                                                         onToggleMenu={setActiveMenu}
-                                                        onSelect={(subjectId: any) => {
-                                                            if (selectMode) {
-                                                                onToggleSelectItem(subject, 'subject');
-                                                                return;
-                                                            }
-                                                            handleSelectSubject(subjectId);
+                                                        onSelect={(subjectId: any, event: any) => {
+                                                            handleSelectionAwareInteraction({
+                                                                item: subject,
+                                                                type: 'subject',
+                                                                event,
+                                                                onOpen: () => handleSelectSubject(subjectId)
+                                                            });
                                                         }}
                                                         onSelectTopic={(sid, tid) => navigate(`/home/subject/${sid}/topic/${tid}`)}
                                                         onEdit={(e, s: any) => { e.stopPropagation(); setSubjectModalConfig({ isOpen: true, isEditing: true, data: s }); setActiveMenu(null); }}
@@ -800,22 +903,27 @@ const HomeContent = ({
                                                 parentId={currentFolder ? currentFolder.id : null}
                                                 allFolders={allFoldersForTree}
                                                 allSubjects={allSubjectsForTree}
-                                                onNavigate={(targetFolder: any) => {
-                                                    if (selectMode) {
-                                                        onToggleSelectItem(targetFolder, 'folder');
-                                                        return;
-                                                    }
-                                                    handleOpenFolder(targetFolder);
+                                                onNavigate={(targetFolder: any, event: any) => {
+                                                    handleSelectionAwareInteraction({
+                                                        item: targetFolder,
+                                                        type: 'folder',
+                                                        event,
+                                                        onOpen: () => handleOpenFolder(targetFolder)
+                                                    });
                                                 }}
-                                                onNavigateSubject={(subjectId: any) => {
-                                                    if (selectMode) {
-                                                        const selectedSubject = (allSubjectsForTree || []).find((entry: any) => entry?.id === subjectId);
-                                                        if (selectedSubject) {
-                                                            onToggleSelectItem(selectedSubject, 'subject');
-                                                        }
+                                                onNavigateSubject={(subjectId: any, event: any) => {
+                                                    const selectedSubject = (allSubjectsForTree || []).find((entry: any) => entry?.id === subjectId);
+                                                    if (!selectedSubject) {
+                                                        handleSelectSubject(subjectId);
                                                         return;
                                                     }
-                                                    handleSelectSubject(subjectId);
+
+                                                    handleSelectionAwareInteraction({
+                                                        item: selectedSubject,
+                                                        type: 'subject',
+                                                        event,
+                                                        onOpen: () => handleSelectSubject(subjectId)
+                                                    });
                                                 }}
                                                 onEdit={(f) => setFolderModalConfig({ isOpen: true, isEditing: true, data: f })}
                                                 onDelete={(f, action = 'delete') => {
@@ -874,12 +982,13 @@ const HomeContent = ({
                                                     parentId={currentFolder ? currentFolder.id : null}
                                                     allFolders={allFoldersForTree}
                                                     allSubjects={allSubjectsForTree}
-                                                    onNavigateSubject={(subjectId: any) => {
-                                                        if (selectMode) {
-                                                            onToggleSelectItem(subject, 'subject');
-                                                            return;
-                                                        }
-                                                        handleSelectSubject(subjectId);
+                                                    onNavigateSubject={(subjectId: any, event: any) => {
+                                                        handleSelectionAwareInteraction({
+                                                            item: subject,
+                                                            type: 'subject',
+                                                            event,
+                                                            onOpen: () => handleSelectSubject(subjectId)
+                                                        });
                                                     }}
                                                     onEdit={(s) => setSubjectModalConfig({ isOpen: true, isEditing: true, data: s })}
                                                     onDelete={(s, action = 'delete') => {

@@ -112,6 +112,76 @@ describe('useHomeBulkSelection', () => {
     );
   });
 
+  it('starts selection and selects range from the anchor item', () => {
+    const onHomeFeedback = vi.fn();
+    const logic = createLogic();
+
+    const { result } = renderHook(() =>
+      useHomeBulkSelection({
+        logic,
+        isStudentRole: false,
+        onHomeFeedback,
+      })
+    );
+
+    const orderedEntries = [
+      { key: 'subject:subject-1', type: 'subject', item: { id: 'subject-1' } },
+      { key: 'subject:subject-2', type: 'subject', item: { id: 'subject-2' } },
+      { key: 'subject:subject-3', type: 'subject', item: { id: 'subject-3' } },
+      { key: 'subject:subject-4', type: 'subject', item: { id: 'subject-4' } },
+    ];
+
+    act(() => {
+      result.current.startSelectionWithItem({ id: 'subject-2' }, 'subject');
+    });
+
+    expect(result.current.selectMode).toBe(true);
+    expect(result.current.selectedItemKeys.has('subject:subject-2')).toBe(true);
+
+    act(() => {
+      result.current.selectRangeToItem({ id: 'subject-4' }, 'subject', orderedEntries);
+    });
+
+    expect(result.current.selectedItemKeys.has('subject:subject-2')).toBe(true);
+    expect(result.current.selectedItemKeys.has('subject:subject-3')).toBe(true);
+    expect(result.current.selectedItemKeys.has('subject:subject-4')).toBe(true);
+    expect(result.current.selectedItemKeys.size).toBe(3);
+  });
+
+  it('passes batch confirmation preview metadata into move options', async () => {
+    const onHomeFeedback = vi.fn();
+    const logic = createLogic();
+    const moveSelectionEntryWithShareRules = vi.fn(async () => ({ status: 'moved' }));
+
+    const { result } = renderHook(() =>
+      useHomeBulkSelection({
+        logic,
+        isStudentRole: false,
+        onHomeFeedback,
+        moveSelectionEntryWithShareRules,
+      })
+    );
+
+    act(() => {
+      result.current.setSelectMode(true);
+      result.current.toggleSelectItem({ id: 'subject-1', name: 'Matematicas', isShared: true }, 'subject');
+      result.current.toggleSelectItem({ id: 'subject-2', name: 'Historia' }, 'subject');
+    });
+
+    await act(async () => {
+      await result.current.runBulkMoveToFolder('folder-target');
+    });
+
+    const [, , moveOptions] = moveSelectionEntryWithShareRules.mock.calls[0];
+    expect(moveOptions.confirmationPreview).toEqual(
+      expect.objectContaining({
+        totalCount: 2,
+        visibleNames: ['Matematicas', 'Historia'],
+        hiddenCount: 0,
+      })
+    );
+  });
+
   it('aggregates undo payload across deferred batch confirmation continuations', async () => {
     vi.useFakeTimers();
 
@@ -140,7 +210,7 @@ describe('useHomeBulkSelection', () => {
 
     act(() => {
       result.current.setSelectMode(true);
-      result.current.toggleSelectItem({ id: 'subject-1', folderId: null }, 'subject');
+      result.current.toggleSelectItem({ id: 'subject-1', folderId: null, isShared: true }, 'subject');
       result.current.toggleSelectItem({ id: 'subject-2', folderId: null }, 'subject');
     });
 

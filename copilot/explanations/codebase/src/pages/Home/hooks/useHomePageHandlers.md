@@ -1,3 +1,13 @@
+## [2026-04-12] Batch Confirmation Preview Payloads
+### Context & Behavior
+- Selection-mode batch moves now require confirmation dialogs to show selected names/count while preserving single-item confirmation behavior.
+
+### Change
+- Added `getMoveConfirmationPreview(moveOptions)` helper to normalize preview payloads.
+- Share/unshare confirmation payloads created from batch move paths now include `selectionPreview` metadata.
+- Added `skipShortcutUndo` support so batch move calls can suppress per-item keyboard undo registrations and keep a single aggregated undo entry.
+- `closeShareConfirm` and `closeUnshareConfirm` now clear `selectionPreview` alongside existing modal fields.
+
 ## [2026-04-09] Batch Confirmation Decision Reuse and Deferred Continuation Hooks
 ### Context & Behavior
 - Phase 02 required shared/unshare confirmation decisions to apply to all remaining selected items instead of forcing repeated per-item prompts.

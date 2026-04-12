@@ -85,9 +85,11 @@ const ListViewItem = ({
         dragHandlers
     } = useGhostDrag({
         item,
-        type: 'subject',
+        type: type === 'folder' ? 'folder' : 'subject',
         cardScale,
         multiDragCount,
+        selectionKey,
+        selectedItemKeys,
         onDragStart: (e: any) => {
             if (!draggable) {
                 e.preventDefault();
@@ -226,7 +228,7 @@ const ListViewItem = ({
                             user={user}
                             subject={item} 
                             isCompleted={isCompleted}
-                            onSelect={() => onNavigateSubject(item.id)} 
+                            onSelect={(_subjectId: any, event: any) => onNavigateSubject(item.id, event)} 
                             onEdit={onEdit} 
                             onDelete={onDelete} 
                             onShare={onShare}

@@ -1,6 +1,10 @@
 # ListViewItem.jsx
 
 ## Changelog
+### 2026-04-12: Modifier event propagation for list subject/folder interactions
+- List row drag hook now receives type-aware item kind plus selection context (`selectionKey`, `selectedItemKeys`) for grouped drag visuals.
+- Subject row click callbacks now forward click events to Home handlers so Ctrl/Cmd and range-selection modifiers are interpreted consistently.
+
 ### 2026-04-10: Multi-selection list-row drag ghost support
 - Subject list rows now pass selection-aware `multiDragCount` to `useGhostDrag`.
 - Added `data-selection-key` on draggable row containers to keep selection identity explicit during grouped drags.

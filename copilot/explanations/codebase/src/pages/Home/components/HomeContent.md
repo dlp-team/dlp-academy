@@ -1,6 +1,13 @@
 # HomeContent.jsx
 
 ## Changelog
+### 2026-04-12: Modifier-aware selection navigation and range selection
+- Added centralized click interaction routing so:
+	- `Ctrl/Cmd + click` outside selection mode starts selection with the clicked item.
+	- `Ctrl/Cmd + click` in selection mode opens folders/subjects without leaving selection mode.
+	- `Ctrl/Cmd + Shift + click` selects a visible range between the anchor and clicked item.
+- Wired the same behavior for grid cards and list rows (folders and subjects).
+
 ### 2026-04-10: Selection-mode create-card visibility and grid batch-drop parity
 - Create-subject cards remain visible in selection mode but are now inert on click.
 - Added selection-aware grid folder drop routing so dragging a selected item to a folder triggers batch move (`onDropSelectedItems`) instead of single-item move.

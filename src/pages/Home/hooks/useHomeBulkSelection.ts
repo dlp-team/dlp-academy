@@ -2,6 +2,8 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { isShortcutItem } from '../../../utils/permissionUtils';
 
+const MAX_CONFIRMATION_PREVIEW_NAMES = 5;
+
 type HomeBulkSelectionParams = {
     logic: any;
     isStudentRole: boolean;
@@ -70,6 +72,24 @@ const normalizeMoveStatus = (result: any) => {
     return 'skipped';
 };
 
+const resolveSelectionEntryDisplayName = (entry: any) => {
+    const itemName = String(entry?.item?.name || '').trim();
+    if (itemName) return itemName;
+    return entry?.type === 'folder' ? 'Carpeta' : 'Asignatura';
+};
+
+const buildMoveConfirmationPreview = (entries: any[] = []) => {
+    const names = (Array.isArray(entries) ? entries : [])
+        .map(resolveSelectionEntryDisplayName)
+        .filter(Boolean);
+
+    return {
+        totalCount: names.length,
+        visibleNames: names.slice(0, MAX_CONFIRMATION_PREVIEW_NAMES),
+        hiddenCount: Math.max(0, names.length - MAX_CONFIRMATION_PREVIEW_NAMES),
+    };
+};
+
 export const useHomeBulkSelection = ({
     logic,
     isStudentRole,
@@ -78,6 +98,7 @@ export const useHomeBulkSelection = ({
 }: HomeBulkSelectionParams) => {
     const [selectMode, setSelectMode] = useState(false);
     const [selectedItemsByKey, setSelectedItemsByKey] = useState<any>({});
+    const [selectionAnchorKey, setSelectionAnchorKey] = useState<string | null>(null);
     const [bulkMoveTargetFolderId, setBulkMoveTargetFolderId] = useState('');
     const [undoToast, setUndoToast] = useState<any>(null);
     const undoTimeoutRef = useRef<any>(null);
@@ -134,6 +155,7 @@ export const useHomeBulkSelection = ({
 
     const clearSelection = React.useCallback(() => {
         setSelectedItemsByKey({});
+        setSelectionAnchorKey(null);
         setBulkMoveTargetFolderId('');
     }, []);
 
@@ -179,52 +201,150 @@ export const useHomeBulkSelection = ({
             nextSelection[entry.key] = entry;
         });
         setSelectedItemsByKey(nextSelection);
+        setSelectionAnchorKey(entries.length > 0 ? entries[entries.length - 1]?.key || null : null);
         if (entries.length === 0) {
             setBulkMoveTargetFolderId('');
         }
     }, []);
 
-    const toggleSelectItem = React.useCallback((item, type: any) => {
+    const mergeEntryIntoSelectionMap = React.useCallback((selectionMap: any, entry: any) => {
+        if (!entry?.key || !entry?.item?.id || !entry?.type) {
+            return selectionMap;
+        }
+
+        const next = {
+            ...selectionMap,
+            [entry.key]: entry
+        };
+
+        const selectedFolderId = entry?.type === 'folder' ? entry?.item?.id : null;
+        const selectedAncestors = getEntryAncestorFolders(entry);
+        const keysToRemove = new Set<string>();
+
+        Object.entries(next).forEach(([entryKey, entryValue]: any) => {
+            if (entryKey === entry.key) return;
+
+            if (entryValue?.type === 'folder' && selectedAncestors.includes(entryValue?.item?.id)) {
+                keysToRemove.add(entryKey);
+                return;
+            }
+
+            if (!selectedFolderId) return;
+            const entryAncestors = getEntryAncestorFolders(entryValue);
+            if (entryAncestors.includes(selectedFolderId)) {
+                keysToRemove.add(entryKey);
+            }
+        });
+
+        keysToRemove.forEach((entryKey: string) => {
+            delete next[entryKey];
+        });
+
+        return next;
+    }, [getEntryAncestorFolders]);
+
+    const startSelectionWithItem = React.useCallback((item: any, type: any) => {
+        if (!item?.id || !type) return;
+        const key = buildSelectionKey(item, type);
+        setSelectedItemsByKey({
+            [key]: { key, type, item }
+        });
+        setSelectionAnchorKey(key);
+        setBulkMoveTargetFolderId('');
+        setSelectMode(true);
+    }, [buildSelectionKey]);
+
+    const selectRangeToItem = React.useCallback((item: any, type: any, orderedEntries: any[] = [], options: any = {}) => {
+        if (!item?.id || !type) return;
+
+        const targetKey = buildSelectionKey(item, type);
+        const normalizedOrderedEntries = (Array.isArray(orderedEntries) ? orderedEntries : [])
+            .map((entry: any) => {
+                if (!entry) return null;
+
+                if (entry?.key && entry?.item?.id && entry?.type) {
+                    return entry;
+                }
+
+                if (entry?.item?.id && entry?.type) {
+                    return {
+                        key: buildSelectionKey(entry.item, entry.type),
+                        type: entry.type,
+                        item: entry.item
+                    };
+                }
+
+                return null;
+            })
+            .filter(Boolean);
+
+        const entryByKey = new Map<string, any>();
+        normalizedOrderedEntries.forEach((entry: any) => {
+            if (!entryByKey.has(entry.key)) {
+                entryByKey.set(entry.key, entry);
+            }
+        });
+
+        const targetEntry = entryByKey.get(targetKey) || { key: targetKey, type, item };
+        if (!entryByKey.has(targetKey)) {
+            normalizedOrderedEntries.push(targetEntry);
+            entryByKey.set(targetKey, targetEntry);
+        }
+
+        const orderedKeys = normalizedOrderedEntries.map((entry: any) => entry.key);
+        const targetIndex = orderedKeys.indexOf(targetKey);
+
+        const anchorCandidate = selectionAnchorKey && orderedKeys.includes(selectionAnchorKey)
+            ? selectionAnchorKey
+            : targetKey;
+        const anchorIndex = orderedKeys.indexOf(anchorCandidate);
+
+        const replaceSelection = options?.replaceSelection === true;
+
+        setSelectedItemsByKey((prev: any) => {
+            let next = replaceSelection ? {} : { ...prev };
+
+            if (targetIndex === -1 || anchorIndex === -1) {
+                return mergeEntryIntoSelectionMap(next, targetEntry);
+            }
+
+            const start = Math.min(anchorIndex, targetIndex);
+            const end = Math.max(anchorIndex, targetIndex);
+
+            for (let index = start; index <= end; index += 1) {
+                const rangeKey = orderedKeys[index];
+                const rangeEntry = entryByKey.get(rangeKey);
+                next = mergeEntryIntoSelectionMap(next, rangeEntry);
+            }
+
+            if (!next[targetKey]) {
+                next = mergeEntryIntoSelectionMap(next, targetEntry);
+            }
+
+            return next;
+        });
+
+        setSelectionAnchorKey(targetKey);
+        setSelectMode(true);
+    }, [buildSelectionKey, mergeEntryIntoSelectionMap, selectionAnchorKey]);
+
+    const toggleSelectItem = React.useCallback((item, type: any, options: any = {}) => {
         if (!item?.id || !type) return;
         const key = buildSelectionKey(item, type);
         setSelectedItemsByKey((prev: any) => {
-            if (prev[key]) {
+            if (prev[key] && options?.forceAdd !== true) {
                 const next = { ...prev };
                 delete next[key];
                 return next;
             }
-            const next = {
-                ...prev,
-                [key]: { key, type, item }
-            };
-
-            const selectedEntry = next[key];
-            const selectedFolderId = type === 'folder' ? item?.id : null;
-            const selectedAncestors = getEntryAncestorFolders(selectedEntry);
-            const keysToRemove = new Set<string>();
-
-            Object.entries(next).forEach(([entryKey, entryValue]: any) => {
-                if (entryKey === key) return;
-
-                if (entryValue?.type === 'folder' && selectedAncestors.includes(entryValue?.item?.id)) {
-                    keysToRemove.add(entryKey);
-                    return;
-                }
-
-                if (!selectedFolderId) return;
-                const entryAncestors = getEntryAncestorFolders(entryValue);
-                if (entryAncestors.includes(selectedFolderId)) {
-                    keysToRemove.add(entryKey);
-                }
-            });
-
-            keysToRemove.forEach((entryKey: string) => {
-                delete next[entryKey];
-            });
-
-            return next;
+            const nextEntry = { key, type, item };
+            return mergeEntryIntoSelectionMap(prev, nextEntry);
         });
-    }, [buildSelectionKey, getEntryAncestorFolders]);
+        setSelectionAnchorKey(key);
+        if (options?.ensureSelectMode) {
+            setSelectMode(true);
+        }
+    }, [buildSelectionKey, mergeEntryIntoSelectionMap]);
 
     const runDefaultMoveForEntry = React.useCallback(async (entry: any, destination: any) => {
         const item = entry?.item;
@@ -259,6 +379,50 @@ export const useHomeBulkSelection = ({
 
         return { status: 'skipped' };
     }, [logic]);
+
+    const canUseParallelSubjectMove = React.useCallback((entries: any[] = [], destination: any) => {
+        if (!Array.isArray(entries) || entries.length === 0) return false;
+
+        const targetFolder = destination ? folderById.get(destination) : null;
+        if (targetFolder?.isShared === true) return false;
+
+        return entries.every((entry: any) => {
+            if (entry?.type !== 'subject') return false;
+            const item = entry?.item;
+            if (!item?.id) return false;
+            if (isShortcutItem(item) && item?.shortcutId) return false;
+            if (item?.isShared === true) return false;
+
+            const sourceParentId = getEntrySourceParentId(entry);
+            const sourceFolder = sourceParentId ? folderById.get(sourceParentId) : null;
+            if (sourceFolder?.isShared === true) return false;
+
+            return true;
+        });
+    }, [folderById]);
+
+    const ensureSnapshotForEntry = React.useCallback((state: any, entry: any) => {
+        if (!state || !entry?.key) return;
+        if (state.snapshotsByKey.has(entry.key)) return;
+
+        state.snapshotsByKey.set(entry.key, {
+            key: entry.key,
+            type: entry?.type,
+            id: entry?.item?.id,
+            shortcutId: entry?.item?.shortcutId || null,
+            previousParentId: getEntrySourceParentId(entry),
+            previousSharedWithUids: Array.isArray(entry?.item?.sharedWithUids)
+                ? [...entry.item.sharedWithUids]
+                : null,
+            previousSharedWith: Array.isArray(entry?.item?.sharedWith)
+                ? [...entry.item.sharedWith]
+                : null,
+            previousIsShared: typeof entry?.item?.isShared === 'boolean'
+                ? entry.item.isShared
+                : null,
+            entry
+        });
+    }, []);
 
     const finalizeBulkMoveSession = React.useCallback((options: any = {}) => {
         const state = bulkMoveStateRef.current;
@@ -381,6 +545,7 @@ export const useHomeBulkSelection = ({
             state = {
                 destination,
                 batchDecisions: {},
+                confirmationPreview: options?.confirmationPreview || buildMoveConfirmationPreview(itemsToMove),
                 snapshotsByKey: new Map<string, any>(),
                 movedKeys: new Set<string>(),
                 failedEntriesByKey: new Map<string, any>(),
@@ -389,34 +554,58 @@ export const useHomeBulkSelection = ({
             bulkMoveStateRef.current = state;
         }
 
+        const shouldUseFastParallelMove = (
+            !isContinuation
+            && typeof moveSelectionEntryWithShareRules === 'function'
+            && canUseParallelSubjectMove(itemsToMove as any[], destination)
+        );
+
+        if (shouldUseFastParallelMove) {
+            const settledResults = await Promise.allSettled(
+                itemsToMove.map(async (entry: any) => {
+                    ensureSnapshotForEntry(state, entry);
+                    const result = await runDefaultMoveForEntry(entry, destination);
+                    return {
+                        entry,
+                        status: normalizeMoveStatus(result)
+                    };
+                })
+            );
+
+            settledResults.forEach((result: any, index: number) => {
+                const fallbackEntry = itemsToMove[index];
+                const resolvedEntry = result.status === 'fulfilled' ? result.value?.entry : fallbackEntry;
+                const resolvedKey = resolvedEntry?.key;
+                const status = result.status === 'fulfilled'
+                    ? result.value?.status
+                    : 'skipped';
+
+                if (!resolvedKey) return;
+
+                if (status === 'moved') {
+                    state.movedKeys.add(resolvedKey);
+                    state.failedEntriesByKey.delete(resolvedKey);
+                    return;
+                }
+
+                state.failedEntriesByKey.set(resolvedKey, resolvedEntry);
+            });
+
+            finalizeBulkMoveSession();
+            return;
+        }
+
         for (let index = 0; index < itemsToMove.length; index += 1) {
             const entry: any = itemsToMove[index];
             if (!entry?.key) continue;
-
-            if (!state.snapshotsByKey.has(entry.key)) {
-                state.snapshotsByKey.set(entry.key, {
-                    key: entry.key,
-                    type: entry?.type,
-                    id: entry?.item?.id,
-                    shortcutId: entry?.item?.shortcutId || null,
-                    previousParentId: getEntrySourceParentId(entry),
-                    previousSharedWithUids: Array.isArray(entry?.item?.sharedWithUids)
-                        ? [...entry.item.sharedWithUids]
-                        : null,
-                    previousSharedWith: Array.isArray(entry?.item?.sharedWith)
-                        ? [...entry.item.sharedWith]
-                        : null,
-                    previousIsShared: typeof entry?.item?.isShared === 'boolean'
-                        ? entry.item.isShared
-                        : null,
-                    entry
-                });
-            }
+            ensureSnapshotForEntry(state, entry);
 
             try {
                 const moveResult = moveSelectionEntryWithShareRules
                     ? await moveSelectionEntryWithShareRules(entry, destination, {
                         batchDecisions: state.batchDecisions,
+                        confirmationPreview: state.confirmationPreview,
+                        skipShortcutUndo: true,
                         setBatchDecision: (key: any, value: any) => {
                             state.batchDecisions[key] = value;
                         },
@@ -481,7 +670,7 @@ export const useHomeBulkSelection = ({
         }
 
         finalizeBulkMoveSession();
-    }, [selectedItemsByKey, moveSelectionEntryWithShareRules, runDefaultMoveForEntry, setSelectionFromEntries, finalizeBulkMoveSession, onHomeFeedback]);
+    }, [selectedItemsByKey, moveSelectionEntryWithShareRules, runDefaultMoveForEntry, setSelectionFromEntries, finalizeBulkMoveSession, onHomeFeedback, canUseParallelSubjectMove, ensureSnapshotForEntry]);
 
     const handleBulkDelete = React.useCallback(async () => {
         const itemsToDelete = Object.values(selectedItemsByKey);
@@ -607,6 +796,8 @@ export const useHomeBulkSelection = ({
         setSelectMode,
         selectedItems,
         selectedItemKeys,
+        startSelectionWithItem,
+        selectRangeToItem,
         bulkMoveTargetFolderId,
         availableMoveFolders,
         setBulkMoveTargetFolderId,

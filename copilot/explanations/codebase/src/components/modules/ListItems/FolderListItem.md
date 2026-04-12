@@ -1,6 +1,12 @@
 # FolderListItem.tsx
 
 ## Changelog
+### 2026-04-12: Folder list modifier-click navigation wiring
+- Folder list rows now pass `selectionKey` and `selectedItemKeys` into `useGhostDrag` for grouped drag previews.
+- Ctrl/Cmd clicks now route through `onNavigate(item, event)` to support Home-level selection shortcuts:
+  - outside selection mode: auto-start selection,
+  - inside selection mode: open folder while selection mode stays enabled.
+
 ### 2026-04-10: Collapsed children spacing regression fix
 - Added children wrapper test hooks (`folder-list-children-shell-*` and `folder-list-children-content-*`) to make expanded/collapsed spacing behavior verifiable.
 - Updated nested children wrapper classes to clip collapsed state (`overflow-hidden pb-0`) while preserving expanded selection-ring safety (`overflow-visible pb-1`).

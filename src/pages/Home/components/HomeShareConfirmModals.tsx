@@ -11,18 +11,58 @@ const HomeShareConfirmModals = ({
     setUnshareConfirm,
     subjects
 }) => {
+    const getSelectionPreviewCount = (selectionPreview: any) => {
+        const totalCount = Number(selectionPreview?.totalCount || 0);
+        if (!Number.isFinite(totalCount) || totalCount <= 1) {
+            return 0;
+        }
+        return totalCount;
+    };
+
+    const renderSelectionPreview = (selectionPreview: any) => {
+        const totalCount = Number(selectionPreview?.totalCount || 0);
+        if (!Number.isFinite(totalCount) || totalCount <= 1) {
+            return null;
+        }
+
+        const visibleNames = Array.isArray(selectionPreview?.visibleNames)
+            ? selectionPreview.visibleNames.filter(Boolean).map((name: any) => String(name)).slice(0, 5)
+            : [];
+        const hiddenCount = Number.isFinite(Number(selectionPreview?.hiddenCount))
+            ? Math.max(0, Number(selectionPreview.hiddenCount))
+            : Math.max(0, totalCount - visibleNames.length);
+
+        return (
+            <div className="mb-6 rounded-xl border border-indigo-100 dark:border-indigo-800/60 bg-indigo-50/70 dark:bg-indigo-900/20 p-3 text-left">
+                <p className="text-sm font-medium text-indigo-900 dark:text-indigo-100">
+                    Esta accion se aplicara a {totalCount} elemento(s) seleccionado(s):
+                </p>
+                {visibleNames.length > 0 && (
+                    <ul className="mt-2 space-y-1 text-sm text-indigo-800 dark:text-indigo-200 list-disc list-inside">
+                        {visibleNames.map((name: any, index: number) => (
+                            <li key={`selection-preview-${index}`}>{name}</li>
+                        ))}
+                        {hiddenCount > 0 && (
+                            <li>{`...y ${hiddenCount} mas.`}</li>
+                        )}
+                    </ul>
+                )}
+            </div>
+        );
+    };
+
     const closeShareConfirm = () => {
         if (typeof shareConfirm?.onCancel === 'function') {
             shareConfirm.onCancel();
         }
-        setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null, onMergeConfirm: null });
+        setShareConfirm({ open: false, type: null, subjectId: null, folder: null, onConfirm: null, onMergeConfirm: null, selectionPreview: null });
     };
 
     const closeUnshareConfirm = () => {
         if (typeof unshareConfirm?.onCancel === 'function') {
             unshareConfirm.onCancel();
         }
-        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null });
+        setUnshareConfirm({ open: false, subjectId: null, folder: null, onConfirm: null, onPreserveConfirm: null, selectionPreview: null });
     };
 
     return (
@@ -39,6 +79,19 @@ const HomeShareConfirmModals = ({
                         </div>
                         {shareConfirm.type === 'shared-mismatch-move' ? (
                             <>
+                                {getSelectionPreviewCount(shareConfirm?.selectionPreview) > 1 ? (
+                                    <>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                            Usuarios compartidos diferentes detectados en la seleccion
+                                        </h3>
+                                        <p className={`${homeThemeTokens.mutedTextClass} mb-6`}>
+                                            Al mover {getSelectionPreviewCount(shareConfirm?.selectionPreview)} elemento(s) seleccionado(s) dentro de la carpeta compartida{' '}
+                                            <span className="font-semibold">"{shareConfirm.folder?.name || 'carpeta compartida'}"</span>, los usuarios compartidos no coinciden.
+                                            <br />Elige como deseas continuar.
+                                        </p>
+                                    </>
+                                ) : (
+                                    <>
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                                     Usuarios compartidos diferentes detectados
                                 </h3>
@@ -47,9 +100,24 @@ const HomeShareConfirmModals = ({
                                     <span className="font-semibold">"{shareConfirm.folder?.name || 'carpeta compartida'}"</span>, los usuarios compartidos no coinciden.
                                     <br />Elige cómo deseas continuar.
                                 </p>
+                                    </>
+                                )}
                             </>
                         ) : shareConfirm.type === 'shortcut-move-request' ? (
                             <>
+                                {getSelectionPreviewCount(shareConfirm?.selectionPreview) > 1 ? (
+                                    <>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                            No se pueden mover accesos directos a una carpeta compartida
+                                        </h3>
+                                        <p className={`${homeThemeTokens.mutedTextClass} mb-6`}>
+                                            Algunos accesos directos de tu seleccion no pueden vivir dentro de carpetas compartidas. Solo el propietario puede mover los elementos originales a{' '}
+                                            <span className="font-semibold">"{shareConfirm.folder?.name || 'carpeta compartida'}"</span>.
+                                            <br />¿Quieres solicitar este movimiento al propietario?
+                                        </p>
+                                    </>
+                                ) : (
+                                    <>
                                 <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                                     No se puede mover un acceso directo a una carpeta compartida
                                 </h3>
@@ -58,8 +126,27 @@ const HomeShareConfirmModals = ({
                                     <span className="font-semibold">"{shareConfirm.folder?.name || 'carpeta compartida'}"</span>.
                                     <br />¿Quieres solicitar este movimiento al propietario?
                                 </p>
+                                    </>
+                                )}
                             </>
                         ) : (() => {
+                            const selectionCount = getSelectionPreviewCount(shareConfirm?.selectionPreview);
+                            if (selectionCount > 1) {
+                                const folderName = shareConfirm.folder?.name || '';
+                                return (
+                                    <>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                            Vas a mover {selectionCount} elemento(s) seleccionado(s) a una carpeta compartida
+                                        </h3>
+                                        <p className={`${homeThemeTokens.mutedTextClass} mb-6`}>
+                                            Esta accion puede ajustar el estado de comparticion de los elementos movidos segun los permisos de la carpeta{' '}
+                                            <span className="font-semibold">"{folderName}"</span>.
+                                            <br />¿Deseas continuar?
+                                        </p>
+                                    </>
+                                );
+                            }
+
                             const isFolder = !shareConfirm.subjectId;
                             const itemType = isFolder ? 'carpeta' : 'asignatura';
                             const itemName = isFolder
@@ -85,6 +172,7 @@ const HomeShareConfirmModals = ({
                                 </>
                             );
                         })()}
+                        {renderSelectionPreview(shareConfirm?.selectionPreview)}
                         <div className="flex justify-center gap-3 flex-wrap">
                             <button
                                 className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
@@ -133,6 +221,23 @@ const HomeShareConfirmModals = ({
                             </svg>
                         </div>
                         {(() => {
+                            const selectionCount = getSelectionPreviewCount(unshareConfirm?.selectionPreview);
+                            if (selectionCount > 1) {
+                                const folderName = unshareConfirm.folder?.name || '';
+                                return (
+                                    <>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+                                            Vas a mover {selectionCount} elemento(s) seleccionado(s) fuera de una carpeta compartida
+                                        </h3>
+                                        <p className={`${homeThemeTokens.mutedTextClass} mb-6`}>
+                                            Esta accion puede quitar el acceso heredado desde la carpeta compartida{' '}
+                                            <span className="font-semibold">"{folderName}"</span>.
+                                            <br />¿Deseas continuar?
+                                        </p>
+                                    </>
+                                );
+                            }
+
                             const isFolder = !unshareConfirm.subjectId;
                             const itemType = isFolder ? 'carpeta' : 'asignatura';
                             const itemName = isFolder
@@ -158,6 +263,7 @@ const HomeShareConfirmModals = ({
                                 </>
                             );
                         })()}
+                        {renderSelectionPreview(unshareConfirm?.selectionPreview)}
                         <div className="flex justify-center gap-3 flex-wrap">
                             <button
                                 className="px-5 py-2 rounded-xl bg-gray-100 dark:bg-slate-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-200 dark:hover:bg-slate-700 transition-colors"
