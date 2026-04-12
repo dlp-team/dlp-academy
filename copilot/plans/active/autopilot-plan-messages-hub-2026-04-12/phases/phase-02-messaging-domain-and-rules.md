@@ -14,4 +14,4 @@ Define/extend direct messaging data model and enforce institution-safe access bo
 - Negative cross-institution and non-participant read denials.
 
 ## Status
-- `PLANNED`
+- `COMPLETED`

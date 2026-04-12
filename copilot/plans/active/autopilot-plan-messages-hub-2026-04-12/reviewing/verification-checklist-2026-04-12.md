@@ -2,26 +2,26 @@
 # Verification Checklist (2026-04-12)
 
 ## Functional
-- [ ] Dedicated Messages section lists all user conversations.
-- [ ] Conversation thread UI supports send/read/update flows.
-- [ ] Subject profile/class entrypoint still opens/sends direct messages.
-- [ ] Participant profile context shows shared subjects and user role.
-- [ ] Header message notifications are separated from non-message notifications.
-- [ ] Shared notification/message component renders both channels consistently.
+- [x] Dedicated Messages section lists all user conversations.
+- [x] Conversation thread UI supports send/read/update flows.
+- [x] Subject profile/class entrypoint still opens/sends direct messages.
+- [x] Participant profile context shows shared subjects and user role.
+- [x] Header message notifications are separated from non-message notifications.
+- [x] Shared notification/message component renders both channels consistently.
 
 ## Security / Multi-Tenancy
-- [ ] Same-institution constraint enforced on all message reads/writes.
-- [ ] No cross-institution conversation discovery.
-- [ ] Least-privilege Firestore rules preserved for non-message collections.
+- [x] Same-institution constraint enforced on all message reads/writes.
+- [x] No cross-institution conversation discovery.
+- [x] Least-privilege Firestore rules preserved for non-message collections.
 
 ## Technical
-- [ ] `get_errors` clean for touched files.
-- [ ] `npm run lint` passes.
-- [ ] `npx tsc --noEmit` passes.
-- [ ] `npm run test` passes with deterministic coverage updates.
+- [x] `get_errors` clean for touched files.
+- [x] `npm run lint` passes.
+- [x] `npx tsc --noEmit` passes.
+- [x] `npm run test` passes with deterministic coverage updates.
 
 ## Documentation
-- [ ] Lossless report created under date folder.
-- [ ] Codebase explanation docs updated for all touched modules.
-- [ ] BRANCH_LOG and plan phases synced to final status.
-- [ ] Out-of-scope risks recorded in [copilot/plans/out-of-scope-risk-log.md](../../../out-of-scope-risk-log.md) when applicable.
+- [x] Lossless report created under date folder.
+- [x] Codebase explanation docs updated for all touched modules.
+- [x] BRANCH_LOG and plan phases synced to final status.
+- [x] Out-of-scope risks recorded in [copilot/plans/out-of-scope-risk-log.md](../../../out-of-scope-risk-log.md) when applicable.

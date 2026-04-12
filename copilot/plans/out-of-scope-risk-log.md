@@ -19,6 +19,14 @@ Track risks discovered during implementation/review that are important but outsi
 - Owner/Status:
 
 ## Entries
+- Date: 2026-04-12
+	Plan/Phase: [copilot/plans/active/autopilot-plan-messages-hub-2026-04-12/phases/phase-09-optimization-risk-review.md](copilot/plans/active/autopilot-plan-messages-hub-2026-04-12/phases/phase-09-optimization-risk-review.md)
+	Related Files: [src/pages/Messages/Messages.tsx](src/pages/Messages/Messages.tsx), [src/utils/directMessageUtils.ts](src/utils/directMessageUtils.ts)
+	Risk Summary: Messages workspace currently concentrates listener orchestration, conversation derivation, profile hydration, subject-context derivation, and compose UX in a single large module (~600+ lines), increasing regression risk and review complexity.
+	Why Out of Scope: Current block prioritized requested feature delivery, validation, and no-regression migration of notifications/messages behavior under autopilot timeline.
+	Recommended Follow-up: Create a focused refactor plan to extract `useMessagesConversations` and `useParticipantContext` hooks, then split presentation subcomponents (conversation list, thread pane, message notification list) with focused tests.
+	Owner/Status: OPEN - schedule refactor in a dedicated follow-up plan after current feature verification.
+
 - Date: 2026-04-04
 	Plan/Phase: [copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md](copilot/plans/finished/institution-admin-academic-lifecycle-and-notifications-overhaul-2026-04-03/phases/phase-05-student-course-linking-and-transfer-planned.md)
 	Related Files: [functions/security/transferPromotionApplyHandler.js](functions/security/transferPromotionApplyHandler.js), [functions/security/transferPromotionRollbackHandler.js](functions/security/transferPromotionRollbackHandler.js)

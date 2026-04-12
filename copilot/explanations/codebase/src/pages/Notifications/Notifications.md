@@ -23,4 +23,5 @@
 - `default Notifications`
 
 ## Changelog
+- 2026-04-12: Filtered out `direct_message` notifications from the notifications history page and updated bulk mark-as-read to target only general notifications.
 - 2026-04-12: Migrated notification row UI to shared `NotificationItemCard`, preserving mark-read navigation and shortcut move request actions.

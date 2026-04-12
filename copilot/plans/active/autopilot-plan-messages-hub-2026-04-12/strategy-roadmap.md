@@ -3,14 +3,14 @@
 
 ## Execution Order
 1. `phase-01-intake-governance` - COMPLETED
-2. `phase-02-messaging-domain-and-rules` - PLANNED
-3. `phase-03-messages-hub-route-shell` - PLANNED
-4. `phase-04-conversation-list-and-thread` - PLANNED
-5. `phase-05-profile-context-and-common-subjects` - PLANNED
-6. `phase-06-subject-entrypoint-integration` - PLANNED
-7. `phase-07-notification-message-unification` - PLANNED
-8. `phase-08-validation-tests-docs` - PLANNED
-9. `phase-09-optimization-risk-review` - PLANNED
+2. `phase-02-messaging-domain-and-rules` - COMPLETED
+3. `phase-03-messages-hub-route-shell` - COMPLETED
+4. `phase-04-conversation-list-and-thread` - COMPLETED
+5. `phase-05-profile-context-and-common-subjects` - COMPLETED
+6. `phase-06-subject-entrypoint-integration` - COMPLETED
+7. `phase-07-notification-message-unification` - COMPLETED
+8. `phase-08-validation-tests-docs` - COMPLETED
+9. `phase-09-optimization-risk-review` - COMPLETED
 
 ## Why This Order
 - Data model/rules and multi-tenant safeguards must be validated before broad UI wiring.
@@ -25,4 +25,4 @@
 - Verification checklist in [reviewing/verification-checklist-2026-04-12.md](reviewing/verification-checklist-2026-04-12.md)
 
 ## Immediate Next Action
-- Start phase 02 discovery for domain/rules gaps and message hub data requirements.
+- Transition plan lifecycle to `inReview` and execute final closure verification gate.

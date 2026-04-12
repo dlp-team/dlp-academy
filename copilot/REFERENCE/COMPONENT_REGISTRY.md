@@ -105,6 +105,14 @@ CRITICAL COPILOT DIRECTIVE: before creating any new UI element (modal, overlay, 
   - src/components/ui/NotificationsPanel.tsx
   - src/pages/Notifications/Notifications.tsx
 
+### CommunicationItemCard
+- File: src/components/ui/CommunicationItemCard.tsx
+- Status: Active
+- Purpose: unified list-card primitive used by both notifications and direct-message conversation previews (icon, actor metadata, unread marker, actions).
+- Current adopters:
+  - src/components/ui/NotificationItemCard.tsx
+  - src/pages/Messages/Messages.tsx
+
 ## Buttons and Inputs
 
 No generic button primitives are active yet in src/components/ui.

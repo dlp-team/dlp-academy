@@ -14,4 +14,4 @@ Preserve and improve direct-message initiation from Subject member/profile conte
 - No regressions in Subject class rendering/actions.
 
 ## Status
-- `PLANNED`
+- `COMPLETED`

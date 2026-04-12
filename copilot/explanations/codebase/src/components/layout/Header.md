@@ -127,6 +127,11 @@ function ExampleScreen() {
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
 
 ## Changelog
+### 2026-04-12
+- Added dedicated messages shortcut button with unread direct-message badge and navigation to `/messages`.
+- Split header notifications into two channels: general notifications (bell panel) and `direct_message` notifications (messages entrypoint).
+- Restricted panel toast/mark-all behaviors to general notifications to avoid cross-channel read side effects.
+
 ### 2026-04-07
 - Added user preference support for header theme slider visibility (`headerThemeSliderEnabled`) with safe default fallback.
 - Updated header theme state logic to resolve `system` preference correctly and keep icon/toggle state aligned with OS theme changes.

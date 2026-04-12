@@ -22,4 +22,5 @@
 - `default NotificationItemCard`
 
 ## Changelog
+- 2026-04-12: Refactored to compose `CommunicationItemCard` for shared row layout while retaining move-request action buttons and notification activation behavior.
 - 2026-04-12: Added to centralize notification row rendering across `NotificationsPanel` and notifications history page.

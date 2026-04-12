@@ -1,5 +1,15 @@
 # App.tsx
 
+## [2026-04-12] Dedicated Messages Route
+
+### Change
+- Added protected route `/messages` mapped to `src/pages/Messages/Messages.tsx`.
+- Kept route under standard `ProtectedRoute` user/auth gating to preserve existing access model.
+
+### Impact
+- Direct-message workflows now have a dedicated workspace separated from generic notifications history.
+- Header message entrypoint can safely deep-link to a focused conversation hub without overloading notification panel behavior.
+
 ## [2026-04-08] Public Theme Preview Route
 
 ### Change

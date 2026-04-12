@@ -1,7 +1,7 @@
 // src/components/layout/Header.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Settings, Moon, Sun, LayoutDashboard } from 'lucide-react';
+import { GraduationCap, Settings, Moon, Sun, LayoutDashboard, MessageCircle } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config'; 
 import useInstitutionBranding from '../../hooks/useInstitutionBranding';
@@ -199,12 +199,30 @@ const Header = ({ user }: any) => {
   // --- 4. NOTIFICATIONS ---
   const {
     notifications,
-    unreadCount,
     markAsRead,
-    markAllAsRead,
     resolveMoveRequestFromNotification,
     isResolvingMoveRequest,
   } = useNotifications(userData);
+
+  const messageNotifications = useMemo(
+    () => notifications.filter((notification: any) => String(notification?.type || '').trim().toLowerCase() === 'direct_message'),
+    [notifications]
+  );
+
+  const generalNotifications = useMemo(
+    () => notifications.filter((notification: any) => String(notification?.type || '').trim().toLowerCase() !== 'direct_message'),
+    [notifications]
+  );
+
+  const messageUnreadCount = useMemo(
+    () => messageNotifications.filter((notification: any) => !notification?.read).length,
+    [messageNotifications]
+  );
+
+  const generalUnreadCount = useMemo(
+    () => generalNotifications.filter((notification: any) => !notification?.read).length,
+    [generalNotifications]
+  );
   const [showPanel, setShowPanel] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '' });
   const prevCountRef = useRef<any>(null);
@@ -229,26 +247,32 @@ const Header = ({ user }: any) => {
     }
   };
 
+  const handleMarkAllGeneralAsRead = async () => {
+    const unreadGeneral = generalNotifications.filter((notification: any) => !notification?.read);
+    if (unreadGeneral.length === 0) return;
+    await Promise.all(unreadGeneral.map((notification: any) => markAsRead(notification.id)));
+  };
+
   useEffect(() => {
     if (isFirstLoadRef.current) {
-      prevCountRef.current = notifications.length;
+      prevCountRef.current = generalNotifications.length;
       isFirstLoadRef.current = false;
       return;
     }
 
-    if (notifications.length <= prevCountRef.current) {
-      prevCountRef.current = notifications.length;
+    if (generalNotifications.length <= prevCountRef.current) {
+      prevCountRef.current = generalNotifications.length;
       return;
     }
 
-    const newest = notifications[0];
+    const newest = generalNotifications[0];
     const toastTimer = setTimeout(() => {
       setToast({ show: true, message: newest?.message || '¡Un tema tiene contenido listo!' });
     }, 0);
 
-    prevCountRef.current = notifications.length;
+    prevCountRef.current = generalNotifications.length;
     return () => clearTimeout(toastTimer);
-  }, [notifications]);
+  }, [generalNotifications]);
 
   return (
     <>
@@ -323,6 +347,21 @@ const Header = ({ user }: any) => {
             )}
 
             {/* 4. SETTINGS BUTTON */}
+            <button
+                onClick={() => navigate('/messages')}
+                className="relative p-2.5 text-gray-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-300 hover:bg-sky-50 dark:hover:bg-sky-900/20 rounded-full transition-all duration-200 cursor-pointer"
+                title="Mensajes"
+                aria-label="Abrir mensajes"
+            >
+                <MessageCircle size={20} />
+                {messageUnreadCount > 0 && (
+                  <span className="absolute -left-0.5 -top-0.5 inline-flex min-w-[1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
+                    {messageUnreadCount > 99 ? '99+' : messageUnreadCount}
+                  </span>
+                )}
+            </button>
+
+            {/* 4. SETTINGS BUTTON */}
             <button 
                 onClick={() => navigate('/settings')}
                 className="p-2.5 text-gray-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-full transition-all duration-200 cursor-pointer"
@@ -359,15 +398,15 @@ const Header = ({ user }: any) => {
             {/* 6. MAILBOX ICON - PLACED RIGHT OF AVATAR */}
             <div ref={notificationsTriggerRef} className="border-l pl-4 border-gray-200 dark:border-slate-700 relative">
                 <MailboxIcon
-                    mailCount={unreadCount}
+                  mailCount={generalUnreadCount}
                     onClick={() => setShowPanel(prev => !prev)}
                     dark={darkMode}
                 />
                 {showPanel && (
                     <NotificationsPanel
-                        notifications={notifications}
+                    notifications={generalNotifications}
                         onMarkAsRead={markAsRead}
-                        onMarkAllAsRead={markAllAsRead}
+                    onMarkAllAsRead={handleMarkAllGeneralAsRead}
                       triggerRef={notificationsTriggerRef}
                       onOpenAll={() => {
                         setShowPanel(false);

@@ -3,7 +3,7 @@
 
 ## Status
 - Lifecycle: `active`
-- Current phase: `phase-02-messaging-domain-and-rules`
+- Current phase: `phase-09-optimization-risk-review (completed)`
 - Branch: `feature/hector/autopilot-plan-messages-hub-2026-0412`
 - Owner: `hector`
 
@@ -49,3 +49,9 @@ The platform currently supports direct-message creation from Subject context and
 - 2026-04-12: Plan package initialized in active lifecycle.
 - 2026-04-12: Source spec moved from repository root into this plan folder as `source-autopilot-user-spec-messages-hub.md`.
 - 2026-04-12: Intake/governance phase completed on branch `feature/hector/autopilot-plan-messages-hub-2026-0412`.
+- 2026-04-12: Added dedicated `/messages` route/page with conversation list, thread view, send flow, and participant profile context.
+- 2026-04-12: Separated direct-message notifications from general notifications in Header and notifications history.
+- 2026-04-12: Introduced shared `CommunicationItemCard` primitive and reused it through `NotificationItemCard`.
+- 2026-04-12: Validation gates executed (`get_errors`, lint, typecheck, targeted tests, full test suite).
+- 2026-04-12: Documentation sync executed (lossless report + codebase explanation updates for all touched modules).
+- 2026-04-12: Optimization/risk review completed; out-of-scope refactor risk recorded in `copilot/plans/out-of-scope-risk-log.md`.

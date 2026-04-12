@@ -1,5 +1,5 @@
 // src/pages/Notifications/Notifications.tsx
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BellOff, CheckCheck } from 'lucide-react';
 import Header from '../../components/layout/Header';
@@ -10,12 +10,26 @@ const Notifications = ({ user }: any) => {
   const navigate = useNavigate();
   const {
     notifications,
-    unreadCount,
     markAsRead,
-    markAllAsRead,
     resolveMoveRequestFromNotification,
     isResolvingMoveRequest,
   } = useNotifications(user);
+
+  const generalNotifications = useMemo(
+    () => notifications.filter((notification: any) => String(notification?.type || '').trim().toLowerCase() !== 'direct_message'),
+    [notifications]
+  );
+
+  const unreadCount = useMemo(
+    () => generalNotifications.filter((notification: any) => !notification?.read).length,
+    [generalNotifications]
+  );
+
+  const markAllGeneralAsRead = async () => {
+    const unreadGeneral = generalNotifications.filter((notification: any) => !notification?.read);
+    if (unreadGeneral.length === 0) return;
+    await Promise.all(unreadGeneral.map((notification: any) => markAsRead(notification.id)));
+  };
 
   const handleNotificationClick = async (notification: any) => {
     if (!notification?.read) {
@@ -51,7 +65,7 @@ const Notifications = ({ user }: any) => {
               {unreadCount > 0 && (
                 <button
                   type="button"
-                  onClick={markAllAsRead}
+                  onClick={markAllGeneralAsRead}
                   className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 dark:border-indigo-700 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-colors"
                 >
                   <CheckCheck className="w-3.5 h-3.5" />
@@ -62,7 +76,7 @@ const Notifications = ({ user }: any) => {
           </div>
 
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {notifications.length === 0 ? (
+            {generalNotifications.length === 0 ? (
               <div className="py-14 flex flex-col items-center justify-center text-center px-4">
                 <BellOff className="w-10 h-10 text-slate-300 dark:text-slate-600 mb-3" />
                 <p className="text-sm font-medium text-slate-600 dark:text-slate-300">No tienes notificaciones activas</p>
@@ -71,7 +85,7 @@ const Notifications = ({ user }: any) => {
                 </p>
               </div>
             ) : (
-              notifications.map((notification) => (
+              generalNotifications.map((notification) => (
                 <NotificationItemCard
                   key={notification.id}
                   notification={notification}

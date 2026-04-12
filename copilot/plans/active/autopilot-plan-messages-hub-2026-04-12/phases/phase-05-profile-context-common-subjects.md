@@ -14,4 +14,4 @@ Show participant context inside messages: shared subjects and participant role.
 - Role labeling consistency with existing permission model.
 
 ## Status
-- `PLANNED`
+- `COMPLETED`

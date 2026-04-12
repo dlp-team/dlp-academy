@@ -14,4 +14,4 @@ Implement core messaging UX: conversations index, thread view, compose/send, and
 - Send failure handling with inline feedback.
 
 ## Status
-- `PLANNED`
+- `COMPLETED`

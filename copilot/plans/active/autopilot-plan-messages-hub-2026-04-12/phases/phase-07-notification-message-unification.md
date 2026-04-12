@@ -14,4 +14,4 @@ Unify message/non-message visual primitives while splitting header behavior betw
 - Existing notification interactions remain stable.
 
 ## Status
-- `PLANNED`
+- `COMPLETED`

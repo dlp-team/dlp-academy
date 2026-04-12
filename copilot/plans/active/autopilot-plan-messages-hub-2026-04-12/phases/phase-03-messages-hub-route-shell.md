@@ -14,4 +14,4 @@ Add dedicated Messages section with route, navigation entry, and responsive shel
 - Mobile and desktop shell behavior.
 
 ## Status
-- `PLANNED`
+- `COMPLETED`

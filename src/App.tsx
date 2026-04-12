@@ -14,6 +14,7 @@ import OnboardingWizard from './pages/Onboarding/components/OnboardingWizard';
 import AdminPasswordWizard from './pages/Auth/components/AdminPasswordWizard';
 import Settings from './pages/Settings/Settings';
 import Notifications from './pages/Notifications/Notifications';
+import Messages from './pages/Messages/Messages';
 
 // Main app pages
 import Home from './pages/Home/Home';
@@ -110,6 +111,7 @@ const ExamPage: any = Exam;
 const ProfilePage: any = Profile;
 const SettingsPage: any = Settings;
 const NotificationsPage: any = Notifications;
+const MessagesPage: any = Messages;
 const AdminDashboardPage: any = AdminDashboard;
 const InstitutionAdminDashboardPage: any = InstitutionAdminDashboard;
 const TeacherDetailViewPage: any = TeacherDetailView;
@@ -535,6 +537,15 @@ body[data-dlp-preview-highlight]::after {
           element={
             <ProtectedRoute user={user} loading={loading}>
               <NotificationsPage user={user} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute user={user} loading={loading}>
+              <MessagesPage user={user} />
             </ProtectedRoute>
           }
         />
