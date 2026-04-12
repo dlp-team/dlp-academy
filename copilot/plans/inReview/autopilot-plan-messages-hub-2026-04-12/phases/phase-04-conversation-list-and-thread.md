@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-messages-hub-2026-04-12/phases/phase-04-conversation-list-and-thread.md -->
+﻿<!-- copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/phases/phase-04-conversation-list-and-thread.md -->
 # Phase 04 - Conversation List and Thread Experience
 
 ## Objective
@@ -15,3 +15,4 @@ Implement core messaging UX: conversations index, thread view, compose/send, and
 
 ## Status
 - `COMPLETED`
+

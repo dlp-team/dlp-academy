@@ -20,7 +20,7 @@ Track risks discovered during implementation/review that are important but outsi
 
 ## Entries
 - Date: 2026-04-12
-	Plan/Phase: [copilot/plans/active/autopilot-plan-messages-hub-2026-04-12/phases/phase-09-optimization-risk-review.md](copilot/plans/active/autopilot-plan-messages-hub-2026-04-12/phases/phase-09-optimization-risk-review.md)
+	Plan/Phase: [copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/phases/phase-09-optimization-risk-review.md](copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/phases/phase-09-optimization-risk-review.md)
 	Related Files: [src/pages/Messages/Messages.tsx](src/pages/Messages/Messages.tsx), [src/utils/directMessageUtils.ts](src/utils/directMessageUtils.ts)
 	Risk Summary: Messages workspace currently concentrates listener orchestration, conversation derivation, profile hydration, subject-context derivation, and compose UX in a single large module (~600+ lines), increasing regression risk and review complexity.
 	Why Out of Scope: Current block prioritized requested feature delivery, validation, and no-regression migration of notifications/messages behavior under autopilot timeline.

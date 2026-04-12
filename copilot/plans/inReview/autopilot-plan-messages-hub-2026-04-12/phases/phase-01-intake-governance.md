@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-messages-hub-2026-04-12/phases/phase-01-intake-governance.md -->
+﻿<!-- copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/phases/phase-01-intake-governance.md -->
 # Phase 01 - Intake and Governance
 
 ## Objective
@@ -12,3 +12,4 @@ Initialize new branch execution context, create active plan package, and bind us
 
 ## Status
 - `COMPLETED`
+

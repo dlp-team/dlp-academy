@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-messages-hub-2026-04-12/strategy-roadmap.md -->
+﻿<!-- copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/strategy-roadmap.md -->
 # Strategy Roadmap
 
 ## Execution Order
@@ -25,4 +25,5 @@
 - Verification checklist in [reviewing/verification-checklist-2026-04-12.md](reviewing/verification-checklist-2026-04-12.md)
 
 ## Immediate Next Action
-- Transition plan lifecycle to `inReview` and execute final closure verification gate.
+- Execute final closure verification gate and transition lifecycle to `finished` when approved.
+

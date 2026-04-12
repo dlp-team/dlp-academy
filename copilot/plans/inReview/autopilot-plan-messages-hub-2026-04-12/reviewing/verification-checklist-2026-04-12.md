@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-messages-hub-2026-04-12/reviewing/verification-checklist-2026-04-12.md -->
+﻿<!-- copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/reviewing/verification-checklist-2026-04-12.md -->
 # Verification Checklist (2026-04-12)
 
 ## Functional
@@ -25,3 +25,4 @@
 - [x] Codebase explanation docs updated for all touched modules.
 - [x] BRANCH_LOG and plan phases synced to final status.
 - [x] Out-of-scope risks recorded in [copilot/plans/out-of-scope-risk-log.md](../../../out-of-scope-risk-log.md) when applicable.
+

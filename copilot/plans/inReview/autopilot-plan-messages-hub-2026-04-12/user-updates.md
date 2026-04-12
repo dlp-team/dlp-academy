@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-messages-hub-2026-04-12/user-updates.md -->
+﻿<!-- copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/user-updates.md -->
 # User Updates
 
 ## How to Use
@@ -11,3 +11,4 @@
 
 ## Processed Updates
 - 2026-04-12: Initial AUTOPILOT_PLAN messaging scope synced into [README.md](README.md), [strategy-roadmap.md](strategy-roadmap.md), and [phases/](phases/).
+

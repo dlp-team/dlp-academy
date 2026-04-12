@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-messages-hub-2026-04-12/phases/phase-09-optimization-risk-review.md -->
+﻿<!-- copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/phases/phase-09-optimization-risk-review.md -->
 # Phase 09 - Optimization and Risk Review
 
 ## Objective
@@ -13,3 +13,4 @@ Complete mandatory final optimization and deep risk analysis before lifecycle tr
 
 ## Status
 - `COMPLETED`
+

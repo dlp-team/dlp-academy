@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-messages-hub-2026-04-12/phases/phase-08-validation-tests-docs.md -->
+﻿<!-- copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/phases/phase-08-validation-tests-docs.md -->
 # Phase 08 - Validation, Tests, and Documentation
 
 ## Objective
@@ -12,3 +12,4 @@ Run deterministic quality gates and synchronize all required plan/explanation ar
 
 ## Status
 - `COMPLETED`
+
