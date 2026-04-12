@@ -25,6 +25,7 @@
 - Subject fetch failures are no longer silent; warning feedback is visible while preserving exam usability when exam payload loads successfully.
 
 ## Changelog
+- 2026-04-12: Added page-level fixed-header marker lifecycle for global overlay scrollbar alignment; while Exam is mounted, body now uses `has-fixed-header` with `--app-fixed-header-height: 6rem` so scrollbar rail does not render over the fixed top bars.
 - 2026-04-04: Removed duplicate `src/pages/Content/Exam.jsx` and kept `Exam.tsx` as the single source of truth; added deterministic test coverage for lifecycle access-denied redirect to Home.
 - 2026-04-03: Added lifecycle-aware subject access gate via `canUserAccessSubject(...)` before exam payload rendering; denied lifecycle visibility now redirects direct exam entry to Home.
 - 2026-03-31: Added explicit not-found/error/warning fallback states for exam and subject-context loading paths, replacing silent failure behavior.

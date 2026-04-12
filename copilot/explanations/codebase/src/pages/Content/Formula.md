@@ -22,4 +22,5 @@
 - `katex/dist/katex.min.css`
 
 ## Changelog
+- 2026-04-12: Added page-level fixed-header marker lifecycle for global overlay scrollbar alignment; while Formula is mounted, body now uses `has-fixed-header` with `--app-fixed-header-height: 5rem` so scrollbar rail stays below the fixed top bars.
 - 2026-04-03: Added lifecycle-aware subject access gate via `canUserAccessSubject(...)` during subject context load so direct formula-route access honors post-course visibility policy.

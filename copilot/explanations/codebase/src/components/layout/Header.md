@@ -127,6 +127,10 @@ function ExampleScreen() {
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
 
 ## Changelog
+### 2026-04-12
+- Added fixed-header presence marker lifecycle on `document.body` (`has-fixed-header`) while `Header` is mounted.
+- This marker is consumed by global scrollbar CSS so the app-level overlay scrollbar starts below the fixed header and does not render over it.
+
 ### 2026-04-09
 - Added notification-toast deduplication keyed by notification id so the same notification card toast is not replayed repeatedly.
 - Persisted seen toast ids in session storage per user (`dlp-seen-notification-toasts:<uid>`).

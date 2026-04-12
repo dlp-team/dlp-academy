@@ -1,6 +1,7 @@
-// src/App.jsx
+// src/App.tsx
 import React, { useState, useEffect, ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { OverlayScrollbarsComponent } from 'overlayscrollbars-react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore'; // Import Firestore functions
 import { auth, db } from './firebase/config'; // Import db
@@ -17,7 +18,6 @@ import Notifications from './pages/Notifications/Notifications';
 
 // Main app pages
 import Home from './pages/Home/Home';
-import CustomScrollbar from './components/ui/CustomScrollbar';
 import Subject from './pages/Subject/Subject';
 import Topic from './pages/Topic/Topic';
 import Quizzes from './pages/Quizzes/Quizzes';
@@ -44,6 +44,15 @@ import { isInstitutionPreviewThemeMessage } from './utils/institutionPreviewProt
 const ACTIVE_ROLE_STORAGE_KEY_PREFIX = 'dlp_active_role_';
 const ACTIVE_ROLE_CHANGE_EVENT = 'dlp-active-role-change';
 const VALID_ROLES = new Set(['student', 'teacher', 'institutionadmin', 'admin']);
+const GLOBAL_SCROLLBAR_OPTIONS = {
+  scrollbars: {
+    theme: 'os-theme-dlp',
+    autoHide: 'scroll',
+    autoHideDelay: 140,
+    clickScroll: true,
+    dragScroll: true,
+  },
+} as const;
 
 const buildActiveRoleStorageKey = (uid: any) => {
   if (!uid) return null;
@@ -424,8 +433,11 @@ body[data-dlp-preview-highlight]::after {
   }, []);
 
   return (
-    <>
-      <CustomScrollbar />
+    <OverlayScrollbarsComponent
+      defer
+      className="app-global-scrollbar"
+      options={GLOBAL_SCROLLBAR_OPTIONS}
+    >
       <BrowserRouter>
 
         {user && <OnboardingWizard user={user} />}
@@ -693,7 +705,7 @@ body[data-dlp-preview-highlight]::after {
         <Route path="*" element={<Navigate to="/home" />} />
         </Routes>
       </BrowserRouter>
-    </>
+    </OverlayScrollbarsComponent>
   );
 }
 

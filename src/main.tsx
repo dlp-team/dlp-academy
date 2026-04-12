@@ -1,5 +1,6 @@
 // src/main.tsx
 import { createRoot } from 'react-dom/client'
+import 'overlayscrollbars/styles/overlayscrollbars.css'
 import './index.css'
 import App from './App'
 

@@ -30,6 +30,25 @@ const Formula = ({ user }: any) => {
     const [scrollProgress, setScrollProgress] = useState(0);
 
     useEffect(() => {
+        if (typeof document === 'undefined') return undefined;
+
+        const previousHeaderOffset = document.body.style.getPropertyValue('--app-fixed-header-height');
+
+        document.body.classList.add('has-fixed-header');
+        document.body.style.setProperty('--app-fixed-header-height', '5rem');
+
+        return () => {
+            document.body.classList.remove('has-fixed-header');
+
+            if (previousHeaderOffset) {
+                document.body.style.setProperty('--app-fixed-header-height', previousHeaderOffset);
+            } else {
+                document.body.style.removeProperty('--app-fixed-header-height');
+            }
+        };
+    }, []);
+
+    useEffect(() => {
         const handleScroll = () => {
             const total = document.documentElement.scrollHeight - document.documentElement.clientHeight;
             setScrollProgress(total > 0 ? document.documentElement.scrollTop / total : 0);

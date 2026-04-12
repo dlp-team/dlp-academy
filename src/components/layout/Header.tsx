@@ -334,6 +334,25 @@ const Header = ({ user }: any) => {
     return () => clearTimeout(toastTimer);
   }, [notifications, persistSeenNotificationToastIds]);
 
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+
+    const previousHeaderOffset = document.body.style.getPropertyValue('--app-fixed-header-height');
+
+    document.body.classList.add('has-fixed-header');
+    document.body.style.setProperty('--app-fixed-header-height', '5rem');
+
+    return () => {
+      document.body.classList.remove('has-fixed-header');
+
+      if (previousHeaderOffset) {
+        document.body.style.setProperty('--app-fixed-header-height', previousHeaderOffset);
+      } else {
+        document.body.style.removeProperty('--app-fixed-header-height');
+      }
+    };
+  }, []);
+
   return (
     <>
     <header className="fixed top-0 w-full h-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm shadow-sm border-b border-gray-200 dark:border-slate-800 z-[9999] transition-colors duration-300">

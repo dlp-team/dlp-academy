@@ -364,6 +364,25 @@ const Exam = ({ user }) => {
         () => sessionStorage.getItem('dlpPreviewAsStudent') === '1'
     );
 
+    useEffect(() => {
+        if (typeof document === 'undefined') return undefined;
+
+        const previousHeaderOffset = document.body.style.getPropertyValue('--app-fixed-header-height');
+
+        document.body.classList.add('has-fixed-header');
+        document.body.style.setProperty('--app-fixed-header-height', '6rem');
+
+        return () => {
+            document.body.classList.remove('has-fixed-header');
+
+            if (previousHeaderOffset) {
+                document.body.style.setProperty('--app-fixed-header-height', previousHeaderOffset);
+            } else {
+                document.body.style.removeProperty('--app-fixed-header-height');
+            }
+        };
+    }, []);
+
     // Load data
     useEffect(() => {
         const load = async () => {
