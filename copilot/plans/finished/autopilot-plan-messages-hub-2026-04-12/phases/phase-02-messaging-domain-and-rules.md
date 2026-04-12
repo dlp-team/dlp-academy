@@ -1,4 +1,4 @@
-﻿<!-- copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/phases/phase-02-messaging-domain-and-rules.md -->
+﻿<!-- copilot/plans/finished/autopilot-plan-messages-hub-2026-04-12/phases/phase-02-messaging-domain-and-rules.md -->
 # Phase 02 - Messaging Domain and Rules
 
 ## Objective
@@ -15,4 +15,5 @@ Define/extend direct messaging data model and enforce institution-safe access bo
 
 ## Status
 - `COMPLETED`
+
 

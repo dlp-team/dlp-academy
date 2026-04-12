@@ -1,4 +1,4 @@
-﻿<!-- copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/phases/phase-06-subject-entrypoint-integration.md -->
+﻿<!-- copilot/plans/finished/autopilot-plan-messages-hub-2026-04-12/phases/phase-06-subject-entrypoint-integration.md -->
 # Phase 06 - Subject Entrypoint Integration
 
 ## Objective
@@ -15,4 +15,5 @@ Preserve and improve direct-message initiation from Subject member/profile conte
 
 ## Status
 - `COMPLETED`
+
 

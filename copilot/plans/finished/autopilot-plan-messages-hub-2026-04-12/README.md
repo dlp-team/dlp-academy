@@ -1,8 +1,8 @@
-﻿<!-- copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/README.md -->
+﻿<!-- copilot/plans/finished/autopilot-plan-messages-hub-2026-04-12/README.md -->
 # Autopilot Plan: Messages Hub + Notification Split
 
 ## Status
-- Lifecycle: `inReview`
+- Lifecycle: `finished`
 - Current phase: `phase-09-optimization-risk-review (completed)`
 - Branch: `feature/hector/autopilot-plan-messages-hub-2026-0412`
 - Owner: `hector`
@@ -56,4 +56,6 @@ The platform currently supports direct-message creation from Subject context and
 - 2026-04-12: Documentation sync executed (lossless report + codebase explanation updates for all touched modules).
 - 2026-04-12: Optimization/risk review completed; out-of-scope refactor risk recorded in `copilot/plans/out-of-scope-risk-log.md`.
 - 2026-04-12: Plan lifecycle transitioned from `active` to `inReview` after implementation, validation, and docs-sync completion.
+- 2026-04-12: Final closure verification completed and lifecycle transitioned from `inReview` to `finished`.
+
 

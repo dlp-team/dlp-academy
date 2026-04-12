@@ -1,4 +1,4 @@
-﻿<!-- copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/phases/phase-03-messages-hub-route-shell.md -->
+﻿<!-- copilot/plans/finished/autopilot-plan-messages-hub-2026-04-12/phases/phase-03-messages-hub-route-shell.md -->
 # Phase 03 - Messages Hub Route and Shell
 
 ## Objective
@@ -15,4 +15,5 @@ Add dedicated Messages section with route, navigation entry, and responsive shel
 
 ## Status
 - `COMPLETED`
+
 

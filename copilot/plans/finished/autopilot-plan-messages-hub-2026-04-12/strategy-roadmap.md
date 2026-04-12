@@ -1,4 +1,4 @@
-﻿<!-- copilot/plans/inReview/autopilot-plan-messages-hub-2026-04-12/strategy-roadmap.md -->
+﻿<!-- copilot/plans/finished/autopilot-plan-messages-hub-2026-04-12/strategy-roadmap.md -->
 # Strategy Roadmap
 
 ## Execution Order
@@ -25,5 +25,6 @@
 - Verification checklist in [reviewing/verification-checklist-2026-04-12.md](reviewing/verification-checklist-2026-04-12.md)
 
 ## Immediate Next Action
-- Execute final closure verification gate and transition lifecycle to `finished` when approved.
+- Plan closed in `finished`; next work should be a separate follow-up plan for out-of-scope refactor risk if prioritized.
+
 
