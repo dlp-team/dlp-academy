@@ -14,9 +14,9 @@
 - Current Work: Execute AUTOPILOT_PLAN notification unification, direct messaging rollout, and Topic study guide permission access fix.
 
 ## Related Plans
-- Active plan: copilot/plans/active/autopilot-plan-notifications-topic-2026-04-12/
-- Strategy: copilot/plans/active/autopilot-plan-notifications-topic-2026-04-12/strategy-roadmap.md
-- User updates: copilot/plans/active/autopilot-plan-notifications-topic-2026-04-12/user-updates.md
+- Finished plan: copilot/plans/finished/autopilot-plan-notifications-topic-2026-04-12/
+- Strategy: copilot/plans/finished/autopilot-plan-notifications-topic-2026-04-12/strategy-roadmap.md
+- User updates: copilot/plans/finished/autopilot-plan-notifications-topic-2026-04-12/user-updates.md
 
 ## Touched Files
 - BRANCH_LOG.md
@@ -92,3 +92,4 @@
 - Phase 06 completed: topic/study-guide teacher access interactions corrected.
 - Phase 07 (validation/docs) in progress: `get_errors`, `npm run lint`, `npm run test`, and `npx tsc --noEmit` all passing.
 - Step 23 completed: mandatory `vscode/askQuestions` closure leverage gate executed; user confirmed `✅ All complete`.
+- Lifecycle update completed: plan folder transitioned to `finished` and removed from `active` (single-location rule).

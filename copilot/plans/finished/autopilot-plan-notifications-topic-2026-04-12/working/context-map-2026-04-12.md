@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-notifications-topic-2026-04-12/working/context-map-2026-04-12.md -->
+<!-- copilot/plans/finished/autopilot-plan-notifications-topic-2026-04-12/working/context-map-2026-04-12.md -->
 # Context Map (Working)
 
 ## Notification Surfaces

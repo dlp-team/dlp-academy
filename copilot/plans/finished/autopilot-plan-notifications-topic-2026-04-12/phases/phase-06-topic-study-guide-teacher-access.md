@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-notifications-topic-2026-04-12/phases/phase-06-topic-study-guide-teacher-access.md -->
+<!-- copilot/plans/finished/autopilot-plan-notifications-topic-2026-04-12/phases/phase-06-topic-study-guide-teacher-access.md -->
 # Phase 06 - Topic Study Guide Teacher Access Fix
 
 ## Objective

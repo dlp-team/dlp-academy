@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-notifications-topic-2026-04-12/strategy-roadmap.md -->
+<!-- copilot/plans/finished/autopilot-plan-notifications-topic-2026-04-12/strategy-roadmap.md -->
 # Strategy Roadmap
 
 ## Execution Order
@@ -24,4 +24,4 @@
 - Review checklist in [reviewing/verification-checklist-2026-04-12.md](reviewing/verification-checklist-2026-04-12.md)
 
 ## Immediate Next Action
-- Phase implementation complete. Awaiting potential follow-up scope from user.
+- Plan closed. Keep as reference baseline for follow-up messaging expansion scope.

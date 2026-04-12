@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-notifications-topic-2026-04-12/subplans/README.md -->
+<!-- copilot/plans/finished/autopilot-plan-notifications-topic-2026-04-12/subplans/README.md -->
 # Subplans Index
 
 No independent subplans created yet.

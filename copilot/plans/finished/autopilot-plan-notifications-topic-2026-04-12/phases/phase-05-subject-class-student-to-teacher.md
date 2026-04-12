@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-notifications-topic-2026-04-12/phases/phase-05-subject-class-student-to-teacher.md -->
+<!-- copilot/plans/finished/autopilot-plan-notifications-topic-2026-04-12/phases/phase-05-subject-class-student-to-teacher.md -->
 # Phase 05 - Subject Class Student-to-Teacher Messaging
 
 ## Objective

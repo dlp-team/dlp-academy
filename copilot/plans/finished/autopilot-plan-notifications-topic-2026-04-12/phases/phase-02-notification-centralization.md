@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-notifications-topic-2026-04-12/phases/phase-02-notification-centralization.md -->
+<!-- copilot/plans/finished/autopilot-plan-notifications-topic-2026-04-12/phases/phase-02-notification-centralization.md -->
 # Phase 02 - Notification Centralization
 
 ## Objective

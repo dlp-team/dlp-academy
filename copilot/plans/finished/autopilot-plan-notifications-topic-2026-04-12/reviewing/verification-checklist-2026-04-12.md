@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-notifications-topic-2026-04-12/reviewing/verification-checklist-2026-04-12.md -->
+<!-- copilot/plans/finished/autopilot-plan-notifications-topic-2026-04-12/reviewing/verification-checklist-2026-04-12.md -->
 # Verification Checklist (2026-04-12)
 
 ## Functional

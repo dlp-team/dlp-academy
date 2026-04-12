@@ -1,4 +1,4 @@
-<!-- copilot/plans/active/autopilot-plan-notifications-topic-2026-04-12/phases/phase-04-direct-messages-same-institution.md -->
+<!-- copilot/plans/finished/autopilot-plan-notifications-topic-2026-04-12/phases/phase-04-direct-messages-same-institution.md -->
 # Phase 04 - Direct Messages (Same Institution)
 
 ## Objective

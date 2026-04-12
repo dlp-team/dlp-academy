@@ -1,9 +1,10 @@
-<!-- copilot/plans/active/autopilot-plan-notifications-topic-2026-04-12/README.md -->
+<!-- copilot/plans/finished/autopilot-plan-notifications-topic-2026-04-12/README.md -->
 # Autopilot Plan: Notifications + Topic Access + Direct Messaging
 
 ## Status
-- Lifecycle: `active`
-- Current phase: `completed`
+- Lifecycle: `finished`
+- Current phase: `closure-complete`
+- Closed on: `2026-04-12`
 - Branch: `feature/hector/autopilot-plan-notifications-topic-2026-0412`
 - Owner: `hector`
 
@@ -54,3 +55,5 @@ The current UX uses multiple notification patterns and isolated components (head
 - Source spec moved to this plan folder as `source-autopilot-user-spec-notifications-topic.md`.
 - Plan package directories/files populated and linked for implementation.
 - Phases 02-06 implemented: notification centralization, share identity rendering, direct messaging, student-to-teacher entrypoint, and teacher study-guide access adjustments.
+- Validation and documentation closure completed in Phase 07.
+- Lifecycle transitioned from `active` to `finished` with single-location compliance.
