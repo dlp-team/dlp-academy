@@ -52,3 +52,10 @@
 - Passed focused Phase 04 validation:
 	- `npm run test -- tests/unit/pages/institution-admin/InstitutionCustomizationMockView.test.jsx tests/unit/pages/institution-admin/CustomizationPreviewHeader.test.jsx tests/unit/pages/institution-admin/ColorField.test.jsx tests/unit/pages/theme-preview/ThemePreview.test.jsx`
 	- `get_errors` clean on touched source/test files.
+- Security gates passed for Phase 04 commit block:
+	- `npm run security:scan:staged`
+	- `git check-ignore -v .env`
+	- `npm run security:scan:branch`
+- Committed and pushed Phase 04 atomic block:
+	- Commit: `2ecc0b7` (`feat(customization): Complete phase-04 preview parity`)
+	- Push: `origin/feature/autopilot-plan-scrollbar-2026-04-12`
