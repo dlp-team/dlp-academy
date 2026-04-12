@@ -37,3 +37,10 @@
 - Passed focused Phase 03 validation:
 	- `npm run test -- tests/unit/components/BinView.listPressState.test.jsx tests/unit/components/BinSelectionOverlay.test.jsx tests/unit/pages/home/BinView.listInlinePanel.test.jsx tests/unit/components/BinGridItem.test.jsx tests/unit/utils/selectionVisualUtils.test.js`
 	- `get_errors` clean on touched source/test files.
+- Security gates passed for Phase 03 commit block:
+	- `npm run security:scan:staged`
+	- `git check-ignore -v .env`
+	- `npm run security:scan:branch`
+- Committed and pushed Phase 03 atomic block:
+	- Commit: `ad4a639` (`fix(home-bin): Polish phase-03 press states`)
+	- Push: `origin/feature/autopilot-plan-scrollbar-2026-04-12`
