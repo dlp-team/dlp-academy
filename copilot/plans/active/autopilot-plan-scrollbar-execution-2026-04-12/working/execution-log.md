@@ -24,3 +24,10 @@
 	- `npm run test -- tests/unit/utils/homeBatchConfirmationUtils.test.js tests/unit/pages/home/HomeShareConfirmModals.test.jsx tests/unit/hooks/useHomeBulkSelection.test.js`
 	- `npm run test -- tests/unit/pages/home tests/unit/utils/homeBatchConfirmationUtils.test.js`
 	- `get_errors` clean on touched Home phase-02 files
+- Security gates passed for commit block:
+	- `npm run security:scan:staged`
+	- `git check-ignore -v .env`
+	- `npm run security:scan:branch`
+- Committed and pushed Phase 02 atomic block:
+	- Commit: `81017f9` (`feat(home): Add phase-02 batch previews`)
+	- Push: `origin/feature/autopilot-plan-scrollbar-2026-04-12`

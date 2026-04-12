@@ -25,6 +25,6 @@
 - [ ] `npm run build` succeeds.
 
 ## Governance
-- [ ] Commit/push branch rule verified in protocol, skill, and checklist sources.
-- [ ] No commit/push occurred on `main`.
-- [ ] Security scans (`security:scan:staged`, `security:scan:branch`) pass for each commit block.
+- [x] Commit/push branch rule verified in protocol, skill, and checklist sources.
+- [x] No commit/push occurred on `main`.
+- [x] Security scans (`security:scan:staged`, `security:scan:branch`) pass for each commit block.
