@@ -41,6 +41,8 @@ Create complete plan artifacts and immediately start execution when requested wi
 - Commit after running validation steps
 - Format: `<type>(<scope>): <subject>` per git-workflow-rules.md
 - **Target: 3-5 commits per phase** (reflects incremental, validated progress)
+- Before each commit and push, verify branch identity with `git branch --show-current`
+- Commits and pushes must run on the same branch currently being worked for that phase/block
 - Push to feature branch: `git push origin <branch-name>`
 - Never commit to `main` branch
 - **Cadence gate**: Do NOT begin a new major work block until the previous validated block is both committed and pushed

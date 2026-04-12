@@ -266,6 +266,9 @@
 
 - [ ] **Read Git Workflow Standards:**
   - [ ] Read: `.github/skills/git-workflow/SKILL.md` (ensures strict adherence to commit standards)
+- [ ] Run: `git branch --show-current`
+  - [ ] Confirm this is the same branch currently being worked for this block
+  - [ ] Confirm it matches `BRANCH_LOG.md` branch identity when BRANCH_LOG is in use
 - [ ] Run: `git add <file1> <file2> <file3>` (SCOPED, NOT `git add .`)
 - [ ] Run: `git commit -m "<type>(<scope>): <subject>"`
   - [ ] Format: `feat(overlay): Add create subject overlay`
@@ -283,6 +286,8 @@
 
 ### Step 13: Push to Feature Branch
 
+- [ ] Run: `git branch --show-current`
+  - [ ] Confirm it is still the branch currently being worked for this block
 - [ ] Run: `git push origin <branch-name>`
 - [ ] Branch pushed? → Continue to Step 14
 

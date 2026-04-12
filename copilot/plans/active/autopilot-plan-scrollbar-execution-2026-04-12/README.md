@@ -1,13 +1,17 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/README.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/README.md -->
 # AUTOPILOT + Scrollbar Execution Plan (2026-04-12)
 
 ## Status
-- Lifecycle: todo
+- Lifecycle: active
 - Execution Mode: autopilot (checklist-driven)
 - Branch: feature/autopilot-plan-scrollbar-2026-04-12
 - Parent Branch: feature/autopilot-workflow-updates-2026-04-09
 - Owner: hector
-- Current Checklist Step: planning-package-created
+- Current Checklist Step: phase-00-completed
+
+## Activation Note
+- This plan was promoted from `todo` to `active` on 2026-04-12.
+- Phase 00 governance verification is complete; Phase 01 is next.
 
 ## Source Priority
 - Primary source of truth: [sources/source-autopilot-user-spec-autopilot-plan-scrollbar-execution-2026-04-12.md](./sources/source-autopilot-user-spec-autopilot-plan-scrollbar-execution-2026-04-12.md)

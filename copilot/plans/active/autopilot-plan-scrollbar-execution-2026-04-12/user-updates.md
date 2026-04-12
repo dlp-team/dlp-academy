@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/user-updates.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/user-updates.md -->
 # User Updates Channel
 
 ## How to Use

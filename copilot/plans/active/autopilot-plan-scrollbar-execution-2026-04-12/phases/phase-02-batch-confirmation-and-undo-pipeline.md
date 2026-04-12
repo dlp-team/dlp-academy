@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/phases/phase-02-batch-confirmation-and-undo-pipeline.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/phases/phase-02-batch-confirmation-and-undo-pipeline.md -->
 # Phase 02 - Batch Confirmation and Undo Pipeline
 
 ## Objective

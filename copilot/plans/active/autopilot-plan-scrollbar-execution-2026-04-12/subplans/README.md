@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/subplans/README.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/subplans/README.md -->
 # Subplans Index
 
 - [subplan-00-governance-branch-commit-push-rule.md](./subplan-00-governance-branch-commit-push-rule.md)

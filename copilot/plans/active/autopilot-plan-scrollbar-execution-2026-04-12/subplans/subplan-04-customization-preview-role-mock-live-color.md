@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/subplans/subplan-04-customization-preview-role-mock-live-color.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/subplans/subplan-04-customization-preview-role-mock-live-color.md -->
 # Subplan 04 - Customization Preview Role Mock + Live Color
 
 ## Deliverable

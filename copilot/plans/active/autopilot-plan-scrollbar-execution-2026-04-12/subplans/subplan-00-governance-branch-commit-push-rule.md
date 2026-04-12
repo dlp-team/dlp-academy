@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/subplans/subplan-00-governance-branch-commit-push-rule.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/subplans/subplan-00-governance-branch-commit-push-rule.md -->
 # Subplan 00 - Governance Branch Commit/Push Rule
 
 ## Deliverable

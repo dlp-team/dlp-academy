@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/phases/phase-03-bin-interaction-press-state-polish.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/phases/phase-03-bin-interaction-press-state-polish.md -->
 # Phase 03 - Bin Interaction Press-State Polish
 
 ## Objective

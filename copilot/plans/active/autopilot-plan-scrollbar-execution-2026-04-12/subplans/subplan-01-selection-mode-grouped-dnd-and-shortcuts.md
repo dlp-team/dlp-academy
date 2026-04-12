@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/subplans/subplan-01-selection-mode-grouped-dnd-and-shortcuts.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/subplans/subplan-01-selection-mode-grouped-dnd-and-shortcuts.md -->
 # Subplan 01 - Selection Mode Grouped DnD and Shortcuts
 
 ## Deliverable

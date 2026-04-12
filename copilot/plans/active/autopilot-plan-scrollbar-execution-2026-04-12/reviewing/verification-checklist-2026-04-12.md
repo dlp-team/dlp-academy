@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/reviewing/verification-checklist-2026-04-12.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/reviewing/verification-checklist-2026-04-12.md -->
 # Verification Checklist (2026-04-12)
 
 ## Functional

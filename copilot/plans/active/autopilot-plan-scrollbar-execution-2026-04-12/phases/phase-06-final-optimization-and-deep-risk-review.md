@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/phases/phase-06-final-optimization-and-deep-risk-review.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/phases/phase-06-final-optimization-and-deep-risk-review.md -->
 # Phase 06 - Final Optimization and Deep Risk Review
 
 ## Objective

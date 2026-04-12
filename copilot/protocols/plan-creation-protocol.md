@@ -88,6 +88,10 @@ Each plan folder should contain:
    - [ ] Developer did not rush or skip validation steps
    - [ ] Lossless report documents all changes and validations
    - [ ] 3-5 commits exist for that phase (showing incremental, validated progress)
+6. **Branch Integrity Rule (MANDATORY)**:
+  - [ ] Before every commit and push, run `git branch --show-current`.
+  - [ ] Commit and push must happen on the same branch currently being worked for that plan block.
+  - [ ] If branch identity does not match the intended working branch, stop and correct branch context before committing.
 
 ## Review Gate (Before Finished)
 

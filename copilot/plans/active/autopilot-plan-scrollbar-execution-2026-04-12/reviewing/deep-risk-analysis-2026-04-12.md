@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/reviewing/deep-risk-analysis-2026-04-12.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/reviewing/deep-risk-analysis-2026-04-12.md -->
 # Deep Risk Analysis (2026-04-12)
 
 ## Security and Permissions

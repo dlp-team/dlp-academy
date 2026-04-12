@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/subplans/subplan-05-global-scrollbar-fix.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/subplans/subplan-05-global-scrollbar-fix.md -->
 # Subplan 05 - Global Scrollbar Fix
 
 ## Deliverable

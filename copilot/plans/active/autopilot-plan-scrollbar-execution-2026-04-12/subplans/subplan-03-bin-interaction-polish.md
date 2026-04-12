@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/subplans/subplan-03-bin-interaction-polish.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/subplans/subplan-03-bin-interaction-polish.md -->
 # Subplan 03 - Bin Interaction Polish
 
 ## Deliverable

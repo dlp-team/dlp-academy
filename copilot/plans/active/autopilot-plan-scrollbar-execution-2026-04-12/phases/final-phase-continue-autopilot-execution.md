@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/phases/final-phase-continue-autopilot-execution.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/phases/final-phase-continue-autopilot-execution.md -->
 # Final Phase - Continue AUTOPILOT Execution
 
 ## Objective

@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/phases/phase-04-customization-preview-parity.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/phases/phase-04-customization-preview-parity.md -->
 # Phase 04 - Customization Preview Parity
 
 ## Objective

@@ -1,4 +1,4 @@
-<!-- copilot/plans/todo/autopilot-plan-scrollbar-execution-2026-04-12/phases/phase-05-global-scrollbar-fix.md -->
+<!-- copilot/plans/active/autopilot-plan-scrollbar-execution-2026-04-12/phases/phase-05-global-scrollbar-fix.md -->
 # Phase 05 - Global Scrollbar Fix
 
 ## Objective
