@@ -70,3 +70,10 @@
 - Phase 05 gate caveats captured:
 	- `npx tsc --noEmit` failed due unrelated pre-existing type errors in `src/pages/Home/components/HomeContent.tsx`.
 	- `npm run test` full-suite run had one intermittent `StudyGuide.navigation` failure; isolated rerun passed.
+- Security gates passed for Phase 05 commit block:
+	- `npm run security:scan:staged`
+	- `git check-ignore -v .env`
+	- `npm run security:scan:branch`
+- Committed and pushed Phase 05 atomic block:
+	- Commit: `51512a9` (`fix(scrollbar): Complete phase-05 global parity`)
+	- Push: `origin/feature/autopilot-plan-scrollbar-2026-04-12`
