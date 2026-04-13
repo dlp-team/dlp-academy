@@ -105,3 +105,19 @@
 - `get_errors` clean on touched files.
 - `npm run test -- tests/unit/utils/studyGuideQuestionUtils.test.js` -> pass (6/6).
 - `npm run lint` -> pass.
+
+## Discoverability Hotfix (2026-04-13)
+
+### User-Reported Gap
+- User could not find the StudyGuide action to ask the teacher.
+
+### Hotfix Applied
+- [src/pages/Content/StudyGuide.tsx](src/pages/Content/StudyGuide.tsx)
+  - Added a visible quick action button (`Preguntar al profesor`) in the guidance banner so the flow is discoverable without right-click hunting.
+  - Kept right-click contextual action intact.
+  - Removed strict student-only gate for this workflow and allowed any authenticated StudyGuide viewer to use it.
+
+### Hotfix Validation
+- `get_errors` clean on touched file.
+- `npm run test -- tests/unit/utils/studyGuideQuestionUtils.test.js` -> pass (6/6).
+- `npm run lint` -> pass.

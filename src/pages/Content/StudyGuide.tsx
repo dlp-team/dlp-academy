@@ -11,7 +11,6 @@ import {
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { canUserAccessSubject } from '../../utils/subjectAccessUtils';
-import { getActiveRole } from '../../utils/permissionUtils';
 import { sendDirectMessage } from '../../services/directMessageService';
 import {
     buildStudyGuideQuestionReference,
@@ -462,8 +461,7 @@ const StudyGuide = ({ user }: any) => {
     const activeDocId = fileId || guideId;
     const navigate = useNavigate();
     const location = useLocation();
-    const activeRole = getActiveRole(user);
-    const isStudentView = activeRole === 'student';
+    const canAskTeacherInStudyGuide = Boolean(subjectId && user?.uid);
     const contentRootRef = useRef<any>(null);
     const questionContextMenuRef = useRef<any>(null);
 
@@ -564,7 +562,7 @@ const StudyGuide = ({ user }: any) => {
     }, []);
 
     const handleStudyGuideContextMenu = useCallback((event: any) => {
-        if (!isStudentView) return;
+        if (!canAskTeacherInStudyGuide) return;
 
         const selectedContext = readSelectedGuideText(event);
         if (!selectedContext || !selectedContext.selectedText) {
@@ -580,7 +578,7 @@ const StudyGuide = ({ user }: any) => {
             selectedText: selectedContext.selectedText,
             selectionType: selectedContext.selectionType,
         });
-    }, [closeTeacherQuestionContextMenu, isStudentView, readSelectedGuideText]);
+    }, [canAskTeacherInStudyGuide, closeTeacherQuestionContextMenu, readSelectedGuideText]);
 
     useEffect(() => {
         if (!teacherQuestionContextMenu.isOpen) return undefined;
@@ -700,7 +698,7 @@ const StudyGuide = ({ user }: any) => {
     }, [guideData]);
 
     useEffect(() => {
-        if (!isStudentView || !subjectId || !user?.uid) {
+        if (!canAskTeacherInStudyGuide || !subjectId || !user?.uid) {
             setStudyGuideTeachers([]);
             setSelectedTeacherUid('');
             setLoadingStudyGuideTeachers(false);
@@ -797,7 +795,7 @@ const StudyGuide = ({ user }: any) => {
         return () => {
             cancelled = true;
         };
-    }, [isStudentView, subjectId, user?.institutionId, user?.uid]);
+    }, [canAskTeacherInStudyGuide, subjectId, user?.institutionId, user?.uid]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -985,6 +983,30 @@ const StudyGuide = ({ user }: any) => {
         setTeacherQuestionFeedback({ tone: '', text: '' });
         closeTeacherQuestionContextMenu();
     };
+
+    const handleOpenTeacherQuestionFromSelection = useCallback(() => {
+        const selectedContext = readSelectedGuideText(null);
+        const selectedText = normalizeValue(selectedContext?.selectedText).replace(/\s+/g, ' ');
+        const selectionType = normalizeValue(selectedContext?.selectionType).toLowerCase() === 'formula'
+            ? 'formula'
+            : 'text';
+
+        if (!selectedText) {
+            setQuestionComposerOpen(true);
+            setTeacherQuestionFeedback({
+                tone: 'error',
+                text: 'Selecciona un texto o una formula de la guia y vuelve a intentarlo.',
+            });
+            return;
+        }
+
+        setSelectedGuideSnippet(selectedText);
+        setSelectedGuideSnippetType(selectionType);
+        setQuestionComposerOpen(true);
+        setTeacherQuestionMessage('');
+        setTeacherQuestionFeedback({ tone: '', text: '' });
+        closeTeacherQuestionContextMenu();
+    }, [closeTeacherQuestionContextMenu, readSelectedGuideText]);
 
     const handleCloseTeacherQuestionComposer = () => {
         if (sendingTeacherQuestion) return;
@@ -1452,13 +1474,24 @@ const StudyGuide = ({ user }: any) => {
                     </div>
                 </div>
 
-                {isStudentView && (
+                {canAskTeacherInStudyGuide && (
                     <section className="rounded-2xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-sm text-sky-700 shadow-sm dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-200">
-                        <div className="flex items-start gap-2">
-                            <MessageCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                            <p className="leading-relaxed font-medium">
-                                Consejo: selecciona un fragmento de esta guia y haz clic derecho para usar la opcion "Preguntar al profesor".
-                            </p>
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="flex items-start gap-2">
+                                <MessageCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                                <p className="leading-relaxed font-medium">
+                                    Consejo: selecciona un texto o formula y haz clic derecho para usar la opcion "Preguntar al profesor", o pulsa el boton directo.
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleOpenTeacherQuestionFromSelection}
+                                className="inline-flex items-center gap-2 rounded-full border border-sky-300 bg-white px-3 py-1.5 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-700 dark:bg-slate-900 dark:text-sky-200 dark:hover:bg-slate-800"
+                            >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                                Preguntar al profesor
+                            </button>
                         </div>
                     </section>
                 )}
@@ -1694,7 +1727,7 @@ const StudyGuide = ({ user }: any) => {
                 </div>
             </main>
 
-            {isStudentView && teacherQuestionContextMenu.isOpen && (
+            {canAskTeacherInStudyGuide && teacherQuestionContextMenu.isOpen && (
                 <div
                     ref={questionContextMenuRef}
                     className="fixed z-[80] w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
@@ -1716,7 +1749,7 @@ const StudyGuide = ({ user }: any) => {
                 </div>
             )}
 
-            {isStudentView && questionComposerOpen && (
+            {canAskTeacherInStudyGuide && questionComposerOpen && (
                 <aside className="fixed z-[75] bottom-4 left-4 right-4 lg:left-auto lg:right-6 lg:w-[440px] rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-2xl backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
                     <div className="flex items-start justify-between gap-3">
                         <div>

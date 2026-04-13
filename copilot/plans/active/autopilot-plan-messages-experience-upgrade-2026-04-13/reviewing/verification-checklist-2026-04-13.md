@@ -19,6 +19,7 @@
 - [x] Messages resource-reference loading tolerates partial permission denials and still returns accessible references.
 - [x] Chat composer reference insertion now follows `Asignatura -> Tema -> Recurso` hierarchy (including topic-level reference mode).
 - [x] Thread reference cards display exact selected snippet context when available.
+- [x] StudyGuide now exposes a visible quick action button (`Preguntar al profesor`) in addition to right-click contextual action.
 
 ## Regression Validation
 - [x] Existing read-marking behavior remains intact and only triggers when a conversation is explicitly opened.

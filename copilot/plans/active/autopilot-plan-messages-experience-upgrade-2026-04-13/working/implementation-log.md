@@ -38,3 +38,8 @@
 	- Added topic-level reference insertion (`Tema seleccionado`) and topic route generation.
 	- Added reference snippet preview rendering inside chat bubbles for exact-context visibility.
 - Follow-up validation rerun completed: `get_errors` clean, `npm run test -- tests/unit/utils/studyGuideQuestionUtils.test.js` (6/6), `npm run lint` passed.
+- Discoverability hotfix after user feedback:
+	- Added visible StudyGuide quick action button (`Preguntar al profesor`) in the guidance panel.
+	- Removed strict student-only gate so any authenticated StudyGuide viewer can use the ask-teacher flow.
+	- Kept right-click contextual flow active as parallel entrypoint.
+- Hotfix validation rerun completed: `get_errors` clean, `npm run test -- tests/unit/utils/studyGuideQuestionUtils.test.js` (6/6), `npm run lint` passed.

@@ -60,3 +60,4 @@ Implement a student-first StudyGuide workflow where selected text can be sent to
 - Propagated exact selection metadata into `subjectReference` payload (`selectionSnippet`, `selectionType`) for downstream thread rendering.
 - Upgraded chat reference picker to hierarchical flow (`Asignatura -> Tema -> Recurso`) with explicit topic-level option (`Tema seleccionado`).
 - Added in-thread snippet preview rendering so recipients can see the exact selected fragment/formula without opening the destination route.
+- Added StudyGuide discoverability fallback with visible quick action button (`Preguntar al profesor`) and broadened availability to authenticated StudyGuide viewers.
