@@ -21,6 +21,8 @@ type CommunicationItemCardProps = {
   onActivate?: () => void;
   actions?: React.ReactNode;
   containerClassName?: string;
+  showActorAsLeading?: boolean;
+  showActorMeta?: boolean;
 };
 
 const CommunicationItemCard = ({
@@ -36,8 +38,11 @@ const CommunicationItemCard = ({
   onActivate,
   actions,
   containerClassName = '',
+  showActorAsLeading = false,
+  showActorMeta = true,
 }: CommunicationItemCardProps) => {
   const isInteractive = typeof onActivate === 'function';
+  const shouldRenderActorAsLeading = showActorAsLeading && Boolean(actor?.name);
 
   return (
     <div
@@ -58,9 +63,19 @@ const CommunicationItemCard = ({
       aria-label={ariaLabel || title || 'Elemento'}
     >
       <div className="flex items-start gap-3">
-        <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconContainerClass}`}>
-          <Icon className="h-4 w-4" />
-        </div>
+        {shouldRenderActorAsLeading ? (
+          <Avatar
+            photoURL={actor?.photoURL}
+            name={actor?.name}
+            size="w-8 h-8"
+            textSize="text-[11px]"
+            className="mt-0.5 border-0"
+          />
+        ) : (
+          <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconContainerClass}`}>
+            <Icon className="h-4 w-4" />
+          </div>
+        )}
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
@@ -74,7 +89,7 @@ const CommunicationItemCard = ({
             </p>
           )}
 
-          {actor?.name && (
+          {showActorMeta && actor?.name && (
             <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white/70 px-2.5 py-1 text-[11px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-300">
               <Avatar
                 photoURL={actor.photoURL}

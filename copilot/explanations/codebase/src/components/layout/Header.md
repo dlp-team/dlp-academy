@@ -2,7 +2,7 @@
 
 ## Purpose
 - **Source file:** `src/components/layout/Header.tsx`
-- **Last documented:** 2026-02-24
+- **Last documented:** 2026-04-13
 - **Role:** Global app header (navigation bar) with user profile, theme toggle, and dashboard shortcuts.
 
 ## High-Level Architecture
@@ -127,6 +127,15 @@ function ExampleScreen() {
 - If imported dependencies change, update the relation mapping and the example snippet accordingly.
 
 ## Changelog
+### 2026-04-13
+- Added unread-chat badge prioritization for messages shortcut: header now listens to unread `directMessages` and groups by conversation key.
+- Kept notification-based message unread count as fallback when unread chat grouping is zero.
+- This aligns the badge with "chats sin leer" behavior instead of raw unread notification count.
+
+### 2026-04-13
+- Updated user/profile merge precedence to prefer live app-shell user context over cached Firestore profile fields for role-driven navigation consistency.
+- This prevents dashboard shortcut mismatches when `activeRole` is newer in app state than cached profile payloads.
+
 ### 2026-04-12
 - Added dedicated messages shortcut button with unread direct-message badge and navigation to `/messages`.
 - Split header notifications into two channels: general notifications (bell panel) and `direct_message` notifications (messages entrypoint).

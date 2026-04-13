@@ -11,7 +11,21 @@ Track manual actions that must be completed by the user outside automated code e
 - Move an item from `OPEN` to `RESOLVED` only after user confirmation.
 
 ## OPEN
-- None.
+- Date: 2026-04-13
+- Related Task/Plan: direct-messages-hardening-and-backfill
+- Status: OPEN
+- Required Action:
+  - Deploy updated Cloud Functions so `onDirectMessageCreated` starts generating `direct_message` notifications server-side.
+  - Deploy updated Firestore rules and indexes (`firestore.rules`, `firestore.indexes.json`).
+  - Deploy updated Storage rules (`storage.rules`) so direct-message attachments can be uploaded/read under conversation paths.
+  - Run `scripts/migrate-direct-messages-legacy-fields.cjs` first with `DRY_RUN=true`, then with `DRY_RUN=false` after review.
+- Why Needed:
+  - Without function deployment, new direct messages will no longer generate recipient notifications from client writes.
+  - Without rules/index deployment, direct-message security hardening and optimized queries will not be fully active.
+  - Without Storage rules deployment, users will not be able to upload/read direct-message file attachments.
+  - Without migration, legacy message docs may miss `participants` / `conversationKey`, reducing query quality and historical coverage.
+- Safe Placeholder Example (if applicable):
+  - `FIREBASE_SERVICE_ACCOUNT_PATH=<absolute-path-to-service-account-json>`
 
 ## RESOLVED
 - Date: 2026-04-08

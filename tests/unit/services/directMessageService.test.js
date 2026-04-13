@@ -8,12 +8,19 @@ const firestoreMocks = vi.hoisted(() => ({
   doc: vi.fn(),
   getDoc: vi.fn(),
   serverTimestamp: vi.fn(() => ({ __type: 'serverTimestamp' })),
-  setDoc: vi.fn(),
   dbRef: { __type: 'db' },
+}));
+
+const storageMocks = vi.hoisted(() => ({
+  getDownloadURL: vi.fn(),
+  ref: vi.fn(),
+  uploadBytes: vi.fn(),
+  storageRef: { __type: 'storage' },
 }));
 
 vi.mock('../../../src/firebase/config', () => ({
   db: firestoreMocks.dbRef,
+  storage: storageMocks.storageRef,
 }));
 
 vi.mock('firebase/firestore', async () => {
@@ -25,7 +32,16 @@ vi.mock('firebase/firestore', async () => {
     doc: firestoreMocks.doc,
     getDoc: firestoreMocks.getDoc,
     serverTimestamp: firestoreMocks.serverTimestamp,
-    setDoc: firestoreMocks.setDoc,
+  };
+});
+
+vi.mock('firebase/storage', async () => {
+  const actual = await vi.importActual('firebase/storage');
+  return {
+    ...actual,
+    getDownloadURL: storageMocks.getDownloadURL,
+    ref: storageMocks.ref,
+    uploadBytes: storageMocks.uploadBytes,
   };
 });
 
@@ -36,7 +52,9 @@ describe('directMessageService.sendDirectMessage', () => {
     firestoreMocks.collection.mockReturnValue({ __type: 'collection', path: 'directMessages' });
     firestoreMocks.doc.mockImplementation((_db, path, id) => ({ __type: 'doc', path, id }));
     firestoreMocks.addDoc.mockResolvedValue({ id: 'dm-1' });
-    firestoreMocks.setDoc.mockResolvedValue(undefined);
+    storageMocks.ref.mockImplementation((_storage, path) => ({ __type: 'storage-ref', path }));
+    storageMocks.uploadBytes.mockResolvedValue({});
+    storageMocks.getDownloadURL.mockResolvedValue('https://example.com/attachment.pdf');
 
     firestoreMocks.getDoc.mockResolvedValue({
       exists: () => true,
@@ -48,7 +66,7 @@ describe('directMessageService.sendDirectMessage', () => {
     });
   });
 
-  it('creates direct message and notification when users share institution', async () => {
+  it('creates direct message payload with participants metadata when users share institution', async () => {
     const sender = {
       uid: 'student-1',
       institutionId: 'inst-1',
@@ -67,7 +85,17 @@ describe('directMessageService.sendDirectMessage', () => {
 
     expect(firestoreMocks.getDoc).toHaveBeenCalledTimes(1);
     expect(firestoreMocks.addDoc).toHaveBeenCalledTimes(1);
-    expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.addDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'directMessages' }),
+      expect.objectContaining({
+        institutionId: 'inst-1',
+        senderUid: 'student-1',
+        recipientUid: 'teacher-1',
+        participants: ['student-1', 'teacher-1'],
+        conversationKey: 'student-1__teacher-1',
+        content: 'Profe, tengo una duda sobre la tarea.',
+      })
+    );
     expect(result).toEqual({
       directMessageId: 'dm-1',
       recipientUid: 'teacher-1',
@@ -96,7 +124,6 @@ describe('directMessageService.sendDirectMessage', () => {
     ).rejects.toThrow('Solo puedes enviar mensajes a usuarios de tu institución.');
 
     expect(firestoreMocks.addDoc).not.toHaveBeenCalled();
-    expect(firestoreMocks.setDoc).not.toHaveBeenCalled();
   });
 
   it('rejects empty message content', async () => {
@@ -109,8 +136,56 @@ describe('directMessageService.sendDirectMessage', () => {
         recipientUid: 'teacher-1',
         content: '   ',
       })
-    ).rejects.toThrow('Escribe un mensaje antes de enviar.');
+    ).rejects.toThrow('Escribe un mensaje o añade un adjunto antes de enviar.');
 
-    expect(firestoreMocks.getDoc).not.toHaveBeenCalled();
+    expect(firestoreMocks.getDoc).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.addDoc).not.toHaveBeenCalled();
+  });
+
+  it('uploads attachments and stores subject reference metadata', async () => {
+    const attachment = {
+      name: 'resumen.pdf',
+      size: 1024,
+      type: 'application/pdf',
+    };
+
+    await sendDirectMessage({
+      sender: {
+        uid: 'student-1',
+        institutionId: 'inst-1',
+        displayName: 'Alumno Uno',
+      },
+      recipientUid: 'teacher-1',
+      content: '',
+      attachments: [attachment],
+      subjectReference: {
+        subjectId: 'subject-1',
+        topicId: 'topic-1',
+        resourceId: 'doc-1',
+        resourceType: 'resource',
+        label: 'PDF de apoyo',
+        route: '/home/subject/subject-1/topic/topic-1/resource/doc-1',
+      },
+    });
+
+    expect(storageMocks.uploadBytes).toHaveBeenCalledTimes(1);
+    expect(storageMocks.getDownloadURL).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.addDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'directMessages' }),
+      expect.objectContaining({
+        attachments: [
+          expect.objectContaining({
+            name: 'resumen.pdf',
+            url: 'https://example.com/attachment.pdf',
+            kind: 'file',
+          }),
+        ],
+        subjectReference: expect.objectContaining({
+          subjectId: 'subject-1',
+          resourceType: 'resource',
+          resourceId: 'doc-1',
+        }),
+      })
+    );
   });
 });

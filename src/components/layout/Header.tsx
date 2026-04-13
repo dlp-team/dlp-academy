@@ -2,10 +2,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Settings, Moon, Sun, LayoutDashboard, MessageCircle } from 'lucide-react';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
 import { db } from '../../firebase/config'; 
 import useInstitutionBranding from '../../hooks/useInstitutionBranding';
 import { applyThemeToDom, resolveThemeMode } from '../../utils/themeMode';
+import { buildConversationKey } from '../../utils/directMessageUtils';
 import { getActiveRole, getAssignedRoles } from '../../utils/permissionUtils';
 
 // Import UI Helpers
@@ -28,6 +29,7 @@ const ROLE_VIEW_LABELS: any = {
 const Header = ({ user }: any) => {
   const navigate = useNavigate();
   const [firestoreUser, setFirestoreUser] = useState<any>(null);
+  const [unreadConversationCount, setUnreadConversationCount] = useState(0);
 
   // --- 1. THEME LOGIC (Instant) ---
   const [darkMode, setDarkMode] = useState(() => {
@@ -136,7 +138,7 @@ const Header = ({ user }: any) => {
   }, [themePreference]);
 
   // Determine which data to show
-  const userData = { ...(user || {}), ...(firestoreUser || {}) };
+  const userData = { ...(firestoreUser || {}), ...(user || {}) };
   const assignedRoles = getAssignedRoles(userData);
   const activeRole = getActiveRole(userData);
   const canSwitchRole = assignedRoles.length > 1;
@@ -209,14 +211,62 @@ const Header = ({ user }: any) => {
     [notifications]
   );
 
+  useEffect(() => {
+    const currentUid = String(userData?.uid || '').trim();
+    const currentInstitutionId = String(userData?.institutionId || '').trim();
+
+    if (!currentUid || !currentInstitutionId) {
+      setUnreadConversationCount(0);
+      return undefined;
+    }
+
+    const unreadMessagesQuery = query(
+      collection(db, 'directMessages'),
+      where('institutionId', '==', currentInstitutionId),
+      where('recipientUid', '==', currentUid),
+      where('readByRecipient', '==', false)
+    );
+
+    const unsubscribe = onSnapshot(unreadMessagesQuery, (snapshot: any) => {
+      const unreadConversationKeys = new Set<string>();
+
+      snapshot.docs.forEach((messageDoc: any) => {
+        const messageData = messageDoc.data() || {};
+        const senderUid = String(messageData?.senderUid || '').trim();
+        const recipientUid = String(messageData?.recipientUid || '').trim();
+        const derivedConversationKey = buildConversationKey(senderUid, recipientUid);
+        const persistedConversationKey = String(messageData?.conversationKey || '').trim();
+        const conversationKey = persistedConversationKey || derivedConversationKey;
+
+        if (conversationKey) {
+          unreadConversationKeys.add(conversationKey);
+        }
+      });
+
+      setUnreadConversationCount(unreadConversationKeys.size);
+    }, (error: any) => {
+      console.error('Error loading unread direct-message conversations:', error);
+      setUnreadConversationCount(0);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [userData?.institutionId, userData?.uid]);
+
   const generalNotifications = useMemo(
     () => notifications.filter((notification: any) => String(notification?.type || '').trim().toLowerCase() !== 'direct_message'),
     [notifications]
   );
 
-  const messageUnreadCount = useMemo(
+  const messageNotificationCount = useMemo(
     () => messageNotifications.filter((notification: any) => !notification?.read).length,
     [messageNotifications]
+  );
+
+  const messageUnreadCount = useMemo(
+    () => (unreadConversationCount > 0 ? unreadConversationCount : messageNotificationCount),
+    [messageNotificationCount, unreadConversationCount]
   );
 
   const generalUnreadCount = useMemo(

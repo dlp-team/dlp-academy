@@ -43,6 +43,23 @@ service firebase.storage {
         && (isGlobalAdmin() || isInstitutionAdminOf(institutionId));
     }
 
+    match /institutions/{institutionId}/direct-messages/{participantA}/{participantB}/{fileName} {
+      allow read: if isSignedIn()
+        && currentUserInstitutionId() == institutionId
+        && (
+          isGlobalAdmin()
+          || request.auth.uid == participantA
+          || request.auth.uid == participantB
+        );
+
+      allow write: if isSignedIn()
+        && currentUserInstitutionId() == institutionId
+        && (
+          request.auth.uid == participantA
+          || request.auth.uid == participantB
+        );
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }
