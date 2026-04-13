@@ -11,6 +11,7 @@
 7. phase-07-autopilot-intake-and-gap-audit - COMPLETED
 8. phase-08-attachments-notification-and-reference-ux - COMPLETED
 9. phase-09-validation-doc-sync-closure - COMPLETED
+10. phase-10-studyguide-contextual-teacher-questions-and-chat-reliability - COMPLETED
 
 ## Why This Order
 - Inbox controls and conversation ranking are foundational before thread polish.
@@ -25,4 +26,4 @@
 - Verification checklist under [reviewing/verification-checklist-2026-04-13.md](reviewing/verification-checklist-2026-04-13.md)
 
 ## Immediate Next Action
-- Transition this plan from active to inReview after reviewer confirmation.
+- Transition this plan from active to inReview after deployment prerequisites (Firestore indexes/rules) are confirmed.

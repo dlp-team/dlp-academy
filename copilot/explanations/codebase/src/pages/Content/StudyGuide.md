@@ -27,6 +27,7 @@
 - This explanation is synchronized to the mirrored structure under `copilot/explanations/codebase/src/pages` for maintenance and onboarding.
 
 ## Changelog
+- 2026-04-13: Added student-only contextual question flow in StudyGuide: right-click selected text -> "Preguntar al profesor" -> choose teacher recipient -> send direct message with selected snippet and guide reference route.
 - 2026-04-04: Consolidated `StudyGuide` into TypeScript-only implementation by removing duplicate `StudyGuide.jsx` and keeping lifecycle access guard (`canUserAccessSubject(...)`) in `StudyGuide.tsx`.
 - 2026-04-03: Added lifecycle-aware subject access gate via `canUserAccessSubject(...)` during subject context load; direct guide entry now redirects to Home when subject visibility policy denies access.
 - 2026-04-01: Added deterministic page-level navigation coverage in `tests/unit/pages/content/StudyGuide.navigation.test.jsx` for TOC-driven section jumps and keyboard arrow progression to block navigation regressions.

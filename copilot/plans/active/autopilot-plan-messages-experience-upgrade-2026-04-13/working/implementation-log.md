@@ -20,3 +20,13 @@
 - Removed in-panel message-notification list and aligned unread indicator behavior to header-level message entrypoint.
 - Updated header unread badge to prioritize unread chat conversation count (`directMessages` unread group) over raw notification count fallback.
 - Validation rerun completed: `get_errors` clean, `npm run test -- tests/unit/services/directMessageService.test.js tests/unit/utils/directMessageUtils.test.js tests/unit/components/CommunicationItemCard.test.jsx` (14/14), `npm run lint` passed.
+- Added `src/utils/studyGuideQuestionUtils.ts` to centralize StudyGuide contextual-question payload composition and teacher-role filtering.
+- Added student-only right-click contextual action in StudyGuide to open "Preguntar al profesor" composer with selected text payload.
+- Added teacher recipient resolution from subject owner/editor metadata and same-institution user profiles.
+- Wired StudyGuide question send flow through `sendDirectMessage` with explicit `subjectReference` route to the current guide.
+- Hardened Messages listeners to avoid expected console noise when index fallback (`failed-precondition`) activates.
+- Hardened subject-reference resource loading to tolerate partial permission-denied results and merge root + nested subject topic resource paths.
+- Added missing Firestore helper `topicReadableByRef(topicId)` used by `resumen` read rules.
+- Updated `firestore.indexes.json` direct-message composites with explicit `__name__` descending tie-break field.
+- Validation rerun completed: `get_errors` clean, `npm run test -- tests/unit/utils/studyGuideQuestionUtils.test.js tests/unit/services/directMessageService.test.js tests/unit/utils/directMessageUtils.test.js` (17/17), `npm run lint` passed.
+- Rules emulator suite attempted (`npm run test:rules`), but local environment lacks Firebase CLI (`firebase` command not found).

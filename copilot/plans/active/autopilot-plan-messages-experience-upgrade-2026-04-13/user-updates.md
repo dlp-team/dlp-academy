@@ -10,6 +10,15 @@
 - None.
 
 ## Processed Updates
+- 2026-04-13: Added student StudyGuide contextual messaging workflow requested by user: selected-text right-click action (`Preguntar al profesor`) with teacher selection, custom message, and direct-message payload linked to the exact guide route. Also addressed runtime blockers reported in chat entry (index fallback noise and subject-reference permission failures). Synced in:
+	- `src/pages/Content/StudyGuide.tsx`
+	- `src/utils/studyGuideQuestionUtils.ts`
+	- `tests/unit/utils/studyGuideQuestionUtils.test.js`
+	- `src/pages/Messages/Messages.tsx`
+	- `firestore.rules`
+	- `firestore.indexes.json`
+	- `src/firebase/config.ts`
+	- `copilot/explanations/temporal/lossless-reports/2026-04-13/studyguide-contextual-teacher-questions-and-chat-reliability.md`
 - 2026-04-13: Applied AUTOPILOT intake extension from `AUTOPILOT_PLAN.md` on a new branch with the remaining requested messaging upgrades: participant avatars on inbox/thread headers, file attachments, header-level unread-chat counter alignment, removal of in-panel message notifications, clickable common-subject chips, and subject/resource reference insertion (study guides, summaries, PDFs). Synced in:
 	- `src/pages/Messages/Messages.tsx`
 	- `src/services/directMessageService.ts`

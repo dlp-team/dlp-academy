@@ -1,4 +1,49 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "directMessages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "institutionId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "senderUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "directMessages",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "institutionId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "recipientUid",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

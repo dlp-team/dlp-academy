@@ -16,14 +16,16 @@ Track manual actions that must be completed by the user outside automated code e
 - Status: OPEN
 - Required Action:
   - Deploy updated Cloud Functions so `onDirectMessageCreated` starts generating `direct_message` notifications server-side.
-  - Deploy updated Firestore rules and indexes (`firestore.rules`, `firestore.indexes.json`).
+  - Deploy updated Firestore rules and indexes (`firestore.rules`, `firestore.indexes.json`) including the `topicReadableByRef` helper and direct-message composite tie-break updates.
   - Deploy updated Storage rules (`storage.rules`) so direct-message attachments can be uploaded/read under conversation paths.
   - Run `scripts/migrate-direct-messages-legacy-fields.cjs` first with `DRY_RUN=true`, then with `DRY_RUN=false` after review.
+  - Verify Firebase Analytics web-app configuration if production still reports `analytics/config-fetch-failed` (App not found / measurement mismatch).
 - Why Needed:
   - Without function deployment, new direct messages will no longer generate recipient notifications from client writes.
   - Without rules/index deployment, direct-message security hardening and optimized queries will not be fully active.
   - Without Storage rules deployment, users will not be able to upload/read direct-message file attachments.
   - Without migration, legacy message docs may miss `participants` / `conversationKey`, reducing query quality and historical coverage.
+  - Without analytics config verification, production analytics may keep falling back to local measurement ID and emit warning logs.
 - Safe Placeholder Example (if applicable):
   - `FIREBASE_SERVICE_ACCOUNT_PATH=<absolute-path-to-service-account-json>`
 

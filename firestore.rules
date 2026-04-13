@@ -247,6 +247,19 @@ service cloud.firestore {
         );
     }
 
+    function topicReadableByRef(topicId) {
+      return exists(/databases/$(database)/documents/topics/$(topicId))
+        && (
+          canReadResource(get(/databases/$(database)/documents/topics/$(topicId)).data)
+          || topicInstitutionMatches(topicId)
+          || (
+            hasSubjectRef(get(/databases/$(database)/documents/topics/$(topicId)).data)
+            && subjectReadableByRef(subjectRef(get(/databases/$(database)/documents/topics/$(topicId)).data))
+          )
+          || isOwnerData(get(/databases/$(database)/documents/topics/$(topicId)).data)
+        );
+    }
+
     function subjectReadableByRef(subjectId) {
       return exists(/databases/$(database)/documents/subjects/$(subjectId))
         && (
@@ -1429,11 +1442,22 @@ service cloud.firestore {
           && (
             isGlobalAdmin()
             || (
-              resource.data.keys().hasAll(['institutionId', 'senderUid', 'recipientUid'])
+              resource.data.keys().hasAny(['institutionId'])
               && resource.data.institutionId == currentUserInstitutionId()
               && (
-                resource.data.senderUid == request.auth.uid
-                || resource.data.recipientUid == request.auth.uid
+                (
+                  resource.data.keys().hasAny(['senderUid'])
+                  && resource.data.senderUid == request.auth.uid
+                )
+                || (
+                  resource.data.keys().hasAny(['recipientUid'])
+                  && resource.data.recipientUid == request.auth.uid
+                )
+                || (
+                  resource.data.keys().hasAny(['participants'])
+                  && resource.data.participants is list
+                  && request.auth.uid in resource.data.participants
+                )
               )
             )
             || (
@@ -1444,10 +1468,15 @@ service cloud.firestore {
           );
 
         allow create: if isSignedIn()
-          && request.resource.data.keys().hasAll(['institutionId', 'senderUid', 'recipientUid', 'content'])
+          && request.resource.data.keys().hasAll(['institutionId', 'senderUid', 'recipientUid', 'participants', 'conversationKey', 'content'])
           && request.resource.data.senderUid == request.auth.uid
           && request.resource.data.recipientUid is string
           && request.resource.data.recipientUid != request.auth.uid
+          && request.resource.data.participants is list
+          && request.resource.data.participants.size() == 2
+          && request.resource.data.participants.hasAll([request.resource.data.senderUid, request.resource.data.recipientUid])
+          && request.resource.data.conversationKey is string
+          && request.resource.data.conversationKey.size() > 0
           && request.resource.data.content is string
           && request.resource.data.content.size() > 0
           && request.resource.data.content.size() <= 700
@@ -1492,7 +1521,7 @@ service cloud.firestore {
             || (
               request.resource.data.keys().hasAll(['institutionId', 'userId', 'type'])
               && request.resource.data.institutionId == currentUserInstitutionId()
-              && (request.resource.data.type == 'subject_shared' || request.resource.data.type == 'direct_message')
+              && request.resource.data.type == 'subject_shared'
               && request.resource.data.userId is string
               && exists(/databases/$(database)/documents/users/$(request.resource.data.userId))
               && get(/databases/$(database)/documents/users/$(request.resource.data.userId)).data.institutionId == currentUserInstitutionId()

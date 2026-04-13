@@ -1,6 +1,10 @@
 // copilot/explanations/codebase/firestore.rules.md
 
 ## Changelog
+### 2026-04-13: Resumen topic reference readability helper restored
+- Added `topicReadableByRef(topicId)` helper used by `resumen` read rules.
+- Keeps topic-level readability checks institution-scoped and owner/shared aware while preventing deny-path regressions caused by missing helper resolution.
+
 ### 2026-04-12: Direct messages same-institution policy and controlled peer notification creates
 - Added `match /directMessages/{messageId}` with least-privilege constraints:
   - reads limited to participants in same institution, global admins, and same-institution institution admins,

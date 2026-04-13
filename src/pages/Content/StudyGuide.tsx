@@ -1,22 +1,32 @@
 // src/pages/Content/StudyGuide.tsx
-import React, { useCallback, useState, useEffect, useMemo } from 'react';
+import React, { useCallback, useState, useEffect, useMemo, useRef } from 'react';
 import { useDarkMode } from '../../hooks/useDarkMode';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
     ChevronLeft, BookOpen, Calculator, Share2, 
     MoreVertical, ArrowUp, Sparkles, BookMarked,
     FileText, Lightbulb, ChevronDown, ChevronUp,
-    Download, Eye, TrendingUp, Zap, List
+    Download, Eye, TrendingUp, Zap, List, MessageCircle, Loader2, X
 } from 'lucide-react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { canUserAccessSubject } from '../../utils/subjectAccessUtils';
+import { getActiveRole } from '../../utils/permissionUtils';
+import { sendDirectMessage } from '../../services/directMessageService';
+import {
+    buildStudyGuideQuestionReference,
+    buildTeacherCandidateUidsFromSubject,
+    composeStudyGuideQuestionMessage,
+    isTeacherLikeRole,
+} from '../../utils/studyGuideQuestionUtils';
 
 import 'katex/dist/katex.min.css';
 import { BlockMath, InlineMath } from 'react-katex';
 
 
 // ==================== CONSTANTS ====================
+const normalizeValue = (value: any) => String(value || '').trim();
+const normalizeRole = (value: any) => normalizeValue(value).toLowerCase();
 
 // ==================== UTILITY FUNCTIONS ====================
 
@@ -451,6 +461,10 @@ const StudyGuide = ({ user }: any) => {
     const activeDocId = fileId || guideId;
     const navigate = useNavigate();
     const location = useLocation();
+    const activeRole = getActiveRole(user);
+    const isStudentView = activeRole === 'student';
+    const contentRootRef = useRef<any>(null);
+    const questionContextMenuRef = useRef<any>(null);
 
     const [loading, setLoading] = useState(true);
     const [guideData, setGuideData] = useState<any>(null);
@@ -462,6 +476,24 @@ const StudyGuide = ({ user }: any) => {
     const [isMouseAtTop, setIsMouseAtTop] = useState(true);
     const [keepHeaderVisible, setKeepHeaderVisible] = useState(false);
     const [isGridMode, setIsGridMode] = useState(false);
+    const [subjectName, setSubjectName] = useState('');
+    const [studyGuideTeachers, setStudyGuideTeachers] = useState<any[]>([]);
+    const [loadingStudyGuideTeachers, setLoadingStudyGuideTeachers] = useState(false);
+    const [teacherQuestionContextMenu, setTeacherQuestionContextMenu] = useState<any>({
+        isOpen: false,
+        x: 0,
+        y: 0,
+        selectedText: '',
+    });
+    const [questionComposerOpen, setQuestionComposerOpen] = useState(false);
+    const [selectedTeacherUid, setSelectedTeacherUid] = useState('');
+    const [selectedGuideSnippet, setSelectedGuideSnippet] = useState('');
+    const [teacherQuestionMessage, setTeacherQuestionMessage] = useState('');
+    const [sendingTeacherQuestion, setSendingTeacherQuestion] = useState(false);
+    const [teacherQuestionFeedback, setTeacherQuestionFeedback] = useState<{ tone: '' | 'success' | 'error'; text: string }>({
+        tone: '',
+        text: '',
+    });
     const { isDark, toggleDarkMode } = useDarkMode();
 
     useEffect(() => {
@@ -483,6 +515,85 @@ const StudyGuide = ({ user }: any) => {
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
     }, []);
+
+    const closeTeacherQuestionContextMenu = useCallback(() => {
+        setTeacherQuestionContextMenu((previous: any) => (
+            previous?.isOpen
+                ? { isOpen: false, x: 0, y: 0, selectedText: '' }
+                : previous
+        ));
+    }, []);
+
+    const readSelectedGuideText = useCallback(() => {
+        if (typeof window === 'undefined') return '';
+
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return '';
+
+        const selectedText = normalizeValue(selection.toString()).replace(/\s+/g, ' ');
+        if (!selectedText || selectedText.length < 6) return '';
+
+        const range = selection.getRangeAt(0);
+        const commonAncestor = range.commonAncestorContainer;
+        const ancestorElement = commonAncestor?.nodeType === Node.TEXT_NODE
+            ? commonAncestor.parentElement
+            : commonAncestor;
+
+        if (!ancestorElement || !contentRootRef.current?.contains(ancestorElement)) {
+            return '';
+        }
+
+        return selectedText;
+    }, []);
+
+    const handleStudyGuideContextMenu = useCallback((event: any) => {
+        if (!isStudentView) return;
+
+        const selectedText = readSelectedGuideText();
+        if (!selectedText) {
+            closeTeacherQuestionContextMenu();
+            return;
+        }
+
+        event.preventDefault();
+        setTeacherQuestionContextMenu({
+            isOpen: true,
+            x: event.clientX,
+            y: event.clientY,
+            selectedText,
+        });
+    }, [closeTeacherQuestionContextMenu, isStudentView, readSelectedGuideText]);
+
+    useEffect(() => {
+        if (!teacherQuestionContextMenu.isOpen) return undefined;
+
+        const handlePointerDown = (event: any) => {
+            if (questionContextMenuRef.current?.contains(event.target)) {
+                return;
+            }
+            closeTeacherQuestionContextMenu();
+        };
+
+        const handleEscape = (event: any) => {
+            if (event.key === 'Escape') {
+                closeTeacherQuestionContextMenu();
+            }
+        };
+
+        const handleScroll = () => {
+            closeTeacherQuestionContextMenu();
+        };
+
+        window.addEventListener('mousedown', handlePointerDown);
+        window.addEventListener('keydown', handleEscape);
+        window.addEventListener('scroll', handleScroll, true);
+
+        return () => {
+            window.removeEventListener('mousedown', handlePointerDown);
+            window.removeEventListener('keydown', handleEscape);
+            window.removeEventListener('scroll', handleScroll, true);
+        };
+    }, [closeTeacherQuestionContextMenu, teacherQuestionContextMenu.isOpen]);
 
     useEffect(() => {
         const handleKeyDown = (e: any) => {
@@ -571,6 +682,106 @@ const StudyGuide = ({ user }: any) => {
     }, [guideData]);
 
     useEffect(() => {
+        if (!isStudentView || !subjectId || !user?.uid) {
+            setStudyGuideTeachers([]);
+            setSelectedTeacherUid('');
+            setLoadingStudyGuideTeachers(false);
+            return;
+        }
+
+        let cancelled = false;
+
+        const loadStudyGuideTeachers = async () => {
+            setLoadingStudyGuideTeachers(true);
+
+            try {
+                const currentUid = normalizeValue(user?.uid);
+                const currentInstitutionId = normalizeValue(user?.institutionId);
+
+                const subjectSnapshot = await getDoc(doc(db, 'subjects', subjectId));
+                if (!subjectSnapshot.exists()) {
+                    if (!cancelled) {
+                        setStudyGuideTeachers([]);
+                        setSelectedTeacherUid('');
+                    }
+                    return;
+                }
+
+                const subjectData = subjectSnapshot.data() || {};
+                if (!cancelled) {
+                    setSubjectName(normalizeValue(subjectData?.name || subjectData?.course || ''));
+                }
+
+                const candidateUids = buildTeacherCandidateUidsFromSubject(subjectData)
+                    .filter((candidateUid) => normalizeValue(candidateUid) !== currentUid);
+
+                const recipients: any[] = [];
+
+                for (const candidateUid of candidateUids) {
+                    try {
+                        const candidateSnapshot = await getDoc(doc(db, 'users', candidateUid));
+                        if (!candidateSnapshot.exists()) continue;
+
+                        const candidateData = candidateSnapshot.data() || {};
+                        const candidateInstitutionId = normalizeValue(candidateData?.institutionId);
+                        if (currentInstitutionId && candidateInstitutionId && candidateInstitutionId !== currentInstitutionId) {
+                            continue;
+                        }
+
+                        const roleCandidates = [
+                            candidateData?.role,
+                            candidateData?.primaryRole,
+                            ...(Array.isArray(candidateData?.roles) ? candidateData.roles : []),
+                        ];
+
+                        const isTeacherRecipient = roleCandidates.some((roleValue) => isTeacherLikeRole(roleValue));
+                        if (!isTeacherRecipient) continue;
+
+                        recipients.push({
+                            uid: candidateUid,
+                            role: normalizeRole(candidateData?.role || candidateData?.primaryRole || 'teacher'),
+                            displayName: normalizeValue(candidateData?.displayName || candidateData?.name || candidateData?.email || 'Profesor'),
+                            email: normalizeValue(candidateData?.email),
+                        });
+                    } catch (candidateError) {
+                        console.error('Error loading study-guide teacher profile:', candidateError);
+                    }
+                }
+
+                recipients.sort((left: any, right: any) => (
+                    normalizeValue(left?.displayName).localeCompare(normalizeValue(right?.displayName), 'es')
+                ));
+
+                if (!cancelled) {
+                    setStudyGuideTeachers(recipients);
+                    setSelectedTeacherUid((previous) => {
+                        if (previous && recipients.some((recipient) => normalizeValue(recipient?.uid) === previous)) {
+                            return previous;
+                        }
+                        return normalizeValue(recipients[0]?.uid);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading teachers for StudyGuide direct questions:', error);
+                if (!cancelled) {
+                    setStudyGuideTeachers([]);
+                    setSelectedTeacherUid('');
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoadingStudyGuideTeachers(false);
+                }
+            }
+        };
+
+        loadStudyGuideTeachers();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [isStudentView, subjectId, user?.institutionId, user?.uid]);
+
+    useEffect(() => {
         const loadData = async () => {
             if (!activeDocId) return;
 
@@ -585,6 +796,7 @@ const StudyGuide = ({ user }: any) => {
 
                         if (subjectSnap.exists()) {
                             const sData = subjectSnap.data();
+                            setSubjectName(normalizeValue(sData?.name || sData?.course || ''));
 
                             if (user?.uid) {
                                 const hasSubjectAccess = await canUserAccessSubject({
@@ -737,6 +949,105 @@ const StudyGuide = ({ user }: any) => {
     }, [isScrolled]);
     
     const scrollToFormulas = () => scrollToSection('formulas-section');
+
+    const handleOpenTeacherQuestionComposer = () => {
+        const selectedText = normalizeValue(teacherQuestionContextMenu?.selectedText).replace(/\s+/g, ' ');
+        if (!selectedText) {
+            closeTeacherQuestionContextMenu();
+            return;
+        }
+
+        setSelectedGuideSnippet(selectedText);
+        setQuestionComposerOpen(true);
+        setTeacherQuestionMessage('');
+        setTeacherQuestionFeedback({ tone: '', text: '' });
+        closeTeacherQuestionContextMenu();
+    };
+
+    const handleCloseTeacherQuestionComposer = () => {
+        if (sendingTeacherQuestion) return;
+        setQuestionComposerOpen(false);
+        setTeacherQuestionMessage('');
+    };
+
+    const handleSendTeacherQuestion = async () => {
+        if (sendingTeacherQuestion) return;
+
+        const normalizedTeacherUid = normalizeValue(selectedTeacherUid);
+        const normalizedQuestion = normalizeValue(teacherQuestionMessage);
+        const normalizedSnippet = normalizeValue(selectedGuideSnippet).replace(/\s+/g, ' ');
+
+        if (!normalizedTeacherUid) {
+            setTeacherQuestionFeedback({ tone: 'error', text: 'Selecciona un profesor para enviar tu duda.' });
+            return;
+        }
+
+        if (!normalizedSnippet) {
+            setTeacherQuestionFeedback({ tone: 'error', text: 'No se detecto un fragmento seleccionado en la guia.' });
+            return;
+        }
+
+        if (!normalizedQuestion) {
+            setTeacherQuestionFeedback({ tone: 'error', text: 'Escribe tu duda antes de enviar.' });
+            return;
+        }
+
+        const selectedTeacher = studyGuideTeachers.find(
+            (candidate: any) => normalizeValue(candidate?.uid) === normalizedTeacherUid
+        );
+
+        const directMessageContent = composeStudyGuideQuestionMessage({
+            guideTitle: guideData?.title || subjectName || 'Guia de estudio',
+            selectedText: normalizedSnippet,
+            question: normalizedQuestion,
+            maxLength: 700,
+        });
+
+        const subjectReference = buildStudyGuideQuestionReference({
+            subjectId,
+            topicId,
+            guideId: activeDocId,
+            guideTitle: guideData?.title || subjectName || 'Guia de estudio',
+        });
+
+        setSendingTeacherQuestion(true);
+        setTeacherQuestionFeedback({ tone: '', text: '' });
+
+        try {
+            await sendDirectMessage({
+                sender: {
+                    ...(user || {}),
+                    institutionId: normalizeValue(user?.institutionId),
+                },
+                recipientUid: normalizedTeacherUid,
+                content: directMessageContent,
+                subjectId: normalizeValue(subjectId) || null,
+                subjectName: normalizeValue(subjectName) || null,
+                subjectReference: subjectReference
+                    ? {
+                        ...subjectReference,
+                        subjectName: normalizeValue(subjectName) || null,
+                    }
+                    : null,
+            });
+
+            setTeacherQuestionFeedback({
+                tone: 'success',
+                text: `Tu duda se envio correctamente a ${normalizeValue(selectedTeacher?.displayName || 'el profesor seleccionado')}.`,
+            });
+            setQuestionComposerOpen(false);
+            setTeacherQuestionMessage('');
+            setSelectedGuideSnippet('');
+        } catch (error: any) {
+            const fallbackError = 'No se pudo enviar tu duda al profesor en este momento.';
+            setTeacherQuestionFeedback({
+                tone: 'error',
+                text: normalizeValue(error?.message) || fallbackError,
+            });
+        } finally {
+            setSendingTeacherQuestion(false);
+        }
+    };
     
     const toggleAllSections = () => {
         const allExpanded = Object.values(expandedSections).every(val => val);
@@ -809,6 +1120,19 @@ const StudyGuide = ({ user }: any) => {
     }, [guideData]);
 
     const allExpanded = Object.values(expandedSections).every(val => val);
+    const contextMenuLeft = useMemo(() => {
+        if (!teacherQuestionContextMenu?.isOpen || typeof window === 'undefined') {
+            return Number(teacherQuestionContextMenu?.x || 0);
+        }
+        return Math.min(Math.max(12, Number(teacherQuestionContextMenu?.x || 0)), window.innerWidth - 280);
+    }, [teacherQuestionContextMenu?.isOpen, teacherQuestionContextMenu?.x]);
+
+    const contextMenuTop = useMemo(() => {
+        if (!teacherQuestionContextMenu?.isOpen || typeof window === 'undefined') {
+            return Number(teacherQuestionContextMenu?.y || 0);
+        }
+        return Math.min(Math.max(12, Number(teacherQuestionContextMenu?.y || 0)), window.innerHeight - 120);
+    }, [teacherQuestionContextMenu?.isOpen, teacherQuestionContextMenu?.y]);
 
     if (loading) return <LoadingSpinner />;
 
@@ -1001,9 +1325,13 @@ const StudyGuide = ({ user }: any) => {
                 }}
             />
 
-            <main className={`relative z-10 max-w-7xl mx-auto px-6 lg:px-8 space-y-12 transition-all duration-500 ${
+            <main
+                ref={contentRootRef}
+                onContextMenu={handleStudyGuideContextMenu}
+                className={`relative z-10 max-w-7xl mx-auto px-6 lg:px-8 space-y-12 transition-all duration-500 ${
                 isScrolled ? 'pt-48' : 'pt-56'
-            }`}>
+            }`}
+            >
                 
                 <div className="relative group/hero">
                     <div className={`absolute inset-0 bg-gradient-to-br ${topicGradient} rounded-[3rem] blur-3xl opacity-20 group-hover/hero:opacity-30 transition-opacity duration-700`} />
@@ -1095,6 +1423,17 @@ const StudyGuide = ({ user }: any) => {
                         </div>
                     </div>
                 </div>
+
+                {isStudentView && (
+                    <section className="rounded-2xl border border-sky-200 bg-sky-50/80 px-4 py-3 text-sm text-sky-700 shadow-sm dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-200">
+                        <div className="flex items-start gap-2">
+                            <MessageCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                            <p className="leading-relaxed font-medium">
+                                Consejo: selecciona un fragmento de esta guia y haz clic derecho para usar la opcion "Preguntar al profesor".
+                            </p>
+                        </div>
+                    </section>
+                )}
 
                 <div className="space-y-10">
                     {guideData.studyGuide.map((section, idx: any) => (
@@ -1324,6 +1663,115 @@ const StudyGuide = ({ user }: any) => {
                     </div>
                 </div>
             </main>
+
+            {isStudentView && teacherQuestionContextMenu.isOpen && (
+                <div
+                    ref={questionContextMenuRef}
+                    className="fixed z-[80] w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+                    style={{
+                        top: `${contextMenuTop}px`,
+                        left: `${contextMenuLeft}px`,
+                    }}
+                >
+                    <button
+                        type="button"
+                        onClick={handleOpenTeacherQuestionComposer}
+                        className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                    >
+                        <span className="inline-flex items-center gap-2">
+                            <MessageCircle className="w-4 h-4 text-sky-600 dark:text-sky-300" />
+                            Preguntar al profesor
+                        </span>
+                    </button>
+                </div>
+            )}
+
+            {isStudentView && questionComposerOpen && (
+                <aside className="fixed z-[75] bottom-4 left-4 right-4 lg:left-auto lg:right-6 lg:w-[440px] rounded-2xl border border-slate-200 bg-white/95 p-4 shadow-2xl backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
+                    <div className="flex items-start justify-between gap-3">
+                        <div>
+                            <h3 className="text-sm font-black text-slate-900 dark:text-slate-100">Preguntar al profesor</h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Envia tu duda sobre el fragmento seleccionado de esta guia.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleCloseTeacherQuestionComposer}
+                            className="inline-flex h-7 w-7 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                            aria-label="Cerrar panel de pregunta"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </div>
+
+                    <label htmlFor="studyguide-teacher-select" className="mt-3 block text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Profesor destinatario
+                    </label>
+                    <select
+                        id="studyguide-teacher-select"
+                        value={selectedTeacherUid}
+                        onChange={(event: any) => setSelectedTeacherUid(event.target.value)}
+                        className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-sky-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    >
+                        <option value="">
+                            {loadingStudyGuideTeachers ? 'Cargando profesores...' : 'Selecciona un profesor'}
+                        </option>
+                        {studyGuideTeachers.map((teacher: any) => (
+                            <option key={teacher.uid} value={teacher.uid}>
+                                {normalizeValue(teacher?.displayName || teacher?.email || 'Profesor')} · {normalizeRole(teacher?.role) || 'teacher'}
+                            </option>
+                        ))}
+                    </select>
+
+                    <label htmlFor="studyguide-question-message" className="mt-3 block text-xs font-semibold text-slate-500 dark:text-slate-400">
+                        Tu mensaje
+                    </label>
+                    <textarea
+                        id="studyguide-question-message"
+                        value={teacherQuestionMessage}
+                        onChange={(event: any) => setTeacherQuestionMessage(event.target.value)}
+                        rows={3}
+                        maxLength={280}
+                        placeholder="Escribe aqui tu duda para el profesor."
+                        className="mt-1 w-full resize-none rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition-colors focus:border-sky-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    />
+
+                    <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300">
+                        <p className="font-semibold text-slate-700 dark:text-slate-200">Fragmento seleccionado</p>
+                        <p className="mt-1 leading-relaxed">{selectedGuideSnippet || 'No hay texto seleccionado.'}</p>
+                    </div>
+
+                    {teacherQuestionFeedback.text && (
+                        <div className={`mt-3 rounded-xl border px-3 py-2 text-xs font-semibold ${
+                            teacherQuestionFeedback.tone === 'error'
+                                ? 'border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-300'
+                                : 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300'
+                        }`}>
+                            {teacherQuestionFeedback.text}
+                        </div>
+                    )}
+
+                    <div className="mt-3 flex items-center justify-end gap-2">
+                        <button
+                            type="button"
+                            onClick={handleCloseTeacherQuestionComposer}
+                            className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleSendTeacherQuestion}
+                            disabled={sendingTeacherQuestion || !selectedTeacherUid || !normalizeValue(teacherQuestionMessage)}
+                            className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-70"
+                        >
+                            {sendingTeacherQuestion ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageCircle className="w-3.5 h-3.5" />}
+                            Enviar duda
+                        </button>
+                    </div>
+                </aside>
+            )}
 
             <style>{`
                 .no-scrollbar {

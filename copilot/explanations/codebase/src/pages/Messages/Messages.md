@@ -30,6 +30,8 @@
 - `default Messages`
 
 ## Changelog
+- 2026-04-13: Improved reliability when opening chats by silencing expected `failed-precondition` logs during automatic index fallback and keeping compatibility-mode behavior unchanged.
+- 2026-04-13: Hardened subject-reference resource loading with partial-permission tolerance and merge strategy across root and nested subject-topic resource collections.
 - 2026-04-13: Added composer file-attachment workflow (validation, removal, send) and message-bubble rendering for image/file attachments.
 - 2026-04-13: Added subject/resource reference workflow in composer with route-aware rendering/navigation inside thread bubbles.
 - 2026-04-13: Updated conversation rows to render participant avatar as leading visual and added participant avatar to thread/new-chat headers.

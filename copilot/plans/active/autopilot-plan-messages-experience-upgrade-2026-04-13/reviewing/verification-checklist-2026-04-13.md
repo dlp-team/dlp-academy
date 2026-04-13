@@ -13,6 +13,9 @@
 - [x] Message bubbles render attachments and subject/resource reference cards with navigation.
 - [x] Common-subject chips navigate directly to subject routes.
 - [x] In-panel message notifications were removed from `/messages` in favor of header-only signaling.
+- [x] StudyGuide for students now exposes right-click "Preguntar al profesor" on selected text and opens composer flow.
+- [x] StudyGuide question composer sends selected snippet + user message + guide reference to chosen teacher recipient.
+- [x] Messages resource-reference loading tolerates partial permission denials and still returns accessible references.
 
 ## Regression Validation
 - [x] Existing read-marking behavior remains intact and only triggers when a conversation is explicitly opened.
@@ -21,8 +24,9 @@
 
 ## Technical Validation
 - [x] get_errors is clean for touched files.
-- [x] Targeted unit tests pass (`14/14` on touched messaging suites).
+- [x] Targeted unit tests pass (`17/17` on touched messaging + StudyGuide question suites).
 - [x] Related existing unit tests pass.
+- [ ] Firestore rules emulator suite run locally (blocked in this environment because Firebase CLI is unavailable).
 
 ## Documentation Validation
 - [x] Lossless report created/updated.

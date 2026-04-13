@@ -554,8 +554,6 @@ const Messages = ({ user }: any) => {
       }
       syncMergedMessages();
     }, (error: any) => {
-      console.error('Error listening sender messages:', error);
-
       if (
         useIndexedMessageQuery
         && error?.code === 'failed-precondition'
@@ -566,6 +564,8 @@ const Messages = ({ user }: any) => {
         setMessagesError('');
         return;
       }
+
+      console.error('Error listening sender messages:', error);
 
       setMessagesError(
         error?.code === 'permission-denied'
@@ -587,8 +587,6 @@ const Messages = ({ user }: any) => {
       }
       syncMergedMessages();
     }, (error: any) => {
-      console.error('Error listening recipient messages:', error);
-
       if (
         useIndexedMessageQuery
         && error?.code === 'failed-precondition'
@@ -599,6 +597,8 @@ const Messages = ({ user }: any) => {
         setMessagesError('');
         return;
       }
+
+      console.error('Error listening recipient messages:', error);
 
       setMessagesError(
         error?.code === 'permission-denied'
@@ -1075,47 +1075,82 @@ const Messages = ({ user }: any) => {
             return !institutionId || !topicInstitutionId || topicInstitutionId === institutionId;
           });
 
+        let encounteredPermissionDenial = false;
+
         const resourceGroups = await Promise.all(topicDocs.map(async (topic: any) => {
-          const [documentsSnapshot, summariesSnapshot] = await Promise.all([
+          const topicName = normalizeValue(topic?.name || topic?.title || 'Tema');
+
+          const resourceQueries = await Promise.allSettled([
             getDocs(query(collection(db, 'documents'), where('topicId', '==', topic.id), limit(10))),
             getDocs(query(collection(db, 'resumen'), where('topicId', '==', topic.id), limit(10))),
+            getDocs(query(collection(db, 'subjects', referenceSubjectId, 'topics', topic.id, 'documents'), limit(10))),
+            getDocs(query(collection(db, 'subjects', referenceSubjectId, 'topics', topic.id, 'resumen'), limit(10))),
           ]);
 
-          const resources = documentsSnapshot.docs.map((resourceDoc: any) => {
-            const resourceData = resourceDoc.data() || {};
-            return {
-              id: `resource_${resourceDoc.id}`,
-              resourceType: 'resource',
-              resourceId: resourceDoc.id,
-              resourceName: normalizeValue(resourceData?.name || resourceData?.title || 'Recurso'),
-              topicId: topic.id,
-              topicName: normalizeValue(topic?.name || topic?.title || 'Tema'),
-              route: `/home/subject/${referenceSubjectId}/topic/${topic.id}/resource/${resourceDoc.id}`,
-            };
+          const [
+            rootDocumentsResult,
+            rootSummariesResult,
+            nestedDocumentsResult,
+            nestedSummariesResult,
+          ] = resourceQueries;
+
+          const mapDocsToResources = (result: any, resourceType: 'resource' | 'resumen') => {
+            if (result.status !== 'fulfilled') {
+              const errorCode = normalizeValue(result?.reason?.code);
+              if (errorCode === 'permission-denied') {
+                encounteredPermissionDenial = true;
+              } else if (result?.reason) {
+                console.error('Error loading topic resources for direct message references:', result.reason);
+              }
+              return [];
+            }
+
+            return result.value.docs.map((resourceDoc: any) => {
+              const resourceData = resourceDoc.data() || {};
+              return {
+                id: `${resourceType}_${resourceDoc.id}`,
+                resourceType,
+                resourceId: resourceDoc.id,
+                resourceName: normalizeValue(resourceData?.name || resourceData?.title || (resourceType === 'resumen' ? 'Resumen' : 'Recurso')),
+                topicId: topic.id,
+                topicName,
+                route: resourceType === 'resumen'
+                  ? `/home/subject/${referenceSubjectId}/topic/${topic.id}/resumen/${resourceDoc.id}`
+                  : `/home/subject/${referenceSubjectId}/topic/${topic.id}/resource/${resourceDoc.id}`,
+              };
+            });
+          };
+
+          const resourcesMap = new Map<string, any>();
+          [
+            ...mapDocsToResources(rootDocumentsResult, 'resource'),
+            ...mapDocsToResources(rootSummariesResult, 'resumen'),
+            ...mapDocsToResources(nestedDocumentsResult, 'resource'),
+            ...mapDocsToResources(nestedSummariesResult, 'resumen'),
+          ].forEach((entry: any) => {
+            if (!resourcesMap.has(entry.id)) {
+              resourcesMap.set(entry.id, entry);
+            }
           });
 
-          const summaries = summariesSnapshot.docs.map((summaryDoc: any) => {
-            const summaryData = summaryDoc.data() || {};
-            return {
-              id: `resumen_${summaryDoc.id}`,
-              resourceType: 'resumen',
-              resourceId: summaryDoc.id,
-              resourceName: normalizeValue(summaryData?.name || summaryData?.title || 'Resumen'),
-              topicId: topic.id,
-              topicName: normalizeValue(topic?.name || topic?.title || 'Tema'),
-              route: `/home/subject/${referenceSubjectId}/topic/${topic.id}/resumen/${summaryDoc.id}`,
-            };
-          });
-
-          return [...resources, ...summaries];
+          return Array.from(resourcesMap.values());
         }));
 
         if (cancelled) return;
 
+        const flattenedResources = resourceGroups.flat().slice(0, 50);
+
         setSubjectResourcesBySubjectId((previous: any) => ({
           ...(previous || {}),
-          [referenceSubjectId]: resourceGroups.flat().slice(0, 50),
+          [referenceSubjectId]: flattenedResources,
         }));
+
+        if (encounteredPermissionDenial && flattenedResources.length === 0) {
+          setComposerFeedback({
+            tone: 'error',
+            text: 'No tienes permisos para consultar recursos de referencia en esta asignatura.',
+          });
+        }
       } catch (error) {
         console.error('Error loading subject references for direct messages:', error);
         if (!cancelled) {

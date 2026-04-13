@@ -3,7 +3,7 @@
 
 ## Status
 - Lifecycle: active
-- Current phase: phase-09-validation-doc-sync-closure (completed)
+- Current phase: phase-10-studyguide-contextual-teacher-questions-and-chat-reliability (completed)
 - Owner: GitHub Copilot
 
 ## Source Priority
@@ -21,6 +21,7 @@ The direct-messages module is functional and secure, but still lacks several pra
 - Improve thread readability and composer behavior for fast day-to-day messaging.
 - Improve mobile UX so direct messages are practical on small screens.
 - Implement AUTOPILOT intake requirements: avatar-first chat list/thread header, file attachments, header-level unread chats, clickable common-subject chips, and exact academic resource references in chat.
+- Implement StudyGuide contextual student question flow: selected-text right-click action to ask subject teachers with exact guide reference context.
 - Keep all visible UI text in Spanish and maintain existing architecture patterns.
 
 ## Out Of Scope
@@ -54,3 +55,4 @@ The direct-messages module is functional and secure, but still lacks several pra
 - 2026-04-13: Phase 07 completed with AUTOPILOT intake binding and remaining-gap audit on a new dedicated branch.
 - 2026-04-13: Phase 08 completed with avatar-led conversation cards, thread-header avatars, attachment upload/rendering, header unread-chat signal alignment, and subject/resource reference workflows.
 - 2026-04-13: Phase 09 completed with full validation (`get_errors`, targeted tests, lint) and plan/docs synchronization.
+- 2026-04-13: Phase 10 completed with StudyGuide right-click "Preguntar al profesor" flow for students (selected snippet + custom question + teacher selection + direct-message reference routing), plus chat reliability fixes for index-fallback noise and permission-tolerant subject-reference loading.
